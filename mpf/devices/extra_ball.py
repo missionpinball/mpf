@@ -1,4 +1,6 @@
 """Device that implements an extra ball."""
+import asyncio
+
 from mpf.core.events import event_handler
 from mpf.core.machine import MachineController
 from mpf.core.device_monitor import DeviceMonitor
@@ -34,8 +36,9 @@ class ExtraBall(ModeDevice):
         """
         return self.is_ok_to_award()
 
+    @asyncio.coroutine
     def _initialize(self):
-        super()._initialize()
+        yield from super()._initialize()
         self.group = self.config['group']
 
     @event_handler(2)

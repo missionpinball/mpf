@@ -1,4 +1,6 @@
 """Implements a servo in MPF."""
+import asyncio
+
 from mpf.core.delays import DelayManager
 
 from mpf.core.device_monitor import DeviceMonitor
@@ -30,7 +32,9 @@ class Servo(SystemWideDevice):
         self.delay = DelayManager(machine.delayRegistry)
         super().__init__(machine, name)
 
+    @asyncio.coroutine
     def _initialize(self):
+        yield from super()._initialize()
         self.platform = self.machine.get_platform_sections('servo_controllers', self.config['platform'])
 
         for position in self.config['positions']:

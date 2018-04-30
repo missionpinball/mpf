@@ -55,7 +55,9 @@ class ScoreReel(SystemWideDevice):
         # stop device on shutdown
         self.machine.events.add_handler("shutdown", self.stop)
 
+    @asyncio.coroutine
     def _initialize(self):
+        yield from super()._initialize()
         self.log.debug("Configuring score reel with: %s", self.config)
 
         # figure out how many values we have

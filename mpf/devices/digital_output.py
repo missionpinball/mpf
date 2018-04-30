@@ -1,4 +1,5 @@
 """A digital output on either a light or driver platform."""
+import asyncio
 from functools import partial
 from typing import Union, Tuple
 
@@ -29,8 +30,10 @@ class DigitalOutput(SystemWideDevice):
         self.type = None                # type: str
         super().__init__(machine, name)
 
+    @asyncio.coroutine
     def _initialize(self):
         """Initialise the hardware driver for this digital output."""
+        yield from super()._initialize()
         if self.config['type'] == "driver":
             self._initialize_driver()
         elif self.config['type'] == "light":

@@ -1,4 +1,5 @@
 """Physical segment displays."""
+import asyncio
 from collections import namedtuple
 from operator import attrgetter
 from typing import List
@@ -33,7 +34,9 @@ class SegmentDisplay(SystemWideDevice):
         self.text = ""                      # type: str
         self.flashing = False               # type: bool
 
+    @asyncio.coroutine
     def _initialize(self):
+        yield from super()._initialize()
         """Initialise display."""
         # load platform
         self.platform = self.machine.get_platform_sections('segment_displays', self.config['platform'])

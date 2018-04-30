@@ -1,5 +1,5 @@
 """Contains the Accelerometer device."""
-
+import asyncio
 import math
 from typing import Tuple
 
@@ -40,8 +40,10 @@ class Accelerometer(SystemWideDevice):
         self.value = None       # type: Tuple[float, float, float]
         self.hw_device = None   # type: AccelerometerPlatformInterface
 
+    @asyncio.coroutine
     def _initialize(self):
         """Initialise and configure accelerometer."""
+        yield from super()._initialize()
         self.platform = self.machine.get_platform_sections(
             'accelerometers', self.config['platform'])
         self.hw_device = self.platform.configure_accelerometer(self.config['platform_settings'], self)

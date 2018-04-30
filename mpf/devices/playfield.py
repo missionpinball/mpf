@@ -38,7 +38,9 @@ class Playfield(SystemWideDevice):
 
         self._incoming_balls = []
 
+    @asyncio.coroutine
     def _initialize(self):
+        yield from super()._initialize()
         if 'default' in self.config['tags']:
             self.machine.playfield = self
 

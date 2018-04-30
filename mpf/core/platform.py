@@ -3,10 +3,11 @@ import abc
 import asyncio
 from collections import namedtuple
 
-from typing import Optional
+from typing import Optional, Generator
 
 MYPY = False
 if MYPY:   # pragma: no cover
+    from logging import Logger
     from mpf.devices.switch import Switch
     from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
     from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
@@ -14,8 +15,9 @@ if MYPY:   # pragma: no cover
     from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
     from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
     from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
-    from logging import Logger
     from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
+    from mpf.platforms.interfaces.accelerometer_platform_interface import AccelerometerPlatformInterface
+    from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
 
 
 class BasePlatform(metaclass=abc.ABCMeta):
@@ -236,7 +238,7 @@ class AccelerometerPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_accelerometers'] = True
 
     @abc.abstractmethod
-    def configure_accelerometer(self, config, callback):
+    def configure_accelerometer(self, config, callback) -> "AccelerometerPlatformInterface":
         """Configure accelerometer.
 
         Args:
@@ -255,38 +257,9 @@ class I2cPlatform(BasePlatform, metaclass=abc.ABCMeta):
         super().__init__(machine)
         self.features['has_i2c'] = True
 
-    @abc.abstractmethod
-    def i2c_write8(self, address, register, value):
-        """Write an 8-bit value to a specific address and register via I2C.
-
-        Args:
-            address (int): I2C address
-            register (int): Register
-            value (int): Value to write
-        """
-        raise NotImplementedError
-
-    @abc.abstractmethod
     @asyncio.coroutine
-    def i2c_read_block(self, address, register, count):
-        """Read an len bytes from an address and register via I2C.
-
-        Args:
-            address (int): I2C Address
-            register (int): Register
-            count (int): Bytes to read
-        """
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    @asyncio.coroutine
-    def i2c_read8(self, address, register):
-        """Read an 8-bit value from an address and register via I2C.
-
-        Args:
-            address (int): I2C Address
-            register (int): Register
-        """
+    def configure_i2c(self, number: str) -> Generator[int, None, "I2cPlatformInterface"]:
+        """Configure i2c device."""
         raise NotImplementedError
 
 

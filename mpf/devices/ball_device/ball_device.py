@@ -81,9 +81,10 @@ class BallDevice(SystemWideDevice):
         del kwargs
         self.ball_count_handler.counter.received_entrance_event()
 
+    @asyncio.coroutine
     def _initialize(self):
         """Initialize right away."""
-        super()._initialize()
+        yield from super()._initialize()
         self._configure_targets()
 
         self.ball_count_handler = BallCountHandler(self)

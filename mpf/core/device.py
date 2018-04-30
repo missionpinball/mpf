@@ -1,7 +1,8 @@
 """Contains the Device base class."""
 import abc
+import asyncio
 
-from typing import List, Any
+from typing import List, Any, Generator
 
 from mpf.core.machine import MachineController
 from mpf.core.logging import LogMixin
@@ -53,7 +54,8 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         """Compare two devices."""
         return self.name < other.name
 
-    def device_added_to_mode(self, mode: "Mode") -> None:
+    @asyncio.coroutine
+    def device_added_to_mode(self, mode: "Mode") -> Generator[int, None, None]:
         """Add a device to a running mode.
 
         Args:
@@ -142,6 +144,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
 
         return cls.collection, cls.config_section
 
+    @asyncio.coroutine
     def _initialize(self):
         """Initialise device."""
         pass

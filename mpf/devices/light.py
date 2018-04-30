@@ -1,4 +1,5 @@
 """Contains the Light class."""
+import asyncio
 from functools import partial
 from operator import itemgetter
 
@@ -226,7 +227,9 @@ class Light(SystemWideDevice, DevicePositionMixin):
                 raise AssertionError("Failed to configure light {} in platform. See error above".
                                      format(self.name)) from e
 
+    @asyncio.coroutine
     def _initialize(self):
+        yield from super()._initialize()
         self._load_hw_drivers()
 
         self.config['default_on_color'] = RGBColor(self.config['default_on_color'])

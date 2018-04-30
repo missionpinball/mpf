@@ -1,4 +1,6 @@
 """Motor device."""
+import asyncio
+
 from mpf.core.events import event_handler
 from mpf.core.system_wide_device import SystemWideDevice
 
@@ -18,7 +20,9 @@ class Motor(SystemWideDevice):
         self.type = None
         super().__init__(machine, name)
 
+    @asyncio.coroutine
     def _initialize(self):
+        yield from super()._initialize()
         super()._initialize()
         self._target_position = self.config['reset_position']
         if self.config['reset_position'] not in self.config['position_switches']:

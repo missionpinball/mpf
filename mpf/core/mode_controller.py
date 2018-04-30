@@ -86,10 +86,11 @@ class ModeController(MpfController):
         for mode in self.machine.modes:
             mode.create_mode_devices()
 
+    @asyncio.coroutine
     def load_mode_devices(self):
         """Load mode devices."""
         for mode in self.machine.modes:
-            mode.load_mode_devices()
+            yield from mode.load_mode_devices()
 
     def initialise_modes(self, **kwargs):
         """Initialise modes."""

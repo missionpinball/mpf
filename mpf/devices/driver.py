@@ -1,4 +1,5 @@
 """Contains the Driver parent class."""
+import asyncio
 from typing import Optional
 
 from mpf.core.delays import DelayManager
@@ -70,7 +71,9 @@ class Driver(SystemWideDevice):
         self._configure_device_logging(config)
         return config
 
+    @asyncio.coroutine
     def _initialize(self):
+        yield from super()._initialize()
         self.platform = self.machine.get_platform_sections('coils', self.config['platform'])
 
         config = DriverConfig(

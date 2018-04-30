@@ -1,5 +1,6 @@
 """Light group devices to comfortably configure groups of lights."""
 import abc
+import asyncio
 import copy
 
 import math
@@ -41,11 +42,13 @@ class LightGroup(SystemWideDevice):
 
         return config
 
+    @asyncio.coroutine
     def _initialize(self):
+        yield from super()._initialize()
         self._create_lights()
 
         for light in self.lights:
-            light.device_added_system_wide()
+            yield from light.device_added_system_wide()
 
     def get_token(self):
         """Return all lights in group as token."""
