@@ -39,9 +39,9 @@ class Motor(SystemWideDevice):
             self.type = "two_directions"
             # add handlers to stop the motor when it reaches the end to prevent damage
             self.machine.switch_controller.add_switch_handler(
-                next(iter(self.config['position_switches'].values())).name, self._end_reached)
+                next(iter(self.config['position_switches'].values())).name, self._end_reached)  # noqa
             self.machine.switch_controller.add_switch_handler(
-                next(reversed(list(self.config['position_switches'].values()))).name, self._end_reached)
+                next(reversed(list(self.config['position_switches'].values()))).name, self._end_reached)    # noqa
         else:
             self.type = "one_direction"
 

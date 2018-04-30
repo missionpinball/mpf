@@ -4,10 +4,12 @@ import logging
 import os
 import importlib
 
-from typing import Dict
-from typing import List
-
 import mpf.file_interfaces
+
+MYPY=False
+if MYPY:    # noqa
+    from typing import Dict
+    from typing import List
 
 
 class FileInterface(object):
