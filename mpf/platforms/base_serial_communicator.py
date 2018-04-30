@@ -1,6 +1,8 @@
 """Base class for serial communicator."""
 import asyncio
 
+from serial import SerialException
+
 MYPY = False
 if MYPY:   # pragma: no cover
     from typing import Generator
@@ -38,10 +40,22 @@ class BaseSerialCommunicator(object):
     @asyncio.coroutine
     def _connect_to_hardware(self, port, baud, xonxoff=False):
         self.log.info("Connecting to %s at %sbps", port, baud)
+        while True:
+            try:
+                connector = self.machine.clock.open_serial_connection(
+                    url=port, baudrate=baud, limit=0, xonxoff=xonxoff)
+                self.reader, self.writer = yield from connector
+            except SerialException:
+                if not self.machine.options["production"]:
+                    raise
+                else:
+                    # if we are in production mode retry
+                    yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
+                    self.log.debug("Connection to %s failed. Will retry.", port)
+            else:
+                # we got a connection
+                break
 
-        connector = self.machine.clock.open_serial_connection(
-            url=port, baudrate=baud, limit=0, xonxoff=xonxoff)
-        self.reader, self.writer = yield from connector
         # defaults are slightly high for our usecase
         self.writer.transport.set_write_buffer_limits(2048, 1024)
 
