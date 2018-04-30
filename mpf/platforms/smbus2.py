@@ -2,6 +2,8 @@
 import asyncio
 from typing import Dict, Tuple, Generator
 
+import logging
+
 from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
 
 from mpf.core.utility_functions import Util
@@ -20,10 +22,11 @@ class Smbus2I2cDevice(I2cPlatformInterface):
 
     """A i2c device on smbus2."""
 
-    def __init__(self, number: str, loop, busses) -> None:
+    def __init__(self, number: str, platform, busses) -> None:
         """Initialise smbus2 device."""
         super().__init__(number)
-        self.loop = loop
+        self.loop = platform.machine.clock.loop
+        self.platform = platform
         self.busses = busses
         bus, self.address = self._get_i2c_bus_address(number)
         self.smbus = self._get_i2c_bus(bus)
@@ -31,8 +34,18 @@ class Smbus2I2cDevice(I2cPlatformInterface):
     @asyncio.coroutine
     def open(self):
         """Open device (if not already open)."""
-        if not self.smbus.smbus:
-            yield from self.smbus.open()
+        while not self.smbus.smbus:
+            try:
+                yield from self.smbus.open()
+            except FileNotFoundError:
+                if not self.platform.machine.options["production"]:
+                    raise
+                else:
+                    # if we are in production mode retry
+                    yield from asyncio.sleep(.1, loop=self.platform.machine.clock.loop)
+                    self.platform.log.debug("Connection to %s failed. Will retry.", self.number)
+            else:
+                break
 
     @staticmethod
     def _get_i2c_bus_address(address) -> Tuple[int, int]:
@@ -74,6 +87,7 @@ class Smbus2(I2cPlatform):
         """Initialise Smbus2 platform."""
         super().__init__(machine)
         self._i2c_busses = {}
+        self.log = logging.getLogger('Smbus2')
 
     @asyncio.coroutine
     def initialize(self):
@@ -84,6 +98,6 @@ class Smbus2(I2cPlatform):
     @asyncio.coroutine
     def configure_i2c(self, number: str) -> Generator[int, None, Smbus2I2cDevice]:
         """Configure device on smbus2."""
-        device = Smbus2I2cDevice(number, self.machine.clock.loop, self._i2c_busses)
+        device = Smbus2I2cDevice(number, self, self._i2c_busses)
         yield from device.open()
         return device
