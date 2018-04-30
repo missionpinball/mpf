@@ -163,7 +163,7 @@ class TestRpi(MpfTestCase):
         self.machine.coils["c_test_allow_enable"].disable()
         self.machine_run()
         self.assertEqual(0, self.pi.outputs[30])
-        
+
         # enable with pwm (10ms pulse and 20% duty)
         self.machine.coils["c_pwm"].enable()
         self.machine_run()
@@ -184,9 +184,11 @@ class TestRpi(MpfTestCase):
         self.machine_run()
         self.assertEqual(2000, self.pi.servos[10])
 
-        self.machine.default_platform.i2c_write8(123, 43, 1337)
+        device = self.loop.run_until_complete(self.machine.default_platform.configure_i2c("0-123"))
+
+        device.i2c_write8(43, 1337)
         self.machine_run()
         self.assertEqual(((0, 123), 43, 1337), self.pi.i2c_write[0])
         self.pi.i2c_read.append(1337)
-        result = self.loop.run_until_complete(self.machine.default_platform.i2c_read8("0-123", 43))
+        result = self.loop.run_until_complete(device.i2c_read8(43))
         self.assertEqual(1337, result)

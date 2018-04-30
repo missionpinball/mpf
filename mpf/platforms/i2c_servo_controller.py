@@ -19,6 +19,7 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
         self.log.debug("Configuring template hardware interface.")
         self.config = self.machine.config['servo_controllers']
         self.platform = None
+        self.i2c_device = None
         self.features['tickless'] = True
 
     def __repr__(self):
@@ -39,16 +40,14 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
         self.platform = self.machine.get_platform_sections(
             "i2c", self.config['platform'])
 
+        self.i2c_device = self.platform.configure_i2c(self.config['address'])
+
         # initialise PCA9685/PCA9635
-        self.platform.i2c_write8(self.config['address'], 0x00,
-                                 0x11)  # set sleep
-        self.platform.i2c_write8(self.config['address'], 0x01,
-                                 0x04)  # configure output
-        self.platform.i2c_write8(self.config['address'], 0xFE,
-                                 130)  # set approx 50Hz
+        self.i2c_device.i2c_write8(0x00, 0x11)  # set sleep
+        self.i2c_device.i2c_write8(0x01, 0x04)  # configure output
+        self.i2c_device.i2c_write8(0xFE, 130)   # set approx 50Hz
         yield from asyncio.sleep(.01, loop=self.machine.clock.loop)     # needed according to datasheet to sync PLL
-        self.platform.i2c_write8(self.config['address'], 0x00,
-                                 0x01)  # no more sleep
+        self.i2c_device.i2c_write8(0x00, 0x01)  # no more sleep
         yield from asyncio.sleep(.01, loop=self.machine.clock.loop)     # needed to end sleep according to datasheet
 
     def configure_servo(self, number: str):
@@ -59,7 +58,7 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
         if number_int < 0 or number_int > 15:
             raise AssertionError("invalid number")
 
-        return I2cServo(number_int, self.config, self.platform)
+        return I2cServo(number_int, self.config, self.i2c_device)
 
     def stop(self):
         """Stop platform."""
@@ -70,12 +69,12 @@ class I2cServo(ServoPlatformInterface):
 
     """A servo hw device."""
 
-    def __init__(self, number, config, platform):
+    def __init__(self, number, config, i2c_device):
         """Initialise I2C hw servo."""
         self.log = logging.getLogger('I2cServo')
         self.number = number
         self.config = config
-        self.platform = platform
+        self.i2c_device = i2c_device
 
     def go_to_position(self, position):
         """Move servo to position.
@@ -95,12 +94,10 @@ class I2cServo(ServoPlatformInterface):
         value = int(servo_min + position * (servo_max - servo_min))
 
         # set servo via i2c
-        self.platform.i2c_write8(self.config['address'], 0x06 + self.number * 4, 0)
-        self.platform.i2c_write8(self.config['address'], 0x07 + self.number * 4, 0)
-        self.platform.i2c_write8(self.config['address'], 0x08 + self.number * 4,
-                                 value & 0xFF)
-        self.platform.i2c_write8(self.config['address'], 0x09 + self.number * 4,
-                                 value >> 8)
+        self.i2c_device.i2c_write8(0x06 + self.number * 4, 0)
+        self.i2c_device.i2c_write8(0x07 + self.number * 4, 0)
+        self.i2c_device.i2c_write8(0x08 + self.number * 4, value & 0xFF)
+        self.i2c_device.i2c_write8(0x09 + self.number * 4, value >> 8)
 
     @classmethod
     def set_speed_limit(cls, speed_limit):

@@ -4,6 +4,7 @@ import logging
 from typing import Callable, Tuple
 
 from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
+from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
 
 from mpf.exceptions.ConfigFileError import ConfigFileError
@@ -26,7 +27,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
     """Base class for the virtual hardware platform."""
 
-    def __init__(self, machine):
+    def __init__(self, machine) -> None:
         """Initialise virtual platform."""
         super().__init__(machine)
         self._setup_log()
@@ -51,7 +52,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         self.log.debug("Configuring virtual hardware interface.")
 
     @asyncio.coroutine
-    def initialize(self):
+    def initialize(self) -> None:
         """Initialise platform."""
         pass
 
@@ -73,7 +74,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         del platform_settings
         # generate number if None
         if number is None:
-            number = self._next_driver
+            number = str(self._next_driver)
             self._next_driver += 1
 
         driver = VirtualDriver(config, number)
@@ -182,31 +183,6 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         """Clear hw rule."""
         pass
 
-    def i2c_write8(self, address, register, value):
-        """Write to I2C."""
-        pass
-
-    @asyncio.coroutine
-    def i2c_read8(self, address, register):
-        """Read I2C."""
-        del address
-        del register
-        return None
-
-    def i2c_read16(self, address, register):
-        """Read I2C."""
-        del address
-        del register
-        return None
-
-    @asyncio.coroutine
-    def i2c_read_block(self, address, register, count):
-        """Read I2C block."""
-        del address
-        del register
-        del count
-        return None
-
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
         """Set rule."""
         pass
@@ -236,12 +212,53 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         """Configure segment display."""
         return VirtualSegmentDisplay(number)
 
+    @asyncio.coroutine
+    def configure_i2c(self, number: str) -> "I2cPlatformInterface":
+        """Configure virtual i2c device."""
+        return VirtualI2cDevice(number, self._get_initial_i2c(number))
+
+    @staticmethod
+    def _get_initial_i2c(number):
+        """Get virtual i2c layout.
+
+        Mock this in your test.
+        """
+        del number
+        return {}
+
+
+class VirtualI2cDevice(I2cPlatformInterface):
+
+    """Virtual i2c device."""
+
+    def __init__(self, number, initial_layout) -> None:
+        """Initialise virtual i2c device."""
+        super().__init__(number)
+        self.data = initial_layout
+
+    def i2c_write8(self, register, value):
+        """Write data."""
+        self.data[int(register)] = value
+
+    @asyncio.coroutine
+    def i2c_read_block(self, register, count):
+        """Read data block."""
+        result = []
+        for i in range(int(register), int(register) + count):
+            result.append(self.data[i])
+        return result
+
+    @asyncio.coroutine
+    def i2c_read8(self, register):
+        """Read data."""
+        return self.data[int(register)]
+
 
 class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
 
     """Virtual segment display."""
 
-    def __init__(self, number):
+    def __init__(self, number) -> None:
         """Initialise virtual segment display."""
         super().__init__(number)
         self.text = ''
@@ -257,7 +274,7 @@ class VirtualSound(HardwareSoundPlatformInterface):
 
     """Virtual hardware sound interface."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialise virtual hardware sound."""
         self.playing = None
 
@@ -274,7 +291,7 @@ class VirtualDmd(DmdPlatformInterface):
 
     """Virtual DMD."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialise virtual DMD."""
         self.data = None
         self.brightness = None
@@ -296,7 +313,7 @@ class VirtualSwitch(SwitchPlatformInterface):
 
     """Represents a switch in a pinball machine used with virtual hardware."""
 
-    def __init__(self, config, number):
+    def __init__(self, config, number) -> None:
         """Initialise switch."""
         super().__init__(config, number)
         self.log = logging.getLogger('VirtualSwitch')
@@ -310,7 +327,7 @@ class VirtualLight(LightPlatformInterface):
 
     """Virtual Light."""
 
-    def __init__(self, number, settings):
+    def __init__(self, number, settings) -> None:
         """Initialise LED."""
         super().__init__(number)
         self.settings = settings
@@ -341,7 +358,7 @@ class VirtualServo(ServoPlatformInterface):
 
     """Virtual servo."""
 
-    def __init__(self, number):
+    def __init__(self, number) -> None:
         """Initialise servo."""
         self.log = logging.getLogger('VirtualServo')
         self.number = number
@@ -368,7 +385,7 @@ class VirtualStepper(StepperPlatformInterface):
 
     """Virtual Stepper."""
 
-    def __init__(self, number):
+    def __init__(self, number) -> None:
         """Initialise servo."""
         self.log = logging.getLogger('VirtualStepper')
         self.number = number
@@ -405,7 +422,7 @@ class VirtualDriver(DriverPlatformInterface):
 
     """A virtual driver object."""
 
-    def __init__(self, config, number):
+    def __init__(self, config, number) -> None:
         """Initialise virtual driver to disabled."""
         self.log = logging.getLogger("VirtualDriver.{}".format(number))
         super().__init__(config, number)

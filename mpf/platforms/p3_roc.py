@@ -13,6 +13,8 @@ https://github.com/preble/pyprocgame
 import logging
 import asyncio
 
+from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
+
 from mpf.core.platform import I2cPlatform, AccelerometerPlatform, DriverConfig, SwitchConfig
 from mpf.platforms.interfaces.accelerometer_platform_interface import AccelerometerPlatformInterface
 from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
@@ -64,36 +66,9 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         """Return string representation."""
         return '<Platform.P3-ROC>'
 
-    def i2c_write8(self, address, register, value):
-        """Write an 8-bit value to the I2C bus of the P3-Roc."""
-        self.proc.write_data(7, int(address) << 9 | register, value)
-
-    @asyncio.coroutine
-    def i2c_read8(self, address, register):
-        """Read an 8-bit value from the I2C bus of the P3-Roc."""
-        return self.proc.read_data(7, int(address) << 9 | register) & 0xFF
-
-    @asyncio.coroutine
-    def i2c_read_block(self, address, register, count):
-        """Read block via I2C."""
-        result = []
-        position = 0
-        while position < count:
-            if count - position == 1:
-                data = yield from self.i2c_read8(int(address), register + position)
-                result.append(data)
-                position += 1
-            else:
-                data = yield from self.i2c_read16(int(address), register)
-                result.append((data >> 8) & 0xFF)
-                result.append(data & 0xFF)
-                position += 2
-        return result
-
-    @asyncio.coroutine
-    def i2c_read16(self, address, register):
-        """Read an 16-bit value from the I2C bus of the P3-Roc."""
-        return self.proc.read_data(7, int(address) << 9 | 1 << 8 | register)
+    def configure_i2c(self, number: str):
+        """Configure I2C device on P3-Roc."""
+        return P3RocI2c(number, self)
 
     @classmethod
     def scale_accelerometer_to_g(cls, raw_value):
@@ -273,6 +248,49 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
 
         self.proc.watchdog_tickle()
         self.proc.flush()
+
+
+class P3RocI2c(I2cPlatformInterface):
+
+    """I2c device on a P3-Roc."""
+
+    def __init__(self, number: str, platform) -> None:
+        """Initialise I2c device on P3_Roc."""
+        super().__init__(number)
+        self.platform = platform
+        self.address = number
+        self.proc = platform.proc
+
+    def i2c_write8(self, register, value):
+        """Write an 8-bit value to the I2C bus of the P3-Roc."""
+        self.proc.write_data(7, int(self.address) << 9 | register, value)
+
+    @asyncio.coroutine
+    def i2c_read8(self, register):
+        """Read an 8-bit value from the I2C bus of the P3-Roc."""
+        return self.proc.read_data(7, int(self.address) << 9 | register) & 0xFF
+
+    @asyncio.coroutine
+    def i2c_read_block(self, register, count):
+        """Read block via I2C."""
+        result = []
+        position = 0
+        while position < count:
+            if count - position == 1:
+                data = yield from self.i2c_read8(register + position)
+                result.append(data)
+                position += 1
+            else:
+                data = yield from self.i2c_read16(register)
+                result.append((data >> 8) & 0xFF)
+                result.append(data & 0xFF)
+                position += 2
+        return result
+
+    @asyncio.coroutine
+    def i2c_read16(self, register):
+        """Read an 16-bit value from the I2C bus of the P3-Roc."""
+        return self.proc.read_data(7, int(self.address) << 9 | 1 << 8 | register)
 
 
 class PROCAccelerometer(AccelerometerPlatformInterface):

@@ -344,7 +344,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
         del platform_settings
         # generate number if None
         if number is None:
-            number = self._next_driver
+            number = str(self._next_driver)
             self._next_driver += 1
 
         driver = SmartVirtualDriver(config, number)

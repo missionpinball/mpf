@@ -2,6 +2,8 @@
 import asyncio
 from typing import Optional, Dict, Any
 
+from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
+
 from mpf.core.delays import DelayManager
 
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
@@ -98,6 +100,59 @@ class RpiServo(ServoPlatformInterface):
         pass
 
 
+class RpiI2cDevice(I2cPlatformInterface):
+
+    """A I2c device on a Rpi."""
+
+    def __init__(self, number: str, loop, platform) -> None:
+        """Initialise i2c device on rpi."""
+        super().__init__(number)
+        self.loop = loop
+        self.pi = platform.pi
+        self.platform = platform
+        self.number = number
+        self.handle = None
+
+    @asyncio.coroutine
+    def open(self):
+        """Open I2c port."""
+        self.handle = yield from self._get_i2c_handle(self.number)
+
+    @staticmethod
+    def _get_i2c_bus_address(address):
+        """Split and return bus + address."""
+        if isinstance(address, int):
+            return 0, address
+        bus, address = address.split("-")
+        return int(bus), int(address)
+
+    @asyncio.coroutine
+    def _get_i2c_handle(self, address):
+        """Get or open handle for i2c device via pigpio."""
+        bus_address, device_address = self._get_i2c_bus_address(address)
+        handle = yield from self.pi.i2c_open(bus_address, device_address)
+        return handle
+
+    def i2c_write8(self, register, value):
+        """Write to i2c via pigpio."""
+        self.platform.send_command(self._i2c_write8_async(register, value))
+
+    @asyncio.coroutine
+    def _i2c_write8_async(self, register, value):
+        yield from self.pi.i2c_write_byte_data(self.handle, register, value)
+
+    @asyncio.coroutine
+    def i2c_read8(self, register):
+        """Read from i2c via pigpio."""
+        return (yield from self.pi.i2c_read_byte_data(self.handle, register))
+
+    @asyncio.coroutine
+    def i2c_read_block(self, register, count):
+        """Read block via I2C."""
+        data = yield from self.pi.i2c_read_i2c_block_data(self.handle, register, count)
+        return data
+
+
 class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform, I2cPlatform):
 
     """Control the hardware of a Raspberry Pi.
@@ -118,7 +173,6 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
 
         self._cmd_queue = None  # type: asyncio.Queue
         self._cmd_task = None   # type: asyncio.Task
-        self._i2c_handles = {}  # type: Dict[Tuple[int, int], Any]
 
     @asyncio.coroutine
     def initialize(self):
@@ -238,42 +292,9 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
 
         return RpiDriver(number, config, self)
 
-    @staticmethod
-    def _get_i2c_bus_address(address):
-        """Split and return bus + address."""
-        if isinstance(address, int):
-            return 0, address
-        bus, address = address.split("-")
-        return int(bus), int(address)
-
     @asyncio.coroutine
-    def _get_i2c_handle(self, address):
-        """Get or open handle for i2c device via pigpio."""
-        bus_address, device_address = self._get_i2c_bus_address(address)
-        if (bus_address, device_address) in self._i2c_handles:
-            return self._i2c_handles[(bus_address, device_address)]
-        handle = yield from self.pi.i2c_open(bus_address, device_address)
-        self._i2c_handles[(bus_address, device_address)] = handle
-        return handle
-
-    def i2c_write8(self, address, register, value):
-        """Write to i2c via pigpio."""
-        self.send_command(self._i2c_write8_async(address, register, value))
-
-    @asyncio.coroutine
-    def _i2c_write8_async(self, address, register, value):
-        handle = yield from self._get_i2c_handle(address)
-        yield from self.pi.i2c_write_byte_data(handle, register, value)
-
-    @asyncio.coroutine
-    def i2c_read8(self, address, register):
-        """Read from i2c via pigpio."""
-        handle = yield from self._get_i2c_handle(address)
-        return (yield from self.pi.i2c_read_byte_data(handle, register))
-
-    @asyncio.coroutine
-    def i2c_read_block(self, address, register, count):
-        """Read block via I2C."""
-        handle = yield from self._get_i2c_handle(address)
-        data = yield from self.pi.i2c_read_i2c_block_data(handle, register, count)
-        return data
+    def configure_i2c(self, number: str):
+        """Configure I2c device."""
+        device = RpiI2cDevice(number, self.machine.clock.loop, self)
+        yield from device.open()
+        return device
