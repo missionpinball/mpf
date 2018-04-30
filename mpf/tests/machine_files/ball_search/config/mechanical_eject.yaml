@@ -1,0 +1,53 @@
+#config_version=5
+
+game:
+    balls_per_game: 3
+
+machine:
+    min_balls: 1
+
+coils:
+    eject_coil1:
+        number:
+    eject_coil2:
+        number:
+
+playfields:
+    playfield:
+        enable_ball_search: True
+        ball_search_timeout: 20s
+        ball_search_wait_after_iteration: 10s
+        ball_search_interval: 250ms
+        default_source_device: test_launcher
+
+switches:
+    s_start:
+        number:
+        tags: start
+    s_ball_switch1:
+        number:
+    s_ball_switch2:
+        number:
+    s_ball_switch3:
+        number:
+    s_ball_switch4:
+        number:
+    s_ball_switch_launcher:
+        number:
+
+ball_devices:
+    test_trough:
+        eject_coil: eject_coil1
+        ball_switches: s_ball_switch1, s_ball_switch2, s_ball_switch3, s_ball_switch4
+        debug: true
+        eject_targets: test_launcher
+        tags: trough, drain, home
+        ball_search_order: 1
+    test_launcher:
+        eject_coil: eject_coil2
+        ball_switches: s_ball_switch_launcher
+        mechanical_eject: True
+        debug: true
+        ball_search_order: 2
+        auto_fire_on_unexpected_ball: False
+
