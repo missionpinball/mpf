@@ -717,7 +717,10 @@ class EventManager(MpfController):
             # first process all events. if they post more events we will
             # process them in the same loop.
             while self.event_queue:
-                event = self.event_queue.popleft()
+                # remember the previous queue since events might be posted in this handler
+                previous_queue = self.event_queue
+                self.event_queue = deque()
+                event = previous_queue.popleft()
                 if event.type == "queue":
                     self._process_queue_event(event=event[0],
                                               callback=event[2],
@@ -727,6 +730,12 @@ class EventManager(MpfController):
                                         ev_type=event[1],
                                         callback=event[2],
                                         **event[3])
+
+                # make sure the handler created during this handler are called first
+                if self.event_queue:
+                    self.event_queue = self.event_queue + previous_queue
+                else:
+                    self.event_queue = previous_queue
 
             # when all events are processed run the _last_ callback. afterwards
             # continue with the loop and run all events. this makes sure all

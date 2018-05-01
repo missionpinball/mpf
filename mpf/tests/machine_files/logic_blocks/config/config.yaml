@@ -8,6 +8,11 @@ lights:
   led3:
     number:
 
+switches:
+  s_qualify1:
+    number:
+  s_qualify2:
+    number:
 
 # system wide logic blocks
 accruals:
@@ -91,3 +96,4 @@ sequences:
 modes:
     - mode1
     - mode2
+    - mode3
