@@ -733,7 +733,7 @@ class EventManager(MpfController):
 
                 # make sure the handler created during this handler are called first
                 if self.event_queue:
-                    self.event_queue = self.event_queue + previous_queue
+                    self.event_queue.extend(previous_queue)
                 else:
                     self.event_queue = previous_queue
 
