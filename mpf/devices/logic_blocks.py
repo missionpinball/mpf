@@ -201,6 +201,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         del kwargs
         self.debug_log("Disabling")
         self.enabled = False
+        self.post_update_event()
 
     def reset(self, **kwargs):
         """Reset the progress towards completion of this logic block.

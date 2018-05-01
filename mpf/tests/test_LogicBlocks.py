@@ -10,6 +10,24 @@ class TestLogicBlocks(MpfFakeGameTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/logic_blocks/'
 
+    def test_mode_selection_with_counters(self):
+        self.mock_event("qualify_start_mode1")
+        self.mock_event("qualify_start_mode2")
+        self.start_game()
+        self.start_mode("mode3")
+        # advance both counters to 2/3
+        self.post_event("qualify1_count")
+        self.post_event("qualify1_count")
+        self.post_event("qualify2_count")
+        self.post_event("qualify2_count")
+
+        # post the final even for both of them
+        self.machine.switch_controller.process_switch("s_qualify1", 1, True)
+        self.machine.switch_controller.process_switch("s_qualify2", 1, True)
+        self.advance_time_and_run()
+        self.assertEventCalled("qualify_start_mode1")
+        self.assertEventNotCalled("qualify_start_mode2")
+
     def test_counter_with_lights(self):
         self.start_game()
         self.post_event("start_mode2")

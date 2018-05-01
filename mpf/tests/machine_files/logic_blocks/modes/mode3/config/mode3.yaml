@@ -1,0 +1,26 @@
+#config_version=5
+mode:
+  start_events: start_mode3
+  stop_events: stop_mode3
+
+counters:
+  qualify1:
+      count_events: qualify1_count, s_qualify1_active
+      disable_events: disable_qualify
+      enable_events: enable_qualify
+      start_enabled: True
+      events_when_complete: disable_qualify, qualify_start_mode1
+      starting_count: 0
+      count_complete_value: 3
+      persist_state: True
+      debug: True
+  qualify2:
+      count_events: qualify2_count, s_qualify2_active
+      disable_events: disable_qualify
+      enable_events: enable_qualify
+      start_enabled: True
+      events_when_complete: disable_qualify, qualify_start_mode2
+      starting_count: 0
+      count_complete_value: 3
+      persist_state: True
+      debug: True
