@@ -1,4 +1,5 @@
 """Contains the MultiBall device class."""
+import asyncio
 
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
@@ -43,7 +44,9 @@ class Multiball(SystemWideDevice, ModeDevice):
         if self.shoot_again:
             self.stop()
 
+    @asyncio.coroutine
     def _initialize(self):
+        yield from super()._initialize()
         self.ball_locks = self.config['ball_locks']
         self.source_playfield = self.config['source_playfield']
 

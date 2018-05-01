@@ -1,4 +1,6 @@
 """Contains the BallLock device class."""
+import asyncio
+
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
 from mpf.core.mode_device import ModeDevice
@@ -41,9 +43,10 @@ class MultiballLock(ModeDevice):
         """Return true if this device can exist outside of a game."""
         return False
 
+    @asyncio.coroutine
     def _initialize(self):
         # load lock_devices
-        super()._initialize()
+        yield from super()._initialize()
 
         self.lock_devices = []
         for device in self.config['lock_devices']:

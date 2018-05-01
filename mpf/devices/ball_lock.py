@@ -1,5 +1,5 @@
 """Contains the BallLock device class."""
-
+import asyncio
 from collections import deque
 
 from mpf.core.events import event_handler
@@ -51,9 +51,10 @@ class BallLock(SystemWideDevice, ModeDevice):
                 config['disable_events'] = 'ball_will_end'
         return super().prepare_config(config, is_mode_config)
 
+    @asyncio.coroutine
     def _initialize(self):
+        yield from super()._initialize()
         # load lock_devices
-
         self.lock_devices = []
         for device in self.config['lock_devices']:
             self.lock_devices.append(device)

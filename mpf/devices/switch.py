@@ -1,4 +1,5 @@
 """Contains the Switch parent class."""
+import asyncio
 from functools import partial
 
 from mpf.core.device_monitor import DeviceMonitor
@@ -90,7 +91,9 @@ class Switch(SystemWideDevice, DevicePositionMixin):
             ms=ms
         )
 
+    @asyncio.coroutine
     def _initialize(self):
+        yield from super()._initialize()
         self.platform = self.machine.get_platform_sections(
             'switches', self.config['platform'])
 

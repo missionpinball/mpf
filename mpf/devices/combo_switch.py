@@ -1,4 +1,5 @@
 """Contains the Combo Switch device class."""
+import asyncio
 
 from mpf.core.delays import DelayManager, DelayManagerRegistry
 from mpf.core.device_monitor import DeviceMonitor
@@ -43,9 +44,10 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
 
         return config
 
+    @asyncio.coroutine
     def device_added_system_wide(self):
         """Add event handlers."""
-        super().device_added_system_wide()
+        yield from super().device_added_system_wide()
         self._add_switch_handlers()
 
     def device_loaded_in_mode(self, mode: Mode, player: Player):

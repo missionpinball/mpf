@@ -1,5 +1,8 @@
 """Contains a class to implement mode devices."""
 import abc
+import asyncio
+
+from typing import Generator
 
 from mpf.core.device import Device
 from mpf.core.machine import MachineController
@@ -16,14 +19,15 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
         super().__init__(machine, name)
         self.mode = None    # type: Mode
 
-    def device_added_to_mode(self, mode: Mode) -> None:
+    @asyncio.coroutine
+    def device_added_to_mode(self, mode: Mode) -> Generator[int, None, None]:
         """Add device to a running mode.
 
         Args:
             mode: Mode which loaded the device
         """
         del mode
-        self._initialize()
+        yield from self._initialize()
 
     def device_loaded_in_mode(self, mode: Mode, player: Player) -> None:
         """Load device in running mode.

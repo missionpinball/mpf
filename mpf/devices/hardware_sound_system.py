@@ -1,4 +1,6 @@
 """Hardware sound system."""
+import asyncio
+
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
 
@@ -17,8 +19,10 @@ class HardwareSoundSystem(SystemWideDevice):
         self.hw_device = None       # type: HardwareSoundPlatformInterface
         self.platform = None
 
+    @asyncio.coroutine
     def _initialize(self):
         """Configure hardware."""
+        yield from super()._initialize()
         self.platform = self.machine.get_platform_sections(
             'hardware_sound_system', self.config['platform'])
         self.hw_device = self.platform.configure_hardware_sound_system()

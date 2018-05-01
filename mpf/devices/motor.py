@@ -1,4 +1,6 @@
 """Motor device."""
+import asyncio
+
 from mpf.core.events import event_handler
 from mpf.core.system_wide_device import SystemWideDevice
 
@@ -18,7 +20,9 @@ class Motor(SystemWideDevice):
         self.type = None
         super().__init__(machine, name)
 
+    @asyncio.coroutine
     def _initialize(self):
+        yield from super()._initialize()
         super()._initialize()
         self._target_position = self.config['reset_position']
         if self.config['reset_position'] not in self.config['position_switches']:
@@ -35,9 +39,9 @@ class Motor(SystemWideDevice):
             self.type = "two_directions"
             # add handlers to stop the motor when it reaches the end to prevent damage
             self.machine.switch_controller.add_switch_handler(
-                next(iter(self.config['position_switches'].values())).name, self._end_reached)
+                next(iter(self.config['position_switches'].values())).name, self._end_reached)  # noqa
             self.machine.switch_controller.add_switch_handler(
-                next(reversed(list(self.config['position_switches'].values()))).name, self._end_reached)
+                next(reversed(list(self.config['position_switches'].values()))).name, self._end_reached)    # noqa
         else:
             self.type = "one_direction"
 

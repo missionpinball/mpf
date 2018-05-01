@@ -28,19 +28,20 @@ class MMA8451Device(object):
 
     @asyncio.coroutine
     def _poll(self):
+        device = yield from self.i2c_platform.configure_i2c(self.config['i2c_address'])
         # check id
         self.platform.log.info("Checking ID of device at: %s", self.config['i2c_address'])
-        device_id = yield from self.i2c_platform.i2c_read8(self.config['i2c_address'], 0x0D)
+        device_id = yield from device.i2c_read8(0x0D)
         if device_id != 0x1A:
             raise AssertionError("Device ID does not match MMA8451. Detected: {}".format(device_id))
 
         # reset
         self.platform.log.info("Resetting device at: %s", self.config['i2c_address'])
-        self.i2c_platform.i2c_write8(self.config['i2c_address'], 0x2B, 0x40)
+        device.i2c_write8(0x2B, 0x40)
         yield from asyncio.sleep(.3, loop=self.platform.machine.clock.loop)
         result = -1
         for _ in range(10):
-            result = yield from self.i2c_platform.i2c_read8(self.config['i2c_address'], 0x2B)
+            result = yield from device.i2c_read8(0x2B)
             if result == 0:
                 break
             self.platform.log.warning("Failed to reset: %s at %s", result, self.config['i2c_address'])
@@ -49,17 +50,17 @@ class MMA8451Device(object):
             raise AssertionError("Failed to reset MMA8451 accelerometer. Result: {}".format(result))
 
         # set resolution to 2g
-        self.i2c_platform.i2c_write8(self.config['i2c_address'], 0x2B, 0x02)
+        device.i2c_write8(0x2B, 0x02)
 
         # set ready
-        self.i2c_platform.i2c_write8(self.config['i2c_address'], 0x2D, 0x01)
-        self.i2c_platform.i2c_write8(self.config['i2c_address'], 0x2E, 0x01)
+        device.i2c_write8(0x2D, 0x01)
+        device.i2c_write8(0x2E, 0x01)
 
         # turn on orientation
-        self.i2c_platform.i2c_write8(self.config['i2c_address'], 0x11, 0x40)
+        device.i2c_write8(0x11, 0x40)
 
         # low noise mode, 12,5Hz and activate
-        self.i2c_platform.i2c_write8(self.config['i2c_address'], 0x2A, 0x2D)
+        device.i2c_write8(0x2A, 0x2D)
 
         # wait for activate
         yield from asyncio.sleep(.3, loop=self.platform.machine.clock.loop)
@@ -67,7 +68,7 @@ class MMA8451Device(object):
         self.platform.log.info("Init done for device at: %s", self.config['i2c_address'])
 
         while True:
-            data = yield from self.i2c_platform.i2c_read_block(self.config['i2c_address'], 0x01, 6)
+            data = yield from device.i2c_read_block(0x01, 6)
             x = ((data[0] << 8) | data[1]) >> 2
             y = ((data[2] << 8) | data[3]) >> 2
             z = ((data[4] << 8) | data[5]) >> 2

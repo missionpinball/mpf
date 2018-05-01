@@ -1,4 +1,5 @@
 """Contains the DeviceManager base class."""
+import asyncio
 from collections import OrderedDict
 from typing import Sized, Iterable, Container, Generic, TypeVar
 
@@ -30,8 +31,8 @@ class DeviceManager(MpfController):
                                         self._load_device_config_spec, priority=20)
 
         # this has to happen after mode load
-        self.machine.events.add_handler('init_phase_1',
-                                        self._load_device_modules, priority=5)
+        self.machine.events.add_async_handler('init_phase_1',
+                                              self._load_device_modules, priority=5)
 
         self.machine.events.add_handler('init_phase_2',
                                         self.create_machinewide_device_control_events,
@@ -73,6 +74,7 @@ class DeviceManager(MpfController):
                 self.machine.config_validator.load_device_config_spec(
                     device_cls.config_section, device_cls.get_config_spec())
 
+    @asyncio.coroutine
     def _load_device_modules(self, **kwargs):
         del kwargs
         # step 1: create devices in machine collection
@@ -108,10 +110,10 @@ class DeviceManager(MpfController):
 
         # step 2: load config and validate devices
         self.load_devices_config(validate=True)
-        self.machine.mode_controller.load_mode_devices()
+        yield from self.machine.mode_controller.load_mode_devices()
 
         # step 3: initialise devices (mode devices will be initialised when mode is started)
-        self.initialize_devices()
+        yield from self.initialize_devices()
 
     def stop_devices(self):
         """Stop all devices in the machine."""
@@ -190,6 +192,7 @@ class DeviceManager(MpfController):
             for device_name in config:
                 collection[device_name].load_config(config[device_name])
 
+    @asyncio.coroutine
     def initialize_devices(self):
         """Initialise devices."""
         for device_type in self.machine.config['mpf']['device_modules']:
@@ -207,7 +210,7 @@ class DeviceManager(MpfController):
 
             # add machine wide
             for device_name in config:
-                collection[device_name].device_added_system_wide()
+                yield from collection[device_name].device_added_system_wide()
 
     # pylint: disable-msg=too-many-nested-blocks
     def get_device_control_events(self, config):

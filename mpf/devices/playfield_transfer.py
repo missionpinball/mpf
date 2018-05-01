@@ -2,6 +2,7 @@
 
 E.g. lower to upper playfield via a ramp.
 """
+import asyncio
 
 from mpf.core.system_wide_device import SystemWideDevice
 
@@ -20,7 +21,9 @@ class PlayfieldTransfer(SystemWideDevice):
         self.source = None
         super().__init__(machine, name)
 
+    @asyncio.coroutine
     def _initialize(self):
+        yield from super()._initialize()
         if self.config['ball_switch']:
             self.machine.events.add_handler('init_phase_3',
                                             self._configure_switch)

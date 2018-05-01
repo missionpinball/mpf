@@ -32,7 +32,9 @@ class RgbDmd(SystemWideDevice):
         self.platform = None        # type: RgbDmdPlatform
         super().__init__(machine, name)
 
+    @asyncio.coroutine
     def _initialize(self):
+        yield from super()._initialize()
         self.platform = self.machine.get_platform_sections("rgb_dmd", self.config['platform'])
         self.hw_device = self.platform.configure_rgb_dmd(self.name)
         self._update_brightness(None)
