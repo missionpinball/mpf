@@ -20,15 +20,25 @@ matrix:
      language: python
      python: "3.6"
    - os: linux
+     env: LINUX=ubuntu:18.04
+     sudo: required
+     language: python
+     python: "3.6"
+   - os: linux  # oldstable
      env: LINUX=debian:jessie
      sudo: required
      language: python
      python: "3.4"
-#   - os: linux
-#     env: LINUX=debian:experimental
-#     sudo: required
-#     language: python
-#     python: "3.6"
+   - os: linux  # stable
+     env: LINUX=debian:stretch
+     sudo: required
+     language: python
+     python: "3.5"
+   - os: linux  # testing
+     env: LINUX=debian:buster
+     sudo: required
+     language: python
+     python: "3.6"
    - os: osx
      language: generic
      osx_image: xcode8.3  # OS 10.12
