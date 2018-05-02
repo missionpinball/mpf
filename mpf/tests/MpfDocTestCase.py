@@ -124,6 +124,12 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
         self.machine_run()
         self.assertModeRunning(mode)
 
+    def command_assert_mode_running(self, mode):
+        self.assertModeRunning(mode)
+
+    def command_assert_mode_not_running(self, mode):
+        self.assertModeNotRunning(mode)
+
     def command_post(self, event_name):
         self.post_event(event_name)
 
