@@ -64,7 +64,8 @@ class MyPinballsHardwarePlatform(SegmentDisplayPlatform):
         self._reader, self._writer = yield from connector
 
         # send a newline to end any previous command in the queue
-        self.send_cmd(b'\n')
+        # this caused problems. disable it for now
+        # self.send_cmd(b'\n')
 
     def stop(self):
         """Stop platform."""
