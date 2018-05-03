@@ -263,6 +263,54 @@ class TestLisy(MpfTestCase):
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
+        # test sound file
+        self.serialMock.expected_commands = {
+            b'\x34\x00some_file\x00': None
+        }
+        self.post_event("play_file")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # test sound file looping
+        self.serialMock.expected_commands = {
+            b'\x34\x01some_file\x00': None
+        }
+        self.post_event("play_file_loop")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # text to speech
+        self.serialMock.expected_commands = {
+            b'\x35\x02Hello MPF\x00': None
+        }
+        self.post_event("play_text")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # set volume to 50 (32 hex)
+        self.serialMock.expected_commands = {
+            b'\x36\x32': None
+        }
+        self.post_event("volume_05")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # increase volume by 0.1 -> 60 -> hex 3C
+        self.serialMock.expected_commands = {
+            b'\x36\x3C': None
+        }
+        self.post_event("increase_volume")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # decrease volume by 0.01 -> 59 -> hex 3B
+        self.serialMock.expected_commands = {
+            b'\x36\x3B': None
+        }
+        self.post_event("decrease_volume")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
         # test another sound
         self.serialMock.expected_commands = {
             b'\x32\x03': None

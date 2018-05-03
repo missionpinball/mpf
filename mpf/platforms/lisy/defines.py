@@ -38,6 +38,9 @@ class LisyDefines:
 
     SoundPlaySound = 50
     SoundStopAllSounds = 51
+    SoundPlaySoundFile = 52
+    SoundTextToSpeech = 53
+    SoundSetVolume = 54
 
     GeneralReset = 100
     GeneralWatchdog = 101

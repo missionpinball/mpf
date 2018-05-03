@@ -18,6 +18,7 @@ class HardwareSoundSystem(SystemWideDevice):
         super().__init__(machine, name)
         self.hw_device = None       # type: HardwareSoundPlatformInterface
         self.platform = None
+        self._volume = 1.0
 
     @asyncio.coroutine
     def _initialize(self):
@@ -29,7 +30,30 @@ class HardwareSoundSystem(SystemWideDevice):
 
     def play(self, sound_number: int):
         """Play a sound."""
-        self.hw_device.play_sound(int(sound_number))
+        self.hw_device.play_sound(sound_number)
+
+    def play_file(self, file: str, platform_options):
+        """Play a sound file."""
+        self.hw_device.play_sound_file(file, platform_options)
+
+    def text_to_speech(self, text: str, platform_options):
+        """Text to speech output."""
+        self.hw_device.text_to_speech(text, platform_options)
+
+    def set_volume(self, volume: float):
+        """Set volume."""
+        self._volume = float(volume)
+        self.hw_device.set_volume(self._volume)
+
+    def increase_volume(self, volume: float):
+        """Increase volume."""
+        self._volume += float(volume)
+        self.hw_device.set_volume(self._volume)
+
+    def decrease_volume(self, volume: float):
+        """Increase volume."""
+        self._volume -= float(volume)
+        self.hw_device.set_volume(self._volume)
 
     def stop_all_sounds(self):
         """Stop all sounds."""

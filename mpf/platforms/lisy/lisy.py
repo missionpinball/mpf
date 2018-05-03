@@ -113,6 +113,22 @@ class LisySound(HardwareSoundPlatformInterface):
         """Play sound with number."""
         self.platform.send_byte(LisyDefines.SoundPlaySound, bytes([number]))
 
+    def play_sound_file(self, file: str, platform_options: dict):
+        """Play sound file."""
+        flags = 1 if platform_options.get("loop", False) else 0
+        flags += 2 if platform_options.get("no_cache", False) else 0
+        self.platform.send_string(LisyDefines.SoundPlaySoundFile, chr(flags) + file)
+
+    def text_to_speech(self, text: str, platform_options: dict):
+        """Text to speech."""
+        flags = 1 if platform_options.get("loop", False) else 0
+        flags += 2 if platform_options.get("no_cache", False) else 0
+        self.platform.send_string(LisyDefines.SoundTextToSpeech, chr(flags) + text)
+
+    def set_volume(self, volume: float):
+        """Set volume."""
+        self.platform.send_byte(LisyDefines.SoundSetVolume, bytes([int(volume * 100)]))
+
     def stop_all_sounds(self):
         """Stop all sounds."""
         self.platform.send_byte(LisyDefines.SoundStopAllSounds)

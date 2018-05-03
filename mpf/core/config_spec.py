@@ -567,8 +567,9 @@ hardware_sound_systems:
     platform: single|str|None
 hardware_sound_player:
     __valid_in__: machine, mode, show
-    action: single|enum(play,stop)|play
-    sound: single|int|None
+    action: single|enum(play,play_file,text_to_speech,set_volume,increase_volume,decrease_volume,stop)|play
+    value: single|str|None
+    platform_options: single|dict|None
     sound_system: single|machine(hardware_sound_systems)|default
 high_score:
     __valid_in__: mode
