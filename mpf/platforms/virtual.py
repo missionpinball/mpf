@@ -260,10 +260,23 @@ class VirtualSound(HardwareSoundPlatformInterface):
     def __init__(self):
         """Initialise virtual hardware sound."""
         self.playing = None
+        self.volume = None
 
     def play_sound(self, number: int):
         """Play virtual sound."""
         self.playing = number
+
+    def play_sound_file(self, file: str, platform_options: dict):
+        """Play a sound file."""
+        self.playing = file
+
+    def text_to_speech(self, text: str, platform_options: dict):
+        """Text to speech output."""
+        self.playing = text
+
+    def set_volume(self, volume: float):
+        """Set volume."""
+        self.volume = volume
 
     def stop_all_sounds(self):
         """Stop sound."""

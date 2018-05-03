@@ -57,6 +57,31 @@ hardware_sound_player:
     test2:
         2:
             action: play
+    play_file:
+        "some_file": play_file
+    play_file_loop:
+        "some_file":
+          action: play_file
+          platform_options:
+            loop: True
+            no_cache: False
+    play_text:
+        text:
+          action: text_to_speech
+          value: "Hello MPF"
+          platform_options:
+            loop: False
+            no_cache: True
+    volume_05:
+        set_volume:
+          action: set_volume
+          value: 0.5
+    increase_volume:
+        0.1: increase_volume
+    decrease_volume:
+        decrease_volume:
+          action: decrease_volume
+          value: 0.01
     test3:
         3: play
     test_stop: stop
