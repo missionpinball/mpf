@@ -238,10 +238,11 @@ class AccelerometerPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_accelerometers'] = True
 
     @abc.abstractmethod
-    def configure_accelerometer(self, config, callback) -> "AccelerometerPlatformInterface":
+    def configure_accelerometer(self, number: str, config: dict, callback) -> "AccelerometerPlatformInterface":
         """Configure accelerometer.
 
         Args:
+            number: Number of this accelerometer
             config (dict): Configuration of this accelerometer
             callback (mpf.devices.accelerometer.Accelerometer): Callback device to send data to
         """

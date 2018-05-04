@@ -138,7 +138,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         """Validate coil sections."""
         return config
 
-    def configure_accelerometer(self, config, callback):
+    def configure_accelerometer(self, number, config, callback):
         """Configure accelerometer."""
         pass
 

@@ -82,11 +82,11 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
 
         return g_value
 
-    def configure_accelerometer(self, config, callback):
+    def configure_accelerometer(self, number, config, callback):
         """Configure the accelerometer on the P3-ROC."""
-        config = self.machine.config_validator.validate_config("p3_roc_accelerometer", config)
-        if config['number'] != 1:
-            raise AssertionError("P3-ROC only has one accelerometer. Use number 1. Found: {}".format(config))
+        del config
+        if number != "1":
+            raise AssertionError("P3-ROC only has one accelerometer. Use number 1. Found: {}".format(number))
 
         self.accelerometer_device = PROCAccelerometer(callback)
         self._configure_accelerometer()

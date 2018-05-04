@@ -9,12 +9,12 @@ class MMA8451Device(object):
 
     """MMA8451 accelerometer."""
 
-    def __init__(self, config, callback, i2c_platform, platform):
+    def __init__(self, number, callback, i2c_platform, platform):
         """Initialise MMA8451 accelerometer."""
         self.i2c_platform = i2c_platform    # type: I2cPlatform
         self.platform = platform            # type: MMA8451Platform
         self.callback = callback
-        self.config = config
+        self.number = number
 
         self.task = self.platform.machine.clock.loop.create_task(self._poll())
         self.task.add_done_callback(self._done)
@@ -28,15 +28,15 @@ class MMA8451Device(object):
 
     @asyncio.coroutine
     def _poll(self):
-        device = yield from self.i2c_platform.configure_i2c(self.config['i2c_address'])
+        device = yield from self.i2c_platform.configure_i2c(self.number)
         # check id
-        self.platform.log.info("Checking ID of device at: %s", self.config['i2c_address'])
+        self.platform.log.info("Checking ID of device at: %s", self.number)
         device_id = yield from device.i2c_read8(0x0D)
         if device_id != 0x1A:
             raise AssertionError("Device ID does not match MMA8451. Detected: {}".format(device_id))
 
         # reset
-        self.platform.log.info("Resetting device at: %s", self.config['i2c_address'])
+        self.platform.log.info("Resetting device at: %s", self.number)
         device.i2c_write8(0x2B, 0x40)
         yield from asyncio.sleep(.3, loop=self.platform.machine.clock.loop)
         result = -1
@@ -44,7 +44,7 @@ class MMA8451Device(object):
             result = yield from device.i2c_read8(0x2B)
             if result == 0:
                 break
-            self.platform.log.warning("Failed to reset: %s at %s", result, self.config['i2c_address'])
+            self.platform.log.warning("Failed to reset: %s at %s", result, self.number)
             yield from asyncio.sleep(.5, loop=self.platform.machine.clock.loop)
         else:
             raise AssertionError("Failed to reset MMA8451 accelerometer. Result: {}".format(result))
@@ -65,7 +65,7 @@ class MMA8451Device(object):
         # wait for activate
         yield from asyncio.sleep(.3, loop=self.platform.machine.clock.loop)
 
-        self.platform.log.info("Init done for device at: %s", self.config['i2c_address'])
+        self.platform.log.info("Init done for device at: %s", self.number)
 
         while True:
             data = yield from device.i2c_read_block(0x01, 6)
@@ -108,8 +108,8 @@ class MMA8451Platform(AccelerometerPlatform):
                 accelerometer.task.cancel()
                 accelerometer.task = None
 
-    def configure_accelerometer(self, config, callback):
+    def configure_accelerometer(self, number, config, callback):
         """Configure MMA8451 accelerometer."""
         config = self.machine.config_validator.validate_config("mma8451_accelerometer", config)
         i2c_platform = self.machine.get_platform_sections("i2c", config['i2c_platform'])
-        return MMA8451Device(config, callback, i2c_platform, self)
+        return MMA8451Device(number, callback, i2c_platform, self)

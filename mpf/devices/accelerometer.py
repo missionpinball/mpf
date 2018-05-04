@@ -46,7 +46,8 @@ class Accelerometer(SystemWideDevice):
         yield from super()._initialize()
         self.platform = self.machine.get_platform_sections(
             'accelerometers', self.config['platform'])
-        self.hw_device = self.platform.configure_accelerometer(self.config['platform_settings'], self)
+        self.hw_device = self.platform.configure_accelerometer(self.config['number'],
+                                                               self.config['platform_settings'], self)
 
     @classmethod
     def _calculate_vector_length(cls, x: float, y: float, z: float) -> float:

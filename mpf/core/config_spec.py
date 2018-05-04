@@ -7,6 +7,7 @@ mpf_config_spec = '''
 
 accelerometers:
     __valid_in__: machine
+    number: single|str|
     platform: single|str|None
     hit_limits: dict|float:str|None
     level_limits: dict|float:str|None
@@ -712,7 +713,6 @@ mc_scriptlets:
     __valid_in__: machine  # used by the MC, ignored by MPF
 mma8451_accelerometer:
     i2c_platform: single|str|None
-    i2c_address: single|str|29
 mode:
     __valid_in__: mode
     priority: single|int|100
@@ -849,8 +849,6 @@ p3_roc:
     debug: single|bool|False
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
-p3_roc_accelerometer:
-    number: single|int|1
 psus:
     __valid_in__: machine
     voltage: single|int|None
