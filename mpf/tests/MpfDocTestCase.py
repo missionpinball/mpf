@@ -115,9 +115,11 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
             except AssertionError as e:
                 raise AssertionError("Error in line {}".format(line_no), e)
 
-
     def command_start_game(self):
         self.start_game()
+
+    def command_stop_game(self):
+        self.stop_game()
 
     def command_start_mode(self, mode):
         self.machine.modes[mode].start()
