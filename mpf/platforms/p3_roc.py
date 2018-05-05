@@ -62,6 +62,31 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         self.acceleration = [0] * 3
         self.accelerometer_device = None    # type: PROCAccelerometer
 
+    def connect(self):
+        """Connect to the P3-Roc."""
+        super().connect()
+
+        prevent_sw16_0_to_3 = False
+        if self.dipswitches & 0x01:
+            self.log.info("Burst drivers are configured as outputs (DIP Switch 1 set). "
+                          "You cannot use IDs 0-3 for SW-16 boards.")
+            prevent_sw16_0_to_3 = True
+
+        if self.dipswitches & 0x02:
+            self.log.info("Burst switches are configured as inputs (DIP Switch 2 set). "
+                          "You cannot use IDs 0-3 for SW-16 boards.")
+            prevent_sw16_0_to_3 = True
+
+
+        if prevent_sw16_0_to_3:
+            for board in range(0, 4):
+                device_type = self.proc.read_data(2, (1 << 12) + (board << 6))
+                if device_type != 0:
+                    raise AssertionError("Invalid P3-Roc configuration. Found SW-16 with ID {} which is invalid "
+                                         "because burst switches/drivers which are configured as inputs/outputs use "
+                                         "the same switch position. Either disabled DIP 1 and 2 or assign ID >= 4 to "
+                                         "all your SW-16s.")
+
     def __repr__(self):
         """Return string representation."""
         return '<Platform.P3-ROC>'
