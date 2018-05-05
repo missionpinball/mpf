@@ -79,7 +79,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
                 if device_type != 0:
                     raise AssertionError("Invalid P3-Roc configuration. Found SW-16 with ID {} which is invalid "
                                          "because burst switches/drivers which are configured as inputs/outputs use "
-                                         "the same switch position. Either disabled DIP 1 and 2 or assign ID >= 4 to "
+                                         "the same switch position. Either disabled DIP 2 or assign ID >= 4 to "
                                          "all your SW-16s.")
 
     def __repr__(self):
@@ -308,7 +308,7 @@ class P3RocI2c(I2cPlatformInterface):
         return result
 
     @asyncio.coroutine
-    def i2c_read16(self, register):
+    def i2c_read16(self, register) -> Generator[int, None, int]:
         """Read an 16-bit value from the I2C bus of the P3-Roc."""
         return self.proc.read_data(7, int(self.address) << 9 | 1 << 8 | register)
 
