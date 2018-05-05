@@ -66,19 +66,14 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         """Connect to the P3-Roc."""
         super().connect()
 
-        prevent_sw16_0_to_3 = False
         if self.dipswitches & 0x01:
             self.log.info("Burst drivers are configured as outputs (DIP Switch 1 set). "
-                          "You cannot use IDs 0-3 for SW-16 boards.")
-            prevent_sw16_0_to_3 = True
+                          "You cannot use IDs 0-3 for PD-16/PD-LED boards.")
 
         if self.dipswitches & 0x02:
             self.log.info("Burst switches are configured as inputs (DIP Switch 2 set). "
                           "You cannot use IDs 0-3 for SW-16 boards.")
-            prevent_sw16_0_to_3 = True
 
-
-        if prevent_sw16_0_to_3:
             for board in range(0, 4):
                 device_type = self.proc.read_data(2, (1 << 12) + (board << 6))
                 if device_type != 0:
