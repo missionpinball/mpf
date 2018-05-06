@@ -130,7 +130,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         self.version = (version_revision & 0xFFFF0000) >> 16
         dipswitches = self.proc.read_data(0x00, 0x03)
         self.hardware_version = (dipswitches & 0xF00) >> 8
-        self.dipswitches = dipswitches & 0x3F
+        self.dipswitches = ~dipswitches & 0x3F
 
         self.log.info("Successfully connected to P-ROC/P3-ROC. Firmware Version: %s. Firmware Revision: %s. "
                       "Hardware Board ID: %s",
