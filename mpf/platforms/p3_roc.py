@@ -205,6 +205,10 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         if proc_num == -1:
             raise AssertionError("Driver {} cannot be controlled by the P3-ROC. ".format(str(number)))
 
+        if proc_num < 32 and self.dipswitches & 0x01:
+            raise AssertionError("Cannot use PD-16 with ID 0 or 1 when DIP 1 is on the P3-Roc. Turn DIP 1 off or "
+                                 "renumber PD-16s. Driver: {}".format(number))
+
         proc_driver_object = PROCDriver(proc_num, config, self, number)
 
         return proc_driver_object
@@ -240,6 +244,9 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
             return self._configure_direct_switch(config, number)
         else:
             proc_num = self.pdbconfig.get_proc_switch_number(str(number))
+            if 0 <= proc_num < 64 and self.dipswitches & 0x02:
+                raise AssertionError("Cannot use SW-16 with ID 0-3 when DIP 2 is on the P3-Roc. Turn DIP 2 off or "
+                                     "renumber SW-16s. Switch: {}".format(number))
             return self._configure_switch(config, proc_num)
 
     def _configure_direct_switch(self, config, number):
@@ -416,9 +423,13 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
     def _handle_burst(self, event_value, state):
         input_num = event_value & 0x3F
         output_num = (event_value >> 6) & 0x1F
-        burst_number = "burst-{}-{}".format(input_num, output_num)
+        burst_number1 = "burst-{}-{}".format(input_num, output_num)
         self.machine.switch_controller.process_switch_by_num(state=state,
-                                                             num=burst_number,
+                                                             num=burst_number1,
+                                                             platform=self)
+        burst_number2 = "burst-{}-{}".format(input_num, output_num + 32)
+        self.machine.switch_controller.process_switch_by_num(state=state,
+                                                             num=burst_number2,
                                                              platform=self)
 
 
