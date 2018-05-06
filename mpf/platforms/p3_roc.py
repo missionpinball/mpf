@@ -13,6 +13,12 @@ https://github.com/preble/pyprocgame
 import logging
 import asyncio
 
+from typing import Generator
+
+import time
+
+from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
+
 from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
 
 from mpf.core.platform import I2cPlatform, AccelerometerPlatform, DriverConfig, SwitchConfig
@@ -58,9 +64,47 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
 
         self.debug_log("Configuring P3-ROC for PDB driver boards.")
         self.pdbconfig = PDBConfig(self.proc, self.machine.config, self.pinproc.DriverCount)
+        self._burst_opto_drivers_to_switch_map = {}
+        self._burst_switches = []
+        self._bursts_enabled = False
 
         self.acceleration = [0] * 3
         self.accelerometer_device = None    # type: PROCAccelerometer
+
+    def connect(self):
+        """Connect to the P3-Roc."""
+        super().connect()
+
+        if self.dipswitches & 0x01:
+            self.log.info("Burst drivers are configured as outputs (DIP Switch 1 set). "
+                          "You cannot use IDs 0-3 for PD-16/PD-LED boards.")
+
+            if self.version < 2 or self.revision < 6:
+                raise AssertionError("Local inputs are supported only in FW 2.6+. Disable DIP 1 or update firmware.")
+
+        if self.dipswitches & 0x02:
+            self.log.info("Burst switches are configured as inputs (DIP Switch 2 set). "
+                          "You cannot use IDs 0-3 for SW-16 boards.")
+
+            if self.version < 2 or self.revision < 6:
+                raise AssertionError("Local inputs are supported only in FW 2.6+. Disable DIP 2 or update firmware.")
+
+            for board in range(0, 4):
+                device_type = self.proc.read_data(2, (1 << 12) + (board << 6))
+                if device_type != 0:
+                    raise AssertionError("Invalid P3-Roc configuration. Found SW-16 with ID {} which is invalid "
+                                         "because burst switches/drivers which are configured as inputs/outputs use "
+                                         "the same switch position. Either disabled DIP 2 or assign ID >= 4 to "
+                                         "all your SW-16s.")
+
+        # remove all burst ir mappings
+        for driver in range(0, 64):
+            self.proc.write_data(0x02, 0x80 + (driver * 2), 0)
+            self.proc.write_data(0x02, 0x81 + (driver * 2), 0)
+
+        # disable burst IRs
+        burst_config1 = 0
+        self.proc.write_data(0x02, 0x01, burst_config1)
 
     def __repr__(self):
         """Return string representation."""
@@ -154,13 +198,35 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         # Find the P3-ROC number for each driver. For P3-ROC driver boards, the
         # P3-ROC number is specified via the Ax-By-C format.
 
+        if number.startswith("direct-"):
+            return self._configure_direct_driver(config, number)
+
         proc_num = self.pdbconfig.get_proc_coil_number(str(number))
         if proc_num == -1:
             raise AssertionError("Driver {} cannot be controlled by the P3-ROC. ".format(str(number)))
 
+        if proc_num < 32 and self.dipswitches & 0x01:
+            raise AssertionError("Cannot use PD-16 with ID 0 or 1 when DIP 1 is on the P3-Roc. Turn DIP 1 off or "
+                                 "renumber PD-16s. Driver: {}".format(number))
+
         proc_driver_object = PROCDriver(proc_num, config, self, number)
 
         return proc_driver_object
+
+    def _configure_direct_driver(self, config, number):
+        try:
+            _, driver_number = number.split("-", 2)
+            driver_number = int(driver_number)
+        except (ValueError, TypeError):
+            raise AssertionError("Except format direct-X with 0 <= X <= 63. Invalid format. Got: {}".format(number))
+
+        if 0 < driver_number > 63:
+            raise AssertionError("Except format direct-X with 0 <= X <= 63. X out of bounds. Got: {}".format(number))
+
+        if not self.dipswitches & 0x01:
+            raise AssertionError("Set DIP 1 on the P3-Roc to use burst switches as local outputs")
+
+        return PROCDriver(driver_number, config, self, number)
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure a P3-ROC switch.
@@ -172,8 +238,103 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         Returns: A configured switch object.
         """
         del platform_config
-        proc_num = self.pdbconfig.get_proc_switch_number(str(number))
-        return self._configure_switch(config, proc_num)
+        if number.startswith("burst-"):
+            return self._configure_burst_opto(config, number)
+        elif number.startswith("direct-"):
+            return self._configure_direct_switch(config, number)
+        else:
+            proc_num = self.pdbconfig.get_proc_switch_number(str(number))
+            if 0 <= proc_num < 64 and self.dipswitches & 0x02:
+                raise AssertionError("Cannot use SW-16 with ID 0-3 when DIP 2 is on the P3-Roc. Turn DIP 2 off or "
+                                     "renumber SW-16s. Switch: {}".format(number))
+            return self._configure_switch(config, proc_num)
+
+    def _configure_direct_switch(self, config, number):
+        try:
+            _, switch_number = number.split("-", 2)
+            switch_number = int(switch_number)
+        except (ValueError, TypeError):
+            raise AssertionError("Except format direct-X with 0 <= X <= 63. Invalid format. Got: {}".format(number))
+
+        if 0 < switch_number > 63:
+            raise AssertionError("Except format direct-X with 0 <= X <= 63. X out of bounds. Got: {}".format(number))
+
+        if not self.dipswitches & 0x02:
+            raise AssertionError("Set DIP 2 on the P3-Roc to use burst switches as local inputs")
+
+        return self._configure_switch(config, switch_number)
+
+    def _configure_burst_opto(self, config, number):
+        """Configure burst opto on the P3-Roc.
+
+        From Gerry:
+        Iterate txIndex from 0 to 63 and fill in the rxMap for each.
+        The rx map can overlap. Doesn't matter. The P3-ROC hardware drives burst tx0 then checks the 5 mapped rx.
+        Then it drives burst tx1 and checks its 5 mapped rx. Etc up to tx63.
+        Also be sure to set the Max burst tx in Switch Controller Burst Configuration 1 register (as documented in the
+        programmer's reference).
+        Only other thing I can think that matters is this. There are 64 burst tx (outputs) on the board, but only 32
+        actual drivers in the code. 0:31 are duplicated as 32:63. So at any one time, 2 tx pins are active.
+
+        Now for burst rx map configuration:
+        // Program Count into 1st address for transmitter
+        data = (uint)rx_list.Count;
+        Machine.PROC.write_data (switchModule, (uint)(burstConfigOffset + tx*2), data);
+
+        // Prepare rx map
+        data = 0;
+        foreach (int receiver in rx_list) {
+          data = (data << 6) | ((uint)receiver & 0x3f);
+        }
+        Machine.PROC.write_data (switchModule, (uint)(burstConfigOffset + tx*2+1), data);
+        """
+        # parse input and driver switches first
+        try:
+            _, input_switch, driver = number.split("-", 3)
+            input_switch = int(input_switch)
+            driver = int(driver)
+        except ValueError:
+            raise AssertionError("Burst Opto {} is invalid. Format should be burst-XX-YY with X=input Y=driver.")
+
+        # verify we are not conflicting with local inputs
+        if self.dipswitches & 0x03:
+            raise AssertionError("Cannot use Burst Optos when local inputs or outputs are used. Disable DIP 1 and 2 "
+                                 "on the P3-Roc.")
+
+        # enable burst IRs
+        if not self._bursts_enabled:
+            self._bursts_enabled = True
+            self.log.info("Enabling burst opto %s on the P3-Roc.", number)
+            burst_config1 = (1 << 31) | 0x1F
+            self.proc.write_data(0x02, 0x01, burst_config1)
+
+        # configure driver for receiver
+        if driver not in self._burst_opto_drivers_to_switch_map:
+            self._burst_opto_drivers_to_switch_map[driver] = []
+
+        if input_switch in self._burst_opto_drivers_to_switch_map[driver]:
+            raise AssertionError("Input {} already configured for driver {} in {}. Make sure to configure each "
+                                 "burst input<->driver combination only once.".format(input_switch, driver, number))
+
+        # tell p3-roc to check this input for that driver
+        self._burst_opto_drivers_to_switch_map[driver].append(input_switch)
+
+        if len(self._burst_opto_drivers_to_switch_map[driver]) > 5:
+            raise AssertionError("Every burst driver only supports up to 5 drivers. Driver {} exceeded that with "
+                                 "switch {}.".format(driver, number))
+
+        rx_to_check_for_this_transmitter = 0
+        for switch in self._burst_opto_drivers_to_switch_map[driver]:
+            rx_to_check_for_this_transmitter <<= 6
+            rx_to_check_for_this_transmitter += switch
+
+        self.proc.write_data(0x02, 0x80 + (driver * 2), len(self._burst_opto_drivers_to_switch_map[driver]))
+        self.proc.write_data(0x02, 0x81 + (driver * 2), rx_to_check_for_this_transmitter)
+
+        burst_switch = P3RocBurstOpto(config, number, input_switch, driver)
+        self._burst_switches.append(burst_switch)
+
+        return burst_switch
 
     @asyncio.coroutine
     def get_hw_switch_states(self):
@@ -186,16 +347,21 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         4 - open (not debounced)
         """
         states = self.proc.switch_get_states()
+        result = {}
 
         for switch, state in enumerate(states):
             # Note: The P3-ROC will return a state of "3" for switches from non-
             # connected SW-16 boards, so that's why we only check for "1" below
             if state == 1:
-                states[switch] = 1
+                result[switch] = 1
             else:
-                states[switch] = 0
+                result[switch] = 0
 
-        return states
+        # assume 0 for all bursts initially
+        for switch in self._burst_switches:
+            result[switch.number] = 0
+
+        return result
 
     def tick(self):
         """Check the P3-ROC for any events (switch state changes).
@@ -241,13 +407,30 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
                         self.scale_accelerometer_to_g(self.acceleration[1]),
                         self.scale_accelerometer_to_g(self.acceleration[2]))
                     self.debug_log("Got Accelerometer value Z. Value: %s", event_value)
-
+            elif event_type == self.pinproc.EventTypeBurstSwitchOpen:
+                self.debug_log("Got burst open event value %s", event_value)
+                self._handle_burst(event_value, 0)
+            elif event_type == self.pinproc.EventTypeBurstSwitchClosed:
+                self.debug_log("Got burst closed event value %s", event_value)
+                self._handle_burst(event_value, 1)
             else:   # pragma: no cover
                 self.log.warning("Received unrecognized event from the P3-ROC. "
                                  "Type: %s, Value: %s", event_type, event_value)
 
         self.proc.watchdog_tickle()
         self.proc.flush()
+
+    def _handle_burst(self, event_value, state):
+        input_num = event_value & 0x3F
+        output_num = (event_value >> 6) & 0x1F
+        burst_number1 = "burst-{}-{}".format(input_num, output_num)
+        self.machine.switch_controller.process_switch_by_num(state=state,
+                                                             num=burst_number1,
+                                                             platform=self)
+        burst_number2 = "burst-{}-{}".format(input_num, output_num + 32)
+        self.machine.switch_controller.process_switch_by_num(state=state,
+                                                             num=burst_number2,
+                                                             platform=self)
 
 
 class P3RocI2c(I2cPlatformInterface):
@@ -288,7 +471,7 @@ class P3RocI2c(I2cPlatformInterface):
         return result
 
     @asyncio.coroutine
-    def i2c_read16(self, register):
+    def i2c_read16(self, register) -> Generator[int, None, int]:
         """Read an 16-bit value from the I2C bus of the P3-Roc."""
         return self.proc.read_data(7, int(self.address) << 9 | 1 << 8 | register)
 
@@ -304,3 +487,19 @@ class PROCAccelerometer(AccelerometerPlatformInterface):
     def update_acceleration(self, x: float, y: float, z: float) -> None:
         """Call the callback."""
         self.callback.update_acceleration(x, y, z)
+
+
+class P3RocBurstOpto(SwitchPlatformInterface):
+
+    """A burst opto switch/driver combination."""
+
+    def __init__(self, config, number, input_switch, driver):
+        """Initialise burst opto."""
+        super().__init__(config, number)
+        self.input_switch = input_switch
+        self.driver = driver
+        self.log = logging.getLogger('P3RocBurstOpto')
+
+    def get_board_name(self):
+        """Return board of the switch."""
+        return "P3-Roc Burst Opto Input {} Driver {}".format(self.input_switch, self.driver)

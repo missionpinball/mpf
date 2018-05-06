@@ -114,7 +114,7 @@ class TestP3Roc(MpfTestCase):
             0x00: {         # manager
                 0x00: 0,            # chip id
                 0x01: 0x00020006,   # version
-                0x03: 0x0000,       # dip switches
+                0x03: 0x00FF,       # dip switches
             },
             0x02: {         # switch controller
                 0x1000: 0xA3,       # SW-16 Address 0 Reg 0
