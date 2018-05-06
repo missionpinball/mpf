@@ -198,6 +198,9 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         # Find the P3-ROC number for each driver. For P3-ROC driver boards, the
         # P3-ROC number is specified via the Ax-By-C format.
 
+        if number.startswith("direct-"):
+            return self._configure_direct_driver(config, number)
+
         proc_num = self.pdbconfig.get_proc_coil_number(str(number))
         if proc_num == -1:
             raise AssertionError("Driver {} cannot be controlled by the P3-ROC. ".format(str(number)))
@@ -205,6 +208,21 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         proc_driver_object = PROCDriver(proc_num, config, self, number)
 
         return proc_driver_object
+
+    def _configure_direct_driver(self, config, number):
+        try:
+            _, driver_number = number.split("-", 2)
+            driver_number = int(driver_number)
+        except (ValueError, TypeError):
+            raise AssertionError("Except format direct-X with 0 <= X <= 63. Invalid format. Got: {}".format(number))
+
+        if 0 < driver_number > 63:
+            raise AssertionError("Except format direct-X with 0 <= X <= 63. X out of bounds. Got: {}".format(number))
+
+        if not self.dipswitches & 0x01:
+            raise AssertionError("Set DIP 1 on the P3-Roc to use burst switches as local outputs")
+
+        return PROCDriver(driver_number, config, self, number)
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure a P3-ROC switch.
@@ -218,9 +236,26 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         del platform_config
         if number.startswith("burst-"):
             return self._configure_burst_opto(config, number)
+        elif number.startswith("direct-"):
+            return self._configure_direct_switch(config, number)
         else:
             proc_num = self.pdbconfig.get_proc_switch_number(str(number))
             return self._configure_switch(config, proc_num)
+
+    def _configure_direct_switch(self, config, number):
+        try:
+            _, switch_number = number.split("-", 2)
+            switch_number = int(switch_number)
+        except (ValueError, TypeError):
+            raise AssertionError("Except format direct-X with 0 <= X <= 63. Invalid format. Got: {}".format(number))
+
+        if 0 < switch_number > 63:
+            raise AssertionError("Except format direct-X with 0 <= X <= 63. X out of bounds. Got: {}".format(number))
+
+        if not self.dipswitches & 0x02:
+            raise AssertionError("Set DIP 2 on the P3-Roc to use burst switches as local inputs")
+
+        return self._configure_switch(config, switch_number)
 
     def _configure_burst_opto(self, config, number):
         """Configure burst opto on the P3-Roc.
