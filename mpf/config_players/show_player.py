@@ -63,6 +63,7 @@ class ShowPlayer(DeviceConfigPlayer):
             callback = queue.clear
 
         start_step = show_settings['start_step'].evaluate(placeholder_args)
+        start_callback = None
 
         if key in instance_dict and not instance_dict[key].stopped:
             # this is an optimization for the case where we only advance a show or do not change it at all
@@ -94,7 +95,12 @@ class ShowPlayer(DeviceConfigPlayer):
                     instance_dict[key].advance()
                     return
             # in all other cases stop the current show
-            instance_dict[key].stop()
+            if show_settings["sync_ms"]:
+                # stop current show in sync with new show
+                start_callback = instance_dict[key].stop
+            else:
+                # stop the current show instantly
+                instance_dict[key].stop()
         try:
             show_obj = self.machine.shows[show]
         except KeyError:
@@ -120,7 +126,8 @@ class ShowPlayer(DeviceConfigPlayer):
             events_when_stepped_back=show_settings[
                 'events_when_stepped_back'],
             events_when_updated=show_settings['events_when_updated'],
-            events_when_completed=show_settings['events_when_completed']
+            events_when_completed=show_settings['events_when_completed'],
+            start_callback=start_callback
         )
 
     @staticmethod
