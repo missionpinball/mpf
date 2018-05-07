@@ -51,6 +51,8 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
 
         self.aux_port = AuxPort(self)
         self.aux_port.reset()
+        self._use_extended_matrix = False
+        self._use_first_eight_direct_inputs = False
 
         # Because PDBs can be configured in many different ways, we need to
         # traverse the YAML settings to see how many PDBs are being used.
@@ -116,6 +118,21 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
 
         """
         del platform_config
+        try:
+            if number.startswith("SD") and 0 <= int(number[2:]) <= 7:
+                self._use_first_eight_direct_inputs = True
+            _, y = number.split('/', 2)
+            if int(y) > 7:
+                self._use_extended_matrix = True
+        except ValueError:
+            pass
+
+        if self._use_extended_matrix and self._use_first_eight_direct_inputs:
+            raise AssertionError(
+                "P-Roc vannot use extended matrix and the first eight direct inputs at the same "
+                "time. Either only use SD8 to SD31 or only use matrix X/Y with Y <= 7. Offending "
+                "switch: {}".format(number))
+
         if self.machine_type == self.pinproc.MachineTypePDB:
             proc_num = self.pdbconfig.get_proc_switch_number(str(number))
             if proc_num == -1:
