@@ -32,7 +32,7 @@ if MYPY:   # pragma: no cover
     from mpf.core.show_controller import ShowController
     from mpf.core.service_controller import ServiceController
 
-    from mpf.core.scriptlet import Scriptlet
+    from mpf.core.custom_code import CustomCode
     from mpf.core.mode_controller import ModeController
     from mpf.core.settings_controller import SettingsController
     from mpf.core.bcp.bcp import Bcp
@@ -102,7 +102,7 @@ class MachineController(LogMixin):
         self._done = False
         self.monitors = dict()      # type: Dict[str, Set[Callable]]
         self.plugins = list()       # type: List[Any]
-        self.scriptlets = list()    # type: List[Scriptlet]
+        self.custom_code = list()   # type: List[CustomCode]
         self.modes = DeviceCollection(self, 'modes', None)          # type: Dict[str, Mode]
         self.game = None            # type: Game
         self.machine_vars = dict()
@@ -244,7 +244,7 @@ class MachineController(LogMixin):
 
         desc: Posted during the initial boot up of MPF.
         '''
-        self._load_scriptlets()
+        self._load_custom_code()
 
         yield from self.events.post_queue_async("init_phase_4")
         '''event: init_phase_4
@@ -493,20 +493,29 @@ class MachineController(LogMixin):
             plugin_obj = Util.string_to_class(plugin)(self)
             self.plugins.append(plugin_obj)
 
-    def _load_scriptlets(self) -> None:
-        """Load scriptlets."""
+    def _load_custom_code(self) -> None:
+        """Load custom code."""
         if 'scriptlets' in self.config:
-            self.debug_log("Loading scriptlets...")
-
+            self.debug_log("Loading scriptlets (deprecated).")
             for scriptlet in Util.string_to_list(self.config['scriptlets']):
-
-                self.debug_log("Loading '%s' scriptlet", scriptlet)
-
+                self.debug_log("Loading '%s' scriptlet (deprecated)", scriptlet)
                 scriptlet_obj = Util.string_to_class(self.config['mpf']['paths']['scriptlets'] + "." + scriptlet)(
                     machine=self,
                     name=scriptlet.split('.')[1])
+                self.custom_code.append(scriptlet_obj)
 
-                self.scriptlets.append(scriptlet_obj)
+        if 'custom_code' in self.config:
+            self.debug_log("Loading custom code.")
+
+            for custom_code in Util.string_to_list(self.config['custom_code']):
+
+                self.debug_log("Loading '%s' custom code", custom_code)
+
+                custom_code_obj = Util.string_to_class(custom_code)(
+                    machine=self,
+                    name=custom_code)
+
+                self.custom_code.append(custom_code_obj)
 
     @asyncio.coroutine
     def reset(self) -> Generator[int, None, None]:

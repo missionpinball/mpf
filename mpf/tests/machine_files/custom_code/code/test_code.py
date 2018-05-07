@@ -1,7 +1,7 @@
-from mpf.core.scriptlet import Scriptlet
+from mpf.core.custom_code import CustomCode
 
 
-class TestScriptlet(Scriptlet):
+class TestCustomCode(CustomCode):
     def on_load(self):
         self.log.debug("Loaded!")
 

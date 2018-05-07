@@ -248,6 +248,8 @@ coils:
     platform_settings: single|dict|None
     psu: single|machine(psus)|default
     platform: single|str|None
+custom_code:
+    __valid_in__: machine
 digital_outputs:
     __valid_in__: machine
     number: single|str|
@@ -979,7 +981,7 @@ score_reel_groups:
     chimes: list|machine(coils)|None
     lights_tag: single|str|None
 scriptlets:
-    __valid_in__: machine                           # todo add to validator
+    __valid_in__: machine
 segment_displays:
     __valid_in__: machine
     number: single|str|

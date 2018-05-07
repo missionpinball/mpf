@@ -34,5 +34,5 @@ MPF. It does a lot of things, including:
 * Loading platform modules (based on what's used in the configs)
 * Loading MPF core modules
 * Loading MPF plugins
-* Loading scriptlets and custom machine code
+* Loading custom machine code
 * Stepping through the initialization and reset phases

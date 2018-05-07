@@ -154,7 +154,6 @@ logging:
       players: basic  # todo
       plugins: none  # todo
       score_reel_controller: none
-      scriptlets: none  # todo
       service_controller: basic
       settings_controller: none
       show_controller: none
@@ -188,7 +187,6 @@ logging:
       players: full
       plugins: basic
       score_reel_controller: basic
-      scriptlets: basic
       service_controller: basic
       settings_controller: basic
       show_controller: basic
