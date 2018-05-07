@@ -681,8 +681,6 @@ logic_blocks_common:
     start_enabled: single|bool|None
     events_when_complete: list|str|None
     events_when_hit: list|str|None
-    console_log: single|enum(none,basic,full)|none
-    file_log: single|enum(none,basic,full)|basic
 accruals:
     __valid_in__: machine, mode
     events: list|str|
@@ -1067,6 +1065,12 @@ shot_profiles:
         sync_ms: single|int|None
         manual_advance: single|bool|None
         show_tokens: dict|str:str|None
+state:
+    __valid_in__: machine, mode
+    enable_events: dict|str:ms|None
+    disable_events: dict|str:ms|None
+    persist_state: single|bool|False
+    start_enabled: single|bool|None
 state_machines:
     __valid_in__: machine, mode
     states: dict|str:subconfig(state_machine_states)|
