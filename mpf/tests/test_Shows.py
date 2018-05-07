@@ -9,7 +9,10 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class TestShows(MpfTestCase):
     def getConfigFile(self):
-        return 'test_shows.yaml'
+        if self._testMethodName == "test_sync_ms":
+            return "test_sync_ms.yaml"
+        else:
+            return 'test_shows.yaml'
 
     def getMachinePath(self):
         return 'tests/machine_files/shows/'
@@ -588,6 +591,59 @@ class TestShows(MpfTestCase):
         self.machine.events.post('play_with_manual_advance')
         self.advance_time_and_run(10)
         self.assertEqual(1, self.machine.show_player.instances['_global']['show_player']['test_show1'].next_step_index)
+
+    def advance_to_sync_ms(self, ms):
+        current_time = self.clock.get_time()
+        ms = float(ms)
+        next_full_second = current_time + ((ms - (current_time * 1000) % ms) / 1000.0)
+        self.advance_time_and_run(next_full_second - current_time)
+        delta = (self.clock.get_time() * 1000) % ms
+        self.assertTrue(delta == ms or delta < 1, "Delta {} too large".format(delta))
+
+    def test_sync_ms(self):
+        self.advance_to_sync_ms(250)
+        # shortly after sync point. start initial show
+        self.advance_time_and_run(.01)
+        self.post_event("play_show_sync_ms1")
+        self.assertLightColor("light", "off")
+        # wait for first sync point
+        self.advance_to_sync_ms(250)
+        self.advance_time_and_run(.01)
+        self.assertLightColor("light", "red")
+        # shortly after sync point again
+        self.post_event("play_show_sync_ms2")
+        # old show still playing
+        self.advance_time_and_run(.1)
+        self.assertLightColor("light", "red")
+        # until next sync point is reached
+        self.advance_time_and_run(.15)
+        self.assertLightColor("light", "blue")
+        self.post_event("stop_show")
+        self.assertLightColor("light", "off")
+
+        # play show and start second show before first was synced
+        self.advance_to_sync_ms(250)
+        self.advance_time_and_run(.01)
+        self.post_event("play_show_sync_ms1")
+        self.advance_time_and_run(.01)
+        self.post_event("play_show_sync_ms2")
+        self.assertLightColor("light", "off")
+        self.advance_to_sync_ms(250)
+        self.assertLightColor("light", "blue")
+        self.post_event("stop_show")
+        self.assertLightColor("light", "off")
+
+        # play show and start second show before first was synced. stop before second is synced
+        self.advance_to_sync_ms(250)
+        self.advance_time_and_run(.01)
+        self.post_event("play_show_sync_ms1")
+        self.advance_time_and_run(.01)
+        self.post_event("play_show_sync_ms2")
+        self.assertLightColor("light", "off")
+        self.post_event("stop_show")
+        self.assertLightColor("light", "off")
+        self.advance_time_and_run(.5)
+        self.assertLightColor("light", "off")
 
     def test_pause_resume_shows(self):
         self.machine.events.post('play_test_show1')

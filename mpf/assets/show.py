@@ -274,7 +274,7 @@ class Show(Asset):
              events_when_looped=None, events_when_paused=None,
              events_when_resumed=None, events_when_advanced=None,
              events_when_stepped_back=None, events_when_updated=None,
-             events_when_completed=None, start_time=None) -> "RunningShow":
+             events_when_completed=None, start_time=None, start_callback=None) -> "RunningShow":
         """Play a Show.
 
         There are many parameters you can use here which
@@ -382,7 +382,8 @@ class Show(Asset):
                                    events_when_advanced=events_when_advanced,
                                    events_when_stepped_back=events_when_stepped_back,
                                    events_when_updated=events_when_updated,
-                                   events_when_completed=events_when_completed)
+                                   events_when_completed=events_when_completed,
+                                   start_callback=start_callback)
 
         if not self.loaded:
             self.load(callback=running_show.show_loaded, priority=priority)
@@ -418,7 +419,7 @@ class RunningShow(object):
                  events_when_paused, events_when_resumed,
                  events_when_advanced, events_when_stepped_back,
                  events_when_updated, events_when_completed,
-                 start_time):
+                 start_time, start_callback):
         """Initialise an instance of a show."""
         self.machine = machine
         self.show = show
@@ -430,6 +431,7 @@ class RunningShow(object):
         self.start_step = start_step
         self.sync_ms = sync_ms
         self.show_tokens = show_tokens
+        self.start_callback = start_callback
 
         self.events = dict(play=events_when_played,
                            stop=events_when_stopped,
@@ -500,12 +502,14 @@ class RunningShow(object):
 
         # Figure out the show start time
         if self.sync_ms:
-            delay_secs = (self.sync_ms / 1000.0) - (self.next_step_time % (self.sync_ms / 1000.0))
-            self.next_step_time += delay_secs
+            # calculate next step based on synchronized start time
+            self.next_step_time += (self.sync_ms / 1000.0) - (self.next_step_time % (self.sync_ms / 1000.0))
+            # but wait relative to real time
+            delay_secs = self.next_step_time - self.machine.clock.get_time()
             self._delay_handler = self.machine.clock.schedule_once(
-                partial(self._run_next_step, post_events='play'), delay_secs)
+                self._start_now, delay_secs)
         else:  # run now
-            self._run_next_step(post_events='play')
+            self._start_now()
 
     def _post_events(self, action):
         if self.events[action]:  # Should make sure this is a list? todo
@@ -575,8 +579,10 @@ class RunningShow(object):
 
         self._stopped = True
 
-        if not self._show_loaded:
-            return
+        # if the start callback has never been called then call it now
+        if self.start_callback:
+            self.start_callback()
+            self.start_callback = None
 
         self._remove_delay_handler()
 
@@ -641,6 +647,13 @@ class RunningShow(object):
 
         if self._show_loaded:
             self._run_next_step(post_events='step_back')
+
+    def _start_now(self) -> None:
+        """Start playing the show."""
+        if self.start_callback:
+            self.start_callback()
+            self.start_callback = None
+        self._run_next_step(post_events='play')
 
     def _run_next_step(self, post_events=None) -> None:
         """Run the next show step."""
