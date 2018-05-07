@@ -981,7 +981,7 @@ score_reel_groups:
     chimes: list|machine(coils)|None
     lights_tag: single|str|None
 scriptlets:
-    __valid_in__: machine 
+    __valid_in__: machine
 segment_displays:
     __valid_in__: machine
     number: single|str|

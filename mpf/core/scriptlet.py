@@ -10,9 +10,9 @@ from mpf.core.logging import LogMixin
 class Scriptlet(LogMixin):
 
     """Baseclass for DEPRECATED scriptlets which are simple scripts in a machine.
-    
+
     This is deprecated and will be removed in config_version 6 with MPF 0.60.
-    Use custom code instead.   
+    Use custom code instead.
     """
 
     def __init__(self, machine, name):
