@@ -486,3 +486,27 @@ class Sequence(LogicBlock):
 
         if self._state.value >= len(self.config['events']):
             self.complete()
+
+
+class State(LogicBlock):
+
+    """A type of LogicBlock which tracks just enable or disable."""
+
+    config_section = 'states'
+    collection = 'states'
+    class_label = 'state'
+
+    @property
+    def config_section_name(self):
+        """Return config section."""
+        return "state"
+
+    def hit(self, **kwargs):
+        """Not possible."""
+        raise AssertionError("Not possible for a State block.")
+
+    def get_start_value(self) -> int:
+        """Return None."""
+        return None
+
+
