@@ -114,6 +114,7 @@ mpf:
         virtual_pinball: mpf.platforms.virtual_pinball.virtual_pinball.VirtualPinballPlatform
 
     paths:
+        scriptlets: scriptlets
         shows: shows
         audits: data/audits.yaml
         machine_vars: data/machine_vars.yaml

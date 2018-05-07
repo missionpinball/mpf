@@ -7,9 +7,19 @@ class TestCustomCode(MpfTestCase):
         return 'config.yaml'
 
     def getMachinePath(self):
-        return 'tests/machine_files/custom_code/'
+        if self._testMethodName == "test_legacy_scriptlet":
+            return 'tests/machine_files/scriptlet/'
+        else:
+            return 'tests/machine_files/custom_code/'
 
     def test_scoring(self):
+        self.mock_event("test_response")
+        self.post_event("test_event")
+        self.machine_run()
+
+        self.assertEqual(1, self._events['test_response'])
+
+    def test_legacy_scriptlet(self):
         self.mock_event("test_response")
         self.post_event("test_event")
         self.machine_run()

@@ -495,8 +495,17 @@ class MachineController(LogMixin):
 
     def _load_custom_code(self) -> None:
         """Load custom code."""
+        if 'scriptlets' in self.config:
+            self.debug_log("Loading scriptlets (deprecated).")
+            for scriptlet in Util.string_to_list(self.config['scriptlets']):
+                self.debug_log("Loading '%s' scriptlet (deprecated)", scriptlet)
+                scriptlet_obj = Util.string_to_class(self.config['mpf']['paths']['scriptlets'] + "." + scriptlet)(
+                    machine=self,
+                    name=scriptlet.split('.')[1])
+                self.custom_code.append(scriptlet_obj)
+
         if 'custom_code' in self.config:
-            self.debug_log("Loading custom code...")
+            self.debug_log("Loading custom code.")
 
             for custom_code in Util.string_to_list(self.config['custom_code']):
 
