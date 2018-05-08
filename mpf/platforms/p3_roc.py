@@ -60,6 +60,10 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         self.acceleration = [0] * 3
         self.accelerometer_device = None    # type: PROCAccelerometer
 
+    def _get_default_subtype(self):
+        """Return default subtype for P3-Roc."""
+        return "led"
+
     def __repr__(self):
         """Return string representation."""
         return '<Platform.P3-ROC>'

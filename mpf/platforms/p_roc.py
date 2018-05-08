@@ -64,6 +64,10 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         else:
             self.debug_log("Configuring P-ROC for OEM driver boards")
 
+    def _get_default_subtype(self):
+        """Return default subtype for P-Roc."""
+        return "matrix"
+
     def __repr__(self):
         """Return string representation."""
         return '<Platform.P-ROC>'
