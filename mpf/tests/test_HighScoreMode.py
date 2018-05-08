@@ -55,6 +55,15 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.advance_time_and_run()
         self.assertFalse(self.machine.modes.high_score.active)
 
+        new_score_data = OrderedDict()
+        new_score_data['score'] = [('BRI', 7050550),
+                                   ('GHK', 93060),
+                                   ('JK', 87890),
+                                   ('QC', 87890),
+                                   ('MPF', 10000)]
+        new_score_data['loops'] = []
+        self.assertEqual(new_score_data, self.machine.modes.high_score.data_manager.written_data)
+
     def test_tilt_during_high_score(self):
         self.mock_event("high_score_enter_initials")
         self.machine.modes.high_score.high_scores = OrderedDict(
@@ -128,6 +137,8 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.assertEqual(new_score_data,
                          self.machine.modes.high_score.high_scores)
 
+        self.assertEqual(new_score_data, self.machine.modes.high_score.data_manager.written_data)
+
     def test_2_high_scores(self):
         self.mock_event("high_score_enter_initials")
         self.machine.modes.high_score.high_scores = OrderedDict(
@@ -183,6 +194,7 @@ class TestHighScoreMode(MpfBcpTestCase):
 
         self.assertEqual(new_score_data,
                          self.machine.modes.high_score.high_scores)
+        self.assertEqual(new_score_data, self.machine.modes.high_score.data_manager.written_data)
 
     def test_2_high_scores_and_timeout(self):
         self.mock_event("high_score_enter_initials")
@@ -235,6 +247,7 @@ class TestHighScoreMode(MpfBcpTestCase):
 
         self.assertEqual(new_score_data,
                          self.machine.modes.high_score.high_scores)
+        self.assertEqual(new_score_data, self.machine.modes.high_score.data_manager.written_data)
 
     def test_new_score_to_incomplete_list(self):
         self.mock_event("high_score_enter_initials")
@@ -265,6 +278,7 @@ class TestHighScoreMode(MpfBcpTestCase):
 
         self.assertEqual(new_score_data,
                          self.machine.modes.high_score.high_scores)
+        self.assertEqual(new_score_data, self.machine.modes.high_score.data_manager.written_data)
 
     def test_more_than_3_chars(self):
         self.mock_event("high_score_enter_initials")
@@ -302,6 +316,7 @@ class TestHighScoreMode(MpfBcpTestCase):
 
         self.assertEqual(new_score_data,
                          self.machine.modes.high_score.high_scores)
+        self.assertEqual(new_score_data, self.machine.modes.high_score.data_manager.written_data)
 
     def test_multiple_awards(self):
         self.mock_event("high_score_enter_initials")
@@ -380,6 +395,7 @@ class TestHighScoreMode(MpfBcpTestCase):
 
         self.assertEqual(new_score_data,
                          self.machine.modes.high_score.high_scores)
+        self.assertEqual(new_score_data, self.machine.modes.high_score.data_manager.written_data)
 
     def test_score_from_nonexistent_player_var(self):
         self.machine.modes.high_score.high_scores = OrderedDict(
@@ -405,6 +421,7 @@ class TestHighScoreMode(MpfBcpTestCase):
 
         self.assertEqual(new_score_data,
                          self.machine.modes.high_score.high_scores)
+        self.assertEqual(new_score_data, self.machine.modes.high_score.data_manager.written_data)
 
     def _get_mock_data(self):
         if self._testMethodName == "testInvalidData":
@@ -436,6 +453,8 @@ class TestHighScoreMode(MpfBcpTestCase):
                                    ('MPF', 1)]
         new_score_data['loops'] = []
         self.assertEqual(new_score_data, self.machine.modes.high_score.high_scores)
+        # no changes yet
+        self.assertEqual(None, self.machine.modes.high_score.data_manager.written_data)
 
     def testInvalidData(self):
         self.start_game(4)
@@ -452,3 +471,4 @@ class TestHighScoreMode(MpfBcpTestCase):
         new_score_data['loops'] = [('JK', 42)]
 
         self.assertEqual(new_score_data, self.machine.modes.high_score.high_scores)
+        self.assertEqual(new_score_data, self.machine.modes.high_score.data_manager.written_data)
