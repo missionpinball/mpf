@@ -372,6 +372,27 @@ shows:
           lights:
             (led): (color)
             (leds): (color)
+    flash_color:
+        - duration: 1
+          lights:
+            (light):
+              color: (color)
+            (lights):
+              color: (color)
+            (led):
+              color: (color)
+            (leds):
+              color: (color)
+        - duration: 1
+          lights:
+            (light):
+              color: off
+            (lights):
+              color: off
+            (led):
+              color: off
+            (leds):
+              color: off
 
 settings:
   flipper_power:

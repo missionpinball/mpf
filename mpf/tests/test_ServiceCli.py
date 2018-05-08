@@ -94,14 +94,15 @@ class TestServiceCli(MpfBcpTestCase):
         self.assertEqual(expected, self._last_write())
 
         cli.onecmd("list_shows")
-        expected = """+-----------+------------------------------------+
-| Name      | Token                              |
-+-----------+------------------------------------+
-| flash     | ['led', 'leds', 'light', 'lights'] |
-| led_color | ['color', 'led', 'leds']           |
-| off       | ['led', 'leds', 'light', 'lights'] |
-| on        | ['led', 'leds', 'light', 'lights'] |
-+-----------+------------------------------------+
+        expected = """+-------------+---------------------------------------------+
+| Name        | Token                                       |
++-------------+---------------------------------------------+
+| flash       | ['led', 'leds', 'light', 'lights']          |
+| flash_color | ['color', 'led', 'leds', 'light', 'lights'] |
+| led_color   | ['color', 'led', 'leds']                    |
+| off         | ['led', 'leds', 'light', 'lights']          |
+| on          | ['led', 'leds', 'light', 'lights']          |
++-------------+---------------------------------------------+
 """
         self.assertEqual(expected, self._last_write())
 
