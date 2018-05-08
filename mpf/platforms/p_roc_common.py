@@ -267,9 +267,14 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
 
         return bool(coil_number)
 
+    def _get_default_subtype(self):
+        """Return default subtype for either P3-Roc or P-Roc."""
+        raise NotImplementedError
+
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Parse light number to a list of channels."""
-        # TODO: implement default subtype
+        if not subtype:
+            subtype = self._get_default_subtype()
         if subtype == "matrix":
             return [
                 {
@@ -299,6 +304,8 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
 
     def configure_light(self, number, subtype, platform_settings) -> LightPlatformInterface:
         """Configure a light channel."""
+        if not subtype:
+            subtype = self._get_default_subtype()
         if subtype == "matrix":
             if self.machine_type == self.pinproc.MachineTypePDB:
                 proc_num = self.pdbconfig.get_proc_light_number(str(number))

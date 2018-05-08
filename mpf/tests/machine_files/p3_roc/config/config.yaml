@@ -100,7 +100,6 @@ lights:
     number: test_gi
   test_led:
     number: 2-1-2-3
-    subtype: led
   test_led_inverted:
     number: 2-4-5-6
     platform_settings:
