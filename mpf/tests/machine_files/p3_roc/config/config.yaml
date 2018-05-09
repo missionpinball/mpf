@@ -5,6 +5,9 @@ hardware:
     platform: p3_roc
     servo_controllers: i2c_servo_controller
 
+p_roc:
+    debug: true
+
 switches:
     s_test_000:
         number: A0-B0-0
