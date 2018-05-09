@@ -6,6 +6,7 @@ hardware:
 
 p_roc:
   dmd_timing_cycles: 1, 2, 3, 4
+  debug: true
 
 switches:
     s_test_000:

@@ -307,7 +307,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         elif subtype == "led":
             board, index = number.split("-")
             polarity = platform_settings and platform_settings.get("polarity", False)
-            return PDBLED(int(board), int(index), polarity, self.proc)
+            return PDBLED(int(board), int(index), polarity, self.proc, self.config.get("debug", False))
         else:
             raise AssertionError("unknown subtype {}".format(subtype))
 
@@ -854,10 +854,12 @@ class PDBLED(LightPlatformInterface):
 
     """Represents an RGB LED connected to a PD-LED board."""
 
-    def __init__(self, board, address, polarity, proc_driver):
+    # pylint: ignore-msg=too-many-arguments
+    def __init__(self, board, address, polarity, proc_driver, debug):
         """Initialise PDB LED."""
         self.board = board
         self.address = address
+        self.debug = debug
         super().__init__("{}-{}".format(self.board, self.address))
         self.log = logging.getLogger('PDBLED')
         self.proc = proc_driver
@@ -881,6 +883,10 @@ class PDBLED(LightPlatformInterface):
             color_and_fade_callback: brightness of this channel via callback
         """
         brightness, fade_ms = color_and_fade_callback(int(pow(2, 31) * 4))
+        if self.debug:
+            self.log.debug("Setting color %s with fade_ms %s to %s-%s",
+                           self._normalise_color(int(brightness * 255)), fade_ms, self.board, self.address)
+
         if fade_ms <= 0:
             # just set color
             self.proc.led_color(self.board, self.address, self._normalise_color(int(brightness * 255)))
