@@ -854,7 +854,7 @@ class PDBLED(LightPlatformInterface):
 
     """Represents an RGB LED connected to a PD-LED board."""
 
-    # pylint: ignore-msg=too-many-arguments
+    # pylint: disable-msg=too-many-arguments
     def __init__(self, board, address, polarity, proc_driver, debug):
         """Initialise PDB LED."""
         self.board = board
