@@ -276,7 +276,6 @@ coil_player:
     power: single|float|1.0
     __allow_others__:
 color_correction_profile:
-    __valid_in__: machine
     gamma: single|float|2.5
     whitepoint: list|float|1.0, 1.0, 1.0
     linear_slope: single|float|1.0
@@ -844,7 +843,6 @@ p_roc:
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
 p3_roc:
-    __valid_in__: machine
     lamp_matrix_strobe_time: single|ms|100ms
     watchdog_time: single|ms|1s
     use_watchdog: single|bool|True
