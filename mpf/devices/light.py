@@ -296,7 +296,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
                 settings in the stack already have this key, those settings
                 will be replaced with these new settings.
         """
-        self.debug_log("Received color() command. color: %s, fade_ms: %s"
+        self.debug_log("Received color() command. color: %s, fade_ms: %s "
                        "priority: %s, key: %s", color, fade_ms, priority,
                        key)
 

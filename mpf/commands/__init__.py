@@ -67,8 +67,8 @@ class MpfCommandLineParser(object):
             else:
                 wrong_path = os.path.abspath(os.curdir)
 
-            raise AssertionError("Error: Could not find machine in folder: '{}'."
-                                 "Either start MPF from within your machine root folder or provide the path after the"
+            raise AssertionError("Error: Could not find machine in folder: '{}'. "
+                                 "Either start MPF from within your machine root folder or provide the path after the "
                                  "command.".format(wrong_path))
 
     def parse_args(self):
