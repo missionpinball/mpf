@@ -11,12 +11,9 @@ class TestConfig(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/config_interface/'
 
-    def setUp(self):
-
+    def _early_machine_init(self):
         self.add_to_config_validator('test_section',
                                      dict(__valid_in__='machine'))
-
-        super().setUp()
 
     def test_config_file(self):
         # true, True, yes, Yes values should be True

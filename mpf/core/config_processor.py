@@ -6,27 +6,34 @@ import logging
 import os
 import pickle
 import tempfile
+
+import mpf
 from typing import List, Tuple, Any
 
 from mpf.core.file_manager import FileManager
 from mpf.core.utility_functions import Util
-from mpf.core.config_validator import ConfigValidator
 from mpf._version import __show_version__, __config_version__
 from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.file_interfaces.yaml_interface import YamlInterface
 
 
 class ConfigProcessor(object):
 
     """Config processor which loads the config."""
 
-    def __init__(self):
+    def __init__(self, config_validator):
         """Initialise config processor."""
         self.log = logging.getLogger("ConfigProcessor")
+        self.config_validator = config_validator
 
     @staticmethod
-    def get_cache_filename(filenames: List[str]) -> str:   # pragma: no cover
+    def get_cache_dir():
+        """Return cache dir."""
+        return tempfile.gettempdir()
+
+    def get_cache_filename(self, filenames: List[str]) -> str:   # pragma: no cover
         """Return cache file name."""
-        cache_dir = tempfile.gettempdir()
+        cache_dir = self.get_cache_dir()
         filestring = ""
         for configfile in filenames:
             filestring += str(os.path.abspath(configfile))
@@ -99,10 +106,6 @@ class ConfigProcessor(object):
         if load_from_cache:
             return config
 
-        # Step 5: If we did not get it from cache load it from files
-        if not ConfigValidator.config_spec:
-            ConfigValidator.load_config_spec()
-
         config = dict()
         loaded_files = []
         for configfile in filenames:
@@ -112,7 +115,7 @@ class ConfigProcessor(object):
             loaded_files.extend(file_subfiles)
             config = Util.dict_merge(config, file_config)
 
-        # Step 6: Store to cache
+        # Step 5: Store to cache
         if store_to_cache:
             with open(cache_file, 'wb') as f:
                 pickle.dump((config, loaded_files), f, protocol=4)
@@ -131,9 +134,6 @@ class ConfigProcessor(object):
         config = FileManager.load(filename, expected_version_str, True)
         subfiles = []
 
-        if not ConfigValidator.config_spec:
-            ConfigValidator.load_config_spec()
-
         if not config:
             return dict(), []
 
@@ -144,7 +144,7 @@ class ConfigProcessor(object):
                 raise ConfigFileError("Config should be a dict: {}".format(config), self.log.name, "ConfigProcessor")
             for k in config.keys():
                 try:
-                    if config_type not in ConfigValidator.config_spec[k][
+                    if config_type not in self.config_validator.get_config_spec()[k][
                             '__valid_in__']:
                         raise ValueError('Found a "{}:" section in config file {}, '
                                          'but that section is not valid in {} config '
@@ -169,8 +169,7 @@ class ConfigProcessor(object):
         except TypeError:
             return dict(), []
 
-    @staticmethod
-    def load_config_file(filename, config_type: str,
+    def load_config_file(self, filename, config_type: str,
                          ignore_unknown_sections=False) -> dict:   # pragma: no cover
         """Load a config file."""
         # config_type is str 'machine' or 'mode', which specifies whether this
@@ -178,15 +177,12 @@ class ConfigProcessor(object):
         expected_version_str = ConfigProcessor.get_expected_version(config_type)
         config = FileManager.load(filename, expected_version_str, True)
 
-        if not ConfigValidator.config_spec:
-            ConfigValidator.load_config_spec()
-
         if not config:
             return dict()
 
         for k in config.keys():
             try:
-                if config_type not in ConfigValidator.config_spec[k][
+                if config_type not in self.config_validator.get_config_spec()[k][
                         '__valid_in__']:
                     raise ValueError('Found a "{}:" section in config file {}, '
                                      'but that section is not valid in {} config '
@@ -204,7 +200,7 @@ class ConfigProcessor(object):
                 for file in Util.string_to_list(config['config']):
                     full_file = os.path.join(path, file)
                     config = Util.dict_merge(config,
-                                             ConfigProcessor.load_config_file(
+                                             self.load_config_file(
                                                  full_file, config_type))
             return config
         except TypeError:

@@ -1,10 +1,3 @@
-# pylint: disable-msg=too-many-lines
-"""Config spec for MPF."""
-from mpf._version import __version__
-
-# values are type|validation|default
-mpf_config_spec = '''
-
 accelerometers:
     __valid_in__: machine
     number: single|str|
@@ -19,16 +12,16 @@ accelerometers:
 achievement_groups:
     __valid_in__: mode
     achievements: list|machine(achievements)|
-    enable_events: dict|str:ms|None
-    disable_events: dict|str:ms|None
-    start_selected_events: dict|str:ms|None
-    select_random_achievement_events: dict|str:ms|None
+    enable_events: event_handler|str:ms|None
+    disable_events: event_handler|str:ms|None
+    start_selected_events: event_handler|str:ms|None
+    select_random_achievement_events: event_handler|str:ms|None
     allow_selection_change_while_disabled: single|bool|False
     auto_select: single|bool|False
     disable_while_achievement_started: single|bool|True
     enable_while_no_achievement_started: single|bool|True
-    rotate_right_events: dict|str:ms|None
-    rotate_left_events: dict|str:ms|None
+    rotate_right_events: event_handler|str:ms|None
+    rotate_left_events: event_handler|str:ms|None
     events_when_all_completed: list|str|None
     events_when_no_more_enabled: list|str|None
     events_when_enabled: list|str|None
@@ -41,13 +34,13 @@ achievements:
     restart_on_next_ball_when_started: single|bool|False
     enable_on_next_ball_when_enabled: single|bool|True
 
-    enable_events: dict|str:ms|None
-    start_events: dict|str:ms|None
-    complete_events: dict|str:ms|None
-    disable_events: dict|str:ms|None
-    stop_events: dict|str:ms|None
-    reset_events: dict|str:ms|None
-    select_events: dict|str:ms|None
+    enable_events: event_handler|str:ms|None
+    start_events: event_handler|str:ms|None
+    complete_events: event_handler|str:ms|None
+    disable_events: event_handler|str:ms|None
+    stop_events: event_handler|str:ms|None
+    reset_events: event_handler|str:ms|None
+    select_events: event_handler|str:ms|None
 
     events_when_enabled: list|str|None
     events_when_started: list|str|None
@@ -97,8 +90,8 @@ autofire_coils:
     coil: single|machine(coils)|
     switch: single|machine(switches)|
     reverse_switch: single|bool|False
-    enable_events: dict|str:ms|ball_started
-    disable_events: dict|str:ms|ball_will_end, service_mode_entered
+    enable_events: event_handler|str:ms|ball_started
+    disable_events: event_handler|str:ms|ball_will_end, service_mode_entered
     coil_overwrite: single|subconfig(coil_overwrites)|None
     switch_overwrite: dict|str:str|None
     ball_search_order: single|int|100
@@ -125,11 +118,11 @@ ball_devices:
     retries_before_increasing_pulse: single|int|4
     hold_coil: single|machine(coils)|None
     hold_coil_release_time: single|ms|1s
-    hold_events: dict|str:ms|None
+    hold_events: event_handler|str:ms|None
     hold_switches: list|machine(switches)|None
     entrance_switch: single|machine(switches)|None
     entrance_switch_full_timeout: single|ms|0
-    entrance_events: dict|str:ms|None
+    entrance_events: event_handler|str:ms|None
     entrance_event_timeout: single|secs|5s
     idle_missing_ball_timeout: single|secs|5s
     jam_switch: single|machine(switches)|None
@@ -145,8 +138,8 @@ ball_devices:
     ball_switches: list|machine(switches)|None
     ball_capacity: single|int|None
     request_ball_events: list|str|None
-    eject_events: dict|str:ms|None
-    eject_all_events: dict|str:ms|None
+    eject_events: event_handler|str:ms|None
+    eject_all_events: event_handler|str:ms|None
     mechanical_eject: single|bool|False
     player_controlled_eject_event: single|str|None
     ball_search_order: single|int|200
@@ -165,23 +158,23 @@ ball_holds:
     balls_to_hold: single|int|None
     hold_devices: list|machine(ball_devices)|
     source_playfield: single|machine(ball_devices)|playfield
-    enable_events: dict|str:ms|None
-    disable_events: dict|str:ms|None
-    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
-    release_one_events: dict|str:ms|None
-    release_all_events: dict|str:ms|None
-    release_one_if_full_events: dict|str:ms|None
+    enable_events: event_handler|str:ms|None
+    disable_events: event_handler|str:ms|None
+    reset_events: event_handler|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
+    release_one_events: event_handler|str:ms|None
+    release_all_events: event_handler|str:ms|None
+    release_one_if_full_events: event_handler|str:ms|None
 ball_locks:
     __valid_in__: machine, mode
     balls_to_lock: single|int|
     lock_devices: list|machine(ball_devices)|
     source_playfield: single|machine(ball_devices)|playfield
     request_new_balls_to_pf: single|bool|True
-    enable_events: dict|str:ms|None
-    disable_events: dict|str:ms|None
-    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
-    release_one_events: dict|str:ms|None
-    release_one_if_full_events: dict|str:ms|None
+    enable_events: event_handler|str:ms|None
+    disable_events: event_handler|str:ms|None
+    reset_events: event_handler|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
+    release_one_events: event_handler|str:ms|None
+    release_one_if_full_events: event_handler|str:ms|None
 ball_saves:
     __valid_in__: machine, mode
     source_playfield: single|machine(ball_devices)|playfield
@@ -192,14 +185,14 @@ ball_saves:
     grace_period: single|ms|0
     auto_launch: single|bool|True
     balls_to_save: single|int|1
-    enable_events: dict|str:ms|None
-    early_ball_save_events: dict|str:ms|None
-    delayed_eject_events: dict|str:ms|None
-    disable_events: dict|str:ms|ball_will_end, service_mode_entered
-    timer_start_events: dict|str:ms|None
+    enable_events: event_handler|str:ms|None
+    early_ball_save_events: event_handler|str:ms|None
+    delayed_eject_events: event_handler|str:ms|None
+    disable_events: event_handler|str:ms|ball_will_end, service_mode_entered
+    timer_start_events: event_handler|str:ms|None
 bcp:
     __valid_in__: machine
-    debug: False
+    debug: single|bool|False
     connections:
         host: single|str|None
         port: single|int|5050
@@ -242,17 +235,17 @@ coils:
     max_pulse_ms: single|ms|None
     max_pulse_power: single|float(0,1)|1.0
     max_hold_power: single|float(0,1)|None
-    disable_events: dict|str:ms|None
-    enable_events: dict|str:ms|None
-    pulse_events: dict|str:ms|None
+    disable_events: event_handler|str:ms|None
+    enable_events: event_handler|str:ms|None
+    pulse_events: event_handler|str:ms|None
     platform_settings: single|dict|None
     psu: single|machine(psus)|default
     platform: single|str|None
 digital_outputs:
     __valid_in__: machine
     number: single|str|
-    disable_events: dict|str:ms|None
-    enable_events: dict|str:ms|None
+    disable_events: event_handler|str:ms|None
+    enable_events: event_handler|str:ms|None
     platform: single|str|None
     type: single|enum(light,driver)|
     light_subtype: single|str|None
@@ -302,7 +295,7 @@ credits:
     __valid_in__: machine
     max_credits: single|template_int|0
     free_play: single|bool|yes
-    price_tier_template: single|str|{{credits}} CREDITS ${{price}}
+    price_tier_template: single|str|{credits} CREDITS ${price}
     service_credits_switch: list|machine(switches)|None
     fractional_credit_expiration_time: single|ms|0
     credit_expiration_time: single|ms|0
@@ -346,20 +339,20 @@ display_light_player:
     max_y: single|int|None
 diverters:
     __valid_in__: machine
-    activate_events: dict|str:ms|None
+    activate_events: event_handler|str:ms|None
     activation_coil: single|machine(coils)|None
     activation_time: single|ms|0
     activation_switches: list|machine(switches)|None
     allow_multiple_concurrent_ejects_to_same_side: single|bool|True
     cool_down_time: single|ms|0
-    deactivate_events: dict|str:ms|None
+    deactivate_events: event_handler|str:ms|None
     deactivation_switches: list|machine(switches)|None
     deactivation_coil: single|machine(coils)|None
-    disable_events: dict|str:ms|None
+    disable_events: event_handler|str:ms|None
     disable_switches: list|machine(switches)|None
-    enable_events: dict|str:ms|None
+    enable_events: event_handler|str:ms|None
     feeder_devices: list|machine(ball_devices)|playfield
-    reset_events: dict|str:ms|machine_reset_phase_3
+    reset_events: event_handler|str:ms|machine_reset_phase_3
     targets_when_active: list|machine(ball_devices)|playfield
     targets_when_inactive: list|machine(ball_devices)|playfield
     type: single|enum(hold,pulse)|hold
@@ -381,10 +374,10 @@ drop_targets:
     switch: single|machine(switches)|
     reset_coil: single|machine(coils)|None
     knockdown_coil: single|machine(coils)|None
-    reset_events: dict|str:ms|ball_starting, machine_reset_phase_3
-    knockdown_events: dict|str:ms|None
-    enable_keep_up_events: dict|str:ms|None
-    disable_keep_up_events: dict|str:ms|None
+    reset_events: event_handler|str:ms|ball_starting, machine_reset_phase_3
+    knockdown_events: event_handler|str:ms|None
+    enable_keep_up_events: event_handler|str:ms|None
+    disable_keep_up_events: event_handler|str:ms|None
     ball_search_order: single|int|100
     reset_coil_max_wait_ms: single|ms|100ms
     knockdown_coil_max_wait_ms: single|ms|100ms
@@ -397,7 +390,7 @@ drop_target_banks:
     reset_coil: single|machine(coils)|None
     reset_coils: list|machine(coils)|None
     reset_coil_max_wait_ms: single|ms|100ms
-    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
+    reset_events: event_handler|str:ms|machine_reset_phase_3, ball_starting
     ignore_switch_ms: single|ms|500ms
 effects:
     __valid_in__: None
@@ -472,13 +465,13 @@ extra_balls:
     __valid_in__: mode
     enabled: single|bool|True
     group: single|machine(extra_ball_groups)|None
-    award_events: dict|str:ms|None
-    light_events: dict|str:ms|None
+    award_events: event_handler|str:ms|None
+    light_events: event_handler|str:ms|None
     max_per_game: single|int|1
 extra_ball_groups:
     __valid_in__: machine
     enabled: single|bool|True
-    award_events: dict|str:ms|None
+    award_events: event_handler|str:ms|None
     max_per_game: single|int|None
     max_per_ball: single|int|None
     max_lit: single|int|None
@@ -527,10 +520,10 @@ flippers:
     activation_switch: single|machine(switches)|
     eos_switch: single|machine(switches)|None
     use_eos: single|bool|False
-    enable_events: dict|str:ms|ball_started
-    disable_events: dict|str:ms|ball_will_end, service_mode_entered
-    # enable_no_hold_events: dict|str:ms|None
-    # invert_events: dict|str:ms|None
+    enable_events: event_handler|str:ms|ball_started
+    disable_events: event_handler|str:ms|ball_will_end, service_mode_entered
+    # enable_no_hold_events: event_handler|str:ms|None
+    # invert_events: event_handler|str:ms|None
     main_coil_overwrite: single|subconfig(coil_overwrites)|None
     hold_coil_overwrite: single|subconfig(coil_overwrites)|None
     switch_overwrite: dict|str:str|None
@@ -593,8 +586,8 @@ kickbacks:
     coil: single|machine(coils)|
     switch: single|machine(switches)|
     reverse_switch: single|bool|False
-    enable_events: dict|str:ms|None
-    disable_events: dict|str:ms|ball_will_end, service_mode_entered
+    enable_events: event_handler|str:ms|None
+    disable_events: event_handler|str:ms|ball_will_end, service_mode_entered
     coil_overwrite: single|subconfig(coil_overwrites)|None
     switch_overwrite: dict|str:str|None
     ball_search_order: single|int|100
@@ -671,10 +664,10 @@ lisy:
     network_port: single|int|None
     network_host: single|str|None
 logic_blocks_common:
-    enable_events: dict|str:ms|None
-    disable_events: dict|str:ms|None
-    reset_events: dict|str:ms|None
-    restart_events: dict|str:ms|None
+    enable_events: event_handler|str:ms|None
+    disable_events: event_handler|str:ms|None
+    reset_events: event_handler|str:ms|None
+    restart_events: event_handler|str:ms|None
     reset_on_complete: single|bool|True
     disable_on_complete: single|bool|True
     persist_state: single|bool|False
@@ -686,7 +679,7 @@ accruals:
     events: list|str|
 counters:
     __valid_in__: machine, mode
-    count_events: dict|str:ms|
+    count_events: event_handler|str:ms|
     count_complete_value: single|template_int|None
     multiple_hit_window: single|ms|0
     count_interval: single|int|1
@@ -741,17 +734,17 @@ magnets:
     fling_drop_time: single|ms|250ms
     fling_regrab_time: single|ms|50ms
     playfield: single|machine(playfields)|playfield
-    enable_events: dict|str:ms|None
-    disable_events: dict|str:ms|None
-    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
-    grab_ball_events: dict|str:ms|None
-    release_ball_events: dict|str:ms|None
-    fling_ball_events: dict|str:ms|None
+    enable_events: event_handler|str:ms|None
+    disable_events: event_handler|str:ms|None
+    reset_events: event_handler|str:ms|machine_reset_phase_3, ball_starting
+    grab_ball_events: event_handler|str:ms|None
+    release_ball_events: event_handler|str:ms|None
+    fling_ball_events: event_handler|str:ms|None
 motors:
     __valid_in__: machine
     position_switches: omap|str:machine(switches)|
     reset_position: single|str|
-    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
+    reset_events: event_handler|str:ms|machine_reset_phase_3, ball_starting
     go_to_position: dict|str:str|None
     motor_left_output: single|machine(digital_outputs)|None
     motor_right_output: single|machine(digital_outputs)|None
@@ -786,24 +779,24 @@ multiballs:
     source_playfield: single|machine(ball_devices)|playfield
     shoot_again: single|ms|10s
     ball_locks: list|machine(ball_devices)|None
-    enable_events: dict|str:ms|None
-    disable_events: dict|str:ms|None
-    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
-    start_events: dict|str:ms|None
-    stop_events: dict|str:ms|None
-    add_a_ball_events: dict|str:ms|None
-    start_or_add_a_ball_events: dict|str:ms|None
+    enable_events: event_handler|str:ms|None
+    disable_events: event_handler|str:ms|None
+    reset_events: event_handler|str:ms|machine_reset_phase_3, ball_starting
+    start_events: event_handler|str:ms|None
+    stop_events: event_handler|str:ms|None
+    add_a_ball_events: event_handler|str:ms|None
+    start_or_add_a_ball_events: event_handler|str:ms|None
 multiball_locks:
     __valid_in__: mode
     balls_to_lock: single|int|
     balls_to_replace: single|int|-1
     lock_devices: list|machine(ball_devices)|
     source_playfield: single|machine(ball_devices)|playfield
-    enable_events: dict|str:ms|None
-    disable_events: dict|str:ms|None
+    enable_events: event_handler|str:ms|None
+    disable_events: event_handler|str:ms|None
     locked_ball_counting_strategy: single|enum(virtual_only,min_virtual_physical,physical_only,no_virtual)|virtual_only
-    reset_all_counts_events: dict|str:ms|None
-    reset_count_for_current_player_events: dict|str:ms|None
+    reset_all_counts_events: event_handler|str:ms|None
+    reset_count_for_current_player_events: event_handler|str:ms|None
 mypinballs:
     __valid_in__: machine
     port: single|str|
@@ -866,15 +859,15 @@ playfields:
     ball_search_phase_3_searches: single|int|4
     ball_search_failed_action: single|str|new_ball
     ball_search_wait_after_iteration: single|ms|5s
-    ball_search_block_events: dict|str:ms|flipper_cradle
-    ball_search_unblock_events: dict|str:ms|flipper_cradle_release
-    ball_search_enable_events: dict|str:ms|None
-    ball_search_disable_events: dict|str:ms|None
+    ball_search_block_events: event_handler|str:ms|flipper_cradle
+    ball_search_unblock_events: event_handler|str:ms|flipper_cradle_release
+    ball_search_enable_events: event_handler|str:ms|None
+    ball_search_disable_events: event_handler|str:ms|None
     default_source_device: single|machine(ball_devices)|
 playfield_transfers:
     __valid_in__: machine
     ball_switch: single|machine(switches)|None
-    transfer_events: dict|str:ms|None
+    transfer_events: event_handler|str:ms|None
     eject_target: single|machine(ball_devices)|
     captures_from: single|machine(ball_devices)|
 playlist_player:
@@ -1008,7 +1001,7 @@ servos:
     ball_search_wait: single|ms|5s
     include_in_ball_search: single|bool|True
     reset_position: single|float|0.5
-    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
+    reset_events: event_handler|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
     number: single|str|
     platform: single|str|None
 settings:
@@ -1028,23 +1021,23 @@ shots:
     delay_switch: dict|machine(switches):ms|None
     persist_enable: single|bool|True
     playfield: single|machine(playfields)|playfield
-    enable_events: dict|str:ms|None
-    disable_events: dict|str:ms|None
-    reset_events: dict|str:ms|None
-    advance_events: dict|str:ms|None
-    hit_events: dict|str:ms|None
+    enable_events: event_handler|str:ms|None
+    disable_events: event_handler|str:ms|None
+    reset_events: event_handler|str:ms|None
+    advance_events: event_handler|str:ms|None
+    hit_events: event_handler|str:ms|None
     show_tokens: dict|str:str|None
 shot_groups:
     __valid_in__: mode
     shots: list|machine(shots)|None
-    rotate_events: dict|str:ms|None
-    rotate_left_events: dict|str:ms|None
-    rotate_right_events: dict|str:ms|None
-    enable_events: dict|str:ms|None
-    disable_events: dict|str:ms|None
-    reset_events: dict|str:ms|None
-    enable_rotation_events: dict|str:ms|None
-    disable_rotation_events: dict|str:ms|None
+    rotate_events: event_handler|str:ms|None
+    rotate_left_events: event_handler|str:ms|None
+    rotate_right_events: event_handler|str:ms|None
+    enable_events: event_handler|str:ms|None
+    disable_events: event_handler|str:ms|None
+    reset_events: event_handler|str:ms|None
+    enable_rotation_events: event_handler|str:ms|None
+    disable_rotation_events: event_handler|str:ms|None
 shot_profiles:
     __valid_in__: machine, mode
     loop: single|bool|False
@@ -1067,8 +1060,8 @@ shot_profiles:
         show_tokens: dict|str:str|None
 state:
     __valid_in__: machine, mode
-    enable_events: dict|str:ms|None
-    disable_events: dict|str:ms|None
+    enable_events: event_handler|str:ms|None
+    disable_events: event_handler|str:ms|None
     persist_state: single|bool|False
     start_enabled: single|bool|None
 state_machines:
@@ -1334,7 +1327,7 @@ steppers:
     ball_search_wait: single|ms|5s
     include_in_ball_search: single|bool|True
     reset_position: single|float|0.0
-    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
+    reset_events: event_handler|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
     number: single|str|
     platform: single|str|None
 switch_player:
@@ -1346,7 +1339,7 @@ sequence_shots:
     switch_sequence: list|machine(switches)|None
     event_sequence: list|str|None
     cancel_switches: list|machine(switches)|None
-    cancel_events: dict|str:ms|None
+    cancel_events: event_handler|str:ms|None
     delay_switch_list: dict|machine(switches):ms|None
     delay_event_list: dict|str:ms|None
     sequence_timeout: single|ms|0
@@ -1410,8 +1403,7 @@ timers:
     file_log: single|enum(none,basic,full)|basic
 timer_control_events:  # subconfig for mode timers
     __valid_in__: None
-    action: single|enum(add,subtract,jump,start,stop,reset,restart,pause,set_tick_interval,change_tick_interval,\
-reset_tick_interval)|
+    action: single|enum(add,subtract,jump,start,stop,reset,restart,pause,set_tick_interval,change_tick_interval,reset_tick_interval)|
     event: single|str|
     value: single|int|None
 track_player:
@@ -1670,4 +1662,3 @@ window:
     top: single|int|None
     no_window: single|bool|False
     effects: ignore
-'''.format(__version__)

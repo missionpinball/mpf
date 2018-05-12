@@ -400,6 +400,9 @@ class MpfTestCase(unittest.TestCase):
     def _mock_loop(self):
         pass
 
+    def _early_machine_init(self):
+        pass
+
     def _exception_handler(self, loop, context):
         try:
             loop.stop()
@@ -450,6 +453,8 @@ class MpfTestCase(unittest.TestCase):
                 self.getOptions(), self.machine_config_patches, self.machine_config_defaults,
                 self.clock, self._get_mock_data(),
                 self.get_enable_plugins())
+
+            self._early_machine_init()
 
             self._initialise_machine()
 
@@ -885,9 +890,4 @@ class MpfTestCase(unittest.TestCase):
         self._get_event_loop2 = None
 
     def add_to_config_validator(self, key, new_dict):
-        if mpf.core.config_validator.ConfigValidator.config_spec:
-            mpf.core.config_validator.ConfigValidator.config_spec[key] = (
-                new_dict)
-        else:
-            mpf.core.config_validator.mpf_config_spec += '\n' + yaml.dump(
-                {key: new_dict}, default_flow_style=False)
+        self.machine.config_validator.get_config_spec()[key] = (new_dict)
