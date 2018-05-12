@@ -180,9 +180,6 @@ class Shot(EnableDisableMixin, ModeDevice):
                         # not advancing manually but correct show. keep it that way.
                         return
 
-                # current show it not the right one. stop it
-                self._stop_show()
-
             # play the right one
             self._play_show(settings=state_settings)
 
@@ -193,17 +190,12 @@ class Shot(EnableDisableMixin, ModeDevice):
                 # one from the previous step?
                 if (self.running_show.show.name !=
                         self.profile.config['show']):  # not ours
-                    self._stop_show()
-
                     # start the new show at this step
                     self._play_show(settings=state_settings, start_step=state + 1)
 
                 elif self.running_show.current_step_index == state_settings['start_step'] - 1:
                     self.running_show.advance()
                 else:
-                    # restart otherwise
-                    self._stop_show()
-
                     # start the new show at this step
                     self._play_show(settings=state_settings, start_step=state + 1)
 
@@ -237,6 +229,9 @@ class Shot(EnableDisableMixin, ModeDevice):
         s.pop('name')
 
         self.debug_log("Playing show: %s. %s", show_name, s)
+
+        if self.running_show:
+            s["start_callback"] = self.running_show.stop
 
         self.running_show = self.machine.shows[show_name].play(**s)
 
