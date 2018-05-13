@@ -26,6 +26,8 @@ class ConfigValidator(object):
 
     """Validates config against config specs."""
 
+    class_cache = None
+
     def __init__(self, machine):
         """Initialise validator."""
         self.machine = machine      # type: MachineController
@@ -79,12 +81,17 @@ class ConfigValidator(object):
 
     def load_config_spec(self):
         """Load config spec."""
+        if ConfigValidator.class_cache:
+            self.config_spec = ConfigValidator.class_cache
+            return
+
         cache_file = os.path.join(self.get_cache_dir(), "config_spec.mpf_cache")
         config_spec_file = os.path.abspath(os.path.join(mpf.core.__path__[0], os.pardir, "config_spec.yaml"))
         if os.path.isfile(cache_file) and os.path.getmtime(cache_file) >= os.path.getmtime(config_spec_file):
             try:
                 with open(cache_file, 'rb') as f:
                     self.config_spec = pickle.load(f)
+                    ConfigValidator.class_cache = deepcopy(self.config_spec)
                     return
             except:
                 pass
@@ -99,6 +106,7 @@ class ConfigValidator(object):
             pickle.dump(config, f, protocol=4)
             self.log.info('Config spec file cache created: %s', cache_file)
 
+        ConfigValidator.class_cache = deepcopy(self.config_spec)
         self.config_spec = config
 
     def _process_config_spec(self, spec, path):
