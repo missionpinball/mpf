@@ -7,14 +7,12 @@ import os
 import pickle
 import tempfile
 
-import mpf
 from typing import List, Tuple, Any
 
 from mpf.core.file_manager import FileManager
 from mpf.core.utility_functions import Util
 from mpf._version import __show_version__, __config_version__
 from mpf.exceptions.ConfigFileError import ConfigFileError
-from mpf.file_interfaces.yaml_interface import YamlInterface
 
 
 class ConfigProcessor(object):

@@ -2,6 +2,7 @@
 import logging
 import os
 import re
+import tempfile
 from collections import OrderedDict
 from copy import deepcopy
 
@@ -61,7 +62,7 @@ class ConfigValidator(object):
 
     def load_device_config_spec(self, config_section, config_spec):
         """Load config specs for a device."""
-        self.config_spec[config_section] = YamlInterface.process(config_spec)
+        self.config_spec[config_section] = self._process_config_spec(YamlInterface.process(config_spec), config_section)
 
     def load_mode_config_spec(self, mode_string, config_spec):
         """Load config specs for a mode."""
@@ -71,9 +72,14 @@ class ConfigValidator(object):
             config = YamlInterface.process(config_spec)
             self.config_spec['_mode_settings'][mode_string] = self._process_config_spec(config, mode_string)
 
+    @staticmethod
+    def get_cache_dir():
+        """Return cache dir."""
+        return tempfile.gettempdir()
+
     def load_config_spec(self):
         """Load config spec."""
-        cache_file = os.path.join(self.machine.config_processor.get_cache_dir(), "config_spec.mpf_cache")
+        cache_file = os.path.join(self.get_cache_dir(), "config_spec.mpf_cache")
         config_spec_file = os.path.abspath(os.path.join(mpf.core.__path__[0], os.pardir, "config_spec.yaml"))
         if os.path.isfile(cache_file) and os.path.getmtime(cache_file) >= os.path.getmtime(config_spec_file):
             try:
