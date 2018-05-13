@@ -136,10 +136,10 @@ class TestPluginConfigPlayer(MpfBcpTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/plugin_config_player/'
 
-    def _early_machine_init(self):
-        self.add_to_config_validator('test_player',
+    def _early_machine_init(self, machine):
+        self.add_to_config_validator(machine, 'test_player',
                                      dict(__valid_in__='machine, mode'))
-        self.add_to_config_validator('test2_player',
+        self.add_to_config_validator(machine, 'test2_player',
                                      dict(__valid_in__='machine, mode'))
 
     def setUp(self):

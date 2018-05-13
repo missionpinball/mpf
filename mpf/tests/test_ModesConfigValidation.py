@@ -12,8 +12,8 @@ class TestModesConfigValidation(MpfTestCase):
     def setUp(self):
         self.save_and_prepare_sys_path()
 
-    def _early_machine_init(self):
-        self.add_to_config_validator('unrelated_section',
+    def _early_machine_init(self, machine):
+        self.add_to_config_validator(machine, 'unrelated_section',
                                      dict(__valid_in__ = 'mode'))
 
     def tearDown(self):

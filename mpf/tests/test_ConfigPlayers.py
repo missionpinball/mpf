@@ -53,8 +53,8 @@ class TestConfigPlayers(MpfTestCase):
 
         super().setUp()
 
-    def _early_machine_init(self):
-        self.add_to_config_validator('banana_player',
+    def _early_machine_init(self, machine):
+        self.add_to_config_validator(machine, 'banana_player',
                                      dict(__valid_in__='machine, mode'))
 
     def test_config_player(self):
