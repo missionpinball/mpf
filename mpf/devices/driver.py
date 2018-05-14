@@ -30,6 +30,8 @@ class Driver(SystemWideDevice):
     collection = 'coils'
     class_label = 'coil'
 
+    __slots__ = ["hw_driver", "delay", "platform", "__dict__"]
+
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise driver."""
         self.hw_driver = None   # type: DriverPlatformInterface

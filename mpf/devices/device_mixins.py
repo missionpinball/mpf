@@ -10,6 +10,8 @@ class DevicePositionMixin():
     device.y and device.z instead of device.config['x']
     """
 
+    __slots__ = []
+
     @property
     def x(self):
         """Get the X value from the config.
