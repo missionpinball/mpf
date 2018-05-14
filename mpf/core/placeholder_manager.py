@@ -14,7 +14,6 @@ from mpf.core.mpf_controller import MpfController
 MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
-    from mpf.core.player import Player
 
 
 # supported operators
