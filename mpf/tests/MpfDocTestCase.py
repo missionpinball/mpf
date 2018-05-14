@@ -155,7 +155,6 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
     def command_assert_light_color(self, light, color):
         self.assertLightColor(light, color)
 
-<<<<<<< HEAD
     def command_mock_event(self, name):
         self.mock_event(name)
 
@@ -164,6 +163,3 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
 
     def command_assert_event_not_called(self, name):
         self.assertEventNotCalled(name)
-=======
-
->>>>>>> bf45e4a... add regression tests
