@@ -1062,7 +1062,7 @@ shot_profiles:
         name: single|str|
         priority: single|int|0
         speed: single|float|1
-        start_step: single|int|1
+        start_step: single|int|None
         loops: single|int|-1
         sync_ms: single|int|None
         manual_advance: single|bool|None
