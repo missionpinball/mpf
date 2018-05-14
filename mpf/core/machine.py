@@ -77,6 +77,15 @@ class MachineController(LogMixin):
         machine_path: The root path of this machine_files folder
     """
 
+    __slots__ = ["log", "options", "config_processor", "mpf_path", "machine_path", "_exception", "_boot_holds",
+                 "is_init_done", "_done", "monitors", "plugins", "custom_code", "modes", "game", "machine_vars",
+                 "machine_var_monitor", "machine_var_data_manager", "thread_stopper", "config", "config_validator",
+                 "machine_config", "delayRegistry", "delay", "hardware_platforms", "default_platform", "clock",
+                 "stop_future", "events", "switch_controller", "mode_controller", "settings", "asset_manager",
+                 "bcp", "ball_controller", "show_controller", "placeholder_manager", "device_manager", "auditor",
+                 "tui", "service", "switches", "shows", "coils", "ball_devices", "lights", "playfield", "playfields",
+                 "autofires", "__dict__"]
+
     # pylint: disable-msg=too-many-statements
     def __init__(self, mpf_path: str, machine_path: str, options: dict) -> None:
         """Initialize machine controller."""

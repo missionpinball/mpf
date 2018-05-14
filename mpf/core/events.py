@@ -30,6 +30,8 @@ class EventManager(MpfController):
 
     config_name = "event_manager"
 
+    __slots__ = ["registered_handlers", "event_queue", "callback_queue", "monitor_events", "_queue_tasks"]
+
     def __init__(self, machine: "MachineController") -> None:
         """Initialize EventManager."""
         super().__init__(machine)

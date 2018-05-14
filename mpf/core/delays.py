@@ -18,6 +18,8 @@ class DelayManagerRegistry(object):
 
     """Keeps references to all DelayManager instances."""
 
+    __slots__ = ["delay_managers", "machine"]
+
     def __init__(self, machine: "MachineController") -> None:
         """Initialise delay registry."""
         self.delay_managers = set()     # type: Set["DelayManager"]
@@ -46,6 +48,8 @@ class DelayManager(MpfController):
     are automatically removed when the mode stops.)
 
     """
+
+    __slots__ = ["delays", "registry"]
 
     config_name = "delay_manager"
 

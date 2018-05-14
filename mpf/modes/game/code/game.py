@@ -21,6 +21,10 @@ class Game(AsyncMode):
     balls, rotating to the next player, etc.
     """
 
+    __slots__ = ["_balls_in_play", "player_list", "slam_tilted", "tilted", "ending", "player", "num_players",
+                 "_stopping_modes", "_stopping_queue", "_end_ball_event", "_at_least_one_player_event",
+                 "balls_per_game", "max_players"]
+
     def __init__(self, machine, config, name, path):
         """Initialise game."""
         super().__init__(machine, config, name, path)

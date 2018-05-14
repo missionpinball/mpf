@@ -14,6 +14,8 @@ class LogMixin(object):
 
     unit_test = False
 
+    __slots__ = ["log", "_info_to_console", "_debug_to_console", "_info_to_file", "_debug_to_file"]
+
     def __init__(self) -> None:
         """Initialise Log Mixin."""
         self.log = None     # type: Logger

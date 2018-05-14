@@ -852,6 +852,9 @@ class Asset(object):
 
     asset_group_class = AssetPool  # replace with your own asset group class
 
+    __slots__ = ["machine", "name", "file", "config", "priority", "_callbacks", "_id", "lock", "loading", "loaded",
+                 "unloading"]
+
     @classmethod
     def initialize(cls, machine):
         """Initialise asset class."""

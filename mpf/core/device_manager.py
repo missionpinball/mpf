@@ -17,6 +17,8 @@ class DeviceManager(MpfController):
 
     config_name = "device_manager"
 
+    __slots__ = ["_monitorable_devices", "collections", "device_classes"]
+
     def __init__(self, machine):
         """Initialize device manager."""
         super().__init__(machine)
@@ -334,6 +336,8 @@ class DeviceCollection(dict):
     One instance of this class will be created for each different type of
     hardware device (such as coils, lights, switches, ball devices, etc.).
     """
+
+    __slots__ = ["machine", "name", "config_section"]
 
     def __init__(self, machine, collection, config_section):
         """Initialise device collection."""

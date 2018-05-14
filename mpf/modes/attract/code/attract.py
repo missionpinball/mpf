@@ -12,6 +12,8 @@ class Attract(Mode):
     next mode if the request to start game comes back as approved.
     """
 
+    __slots__ = ["start_button_pressed_time", "start_hold_time", "start_buttons_held"]
+
     def __init__(self, machine, config, name, path):
         """Initialise mode."""
         super().__init__(machine, config, name, path)

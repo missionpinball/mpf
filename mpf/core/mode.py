@@ -28,6 +28,11 @@ class Mode(LogMixin):
 
     """Base class for a mode."""
 
+    __slots__ = ["machine", "config", "name", "path", "priority", "_active", "_starting", "_mode_start_wait_queue",
+                 "stop_methods", "start_callback", "stop_callbacks", "event_handlers", "switch_handlers",
+                 "mode_stop_kwargs", "mode_devices", "start_event_kwargs", "stopping", "delay", "player",
+                 "auto_stop_on_ball_end", "restart_on_next_ball"]
+
     def __init__(self, machine: "MachineController", config, name: str, path) -> None:
         """Initialise mode.
 
