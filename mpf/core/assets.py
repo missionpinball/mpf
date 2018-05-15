@@ -881,7 +881,7 @@ class Asset(object):
 
     def __init__(self, machine, name, file, config):
         """Initialise asset."""
-        self.machine = machine
+        self.machine = machine      # type: MachineController
         self.name = name
         self.file = file
 

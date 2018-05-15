@@ -164,44 +164,11 @@ class Shot(EnableDisableMixin, ModeDevice):
         state_settings = self.profile.config['states'][state]
 
         if state_settings['show']:  # there's a show specified this state
-            if self.running_show:
-                if (self.running_show.show.name == state_settings['show'] and
-                        self.running_show.manual_advance == bool(state_settings['manual_advance'])):
-                    if (self.running_show.manual_advance and
-                            self.running_show.current_step_index + 1 == state_settings['start_step']):
-                        # manual advance and correct step. stay there.
-                        return
-                    elif (self.running_show.manual_advance and
-                            self.running_show.current_step_index + 2 == state_settings['start_step']):
-                        # show it one step behind. advance it.
-                        self.running_show.advance()
-                        return
-                    elif not self.running_show.manual_advance:
-                        # not advancing manually but correct show. keep it that way.
-                        return
-
-            # play the right one
             self._play_show(settings=state_settings)
 
         elif self.profile.config['show']:
             # no show for this state, but we have a profile root show
-            if self.running_show:
-                # is the running show the profile root one or a step-specific
-                # one from the previous step?
-                if (self.running_show.show.name !=
-                        self.profile.config['show']):  # not ours
-                    # start the new show at this step
-                    self._play_show(settings=state_settings, start_step=state + 1)
-
-                elif self.running_show.current_step_index == state_settings['start_step'] - 1:
-                    self.running_show.advance()
-                else:
-                    # start the new show at this step
-                    self._play_show(settings=state_settings, start_step=state + 1)
-
-            else:  # no running show, so start the profile root show
-                start_step = state + 1
-                self._play_show(settings=state_settings, start_step=start_step)
+            self._play_show(settings=state_settings, start_step=state + 1)
 
         # if neither if/elif above happens, it means the current step has no
         # show but the previous step had one. We stop the previous show if there is one
@@ -222,18 +189,19 @@ class Shot(EnableDisableMixin, ModeDevice):
 
         s['show_tokens'].update(self.config['show_tokens'])
         s['priority'] += self.mode.priority
-        if start_step:
-            s['start_step'] = start_step
+        if not start_step:
+            start_step = s.pop('start_step')
+        else:
+            s.pop('start_step')
 
         s.pop('show')
         s.pop('name')
 
         self.debug_log("Playing show: %s. %s", show_name, s)
 
-        if self.running_show:
-            s["start_callback"] = self.running_show.stop
-
-        self.running_show = self.machine.shows[show_name].play(**s)
+        show_config = self.machine.show_controller.create_show_config(show_name, **s)
+        self.running_show = self.machine.show_controller.replace_or_advance_show(self.running_show, show_config,
+                                                                                 start_step)
 
     def device_removed_from_mode(self, mode):
         """Remove this shot device.
