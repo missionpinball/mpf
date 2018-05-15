@@ -70,7 +70,7 @@ class Command(object):
                             "ensuring all assets are set up properly "
                             "during development.")
 
-        parser.add_argument("-j",
+        parser.add_argument("--json-logging",
                             action="store_true", dest="jsonlogging",
                             default=False,
                             help="Enables json logging to file. ")
