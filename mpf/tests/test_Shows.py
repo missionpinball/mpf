@@ -133,7 +133,7 @@ class TestShows(MpfTestCase):
         self.assertIsNotNone(running_show1)
 
         # Make sure the show is running at the proper priority (of the mode)
-        self.assertEqual(running_show1.priority, 200)
+        self.assertEqual(running_show1.show_config.priority, 200)
 
         # Check LEDs, lights, and GI after first show step
         self.assertLightColor("led_01", '006400')
@@ -545,13 +545,13 @@ class TestShows(MpfTestCase):
         # Test priority
         self.machine.events.post('play_with_priority')
         self.advance_time_and_run()
-        self.assertEqual(15, self.machine.show_player.instances['_global']['show_player']['test_show1'].priority)
+        self.assertEqual(15, self.machine.show_player.instances['_global']['show_player']['test_show1'].show_config.priority)
         self.post_event("stop_test_show1")
 
         # Test speed
         self.machine.events.post('play_with_speed')
         self.advance_time_and_run()
-        self.assertEqual(2, self.machine.show_player.instances['_global']['show_player']['test_show1'].speed)
+        self.assertEqual(2, self.machine.show_player.instances['_global']['show_player']['test_show1'].show_config.speed)
         self.post_event("stop_test_show1")
 
         # Test start step

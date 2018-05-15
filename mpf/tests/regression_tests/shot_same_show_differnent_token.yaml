@@ -1,0 +1,36 @@
+lights:
+  l_light1:
+    number:
+
+switches:
+  s_shot1:
+    number:
+
+##! mode: my_mode
+shot_profiles:
+  my_profile:
+    states:
+    - name: lit_red
+      show: led_color
+      show_tokens:
+         color: red
+    - name: lit_blue
+      show: led_color
+      show_tokens:
+         color: blue
+
+shots:
+  my_shot:
+    switch: s_shot1
+    profile: my_profile
+    advance_events: my_shot_advance
+    show_tokens:
+      leds: l_light1
+
+
+##! test
+#! start_game
+#! start_mode my_mode
+#! assert_light_color l_light1 red
+#! post my_shot_advance
+#! assert_light_color l_light1 blue
