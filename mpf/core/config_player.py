@@ -23,6 +23,8 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
     show_section = None                 # type: str
     machine_collection_name = None      # type: str
 
+    __slots__ = ["device_collection", "machine", "mode_event_keys", "instances", "_show_keys"]
+
     def __init__(self, machine):
         """Initialise config player."""
         super().__init__()

@@ -17,6 +17,8 @@ class DataManager(MpfController):
 
     config_name = "data_manager"
 
+    __slots_ = ["name", "min_wait_secs", "filename", "data", "_dirty"]
+
     def __init__(self, machine, name, min_wait_secs=1):
         """Initialise data manger.
 

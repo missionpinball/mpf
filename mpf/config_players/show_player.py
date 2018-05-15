@@ -9,6 +9,8 @@ class ShowPlayer(DeviceConfigPlayer):
     config_file_section = 'show_player'
     show_section = 'shows'
 
+    __slots__ = []
+
     # pylint: disable-msg=too-many-arguments
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Play, start, stop, pause, resume or advance show based on config."""

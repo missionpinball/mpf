@@ -9,6 +9,8 @@ class PluginPlayer(DeviceConfigPlayer):
     This class is created on the MPF side of things.
     """
 
+    __slots__ = ["bcp_client"]
+
     def __init__(self, machine):
         """Initialise plugin player."""
         super().__init__(machine)

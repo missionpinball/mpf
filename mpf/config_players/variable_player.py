@@ -15,6 +15,8 @@ class VariablePlayer(ConfigPlayer):
     config_file_section = 'variable_player'
     show_section = 'variables'
 
+    __slots__ = ["blocks"]
+
     def __init__(self, machine: MachineController) -> None:
         """Initialise variable player."""
         super().__init__(machine)

@@ -7,6 +7,8 @@ class CustomCode(LogMixin):
 
     """Baseclass for custom code in a machine."""
 
+    __slots__ = ["machine", "name", "delay"]
+
     def __init__(self, machine, name):
         """Initialise custom code."""
         super().__init__()

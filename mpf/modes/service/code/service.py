@@ -15,6 +15,8 @@ class Service(AsyncMode):
 
     """The service mode."""
 
+    __slots__ = []
+
     @staticmethod
     def get_config_spec():
         """Add validation for mode."""

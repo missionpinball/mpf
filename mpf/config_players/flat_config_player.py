@@ -8,6 +8,8 @@ class FlatConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
 
     """Flat show players."""
 
+    __slots__ = []
+
     def validate_config_entry(self, settings, name):
         """Validate one entry of this player."""
         config = self._parse_config(settings, name)

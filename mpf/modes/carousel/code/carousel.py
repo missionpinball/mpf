@@ -10,6 +10,9 @@ class Carousel(Mode):
 
     """Mode which allows the player to select another mode to run."""
 
+    __slots__ = ["_items", "_select_item_events", "_next_item_events", "_previous_item_events",
+                 "_highlighted_item_index", "_done"]
+
     def __init__(self, machine, config, name, path):
         """Initialise carousel mode."""
         self._items = None

@@ -30,6 +30,9 @@ class BaseAssetManager(MpfController, LogMixin):
     module_name = 'AssetManager'
     config_name = 'asset_manager'
 
+    __slots__ = ["_asset_classes", "num_assets_to_load", "num_assets_loaded", "num_bcp_assets_to_load",
+                 "num_bcp_assets_loaded", "_next_id", "_last_asset_event_time"]
+
     def __init__(self, machine: MachineController) -> None:
         """Initialise asset manager.
 
@@ -591,6 +594,8 @@ class AsyncioSyncAssetManager(BaseAssetManager):
 
     """AssetManager which uses asyncio to load assets."""
 
+    __slots__ = []
+
     @staticmethod
     def _load_sync(asset):
         if not asset.loaded:
@@ -626,6 +631,9 @@ class AsyncioSyncAssetManager(BaseAssetManager):
 class AssetPool(object):
 
     """Pool of assets."""
+
+    __slots__ = ["machine", "priority", "name", "config", "member_cls", "loading_members", "_callbacks", "assets"
+                 "_last_asset", "_asset_sequence", "_assets_sent", "_total_weights", "_has_conditions"]
 
     # pylint: disable=too-many-instance-attributes
     # Could possibly combine some or make @properties?

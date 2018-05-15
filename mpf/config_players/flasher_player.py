@@ -10,6 +10,8 @@ class FlasherPlayer(DeviceConfigPlayer):
     config_file_section = 'flasher_player'
     show_section = 'flashers'
 
+    __slots__ = ["delay"]
+
     def __init__(self, machine):
         """Initialise flasher_player."""
         super().__init__(machine)
