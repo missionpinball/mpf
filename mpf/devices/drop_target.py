@@ -172,7 +172,7 @@ class DropTarget(SystemWideDevice):
         del kwargs
         if self.knockdown_coil and not self.machine.switch_controller.is_active(self.config['switch'].name):
             self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
-            self.knockdown_coil.pulse(self.config['knockdown_coil_max_wait_ms'])
+            self.knockdown_coil.pulse(max_wait_ms=self.config['knockdown_coil_max_wait_ms'])
 
     def _update_state_from_switch(self, reconcile=False, **kwargs):
         del kwargs
@@ -248,7 +248,7 @@ class DropTarget(SystemWideDevice):
 
         if self.reset_coil and self.machine.switch_controller.is_active(self.config['switch'].name):
             self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
-            self.reset_coil.pulse(self.config['reset_coil_max_wait_ms'])
+            self.reset_coil.pulse(max_wait_ms=self.config['reset_coil_max_wait_ms'])
 
 
 @DeviceMonitor("complete", "down", "up")
@@ -340,7 +340,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         # now pulse them
         for coil in coils:
             self.debug_log('Pulsing reset coils: %s', coils)
-            coil.pulse(self.config['reset_coil_max_wait_ms'])
+            coil.pulse(max_wait_ms=self.config['reset_coil_max_wait_ms'])
 
     def _restore_switch_hits(self):
         self.machine.events.post('restore')
