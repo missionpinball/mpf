@@ -15,6 +15,7 @@ from asciimatics.screen import Screen
 
 from mpf.core.machine import MachineController
 from mpf.core.utility_functions import Util
+from mpf.commands.loggingFormatters import JSONFormatter
 
 
 class Command(object):
@@ -68,6 +69,11 @@ class Command(object):
                             help="Load all assets upon startup.  Useful for "
                             "ensuring all assets are set up properly "
                             "during development.")
+
+        parser.add_argument("-j",
+                            action="store_true", dest="jsonlogging",
+                            default=False,
+                            help="Enables json logging to file. ")
 
         parser.add_argument("-l",
                             action="store", dest="logfile",
@@ -178,8 +184,11 @@ class Command(object):
 
         # initialise file log
         file_log = logging.FileHandler(full_logfile_path)
-        file_log.setFormatter(logging.Formatter(
-            '%(asctime)s : %(levelname)s : %(name)s : %(message)s'))
+        if self.args.jsonlogging:
+            formatter = JSONFormatter()
+        else:
+            formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
+        file_log.setFormatter(formatter)
 
         # initialise async handler for file log
         file_log_queue = Queue()
