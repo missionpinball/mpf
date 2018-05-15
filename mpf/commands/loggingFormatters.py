@@ -13,6 +13,15 @@ def json_serial(obj):
     raise TypeError("Type not serializable")
 
 
+def format_time(record, datefmt=None):
+    """Override default to use strftime, e.g. to get microseconds."""
+    created = datetime.fromtimestamp(record.created)
+    if datefmt:
+        return created.strftime(datefmt)
+    else:
+        return created.strftime("%Y-%m-%dT%H:%M:%S.{:03f}%z".format(record.msecs))
+
+
 class JSONFormatter(logging.Formatter):
 
     """A formatter that renders log records as JSON objects.
@@ -23,7 +32,7 @@ class JSONFormatter(logging.Formatter):
     def format(self, record):
         """Encode log record as JSON."""
         log = {
-            'timestamp': self.format_time(record, self.datefmt),
+            'timestamp': format_time(record, self.datefmt),
             'level': record.levelname,
             'name': record.name,
             'message': record.getMessage(),
@@ -34,21 +43,11 @@ class JSONFormatter(logging.Formatter):
                 traceback = self.formatException(record.exc_info)
                 traceback = base64.b64encode(traceback.encode('utf-8'))
                 traceback = traceback.decode('utf-8')
-            except Exception as e:
+            except Exception:
                 traceback = 'unable to serialize exception'
             log['traceback'] = traceback
         if isinstance(record.msg, dict):
             log['json_message'] = record.msg
 
         log = json.dumps(log, default=json_serial)
-
         return log
-
-    def format_time(self, record, datefmt=None):
-        """Override default to use strftime, e.g. to get microseconds."""
-        created = datetime.fromtimestamp(record.created)
-        if datefmt:
-            return created.strftime(datefmt)
-        else:
-            return created.strftime("%Y-%m-%dT%H:%M:%S.{:03f}%z".format(record.msecs))
-
