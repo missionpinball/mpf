@@ -114,6 +114,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         """Return string representation."""
         return '<Platform.P3-ROC>'
 
+    @asyncio.coroutine
     def configure_i2c(self, number: str):
         """Configure I2C device on P3-Roc."""
         return P3RocI2c(number, self)

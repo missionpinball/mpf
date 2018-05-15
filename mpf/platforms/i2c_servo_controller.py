@@ -40,7 +40,7 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
         self.platform = self.machine.get_platform_sections(
             "i2c", self.config['platform'])
 
-        self.i2c_device = self.platform.configure_i2c(self.config['address'])
+        self.i2c_device = yield from self.platform.configure_i2c(self.config['address'])
 
         # initialise PCA9685/PCA9635
         self.i2c_device.i2c_write8(0x00, 0x11)  # set sleep
