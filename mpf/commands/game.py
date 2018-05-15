@@ -15,7 +15,7 @@ from asciimatics.screen import Screen
 
 from mpf.core.machine import MachineController
 from mpf.core.utility_functions import Util
-from mpf.commands.loggingFormatters import JSONFormatter
+from mpf.commands.logging_formatters import JSONFormatter
 
 
 class Command(object):
