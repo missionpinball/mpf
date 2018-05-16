@@ -628,6 +628,7 @@ class AsyncioSyncAssetManager(BaseAssetManager):
         future.result()
 
 
+# pylint: disable=too-many-instance-attributes
 class AssetPool(object):
 
     """Pool of assets."""
@@ -635,7 +636,6 @@ class AssetPool(object):
     __slots__ = ["machine", "priority", "name", "config", "member_cls", "loading_members", "_callbacks", "assets",
                  "_last_asset", "_asset_sequence", "_assets_sent", "_total_weights", "_has_conditions"]
 
-    # pylint: disable=too-many-instance-attributes
     # Could possibly combine some or make @properties?
     def __init__(self, mc, name, config, member_cls):
         """Initialise asset pool."""
