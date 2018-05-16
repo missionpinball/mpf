@@ -52,6 +52,9 @@ class MMA8451Device(object):
         # set resolution to 2g
         device.i2c_write8(0x2B, 0x02)
 
+
+#        device.i2c_write8(0x0F, 0x0)
+
         # set ready
         device.i2c_write8(0x2D, 0x01)
         device.i2c_write8(0x2E, 0x01)
@@ -60,7 +63,7 @@ class MMA8451Device(object):
         device.i2c_write8(0x11, 0x40)
 
         # low noise mode, 12,5Hz and activate
-        device.i2c_write8(0x2A, 0x2D)
+        device.i2c_write8(0x2A, 0x1D)
 
         # wait for activate
         yield from asyncio.sleep(.3, loop=self.platform.machine.clock.loop)
@@ -82,7 +85,7 @@ class MMA8451Device(object):
             y = round((float(y)) / range_divisor, 3)
             z = round((float(z)) / range_divisor, 3)
             self.callback.update_acceleration(x, y, z)
-            yield from asyncio.sleep(.1, loop=self.platform.machine.clock.loop)
+            yield from asyncio.sleep(.01, loop=self.platform.machine.clock.loop)
 
 
 class MMA8451Platform(AccelerometerPlatform):
