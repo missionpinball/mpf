@@ -15,6 +15,7 @@ accelerometers:
     level_y: single|int|0
     level_z: single|int|1
     alpha: single|float|0.8
+    hit_window: single|int|6
     platform_settings: dict|str:str|None
 achievement_groups:
     __valid_in__: mode

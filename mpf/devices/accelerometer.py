@@ -39,6 +39,7 @@ class Accelerometer(SystemWideDevice):
         self.history = None     # type: Tuple[float, float, float]
         self.value = None       # type: Tuple[float, float, float]
         self.hw_device = None   # type: AccelerometerPlatformInterface
+        self._hit_window = []
 
     @asyncio.coroutine
     def _initialize(self):
@@ -126,10 +127,16 @@ class Accelerometer(SystemWideDevice):
 
     def _handle_hits(self, dx: float, dy: float, dz: float) -> None:
         acceleration = self._calculate_vector_length(dx, dy, dz)
+        self._hit_window.append(acceleration)
+        while len(self._hit_window) > self.config['hit_window']:
+            self._hit_window.pop(0)
+
+        total_acceleration = sum(self._hit_window)
+
         for min_acceleration in self.config['hit_limits']:
-            if acceleration > min_acceleration:
+            if total_acceleration > min_acceleration:
                 self.debug_log("Received hit of %s > %s. Posting %s",
-                               acceleration,
+                               total_acceleration,
                                min_acceleration,
                                self.config['hit_limits'][min_acceleration]
                                )
