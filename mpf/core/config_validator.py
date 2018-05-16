@@ -139,7 +139,7 @@ class ConfigValidator(object):
         """Unload specs."""
         self.config_spec = None
 
-    def _build_spec(self, config_spec, base_spec):
+    def build_spec(self, config_spec, base_spec):
         if not self.config_spec:
             self.load_config_spec()
 
@@ -188,7 +188,7 @@ class ConfigValidator(object):
         else:
             validation_failure_info = (config_spec, section_name)
 
-        this_spec = self._build_spec(config_spec, base_spec)
+        this_spec = self.build_spec(config_spec, base_spec)
 
         if '__allow_others__' not in this_spec:
             self.check_for_invalid_sections(this_spec, source,

@@ -232,23 +232,28 @@ class DeviceManager(MpfController):
         """
         for collection in self.collections:
             if self.collections[collection].config_section in config:
+                config_spec = self.machine.config_validator.build_spec(
+                    self.collections[collection].get_config_spec_sections())
                 for device, settings in iter(config[self.collections[collection].config_section].items()):
 
-                    control_events = [x for x in settings if
-                                      x.endswith('_events') and x != "control_events"]
+                    for setting in settings:
+                        if setting not in config_spec or not isinstance(config_spec[setting], list) or \
+                                config_spec[setting][0] != "event_handler":
+                            if setting.endswith("_events"):
+                                print(collection, setting, config_spec[setting])
+                            continue
 
-                    for control_event in control_events:
                         # get events from this device's config
-                        if settings[control_event]:
-                            if not isinstance(settings[control_event], dict):
+                        if settings[setting]:
+                            if not isinstance(settings[setting], dict):
                                 raise AssertionError("Type of {}:{} should be dict|str:ms| in config_spec".format(
-                                    collection, control_event))
-                            for event, delay in settings[control_event].items():
+                                    collection, setting))
+                            for event, delay in settings[setting].items():
                                 try:
-                                    method = getattr(self.collections[collection][device], control_event[:-7])
+                                    method = getattr(self.collections[collection][device], setting[:-7])
                                 except:
                                     raise AssertionError("Class {} needs to have method {} to handle {}".format(
-                                        self.collections[collection][device], control_event[:-7], control_event
+                                        self.collections[collection][device], setting[:-7], setting
                                     ))
                                 yield (event,
                                        method,
