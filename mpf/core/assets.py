@@ -632,7 +632,7 @@ class AssetPool(object):
 
     """Pool of assets."""
 
-    __slots__ = ["machine", "priority", "name", "config", "member_cls", "loading_members", "_callbacks", "assets"
+    __slots__ = ["machine", "priority", "name", "config", "member_cls", "loading_members", "_callbacks", "assets",
                  "_last_asset", "_asset_sequence", "_assets_sent", "_total_weights", "_has_conditions"]
 
     # pylint: disable=too-many-instance-attributes
