@@ -40,6 +40,7 @@ class Accelerometer(SystemWideDevice):
         self.value = None       # type: Tuple[float, float, float]
         self.hw_device = None   # type: AccelerometerPlatformInterface
         self._hit_window = []
+        self._counter = 0
 
     @asyncio.coroutine
     def _initialize(self):
@@ -126,12 +127,21 @@ class Accelerometer(SystemWideDevice):
                     deviation_yz=deviation_yz)
 
     def _handle_hits(self, dx: float, dy: float, dz: float) -> None:
-        acceleration = self._calculate_vector_length(dx, dy, dz)
-        self._hit_window.append(acceleration)
+        self._hit_window.append((dx, dy, dz))
+
+        total_dx = sum([dx for dx, dy, dz in self._hit_window]) / len(self._hit_window)
+        total_dy = sum([dy for dx, dy, dz in self._hit_window]) / len(self._hit_window)
+        total_dz = sum([dz for dx, dy, dz in self._hit_window]) / len(self._hit_window)
+
+        #print(self.name, acceleration)
+        total_acceleration = self._counter
         while len(self._hit_window) > self.config['hit_window']:
             self._hit_window.pop(0)
+        total_acceleration = self._calculate_vector_length(total_dx, total_dy, total_dz)
+        if total_acceleration > 0.05:
+          print(total_acceleration, total_dx, total_dy, total_dz)
 
-        total_acceleration = sum(self._hit_window)
+#        total_acceleration = sum(self._hit_window)
 
         for min_acceleration in self.config['hit_limits']:
             if total_acceleration > min_acceleration:
