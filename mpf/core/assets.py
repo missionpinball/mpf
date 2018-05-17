@@ -468,7 +468,7 @@ class BaseAssetManager(MpfController, LogMixin):
                         ac.cls.asset_group_class(self.machine, name, settings,
                                                  ac.cls))
 
-    def _load_mode_assets(self, config, priority: int, mode: Mode)->\
+    def _load_mode_assets(self, config, priority: int, mode: Mode) -> \
             Tuple[Callable[[Iterable["Asset"]], None], Set["Asset"]]:
         # Called on mode start to load the assets that are set to automatically
         # load based on that mode starting
