@@ -16,6 +16,8 @@ class HighScore(AsyncMode):
     initials.
     """
 
+    __slots__ = ["data_manager", "high_scores", "high_score_config", "pending_award"]
+
     def __init__(self, machine, config, name, path):
         """Initialise high score mode."""
         self.data_manager = None

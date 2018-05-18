@@ -129,6 +129,7 @@ class Auditor(object):
 
         self.current_audits[audit_class][event] += 1
         self.machine.set_machine_var("audits_{}_{}".format(audit_class, event), self.current_audits[audit_class][event])
+        self._save_audits()
 
     def audit_switch(self, change: MonitoredSwitchChange):
         """Record switch change."""
@@ -152,6 +153,7 @@ class Auditor(object):
         del kwargs
 
         self.current_audits['events'][eventname] += 1
+        self._save_audits()
 
     def audit_player(self, **kwargs):
         """Write player data to the audit log.
@@ -179,6 +181,7 @@ class Auditor(object):
                     (self.current_audits['player'][item]['total'] + 1))
 
                 self.current_audits['player'][item]['total'] += 1
+        self._save_audits()
 
     @classmethod
     def _merge_into_top_list(cls, new_item, current_list, num_items):
@@ -218,12 +221,7 @@ class Auditor(object):
                 if event not in self.current_audits['events']:
                     self.current_audits['events'][event] = 0
 
-        for event in self.config['save_events']:
-            self.machine.events.add_handler(event, self._save_audits,
-                                            priority=0)
-
-    def _save_audits(self, **kwargs):
-        del kwargs
+    def _save_audits(self):
         self.data_manager.save_all(data=self.current_audits)
 
     def disable(self, **kwargs):
@@ -234,6 +232,5 @@ class Auditor(object):
 
         # remove switch and event handlers
         self.machine.events.remove_handler(self.audit_event)
-        self.machine.events.remove_handler(self._save_audits)
 
 plugin_class = Auditor

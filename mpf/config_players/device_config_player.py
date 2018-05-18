@@ -9,6 +9,8 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
 
     """Base class for config players which have multiple entries."""
 
+    __slots__ = []
+
     def validate_config_entry(self, settings, name):
         """Validate one entry of this player."""
         validated_config = dict()

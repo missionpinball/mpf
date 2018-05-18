@@ -1,11 +1,19 @@
-"""Contains the parent class for Scriptlets."""
+"""Contains the parent class for DEPRECATED Scriptlets.
+
+This is deprecated and will be removed in config_version 6 with MPF 0.60.
+Use custom code instead.
+"""
 from mpf.core.delays import DelayManager
 from mpf.core.logging import LogMixin
 
 
 class Scriptlet(LogMixin):
 
-    """Baseclass for scriptlet which are simple scripts in a machine."""
+    """Baseclass for DEPRECATED scriptlets which are simple scripts in a machine.
+
+    This is deprecated and will be removed in config_version 6 with MPF 0.60.
+    Use custom code instead.
+    """
 
     def __init__(self, machine, name):
         """Initialise scriptlet."""

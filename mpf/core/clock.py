@@ -13,6 +13,8 @@ class PeriodicTask:
 
     """A periodic asyncio task."""
 
+    __slots__ = ["_canceled", "_interval", "_callback", "_loop", "_last_call"]
+
     def __init__(self, interval, loop, callback):
         """Initialise periodic task."""
         self._canceled = False
@@ -46,6 +48,8 @@ class PeriodicTask:
 class ClockBase(LogMixin):
 
     """A clock object with event support."""
+
+    __slots__ = ["machine", "loop"]
 
     def __init__(self, machine=None, loop=None):
         """Initialise clock."""

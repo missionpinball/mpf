@@ -16,6 +16,8 @@ class Match(AsyncMode):
 
     """Match mode."""
 
+    __slots__ = []
+
     def __init__(self, machine, config, name, path):
         """Initialise match mode."""
         super().__init__(machine, config, name, path)

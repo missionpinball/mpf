@@ -15,6 +15,9 @@ class Tilt(Mode):
     machine needs to watch for slam tilts at all times.
     """
 
+    __slots__ = ["_balls_to_collect", "_last_warning", "ball_ending_tilted_queue", "tilt_event_handlers",
+                 "last_tilt_warning_switch", "tilt_config"]
+
     def __init__(self, machine: MachineController, config: dict, name: str, path) -> None:
         """Create mode."""
         self._balls_to_collect = None   # type: int

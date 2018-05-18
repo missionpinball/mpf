@@ -2,9 +2,11 @@
 from mpf.core.utility_functions import Util
 
 
-class DeviceMonitor:
+class DeviceMonitor(object):
 
     """Monitor variables of a device."""
+
+    __slots__ = ["_attributes_to_monitor", "_aliased_attributes_to_monitor"]
 
     def __init__(self, *attributes_to_monitor, **aliased_attributes_to_monitor):
         """Initialise decorator and remember attributes to monitor."""

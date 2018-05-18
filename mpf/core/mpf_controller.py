@@ -11,6 +11,8 @@ class MpfController(LogMixin, metaclass=abc.ABCMeta):
 
     """Base class for MPF controllers."""
 
+    __slots__ = ["machine"]
+
     module_name = None  # type: str
     config_name = None  # type: str
 
@@ -26,14 +28,11 @@ class MpfController(LogMixin, metaclass=abc.ABCMeta):
         super().__init__()
         self.machine = machine
 
-        if not self.module_name:
-            self.module_name = self.__class__.__name__
-
         if not self.config_name:
             raise AssertionError("Please specify a config name for {}".format(self))
 
         self.configure_logging(
-            self.module_name,
+            self.module_name if self.module_name else self.__class__.__name__,
             self.machine.machine_config['logging']['console'][self.config_name],
             self.machine.machine_config['logging']['file'][self.config_name])
 

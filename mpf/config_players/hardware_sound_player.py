@@ -13,6 +13,8 @@ class HardwareSoundPlayer(DeviceConfigPlayer):
     config_file_section = 'hardware_sound_player'
     show_section = 'hardware_sound_players'
 
+    __slots__ = []
+
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Play sound on external card."""
         del kwargs

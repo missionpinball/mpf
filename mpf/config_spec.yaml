@@ -241,6 +241,8 @@ coils:
     platform_settings: single|dict|None
     psu: single|machine(psus)|default
     platform: single|str|None
+custom_code:
+    __valid_in__: machine
 digital_outputs:
     __valid_in__: machine
     number: single|str|
@@ -267,7 +269,6 @@ coil_player:
     power: single|float|1.0
     __allow_others__:
 color_correction_profile:
-    __valid_in__: machine
     gamma: single|float|2.5
     whitepoint: list|float|1.0, 1.0, 1.0
     linear_slope: single|float|1.0
@@ -833,7 +834,6 @@ p_roc:
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
 p3_roc:
-    __valid_in__: machine
     lamp_matrix_strobe_time: single|ms|100ms
     watchdog_time: single|ms|1s
     use_watchdog: single|bool|True
@@ -970,7 +970,7 @@ score_reel_groups:
     chimes: list|machine(coils)|None
     lights_tag: single|str|None
 scriptlets:
-    __valid_in__: machine                           # todo add to validator
+    __valid_in__: machine
 segment_displays:
     __valid_in__: machine
     number: single|str|
@@ -1053,7 +1053,7 @@ shot_profiles:
         name: single|str|
         priority: single|int|0
         speed: single|float|1
-        start_step: single|int|1
+        start_step: single|int|None
         loops: single|int|-1
         sync_ms: single|int|None
         manual_advance: single|bool|None

@@ -1,10 +1,10 @@
 How to add machine-wide custom code
 ===================================
 
-MPF contains a "Scriptlet" concept which lets you add custom code to your
+MPF contains a "CustomCode" concept which lets you add custom code to your
 game.
 
-Scriptlets are Python modules that run at the "root" of your game. You can
+CustomCode classes are Python modules that run at the "root" of your game. You can
 use them to do anything you want.
 
 Note that MPF also has the ability to run custom :doc:`mode code <mode_code>`
@@ -12,8 +12,8 @@ which is code that is associated with a certain game mode and is generally
 only active when the mode it's in is active. So if you just want to write your
 own custom game logic, you'll probably use mode code.
 
-Scriptlets, on the other hand, are sort of "machine-level" custom code.
-Scriptlets are nice if you have some kind of custom device type that doesn't
+CustomCode classes, on the other hand, are sort of "machine-level" custom code.
+CustomCode classes are nice if you have some kind of custom device type that doesn't
 match up to any of MPF's built in devices. The elevator and claw unloader
 in *Demolition Man* is a good example, and what we'll use here.
 
@@ -21,73 +21,79 @@ in *Demolition Man* is a good example, and what we'll use here.
 `example games section <http://docs.missionpinball.org/en/latest/example_games>`_
 section of the MPF User Documentation.)
 
-Here's how to create a scriptlet:
+Here's how to create a custom code class:
 
-1. Create your scriptlet file
------------------------------
+1. Create your custom code file
+-------------------------------
 
-First, add a ``scriptlets`` folder to your machine folder. Then inside there,
-create the Python file that will hold your scriptlet. You can name this file
-whatever you want, just remember the name for the next step.
+First, add a ``code`` folder to your machine folder (you can use another name if you
+want). Then inside there, create the Python file that will hold your custom code classes.
+You can name this file whatever you want, just remember the name for the next step.
 
 In the *Demo Man* example, it looks like this:
 
 .. image:: /images/scriptlet.png
 
-2. Open and edit your scriptlet file
-------------------------------------
+Add an empty ``__init__.py`` file into your folder to make it a package.
+It become the package ``code`` and all your classes will be referenced as 
+``code.file_name.ClassName``.
 
-Next, edit the scriptlet file you created. At a bare minimum, you'll need this:
+2. Open and edit your custom code class file
+--------------------------------------------
+
+Next, edit the class file you created. At a bare minimum, you'll need this:
 
 .. code-block:: python
 
-   from mpf.core.scriptlet import Scriptlet
+   from mpf.core.custom_code import CustomCode
 
 
-   class Claw(Scriptlet):
+   class Claw(CustomCode):
        pass
 
-Note that MPF contains a ``Scriptlet`` base class which is very simple.
-(You can see the source of it on GitHub `here <https://github.com/missionpinball/mpf/blob/dev/mpf/core/scriptlet.py>`_.)
+Note that MPF contains a ``CustomCode`` base class which is very simple.
+(You can see the source of it on GitHub `here <https://github.com/missionpinball/mpf/blob/dev/mpf/core/custom_code.py>`_.)
 We called our class ``Claw`` in this case.
 
 Pretty much all this does is give you a reference to the main MPF machine
 controller at ``self.machine``, as well as setup a delay manager you can use
-and set the name of your scriptlet. There's also an ``on_load()`` method which
-is called when the scriptlet is loaded which you can use in your own code.
+and set the name of your class. There's also an ``on_load()`` method which
+is called when the class is loaded which you can use in your own code.
 
-3. Add the scriptlet to your machine config
--------------------------------------------
+3. Add the class to your machine config
+---------------------------------------
 
-Next, edit your machine config file and add a ``scriptlets:`` section, then
-under there add the module (file name) for your scriptlet, followed by a dot,
-followed by the class name for your scriptlet.
+Next, edit your machine config file and add a ``custom_code:`` section, then
+under there add the package (folder), followed by a dot, then the module (file name) for your class, followed by a dot,
+followed by the class name for your class.
 
 For *Demo Man*, that looks like this:
 
 .. code-block:: yaml
 
-   scriptlets:
-     - claw.Claw
+   custom_code:
+     - code.claw.Claw
+
+This references class ``Claw`` in file ``claw``.py which lives package ``code``.
 
 4. Real-world example
 ---------------------
 
 At this point you should be able to run your game, though nothing should
-happen because you haven't added any code to your scriptlet.
+happen because you haven't added any code to your code.
 
-Take a look at the final *Demo Man* claw scriptlet to see what we did there.
-Since Scriptlets have access to ``self.machine`` and they load when MPF
+Take a look at the final *Demo Man* claw class to see what we did there.
+Since custom code classes have access to ``self.machine`` and they load when MPF
 loads, you can do anything you want in them.
 
 .. code-block:: python
 
-   """Claw controller Scriptlet for Demo Man"""
+   """Claw controller for Demo Man"""
 
-   from mpf.core.scriptlet import Scriptlet
+   from mpf.core.custom_code import CustomCode
 
 
-   class Claw(Scriptlet):
+   class Claw(CustomCode):
 
        def on_load(self):
 

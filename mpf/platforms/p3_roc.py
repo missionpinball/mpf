@@ -49,7 +49,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         self.debug_log("Configuring P3-ROC hardware.")
 
         # validate config for p3_roc
-        self.machine.config_validator.validate_config("p3_roc", self.machine.config['p_roc'])
+        self.config = self.machine.config_validator.validate_config("p3_roc", self.machine.config['p_roc'])
 
         if self.machine_type != self.pinproc.MachineTypePDB:
             raise AssertionError("P3-Roc can only handle PDB driver boards")
@@ -106,10 +106,15 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         burst_config1 = 0
         self.proc.write_data(0x02, 0x01, burst_config1)
 
+    def _get_default_subtype(self):
+        """Return default subtype for P3-Roc."""
+        return "led"
+
     def __repr__(self):
         """Return string representation."""
         return '<Platform.P3-ROC>'
 
+    @asyncio.coroutine
     def configure_i2c(self, number: str):
         """Configure I2C device on P3-Roc."""
         return P3RocI2c(number, self)

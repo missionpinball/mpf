@@ -9,6 +9,8 @@ class ShowPlayer(DeviceConfigPlayer):
     config_file_section = 'show_player'
     show_section = 'shows'
 
+    __slots__ = []
+
     # pylint: disable-msg=too-many-arguments
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Play, start, stop, pause, resume or advance show based on config."""
@@ -55,73 +57,28 @@ class ShowPlayer(DeviceConfigPlayer):
 
     # pylint: disable-msg=too-many-arguments
     def _play(self, key, instance_dict, show, show_settings, queue, start_time, placeholder_args):
-        callback = None
+        stop_callback = None
         if show_settings['block_queue']:
             if not queue:
                 raise AssertionError("block_queue can only be used with a queue event.")
             queue.wait()
-            callback = queue.clear
+            stop_callback = queue.clear
 
         start_step = show_settings['start_step'].evaluate(placeholder_args)
 
-        if key in instance_dict and not instance_dict[key].stopped:
-            # this is an optimization for the case where we only advance a show or do not change it at all
-            # pylint: disable-msg=too-many-boolean-expressions
-            if (show == instance_dict[key].show.name and
-                    instance_dict[key].show_tokens == show_settings['show_tokens'] and
-                    instance_dict[key].priority == show_settings['priority'] and
-                    instance_dict[key].speed == show_settings['speed'] and
-                    instance_dict[key].loops == show_settings['loops'] and
-                    instance_dict[key].sync_ms == (show_settings['sync_ms'] if show_settings['sync_ms'] else 0) and
-                    instance_dict[key].manual_advance == show_settings['manual_advance'] and
-                    not callback and not show_settings['events_when_played'] and
-                    not show_settings['events_when_played'] and not instance_dict[key].events["play"] and
-                    not show_settings['events_when_stopped'] and not instance_dict[key].events["stop"] and
-                    instance_dict[key].events["loop"] == show_settings['events_when_looped'] and
-                    instance_dict[key].events["pause"] == show_settings['events_when_paused'] and
-                    instance_dict[key].events["resume"] == show_settings['events_when_resumed'] and
-                    instance_dict[key].events["advance"] == show_settings['events_when_advanced'] and
-                    instance_dict[key].events["step_back"] == show_settings['events_when_stepped_back'] and
-                    instance_dict[key].events["update"] == show_settings['events_when_updated'] and
-                    instance_dict[key].events["complete"] == show_settings['events_when_completed']):
-                if instance_dict[key].current_step_index is not None and \
-                        instance_dict[key].current_step_index + 1 == start_step:
-                    # the show already is at the target step
-                    return
-                elif instance_dict[key].current_step_index is not None and \
-                        instance_dict[key].current_step_index + 2 == start_step:
-                    # advance show to target step
-                    instance_dict[key].advance()
-                    return
-            # in all other cases stop the current show
-            instance_dict[key].stop()
-        try:
-            show_obj = self.machine.shows[show]
-        except KeyError:
-            raise KeyError("Cannot play show '{}'. No show with that "
-                           "name.".format(show))
+        show_config = self.machine.show_controller.create_show_config(
+            show, show_settings['priority'], show_settings['speed'], show_settings['loops'], show_settings['sync_ms'],
+            show_settings['manual_advance'], show_settings['show_tokens'], show_settings['events_when_played'],
+            show_settings['events_when_stopped'], show_settings['events_when_looped'],
+            show_settings['events_when_paused'], show_settings['events_when_resumed'],
+            show_settings['events_when_advanced'], show_settings['events_when_stepped_back'],
+            show_settings['events_when_updated'], show_settings['events_when_completed'])
 
-        instance_dict[key] = show_obj.play(
-            show_tokens=show_settings['show_tokens'],
-            priority=show_settings['priority'],
-            speed=show_settings['speed'],
-            start_time=start_time,
-            start_step=start_step,
-            loops=show_settings['loops'],
-            sync_ms=show_settings['sync_ms'],
-            manual_advance=show_settings['manual_advance'],
-            callback=callback,
-            events_when_played=show_settings['events_when_played'],
-            events_when_stopped=show_settings['events_when_stopped'],
-            events_when_looped=show_settings['events_when_looped'],
-            events_when_paused=show_settings['events_when_paused'],
-            events_when_resumed=show_settings['events_when_resumed'],
-            events_when_advanced=show_settings['events_when_advanced'],
-            events_when_stepped_back=show_settings[
-                'events_when_stepped_back'],
-            events_when_updated=show_settings['events_when_updated'],
-            events_when_completed=show_settings['events_when_completed']
-        )
+        previous_show = instance_dict.get(key, None)
+
+        instance_dict[key] = self.machine.show_controller.replace_or_advance_show(previous_show, show_config,
+                                                                                  start_step, start_time, stop_callback)
+        return
 
     @staticmethod
     def _stop(key, instance_dict, show, show_settings, queue, start_time, placeholder_args):

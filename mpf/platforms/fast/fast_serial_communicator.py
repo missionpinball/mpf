@@ -285,6 +285,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                 self.log.warning("Port %s was blocked for more than 1s. Reseting send queue! If this happens "
                                  "frequently report a bug!", self.port)
                 self.messages_in_flight = 0
+                self.send_ready.set()
 
             self._send(msg)
 

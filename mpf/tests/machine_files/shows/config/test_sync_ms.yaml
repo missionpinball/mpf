@@ -1,0 +1,26 @@
+#config_version=5
+lights:
+  light:
+    number: 1
+
+shows:
+  my_show1:
+    - duration: -1
+      lights:
+        light: red
+  my_show2:
+    - duration: -1
+      lights:
+        light: blue
+
+show_player:
+  play_show_sync_ms1:
+    my_show1:
+      key: sync_show
+      sync_ms: 250
+  play_show_sync_ms2:
+    my_show2:
+      key: sync_show
+      sync_ms: 250
+  stop_show:
+    sync_show: stop

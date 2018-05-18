@@ -47,6 +47,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
     collection = 'lights'
     class_label = 'light'
 
+    __slots__ = ["hw_drivers", "platforms", "delay", "default_fade_ms", "_color_correction_profile", "stack"]
+
     def __init__(self, machine, name):
         """Initialise light."""
         self.hw_drivers = {}
@@ -296,7 +298,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
                 settings in the stack already have this key, those settings
                 will be replaced with these new settings.
         """
-        self.debug_log("Received color() command. color: %s, fade_ms: %s"
+        self.debug_log("Received color() command. color: %s, fade_ms: %s "
                        "priority: %s, key: %s", color, fade_ms, priority,
                        key)
 

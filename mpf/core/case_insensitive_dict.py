@@ -6,6 +6,8 @@ class CaseInsensitiveDict(dict):
 
     """A dict which lowercases all keys."""
 
+    __slots__ = []
+
     @staticmethod
     def lower(key):
         """Lowercase the key."""

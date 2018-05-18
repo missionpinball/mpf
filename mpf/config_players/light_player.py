@@ -13,6 +13,8 @@ class LightPlayer(DeviceConfigPlayer):
     show_section = 'lights'
     machine_collection_name = 'lights'
 
+    __slots__ = []
+
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Set light color based on config."""
         instance_dict = self._get_instance_dict(context)

@@ -10,6 +10,8 @@ class Bonus(Mode):
     tilted.
     """
 
+    __slots__ = ["bonus_score", "settings", "display_delay", "bonus_entries", "bonus_iterator"]
+
     def __init__(self, machine, config, name, path):
         """Initialize bonus mode."""
         super().__init__(machine, config, name, path)

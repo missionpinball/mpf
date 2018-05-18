@@ -9,6 +9,9 @@ class Credits(Mode):
 
     """Mode which manages the credits and prevents the game from starting without credits."""
 
+    __slots__ = ["data_manager", "earnings", "credit_units_per_game", "credit_unit", "pricing_tiers",
+                 "credit_units_for_pricing_tiers", "reset_pricing_tier_count_this_game", "credits_config"]
+
     def __init__(self, machine, config, name, path):
         """Initialise credits mode."""
         self.data_manager = None

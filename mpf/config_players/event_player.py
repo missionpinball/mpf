@@ -15,6 +15,8 @@ class EventPlayer(FlatConfigPlayer):
     config_file_section = 'event_player'
     show_section = 'events'
 
+    __slots__ = ["delay"]
+
     def __init__(self, machine):
         """Initialise EventPlayer."""
         super().__init__(machine)

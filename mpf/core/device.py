@@ -29,6 +29,8 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
     # Can a config for this device be empty?
     allow_empty_configs = False
 
+    __slots__ = ["machine", "name", "tags", "platform", "label", "config"]
+
     def __init__(self, machine: MachineController, name: str) -> None:
         """Set up default attributes of every device.
 

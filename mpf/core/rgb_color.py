@@ -167,6 +167,8 @@ class RGBColor(object):
 
     """One RGB Color."""
 
+    __slots__ = ["_color"]
+
     def __init__(self, color: Union["RGBColor", str, List[int], Tuple[int, int, int]] = None) -> None:
         """Initialise color."""
         if isinstance(color, RGBColor):

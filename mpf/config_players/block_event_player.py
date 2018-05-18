@@ -8,6 +8,8 @@ class BlockEventPlayer(ConfigPlayer):
 
     config_file_section = 'blocking'
 
+    __slots__ = []
+
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Block event."""
         min_priority = kwargs.get("_min_priority", {"all": 0})

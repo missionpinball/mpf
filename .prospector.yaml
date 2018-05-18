@@ -36,6 +36,7 @@ pylint:
     max-public-methods: 40
 
 ignore-paths:
+  - mpf/tests/
   - docs
   - mpf/platforms/trinamics/
   - tools/

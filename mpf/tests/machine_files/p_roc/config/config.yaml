@@ -6,6 +6,7 @@ hardware:
 
 p_roc:
   dmd_timing_cycles: 1, 2, 3, 4
+  debug: true
 
 switches:
     s_test_000:
@@ -55,7 +56,6 @@ lights:
     subtype: matrix
   test_direct_light:
     number: L01
-    subtype: matrix
   test_gi:
     platform: drivers
     number: test_gi

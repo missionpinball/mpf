@@ -24,6 +24,9 @@ class Switch(SystemWideDevice, DevicePositionMixin):
     collection = 'switches'
     class_label = 'switch'
 
+    __slots__ = ["hw_switch", "platform", "state", "hw_state", "invert", "recycle_secs", "recycle_clear_time",
+                 "recycle_jitter_count"]
+
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise switch."""
         self.hw_switch = None   # type: SwitchPlatformInterface

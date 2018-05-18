@@ -12,6 +12,8 @@ class CoilPlayer(DeviceConfigPlayer):
     show_section = 'coils'
     machine_collection_name = 'coils'
 
+    __slots__ = []
+
     def play(self, settings, context: str, calling_context: str, priority: int = 0, **kwargs):
         """Enable, Pulse or disable coils."""
         del kwargs

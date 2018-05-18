@@ -30,6 +30,9 @@ class BaseAssetManager(MpfController, LogMixin):
     module_name = 'AssetManager'
     config_name = 'asset_manager'
 
+    __slots__ = ["_asset_classes", "num_assets_to_load", "num_assets_loaded", "num_bcp_assets_to_load",
+                 "num_bcp_assets_loaded", "_next_id", "_last_asset_event_time"]
+
     def __init__(self, machine: MachineController) -> None:
         """Initialise asset manager.
 
@@ -465,7 +468,7 @@ class BaseAssetManager(MpfController, LogMixin):
                         ac.cls.asset_group_class(self.machine, name, settings,
                                                  ac.cls))
 
-    def _load_mode_assets(self, config, priority: int, mode: Mode)->\
+    def _load_mode_assets(self, config, priority: int, mode: Mode) -> \
             Tuple[Callable[[Iterable["Asset"]], None], Set["Asset"]]:
         # Called on mode start to load the assets that are set to automatically
         # load based on that mode starting
@@ -591,6 +594,8 @@ class AsyncioSyncAssetManager(BaseAssetManager):
 
     """AssetManager which uses asyncio to load assets."""
 
+    __slots__ = []
+
     @staticmethod
     def _load_sync(asset):
         if not asset.loaded:
@@ -623,11 +628,14 @@ class AsyncioSyncAssetManager(BaseAssetManager):
         future.result()
 
 
+# pylint: disable=too-many-instance-attributes
 class AssetPool(object):
 
     """Pool of assets."""
 
-    # pylint: disable=too-many-instance-attributes
+    __slots__ = ["machine", "priority", "name", "config", "member_cls", "loading_members", "_callbacks", "assets",
+                 "_last_asset", "_asset_sequence", "_assets_sent", "_total_weights", "_has_conditions"]
+
     # Could possibly combine some or make @properties?
     def __init__(self, mc, name, config, member_cls):
         """Initialise asset pool."""
@@ -852,6 +860,9 @@ class Asset(object):
 
     asset_group_class = AssetPool  # replace with your own asset group class
 
+    __slots__ = ["machine", "name", "file", "config", "priority", "_callbacks", "_id", "lock", "loading", "loaded",
+                 "unloading"]
+
     @classmethod
     def initialize(cls, machine):
         """Initialise asset class."""
@@ -870,7 +881,7 @@ class Asset(object):
 
     def __init__(self, machine, name, file, config):
         """Initialise asset."""
-        self.machine = machine
+        self.machine = machine      # type: MachineController
         self.name = name
         self.file = file
 
