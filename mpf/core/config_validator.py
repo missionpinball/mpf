@@ -8,10 +8,10 @@ from copy import deepcopy
 
 import pickle
 
-import mpf
 from typing import Any
 from typing import Dict
 
+import mpf
 from mpf.core.rgb_color import named_rgb_colors, RGBColor
 from mpf.exceptions.ConfigFileError import ConfigFileError
 from mpf.file_interfaces.yaml_interface import YamlInterface
@@ -93,7 +93,7 @@ class ConfigValidator(object):
                     self.config_spec = pickle.load(f)
                     ConfigValidator.class_cache = deepcopy(self.config_spec)
                     return
-            except:
+            except Exception:   # noqa
                 pass
 
         with open(config_spec_file, 'rb') as f:
@@ -140,6 +140,7 @@ class ConfigValidator(object):
         self.config_spec = None
 
     def build_spec(self, config_spec, base_spec):
+        """Build config spec out of two or more specs."""
         if not self.config_spec:
             self.load_config_spec()
 
