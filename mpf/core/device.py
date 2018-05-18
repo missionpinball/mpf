@@ -91,6 +91,10 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         del is_mode_config
         return config
 
+    def get_config_spec_sections(self):
+        """Return config spec sections."""
+        return ["device"]
+
     def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Return the parsed and validated config.
 
@@ -102,7 +106,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         """
         del is_mode_config
         self.machine.config_validator.validate_config(
-            self.config_section, config, self.name, "device", prefix=debug_prefix)
+            self.config_section, config, self.name, self.get_config_spec_sections(), prefix=debug_prefix)
 
         self._configure_device_logging(config)
 

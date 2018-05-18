@@ -186,6 +186,7 @@ class ModeController(MpfController):
         return config
 
     def _load_mode_config_spec(self, mode_string, mode_class):
+        # TODO: cache this
         self.machine.config_validator.load_mode_config_spec(mode_string, mode_class.get_config_spec())
 
     def _load_mode_from_machine_folder(self, mode_string: str, code_path: str) -> Optional[Callable[..., Mode]]:

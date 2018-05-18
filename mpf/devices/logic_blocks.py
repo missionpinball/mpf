@@ -58,21 +58,18 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         """Do not auto enable this device in modes."""
         pass
 
+    def get_config_spec_sections(self):
+        return super().get_config_spec_sections() + ["logic_blocks_common"]
+
     def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Validate logic block config."""
-        del is_mode_config
-        del debug_prefix
         if 'events_when_complete' not in config:
             config['events_when_complete'] = ['logicblock_' + self.name + '_complete']
 
         if 'events_when_hit' not in config:
             config['events_when_hit'] = ['logicblock_' + self.name + '_hit']
 
-        self.machine.config_validator.validate_config(
-            self.config_section, config, self.name, ["device", "logic_blocks_common"])
-
-        self._configure_device_logging(config)
-        return config
+        return super().validate_and_parse_config(config, is_mode_config, debug_prefix)
 
     def can_exist_outside_of_game(self) -> bool:
         """Return true if persist_state is not set."""
@@ -486,3 +483,27 @@ class Sequence(LogicBlock):
 
         if self._state.value >= len(self.config['events']):
             self.complete()
+
+
+class State(LogicBlock):
+
+    """A type of LogicBlock which tracks just enable or disable."""
+
+    config_section = 'states'
+    collection = 'states'
+    class_label = 'state'
+
+    @property
+    def config_section_name(self):
+        """Return config section."""
+        return "state"
+
+    def hit(self, **kwargs):
+        """Not possible."""
+        raise AssertionError("Not possible for a State block.")
+
+    def get_start_value(self) -> int:
+        """Return None."""
+        return None
+
+
