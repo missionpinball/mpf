@@ -86,7 +86,8 @@ class MachineController(LogMixin):
 
         self.log.info("Command line arguments: %s", options)
         self.options = options
-        self.config_processor = ConfigProcessor()
+        self.config_validator = ConfigValidator(self)
+        self.config_processor = ConfigProcessor(self.config_validator)
 
         self.log.info("MPF path: %s", mpf_path)
         self.mpf_path = mpf_path
@@ -152,8 +153,6 @@ class MachineController(LogMixin):
             self.segment_displays = None                # type: DeviceCollectionType[str, SegmentDisplay]
 
         self._set_machine_path()
-
-        self.config_validator = ConfigValidator(self)
 
         self._load_config()
         self.machine_config = self.config       # type: Any
@@ -261,7 +260,7 @@ class MachineController(LogMixin):
     def _init_phases_complete(self, **kwargs) -> None:
         """Cleanup after init and remove boot holds."""
         del kwargs
-        ConfigValidator.unload_config_spec()
+        # self.config_validator.unload_config_spec()
         self.events.remove_all_handlers_for_event("init_phase_1")
         self.events.remove_all_handlers_for_event("init_phase_2")
         self.events.remove_all_handlers_for_event("init_phase_3")
@@ -319,7 +318,7 @@ class MachineController(LogMixin):
 
     def validate_machine_config_section(self, section: str) -> None:
         """Validate a config section."""
-        if section not in ConfigValidator.config_spec:
+        if section not in self.config_validator.get_config_spec():
             return
 
         if section not in self.config:
@@ -901,5 +900,4 @@ class MachineController(LogMixin):
         other words, once this is posted, MPF is booted and ready to go.
         '''
 
-        ConfigValidator.unload_config_spec()
         yield from self.reset()

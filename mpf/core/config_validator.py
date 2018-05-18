@@ -1,28 +1,37 @@
 """Config specs and validator."""
 import logging
+import os
 import re
+import tempfile
 from collections import OrderedDict
 from copy import deepcopy
 
-from typing import Any, Union, List
+import pickle
+
+import mpf
+from typing import Any
 from typing import Dict
 
-from mpf.core.config_spec import mpf_config_spec
 from mpf.core.rgb_color import named_rgb_colors, RGBColor
 from mpf.exceptions.ConfigFileError import ConfigFileError
 from mpf.file_interfaces.yaml_interface import YamlInterface
 from mpf.core.utility_functions import Util
+
+MYPY = False
+if MYPY:    # noqa
+    from mpf.core.machine import MachineController
 
 
 class ConfigValidator(object):
 
     """Validates config against config specs."""
 
-    config_spec = None      # type: Any
+    class_cache = None
 
     def __init__(self, machine):
         """Initialise validator."""
-        self.machine = machine
+        self.machine = machine      # type: MachineController
+        self.config_spec = None     # type: Any
         self.log = logging.getLogger('ConfigValidator')
 
         self.validator_list = {
@@ -53,40 +62,84 @@ class ConfigValidator(object):
             "machine": self._validate_type_machine,
         }
 
-        if not ConfigValidator.config_spec:
-            ConfigValidator.load_config_spec()
-
-    @classmethod
-    def load_device_config_spec(cls, config_section, config_spec):
+    def load_device_config_spec(self, config_section, config_spec):
         """Load config specs for a device."""
-        cls.config_spec[config_section] = YamlInterface.process(config_spec)
+        self.config_spec[config_section] = self._process_config_spec(YamlInterface.process(config_spec), config_section)
 
-    @classmethod
-    def load_mode_config_spec(cls, mode_string, config_spec):
+    def load_mode_config_spec(self, mode_string, config_spec):
         """Load config specs for a mode."""
-        if '_mode_settings' not in cls.config_spec:
-            cls.config_spec['_mode_settings'] = {}
-        if mode_string not in cls.config_spec['_mode_settings']:
-            cls.config_spec['_mode_settings'][mode_string] = YamlInterface.process(config_spec)
+        if '_mode_settings' not in self.config_spec:
+            self.config_spec['_mode_settings'] = {}
+        if mode_string not in self.config_spec['_mode_settings']:
+            config = YamlInterface.process(config_spec)
+            self.config_spec['_mode_settings'][mode_string] = self._process_config_spec(config, mode_string)
 
-    @classmethod
-    def load_config_spec(cls, config_spec=None):
-        """Load config specs."""
-        if not config_spec:
-            config_spec = mpf_config_spec
+    @staticmethod
+    def get_cache_dir():
+        """Return cache dir."""
+        return tempfile.gettempdir()
 
-        cls.config_spec = YamlInterface.process(config_spec)
+    def load_config_spec(self):
+        """Load config spec."""
+        if ConfigValidator.class_cache:
+            self.config_spec = ConfigValidator.class_cache
+            return
 
-    @classmethod
-    def unload_config_spec(cls):
+        cache_file = os.path.join(self.get_cache_dir(), "config_spec.mpf_cache")
+        config_spec_file = os.path.abspath(os.path.join(mpf.core.__path__[0], os.pardir, "config_spec.yaml"))
+        if os.path.isfile(cache_file) and os.path.getmtime(cache_file) >= os.path.getmtime(config_spec_file):
+            try:
+                with open(cache_file, 'rb') as f:
+                    self.config_spec = pickle.load(f)
+                    ConfigValidator.class_cache = deepcopy(self.config_spec)
+                    return
+            except:
+                pass
+
+        with open(config_spec_file, 'rb') as f:
+            config_str = f.read()
+
+        config = YamlInterface.process(config_str)
+        config = self._process_config_spec(config, "root")
+
+        with open(cache_file, 'wb') as f:
+            pickle.dump(config, f, protocol=4)
+            self.log.info('Config spec file cache created: %s', cache_file)
+
+        ConfigValidator.class_cache = deepcopy(self.config_spec)
+        self.config_spec = config
+
+    def _process_config_spec(self, spec, path):
+        if not isinstance(spec, dict):
+            raise AssertionError("Expected a dict at: {} {}".format(path, spec))
+
+        for element, value in spec.items():
+            if element.startswith("__"):
+                spec[element] = value
+            elif isinstance(value, str):
+                if value == "ignore":
+                    spec[element] = value
+                else:
+                    spec[element] = value.split('|')
+                    if len(spec[element]) != 3:
+                        raise AssertionError("Format incorrect: {}".format(value))
+            else:
+                spec[element] = self._process_config_spec(value, path + ":" + element)
+
+        return spec
+
+    def get_config_spec(self):
+        """Return config spec."""
+        if not self.config_spec:
+            self.load_config_spec()
+
+        return self.config_spec
+
+    def unload_config_spec(self):
         """Unload specs."""
-        # cls.config_spec = None
-        pass
+        self.config_spec = None
 
-        # todo I had the idea that we could unload the config spec to save
-        # memory, but doing so will take more thought about timing
-
-    def _build_spec(self, config_spec, base_spec):
+    def build_spec(self, config_spec, base_spec):
         if not self.config_spec:
             self.load_config_spec()
 
@@ -121,6 +174,9 @@ class ConfigValidator(object):
         # source is dict
         # section_name is str used for logging failures
 
+        if not self.config_spec:
+            self.load_config_spec()
+
         if source is None:
             source = dict()
 
@@ -132,7 +188,7 @@ class ConfigValidator(object):
         else:
             validation_failure_info = (config_spec, section_name)
 
-        this_spec = self._build_spec(config_spec, base_spec)
+        this_spec = self.build_spec(config_spec, base_spec)
 
         if '__allow_others__' not in this_spec:
             self.check_for_invalid_sections(this_spec, source,
@@ -185,7 +241,7 @@ class ConfigValidator(object):
                              item='item not in config!@#', ):
         """Validate a config item."""
         try:
-            item_type, validation, default = spec.split('|')
+            item_type, validation, default = spec
         except (ValueError, AttributeError):
             raise ValueError('Error in validator spec: {}:{}'.format(
                 validation_failure_info, spec))
@@ -226,7 +282,10 @@ class ConfigValidator(object):
                 new_set.add(self.validate_item(i, validation, validation_failure_info))
 
             return new_set
-
+        elif item_type == "event_handler":
+            if validation != "str:ms":
+                raise AssertionError("event_handler should use str:ms in config_spec: {}".format(spec))
+            return self._validate_dict_or_omap(item_type, validation, validation_failure_info, item)
         elif item_type in ('dict', 'omap'):
             return self._validate_dict_or_omap(item_type, validation, validation_failure_info, item)
         else:

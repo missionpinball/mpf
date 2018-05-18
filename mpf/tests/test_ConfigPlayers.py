@@ -48,13 +48,14 @@ class TestConfigPlayers(MpfTestCase):
         self.machine_config_patches['mpf']['config_players']['banana'] = \
             'mpf.tests.test_ConfigPlayers.BananaPlayer'
 
-        self.add_to_config_validator('banana_player',
-                                     dict(__valid_in__='machine, mode'))
-
         # Hack around globals in shows
         Show.next_id = 0
 
         super().setUp()
+
+    def _early_machine_init(self, machine):
+        self.add_to_config_validator(machine, 'banana_player',
+                                     dict(__valid_in__='machine, mode'))
 
     def test_config_player(self):
         self.assertIn('bananas', self.machine.show_controller.show_players)

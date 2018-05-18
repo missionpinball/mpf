@@ -15,7 +15,6 @@ from mpf.file_interfaces.yaml_roundtrip import YamlRoundtrip
 from mpf._version import version
 from mpf.core.file_manager import FileManager
 from mpf.core.utility_functions import Util
-from mpf.core.config_validator import mpf_config_spec
 
 EXTENSION = '.yaml'
 BACKUP_FOLDER_NAME = 'previous_config_files'
@@ -178,7 +177,6 @@ class VersionMigrator(object):
         self.base_name = os.path.basename(file_name).lower()
         self.fc = file_contents
         self.current_config_version = 0
-        self.mpf_config_spec = yaml.load(mpf_config_spec)
 
         if not self.initialized:
             self._initialize()

@@ -47,12 +47,13 @@ class TestMachineController(MachineController):
     local_mpf_config_cache = {}     # type: Any
 
     def __init__(self, mpf_path, machine_path, options, config_patches, config_defaults, clock, mock_data,
-                 enable_plugins=False):
+                 enable_plugins=False, early_init=None):
         self.test_config_patches = config_patches
         self.test_config_defaults = config_defaults
         self._enable_plugins = enable_plugins
         self._test_clock = clock
         self._mock_data = mock_data
+        self._early_init = early_init
         super().__init__(mpf_path, machine_path, options)
 
     def create_data_manager(self, config_name):
@@ -75,6 +76,8 @@ class TestMachineController(MachineController):
             super()._register_plugin_config_players()
 
     def _load_config(self):
+        if self._early_init:
+            self._early_init(self)
         super()._load_config()
         self.config = Util.dict_merge(self.test_config_defaults, self.config)
         self.config = Util.dict_merge(self.config, self.test_config_patches)
@@ -400,6 +403,9 @@ class MpfTestCase(unittest.TestCase):
     def _mock_loop(self):
         pass
 
+    def _early_machine_init(self, machine):
+        pass
+
     def _exception_handler(self, loop, context):
         try:
             loop.stop()
@@ -449,7 +455,7 @@ class MpfTestCase(unittest.TestCase):
                     mpf.core.__path__[0], os.pardir)), machine_path,
                 self.getOptions(), self.machine_config_patches, self.machine_config_defaults,
                 self.clock, self._get_mock_data(),
-                self.get_enable_plugins())
+                self.get_enable_plugins(), self._early_machine_init)
 
             self._initialise_machine()
 
@@ -884,10 +890,6 @@ class MpfTestCase(unittest.TestCase):
         events.get_event_loop = self._get_event_loop2
         self._get_event_loop2 = None
 
-    def add_to_config_validator(self, key, new_dict):
-        if mpf.core.config_validator.ConfigValidator.config_spec:
-            mpf.core.config_validator.ConfigValidator.config_spec[key] = (
-                new_dict)
-        else:
-            mpf.core.config_validator.mpf_config_spec += '\n' + yaml.dump(
-                {key: new_dict}, default_flow_style=False)
+    def add_to_config_validator(self, machine, key, new_dict):
+        """Add config dict to validator."""
+        machine.config_validator.get_config_spec()[key] = (new_dict)
