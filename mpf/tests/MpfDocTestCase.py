@@ -92,6 +92,9 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
     def getConfigFile(self):
         return "config.yaml"
 
+    def get_platform(self):
+        return "smart_virtual"
+
     def getMachinePath(self):
         return self.config_dir
 
@@ -125,6 +128,11 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
         self.machine.modes[mode].start()
         self.machine_run()
         self.assertModeRunning(mode)
+
+    def command_stop_mode(self, mode):
+        self.machine.modes[mode].stop()
+        self.machine_run()
+        self.assertModeNotRunning(mode)
 
     def command_assert_mode_running(self, mode):
         self.assertModeRunning(mode)
@@ -163,3 +171,9 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
 
     def command_assert_event_not_called(self, name):
         self.assertEventNotCalled(name)
+
+    def command_assert_balls_on_playfield(self, balls):
+        self.assertBallsOnPlayfield(int(balls))
+
+    def command_assert_balls_in_play(self, balls):
+        self.assertBallsInPlay(int(balls))
