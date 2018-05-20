@@ -18,8 +18,10 @@ coil_player:
   event2:
     coil_1:
       action: pulse
+      pulse_power: 1.0
     coil_2:
       action: pulse
+      pulse_power: 0.5
   event3:
     coil_1:
       action: pulse
@@ -32,8 +34,19 @@ coil_player:
       action: disable
   event6: coil_2
   event7:
-    coil_3: enable
+    coil_3:
+      action: enable
+      hold_power: 0.5
   event8:
     coil_3: disable
   event9:
     coil_3: 30
+  pulse_1_100:
+    coil_1:
+      action: pulse
+      pulse_ms: 100
+  pulse_1_50_max_wait_ms:
+    coil_1:
+      action: pulse
+      pulse_ms: 50
+      max_wait_ms: 100

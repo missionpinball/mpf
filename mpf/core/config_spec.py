@@ -270,8 +270,10 @@ fast_coils:
 coil_player:
     __valid_in__: machine, mode, show
     action: single|lstr|pulse
-    power: single|float|1.0
-    __allow_others__:
+    hold_power: single|float|None
+    pulse_power: single|float|None
+    pulse_ms: single|int|None
+    max_wait_ms: single|int|None
 color_correction_profile:
     __valid_in__: machine
     gamma: single|float|2.5
