@@ -163,7 +163,7 @@ class MpfGameTestCase(MpfTestCase):
         """
         self.assertEqual(number, self.machine.game.player.index + 1)
 
-    def stop_game(self):
+    def stop_game(self, stop_time=1):
         """Stop the current game.
         
         This method asserts that a game is running, then call's
@@ -179,7 +179,7 @@ class MpfGameTestCase(MpfTestCase):
         """
         self.assertGameIsRunning()
         self.machine.game.end_game()
-        self.advance_time_and_run()
+        self.advance_time_and_run(stop_time)
         self.assertGameIsNotRunning()
 
     def assertGameIsRunning(self):

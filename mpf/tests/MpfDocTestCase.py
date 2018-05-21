@@ -121,8 +121,8 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
     def command_start_game(self):
         self.start_game()
 
-    def command_stop_game(self):
-        self.stop_game()
+    def command_stop_game(self, stop_time=1):
+        self.stop_game(float(stop_time))
 
     def command_drain_ball(self):
         self.drain_ball()
