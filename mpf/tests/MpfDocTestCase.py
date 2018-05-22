@@ -155,6 +155,9 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
     def command_assert_light_color(self, light, color):
         self.assertLightColor(light, color)
 
+    def command_assert_light_flashing(self, light, color, secs=1, delta=.1):
+        self.assertLightFlashing(light, color, float(secs), float(delta))
+
     def command_mock_event(self, name):
         self.mock_event(name)
 
