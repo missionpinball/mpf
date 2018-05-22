@@ -356,7 +356,7 @@ class Game(AsyncMode):
             desc: A new ball has started, and this is a multiplayer game.
             The player number is the (number) in the event that's posted.'''
 
-        if not hasattr(self.machine, "playfield"):
+        if not hasattr(self.machine, "playfield") or not self.machine.playfield:
             raise AssertionError("The game did not define default playfield. Did you add tags: default to one of your "
                                  "playfield?")
 
