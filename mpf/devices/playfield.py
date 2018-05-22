@@ -236,6 +236,10 @@ class Playfield(SystemWideDevice):
         if not source_device:
             source_device = self.config['default_source_device']
 
+        if not source_device:
+            self.raise_config_error("Missing a source device to request a ball. Did you define a default_source_device "
+                                    "in your playfield?", 1)
+
         self.debug_log("Received request to add %s ball(s). Source device: %s."
                        " Player-controlled: %s", balls,
                        source_device.name, player_controlled)
