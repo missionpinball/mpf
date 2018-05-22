@@ -20,7 +20,7 @@ from mpf.core.config_processor import ConfigProcessor
 from mpf.core.config_validator import ConfigValidator
 from mpf.core.data_manager import DataManager
 from mpf.core.delays import DelayManager, DelayManagerRegistry
-from mpf.core.device_manager import DeviceCollection, DeviceCollectionType
+from mpf.core.device_manager import DeviceCollection
 from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
 
@@ -141,25 +141,25 @@ class MachineController(LogMixin):
             self.service = None                         # type: ServiceController
 
             # devices
-            self.autofires = None                       # type: DeviceCollectionType[str, AutofireCoil]
-            self.motors = None                          # type: DeviceCollectionType[str, Motor]
-            self.digital_outputs = None                 # type: DeviceCollectionType[str, DigitalOutput]
-            self.shows = None                           # type: DeviceCollectionType[str, Show]
-            self.shots = None                           # type: DeviceCollectionType[str, Shot]
-            self.shot_groups = None                     # type: DeviceCollectionType[str, ShotGroup]
-            self.switches = None                        # type: DeviceCollectionType[str, Switch]
-            self.coils = None                           # type: DeviceCollectionType[str, Driver]
-            self.lights = None                          # type: DeviceCollectionType[str, Light]
-            self.ball_devices = None                    # type: DeviceCollectionType[str, BallDevice]
-            self.accelerometers = None                  # type: DeviceCollectionType[str, Accelerometer]
+            self.autofires = None                       # type: Dict[str, AutofireCoil]
+            self.motors = None                          # type: Dict[str, Motor]
+            self.digital_outputs = None                 # type: Dict[str, DigitalOutput]
+            self.shows = None                           # type: Dict[str, Show]
+            self.shots = None                           # type: Dict[str, Shot]
+            self.shot_groups = None                     # type: Dict[str, ShotGroup]
+            self.switches = None                        # type: Dict[str, Switch]
+            self.coils = None                           # type: Dict[str, Driver]
+            self.lights = None                          # type: Dict[str, Light]
+            self.ball_devices = None                    # type: Dict[str, BallDevice]
+            self.accelerometers = None                  # type: Dict[str, Accelerometer]
             self.playfield = None                       # type: Playfield
-            self.playfields = None                      # type: DeviceCollectionType[str, Playfield]
-            self.counters = None                        # type: DeviceCollectionType[str, Counter]
-            self.sequences = None                       # type: DeviceCollectionType[str, Sequence]
-            self.accruals = None                        # type: DeviceCollectionType[str, Accrual]
-            self.drop_targets = None                    # type: DeviceCollectionType[str, DropTarget]
-            self.servos = None                          # type: DeviceCollectionType[str, Servo]
-            self.segment_displays = None                # type: DeviceCollectionType[str, SegmentDisplay]
+            self.playfields = None                      # type: Dict[str, Playfield]
+            self.counters = None                        # type: Dict[str, Counter]
+            self.sequences = None                       # type: Dict[str, Sequence]
+            self.accruals = None                        # type: Dict[str, Accrual]
+            self.drop_targets = None                    # type: Dict[str, DropTarget]
+            self.servos = None                          # type: Dict[str, Servo]
+            self.segment_displays = None                # type: Dict[str, SegmentDisplay]
 
         self._set_machine_path()
 

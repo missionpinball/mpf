@@ -830,7 +830,7 @@ class AssetPool(object):
         if not assets or assets[0][0] is None:
             return (None, 0)
 
-        value = random.randint(1, self._total_weights)
+        value = random.randint(1, self._total_weights)  # nosec
         index_value = assets[0][1]
 
         for asset in assets:

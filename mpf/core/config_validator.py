@@ -6,7 +6,7 @@ import tempfile
 from collections import OrderedDict
 from copy import deepcopy
 
-import pickle
+import pickle   # nosec
 
 from typing import Any
 from typing import Dict
@@ -90,7 +90,7 @@ class ConfigValidator(object):
         if os.path.isfile(cache_file) and os.path.getmtime(cache_file) >= os.path.getmtime(config_spec_file):
             try:
                 with open(cache_file, 'rb') as f:
-                    self.config_spec = pickle.load(f)
+                    self.config_spec = pickle.load(f)   # nosec
                     ConfigValidator.class_cache = deepcopy(self.config_spec)
                     return
             except Exception:   # noqa

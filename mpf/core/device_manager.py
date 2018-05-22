@@ -304,31 +304,6 @@ class DeviceManager(MpfController):
                                                                 method))
 
 
-KT = TypeVar('KT')      # key type.
-VT = TypeVar('VT')      # Value type.
-
-
-class DeviceCollectionType(Sized, Container[KT], Generic[KT, VT], Iterable[VT], extra=dict):    # noqa
-
-    """Type for a device collection."""
-
-    def values(self) -> Iterable[VT]:
-        """Annotate dummy for type annotations."""
-        pass
-
-    def items_tagged(self, tag: str) -> Iterable[VT]:
-        """Annotate dummy for type annotations."""
-        pass
-
-    def __getitem__(self, key: KT) -> VT:
-        """Annotate dummy for type annotations."""
-        pass
-
-    def __getattr__(self, key: str) -> VT:
-        """Annotate dummy for type annotations."""
-        pass
-
-
 class DeviceCollection(dict):
 
     """A collection of Devices.

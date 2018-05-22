@@ -4,7 +4,7 @@ import errno
 import hashlib
 import logging
 import os
-import pickle
+import pickle   # nosec
 import tempfile
 
 from typing import List, Tuple, Any
@@ -35,10 +35,10 @@ class ConfigProcessor(object):
         filestring = ""
         for configfile in filenames:
             filestring += str(os.path.abspath(configfile))
-        path_hash = hashlib.md5(bytes(filestring, 'UTF-8')).hexdigest()
+        path_hash = hashlib.md5(bytes(filestring, 'UTF-8')).hexdigest()     # nosec
         return os.path.join(cache_dir, path_hash + ".mpf_cache")
 
-    def _load_config_from_cache(self, cache_file) -> Tuple[Any, List[str]]:
+    def _load_config_from_cache(self, cache_file) -> Tuple[Any, List[str]]:     # nosec
         """Return config from cache."""
         self.log.info("Loading config from cache: %s", cache_file)
         with open(cache_file, 'rb') as f:
