@@ -95,6 +95,8 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
         """Initialise segment display."""
         super().__init__(number)
         self.platform = platform
+        # clear display initially
+        self.platform.send_string(LisyDefines.DisplaysSetDisplay0To + self.number, "")
 
     def _set_text(self, text: str):
         """Set text to display."""
