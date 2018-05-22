@@ -94,9 +94,9 @@ class TestLisy(MpfTestCase):
             b'\x03': b'\x28',           # get number of lamps -> 40
             b'\x04': b'\x09',           # get number of solenoids -> 9
             b'\x06': b'\x05',           # get number of displays -> 5
-            b'\x1e\x00': b'\x00',       # clear display
-            b'\x1f\x00': b'\x00',       # clear display
-            b'\x20\x00': b'\x00',       # clear display
+            b'\x1e\x00': None,          # clear display
+            b'\x1f\x00': None,          # clear display
+            b'\x20\x00': None,          # clear display
         }
 
         for row in range(8):
