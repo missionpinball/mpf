@@ -3,6 +3,7 @@ import re
 import tempfile
 
 import shutil
+import shlex
 
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 from mpf.tests.MpfMachineTestCase import MockConfigPlayers
@@ -108,7 +109,7 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
             if not line or line.startswith("#"):
                 continue
 
-            parts = line.split(" ")
+            parts = shlex.split(line)
             command = parts.pop(0)
             method = getattr(self, "command_" + command)
             if not method:
@@ -143,8 +144,12 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
     def command_assert_mode_not_running(self, mode):
         self.assertModeNotRunning(mode)
 
-    def command_post(self, event_name):
-        self.post_event(event_name)
+    def command_post(self, event_name, *args):
+        kwargs = {}
+        for arg in args:
+            key, value = arg.split("=", 2)
+            kwargs[key] = value
+        self.post_event_with_params(event_name, **kwargs)
 
     def command_hit_and_release_switch(self, switch_name):
         self.hit_and_release_switch(switch_name)
@@ -162,6 +167,11 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
         if isinstance(self.machine.game.player[player_var], (int, float)):
             value = float(value)
         self.assertPlayerVarEqual(value, player_var=player_var)
+
+    def command_assert_machine_variable(self, value, name):
+        if name in self.machine.machine_vars and isinstance(self.machine.machine_vars[name]["value"], (int, float)):
+            value = float(value)
+        self.assertMachineVarEqual(value, name)
 
     def command_assert_light_color(self, light, color):
         self.assertLightColor(light, color)
