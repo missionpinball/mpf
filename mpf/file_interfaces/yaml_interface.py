@@ -4,7 +4,6 @@ Fixes for octal and boolean values are from here:
 http://stackoverflow.com/questions/32965846/cant-parse-yaml-correctly/
 """
 import copy
-import logging
 import re
 
 from typing import Any, Iterable
@@ -20,15 +19,13 @@ from ruamel.yaml.parser_ import Parser
 from ruamel.yaml.composer import Composer
 from ruamel.yaml.constructor import Constructor, ConstructorError
 
-from mpf.core.file_manager import FileInterface, FileManager
-from mpf.core.utility_functions import Util
-
-log = logging.getLogger('YAML Interface')
+from mpf.core.file_interface import FileInterface
 
 
 class MpfResolver(BaseResolver):
 
     """Resolver with mentioned fixes."""
+
 
 MpfResolver.add_implicit_resolver(
     # Process any item beginning with a plus sign (+) as a string
@@ -141,6 +138,7 @@ class MpfLoader(Reader, Scanner, Parser, Composer, MpfConstructor, MpfResolver):
 
     """Config loader."""
 
+    # pylint: disable-msg=super-init-not-called
     def __init__(self, stream):
         """Initialise loader."""
         Reader.__init__(self, stream)
@@ -223,5 +221,6 @@ class YamlInterface(FileInterface):
         """Save config to yaml file."""
         with open(filename, 'w', encoding='utf8') as output_file:
             output_file.write(yaml.dump(data, default_flow_style=False))
+
 
 file_interface_class = YamlInterface

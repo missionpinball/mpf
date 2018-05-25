@@ -248,7 +248,7 @@ class DeviceManager(MpfController):
                             for event, delay in settings[control_event].items():
                                 try:
                                     method = getattr(self.collections[collection][device], control_event[:-7])
-                                except:
+                                except Exception:   # pylint: disable-msg=broad-except
                                     raise AssertionError("Class {} needs to have method {} to handle {}".format(
                                         self.collections[collection][device], control_event[:-7], control_event
                                     ))

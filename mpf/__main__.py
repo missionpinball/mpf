@@ -10,5 +10,6 @@ def main(args=None):
 
     mpf.commands.run_from_command_line(args)
 
+
 if __name__ == "__main__":
     main()

@@ -31,7 +31,7 @@ pylint:
   options:
     max-attributes: 12
     max-parents: 15
-    max-branches: 15
+    max-branches: 30
     max-statements: 60
     max-public-methods: 40
 
