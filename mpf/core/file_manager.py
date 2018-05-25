@@ -20,7 +20,7 @@ class FileManager(object):
     @classmethod
     def init(cls):
         """Initialise file interfaces."""
-        cls.file_interfaces["yaml"] = YamlInterface()
+        cls.file_interfaces[".yaml"] = YamlInterface()
 
         FileManager.initialized = True
 
