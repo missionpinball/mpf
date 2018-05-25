@@ -11,6 +11,8 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
 
     __slots__ = []
 
+    allow_placeholders_in_keys = False
+
     def validate_config_entry(self, settings, name):
         """Validate one entry of this player."""
         validated_config = dict()
@@ -67,7 +69,14 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
                 devices = [device]
 
         except KeyError:
-            devices = [device]
+            if not self.__class__.allow_placeholders_in_keys or "(" not in device:
+                # no placeholders
+                self.raise_config_error(
+                    "Could not find a {} device with name or tag {}.".format(self.device_collection.name, device),
+                    1)
+            else:
+                # placeholders may be evaluated later
+                devices = [device]
 
         return_dict = dict()
         for this_device in devices:

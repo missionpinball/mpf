@@ -8,6 +8,7 @@ class ShowPlayer(DeviceConfigPlayer):
 
     config_file_section = 'show_player'
     show_section = 'shows'
+    allow_placeholders_in_keys = True
 
     __slots__ = []
 

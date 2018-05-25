@@ -12,6 +12,7 @@ class LightPlayer(DeviceConfigPlayer):
     config_file_section = 'light_player'
     show_section = 'lights'
     machine_collection_name = 'lights'
+    allow_placeholders_in_keys = True
 
     __slots__ = []
 

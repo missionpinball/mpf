@@ -2,6 +2,19 @@
 lights:
   light:
     number: 1
+  led_01:
+    number:
+  led_02:
+    number:
+  light_01:
+    number:
+  light_02:
+    number:
+  gi_01:
+    number:
+  gi_02:
+    number:
+
 
 shows:
   my_show1:
