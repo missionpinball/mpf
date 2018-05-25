@@ -1648,7 +1648,7 @@ video_control_events:
 window:
     __valid_in__: machine
     icon: single|str|None
-    title: single|str|Mission Pinball Framework v{}
+    title: single|str|Mission Pinball Framework
     source_display: single|str|default
     borderless: single|bool_int|0
     resizable: single|bool_int|1
