@@ -4,6 +4,7 @@ import time
 from unittest.mock import MagicMock
 
 from mpf.core.rgb_color import RGBColor
+from mpf.platforms.interfaces.driver_platform_interface import PulseSettings
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
@@ -307,14 +308,14 @@ class TestShows(MpfTestCase):
         # --------------------------------------------------------
 
         # Setup callback for test_event event (fired in test show) and triggers
-        self.machine.coils['coil_01'].pulse = MagicMock()
+        self.machine.coils['coil_01'].hw_driver.pulse = MagicMock()
         self.machine.coils['flasher_01'].hw_driver.enable = MagicMock()
 
         self.assertTrue(self.machine.shows['test_show3'].loaded)
         self.assertEqual(self.machine.shows['test_show3'].total_steps, 3)
 
         # Make sure our device callbacks have not been fired yet
-        self.assertFalse(self.machine.coils['coil_01'].pulse.called)
+        self.assertFalse(self.machine.coils['coil_01'].hw_driver.pulse.called)
         self.assertFalse(self.machine.coils['flasher_01'].hw_driver.enable.called)
 
         # Start the mode that will trigger playback of the test_show3 show
@@ -334,13 +335,11 @@ class TestShows(MpfTestCase):
 
         # Advance to next show step and check for coil firing
         self.advance_time_and_run()
-        self.machine.coils['coil_01'].pulse.assert_called_with(power=1.0,
-                                                               priority=0)
+        self.machine.coils['coil_01'].hw_driver.pulse.assert_called_with(PulseSettings(power=1.0, duration=30))
 
         # Advance to next show step and check for coil firing
         self.advance_time_and_run()
-        self.machine.coils['coil_01'].pulse.assert_called_with(power=0.45,
-                                                               priority=0)
+        self.machine.coils['coil_01'].hw_driver.pulse.assert_called_with(PulseSettings(power=0.45, duration=30))
 
         # TODO: Test device tags
         # TODO: Add test for multiple shows running at once with different

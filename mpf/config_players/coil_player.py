@@ -2,6 +2,7 @@
 from copy import deepcopy
 
 from mpf.config_players.device_config_player import DeviceConfigPlayer
+from mpf.devices.driver import Driver
 
 
 class CoilPlayer(DeviceConfigPlayer):
@@ -22,8 +23,12 @@ class CoilPlayer(DeviceConfigPlayer):
 
         for coil, s in settings.items():
             s = deepcopy(s)
+            if not isinstance(coil, Driver):
+                self.raise_config_error("Invalid coil name {}".format(coil), 2, context=context)
             action = s.pop('action')
-            coil_action = getattr(coil, action)
+            coil_action = getattr(coil, action, None)
+            if not coil_action:
+                self.raise_config_error("Invalid action {}".format(action), 1, context=context)
 
             if action in ("disable", "off") and coil.name in instance_dict:
                 del instance_dict[coil.name]
@@ -56,4 +61,4 @@ class CoilPlayer(DeviceConfigPlayer):
         elif value in ('enable', 'on'):
             action = 'enable'
 
-        return dict(action=action, power=1.0)
+        return dict(action=action)

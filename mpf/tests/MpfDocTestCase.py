@@ -3,6 +3,7 @@ import re
 import tempfile
 
 import shutil
+import shlex
 
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 from mpf.tests.MpfMachineTestCase import MockConfigPlayers
@@ -92,6 +93,9 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
     def getConfigFile(self):
         return "config.yaml"
 
+    def get_platform(self):
+        return "smart_virtual"
+
     def getMachinePath(self):
         return self.config_dir
 
@@ -105,7 +109,7 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
             if not line or line.startswith("#"):
                 continue
 
-            parts = line.split(" ")
+            parts = shlex.split(line)
             command = parts.pop(0)
             method = getattr(self, "command_" + command)
             if not method:
@@ -118,13 +122,21 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
     def command_start_game(self):
         self.start_game()
 
-    def command_stop_game(self):
-        self.stop_game()
+    def command_stop_game(self, stop_time=1):
+        self.stop_game(float(stop_time))
+
+    def command_drain_ball(self):
+        self.drain_ball()
 
     def command_start_mode(self, mode):
         self.machine.modes[mode].start()
         self.machine_run()
         self.assertModeRunning(mode)
+
+    def command_stop_mode(self, mode):
+        self.machine.modes[mode].stop()
+        self.machine_run()
+        self.assertModeNotRunning(mode)
 
     def command_assert_mode_running(self, mode):
         self.assertModeRunning(mode)
@@ -132,8 +144,12 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
     def command_assert_mode_not_running(self, mode):
         self.assertModeNotRunning(mode)
 
-    def command_post(self, event_name):
-        self.post_event(event_name)
+    def command_post(self, event_name, *args):
+        kwargs = {}
+        for arg in args:
+            key, value = arg.split("=", 2)
+            kwargs[key] = value
+        self.post_event_with_params(event_name, **kwargs)
 
     def command_hit_and_release_switch(self, switch_name):
         self.hit_and_release_switch(switch_name)
@@ -152,8 +168,16 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
             value = float(value)
         self.assertPlayerVarEqual(value, player_var=player_var)
 
+    def command_assert_machine_variable(self, value, name):
+        if name in self.machine.machine_vars and isinstance(self.machine.machine_vars[name]["value"], (int, float)):
+            value = float(value)
+        self.assertMachineVarEqual(value, name)
+
     def command_assert_light_color(self, light, color):
         self.assertLightColor(light, color)
+
+    def command_assert_light_flashing(self, light, color, secs=1, delta=.1):
+        self.assertLightFlashing(light, color, float(secs), float(delta))
 
     def command_mock_event(self, name):
         self.mock_event(name)
@@ -163,3 +187,9 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
 
     def command_assert_event_not_called(self, name):
         self.assertEventNotCalled(name)
+
+    def command_assert_balls_on_playfield(self, balls):
+        self.assertBallsOnPlayfield(int(balls))
+
+    def command_assert_balls_in_play(self, balls):
+        self.assertBallsInPlay(int(balls))

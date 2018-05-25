@@ -44,7 +44,7 @@ class TestCoilPlayer(MpfTestCase):
 
         self.post_event("event7")
         self.advance_time_and_run()
-        coil.hw_driver.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=1.0))
+        coil.hw_driver.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=0.5))
         assert not coil.hw_driver.disable.called
         assert not coil.hw_driver.pulse.called
         coil.hw_driver.pulse = MagicMock()
@@ -82,7 +82,7 @@ class TestCoilPlayer(MpfTestCase):
         coil.hw_driver.pulse.assert_called_with(PulseSettings(power=1.0, duration=10))
         assert not coil.hw_driver.enable.called
 
-        coil2.hw_driver.pulse.assert_called_with(PulseSettings(power=1.0, duration=10))
+        coil2.hw_driver.pulse.assert_called_with(PulseSettings(power=0.5, duration=10))
         assert not coil2.hw_driver.enable.called
 
         # post same event again
@@ -96,7 +96,7 @@ class TestCoilPlayer(MpfTestCase):
         coil.hw_driver.pulse.assert_called_with(PulseSettings(power=1.0, duration=10))
         assert not coil.hw_driver.enable.called
 
-        coil2.hw_driver.pulse.assert_called_with(PulseSettings(power=1.0, duration=10))
+        coil2.hw_driver.pulse.assert_called_with(PulseSettings(power=0.5, duration=10))
         assert not coil2.hw_driver.enable.called
 
     def test_pulse_with_attributes(self):
@@ -147,3 +147,15 @@ class TestCoilPlayer(MpfTestCase):
         self.post_event("stop_mode1", 1)
         self.assertFalse(coil.hw_driver.enable.called)
         coil.hw_driver.disable.assert_called_with()
+
+    def test_max_wait_ms(self):
+        coil = self.machine.coils['coil_1']
+        self.post_event("pulse_1_100")
+        self.advance_time_and_run(.05)
+        self.assertEqual("pulsed_100", coil.hw_driver.state)
+        self.post_event("pulse_1_50_max_wait_ms")
+        # still the same
+        self.assertEqual("pulsed_100", coil.hw_driver.state)
+        # after pulse end
+        self.advance_time_and_run(.06)
+        self.assertEqual("pulsed_50", coil.hw_driver.state)
