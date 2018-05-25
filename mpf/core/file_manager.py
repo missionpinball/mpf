@@ -1,60 +1,12 @@
-"""Contains the FileManager and FileInterface base classes."""
+"""Contains the FileManager base classes."""
 
 import logging
 import os
-import importlib
-
-import mpf.file_interfaces
+from mpf.file_interfaces.yaml_interface import YamlInterface
 
 MYPY = False
 if MYPY:    # noqa
     from typing import Dict
-    from typing import List
-
-
-class FileInterface(object):
-
-    """Interface for config files."""
-
-    file_types = list()     # type: List[str]
-
-    def __init__(self):
-        """Initialise file manager."""
-        self.log = logging.getLogger('{} File Interface'.format(
-            self.file_types[0][1:].upper()))
-
-    def find_file(self, filename):
-        """Test whether the passed file is valid.
-
-        If the file does not have an externsion, this method will test for files with that base name with
-        all the extensions it can read.
-
-        Args:
-            filename: Full absolute path of a file to check, with or without
-                an extension.
-
-        Returns:
-            False if a file is not found.
-            Tuple of (full file with path, extension) if a file is found
-
-        """
-        if not os.path.splitext(filename)[1]:
-            # file has no extension
-
-            for extension in self.file_types:
-                if os.path.isfile(filename + extension):
-                    return os.path.abspath(filename + extension), extension
-            return False, None
-        else:
-            return filename, os.path.splitext(filename)[1]
-
-    def load(self, filename, expected_version_str=None, halt_on_error=True):
-        """Load file."""
-        raise NotImplementedError
-
-    def save(self, filename, data):
-        """Save file."""
-        raise NotImplementedError
 
 
 class FileManager(object):
@@ -62,22 +14,13 @@ class FileManager(object):
     """Manages file interfaces."""
 
     log = logging.getLogger('FileManager')
-    file_interfaces = dict()    # type: Dict[str, FileInterface]
+    file_interfaces = dict()    # type: Dict[str, YamlInterface]
     initialized = False
 
     @classmethod
     def init(cls):
-        """Initialise file manager."""
-        # Needs to be a separate method to prevent circular import
-        for module_name in mpf.file_interfaces.__all__:
-            importlib.import_module('mpf.file_interfaces.{}'.format(module_name))
-            module_obj = getattr(mpf.file_interfaces, module_name)
-            interface_class = getattr(module_obj, "file_interface_class")
-
-            this_instance = interface_class()
-
-            for file_type in interface_class.file_types:
-                cls.file_interfaces[file_type] = this_instance
+        """Initialise file interfaces."""
+        cls.file_interfaces[".yaml"] = YamlInterface()
 
         FileManager.initialized = True
 

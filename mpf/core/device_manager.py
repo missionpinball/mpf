@@ -248,7 +248,7 @@ class DeviceManager(MpfController):
                             for event, delay in settings[control_event].items():
                                 try:
                                     method = getattr(self.collections[collection][device], control_event[:-7])
-                                except:
+                                except Exception:   # pylint: disable-msg=broad-except
                                     raise AssertionError("Class {} needs to have method {} to handle {}".format(
                                         self.collections[collection][device], control_event[:-7], control_event
                                     ))
@@ -302,31 +302,6 @@ class DeviceManager(MpfController):
                 self.machine.events.add_handler(event=event_prefix2 + method,
                                                 handler=getattr(device,
                                                                 method))
-
-
-KT = TypeVar('KT')      # key type.
-VT = TypeVar('VT')      # Value type.
-
-
-class DeviceCollectionType(Sized, Container[KT], Generic[KT, VT], Iterable[VT], extra=dict):    # noqa
-
-    """Type for a device collection."""
-
-    def values(self) -> Iterable[VT]:
-        """Annotate dummy for type annotations."""
-        pass
-
-    def items_tagged(self, tag: str) -> Iterable[VT]:
-        """Annotate dummy for type annotations."""
-        pass
-
-    def __getitem__(self, key: KT) -> VT:
-        """Annotate dummy for type annotations."""
-        pass
-
-    def __getattr__(self, key: str) -> VT:
-        """Annotate dummy for type annotations."""
-        pass
 
 
 class DeviceCollection(dict):

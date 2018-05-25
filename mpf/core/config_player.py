@@ -1,4 +1,3 @@
-
 """Base class used for things that "play" from the config files, such as WidgetPlayer, SlidePlayer, etc."""
 import abc
 from functools import partial

@@ -389,7 +389,7 @@ class Show(Asset):
     @staticmethod
     def _get_mpfcache_file_name(file_name):
         cache_dir = tempfile.gettempdir()
-        path_hash = str(hashlib.md5(bytes(file_name, 'UTF-8')).hexdigest())
+        path_hash = str(hashlib.md5(bytes(file_name, 'UTF-8')).hexdigest())     # nosec
         result = os.path.join(cache_dir, path_hash)
         return result + ".mpf_cache"
 

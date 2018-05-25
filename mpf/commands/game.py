@@ -248,6 +248,6 @@ class Command(object):
         self.file_queue_listener.stop()
 
         if self.args.pause:
-            input('Press ENTER to continue...')
+            input('Press ENTER to continue...')     # nosec
 
         sys.exit()

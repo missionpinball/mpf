@@ -11,7 +11,6 @@ from unittest.mock import *
 
 import asyncio
 from asyncio import events
-import ruamel.yaml as yaml
 from typing import Any
 
 from mpf.core.logging import LogMixin
@@ -47,15 +46,17 @@ class TestMachineController(MachineController):
     local_mpf_config_cache = {}     # type: Any
 
     def __init__(self, mpf_path, machine_path, options, config_patches, config_defaults, clock, mock_data,
-                 enable_plugins=False):
+                 enable_plugins=False, early_init=None):
         self.test_config_patches = config_patches
         self.test_config_defaults = config_defaults
         self._enable_plugins = enable_plugins
         self._test_clock = clock
         self._mock_data = mock_data
+        self._early_init = early_init
         super().__init__(mpf_path, machine_path, options)
 
     def create_data_manager(self, config_name):
+        """Create TestDataManager."""
         return TestDataManager(self._mock_data.get(config_name, {}))
 
     def _load_clock(self):
@@ -65,16 +66,13 @@ class TestMachineController(MachineController):
         if self._test_clock:
             self._test_clock.loop.close()
 
-    def sleep_until_next_event_mock(self):
-        for socket, callback in self.clock.read_sockets.items():
-            if socket.ready():
-                callback()
-
     def _register_plugin_config_players(self):
         if self._enable_plugins:
             super()._register_plugin_config_players()
 
     def _load_config(self):
+        if self._early_init:
+            self._early_init(self)
         super()._load_config()
         self.config = Util.dict_merge(self.test_config_defaults, self.config)
         self.config = Util.dict_merge(self.config, self.test_config_patches)
@@ -171,7 +169,8 @@ class MpfTestCase(unittest.TestCase):
         return os.path.abspath(os.path.join(
             mpf.core.__path__[0], os.pardir, self.getMachinePath()))
 
-    def get_abs_path(self, path):
+    @staticmethod
+    def get_abs_path(path):
         return os.path.join(os.path.abspath(os.curdir), path)
 
     def post_event(self, event_name, run_time=0):
@@ -357,7 +356,8 @@ class MpfTestCase(unittest.TestCase):
         """
         self.advance_time_and_run(0)
 
-    def unittest_verbosity(self):
+    @staticmethod
+    def unittest_verbosity():
         """Return the verbosity setting of the currently running unittest
         program, or 0 if none is running.
         
@@ -398,6 +398,9 @@ class MpfTestCase(unittest.TestCase):
         return dict()
 
     def _mock_loop(self):
+        pass
+
+    def _early_machine_init(self, machine):
         pass
 
     def _exception_handler(self, loop, context):
@@ -449,7 +452,7 @@ class MpfTestCase(unittest.TestCase):
                     mpf.core.__path__[0], os.pardir)), machine_path,
                 self.getOptions(), self.machine_config_patches, self.machine_config_defaults,
                 self.clock, self._get_mock_data(),
-                self.get_enable_plugins())
+                self.get_enable_plugins(), self._early_machine_init)
 
             self._initialise_machine()
 
@@ -690,75 +693,6 @@ class MpfTestCase(unittest.TestCase):
         self.assertEventCalled(event_name)
         self.assertEqual(kwargs, self._last_event_kwargs[event_name], "Args for {} differ.".format(event_name))
 
-    def assertShotShow(self, shot_name, show_name):
-        """Assert that the highest priority running show for a shot is a
-        certain show name.
-        
-        Args:
-            shot_name: String name of the shot.
-            show_name: String name of the show.
-        
-        """
-        if shot_name not in self.machine.shots:
-            raise AssertionError("Shot {} is not a valid shot".format(shot_name))
-
-        if show_name:
-            self.assertIsNotNone(self.machine.shots[shot_name].profiles)
-            self.assertIsNotNone(self.machine.shots[shot_name].profiles[0]['running_show'])
-            self.assertEqual(show_name, self.machine.shots[shot_name].profiles[0]['running_show'].name)
-        else:
-            self.assertIsNone(self.machine.shots[shot_name].profiles[0]['running_show'])
-
-    def assertShotProfile(self, shot_name, profile_name):
-        """Assert that the highest priority profile for a shot is a
-        certain profile name.
-        
-        Args:
-            shot_name: String name of the shot.
-            profile_name: String name of the profile.
-        
-        """
-        if shot_name not in self.machine.shots:
-            raise AssertionError("Shot {} is not a valid shot".format(shot_name))
-
-        if profile_name:
-            self.assertIsNotNone(self.machine.shots[shot_name].profiles)
-            self.assertIsNotNone(self.machine.shots[shot_name].profiles[0]['profile'])
-            self.assertEqual(profile_name, self.machine.shots[shot_name].profiles[0]['profile'])
-        else:
-            self.assertIsNone(self.machine.shots[shot_name].profiles[0]['profile'])
-
-    def assertShotProfileState(self, shot_name, state_name):
-        """Assert that the highest priority profile for a shot is in a certain
-        state.
-        
-        Args:
-            shot_name: String name of the shot.
-            state_name: String name of the state.
-        
-        """
-        if shot_name not in self.machine.shots:
-            raise AssertionError("Shot {} is not a valid shot".format(shot_name))
-
-        if state_name:
-            self.assertIsNotNone(self.machine.shots[shot_name].profiles)
-            self.assertIsNotNone(self.machine.shots[shot_name].profiles[0]['current_state_name'])
-            self.assertEqual(state_name, self.machine.shots[shot_name].profiles[0]['current_state_name'])
-        else:
-            self.assertIsNone(self.machine.shots[shot_name].profiles[0]['current_state_name'])
-
-    def assertShotEnabled(self, shot_name):
-        """Assert that a shot is enabled.
-        
-        Args:
-            shot_name: String name of the shot.
-        
-        """
-        if shot_name not in self.machine.shots:
-            raise AssertionError("Shot {} is not a valid shot".format(shot_name))
-
-        self.assertTrue(self.machine.shots[shot_name].profiles[0]['enable'])
-
     def assertColorAlmostEqual(self, color1, color2, delta=6):
         """Assert that two color are almost equal.
         
@@ -779,26 +713,6 @@ class MpfTestCase(unittest.TestCase):
                 abs(color1[1] - color2[1]) +\
                 abs(color1[2] - color2[2])
         self.assertLessEqual(difference, delta, "Colors do not match: " + str(color1) + " " + str(color2))
-
-    def get_timer(self, timer):
-        """Return a timer object from a mode based on a name.
-        
-        Args:
-            timer: String name of the timer to look for.
-        
-        Returns:
-            A Timer object.
-        
-        Raises:
-            AssertionError if the timer does not exist.
-        
-        """
-        for mode in self.machine.modes:
-            for t in mode.timers:
-                if t == timer:
-                    return mode.timers[t]
-
-        raise AssertionError("Timer {} not found".format(timer))
 
     def reset_mock_events(self):
         """Reset all mocked events.
@@ -822,7 +736,7 @@ class MpfTestCase(unittest.TestCase):
         switch inactive, use the :meth:`release_switch_and_run`.
         
         """
-        self.machine.switch_controller.process_switch(name, 1, True)
+        self.machine.switch_controller.process_switch(name, logical=True)
         self.advance_time_and_run(delta)
 
     def release_switch_and_run(self, name, delta):
@@ -846,8 +760,8 @@ class MpfTestCase(unittest.TestCase):
         time in between.
         
         """
-        self.machine.switch_controller.process_switch(name, 1, True)
-        self.machine.switch_controller.process_switch(name, 0, True)
+        self.machine.switch_controller.process_switch(name, logical=True)
+        self.machine.switch_controller.process_switch(name, state=0, logical=True)
         self.machine_run()
 
     def tearDown(self):
@@ -884,10 +798,7 @@ class MpfTestCase(unittest.TestCase):
         events.get_event_loop = self._get_event_loop2
         self._get_event_loop2 = None
 
-    def add_to_config_validator(self, key, new_dict):
-        if mpf.core.config_validator.ConfigValidator.config_spec:
-            mpf.core.config_validator.ConfigValidator.config_spec[key] = (
-                new_dict)
-        else:
-            mpf.core.config_validator.mpf_config_spec += '\n' + yaml.dump(
-                {key: new_dict}, default_flow_style=False)
+    @staticmethod
+    def add_to_config_validator(machine, key, new_dict):
+        """Add config dict to validator."""
+        machine.config_validator.get_config_spec()[key] = new_dict

@@ -203,5 +203,5 @@ class ClockBase(LogMixin):
         """
         try:
             event.cancel()
-        except:     # pylint: disable-msg=broad-except
+        except Exception:     # pylint: disable-msg=broad-except
             raise AssertionError("Broken unschedule: {} {}".format(event, type(event)))

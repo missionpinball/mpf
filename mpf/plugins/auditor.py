@@ -233,4 +233,5 @@ class Auditor(object):
         # remove switch and event handlers
         self.machine.events.remove_handler(self.audit_event)
 
+
 plugin_class = Auditor
