@@ -348,7 +348,7 @@ class DeviceCollection(dict):
             A list of device objects. If no devices are found with that tag, it
             will return an empty list.
         """
-        return [item for item in self if tag in item.tags]
+        return [item for item in self if hasattr(item, "tags") and tag in item.tags]
 
     def number(self, number):
         """Return a device object based on its number."""

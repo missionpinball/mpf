@@ -71,7 +71,7 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
         except KeyError:
             if not self.__class__.allow_placeholders_in_keys or "(" not in device:
                 # no placeholders
-                self.raise_config_error(
+                return self.raise_config_error(
                     "Could not find a {} device with name or tag {}.".format(self.device_collection.name, device),
                     1)
             else:
