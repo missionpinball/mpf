@@ -11,7 +11,7 @@ class HardwareSoundPlayer(DeviceConfigPlayer):
     """Plays sounds on an external sound card."""
 
     config_file_section = 'hardware_sound_player'
-    show_section = 'hardware_sound_players'
+    show_section = 'hardware_sounds'
 
     __slots__ = []
 
