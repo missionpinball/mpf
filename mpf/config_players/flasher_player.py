@@ -1,6 +1,7 @@
 """Flasher config player."""
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 from mpf.core.delays import DelayManager
+from mpf.core.utility_functions import Util
 
 
 class FlasherPlayer(DeviceConfigPlayer):
@@ -23,9 +24,11 @@ class FlasherPlayer(DeviceConfigPlayer):
 
         for flasher, s in settings.items():
             if isinstance(flasher, str):
-                self._flash(self.machine.lights[flasher],
-                            duration_ms=s['ms'],
-                            key=context)
+                flasher_names = Util.string_to_list(flasher)
+                for flasher_name in flasher_names:
+                    self._flash(self.machine.lights[flasher_name],
+                                duration_ms=s['ms'],
+                                key=context)
             else:
                 self._flash(flasher, duration_ms=s['ms'], key=context)
 
