@@ -56,8 +56,21 @@ coils:
         number: 6
         max_hold_power: 1.0
 
+show_player:
+   flash2:
+      flash_show:
+         action: play
+         show_tokens:
+            flashers: flasher_01, flasher_02
+
+shows:
+   flash_show:
+     - flashers:
+         (flashers): 100ms
+       events: test
+       duration: 1s
+
 flasher_player:
    flash:
       flasher_01: 100ms
-
 

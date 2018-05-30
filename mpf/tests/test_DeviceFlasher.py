@@ -29,3 +29,21 @@ class TestDeviceDriver(MpfTestCase):
         self.assertFalse(self.machine.coils.flasher_01.hw_driver.disable.called)
         self.advance_time_and_run(.1)
         self.assertTrue(self.machine.coils.flasher_01.hw_driver.disable.called)
+
+        # Flash with placeholder
+        self.machine.coils.flasher_01.hw_driver.disable = MagicMock()
+        self.machine.coils.flasher_01.hw_driver.enable = MagicMock()
+        self.machine.coils.flasher_01.hw_driver.pulse = MagicMock()
+        self.machine.coils.flasher_02.hw_driver.disable = MagicMock()
+        self.machine.coils.flasher_02.hw_driver.enable = MagicMock()
+        self.machine.coils.flasher_02.hw_driver.pulse = MagicMock()
+
+        self.post_event("flash2")
+        self.advance_time_and_run(.05)
+        self.assertTrue(self.machine.coils.flasher_01.hw_driver.enable.called)
+        self.assertFalse(self.machine.coils.flasher_01.hw_driver.disable.called)
+        self.assertTrue(self.machine.coils.flasher_02.hw_driver.enable.called)
+        self.assertFalse(self.machine.coils.flasher_02.hw_driver.disable.called)
+        self.advance_time_and_run(.1)
+        self.assertTrue(self.machine.coils.flasher_01.hw_driver.disable.called)
+        self.assertTrue(self.machine.coils.flasher_02.hw_driver.disable.called)
