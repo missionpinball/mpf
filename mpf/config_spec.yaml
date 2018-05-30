@@ -755,7 +755,6 @@ motors:
 mpf:
     __valid_in__: machine                           # todo add to validator
     default_pulse_ms: single|int|10
-    default_flash_ms: single|int|50
     default_ball_search: single|bool|False
     default_light_hw_update_hz: single|int|50
     auto_create_switch_events: single|bool|True
