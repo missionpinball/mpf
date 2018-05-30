@@ -1,10 +1,5 @@
 #config_version=5
 
-bcp:
-    connections:
-        local_display:
-            connection_attempts: 0
-
 event_player:
     test_event_player1:
         - test_event_player2

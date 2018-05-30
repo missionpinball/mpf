@@ -818,10 +818,8 @@ opp:
     poll_hz: single|int|100
 open_pixel_control:
     __valid_in__: machine
-    connection_required: single|bool|False
     host: single|str|localhost
     port: single|int|7890
-    connection_attempts: single|int|-1
     debug: single|bool|False
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
