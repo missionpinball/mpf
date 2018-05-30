@@ -946,12 +946,10 @@ rgb_dmds:
 score_reels:
     __valid_in__: machine
     coil_inc: single|machine(coils)|None
-    rollover: single|bool|True
     limit_lo: single|int|0
     limit_hi: single|int|9
     repeat_pulse_time: single|ms|200
     hw_confirm_time: single|ms|20
-    confirm: single|str|strict
     switch_0: single|machine(switches)|None
     switch_1: single|machine(switches)|None
     switch_2: single|machine(switches)|None
