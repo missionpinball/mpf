@@ -51,12 +51,12 @@ class TestQueueEventPlayer(MpfTestCase):
         self.mock_event("relay2_start")
 
         # post queue event
-        self.machine.events.post_queue("relay", callback=self._cb)
+        self.machine.events.post_queue("relay", callback=self._cb, something=7)
         self.advance_time_and_run()
 
         # should run the first relay only
         self.assertFalse(self._done)
-        self.assertEventCalled("relay_start")
+        self.assertEventCalledWith("relay_start")
         self.assertEventNotCalled("relay2_start")
 
         # first relay done. should trigger the second
@@ -67,6 +67,23 @@ class TestQueueEventPlayer(MpfTestCase):
 
         # second done. should trigger cb
         self.post_event("relay2_done")
+        self.advance_time_and_run()
+        self.assertTrue(self._done)
+
+    def test_queue_relay_player_with_pass_args(self):
+        self._done = False
+        self.mock_event("relay_with_args_start")
+
+        # post queue event
+        self.machine.events.post_queue("relay_with_args", callback=self._cb, test=42)
+        self.advance_time_and_run()
+
+        # should run the first relay only
+        self.assertFalse(self._done)
+        self.assertEventCalledWith("relay_with_args_start", test=42)
+
+        # relay done
+        self.post_event("relay_with_args_done")
         self.advance_time_and_run()
         self.assertTrue(self._done)
 
