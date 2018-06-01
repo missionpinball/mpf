@@ -1,0 +1,14 @@
+#config_version=5
+
+slide_player:
+  match_has_match: match
+  match_no_match: no_match
+
+slides:
+  match:
+    - type: text
+      text: asd
+  no_match:
+    - type: text
+      text: asd
+
