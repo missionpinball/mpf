@@ -15,3 +15,7 @@ queue_relay_player:
     relay:
       post: relay2_start
       wait_for: relay2_done
+    relay_with_args:
+      post: relay_with_args_start
+      wait_for: relay_with_args_done
+      pass_args: True

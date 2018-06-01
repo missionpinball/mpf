@@ -469,6 +469,7 @@ queue_relay_player:
     args: dict|str:str|None
     post: single|str|
     wait_for: single|str|
+    pass_args: single|bool|False
 extra_balls:
     __valid_in__: mode
     enabled: single|bool|True
