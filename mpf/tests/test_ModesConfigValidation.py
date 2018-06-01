@@ -30,6 +30,11 @@ class TestModesConfigValidation(MpfTestCase):
                          "mode folder in your machine's 'modes' folder?",
                          str(context.exception))
 
+    def test_empty_modes_section(self):
+        self.config = 'test_empty_modes_section.yaml'
+        super(TestModesConfigValidation, self).setUp()
+        super().tearDown()
+
     def test_broken_mode_config(self):
         self.config = 'test_broken_mode_config.yaml'
         with self.assertRaises(AssertionError) as context:

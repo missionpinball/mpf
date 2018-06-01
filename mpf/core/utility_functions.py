@@ -221,6 +221,8 @@ class Util(object):
             return b
         result = deepcopy(a)
         for k, v in b.items():
+            if v is None:
+                continue
             if isinstance(v, dict) and '_overwrite' in v:
                 result[k] = v
                 del result[k]['_overwrite']
@@ -230,9 +232,9 @@ class Util(object):
             elif k in result and isinstance(result[k], dict):
                 result[k] = Util.dict_merge(result[k], v)
             elif k in result and isinstance(result[k], list):
-                if v[0] == dict(_overwrite=True):
+                if isinstance(v, dict) and v[0] == dict(_overwrite=True):
                     result[k] = v[1:]
-                elif combine_lists:
+                elif isinstance(v, list) and combine_lists:
                     result[k].extend(v)
                 else:
                     result[k] = deepcopy(v)
