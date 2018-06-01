@@ -97,14 +97,12 @@ score_reel_groups:
     player1:
         reels: score_1p_10k, score_1p_1k, score_1p_100, score_1p_10, None
         tags: player1
-        max_simultaneous_coils: 2
         chimes: None, chime1, chime2, chime3, None
         lights_tag: player1
         debug: True
     player2:
         reels: score_2p_10, None
         tags: player2
-        max_simultaneous_coils: 2
         chimes: chime3, None
         lights_tag: player2
         debug: True

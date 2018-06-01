@@ -963,7 +963,6 @@ score_reels:
     switch_12: single|machine(switches)|None
 score_reel_groups:
     __valid_in__: machine
-    max_simultaneous_coils: single|int|2
     reels: list|machine(score_reels)|
     chimes: list|machine(coils)|None
     lights_tag: single|str|None
