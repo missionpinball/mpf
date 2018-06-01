@@ -294,15 +294,6 @@ bcp:
             port: 5051
             type: mpf.core.bcp.bcp_socket_client.BCPClientSocket
 
-    player_variables:
-      __all__
-
-    machine_variables:
-      __all__
-
-    shots:
-      __all__
-
     debug: false
 
 open_pixel_control:
