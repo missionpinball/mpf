@@ -640,7 +640,6 @@ lights:
     platform_settings: single|dict|None
     fade_ms: single|ms|None
     color_correction_profile: single|str|None
-    default_fade_ms: single|ms|None
     default_on_color: single|color|ffffff
     channels: single|dict|None
     x: single|float|None
