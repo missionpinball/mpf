@@ -655,7 +655,10 @@ class EventManager(MpfController):
                 pass
 
             # call the handler and save the results
-            result = handler.callback(**merged_kwargs)
+            try:
+                result = handler.callback(**merged_kwargs)
+            except Exception as e:
+                raise Exception("Exception while processing {} for event {}".format(handler, event)) from e
 
             # If whatever handler we called returns False, we stop
             # processing the remaining handlers for boolean or queue events
