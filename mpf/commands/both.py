@@ -11,7 +11,7 @@ def _start_mpf(mpf_path, machine_path, args):
 
 def _start_mc(mpf_path, machine_path, args):
     module = import_module('mpfmc.commands.mc')
-    module.Command(mpf_path, machine_path, args)
+    module.Command(mpf_path, machine_path, args + ["--both"])
 
 
 class Command(object):
