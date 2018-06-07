@@ -76,7 +76,8 @@ class ConfigValidator(object):
             "machine": self._validate_type_machine,
         }
 
-    def _validate_type_or_token(self, func):
+    @staticmethod
+    def _validate_type_or_token(func):
         def _validate_type_or_token_real(item, validation_failure_info, param=None):
             if isinstance(item, str) and item.startswith("(") and item.endswith(")"):
                 return RuntimeToken(item[1:-1], func)

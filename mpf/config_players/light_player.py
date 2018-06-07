@@ -34,7 +34,8 @@ class LightPlayer(DeviceConfigPlayer):
                     # skip non-replaces placeholders
                     if not light_name or light_name[0:1] == "(" and light_name[-1:] == ")":
                         continue
-                    self._light_named_color(light_name, instance_dict, full_context, s['color'], s["fade"], s['priority'])
+                    self._light_named_color(light_name, instance_dict, full_context, s['color'], s["fade"],
+                                            s['priority'])
             else:
                 self._light_color(light, instance_dict, full_context, s['color'], s["fade"], s['priority'])
 
