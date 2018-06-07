@@ -6,6 +6,7 @@ import re
 from collections import namedtuple
 
 from mpf.core.assets import Asset, AssetPool
+from mpf.core.config_validator import RuntimeToken
 from mpf.core.utility_functions import Util
 
 __api__ = ['Show', 'RunningShow', 'ShowPool']
@@ -246,6 +247,9 @@ class Show(Asset):
         return data
 
     def _check_token(self, path, data, token_type):
+        if isinstance(data, RuntimeToken):
+            self._add_token(data, data.token, path, token_type)
+            return
         if not isinstance(data, str):
             return
 
@@ -502,7 +506,9 @@ class RunningShow(object):
                     for x in token_path[:-1]:
                         target = target[x]
 
-                    if target[token_path[-1]] == "(" + token + ")":
+                    if isinstance(target[token_path[-1]], RuntimeToken):
+                        target[token_path[-1]] = target[token_path[-1]].validator_function(replacement, None)
+                    elif target[token_path[-1]] == "(" + token + ")":
                         target[token_path[-1]] = replacement
                     else:
                         target[token_path[-1]] = target[token_path[-1]].replace("(" + token + ")", replacement)

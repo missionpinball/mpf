@@ -34,9 +34,9 @@ class LightPlayer(DeviceConfigPlayer):
                     # skip non-replaces placeholders
                     if not light_name or light_name[0:1] == "(" and light_name[-1:] == ")":
                         continue
-                    self._light_named_color(light_name, instance_dict, full_context, **s)
+                    self._light_named_color(light_name, instance_dict, full_context, s['color'], s["fade"], s['priority'])
             else:
-                self._light_color(light, instance_dict, full_context, **s)
+                self._light_color(light, instance_dict, full_context, s['color'], s["fade"], s['priority'])
 
     def _remove(self, settings, context, priority):
         instance_dict = self._get_instance_dict(context)
@@ -51,9 +51,9 @@ class LightPlayer(DeviceConfigPlayer):
             if isinstance(light, str):
                 light_names = Util.string_to_list(light)
                 for light_name in light_names:
-                    self._light_remove_named(light_name, instance_dict, full_context, s.get("fade_ms", None))
+                    self._light_remove_named(light_name, instance_dict, full_context, s['fade'])
             else:
-                self._light_remove(light, instance_dict, full_context, s.get("fade_ms", None))
+                self._light_remove(light, instance_dict, full_context, s['fade'])
 
     def _light_remove_named(self, light_name, instance_dict, full_context, fade_ms):
         try:
@@ -79,8 +79,9 @@ class LightPlayer(DeviceConfigPlayer):
         else:
             self._remove(settings, context, priority)
 
+    # pylint: disable-msg=too-many-arguments
     def _light_named_color(self, light_name, instance_dict,
-                           full_context, color, **s):
+                           full_context, color, fade_ms, priority):
         try:
             lights = [self.machine.lights[light_name]]
         except KeyError:
@@ -90,11 +91,12 @@ class LightPlayer(DeviceConfigPlayer):
             raise AssertionError("Could not find light or tag {} in {}".format(light_name, full_context))
 
         for light in lights:
-            self._light_color(light, instance_dict, full_context, color, **s)
+            self._light_color(light, instance_dict, full_context, color, fade_ms, priority)
 
-    def _light_color(self, light, instance_dict, full_context, color, **s):
+    # pylint: disable-msg=too-many-arguments
+    def _light_color(self, light, instance_dict, full_context, color, fade_ms, priority):
         if color == "stop":
-            self._light_remove(light, instance_dict, full_context, s.get("fade_ms", None))
+            self._light_remove(light, instance_dict, full_context, fade_ms)
             return
         if color != "on":
             # hack to keep compatibility for matrix_light values
@@ -104,7 +106,7 @@ class LightPlayer(DeviceConfigPlayer):
                 color = color + color + color
 
             color = RGBColor(color)
-        light.color(color, key=full_context, **s)
+        light.color(color, key=full_context, fade_ms=fade_ms, priority=priority)
         instance_dict[light.name] = light
 
     def clear_context(self, context):
@@ -127,9 +129,3 @@ class LightPlayer(DeviceConfigPlayer):
             fade = Util.string_to_ms(composite_value[1])
 
         return dict(color=value, fade=fade)
-
-    def get_full_config(self, value):
-        """Return full config."""
-        super().get_full_config(value)
-        value['fade_ms'] = value.pop('fade')
-        return value

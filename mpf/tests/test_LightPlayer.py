@@ -17,31 +17,31 @@ class TestLedPlayer(MpfFakeGameTestCase):
         led3 = self.machine.lights.led3
 
         self.assertEqual(self.machine.config['light_player']['event1'][led1]['color'], 'red')
-        self.assertEqual(self.machine.config['light_player']['event1'][led1]['fade_ms'], 0)
+        self.assertEqual(self.machine.config['light_player']['event1'][led1]['fade'], 0)
         self.assertEqual(self.machine.config['light_player']['event1'][led1]['priority'], 200)
         self.assertEqual(self.machine.config['light_player']['event1'][led2]['color'], 'ff0000')
-        self.assertEqual(self.machine.config['light_player']['event1'][led2]['fade_ms'], 0)
+        self.assertEqual(self.machine.config['light_player']['event1'][led2]['fade'], 0)
         self.assertEqual(self.machine.config['light_player']['event1'][led3]['color'], 'red')
-        self.assertEqual(self.machine.config['light_player']['event1'][led3]['fade_ms'], 0)
+        self.assertEqual(self.machine.config['light_player']['event1'][led3]['fade'], 0)
 
         self.assertEqual(self.machine.config['light_player']['event2'][led1]['color'], 'blue')
-        self.assertEqual(self.machine.config['light_player']['event2'][led1]['fade_ms'], 200)
+        self.assertEqual(self.machine.config['light_player']['event2'][led1]['fade'], 200)
         self.assertEqual(self.machine.config['light_player']['event2'][led1]['priority'], 100)
         self.assertEqual(self.machine.config['light_player']['event2'][led2]['color'], 'blue')
-        self.assertEqual(self.machine.config['light_player']['event2'][led2]['fade_ms'], 200)
+        self.assertEqual(self.machine.config['light_player']['event2'][led2]['fade'], 200)
         self.assertEqual(self.machine.config['light_player']['event2'][led1]['priority'], 100)
 
         self.assertEqual(self.machine.config['light_player']['event3'][led1]['color'], 'lime')
-        self.assertEqual(self.machine.config['light_player']['event3'][led1]['fade_ms'], 500)
+        self.assertEqual(self.machine.config['light_player']['event3'][led1]['fade'], 500)
         self.assertEqual(self.machine.config['light_player']['event3'][led2]['color'], 'lime')
-        self.assertEqual(self.machine.config['light_player']['event3'][led2]['fade_ms'], 500)
+        self.assertEqual(self.machine.config['light_player']['event3'][led2]['fade'], 500)
         self.assertEqual(self.machine.config['light_player']['event3'][led3]['color'], '00ff00')
-        self.assertEqual(self.machine.config['light_player']['event3'][led3]['fade_ms'], 500)
+        self.assertEqual(self.machine.config['light_player']['event3'][led3]['fade'], 500)
 
         self.assertEqual(self.machine.config['light_player']['event4'][led1]['color'], '00ffff')
-        self.assertEqual(self.machine.config['light_player']['event4'][led1]['fade_ms'], None)
+        self.assertEqual(self.machine.config['light_player']['event4'][led1]['fade'], None)
         self.assertEqual(self.machine.config['light_player']['event4'][led2]['color'], '00ffff')
-        self.assertEqual(self.machine.config['light_player']['event4'][led2]['fade_ms'], None)
+        self.assertEqual(self.machine.config['light_player']['event4'][led2]['fade'], None)
 
     def test_light_player(self):
         self.assertLightColor("led1", 'black')
