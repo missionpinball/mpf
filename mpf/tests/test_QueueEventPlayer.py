@@ -88,8 +88,9 @@ class TestQueueEventPlayer(MpfTestCase):
         self.assertTrue(self._done)
 
     def test_broken_queue_relay_player(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(Exception) as e:
             self.post_event("relay")
+            self.assertIsInstance(e.exception, AssertionError)
 
         # reset exception
         self._exception = None
