@@ -146,7 +146,7 @@ class EventManager(MpfController):
                              'accidentally add parenthesis to the end of the '
                              'handler you passed?'.format(handler, event))
 
-        if " " in event:
+        if " " in event.split("{")[0]:
             raise ValueError('Cannot handle events with spaces in the event name, '
                              'please remedy "{}"'.format(event))
 
