@@ -528,11 +528,11 @@ class TestShows(MpfTestCase):
         self.assertIn(self.machine.lights.led_01, copied_show[0]['lights'])
         self.assertIn(self.machine.lights.led_02, copied_show[0]['lights'])
         self.assertEqual(copied_show[0]['lights'][self.machine.lights.led_01],
-                         dict(color='006400', fade_ms=None, priority=0))
+                         dict(color='006400', fade=None, priority=0))
         self.assertEqual(copied_show[0]['lights'][self.machine.lights.led_02],
-                         dict(color='cccccc', fade_ms=None, priority=0))
+                         dict(color='cccccc', fade=None, priority=0))
         self.assertEqual(copied_show[3]['lights'][self.machine.lights.led_01],
-                         dict(color='midnightblue', fade_ms=500, priority=0))
+                         dict(color='midnightblue', fade=500, priority=0))
 
     def test_show_player(self):
         # Basic show
@@ -863,4 +863,13 @@ class TestShows(MpfTestCase):
     def test_token_in_keys(self):
         self.post_event("play_show_with_token_in_key")
         self.advance_time_and_run()
+        self.assertLightColor("led_01", "red")
+
+    def test_non_string_token(self):
+        self.start_mode("mode4")
+        self.assertLightColor("led_01", "black")
+        self.post_event("test_token")
+        self.advance_time_and_run(.05)
+        self.assertNotLightColor("led_01", "red")
+        self.advance_time_and_run(.06)
         self.assertLightColor("led_01", "red")

@@ -4,6 +4,7 @@ modes:
   - mode1
   - mode2
   - mode3
+  - mode4
 
 lights:
     led_01:

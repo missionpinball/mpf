@@ -515,8 +515,7 @@ file_shows:
     __valid_in__: machine, mode                      # todo add to validator
 flasher_player:
     __valid_in__: machine, mode, show
-    __allow_others__:
-    ms: single|ms|100ms
+    ms: single|ms_or_token|100ms
 flippers:
     __valid_in__: machine
     main_coil: single|machine(coils)|
@@ -601,11 +600,6 @@ kickbacks:
     timeout_disable_time: single|ms|0
 kivy_config:
     __valid_in__: machine                           # todo add to validator
-led_player:
-    __valid_in__: machine, mode, show
-    color: single|str|white
-    fade: single|ms|None
-    __allow_others__:
 light_settings:
     __valid_in__: machine
     color_correction_profiles: single|dict|None
@@ -653,8 +647,8 @@ light_channels:
 light_player:
     __valid_in__: machine, mode, show
     color: single|str|white
-    fade: single|ms|None
-    __allow_others__:
+    fade: single|ms_or_token|None
+    priority: single|int_or_token|0
 lisy:
     __valid_in__: machine
     port: single|str|None
@@ -973,11 +967,11 @@ segment_displays:
     platform: single|str|None
 segment_display_player:
     __valid_in__: machine, mode, show
-    priority: single|int|0
+    priority: single|int_or_token|0
     text: single|str|None
     action: single|enum(add,remove,flash,no_flash)|add
     key: single|str|None
-    expire: single|ms|None
+    expire: single|ms_or_token|None
 servo_controllers:
     __valid_in__: machine
     platform: single|str|None
@@ -1088,12 +1082,12 @@ show_player:
     __valid_in__: machine, mode, show
     action: single|enum(play,stop,pause,resume,advance,step_back,update)|play
     show: single|str|None
-    priority: single|int|0
-    speed: single|float|1
+    priority: single|int_or_token|0
+    speed: single|float_or_token|1
     block_queue: single|bool|False
     start_step: single|template_int|1
-    loops: single|int|-1
-    sync_ms: single|int|None
+    loops: single|int_or_token|-1
+    sync_ms: single|int_or_token|None
     manual_advance: single|bool|False
     key: single|str|None
     show_tokens: dict|str:str|None
@@ -1119,7 +1113,7 @@ slide_player:
     __valid_in__: machine, mode, show
     target: single|str|None
     background_color: single|kivycolor|000000ff
-    priority: single|int|None                      # todo should this be 0?
+    priority: single|int_or_token|None               # todo should this be 0?
     show: single|bool|True
     force: single|bool|False
     transition: ignore
@@ -1217,9 +1211,9 @@ sound_player:
     action: single|enum(play,stop,stop_looping,load,unload)|play
     track: single|str|use_sound_setting
     volume: single|gain|None
-    pan: single|float|0
-    loops: single|int|None
-    priority: single|int|None
+    pan: single|float_or_token|0
+    loops: single|int_or_token|None
+    priority: single|int_or_token|None
     start_at: single|secs|None
     fade_in: single|secs|None
     fade_out: single|secs|None

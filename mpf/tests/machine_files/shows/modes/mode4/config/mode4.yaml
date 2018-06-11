@@ -1,0 +1,17 @@
+#config_version=5
+mode:
+  priority: 100
+  game_mode: False
+
+show_player:
+  test_token:
+    test_show4:
+      show_tokens:
+        fade_time: 100
+
+shows:
+  test_show4:
+    - lights:
+        led_01:
+          color: red
+          fade: (fade_time)

@@ -22,6 +22,16 @@ if MYPY:    # noqa
     from mpf.core.machine import MachineController
 
 
+class RuntimeToken(object):
+
+    """A runtime token."""
+
+    def __init__(self, token, validator_function):
+        """Create a runtime token."""
+        self.token = token
+        self.validator_function = validator_function
+
+
 class ConfigValidator(object):
 
     """Validates config against config specs."""
@@ -38,8 +48,11 @@ class ConfigValidator(object):
             "str": self._validate_type_str,
             "lstr": self._validate_type_lstr,
             "float": self._validate_type_float,
+            "float_or_token": self._validate_type_or_token(self._validate_type_float),
             "int": self._validate_type_int,
+            "int_or_token": self._validate_type_or_token(self._validate_type_int),
             "num": self._validate_type_num,
+            "num_or_token": self._validate_type_or_token(self._validate_type_num),
             "bool": self._validate_type_bool,
             "template_float": self._validate_type_template_float,
             "template_int": self._validate_type_template_int,
@@ -47,6 +60,7 @@ class ConfigValidator(object):
             "template_secs": self._validate_type_template_secs,
             "boolean": self._validate_type_bool,
             "ms": self._validate_type_ms,
+            "ms_or_token": self._validate_type_or_token(self._validate_type_ms),
             "secs": self._validate_type_secs,
             "list": self._validate_type_list,
             "int_from_hex": self._validate_type_int_from_hex,
@@ -61,6 +75,15 @@ class ConfigValidator(object):
             "enum": self._validate_type_enum,
             "machine": self._validate_type_machine,
         }
+
+    @staticmethod
+    def _validate_type_or_token(func):
+        def _validate_type_or_token_real(item, validation_failure_info, param=None):
+            if isinstance(item, str) and item.startswith("(") and item.endswith(")"):
+                return RuntimeToken(item[1:-1], func)
+            else:
+                return func(item, validation_failure_info, param)
+        return _validate_type_or_token_real
 
     def load_device_config_spec(self, config_section, config_spec):
         """Load config specs for a device."""
@@ -516,21 +539,30 @@ class ConfigValidator(object):
 
         return value
 
-    def _validate_type_num(self, item, validation_failure_info):
+    def _validate_type_num(self, item, validation_failure_info, param=None):
         if item is None:
             return None
 
         # used for int or float, but does not convert one to the other
         if isinstance(item, (int, float)):
-            return item
+            value = item
         else:
             try:
                 if '.' in item:
-                    return float(item)
+                    value = float(item)
                 else:
-                    return int(item)
+                    value = int(item)
             except (TypeError, ValueError):
-                self.validation_error(item, validation_failure_info, "Could not convert {} to num".format(item))
+                return self.validation_error(item, validation_failure_info, "Could not convert {} to num".format(item))
+
+        if param:
+            param = param.split(",")
+            if param[0] != "NONE" and value < int(param[0]):
+                self.validation_error(item, validation_failure_info, "{} is smaller then {}".format(item, param[0]))
+            elif param[1] != "NONE" and value > int(param[1]):
+                self.validation_error(item, validation_failure_info, "{} is larger then {}".format(item, param[1]))
+
+        return value
 
     @classmethod
     def _validate_type_bool(cls, item, validation_failure_info):
@@ -545,8 +577,9 @@ class ConfigValidator(object):
             return True
 
     @classmethod
-    def _validate_type_ms(cls, item, validation_failure_info):
+    def _validate_type_ms(cls, item, validation_failure_info, param=None):
         del validation_failure_info
+        assert not param
         if item is not None:
             return Util.string_to_ms(item)
         else:
