@@ -130,6 +130,20 @@ class TestTimer(MpfFakeGameTestCase):
         self.advance_time_and_run()
         self.assertEqual(4, timer.ticks)
 
+    def test_change_tick(self):
+        self.start_mode("mode_with_timers")
+        self.mock_event("timer_timer_change_tick_tick")
+        self.advance_time_and_run()
+        self.post_event("timer_change_tick_start")
+        self.advance_time_and_run(.1)
+        self.assertEventCalled("timer_timer_change_tick_tick", 1)
+        self.advance_time_and_run(1)
+        self.assertEventCalled("timer_timer_change_tick_tick", 2)
+        self.post_event("timer_change_tick_event")
+        self.assertEventCalled("timer_timer_change_tick_tick", 2)
+        self.advance_time_and_run(1)
+        self.assertEventCalled("timer_timer_change_tick_tick", 12)
+
     def test_start_running(self):
         # add a fake player
         self.start_game()

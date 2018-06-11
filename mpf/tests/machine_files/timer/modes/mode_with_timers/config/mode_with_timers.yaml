@@ -83,3 +83,15 @@ timers:
         direction: up
         tick_interval: 1s
         start_running: yes
+    timer_change_tick:
+        start_value: 30
+        end_value: 0
+        tick_interval: 1s
+        direction: down
+        start_running: no
+        control_events:
+          - event: timer_change_tick_start
+            action: start
+          - event: timer_change_tick_event
+            action: change_tick_interval
+            value: 0.1
