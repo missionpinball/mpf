@@ -1469,7 +1469,7 @@ widget_player:
     widget_settings: ignore
     target: single|str|None
 widget_styles:
-    __valid_in__: machine, mode, show
+    __valid_in__: machine, mode
     color: single|kivycolor|ffffffff
     __allow_others__:
 widgets:
@@ -1531,15 +1531,11 @@ widgets:
         rotation: single|float|0
         scale: single|float|1.0
     image:
-        allow_stretch: single|bool|False
         fps: single|int|10
         loops: single|int|-1
-        keep_ratio: single|bool|False
         image: single|str|
-        height: single|int|0
-        width: single|int|0
         auto_play: single|bool|True
-        start_frame: single|int|0                          # todo
+        start_frame: single|int|0
         rotation: single|int|0
         scale: single|float|1.0
     line:
