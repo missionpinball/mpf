@@ -182,13 +182,9 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
 
         return PRocAlphanumericDisplay(self.alpha_display, number_int)
 
-    def tick(self):
-        """Check the P-ROC for any events (switch state changes or notification that a DMD frame was updated).
-
-        Also tickles the watchdog and flushes any queued commands to the P-ROC.
-        """
-        # Get P-ROC events (switches & DMD frames displayed)
-        for event in self.proc.get_events():
+    def process_events(self, events):
+        """Process events from the P-Roc."""
+        for event in events:
             event_type = event['type']
             event_value = event['value']
             if event_type == self.pinproc.EventTypeDMDFrameDisplayed:
@@ -208,9 +204,6 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
             else:
                 self.log.warning("Received unrecognized event from the P-ROC. "
                                  "Type: %s, Value: %s", event_type, event_value)
-
-        self.proc.watchdog_tickle()
-        self.proc.flush()
 
 
 class PROCDMD(DmdPlatformInterface):

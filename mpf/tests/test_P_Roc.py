@@ -1,3 +1,5 @@
+import time
+
 from mpf.tests.MpfTestCase import MpfTestCase
 from unittest.mock import MagicMock, call
 from mpf.platforms import p_roc_common, p_roc
@@ -104,6 +106,11 @@ class TestPRoc(MpfTestCase):
     def read_data(self, module, address):
         return self._memory[module][address]
 
+    def wait_for_platform(self):
+        while self.machine.default_platform._commands_running:
+            time.sleep(.0001)
+            self.advance_time_and_run(.0001)
+
     def setUp(self):
         self.expected_duration = 2
         p_roc_common.pinproc_imported = True
@@ -197,6 +204,7 @@ class TestPRoc(MpfTestCase):
         self.assertEqual("PD-16 Board 1 Bank 1", self.machine.coils.c_test.hw_driver.get_board_name())
         # pulse coil A1-B1-2
         self.machine.coils.c_test.pulse()
+        self.wait_for_platform()
         # A1-B1-2 -> address 16 + 8 + 2 = 26 in P3-Roc
         # for 23ms (from config)
         number = self.machine.coils.c_test.hw_driver.number
@@ -228,6 +236,7 @@ class TestPRoc(MpfTestCase):
 
     def _test_allow_enable(self):
         self.machine.coils.c_test_allow_enable.enable()
+        self.wait_for_platform()
         number = self.machine.coils.c_test_allow_enable.hw_driver.number
         self.machine.coils.c_test.hw_driver.proc.driver_schedule.assert_called_with(
             number=number, cycle_seconds=0, now=True, schedule=0xffffffff)
@@ -235,6 +244,7 @@ class TestPRoc(MpfTestCase):
     def _test_hw_rule_pulse(self):
         self.machine.coils.c_slingshot_test.hw_driver.state = MagicMock(return_value=8)
         self.machine.autofires.ac_slingshot_test.enable()
+        self.wait_for_platform()
         self.machine.coils.c_slingshot_test.platform.proc.switch_update_rule.assert_any_call(
             40, 'closed_nondebounced',
             {'notifyHost': False, 'reloadActive': True},
@@ -262,6 +272,7 @@ class TestPRoc(MpfTestCase):
         self.assertTrue(self.machine.switch_controller.is_active("s_direct"))
 
     def _test_switches(self):
+        self.wait_for_platform()
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(23, 'closed_debounced', {'notifyHost': True, 'reloadActive': False}, [], False),
             call(23, 'open_debounced', {'notifyHost': True, 'reloadActive': False}, [], False),
@@ -274,12 +285,14 @@ class TestPRoc(MpfTestCase):
         self.machine.default_platform.proc.get_events = MagicMock(return_value=[
             {'type': 1, 'value': 23}])
         self.advance_time_and_run(.01)
+        self.wait_for_platform()
         self.assertTrue(self.machine.switch_controller.is_active("s_test"))
 
         # open debounces -> inactive
         self.machine.default_platform.proc.get_events = MagicMock(return_value=[
             {'type': 2, 'value': 23}])
         self.advance_time_and_run(.01)
+        self.wait_for_platform()
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
 
         self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
@@ -287,12 +300,14 @@ class TestPRoc(MpfTestCase):
         self.machine.default_platform.proc.get_events = MagicMock(return_value=[
             {'type': 3, 'value': 24}])
         self.advance_time_and_run(.01)
+        self.wait_for_platform()
         self.assertTrue(self.machine.switch_controller.is_active("s_test_no_debounce"))
 
         # open non debounced -> should be inactive
         self.machine.default_platform.proc.get_events = MagicMock(return_value=[
             {'type': 4, 'value': 24}])
         self.advance_time_and_run(.01)
+        self.wait_for_platform()
         self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
 
     def _test_dmd_update(self):
@@ -345,13 +360,14 @@ class TestPRoc(MpfTestCase):
         assert not self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_schedule.called
         self.machine.lights.test_pdb_light.on()
         self.advance_time_and_run(.02)
+        self.wait_for_platform()
         self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_schedule.assert_called_with(
             cycle_seconds=0, schedule=4294967295, now=True, number=32
         )
 
         self.machine.lights.test_pdb_light.on(brightness=128)
         self.advance_time_and_run(.02)
-
+        self.wait_for_platform()
         self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_patter.assert_called_with(
             32, 1, 1, 0, True
         )
@@ -360,6 +376,7 @@ class TestPRoc(MpfTestCase):
         assert not self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_disable.called
         self.machine.lights.test_pdb_light.off()
         self.advance_time_and_run(.1)
+        self.wait_for_platform()
         self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_disable.assert_called_with(32)
 
         self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_patter = MagicMock()
@@ -367,24 +384,29 @@ class TestPRoc(MpfTestCase):
         self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_disable = MagicMock()
 
         self.post_event("play_test_show")
+        self.wait_for_platform()
         self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_schedule.assert_called_with(
             cycle_seconds=0, schedule=4294967295, now=True, number=32
         )
 
         self.advance_time_and_run(1)
+        self.wait_for_platform()
         self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_patter.assert_called_with(
             32, 3, 1, 0, True
         )
 
         self.advance_time_and_run(1)
+        self.wait_for_platform()
         self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_disable.assert_called_with(32)
         self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_disable = MagicMock()
 
         self.advance_time_and_run(1)
+        self.wait_for_platform()
         self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_schedule.assert_called_with(
             cycle_seconds=0, schedule=4294967295, now=True, number=32
         )
         self.advance_time_and_run(10)
+        self.wait_for_platform()
         self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_schedule.assert_called_with(
             cycle_seconds=0, schedule=4294967295, now=True, number=32
         )
@@ -398,6 +420,7 @@ class TestPRoc(MpfTestCase):
         device.hw_drivers["white"][0].driver.hw_driver.proc.driver_schedule = MagicMock()
         device.color("white")
         self.advance_time_and_run(.1)
+        self.wait_for_platform()
         device.hw_drivers["white"][0].driver.hw_driver.proc.driver_schedule.assert_has_calls([
             call(now=True, number=num, cycle_seconds=0, schedule=4294967295)])
         device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter = MagicMock()
@@ -405,6 +428,7 @@ class TestPRoc(MpfTestCase):
 
         device.color([128, 128, 128])
         self.advance_time_and_run(.1)
+        self.wait_for_platform()
         device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter.assert_has_calls([
             call(num, 1, 1, 0, True)])
         device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter = MagicMock()
@@ -412,6 +436,7 @@ class TestPRoc(MpfTestCase):
 
         device.color([245, 245, 245])
         self.advance_time_and_run(.1)
+        self.wait_for_platform()
         device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter.assert_has_calls([
             call(num, 19, 1, 0, True)])
         device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter = MagicMock()
@@ -421,6 +446,7 @@ class TestPRoc(MpfTestCase):
         device.hw_drivers["white"][0].driver.hw_driver.proc.driver_disable = MagicMock()
         device.color("off")
         self.advance_time_and_run(.1)
+        self.wait_for_platform()
         device.hw_drivers["white"][0].driver.hw_driver.proc.driver_disable.assert_has_calls([
             call(num)])
 
@@ -432,11 +458,13 @@ class TestPRoc(MpfTestCase):
         """Test snux."""
         # test enable
         self.machine.coils.c_flipper_enable_driver.enable()
+        self.wait_for_platform()
         self.machine.coils.c_flipper_enable_driver.hw_driver.proc.driver_schedule.assert_called_with(
             number=9923, cycle_seconds=0, now=True, schedule=0xffffffff)
 
         # assert diag flash
         self.advance_time_and_run(1)
+        self.wait_for_platform()
         self.machine.coils.c_diag_led_driver.hw_driver.proc.driver_pulse.assert_called_with(
             9924, 250)
 
@@ -445,12 +473,14 @@ class TestPRoc(MpfTestCase):
         self.machine.coils.c_test_a_side.pulse(100)
         self.machine.coils.c_test_c_side.pulse(50)
         self.advance_time_and_run(.050)
+        self.wait_for_platform()
         self.machine.coils.c_diag_led_driver.hw_driver.proc.driver_pulse.assert_called_with(
             9902, 100)
         self.assertFalse(self.machine.coils.c_ac_relay.hw_driver.proc.driver_schedule.called)
 
         # afterwards service c side
         self.advance_time_and_run(.2)
+        self.wait_for_platform()
         self.machine.coils.c_ac_relay.hw_driver.proc.driver_schedule.assert_called_with(
             number=9925, cycle_seconds=0, now=True, schedule=0xffffffff)
         self.machine.coils.c_diag_led_driver.hw_driver.proc.driver_pulse.assert_called_with(

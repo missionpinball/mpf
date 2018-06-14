@@ -1,3 +1,5 @@
+import time
+
 from mpf.core.platform_controller import SwitchRuleSettings, DriverRuleSettings, PulseRuleSettings
 
 from mpf.core.rgb_color import RGBColor
@@ -49,6 +51,11 @@ class TestP3Roc(MpfTestCase):
         if module not in self._memory or address not in self._memory[module]:
             return 0
         return self._memory[module][address]
+
+    def wait_for_platform(self):
+        while self.machine.default_platform._commands_running:
+            time.sleep(.0001)
+            self.advance_time_and_run(.0001)
 
     def setUp(self):
         self.expected_duration = 2
@@ -164,6 +171,7 @@ SW-16 boards found:
         self.assertEqual("PD-16 Board 1 Bank 1", self.machine.coils.c_test.hw_driver.get_board_name())
         # pulse coil A1-B1-2
         self.machine.coils.c_test.pulse()
+        self.wait_for_platform()
         number = self.machine.coils.c_test.hw_driver.number
         self.machine.coils.c_test.hw_driver.proc.driver_pulse.assert_called_with(
             number, 23)
@@ -176,16 +184,19 @@ SW-16 boards found:
 
     def _test_allow_enable_disable(self):
         self.machine.coils.c_test_allow_enable.enable()
+        self.wait_for_platform()
         number = self.machine.coils.c_test_allow_enable.hw_driver.number
         self.machine.coils.c_test_allow_enable.hw_driver.proc.driver_schedule.assert_called_with(
             number=number, cycle_seconds=0, now=True, schedule=0xffffffff)
 
         self.machine.coils.c_test_allow_enable.disable()
+        self.wait_for_platform()
         self.machine.coils.c_test_allow_enable.hw_driver.proc.driver_disable.assert_called_with(number)
 
     def _test_hw_rule_pulse(self):
         self.machine.coils.c_slingshot_test.hw_driver.state = MagicMock(return_value=8)
         self.machine.autofires.ac_slingshot_test.enable()
+        self.wait_for_platform()
         self.machine.coils.c_slingshot_test.platform.proc.switch_update_rule.assert_any_call(
             40, 'closed_nondebounced',
             {'notifyHost': False, 'reloadActive': True},
@@ -205,6 +216,7 @@ SW-16 boards found:
 
         # test disable
         self.machine.autofires.ac_slingshot_test.disable()
+        self.wait_for_platform()
 
         self.machine.coils.c_slingshot_test.platform.proc.switch_update_rule.assert_has_calls([
             call(40, 'open_nondebounced', {'notifyHost': False, 'reloadActive': True}, []),
@@ -219,6 +231,7 @@ SW-16 boards found:
         self.machine.coils.c_coil_pwm_test.hw_driver.state = MagicMock(return_value=8)
         self.machine.coils.c_coil_pwm_test.platform.proc.switch_update_rule = MagicMock()
         self.machine.autofires.ac_switch_nc_test.enable()
+        self.wait_for_platform()
         self.machine.coils.c_coil_pwm_test.platform.proc.switch_update_rule.assert_any_call(
             41, 'open_nondebounced',
             {'notifyHost': False, 'reloadActive': True},
@@ -246,6 +259,7 @@ SW-16 boards found:
             SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
             DriverRuleSettings(driver=self.machine.coils.c_test, recycle=False),
             PulseRuleSettings(duration=23, power=1.0))
+        self.wait_for_platform()
 
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
@@ -348,6 +362,8 @@ SW-16 boards found:
             DriverRuleSettings(driver=self.machine.coils.c_test_allow_enable, recycle=False),
             PulseRuleSettings(duration=23, power=1.0))
 
+        self.wait_for_platform()
+
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
                 23, 'closed_debounced',
@@ -398,6 +414,8 @@ SW-16 boards found:
             DriverRuleSettings(driver=self.machine.coils.c_test, recycle=False),
             PulseRuleSettings(duration=23, power=1.0))
 
+        self.wait_for_platform()
+
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
                 23, 'closed_debounced',
@@ -426,6 +444,7 @@ SW-16 boards found:
             SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
             DriverRuleSettings(driver=self.machine.coils.c_test, recycle=False),
             PulseRuleSettings(duration=23, power=1.0))
+        self.wait_for_platform()
 
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
@@ -449,6 +468,8 @@ SW-16 boards found:
             SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
             DriverRuleSettings(driver=self.machine.coils.c_coil_pwm_test, recycle=False),
             PulseRuleSettings(duration=23, power=1.0))
+
+        self.wait_for_platform()
 
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
@@ -518,12 +539,14 @@ SW-16 boards found:
         self.machine.default_platform.proc.get_events = MagicMock(return_value=[
             {'type': 1, 'value': 23}])
         self.advance_time_and_run(.01)
+        self.wait_for_platform()
         self.assertTrue(self.machine.switch_controller.is_active("s_test"))
 
         # open debounces -> inactive
         self.machine.default_platform.proc.get_events = MagicMock(return_value=[
             {'type': 2, 'value': 23}])
         self.advance_time_and_run(.01)
+        self.wait_for_platform()
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
 
         self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
@@ -531,13 +554,17 @@ SW-16 boards found:
         self.machine.default_platform.proc.get_events = MagicMock(return_value=[
             {'type': 3, 'value': 24}])
         self.advance_time_and_run(.01)
+        self.wait_for_platform()
         self.assertTrue(self.machine.switch_controller.is_active("s_test_no_debounce"))
 
         # open non debounced -> should be inactive
         self.machine.default_platform.proc.get_events = MagicMock(return_value=[
             {'type': 4, 'value': 24}])
         self.advance_time_and_run(.01)
+        self.wait_for_platform()
         self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
+
+        self.machine.default_platform.proc.get_events = MagicMock(return_value=[])
 
     def _test_accelerometer(self):
         # verify init
@@ -559,6 +586,7 @@ SW-16 boards found:
             {'type': 10, 'value': 8192}
         ])
         self.advance_time_and_run(.01)
+        self.wait_for_platform()
 
         # check correct decoding of 2 complement
         self.machine.accelerometers.p3_roc_accelerometer.update_acceleration.assert_called_with(1.0, 0.0, -2.0)
@@ -567,6 +595,8 @@ SW-16 boards found:
         # enable
         self.machine.default_platform.proc.switch_update_rule = MagicMock()
         self.machine.flippers.f_test_single.enable()
+
+        self.wait_for_platform()
 
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
@@ -606,6 +636,7 @@ SW-16 boards found:
         # disable
         self.machine.default_platform.proc.switch_update_rule = MagicMock()
         self.machine.flippers.f_test_single.disable()
+        self.wait_for_platform()
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(1, 'open_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
             call(1, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
@@ -619,6 +650,7 @@ SW-16 boards found:
         # hold coil (21) is pulsed + enabled
         self.machine.default_platform.proc.switch_update_rule = MagicMock()
         self.machine.flippers.f_test_hold.enable()
+        self.wait_for_platform()
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
                 1, 'open_nondebounced',
@@ -678,6 +710,7 @@ SW-16 boards found:
     def _test_flipper_two_coils_with_eos(self):
         self.machine.default_platform.proc.switch_update_rule = MagicMock()
         self.machine.flippers.f_test_hold_eos.enable()
+        self.wait_for_platform()
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
                 1, 'open_nondebounced',
@@ -751,6 +784,7 @@ SW-16 boards found:
         # disable
         self.machine.default_platform.proc.switch_update_rule = MagicMock()
         self.machine.flippers.f_test_hold_eos.disable()
+        self.wait_for_platform()
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(1, 'open_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
             call(1, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
@@ -773,6 +807,7 @@ SW-16 boards found:
         assert not self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_schedule.called
         self.machine.lights.test_pdb_light.on()
         self.advance_time_and_run(.02)
+        self.wait_for_platform()
         self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_schedule.assert_called_with(
             cycle_seconds=0, schedule=4294967295, now=True, number=32
         )
@@ -780,6 +815,7 @@ SW-16 boards found:
         self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_patter = MagicMock()
         self.machine.lights.test_pdb_light.on(brightness=128)
         self.advance_time_and_run(.02)
+        self.wait_for_platform()
         self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_patter.assert_called_with(
             32, 1, 1, 0, True
         )
@@ -788,6 +824,7 @@ SW-16 boards found:
         assert not self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_disable.called
         self.machine.lights.test_pdb_light.off()
         self.advance_time_and_run(.02)
+        self.wait_for_platform()
         self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_disable.assert_called_with(32)
 
     def _test_pdb_gi_light(self):
@@ -797,21 +834,21 @@ SW-16 boards found:
         device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter = MagicMock()
         device.hw_drivers["white"][0].driver.hw_driver.proc.driver_schedule = MagicMock()
         device.color("white")
-        self.advance_time_and_run(.1)
+        self.wait_for_platform()
         device.hw_drivers["white"][0].driver.hw_driver.proc.driver_schedule.assert_has_calls([
             call(now=True, number=num, cycle_seconds=0, schedule=4294967295)])
         device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter = MagicMock()
         device.hw_drivers["white"][0].driver.hw_driver.proc.driver_schedule = MagicMock()
 
         device.color([128, 128, 128])
-        self.advance_time_and_run(.1)
+        self.wait_for_platform()
         device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter.assert_has_calls([
             call(num, 1, 1, 0, True)])
         device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter = MagicMock()
         device.hw_drivers["white"][0].driver.hw_driver.proc.driver_schedule = MagicMock()
 
         device.color([245, 245, 245])
-        self.advance_time_and_run(.1)
+        self.wait_for_platform()
         device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter.assert_has_calls([
             call(num, 19, 1, 0, True)])
         device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter = MagicMock()
@@ -820,7 +857,7 @@ SW-16 boards found:
         # test gi off
         device.hw_drivers["white"][0].driver.hw_driver.proc.driver_disable = MagicMock()
         device.color("off")
-        self.advance_time_and_run(.1)
+        self.wait_for_platform()
         device.hw_drivers["white"][0].driver.hw_driver.proc.driver_disable.assert_has_calls([
             call(num)])
 
@@ -830,7 +867,7 @@ SW-16 boards found:
 
         # test led on
         device.on()
-        self.advance_time_and_run(1)
+        self.wait_for_platform()
         device.hw_drivers['red'][0].proc.led_color.assert_has_calls([
             call(2, 1, 255),
             call(2, 2, 255),
@@ -839,7 +876,7 @@ SW-16 boards found:
 
         # test led off
         device.off()
-        self.advance_time_and_run(1)
+        self.wait_for_platform()
         device.hw_drivers['red'][0].proc.led_color.assert_has_calls([
             call(2, 1, 0),
             call(2, 2, 0),
@@ -847,7 +884,7 @@ SW-16 boards found:
 
         # test led color
         device.color(RGBColor((2, 23, 42)))
-        self.advance_time_and_run(1)
+        self.wait_for_platform()
         device.hw_drivers['red'][0].proc.led_color.assert_has_calls([
             call(2, 1, 2),
             call(2, 2, 23),
@@ -858,7 +895,7 @@ SW-16 boards found:
         device.hw_drivers['red'][0].proc.led_color = MagicMock()
         # test led on
         device.on()
-        self.advance_time_and_run(1)
+        self.wait_for_platform()
         device.hw_drivers['red'][0].proc.led_color.assert_has_calls([
             call(2, 4, 0),
             call(2, 5, 0),
@@ -867,7 +904,7 @@ SW-16 boards found:
 
         # test led off
         device.color("off")
-        self.advance_time_and_run(1)
+        self.wait_for_platform()
         device.hw_drivers['red'][0].proc.led_color.assert_has_calls([
             call(2, 4, 255),
             call(2, 5, 255),
@@ -875,7 +912,7 @@ SW-16 boards found:
 
         # test led color
         device.color(RGBColor((2, 23, 42)))
-        self.advance_time_and_run(1)
+        self.wait_for_platform()
         device.hw_drivers['red'][0].proc.led_color.assert_has_calls([
             call(2, 4, 255 - 2),
             call(2, 5, 255 -23),

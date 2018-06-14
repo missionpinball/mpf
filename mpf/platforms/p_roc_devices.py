@@ -1,5 +1,6 @@
 """P-Roc hardware platform devices."""
 import logging
+from functools import partial
 
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
@@ -48,6 +49,7 @@ class PROCDriver(DriverPlatformInterface):
         self.log = logging.getLogger('PROCDriver')
         super().__init__(config, number)
         self.proc = platform.proc
+        self.platform = platform
         self.string_number = string_number
         self.pdbconfig = getattr(platform, "pdbconfig", None)
 
@@ -70,7 +72,7 @@ class PROCDriver(DriverPlatformInterface):
     def disable(self):
         """Disable (turn off) this driver."""
         self.log.debug('Disabling Driver')
-        self.proc.driver_disable(self.number)
+        self.platform.run_proc_cmd(partial(self.proc.driver_disable, self.number))
 
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable (turn on) this driver."""
@@ -82,12 +84,13 @@ class PROCDriver(DriverPlatformInterface):
             self.log.debug('Enabling. Initial pulse_ms:%s, pwm_on_ms: %s'
                            'pwm_off_ms: %s', pwm_on, pwm_off, pulse_settings.duration)
 
-            self.proc.driver_patter(self.number, pwm_on, pwm_off, pulse_settings.duration, True)
+            self.platform.run_proc_cmd(partial(self.proc.driver_patter, self.number, pwm_on, pwm_off,
+                                               pulse_settings.duration, True))
         else:
             self.log.debug('Enabling at 100%')
 
-            self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
-                                      cycle_seconds=0, now=True)
+            self.platform.run_proc_cmd(partial(self.proc.driver_schedule, number=self.number, schedule=0xffffffff,
+                                               cycle_seconds=0, now=True))
 
     def pulse(self, pulse_settings: PulseSettings):
         """Enable this driver for `milliseconds`.
@@ -99,7 +102,7 @@ class PROCDriver(DriverPlatformInterface):
         if pulse_settings.power != 1:
             raise AssertionError("Not pulse_power not supported in P-Roc currently.")
         self.log.debug('Pulsing for %sms', pulse_settings.duration)
-        self.proc.driver_pulse(self.number, pulse_settings.duration)
+        self.platform.run_proc_cmd(partial(self.proc.driver_pulse, self.number, pulse_settings.duration))
 
     def state(self):
         """Return a dictionary representing this driver's current configuration state."""
@@ -110,23 +113,24 @@ class PROCMatrixLight(LightPlatformSoftwareFade):
 
     """A P-ROC matrix light device."""
 
-    def __init__(self, number, proc_driver, machine):
+    def __init__(self, number, proc_driver, machine, platform):
         """Initialise matrix light device."""
         super().__init__(number, machine.clock.loop,
                          int(1 / machine.config['mpf']['default_light_hw_update_hz'] * 1000))
         self.log = logging.getLogger('PROCMatrixLight')
         self.proc = proc_driver
+        self.platform = platform
 
     def set_brightness(self, brightness: float):
         """Enable (turns on) this driver."""
         if brightness >= 1:
-            self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
-                                      cycle_seconds=0, now=True)
+            self.platform.run_proc_cmd(partial(self.proc.driver_schedule, number=self.number, schedule=0xffffffff,
+                                               cycle_seconds=0, now=True))
         elif brightness > 0:
             pwm_on_ms, pwm_off_ms = Util.power_to_on_off(brightness)
-            self.proc.driver_patter(self.number, pwm_on_ms, pwm_off_ms, 0, True)
+            self.platform.run_proc_cmd(partial(self.proc.driver_patter, self.number, pwm_on_ms, pwm_off_ms, 0, True))
         else:
-            self.proc.driver_disable(self.number)
+            self.platform.run_proc_cmd(partial(self.proc.driver_disable, self.number))
 
     def get_board_name(self):
         """Return board of the light."""

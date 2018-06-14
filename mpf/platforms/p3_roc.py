@@ -368,13 +368,9 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
 
         return result
 
-    def tick(self):
-        """Check the P3-ROC for any events (switch state changes).
-
-        Also tickles the watchdog and flushes any queued commands to the P3-ROC.
-        """
-        # Get P3-ROC events
-        for event in self.proc.get_events():
+    def process_events(self, events):
+        """Process events from the P3-Roc."""
+        for event in events:
             event_type = event['type']
             event_value = event['value']
             if event_type == self.pinproc.EventTypeSwitchClosedDebounced:
@@ -421,9 +417,6 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
             else:   # pragma: no cover
                 self.log.warning("Received unrecognized event from the P3-ROC. "
                                  "Type: %s, Value: %s", event_type, event_value)
-
-        self.proc.watchdog_tickle()
-        self.proc.flush()
 
     def _handle_burst(self, event_value, state):
         input_num = event_value & 0x3F

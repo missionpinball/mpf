@@ -5,6 +5,8 @@ import logging
 import platform
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from typing import Any, List, Union, Callable, Tuple
 
 from mpf.platforms.p_roc_devices import PROCSwitch, PROCMatrixLight
@@ -53,6 +55,7 @@ except ImportError:     # pragma: no cover
 
 # pylint does not understand that this class is abstract
 # pylint: disable-msg=abstract-method
+# pylint: disable-msg=too-many-instance-attributes
 class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass=abc.ABCMeta):
 
     """Platform class for the P-Roc and P3-ROC hardware controller.
@@ -84,9 +87,24 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         self.revision = None
         self.hardware_version = None
         self.dipswitches = None
+        self.event_task = None
+
+        self.proc_executor = ThreadPoolExecutor(max_workers=1)
+        self._commands_running = 0
 
         self.machine_type = pinproc.normalize_machine_type(
             self.machine.config['hardware']['driverboards'])
+
+    def _decrement_running_commands(self, future):
+        del future
+        self._commands_running -= 1
+
+    def run_proc_cmd(self, cmd):
+        """Run a command in the p-roc thread and return a future."""
+        future = self.machine.clock.loop.run_in_executor(self.proc_executor, cmd)
+        future.add_done_callback(self._decrement_running_commands)
+        self._commands_running += 1
+        return future
 
     @asyncio.coroutine
     def initialize(self):
@@ -105,9 +123,41 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         that's attached to MPF.
         '''
 
+    @asyncio.coroutine
+    def start(self):
+        """Start listening for switches."""
+        self.event_task = self.machine.clock.loop.create_task(self._poll_events())
+
+    def _get_events(self):
+        """Return all events."""
+        # This method is called in the p-roc thread. we can call self.proc here
+        events = self.proc.get_events()
+        self.proc.watchdog_tickle()
+        self.proc.flush()
+        return events
+
+    def process_events(self, events):
+        """Process events from the P-Roc."""
+        raise NotImplementedError()
+
+    @asyncio.coroutine
+    def _poll_events(self):
+        while True:
+            events = yield from self.run_proc_cmd(self._get_events)
+            self.process_events(events)
+            yield from asyncio.sleep(.001, loop=self.machine.clock.loop)
+
     def stop(self):
         """Stop proc."""
-        self.proc.reset(1)
+        if self.event_task:
+            self.event_task.cancel()
+            self.event_task = None
+        if self.proc_executor:
+            self.proc_executor.shutdown()
+            self.proc_executor = None
+        if self.proc:
+            self.proc.reset(1)
+            self.proc = None
 
     def connect(self):
         """Connect to the P-ROC.
@@ -161,24 +211,28 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
 
     def _add_pulse_rule_to_switch(self, switch, coil):
         # TODO: properly implement pulse_power. previously implemented pwm_on_ms/pwm_off_ms were incorrect here
-
+        # This method is called in the p-roc thread. we can call hw_driver.state()
         self._add_hw_rule(switch, coil,
                           self.pinproc.driver_state_pulse(coil.hw_driver.state(), coil.pulse_settings.duration))
 
     def _add_pulse_and_hold_rule_to_switch(self, switch: SwitchSettings, coil: DriverSettings):
         if coil.hold_settings.power < 1.0:
             pwm_on, pwm_off = coil.hw_driver.get_pwm_on_off_ms(coil.hold_settings)
+            # This method is called in the p-roc thread. we can call hw_driver.state()
             self._add_hw_rule(switch, coil,
                               self.pinproc.driver_state_patter(
                                   coil.hw_driver.state(), pwm_on, pwm_off, coil.pulse_settings.duration, True))
         else:
+            # This method is called in the p-roc thread. we can call hw_driver.state()
             self._add_hw_rule(switch, coil, self.pinproc.driver_state_pulse(coil.hw_driver.state(), 0))
 
     def _add_release_disable_rule_to_switch(self, switch: SwitchSettings, coil: DriverSettings):
+        # This method is called in the p-roc thread. we can call hw_driver.state()
         self._add_hw_rule(switch, coil,
                           self.pinproc.driver_state_disable(coil.hw_driver.state()), invert=True)
 
     def _add_disable_rule_to_switch(self, switch: SwitchSettings, coil: DriverSettings):
+        # This method is called in the p-roc thread. we can call hw_driver.state()
         self._add_hw_rule(switch, coil,
                           self.pinproc.driver_state_disable(coil.hw_driver.state()))
 
@@ -190,24 +244,29 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
             rule = {'notifyHost': bool(switch.hw_switch.notify_on_nondebounce) == event_type.endswith("nondebounced"),
                     'reloadActive': bool(coil.recycle)}
             if drive_now is None:
+                # This method is called in the p-roc thread. we can call self.proc here
                 self.proc.switch_update_rule(switch.hw_switch.number, event_type, rule, driver)
             else:
+                # This method is called in the p-roc thread. we can call self.proc here
                 self.proc.switch_update_rule(switch.hw_switch.number, event_type, rule, driver, drive_now)
 
     def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit rule on driver."""
         self.debug_log("Setting HW Rule on pulse on hit. Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
+        self.run_proc_cmd(partial(self._set_pulse_on_hit_rule, enable_switch, coil))
 
+    def _set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         self._add_pulse_rule_to_switch(enable_switch, coil)
-
         self._write_rules_to_switch(enable_switch, coil, False)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and release rule to driver."""
         self.debug_log("Setting HW Rule on pulse on hit and relesae. Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
+        self.run_proc_cmd(partial(self._set_pulse_on_hit_and_release_rule, enable_switch, coil))
 
+    def _set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         self._add_pulse_rule_to_switch(enable_switch, coil)
         self._add_release_disable_rule_to_switch(enable_switch, coil)
 
@@ -217,6 +276,9 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         """Set pulse on hit and enable and relase rule on driver."""
         self.debug_log("Setting Pulse on hit and enable and release HW Rule. Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
+        self.run_proc_cmd(partial(self._set_pulse_on_hit_and_enable_and_release_rule, enable_switch, coil))
+
+    def _set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
 
         self._add_pulse_and_hold_rule_to_switch(enable_switch, coil)
         self._add_release_disable_rule_to_switch(enable_switch, coil)
@@ -229,7 +291,12 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         self.debug_log("Setting Pulse on hit and enable and release and disable HW Rule. Enable Switch: %s,"
                        "Disable Switch: %s, Driver: %s", enable_switch.hw_switch.number,
                        disable_switch.hw_switch.number, coil.hw_driver.number)
+        self.run_proc_cmd(partial(self._set_pulse_on_hit_and_enable_and_release_and_disable_rule, enable_switch,
+                                  disable_switch, coil))
 
+    def _set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
+                                                                  disable_switch: SwitchSettings,
+                                                                  coil: DriverSettings):
         self._add_pulse_and_hold_rule_to_switch(enable_switch, coil)
         self._add_release_disable_rule_to_switch(enable_switch, coil)
         self._add_disable_rule_to_switch(disable_switch, coil)
@@ -251,7 +318,9 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
             coil: Coil object
         """
         self.debug_log("Clearing HW rule for switch: %s coil: %s", switch.hw_switch.number, coil.hw_driver.number)
+        self.run_proc_cmd(partial(self._clear_hw_rule, switch, coil))
 
+    def _clear_hw_rule(self, switch, coil):
         coil_number = False
         for entry, element in switch.hw_switch.hw_rules.items():
             if not element:
@@ -262,10 +331,9 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
                     del switch.hw_switch.hw_rules[entry][rule_num]
 
         if coil_number:
+            # This method is called in the p-roc thread. we can call self.proc here
             self.proc.driver_disable(coil_number)
             self._write_rules_to_switch(switch, coil, None)
-
-        return bool(coil_number)
 
     def _get_default_subtype(self):
         """Return default subtype for either P3-Roc or P-Roc."""
@@ -316,11 +384,11 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
             else:
                 proc_num = self.pinproc.decode(self.machine_type, str(number))
 
-            return PROCMatrixLight(proc_num, self.proc, self.machine)
+            return PROCMatrixLight(proc_num, self.proc, self.machine, self)
         elif subtype == "led":
             board, index = number.split("-")
             polarity = platform_settings and platform_settings.get("polarity", False)
-            return PDBLED(int(board), int(index), polarity, self.proc, self.config.get("debug", False))
+            return PDBLED(int(board), int(index), polarity, self.proc, self.config.get("debug", False), self)
         else:
             raise AssertionError("unknown subtype {}".format(subtype))
 
@@ -350,19 +418,19 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
                        "number: %s, debounce: %s", proc_num,
                        config.debounce)
         if config.debounce == "quick":
-            self.proc.switch_update_rule(proc_num, 'closed_nondebounced',
-                                         {'notifyHost': True,
-                                          'reloadActive': False}, [], False)
-            self.proc.switch_update_rule(proc_num, 'open_nondebounced',
-                                         {'notifyHost': True,
-                                          'reloadActive': False}, [], False)
+            self.run_proc_cmd(
+                partial(self.proc.switch_update_rule, proc_num, 'closed_nondebounced',
+                        {'notifyHost': True, 'reloadActive': False}, [], False))
+            self.run_proc_cmd(
+                partial(self.proc.switch_update_rule, proc_num, 'open_nondebounced',
+                        {'notifyHost': True, 'reloadActive': False}, [], False))
         else:
-            self.proc.switch_update_rule(proc_num, 'closed_debounced',
-                                         {'notifyHost': True,
-                                          'reloadActive': False}, [], False)
-            self.proc.switch_update_rule(proc_num, 'open_debounced',
-                                         {'notifyHost': True,
-                                          'reloadActive': False}, [], False)
+            self.run_proc_cmd(
+                partial(self.proc.switch_update_rule, proc_num, 'closed_debounced',
+                        {'notifyHost': True, 'reloadActive': False}, [], False))
+            self.run_proc_cmd(
+                partial(self.proc.switch_update_rule, proc_num, 'open_debounced',
+                        {'notifyHost': True, 'reloadActive': False}, [], False))
         return switch
 
 
@@ -868,11 +936,12 @@ class PDBLED(LightPlatformInterface):
     """Represents an RGB LED connected to a PD-LED board."""
 
     # pylint: disable-msg=too-many-arguments
-    def __init__(self, board, address, polarity, proc_driver, debug):
+    def __init__(self, board, address, polarity, proc_driver, debug, driver_platform):
         """Initialise PDB LED."""
         self.board = board
         self.address = address
         self.debug = debug
+        self.platform = driver_platform
         super().__init__("{}-{}".format(self.board, self.address))
         self.log = logging.getLogger('PDBLED')
         self.proc = proc_driver
@@ -902,10 +971,13 @@ class PDBLED(LightPlatformInterface):
 
         if fade_ms <= 0:
             # just set color
-            self.proc.led_color(self.board, self.address, self._normalise_color(int(brightness * 255)))
+            self.platform.run_proc_cmd(
+                partial(self.proc.led_color, self.board, self.address, self._normalise_color(int(brightness * 255))))
         else:
             # fade to color
-            self.proc.led_fade(self.board, self.address, self._normalise_color(int(brightness * 255)), int(fade_ms / 4))
+            self.platform.run_proc_cmd(
+                partial(self.proc.led_fade, self.board, self.address, self._normalise_color(int(brightness * 255)),
+                        int(fade_ms / 4)))
 
     def get_board_name(self):
         """Return board of the light."""
