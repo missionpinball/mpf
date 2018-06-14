@@ -758,7 +758,7 @@ mpf:
     allow_invalid_config_sections: single|bool|false
     save_machine_vars_to_disk: single|bool|true
     default_show_sync_ms: single|int|0
-    default_platform_hz: single|float|1000
+    default_platform_hz: single|float|100
     core_modules: ignore
     config_players: ignore
     device_modules: ignore
