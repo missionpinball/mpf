@@ -145,7 +145,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         while True:
             events = yield from self.run_proc_cmd(self._get_events)
             self.process_events(events)
-            yield from asyncio.sleep(.001, loop=self.machine.clock.loop)
+            yield from asyncio.sleep(.02, loop=self.machine.clock.loop)
 
     def stop(self):
         """Stop proc."""

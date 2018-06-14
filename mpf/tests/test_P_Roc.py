@@ -284,14 +284,14 @@ class TestPRoc(MpfTestCase):
         # closed debounced -> switch active
         self.machine.default_platform.proc.get_events = MagicMock(return_value=[
             {'type': 1, 'value': 23}])
-        self.advance_time_and_run(.01)
+        self.advance_time_and_run(.1)
         self.wait_for_platform()
         self.assertTrue(self.machine.switch_controller.is_active("s_test"))
 
         # open debounces -> inactive
         self.machine.default_platform.proc.get_events = MagicMock(return_value=[
             {'type': 2, 'value': 23}])
-        self.advance_time_and_run(.01)
+        self.advance_time_and_run(.1)
         self.wait_for_platform()
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
 
@@ -299,14 +299,14 @@ class TestPRoc(MpfTestCase):
         # closed non debounced -> should be active
         self.machine.default_platform.proc.get_events = MagicMock(return_value=[
             {'type': 3, 'value': 24}])
-        self.advance_time_and_run(.01)
+        self.advance_time_and_run(.1)
         self.wait_for_platform()
         self.assertTrue(self.machine.switch_controller.is_active("s_test_no_debounce"))
 
         # open non debounced -> should be inactive
         self.machine.default_platform.proc.get_events = MagicMock(return_value=[
             {'type': 4, 'value': 24}])
-        self.advance_time_and_run(.01)
+        self.advance_time_and_run(.1)
         self.wait_for_platform()
         self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
 
