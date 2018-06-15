@@ -96,7 +96,8 @@ class Switch(SystemWideDevice, DevicePositionMixin):
 
     def _post_events(self, state):
         for event in self._events_to_post[state]:
-            self.machine.events.post(event)
+            if self.machine.events.does_event_exist(event):
+                self.machine.events.post(event)
 
     @asyncio.coroutine
     def _initialize(self):
