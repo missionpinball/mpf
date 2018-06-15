@@ -353,14 +353,14 @@ class SwitchController(MpfController):
         obj.hw_state = hw_state
 
         # if the switch is active, check to see if it's recycle_time has passed
-        if state and not self._check_recycle_time(obj, state):
+        if state and obj.recycle_secs and not self._check_recycle_time(obj, state):
             self.machine.clock.schedule_once(partial(self._recycle_passed, obj, state, logical, obj.hw_state),
                                              timeout=obj.recycle_clear_time - self.machine.clock.get_time())
             return
 
         obj.state = state  # update the switch device
 
-        if state:
+        if state and obj.recycle_secs:
             # update the switch's next recycle clear time
             obj.recycle_clear_time = (self.machine.clock.get_time() +
                                       obj.recycle_secs)
@@ -377,9 +377,9 @@ class SwitchController(MpfController):
             return
 
         if state:
-            self.info_log("<<<<<<< '{}' active >>>>>>>".format(obj.name))
+            self.info_log("<<<<<<< '%s' active >>>>>>>", obj.name)
         else:
-            self.info_log("<<<<<<< '{}' inactive >>>>>>>".format(obj.name))
+            self.info_log("<<<<<<< '%s' inactive >>>>>>>", obj.name)
 
         # Update the switch controller's logical state for this switch
         self.set_state(obj.name, state)
