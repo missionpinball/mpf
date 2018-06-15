@@ -4,7 +4,6 @@ from collections import deque, namedtuple
 import uuid
 
 import asyncio
-from enum import Enum
 from functools import partial
 from unittest.mock import MagicMock
 
@@ -69,20 +68,19 @@ class EventManager(MpfController):
 
         Returns:
             2-item tuple:
-                First item is the event name, cleaned up a by converting it
-                to lowercase.
+                First item is the event name
 
                 Second item is the condition (A BoolTemplate instance) if it
                 exists, or None if it doesn't.
 
         """
         if event_string.find("{") > 0 and event_string[-1:] == "}":
-            return (event_string[0:event_string.find("{")].lower(),
+            return (event_string[0:event_string.find("{")],
                     self.machine.placeholder_manager.build_bool_template(
                         event_string[event_string.find("{") + 1:-1]))
 
         else:
-            return event_string.lower(), None
+            return event_string, None
 
     def add_async_handler(self, event: str, handler: Any, priority: int = 1, blocking_facility: Any = None,
                           **kwargs) -> EventHandlerKey:
@@ -110,7 +108,6 @@ class EventManager(MpfController):
         Args:
             event: String name of the event you're adding a handler for. Since
                 events are text strings, they don't have to be pre-defined.
-                Note that all event strings will be converted to lowercase.
             handler: The callable method that will be called when the event is
                 fired. Since it's possible for events to have kwargs attached
                 to them, the handler method must include ``**kwargs`` in its
@@ -235,7 +232,7 @@ class EventManager(MpfController):
 
         Args:
             event: The event you want to check to see if this handler is
-                registered for. This string will be converted to lowercase.
+                registered for.
             handler: The method of the handler you want to check.
             priority: Optional priority of the new handler that will be
                 registered.
@@ -252,8 +249,6 @@ class EventManager(MpfController):
         # If we don't have kwargs, then we'll look for just the handler meth.
         # If we have kwargs, we'll look for that combination. If it finds it,
         # remove it.
-        event = event.lower()
-
         if event in self.registered_handlers:
             if kwargs:
                 # slice the full list [:] to make a copy so we can delete from the
@@ -299,7 +294,6 @@ class EventManager(MpfController):
 
         Args:
             event: The name of the event you want to remove the handler from.
-                This string will be converted to lowercase.
             handler:
                 The handler method you want to remove.
 
@@ -308,8 +302,6 @@ class EventManager(MpfController):
         handler / event combination, regardless of whether the keyword
         arguments match or not.
         """
-        event = event.lower()
-
         events_to_delete_if_empty = []
         if event in self.registered_handlers:
             for handler_tup in self.registered_handlers[event][:]:
@@ -389,13 +381,12 @@ class EventManager(MpfController):
         """Check to see if any handlers are registered for the event name that is passed.
 
         Args:
-            event_name : The string name of the event you want to check. This
-                string will be converted to lowercase.
+            event_name : The string name of the event you want to check.
 
         Returns:
             True or False
         """
-        return event_name.lower() in self.registered_handlers
+        return event_name in self.registered_handlers
 
     @staticmethod
     def _set_result(_future, **kwargs):
@@ -435,8 +426,7 @@ class EventManager(MpfController):
             event: A string name of the event you're posting. Note that you can
                 post whatever event you want. You don't have to set up anything
                 ahead of time, and if no handlers are registered for the event
-                you post, so be it. Note that this event name will be converted
-                to lowercase.
+                you post, so be it.
             callback: An optional method which will be called when the final
                 handler is done processing this event. Default is None.
             **kwargs: One or more options keyword/value pairs that will be
@@ -465,8 +455,7 @@ class EventManager(MpfController):
             event: A string name of the event you're posting. Note that you can
                 post whatever event you want. You don't have to set up anything
                 ahead of time, and if no handlers are registered for the event
-                you post, so be it. Note that this event name will be converted
-                to lowercase.
+                you post, so be it.
             callback: An optional method which will be called when the final
                 handler is done processing this event. Default is None. If
                 any handler returns False and cancels this boolean event, the
@@ -498,8 +487,7 @@ class EventManager(MpfController):
             event: A string name of the event you're posting. Note that you can
                 post whatever event you want. You don't have to set up anything
                 ahead of time, and if no handlers are registered for the event
-                you post, so be it. Note that this event name will be converted
-                to lowercase.
+                you post, so be it.
             callback: The method which will be called when the final
                 handler is done processing this event and any handlers that
                 registered waits have cleared their waits.
@@ -529,8 +517,7 @@ class EventManager(MpfController):
             event: A string name of the event you're posting. Note that you can
                 post whatever event you want. You don't have to set up anything
                 ahead of time, and if no handlers are registered for the event
-                you post, so be it. Note that this event name will be converted
-                to lowercase.
+                you post, so be it.
             callback: The method which will be called when the final handler is
                 done processing this event. Default is None.
             **kwargs: One or more options keyword/value pairs that will be
@@ -555,13 +542,10 @@ class EventManager(MpfController):
         self._post(event, ev_type='relay', callback=callback, **kwargs)
 
     def _post(self, event: str, ev_type: Optional[str], callback, **kwargs: dict) -> None:
-
-        event = event.lower()
-
         if self._debug_to_console or self._debug_to_file:
             self.debug_log("Event: ===='%s'==== Type: %s, Callback: %s, "
                            "Args: %s", event, ev_type, callback, kwargs)
-        elif self._info_to_file or self._info_to_console and not kwargs.get("_silent", False):
+        elif (self._info_to_file or self._info_to_console) and not kwargs.get("_silent", False):
             self.info_log("Event: ======'%s'====== Args=%s", event, kwargs)
 
         # fast path for events without handler
