@@ -1,8 +1,4 @@
 #config_version=5
-logging:
-  file:
-    event_manager: none
-
 switches:
   s_switch_standard_playfield:
     number: 1
