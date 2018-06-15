@@ -435,7 +435,7 @@ class EventManager(MpfController):
                 registered to prevent run-time crashes from unexpected kwargs
                 that were included in ``post()`` calls.
         """
-        self._post(event, ev_type=None, callback=callback, **kwargs)
+        self._post(event, None, callback, **kwargs)
 
     def post_boolean(self, event: str, callback=None, **kwargs) -> None:
         """Post an boolean event which causes all the registered handlers to be called one-by-one.
@@ -464,7 +464,7 @@ class EventManager(MpfController):
             **kwargs: One or more options keyword/value pairs that will be
                 passed to each handler.
         """
-        self._post(event, ev_type='boolean', callback=callback, **kwargs)
+        self._post(event, 'boolean', callback, **kwargs)
 
     def post_queue(self, event, callback, **kwargs):
         """Post a queue event which causes all the registered handlers to be called.
@@ -505,7 +505,7 @@ class EventManager(MpfController):
                  self.machine.events.post_queue('pizza_time', self.pizza_done)
 
         """
-        self._post(event, ev_type='queue', callback=callback, **kwargs)
+        self._post(event, 'queue', callback, **kwargs)
 
     def post_relay(self, event: str, callback=None, **kwargs) -> None:
         """Post a relay event which causes all the registered handlers to be called.
@@ -539,7 +539,7 @@ class EventManager(MpfController):
         whereas relay events "relay" the resulting kwargs from one handler to
         the next.)
         """
-        self._post(event, ev_type='relay', callback=callback, **kwargs)
+        self._post(event, 'relay', callback, **kwargs)
 
     def _post(self, event: str, ev_type: Optional[str], callback, **kwargs: dict) -> None:
         if self._debug_to_console or self._debug_to_file:
