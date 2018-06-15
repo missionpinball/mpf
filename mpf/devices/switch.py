@@ -48,7 +48,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         self.recycle_jitter_count = 0
 
         # register switch so other devices can add handlers to it
-        self.machine.switch_controller.register_switch(name)
+        self.machine.switch_controller.register_switch(self)
 
     @classmethod
     def device_class_init(cls, machine: MachineController):

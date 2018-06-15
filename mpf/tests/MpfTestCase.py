@@ -536,7 +536,7 @@ class MpfTestCase(unittest.TestCase):
                          format(player_var, self.machine.game.player[player_var], value))
 
     def assertSwitchState(self, name, state):
-        self.assertIn(name, self.machine.switch_controller.switches, "Switch {} does not exist.".format(name))
+        self.assertIn(name, self.machine.switch_controller._switch_state, "Switch {} does not exist.".format(name))
         self.assertEqual(state, self.machine.switch_controller.is_active(name))
 
     def assertLightChannel(self, light_name, brightness, channel="white"):
