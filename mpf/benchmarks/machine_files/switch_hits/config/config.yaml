@@ -1,0 +1,11 @@
+#config_version=5
+switches:
+  s_switch1:
+    number: 1
+    tags: playfield_active, skill_shot_cancel
+  s_switch2:
+    number: 2
+    tags: playfield_active, skill_shot_cancel
+  s_switch3:
+    number: 3
+    tags: playfield_active, skill_shot_cancel

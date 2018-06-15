@@ -37,6 +37,7 @@ pylint:
 
 ignore-paths:
   - mpf/tests/
+  - mpf/benchmarks/
   - docs
   - mpf/platforms/trinamics/
   - tools/
