@@ -8,7 +8,9 @@ import logging
 from collections import defaultdict, namedtuple
 import asyncio
 from functools import partial
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Tuple
+
+from mpf.core.platform import SwitchPlatform
 
 from mpf.core.machine import MachineController
 from mpf.core.mpf_controller import MpfController
@@ -27,8 +29,8 @@ class SwitchController(MpfController):
 
     config_name = "switch_controller"
 
-    __slots__ = ["registered_switches", "_timed_switch_handler_delay", "active_timed_switches", "switches",
-                 "monitors", "_initialised"]
+    __slots__ = ["registered_switches", "_timed_switch_handler_delay", "active_timed_switches", "_switch_state",
+                 "_switch_lookup", "monitors", "_initialised"]
 
     def __init__(self, machine: MachineController) -> None:
         """Initialise switch controller."""
@@ -45,7 +47,10 @@ class SwitchController(MpfController):
         # that tracks current switches for things like "do foo() if switch bar
         # is active for 100ms."
 
-        self.switches = dict()                                  # type: Dict[str, SwitchState]
+        self._switch_lookup = dict()                            # type: Dict[Tuple[str, SwitchPlatform], Switch]
+        # Lookup table for switch + platform to an Switch object
+
+        self._switch_state = dict()                             # type: Dict[str, SwitchState]
         # Dictionary which holds the master list of switches as well as their
         # current states. State here does factor in whether a switch is NO or
         # NC so 1 = active and 0 = inactive.
@@ -59,25 +64,26 @@ class SwitchController(MpfController):
         # to detect early switch changes before init
         self._initialised = False
 
-    def register_switch(self, name):
+    def register_switch(self, switch: Switch):
         """Add the name of a switch to the switch controller for tracking.
 
         Args:
             name: String name of the switch to add
         """
-        self.registered_switches[name + '-0'] = list()
-        self.registered_switches[name + '-1'] = list()
+        self.registered_switches[switch.name + '-0'] = list()
+        self.registered_switches[switch.name + '-1'] = list()
 
-        self.set_state(name, 0, reset_time=True)
+        self.set_state(switch.name, 0, reset_time=True)
 
     @asyncio.coroutine
     def _initialize_switches(self, **kwargs):
         del kwargs
         yield from self.update_switches_from_hw()
 
-        for switch in self.machine.switches:
+        for switch in self.machine.switches.values():
             # Populate self.switches
             self.set_state(switch.name, switch.state, reset_time=True)
+            self._switch_lookup[(switch.hw_switch.number, switch.platform)] = switch
 
         self._initialised = True
 
@@ -165,7 +171,7 @@ class SwitchController(MpfController):
         if not ms:
             ms = 0.0
 
-        return self.switches[switch_name].state == state and ms <= self.ms_since_change(switch_name)
+        return self._switch_state[switch_name].state == state and ms <= self.ms_since_change(switch_name)
 
     def is_active(self, switch_name, ms=None):
         """Query whether a switch is active.
@@ -212,7 +218,7 @@ class SwitchController(MpfController):
         Returns:
             Integer of milliseconds.
         """
-        return round((self.machine.clock.get_time() - self.switches[switch_name].time) * 1000.0, 0)
+        return round((self.machine.clock.get_time() - self._switch_state[switch_name].time) * 1000.0, 0)
 
     def set_state(self, switch_name, state=1, reset_time=False):
         """Set the state of a switch.
@@ -238,7 +244,7 @@ class SwitchController(MpfController):
         else:
             timestamp = self.machine.clock.get_time()
 
-        self.switches[switch_name] = SwitchState(state=state, time=timestamp)
+        self._switch_state[switch_name] = SwitchState(state=state, time=timestamp)
 
     def process_switch_by_num(self, num, state, platform, logical=False):
         """Process a switch state change by switch number.
@@ -258,16 +264,15 @@ class SwitchController(MpfController):
         if not self._initialised:
             raise AssertionError("Got early switch change for switch {} to state {}. platform: {}".format(
                 num, state, platform))
-        for switch in self.machine.switches:
-            if switch.hw_switch.number == num and switch.platform == platform:
-                self.process_switch_obj(obj=switch, state=state, logical=logical)
-                return
-
-        self.debug_log("Unknown switch %s change to state %s on platform %s", num, state, platform)
-        # if the switch is not configured still trigger the monitor
-        for monitor in self.monitors:
-            monitor(MonitoredSwitchChange(name=str(num), label="{}-{}".format(str(platform), str(num)),
-                                          platform=platform, num=str(num), state=state))
+        switch = self._switch_lookup.get((num, platform), None)
+        if switch:
+            self.process_switch_obj(switch, state, logical)
+        else:
+            self.debug_log("Unknown switch %s change to state %s on platform %s", num, state, platform)
+            # if the switch is not configured still trigger the monitor
+            for monitor in self.monitors:
+                monitor(MonitoredSwitchChange(name=str(num), label="{}-{}".format(str(platform), str(num)),
+                                              platform=platform, num=str(num), state=state))
 
     def process_switch(self, name, state=1, logical=False):
         """Process a new switch state change for a switch by name.
@@ -353,20 +358,20 @@ class SwitchController(MpfController):
         obj.hw_state = hw_state
 
         # if the switch is active, check to see if it's recycle_time has passed
-        if state and not self._check_recycle_time(obj, state):
+        if state and obj.recycle_secs and not self._check_recycle_time(obj, state):
             self.machine.clock.schedule_once(partial(self._recycle_passed, obj, state, logical, obj.hw_state),
                                              timeout=obj.recycle_clear_time - self.machine.clock.get_time())
             return
 
         obj.state = state  # update the switch device
 
-        if state:
+        if state and obj.recycle_secs:
             # update the switch's next recycle clear time
             obj.recycle_clear_time = (self.machine.clock.get_time() +
                                       obj.recycle_secs)
 
         # if the switch is already in this state, then abort
-        if self.switches[obj.name].state == state:
+        if self._switch_state[obj.name].state == state:
 
             if not obj.recycle_secs:
                 self.warning_log(
@@ -377,9 +382,9 @@ class SwitchController(MpfController):
             return
 
         if state:
-            self.info_log("<<<<<<< '{}' active >>>>>>>".format(obj.name))
+            self.info_log("<<<<<<< '%s' active >>>>>>>", obj.name)
         else:
-            self.info_log("<<<<<<< '{}' inactive >>>>>>>".format(obj.name))
+            self.info_log("<<<<<<< '%s' inactive >>>>>>>", obj.name)
 
         # Update the switch controller's logical state for this switch
         self.set_state(obj.name, state)
@@ -615,7 +620,7 @@ class SwitchController(MpfController):
     def log_active_switches(self, **kwargs):
         """Write out entries to the INFO log file of all switches that are currently active."""
         del kwargs
-        for k, v in self.switches.items():
+        for k, v in self._switch_state.items():
             if v.state:
                 self.info_log("Found active switch: %s", k)
 
