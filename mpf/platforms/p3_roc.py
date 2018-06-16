@@ -54,8 +54,6 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         if self.machine_type != self.pinproc.MachineTypePDB:
             raise AssertionError("P3-Roc can only handle PDB driver boards")
 
-        self.connect()
-
         # Because PDBs can be configured in many different ways, we need to
         # traverse the YAML settings to see how many PDBs are being used.
         # Then we can configure the P3-ROC appropriately to use those PDBs.
@@ -63,7 +61,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         # the collections.
 
         self.debug_log("Configuring P3-ROC for PDB driver boards.")
-        self.pdbconfig = PDBConfig(self.proc, self.machine.config, self.pinproc.DriverCount)
+        self.pdbconfig = PDBConfig(self, self.machine.config, self.pinproc.DriverCount)
         self._burst_opto_drivers_to_switch_map = {}
         self._burst_switches = []
         self._bursts_enabled = False
@@ -71,9 +69,10 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         self.acceleration = [0] * 3
         self.accelerometer_device = None    # type: PROCAccelerometer
 
+    @asyncio.coroutine
     def connect(self):
         """Connect to the P3-Roc."""
-        super().connect()
+        yield from super().connect()
 
         if self.dipswitches & 0x01:
             self.log.info("Burst drivers are configured as outputs (DIP Switch 1 set). "
@@ -90,7 +89,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
                 raise AssertionError("Local inputs are supported only in FW 2.6+. Disable DIP 2 or update firmware.")
 
             for board in range(0, 4):
-                device_type = self.proc.read_data(2, (1 << 12) + (board << 6))
+                device_type = yield from self.run_proc_cmd("read_data", 2, (1 << 12) + (board << 6))
                 if device_type != 0:
                     raise AssertionError("Invalid P3-Roc configuration. Found SW-16 with ID {} which is invalid "
                                          "because burst switches/drivers which are configured as inputs/outputs use "
@@ -99,12 +98,12 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
 
         # remove all burst ir mappings
         for driver in range(0, 64):
-            self.proc.write_data(0x02, 0x80 + (driver * 2), 0)
-            self.proc.write_data(0x02, 0x81 + (driver * 2), 0)
+            self.run_proc_cmd_no_wait("write_data", 0x02, 0x80 + (driver * 2), 0)
+            self.run_proc_cmd_no_wait("write_data", 0x02, 0x81 + (driver * 2), 0)
 
         # disable burst IRs
         burst_config1 = 0
-        self.proc.write_data(0x02, 0x01, burst_config1)
+        self.run_proc_cmd_no_wait("write_data", 0x02, 0x01, burst_config1)
 
     def _get_default_subtype(self):
         """Return default subtype for P3-Roc."""
@@ -148,26 +147,27 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         enable = 0x0F
 
         # configure some P3-Roc registers
-        self.proc.write_data(6, 0x000, enable)
+
+        self.run_proc_cmd_no_wait("write_data", 6, 0x000, enable)
 
         # CTRL_REG1 - set to standby
-        self.proc.write_data(6, 0x12A, 0)
+        self.run_proc_cmd_no_wait("write_data", 6, 0x12A, 0)
 
         # XYZ_DATA_CFG - disable high pass filter, scale 0 to 2g
-        self.proc.write_data(6, 0x10E, 0x00)
+        self.run_proc_cmd_no_wait("write_data", 6, 0x10E, 0x00)
 
         # CTRL_REG1 - set device to active and in low noise mode
         # 800HZ output data rate
-        self.proc.write_data(6, 0x12A, 0x05)
+        self.run_proc_cmd_no_wait("write_data", 6, 0x12A, 0x05)
 
         # CTRL_REG2 - set no sleep, high resolution mode
-        self.proc.write_data(6, 0x12B, 0x02)
+        self.run_proc_cmd_no_wait("write_data", 6, 0x12B, 0x02)
 
         # for auto-polling of accelerometer every 128 ms (8 times a sec). set 0x0F
         # disable polling + IRQ status addr FF_MT_SRC
-        self.proc.write_data(6, 0x000, 0x1E0F)
+        self.run_proc_cmd_no_wait("write_data", 6, 0x000, 0x1E0F)
         # flush data to proc
-        self.proc.flush()
+        self.run_proc_cmd_no_wait("flush")
 
     def get_info_string(self):
         """Dump infos about boards."""
@@ -177,8 +177,8 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         infos += "SW-16 boards found:\n"
 
         for board in range(0, 32):
-            device_type = self.proc.read_data(2, (1 << 12) + (board << 6))
-            board_id = self.proc.read_data(2, (1 << 12) + (board << 6) + 1)
+            device_type = self.run_proc_cmd_sync("read_data", 2, (1 << 12) + (board << 6))
+            board_id = self.run_proc_cmd_sync("read_data", 2, (1 << 12) + (board << 6) + 1)
             if device_type != 0:
                 infos += " - Board: {} Switches: 16 Device Type: {:X} Board ID: {:X}\n".format(
                     board, device_type, board_id)
@@ -311,7 +311,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
             self._bursts_enabled = True
             self.log.info("Enabling burst opto %s on the P3-Roc.", number)
             burst_config1 = (1 << 31) | 0x1F
-            self.proc.write_data(0x02, 0x01, burst_config1)
+            self.run_proc_cmd_no_wait("write_data", 0x02, 0x01, burst_config1)
 
         # configure driver for receiver
         if driver not in self._burst_opto_drivers_to_switch_map:
@@ -333,8 +333,8 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
             rx_to_check_for_this_transmitter <<= 6
             rx_to_check_for_this_transmitter += switch
 
-        self.proc.write_data(0x02, 0x80 + (driver * 2), len(self._burst_opto_drivers_to_switch_map[driver]))
-        self.proc.write_data(0x02, 0x81 + (driver * 2), rx_to_check_for_this_transmitter)
+        self.run_proc_cmd_no_wait("write_data", 0x02, 0x80 + (driver * 2), len(self._burst_opto_drivers_to_switch_map[driver]))
+        self.run_proc_cmd_no_wait("write_data", 0x02, 0x81 + (driver * 2), rx_to_check_for_this_transmitter)
 
         burst_switch = P3RocBurstOpto(config, number, input_switch, driver)
         self._burst_switches.append(burst_switch)
@@ -351,7 +351,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         3 - closed (not debounced)
         4 - open (not debounced)
         """
-        states = self.proc.switch_get_states()
+        states = yield from self.run_proc_cmd("switch_get_states")
         result = {}
 
         for switch, state in enumerate(states):
@@ -440,16 +440,16 @@ class P3RocI2c(I2cPlatformInterface):
         super().__init__(number)
         self.platform = platform
         self.address = number
-        self.proc = platform.proc
 
     def i2c_write8(self, register, value):
         """Write an 8-bit value to the I2C bus of the P3-Roc."""
-        self.proc.write_data(7, int(self.address) << 9 | register, value)
+        self.platform.run_proc_cmd_no_wait("write_data", 7, int(self.address) << 9 | register, value)
 
     @asyncio.coroutine
     def i2c_read8(self, register):
         """Read an 8-bit value from the I2C bus of the P3-Roc."""
-        return self.proc.read_data(7, int(self.address) << 9 | register) & 0xFF
+        data = yield from self.platform.run_proc_cmd("read_data", 7, int(self.address) << 9 | register)
+        return data & 0xFF
 
     @asyncio.coroutine
     def i2c_read_block(self, register, count):
@@ -468,10 +468,9 @@ class P3RocI2c(I2cPlatformInterface):
                 position += 2
         return result
 
-    @asyncio.coroutine
     def i2c_read16(self, register) -> Generator[int, None, int]:
         """Read an 16-bit value from the I2C bus of the P3-Roc."""
-        return self.proc.read_data(7, int(self.address) << 9 | 1 << 8 | register)
+        return self.platform.run_proc_cmd("read_data", 7, int(self.address) << 9 | 1 << 8 | register)
 
 
 class PROCAccelerometer(AccelerometerPlatformInterface):

@@ -5,9 +5,10 @@ import logging
 import platform
 import sys
 import time
-from concurrent.futures import ThreadPoolExecutor
-from functools import partial
+from concurrent.futures import ProcessPoolExecutor
 from typing import Any, List, Union, Callable, Tuple
+
+import aioprocessing
 
 from mpf.platforms.p_roc_devices import PROCSwitch, PROCMatrixLight
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
@@ -53,6 +54,39 @@ except ImportError:     # pragma: no cover
         pinproc = None
 
 
+class ProcProcess(object):
+
+    def __init__(self):
+        self.proc = None
+
+    def proc_process(self, machine_type, command_queue, response_queue):
+        while not self.proc:
+            try:
+                self.proc = pinproc.PinPROC(machine_type)
+                self.proc.reset(1)
+            except IOError:     # pragma: no cover
+                print("Retrying...")
+                time.sleep(1)
+
+        while True:
+            needs_response, cmd = command_queue.get()
+            if cmd[0].startswith("_"):
+                result = getattr(self, cmd[0])(*(cmd[1:]))
+            else:
+                result = getattr(self.proc, cmd[0])(*(cmd[1:]))
+            if needs_response:
+                response_queue.put(result)
+            if cmd[0] == "reset":
+                return
+
+    def _get_events(self):
+        """Return all events."""
+        events = self.proc.get_events()
+        self.proc.watchdog_tickle()
+        self.proc.flush()
+        return list(events)
+
+
 # pylint does not understand that this class is abstract
 # pylint: disable-msg=abstract-method
 # pylint: disable-msg=too-many-instance-attributes
@@ -80,7 +114,6 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
 
         self.pdbconfig = None
         self.pinproc = pinproc
-        self.proc = None
         self.log = None
         self.hw_switch_rules = {}
         self.version = None
@@ -89,7 +122,12 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         self.dipswitches = None
         self.event_task = None
 
-        self.proc_executor = ThreadPoolExecutor(max_workers=1)
+        self.command_queue = aioprocessing.AioQueue()
+        self.response_queue = aioprocessing.AioQueue()
+        self.proc_lock = asyncio.Lock(loop=self.machine.clock.loop)
+        self.proc_executor = None
+        self.proc_process = None
+        self.proc_process_instance = None
         self._commands_running = 0
 
         self.machine_type = pinproc.normalize_machine_type(
@@ -99,16 +137,26 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         del future
         self._commands_running -= 1
 
-    def run_proc_cmd(self, cmd):
+    @asyncio.coroutine
+    def run_proc_cmd(self, *cmd):
         """Run a command in the p-roc thread and return a future."""
-        future = self.machine.clock.loop.run_in_executor(self.proc_executor, cmd)
-        future.add_done_callback(self._decrement_running_commands)
-        self._commands_running += 1
-        return future
+        with (yield from self.proc_lock):
+            yield from self.command_queue.coro_put((True, cmd), loop=self.machine.clock.loop)
+            result = yield from self.response_queue.coro_get(loop=self.machine.clock.loop)
+        return result
+
+    def run_proc_cmd_no_wait(self, *cmd):
+        """Run a command in the p-roc thread and return a future."""
+        self.command_queue.put((False, cmd))
+
+    def run_proc_cmd_sync(self, *cmd):
+        """Run a command in the p-roc thread and return the result."""
+        return self.machine.clock.loop.run_until_complete(self.run_proc_cmd(*cmd))
 
     @asyncio.coroutine
     def initialize(self):
         """Set machine vars."""
+        yield from self.connect()
         self.machine.set_machine_var("p_roc_version", self.version)
         '''machine_var: p_roc_version
 
@@ -128,13 +176,9 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         """Start listening for switches."""
         self.event_task = self.machine.clock.loop.create_task(self._poll_events())
 
-    def _get_events(self):
-        """Return all events."""
-        # This method is called in the p-roc thread. we can call self.proc here
-        events = self.proc.get_events()
-        self.proc.watchdog_tickle()
-        self.proc.flush()
-        return events
+    def _start_proc_process(self):
+        """Start the pinproc process."""
+        self.proc_executor = ProcessPoolExecutor(max_workers=1)
 
     def process_events(self, events):
         """Process events from the P-Roc."""
@@ -143,22 +187,21 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
     @asyncio.coroutine
     def _poll_events(self):
         while True:
-            events = yield from self.run_proc_cmd(self._get_events)
+            events = yield from self.run_proc_cmd("_get_events")
             self.process_events(events)
-            yield from asyncio.sleep(.02, loop=self.machine.clock.loop)
+            yield from asyncio.sleep(.01, loop=self.machine.clock.loop)
 
     def stop(self):
         """Stop proc."""
         if self.event_task:
             self.event_task.cancel()
             self.event_task = None
-        if self.proc_executor:
-            self.proc_executor.shutdown()
-            self.proc_executor = None
-        if self.proc:
-            self.proc.reset(1)
-            self.proc = None
+        if self.proc_process_instance:
+            self.run_proc_cmd_sync("reset", 1)
+            self.proc_process_instance.join()
+            self.proc_process_instance = None
 
+    @asyncio.coroutine
     def connect(self):
         """Connect to the P-ROC.
 
@@ -166,19 +209,16 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         """
         self.log.info("Connecting to P-ROC")
 
-        while not self.proc:
-            try:
-                self.proc = pinproc.PinPROC(self.machine_type)
-                self.proc.reset(1)
-            except IOError:     # pragma: no cover
-                print("Retrying...")
-                time.sleep(1)
+        self.proc_process = ProcProcess()
+        self.proc_process_instance = aioprocessing.AioProcess(target=self.proc_process.proc_process,
+                                                              args=(self.machine_type, self.command_queue, self.response_queue))
+        self.proc_process_instance.start()
 
-        version_revision = self.proc.read_data(0x00, 0x01)
+        version_revision = yield from self.run_proc_cmd("read_data", 0x00, 0x01)
 
         self.revision = version_revision & 0xFFFF
         self.version = (version_revision & 0xFFFF0000) >> 16
-        dipswitches = self.proc.read_data(0x00, 0x03)
+        dipswitches = yield from self.run_proc_cmd("read_data", 0x00, 0x03)
         self.hardware_version = (dipswitches & 0xF00) >> 8
         self.dipswitches = ~dipswitches & 0x3F
 
@@ -245,18 +285,15 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
                     'reloadActive': bool(coil.recycle)}
             if drive_now is None:
                 # This method is called in the p-roc thread. we can call self.proc here
-                self.proc.switch_update_rule(switch.hw_switch.number, event_type, rule, driver)
+                self.run_proc_cmd_no_wait("switch_update_rule", switch.hw_switch.number, event_type, rule, driver)
             else:
                 # This method is called in the p-roc thread. we can call self.proc here
-                self.proc.switch_update_rule(switch.hw_switch.number, event_type, rule, driver, drive_now)
+                self.run_proc_cmd_no_wait("switch_update_rule", switch.hw_switch.number, event_type, rule, driver, drive_now)
 
     def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit rule on driver."""
         self.debug_log("Setting HW Rule on pulse on hit. Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
-        self.run_proc_cmd(partial(self._set_pulse_on_hit_rule, enable_switch, coil))
-
-    def _set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         self._add_pulse_rule_to_switch(enable_switch, coil)
         self._write_rules_to_switch(enable_switch, coil, False)
 
@@ -264,9 +301,6 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         """Set pulse on hit and release rule to driver."""
         self.debug_log("Setting HW Rule on pulse on hit and relesae. Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
-        self.run_proc_cmd(partial(self._set_pulse_on_hit_and_release_rule, enable_switch, coil))
-
-    def _set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         self._add_pulse_rule_to_switch(enable_switch, coil)
         self._add_release_disable_rule_to_switch(enable_switch, coil)
 
@@ -276,10 +310,6 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         """Set pulse on hit and enable and relase rule on driver."""
         self.debug_log("Setting Pulse on hit and enable and release HW Rule. Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
-        self.run_proc_cmd(partial(self._set_pulse_on_hit_and_enable_and_release_rule, enable_switch, coil))
-
-    def _set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
-
         self._add_pulse_and_hold_rule_to_switch(enable_switch, coil)
         self._add_release_disable_rule_to_switch(enable_switch, coil)
 
@@ -291,12 +321,6 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         self.debug_log("Setting Pulse on hit and enable and release and disable HW Rule. Enable Switch: %s,"
                        "Disable Switch: %s, Driver: %s", enable_switch.hw_switch.number,
                        disable_switch.hw_switch.number, coil.hw_driver.number)
-        self.run_proc_cmd(partial(self._set_pulse_on_hit_and_enable_and_release_and_disable_rule, enable_switch,
-                                  disable_switch, coil))
-
-    def _set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
-                                                                  disable_switch: SwitchSettings,
-                                                                  coil: DriverSettings):
         self._add_pulse_and_hold_rule_to_switch(enable_switch, coil)
         self._add_release_disable_rule_to_switch(enable_switch, coil)
         self._add_disable_rule_to_switch(disable_switch, coil)
@@ -318,9 +342,6 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
             coil: Coil object
         """
         self.debug_log("Clearing HW rule for switch: %s coil: %s", switch.hw_switch.number, coil.hw_driver.number)
-        self.run_proc_cmd(partial(self._clear_hw_rule, switch, coil))
-
-    def _clear_hw_rule(self, switch, coil):
         coil_number = False
         for entry, element in switch.hw_switch.hw_rules.items():
             if not element:
@@ -332,7 +353,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
 
         if coil_number:
             # This method is called in the p-roc thread. we can call self.proc here
-            self.proc.driver_disable(coil_number)
+            self.run_proc_cmd_no_wait("driver_disable", coil_number)
             self._write_rules_to_switch(switch, coil, None)
 
     def _get_default_subtype(self):
@@ -384,11 +405,11 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
             else:
                 proc_num = self.pinproc.decode(self.machine_type, str(number))
 
-            return PROCMatrixLight(proc_num, self.proc, self.machine, self)
+            return PROCMatrixLight(proc_num, self.machine, self)
         elif subtype == "led":
             board, index = number.split("-")
             polarity = platform_settings and platform_settings.get("polarity", False)
-            return PDBLED(int(board), int(index), polarity, self.proc, self.config.get("debug", False), self)
+            return PDBLED(int(board), int(index), polarity, self.config.get("debug", False), self)
         else:
             raise AssertionError("unknown subtype {}".format(subtype))
 
@@ -418,19 +439,15 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
                        "number: %s, debounce: %s", proc_num,
                        config.debounce)
         if config.debounce == "quick":
-            self.run_proc_cmd(
-                partial(self.proc.switch_update_rule, proc_num, 'closed_nondebounced',
-                        {'notifyHost': True, 'reloadActive': False}, [], False))
-            self.run_proc_cmd(
-                partial(self.proc.switch_update_rule, proc_num, 'open_nondebounced',
-                        {'notifyHost': True, 'reloadActive': False}, [], False))
+            self.run_proc_cmd_no_wait("switch_update_rule", proc_num, 'closed_nondebounced',
+                              {'notifyHost': True, 'reloadActive': False}, [], False)
+            self.run_proc_cmd_no_wait("switch_update_rule", proc_num, 'open_nondebounced',
+                              {'notifyHost': True, 'reloadActive': False}, [], False)
         else:
-            self.run_proc_cmd(
-                partial(self.proc.switch_update_rule, proc_num, 'closed_debounced',
-                        {'notifyHost': True, 'reloadActive': False}, [], False))
-            self.run_proc_cmd(
-                partial(self.proc.switch_update_rule, proc_num, 'open_debounced',
-                        {'notifyHost': True, 'reloadActive': False}, [], False))
+            self.run_proc_cmd_no_wait("switch_update_rule", proc_num, 'closed_debounced',
+                              {'notifyHost': True, 'reloadActive': False}, [], False)
+            self.run_proc_cmd_no_wait("switch_update_rule", proc_num, 'open_debounced',
+                              {'notifyHost': True, 'reloadActive': False}, [], False)
         return switch
 
 
@@ -446,7 +463,7 @@ class PDBConfig(object):
     indexes = []    # type: List[Any]
     proc = None     # type: pinproc.PinPROC
 
-    def __init__(self, proc, config, driver_count):
+    def __init__(self, platform, config, driver_count):
         """Set up PDB config.
 
         Will configure driver groups for matrixes, lamps and normal drivers.
@@ -454,7 +471,7 @@ class PDBConfig(object):
         self.log = logging.getLogger('PDBConfig')
         self.log.debug("Processing PDB Driver Board configuration")
 
-        self.proc = proc
+        self.platform = platform
 
         # Set config defaults
         self.lamp_matrix_strobe_time = config['p_roc']['lamp_matrix_strobe_time']
@@ -471,7 +488,7 @@ class PDBConfig(object):
         num_proc_banks = driver_count // 8
         self.indexes = [{}] * num_proc_banks    # type: List[Union[int, dict]]
 
-        self._initialize_drivers(proc)
+        self._initialize_drivers()
 
         # Set up dedicated driver groups (groups 0-3).
         for group_ctr in range(0, 4):
@@ -479,15 +496,16 @@ class PDBConfig(object):
             enable = group_ctr in coil_bank_list
             self.log.debug("Driver group %02d (dedicated): Enable=%s",
                            group_ctr, enable)
-            proc.driver_update_group_config(group_ctr,
-                                            0,
-                                            group_ctr,
-                                            0,
-                                            0,
-                                            False,
-                                            True,
-                                            enable,
-                                            True)
+            self.platform.run_proc_cmd_no_wait("driver_update_group_config",
+                                       group_ctr,
+                                       0,
+                                       group_ctr,
+                                       0,
+                                       0,
+                                       False,
+                                       True,
+                                       enable,
+                                       True)
 
         # next group is 4
         group_ctr = 4
@@ -517,15 +535,16 @@ class PDBConfig(object):
                                lamp_dict['source_output'],
                                lamp_dict['source_index'], True)
                 self.indexes[group_ctr] = lamp_list_for_index[i]
-                proc.driver_update_group_config(group_ctr,
-                                                self.lamp_matrix_strobe_time,
-                                                lamp_dict['sink_bank'],
-                                                lamp_dict['source_output'],
-                                                lamp_dict['source_index'],
-                                                True,
-                                                True,
-                                                True,
-                                                True)
+                self.platform.run_proc_cmd_no_wait("driver_update_group_config",
+                                           group_ctr,
+                                           self.lamp_matrix_strobe_time,
+                                           lamp_dict['sink_bank'],
+                                           lamp_dict['source_output'],
+                                           lamp_dict['source_index'],
+                                           True,
+                                           True,
+                                           True,
+                                           True)
                 group_ctr += 1
 
         for coil_bank in coil_bank_list:
@@ -549,28 +568,30 @@ class PDBConfig(object):
                 self.log.debug("Driver group %02d: slow_time=%d Enable "
                                "Index=%d", group_ctr, 0, coil_bank)
                 self.indexes[group_ctr] = coil_bank
-                proc.driver_update_group_config(group_ctr,
-                                                0,
-                                                coil_bank,
-                                                0,
-                                                0,
-                                                False,
-                                                True,
-                                                True,
-                                                True)
+                self.platform.run_proc_cmd_no_wait("driver_update_group_config",
+                                           group_ctr,
+                                           0,
+                                           coil_bank,
+                                           0,
+                                           0,
+                                           False,
+                                           True,
+                                           True,
+                                           True)
                 group_ctr += 1
 
         for i in range(group_ctr, 26):
             self.log.debug("Driver group %02d: disabled", i)
-            proc.driver_update_group_config(i,
-                                            self.lamp_matrix_strobe_time,
-                                            0,
-                                            0,
-                                            0,
-                                            False,
-                                            True,
-                                            False,
-                                            True)
+            self.platform.run_proc_cmd_no_wait("driver_update_group_config",
+                                       i,
+                                       self.lamp_matrix_strobe_time,
+                                       0,
+                                       0,
+                                       0,
+                                       False,
+                                       True,
+                                       False,
+                                       True)
 
         # Make sure there are two indexes.  If not, fill them in.
         while len(lamp_source_bank_list) < 2:
@@ -578,8 +599,8 @@ class PDBConfig(object):
 
         # Now set up globals.  First disable them to allow the P-ROC/P3-ROC to set up
         # the polarities on the Drivers.  Then enable them.
-        self._configure_lamp_banks(proc, lamp_source_bank_list, False)
-        self._configure_lamp_banks(proc, lamp_source_bank_list, True)
+        self._configure_lamp_banks(lamp_source_bank_list, False)
+        self._configure_lamp_banks(lamp_source_bank_list, True)
 
     def is_pdb_address(self, addr):
         """Return True if the given address is a valid PDB address."""
@@ -677,8 +698,7 @@ class PDBConfig(object):
 
         return coil_bank_list
 
-    @classmethod
-    def _initialize_drivers(cls, proc):
+    def _initialize_drivers(self):
         """Loop through all of the drivers, initializing them with the polarity."""
         for i in range(0, 255):
             state = {'driverNum': i,
@@ -692,22 +712,23 @@ class PDBConfig(object):
                      'patterEnable': False,
                      'futureEnable': False}
 
-            proc.driver_update_state(state)
+            self.platform.run_proc_cmd_no_wait("driver_update_state", state)
 
-    def _configure_lamp_banks(self, proc, lamp_source_bank_list, enable=True):
-        proc.driver_update_global_config(enable,
-                                         True,  # Polarity
-                                         False,  # N/A
-                                         False,  # N/A
-                                         1,  # N/A
-                                         lamp_source_bank_list[0],
-                                         lamp_source_bank_list[1],
-                                         False,  # Active low rows? No
-                                         False,  # N/A
-                                         False,  # Stern? No
-                                         False,  # Reset watchdog trigger
-                                         self.use_watchdog,  # Enable watchdog
-                                         self.watchdog_time)
+    def _configure_lamp_banks(self, lamp_source_bank_list, enable=True):
+        self.platform.run_proc_cmd_no_wait("driver_update_global_config",
+                                   enable,
+                                   True,  # Polarity
+                                   False,  # N/A
+                                   False,  # N/A
+                                   1,  # N/A
+                                   lamp_source_bank_list[0],
+                                   lamp_source_bank_list[1],
+                                   False,  # Active low rows? No
+                                   False,  # N/A
+                                   False,  # Stern? No
+                                   False,  # Reset watchdog trigger
+                                   self.use_watchdog,  # Enable watchdog
+                                   self.watchdog_time)
 
         if enable:
             self.log.debug("Configuring PDB Driver Globals:  polarity = %s  "
@@ -936,7 +957,7 @@ class PDBLED(LightPlatformInterface):
     """Represents an RGB LED connected to a PD-LED board."""
 
     # pylint: disable-msg=too-many-arguments
-    def __init__(self, board, address, polarity, proc_driver, debug, driver_platform):
+    def __init__(self, board, address, polarity, debug, driver_platform):
         """Initialise PDB LED."""
         self.board = board
         self.address = address
@@ -944,7 +965,6 @@ class PDBLED(LightPlatformInterface):
         self.platform = driver_platform
         super().__init__("{}-{}".format(self.board, self.address))
         self.log = logging.getLogger('PDBLED')
-        self.proc = proc_driver
         self.polarity = polarity
 
         self.log.debug("Creating PD-LED item: board: %s, "
@@ -971,13 +991,12 @@ class PDBLED(LightPlatformInterface):
 
         if fade_ms <= 0:
             # just set color
-            self.platform.run_proc_cmd(
-                partial(self.proc.led_color, self.board, self.address, self._normalise_color(int(brightness * 255))))
+            self.platform.run_proc_cmd_no_wait("led_color", self.board, self.address,
+                                       self._normalise_color(int(brightness * 255)))
         else:
             # fade to color
-            self.platform.run_proc_cmd(
-                partial(self.proc.led_fade, self.board, self.address, self._normalise_color(int(brightness * 255)),
-                        int(fade_ms / 4)))
+            self.platform.run_proc_cmd_no_wait("led_fade", self.board, self.address,
+                                       self._normalise_color(int(brightness * 255)), int(fade_ms / 4))
 
     def get_board_name(self):
         """Return board of the light."""
