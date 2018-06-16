@@ -15,8 +15,6 @@ import asyncio
 
 from typing import Generator
 
-import time
-
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
 from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
@@ -333,7 +331,8 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
             rx_to_check_for_this_transmitter <<= 6
             rx_to_check_for_this_transmitter += switch
 
-        self.run_proc_cmd_no_wait("write_data", 0x02, 0x80 + (driver * 2), len(self._burst_opto_drivers_to_switch_map[driver]))
+        self.run_proc_cmd_no_wait("write_data", 0x02, 0x80 + (driver * 2),
+                                  len(self._burst_opto_drivers_to_switch_map[driver]))
         self.run_proc_cmd_no_wait("write_data", 0x02, 0x81 + (driver * 2), rx_to_check_for_this_transmitter)
 
         burst_switch = P3RocBurstOpto(config, number, input_switch, driver)

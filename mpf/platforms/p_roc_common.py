@@ -1,3 +1,4 @@
+# pylint: disable-msg=too-many-lines
 """Common code for P-Roc and P3-Roc."""
 import abc
 import asyncio
@@ -56,10 +57,14 @@ except ImportError:     # pragma: no cover
 
 class ProcProcess(object):
 
+    """External pinproc process."""
+
     def __init__(self):
+        """Initialise process."""
         self.proc = None
 
     def proc_process(self, machine_type, command_queue, response_queue):
+        """Run the pinproc communication."""
         while not self.proc:
             try:
                 self.proc = pinproc.PinPROC(machine_type)
@@ -171,14 +176,18 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         that's attached to MPF.
         '''
 
+    @staticmethod
+    def _done(future):
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            pass
+
     @asyncio.coroutine
     def start(self):
         """Start listening for switches."""
         self.event_task = self.machine.clock.loop.create_task(self._poll_events())
-
-    def _start_proc_process(self):
-        """Start the pinproc process."""
-        self.proc_executor = ProcessPoolExecutor(max_workers=1)
+        self.event_task.add_done_callback(self._done)
 
     def process_events(self, events):
         """Process events from the P-Roc."""
@@ -201,6 +210,13 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
             self.proc_process_instance.join()
             self.proc_process_instance = None
 
+    def _start_proc_process(self):
+        self.proc_process = ProcProcess()
+        self.proc_process_instance = aioprocessing.AioProcess(target=self.proc_process.proc_process,
+                                                              args=(self.machine_type, self.command_queue,
+                                                                    self.response_queue))
+        self.proc_process_instance.start()
+
     @asyncio.coroutine
     def connect(self):
         """Connect to the P-ROC.
@@ -209,10 +225,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         """
         self.log.info("Connecting to P-ROC")
 
-        self.proc_process = ProcProcess()
-        self.proc_process_instance = aioprocessing.AioProcess(target=self.proc_process.proc_process,
-                                                              args=(self.machine_type, self.command_queue, self.response_queue))
-        self.proc_process_instance.start()
+        self._start_proc_process()
 
         version_revision = yield from self.run_proc_cmd("read_data", 0x00, 0x01)
 
@@ -288,7 +301,8 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
                 self.run_proc_cmd_no_wait("switch_update_rule", switch.hw_switch.number, event_type, rule, driver)
             else:
                 # This method is called in the p-roc thread. we can call self.proc here
-                self.run_proc_cmd_no_wait("switch_update_rule", switch.hw_switch.number, event_type, rule, driver, drive_now)
+                self.run_proc_cmd_no_wait("switch_update_rule", switch.hw_switch.number, event_type, rule, driver,
+                                          drive_now)
 
     def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit rule on driver."""
@@ -440,14 +454,14 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
                        config.debounce)
         if config.debounce == "quick":
             self.run_proc_cmd_no_wait("switch_update_rule", proc_num, 'closed_nondebounced',
-                              {'notifyHost': True, 'reloadActive': False}, [], False)
+                                      {'notifyHost': True, 'reloadActive': False}, [], False)
             self.run_proc_cmd_no_wait("switch_update_rule", proc_num, 'open_nondebounced',
-                              {'notifyHost': True, 'reloadActive': False}, [], False)
+                                      {'notifyHost': True, 'reloadActive': False}, [], False)
         else:
             self.run_proc_cmd_no_wait("switch_update_rule", proc_num, 'closed_debounced',
-                              {'notifyHost': True, 'reloadActive': False}, [], False)
+                                      {'notifyHost': True, 'reloadActive': False}, [], False)
             self.run_proc_cmd_no_wait("switch_update_rule", proc_num, 'open_debounced',
-                              {'notifyHost': True, 'reloadActive': False}, [], False)
+                                      {'notifyHost': True, 'reloadActive': False}, [], False)
         return switch
 
 
@@ -463,7 +477,7 @@ class PDBConfig(object):
     indexes = []    # type: List[Any]
     proc = None     # type: pinproc.PinPROC
 
-    def __init__(self, platform, config, driver_count):
+    def __init__(self, proc_platform, config, driver_count):
         """Set up PDB config.
 
         Will configure driver groups for matrixes, lamps and normal drivers.
@@ -471,7 +485,7 @@ class PDBConfig(object):
         self.log = logging.getLogger('PDBConfig')
         self.log.debug("Processing PDB Driver Board configuration")
 
-        self.platform = platform
+        self.platform = proc_platform
 
         # Set config defaults
         self.lamp_matrix_strobe_time = config['p_roc']['lamp_matrix_strobe_time']
@@ -497,15 +511,15 @@ class PDBConfig(object):
             self.log.debug("Driver group %02d (dedicated): Enable=%s",
                            group_ctr, enable)
             self.platform.run_proc_cmd_no_wait("driver_update_group_config",
-                                       group_ctr,
-                                       0,
-                                       group_ctr,
-                                       0,
-                                       0,
-                                       False,
-                                       True,
-                                       enable,
-                                       True)
+                                               group_ctr,
+                                               0,
+                                               group_ctr,
+                                               0,
+                                               0,
+                                               False,
+                                               True,
+                                               enable,
+                                               True)
 
         # next group is 4
         group_ctr = 4
@@ -536,15 +550,15 @@ class PDBConfig(object):
                                lamp_dict['source_index'], True)
                 self.indexes[group_ctr] = lamp_list_for_index[i]
                 self.platform.run_proc_cmd_no_wait("driver_update_group_config",
-                                           group_ctr,
-                                           self.lamp_matrix_strobe_time,
-                                           lamp_dict['sink_bank'],
-                                           lamp_dict['source_output'],
-                                           lamp_dict['source_index'],
-                                           True,
-                                           True,
-                                           True,
-                                           True)
+                                                   group_ctr,
+                                                   self.lamp_matrix_strobe_time,
+                                                   lamp_dict['sink_bank'],
+                                                   lamp_dict['source_output'],
+                                                   lamp_dict['source_index'],
+                                                   True,
+                                                   True,
+                                                   True,
+                                                   True)
                 group_ctr += 1
 
         for coil_bank in coil_bank_list:
@@ -569,29 +583,29 @@ class PDBConfig(object):
                                "Index=%d", group_ctr, 0, coil_bank)
                 self.indexes[group_ctr] = coil_bank
                 self.platform.run_proc_cmd_no_wait("driver_update_group_config",
-                                           group_ctr,
-                                           0,
-                                           coil_bank,
-                                           0,
-                                           0,
-                                           False,
-                                           True,
-                                           True,
-                                           True)
+                                                   group_ctr,
+                                                   0,
+                                                   coil_bank,
+                                                   0,
+                                                   0,
+                                                   False,
+                                                   True,
+                                                   True,
+                                                   True)
                 group_ctr += 1
 
         for i in range(group_ctr, 26):
             self.log.debug("Driver group %02d: disabled", i)
             self.platform.run_proc_cmd_no_wait("driver_update_group_config",
-                                       i,
-                                       self.lamp_matrix_strobe_time,
-                                       0,
-                                       0,
-                                       0,
-                                       False,
-                                       True,
-                                       False,
-                                       True)
+                                               i,
+                                               self.lamp_matrix_strobe_time,
+                                               0,
+                                               0,
+                                               0,
+                                               False,
+                                               True,
+                                               False,
+                                               True)
 
         # Make sure there are two indexes.  If not, fill them in.
         while len(lamp_source_bank_list) < 2:
@@ -716,19 +730,19 @@ class PDBConfig(object):
 
     def _configure_lamp_banks(self, lamp_source_bank_list, enable=True):
         self.platform.run_proc_cmd_no_wait("driver_update_global_config",
-                                   enable,
-                                   True,  # Polarity
-                                   False,  # N/A
-                                   False,  # N/A
-                                   1,  # N/A
-                                   lamp_source_bank_list[0],
-                                   lamp_source_bank_list[1],
-                                   False,  # Active low rows? No
-                                   False,  # N/A
-                                   False,  # Stern? No
-                                   False,  # Reset watchdog trigger
-                                   self.use_watchdog,  # Enable watchdog
-                                   self.watchdog_time)
+                                           enable,
+                                           True,  # Polarity
+                                           False,  # N/A
+                                           False,  # N/A
+                                           1,  # N/A
+                                           lamp_source_bank_list[0],
+                                           lamp_source_bank_list[1],
+                                           False,  # Active low rows? No
+                                           False,  # N/A
+                                           False,  # Stern? No
+                                           False,  # Reset watchdog trigger
+                                           self.use_watchdog,  # Enable watchdog
+                                           self.watchdog_time)
 
         if enable:
             self.log.debug("Configuring PDB Driver Globals:  polarity = %s  "
@@ -992,11 +1006,11 @@ class PDBLED(LightPlatformInterface):
         if fade_ms <= 0:
             # just set color
             self.platform.run_proc_cmd_no_wait("led_color", self.board, self.address,
-                                       self._normalise_color(int(brightness * 255)))
+                                               self._normalise_color(int(brightness * 255)))
         else:
             # fade to color
             self.platform.run_proc_cmd_no_wait("led_fade", self.board, self.address,
-                                       self._normalise_color(int(brightness * 255)), int(fade_ms / 4))
+                                               self._normalise_color(int(brightness * 255)), int(fade_ms / 4))
 
     def get_board_name(self):
         """Return board of the light."""

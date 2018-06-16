@@ -9,6 +9,8 @@ from asyncio.selector_events import _SelectorSocketTransport
 
 import asyncio
 
+import time
+
 from mpf.core.clock import ClockBase
 from serial_asyncio import SerialTransport
 
@@ -235,6 +237,7 @@ class TimeTravelLoop(base_events.BaseEventLoop):
         self._selector = TestSelector()
         self._transports = {}   # needed for newer asyncio on windows
         self.reset_counters()
+        self._wait_for_external_executor = False
 
     def time(self):
         return self._time
@@ -354,10 +357,14 @@ class TimeTravelLoop(base_events.BaseEventLoop):
         if len(self._ready) == 0:
             if not self._timers.is_empty():
                 self._time = self._timers.pop_closest()
-            elif not self._closed and not self._selector.select(0):
+            elif not self._closed and not self._selector.select(0) and not self._wait_for_external_executor:
                 raise AssertionError("Ran into an infinite loop. No socket ready and nothing scheduled.")
+            if self._wait_for_external_executor:
+                time.sleep(.0001)
 
         super()._run_once()
+        if self._wait_for_external_executor:
+            self._waiting_since = None
 
     def call_at(self, when, callback, *args):
         self._timers.add(when)

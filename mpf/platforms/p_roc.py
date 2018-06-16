@@ -61,7 +61,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         # the collections.
         if self.machine_type == self.pinproc.MachineTypePDB:
             self.debug_log("Configuring P-ROC for PDBs (P-ROC driver boards)")
-            self.pdbconfig = PDBConfig(self.proc, self.machine.config, self.pinproc.DriverCount)
+            self.pdbconfig = PDBConfig(self, self.machine.config, self.pinproc.DriverCount)
 
         else:
             self.debug_log("Configuring P-ROC for OEM driver boards")
@@ -156,7 +156,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         3 - closed (not debounced)
         4 - open (not debounced)
         """
-        states = self.proc.switch_get_states()
+        states = yield from self.run_proc_cmd("switch_get_states")
 
         for switch, state in enumerate(states):
             if state == 3 or state == 1:
@@ -168,7 +168,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
 
     def configure_dmd(self):
         """Configure a hardware DMD connected to a classic P-ROC."""
-        self.dmd = PROCDMD(self.pinproc, self.proc, self.machine)
+        self.dmd = PROCDMD(self.pinproc, self, self.machine)
         return self.dmd
 
     def configure_segment_display(self, number: str) -> "SegmentDisplayPlatformInterface":
@@ -219,9 +219,9 @@ class PROCDMD(DmdPlatformInterface):
 
     """
 
-    def __init__(self, pinproc, proc, machine):
+    def __init__(self, pinproc, platform, machine):
         """Set up DMD."""
-        self.proc = proc
+        self.platform = platform
         self.machine = machine
 
         # size is hardcoded here since 128x32 is all the P-ROC hw supports
@@ -232,7 +232,7 @@ class PROCDMD(DmdPlatformInterface):
             dmd_timing = Util.string_to_list(
                 self.machine.config['p_roc']['dmd_timing_cycles'])
 
-            self.proc.dmd_update_config(high_cycles=dmd_timing)
+            self.platform.run_proc_cmd_no_wait("dmd_update_config", dmd_timing)
 
     def set_brightness(self, brightness: float):
         """Set brightness."""
@@ -248,7 +248,7 @@ class PROCDMD(DmdPlatformInterface):
         """
         if len(data) == 4096:
             self.dmd.set_data(data)
-            self.proc.dmd_draw(self.dmd)
+            self.platform.run_proc_cmd_no_wait("dmd_draw", self.dmd)
         else:
             self.machine.log.warning("Received DMD frame of length %s instead"
                                      "of 4096. Discarding...", len(data))
@@ -270,7 +270,7 @@ class AuxPort(object):
         for _ in range(1, 255):
             commands += [self.platform.pinproc.aux_command_jump(0)]
 
-        self.platform.proc.aux_send_commands(0, commands)
+        self.platform.run_proc_cmd_no_wait("aux_send_commands", 0, commands)
 
     def reserve_index(self):
         """Return index of next free command slot and reserve it."""
@@ -289,10 +289,10 @@ class AuxPort(object):
         # build command list
         for command_set in self._commands:
             commands += command_set
-        self.platform.proc.aux_send_commands(0, commands)
+            self.platform.run_proc_cmd_no_wait("aux_send_commands", 0, commands)
 
         # jump from slot 0 to slot 1. overwrites the disable
-        self.platform.proc.aux_send_commands(0, [self.platform.pinproc.aux_command_jump(1)])
+            self.platform.run_proc_cmd_no_wait("aux_send_commands", 0, [self.platform.pinproc.aux_command_jump(1)])
 
 
 class PRocAlphanumericDisplay(SegmentDisplayPlatformInterface):
