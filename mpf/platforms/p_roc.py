@@ -224,9 +224,6 @@ class PROCDMD(DmdPlatformInterface):
         self.platform = platform
         self.machine = machine
 
-        # size is hardcoded here since 128x32 is all the P-ROC hw supports
-        self.dmd = pinproc.DMDBuffer(128, 32)
-
         # dmd_timing defaults should be 250, 400, 180, 800
         if self.machine.config['p_roc']['dmd_timing_cycles']:
             dmd_timing = Util.string_to_list(
@@ -247,8 +244,7 @@ class PROCDMD(DmdPlatformInterface):
 
         """
         if len(data) == 4096:
-            self.dmd.set_data(data)
-            self.platform.run_proc_cmd_no_wait("dmd_draw", self.dmd)
+            self.platform.run_proc_cmd_no_wait("_dmd_send", data)
         else:
             self.machine.log.warning("Received DMD frame of length %s instead"
                                      "of 4096. Discarding...", len(data))

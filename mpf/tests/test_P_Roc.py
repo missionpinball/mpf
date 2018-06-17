@@ -126,7 +126,6 @@ class TestPRoc(MpfTestCase):
         self.loop._wait_for_external_executor = True
 
     def setUp(self):
-        return self.skipTest("test proc thread")
         self.expected_duration = 2
         p_roc_common.pinproc_imported = True
         p_roc_common.pinproc = MockPinProcModule()
@@ -215,7 +214,8 @@ class TestPRoc(MpfTestCase):
         def _start_proc_process(s):
             s.proc_process = MockProcProcess()
             s.proc_process_instance = MockProcProcessObject(self.loop.create_task(
-                s.proc_process.proc_process(self.loop, s.machine_type, s.command_queue, s.response_queue)))
+                s.proc_process.proc_process(self.loop, s.machine_type, s.command_queue, s.response_queue,
+                                            s.event_queue)))
 
             s.proc_process_instance.task.add_done_callback(s._done)
         p_roc_common.PROCBasePlatform._start_proc_process = _start_proc_process
@@ -326,35 +326,36 @@ class TestPRoc(MpfTestCase):
         # closed debounced -> switch active
         self.pinproc.get_events = MagicMock(return_value=[
             {'type': 1, 'value': 23}])
-        self.advance_time_and_run(.1)
         self.wait_for_platform()
+        self.advance_time_and_run(.1)
         self.assertTrue(self.machine.switch_controller.is_active("s_test"))
 
         # open debounces -> inactive
         self.pinproc.get_events = MagicMock(return_value=[
             {'type': 2, 'value': 23}])
-        self.advance_time_and_run(.1)
         self.wait_for_platform()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
 
         self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
         # closed non debounced -> should be active
         self.pinproc.get_events = MagicMock(return_value=[
             {'type': 3, 'value': 24}])
-        self.advance_time_and_run(.1)
         self.wait_for_platform()
+        self.advance_time_and_run(.1)
         self.assertTrue(self.machine.switch_controller.is_active("s_test_no_debounce"))
 
         # open non debounced -> should be inactive
         self.pinproc.get_events = MagicMock(return_value=[
             {'type': 4, 'value': 24}])
-        self.advance_time_and_run(.1)
         self.wait_for_platform()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
 
     def _test_dmd_update(self):
 
         self.machine.default_platform.pinproc.DMDBuffer = MockDMD
+        self.pinproc.dmd_draw = MagicMock(return_value=True)
 
         # test configure
         self.machine.default_platform.configure_dmd()
@@ -372,8 +373,7 @@ class TestPRoc(MpfTestCase):
         dmd.update(frame)
         self.wait_for_platform()
 
-        self.assertEqual(frame, dmd.dmd.data)
-        self.assertEqual(self.pinproc.dmd_draw.call_args[0][0].data, dmd.dmd.data)
+        self.assertEqual(self.pinproc.dmd_draw.call_args[0][0].data, frame)
 
         # frame displayed
         self.pinproc.get_events = MagicMock(return_value=[
@@ -381,19 +381,20 @@ class TestPRoc(MpfTestCase):
 
         self.advance_time_and_run(0.04)
         self.wait_for_platform()
-        self.assertEqual(self.pinproc.dmd_draw.call_args[0][0].data, dmd.dmd.data)
+        self.assertEqual(self.pinproc.dmd_draw.call_args[0][0].data, frame)
 
-        # draw broken frame
-        dmd.dmd.set_data = MagicMock(return_value=True)
+        self.pinproc.dmd_draw = MagicMock(return_value=True)
 
         # test set frame to buffer
         frame = bytearray()
         for i in range(1234):
             frame.append(i % 256)
-        self.pinproc.update(frame)
+
+        dmd.update(frame)
+        self.wait_for_platform()
 
         # should not be rendered
-        assert not dmd.dmd.set_data.called
+        assert not self.pinproc.dmd_draw.called
 
     def _test_pdb_matrix_light(self):
         # very simple check for matrix config

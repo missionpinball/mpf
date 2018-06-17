@@ -1,6 +1,7 @@
 import asyncio
 import time
 from concurrent.futures import ThreadPoolExecutor
+from queue import Empty
 
 from mpf.core.platform_controller import SwitchRuleSettings, DriverRuleSettings, PulseRuleSettings
 
@@ -23,25 +24,58 @@ class MockProcProcess(object):
 
     def __init__(self):
         self.proc = None
+        self.event_queue = None
+        self.dmd = None
 
     def _sync(self):
+        events = self._get_events()
+        if events:
+            self.event_queue.put(events)
         return "sync"
 
     @asyncio.coroutine
-    def proc_process(self, loop, machine_type, command_queue, response_queue):
+    def proc_process(self, loop, machine_type, command_queue, response_queue, event_queue):
+        self.event_queue = event_queue
         self.proc = p_roc_common.pinproc.PinPROC(machine_type)
         self.proc.reset(1)
 
+        last_poll = time.time()
+        poll_wait = 0.01
         while True:
-            needs_response, cmd = yield from command_queue.coro_get(loop=loop)
-            if cmd[0].startswith("_"):
-                result = getattr(self, cmd[0])(*(cmd[1:]))
+            time_since_last_poll = time.time() - last_poll
+            if time_since_last_poll > poll_wait:
+                max_wait = 0
             else:
-                result = getattr(self.proc, cmd[0])(*(cmd[1:]))
-            if needs_response:
-                yield from response_queue.coro_put(result, loop=loop)
-            if cmd[0] == "reset":
-                return
+                max_wait = poll_wait - time_since_last_poll
+
+            try:
+                needs_response, cmd = yield from command_queue.coro_get(loop=loop, timeout=max_wait)
+            except Empty:
+                pass
+            else:
+                if cmd[0].startswith("_"):
+                    result = getattr(self, cmd[0])(*(cmd[1:]))
+                else:
+                    result = getattr(self.proc, cmd[0])(*(cmd[1:]))
+                if needs_response:
+                    response_queue.put(result)
+                if cmd[0] == "reset":
+                    event_queue.put("exit")
+                    return
+
+            if time.time() - last_poll >= poll_wait:
+                events = self._get_events()
+                if events:
+                    event_queue.put(events)
+                last_poll = time.time()
+
+    def _dmd_send(self, data):
+        if not self.dmd:
+            # size is hardcoded here since 128x32 is all the P-ROC hw supports
+            self.dmd = p_roc_common.pinproc.DMDBuffer(128, 32)
+
+        self.dmd.set_data(data)
+        self.proc.dmd_draw(self.dmd)
 
     def _get_events(self):
         """Return all events."""
@@ -103,7 +137,6 @@ class TestP3Roc(MpfTestCase):
         self.loop._wait_for_external_executor = True
 
     def setUp(self):
-        return self.skipTest("test proc thread")
         self.expected_duration = 2
         p_roc_common.pinproc_imported = True
         p_roc_common.pinproc = MockPinProcModule()
@@ -162,7 +195,8 @@ class TestP3Roc(MpfTestCase):
         def _start_proc_process(s):
             s.proc_process = MockProcProcess()
             s.proc_process_instance = MockProcProcessObject(self.loop.create_task(
-                s.proc_process.proc_process(self.loop, s.machine_type, s.command_queue, s.response_queue)))
+                s.proc_process.proc_process(self.loop, s.machine_type, s.command_queue, s.response_queue,
+                                            s.event_queue)))
 
             s.proc_process_instance.task.add_done_callback(s._done)
         p_roc_common.PROCBasePlatform._start_proc_process = _start_proc_process
@@ -606,28 +640,29 @@ SW-16 boards found:
         self.pinproc.get_events = MagicMock(return_value=[
             {'type': 1, 'value': 23}])
         self.wait_for_platform()
+        self.advance_time_and_run(.1)
         self.assertTrue(self.machine.switch_controller.is_active("s_test"))
 
         # open debounces -> inactive
         self.pinproc.get_events = MagicMock(return_value=[
             {'type': 2, 'value': 23}])
-        self.advance_time_and_run(.1)
         self.wait_for_platform()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
 
         self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
         # closed non debounced -> should be active
         self.pinproc.get_events = MagicMock(return_value=[
             {'type': 3, 'value': 24}])
-        self.advance_time_and_run(.1)
         self.wait_for_platform()
+        self.advance_time_and_run(.1)
         self.assertTrue(self.machine.switch_controller.is_active("s_test_no_debounce"))
 
         # open non debounced -> should be inactive
         self.pinproc.get_events = MagicMock(return_value=[
             {'type': 4, 'value': 24}])
-        self.advance_time_and_run(.1)
         self.wait_for_platform()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
 
         self.pinproc.get_events = MagicMock(return_value=[])
@@ -653,6 +688,7 @@ SW-16 boards found:
         ])
         self.advance_time_and_run(.1)
         self.wait_for_platform()
+        self.advance_time_and_run(.1)
 
         # check correct decoding of 2 complement
         self.machine.accelerometers.p3_roc_accelerometer.update_acceleration.assert_called_with(1.0, 0.0, -2.0)

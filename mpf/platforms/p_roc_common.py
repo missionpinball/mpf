@@ -6,7 +6,6 @@ import logging
 import platform
 import sys
 import time
-from concurrent.futures import ProcessPoolExecutor
 from queue import Empty
 from typing import Any, List, Union, Callable, Tuple
 
@@ -63,6 +62,7 @@ class ProcProcess(object):
     def __init__(self):
         """Initialise process."""
         self.proc = None
+        self.dmd = None
 
     def proc_process(self, machine_type, command_queue, response_queue, event_queue):
         """Run the pinproc communication."""
@@ -103,6 +103,14 @@ class ProcProcess(object):
                 if events:
                     event_queue.put(events)
                 last_poll = time.time()
+
+    def _dmd_send(self, data):
+        if not self.dmd:
+            # size is hardcoded here since 128x32 is all the P-ROC hw supports
+            self.dmd = pinproc.DMDBuffer(128, 32)
+
+        self.dmd.set_data(data)
+        self.proc.dmd_draw(self.dmd)
 
     def _get_events(self):
         """Return all events."""

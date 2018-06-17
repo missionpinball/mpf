@@ -78,6 +78,7 @@ community.''',
                       'asciimatics',
                       'terminaltables',
                       'psutil',
+                      'aioprocessing',
                       # asciimatic depends on pypiwin32 but newer version will not install
                       'pypiwin32>=223;platform_system=="Windows" and python_version>"3.4"',
                       'pypiwin32<=219;platform_system=="Windows" and python_version=="3.4"'],
