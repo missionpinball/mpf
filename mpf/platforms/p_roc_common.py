@@ -7,6 +7,7 @@ import platform
 import sys
 import time
 from concurrent.futures import ProcessPoolExecutor
+from queue import Empty
 from typing import Any, List, Union, Callable, Tuple
 
 import aioprocessing
@@ -63,7 +64,7 @@ class ProcProcess(object):
         """Initialise process."""
         self.proc = None
 
-    def proc_process(self, machine_type, command_queue, response_queue):
+    def proc_process(self, machine_type, command_queue, response_queue, event_queue):
         """Run the pinproc communication."""
         while not self.proc:
             try:
@@ -73,16 +74,35 @@ class ProcProcess(object):
                 print("Retrying...")
                 time.sleep(1)
 
+        last_poll = time.time()
+        poll_wait = 0.01
         while True:
-            needs_response, cmd = command_queue.get()
-            if cmd[0].startswith("_"):
-                result = getattr(self, cmd[0])(*(cmd[1:]))
+            time_since_last_poll = time.time() - last_poll
+            if time_since_last_poll > poll_wait:
+                max_wait = 0
             else:
-                result = getattr(self.proc, cmd[0])(*(cmd[1:]))
-            if needs_response:
-                response_queue.put(result)
-            if cmd[0] == "reset":
-                return
+                max_wait = poll_wait - time_since_last_poll
+
+            try:
+                needs_response, cmd = command_queue.get(timeout=max_wait)
+            except Empty:
+                pass
+            else:
+                if cmd[0].startswith("_"):
+                    result = getattr(self, cmd[0])(*(cmd[1:]))
+                else:
+                    result = getattr(self.proc, cmd[0])(*(cmd[1:]))
+                if needs_response:
+                    response_queue.put(result)
+                if cmd[0] == "reset":
+                    event_queue.put("exit")
+                    return
+
+            if time.time() - last_poll >= poll_wait:
+                events = self._get_events()
+                if events:
+                    event_queue.put(events)
+                last_poll = time.time()
 
     def _get_events(self):
         """Return all events."""
@@ -129,6 +149,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
 
         self.command_queue = aioprocessing.AioQueue()
         self.response_queue = aioprocessing.AioQueue()
+        self.event_queue = aioprocessing.AioQueue()
         self.proc_lock = asyncio.Lock(loop=self.machine.clock.loop)
         self.proc_executor = None
         self.proc_process = None
@@ -196,15 +217,13 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
     @asyncio.coroutine
     def _poll_events(self):
         while True:
-            events = yield from self.run_proc_cmd("_get_events")
+            events = yield from self.event_queue.coro_get(loop=self.machine.clock.loop)
+            if events == "exit":
+                return
             self.process_events(events)
-            yield from asyncio.sleep(.01, loop=self.machine.clock.loop)
 
     def stop(self):
         """Stop proc."""
-        if self.event_task:
-            self.event_task.cancel()
-            self.event_task = None
         if self.proc_process_instance:
             self.run_proc_cmd_sync("reset", 1)
             self.proc_process_instance.join()
@@ -214,7 +233,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         self.proc_process = ProcProcess()
         self.proc_process_instance = aioprocessing.AioProcess(target=self.proc_process.proc_process,
                                                               args=(self.machine_type, self.command_queue,
-                                                                    self.response_queue))
+                                                                    self.response_queue, self.event_queue))
         self.proc_process_instance.start()
 
     @asyncio.coroutine
