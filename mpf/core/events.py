@@ -4,7 +4,6 @@ from collections import deque, namedtuple
 import uuid
 
 import asyncio
-from enum import Enum
 from functools import partial
 from unittest.mock import MagicMock
 
@@ -69,20 +68,19 @@ class EventManager(MpfController):
 
         Returns:
             2-item tuple:
-                First item is the event name, cleaned up a by converting it
-                to lowercase.
+                First item is the event name
 
                 Second item is the condition (A BoolTemplate instance) if it
                 exists, or None if it doesn't.
 
         """
         if event_string.find("{") > 0 and event_string[-1:] == "}":
-            return (event_string[0:event_string.find("{")].lower(),
+            return (event_string[0:event_string.find("{")],
                     self.machine.placeholder_manager.build_bool_template(
                         event_string[event_string.find("{") + 1:-1]))
 
         else:
-            return event_string.lower(), None
+            return event_string, None
 
     def add_async_handler(self, event: str, handler: Any, priority: int = 1, blocking_facility: Any = None,
                           **kwargs) -> EventHandlerKey:
@@ -110,7 +108,6 @@ class EventManager(MpfController):
         Args:
             event: String name of the event you're adding a handler for. Since
                 events are text strings, they don't have to be pre-defined.
-                Note that all event strings will be converted to lowercase.
             handler: The callable method that will be called when the event is
                 fired. Since it's possible for events to have kwargs attached
                 to them, the handler method must include ``**kwargs`` in its
@@ -175,12 +172,13 @@ class EventManager(MpfController):
         self.registered_handlers[event].append(RegisteredHandler(handler, priority, kwargs, key, condition,
                                                                  blocking_facility))
 
-        try:
-            self.debug_log("Registered %s as a handler for '%s', priority: %s, "
-                           "kwargs: %s",
-                           (str(handler).split(' '))[2], event, priority, kwargs)
-        except IndexError:
-            pass
+        if self._debug_to_console or self._debug_to_file:
+            try:
+                self.debug_log("Registered %s as a handler for '%s', priority: %s, "
+                               "kwargs: %s",
+                               (str(handler).split(' '))[2], event, priority, kwargs)
+            except IndexError:
+                pass
 
         # Sort the handlers for this event based on priority. We do it now
         # so the list is pre-sorted so we don't have to do that with each
@@ -234,7 +232,7 @@ class EventManager(MpfController):
 
         Args:
             event: The event you want to check to see if this handler is
-                registered for. This string will be converted to lowercase.
+                registered for.
             handler: The method of the handler you want to check.
             priority: Optional priority of the new handler that will be
                 registered.
@@ -251,8 +249,6 @@ class EventManager(MpfController):
         # If we don't have kwargs, then we'll look for just the handler meth.
         # If we have kwargs, we'll look for that combination. If it finds it,
         # remove it.
-        event = event.lower()
-
         if event in self.registered_handlers:
             if kwargs:
                 # slice the full list [:] to make a copy so we can delete from the
@@ -286,7 +282,8 @@ class EventManager(MpfController):
             for handler_tup in handler_list[:]:  # copy via slice
                 if handler_tup[0] == method:
                     handler_list.remove(handler_tup)
-                    self.debug_log("Removing method %s from event %s", (str(method).split(' '))[2], event)
+                    if self._debug_to_console or self._debug_to_file:
+                        self.debug_log("Removing method %s from event %s", (str(method).split(' '))[2], event)
                     events_to_delete_if_empty.append(event)
 
         for event in events_to_delete_if_empty:
@@ -297,7 +294,6 @@ class EventManager(MpfController):
 
         Args:
             event: The name of the event you want to remove the handler from.
-                This string will be converted to lowercase.
             handler:
                 The handler method you want to remove.
 
@@ -306,14 +302,13 @@ class EventManager(MpfController):
         handler / event combination, regardless of whether the keyword
         arguments match or not.
         """
-        event = event.lower()
-
         events_to_delete_if_empty = []
         if event in self.registered_handlers:
             for handler_tup in self.registered_handlers[event][:]:
                 if handler_tup[0] == handler:
                     self.registered_handlers[event].remove(handler_tup)
-                    self.debug_log("Removing method %s from event %s", (str(handler).split(' '))[2], event)
+                    if self._debug_to_console or self._debug_to_file:
+                        self.debug_log("Removing method %s from event %s", (str(handler).split(' '))[2], event)
                     events_to_delete_if_empty.append(event)
 
         for this_event in events_to_delete_if_empty:
@@ -331,7 +326,8 @@ class EventManager(MpfController):
         for handler_tup in self.registered_handlers[key.event][:]:  # copy via slice
             if handler_tup.key == key.key:
                 self.registered_handlers[key.event].remove(handler_tup)
-                self.debug_log("Removing method %s from event %s", (str(handler_tup[0]).split(' '))[2], key.event)
+                if self._debug_to_console or self._debug_to_file:
+                    self.debug_log("Removing method %s from event %s", (str(handler_tup[0]).split(' '))[2], key.event)
                 events_to_delete_if_empty.append(key.event)
         for event in events_to_delete_if_empty:
             self._remove_event_if_empty(event)
@@ -354,8 +350,9 @@ class EventManager(MpfController):
 
         if not self.registered_handlers[event]:  # if value is empty list
             del self.registered_handlers[event]
-            self.debug_log("Removing event %s since there are no more"
-                           " handlers registered for it", event)
+            if self._debug_to_console or self._debug_to_file:
+                self.debug_log("Removing event %s since there are no more"
+                               " handlers registered for it", event)
 
     def wait_for_event(self, event_name: str) -> asyncio.Future:
         """Wait for event."""
@@ -384,13 +381,12 @@ class EventManager(MpfController):
         """Check to see if any handlers are registered for the event name that is passed.
 
         Args:
-            event_name : The string name of the event you want to check. This
-                string will be converted to lowercase.
+            event_name : The string name of the event you want to check.
 
         Returns:
             True or False
         """
-        return event_name.lower() in self.registered_handlers
+        return event_name in self.registered_handlers
 
     @staticmethod
     def _set_result(_future, **kwargs):
@@ -430,8 +426,7 @@ class EventManager(MpfController):
             event: A string name of the event you're posting. Note that you can
                 post whatever event you want. You don't have to set up anything
                 ahead of time, and if no handlers are registered for the event
-                you post, so be it. Note that this event name will be converted
-                to lowercase.
+                you post, so be it.
             callback: An optional method which will be called when the final
                 handler is done processing this event. Default is None.
             **kwargs: One or more options keyword/value pairs that will be
@@ -440,7 +435,7 @@ class EventManager(MpfController):
                 registered to prevent run-time crashes from unexpected kwargs
                 that were included in ``post()`` calls.
         """
-        self._post(event, ev_type=None, callback=callback, **kwargs)
+        self._post(event, None, callback, **kwargs)
 
     def post_boolean(self, event: str, callback=None, **kwargs) -> None:
         """Post an boolean event which causes all the registered handlers to be called one-by-one.
@@ -460,8 +455,7 @@ class EventManager(MpfController):
             event: A string name of the event you're posting. Note that you can
                 post whatever event you want. You don't have to set up anything
                 ahead of time, and if no handlers are registered for the event
-                you post, so be it. Note that this event name will be converted
-                to lowercase.
+                you post, so be it.
             callback: An optional method which will be called when the final
                 handler is done processing this event. Default is None. If
                 any handler returns False and cancels this boolean event, the
@@ -470,7 +464,7 @@ class EventManager(MpfController):
             **kwargs: One or more options keyword/value pairs that will be
                 passed to each handler.
         """
-        self._post(event, ev_type='boolean', callback=callback, **kwargs)
+        self._post(event, 'boolean', callback, **kwargs)
 
     def post_queue(self, event, callback, **kwargs):
         """Post a queue event which causes all the registered handlers to be called.
@@ -493,8 +487,7 @@ class EventManager(MpfController):
             event: A string name of the event you're posting. Note that you can
                 post whatever event you want. You don't have to set up anything
                 ahead of time, and if no handlers are registered for the event
-                you post, so be it. Note that this event name will be converted
-                to lowercase.
+                you post, so be it.
             callback: The method which will be called when the final
                 handler is done processing this event and any handlers that
                 registered waits have cleared their waits.
@@ -512,7 +505,7 @@ class EventManager(MpfController):
                  self.machine.events.post_queue('pizza_time', self.pizza_done)
 
         """
-        self._post(event, ev_type='queue', callback=callback, **kwargs)
+        self._post(event, 'queue', callback, **kwargs)
 
     def post_relay(self, event: str, callback=None, **kwargs) -> None:
         """Post a relay event which causes all the registered handlers to be called.
@@ -524,8 +517,7 @@ class EventManager(MpfController):
             event: A string name of the event you're posting. Note that you can
                 post whatever event you want. You don't have to set up anything
                 ahead of time, and if no handlers are registered for the event
-                you post, so be it. Note that this event name will be converted
-                to lowercase.
+                you post, so be it.
             callback: The method which will be called when the final handler is
                 done processing this event. Default is None.
             **kwargs: One or more options keyword/value pairs that will be
@@ -547,16 +539,13 @@ class EventManager(MpfController):
         whereas relay events "relay" the resulting kwargs from one handler to
         the next.)
         """
-        self._post(event, ev_type='relay', callback=callback, **kwargs)
+        self._post(event, 'relay', callback, **kwargs)
 
     def _post(self, event: str, ev_type: Optional[str], callback, **kwargs: dict) -> None:
-
-        event = event.lower()
-
         if self._debug_to_console or self._debug_to_file:
             self.debug_log("Event: ===='%s'==== Type: %s, Callback: %s, "
                            "Args: %s", event, ev_type, callback, kwargs)
-        elif not kwargs.get("_silent", False):
+        elif (self._info_to_file or self._info_to_console) and not kwargs.get("_silent", False):
             self.info_log("Event: ======'%s'====== Args=%s", event, kwargs)
 
         # fast path for events without handler
@@ -572,17 +561,19 @@ class EventManager(MpfController):
             self.machine.bcp.interface.monitor_posted_event(posted_event)
 
         self.event_queue.append(posted_event)
-        self.debug_log("+============= EVENTS QUEUE =============")
-        for this_event in list(self.event_queue):    # type: ignore
-            self.debug_log("| %s, %s, %s, %s", this_event[0], this_event[1],
-                           this_event[2], this_event[3])
-        self.debug_log("+========================================")
+        if self._debug_to_console or self._debug_to_file:
+            self.debug_log("+============= EVENTS QUEUE =============")
+            for this_event in list(self.event_queue):    # type: ignore
+                self.debug_log("| %s, %s, %s, %s", this_event[0], this_event[1],
+                               this_event[2], this_event[3])
+            self.debug_log("+========================================")
 
     @asyncio.coroutine
     def _run_handlers_sequential(self, event: str, callback, kwargs: dict) -> Generator[int, None, None]:
         """Run all handlers for an event."""
-        self.debug_log("^^^^ Processing queue event '%s'. Callback: %s,"
-                       " Args: %s", event, callback, kwargs)
+        if self._debug_to_console or self._debug_to_file:
+            self.debug_log("^^^^ Processing queue event '%s'. Callback: %s,"
+                           " Args: %s", event, callback, kwargs)
 
         # all handlers may have been removed in the meantime
         if event not in self.registered_handlers:
@@ -602,13 +593,14 @@ class EventManager(MpfController):
                 continue
 
             # log if debug is enabled and this event is not the timer tick
-            try:
-                self.debug_log("%s (priority: %s) responding to event '%s'"
-                               " with args %s",
-                               (str(handler.callback).split(' ')), handler.priority,
-                               event, merged_kwargs)
-            except IndexError:
-                pass
+            if self._debug_to_console or self._debug_to_file:
+                try:
+                    self.debug_log("%s (priority: %s) responding to event '%s'"
+                                   " with args %s",
+                                   (str(handler.callback).split(' ')), handler.priority,
+                                   event, merged_kwargs)
+                except IndexError:
+                    pass
 
             # call the handler and save the results
 
@@ -623,8 +615,9 @@ class EventManager(MpfController):
                 queue.event = asyncio.Event(loop=self.machine.clock.loop)
                 yield from queue.event.wait()
 
-        self.debug_log("vvvv Finished queue event '%s'. Callback: %s. "
-                       "Args: %s", event, callback, kwargs)
+        if self._debug_to_console or self._debug_to_file:
+            self.debug_log("vvvv Finished queue event '%s'. Callback: %s. "
+                           "Args: %s", event, callback, kwargs)
 
         if callback:
             callback(**kwargs)
@@ -670,7 +663,8 @@ class EventManager(MpfController):
                 # add a False result so our callback knows something failed
                 kwargs['ev_result'] = False
 
-                self.debug_log("Aborting future event processing")
+                if self._debug_to_console or self._debug_to_file:
+                    self.debug_log("Aborting future event processing")
                 break
 
             elif ev_type == 'relay' and isinstance(result, dict):
@@ -699,15 +693,17 @@ class EventManager(MpfController):
         # Internal method which actually handles the events. Don't call this.
 
         result = None
-        self.debug_log("^^^^ Processing event '%s'. Type: %s, Callback: %s,"
-                       " Args: %s", event, ev_type, callback, kwargs)
+        if self._debug_to_console or self._debug_to_file:
+            self.debug_log("^^^^ Processing event '%s'. Type: %s, Callback: %s,"
+                           " Args: %s", event, ev_type, callback, kwargs)
 
         # Now let's call the handlers one-by-one, including any kwargs
         if event in self.registered_handlers:
             result = self._run_handlers(event, ev_type, kwargs)
 
-        self.debug_log("vvvv Finished event '%s'. Type: %s. Callback: %s. "
-                       "Args: %s", event, ev_type, callback, kwargs)
+        if self._debug_to_console or self._debug_to_file:
+            self.debug_log("vvvv Finished event '%s'. Type: %s. Callback: %s. "
+                           "Args: %s", event, ev_type, callback, kwargs)
 
         if callback:
             # For event types other than queue, we'll handle the callback here.

@@ -412,7 +412,7 @@ class RunningShow(object):
 
     __slots__ = ["machine", "show", "show_steps", "show_config", "callback", "start_step", "start_callback",
                  "_delay_handler", "next_step_index", "current_step_index", "next_step_time", "name", "loops",
-                 "id", "_players", "debug", "_stopped", "_show_loaded", "_total_steps"]
+                 "id", "_players", "debug", "_stopped", "_show_loaded", "_total_steps", "context"]
 
     # pylint: disable-msg=too-many-arguments
     # pylint: disable-msg=too-many-locals
@@ -433,7 +433,8 @@ class RunningShow(object):
         self.loops = self.show_config.loops
 
         self.id = self.machine.show_controller.get_next_show_id()
-        self._players = list()
+        self.context = "show_{}".format(self.id)
+        self._players = set()
 
         # if show_tokens:
         #     self.show_tokens = show_tokens
@@ -488,10 +489,12 @@ class RunningShow(object):
         else:  # run now
             self._start_now()
 
-    def _post_events(self, action):
-        if getattr(self.show_config, "events_when_" + action):
-            for event in getattr(self.show_config, "events_when_" + action):
-                self.machine.events.post(event)
+    def _post_events(self, actions):
+        for action in actions:
+            events = getattr(self.show_config, "events_when_{}".format(action), None)
+            if events:
+                for event in events:
+                    self.machine.events.post(event)
 
     def __repr__(self):
         """Return str representation."""
@@ -567,12 +570,14 @@ class RunningShow(object):
 
         # clear context in used players
         for player in self._players:
-            self.machine.show_controller.show_players[player].show_stop_callback("show_" + str(self.id))
+            self.machine.show_controller.show_players[player].show_stop_callback(self.context)
+
+        self._players = set()
 
         if self.callback and callable(self.callback):
             self.callback()
 
-        self._post_events('stopped')
+        self._post_events(['stopped'])
 
     def _remove_delay_handler(self):
         if self._delay_handler:
@@ -582,7 +587,7 @@ class RunningShow(object):
     def pause(self):
         """Pause show."""
         self._remove_delay_handler()
-        self._post_events('paused')
+        self._post_events(['paused'])
 
     def resume(self):
         """Resume paused show."""
@@ -601,7 +606,7 @@ class RunningShow(object):
                                   "coming though...")
 
         # don't forget this when we implement this feature
-        # self._post_events('updated')
+        # self._post_events(['updated'])
 
     def advance(self, steps=1, show_step=None):
         """Manually advance this show to the next step."""
@@ -636,8 +641,9 @@ class RunningShow(object):
 
     def _run_next_step(self, post_events=None) -> None:
         """Run the next show step."""
+        events = []
         if post_events:
-            self._post_events(post_events)
+            events.append(post_events)
 
         if self.next_step_index < 0:
             self.next_step_index %= self._total_steps
@@ -648,38 +654,39 @@ class RunningShow(object):
             if self.loops > 0:
                 self.loops -= 1
                 self.next_step_index = 0
-                self._post_events('looped')
+                events.append('looped')
             elif self.loops < 0:
                 self.next_step_index = 0
-                self._post_events('looped')
+                events.append('looped')
             else:
                 self.stop()
-                self._post_events('completed')
+                events.append("completed")
+                self._post_events(events)
                 return
 
         self.current_step_index = self.next_step_index
 
-        for item_type, item_dict in (
-                iter(self.show_steps[self.current_step_index].items())):
+        for item_type, item_dict in self.show_steps[self.current_step_index].items():
 
             if item_type == 'duration':
                 continue
 
-            elif item_type in self.machine.show_controller.show_players:
+            player = self.machine.show_controller.show_players.get(item_type, None)
 
-                self.machine.show_controller.show_players[item_type].show_play_callback(
-                    settings=item_dict,
-                    context="show_" + str(self.id),
-                    calling_context=self.current_step_index,
-                    priority=self.show_config.priority,
-                    show_tokens=self.show_config.show_tokens,
-                    start_time=self.next_step_time)
-
-                if item_type not in self._players:
-                    self._players.append(item_type)
-
-            else:
+            if not player:
                 raise ValueError("Invalid entry in show: {}".format(item_type))
+
+            player.show_play_callback(
+                settings=item_dict,
+                context=self.context,
+                calling_context=self.current_step_index,
+                priority=self.show_config.priority,
+                show_tokens=self.show_config.show_tokens,
+                start_time=self.next_step_time)
+
+            self._players.add(item_type)
+
+        self._post_events(events)
 
         self.next_step_index += 1
 

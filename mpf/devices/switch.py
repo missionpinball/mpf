@@ -25,7 +25,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
     class_label = 'switch'
 
     __slots__ = ["hw_switch", "platform", "state", "hw_state", "invert", "recycle_secs", "recycle_clear_time",
-                 "recycle_jitter_count"]
+                 "recycle_jitter_count", "_events_to_post"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise switch."""
@@ -46,9 +46,10 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         self.recycle_secs = 0
         self.recycle_clear_time = 0
         self.recycle_jitter_count = 0
+        self._events_to_post = {0: [], 1: []}
 
         # register switch so other devices can add handlers to it
-        self.machine.switch_controller.register_switch(name)
+        self.machine.switch_controller.register_switch(self)
 
     @classmethod
     def device_class_init(cls, machine: MachineController):
@@ -84,15 +85,19 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         if "|" in event_str:
             event, ev_time = event_str.split("|")
             ms = Util.string_to_ms(ev_time)
+            self.machine.switch_controller.add_switch_handler(
+                switch_name=self.name,
+                state=state,
+                callback=partial(self.machine.events.post, event=event),
+                ms=ms
+            )
         else:
-            event = event_str
-            ms = 0
-        self.machine.switch_controller.add_switch_handler(
-            switch_name=self.name,
-            state=state,
-            callback=partial(self.machine.events.post, event=event),
-            ms=ms
-        )
+            self._events_to_post[state].append(event_str)
+
+    def _post_events(self, state):
+        for event in self._events_to_post[state]:
+            if self.machine.events.does_event_exist(event):
+                self.machine.events.post(event)
 
     @asyncio.coroutine
     def _initialize(self):
@@ -112,6 +117,9 @@ class Switch(SystemWideDevice, DevicePositionMixin):
                 self.config['number'], config, self.config['platform_settings'])
         except AssertionError as e:
             raise AssertionError("Failed to configure switch {} in platform. See error above".format(self.name)) from e
+
+        self.add_handler(state=1, callback=self._post_events, callback_kwargs={"state": 1})
+        self.add_handler(state=0, callback=self._post_events, callback_kwargs={"state": 0})
 
         if self.machine.config['mpf']['auto_create_switch_events']:
             self._create_activation_event(
