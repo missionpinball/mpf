@@ -268,7 +268,8 @@ class SwitchController(MpfController):
         if switch:
             self.process_switch_obj(switch, state, logical)
         else:
-            self.debug_log("Unknown switch %s change to state %s on platform %s", num, state, platform)
+            if self._debug_to_console or self._debug_to_file:
+                self.debug_log("Unknown switch %s change to state %s on platform %s", num, state, platform)
             # if the switch is not configured still trigger the monitor
             for monitor in self.monitors:
                 monitor(MonitoredSwitchChange(name=str(num), label="{}-{}".format(str(platform), str(num)),
@@ -504,9 +505,10 @@ class SwitchController(MpfController):
                                                state=state,
                                                ms=entry.ms)
                     self._add_timed_switch_handler(key, value)
-                    self.debug_log(
-                        "Found timed switch handler for k/v %s / %s",
-                        key, value)
+                    if self._debug_to_console or self._debug_to_file:
+                        self.debug_log(
+                            "Found timed switch handler for k/v %s / %s",
+                            key, value)
                 else:
                     # This entry doesn't have a timed delay, so do the action
                     # now
@@ -555,9 +557,10 @@ class SwitchController(MpfController):
         elif callback_kwargs:
             callback = partial(callback, **callback_kwargs)
 
-        self.debug_log("Registering switch handler: %s, %s, state: %s, ms: %s"
-                       ", info: %s", switch_name, callback,
-                       state, ms, return_info)
+        if self._debug_to_console or self._debug_to_file:
+            self.debug_log("Registering switch handler: %s, %s, state: %s, ms: %s"
+                           ", info: %s", switch_name, callback,
+                           state, ms, return_info)
 
         entry_val = RegisteredSwitch(ms=ms, callback=callback)
         entry_key = str(switch_name) + '-' + str(state)
@@ -599,9 +602,10 @@ class SwitchController(MpfController):
         it up. (Except for return_info, which doesn't matter if true or false,
         it will remove either / both.
         """
-        self.debug_log(
-            "Removing switch handler. Switch: %s, State: %s, ms: %s",
-            switch_name, state, ms)
+        if self._debug_to_console or self._debug_to_file:
+            self.debug_log(
+                "Removing switch handler. Switch: %s, State: %s, ms: %s",
+                switch_name, state, ms)
 
         entry_key = str(switch_name) + '-' + str(state)
 
@@ -654,6 +658,7 @@ class SwitchController(MpfController):
         time to take action on any of them. If so, does the callback and then
         removes that entry from the list.
         """
+        self._timed_switch_handler_delay = None
         next_event_time = False
         for k in list(self.active_timed_switches.keys()):
             if k <= self.machine.clock.get_time():  # change to generator?
@@ -661,10 +666,11 @@ class SwitchController(MpfController):
                     # check if removed by previous entry
                     if entry not in self.active_timed_switches[k]:
                         continue
-                    self.debug_log(
-                        "Processing timed switch handler. Switch: %s "
-                        " State: %s, ms: %s", entry.switch_name,
-                        entry.state, entry.ms)
+                    if self._debug_to_console or self._debug_to_file:
+                        self.debug_log(
+                            "Processing timed switch handler. Switch: %s "
+                            " State: %s, ms: %s", entry.switch_name,
+                            entry.state, entry.ms)
                     entry.callback()
                 del self.active_timed_switches[k]
             else:
@@ -673,8 +679,6 @@ class SwitchController(MpfController):
 
         self.machine.events.process_event_queue()
         if next_event_time:
-            if self._timed_switch_handler_delay:
-                self.machine.clock.unschedule(self._timed_switch_handler_delay)
             self._timed_switch_handler_delay = self.machine.clock.schedule_once(
                 self._process_active_timed_switches,
                 next_event_time - self.machine.clock.get_time())
