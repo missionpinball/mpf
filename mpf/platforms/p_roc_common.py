@@ -175,7 +175,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
     def run_proc_cmd(self, *cmd):
         """Run a command in the p-roc thread and return a future."""
         with (yield from self.proc_lock):
-            yield from self.command_queue.coro_put((True, cmd), loop=self.machine.clock.loop)
+            self.command_queue.put((True, cmd))
             result = yield from self.response_queue.coro_get(loop=self.machine.clock.loop)
         return result
 
