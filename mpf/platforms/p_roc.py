@@ -168,7 +168,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
 
     def configure_dmd(self):
         """Configure a hardware DMD connected to a classic P-ROC."""
-        self.dmd = PROCDMD(self.pinproc, self, self.machine)
+        self.dmd = PROCDMD(self, self.machine)
         return self.dmd
 
     def configure_segment_display(self, number: str) -> "SegmentDisplayPlatformInterface":
@@ -219,7 +219,7 @@ class PROCDMD(DmdPlatformInterface):
 
     """
 
-    def __init__(self, pinproc, platform, machine):
+    def __init__(self, platform, machine):
         """Set up DMD."""
         self.platform = platform
         self.machine = machine
