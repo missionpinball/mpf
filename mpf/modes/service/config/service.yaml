@@ -37,7 +37,7 @@ sound_player:
     service_switch_hit: switch_hit
 
 slide_player:
-  # doof open
+  # door open
   service_door_opened:
     service_door_open:
       action: play
