@@ -50,7 +50,7 @@ class SwitchController(MpfController):
         # Dictionary of switches and states that have been registered for
         # callbacks.
 
-        self._timed_switch_handler_delay = None                 # type: Any
+        self._timed_switch_handler_delay = dict()               # type: Any
 
         self.active_timed_switches = defaultdict(list)          # type: Dict[float, List[TimedSwitchHandler]]
         # Dictionary of switches that are currently in a state counting ms
@@ -461,14 +461,22 @@ class SwitchController(MpfController):
                     if self.active_timed_switches[k] and self.active_timed_switches[k][k2]:
                         del self.active_timed_switches[k][k2]
 
-    def _add_timed_switch_handler(self, time: float, timed_switch_handler: TimedSwitchHandler):
+    def _add_timed_switch_handler(self, switch, time: float, timed_switch_handler: TimedSwitchHandler):
         self.active_timed_switches[time].append(timed_switch_handler)
 
-        if self._timed_switch_handler_delay:
-            self.machine.clock.unschedule(self._timed_switch_handler_delay)
-        self._timed_switch_handler_delay = self.machine.clock.schedule_once(
-            self._process_active_timed_switches,
-            self.get_next_timed_switch_event() - self.machine.clock.get_time())
+        next_event_time = self.get_next_timed_switch_event()
+        add_handler = False
+
+        if switch not in self._timed_switch_handler_delay:
+            add_handler = True
+        elif next_event_time < self._timed_switch_handler_delay[switch][1]:
+            add_handler = True
+            self.machine.clock.unschedule(self._timed_switch_handler_delay[switch][0])
+
+        if add_handler:
+            handler = self.machine.clock.loop.call_at(
+                next_event_time, partial(self._process_active_timed_switches, switch))
+            self._timed_switch_handler_delay[switch] = (handler, next_event_time)
 
     def _call_handlers(self, switch, state):
         for entry in self.registered_switches[switch][state][:]:  # generator?
@@ -486,7 +494,7 @@ class SwitchController(MpfController):
                                            switch_name=switch.name,
                                            state=state,
                                            ms=entry.ms)
-                self._add_timed_switch_handler(key, value)
+                self._add_timed_switch_handler(switch, key, value)
                 if self._debug_to_console or self._debug_to_file:
                     self.debug_log(
                         "Found timed switch handler for k/v %s / %s",
@@ -574,7 +582,7 @@ class SwitchController(MpfController):
                                            switch_name=switch.name,
                                            state=state,
                                            ms=ms)
-                self._add_timed_switch_handler(key, value)
+                self._add_timed_switch_handler(switch, key, value)
 
         # Return the args we used to setup this handler for easy removal later
         return SwitchHandler(switch, callback, state, ms)
@@ -634,14 +642,14 @@ class SwitchController(MpfController):
             raise AssertionError("No active timed switches")
         return min(self.active_timed_switches.keys())
 
-    def _process_active_timed_switches(self):
+    def _process_active_timed_switches(self, switch):
         """Process active times switches.
 
         Checks the current list of active timed switches to see if it's
         time to take action on any of them. If so, does the callback and then
         removes that entry from the list.
         """
-        self._timed_switch_handler_delay = None
+        del self._timed_switch_handler_delay[switch]
         next_event_time = False
         current_time = self.machine.clock.get_time()
         for k in list(self.active_timed_switches.keys()):
@@ -663,6 +671,7 @@ class SwitchController(MpfController):
 
         self.machine.events.process_event_queue()
         if next_event_time:
-            self._timed_switch_handler_delay = self.machine.clock.loop.call_at(
+            handler = self.machine.clock.loop.call_at(
                 next_event_time,
-                self._process_active_timed_switches)
+                partial(self._process_active_timed_switches, switch))
+            self._timed_switch_handler_delay[switch] = (handler, next_event_time)
