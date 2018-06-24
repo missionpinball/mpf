@@ -43,6 +43,28 @@ class BenchmarkSwitchHits(MpfGameTestCase):
             end2 = time.time()
             self._output(start, end, end2, num)
 
+    def testSimpleHandlers(self):
+        hit = 0
+        handler = 100
+        for i in range(handler):
+            self.machine.switch_controller.add_switch_handler("s_switch4", lambda: hit.__add__(1))
+
+        for i in range(1000):
+            self.machine.switch_controller.process_switch_by_num("4", 1, self.machine.default_platform)
+            self.machine.switch_controller.process_switch_by_num("4", 0, self.machine.default_platform)
+        self.advance_time_and_run()
+
+        num = 10000
+        for runs in range(10):
+            start = time.time()
+            for i in range(num):
+                self.machine.switch_controller.process_switch_by_num("4", 1, self.machine.default_platform)
+                self.machine.switch_controller.process_switch_by_num("4", 0, self.machine.default_platform)
+            end = time.time()
+            self.advance_time_and_run()
+            end2 = time.time()
+            self._output(start, end, end2, num)
+
     def testTimedSwitchHandlers(self):
         hit = 0
         handler = 1
