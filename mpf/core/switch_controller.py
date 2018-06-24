@@ -360,24 +360,9 @@ class SwitchController(MpfController):
                 # state is the opposite
                 state ^= 1
 
-        # Update the hardware state since we always want this to match real hw
-        obj.hw_state = hw_state
-
-        # if the switch is active, check to see if it's recycle_time has passed
-        if state and obj.recycle_secs and not self._check_recycle_time(obj, state):
-            self.machine.clock.schedule_once(partial(self._recycle_passed, obj, state, logical, obj.hw_state),
-                                             timeout=obj.recycle_clear_time - self.machine.clock.get_time())
-            return
-
-        if state and obj.recycle_secs:
-            # update the switch's next recycle clear time
-            obj.recycle_clear_time = (self.machine.clock.get_time() +
-                                      obj.recycle_secs)
-
         # if the switch is already in this state, then abort
         if obj.state == state:
-
-            if not obj.recycle_secs:
+            if not self.machine.options['production']:
                 self.warning_log(
                     "Received duplicate switch state, which means this switch "
                     "had some non-debounced state changes. This could be "
@@ -385,7 +370,10 @@ class SwitchController(MpfController):
                     "or interference on the line. Switch: %s", obj.name)
             return
 
-        obj.state = state  # update the switch device
+        # Update the hardware state since we always want this to match real hw
+        obj.hw_state = hw_state
+        # update the switch device
+        obj.state = state
         obj.last_change = self.machine.clock.get_time()
 
         if state:
@@ -400,10 +388,6 @@ class SwitchController(MpfController):
         for monitor in self.monitors:
             monitor(MonitoredSwitchChange(name=obj.name, label=obj.label, platform=obj.platform,
                                           num=obj.hw_switch.number, state=state))
-
-    def _recycle_passed(self, obj, state, logical, hw_state):
-        if obj.hw_state == hw_state:
-            self.process_switch_obj(obj, state, logical)
 
     def wait_for_switch(self, switch_name: str, state: int = 1, only_on_change=True, ms=0):
         """Wait for a switch to change into a state.
@@ -468,7 +452,7 @@ class SwitchController(MpfController):
     def _cancel_timed_handlers(self, name, state):
         # now check if the opposite state is in the active timed switches list
         # if so, remove it
-        for k, v, in list(self.active_timed_switches.items()):
+        for k, v, in self.active_timed_switches.items():
             # using items() instead of iteritems() since we might want to
             # delete while iterating
             for k2, item in enumerate(v):
@@ -497,7 +481,7 @@ class SwitchController(MpfController):
             if entry.ms:
                 # This entry is for a timed switch, so add it to our
                 # active timed switch list
-                key = self.machine.clock.get_time() + (entry.ms / 1000.0)
+                key = switch.last_change + (entry.ms / 1000.0)
                 value = TimedSwitchHandler(callback=entry.callback,
                                            switch_name=switch.name,
                                            state=state,
@@ -639,18 +623,6 @@ class SwitchController(MpfController):
             if v.state:
                 self.info_log("Found active switch: %s", k)
 
-    def _check_recycle_time(self, switch, state):
-        # checks to see when a switch is ok to be activated again after it's
-        # been last activated
-
-        if self.machine.clock.get_time() >= switch.recycle_clear_time:
-            return True
-
-        else:
-            if state:
-                switch.recycle_jitter_count += 1
-            return False
-
     @staticmethod
     def get_active_event_for_switch(switch_name):
         """Return the event name which is posted when switch_name becomes active."""
@@ -671,8 +643,9 @@ class SwitchController(MpfController):
         """
         self._timed_switch_handler_delay = None
         next_event_time = False
+        current_time = self.machine.clock.get_time()
         for k in list(self.active_timed_switches.keys()):
-            if k <= self.machine.clock.get_time():  # change to generator?
+            if k <= current_time:  # change to generator?
                 for entry in list(self.active_timed_switches[k]):
                     # check if removed by previous entry
                     if entry not in self.active_timed_switches[k]:
@@ -690,6 +663,6 @@ class SwitchController(MpfController):
 
         self.machine.events.process_event_queue()
         if next_event_time:
-            self._timed_switch_handler_delay = self.machine.clock.schedule_once(
-                self._process_active_timed_switches,
-                next_event_time - self.machine.clock.get_time())
+            self._timed_switch_handler_delay = self.machine.clock.loop.call_at(
+                next_event_time,
+                self._process_active_timed_switches)

@@ -293,6 +293,7 @@ class MpfTestCase(unittest.TestCase):
 
         return {
             'force_platform': self.get_platform(),
+            'production': False,
             'mpfconfigfile': mpfconfig,
             'configfile': Util.string_to_list(self.getConfigFile()),
             'debug': True,

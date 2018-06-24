@@ -44,7 +44,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         self.invert = 0
 
         self.recycle_secs = 0
-        self.recycle_clear_time = 0
+        self.recycle_clear_time = None
         self.recycle_jitter_count = 0
         self._events_to_post = {0: [], 1: []}
         self.last_change = -100000
@@ -95,6 +95,21 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         else:
             self._events_to_post[state].append(event_str)
 
+    def _recycle_passed(self, state):
+        self.recycle_clear_time = None
+        # only post event if the switch toggled
+        if self.state != state:
+            self._post_events(self.state)
+
+    def _post_events_with_recycle(self, state):
+        # if recycle is ongoing do nothing
+        if not self.recycle_clear_time:
+            # calculate clear time
+            self.recycle_clear_time = self.machine.clock.get_time() + self.recycle_secs
+            self.machine.clock.loop.call_at(self.recycle_clear_time, partial(self._recycle_passed, state))
+            # post event
+            self._post_events(state)
+
     def _post_events(self, state):
         for event in self._events_to_post[state]:
             if self.machine.events.does_event_exist(event):
@@ -119,8 +134,12 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         except AssertionError as e:
             raise AssertionError("Failed to configure switch {} in platform. See error above".format(self.name)) from e
 
-        self.add_handler(state=1, callback=self._post_events, callback_kwargs={"state": 1})
-        self.add_handler(state=0, callback=self._post_events, callback_kwargs={"state": 0})
+        if self.recycle_secs:
+            self.add_handler(state=1, callback=self._post_events_with_recycle, callback_kwargs={"state": 1})
+            self.add_handler(state=0, callback=self._post_events_with_recycle, callback_kwargs={"state": 0})
+        else:
+            self.add_handler(state=1, callback=self._post_events, callback_kwargs={"state": 1})
+            self.add_handler(state=0, callback=self._post_events, callback_kwargs={"state": 0})
 
         if self.machine.config['mpf']['auto_create_switch_events']:
             self._create_activation_event(
