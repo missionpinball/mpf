@@ -39,10 +39,10 @@ class MockProcProcess(object):
         self.proc = p_roc_common.pinproc.PinPROC(machine_type)
         self.proc.reset(1)
 
-        last_poll = time.time()
+        last_poll = loop.time()
         poll_wait = 0.01
         while True:
-            time_since_last_poll = time.time() - last_poll
+            time_since_last_poll = loop.time() - last_poll
             if time_since_last_poll > poll_wait:
                 max_wait = 0
             else:
@@ -63,11 +63,11 @@ class MockProcProcess(object):
                     event_queue.put("exit")
                     return
 
-            if time.time() - last_poll >= poll_wait:
+            if loop.time() - last_poll >= poll_wait:
                 events = self._get_events()
                 if events:
                     event_queue.put(events)
-                last_poll = time.time()
+                last_poll = loop.time()
 
     def _dmd_send(self, data):
         if not self.dmd:
@@ -641,6 +641,7 @@ SW-16 boards found:
             {'type': 1, 'value': 23}])
         self.wait_for_platform()
         self.advance_time_and_run(.1)
+        self.wait_for_platform()
         self.assertTrue(self.machine.switch_controller.is_active("s_test"))
 
         # open debounces -> inactive
@@ -648,6 +649,7 @@ SW-16 boards found:
             {'type': 2, 'value': 23}])
         self.wait_for_platform()
         self.advance_time_and_run(.1)
+        self.wait_for_platform()
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
 
         self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
@@ -656,6 +658,7 @@ SW-16 boards found:
             {'type': 3, 'value': 24}])
         self.wait_for_platform()
         self.advance_time_and_run(.1)
+        self.wait_for_platform()
         self.assertTrue(self.machine.switch_controller.is_active("s_test_no_debounce"))
 
         # open non debounced -> should be inactive
@@ -663,6 +666,7 @@ SW-16 boards found:
             {'type': 4, 'value': 24}])
         self.wait_for_platform()
         self.advance_time_and_run(.1)
+        self.wait_for_platform()
         self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
 
         self.pinproc.get_events = MagicMock(return_value=[])

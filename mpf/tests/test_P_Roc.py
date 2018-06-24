@@ -328,11 +328,15 @@ class TestPRoc(MpfTestCase):
             {'type': 1, 'value': 23}])
         self.wait_for_platform()
         self.advance_time_and_run(.1)
+        self.wait_for_platform()
+        self.advance_time_and_run(.1)
         self.assertTrue(self.machine.switch_controller.is_active("s_test"))
 
         # open debounces -> inactive
         self.pinproc.get_events = MagicMock(return_value=[
             {'type': 2, 'value': 23}])
+        self.wait_for_platform()
+        self.advance_time_and_run(.1)
         self.wait_for_platform()
         self.advance_time_and_run(.1)
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
@@ -342,12 +346,17 @@ class TestPRoc(MpfTestCase):
         self.pinproc.get_events = MagicMock(return_value=[
             {'type': 3, 'value': 24}])
         self.wait_for_platform()
+        self.wait_for_platform()
+        self.advance_time_and_run(.1)
+        self.wait_for_platform()
         self.advance_time_and_run(.1)
         self.assertTrue(self.machine.switch_controller.is_active("s_test_no_debounce"))
 
         # open non debounced -> should be inactive
         self.pinproc.get_events = MagicMock(return_value=[
             {'type': 4, 'value': 24}])
+        self.wait_for_platform()
+        self.advance_time_and_run(.1)
         self.wait_for_platform()
         self.advance_time_and_run(.1)
         self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
@@ -519,7 +528,10 @@ class TestPRoc(MpfTestCase):
         self.pinproc.driver_schedule = MagicMock(return_value=True)
         self.machine.coils.c_test_a_side.pulse(100)
         self.machine.coils.c_test_c_side.pulse(50)
-        self.advance_time_and_run(.050)
+        self.wait_for_platform()
+        self.advance_time_and_run(.040)
+        self.wait_for_platform()
+        self.advance_time_and_run(.001)
         self.wait_for_platform()
         self.pinproc.driver_pulse.assert_called_with(
             9902, 100)
