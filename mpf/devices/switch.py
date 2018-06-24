@@ -25,7 +25,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
     class_label = 'switch'
 
     __slots__ = ["hw_switch", "platform", "state", "hw_state", "invert", "recycle_secs", "recycle_clear_time",
-                 "recycle_jitter_count", "_events_to_post"]
+                 "recycle_jitter_count", "_events_to_post", "last_change"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise switch."""
@@ -47,6 +47,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         self.recycle_clear_time = 0
         self.recycle_jitter_count = 0
         self._events_to_post = {0: [], 1: []}
+        self.last_change = -100000
 
         # register switch so other devices can add handlers to it
         self.machine.switch_controller.register_switch(self)
