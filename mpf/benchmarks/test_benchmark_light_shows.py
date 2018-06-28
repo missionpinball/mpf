@@ -6,7 +6,7 @@ from mpf.core.logging import LogMixin
 from mpf.tests.MpfGameTestCase import MpfGameTestCase
 
 
-class BenchmarkSwitchHits(MpfGameTestCase):
+class BenchmarkLightShows(MpfGameTestCase):
 
     def getConfigFile(self):
         return 'config.yaml'
