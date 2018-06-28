@@ -161,7 +161,7 @@ class ShowPlayer(DeviceConfigPlayer):
             'update': self._update
         }
 
-        action = actions.get(show_settings['action'].lower(), None)
+        action = actions.get(show_settings['action'], None)
 
         if not callable(action):
             raise AssertionError("Invalid action {} in show_player {}".format(
