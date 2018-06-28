@@ -256,7 +256,7 @@ class Show(Asset):
         results = re.findall(r"\(([^)]+)\)", data)
         if results:
             for result in results:
-                self._add_token(data, result.lower(), path, token_type)
+                self._add_token(data, result, path, token_type)
 
     def _add_token(self, placeholder, token, path, token_type):
 
