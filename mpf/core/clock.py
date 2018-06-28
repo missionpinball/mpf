@@ -169,8 +169,9 @@ class ClockBase(LogMixin):
 
         event = self.loop.call_later(delay=timeout, callback=callback)
 
-        self.debug_log("Scheduled a one-time clock callback (callback=%s, timeout=%s)",
-                       str(callback), timeout)
+        if self._debug_to_console or self._debug_to_file:
+            self.debug_log("Scheduled a one-time clock callback (callback=%s, timeout=%s)",
+                           str(callback), timeout)
 
         return event
 
@@ -189,8 +190,9 @@ class ClockBase(LogMixin):
 
         periodic_task = PeriodicTask(timeout, self.loop, callback)
 
-        self.debug_log("Scheduled a recurring clock callback (callback=%s, timeout=%s)",
-                       str(callback), timeout)
+        if self._debug_to_console or self._debug_to_file:
+            self.debug_log("Scheduled a recurring clock callback (callback=%s, timeout=%s)",
+                           str(callback), timeout)
 
         return periodic_task
 

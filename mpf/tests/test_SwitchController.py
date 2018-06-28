@@ -174,24 +174,50 @@ class TestSwitchController(MpfTestCase):
         self.assertEqual(1, self._events['test_inactive2'])
 
     def test_ignore_window_ms(self):
-        # first hit. switch gets active
+        # first hit. switch becomes active
+        self.mock_event("s_test_window_ms_active")
+        self.mock_event("s_test_window_ms_inactive")
         self.machine.switch_controller.process_switch("s_test_window_ms", 1)
         self.advance_time_and_run(.001)
-        self.assertTrue(self.machine.switch_controller.is_active("s_test_window_ms"))
+        self.assertEventCalled("s_test_window_ms_active")
+        self.assertEventNotCalled("s_test_window_ms_inactive")
+        self.mock_event("s_test_window_ms_active")
 
-        # an disables instantly
+        # and disables
         self.machine.switch_controller.process_switch("s_test_window_ms", 0)
         self.advance_time_and_run(.001)
-        self.assertFalse(self.machine.switch_controller.is_active("s_test_window_ms"))
+        self.assertEventNotCalled("s_test_window_ms_active")
+        self.assertEventNotCalled("s_test_window_ms_inactive")
+        # after the window passed we get an event
+        self.advance_time_and_run(.1)
+        self.assertEventNotCalled("s_test_window_ms_active")
+        self.assertEventCalled("s_test_window_ms_inactive")
+        self.mock_event("s_test_window_ms_inactive")
 
         # and enables again
         self.machine.switch_controller.process_switch("s_test_window_ms", 1)
         self.advance_time_and_run(.01)
-        self.assertFalse(self.machine.switch_controller.is_active("s_test_window_ms"))
-        self.advance_time_and_run(.05)
-        self.assertFalse(self.machine.switch_controller.is_active("s_test_window_ms"))
-        self.advance_time_and_run(.05)
-        self.assertTrue(self.machine.switch_controller.is_active("s_test_window_ms"))
+        self.assertEventCalled("s_test_window_ms_active")
+        self.assertEventNotCalled("s_test_window_ms_inactive")
+        self.mock_event("s_test_window_ms_active")
+
+        # disables
+        self.machine.switch_controller.process_switch("s_test_window_ms", 0)
+        self.advance_time_and_run(.001)
+        self.assertEventNotCalled("s_test_window_ms_active")
+        self.assertEventNotCalled("s_test_window_ms_inactive")
+
+        # and enables again. nothing happens
+        self.machine.switch_controller.process_switch("s_test_window_ms", 1)
+        self.advance_time_and_run(.2)
+        self.assertEventNotCalled("s_test_window_ms_active")
+        self.assertEventNotCalled("s_test_window_ms_inactive")
+
+        # instant response on disable this time
+        self.machine.switch_controller.process_switch("s_test_window_ms", 0)
+        self.advance_time_and_run(.001)
+        self.assertEventNotCalled("s_test_window_ms_active")
+        self.assertEventCalled("s_test_window_ms_inactive")
 
     def test_invert(self):
         self.machine.switch_controller.process_switch("s_test_invert", 1, logical=False)

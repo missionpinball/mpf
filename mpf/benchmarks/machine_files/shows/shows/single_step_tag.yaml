@@ -1,0 +1,4 @@
+#show_version=5
+- duration: -1
+  lights:
+    (tag): (color)

@@ -48,7 +48,7 @@ class Mode(LogMixin):
         super().__init__()
         self.machine = machine                  # type: MachineController
         self.config = config                    # type: ignore
-        self.name = name.lower()
+        self.name = name
         self.path = path
         self.priority = 0
         self._active = False

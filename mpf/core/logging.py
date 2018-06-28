@@ -41,6 +41,8 @@ class LogMixin(object):
                 are "none", "basic", or "full".
         """
         self.log = logging.getLogger(logger)
+        if hasattr(self, "machine") and self.machine and self.machine.options['production']:
+            return
 
         try:
             if console_level.lower() == 'basic':
@@ -90,6 +92,8 @@ class LogMixin(object):
             code = 22
         elif self._info_to_file or self._debug_to_file:
             code = 21
+        else:
+            return
 
         if context:
             self.log.log(code, msg + " context: " + context, *args, **kwargs)
