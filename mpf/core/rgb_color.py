@@ -417,7 +417,13 @@ class RGBColor(object):
         if '%' in value:
             value, brightness = value.split("%")
 
-        rgb = named_rgb_colors.get(value.lower())
+        rgb = named_rgb_colors.get(value)
+        if rgb is None:
+            # we do not want to call lower every time since this code path is very hot
+            # instead we just add the upper case string to the color hash map so next time we will hit the fast path
+            rgb = named_rgb_colors.get(value.lower())
+            if rgb:
+                named_rgb_colors[value] = rgb
         if rgb is None:
             rgb = RGBColor.hex_to_rgb(value)
             if rgb is None:
