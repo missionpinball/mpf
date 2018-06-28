@@ -1,0 +1,120 @@
+#config_version=5
+lights:
+  light_1:
+    number: 1
+    tags: playfield, light_group_1
+  light_2:
+    number: 2
+    tags: playfield, light_group_1
+  light_3:
+    number: 3
+    tags: playfield, light_group_1
+  light_4:
+    number: 4
+    tags: playfield, light_group_2
+  light_5:
+    number: 5
+    tags: playfield, light_group_2
+  light_6:
+    number: 6
+    tags: playfield, light_group_2
+  light_7:
+    number: 7
+    tags: playfield, light_group_3
+  light_8:
+    number: 8
+    tags: playfield, light_group_3
+  light_9:
+    number: 9
+    tags: playfield, light_group_3
+  light_10:
+    number: 10
+  light_11:
+    number: 11
+    tags: playfield, light_group_1
+  light_12:
+    number: 12
+    tags: playfield, light_group_1
+  light_13:
+    number: 13
+    tags: playfield, light_group_1
+  light_14:
+    number: 14
+    tags: playfield, light_group_2
+  light_15:
+    number: 15
+    tags: playfield, light_group_2
+  light_16:
+    number: 16
+    tags: playfield, light_group_2
+  light_17:
+    number: 17
+    tags: playfield, light_group_4
+  light_18:
+    number: 18
+    tags: playfield, light_group_4
+  light_19:
+    number: 19
+    tags: playfield, light_group_4
+  light_20:
+    number: 20
+  light_21:
+    number: 21
+    tags: playfield, light_group_1
+  light_22:
+    number: 22
+    tags: playfield, light_group_1
+  light_23:
+    number: 23
+    tags: playfield, light_group_1
+  light_24:
+    number: 24
+    tags: playfield, light_group_5
+  light_25:
+    number: 25
+    tags: playfield, light_group_5
+  light_26:
+    number: 26
+    tags: playfield, light_group_5
+  light_27:
+    number: 27
+    tags: playfield, light_group_6
+  light_28:
+    number: 28
+    tags: playfield, light_group_6
+  light_29:
+    number: 29
+    tags: playfield, light_group_6
+  light_30:
+    number: 30
+
+show_player:
+  stop_minimal_light_show:
+    minimal_light_show: stop
+  play_minimal_light_show: minimal_light_show
+  stop_single_step_tag_playfield:
+    single_step_tag: stop
+  play_single_step_tag_playfield:
+    single_step_tag:
+      show_tokens:
+        tag: playfield
+        color: red
+  play_single_step_tag_group_6:
+    single_step_tag:
+      show_tokens:
+        tag: light_group_6
+        color: blue
+  stop_multi_step:
+    multi_step_tags: stop
+  play_multi_step:
+    multi_step_tags:
+      loops: 10
+      show_tokens:
+        tag1: light_group_1
+        tag2: light_group_2
+        tag3: light_group_3
+        tag4: light_group_4
+        color1: red
+        color2: blue
+        color3: green
+        color4: yellow
