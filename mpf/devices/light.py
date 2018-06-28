@@ -47,11 +47,12 @@ class Light(SystemWideDevice, DevicePositionMixin):
     collection = 'lights'
     class_label = 'light'
 
-    __slots__ = ["hw_drivers", "platforms", "delay", "default_fade_ms", "_color_correction_profile", "stack"]
+    __slots__ = ["hw_drivers", "platforms", "delay", "default_fade_ms", "_color_correction_profile", "stack", "hw_driver_functions"]
 
     def __init__(self, machine, name):
         """Initialise light."""
         self.hw_drivers = {}
+        self.hw_driver_functions = []
         self.platforms = set()      # type: Set[LightsPlatform]
         super().__init__(machine, name)
         self.machine.light_controller.initialise_light_subsystem()
@@ -213,7 +214,9 @@ class Light(SystemWideDevice, DevicePositionMixin):
             self.hw_drivers[color] = []
             for channel in channel_list:
                 channel = self.machine.config_validator.validate_config("light_channels", channel)
-                self.hw_drivers[color].append(self._load_hw_driver(channel))
+                driver = self._load_hw_driver(channel)
+                self.hw_drivers[color].append(driver)
+                self.hw_driver_functions.append((driver, partial(self._get_brightness_and_fade, color=color)))
 
     def _load_hw_driver(self, channel):
         """Load one channel."""
@@ -380,7 +383,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
                                dest_color=color,
                                key=key))
 
-        self.stack.sort(key=itemgetter('priority', 'key'), reverse=True)
+        if len(self.stack) > 1:
+            self.stack.sort(key=itemgetter('priority', 'key'), reverse=True)
 
         self.debug_log("+-------------- Adding to stack ----------------+")
         self.debug_log("priority: %s", priority)
@@ -443,7 +447,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
                                    dest_color=None,
                                    key=key))
             self.delay.reset(ms=fade_ms, callback=partial(self._remove_fade_out, key=key), name="remove_fade")
-            self.stack.sort(key=itemgetter('priority', 'key'), reverse=True)
+            if len(self.stack) > 1:
+                self.stack.sort(key=itemgetter('priority', 'key'), reverse=True)
 
         if color_changes:
             self._schedule_update()
@@ -465,7 +470,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
 
         if found:
             self.debug_log("Removing fadeout for key '%s' from stack", key)
-            self.stack[:] = [x for x in self.stack if x['key'] != key or x['dest_color'] is not None]
+            self.stack = [x for x in self.stack if x['key'] != key or x['dest_color'] is not None]
 
         if found and color_change:
             self._schedule_update()
@@ -476,25 +481,32 @@ class Light(SystemWideDevice, DevicePositionMixin):
         if not self.stack:
             return
         self.debug_log("Removing key '%s' from stack", key)
-        self.stack[:] = [x for x in self.stack if x['key'] != key]
+        if len(self.stack) == 1:
+            if self.stack[0]['key'] == key:
+                self.stack = []
+        else:
+            self.stack = [x for x in self.stack if x['key'] != key]
 
     def _schedule_update(self):
-        for color, hw_drivers in self.hw_drivers.items():
-            for hw_driver in hw_drivers:
-                hw_driver.set_fade(partial(self._get_brightness_and_fade, color=color))
+        for hw_driver, function in self.hw_driver_functions:
+            hw_driver.set_fade(function)
 
         for platform in self.platforms:
             platform.light_sync()
 
     def clear_stack(self):
         """Remove all entries from the stack and resets this light to 'off'."""
-        self.stack[:] = []
+        self.stack = []
 
         self.debug_log("Clearing Stack")
 
         self._schedule_update()
 
     def _get_priority_from_key(self, key):
+        if not self.stack:
+            return 0
+        if self.stack[0]['key'] == key:
+            return self.stack[0]['priority']
         try:
             return [x for x in self.stack if x['key'] == key][0]['priority']
         except IndexError:
@@ -608,7 +620,12 @@ class Light(SystemWideDevice, DevicePositionMixin):
         Similar to get_color.
         """
         if not self.stack:
+            # no stack -> we are black
             return RGBColor("off")
+
+        if self.stack[0]['key'] == key and self.stack[0]['priority'] == priority:
+            # fast path for resetting the top element
+            return self._get_color_and_fade(self.stack, 0)[0]
 
         stack = []
         for i, entry in enumerate(self.stack):
