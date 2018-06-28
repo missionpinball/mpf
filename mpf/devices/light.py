@@ -47,7 +47,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
     collection = 'lights'
     class_label = 'light'
 
-    __slots__ = ["hw_drivers", "platforms", "delay", "default_fade_ms", "_color_correction_profile", "stack", "hw_driver_functions"]
+    __slots__ = ["hw_drivers", "platforms", "delay", "default_fade_ms", "_color_correction_profile", "stack",
+                 "hw_driver_functions"]
 
     def __init__(self, machine, name):
         """Initialise light."""
