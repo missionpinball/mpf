@@ -302,9 +302,10 @@ class Light(SystemWideDevice, DevicePositionMixin):
                 settings in the stack already have this key, those settings
                 will be replaced with these new settings.
         """
-        self.debug_log("Received color() command. color: %s, fade_ms: %s "
-                       "priority: %s, key: %s", color, fade_ms, priority,
-                       key)
+        if self._debug:
+            self.debug_log("Received color() command. color: %s, fade_ms: %s "
+                           "priority: %s, key: %s", color, fade_ms, priority,
+                           key)
 
         if isinstance(color, str) and color == "on":
             color = self.config['default_on_color']
@@ -354,18 +355,19 @@ class Light(SystemWideDevice, DevicePositionMixin):
     def _add_to_stack(self, color, fade_ms, priority, key, start_time):
         """Add color to stack."""
         # handle None to make keys sortable
-        if not key:
+        if key is None:
             key = ""
-        else:
-            key = str(key)
+        elif not isinstance(key, str):
+            raise AssertionError("Key should be string")
 
         if priority < self._get_priority_from_key(key):
-            self.debug_log("Incoming priority %s is lower than an existing "
-                           "stack item with the same key %s. Not adding to "
-                           "stack.", priority, key)
+            if self._debug:
+                self.debug_log("Incoming priority %s is lower than an existing "
+                               "stack item with the same key %s. Not adding to "
+                               "stack.", priority, key)
             return
 
-        if self.stack and priority == self.stack[0]['priority'] and key == self.stack[0]['key']:
+        if self._debug and self.stack and priority == self.stack[0]['priority'] and key == self.stack[0]['key']:
             self.debug_log("Light stack contains two entries with the same priority %s but different keys: ",
                            priority, self.stack)
 
@@ -387,13 +389,14 @@ class Light(SystemWideDevice, DevicePositionMixin):
         if len(self.stack) > 1:
             self.stack.sort(key=itemgetter('priority', 'key'), reverse=True)
 
-        self.debug_log("+-------------- Adding to stack ----------------+")
-        self.debug_log("priority: %s", priority)
-        self.debug_log("start_time: %s", self.machine.clock.get_time())
-        self.debug_log("start_color: %s", color_below)
-        self.debug_log("dest_time: %s", dest_time)
-        self.debug_log("dest_color: %s", color)
-        self.debug_log("key: %s", key)
+        if self._debug:
+            self.debug_log("+-------------- Adding to stack ----------------+")
+            self.debug_log("priority: %s", priority)
+            self.debug_log("start_time: %s", self.machine.clock.get_time())
+            self.debug_log("start_color: %s", color_below)
+            self.debug_log("dest_time: %s", dest_time)
+            self.debug_log("dest_color: %s", color)
+            self.debug_log("key: %s", key)
 
     def remove_from_stack_by_key(self, key, fade_ms=None):
         """Remove a group of color settings from the stack.
@@ -545,10 +548,11 @@ class Light(SystemWideDevice, DevicePositionMixin):
             return color
         else:
 
-            self.debug_log("Applying color correction: %s (applied "
-                           "'%s' color correction profile)",
-                           self._color_correction_profile.apply(color),
-                           self._color_correction_profile.name)
+            if self._debug:
+                self.debug_log("Applying color correction: %s (applied "
+                               "'%s' color correction profile)",
+                               self._color_correction_profile.apply(color),
+                               self._color_correction_profile.name)
 
             return self._color_correction_profile.apply(color)
 
