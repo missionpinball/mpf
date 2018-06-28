@@ -29,6 +29,14 @@ class LogMixin(object):
         logging.addLevelName(22, "INFO")
         logging.addLevelName(12, "DEBUG")
 
+    @property
+    def _info(self):
+        return self._info_to_console or self._info_to_file
+
+    @property
+    def _debug(self):
+        return self._debug_to_console or self._debug_to_file
+
     def configure_logging(self, logger: str, console_level: str = 'basic',
                           file_level: str = 'basic'):
         """Configure logging.
