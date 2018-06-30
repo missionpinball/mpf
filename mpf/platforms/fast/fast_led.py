@@ -8,9 +8,11 @@ from typing import Union
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
 
-class FASTDirectLED:
+class FASTDirectLED(object):
 
     """FAST RGB LED."""
+
+    __slots__ = ["number", "dirty", "hardware_fade_ms", "colors", "log"]
 
     def __init__(self, number: str, hardware_fade_ms: int) -> None:
         """Initialise FAST LED."""
@@ -44,6 +46,8 @@ class FASTDirectLED:
 class FASTDirectLEDChannel(LightPlatformInterface):
 
     """Represents a single RGB LED channel connected to the Fast hardware platform."""
+
+    __slots__ = ["led", "channel"]
 
     def __init__(self, led: FASTDirectLED, channel) -> None:
         """Initialise LED."""

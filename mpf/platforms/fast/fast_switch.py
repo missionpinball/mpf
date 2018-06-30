@@ -14,6 +14,8 @@ class FASTSwitch(SwitchPlatformInterface):
 
     """A switch conntected to a fast controller."""
 
+    __slots__ = ["log", "connection", "send", "platform", "platform_settings", "_configured_debounce"]
+
     def __init__(self, config: SwitchConfig, number_tuple, platform: "FastHardwarePlatform", platform_settings) -> None:
         """Initialise switch."""
         super().__init__(config, number_tuple)

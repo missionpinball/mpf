@@ -18,6 +18,8 @@ class DriverPlatformInterface(metaclass=abc.ABCMeta):
     methods are implemented to support driver operations in MPF.
     """
 
+    __slots__ = ["number", "config"]
+
     def __init__(self, config: DriverConfig, number: "Any") -> None:
         """Initialise driver."""
         self.number = number    # type: Any

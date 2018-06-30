@@ -15,6 +15,8 @@ class Auditor(object):
 
     """Writes switch events, regular events, and player variables to an audit log file."""
 
+    __slots__ = ["log", "machine", "switchnames_to_audit", "config", "current_audits", "enabled", "data_manager"]
+
     def __init__(self, machine: "MachineController") -> None:
         """Initialise auditor.
 

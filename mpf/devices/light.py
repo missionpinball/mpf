@@ -21,6 +21,8 @@ class DriverLight(LightPlatformSoftwareFade):
 
     """A coil which is used to drive a light."""
 
+    __slots__ = ["driver"]
+
     def __init__(self, driver, loop, software_fade_ms):
         """Initialise coil as light."""
         super().__init__(driver.hw_driver.number, loop, software_fade_ms)

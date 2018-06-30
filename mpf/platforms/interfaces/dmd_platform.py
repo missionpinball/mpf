@@ -6,6 +6,8 @@ class DmdPlatformInterface(metaclass=abc.ABCMeta):
 
     """Interface for monochrome DMDs in hardware platforms."""
 
+    __slots__ = []
+
     @abc.abstractmethod
     def update(self, data: bytes):
         """Update data on the DMD.

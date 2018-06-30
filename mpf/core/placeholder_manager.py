@@ -44,6 +44,8 @@ class BaseTemplate(metaclass=abc.ABCMeta):
 
     """Base class for templates."""
 
+    __slots__ = ["template", "placeholder_manager", "default_value"]
+
     def __init__(self, template, placeholder_manger, default_value):
         """Initialise template."""
         self.template = template
@@ -59,6 +61,8 @@ class BaseTemplate(metaclass=abc.ABCMeta):
 class BoolTemplate(BaseTemplate):
 
     """Bool template."""
+
+    __slots__ = []
 
     def evaluate(self, parameters, fail_on_missing_params=False):
         """Evaluate template to bool."""
@@ -83,6 +87,8 @@ class BoolTemplate(BaseTemplate):
 class FloatTemplate(BaseTemplate):
 
     """Float template."""
+
+    __slots__ = []
 
     def evaluate(self, parameters, fail_on_missing_params=False):
         """Evaluate template to float."""
@@ -109,6 +115,8 @@ class IntTemplate(BaseTemplate):
 
     """Float template."""
 
+    __slots__ = []
+
     def evaluate(self, parameters, fail_on_missing_params=False):
         """Evaluate template to float."""
         try:
@@ -133,6 +141,8 @@ class StringTemplate(BaseTemplate):
 
     """String template."""
 
+    __slots__ = []
+
     def evaluate(self, parameters, fail_on_missing_params=False):
         """Evaluate template to string."""
         try:
@@ -147,6 +157,8 @@ class StringTemplate(BaseTemplate):
 class RawTemplate(BaseTemplate):
 
     """Raw template."""
+
+    __slots__ = []
 
     def evaluate(self, parameters, fail_on_missing_params=False):
         """Evaluate template."""
@@ -170,6 +182,8 @@ class NativeTypeTemplate:
 
     """Native type template which encapsulates an int/float/bool."""
 
+    __slots__ = ["value", "machine"]
+
     def __init__(self, value, machine):
         """Set value."""
         self.value = value
@@ -191,6 +205,8 @@ class NativeTypeTemplate:
 class MpfFormatter(string.Formatter):
 
     """String formater which replaces placeholders."""
+
+    __slots__ = ["machine", "parameters", "subscriptions", "subscribe"]
 
     def __init__(self, machine, parameters, subscribe):
         """Initialise formatter."""
@@ -230,6 +246,8 @@ class TextTemplate:
     var_finder = re.compile("(?<=\\()[a-zA-Z_0-9|]+(?=\\))")
     string_finder = re.compile("(?<=\\$)[a-zA-Z_0-9]+")
 
+    __slots__ = ["machine", "text", "vars", "_change_callback"]
+
     def __init__(self, machine: "MachineController", text: str) -> None:
         """Initialise placeholder."""
         self.machine = machine
@@ -261,6 +279,8 @@ class BasePlaceholder(object):
 
     """Base class for placeholder variables."""
 
+    __slots__ = []
+
     # pylint: disable-msg=no-self-use
     def subscribe(self):
         """Subscribe to placeholder."""
@@ -280,6 +300,8 @@ class BasePlaceholder(object):
 class DeviceClassPlaceholder:
 
     """Wrap a monitorable device."""
+
+    __slots__ = ["_devices"]
 
     def __init__(self, devices):
         """Initialise placeholder."""
@@ -302,6 +324,8 @@ class DevicesPlaceholder:
 
     """Device monitor placeholder."""
 
+    __slots__ = ["_machine"]
+
     def __init__(self, machine):
         """Initialise placeholder."""
         self._machine = machine
@@ -322,6 +346,8 @@ class ModeClassPlaceholder:
 
     """Wrap a mode."""
 
+    __slots__ = ["_mode"]
+
     def __init__(self, mode):
         """Initialise placeholder."""
         self._mode = mode
@@ -339,6 +365,8 @@ class ModeClassPlaceholder:
 class ModePlaceholder:
 
     """Mode placeholder."""
+
+    __slots__ = ["_machine"]
 
     def __init__(self, machine):
         """Initialise placeholder."""
@@ -359,6 +387,8 @@ class ModePlaceholder:
 class PlayerPlaceholder(BasePlaceholder):
 
     """Wraps the player."""
+
+    __slots__ = ["_machine", "_number"]
 
     def __init__(self, machine, number=None):
         """Initialise placeholder."""
@@ -402,6 +432,8 @@ class PlayersPlaceholder(BasePlaceholder):
 
     """Wraps the player list."""
 
+    __slots__ = ["_machine"]
+
     def __init__(self, machine):
         """Initialise placeholder."""
         self._machine = machine     # type: MachineController
@@ -426,6 +458,8 @@ class PlayersPlaceholder(BasePlaceholder):
 class MachinePlaceholder(BasePlaceholder):
 
     """Wraps the machine."""
+
+    __slots__ = ["_machine"]
 
     def __init__(self, machine):
         """Initialise placeholder."""
@@ -455,6 +489,8 @@ class SettingsPlaceholder(BasePlaceholder):
 
     """Wraps settings."""
 
+    __slots__ = ["_machine"]
+
     def __init__(self, machine):
         """Initialise placeholder."""
         self._machine = machine  # type: MachineController
@@ -483,6 +519,8 @@ class BasePlaceholderManager(MpfController):
     # needed here so the auto-detection of child classes works
     module_name = 'PlaceholderManager'
     config_name = 'placeholder_manager'
+
+    __slots__ = ["_eval_methods"]
 
     def __init__(self, machine):
         """Initialise."""
@@ -705,6 +743,8 @@ class BasePlaceholderManager(MpfController):
 class PlaceholderManager(BasePlaceholderManager):
 
     """Manages templates and placeholders for MPF."""
+
+    __slots__ = []
 
     # pylint: disable-msg=too-many-return-statements
     def get_global_parameters(self, name):

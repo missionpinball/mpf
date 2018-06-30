@@ -22,6 +22,8 @@ class LisySwitch(SwitchPlatformInterface):
 
     """A switch in the LISY platform."""
 
+    __slots__ = []
+
     def get_board_name(self):
         """Return board name."""
         return "LISY"
@@ -30,6 +32,8 @@ class LisySwitch(SwitchPlatformInterface):
 class LisyDriver(DriverPlatformInterface):
 
     """A driver in the LISY platform."""
+
+    __slots__ = ["platform", "_pulse_ms"]
 
     def __init__(self, config, number, platform):
         """Initialise driver."""
@@ -70,6 +74,8 @@ class LisyLight(LightPlatformSoftwareFade):
 
     """A light in the LISY platform."""
 
+    __slots__ = ["platform"]
+
     def __init__(self, number, platform):
         """Initialise Lisy Light."""
         super().__init__(number, platform.machine.clock.loop, 50)
@@ -91,6 +97,8 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
 
     """A segment display in the LISY platform."""
 
+    __slots__ = ["platform"]
+
     def __init__(self, number: int, platform: "LisyHardwarePlatform") -> None:
         """Initialise segment display."""
         super().__init__(number)
@@ -106,6 +114,8 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
 class LisySound(HardwareSoundPlatformInterface):
 
     """Hardware sound interface for LISY."""
+
+    __slots__ = ["platform"]
 
     def __init__(self, platform):
         """Initialise hardware sound."""
@@ -141,6 +151,9 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                            HardwareSoundPlatform, LogMixin):
 
     """LISY platform."""
+
+    __slots__ = ["config", "_writer", "_reader", "_poll_task", "_watchdog_task", "_number_of_lamps",
+                 "_number_of_solenoids", "_number_of_displays", "_inputs", "_system_type"]
 
     def __init__(self, machine) -> None:
         """Initialise platform."""

@@ -11,6 +11,8 @@ class ServoPlatformInterface(metaclass=abc.ABCMeta):
     methods are implemented to support servo operations in MPF.
     """
 
+    __slots__ = []
+
     @abc.abstractmethod
     def go_to_position(self, position):
         """Move servo to a certain position."""

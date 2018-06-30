@@ -116,6 +116,8 @@ class IncomingBallsHandler(BallDeviceStateHandler):
 
     """Handles incoming balls and timeouts."""
 
+    __slots__ = ["_incoming_balls", "_has_no_incoming_balls", "_has_incoming_balls", "_is_timeouting"]
+
     def __init__(self, ball_device):
         """Initialise incoming balls handler."""
         super().__init__(ball_device)

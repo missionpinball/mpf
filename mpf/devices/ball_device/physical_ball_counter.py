@@ -15,9 +15,12 @@ if MYPY:
     from mpf.devices.ball_device.ball_count_handler import BallCountHandler
 
 
-class EjectTracker:
+class EjectTracker(object):
 
     """Tracks ball changes during an eject."""
+
+    __slots__ = ["machine", "_already_left", "_ball_count_handler", "_task", "_event_queue", "_ball_left",
+                 "_ball_returned", "_ready", "_unknown_balls", "_num_unknown_balls", "_num_lost_balls"]
 
     def __init__(self, ball_counter_handler, already_left):
         """Initialise eject tracker."""
@@ -140,35 +143,35 @@ class BallActivity(object):
 
     """An acticity in a ball device."""
 
-    pass
+    __slots__ = []
 
 
 class BallLostActivity(BallActivity):
 
     """A ball was lost/ejected from device."""
 
-    pass
+    __slots__ = []
 
 
 class NewBallActivity(BallActivity):
 
     """A new ball was found in the device."""
 
-    pass
+    __slots__ = []
 
 
 class BallEntranceActivity(NewBallActivity):
 
     """A new ball entered the device (did not return)."""
 
-    pass
+    __slots__ = []
 
 
 class BallReturnActivity(NewBallActivity):
 
     """A ball returned."""
 
-    pass
+    __slots__ = []
 
 
 class UnknownBallActivity(NewBallActivity):
@@ -178,12 +181,15 @@ class UnknownBallActivity(NewBallActivity):
     This could be a returned or entered ball.
     """
 
-    pass
+    __slots__ = []
 
 
 class PhysicalBallCounter(object):
 
     """Ball counter for ball device."""
+
+    __slots__ = ["ball_device", "config", "machine", "_last_count", "_count_stable", "_activity_queues",
+                 "_ball_change_futures"]
 
     def __init__(self, ball_device, config) -> None:
         """Initialise ball counter."""

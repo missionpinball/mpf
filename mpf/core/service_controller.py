@@ -21,13 +21,15 @@ class ServiceController(MpfController):
 
     """Provides all service information and can perform service tasks."""
 
+    __slots__ = ["_enabled"]
+
     config_name = "service_controller"
 
     def __init__(self, machine):
         """Initialise service controller."""
         super().__init__(machine)
         self._enabled = False
-        self.log = logging.getLogger("ServiceController")
+        self.configure_logging("service")
 
     @staticmethod
     def _natural_key_sort(string_):

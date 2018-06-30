@@ -13,6 +13,8 @@ class SwitchPlatformInterface(metaclass=abc.ABCMeta):
     methods are implemented to support switch operations in MPF.
     """
 
+    __slots__ = ["config", "number"]
+
     def __init__(self, config: SwitchConfig, number: Any) -> None:
         """Initialise default attributes for switches."""
         self.config = config    # type: SwitchConfig

@@ -42,6 +42,9 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         machine: The MachineController instance.
     """
 
+    __slots__ = ["config", "_burst_opto_drivers_to_switch_map", "_burst_switches", "_bursts_enabled", "acceleration",
+                 "accelerometer_device"]
+
     def __init__(self, machine):
         """Initialise and connect P3-Roc."""
         super().__init__(machine)
@@ -442,6 +445,8 @@ class P3RocI2c(I2cPlatformInterface):
 
     """I2c device on a P3-Roc."""
 
+    __slots__ = ["platform", "address", "proc"]
+
     def __init__(self, number: str, platform) -> None:
         """Initialise I2c device on P3_Roc."""
         super().__init__(number)
@@ -485,6 +490,8 @@ class PROCAccelerometer(AccelerometerPlatformInterface):
 
     """The accelerometer on the P3-Roc."""
 
+    __slots__ = ["callback"]
+
     def __init__(self, callback: "Accelerometer") -> None:
         """Remember the callback."""
         self.callback = callback    # type: Accelerometer
@@ -497,6 +504,8 @@ class PROCAccelerometer(AccelerometerPlatformInterface):
 class P3RocBurstOpto(SwitchPlatformInterface):
 
     """A burst opto switch/driver combination."""
+
+    __slots__ = ["input_switch", "driver", "log"]
 
     def __init__(self, config, number, input_switch, driver):
         """Initialise burst opto."""

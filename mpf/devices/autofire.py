@@ -36,6 +36,9 @@ class AutofireCoil(SystemWideDevice):
     collection = 'autofires'
     class_label = 'autofire'
 
+    __slots__ = ["_enabled", "_rule", "delay", "_ball_search_in_progress", "_timeout_watch_time", "_timeout_max_hits",
+                 "_timeout_disable_time", "_timeout_hits"]
+
     def __init__(self, machine: "MachineController", name: str) -> None:
         """Initialise autofire."""
         self._enabled = False

@@ -65,6 +65,9 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         machine_type: Constant of the pinproc.MachineType
     """
 
+    __slots__ = ["pdbconfig", "pinproc", "proc", "log", "hw_switch_rules", "version", "revision", "hardware_version",
+                 "dipswitches", "machine_type"]
+
     def __init__(self, machine):
         """Make sure pinproc was loaded."""
         super().__init__(machine)
@@ -866,6 +869,8 @@ class PDBLight(object):
 class PDBLED(LightPlatformInterface):
 
     """Represents an RGB LED connected to a PD-LED board."""
+
+    __slots__ = ["board", "address", "debug", "log", "proc", "polarity"]
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, board, address, polarity, proc_driver, debug):

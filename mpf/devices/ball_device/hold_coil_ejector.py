@@ -8,6 +8,8 @@ class HoldCoilEjector(BallDeviceEjector):
 
     """Hold balls by enabling and releases by disabling a coil."""
 
+    __slots__ = ["hold_release_in_progress"]
+
     def eject_all_balls(self):
         """Eject all balls."""
         raise NotImplementedError()

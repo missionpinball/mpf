@@ -8,6 +8,8 @@ class SegmentDisplayPlatformInterface(metaclass=abc.ABCMeta):
 
     """Interface for a segment display in hardware platforms."""
 
+    __slots__ = ["number"]
+
     def __init__(self, number: Any) -> None:
         """Remember the number."""
         self.number = number
@@ -21,6 +23,8 @@ class SegmentDisplayPlatformInterface(metaclass=abc.ABCMeta):
 class SegmentDisplaySoftwareFlashPlatformInterface(SegmentDisplayPlatformInterface):
 
     """SegmentDisplayPlatformInterface with software emulation for flashing."""
+
+    __slots__ = ["_flash_on", "_flashing", "_text"]
 
     def __init__(self, number: Any) -> None:
         """Remember the number."""

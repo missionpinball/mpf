@@ -9,12 +9,14 @@ if MYPY:    # pragma: no cover
     from mpf.devices.ball_device.ball_device import BallDevice
 
 
-class BallDeviceEjector:
+class BallDeviceEjector(object):
 
     """Ejector for a ball device.
 
     It has to implement at least one of eject_one_ball or eject_all_balls.
     """
+
+    __slots__ = ["config", "ball_device", "machine"]
 
     def __init__(self, config: dict, ball_device: "BallDevice", machine: "MachineController") -> None:
         """Initialise ejector."""

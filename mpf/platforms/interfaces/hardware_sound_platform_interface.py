@@ -6,6 +6,8 @@ class HardwareSoundPlatformInterface(metaclass=abc.ABCMeta):
 
     """Interface for a hardware sound platform."""
 
+    __slots__ = []
+
     @abc.abstractmethod
     def play_sound(self, number: int):
         """Play a sound."""

@@ -10,6 +10,8 @@ class EntranceSwitchCounter(PhysicalBallCounter):
 
     """Count balls using an entrance switch."""
 
+    __slots__ = []
+
     def __init__(self, ball_device, config):
         """Initialise entrance switch counter."""
         super().__init__(ball_device, config)

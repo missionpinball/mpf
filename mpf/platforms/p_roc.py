@@ -35,6 +35,9 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         machine: The MachineController instance.
     """
 
+    __slots__ = ["config", "dmd", "alpha_display", "aux_port", "_use_extended_matrix",
+                 "_use_first_eight_direct_inputs"]
+
     def __init__(self, machine):
         """Initialise P-ROC."""
         super().__init__(machine)
@@ -226,6 +229,8 @@ class PROCDMD(DmdPlatformInterface):
 
     """
 
+    __slots__ = ["proc", "machine", "dmd"]
+
     def __init__(self, pinproc, proc, machine):
         """Set up DMD."""
         self.proc = proc
@@ -264,6 +269,8 @@ class PROCDMD(DmdPlatformInterface):
 class AuxPort(object):
 
     """Aux port on the P-Roc."""
+
+    __slots__ = ["platform", "_commands"]
 
     def __init__(self, platform):
         """Initialise aux port."""
@@ -305,6 +312,8 @@ class AuxPort(object):
 class PRocAlphanumericDisplay(SegmentDisplayPlatformInterface):
 
     """Since AuxAlphanumericDisplay updates all four displays wrap it and set the correct offset."""
+
+    __slots__ = ["display"]
 
     def __init__(self, display, index):
         """Initialise alpha numeric display."""
@@ -423,6 +432,8 @@ class AuxAlphanumericDisplay(object):
     strobes = [8, 9, 10, 11, 12]
     full_intensity_delay = 350  # microseconds
     inter_char_delay = 40       # microseconds
+
+    __slots__ = ["platform", "aux_controller", "aux_index", "texts"]
 
     def __init__(self, platform, aux_controller):
         """Initialise the alphanumeric display."""

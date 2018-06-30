@@ -2,9 +2,11 @@
 import asyncio
 
 
-class BallDeviceStateHandler:
+class BallDeviceStateHandler(object):
 
     """Base class for ball device handler."""
+
+    __slots__ = ["ball_device", "machine", "_task"]
 
     def __init__(self, ball_device):
         """Initialise handler.

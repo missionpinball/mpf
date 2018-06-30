@@ -10,6 +10,8 @@ class EnableCoilEjector(PulseCoilEjector):
 
     """Enable a coil to eject one ball."""
 
+    __slots__ = ["delay"]
+
     def __init__(self, config, ball_device, machine):
         """Initialise ejector."""
         super().__init__(config, ball_device, machine)

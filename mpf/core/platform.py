@@ -5,9 +5,10 @@ from collections import namedtuple
 
 from typing import Optional, Generator
 
+from mpf.core.logging import LogMixin
+
 MYPY = False
 if MYPY:   # pragma: no cover
-    from logging import Logger
     from mpf.devices.switch import Switch
     from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
     from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
@@ -20,9 +21,11 @@ if MYPY:   # pragma: no cover
     from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
 
 
-class BasePlatform(metaclass=abc.ABCMeta):
+class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
 
     """Base class for all hardware platforms in MPF."""
+
+    __slots__ = ["machine", "features", "debug"]
 
     def __init__(self, machine):
         """Create features and set default variables.
@@ -32,7 +35,7 @@ class BasePlatform(metaclass=abc.ABCMeta):
         """
         self.machine = machine
         self.features = {}
-        self.log = None         # type: Logger
+        super().__init__()
         self.debug = False
 
         # Set default platform features. Each platform interface can change
@@ -109,6 +112,8 @@ class DmdPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for DMDs in MPF."""
 
+    __slots__ = []
+
     def __init__(self, machine):
         """Add dmd feature."""
         super().__init__(machine)
@@ -129,6 +134,8 @@ class HardwareSoundPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for hardware sounds in MPF."""
 
+    __slots__ = []
+
     def __init__(self, machine):
         """Add hardware sound feature."""
         super().__init__(machine)
@@ -143,6 +150,8 @@ class HardwareSoundPlatform(BasePlatform, metaclass=abc.ABCMeta):
 class RgbDmdPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for RGB DMDs in MPF."""
+
+    __slots__ = []
 
     def __init__(self, machine):
         """Add rgb dmd feature."""
@@ -164,6 +173,8 @@ class SegmentDisplayPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for 7-segment/6-digits display in MPF."""
 
+    __slots__ = []
+
     def __init__(self, machine):
         """Add segment display feature."""
         super().__init__(machine)
@@ -183,6 +194,8 @@ class SegmentDisplayPlatform(BasePlatform, metaclass=abc.ABCMeta):
 class SegmentDisplaySoftwareFlashPlatform(SegmentDisplayPlatform, metaclass=abc.ABCMeta):
 
     """SegmentDisplayPlatform with software flash support."""
+
+    __slots__ = ["_displays", "_display_flash_task"]
 
     def __init__(self, machine):
         """Initialise software flash support."""
@@ -232,6 +245,8 @@ class AccelerometerPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for Accelerometer platforms."""
 
+    __slots__ = []
+
     def __init__(self, machine):
         """Add accelerometer feature."""
         super().__init__(machine)
@@ -253,6 +268,8 @@ class I2cPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for I2C Platforms."""
 
+    __slots__ = []
+
     def __init__(self, machine):
         """Initialise I2C platform and set feature."""
         super().__init__(machine)
@@ -267,6 +284,8 @@ class I2cPlatform(BasePlatform, metaclass=abc.ABCMeta):
 class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for servo platforms in MPF."""
+
+    __slots__ = []
 
     def __init__(self, machine):
         """Add servo feature."""
@@ -286,6 +305,8 @@ class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
 class StepperPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for smart servo (axis) platforms in MPF."""
+
+    __slots__ = []
 
     def __init__(self, machine):
         """Add smart servo feature."""
@@ -308,6 +329,8 @@ class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     This includes LEDs, GIs, Matrix Lights and any other lights.
     """
+
+    __slots__ = []
 
     def __init__(self, machine):
         """Add led feature."""
@@ -342,6 +365,8 @@ SwitchConfig = namedtuple("SwitchConfig", ["invert", "debounce"])
 class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for platforms with switches in MPF."""
+
+    __slots__ = []
 
     def __init__(self, machine):
         """Add switch feature."""
@@ -411,6 +436,8 @@ DriverConfig = namedtuple("DriverConfig", ["default_pulse_ms", "default_pulse_po
 class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for platforms with drivers."""
+
+    __slots__ = []
 
     def __init__(self, machine):
         """Add driver feature and default max_pulse length."""

@@ -9,12 +9,13 @@ from mpf.core.machine import MachineController
 MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.mode import Mode
-    from mpf.core.player import Player
 
 
 class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
 
     """Implements enable and disable_events."""
+
+    __slots__ = ["_enabled", "player"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Remember the enable state."""
