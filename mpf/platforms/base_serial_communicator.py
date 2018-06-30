@@ -12,6 +12,8 @@ class BaseSerialCommunicator(object):
 
     """Basic Serial Communcator for platforms."""
 
+    __slots__ = ["machine", "platform", "log", "debug", "port", "baud", "xonxoff", "reader", "writer", "read_task"]
+
     # pylint: disable=too-many-arguments
     def __init__(self, platform, port: str, baud: int, xonxoff=False) -> None:
         """Initialise Serial Connection Hardware.

@@ -10,6 +10,8 @@ class OPPInputCard(object):
 
     """OPP input card."""
 
+    __slots__ = ["log", "chain_serial", "addr", "isMatrix", "oldState", "mask", "cardNum"]
+
     # pylint: disable-msg=too-many-arguments
     def __init__(self, chain_serial, addr, mask, inp_dict, inp_addr_dict):
         """Initialise OPP input card."""
@@ -33,6 +35,8 @@ class OPPInputCard(object):
 class OPPMatrixCard(object):
 
     """OPP matrix input card."""
+
+    __slots__ = ["log", "chain_serial", "addr", "mask", "isMatrix", "oldState", "cardNum"]
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, chain_serial, addr, inp_dict, inp_addr_dict):
@@ -58,6 +62,8 @@ class OPPMatrixCard(object):
 class OPPSwitch(SwitchPlatformInterface):
 
     """An OPP input on an OPP input card."""
+
+    __slots__ = ["card"]
 
     def __init__(self, card, number):
         """Initialise input."""

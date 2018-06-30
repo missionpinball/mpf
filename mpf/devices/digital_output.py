@@ -23,7 +23,7 @@ class DigitalOutput(SystemWideDevice):
     collection = 'digital_outputs'
     class_label = 'digital_output'
 
-    __slots__ = ["hw_driver", "platform", "type"]
+    __slots__ = ["hw_driver", "platform", "type", "__dict__"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise digital output."""

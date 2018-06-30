@@ -1,5 +1,6 @@
 """Support for physical RGB DMDs."""
 import asyncio
+from functools import partial
 
 from mpf.core.machine import MachineController
 from mpf.core.platform import RgbDmdPlatform
@@ -14,7 +15,8 @@ class RgbDmd(SystemWideDevice):
     config_section = 'rgb_dmds'
     collection = 'rgb_dmds'
     class_label = 'rgb_dmd'
-    machine = None
+
+    __slots__ = ["hw_device", "platform"]
 
     @classmethod
     def device_class_init(cls, machine: MachineController):
@@ -23,8 +25,7 @@ class RgbDmd(SystemWideDevice):
         Args:
             machine: MachineController which is used
         """
-        cls.machine = machine
-        cls.machine.bcp.interface.register_command_callback("rgb_dmd_frame", cls._bcp_receive_dmd_frame)
+        machine.bcp.interface.register_command_callback("rgb_dmd_frame", partial(cls._bcp_receive_dmd_frame, machine))
 
     def __init__(self, machine, name):
         """Initialise DMD."""
@@ -47,15 +48,15 @@ class RgbDmd(SystemWideDevice):
 
     @classmethod
     @asyncio.coroutine
-    def _bcp_receive_dmd_frame(cls, client, name, rawbytes, **kwargs):
+    def _bcp_receive_dmd_frame(cls, machine, client, name, rawbytes, **kwargs):
         """Update dmd from BCP."""
         del client
         del kwargs
 
-        if name not in cls.machine.rgb_dmds:
+        if name not in machine.rgb_dmds:
             raise TypeError("rgb dmd {} not known".format(name))
 
-        cls.machine.rgb_dmds[name].update(rawbytes)
+        machine.rgb_dmds[name].update(rawbytes)
 
     def update(self, data: bytes):
         """Update data on the dmd.

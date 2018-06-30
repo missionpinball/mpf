@@ -10,6 +10,8 @@ class OPPIncandCard(object):
 
     """An incandescent wing card."""
 
+    __slots__ = ["log", "addr", "chain_serial", "oldState", "newState", "mask", "cardNum"]
+
     # pylint: disable-msg=too-many-arguments
     def __init__(self, chain_serial, addr, mask, incand_dict, machine):
         """Initialise OPP incandescent card."""
@@ -34,6 +36,8 @@ class OPPIncandCard(object):
 class OPPIncand(LightPlatformSoftwareFade):
 
     """A driver of an incandescent wing card."""
+
+    __slots__ = ["incandCard"]
 
     def __init__(self, incand_card, number, hardware_fade_ms, loop):
         """Initialise Incandescent wing card driver."""
