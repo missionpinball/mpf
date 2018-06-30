@@ -17,6 +17,8 @@ class FadecandyHardwarePlatform(OpenpixelHardwarePlatform):
 
     """Base class for the FadeCandy hardware platform."""
 
+    __slots__ = []
+
     def __init__(self, machine: "MachineController") -> None:
         """Initialise Fadecandy.
 
@@ -46,6 +48,9 @@ class FadeCandyOPClient(OpenPixelClient):
     available with generic OPC implementations.
 
     """
+
+    __slots__ = ["gamma", "whitepoint", "linear_slope", "linear_cutoff", "keyframe_interpolation", "dithering",
+                 "config"]
 
     def __init__(self, machine, config):
         """Initialise Fadecandy client.

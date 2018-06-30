@@ -9,6 +9,8 @@ class MMA8451Device(object):
 
     """MMA8451 accelerometer."""
 
+    __slots__ = ["i2c_platform", "platform", "callback", "number", "task"]
+
     def __init__(self, number, callback, i2c_platform, platform):
         """Initialise MMA8451 accelerometer."""
         self.i2c_platform = i2c_platform    # type: I2cPlatform
@@ -88,6 +90,8 @@ class MMA8451Device(object):
 class MMA8451Platform(AccelerometerPlatform):
 
     """MMA8451 accelerometer platform."""
+
+    __slots__ = ["accelerometers"]
 
     def __init__(self, machine):
         """Configure MMA8451 based accelerometers."""

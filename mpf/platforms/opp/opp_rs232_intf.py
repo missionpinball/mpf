@@ -1,7 +1,7 @@
 """Defines for OPP platform."""
 
 
-class OppRs232Intf:
+class OppRs232Intf(object):
 
     """Constants for OPP serial protocol."""
 

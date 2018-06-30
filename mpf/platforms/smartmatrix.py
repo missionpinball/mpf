@@ -18,6 +18,8 @@ class SmartMatrixHardwarePlatform(RgbDmdPlatform):
 
     """SmartMatrix RGB DMD."""
 
+    __slots__ = ["devices"]
+
     def __init__(self, machine):
         """Initialise RGB DMD."""
         super().__init__(machine)
@@ -68,6 +70,8 @@ class SmartMatrixHardwarePlatform(RgbDmdPlatform):
 class SmartMatrixDevice(DmdPlatformInterface):
 
     """A smartmatrix device."""
+
+    __slots__ = ["config", "writer", "port", "control_data_queue", "current_frame", "new_frame_event", "machine", "log"]
 
     def __init__(self, config, machine):
         """Initialise smart matrix device."""

@@ -1,9 +1,11 @@
 """Spike defines."""
 
 
-class SpikeNodebus:
+class SpikeNodebus(object):
 
     """Spike message defines."""
+
+    __slots__ = []
 
     Poll = 0x00
     GetInputState = 0x11
