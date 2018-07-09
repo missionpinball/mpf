@@ -144,6 +144,9 @@ class Command(object):
                             metavar='mc_file_name',
                             default=None, help=argparse.SUPPRESS)
 
+        parser.add_argument("--no-sound",
+                            action="store_true", dest="no_sound", default=False)
+
         self.args = parser.parse_args(args)
         self.args.configfile = Util.string_to_list(self.args.configfile)
 
