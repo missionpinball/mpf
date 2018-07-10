@@ -807,6 +807,13 @@ mypinballs:
     debug: single|bool|False
 named_colors:
     __valid_in__: machine
+osc:
+    __valid_in__: machine
+    server_ip: single|str|127.0.0.1
+    server_port: single|int|9000
+    client_ip: single|str|127.0.0.1
+    client_port: single|int|8000
+    enabled: single|bool|False
 opp:
     __valid_in__: machine
     ports: list|str|

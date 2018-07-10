@@ -90,6 +90,7 @@ mpf:
         mpf.plugins.auditor.Auditor
         mpf.plugins.info_lights.InfoLights
         mpf.plugins.switch_player.SwitchPlayer
+        mpf.plugins.osc.Osc
 
     platforms:
         fadecandy: mpf.platforms.fadecandy.FadecandyHardwarePlatform
