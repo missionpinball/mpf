@@ -43,7 +43,7 @@ class Osc(object):
 
     @asyncio.coroutine
     def _start(self):
-        yield from self.server.serve_async()
+        yield from self.server.create_serve_endpoint()
         self.machine.switch_controller.add_monitor(self._notify_switch_changes)
 
 
