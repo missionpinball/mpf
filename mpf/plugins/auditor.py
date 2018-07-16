@@ -167,6 +167,9 @@ class Auditor(object):
                 kwargs.
         """
         del kwargs
+        if not self.machine.game or not self.machine.game.player_list:
+            return
+
         for item in self.config['player']:
             for player in self.machine.game.player_list:
 
