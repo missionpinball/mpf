@@ -233,8 +233,8 @@ class MpfFormatter(string.Formatter):
 
     def format_field(self, value, format_spec):
         """Format field."""
-        # don't crash on None for int
-        if value is None and format_spec[0:1] == "d":
+        # don't crash on None for int. the format type is always the last element in a format spec
+        if value is None and format_spec[-1:] == "d":
             value = 0
         return super().format_field(value, format_spec)
 
