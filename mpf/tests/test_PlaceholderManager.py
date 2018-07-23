@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
-from mpf.core.placeholder_manager import PlaceholderManager, BoolTemplate
+from mpf.core.placeholder_manager import PlaceholderManager, BoolTemplate, TextTemplate
 
 
 class TestPlaceholderManager(unittest.TestCase):
@@ -103,3 +103,111 @@ class TestPlaceholderManagerWithMachine(MpfFakeGameTestCase):
 
         self.machine.game.player.b = 8
         self.advance_time_and_run()
+
+    def test_player_vars(self):
+        self.start_game()
+        template_game = self.machine.placeholder_manager.build_int_template(
+            "game.max_players", 0)
+        game = template_game.evaluate([])
+        self.assertEqual(4, game)
+        template_game = self.machine.placeholder_manager.build_int_template(
+            "game.num_players", 0)
+        game = template_game.evaluate([])
+        self.assertEqual(1, game)
+
+        template_current = self.machine.placeholder_manager.build_int_template(
+            "current_player.score", 0)
+
+        template1 = self.machine.placeholder_manager.build_int_template(
+            "players[0].score", 0)
+        template2 = self.machine.placeholder_manager.build_int_template(
+            "players[1].score", 0)
+
+        value, subscription = template_current.evaluate_and_subscribe([])
+        value1, subscription1 = template1.evaluate_and_subscribe([])
+        value2, subscription2 = template2.evaluate_and_subscribe([])
+        self.assertFalse(subscription.done())
+        self.assertEqual(0, value)
+        self.assertFalse(subscription1.done())
+        self.assertEqual(0, value1)
+        self.assertFalse(subscription2.done())
+        self.assertEqual(0, value2)
+
+        self.machine.game.player.score += 100
+        self.advance_time_and_run(.1)
+        self.assertTrue(subscription.done())
+        self.assertTrue(subscription1.done())
+        value, subscription = template_current.evaluate_and_subscribe([])
+        value1, subscription1 = template1.evaluate_and_subscribe([])
+        value2, subscription2 = template2.evaluate_and_subscribe([])
+        self.assertFalse(subscription.done())
+        self.assertEqual(100, value)
+        self.assertFalse(subscription1.done())
+        self.assertEqual(100, value1)
+        self.assertFalse(subscription2.done())
+        self.assertEqual(0, value2)
+
+        self.add_player()
+        self.advance_time_and_run(.1)
+        self.assertTrue(subscription2.done())
+        value, subscription = template_current.evaluate_and_subscribe([])
+        value1, subscription1 = template1.evaluate_and_subscribe([])
+        value2, subscription2 = template2.evaluate_and_subscribe([])
+        self.assertFalse(subscription.done())
+        self.assertEqual(100, value)
+        self.assertFalse(subscription1.done())
+        self.assertEqual(100, value1)
+        self.assertFalse(subscription2.done())
+        self.assertEqual(0, value2)
+
+        template_game = self.machine.placeholder_manager.build_int_template(
+            "game.num_players", 0)
+        game = template_game.evaluate([])
+        self.assertEqual(2, game)
+
+        self.drain_ball()
+        self.advance_time_and_run(.1)
+        value, subscription = template_current.evaluate_and_subscribe([])
+        value1, subscription1 = template1.evaluate_and_subscribe([])
+        value2, subscription2 = template2.evaluate_and_subscribe([])
+        self.assertFalse(subscription.done())
+        self.assertEqual(0, value)
+        self.assertFalse(subscription1.done())
+        self.assertEqual(100, value1)
+        self.assertFalse(subscription2.done())
+        self.assertEqual(0, value2)
+
+        self.machine.game.player.score += 42
+        self.advance_time_and_run(.1)
+        self.assertTrue(subscription2.done())
+        value, subscription = template_current.evaluate_and_subscribe([])
+        value1, subscription1 = template1.evaluate_and_subscribe([])
+        value2, subscription2 = template2.evaluate_and_subscribe([])
+        self.assertFalse(subscription.done())
+        self.assertEqual(42, value)
+        self.assertFalse(subscription1.done())
+        self.assertEqual(100, value1)
+        self.assertFalse(subscription2.done())
+        self.assertEqual(42, value2)
+        self.advance_time_and_run(.1)
+        self.assertFalse(subscription1.done())
+        self.assertFalse(subscription2.done())
+
+        self.machine.game.player_list[0].score += 23
+        self.advance_time_and_run(.1)
+        self.assertTrue(subscription1.done())
+        value, subscription = template_current.evaluate_and_subscribe([])
+        value1, subscription1 = template1.evaluate_and_subscribe([])
+        value2, subscription2 = template2.evaluate_and_subscribe([])
+        self.assertFalse(subscription.done())
+        self.assertEqual(42, value)
+        self.assertFalse(subscription1.done())
+        self.assertEqual(123, value1)
+        self.assertFalse(subscription2.done())
+        self.assertEqual(42, value2)
+
+    def testTextTemplate(self):
+        t = TextTemplate(self.machine, "Number: {test:<4d}")
+        self.assertEqual("Number: 7   ", t.evaluate({"test": 7}))
+        self.assertEqual("Number: 0   ", t.evaluate({"test": None}))
+
