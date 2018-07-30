@@ -43,6 +43,7 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
         """Close serial."""
         self.serial.close()
 
+    @asyncio.coroutine
     def configure_servo(self, number: str):
         """Configure a servo device in paltform.
 

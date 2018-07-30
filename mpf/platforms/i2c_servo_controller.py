@@ -3,6 +3,7 @@ import asyncio
 import logging
 import time
 
+from mpf.exceptions.ConfigFileError import ConfigFileError
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 
 from mpf.core.platform import ServoPlatform
@@ -17,9 +18,9 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
         super().__init__(machine)
         self.log = logging.getLogger("I2C Servo Controller Platform")
         self.log.debug("Configuring template hardware interface.")
-        self.config = self.machine.config['servo_controllers']
+        self.config = self.machine.config.get('servo_controllers', {})
         self.platform = None
-        self.i2c_device = None
+        self.i2c_devices = {}
         self.features['tickless'] = True
 
     def __repr__(self):
@@ -33,32 +34,51 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
 
         # validate our config (has to be in intialize since config_processor
         # is not read in __init__)
-        self.machine.config_validator.validate_config("servo_controllers",
-                                                      self.config)
+        self.config = self.machine.config_validator.validate_config("servo_controllers", self.config)
 
         # load i2c platform
         self.platform = self.machine.get_platform_sections(
             "i2c", self.config['platform'])
 
-        self.i2c_device = yield from self.platform.configure_i2c(self.config['address'])
+    def _initialize_controller(self, address):
+        # check if controller is already initialized
+        if address in self.i2c_devices:
+            return self.i2c_devices[address]
+
+        i2c_device = yield from self.platform.configure_i2c(address)
+        self.i2c_devices[address] = i2c_device
 
         # initialise PCA9685/PCA9635
-        self.i2c_device.i2c_write8(0x00, 0x11)  # set sleep
-        self.i2c_device.i2c_write8(0x01, 0x04)  # configure output
-        self.i2c_device.i2c_write8(0xFE, 130)   # set approx 50Hz
+        i2c_device.i2c_write8(0x00, 0x11)  # set sleep
+        i2c_device.i2c_write8(0x01, 0x04)  # configure output
+        i2c_device.i2c_write8(0xFE, 130)   # set approx 50Hz
         yield from asyncio.sleep(.01, loop=self.machine.clock.loop)     # needed according to datasheet to sync PLL
-        self.i2c_device.i2c_write8(0x00, 0x01)  # no more sleep
+        i2c_device.i2c_write8(0x00, 0x01)  # no more sleep
         yield from asyncio.sleep(.01, loop=self.machine.clock.loop)     # needed to end sleep according to datasheet
+        return i2c_device
 
+    @asyncio.coroutine
     def configure_servo(self, number: str):
         """Configure servo."""
-        number_int = int(number)
+        try:
+            i2c_address, servo_number = number.rsplit("-", 1)
+        except ValueError:
+            servo_number = number
+            i2c_address = 0x40
+        try:
+            number_int = int(servo_number)
+        except ValueError:
+            raise ConfigFileError("Invalid servo number {} in {}.".format(servo_number, number),
+                                  2, self.log.name)
+
+        i2c_device = yield from self._initialize_controller(i2c_address)
 
         # check bounds
         if number_int < 0 or number_int > 15:
-            raise AssertionError("invalid number")
+            raise ConfigFileError("Invalid number {} in {}. The controller only supports servos 0 to 15.".format(
+                number_int, number), 1, self.log.name)
 
-        return I2cServo(number_int, self.config, self.i2c_device)
+        return I2cServo(number_int, self.config, i2c_device)
 
     def stop(self):
         """Stop platform."""
