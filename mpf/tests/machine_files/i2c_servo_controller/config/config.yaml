@@ -1,0 +1,11 @@
+#config_version=5
+hardware:
+    servo_controllers: i2c_servo_controller
+
+servos:
+    servo1:
+        number: 3
+    servo2:
+        number: bus1-64-7
+    servo3:
+        number: 4

@@ -975,7 +975,6 @@ segment_display_player:
 servo_controllers:
     __valid_in__: machine
     platform: single|str|None
-    address: single|str|64
     servo_min: single|int|150
     servo_max: single|int|600
     debug: single|bool|False

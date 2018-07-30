@@ -454,6 +454,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         # every servo board supports exactly 6 servos
         return self.convert_number_from_config(board * 6 + servo)
 
+    @asyncio.coroutine
     def configure_servo(self, number: str):
         """Configure a servo.
 
