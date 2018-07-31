@@ -54,7 +54,7 @@ class Smbus2I2cDevice(I2cPlatformInterface):
         """Split and return bus + address."""
         if isinstance(address, int):
             return 0, address
-        bus, address = address.split("-")
+        bus, address = address.split("-", 1)
         return bus, int(address)
 
     def _get_i2c_bus(self, bus) -> SMBus2Asyncio:
