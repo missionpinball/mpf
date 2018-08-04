@@ -403,10 +403,12 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
             # Therefore, we will trigger after the Z value
             elif event_type == self.pinproc.EventTypeAccelerometerX:
                 self.acceleration[0] = event_value
-                self.debug_log("Got Accelerometer value X. Value: %s", event_value)
+                if self.debug:
+                    self.debug_log("Got Accelerometer value X. Value: %s", event_value)
             elif event_type == self.pinproc.EventTypeAccelerometerY:
                 self.acceleration[1] = event_value
-                self.debug_log("Got Accelerometer value Y. Value: %s", event_value)
+                if self.debug:
+                    self.debug_log("Got Accelerometer value Y. Value: %s", event_value)
             elif event_type == self.pinproc.EventTypeAccelerometerZ:
                 self.acceleration[2] = event_value
 
@@ -416,12 +418,15 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
                         self.scale_accelerometer_to_g(self.acceleration[0]),
                         self.scale_accelerometer_to_g(self.acceleration[1]),
                         self.scale_accelerometer_to_g(self.acceleration[2]))
+                if self.debug:
                     self.debug_log("Got Accelerometer value Z. Value: %s", event_value)
             elif event_type == self.pinproc.EventTypeBurstSwitchOpen:
-                self.debug_log("Got burst open event value %s", event_value)
+                if self.debug:
+                    self.debug_log("Got burst open event value %s", event_value)
                 self._handle_burst(event_value, 0)
             elif event_type == self.pinproc.EventTypeBurstSwitchClosed:
-                self.debug_log("Got burst closed event value %s", event_value)
+                if self.debug:
+                    self.debug_log("Got burst closed event value %s", event_value)
                 self._handle_burst(event_value, 1)
             else:   # pragma: no cover
                 self.log.warning("Received unrecognized event from the P3-ROC. "
