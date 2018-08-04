@@ -314,9 +314,18 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         # enable burst IRs
         if not self._bursts_enabled:
             self._bursts_enabled = True
-            self.log.info("Enabling burst opto %s on the P3-Roc.", number)
+            self.log.info("Enabling all burst opto on the P3-Roc.")
+            burst_config0  = self.config['burst_us_per_half_pulse'] & 0x3F
+            burst_config0 |= (self.config['burst_number_of_pulses_to_drive_output'] & 0x1F) << 6
+            burst_config0 |= (self.config['burst_number_of_idle_pulses_before_next'] & 0x3F) << 12
+            burst_config0 |= (self.config['burst_number_of_burst_pulses_before_check'] & 0x3F) << 18
+            burst_config0 |= ((self.config['burst_ms_between_scans'] - 1) & 0x1F) << 24
+            self.proc.write_data(0x02, 0x00, burst_config0)
+            self.debug_log("Setting 0x02 0x00 to {}", burst_config0)
+
             burst_config1 = (1 << 31) | 0x1F
             self.proc.write_data(0x02, 0x01, burst_config1)
+            self.debug_log("Setting 0x02 0x01 to {}", burst_config1)
 
         # configure driver for receiver
         if driver not in self._burst_opto_drivers_to_switch_map:

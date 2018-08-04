@@ -833,6 +833,11 @@ p3_roc:
     debug: single|bool|False
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
+    burst_us_per_half_pulse: single|int(0,63)|12
+    burst_number_of_pulses_to_drive_output: single|int(0,31)|5
+    burst_number_of_idle_pulses_before_next: single|int(0,63)|8
+    burst_number_of_burst_pulses_before_check: single|int(0,63)|10
+    burst_ms_between_scans: single|int(1,64)|1
 psus:
     __valid_in__: machine
     voltage: single|int|None
