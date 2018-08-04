@@ -54,6 +54,8 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         # validate config for p3_roc
         self.config = self.machine.config_validator.validate_config("p3_roc", self.machine.config['p_roc'])
 
+        self.debug = self.config["debug"]
+
         if self.machine_type != self.pinproc.MachineTypePDB:
             raise AssertionError("P3-Roc can only handle PDB driver boards")
 

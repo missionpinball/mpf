@@ -47,6 +47,8 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         # validate config for p_roc
         self.config = self.machine.config_validator.validate_config("p_roc", self.machine.config['p_roc'])
 
+        self.debug = self.config["debug"]
+
         self.dmd = None
         self.alpha_display = None
 
