@@ -321,11 +321,11 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
             burst_config0 |= (self.config['burst_number_of_burst_pulses_before_check'] & 0x3F) << 18
             burst_config0 |= ((self.config['burst_ms_between_scans'] - 1) & 0x1F) << 24
             self.proc.write_data(0x02, 0x00, burst_config0)
-            self.debug_log("Setting 0x02 0x00 to {}", burst_config0)
+            self.debug_log("Setting 0x02 0x00 to %s", burst_config0)
 
             burst_config1 = (1 << 31) | 0x1F
             self.proc.write_data(0x02, 0x01, burst_config1)
-            self.debug_log("Setting 0x02 0x01 to {}", burst_config1)
+            self.debug_log("Setting 0x02 0x01 to %s", burst_config1)
 
         # configure driver for receiver
         if driver not in self._burst_opto_drivers_to_switch_map:
