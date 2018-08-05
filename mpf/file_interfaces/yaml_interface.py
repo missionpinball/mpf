@@ -10,7 +10,7 @@ from typing import Any, Iterable
 from typing import Dict
 
 import collections
-import ruamel.yaml as yaml
+import ruamel.yaml as yaml  # pylint: disable-msg=useless-import-alias
 from ruamel.yaml.error import MarkedYAMLError
 from ruamel.yaml.reader import Reader
 from ruamel.yaml.resolver import BaseResolver, Resolver

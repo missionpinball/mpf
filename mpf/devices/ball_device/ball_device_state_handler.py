@@ -2,7 +2,7 @@
 import asyncio
 
 
-class BallDeviceStateHandler(object):
+class BallDeviceStateHandler:
 
     """Base class for ball device handler."""
 

@@ -15,7 +15,7 @@ from mpf._version import __show_version__, __config_version__
 from mpf.exceptions.ConfigFileError import ConfigFileError
 
 
-class ConfigProcessor(object):
+class ConfigProcessor:
 
     """Config processor which loads the config."""
 

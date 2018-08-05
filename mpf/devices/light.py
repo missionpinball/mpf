@@ -40,7 +40,7 @@ class DriverLight(LightPlatformSoftwareFade):
         return self.driver.hw_driver.get_board_name()
 
 
-class LightStackEntry(object):
+class LightStackEntry:
 
     """Data class for a light stack entry."""
 

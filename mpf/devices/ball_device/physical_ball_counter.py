@@ -15,7 +15,7 @@ if MYPY:
     from mpf.devices.ball_device.ball_count_handler import BallCountHandler
 
 
-class EjectTracker(object):
+class EjectTracker:
 
     """Tracks ball changes during an eject."""
 
@@ -139,7 +139,7 @@ class EjectTracker(object):
         self._ready.set_result("ready")
 
 
-class BallActivity(object):
+class BallActivity:
 
     """An acticity in a ball device."""
 

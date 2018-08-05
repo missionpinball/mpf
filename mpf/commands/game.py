@@ -18,7 +18,7 @@ from mpf.core.utility_functions import Util
 from mpf.commands.logging_formatters import JSONFormatter
 
 
-class Command(object):
+class Command:
 
     """Runs the mpf game."""
 

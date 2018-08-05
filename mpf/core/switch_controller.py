@@ -21,7 +21,7 @@ SwitchHandler = namedtuple("SwitchHandler", ["switch_name", "callback", "state",
 TimedSwitchHandler = namedtuple("TimedSwitchHandler", ["callback", 'switch_name', 'state', 'ms'])
 
 
-class RegisteredSwitch(object):
+class RegisteredSwitch:
 
     """Registered switch handler."""
 

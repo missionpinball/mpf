@@ -1,7 +1,7 @@
 """Spike defines."""
 
 
-class SpikeNodebus(object):
+class SpikeNodebus:
 
     """Spike message defines."""
 

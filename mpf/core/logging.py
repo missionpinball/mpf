@@ -8,7 +8,7 @@ if MYPY:   # pragma: no cover
     from logging import Logger
 
 
-class LogMixin(object):
+class LogMixin:
 
     """Mixin class to add smart logging functionality to modules."""
 

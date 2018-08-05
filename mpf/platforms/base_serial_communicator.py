@@ -8,7 +8,7 @@ if MYPY:   # pragma: no cover
     from typing import Generator
 
 
-class BaseSerialCommunicator(object):
+class BaseSerialCommunicator:
 
     """Basic Serial Communcator for platforms."""
 
@@ -140,7 +140,7 @@ class BaseSerialCommunicator(object):
             try:
                 resp = yield from self.reader.read(100)
             except asyncio.CancelledError:
-                raise
+                raise   # pylint: disable-msg=try-except-raise
             except Exception as e:  # pylint: disable-msg=broad-except
                 self.log.warning("Serial error: {}".format(e))
                 resp = None

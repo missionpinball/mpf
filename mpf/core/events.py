@@ -751,7 +751,7 @@ class EventManager(MpfController):
                 callback(**kwargs)
 
 
-class QueuedEvent(object):
+class QueuedEvent:
 
     """Base class for an event queue which is created each time a queue event is called."""
 

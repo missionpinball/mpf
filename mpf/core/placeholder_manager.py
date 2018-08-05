@@ -275,7 +275,7 @@ class TextTemplate:
         return value, future
 
 
-class BasePlaceholder(object):
+class BasePlaceholder:
 
     """Base class for placeholder variables."""
 

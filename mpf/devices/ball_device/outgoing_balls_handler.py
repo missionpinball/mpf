@@ -14,7 +14,7 @@ if MYPY:   # pragma: no cover
     from mpf.devices.ball_device.ball_device import BallDevice
 
 
-class OutgoingBall(object):
+class OutgoingBall:
 
     """One outgoing ball."""
 

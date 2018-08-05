@@ -6,7 +6,7 @@ from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftw
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
 
-class OPPIncandCard(object):
+class OPPIncandCard:
 
     """An incandescent wing card."""
 

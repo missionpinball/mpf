@@ -163,7 +163,7 @@ named_rgb_colors = dict(
 )
 
 
-class RGBColor(object):
+class RGBColor:
 
     """One RGB Color."""
 
@@ -303,7 +303,7 @@ class RGBColor(object):
         """
         return dict(
             [(_v, _k) for _k, _v in list(named_rgb_colors.items())]).get(
-            self._color)
+            self._color)    # pylint: disable-msg=consider-using-dict-comprehension
 
     @name.setter
     def name(self, value: str):
@@ -466,7 +466,7 @@ class ColorException(AssertionError):
     pass
 
 
-class RGBColorCorrectionProfile(object):
+class RGBColorCorrectionProfile:
 
     """Encapsulates a named RGB color correction profile and its associated lookup tables."""
 

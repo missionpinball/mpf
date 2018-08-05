@@ -22,7 +22,7 @@ if MYPY:    # noqa
     from mpf.core.machine import MachineController
 
 
-class RuntimeToken(object):
+class RuntimeToken:
 
     """A runtime token."""
 
@@ -32,7 +32,7 @@ class RuntimeToken(object):
         self.validator_function = validator_function
 
 
-class ConfigValidator(object):
+class ConfigValidator:
 
     """Validates config against config specs."""
 

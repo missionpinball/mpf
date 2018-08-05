@@ -12,7 +12,7 @@ from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.utility_functions import Util
 
 
-class LogicBlockState(object):
+class LogicBlockState:
 
     """Represents the state of a logic_block."""
 

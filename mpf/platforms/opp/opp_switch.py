@@ -6,7 +6,7 @@ from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInt
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
 
-class OPPInputCard(object):
+class OPPInputCard:
 
     """OPP input card."""
 

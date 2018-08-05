@@ -9,7 +9,7 @@ import asyncio
 from ruamel.yaml.compat import ordereddict
 
 
-class Util(object):
+class Util:
 
     """Utility functions for MPF."""
 

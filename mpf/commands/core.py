@@ -3,7 +3,7 @@
 import sys
 
 
-class Command(object):  # pragma: no cover
+class Command:  # pragma: no cover
 
     """Deprecated command."""
 

@@ -7,7 +7,7 @@ if MYPY:    # noqa
     from typing import List
 
 
-class FileInterface(object):
+class FileInterface:
 
     """Interface for config files."""
 

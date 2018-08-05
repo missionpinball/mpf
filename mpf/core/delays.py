@@ -14,7 +14,7 @@ if MYPY:   # pragma: no cover
 __api__ = ['DelayManager', 'DelayManagerRegistry']
 
 
-class DelayManagerRegistry(object):
+class DelayManagerRegistry:
 
     """Keeps references to all DelayManager instances."""
 

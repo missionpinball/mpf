@@ -11,7 +11,7 @@ if MYPY:   # pragma: no cover
     from typing import Any, Set
 
 
-class Auditor(object):
+class Auditor:
 
     """Writes switch events, regular events, and player variables to an audit log file."""
 

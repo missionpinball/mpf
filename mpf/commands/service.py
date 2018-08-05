@@ -314,7 +314,7 @@ class ServiceCli(cmd.Cmd):
         self.loop.run_until_complete(self.bcp_client.wait_for_response("service_stop"))
 
 
-class Command(object):
+class Command:
 
     """Run the service cli."""
 

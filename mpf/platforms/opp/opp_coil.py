@@ -178,7 +178,7 @@ class OPPSolenoid(DriverPlatformInterface):
         self.solCard.platform.send_to_processor(self.solCard.chain_serial, final_cmd)
 
 
-class OPPSolenoidCard(object):
+class OPPSolenoidCard:
 
     """OPP solenoid card."""
 

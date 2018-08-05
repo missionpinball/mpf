@@ -5,7 +5,7 @@ from mpf.core.delays import DelayManager
 from mpf.core.utility_functions import Util
 
 
-class SwitchPlayer(object):
+class SwitchPlayer:
 
     """Plays back switch sequences from a config file, used for testing."""
 

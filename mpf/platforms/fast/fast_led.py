@@ -8,7 +8,7 @@ from typing import Union
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
 
-class FASTDirectLED(object):
+class FASTDirectLED:
 
     """FAST RGB LED."""
 

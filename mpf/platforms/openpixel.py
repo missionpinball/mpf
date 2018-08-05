@@ -119,7 +119,7 @@ class OpenPixelLED(LightPlatformInterface):
         return "OPC Channel {}".format(self.channel_number)
 
 
-class OpenPixelClient(object):
+class OpenPixelClient:
 
     """Base class of an OPC client which connects to a FadeCandy server.
 

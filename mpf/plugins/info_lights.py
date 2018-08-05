@@ -6,7 +6,7 @@ Typically in an EM machine.
 import logging
 
 
-class InfoLights(object):
+class InfoLights:
 
     """Uses lights to represent game state.
 

@@ -79,7 +79,6 @@ class ShowPlayer(DeviceConfigPlayer):
 
         instance_dict[key] = self.machine.show_controller.replace_or_advance_show(previous_show, show_config,
                                                                                   start_step, start_time, stop_callback)
-        return
 
     @staticmethod
     def _stop(key, instance_dict, show, show_settings, queue, start_time, placeholder_args):

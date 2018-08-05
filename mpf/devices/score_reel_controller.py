@@ -7,7 +7,7 @@ from functools import partial
 from mpf.core.utility_functions import Util
 
 
-class ScoreReelController(object):
+class ScoreReelController:
 
     """The overall controller that is in charge of and manages the score reels in a pinball machine.
 

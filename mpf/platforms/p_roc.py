@@ -164,7 +164,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         states = self.proc.switch_get_states()
 
         for switch, state in enumerate(states):
-            if state == 3 or state == 1:
+            if state in (1, 3):
                 states[switch] = 1
             else:
                 states[switch] = 0
@@ -268,7 +268,7 @@ class PROCDMD(DmdPlatformInterface):
                                      "of 4096. Discarding...", len(data))
 
 
-class AuxPort(object):
+class AuxPort:
 
     """Aux port on the P-Roc."""
 
@@ -328,7 +328,7 @@ class PRocAlphanumericDisplay(SegmentDisplayPlatformInterface):
         self.display.set_text(text, self.number)
 
 
-class AuxAlphanumericDisplay(object):
+class AuxAlphanumericDisplay:
 
     """An alpha numeric display connected to the aux port on the P-Roc."""
 
@@ -497,7 +497,7 @@ class AuxAlphanumericDisplay(object):
                 # indexing error by not checking i+1 on the 16th char.
                 if i < 15:
                     comma_dot = strings[j][i + 1]
-                    if comma_dot == "," or comma_dot == ".":
+                    if comma_dot in (".", ","):
                         segs[j][i] |= self.asciiSegments[ord(comma_dot) - 32]
                         strings[j].remove(comma_dot)
                         # Append a space to ensure there are enough chars.

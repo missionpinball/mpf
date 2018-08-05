@@ -3,7 +3,7 @@ max-line-length: 120
 
 mccabe:
   options:
-    max-complexity: 15
+    max-complexity: 20
 
 pyflakes:
   disable:

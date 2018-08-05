@@ -128,7 +128,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
     def _get_platforms(self):
         platforms = []
         for name, platform in self.machine.config['mpf']['platforms'].items():
-            if name == "virtual" or name == "smart_virtual":
+            if name in ("virtual", "smart_virtual"):
                 continue
             platforms.append(Util.string_to_class(platform))
         return platforms

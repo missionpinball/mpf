@@ -369,7 +369,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         return switch
 
 
-class PDBConfig(object):
+class PDBConfig:
 
     """Handles PDB Config of the P/P3-Roc.
 
@@ -696,7 +696,7 @@ class PDBConfig(object):
         return num
 
 
-class PDBSwitch(object):
+class PDBSwitch:
 
     """Base class for switches connected to a P-ROC/P3-ROC."""
 
@@ -729,7 +729,7 @@ class PDBSwitch(object):
         return 32 + int(cr_list[0]) * 16 + int(cr_list[1])
 
 
-class PDBCoil(object):
+class PDBCoil:
 
     """Base class for coils connected to a P-ROC/P3-ROC that are controlled via PDB driver boards.
 
@@ -779,7 +779,7 @@ class PDBCoil(object):
         return self.pdb.is_pdb_address(string)
 
 
-class PDBLight(object):
+class PDBLight:
 
     """Base class for lights connected to a PD-8x8 driver board."""
 

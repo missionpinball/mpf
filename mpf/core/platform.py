@@ -401,7 +401,7 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         Returns: Validated config.
         """
         if self.get_switch_config_section():
-            spec = self.get_switch_config_section()
+            spec = self.get_switch_config_section()     # pylint: disable-msg=assignment-from-none
             config = switch.machine.config_validator.validate_config(spec, config, switch.name)
         elif config:
             raise AssertionError("No platform_config supported but not empty {} for switch {}".
@@ -480,7 +480,7 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
     def validate_coil_section(self, driver, config) -> dict:
         """Validate coil config for platform."""
         if self.get_coil_config_section():
-            spec = self.get_coil_config_section()
+            spec = self.get_coil_config_section()   # pylint: disable-msg=assignment-from-none
             config = driver.machine.config_validator.validate_config(spec, config, driver.name)
         elif config:
             raise AssertionError("No platform_config supported but not empty {} for driver {}".

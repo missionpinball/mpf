@@ -9,7 +9,7 @@ if MYPY:    # noqa
     from typing import Dict
 
 
-class FileManager(object):
+class FileManager:
 
     """Manages file interfaces."""
 

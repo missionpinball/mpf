@@ -9,7 +9,7 @@ if MYPY:    # pragma: no cover
     from mpf.devices.ball_device.ball_device import BallDevice
 
 
-class BallDeviceEjector(object):
+class BallDeviceEjector:
 
     """Ejector for a ball device.
 
