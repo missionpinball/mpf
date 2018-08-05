@@ -301,9 +301,10 @@ class RGBColor:
         Returns a string containing a standard color name or None
         if the current RGB color does not have a standard name.
         """
+        # pylint: disable-msg=consider-using-dict-comprehension
         return dict(
             [(_v, _k) for _k, _v in list(named_rgb_colors.items())]).get(
-            self._color)    # pylint: disable-msg=consider-using-dict-comprehension
+            self._color)
 
     @name.setter
     def name(self, value: str):

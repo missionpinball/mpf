@@ -1,6 +1,7 @@
 """Base class used for things that "play" from the config files, such as WidgetPlayer, SlidePlayer, etc."""
 import abc
 from functools import partial
+from typing import List
 
 from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
@@ -118,7 +119,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
             config = self.get_express_config(config)
         elif isinstance(config, list):
             # list config. convert from list to full
-            config = self.get_list_config(config)
+            config = self.get_list_config(config)   # pylint: disable-msg=assignment-from-no-return
 
         if not isinstance(config, dict):
             raise AssertionError("Player config for {} is supposed to be dict. Config: {}".
@@ -156,7 +157,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         del kwargs
         return config
 
-    def get_list_config(self, value):
+    def get_list_config(self, value) -> List[str]:
         """Parse config list."""
         del value
         raise AssertionError("Player {} does not support lists.".format(self.config_file_section))

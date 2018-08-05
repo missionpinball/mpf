@@ -139,8 +139,8 @@ class BaseSerialCommunicator:
         while True:
             try:
                 resp = yield from self.reader.read(100)
-            except asyncio.CancelledError:
-                raise   # pylint: disable-msg=try-except-raise
+            except asyncio.CancelledError:  # pylint: disable-msg=try-except-raise
+                raise
             except Exception as e:  # pylint: disable-msg=broad-except
                 self.log.warning("Serial error: {}".format(e))
                 resp = None

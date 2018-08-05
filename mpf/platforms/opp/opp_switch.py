@@ -32,7 +32,7 @@ class OPPInputCard:
                     OPPSwitch(self, self.chain_serial + "-" + self.cardNum + '-' + str(index))
 
 
-class OPPMatrixCard(object):
+class OPPMatrixCard:
 
     """OPP matrix input card."""
 

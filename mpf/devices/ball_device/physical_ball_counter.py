@@ -184,7 +184,7 @@ class UnknownBallActivity(NewBallActivity):
     __slots__ = []
 
 
-class PhysicalBallCounter(object):
+class PhysicalBallCounter:
 
     """Ball counter for ball device."""
 

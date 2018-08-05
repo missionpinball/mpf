@@ -353,9 +353,8 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         self.proc.write_data(0x02, addr_80, data_80)
 
         addr_81 = 0x81 + (driver * 2)
-        data_81 = rx_to_check_for_this_transmitter
-        self.debug_log("Setting 0x02 %s to %s", addr_81, data_81)
-        self.proc.write_data(0x02, addr_81, data_81)
+        self.debug_log("Setting 0x02 %s to %s", addr_81, rx_to_check_for_this_transmitter)
+        self.proc.write_data(0x02, addr_81, rx_to_check_for_this_transmitter)
 
         burst_switch = P3RocBurstOpto(config, number, input_switch, driver)
         self._burst_switches.append(burst_switch)
