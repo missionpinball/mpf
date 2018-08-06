@@ -230,6 +230,17 @@ class BallSearch(MpfController):
         # Runs one iteration of the ball search.
         # Will schedule itself for the next run.
 
+        # check if we should skip this phase
+        if not self.playfield.config['ball_search_phase_{}_searches'.format(self.phase)]:
+            self.phase += 1
+            if self.phase > 3:
+                # give up
+                self.give_up()
+            else:
+                # go to the next phase
+                self._run()
+            return
+
         timeout = self.playfield.config['ball_search_interval']
 
         # iterate until we are done with all callbacks
