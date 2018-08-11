@@ -327,6 +327,11 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
             self.proc.write_data(0x02, 0x01, burst_config1)
             self.debug_log("Setting 0x02 0x01 to %s", burst_config1)
 
+            # enable receiver 63 for all of the optos (works around bug in fpga)
+            for driver in range(0, 64):
+                self.proc.write_data(0x02, 0x80 + (driver * 2), 1)
+                self.proc.write_data(0x02, 0x81 + (driver * 2), 63)
+
         # configure driver for receiver
         if driver not in self._burst_opto_drivers_to_switch_map:
             self._burst_opto_drivers_to_switch_map[driver] = []
