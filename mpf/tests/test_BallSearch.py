@@ -494,6 +494,8 @@ class TestBallSearch(MpfGameTestCase):
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
         self.advance_time_and_run(1)
         self.assertEqual(1, self.machine.ball_controller.num_balls_known)
+        self.machine.diverters["diverter1"].activate()
+        self.assertEqual("enabled", self.machine.coils["diverter_coil"].hw_driver.state)
 
         self.assertEqual(None, self.machine.game)
         self.machine.switch_controller.process_switch("s_start", 1)
@@ -508,8 +510,13 @@ class TestBallSearch(MpfGameTestCase):
         self.advance_time_and_run(21)
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
 
+        # diverter disables during ball search
+        self.assertEqual("disabled", self.machine.coils["diverter_coil"].hw_driver.state)
+
         self.post_event('flipper_cradle', 1)
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
+        # diverter should restore state
+        self.assertEqual("enabled", self.machine.coils["diverter_coil"].hw_driver.state)
 
     def test_prevent_ball_search_with_flipper_cradle(self):
         self.machine.ball_controller.num_balls_known = 0
