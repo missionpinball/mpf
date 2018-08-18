@@ -274,6 +274,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
 
         return self._configure_switch(config, switch_number)
 
+    # pylint: disable-msg=too-many-locals
     def _configure_burst_opto(self, config, number):
         """Configure burst opto on the P3-Roc.
 
