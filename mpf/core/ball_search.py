@@ -11,7 +11,7 @@ MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.devices.playfield import Playfield
 
-BallSearchCallback = namedtuple("BallSearchCallback", ["priority", "callback", "name"])
+BallSearchCallback = namedtuple("BallSearchCallback", ["priority", "callback", "name", "restore_callback"])
 
 
 class BallSearch(MpfController):
@@ -90,7 +90,7 @@ class BallSearch(MpfController):
         else:
             return True
 
-    def register(self, priority, callback, name):
+    def register(self, priority, callback, name, *, restore_callback=None):
         """Register a callback for sequential ball search.
 
         Callbacks are called by priority. Ball search only waits if the
@@ -101,10 +101,12 @@ class BallSearch(MpfController):
             callback: callback to call. ball search will wait before the next
                 callback, if it returns true
             name: string name which is used for debugging & the logs
+            restore_callback: optional callback to restore state of the device
+                after ball search ended
         """
         self.debug_log("Registering callback: {} (priority: {})".format(
             name, priority))
-        self.callbacks.append(BallSearchCallback(priority, callback, name))
+        self.callbacks.append(BallSearchCallback(priority, callback, name, restore_callback))
         # sort by priority
         self.callbacks = sorted(self.callbacks, key=lambda entry: entry.priority)
 
@@ -216,6 +218,11 @@ class BallSearch(MpfController):
 
         self.started = False
         self.delay.remove('run')
+
+        # restore all devices
+        for callback in self.callbacks:
+            if callback.restore_callback:
+                callback.restore_callback()
 
         self.machine.events.post('ball_search_stopped')
         '''event: ball_search_stopped
