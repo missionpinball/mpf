@@ -65,7 +65,8 @@ class Diverter(SystemWideDevice):
 
         if self.config['ball_search_order']:
             self.config['playfield'].ball_search.register(
-                self.config['ball_search_order'], self._ball_search, self.name)
+                self.config['ball_search_order'], self._ball_search, self.name,
+                restore_callback=self._ball_search_restore)
 
     def _register_switches(self, **kwargs):
         del kwargs
@@ -165,6 +166,20 @@ class Diverter(SystemWideDevice):
            self.config['deactivate_events']):
             self.deactivate()
 
+    def _coil_activate(self):
+        """Activate the coil."""
+        if self.config['type'] == 'pulse':
+            self.config['activation_coil'].pulse()
+        elif self.config['type'] == 'hold':
+            self.config['activation_coil'].enable()
+
+    def _coil_deactivate(self):
+        """Deactivate the coil."""
+        self.config['activation_coil'].disable()
+
+        if self.config['deactivation_coil']:
+            self.config['deactivation_coil'].pulse()
+
     @event_handler(9)
     def activate(self, **kwargs):
         """Physically activate this diverter's coil."""
@@ -178,10 +193,7 @@ class Diverter(SystemWideDevice):
             it's physically pulsing or holding the coil to move.
 
         '''
-        if self.config['type'] == 'pulse':
-            self.config['activation_coil'].pulse()
-        elif self.config['type'] == 'hold':
-            self.config['activation_coil'].enable()
+        self._coil_activate()
         self.schedule_deactivation()
 
     @event_handler(2)
@@ -203,10 +215,7 @@ class Diverter(SystemWideDevice):
         desc: The diverter called (name) is deativating itself.
 
         '''
-        self.config['activation_coil'].disable()
-
-        if self.config['deactivation_coil']:
-            self.config['deactivation_coil'].pulse()
+        self._coil_deactivate()
 
     def schedule_deactivation(self):
         """Schedule a delay to deactivate this diverter."""
@@ -331,8 +340,15 @@ class Diverter(SystemWideDevice):
     def _ball_search(self, phase, iteration):
         del phase
         del iteration
-        self.activate()
+        self._coil_activate()
         self.machine.delay.add(self.config['ball_search_hold_time'],
-                               self.deactivate,
+                               self._coil_deactivate,
                                'diverter_{}_ball_search'.format(self.name))
         return True
+
+    def _ball_search_restore(self):
+        """Restore state after ball search ended."""
+        if self.active:
+            self._coil_activate()
+        else:
+            self._coil_deactivate()
