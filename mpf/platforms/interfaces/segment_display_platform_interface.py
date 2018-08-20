@@ -16,7 +16,11 @@ class SegmentDisplayPlatformInterface(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def set_text(self, text: str, flashing: bool) -> None:
-        """Set a text to the display."""
+        """Set a text to the display.
+
+        This text will be right aligned in case the text is shorter than the display.
+        If it is too long it will be cropped on the left.
+        """
         raise NotImplementedError
 
 
