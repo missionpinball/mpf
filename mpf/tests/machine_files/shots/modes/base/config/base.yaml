@@ -177,6 +177,7 @@ shot_groups:
     enable_events: group32_enable
     disable_events: group32_disable
     reset_events: group32_reset
+    restart_events: group32_restart
     rotate_left_events: group32_rotate_left
     rotate_right_events: group32_rotate_right
     enable_rotation_events: group32_enable_rotation
