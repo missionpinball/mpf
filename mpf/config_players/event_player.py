@@ -40,7 +40,21 @@ class EventPlayer(FlatConfigPlayer):
 
     def _post_event(self, event, s):
         event_name_placeholder = TextTemplate(self.machine, event.replace("(", "{").replace(")", "}"))
+        for key, param in s.items():
+            if isinstance(param, dict):
+                s[key] = self._evaluate_event_param(param)
         self.machine.events.post(event_name_placeholder.evaluate({}), **s)
+
+    def _evaluate_event_param(self, param):
+        if param.get("type") == "float":
+            placeholder = self.machine.placeholder_manager.build_float_template(param["value"])
+        elif param.get("type") == "int":
+            placeholder = self.machine.placeholder_manager.build_int_template(param["value"])
+        elif param.get("type") == "bool":
+            placeholder = self.machine.placeholder_manager.build_bool_template(param["value"])
+        else:
+            placeholder = self.machine.placeholder_manager.build_string_template(param["value"])
+        return placeholder.evaluate({})
 
     def get_list_config(self, value):
         """Parse list."""
