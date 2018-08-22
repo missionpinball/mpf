@@ -221,8 +221,7 @@ class Achievement(ModeDevice):
             self._show = None
 
     def add_control_events_in_mode(self, mode: Mode) -> None:
-        """Override the default mode device behavior of automatically enabling devices
-        that don't explicitly define enable_events.
+        """Override the default mode device behavior.
 
         Achievements use sophisticated logic to handle their mode-starting states
         during device_loaded_in_mode(). Therefore no default enabling is required.

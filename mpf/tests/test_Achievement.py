@@ -186,6 +186,22 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual("stopped", achievement._state)
         self.assertLightColor('led1', 'off')
 
+    def test_control_events_in_mode(self):
+        baseMode = self.machine.modes.base
+        ach = self.machine.achievements['achievement7']
+        group = self.machine.achievement_groups['group1']
+
+        # The custom behavior is unique to mode devices _without_ enable_events
+        self.assertFalse(ach.config['enable_events'])
+        self.assertFalse(group.config['enable_events'])
+        # Assert that the achievement does not add mode event handlers
+        self.assertEqual(baseMode.event_handlers, set())
+        ach.add_control_events_in_mode(mode=baseMode)
+        self.assertEqual(baseMode.event_handlers, set())
+        # Assert that achievement groups do add event handlers
+        group.add_control_events_in_mode(mode=baseMode)
+        self.assertEqual(len(baseMode.event_handlers), 1)
+
     def test_group_select(self):
 
         a4 = self.machine.achievements['achievement4']
