@@ -39,6 +39,27 @@ event_player:
         - event_if_modestopping{mode.mode1.stopping}
     play_placeholder_event:
       - my_event_(machine.test)_123
+    play_placeholder_args:
+      loaded_event_int:
+        foo:
+          value: machine.testint
+          type: int
+      loaded_event_float:
+        foo:
+          value: machine.testfloat
+          type: float
+      loaded_event_bool:
+        foo:
+          value: machine.testbool
+          type: bool
+      loaded_event_string:
+        foo:
+          value: machine.teststring
+          type: string
+      loaded_event_notype:
+        foo:
+          value: machine.testnotype
+
 
 shows:
   test_event_show:
