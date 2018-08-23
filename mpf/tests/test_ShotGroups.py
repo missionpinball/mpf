@@ -225,6 +225,24 @@ class TestShotGroups(MpfFakeGameTestCase):
         self.assertLightColor("led_32", 'off')
         self.assertLightColor("led_33", 'off')
 
+        # test restart
+        # first advance and disable
+        shot32.advance()
+        shot33.advance()
+        shot32.disable()
+        shot33.disable()
+        self.assertFalse(shot32.enabled)
+        self.assertFalse(shot33.enabled)
+        self.assertEqual(shot32.state_name, 'red')
+        self.assertEqual(shot33.state_name, 'red')
+        # ensure all shots are enabled and at the first state
+        self.machine.events.post('group32_restart')
+        self.advance_time_and_run()
+        self.assertTrue(shot32.enabled)
+        self.assertTrue(shot33.enabled)
+        self.assertEqual(shot32.state_name, 'unlit')
+        self.assertEqual(shot33.state_name, 'unlit')
+
     def test_rotation_pattern(self):
         shot40 = self.machine.shots.shot_40
         shot41 = self.machine.shots.shot_41

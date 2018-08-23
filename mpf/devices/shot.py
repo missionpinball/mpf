@@ -391,6 +391,16 @@ class Shot(EnableDisableMixin, ModeDevice):
 
         self.jump(state=0)
 
+    @event_handler(2)
+    def restart(self, **kwargs):
+        """Restart the shot profile by calling reset() and enable().
+
+        Automatically called when one fo the restart_events is called.
+        """
+        del kwargs
+        self.reset()
+        self.enable()
+
     def _enable(self):
         super()._enable()
         self._register_switch_handlers()

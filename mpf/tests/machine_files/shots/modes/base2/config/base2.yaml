@@ -82,6 +82,7 @@ shots:
     reset_events: custom_reset_16
     hit_events: custom_hit_16
     advance_events: custom_advance_16
+    restart_events: custom_restart_16
   shot_17:
     switch: switch_17
     profile: profile_17

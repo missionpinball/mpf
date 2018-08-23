@@ -552,6 +552,17 @@ class TestShots(MpfTestCase):
         self.assertEqual(2, self._events["shot_16_hit"])
         self.assertEqual(shot16.state_name, 'lit')
 
+        # test restart event
+        self.machine.events.post('custom_disable_16')
+        self.advance_time_and_run()
+        # make sure we are disabled and advanced in the profile
+        self.assertEqual(shot16.state_name, 'lit')
+        self.assertFalse(self.machine.shots.shot_16.enabled)
+        self.machine.events.post('custom_restart_16')
+        self.advance_time_and_run()
+        self.assertEqual(shot16.state_name, 'unlit')
+        self.assertTrue(self.machine.shots.shot_16.enabled)
+
         # mode1 is not active, so make sure none of the events from
         # mode1_shot_17
 

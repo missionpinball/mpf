@@ -1018,6 +1018,7 @@ shots:
     enable_events: event_handler|str:ms|None
     disable_events: event_handler|str:ms|None
     reset_events: event_handler|str:ms|None
+    restart_events: event_handler|str:ms|None
     advance_events: event_handler|str:ms|None
     hit_events: event_handler|str:ms|None
     show_tokens: dict|str:str|None
@@ -1030,6 +1031,7 @@ shot_groups:
     enable_events: event_handler|str:ms|None
     disable_events: event_handler|str:ms|None
     reset_events: event_handler|str:ms|None
+    restart_events: event_handler|str:ms|None
     enable_rotation_events: event_handler|str:ms|None
     disable_rotation_events: event_handler|str:ms|None
 shot_profiles:
