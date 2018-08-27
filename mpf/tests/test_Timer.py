@@ -91,7 +91,16 @@ class TestTimer(MpfFakeGameTestCase):
         self.assertEqual(3, self.tick)
         self.assertEqual(3, timer.ticks)
         self.post_event("pause_timer_down")
+        self.advance_time_and_run(0.5)
+        self.assertEqual(3, self.tick)
+        self.assertEqual(3, timer.ticks)
         self.advance_time_and_run(1)
+        self.assertEqual(3, self.tick)
+        self.assertEqual(3, timer.ticks)
+        self.advance_time_and_run(1)
+        # Resuming the paused timer re-ticks at the last number,
+        # so self.ticks increases but timer.ticks does not
+        self.assertEqual(4, self.tick)
         self.assertEqual(3, timer.ticks)
         self.advance_time_and_run(1)
         self.assertEqual(5, self.tick)
