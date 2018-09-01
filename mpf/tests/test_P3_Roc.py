@@ -853,6 +853,15 @@ SW-16 boards found:
             call(2, 2, 23),
             call(2, 3, 42)], True)
 
+        device = self.machine.lights.test_led2
+        device.hw_drivers['red'][0].proc.led_color = MagicMock()
+        device.on()
+        self.advance_time_and_run(1)
+        device.hw_drivers['red'][0].proc.led_color.assert_has_calls([
+            call(2, 7, 255),
+            call(2, 8, 255),
+            call(2, 9, 255)], True)
+
     def _test_leds_inverted(self):
         device = self.machine.lights.test_led_inverted
         device.hw_drivers['red'][0].proc.led_color = MagicMock()
