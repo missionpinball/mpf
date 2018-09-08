@@ -150,6 +150,8 @@ class Mode(LogMixin):
         put whatever code you want to run when this mode starts in the
         mode_start method which will be called automatically.
         """
+        # remove argument so we do not repost this
+        kwargs.pop('_from_bcp', None)
         self.debug_log("Received request to start")
 
         if self.config['mode']['game_mode'] and not (self.machine.game and self.player):
