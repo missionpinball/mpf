@@ -10,6 +10,8 @@ class LightPlatformInterface(metaclass=abc.ABCMeta):
 
     """Interface for a light in hardware platforms."""
 
+    __slots__ = ["number"]
+
     def __init__(self, number: Any) -> None:
         """Initialise light."""
         self.number = number
@@ -33,6 +35,8 @@ class LightPlatformInterface(metaclass=abc.ABCMeta):
 class LightPlatformDirectFade(LightPlatformInterface, metaclass=abc.ABCMeta):
 
     """Implement a light which can set fade and brightness directly."""
+
+    __slots__ = ["loop", "task"]
 
     def __init__(self, number, loop: AbstractEventLoop) -> None:
         """Initialise light."""
@@ -88,6 +92,8 @@ class LightPlatformDirectFade(LightPlatformInterface, metaclass=abc.ABCMeta):
 class LightPlatformSoftwareFade(LightPlatformDirectFade, metaclass=abc.ABCMeta):
 
     """Implement a light which cannot fade on its own."""
+
+    __slots__ = ["software_fade_ms"]
 
     def __init__(self, number, loop: AbstractEventLoop, software_fade_ms: int) -> None:
         """Initialise light with software fade."""

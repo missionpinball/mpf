@@ -2,7 +2,7 @@
 from mpf.core.utility_functions import Util
 
 
-class DeviceMonitor(object):
+class DeviceMonitor:
 
     """Monitor variables of a device."""
 

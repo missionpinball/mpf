@@ -34,6 +34,9 @@ class ModeController(MpfController):
 
     config_name = "mode_controller"
 
+    __slots__ = ["queue", "active_modes", "mode_stop_count", "_machine_mode_folders", "_mpf_mode_folders",
+                 "loader_methods", "start_methods", "stop_methods"]
+
     def __init__(self, machine: MachineController) -> None:
         """Initialise mode controller.
 

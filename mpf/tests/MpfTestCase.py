@@ -293,6 +293,7 @@ class MpfTestCase(unittest.TestCase):
 
         return {
             'force_platform': self.get_platform(),
+            'production': False,
             'mpfconfigfile': mpfconfig,
             'configfile': Util.string_to_list(self.getConfigFile()),
             'debug': True,
@@ -536,7 +537,7 @@ class MpfTestCase(unittest.TestCase):
                          format(player_var, self.machine.game.player[player_var], value))
 
     def assertSwitchState(self, name, state):
-        self.assertIn(name, self.machine.switch_controller._switch_state, "Switch {} does not exist.".format(name))
+        self.assertIn(name, self.machine.switches, "Switch {} does not exist.".format(name))
         self.assertEqual(state, self.machine.switch_controller.is_active(name))
 
     def assertLightChannel(self, light_name, brightness, channel="white"):

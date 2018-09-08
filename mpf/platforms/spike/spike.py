@@ -21,6 +21,8 @@ class SpikeSwitch(SwitchPlatformInterface):
 
     """A switch on a Stern Spike node board."""
 
+    __slots__ = ["node", "index", "platform"]
+
     def __init__(self, config, number, platform):
         """Initialise switch."""
         super().__init__(config, number)
@@ -37,6 +39,8 @@ class SpikeSwitch(SwitchPlatformInterface):
 class SpikeLight(LightPlatformDirectFade):
 
     """A light on a Stern Spike node board."""
+
+    __slots__ = ["node", "index", "platform"]
 
     def __init__(self, number, platform):
         """Initialise light."""
@@ -69,6 +73,8 @@ class SpikeLight(LightPlatformDirectFade):
 class SpikeDMD(DmdPlatformInterface):
 
     """The DMD on the SPIKE system."""
+
+    __slots__ = ["platform", "data", "new_frame_event", "dmd_task"]
 
     def __init__(self, platform):
         """Initialise DMD."""
@@ -139,6 +145,8 @@ class SpikeDMD(DmdPlatformInterface):
 class SpikeDriver(DriverPlatformInterface):
 
     """A driver on a Stern Spike node board."""
+
+    __slots__ = ["platform", "node", "index", "_enable_task"]
 
     def __init__(self, config, number, platform):
         """Initialise driver on Stern Spike."""
@@ -222,12 +230,33 @@ class SpikeDriver(DriverPlatformInterface):
         return "Spike Node {}".format(self.node)
 
 
-# pylint: disable-msg=too-many-arguments
+# pylint: disable-msg=too-many-instance-attributes
 class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform):
 
     """Stern Spike Platform."""
 
-    # pylint: disable-msg=too-many-instance-attributes
+    __slots__ = ["_writer", "_reader", "_inputs", "config", "_poll_task", "_sender_task", "_send_key_task", "dmd",
+                 "_nodes", "_bus_busy", "_cmd_queue"]
+
+    def __init__(self, machine):
+        """Initialise spike hardware platform."""
+        super().__init__(machine)
+        self.log = logging.getLogger('Spike')
+        self.log.debug("Configuring Stern Spike hardware.")
+        self._writer = None
+        self._reader = None
+        self._inputs = {}
+        self.config = None
+        self._poll_task = None
+        self._sender_task = None
+        self._send_key_task = None
+        self.dmd = None
+
+        self._nodes = None
+        self._bus_busy = asyncio.Lock(loop=self.machine.clock.loop)
+        self._cmd_queue = asyncio.Queue(loop=self.machine.clock.loop)
+
+    # pylint: disable-msg=too-many-arguments
     def _write_rule(self, node, enable_switch_index, disable_switch_index, coil_index, pulse_settings: PulseSettings,
                     hold_settings: Optional[HoldSettings], param1, param2, param3):
         """Write a hardware rule to Stern Spike.
@@ -355,24 +384,6 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
                 hw_states[str(node) + '-' + str(index)] = (curr_bit & self._inputs[node]) == 0
                 curr_bit <<= 1
         return hw_states
-
-    def __init__(self, machine):
-        """Initialise spike hardware platform."""
-        super().__init__(machine)
-        self.log = logging.getLogger('Spike')
-        self.log.debug("Configuring Stern Spike hardware.")
-        self._writer = None
-        self._reader = None
-        self._inputs = {}
-        self.config = None
-        self._poll_task = None
-        self._sender_task = None
-        self._send_key_task = None
-        self.dmd = None
-
-        self._nodes = None
-        self._bus_busy = asyncio.Lock(loop=self.machine.clock.loop)
-        self._cmd_queue = asyncio.Queue(loop=self.machine.clock.loop)
 
     @asyncio.coroutine
     def initialize(self):

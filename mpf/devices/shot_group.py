@@ -106,6 +106,11 @@ class ShotGroup(ModeDevice):
         for shot in self.config['shots']:
             shot.reset(**kwargs)
 
+    def restart(self, **kwargs):
+        """Restart all member shots."""
+        for shot in self.config['shots']:
+            shot.restart(**kwargs)
+
     def _hit(self, advancing, **kwargs):
         """One of the member shots in this shot group was hit.
 

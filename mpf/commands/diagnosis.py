@@ -7,7 +7,7 @@ from serial.tools import list_ports
 from mpf._version import version as mpf_version
 
 
-class Command(object):
+class Command:
 
     """Runs the mpf game."""
 

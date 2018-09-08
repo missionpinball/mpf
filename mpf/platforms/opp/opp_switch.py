@@ -6,9 +6,11 @@ from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInt
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
 
-class OPPInputCard(object):
+class OPPInputCard:
 
     """OPP input card."""
+
+    __slots__ = ["log", "chain_serial", "addr", "isMatrix", "oldState", "mask", "cardNum"]
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, chain_serial, addr, mask, inp_dict, inp_addr_dict):
@@ -30,9 +32,11 @@ class OPPInputCard(object):
                     OPPSwitch(self, self.chain_serial + "-" + self.cardNum + '-' + str(index))
 
 
-class OPPMatrixCard(object):
+class OPPMatrixCard:
 
     """OPP matrix input card."""
+
+    __slots__ = ["log", "chain_serial", "addr", "mask", "isMatrix", "oldState", "cardNum"]
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, chain_serial, addr, inp_dict, inp_addr_dict):
@@ -58,6 +62,8 @@ class OPPMatrixCard(object):
 class OPPSwitch(SwitchPlatformInterface):
 
     """An OPP input on an OPP input card."""
+
+    __slots__ = ["card"]
 
     def __init__(self, card, number):
         """Initialise input."""

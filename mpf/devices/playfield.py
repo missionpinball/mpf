@@ -18,6 +18,9 @@ class Playfield(SystemWideDevice):
     collection = 'playfields'
     class_label = 'playfield'
 
+    __slots__ = ["ball_search", "delay", "_balls", "available_balls", "num_balls_requested", "_incoming_balls",
+                 "__dict__"]
+
     def __init__(self, machine, name):
         """Create the playfield."""
         super().__init__(machine, name)

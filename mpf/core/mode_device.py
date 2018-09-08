@@ -14,6 +14,8 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
 
     """A device in a mode."""
 
+    __slots__ = ["mode"]
+
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise mode device."""
         super().__init__(machine, name)

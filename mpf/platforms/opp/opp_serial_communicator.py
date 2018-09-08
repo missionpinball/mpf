@@ -18,6 +18,8 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
 
     """Manages a Serial connection to the first processor in a OPP serial chain."""
 
+    __slots__ = ["partMsg", "chain_serial", "_lost_synch"]
+
     # pylint: disable=too-many-arguments
     def __init__(self, platform: "OppHardwarePlatform", port, baud) -> None:
         """Initialise Serial Connection to OPP Hardware."""

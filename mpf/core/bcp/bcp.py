@@ -23,6 +23,8 @@ class Bcp(MpfController):
 
     config_name = "bcp"
 
+    __slots__ = ["interface", "transport", "servers"]
+
     def __init__(self, machine: "MachineController") -> None:
         """Initialise BCP module."""
         super().__init__(machine)

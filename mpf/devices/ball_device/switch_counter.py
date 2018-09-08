@@ -14,6 +14,8 @@ class SwitchCounter(PhysicalBallCounter):
     should use a simpler counter.
     """
 
+    __slots__ = ["_entrances", "_trigger_recount", "_task", "_is_unreliable"]
+
     def __init__(self, ball_device, config):
         """Initialise ball counter."""
         super().__init__(ball_device, config)

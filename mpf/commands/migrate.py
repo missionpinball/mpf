@@ -9,7 +9,7 @@ import errno
 from mpf.migrator.migrator import Migrator
 
 
-class Command(object):
+class Command:
 
     """Run the migrator."""
 

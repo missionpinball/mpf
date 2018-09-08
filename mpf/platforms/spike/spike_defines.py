@@ -5,6 +5,8 @@ class SpikeNodebus:
 
     """Spike message defines."""
 
+    __slots__ = []
+
     Poll = 0x00
     GetInputState = 0x11
     GetInputMask = 0x12         # unused

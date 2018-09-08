@@ -2,12 +2,16 @@
 import asyncio
 import logging
 
+from mpf.platforms.interfaces.accelerometer_platform_interface import AccelerometerPlatformInterface
+
 from mpf.core.platform import AccelerometerPlatform, I2cPlatform
 
 
-class MMA8451Device(object):
+class MMA8451Device(AccelerometerPlatformInterface):
 
     """MMA8451 accelerometer."""
+
+    __slots__ = ["i2c_platform", "platform", "callback", "number", "task"]
 
     def __init__(self, number, callback, i2c_platform, platform):
         """Initialise MMA8451 accelerometer."""
@@ -89,6 +93,8 @@ class MMA8451Platform(AccelerometerPlatform):
 
     """MMA8451 accelerometer platform."""
 
+    __slots__ = ["accelerometers"]
+
     def __init__(self, machine):
         """Configure MMA8451 based accelerometers."""
         super().__init__(machine)
@@ -108,7 +114,7 @@ class MMA8451Platform(AccelerometerPlatform):
                 accelerometer.task.cancel()
                 accelerometer.task = None
 
-    def configure_accelerometer(self, number, config, callback):
+    def configure_accelerometer(self, number, config, callback) -> MMA8451Device:
         """Configure MMA8451 accelerometer."""
         config = self.machine.config_validator.validate_config("mma8451_accelerometer", config)
         i2c_platform = self.machine.get_platform_sections("i2c", config['i2c_platform'])

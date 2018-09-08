@@ -12,6 +12,8 @@ class FASTDirectLED:
 
     """FAST RGB LED."""
 
+    __slots__ = ["number", "dirty", "hardware_fade_ms", "colors", "log"]
+
     def __init__(self, number: str, hardware_fade_ms: int) -> None:
         """Initialise FAST LED."""
         self.number = number
@@ -44,6 +46,8 @@ class FASTDirectLED:
 class FASTDirectLEDChannel(LightPlatformInterface):
 
     """Represents a single RGB LED channel connected to the Fast hardware platform."""
+
+    __slots__ = ["led", "channel"]
 
     def __init__(self, led: FASTDirectLED, channel) -> None:
         """Initialise LED."""

@@ -13,7 +13,7 @@ EXAMPLES_FOLDER = 'examples'
 CONFIG_FOLDER = 'config'
 
 
-class MpfCommandLineParser(object):
+class MpfCommandLineParser:
 
     """Base class for cli commands."""
 

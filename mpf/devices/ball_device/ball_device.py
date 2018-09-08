@@ -33,6 +33,10 @@ class BallDevice(SystemWideDevice):
     collection = 'ball_devices'
     class_label = 'ball_device'
 
+    __slots__ = ["delay", "available_balls", "_target_on_unexpected_ball", "_source_devices", "_ball_requests",
+                 "ejector", "ball_count_handler", "incoming_balls_handler", "outgoing_balls_handler",
+                 "counted_balls", "_state"]
+
     def __init__(self, machine, name):
         """Initialise ball device."""
         super().__init__(machine, name)

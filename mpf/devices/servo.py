@@ -42,7 +42,7 @@ class Servo(SystemWideDevice):
                                             self._position_event,
                                             position=position)
 
-        self.hw_servo = self.platform.configure_servo(self.config['number'])
+        self.hw_servo = yield from self.platform.configure_servo(self.config['number'])
         self._position = self.config['reset_position']
         self.speed_limit = self.config['speed_limit']
         self.acceleration_limit = self.config['acceleration_limit']

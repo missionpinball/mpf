@@ -18,7 +18,7 @@ from mpf.core.utility_functions import Util
 from mpf.commands.logging_formatters import JSONFormatter
 
 
-class Command(object):
+class Command:
 
     """Runs the mpf game."""
 
@@ -143,6 +143,9 @@ class Command(object):
                             action="store", dest="mc_file_name",
                             metavar='mc_file_name',
                             default=None, help=argparse.SUPPRESS)
+
+        parser.add_argument("--no-sound",
+                            action="store_true", dest="no_sound", default=False)
 
         self.args = parser.parse_args(args)
         self.args.configfile = Util.string_to_list(self.args.configfile)

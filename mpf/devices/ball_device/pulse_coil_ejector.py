@@ -9,6 +9,8 @@ class PulseCoilEjector(BallDeviceEjector):
 
     """Pulse a coil to eject one ball."""
 
+    __slots__ = []
+
     def __init__(self, config, ball_device, machine):
         """Initialise pulse coil ejector."""
         super().__init__(config, ball_device, machine)

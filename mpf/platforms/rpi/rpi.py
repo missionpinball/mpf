@@ -224,6 +224,7 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
         except asyncio.CancelledError:
             pass
 
+    @asyncio.coroutine
     def configure_servo(self, number: str) -> ServoPlatformInterface:
         """Configure a servo."""
         return RpiServo(number, self)

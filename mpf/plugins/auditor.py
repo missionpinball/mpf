@@ -11,9 +11,11 @@ if MYPY:   # pragma: no cover
     from typing import Any, Set
 
 
-class Auditor(object):
+class Auditor:
 
     """Writes switch events, regular events, and player variables to an audit log file."""
+
+    __slots__ = ["log", "machine", "switchnames_to_audit", "config", "current_audits", "enabled", "data_manager"]
 
     def __init__(self, machine: "MachineController") -> None:
         """Initialise auditor.
@@ -165,6 +167,9 @@ class Auditor(object):
                 kwargs.
         """
         del kwargs
+        if not self.machine.game or not self.machine.game.player_list:
+            return
+
         for item in self.config['player']:
             for player in self.machine.game.player_list:
 

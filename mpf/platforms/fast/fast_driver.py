@@ -15,6 +15,9 @@ class FASTDriver(DriverPlatformInterface):
 
     """Base class for drivers connected to a FAST Controller."""
 
+    __slots__ = ["log", "autofire", "_autofire_cleared", "config_state", "machine", "platform", "driver_settings",
+                 "send", "platform_settings"]
+
     def __init__(self, config: DriverConfig, platform: "FastHardwarePlatform", number: str,
                  platform_settings: dict) -> None:
         """Initialise driver."""

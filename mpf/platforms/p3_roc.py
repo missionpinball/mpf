@@ -40,6 +40,9 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         machine: The MachineController instance.
     """
 
+    __slots__ = ["config", "_burst_opto_drivers_to_switch_map", "_burst_switches", "_bursts_enabled", "acceleration",
+                 "accelerometer_device"]
+
     def __init__(self, machine):
         """Initialise and connect P3-Roc."""
         super().__init__(machine)
@@ -48,6 +51,8 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
 
         # validate config for p3_roc
         self.config = self.machine.config_validator.validate_config("p3_roc", self.machine.config['p_roc'])
+
+        self.debug = self.config["debug"]
 
         if self.machine_type != self.pinproc.MachineTypePDB:
             raise AssertionError("P3-Roc can only handle PDB driver boards")
@@ -267,6 +272,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
 
         return self._configure_switch(config, switch_number)
 
+    # pylint: disable-msg=too-many-locals
     def _configure_burst_opto(self, config, number):
         """Configure burst opto on the P3-Roc.
 
@@ -307,9 +313,26 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         # enable burst IRs
         if not self._bursts_enabled:
             self._bursts_enabled = True
-            self.log.info("Enabling burst opto %s on the P3-Roc.", number)
+            self.log.info("Enabling all burst opto on the P3-Roc.")
+            burst_config0 = self.config['burst_us_per_half_pulse'] & 0x3F
+            burst_config0 |= (self.config['burst_number_of_pulses_to_drive_output'] & 0x1F) << 6
+            burst_config0 |= (self.config['burst_number_of_idle_pulses_before_next'] & 0x3F) << 12
+            burst_config0 |= (self.config['burst_number_of_burst_pulses_before_check'] & 0x3F) << 18
+            burst_config0 |= ((self.config['burst_ms_between_scans'] - 1) & 0x1F) << 24
+            self.proc.write_data(0x02, 0x00, burst_config0)
+            self.debug_log("Setting 0x02 0x00 to %s", burst_config0)
+
             burst_config1 = (1 << 31) | 0x1F
+
             self.run_proc_cmd_no_wait("write_data", 0x02, 0x01, burst_config1)
+            self.debug_log("Setting 0x02 0x01 to %s", burst_config1)
+
+            # enable receiver 63 for all of the optos (works around bug in fpga)
+            for driver_num in range(0, 64):
+                self.run_proc_cmd_no_wait("write_data", 0x02, 0x80 + (driver_num * 2), 1)
+                self.debug_log("Setting 0x02 %s to %s", 0x80 + (driver_num * 2), 1)
+                self.run_proc_cmd_no_wait("write_data", 0x02, 0x81 + (driver_num * 2), 63)
+                self.debug_log("Setting 0x02 %s to %s", 0x81 + (driver_num * 2), 63)
 
         # configure driver for receiver
         if driver not in self._burst_opto_drivers_to_switch_map:
@@ -331,9 +354,14 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
             rx_to_check_for_this_transmitter <<= 6
             rx_to_check_for_this_transmitter += switch
 
-        self.run_proc_cmd_no_wait("write_data", 0x02, 0x80 + (driver * 2),
-                                  len(self._burst_opto_drivers_to_switch_map[driver]))
-        self.run_proc_cmd_no_wait("write_data", 0x02, 0x81 + (driver * 2), rx_to_check_for_this_transmitter)
+        addr_80 = 0x80 + (driver * 2)
+        data_80 = len(self._burst_opto_drivers_to_switch_map[driver])
+        self.debug_log("Setting 0x02 %s to %s", addr_80, data_80)
+        self.run_proc_cmd_no_wait("write_data", 0x02, addr_80, data_80)
+
+        addr_81 = 0x81 + (driver * 2)
+        self.debug_log("Setting 0x02 %s to %s", addr_81, rx_to_check_for_this_transmitter)
+        self.run_proc_cmd_no_wait("write_data", 0x02, addr_81, rx_to_check_for_this_transmitter)
 
         burst_switch = P3RocBurstOpto(config, number, input_switch, driver)
         self._burst_switches.append(burst_switch)
@@ -393,10 +421,12 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
             # Therefore, we will trigger after the Z value
             elif event_type == self.pinproc.EventTypeAccelerometerX:
                 self.acceleration[0] = event_value
-                self.debug_log("Got Accelerometer value X. Value: %s", event_value)
+                if self.debug:
+                    self.debug_log("Got Accelerometer value X. Value: %s", event_value)
             elif event_type == self.pinproc.EventTypeAccelerometerY:
                 self.acceleration[1] = event_value
-                self.debug_log("Got Accelerometer value Y. Value: %s", event_value)
+                if self.debug:
+                    self.debug_log("Got Accelerometer value Y. Value: %s", event_value)
             elif event_type == self.pinproc.EventTypeAccelerometerZ:
                 self.acceleration[2] = event_value
 
@@ -406,12 +436,15 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
                         self.scale_accelerometer_to_g(self.acceleration[0]),
                         self.scale_accelerometer_to_g(self.acceleration[1]),
                         self.scale_accelerometer_to_g(self.acceleration[2]))
+                if self.debug:
                     self.debug_log("Got Accelerometer value Z. Value: %s", event_value)
             elif event_type == self.pinproc.EventTypeBurstSwitchOpen:
-                self.debug_log("Got burst open event value %s", event_value)
+                if self.debug:
+                    self.debug_log("Got burst open event value %s", event_value)
                 self._handle_burst(event_value, 0)
             elif event_type == self.pinproc.EventTypeBurstSwitchClosed:
-                self.debug_log("Got burst closed event value %s", event_value)
+                if self.debug:
+                    self.debug_log("Got burst closed event value %s", event_value)
                 self._handle_burst(event_value, 1)
             else:   # pragma: no cover
                 self.log.warning("Received unrecognized event from the P3-ROC. "
@@ -433,6 +466,8 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
 class P3RocI2c(I2cPlatformInterface):
 
     """I2c device on a P3-Roc."""
+
+    __slots__ = ["platform", "address", "proc"]
 
     def __init__(self, number: str, platform) -> None:
         """Initialise I2c device on P3_Roc."""
@@ -476,6 +511,8 @@ class PROCAccelerometer(AccelerometerPlatformInterface):
 
     """The accelerometer on the P3-Roc."""
 
+    __slots__ = ["callback"]
+
     def __init__(self, callback: "Accelerometer") -> None:
         """Remember the callback."""
         self.callback = callback    # type: Accelerometer
@@ -488,6 +525,8 @@ class PROCAccelerometer(AccelerometerPlatformInterface):
 class P3RocBurstOpto(SwitchPlatformInterface):
 
     """A burst opto switch/driver combination."""
+
+    __slots__ = ["input_switch", "driver", "log"]
 
     def __init__(self, config, number, input_switch, driver):
         """Initialise burst opto."""

@@ -6,9 +6,12 @@ from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftw
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
 
-class OPPNeopixelCard(object):
+class OPPNeopixelCard:
 
     """OPP Neopixel/WS2812 card."""
+
+    __slots__ = ["log", "chain_serial", "platform", "addr", "cardNum", "numPixels", "numColorEntries",
+                 "colorTableDict"]
 
     def __init__(self, chain_serial, addr, neo_card_dict, platform):
         """Initialise OPP Neopixel/WS2812 card."""
@@ -47,6 +50,8 @@ class OPPLightChannel(LightPlatformSoftwareFade):
 
     """A channel of a WS2812 LED."""
 
+    __slots__ = ["led", "index"]
+
     # pylint: disable-msg=too-many-arguments
     def __init__(self, chain_serial, led, index, hardware_fade_ms, loop):
         """Initialise led channel."""
@@ -66,6 +71,8 @@ class OPPLightChannel(LightPlatformSoftwareFade):
 class OPPNeopixel:
 
     """One WS2812 LED."""
+
+    __slots__ = ["log", "number", "current_color", "neoCard", "index_char", "_color", "dirty"]
 
     def __init__(self, number, neo_card):
         """Initialise LED."""

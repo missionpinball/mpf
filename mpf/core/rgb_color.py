@@ -163,7 +163,7 @@ named_rgb_colors = dict(
 )
 
 
-class RGBColor(object):
+class RGBColor:
 
     """One RGB Color."""
 
@@ -301,6 +301,7 @@ class RGBColor(object):
         Returns a string containing a standard color name or None
         if the current RGB color does not have a standard name.
         """
+        # pylint: disable-msg=consider-using-dict-comprehension
         return dict(
             [(_v, _k) for _k, _v in list(named_rgb_colors.items())]).get(
             self._color)
@@ -417,7 +418,13 @@ class RGBColor(object):
         if '%' in value:
             value, brightness = value.split("%")
 
-        rgb = named_rgb_colors.get(value.lower())
+        rgb = named_rgb_colors.get(value)
+        if rgb is None:
+            # we do not want to call lower every time since this code path is very hot
+            # instead we just add the upper case string to the color hash map so next time we will hit the fast path
+            rgb = named_rgb_colors.get(value.lower())
+            if rgb:
+                named_rgb_colors[value] = rgb
         if rgb is None:
             rgb = RGBColor.hex_to_rgb(value)
             if rgb is None:
@@ -460,7 +467,7 @@ class ColorException(AssertionError):
     pass
 
 
-class RGBColorCorrectionProfile(object):
+class RGBColorCorrectionProfile:
 
     """Encapsulates a named RGB color correction profile and its associated lookup tables."""
 

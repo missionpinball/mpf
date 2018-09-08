@@ -79,8 +79,7 @@ class MultiballLock(ModeDevice):
 
         # check if the lock is physically full and not virtually full and release balls in that case
         if self._physically_remaining_space <= 0 and not self.is_virtually_full:
-            self.log.info("Will release a ball because the lock is phyiscally full but not virtually for the current " +
-                          "player.")
+            self.log.info("Will release a ball because the lock is phyiscally full but not virtually for the player.")
             # TODO: eject to next playfield
             self.lock_devices[0].eject()
             queue.wait()

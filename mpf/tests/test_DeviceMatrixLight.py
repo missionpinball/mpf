@@ -37,31 +37,31 @@ class TestDeviceMatrixLight(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual([128, 128, 128], light1.get_color())
         self.assertAlmostEqual(self.machine.clock.get_time() - 1,
-                               light1.stack[0]['start_time'])
+                               light1.stack[0].start_time)
         self.assertLightChannel("light_01", 128)
-        self.assertEqual(0, light1.stack[0]['priority'])
+        self.assertEqual(0, light1.stack[0].priority)
 
         light2.on(255)
         self.advance_time_and_run(1)
         self.assertLightChannel("light_02", 255)
         self.assertEqual([255, 255, 255], light2.get_color())
         self.assertAlmostEqual(self.machine.clock.get_time() - 1,
-                               light2.stack[0]['start_time'])
-        self.assertEqual(0, light2.stack[0]['priority'])
+                               light2.stack[0].start_time)
+        self.assertEqual(0, light2.stack[0].priority)
 
         # Turn the lights off
         light1.off()
         self.advance_time_and_run(1)
         self.assertEqual([0, 0, 0], light1.get_color())
         self.assertAlmostEqual(self.machine.clock.get_time() - 1,
-                               light1.stack[0]['start_time'])
+                               light1.stack[0].start_time)
         self.assertLightChannel("light_01", 0)
-        self.assertEqual(0, light1.stack[0]['priority'])
+        self.assertEqual(0, light1.stack[0].priority)
 
         light2.off()
         self.advance_time_and_run(1)
         self.assertEqual([0, 0, 0], light2.get_color())
         self.assertAlmostEqual(self.machine.clock.get_time() - 1,
-                               light2.stack[0]['start_time'])
+                               light2.stack[0].start_time)
         self.assertLightChannel("light_02", 0)
-        self.assertEqual(0, light2.stack[0]['priority'])
+        self.assertEqual(0, light2.stack[0].priority)

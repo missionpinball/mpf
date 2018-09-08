@@ -9,7 +9,7 @@ import asyncio
 from ruamel.yaml.compat import ordereddict
 
 
-class Util(object):
+class Util:
 
     """Utility functions for MPF."""
 
@@ -106,7 +106,7 @@ class Util(object):
             new_list = string.replace(',', ' ').split()
             # Look for string values of "None" and convert them to Nonetypes.
             for index, value in enumerate(new_list):
-                if isinstance(value, str) and value.lower() == 'none':
+                if isinstance(value, str) and len(value) == 4 and value.lower() == 'none':
                     new_list[index] = None
             return new_list
 

@@ -187,10 +187,7 @@ class BaseAssetManager(MpfController, LogMixin):
         return default_config_dict
 
     def _create_assets(self, **kwargs) -> None:
-        if 'force_assets_load' in kwargs:
-            force_assets_load = kwargs['force_assets_load']
-        else:
-            force_assets_load = False
+        force_assets_load = kwargs.get('force_assets_load', False)
 
         # Called once on boot to create all the asset objects
         # Create the machine-wide assets
@@ -629,7 +626,7 @@ class AsyncioSyncAssetManager(BaseAssetManager):
 
 
 # pylint: disable=too-many-instance-attributes
-class AssetPool(object):
+class AssetPool:
 
     """Pool of assets."""
 
@@ -842,7 +839,7 @@ class AssetPool(object):
         return assets[-1]
 
 
-class Asset(object):
+class Asset:
 
     """Baseclass for all assets."""
 

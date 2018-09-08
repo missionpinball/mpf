@@ -1,0 +1,25 @@
+#show_version=5
+- duration: .001
+  lights:
+    (tag1): (color1)
+    (tag2): (color1)
+    (tag3): (color1)
+    (tag4): (color1)
+- duration: .001
+  lights:
+    (tag1): (color2)
+    (tag2): (color2)
+    (tag3): (color2)
+    (tag4): (color2)
+- duration: .001
+  lights:
+    (tag1): (color3)
+    (tag2): (color3)
+    (tag3): (color3)
+    (tag4): (color3)
+- duration: .001
+  lights:
+    (tag1): (color4)
+    (tag2): (color4)
+    (tag3): (color4)
+    (tag4): (color4)

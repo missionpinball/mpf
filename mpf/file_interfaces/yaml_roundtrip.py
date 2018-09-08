@@ -1,5 +1,5 @@
 """Yaml interface in roundtrip mode."""
-import ruamel.yaml as yaml
+import ruamel.yaml as yaml  # pylint: disable-msg=useless-import-alias
 from ruamel.yaml.reader import Reader
 from ruamel.yaml.scanner import RoundTripScanner
 from ruamel.yaml.parser_ import Parser

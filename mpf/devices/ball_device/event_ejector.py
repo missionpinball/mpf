@@ -8,6 +8,8 @@ class EventEjector(BallDeviceEjector):
 
     """Post an event to trigger an eject."""
 
+    __slots__ = []
+
     def __init__(self, config, ball_device, machine):
         """Initialise ejector."""
         super().__init__(config, ball_device, machine)

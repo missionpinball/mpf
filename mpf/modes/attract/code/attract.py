@@ -77,7 +77,6 @@ class Attract(Mode):
             if self.machine.switch_controller.is_active(switch.name):
                 self.start_buttons_held.append(switch.name)
 
-        # todo test for active?
         self.machine.events.post_boolean('request_to_start_game',
                                          callback=self.result_of_start_request)
         '''event: request_to_start_game

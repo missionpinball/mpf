@@ -38,6 +38,11 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     """
 
+    __slots__ = ["opp_connection", "serial_connections", "opp_incands", "incandDict", "opp_solenoid", "solDict",
+                 "opp_inputs", "inpDict", "inpAddrDict", "matrixInpAddrDict", "read_input_msg", "opp_neopixels",
+                 "neoCardDict", "neoDict", "numGen2Brd", "gen2AddrArr", "badCRC", "minVersion", "_poll_task",
+                 "config", "_poll_response_received", "machine_type", "opp_commands"]
+
     def __init__(self, machine) -> None:
         """Initialise OPP platform."""
         super().__init__(machine)

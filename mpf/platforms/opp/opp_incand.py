@@ -6,9 +6,11 @@ from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftw
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
 
-class OPPIncandCard(object):
+class OPPIncandCard:
 
     """An incandescent wing card."""
+
+    __slots__ = ["log", "addr", "chain_serial", "oldState", "newState", "mask", "cardNum"]
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, chain_serial, addr, mask, incand_dict, machine):
@@ -34,6 +36,8 @@ class OPPIncandCard(object):
 class OPPIncand(LightPlatformSoftwareFade):
 
     """A driver of an incandescent wing card."""
+
+    __slots__ = ["incandCard"]
 
     def __init__(self, incand_card, number, hardware_fade_ms, loop):
         """Initialise Incandescent wing card driver."""

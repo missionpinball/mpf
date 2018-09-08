@@ -23,7 +23,7 @@ REPROCESS_CURRENT_VERSION = False
 INDENTATION_SPACES = 4
 
 
-class Migrator(object):
+class Migrator:
 
     """Migrates a config."""
 
@@ -143,7 +143,7 @@ class Migrator(object):
         FileManager.save(file_name, file_contents)
 
 
-class VersionMigrator(object):
+class VersionMigrator:
 
     """Parent class for a version-specific migrator.
 
@@ -195,7 +195,7 @@ class VersionMigrator(object):
         cls.deprecations = yaml.load(cls.deprecations)
         try:
             for i, key in enumerate(cls.deprecations):
-                cls.deprecations[i] = list(key.split('|'))
+                cls.deprecations[i] = list(key.split('|'))  # pylint: disable-msg=unsupported-assignment-operation
         except TypeError:
             cls.deprecations = list()
 
@@ -219,7 +219,7 @@ class VersionMigrator(object):
             for i, move in enumerate(cls.moves):
                 move['old'] = move['old'].split('|')
                 move['new'] = move['new'].split('|')
-                cls.moves[i] = move
+                cls.moves[i] = move     # pylint: disable-msg=unsupported-assignment-operation
         else:
             cls.moves = dict()
 

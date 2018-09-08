@@ -8,9 +8,11 @@ if MYPY:   # pragma: no cover
     from typing import Generator
 
 
-class BaseSerialCommunicator(object):
+class BaseSerialCommunicator:
 
     """Basic Serial Communcator for platforms."""
+
+    __slots__ = ["machine", "platform", "log", "debug", "port", "baud", "xonxoff", "reader", "writer", "read_task"]
 
     # pylint: disable=too-many-arguments
     def __init__(self, platform, port: str, baud: int, xonxoff=False) -> None:
@@ -137,7 +139,7 @@ class BaseSerialCommunicator(object):
         while True:
             try:
                 resp = yield from self.reader.read(100)
-            except asyncio.CancelledError:
+            except asyncio.CancelledError:  # pylint: disable-msg=try-except-raise
                 raise
             except Exception as e:  # pylint: disable-msg=broad-except
                 self.log.warning("Serial error: {}".format(e))

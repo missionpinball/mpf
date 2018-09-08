@@ -10,6 +10,8 @@ class BcpTransportManager:
 
     """Manages BCP transports."""
 
+    __slots__ = ["_machine", "_transports", "_readers", "_handlers"]
+
     def __init__(self, machine):
         """Initialise BCP transport manager."""
         self._machine = machine

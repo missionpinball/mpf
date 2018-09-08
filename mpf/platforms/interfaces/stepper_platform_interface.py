@@ -14,6 +14,8 @@ class StepperPlatformInterface(metaclass=abc.ABCMeta):
     methods are implemented to support smart stepper operations in MPF.
     """
 
+    __slots__ = []
+
     @abc.abstractmethod
     def home(self):
         """Home an axis, resetting 0 position."""

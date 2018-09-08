@@ -3,8 +3,8 @@ from mpf.file_interfaces.yaml_roundtrip import YamlRoundtrip
 
 config_loader = YamlRoundtrip()
 config_name = "config/leds.yaml"
-monitor_config = config_loader.load("monitor/monitor.yaml", verify_version=False)
-lights_config = config_loader.load(config_name, verify_version=True)
+monitor_config = config_loader.load("monitor/monitor.yaml")
+lights_config = config_loader.load(config_name)
 
 if "light" not in monitor_config:
     raise AssertionError("Monitor config does not contain a light section.")

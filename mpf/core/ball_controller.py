@@ -17,6 +17,8 @@ class BallController(MpfController):
 
     config_name = "ball_controller"
 
+    __slots__ = ["delay", "num_balls_known", "_add_new_balls_task", "_captured_balls"]
+
     def __init__(self, machine: MachineController) -> None:
         """Initialise ball controller.
 

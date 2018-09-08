@@ -135,6 +135,10 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         machine_type: Constant of the pinproc.MachineType
     """
 
+    __slots__ = ["pdbconfig", "pinproc", "proc", "log", "hw_switch_rules", "version", "revision", "hardware_version",
+                 "dipswitches", "machine_type", "event_task", "command_queue", "response_queue", "event_queue",
+                 "proc_lock", "proc_executor", "proc_process", "proc_process_instance", "_commands_running"]
+
     def __init__(self, machine):
         """Make sure pinproc was loaded."""
         super().__init__(machine)
@@ -492,7 +496,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         return switch
 
 
-class PDBConfig(object):
+class PDBConfig:
 
     """Handles PDB Config of the P/P3-Roc.
 
@@ -823,7 +827,7 @@ class PDBConfig(object):
         return num
 
 
-class PDBSwitch(object):
+class PDBSwitch:
 
     """Base class for switches connected to a P-ROC/P3-ROC."""
 
@@ -856,7 +860,7 @@ class PDBSwitch(object):
         return 32 + int(cr_list[0]) * 16 + int(cr_list[1])
 
 
-class PDBCoil(object):
+class PDBCoil:
 
     """Base class for coils connected to a P-ROC/P3-ROC that are controlled via PDB driver boards.
 
@@ -906,7 +910,7 @@ class PDBCoil(object):
         return self.pdb.is_pdb_address(string)
 
 
-class PDBLight(object):
+class PDBLight:
 
     """Base class for lights connected to a PD-8x8 driver board."""
 
@@ -996,6 +1000,8 @@ class PDBLight(object):
 class PDBLED(LightPlatformInterface):
 
     """Represents an RGB LED connected to a PD-LED board."""
+
+    __slots__ = ["board", "address", "debug", "log", "polarity", "platform"]
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, board, address, polarity, debug, driver_platform):

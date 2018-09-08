@@ -15,6 +15,9 @@ class BallCountHandler(BallDeviceStateHandler):
 
     """Handles the ball count in the device."""
 
+    __slots__ = ["_is_counting", "_count_valid", "_revalidate", "_eject_started", "_eject_ended", "_has_balls",
+                 "_ball_count", "_ball_count_changed_futures", "counter"]
+
     def __init__(self, ball_device):
         """Initialise ball count handler."""
         super().__init__(ball_device)

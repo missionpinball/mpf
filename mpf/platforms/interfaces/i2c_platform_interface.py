@@ -8,6 +8,8 @@ class I2cPlatformInterface(metaclass=abc.ABCMeta):
 
     """Interface for a i2c device on a bus in hardware platforms."""
 
+    __slots__ = ["number"]
+
     def __init__(self, number: Any) -> None:
         """Remember the number."""
         self.number = number

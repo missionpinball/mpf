@@ -5,7 +5,7 @@ import logging
 from mpf.core.utility_functions import Util
 
 
-class Player(object):
+class Player:
 
     """Base class for a player in a game.
 

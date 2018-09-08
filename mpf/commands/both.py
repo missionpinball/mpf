@@ -14,7 +14,7 @@ def _start_mc(mpf_path, machine_path, args):
     module.Command(mpf_path, machine_path, args + ["--both"])
 
 
-class Command(object):
+class Command:
 
     """Command which runs game and mc."""
 

@@ -61,9 +61,6 @@ autofire_coils:
         coil: c_coil_pwm_test
         switch: s_test_nc
 
-servo_controllers:
-    address: 0x40
-
 servos:
     servo1:
         number: 3
@@ -103,6 +100,14 @@ lights:
     number: test_gi
   test_led:
     number: 2-1-2-3
+  test_led2:
+    channels:
+      red:
+        number: 2-7
+      green:
+        number: 2-8
+      blue:
+        number: 2-9
   test_led_inverted:
     number: 2-4-5-6
     platform_settings:

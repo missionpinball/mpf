@@ -18,6 +18,8 @@ class OutgoingBall:
 
     """One outgoing ball."""
 
+    __slots__ = ["max_tries", "eject_timeout", "target", "mechanical", "already_left"]
+
     def __init__(self, target: "BallDevice") -> None:
         """Initialise outgoing ball."""
         self.max_tries = None               # type: int
@@ -30,6 +32,9 @@ class OutgoingBall:
 class OutgoingBallsHandler(BallDeviceStateHandler):
 
     """Handles all outgoing balls."""
+
+    __slots__ = ["_eject_queue", "_current_target", "_cancel_future", "_incoming_ball_which_may_skip",
+                 "_no_incoming_ball_which_may_skip", "_incoming_ball_which_may_skip_obj", "_eject_future"]
 
     def __init__(self, ball_device: "BallDevice") -> None:
         """Initialise outgoing balls handler."""

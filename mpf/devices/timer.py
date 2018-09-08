@@ -299,7 +299,7 @@ class Timer(ModeDevice):
 
         self.running = False
 
-        pause_secs = timer_value
+        pause_ms = timer_value * 1000 # delays happen in ms
 
         self._remove_system_timer()
         self.machine.events.post('timer_' + self.name + '_paused',
@@ -314,8 +314,8 @@ class Timer(ModeDevice):
             ticks_remaining: The number of ticks in this timer remaining.
         '''
 
-        if pause_secs > 0:
-            self.delay.add(name='pause', ms=pause_secs, callback=self.start)
+        if pause_ms > 0:
+            self.delay.add(name='pause', ms=pause_ms, callback=self.start)
 
     def timer_complete(self, **kwargs):
         """Automatically called when this timer completes.

@@ -27,6 +27,8 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
     """Base class for the virtual hardware platform."""
 
+    __slots__ = ["hw_switches", "initial_states_sent", "_next_driver", "_next_switch", "_next_light", "__dict__"]
+
     def __init__(self, machine) -> None:
         """Initialise virtual platform."""
         super().__init__(machine)
@@ -60,6 +62,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         """Stop platform."""
         pass
 
+    @asyncio.coroutine
     def configure_servo(self, number: str):
         """Configure a servo device in paltform."""
         return VirtualServo(number)
@@ -125,7 +128,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
     def _get_platforms(self):
         platforms = []
         for name, platform in self.machine.config['mpf']['platforms'].items():
-            if name == "virtual" or name == "smart_virtual":
+            if name in ("virtual", "smart_virtual"):
                 continue
             platforms.append(Util.string_to_class(platform))
         return platforms
@@ -231,6 +234,8 @@ class VirtualI2cDevice(I2cPlatformInterface):
 
     """Virtual i2c device."""
 
+    __slots__ = ["data"]
+
     def __init__(self, number, initial_layout) -> None:
         """Initialise virtual i2c device."""
         super().__init__(number)
@@ -258,6 +263,8 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
 
     """Virtual segment display."""
 
+    __slots__ = ["text", "flashing"]
+
     def __init__(self, number) -> None:
         """Initialise virtual segment display."""
         super().__init__(number)
@@ -273,6 +280,8 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
 class VirtualSound(HardwareSoundPlatformInterface):
 
     """Virtual hardware sound interface."""
+
+    __slots__ = ["playing", "volume"]
 
     def __init__(self) -> None:
         """Initialise virtual hardware sound."""
@@ -304,6 +313,8 @@ class VirtualDmd(DmdPlatformInterface):
 
     """Virtual DMD."""
 
+    __slots__ = ["data", "brightness"]
+
     def __init__(self) -> None:
         """Initialise virtual DMD."""
         self.data = None
@@ -326,6 +337,8 @@ class VirtualSwitch(SwitchPlatformInterface):
 
     """Represents a switch in a pinball machine used with virtual hardware."""
 
+    __slots__ = ["log"]
+
     def __init__(self, config, number) -> None:
         """Initialise switch."""
         super().__init__(config, number)
@@ -339,6 +352,8 @@ class VirtualSwitch(SwitchPlatformInterface):
 class VirtualLight(LightPlatformInterface):
 
     """Virtual Light."""
+
+    __slots__ = ["settings", "color_and_fade_callback"]
 
     def __init__(self, number, settings) -> None:
         """Initialise LED."""
@@ -371,6 +386,8 @@ class VirtualServo(ServoPlatformInterface):
 
     """Virtual servo."""
 
+    __slots__ = ["log", "number", "current_position", "speed", "acceleration"]
+
     def __init__(self, number) -> None:
         """Initialise servo."""
         self.log = logging.getLogger('VirtualServo')
@@ -397,6 +414,8 @@ class VirtualServo(ServoPlatformInterface):
 class VirtualStepper(StepperPlatformInterface):
 
     """Virtual Stepper."""
+
+    __slots__ = ["log", "number", "_current_position", "velocity", "direction"]
 
     def __init__(self, number) -> None:
         """Initialise servo."""
@@ -434,6 +453,8 @@ class VirtualStepper(StepperPlatformInterface):
 class VirtualDriver(DriverPlatformInterface):
 
     """A virtual driver object."""
+
+    __slots__ = ["state", "log", "__dict__"]
 
     def __init__(self, config, number) -> None:
         """Initialise virtual driver to disabled."""

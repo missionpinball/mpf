@@ -79,7 +79,6 @@ class ShowPlayer(DeviceConfigPlayer):
 
         instance_dict[key] = self.machine.show_controller.replace_or_advance_show(previous_show, show_config,
                                                                                   start_step, start_time, stop_callback)
-        return
 
     @staticmethod
     def _stop(key, instance_dict, show, show_settings, queue, start_time, placeholder_args):
@@ -161,7 +160,7 @@ class ShowPlayer(DeviceConfigPlayer):
             'update': self._update
         }
 
-        action = actions.get(show_settings['action'].lower(), None)
+        action = actions.get(show_settings['action'], None)
 
         if not callable(action):
             raise AssertionError("Invalid action {} in show_player {}".format(

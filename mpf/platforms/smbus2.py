@@ -22,6 +22,8 @@ class Smbus2I2cDevice(I2cPlatformInterface):
 
     """A i2c device on smbus2."""
 
+    __slots__ = ["loop", "platform", "busses", "address", "smbus"]
+
     def __init__(self, number: str, platform, busses) -> None:
         """Initialise smbus2 device."""
         super().__init__(number)
@@ -52,7 +54,7 @@ class Smbus2I2cDevice(I2cPlatformInterface):
         """Split and return bus + address."""
         if isinstance(address, int):
             return 0, address
-        bus, address = address.split("-")
+        bus, address = address.split("-", 1)
         return bus, int(address)
 
     def _get_i2c_bus(self, bus) -> SMBus2Asyncio:
@@ -82,6 +84,8 @@ class Smbus2I2cDevice(I2cPlatformInterface):
 class Smbus2(I2cPlatform):
 
     """I2C platform which uses the smbus interface on linux via the smbus2 python extension."""
+
+    __slots__ = ["_i2c_busses"]
 
     def __init__(self, machine):
         """Initialise Smbus2 platform."""

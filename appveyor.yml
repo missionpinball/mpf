@@ -12,10 +12,10 @@ environment:
     - PYTHON: "C:\\Python36-x64"
 
   pypi_user:
-    secure: kxNKBuVMdOz6LjJPQb7PMQ==
+    secure: /UlFCFSXuqY1JAsOwKZdFg==
 
   pypi_password:
-    secure: nmmwU7UgFbrGUJwIr0Vo6cHzCuxlvW4vjg9TjkwrjmE=
+    secure: j1I2BPfJaYmFsQGsR8IWBQ==
 
 install:
   - "git submodule update --init --recursive"

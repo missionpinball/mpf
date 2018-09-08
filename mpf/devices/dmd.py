@@ -1,5 +1,6 @@
 """Support for physical DMDs."""
 import asyncio
+from functools import partial
 
 from mpf.core.machine import MachineController
 from mpf.core.platform import DmdPlatform
@@ -14,7 +15,8 @@ class Dmd(SystemWideDevice):
     config_section = 'dmds'
     collection = 'dmds'
     class_label = 'dmd'
-    machine = None
+
+    __slots__ = ["hw_device", "platform"]
 
     @classmethod
     def device_class_init(cls, machine: MachineController):
@@ -23,8 +25,7 @@ class Dmd(SystemWideDevice):
         Args:
             machine: MachineController which is used
         """
-        cls.machine = machine
-        cls.machine.bcp.interface.register_command_callback("dmd_frame", cls._bcp_receive_dmd_frame)
+        machine.bcp.interface.register_command_callback("dmd_frame", partial(cls._bcp_receive_dmd_frame, machine))
 
     def __init__(self, machine, name):
         """Initialise DMD."""
@@ -40,15 +41,15 @@ class Dmd(SystemWideDevice):
 
     @classmethod
     @asyncio.coroutine
-    def _bcp_receive_dmd_frame(cls, client, name, rawbytes, **kwargs):
+    def _bcp_receive_dmd_frame(cls, machine, client, name, rawbytes, **kwargs):
         """Update dmd from BCP."""
         del client
         del kwargs
 
-        if name not in cls.machine.dmds:
+        if name not in machine.dmds:
             raise TypeError("dmd {} not known".format(name))
 
-        cls.machine.dmds[name].update(rawbytes)
+        machine.dmds[name].update(rawbytes)
 
     def update(self, data: bytes):
         """Update data on the dmd.

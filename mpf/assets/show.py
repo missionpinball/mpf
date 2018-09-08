@@ -21,6 +21,8 @@ class ShowPool(AssetPool):
 
     """A pool of shows."""
 
+    __slots__ = []
+
     def __repr__(self):
         """Return str representation."""
         return '<ShowPool: {}>'.format(self.name)
@@ -197,7 +199,7 @@ class Show(Asset):
             if key in self.machine.show_controller.show_players.keys():
                 actions[key] = self.machine.show_controller.show_players[key].validate_config_entry(value, self.name)
 
-            elif key != 'duration' and key != 'time':   # pragma: no cover
+            elif key not in ('duration', 'time'):   # pragma: no cover
                 self._show_validation_error('Invalid section "{}:" found in show {}'.format(key, self.name))
 
     def _do_unload(self):
@@ -256,7 +258,7 @@ class Show(Asset):
         results = re.findall(r"\(([^)]+)\)", data)
         if results:
             for result in results:
-                self._add_token(data, result.lower(), path, token_type)
+                self._add_token(data, result, path, token_type)
 
     def _add_token(self, placeholder, token, path, token_type):
 
@@ -406,7 +408,7 @@ class Show(Asset):
 
 # This class is more or less a container
 # pylint: disable-msg=too-many-instance-attributes
-class RunningShow(object):
+class RunningShow:
 
     """A running instance of a show."""
 
@@ -534,8 +536,8 @@ class RunningShow(object):
                     use_string_replace = bool(token_path[-1] != "(" + token + ")")
 
                     final_key = token_path[-1]
-                    if final_key in keys_replaced:
-                        final_key = keys_replaced[final_key]
+                    # check if key has been replaced before
+                    final_key = keys_replaced.get(final_key, final_key)
 
                     if use_string_replace:
                         replaced_key = final_key.replace("(" + token + ")", replacement)

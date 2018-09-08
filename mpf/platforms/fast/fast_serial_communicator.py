@@ -40,6 +40,10 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                         'XX:N'
                         ]
 
+    __slots__ = ["dmd", "remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
+                 "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
+                 "send_queue"]
+
     def __init__(self, platform, port, baud):
         """Initialise communicator.
 

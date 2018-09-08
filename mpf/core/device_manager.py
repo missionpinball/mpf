@@ -1,7 +1,6 @@
 """Contains the DeviceManager base class."""
 import asyncio
 from collections import OrderedDict
-from typing import Sized, Iterable, Container, Generic, TypeVar
 
 from mpf.core.utility_functions import Util
 from mpf.core.mpf_controller import MpfController
@@ -312,7 +311,7 @@ class DeviceCollection(dict):
     hardware device (such as coils, lights, switches, ball devices, etc.).
     """
 
-    __slots__ = ["machine", "name", "config_section"]
+    __slots__ = ["machine", "name", "config_section", "_tag_cache"]
 
     def __init__(self, machine, collection, config_section):
         """Initialise device collection."""
@@ -321,6 +320,13 @@ class DeviceCollection(dict):
         self.machine = machine
         self.name = collection
         self.config_section = config_section
+        self._tag_cache = dict()
+
+    def __delitem__(self, key):
+        """Delete item for key."""
+        # clear the tag cache
+        self._tag_cache = dict()
+        return super().__delitem__(key)
 
     def __getattr__(self, attr):
         """Return device by key."""
@@ -348,7 +354,13 @@ class DeviceCollection(dict):
             A list of device objects. If no devices are found with that tag, it
             will return an empty list.
         """
-        return [item for item in self if hasattr(item, "tags") and tag in item.tags]
+        items_in_tag_cache = self._tag_cache.get(tag, None)
+        if items_in_tag_cache is not None:
+            return items_in_tag_cache
+        else:
+            items = [item for item in self if hasattr(item, "tags") and tag in item.tags]
+            self._tag_cache[tag] = items
+            return items
 
     def number(self, number):
         """Return a device object based on its number."""

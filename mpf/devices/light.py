@@ -21,6 +21,8 @@ class DriverLight(LightPlatformSoftwareFade):
 
     """A coil which is used to drive a light."""
 
+    __slots__ = ["driver"]
+
     def __init__(self, driver, loop, software_fade_ms):
         """Initialise coil as light."""
         super().__init__(driver.hw_driver.number, loop, software_fade_ms)
@@ -38,6 +40,27 @@ class DriverLight(LightPlatformSoftwareFade):
         return self.driver.hw_driver.get_board_name()
 
 
+class LightStackEntry:
+
+    """Data class for a light stack entry."""
+
+    __slots__ = ["priority", "start_time", "start_color", "dest_time", "dest_color", "key"]
+
+    # pylint: disable-msg=too-many-arguments
+    def __init__(self, priority, key, start_time, start_color, dest_time, dest_color):
+        """Initialize light stack entry."""
+        self.priority = priority
+        self.key = key
+        self.start_time = start_time
+        self.start_color = start_color
+        self.dest_time = dest_time
+        self.dest_color = dest_color
+
+    def __gt__(self, other):
+        """Compare two stack entries."""
+        return self.priority > other.priority or (self.priority == other.priority and self.key > other.key)
+
+
 @DeviceMonitor(_color="color")
 class Light(SystemWideDevice, DevicePositionMixin):
 
@@ -47,11 +70,13 @@ class Light(SystemWideDevice, DevicePositionMixin):
     collection = 'lights'
     class_label = 'light'
 
-    __slots__ = ["hw_drivers", "platforms", "delay", "default_fade_ms", "_color_correction_profile", "stack"]
+    __slots__ = ["hw_drivers", "platforms", "delay", "default_fade_ms", "_color_correction_profile", "stack",
+                 "hw_driver_functions"]
 
     def __init__(self, machine, name):
         """Initialise light."""
         self.hw_drivers = {}
+        self.hw_driver_functions = []
         self.platforms = set()      # type: Set[LightsPlatform]
         super().__init__(machine, name)
         self.machine.light_controller.initialise_light_subsystem()
@@ -61,7 +86,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
 
         self._color_correction_profile = None
 
-        self.stack = list()
+        self.stack = list()     # type: List[LightStackEntry]
         """A list of dicts which represents different commands that have come
         in to set this light to a certain color (and/or fade). Each entry in the
         list contains the following key/value pairs:
@@ -213,7 +238,9 @@ class Light(SystemWideDevice, DevicePositionMixin):
             self.hw_drivers[color] = []
             for channel in channel_list:
                 channel = self.machine.config_validator.validate_config("light_channels", channel)
-                self.hw_drivers[color].append(self._load_hw_driver(channel))
+                driver = self._load_hw_driver(channel)
+                self.hw_drivers[color].append(driver)
+                self.hw_driver_functions.append((driver, partial(self._get_brightness_and_fade, color=color)))
 
     def _load_hw_driver(self, channel):
         """Load one channel."""
@@ -298,9 +325,10 @@ class Light(SystemWideDevice, DevicePositionMixin):
                 settings in the stack already have this key, those settings
                 will be replaced with these new settings.
         """
-        self.debug_log("Received color() command. color: %s, fade_ms: %s "
-                       "priority: %s, key: %s", color, fade_ms, priority,
-                       key)
+        if self._debug:
+            self.debug_log("Received color() command. color: %s, fade_ms: %s "
+                           "priority: %s, key: %s", color, fade_ms, priority,
+                           key)
 
         if isinstance(color, str) and color == "on":
             color = self.config['default_on_color']
@@ -312,7 +340,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
 
         start_time = self.machine.clock.get_time()
 
-        color_changes = not self.stack or self.stack[0]['priority'] <= priority or self.stack[0]['dest_color'] is None
+        color_changes = not self.stack or self.stack[0].priority <= priority or self.stack[0].dest_color is None
 
         self._add_to_stack(color, fade_ms, priority, key, start_time)
 
@@ -350,18 +378,19 @@ class Light(SystemWideDevice, DevicePositionMixin):
     def _add_to_stack(self, color, fade_ms, priority, key, start_time):
         """Add color to stack."""
         # handle None to make keys sortable
-        if not key:
+        if key is None:
             key = ""
-        else:
-            key = str(key)
+        elif not isinstance(key, str):
+            raise AssertionError("Key should be string")
 
         if priority < self._get_priority_from_key(key):
-            self.debug_log("Incoming priority %s is lower than an existing "
-                           "stack item with the same key %s. Not adding to "
-                           "stack.", priority, key)
+            if self._debug:
+                self.debug_log("Incoming priority %s is lower than an existing "
+                               "stack item with the same key %s. Not adding to "
+                               "stack.", priority, key)
             return
 
-        if self.stack and priority == self.stack[0]['priority'] and key == self.stack[0]['key']:
+        if self._debug and self.stack and priority == self.stack[0].priority and key == self.stack[0].key:
             self.debug_log("Light stack contains two entries with the same priority %s but different keys: ",
                            priority, self.stack)
 
@@ -373,22 +402,24 @@ class Light(SystemWideDevice, DevicePositionMixin):
         color_below = self.get_color_below(priority, key)
         self._remove_from_stack_by_key(key)
 
-        self.stack.append(dict(priority=priority,
-                               start_time=start_time,
-                               start_color=color_below,
-                               dest_time=dest_time,
-                               dest_color=color,
-                               key=key))
+        self.stack.append(LightStackEntry(priority,
+                                          key,
+                                          start_time,
+                                          color_below,
+                                          dest_time,
+                                          color))
 
-        self.stack.sort(key=itemgetter('priority', 'key'), reverse=True)
+        if len(self.stack) > 1:
+            self.stack.sort(reverse=True)
 
-        self.debug_log("+-------------- Adding to stack ----------------+")
-        self.debug_log("priority: %s", priority)
-        self.debug_log("start_time: %s", self.machine.clock.get_time())
-        self.debug_log("start_color: %s", color_below)
-        self.debug_log("dest_time: %s", dest_time)
-        self.debug_log("dest_color: %s", color)
-        self.debug_log("key: %s", key)
+        if self._debug:
+            self.debug_log("+-------------- Adding to stack ----------------+")
+            self.debug_log("priority: %s", priority)
+            self.debug_log("start_time: %s", self.machine.clock.get_time())
+            self.debug_log("start_color: %s", color_below)
+            self.debug_log("dest_time: %s", dest_time)
+            self.debug_log("dest_color: %s", color)
+            self.debug_log("key: %s", key)
 
     def remove_from_stack_by_key(self, key, fade_ms=None):
         """Remove a group of color settings from the stack.
@@ -414,11 +445,11 @@ class Light(SystemWideDevice, DevicePositionMixin):
         color_changes = True
         stack = []
         for i, entry in enumerate(self.stack):
-            if entry["key"] == key:
+            if entry.key == key:
                 stack = self.stack[i:]
-                priority = entry["priority"]
+                priority = entry.priority
                 break
-            elif entry["dest_color"] is not None:
+            elif entry.dest_color is not None:
                 # no transparency above key
                 color_changes = False
 
@@ -427,7 +458,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
             return
 
         # this is already a fadeout. do not fade out the fade out.
-        if stack[0]["dest_color"] is None:
+        if stack[0].dest_color is None:
             fade_ms = None
 
         if fade_ms:
@@ -436,14 +467,15 @@ class Light(SystemWideDevice, DevicePositionMixin):
         self._remove_from_stack_by_key(key)
         if fade_ms:
             start_time = self.machine.clock.get_time()
-            self.stack.append(dict(priority=priority,
-                                   start_time=start_time,
-                                   start_color=color_of_key,
-                                   dest_time=start_time + fade_ms / 1000.0,
-                                   dest_color=None,
-                                   key=key))
+            self.stack.append(LightStackEntry(priority,
+                                              key,
+                                              start_time,
+                                              color_of_key,
+                                              start_time + fade_ms / 1000.0,
+                                              None))
             self.delay.reset(ms=fade_ms, callback=partial(self._remove_fade_out, key=key), name="remove_fade")
-            self.stack.sort(key=itemgetter('priority', 'key'), reverse=True)
+            if len(self.stack) > 1:
+                self.stack.sort(reverse=True)
 
         if color_changes:
             self._schedule_update()
@@ -456,16 +488,16 @@ class Light(SystemWideDevice, DevicePositionMixin):
         found = False
         color_change = True
         for _, entry in enumerate(self.stack):
-            if entry["key"] == key and entry["dest_color"] is None:
+            if entry.key == key and entry.dest_color is None:
                 found = True
                 break
-            elif entry["dest_color"] is not None:
+            elif entry.dest_color is not None:
                 # found entry above the removed which is non-transparent
                 color_change = False
 
         if found:
             self.debug_log("Removing fadeout for key '%s' from stack", key)
-            self.stack[:] = [x for x in self.stack if x['key'] != key or x['dest_color'] is not None]
+            self.stack = [x for x in self.stack if x.key != key or x.dest_color is not None]
 
         if found and color_change:
             self._schedule_update()
@@ -476,27 +508,34 @@ class Light(SystemWideDevice, DevicePositionMixin):
         if not self.stack:
             return
         self.debug_log("Removing key '%s' from stack", key)
-        self.stack[:] = [x for x in self.stack if x['key'] != key]
+        if len(self.stack) == 1:
+            if self.stack[0].key == key:
+                self.stack = []
+        else:
+            self.stack = [x for x in self.stack if x.key != key]
 
     def _schedule_update(self):
-        for color, hw_drivers in self.hw_drivers.items():
-            for hw_driver in hw_drivers:
-                hw_driver.set_fade(partial(self._get_brightness_and_fade, color=color))
+        for hw_driver, function in self.hw_driver_functions:
+            hw_driver.set_fade(function)
 
         for platform in self.platforms:
             platform.light_sync()
 
     def clear_stack(self):
         """Remove all entries from the stack and resets this light to 'off'."""
-        self.stack[:] = []
+        self.stack = []
 
         self.debug_log("Clearing Stack")
 
         self._schedule_update()
 
     def _get_priority_from_key(self, key):
+        if not self.stack:
+            return 0
+        if self.stack[0].key == key:
+            return self.stack[0].priority
         try:
-            return [x for x in self.stack if x['key'] == key][0]['priority']
+            return [x for x in self.stack if x.key == key][0].priority
         except IndexError:
             return 0
 
@@ -532,10 +571,11 @@ class Light(SystemWideDevice, DevicePositionMixin):
             return color
         else:
 
-            self.debug_log("Applying color correction: %s (applied "
-                           "'%s' color correction profile)",
-                           self._color_correction_profile.apply(color),
-                           self._color_correction_profile.name)
+            if self._debug:
+                self.debug_log("Applying color correction: %s (applied "
+                               "'%s' color correction profile)",
+                               self._color_correction_profile.apply(color),
+                               self._color_correction_profile.name)
 
             return self._color_correction_profile.apply(color)
 
@@ -547,10 +587,10 @@ class Light(SystemWideDevice, DevicePositionMixin):
             # no stack
             return RGBColor('off'), -1
 
-        dest_color = color_settings['dest_color']
+        dest_color = color_settings.dest_color
 
         # no fade
-        if not color_settings['dest_time']:
+        if not color_settings.dest_time:
             # if we are transparent just return the lower layer
             if dest_color is None:
                 return self._get_color_and_fade(stack[1:], max_fade_ms)
@@ -559,11 +599,11 @@ class Light(SystemWideDevice, DevicePositionMixin):
         current_time = self.machine.clock.get_time()
 
         # fade is done
-        if current_time >= color_settings['dest_time']:
+        if current_time >= color_settings.dest_time:
             # if we are transparent just return the lower layer
             if dest_color is None:
                 return self._get_color_and_fade(stack[1:], max_fade_ms)
-            return color_settings['dest_color'], -1
+            return color_settings.dest_color, -1
 
         if dest_color is None:
             dest_color, lower_fade_ms = self._get_color_and_fade(stack[1:], max_fade_ms)
@@ -572,17 +612,17 @@ class Light(SystemWideDevice, DevicePositionMixin):
 
         target_time = current_time + (max_fade_ms / 1000.0)
         # check if fade will be done before max_fade_ms
-        if target_time > color_settings['dest_time']:
-            return dest_color, int((color_settings['dest_time'] - current_time) * 1000)
+        if target_time > color_settings.dest_time:
+            return dest_color, int((color_settings.dest_time - current_time) * 1000)
 
         # figure out the ratio of how far along we are
         try:
-            ratio = ((target_time - color_settings['start_time']) /
-                     (color_settings['dest_time'] - color_settings['start_time']))
+            ratio = ((target_time - color_settings.start_time) /
+                     (color_settings.dest_time - color_settings.start_time))
         except ZeroDivisionError:
             ratio = 1.0
 
-        return RGBColor.blend(color_settings['start_color'], dest_color, ratio), max_fade_ms
+        return RGBColor.blend(color_settings.start_color, dest_color, ratio), max_fade_ms
 
     def _get_brightness_and_fade(self, max_fade_ms: int, color: str) -> Tuple[float, int]:
         uncorrected_color, fade_ms = self._get_color_and_fade(self.stack, max_fade_ms)
@@ -608,11 +648,16 @@ class Light(SystemWideDevice, DevicePositionMixin):
         Similar to get_color.
         """
         if not self.stack:
+            # no stack -> we are black
             return RGBColor("off")
+
+        if self.stack[0].key == key and self.stack[0].priority == priority:
+            # fast path for resetting the top element
+            return self._get_color_and_fade(self.stack, 0)[0]
 
         stack = []
         for i, entry in enumerate(self.stack):
-            if entry['priority'] <= priority and entry["key"] <= key:
+            if entry.priority <= priority and entry.key <= key:
                 stack = self.stack[i:]
                 break
         return self._get_color_and_fade(stack, 0)[0]
@@ -630,4 +675,4 @@ class Light(SystemWideDevice, DevicePositionMixin):
     @property
     def fade_in_progress(self) -> bool:
         """Return true if a fade is in progress."""
-        return bool(self.stack and self.stack[0]['dest_time'] > self.machine.clock.get_time())
+        return bool(self.stack and self.stack[0].dest_time > self.machine.clock.get_time())

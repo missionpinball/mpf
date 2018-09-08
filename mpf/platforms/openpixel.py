@@ -26,6 +26,8 @@ class OpenpixelHardwarePlatform(LightsPlatform):
 
     """
 
+    __slots__ = ["opc_client"]
+
     def __init__(self, machine: "MachineController") -> None:
         """Instantiate openpixel hardware platform."""
         super().__init__(machine)
@@ -94,6 +96,8 @@ class OpenPixelLED(LightPlatformInterface):
 
     """One LED on the openpixel platform."""
 
+    __slots__ = ["log", "opc_client", "debug", "opc_channel", "channel_number"]
+
     def __init__(self, number, opc_client, debug):
         """Initialise Openpixel LED obeject."""
         super().__init__(number)
@@ -115,7 +119,7 @@ class OpenPixelLED(LightPlatformInterface):
         return "OPC Channel {}".format(self.channel_number)
 
 
-class OpenPixelClient(object):
+class OpenPixelClient:
 
     """Base class of an OPC client which connects to a FadeCandy server.
 
@@ -123,6 +127,9 @@ class OpenPixelClient(object):
         machine: The main ``MachineController`` instance.
         config: Config to use
     """
+
+    __slots__ = ["machine", "log", "update_every_tick", "socket_sender", "max_fade_ms", "channels", "dirty_leds",
+                 "msg", "openpixel_config"]
 
     def __init__(self, machine, config):
         """Initialise openpixel client."""

@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
-from mpf.core.placeholder_manager import PlaceholderManager, BoolTemplate
+from mpf.core.placeholder_manager import PlaceholderManager, BoolTemplate, TextTemplate
 
 
 class TestPlaceholderManager(unittest.TestCase):
@@ -206,4 +206,9 @@ class TestPlaceholderManagerWithMachine(MpfFakeGameTestCase):
         self.assertEqual(123, value1)
         self.assertFalse(subscription2.done())
         self.assertEqual(42, value2)
+
+    def testTextTemplate(self):
+        t = TextTemplate(self.machine, "Number: {test:<4d}")
+        self.assertEqual("Number: 7   ", t.evaluate({"test": 7}))
+        self.assertEqual("Number: 0   ", t.evaluate({"test": None}))
 

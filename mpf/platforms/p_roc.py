@@ -35,6 +35,9 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         machine: The MachineController instance.
     """
 
+    __slots__ = ["config", "dmd", "alpha_display", "aux_port", "_use_extended_matrix",
+                 "_use_first_eight_direct_inputs"]
+
     def __init__(self, machine):
         """Initialise P-ROC."""
         super().__init__(machine)
@@ -43,6 +46,8 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
 
         # validate config for p_roc
         self.config = self.machine.config_validator.validate_config("p_roc", self.machine.config['p_roc'])
+
+        self.debug = self.config["debug"]
 
         self.dmd = None
         self.alpha_display = None
@@ -159,7 +164,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         states = yield from self.run_proc_cmd("switch_get_states")
 
         for switch, state in enumerate(states):
-            if state == 3 or state == 1:
+            if state in (1, 3):
                 states[switch] = 1
             else:
                 states[switch] = 0
@@ -219,6 +224,8 @@ class PROCDMD(DmdPlatformInterface):
 
     """
 
+    __slots__ = ["machine", "platform"]
+
     def __init__(self, platform, machine):
         """Set up DMD."""
         self.platform = platform
@@ -250,9 +257,11 @@ class PROCDMD(DmdPlatformInterface):
                                      "of 4096. Discarding...", len(data))
 
 
-class AuxPort(object):
+class AuxPort:
 
     """Aux port on the P-Roc."""
+
+    __slots__ = ["platform", "_commands"]
 
     def __init__(self, platform):
         """Initialise aux port."""
@@ -295,6 +304,8 @@ class PRocAlphanumericDisplay(SegmentDisplayPlatformInterface):
 
     """Since AuxAlphanumericDisplay updates all four displays wrap it and set the correct offset."""
 
+    __slots__ = ["display"]
+
     def __init__(self, display, index):
         """Initialise alpha numeric display."""
         super().__init__(index)
@@ -306,7 +317,7 @@ class PRocAlphanumericDisplay(SegmentDisplayPlatformInterface):
         self.display.set_text(text, self.number)
 
 
-class AuxAlphanumericDisplay(object):
+class AuxAlphanumericDisplay:
 
     """An alpha numeric display connected to the aux port on the P-Roc."""
 
@@ -413,6 +424,8 @@ class AuxAlphanumericDisplay(object):
     full_intensity_delay = 350  # microseconds
     inter_char_delay = 40       # microseconds
 
+    __slots__ = ["platform", "aux_controller", "aux_index", "texts"]
+
     def __init__(self, platform, aux_controller):
         """Initialise the alphanumeric display."""
         self.platform = platform
@@ -473,7 +486,7 @@ class AuxAlphanumericDisplay(object):
                 # indexing error by not checking i+1 on the 16th char.
                 if i < 15:
                     comma_dot = strings[j][i + 1]
-                    if comma_dot == "," or comma_dot == ".":
+                    if comma_dot in (".", ","):
                         segs[j][i] |= self.asciiSegments[ord(comma_dot) - 32]
                         strings[j].remove(comma_dot)
                         # Append a space to ensure there are enough chars.

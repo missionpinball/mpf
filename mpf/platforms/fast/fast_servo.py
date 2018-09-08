@@ -7,6 +7,8 @@ class FastServo(ServoPlatformInterface):
 
     """A servo in the FAST platform."""
 
+    __slots__ = ["number", "net_connection"]
+
     def __init__(self, number, net_connection):
         """Initialise servo."""
         self.number = number

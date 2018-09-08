@@ -8,19 +8,27 @@ class SegmentDisplayPlatformInterface(metaclass=abc.ABCMeta):
 
     """Interface for a segment display in hardware platforms."""
 
+    __slots__ = ["number"]
+
     def __init__(self, number: Any) -> None:
         """Remember the number."""
         self.number = number
 
     @abc.abstractmethod
     def set_text(self, text: str, flashing: bool) -> None:
-        """Set a text to the display."""
+        """Set a text to the display.
+
+        This text will be right aligned in case the text is shorter than the display.
+        If it is too long it will be cropped on the left.
+        """
         raise NotImplementedError
 
 
 class SegmentDisplaySoftwareFlashPlatformInterface(SegmentDisplayPlatformInterface):
 
     """SegmentDisplayPlatformInterface with software emulation for flashing."""
+
+    __slots__ = ["_flash_on", "_flashing", "_text"]
 
     def __init__(self, number: Any) -> None:
         """Remember the number."""

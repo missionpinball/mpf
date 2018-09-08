@@ -26,6 +26,10 @@ class TextUi(MpfController):
 
     config_name = "text_ui"
 
+    __slots__ = ["start_time", "machine", "_tick_task", "screen", "mpf_process", "ball_devices", "switches",
+                 "player_start_row", "column_positions", "columns", "_pending_bcp_connection", "_asset_percent",
+                 "_bcp_status"]
+
     def __init__(self, machine: "MachineController") -> None:
         """Initialize TextUi."""
         super().__init__(machine)

@@ -11,6 +11,8 @@ class PROCSwitch(SwitchPlatformInterface):
 
     """P-ROC switch object which is use to store the configure rules and config."""
 
+    __slots__ = ["string_number", "log", "notify_on_nondebounce", "hw_rules", "pdbconfig"]
+
     def __init__(self, config, number, notify_on_nondebounce, platform):
         """Initialise P-ROC switch."""
         super().__init__(config, number)
@@ -42,6 +44,8 @@ class PROCDriver(DriverPlatformInterface):
     (such as the PD-16 or PD-8x8) or an OEM driver board.
 
     """
+
+    __slots__ = ["log", "proc", "string_number", "pdbconfig", "__dict__"]
 
     def __init__(self, number, config, platform, string_number):
         """Initialise driver."""
@@ -120,6 +124,8 @@ class PROCDriver(DriverPlatformInterface):
 class PROCMatrixLight(LightPlatformSoftwareFade):
 
     """A P-ROC matrix light device."""
+
+    __slots__ = ["log", "proc", "platform"]
 
     def __init__(self, number, machine, platform):
         """Initialise matrix light device."""

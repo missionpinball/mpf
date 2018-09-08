@@ -9,6 +9,8 @@ class FASTMatrixLight(LightPlatformSoftwareFade):
 
     """A direct light on a fast controller."""
 
+    __slots__ = ["log", "number", "send", "platform"]
+
     # pylint: disable-msg=too-many-arguments
     def __init__(self, number, sender, machine, fade_interval_ms: int, platform) -> None:
         """Initialise light."""

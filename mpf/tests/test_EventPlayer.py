@@ -196,3 +196,23 @@ class TestEventPlayer(MpfTestCase):
         self.post_event("play_placeholder_event")
         self.assertEventNotCalled("my_event_None_123")
         self.assertEventCalled("my_event_hello_world_123")
+
+    def test_arg_placeholder(self):
+        self.mock_event('loaded_event_int')
+        self.mock_event('loaded_event_float')
+        self.mock_event('loaded_event_bool')
+        self.mock_event('loaded_event_string')
+        self.mock_event('loaded_event_notype')
+
+        self.machine.set_machine_var("testint", 1234)
+        self.machine.set_machine_var("testfloat", 12.34)
+        self.machine.set_machine_var("testbool", True)
+        self.machine.set_machine_var("teststring", "foobar")
+        self.machine.set_machine_var("testnotype", "barfoo")
+
+        self.post_event("play_placeholder_args")
+        self.assertEqual({"foo": 1234, "priority": 0}, self._last_event_kwargs['loaded_event_int'])
+        self.assertEqual({"foo": 12.34, "priority": 0}, self._last_event_kwargs['loaded_event_float'])
+        self.assertEqual({"foo": True, "priority": 0}, self._last_event_kwargs['loaded_event_bool'])
+        self.assertEqual({"foo": "foobar", "priority": 0}, self._last_event_kwargs['loaded_event_string'])
+        self.assertEqual({"foo": "barfoo", "priority": 0}, self._last_event_kwargs['loaded_event_notype'])

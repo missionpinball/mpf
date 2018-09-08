@@ -5,6 +5,8 @@ class OppRs232Intf:
 
     """Constants for OPP serial protocol."""
 
+    __slots__ = []
+
     GET_SER_NUM_CMD = b'\x00'
     GET_PROD_ID_CMD = b'\x01'
     GET_VERS_CMD = b'\x02'
