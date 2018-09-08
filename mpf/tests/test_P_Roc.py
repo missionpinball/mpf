@@ -119,13 +119,18 @@ class TestPRoc(MpfTestCase):
         return self._memory[module][address]
 
     def wait_for_platform(self):
-        self.machine.default_platform.run_proc_cmd_sync("_sync")
+        self._sync_count += 1
+        num = self._sync_count
+        result = self.machine.default_platform.run_proc_cmd_sync("_sync", num)
+        assert result[0] == "sync"
+        assert result[1] == num
 
     def _mock_loop(self):
         super()._mock_loop()
         self.loop._wait_for_external_executor = True
 
     def setUp(self):
+        self._sync_count = 0
         self.expected_duration = 2
         p_roc_common.pinproc_imported = True
         p_roc_common.pinproc = MockPinProcModule()
@@ -524,11 +529,14 @@ class TestPRoc(MpfTestCase):
         self.pinproc.driver_pulse.assert_called_with(
             9924, 250)
 
+        self.advance_time_and_run()
+        self.wait_for_platform()
+
         # pulse a and c side
         self.pinproc.driver_schedule = MagicMock(return_value=True)
         self.machine.coils.c_test_a_side.pulse(100)
+        self.advance_time_and_run(.001)
         self.machine.coils.c_test_c_side.pulse(50)
-        self.wait_for_platform()
         self.advance_time_and_run(.040)
         self.wait_for_platform()
         self.advance_time_and_run(.001)

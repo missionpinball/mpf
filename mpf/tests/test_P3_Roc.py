@@ -27,11 +27,11 @@ class MockProcProcess(object):
         self.event_queue = None
         self.dmd = None
 
-    def _sync(self):
+    def _sync(self, num):
         events = self._get_events()
         if events:
             self.event_queue.put(events)
-        return "sync"
+        return "sync", num
 
     @asyncio.coroutine
     def proc_process(self, loop, machine_type, command_queue, response_queue, event_queue):
@@ -130,13 +130,18 @@ class TestP3Roc(MpfTestCase):
         return self._memory[module][address]
 
     def wait_for_platform(self):
-        self.machine.default_platform.run_proc_cmd_sync("_sync")
+        self._sync_count += 1
+        num = self._sync_count
+        result = self.machine.default_platform.run_proc_cmd_sync("_sync", num)
+        assert result[0] == "sync"
+        assert result[1] == num
 
     def _mock_loop(self):
         super()._mock_loop()
         self.loop._wait_for_external_executor = True
 
     def setUp(self):
+        self._sync_count = 0
         self.expected_duration = 2
         p_roc_common.pinproc_imported = True
         p_roc_common.pinproc = MockPinProcModule()
@@ -999,10 +1004,10 @@ SW-16 boards found:
             call(2, 3, 42)], True)
 
         device = self.machine.lights.test_led2
-        device.hw_drivers['red'][0].proc.led_color = MagicMock()
         device.on()
         self.advance_time_and_run(1)
-        device.hw_drivers['red'][0].proc.led_color.assert_has_calls([
+        self.wait_for_platform()
+        self.pinproc.led_color.assert_has_calls([
             call(2, 7, 255),
             call(2, 8, 255),
             call(2, 9, 255)], True)
