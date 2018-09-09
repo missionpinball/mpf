@@ -101,6 +101,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
 
         # mark playfield active
         if self.config['playfield']:
+            self.machine.log.info("Sequence shot {} setting playfield_active event".format(self.name))
             self.config['playfield'].mark_playfield_active_from_device_action()
 
         self.debug_log("Sequence advance: %s", event_name)

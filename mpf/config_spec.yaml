@@ -92,6 +92,7 @@ autofire_coils:
     reverse_switch: single|bool|False
     enable_events: event_handler|str:ms|ball_started
     disable_events: event_handler|str:ms|ball_will_end, service_mode_entered
+    events_when_fired: list|str|None
     coil_overwrite: single|subconfig(coil_overwrites)|None
     switch_overwrite: dict|str:str|None
     ball_search_order: single|int|100
@@ -121,6 +122,7 @@ ball_devices:
     hold_events: event_handler|str:ms|None
     hold_switches: list|machine(switches)|None
     entrance_switch: single|machine(switches)|None
+    entrance_switch_ignore_window_ms: single|ms|0
     entrance_switch_full_timeout: single|ms|0
     entrance_events: event_handler|str:ms|None
     entrance_event_timeout: single|secs|5s
