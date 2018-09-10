@@ -68,6 +68,24 @@ class TestAutofire(MpfTestCase):
             DriverSettings(hw_driver=self.machine.coils.c_test2.hw_driver,
                            pulse_settings=PulseSettings(power=1.0, duration=23), hold_settings=None, recycle=True))
 
+    def test_disabled(self):
+        self.mock_event("playfield_active")
+        self.machine_run()
+
+        self.hit_and_release_switch("s_test_disabled")
+        self.machine_run()
+        self.assertEventNotCalled("playfield_active")
+
+        self.machine.autofires.ac_test_disabled.enable()
+        self.hit_and_release_switch("s_test_disabled")
+        self.machine_run()
+        self.assertEventCalled("playfield_active", times=1)
+
+        self.machine.autofires.ac_test_disabled.disable()
+        self.hit_and_release_switch("s_test_disabled")
+        self.machine_run()
+        self.assertEventCalled("playfield_active", times=1)
+
     def test_timeout(self):
         self.machine.autofires.ac_test_timeout.enable()
         self.machine_run()

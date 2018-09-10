@@ -3,6 +3,8 @@
 switches:
     s_test:
         number: 7
+    s_test_disabled:
+        number: 8
     s_test_nc:
         number: 1A
         type: 'NC'
@@ -14,6 +16,8 @@ coils:
     c_test2:
         number: 5
         default_pulse_ms: 23
+    c_test_disabled:
+        number: 6
 
 
 autofire_coils:
@@ -33,3 +37,8 @@ autofire_coils:
         timeout_watch_time: 1s
         timeout_max_hits: 10
         timeout_disable_time: 500ms
+    ac_test_disabled:
+        coil: c_test_disabled
+        switch: s_test_disabled
+        enable_events: enable_autofire
+        disable_events: disable_autofire

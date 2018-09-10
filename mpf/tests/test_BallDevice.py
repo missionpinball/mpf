@@ -2066,3 +2066,26 @@ class TestBallDevice(MpfTestCase):
         self.assertEqual("idle", trough._state)
         self.assertEqual("idle", launcher._state)
         self.assertEqual("idle", target._state)
+
+    def test_entrance_switch_ignore_window(self):
+        self.mock_event("balldevice_captured_from_playfield")
+        device = self.machine.ball_devices["test_entrance_ignore_device"]
+
+        # First call should register the capture
+        self.machine.switch_controller.process_switch("s_entrance", 1)
+        self.advance_time_and_run(0.1)
+        self.assertEventCalled("balldevice_captured_from_playfield", times=1)
+        self.machine.switch_controller.process_switch("s_entrance", 0)
+
+        # Second call, 2 seconds later, should be ignored
+        self.advance_time_and_run(2)
+        self.machine.switch_controller.process_switch("s_entrance", 1)
+        self.advance_time_and_run(0.1)
+        self.assertEventCalled("balldevice_captured_from_playfield", times=1)
+        self.machine.switch_controller.process_switch("s_entrance", 0)
+
+        # Third call, 2 seconds later, should capture
+        self.advance_time_and_run(2)
+        self.machine.switch_controller.process_switch("s_entrance", 1)
+        self.advance_time_and_run(0.1)
+        self.assertEventCalled("balldevice_captured_from_playfield", times=2)
