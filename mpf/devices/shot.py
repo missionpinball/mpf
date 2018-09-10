@@ -222,7 +222,6 @@ class Shot(EnableDisableMixin, ModeDevice):
         processed.
         """
         # mark the playfield active no matter what
-        self.machine.log.info("Shot {} setting playfield_active event".format(self.name))
         self.config['playfield'].mark_playfield_active_from_device_action()
 
         if not self.enabled or not self.player:

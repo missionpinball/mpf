@@ -61,15 +61,11 @@ class EntranceSwitchCounter(PhysicalBallCounter):
         # If recycle is ongoing, do nothing
         if self.recycle_clear_time:
             self.debug_log("Entrance switch hit within ignore window, taking no action")
-            self.machine.log.info("Entrance switch hit within ignore window, taking no action")
             return
         # If a recycle time is configured, set a timeout to prevent future entrance activity
         elif self.recycle_secs:
-            self.machine.log.info("Entrance switch hit, setting ignore window to {}s".format(self.recycle_secs))
             self.recycle_clear_time = self.machine.clock.get_time() + self.recycle_secs
             self.machine.clock.loop.call_at(self.recycle_clear_time, self._recycle_passed)
-        else:
-            self.machine.log.info("Entrance switch hit and no recycle settings")
 
         self.debug_log("Entrance switch hit")
         if self.config['ball_capacity'] and self.config['ball_capacity'] <= self._last_count:

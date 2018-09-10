@@ -129,7 +129,6 @@ class AutofireCoil(SystemWideDevice):
         if not self._enabled:
             return
         if not self._ball_search_in_progress:
-            self.machine.log.info("Autofire {} setting playfield_active event".format(self.name))
             self.config['playfield'].mark_playfield_active_from_device_action()
         if self._timeout_watch_time:
             current_time = self.machine.clock.get_time()
@@ -139,9 +138,6 @@ class AutofireCoil(SystemWideDevice):
             if len(self._timeout_hits) >= self._timeout_max_hits:
                 self.disable()
                 self.delay.add(self._timeout_disable_time, self.enable, "_timeout_enable_delay")
-
-        for event in self.config.get('events_when_fired', []):
-            self.machine.events.post(event)
 
     def _ball_search(self, phase, iteration):
         del phase

@@ -99,10 +99,8 @@ class SwitchCounter(PhysicalBallCounter):
                         last_entrance = -1000
 
                     if last_entrance > self.machine.clock.get_time() - self.config['entrance_event_timeout']:
-                        # self.machine.log.info("switch counter recoring event")
                         self.record_activity(BallEntranceActivity())
                     else:
-                        self.machine.log.info("switch counter triggered within timeout, not counting")
                         self.record_activity(UnknownBallActivity())
             elif new_count < self._last_count:
                 # lost ball

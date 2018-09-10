@@ -289,7 +289,6 @@ class Playfield(SystemWideDevice):
 
         """
         if self.balls <= 0 or (kwargs.get('balls') and self.balls - kwargs['balls'] < 0):
-            self.machine.log.info("Playfield itself setting playfield_active event, kwargs are {}".format(kwargs))
             self._mark_playfield_active()
 
             if not self.num_balls_requested:
