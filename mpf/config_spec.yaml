@@ -937,6 +937,7 @@ rgb_dmds:
     source_display: single|str|dmd
     only_send_changes: single|bool|False
     brightness: single|float|1.0
+    channel_order: single|lstr|rgb
     gamma: single|float|2.2
     hardware_brightness: single|template_float|1.0
 score_reels:
