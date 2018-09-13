@@ -1,12 +1,18 @@
-Mission Pinball Framework (mpf)
+Mission Pinball Framework (MPF)
 ===============================
 
 <img align="right" height="146" src="mpf-logo-200.png"/>
 
 Let's build a pinball machine!
 
+What is Mission Pinball Framework?
+----------------------------------
+
 The Mission Pinball Framework (MPF) is an open source, cross-platform, software framework for powering real pinball
 machines.
+
+Technology and Compatibility
+----------------------------
 
 MPF is written in Python 3. It can run on Windows, Mac, and Linux using the same code and configurations.
 
@@ -30,8 +36,8 @@ The MPF project homepage is here : http://missionpinball.org
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1687/badge)](https://bestpractices.coreinfrastructure.org/projects/1687)
 
 
-Installation, Documentation, and Examples
------------------------------------------
+Installation and Documentation
+------------------------------
 * Getting started tutorial : http://docs.missionpinball.org/en/latest/tutorial/
 * Installation : http://docs.missionpinball.org/en/latest/install/
 * User documentation : http://docs.missionpinball.org
@@ -41,8 +47,8 @@ Support
 -------
 We have a user support forum at : https://groups.google.com/forum/#!forum/mpf-users
 
-Authors & Contributing
-----------------------
+Contributing
+------------
 MPF is a labor of love awesome pinball-loving people. There's a list of authors in the AUTHORS file. We'd love for you
 to join us! Even if you don't know Python well, you can help improve the documentation or write how to guides. Drop us a
 line in the forum, or make a change and submit a pull request! More info about [Contributing Code](http://docs.missionpinball.org/en/latest/about/contributing_to_mpf.html)
