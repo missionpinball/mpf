@@ -202,6 +202,8 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
         if type_str == b'LISY1':
             self._system_type = 1
+        if type_str == b'LISY35':
+            self._system_type = 35
         elif type_str == b'LISY80':
             self._system_type = 80
         else:
