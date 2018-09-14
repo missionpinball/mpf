@@ -40,14 +40,14 @@ Visit the MPF project homepage at http://missionpinball.org.
 
 Installation and Documentation
 ------------------------------
-* Getting started tutorial : http://docs.missionpinball.org/en/latest/tutorial/
-* Installation : http://docs.missionpinball.org/en/latest/install/
-* User documentation : http://docs.missionpinball.org
-* Developer documentation : http://developer.missionpinball.org/
+* Getting started tutorial: http://docs.missionpinball.org/en/latest/tutorial/
+* Installation: http://docs.missionpinball.org/en/latest/install/
+* User documentation: http://docs.missionpinball.org
+* Developer documentation: http://developer.missionpinball.org/
 
 Support
 -------
-We have a user support forum at : https://groups.google.com/forum/#!forum/mpf-users
+We have a user support forum at: https://groups.google.com/forum/#!forum/mpf-users
 
 Contributing
 ------------
