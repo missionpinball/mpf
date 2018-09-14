@@ -16,9 +16,14 @@ Technology and Compatibility
 
 MPF is written in Python 3. It is compatible with Windows, Mac, and Linux using the same code and configurations.
 
-MPF interfaces with real, physical pinball machines via modern pinball controller hardware such as the Multimorphic
-P-ROC or P3-ROC, FAST Pinball controllers, Open Pinball Project (OPP) open source hardware, or Stern SPIKE pinball
-machines. You can use it to power your own custom-built machine or to update the software in existing Williams, Bally,
+MPF interfaces with real, physical pinball machines via modern pinball controller hardware, including:
+
+* Multimorphic P-ROC or P3-ROC systems
+* FAST Pinball controllers
+* Open Pinball Project (OPP) open source hardware
+* Stern SPIKE pinball systems
+
+You can use MPF to power your own custom-built machine, or to update software in existing Williams, Bally,
 Stern, or Data East machines.
 
 There's also an [MPF Media Controller](https://github.com/missionpinball/mpf-mc/) (based on [Kivy](http://kivy.org))
