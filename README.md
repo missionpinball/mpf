@@ -49,7 +49,7 @@ Visit the user support forum at https://groups.google.com/forum/#!forum/mpf-user
 
 Contributing
 ------------
-MPF is a passion project supported by an awesome pinball-loving community. If you're Python coder, documentation writer, or pinball proponent, join the community! Drop us a line in the forum, or make a change and submit a pull request. For more information about contributing see the [Contributing Code](http://docs.missionpinball.org/en/latest/about/contributing_to_mpf.html)
+MPF is a passion project supported by an awesome pinball-loving community. If you're a Python coder, documentation writer, or pinball proponent, join the community! Drop us a line in the forum, or make a change and submit a pull request. For more information about contributing see the [Contributing Code](http://docs.missionpinball.org/en/latest/about/contributing_to_mpf.html)
 and [Contributing Documentation](http://docs.missionpinball.org/en/latest/about/contributing_to_mpf_docs.html) pages.
 
 License
