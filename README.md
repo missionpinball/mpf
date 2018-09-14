@@ -29,7 +29,7 @@ MPF is MIT-licensed, developed by fun people, and supported by a vibrant pinball
 See also the [MPF Media Controller](https://github.com/missionpinball/mpf-mc/) (based on [Kivy](http://kivy.org)),
 which is used to control graphics and sounds, including high-res LCD displays, classic DMDs, and modern RGB LED DMDs.
 
-Visit the MPF project homepage is here : http://missionpinball.org
+Visit the MPF project homepage at http://missionpinball.org.
 
 [![Coverage Status](https://coveralls.io/repos/missionpinball/mpf/badge.svg?branch=dev&service=github)](https://coveralls.io/github/missionpinball/mpf?branch=dev)
 [![Build Status](https://travis-ci.org/missionpinball/mpf.svg?branch=dev)](https://travis-ci.org/missionpinball/mpf)
