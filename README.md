@@ -14,9 +14,9 @@ machines in restaurants, bars, arcades, and elsewhere.
 Technology and Compatibility
 ----------------------------
 
-MPF is written in Python 3. It can run on Windows, Mac, and Linux using the same code and configurations.
+MPF is written in Python 3. It is compatible with Windows, Mac, and Linux using the same code and configurations.
 
-MPF interacts with real, physical pinball machines via modern pinball controller hardware such as the Multimorphic
+MPF interfaces with real, physical pinball machines via modern pinball controller hardware such as the Multimorphic
 P-ROC or P3-ROC, FAST Pinball controllers, Open Pinball Project (OPP) open source hardware, or Stern SPIKE pinball
 machines. You can use it to power your own custom-built machine or to update the software in existing Williams, Bally,
 Stern, or Data East machines.
