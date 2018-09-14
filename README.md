@@ -54,7 +54,4 @@ and [Contributing Documentation](http://docs.missionpinball.org/en/latest/about/
 
 License
 -------
-* MPF and its related projects are released under the terms of the MIT License. Please refer to the LICENSE file for details.
-* Docs are Creative Commons CC BY 4.0.
-* Both of these basically mean you can do anything you want with MPF and the docs, including using them for commercial
-  projects. You don't have to pay us or share your changes if you don't want to. Just go make pinball!
+MPF and related projects are released under the MIT License. Refer to the LICENSE file for details. Docs are released under Creative Commons CC BY 4.0.
