@@ -24,11 +24,10 @@ Stern, or Data East pinball machines. MPF interfaces with machines via modern pi
 
 MPF is written in Python 3. It is compatible with Windows, Mac, and Linux using the same code and configurations.
 
-There's also an [MPF Media Controller](https://github.com/missionpinball/mpf-mc/) (based on [Kivy](http://kivy.org))
-which is used to control graphics and sounds, including high-res LCD displays, classic DMDs, and modern RGB LED DMDs.
+MPF is a work in progress we are actively developing. We are reviewing commits weekly. MPF is MIT-licensed, developed by fun people, and supported by a vibrant pinball-loving community.
 
-MPF is a work-in-progress that's not yet complete, though we're actively developing it and checking in several commits a
-week. It's MIT licensed, actively developed by fun people, and supported by a vibrant pinball-loving community.
+See also the [MPF Media Controller](https://github.com/missionpinball/mpf-mc/) (based on [Kivy](http://kivy.org))
+which is used to control graphics and sounds, including high-res LCD displays, classic DMDs, and modern RGB LED DMDs.
 
 The MPF project homepage is here : http://missionpinball.org
 
