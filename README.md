@@ -1,15 +1,15 @@
 Mission Pinball Framework (MPF)
 ===============================
 
-<img align="right" height="146" src="mpf-logo-200.png"/>
+<img align="center" height="146" src="mpf-logo-200.png"/>
 
-Let's build a pinball machine!
+<em>...Let's build a pinball machine!</em>
 
 What is Mission Pinball Framework?
 ----------------------------------
 
-The Mission Pinball Framework (MPF) is an open source, cross-platform, software framework for powering real pinball
-machines.
+Mission Pinball Framework (MPF) is an open source, cross-platform software for powering real pinball
+machines in restaurants, bars, arcades, and elsewhere.
 
 Technology and Compatibility
 ----------------------------
