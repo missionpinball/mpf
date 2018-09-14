@@ -45,7 +45,7 @@ Installation and Documentation
 
 Support
 -------
-Visit the user support forum at: https://groups.google.com/forum/#!forum/mpf-users
+Visit the user support forum at https://groups.google.com/forum/#!forum/mpf-users.
 
 Contributing
 ------------
