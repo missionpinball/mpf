@@ -26,7 +26,7 @@ MPF is written in Python 3. It is compatible with Windows, Mac, and Linux using 
 
 MPF is MIT-licensed, developed by fun people, and supported by a vibrant pinball-loving community. It is a work in progress we are actively developing. We review commits weekly. 
 
-See also the [MPF Media Controller](https://github.com/missionpinball/mpf-mc/) (based on [Kivy](http://kivy.org))
+See also the [MPF Media Controller](https://github.com/missionpinball/mpf-mc/) (based on [Kivy](http://kivy.org)),
 which is used to control graphics and sounds, including high-res LCD displays, classic DMDs, and modern RGB LED DMDs.
 
 Visit the MPF project homepage is here : http://missionpinball.org
