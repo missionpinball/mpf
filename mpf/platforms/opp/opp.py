@@ -107,13 +107,16 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         yield from self._connect_to_hardware()
         self.opp_commands[ord(OppRs232Intf.READ_GEN2_INP_CMD)] = self.read_gen2_inp_resp
         self.opp_commands[ord(OppRs232Intf.READ_MATRIX_INP)] = self.read_matrix_inp_resp
+
+    @asyncio.coroutine
+    def start(self):
+        """Start polling and listening for commands."""
+        # start polling
         for chain_serial in self.read_input_msg:
             self._poll_task[chain_serial] = self.machine.clock.loop.create_task(self._poll_sender(chain_serial))
             self._poll_task[chain_serial].add_done_callback(self._done)
 
-    @asyncio.coroutine
-    def start(self):
-        """Start listening for commands."""
+        # start listening for commands
         for connection in self.serial_connections:
             yield from connection.start_read_loop()
 
