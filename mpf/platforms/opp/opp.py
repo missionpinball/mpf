@@ -41,7 +41,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
     __slots__ = ["opp_connection", "serial_connections", "opp_incands", "incandDict", "opp_solenoid", "solDict",
                  "opp_inputs", "inpDict", "inpAddrDict", "matrixInpAddrDict", "read_input_msg", "opp_neopixels",
                  "neoCardDict", "neoDict", "numGen2Brd", "gen2AddrArr", "badCRC", "minVersion", "_poll_task",
-                 "config", "_poll_response_received", "machine_type", "opp_commands"]
+                 "config", "_poll_response_received", "machine_type", "opp_commands", "_incand_task"]
 
     def __init__(self, machine) -> None:
         """Initialise OPP platform."""
@@ -74,6 +74,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self.badCRC = 0
         self.minVersion = 0xffffffff
         self._poll_task = {}                # type: Dict[str, asyncio.Task]
+        self._incand_task = None            # type: asyncio.Task
 
         self.features['tickless'] = True
 
@@ -120,12 +121,19 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         for connection in self.serial_connections:
             yield from connection.start_read_loop()
 
+        self._incand_task = self.machine.clock.schedule_interval(self.update_incand,
+                                                                 1 / self.config['incand_update_hz'])
+
     def stop(self):
         """Stop hardware and close connections."""
         for task in self._poll_task.values():
             task.cancel()
 
         self._poll_task = {}
+
+        if self._incand_task:
+            self._incand_task.cancel()
+            self._incand_task = None
 
         for connections in self.serial_connections:
             connections.stop()
@@ -783,14 +791,13 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             raise AssertionError("Unknown subtype {}".format(subtype))
 
     def light_sync(self):
-        """Update lights."""
-        # first neo pixels
+        """Update lights.
+
+        Currently we only update neo pixels. Incands are updated separately in a task to provide better batching.
+        """
         for light in self.neoDict.values():
             if light.dirty:
                 light.update_color()
-
-        # then incandescents
-        self.update_incand()
 
     @staticmethod
     def _done(future):  # pragma: no cover
