@@ -43,8 +43,8 @@ switches:
     s_playfield:
         number:
         tags: playfield_active
-
-
+    s_entrance:
+        number:
 
 ball_devices:
     test_trough:
@@ -80,3 +80,8 @@ ball_devices:
         eject_targets: playfield, test_trough
         confirm_eject_type: target
         debug: true
+    test_entrance_ignore_device:
+        ball_capacity: 2
+        eject_coil: eject_coil5
+        entrance_switch: s_entrance
+        entrance_switch_ignore_window_ms: 3000

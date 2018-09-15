@@ -126,6 +126,8 @@ class AutofireCoil(SystemWideDevice):
 
     def _hit(self):
         """Rule was triggered."""
+        if not self._enabled:
+            return
         if not self._ball_search_in_progress:
             self.config['playfield'].mark_playfield_active_from_device_action()
         if self._timeout_watch_time:
