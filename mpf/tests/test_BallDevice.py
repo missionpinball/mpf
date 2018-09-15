@@ -2068,8 +2068,8 @@ class TestBallDevice(MpfTestCase):
         self.assertEqual("idle", target._state)
 
     def test_entrance_switch_ignore_window(self):
+        """Verify that an entrance switch doesn't hit during the ignore window."""
         self.mock_event("balldevice_captured_from_playfield")
-        device = self.machine.ball_devices["test_entrance_ignore_device"]
 
         # First call should register the capture
         self.machine.switch_controller.process_switch("s_entrance", 1)

@@ -69,6 +69,7 @@ class TestAutofire(MpfTestCase):
                            pulse_settings=PulseSettings(power=1.0, duration=23), hold_settings=None, recycle=True))
 
     def test_disabled(self):
+        """Verify that a disabled autofire coil doesn't post 'playfield_active'."""
         self.mock_event("playfield_active")
         self.machine_run()
 
