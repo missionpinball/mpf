@@ -698,6 +698,8 @@ machine_vars:
     initial_value: single|str|
     value_type: single|enum(str,float,int)|int
     persist: single|bool|True
+mc_custom_code:
+    __valid_in__: machine  # used by the MC, ignored by MPF
 mc_scriptlets:
     __valid_in__: machine  # used by the MC, ignored by MPF
 mma8451_accelerometer:
