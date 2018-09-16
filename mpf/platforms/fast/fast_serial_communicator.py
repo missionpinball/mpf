@@ -309,7 +309,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             if msg[:2] not in self.ignored_messages_in_flight:
 
                 self.messages_in_flight -= 1
-                if self.messages_in_flight <= self.max_messages_in_flight:
+                if self.messages_in_flight <= self.max_messages_in_flight or not self.read_task:
                     self.send_ready.set()
                 if self.messages_in_flight < 0:
                     self.log.warning("Port %s received more messages than "

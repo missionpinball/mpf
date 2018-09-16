@@ -161,8 +161,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         yield from self._connect_to_hardware()
 
-        self.machine.clock.schedule_interval(self._update_watchdog, self.config['watchdog'] / 2000)
-
     def stop(self):
         """Stop platform and close connections."""
         for connection in self.serial_connections:
@@ -173,7 +171,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     @asyncio.coroutine
     def start(self):
-        """Start listening for commands."""
+        """Start listening for commands and schedule watchdog."""
+        self.machine.clock.schedule_interval(self._update_watchdog, self.config['watchdog'] / 2000)
+
         for connection in self.serial_connections:
             yield from connection.start_read_loop()
 
