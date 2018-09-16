@@ -41,7 +41,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
     __slots__ = ["opp_connection", "serial_connections", "opp_incands", "incandDict", "opp_solenoid", "solDict",
                  "opp_inputs", "inpDict", "inpAddrDict", "matrixInpAddrDict", "read_input_msg", "opp_neopixels",
                  "neoCardDict", "neoDict", "numGen2Brd", "gen2AddrArr", "badCRC", "minVersion", "_poll_task",
-                 "config", "_poll_response_received", "machine_type", "opp_commands"]
+                 "config", "_poll_response_received", "machine_type", "opp_commands", "_incand_task"]
 
     def __init__(self, machine) -> None:
         """Initialise OPP platform."""
@@ -74,6 +74,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self.badCRC = 0
         self.minVersion = 0xffffffff
         self._poll_task = {}                # type: Dict[str, asyncio.Task]
+        self._incand_task = None            # type: asyncio.Task
 
         self.features['tickless'] = True
 
@@ -107,15 +108,21 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         yield from self._connect_to_hardware()
         self.opp_commands[ord(OppRs232Intf.READ_GEN2_INP_CMD)] = self.read_gen2_inp_resp
         self.opp_commands[ord(OppRs232Intf.READ_MATRIX_INP)] = self.read_matrix_inp_resp
+
+    @asyncio.coroutine
+    def start(self):
+        """Start polling and listening for commands."""
+        # start polling
         for chain_serial in self.read_input_msg:
             self._poll_task[chain_serial] = self.machine.clock.loop.create_task(self._poll_sender(chain_serial))
             self._poll_task[chain_serial].add_done_callback(self._done)
 
-    @asyncio.coroutine
-    def start(self):
-        """Start listening for commands."""
+        # start listening for commands
         for connection in self.serial_connections:
             yield from connection.start_read_loop()
+
+        self._incand_task = self.machine.clock.schedule_interval(self.update_incand,
+                                                                 1 / self.config['incand_update_hz'])
 
     def stop(self):
         """Stop hardware and close connections."""
@@ -123,6 +130,10 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             task.cancel()
 
         self._poll_task = {}
+
+        if self._incand_task:
+            self._incand_task.cancel()
+            self._incand_task = None
 
         for connections in self.serial_connections:
             connections.stop()
@@ -780,14 +791,13 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             raise AssertionError("Unknown subtype {}".format(subtype))
 
     def light_sync(self):
-        """Update lights."""
-        # first neo pixels
+        """Update lights.
+
+        Currently we only update neo pixels. Incands are updated separately in a task to provide better batching.
+        """
         for light in self.neoDict.values():
             if light.dirty:
                 light.update_color()
-
-        # then incandescents
-        self.update_incand()
 
     @staticmethod
     def _done(future):  # pragma: no cover
