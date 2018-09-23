@@ -13,6 +13,8 @@ class BcpPluginPlayer(DeviceConfigPlayer):
         """Initialise plugin player."""
         super().__init__(machine)
         self.bcp_client = None
+        self.instances['_global_bcp'] = dict()
+        self.instances['_global_bcp'][self.config_file_section] = dict()
 
     def __repr__(self):
         """Return str representation."""
@@ -30,6 +32,15 @@ class BcpPluginPlayer(DeviceConfigPlayer):
         self.machine.events.add_handler('init_phase_1', self._initialize_in_mode, priority=20)
         # since bcp is connecting in init_phase_2 we have to postpone this
         self.machine.events.add_handler('init_phase_3', self._initialise_system_wide)
+
+    def process_mode_config(self, config, root_config_dict, mode, **kwargs):
+        """Create bcp context."""
+        super().process_mode_config(config, root_config_dict, mode, **kwargs)
+        bcp_context = mode.name + "_bcp"
+        if bcp_context not in self.instances:
+            self.instances[bcp_context] = dict()
+        if self.config_file_section not in self.instances[bcp_context]:
+            self.instances[bcp_context][self.config_file_section] = dict()
 
     # pylint: disable-msg=too-many-arguments
     def show_play_callback(self, settings, priority, calling_context, show_tokens, context, start_time):
