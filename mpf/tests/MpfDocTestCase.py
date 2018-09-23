@@ -154,6 +154,9 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
     def command_hit_and_release_switch(self, switch_name):
         self.hit_and_release_switch(switch_name)
 
+    def command_hit_and_release_switches_simultaneously(self, switch_name1, switch_name2):
+        self.hit_and_release_switches_simultaneously([switch_name1, switch_name2])
+
     def command_hit_switch(self, switch_name):
         self.hit_switch_and_run(switch_name, 0)
 

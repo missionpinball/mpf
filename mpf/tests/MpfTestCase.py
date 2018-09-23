@@ -765,6 +765,23 @@ class MpfTestCase(unittest.TestCase):
         self.machine.switch_controller.process_switch(name, state=0, logical=True)
         self.machine_run()
 
+    def hit_and_release_switches_simultaneously(self, names):
+        """Momentarily activates and then deactivates multiple switches.
+
+        Switches are hit sequentially and then released sequentially.
+        Events are only processed at the end of the sequence which is useful
+        to reproduce race conditions when processing nearly simultaneous hits.
+
+        Args:
+            names: The names of the switches to hit and release.
+
+        """
+        for name in names:
+            self.machine.switch_controller.process_switch(name, logical=True)
+        for name in names:
+            self.machine.switch_controller.process_switch(name, state=0, logical=True)
+        self.machine_run()
+
     def tearDown(self):
         if self._exception:
             try:
