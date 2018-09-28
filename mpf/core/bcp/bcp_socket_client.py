@@ -38,12 +38,12 @@ def decode_command_string(bcp_string):
     """
     bcp_command = urlsplit(bcp_string)
 
+    if bcp_command.query[0:5] == "json=":
+        kwargs = json.loads(bcp_command.query[5:])
+        return bcp_command.path.lower(), kwargs
+
     try:
         kwargs = parse_qs(bcp_command.query, keep_blank_values=True)
-        if 'json' in kwargs:
-            kwargs = json.loads(kwargs['json'][0])
-            return bcp_command.path.lower(), kwargs
-
     except AttributeError:
         kwargs = dict()
 
