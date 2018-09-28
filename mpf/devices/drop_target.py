@@ -60,6 +60,14 @@ class DropTarget(SystemWideDevice):
             self.config['playfield'].ball_search.register(
                 self.config['ball_search_order'], self._ball_search, self.name)
 
+        if '{}_active'.format(self.config['playfield'].name) in self.config['switch'].tags:
+            self.raise_config_error(
+                "Ball device '{}' uses switch '{}' which has a "
+                "'{}_active' tag. This is handled internally by the defive. Remove the "
+                "redundant '{}_active' tag from that switch.".format(
+                    self.name, self.config['switch'].name, self.config['playfield'].name,
+                    self.config['playfield'].name), 1)
+
     def _ignore_switch_hits_for(self, ms):
         """Ignore switch hits for ms."""
         self._ignore_switch_hits = True

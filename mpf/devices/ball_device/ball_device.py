@@ -116,12 +116,13 @@ class BallDevice(SystemWideDevice):
             switch_set.add(self.config['jam_switch'])
 
         for switch in switch_set:
-            if switch and 'playfield_active' in switch.tags:
-                raise ValueError(
+            if switch and '{}_active'.format(self.config['captures_from'].name) in switch.tags:
+                self.raise_config_error(
                     "Ball device '{}' uses switch '{}' which has a "
-                    "'playfield_active' tag. This is not valid. Remove the "
-                    "'playfield_active' tag from that switch.".format(
-                        self.name, switch.name))
+                    "'{}_active' tag. This is handled internally by the defive. Remove the "
+                    "redundant '{}_active' tag from that switch.".format(
+                        self.name, switch.name, self.config['captures_from'].name,
+                        self.config['captures_from'].name), 13)
 
     def _initialize_late(self, queue: QueuedEvent, **kwargs):
         """Create ball counters."""
