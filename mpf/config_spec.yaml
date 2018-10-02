@@ -1498,7 +1498,7 @@ widgets:
         animations: ignore
         reset_animations_events: event_handler|str:ms|None
         color: single|kivycolor|ffffffff
-        style: single|str|None
+        style: list|str|None
         adjust_top: single|int|0
         adjust_bottom: single|int|0
         adjust_left: single|int|0
