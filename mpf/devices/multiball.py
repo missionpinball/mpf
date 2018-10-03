@@ -5,6 +5,7 @@ from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
 from mpf.core.mode_device import ModeDevice
+from mpf.core.placeholder_manager import NativeTypeTemplate
 from mpf.core.system_wide_device import SystemWideDevice
 
 
@@ -49,6 +50,15 @@ class Multiball(SystemWideDevice, ModeDevice):
         yield from super()._initialize()
         self.ball_locks = self.config['ball_locks']
         self.source_playfield = self.config['source_playfield']
+
+        if self.config['ball_count_type'] == "total" and isinstance(self.config['ball_count'], NativeTypeTemplate) and \
+                        self.config['ball_count'].evaluate([]) <= 1:
+            self.raise_config_error("ball_count should be at least 2 for a multiball to have an effect when "
+                                    "ball_count_type is set to total.", 1)
+        elif self.config['ball_count_type'] == "add" and isinstance(self.config['ball_count'], NativeTypeTemplate) and \
+                        self.config['ball_count'].evaluate([]) <= 0:
+            self.raise_config_error("ball_count should be at least 1 for a multiball to have an effect when "
+                                    "ball_count_type is set to add.", 2)
 
     @classmethod
     def prepare_config(cls, config, is_mode_config):
