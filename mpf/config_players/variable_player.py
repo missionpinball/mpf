@@ -25,8 +25,12 @@ class VariablePlayer(ConfigPlayer):
     @staticmethod
     def is_entry_valid_outside_mode(settings: dict) -> bool:
         """Return true if this entry may run without a game and player."""
-        del settings
-        return False
+        for event, setting in settings.items():
+            if setting['action'] not in ("set_machine", "add_machine"):
+                return False
+
+        # true if only set_machine or add_machine are used
+        return True
 
     def play(self, settings: dict, context: str, calling_context: str,
              priority: int = 0, **kwargs) -> None:
@@ -34,6 +38,9 @@ class VariablePlayer(ConfigPlayer):
         for var, s in settings.items():
             if var == "block":
                 self.raise_config_error('Do not use "block" as variable name in variable_player.', 1, context=context)
+
+            if s['action'] in ("add", "add_machine") and s['string']:
+                self.raise_config_error('Cannot add two strings. Use action set or set_machine.', 3, context=context)
 
             if s['condition'] and not s['condition'].evaluate(kwargs):
                 continue
@@ -47,7 +54,7 @@ class VariablePlayer(ConfigPlayer):
                 if VarBlock(priority, context) not in self.blocks[block_item]:
                     self.blocks[block_item].append(VarBlock(priority, context))
 
-            self._set_variable(var, s, kwargs)
+            self._set_variable(var, s, kwargs, context)
 
     def _is_blocked(self, block_item: str, context: str,
                     priority: int) -> bool:
@@ -57,16 +64,16 @@ class VariablePlayer(ConfigPlayer):
         first_element = priority_sorted[0]
         return first_element.priority > priority and first_element.context != context
 
-    def _set_variable(self, var: str, entry: dict, placeholder_parameters: dict) -> None:
-        if entry['string']:
-            self.machine.game.player[var] = entry['string']
-            return
-
+    def _set_variable(self, var: str, entry: dict, placeholder_parameters: dict, context) -> None:
         # evaluate placeholder
         if entry['float']:
             value = entry['float'].evaluate(placeholder_parameters)
-        else:
+        elif entry['int']:
             value = entry['int'].evaluate(placeholder_parameters)
+        elif entry['string']:
+            value = entry['string']
+        else:
+            return self.raise_config_error("You need to either set float, int or string", 2, context=context)
 
         if entry['action'] == "add":
             if entry['player']:
