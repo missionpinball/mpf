@@ -33,6 +33,13 @@ Adding custom code to your machine
 * :doc:`code/machine_code`
 * :doc:`code/mode_code`
 
+Common functions to use in your code
+------------------------------------
+
+* :doc:`functions/index`
+* :doc:`functions/machine_variables`
+* :doc:`functions/player_variables`
+
 API Reference
 -------------
 
@@ -79,6 +86,7 @@ Index
    Understanding the MPF codebase <overview/index>
    Adding custom code to your game <code/index>
    API Reference <api/index>
+   Common Functions <functions/index>
    Writing Tests <testing/index>
    Extending MPF <dev/index>
    BCP Protocol <bcp/index>
