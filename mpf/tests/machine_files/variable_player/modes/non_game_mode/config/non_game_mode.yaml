@@ -1,0 +1,14 @@
+#config_version=5
+mode:
+    start_events: start_non_game_mode
+    game_mode: False
+    priority: 200
+
+variable_player:
+  test_event:
+    test:
+      string: "123"
+      action: set_machine
+    test2:
+      int: 7
+      action: add_machine
