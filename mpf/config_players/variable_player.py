@@ -26,6 +26,7 @@ class VariablePlayer(ConfigPlayer):
     def is_entry_valid_outside_mode(settings: dict) -> bool:
         """Return true if this entry may run without a game and player."""
         for event, setting in settings.items():
+            del event
             if setting['action'] not in ("set_machine", "add_machine"):
                 return False
 
@@ -73,7 +74,8 @@ class VariablePlayer(ConfigPlayer):
         elif entry['string']:
             value = entry['string']
         else:
-            return self.raise_config_error("You need to either set float, int or string", 2, context=context)
+            value = None    # prevent type confusion
+            self.raise_config_error("You need to either set float, int or string", 2, context=context)
 
         if entry['action'] == "add":
             if entry['player']:
