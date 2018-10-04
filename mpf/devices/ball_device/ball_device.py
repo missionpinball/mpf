@@ -119,7 +119,7 @@ class BallDevice(SystemWideDevice):
             if switch and '{}_active'.format(self.config['captures_from'].name) in switch.tags:
                 self.raise_config_error(
                     "Ball device '{}' uses switch '{}' which has a "
-                    "'{}_active' tag. This is handled internally by the defive. Remove the "
+                    "'{}_active' tag. This is handled internally by the device. Remove the "
                     "redundant '{}_active' tag from that switch.".format(
                         self.name, switch.name, self.config['captures_from'].name,
                         self.config['captures_from'].name), 13)

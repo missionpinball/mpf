@@ -253,3 +253,15 @@ class TestVariablePlayer(MpfGameTestCase):
         # target only scores 10 again... or does it???
         self.hit_and_release_switch("s_counter_target")
         self.assertPlayerVarEqual(640, "score")
+
+    def test_non_game_mode(self):
+        # start non game mode outside of game
+        self.post_event("start_non_game_mode")
+
+        self.machine.set_machine_var("test", "321")
+        self.machine.set_machine_var("test2", 3)
+
+        self.post_event("test_event")
+
+        self.assertMachineVarEqual("123", "test")
+        self.assertMachineVarEqual(10, "test2")
