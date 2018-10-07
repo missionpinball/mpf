@@ -163,6 +163,21 @@ class MpfGameTestCase(MpfTestCase):
         """
         self.assertEqual(number, self.machine.game.player.index + 1)
 
+    def assertPlayerCount(self, count):
+        """Asserts that count players exist.
+
+        Args:
+            count: The expected number of players.
+
+        For example, to assert that the to players are in the game:
+
+        .. code::
+
+            self.assertPlayerCount(2)
+
+        """
+        self.assertEqual(count, len(self.machine.game.player_list))
+
     def stop_game(self, stop_time=1):
         """Stop the current game.
         

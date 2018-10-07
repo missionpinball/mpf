@@ -171,6 +171,9 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
             value = float(value)
         self.assertPlayerVarEqual(value, player_var=player_var)
 
+    def command_assert_player_count(self, count):
+        self.assertPlayerCount(int(count))
+
     def command_assert_machine_variable(self, value, name):
         if name in self.machine.machine_vars and isinstance(self.machine.machine_vars[name]["value"], (int, float)):
             value = float(value)
