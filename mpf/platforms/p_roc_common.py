@@ -140,6 +140,13 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
                       "Hardware Board ID: %s",
                       self.version, self.revision, self.hardware_version)
 
+        # configure servos
+        #self._write_pdled_config_reg(0x04, 20, 0x01)
+        #self._write_pdled_config_reg(0x04, 21, 300)
+
+        #self._write_addr(0x04, 72)
+        #self._write_color(0x04, 200)
+
         # configure pd_leds
         for pd_number, config in self.config['pd_led_boards'].items():
             print(pd_number, config)
