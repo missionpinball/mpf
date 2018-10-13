@@ -832,8 +832,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         Pulses a driver when a switch is hit. When the switch is released the pulse continues. Typically used for
         autofire coils such as pop bumpers.
         """
-        # OPP always does the full pulse
-        self._write_hw_rule(enable_switch, coil, False)
+        self._write_hw_rule(enable_switch, coil, use_hold=False, can_cancel=False)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and release rule to driver.
@@ -841,8 +840,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         Pulses a driver when a switch is hit. When the switch is released the pulse is canceled. Typically used on
         the main coil for dual coil flippers without eos switch.
         """
-        # OPP always does the full pulse. So this is not 100% correct
-        self.set_pulse_on_hit_rule(enable_switch, coil)
+        self._write_hw_rule(enable_switch, coil, use_hold=False, can_cancel=True)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and enable and relase rule on driver.
@@ -850,8 +848,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
         the pulse is canceled and the driver gets disabled. Typically used for single coil flippers.
         """
-        # OPP always does the full pulse. Therefore, this is mostly right.
-        self._write_hw_rule(enable_switch, coil, True)
+        self._write_hw_rule(enable_switch, coil, use_hold=True, can_cancel=True)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
                                                                  disable_switch: SwitchSettings, coil: DriverSettings):
@@ -863,7 +860,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """
         raise AssertionError("Not implemented in OPP currently")
 
-    def _write_hw_rule(self, switch_obj: SwitchSettings, driver_obj: DriverSettings, use_hold):
+    def _write_hw_rule(self, switch_obj: SwitchSettings, driver_obj: DriverSettings, use_hold, can_cancel=False):
         if switch_obj.invert:
             raise AssertionError("Cannot handle inverted switches")
 
@@ -875,7 +872,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self.log.debug("Setting HW Rule. Driver: %s", driver_obj.hw_driver.number)
 
         driver_obj.hw_driver.switches.append(switch_obj.hw_switch.number)
-        driver_obj.hw_driver.set_switch_rule(driver_obj.pulse_settings, driver_obj.hold_settings, driver_obj.recycle)
+        driver_obj.hw_driver.set_switch_rule(driver_obj.pulse_settings, driver_obj.hold_settings, driver_obj.recycle,
+                                             can_cancel)
         _, _, switch_num = switch_obj.hw_switch.number.split("-")
         switch_num = int(switch_num)
         self._add_switch_coil_mapping(switch_num, driver_obj.hw_driver)

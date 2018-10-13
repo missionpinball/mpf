@@ -64,6 +64,7 @@ class OppRs232Intf:
     CFG_SOL_ON_OFF = b'\x04'
     CFG_SOL_DLY_KICK = b'\x08'
     CFG_SOL_USE_MTRX_INP = b'\x10'
+    CFG_SOL_CAN_CANCEL = b'\x20'
 
     CFG_SOL_INP_REMOVE = b'\x80'
 
