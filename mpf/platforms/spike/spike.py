@@ -209,7 +209,7 @@ class SpikeDriver(DriverPlatformInterface):
         """Pulse coil for a certain time."""
         power1 = power2 = int(pulse_settings.power * 255)
         duration1 = int(pulse_settings.duration * 1.28)
-        duration2 = duration1 - 0xFF if duration1 > 0x1FF else 0
+        duration2 = duration1 - 0x1FF if duration1 > 0x1FF else 0
         if duration2 > 0x1FF:
             raise AssertionError("Pulse ms too long.")
 
