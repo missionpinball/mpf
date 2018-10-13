@@ -66,7 +66,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
     """
 
     __slots__ = ["pdbconfig", "pinproc", "proc", "log", "hw_switch_rules", "version", "revision", "hardware_version",
-                 "dipswitches", "machine_type"]
+                 "dipswitches", "machine_type", "config"]
 
     def __init__(self, machine):
         """Make sure pinproc was loaded."""
@@ -87,6 +87,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         self.revision = None
         self.hardware_version = None
         self.dipswitches = None
+        self.config = {}
 
         self.machine_type = pinproc.normalize_machine_type(
             self.machine.config['hardware']['driverboards'])
@@ -138,6 +139,91 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         self.log.info("Successfully connected to P-ROC/P3-ROC. Firmware Version: %s. Firmware Revision: %s. "
                       "Hardware Board ID: %s",
                       self.version, self.revision, self.hardware_version)
+
+        # configure pd_leds
+        for pd_number, config in self.config['pd_led_boards'].items():
+            print(pd_number, config)
+            self._write_ws2811_ctrl(pd_number, config['ws281x_low_bit_time'], config['ws281x_high_bit_time'],
+                                    config['ws281x_end_bit_time'], config['ws281x_reset_bit_time'])
+            self._write_ws2811_range(pd_number, 0, config['ws281x_0_first_address'], config['ws281x_0_last_address'])
+            self._write_ws2811_range(pd_number, 1, config['ws281x_1_first_address'], config['ws281x_1_last_address'])
+            self._write_ws2811_range(pd_number, 2, config['ws281x_2_first_address'], config['ws281x_2_last_address'])
+            self._write_lpd8806_range(pd_number, 0, config['lpd880x_0_first_address'], config['lpd880x_0_last_address'])
+            self._write_lpd8806_range(pd_number, 1, config['lpd880x_1_first_address'], config['lpd880x_1_last_address'])
+            self._write_lpd8806_range(pd_number, 2, config['lpd880x_2_first_address'], config['lpd880x_2_last_address'])
+            self._write_pdled_serial_control(pd_number, (config['use_ws281x_0'] * 1 << 0) +
+                                             (config['use_ws281x_1'] * 1 << 1) +
+                                             (config['use_ws281x_2'] * 1 << 2) +
+                                             (config['use_lpd880x_0'] * 1 << 3) +
+                                             (config['use_lpd880x_1'] * 1 << 4) +
+                                             (config['use_lpd880x_2'] * 1 << 5))
+
+        self.proc.flush()
+
+    def _write_pdled_config_reg(self, board_addr, addr, reg_data):
+        """Write a pdled config register.
+
+        Args:
+            board_addr: Address of the board
+            addr: Register address
+            reg_data: Register data
+
+        Write the 'regData' into the PD-LEDs address register because when writing a config register
+        The data (16 bits) goes into the address field, and the address (8-bits) goes into the data field.
+        """
+        self._write_addr(board_addr, reg_data)
+        self._write_reg_data(board_addr, addr)
+
+    def _write_addr(self, board_addr, addr):
+        """Write an address to pdled."""
+        base_reg_addr = 0x01000000 | (board_addr & 0x3F) << 16
+        proc_output_module = 3
+        proc_pdb_bus_addr = 0xC00
+
+        # Write the low address bits into reg addr 0
+        data = base_reg_addr | (addr & 0xFF)
+        self.proc.write_data(proc_output_module, proc_pdb_bus_addr, data)
+
+        # Write the high address bits into reg addr 6
+        data = base_reg_addr | (6 << 8) | ((addr >> 8) & 0xFF)
+        self.proc.write_data(proc_output_module, proc_pdb_bus_addr, data)
+
+    def _write_reg_data(self, board_addr, data):
+        """Write data to pdled."""
+        base_reg_addr = 0x01000000 | (board_addr & 0x3F) << 16
+        proc_output_module = 3
+        proc_pdb_bus_addr = 0xC00
+
+        # Write 0 into reg addr 7, which is the data word, which is actually the address when
+        # writing a config write.  The config register is mapped to 0.
+        word = base_reg_addr | (7 << 8) | data
+        self.proc.write_data(proc_output_module, proc_pdb_bus_addr, word)
+
+    def _write_color(self, board_addr, color):
+        base_reg_addr = 0x01000000 | (board_addr & 0x3F) << 16
+        proc_output_module = 3
+        proc_pdb_bus_addr = 0xC00
+
+        data = base_reg_addr | (1<<8) | (color & 0xFF)
+        self.proc.write_data(proc_output_module, proc_pdb_bus_addr, data)
+
+    # pylint: disable-msg=too-many-arguments
+    def _write_ws2811_ctrl(self, board_addr, lbt, hbt, ebt, rbt):
+        self._write_pdled_config_reg(board_addr, 4, lbt)
+        self._write_pdled_config_reg(board_addr, 5, hbt)
+        self._write_pdled_config_reg(board_addr, 6, ebt)
+        self._write_pdled_config_reg(board_addr, 7, rbt)
+
+    def _write_pdled_serial_control(self, board_addr, index_mask):
+        self._write_pdled_config_reg(board_addr, 0, index_mask)
+
+    def _write_ws2811_range(self, board_addr, index, first_addr, last_addr):
+        self._write_pdled_config_reg(board_addr, 8 + index * 2, first_addr)
+        self._write_pdled_config_reg(board_addr, 9 + index * 2, last_addr)
+
+    def _write_lpd8806_range(self, board_addr, index, first_addr, last_addr):
+        self._write_pdled_config_reg(board_addr, 16 + index * 2, first_addr)
+        self._write_pdled_config_reg(board_addr, 17 + index * 2, last_addr)
 
     @classmethod
     def _get_event_type(cls, sw_activity, debounced):
