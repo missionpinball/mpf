@@ -58,6 +58,16 @@ class TestDropTargets(MpfTestCase):
         self.assertFalse(self.machine.drop_targets.left3.complete)
         self.assertFalse(self.machine.drop_target_banks.left_bank.complete)
 
+        # check that the bank does not reset if already down
+        self.machine.coils.coil1.pulse = MagicMock()
+        self.machine.drop_target_banks['left_bank'].reset()
+        assert not self.machine.coils.coil1.pulse.called
+
+        # reset should work with one target down
+        self.hit_switch_and_run("switch1", 1)
+        self.machine.drop_target_banks['left_bank'].reset()
+        self.machine.coils.coil1.pulse.assert_called_once_with(max_wait_ms=100)
+
     def test_knockdown_and_reset(self):
         self.mock_event("unexpected_ball_on_playfield")
         self.machine.coils.coil2.pulse = MagicMock(wraps=self.machine.coils.coil2.pulse)
