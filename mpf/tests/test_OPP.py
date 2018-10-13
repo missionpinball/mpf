@@ -171,8 +171,8 @@ LEDs:
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
     def testDualWoundCoils(self):
-        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x02\x04\x0a\x00')] = False
-        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x03\x0a\x00')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x02\x24\x0a\x00')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x23\x0a\x00')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x17\x03\x03')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x17\x03\x02')] = False
         self.machine.flippers.f_test_hold.enable()
@@ -180,9 +180,9 @@ LEDs:
         self.assertFalse(self.serialMock.expected_commands)
 
         # enable a coil (when a rule is active)
-        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x01\x0a\x06')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x21\x0a\x06')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x08\x00\x08', False)] = False
-        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x03\x0a\x00')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x23\x0a\x00')] = False
         self.machine.coils.c_flipper_main.enable()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
@@ -194,9 +194,9 @@ LEDs:
         self.assertFalse(self.serialMock.expected_commands)
 
         # pulse it with other settings (when rule is active)
-        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x03\x2a\x00')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x23\x2a\x00')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x08\x00\x08', False)] = False
-        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x03\x0a\x00')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x23\x0a\x00')] = False
         self.machine.coils.c_flipper_main.pulse(42)
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
@@ -443,7 +443,7 @@ LEDs:
         self.assertFalse(self.serialMock.expected_commands)
 
     def _test_flippers(self):
-        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x01\x0a\x06')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x21\x0a\x06')] = False
         self.machine.flippers.f_test_single.enable()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
