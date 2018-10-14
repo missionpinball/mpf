@@ -299,12 +299,13 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
     @asyncio.coroutine
     def _poll(self):
+        sleep_time = 1.0 / self.config['poll_hz']
         while True:
             self.send_byte(LisyDefines.SwitchesGetChangedSwitches)
             status = yield from self.read_byte()
             if status == 127:
-                # no changes. sleep 1ms
-                yield from asyncio.sleep(.001, loop=self.machine.clock.loop)
+                # no changes. sleep according to poll_hz
+                yield from asyncio.sleep(sleep_time, loop=self.machine.clock.loop)
             else:
                 # bit 7 is state
                 switch_state = 1 if status & 0b10000000 else 0
