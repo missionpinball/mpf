@@ -74,19 +74,22 @@ class LisyLight(LightPlatformSoftwareFade):
 
     """A light in the LISY platform."""
 
-    __slots__ = ["platform"]
+    __slots__ = ["platform", "_state"]
 
     def __init__(self, number, platform):
         """Initialise Lisy Light."""
         super().__init__(number, platform.machine.clock.loop, 50)
         self.platform = platform
+        self._state = None
 
     def set_brightness(self, brightness: float):
         """Turn lamp on or off."""
-        if brightness > 0:
+        if brightness > 0 and self._state is not True:
             self.platform.send_byte(LisyDefines.LampsSetLampOn, bytes([self.number]))
-        else:
+            self._state = True
+        elif brightness <= 0 and self._state is not False:
             self.platform.send_byte(LisyDefines.LampsSetLampOff, bytes([self.number]))
+            self._state = False
 
     def get_board_name(self):
         """Return board name."""
