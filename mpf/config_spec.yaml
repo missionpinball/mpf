@@ -830,6 +830,7 @@ p_roc:
     debug: single|bool|False
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
+    pd_led_boards: dict|int:subconfig(pd_led_boards)|none
 p3_roc:
     lamp_matrix_strobe_time: single|ms|100ms
     watchdog_time: single|ms|1s
@@ -842,6 +843,33 @@ p3_roc:
     burst_number_of_idle_pulses_before_next: single|int(0,63)|8
     burst_number_of_burst_pulses_before_check: single|int(0,63)|10
     burst_ms_between_scans: single|int(1,64)|1
+    pd_led_boards: dict|int:subconfig(pd_led_boards)|none
+pd_led_boards:
+    use_ws281x_0: single|bool|false
+    use_ws281x_1: single|bool|false
+    use_ws281x_2: single|bool|false
+    use_lpd880x_0: single|bool|false
+    use_lpd880x_1: single|bool|false
+    use_lpd880x_2: single|bool|false
+    ws281x_0_first_address: single|int|100
+    ws281x_0_last_address: single|int|249
+    ws281x_1_first_address: single|int|250
+    ws281x_1_last_address: single|int|399
+    ws281x_2_first_address: single|int|400
+    ws281x_2_last_address: single|int|599
+    ws281x_low_bit_time: single|int|13
+    ws281x_high_bit_time: single|int|24
+    ws281x_end_bit_time: single|int|40
+    ws281x_reset_bit_time: single|int|1603
+    lpd880x_0_first_address: single|int|100
+    lpd880x_0_last_address: single|int|249
+    lpd880x_1_first_address: single|int|250
+    lpd880x_1_last_address: single|int|399
+    lpd880x_2_first_address: single|int|400
+    lpd880x_2_last_address: single|int|599
+#    serial_a_start: single|int|0
+#    serial_a_end: single|int|0
+#    serial_b_start: single|int|0
 psus:
     __valid_in__: machine
     voltage: single|int|None

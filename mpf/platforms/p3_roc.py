@@ -42,7 +42,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         machine: The MachineController instance.
     """
 
-    __slots__ = ["config", "_burst_opto_drivers_to_switch_map", "_burst_switches", "_bursts_enabled", "acceleration",
+    __slots__ = ["_burst_opto_drivers_to_switch_map", "_burst_switches", "_bursts_enabled", "acceleration",
                  "accelerometer_device"]
 
     def __init__(self, machine):
