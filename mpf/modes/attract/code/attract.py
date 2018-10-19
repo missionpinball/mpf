@@ -111,8 +111,11 @@ class Attract(Mode):
                                      buttons=self.start_buttons_held,
                                      hold_time=self.start_hold_time)
             '''event: game_start
-            desc: A game is starting. (Do not use this event to start a game.
-            Instead, use the *request_to_start_game* event.
+            desc: Starts game while bypassing the many systems which have to
+            "approve" the start. (Are the balls in the right places, are there
+            enough credits, etc.) Use of this method is not recommended but may
+            be useful in testing code. Instead, use the *request_to_start_game*
+            event.
 
             args:
             buttons: A list of switches tagged with *player* that were held in
