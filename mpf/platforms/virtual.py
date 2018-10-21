@@ -41,6 +41,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         self._next_driver = 1000
         self._next_switch = 1000
         self._next_light = 1000
+        self.rules = {}
 
     def __repr__(self):
         """Return string representation."""
@@ -180,7 +181,10 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
     def clear_hw_rule(self, switch, coil):
         """Clear hw rule."""
-        pass
+        if (switch.hw_switch, coil.hw_driver) in self.rules:
+            del self.rules[(switch.hw_switch, coil.hw_driver)]
+        else:
+            self.log.debug("Tried to clear a non-existing rules %s <-> %s", switch, coil)
 
     def i2c_write8(self, address, register, value):
         """Write to I2C."""
@@ -209,19 +213,40 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
         """Set rule."""
-        pass
+        if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
+            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
+                enable_switch.hw_switch, coil.hw_driver))
+        else:
+            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_enable_and_release"
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         """Set rule."""
-        pass
+        if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
+            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
+                enable_switch.hw_switch, coil.hw_driver))
+        else:
+            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_release"
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
         """Set rule."""
-        pass
+        if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
+            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
+                enable_switch.hw_switch, coil.hw_driver))
+        else:
+            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_enable_and_release_and_disable"
+        if (disable_switch.hw_switch, coil.hw_driver) in self.rules:
+            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
+                disable_switch.hw_switch, coil.hw_driver))
+        else:
+            self.rules[(disable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_enable_and_release_and_disable"
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
         """Set rule."""
-        pass
+        if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
+            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
+                enable_switch.hw_switch, coil.hw_driver))
+        else:
+            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit"
 
     def configure_dmd(self):
         """Configure DMD."""
@@ -317,6 +342,10 @@ class VirtualSwitch(SwitchPlatformInterface):
     def get_board_name(self):
         """Return the name of the board of this switch."""
         return "Virtual"
+
+    def __repr__(self):
+        """Str representation."""
+        return "VirtualSwitch.{}".format(self.number)
 
 
 class VirtualLight(LightPlatformInterface):

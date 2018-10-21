@@ -57,7 +57,8 @@ class AutofireCoil(SystemWideDevice):
             self._timeout_max_hits = self.config['timeout_max_hits']
             self._timeout_disable_time = self.config['timeout_disable_time']
 
-    @event_handler(10)
+    @event_handler(1)
+    # to prevent multiple rules at the same time we prioritize disable > enable
     def enable(self, **kwargs):
         """Enable the autofire device.
 
@@ -94,7 +95,8 @@ class AutofireCoil(SystemWideDevice):
                               power=self.config['coil_overwrite'].get('pulse_power', None))
         )
 
-    @event_handler(1)
+    @event_handler(10)
+    # to prevent multiple rules at the same time we prioritize disable > enable
     def disable(self, **kwargs):
         """Disable the autofire device.
 

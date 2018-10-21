@@ -43,7 +43,8 @@ class Flipper(SystemWideDevice):
             self.config['playfield'].ball_search.register(
                 self.config['ball_search_order'], self._ball_search, self.name)
 
-    @event_handler(10)
+    @event_handler(1)
+    # to prevent multiple rules at the same time we prioritize disable > enable
     def enable(self, **kwargs):
         """Enable the flipper by writing the necessary hardware rules to the hardware controller.
 
@@ -106,7 +107,8 @@ class Flipper(SystemWideDevice):
         if self.config['hold_coil']:
             self._enable_hold_coil_rule()
 
-    @event_handler(1)
+    @event_handler(10)
+    # to prevent multiple rules at the same time we prioritize disable > enable
     def disable(self, **kwargs):
         """Disable the flipper.
 
