@@ -25,6 +25,8 @@ flippers:
         debug: true
         main_coil: c_flipper_main
         activation_switch: s_flipper
+        sw_flip_events: flip_single
+        sw_release_events: release_single
 
     f_test_hold:
         debug: true
@@ -39,6 +41,8 @@ flippers:
         activation_switch: s_flipper
         eos_switch: s_flipper_eos
         use_eos: true
+        sw_flip_events: flip_hold
+        sw_release_events: release_hold
 
     f_test_flippers_with_settings:
         debug: true
