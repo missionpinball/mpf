@@ -526,11 +526,13 @@ flippers:
     __valid_in__: machine
     main_coil: single|machine(coils)|
     hold_coil: single|machine(coils)|None
-    activation_switch: single|machine(switches)|
+    activation_switch: single|machine(switches)|None
     eos_switch: single|machine(switches)|None
     use_eos: single|bool|False
     enable_events: dict|str:ms|ball_started
     disable_events: dict|str:ms|ball_will_end, service_mode_entered
+    sw_flip_events: dict|str:ms|None
+    sw_release_events: dict|str:ms|None
     # enable_no_hold_events: dict|str:ms|None
     # invert_events: dict|str:ms|None
     main_coil_overwrite: single|subconfig(coil_overwrites)|None
