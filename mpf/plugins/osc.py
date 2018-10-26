@@ -7,8 +7,8 @@ from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import AsyncIOOSCUDPServer
 from pythonosc.udp_client import SimpleUDPClient
 
-PYPY = False
-if PYPY:
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
 
 
@@ -45,7 +45,6 @@ class Osc(object):
     def _start(self):
         yield from self.server.create_serve_endpoint()
         self.machine.switch_controller.add_monitor(self._notify_switch_changes)
-
 
     def __repr__(self):
         """Return string representation."""
