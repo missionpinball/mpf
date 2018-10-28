@@ -198,6 +198,8 @@ class Mode(LogMixin):
 
         self.start_event_kwargs = kwargs
 
+        self.mode_will_start(**self.start_event_kwargs) # atze: this was added to be called before any mode devices are set up
+
         self._add_mode_devices()
 
         self.debug_log("Registering mode_stop handlers")
@@ -592,6 +594,10 @@ class Mode(LogMixin):
 
     def mode_init(self) -> None:
         """User-overrideable method which will be called when this mode initializes as part of the MPF boot process."""
+        pass
+
+    def mode_will_start(self, **kwargs) -> None:
+        """User-overrideable method which will be called whenever this mode starts (i.e. before it becomes active)."""
         pass
 
     def mode_start(self, **kwargs) -> None:
