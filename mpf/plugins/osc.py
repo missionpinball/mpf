@@ -3,16 +3,24 @@ import asyncio
 import logging
 
 from mpf.core.switch_controller import MonitoredSwitchChange
-from pythonosc.dispatcher import Dispatcher
-from pythonosc.osc_server import AsyncIOOSCUDPServer
-from pythonosc.udp_client import SimpleUDPClient
 
 MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
 
+# pythonosc is not a requirement for MPF so we fail with a nice error when loading
+try:
+    from pythonosc.dispatcher import Dispatcher
+    from pythonosc.osc_server import AsyncIOOSCUDPServer
+    from pythonosc.udp_client import SimpleUDPClient
 
-class Osc(object):
+except ImportError:
+    Dispatcher = None
+    AsyncIOOSCUDPServer = None
+    SimpleUDPClient = None
+
+
+class Osc:
 
     """Plays back switch sequences from a config file, used for testing."""
 
@@ -26,6 +34,9 @@ class Osc(object):
                               'machine configuration, so the OSC'
                               'plugin will not be used.')
             return
+
+        if not Dispatcher:
+            raise AssertionError("To use the OSC plugin you need to install the pythonosc extension.")
 
         self.config = self.machine.config['osc']
         self.machine.config_validator.validate_config("osc", self.config)
