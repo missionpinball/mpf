@@ -1,7 +1,6 @@
 """I2C servo controller platform."""
 import asyncio
 import logging
-import time
 
 from mpf.exceptions.ConfigFileError import ConfigFileError
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
