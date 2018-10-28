@@ -198,7 +198,8 @@ class Mode(LogMixin):
 
         self.start_event_kwargs = kwargs
 
-        self.mode_will_start(**self.start_event_kwargs) # atze: this was added to be called before any mode devices are set up
+        # hook for custom code. called before any mode devices are set up
+        self.mode_will_start(**self.start_event_kwargs)
 
         self._add_mode_devices()
 
