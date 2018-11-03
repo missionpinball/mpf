@@ -83,7 +83,7 @@ class TestLisy(MpfTestCase):
 
         self.serialMock.permanent_commands = {
             b'\x29': b'\x7F',           # changed switches? -> no
-            b'\x65': None               # watchdog
+            b'\x65': b'\x00'            # watchdog
         }
 
         self.serialMock.expected_commands = {
@@ -112,7 +112,7 @@ class TestLisy(MpfTestCase):
     def test_platform(self):
         # wait for watchdog
         self.serialMock.expected_commands = {
-            b'\x65': None           # watchdog
+            b'\x65': b'\x00'            # watchdog
         }
         self._wait_for_processing()
 
