@@ -1,5 +1,7 @@
 import time
 
+import sys
+
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.tests.loop import MockSerial, MockSocket
 
@@ -110,6 +112,10 @@ class TestLisy(MpfTestCase):
         self.assertFalse(self.serialMock.expected_commands)
 
     def test_platform(self):
+        if sys.version_info[0] == 3 and sys.version_info[1] == 4:
+            # this fails on python 3.4 because of some asyncio bugs
+            return
+
         # wait for watchdog
         self.serialMock.expected_commands = {
             b'\x65': b'\x00'            # watchdog
