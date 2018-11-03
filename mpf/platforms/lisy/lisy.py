@@ -156,7 +156,8 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
     """LISY platform."""
 
     __slots__ = ["config", "_writer", "_reader", "_poll_task", "_watchdog_task", "_number_of_lamps",
-                 "_number_of_solenoids", "_number_of_displays", "_inputs", "_system_type"]  # type: List[str]
+                 "_number_of_solenoids", "_number_of_displays", "_inputs", "_system_type",
+                 "_bus_lock"]  # type: List[str]
 
     def __init__(self, machine) -> None:
         """Initialise platform."""
@@ -166,6 +167,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         self._reader = None                 # type: Optional[asyncio.StreamReader]
         self._poll_task = None
         self._watchdog_task = None
+        self._bus_lock = asyncio.Lock(loop=self.machine.clock.loop)
         self._number_of_lamps = None        # type: Optional[int]
         self._number_of_solenoids = None    # type: Optional[int]
         self._number_of_displays = None     # type: Optional[int]
@@ -176,97 +178,98 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
     @asyncio.coroutine
     def initialize(self):
         """Initialise platform."""
-        self.config = self.machine.config_validator.validate_config("lisy", self.machine.config['lisy'])
+        with (yield from self._bus_lock):
+            self.config = self.machine.config_validator.validate_config("lisy", self.machine.config['lisy'])
 
-        self.configure_logging("lisy", self.config['console_log'], self.config['file_log'])
+            self.configure_logging("lisy", self.config['console_log'], self.config['file_log'])
 
-        yield from super().initialize()
+            yield from super().initialize()
 
-        if self.config['connection'] == "serial":
-            self.log.info("Connecting to %s at %sbps", self.config['port'], self.config['baud'])
-            connector = self.machine.clock.open_serial_connection(
-                url=self.config['port'], baudrate=self.config['baud'], limit=0)
-        else:
-            self.log.info("Connecting to %s:%s", self.config['network_host'], self.config['network_port'])
-            connector = self.machine.clock.open_connection(self.config['network_host'], self.config['network_port'])
+            if self.config['connection'] == "serial":
+                self.log.info("Connecting to %s at %sbps", self.config['port'], self.config['baud'])
+                connector = self.machine.clock.open_serial_connection(
+                    url=self.config['port'], baudrate=self.config['baud'], limit=0)
+            else:
+                self.log.info("Connecting to %s:%s", self.config['network_host'], self.config['network_port'])
+                connector = self.machine.clock.open_connection(self.config['network_host'], self.config['network_port'])
 
-        self._reader, self._writer = yield from connector
+            self._reader, self._writer = yield from connector
 
-        # reset platform
-        self.debug_log("Sending reset.")
-        self.send_byte(LisyDefines.GeneralReset)
-        return_code = yield from self.read_byte()
-        if return_code != 0:
-            raise AssertionError("Reset of LISY failed. Got {} instead of 0".format(return_code))
+            # reset platform
+            self.debug_log("Sending reset.")
+            self.send_byte(LisyDefines.GeneralReset)
+            return_code = yield from self.read_byte()
+            if return_code != 0:
+                raise AssertionError("Reset of LISY failed. Got {} instead of 0".format(return_code))
 
-        # get type (system 1 vs system 80)
-        self.send_byte(LisyDefines.InfoGetConnectedLisyHardware)
-        type_str = yield from self.read_string()
+            # get type (system 1 vs system 80)
+            self.send_byte(LisyDefines.InfoGetConnectedLisyHardware)
+            type_str = yield from self.read_string()
 
-        if type_str == b'LISY1':
-            self._system_type = 1
-        elif type_str == b'LISY35':
-            self._system_type = 35
-        elif type_str == b'LISY80':
-            self._system_type = 80
-        else:
-            raise AssertionError("Invalid LISY hardware version {}".format(type_str))
+            if type_str == b'LISY1':
+                self._system_type = 1
+            elif type_str == b'LISY35':
+                self._system_type = 35
+            elif type_str == b'LISY80':
+                self._system_type = 80
+            else:
+                raise AssertionError("Invalid LISY hardware version {}".format(type_str))
 
-        self.send_byte(LisyDefines.InfoLisyVersion)
-        lisy_version = yield from self.read_string()
-        self.send_byte(LisyDefines.InfoGetApiVersion)
-        api_version = yield from self.read_string()
+            self.send_byte(LisyDefines.InfoLisyVersion)
+            lisy_version = yield from self.read_string()
+            self.send_byte(LisyDefines.InfoGetApiVersion)
+            api_version = yield from self.read_string()
 
-        self.debug_log("Connected to %s hardware. LISY version: %s. API version: %s.",
-                       type_str, lisy_version, api_version)
+            self.debug_log("Connected to %s hardware. LISY version: %s. API version: %s.",
+                           type_str, lisy_version, api_version)
 
-        self.machine.set_machine_var("lisy_hardware", type_str)
-        '''machine_var: lisy_hardware
+            self.machine.set_machine_var("lisy_hardware", type_str)
+            '''machine_var: lisy_hardware
 
-        desc: Connected LISY hardware. Either LISY1 or LISY80.
-        '''
-        self.machine.set_machine_var("lisy_version", lisy_version)
-        '''machine_var: lisy_version
+            desc: Connected LISY hardware. Either LISY1 or LISY80.
+            '''
+            self.machine.set_machine_var("lisy_version", lisy_version)
+            '''machine_var: lisy_version
 
-        desc: LISY version.
-        '''
-        self.machine.set_machine_var("lisy_api_version", api_version)
-        '''machine_var: lisy_api_version
+            desc: LISY version.
+            '''
+            self.machine.set_machine_var("lisy_api_version", api_version)
+            '''machine_var: lisy_api_version
 
-        desc: LISY API version.
-        '''
+            desc: LISY API version.
+            '''
 
-        # get number of lamps
-        self.send_byte(LisyDefines.InfoGetNumberOfLamps)
-        self._number_of_lamps = yield from self.read_byte()
+            # get number of lamps
+            self.send_byte(LisyDefines.InfoGetNumberOfLamps)
+            self._number_of_lamps = yield from self.read_byte()
 
-        # get number of solenoids
-        self.send_byte(LisyDefines.InfoGetNumberOfSolenoids)
-        self._number_of_solenoids = yield from self.read_byte()
+            # get number of solenoids
+            self.send_byte(LisyDefines.InfoGetNumberOfSolenoids)
+            self._number_of_solenoids = yield from self.read_byte()
 
-        # get number of displays
-        self.send_byte(LisyDefines.InfoGetNumberOfDisplays)
-        self._number_of_displays = yield from self.read_byte()
+            # get number of displays
+            self.send_byte(LisyDefines.InfoGetNumberOfDisplays)
+            self._number_of_displays = yield from self.read_byte()
 
-        self.debug_log("Number of lamps: %s. Number of coils: %s. Numbers of display: %s",
-                       self._number_of_lamps, self._number_of_solenoids, self._number_of_displays)
+            self.debug_log("Number of lamps: %s. Number of coils: %s. Numbers of display: %s",
+                           self._number_of_lamps, self._number_of_solenoids, self._number_of_displays)
 
-        # initially read all switches
-        self.debug_log("Reading all switches.")
-        for row in range(8):
-            for col in range(8):
-                number = row * 10 + col
-                self.send_byte(LisyDefines.SwitchesGetStatusOfSwitch, bytes([number]))
-                state = yield from self.read_byte()
-                if state > 1:
-                    raise AssertionError("Invalid switch {}. Got response: {}".format(number, state))
+            # initially read all switches
+            self.debug_log("Reading all switches.")
+            for row in range(8):
+                for col in range(8):
+                    number = row * 10 + col
+                    self.send_byte(LisyDefines.SwitchesGetStatusOfSwitch, bytes([number]))
+                    state = yield from self.read_byte()
+                    if state > 1:
+                        raise AssertionError("Invalid switch {}. Got response: {}".format(number, state))
 
-                self._inputs[str(number)] = state == 1
+                    self._inputs[str(number)] = state == 1
 
-        self._watchdog_task = self.machine.clock.loop.create_task(self._watchdog())
-        self._watchdog_task.add_done_callback(self._done)
+            self._watchdog_task = self.machine.clock.loop.create_task(self._watchdog())
+            self._watchdog_task.add_done_callback(self._done)
 
-        self.debug_log("Init of LISY done.")
+            self.debug_log("Init of LISY done.")
 
     @asyncio.coroutine
     def start(self):
@@ -301,8 +304,9 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
     def _poll(self):
         sleep_time = 1.0 / self.config['poll_hz']
         while True:
-            self.send_byte(LisyDefines.SwitchesGetChangedSwitches)
-            status = yield from self.read_byte()
+            with (yield from self._bus_lock):
+                self.send_byte(LisyDefines.SwitchesGetChangedSwitches)
+                status = yield from self.read_byte()
             if status == 127:
                 # no changes. sleep according to poll_hz
                 yield from asyncio.sleep(sleep_time, loop=self.machine.clock.loop)
@@ -323,7 +327,11 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         """Periodically send watchdog."""
         while True:
             # send watchdog
-            self.send_byte(LisyDefines.GeneralWatchdog)
+            with (yield from self._bus_lock):
+                self.send_byte(LisyDefines.GeneralWatchdog)
+                response = yield from self.read_byte()
+                if response != 0:
+                    self.warning_log("Watchdog returned %s instead 0", response)
             # sleep 500ms
             yield from asyncio.sleep(.5, loop=self.machine.clock.loop)
 
