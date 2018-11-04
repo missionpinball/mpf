@@ -151,56 +151,6 @@ class PROCMatrixLight(LightPlatformSoftwareFade):
         return "P-Roc Matrix"
 
 
-class PDBLED(LightPlatformInterface):
-
-    """Represents an RGB LED connected to a PD-LED board."""
-
-    __slots__ = ["board", "address", "debug", "log", "proc", "polarity"]
-
-    # pylint: disable-msg=too-many-arguments
-    def __init__(self, board, address, polarity, proc_driver, debug):
-        """Initialise PDB LED."""
-        self.board = board
-        self.address = address
-        self.debug = debug
-        super().__init__("{}-{}".format(self.board, self.address))
-        self.log = logging.getLogger('PDBLED')
-        self.proc = proc_driver
-        self.polarity = polarity
-
-        self.log.debug("Creating PD-LED item: board: %s, "
-                       "RGB output: %s", self.board, self.address)
-
-    def _normalise_color(self, value: int) -> int:
-        if self.polarity:
-            return 255 - value
-
-        return value
-
-    def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
-        """Set or fade this LED to the color passed.
-
-        Can fade for up to 100 days so do not bother about too long fades.
-
-        Args:
-            color_and_fade_callback: brightness of this channel via callback
-        """
-        brightness, fade_ms = color_and_fade_callback(int(pow(2, 31) * 4))
-        if self.debug:
-            self.log.debug("Setting color %s with fade_ms %s to %s-%s",
-                           self._normalise_color(int(brightness * 255)), fade_ms, self.board, self.address)
-
-        if fade_ms <= 0:
-            # just set color
-            self.proc.led_color(self.board, self.address, self._normalise_color(int(brightness * 255)))
-        else:
-            # fade to color
-            self.proc.led_fade(self.board, self.address, self._normalise_color(int(brightness * 255)), int(fade_ms / 4))
-
-    def get_board_name(self):
-        """Return board of the light."""
-        return "PD-LED Board {}".format(self.board)
-
 class PDBSwitch:
 
     """Base class for switches connected to a P-ROC/P3-ROC."""
@@ -369,3 +319,56 @@ class PDBLight:
             if not self.pdb.is_pdb_address(addr):
                 return False
         return True
+
+
+class PDBLED(LightPlatformInterface):
+
+    """Represents an RGB LED connected to a PD-LED board."""
+
+    __slots__ = ["board", "address", "debug", "log", "polarity", "platform"]
+
+    # pylint: disable-msg=too-many-arguments
+    def __init__(self, board, address, polarity, debug, driver_platform):
+        """Initialise PDB LED."""
+        self.board = board
+        self.address = address
+        self.debug = debug
+        self.platform = driver_platform
+        super().__init__("{}-{}".format(self.board, self.address))
+        self.log = logging.getLogger('PDBLED')
+        self.polarity = polarity
+
+        self.log.debug("Creating PD-LED item: board: %s, "
+                       "RGB output: %s", self.board, self.address)
+
+    def _normalise_color(self, value: int) -> int:
+        if self.polarity:
+            return 255 - value
+
+        return value
+
+    def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
+        """Set or fade this LED to the color passed.
+
+        Can fade for up to 100 days so do not bother about too long fades.
+
+        Args:
+            color_and_fade_callback: brightness of this channel via callback
+        """
+        brightness, fade_ms = color_and_fade_callback(int(pow(2, 31) * 4))
+        if self.debug:
+            self.log.debug("Setting color %s with fade_ms %s to %s-%s",
+                           self._normalise_color(int(brightness * 255)), fade_ms, self.board, self.address)
+
+        if fade_ms <= 0:
+            # just set color
+            self.platform.run_proc_cmd_no_wait("led_color", self.board, self.address,
+                                               self._normalise_color(int(brightness * 255)))
+        else:
+            # fade to color
+            self.platform.run_proc_cmd_no_wait("led_fade", self.board, self.address,
+                                               self._normalise_color(int(brightness * 255)), int(fade_ms / 4))
+
+    def get_board_name(self):
+        """Return board of the light."""
+        return "PD-LED Board {}".format(self.board)
