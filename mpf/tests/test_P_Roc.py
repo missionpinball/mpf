@@ -1,5 +1,7 @@
 import time
 
+import sys
+
 from mpf.tests.test_P3_Roc import MockProcProcess, MockProcProcessObject
 
 from mpf.tests.MpfTestCase import MpfTestCase
@@ -130,6 +132,10 @@ class TestPRoc(MpfTestCase):
         self.loop._wait_for_external_executor = True
 
     def setUp(self):
+        if sys.version_info[0] == 3 and sys.version_info[1] == 4:
+            # this fails on python 3.4 because of some asyncio bugs
+            self.skipTest("Test is unstable in Python 3.4")
+            return
         self._sync_count = 0
         self.expected_duration = 2
         p_roc_common.pinproc_imported = True
