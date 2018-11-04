@@ -64,7 +64,16 @@ class AutofireCoil(SystemWideDevice):
             self._timeout_max_hits = self.config['timeout_max_hits']
             self._timeout_disable_time = self.config['timeout_disable_time']
 
-    @event_handler(10)
+        if '{}_active'.format(self.config['playfield'].name) in self.config['switch'].tags:
+            self.raise_config_error(
+                "Ball device '{}' uses switch '{}' which has a "
+                "'{}_active' tag. This is handled internally by the defive. Remove the "
+                "redundant '{}_active' tag from that switch.".format(
+                    self.name, self.config['switch'].name, self.config['playfield'].name,
+                    self.config['playfield'].name), 1)
+
+    @event_handler(1)
+    # to prevent multiple rules at the same time we prioritize disable > enable
     def enable(self, **kwargs):
         """Enable the autofire device.
 
@@ -101,7 +110,8 @@ class AutofireCoil(SystemWideDevice):
                               power=self.config['coil_overwrite'].get('pulse_power', None))
         )
 
-    @event_handler(1)
+    @event_handler(10)
+    # to prevent multiple rules at the same time we prioritize disable > enable
     def disable(self, **kwargs):
         """Disable the autofire device.
 
@@ -126,6 +136,8 @@ class AutofireCoil(SystemWideDevice):
 
     def _hit(self):
         """Rule was triggered."""
+        if not self._enabled:
+            return
         if not self._ball_search_in_progress:
             self.config['playfield'].mark_playfield_active_from_device_action()
         if self._timeout_watch_time:

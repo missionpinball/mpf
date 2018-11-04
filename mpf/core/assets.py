@@ -31,7 +31,7 @@ class BaseAssetManager(MpfController, LogMixin):
     config_name = 'asset_manager'
 
     __slots__ = ["_asset_classes", "num_assets_to_load", "num_assets_loaded", "num_bcp_assets_to_load",
-                 "num_bcp_assets_loaded", "_next_id", "_last_asset_event_time"]
+                 "num_bcp_assets_loaded", "_next_id", "_last_asset_event_time", "initial_assets_loaded"]
 
     def __init__(self, machine: MachineController) -> None:
         """Initialise asset manager.
@@ -46,6 +46,9 @@ class BaseAssetManager(MpfController, LogMixin):
         self._asset_classes = list()        # type: List[AssetClass]
         # List of dicts, with each dict being an asset class. See
         # register_asset_class() method for details.
+
+        self.initial_assets_loaded = False  # type: bool
+        # True if the initial asset loaded is done
 
         self.num_assets_to_load = 0
         # Total number of assets that are/will be loaded. Used for
@@ -585,6 +588,7 @@ class BaseAssetManager(MpfController, LogMixin):
 
         if not remaining and not self.machine.is_init_done.is_set():
             self.machine.clear_boot_hold('assets')
+            self.initial_assets_loaded = True
 
 
 class AsyncioSyncAssetManager(BaseAssetManager):

@@ -19,6 +19,7 @@ variable_player:
           action: set
     test_set_string:
         string_test:
+          action: set
           string: HELLO
     test_set_machine_var:
         my_var:

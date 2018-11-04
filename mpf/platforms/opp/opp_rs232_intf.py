@@ -1,11 +1,12 @@
 """Defines for OPP platform."""
+from typing import List
 
 
 class OppRs232Intf:
 
     """Constants for OPP serial protocol."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     GET_SER_NUM_CMD = b'\x00'
     GET_PROD_ID_CMD = b'\x01'
@@ -66,6 +67,7 @@ class OppRs232Intf:
     CFG_SOL_ON_OFF = b'\x04'
     CFG_SOL_DLY_KICK = b'\x08'
     CFG_SOL_USE_MTRX_INP = b'\x10'
+    CFG_SOL_CAN_CANCEL = b'\x20'
 
     CFG_SOL_INP_REMOVE = b'\x80'
 

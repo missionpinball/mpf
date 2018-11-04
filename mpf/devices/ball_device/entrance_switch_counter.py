@@ -10,11 +10,15 @@ class EntranceSwitchCounter(PhysicalBallCounter):
 
     """Count balls using an entrance switch."""
 
-    __slots__ = []
+    __slots__ = ["recycle_secs", "recycle_clear_time"]
 
     def __init__(self, ball_device, config):
         """Initialise entrance switch counter."""
         super().__init__(ball_device, config)
+
+        self.recycle_secs = self.config['entrance_switch_ignore_window_ms'] / 1000.0
+        self.recycle_clear_time = None
+
         # Configure switch handlers for entrance switch activity
         self.machine.switch_controller.add_switch_handler(
             switch_name=self.config['entrance_switch'].name, state=1,
@@ -49,10 +53,21 @@ class EntranceSwitchCounter(PhysicalBallCounter):
         """Handle entrance event."""
         self._entrance_switch_handler()
 
+    def _recycle_passed(self):
+        self.recycle_clear_time = None
+
     def _entrance_switch_handler(self):
         """Add a ball to the device since the entrance switch has been hit."""
-        self.debug_log("Entrance switch hit")
+        # If recycle is ongoing, do nothing
+        if self.recycle_clear_time:
+            self.debug_log("Entrance switch hit within ignore window, taking no action")
+            return
+        # If a recycle time is configured, set a timeout to prevent future entrance activity
+        elif self.recycle_secs:
+            self.recycle_clear_time = self.machine.clock.get_time() + self.recycle_secs
+            self.machine.clock.loop.call_at(self.recycle_clear_time, self._recycle_passed)
 
+        self.debug_log("Entrance switch hit")
         if self.config['ball_capacity'] and self.config['ball_capacity'] <= self._last_count:
             # do not count beyond capacity
             self.ball_device.log.warning("Device received balls but is already full!")

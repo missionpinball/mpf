@@ -13,6 +13,8 @@ class QueueRelayPlayer(ConfigPlayer):
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Block queue event."""
         del calling_context
+        # prevent reposting _from_bcp setting
+        kwargs.pop("_from_bcp", None)
         try:
             queue = kwargs.pop('queue')
         except KeyError:

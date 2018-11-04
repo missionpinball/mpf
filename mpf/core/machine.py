@@ -595,16 +595,29 @@ class MachineController(LogMixin):
                 extension).
         """
         if name not in self.hardware_platforms:
-            if name not in self.config['mpf']['platforms']:
-                raise AssertionError("Invalid platform {}".format(name))
+            if name in self.config['mpf']['platforms']:
+                # if platform is in config load it
+                try:
+                    hardware_platform = Util.string_to_class(self.config['mpf']['platforms'][name])
+                except ImportError as e:  # pragma: no cover
+                    if e.name != name:  # do not swallow unrelated errors
+                        raise
+                    raise ImportError("Cannot add hardware platform {}. This is "
+                                      "not a valid platform name".format(name))
 
-            try:
-                hardware_platform = Util.string_to_class(self.config['mpf']['platforms'][name])
-            except ImportError as e:     # pragma: no cover
-                if e.name != name:  # do not swallow unrelated errors
-                    raise
-                raise ImportError("Cannot add hardware platform {}. This is "
-                                  "not a valid platform name".format(name))
+            else:
+                # check entry points
+                entry_points = list(iter_entry_points(group='mpf.platforms', name=name))
+                if entry_points:
+                    # load platform from entry point
+                    self.debug_log("Loading platform %s from external entry_point", name)
+                    if len(entry_points) != 1:
+                        raise AssertionError("Got more than one entry point for platform {}: {}".format(name,
+                                                                                                        entry_points))
+
+                    hardware_platform = entry_points[0].load()
+                else:
+                    raise AssertionError("Unknown platform {}".format(name))
 
             self.hardware_platforms[name] = (
                 hardware_platform(self))

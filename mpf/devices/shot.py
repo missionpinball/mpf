@@ -56,6 +56,14 @@ class Shot(EnableDisableMixin, ModeDevice):
             if switch not in self.config['switches']:
                 self.config['switches'].append(switch)
 
+            if '{}_active'.format(self.config['playfield'].name) in switch.tags:
+                self.raise_config_error(
+                    "Ball device '{}' uses switch '{}' which has a "
+                    "'{}_active' tag. This is handled internally by the defive. Remove the "
+                    "redundant '{}_active' tag from that switch.".format(
+                        self.name, switch.name, self.config['playfield'].name,
+                        self.config['playfield'].name), 1)
+
     def _register_switch_handlers(self):
         self._handlers = []
         for switch in self.config['switches']:

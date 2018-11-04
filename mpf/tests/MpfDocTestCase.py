@@ -154,6 +154,9 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
     def command_hit_and_release_switch(self, switch_name):
         self.hit_and_release_switch(switch_name)
 
+    def command_hit_and_release_switches_simultaneously(self, switch_name1, switch_name2):
+        self.hit_and_release_switches_simultaneously([switch_name1, switch_name2])
+
     def command_hit_switch(self, switch_name):
         self.hit_switch_and_run(switch_name, 0)
 
@@ -167,6 +170,9 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
         if isinstance(self.machine.game.player[player_var], (int, float)):
             value = float(value)
         self.assertPlayerVarEqual(value, player_var=player_var)
+
+    def command_assert_player_count(self, count):
+        self.assertPlayerCount(int(count))
 
     def command_assert_machine_variable(self, value, name):
         if name in self.machine.machine_vars and isinstance(self.machine.machine_vars[name]["value"], (int, float)):
@@ -193,3 +199,8 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
 
     def command_assert_balls_in_play(self, balls):
         self.assertBallsInPlay(int(balls))
+
+    def command_assert_bool_condition(self, expected, condition):
+        result = self.machine.placeholder_manager.build_bool_template(condition).evaluate([])
+        expected_bool = expected == "True"
+        self.assertEqual(bool(expected_bool), result, "{} = {} != {}".format(condition, result, expected_bool))

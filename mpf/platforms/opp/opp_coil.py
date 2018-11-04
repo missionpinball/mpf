@@ -7,7 +7,7 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
-SwitchRule = namedtuple("SwitchRule", ["pulse_settings", "hold_settings", "recycle"])
+SwitchRule = namedtuple("SwitchRule", ["pulse_settings", "hold_settings", "recycle", "can_cancel"])
 
 
 class OPPSolenoid(DriverPlatformInterface):
@@ -105,9 +105,10 @@ class OPPSolenoid(DriverPlatformInterface):
             HoldSettings(power=self.config.default_hold_power),
             True)
 
-    def set_switch_rule(self, pulse_settings: PulseSettings, hold_settings: Optional[HoldSettings], recycle: bool):
+    def set_switch_rule(self, pulse_settings: PulseSettings, hold_settings: Optional[HoldSettings], recycle: bool,
+                        can_cancel: bool):
         """Set and apply a switch rule."""
-        new_rule = SwitchRule(pulse_settings, hold_settings, recycle)
+        new_rule = SwitchRule(pulse_settings, hold_settings, recycle, can_cancel)
         if self.switch_rule and self.switch_rule != new_rule:
             raise AssertionError("Cannot set two rule with different driver settings in opp. Old: {} New: {}".format(
                 self.switch_rule, new_rule))
@@ -160,6 +161,9 @@ class OPPSolenoid(DriverPlatformInterface):
                 # If driver is using matching switch set CFG_SOL_USE_SWITCH
                 # in case config happens after set switch command
                 cmd += ord(OppRs232Intf.CFG_SOL_USE_SWITCH)
+
+            if self.switch_rule.can_cancel:
+                cmd += ord(OppRs232Intf.CFG_SOL_CAN_CANCEL)
 
         pulse_len = pulse_settings.duration
 

@@ -35,7 +35,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         machine: The MachineController instance.
     """
 
-    __slots__ = ["config", "dmd", "alpha_display", "aux_port", "_use_extended_matrix",
+    __slots__ = ["dmd", "alpha_display", "aux_port", "_use_extended_matrix",
                  "_use_first_eight_direct_inputs"]
 
     def __init__(self, machine):

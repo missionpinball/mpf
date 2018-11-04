@@ -1,6 +1,6 @@
 """LISY platform for System 1 and System 80."""
 import asyncio
-from typing import Generator, Dict
+from typing import Generator, Dict, Optional, List, Any
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
@@ -22,7 +22,7 @@ class LisySwitch(SwitchPlatformInterface):
 
     """A switch in the LISY platform."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def get_board_name(self):
         """Return board name."""
@@ -33,7 +33,7 @@ class LisyDriver(DriverPlatformInterface):
 
     """A driver in the LISY platform."""
 
-    __slots__ = ["platform", "_pulse_ms"]
+    __slots__ = ["platform", "_pulse_ms"]   # type: List[str]
 
     def __init__(self, config, number, platform):
         """Initialise driver."""
@@ -74,19 +74,22 @@ class LisyLight(LightPlatformSoftwareFade):
 
     """A light in the LISY platform."""
 
-    __slots__ = ["platform"]
+    __slots__ = ["platform", "_state"]
 
     def __init__(self, number, platform):
         """Initialise Lisy Light."""
         super().__init__(number, platform.machine.clock.loop, 50)
         self.platform = platform
+        self._state = None
 
     def set_brightness(self, brightness: float):
         """Turn lamp on or off."""
-        if brightness > 0:
+        if brightness > 0 and self._state is not True:
             self.platform.send_byte(LisyDefines.LampsSetLampOn, bytes([self.number]))
-        else:
+            self._state = True
+        elif brightness <= 0 and self._state is not False:
             self.platform.send_byte(LisyDefines.LampsSetLampOff, bytes([self.number]))
+            self._state = False
 
     def get_board_name(self):
         """Return board name."""
@@ -153,21 +156,21 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
     """LISY platform."""
 
     __slots__ = ["config", "_writer", "_reader", "_poll_task", "_watchdog_task", "_number_of_lamps",
-                 "_number_of_solenoids", "_number_of_displays", "_inputs", "_system_type"]
+                 "_number_of_solenoids", "_number_of_displays", "_inputs", "_system_type"]  # type: List[str]
 
     def __init__(self, machine) -> None:
         """Initialise platform."""
         super().__init__(machine)
-        self.config = None
-        self._writer = None                 # type: asyncio.StreamWriter
-        self._reader = None                 # type: asyncio.StreamReader
+        self.config = dict()                # type: Dict[str, Any]
+        self._writer = None                 # type: Optional[asyncio.StreamWriter]
+        self._reader = None                 # type: Optional[asyncio.StreamReader]
         self._poll_task = None
         self._watchdog_task = None
-        self._number_of_lamps = None
-        self._number_of_solenoids = None
-        self._number_of_displays = None
+        self._number_of_lamps = None        # type: Optional[int]
+        self._number_of_solenoids = None    # type: Optional[int]
+        self._number_of_displays = None     # type: Optional[int]
         self._inputs = dict()               # type: Dict[str, bool]
-        self._system_type = None
+        self._system_type = None            # type: Optional[str]
         self.features['max_pulse'] = 255
 
     @asyncio.coroutine
@@ -202,6 +205,8 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
         if type_str == b'LISY1':
             self._system_type = 1
+        elif type_str == b'LISY35':
+            self._system_type = 35
         elif type_str == b'LISY80':
             self._system_type = 80
         else:
@@ -294,12 +299,13 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
     @asyncio.coroutine
     def _poll(self):
+        sleep_time = 1.0 / self.config['poll_hz']
         while True:
             self.send_byte(LisyDefines.SwitchesGetChangedSwitches)
             status = yield from self.read_byte()
             if status == 127:
-                # no changes. sleep 1ms
-                yield from asyncio.sleep(.001, loop=self.machine.clock.loop)
+                # no changes. sleep according to poll_hz
+                yield from asyncio.sleep(sleep_time, loop=self.machine.clock.loop)
             else:
                 # bit 7 is state
                 switch_state = 1 if status & 0b10000000 else 0
@@ -345,6 +351,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
     def configure_light(self, number: str, subtype: str, platform_settings: dict) -> LightPlatformSoftwareFade:
         """Configure light on LISY."""
         del platform_settings, subtype
+        assert self._number_of_lamps is not None
 
         if self._system_type == 80:
             if 0 < int(number) >= self._number_of_lamps:
@@ -379,6 +386,9 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict) -> DriverPlatformInterface:
         """Configure a driver."""
+        assert self._number_of_solenoids is not None
+        assert self._number_of_lamps is not None
+
         if 1 < int(number) > self._number_of_solenoids and int(number) < 100:
             raise AssertionError("LISY only has {} drivers. Cannot configure driver {} (zero indexed).".
                                  format(self._number_of_solenoids, number))
@@ -395,6 +405,8 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
     def configure_segment_display(self, number: str) -> SegmentDisplaySoftwareFlashPlatformInterface:
         """Configure a segment display."""
+        assert self._number_of_displays is not None
+
         if 0 < int(number) >= self._number_of_displays:
             raise AssertionError("Invalid display number {}. Hardware only supports {} displays (indexed with 0)".
                                  format(number, self._number_of_displays))
@@ -409,6 +421,8 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
     def send_byte(self, cmd: int, byte: bytes = None):
         """Send a command with optional payload."""
+        assert self._writer is not None
+
         if byte is not None:
             cmd_str = bytes([cmd])
             cmd_str += byte
@@ -420,12 +434,16 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
     def send_string(self, cmd: int, string: str):
         """Send a command with null terminated string."""
+        assert self._writer is not None
+
         self.log.debug("Sending %s %s", cmd, string)
         self._writer.write(bytes([cmd]) + string.encode() + bytes([0]))
 
     @asyncio.coroutine
     def read_byte(self) -> Generator[int, None, int]:
         """Read one byte."""
+        assert self._reader is not None
+
         self.log.debug("Reading one byte")
         data = yield from self._reader.readexactly(1)
         self.log.debug("Received %s", ord(data))
@@ -440,6 +458,8 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             separator: Read until this separator byte.
             min_chars: Minimum message length before separator
         """
+        assert self._reader is not None
+
         # asyncio StreamReader only supports this from python 3.5.2 on
         buffer = b''
         while True:

@@ -1,7 +1,8 @@
 """P-Roc hardware platform devices."""
 import logging
+from typing import Callable, Tuple
 
-from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade, LightPlatformInterface
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.core.utility_functions import Util
@@ -148,3 +149,223 @@ class PROCMatrixLight(LightPlatformSoftwareFade):
         """Return board of the light."""
         # TODO: Implement this for PDB matrixes
         return "P-Roc Matrix"
+
+
+class PDBLED(LightPlatformInterface):
+
+    """Represents an RGB LED connected to a PD-LED board."""
+
+    __slots__ = ["board", "address", "debug", "log", "proc", "polarity"]
+
+    # pylint: disable-msg=too-many-arguments
+    def __init__(self, board, address, polarity, proc_driver, debug):
+        """Initialise PDB LED."""
+        self.board = board
+        self.address = address
+        self.debug = debug
+        super().__init__("{}-{}".format(self.board, self.address))
+        self.log = logging.getLogger('PDBLED')
+        self.proc = proc_driver
+        self.polarity = polarity
+
+        self.log.debug("Creating PD-LED item: board: %s, "
+                       "RGB output: %s", self.board, self.address)
+
+    def _normalise_color(self, value: int) -> int:
+        if self.polarity:
+            return 255 - value
+
+        return value
+
+    def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
+        """Set or fade this LED to the color passed.
+
+        Can fade for up to 100 days so do not bother about too long fades.
+
+        Args:
+            color_and_fade_callback: brightness of this channel via callback
+        """
+        brightness, fade_ms = color_and_fade_callback(int(pow(2, 31) * 4))
+        if self.debug:
+            self.log.debug("Setting color %s with fade_ms %s to %s-%s",
+                           self._normalise_color(int(brightness * 255)), fade_ms, self.board, self.address)
+
+        if fade_ms <= 0:
+            # just set color
+            self.proc.led_color(self.board, self.address, self._normalise_color(int(brightness * 255)))
+        else:
+            # fade to color
+            self.proc.led_fade(self.board, self.address, self._normalise_color(int(brightness * 255)), int(fade_ms / 4))
+
+    def get_board_name(self):
+        """Return board of the light."""
+        return "PD-LED Board {}".format(self.board)
+
+class PDBSwitch:
+
+    """Base class for switches connected to a P-ROC/P3-ROC."""
+
+    def __init__(self, pdb, number_str):
+        """Find out the number of the switch."""
+        upper_str = number_str.upper()
+        if upper_str.startswith('SD'):  # only P-ROC
+            self.sw_number = int(upper_str[2:])
+        elif upper_str.count("/") == 1:  # only P-ROC
+            self.sw_number = self.parse_matrix_num(upper_str)
+        else:   # only P3-Roc
+            try:
+                (boardnum, banknum, inputnum) = pdb.decode_pdb_address(number_str)
+                self.sw_number = boardnum * 16 + banknum * 8 + inputnum
+            except ValueError:
+                try:
+                    self.sw_number = int(number_str)
+                except ValueError:  # pragma: no cover
+                    raise AssertionError('Switch {} is invalid. Use either PDB '
+                                         'format or an int'.format(str(number_str)))
+
+    def proc_num(self):
+        """Return the number of the switch."""
+        return self.sw_number
+
+    @classmethod
+    def parse_matrix_num(cls, num_str):
+        """Parse a source/sink matrix tuple."""
+        cr_list = num_str.split('/')
+        return 32 + int(cr_list[0]) * 16 + int(cr_list[1])
+
+
+class PDBCoil:
+
+    """Base class for coils connected to a P-ROC/P3-ROC that are controlled via PDB driver boards.
+
+    (i.e. the PD-16 board).
+    """
+
+    def __init__(self, pdb, number_str):
+        """Find out number fo coil."""
+        upper_str = number_str.upper()
+        self.pdb = pdb
+        if self.is_direct_coil(upper_str):
+            self.coil_type = 'dedicated'
+            self.banknum = (int(number_str[1:]) - 1) / 8
+            self.outputnum = int(number_str[1:])
+        elif self.is_pdb_coil(number_str):
+            self.coil_type = 'pdb'
+            (self.boardnum, self.banknum, self.outputnum) = pdb.decode_pdb_address(number_str)
+        else:
+            self.coil_type = 'unknown'
+
+    def bank(self) -> int:
+        """Return the bank number."""
+        if self.coil_type == 'dedicated':
+            return self.banknum
+        elif self.coil_type == 'pdb':
+            return self.boardnum * 2 + self.banknum
+
+        return -1
+
+    def output(self):
+        """Return the output number."""
+        return self.outputnum
+
+    @classmethod
+    def is_direct_coil(cls, string):
+        """Return true if it is a direct coil."""
+        if len(string) < 2 or len(string) > 3:
+            return False
+        if not string[0] == 'C':
+            return False
+        if not string[1:].isdigit():
+            return False
+        return True
+
+    def is_pdb_coil(self, string):
+        """Return true if string looks like PDB address."""
+        return self.pdb.is_pdb_address(string)
+
+
+class PDBLight:
+
+    """Base class for lights connected to a PD-8x8 driver board."""
+
+    def __init__(self, pdb, number_str):
+        """Find out light number."""
+        self.pdb = pdb
+        upper_str = number_str.upper()
+        if self.is_direct_lamp(upper_str):
+            self.lamp_type = 'dedicated'
+            self.output = int(number_str[1:])
+        elif self.is_pdb_lamp(number_str):
+            # C-Ax-By-z:R-Ax-By-z  or  C-x/y/z:R-x/y/z
+            self.lamp_type = 'pdb'
+            source_addr, sink_addr = self.split_matrix_addr_parts(number_str)
+            (self.source_boardnum, self.source_banknum, self.source_outputnum) = pdb.decode_pdb_address(source_addr)
+            (self.sink_boardnum, self.sink_banknum, self.sink_outputnum) = pdb.decode_pdb_address(sink_addr)
+        else:
+            self.lamp_type = 'unknown'
+
+    def source_board(self):
+        """Return source board."""
+        return self.source_boardnum
+
+    def source_bank(self):
+        """Return source bank."""
+        return self.source_boardnum * 2 + self.source_banknum
+
+    def sink_bank(self):
+        """Return sink bank."""
+        return self.sink_boardnum * 2 + self.sink_banknum
+
+    def source_output(self):
+        """Return source output."""
+        return self.source_outputnum
+
+    def sink_output(self):
+        """Return sink output."""
+        return self.sink_outputnum
+
+    def dedicated_output(self):
+        """Return dedicated output number."""
+        return self.output
+
+    @classmethod
+    def is_direct_lamp(cls, string):
+        """Return true if it looks like a direct lamp."""
+        if len(string) < 2 or len(string) > 3:
+            return False
+        if not string[0] == 'L':
+            return False
+        if not string[1:].isdigit():
+            return False
+        return True
+
+    @classmethod
+    def split_matrix_addr_parts(cls, string):
+        """Split the string of a matrix lamp address.
+
+        Input is of form C-Ax-By-z:R-Ax-By-z  or  C-x/y/z:R-x/y/z  or
+        aliasX:aliasY.  We want to return only the address part: Ax-By-z,
+        x/y/z, or aliasX.  That is, remove the two character prefix if present.
+        """
+        addrs = string.rsplit(':')
+        if len(addrs) != 2:
+            return []
+        addrs_out = []
+        for addr in addrs:
+            bits = addr.split('-')
+            if len(bits) is 1:
+                addrs_out.append(addr)  # Append unchanged.
+            else:  # Generally this will be len(bits) 2 or 4.
+                # Remove the first bit and rejoin.
+                addrs_out.append('-'.join(bits[1:]))
+        return addrs_out
+
+    def is_pdb_lamp(self, string):
+        """Return true if it looks like a pdb lamp string."""
+        params = self.split_matrix_addr_parts(string)
+        if len(params) != 2:
+            return False
+        for addr in params:
+            if not self.pdb.is_pdb_address(addr):
+                return False
+        return True

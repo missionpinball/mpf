@@ -41,7 +41,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
     __slots__ = ["opp_connection", "serial_connections", "opp_incands", "incandDict", "opp_solenoid", "solDict",
                  "opp_inputs", "inpDict", "inpAddrDict", "matrixInpAddrDict", "read_input_msg", "opp_neopixels",
                  "neoCardDict", "neoDict", "numGen2Brd", "gen2AddrArr", "badCRC", "minVersion", "_poll_task",
-                 "config", "_poll_response_received", "machine_type", "opp_commands"]
+                 "config", "_poll_response_received", "machine_type", "opp_commands", "_incand_task"]
 
     def __init__(self, machine) -> None:
         """Initialise OPP platform."""
@@ -74,6 +74,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self.badCRC = 0
         self.minVersion = 0xffffffff
         self._poll_task = {}                # type: Dict[str, asyncio.Task]
+        self._incand_task = None            # type: asyncio.Task
 
         self.features['tickless'] = True
 
@@ -107,15 +108,21 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         yield from self._connect_to_hardware()
         self.opp_commands[ord(OppRs232Intf.READ_GEN2_INP_CMD)] = self.read_gen2_inp_resp
         self.opp_commands[ord(OppRs232Intf.READ_MATRIX_INP)] = self.read_matrix_inp_resp
+
+    @asyncio.coroutine
+    def start(self):
+        """Start polling and listening for commands."""
+        # start polling
         for chain_serial in self.read_input_msg:
             self._poll_task[chain_serial] = self.machine.clock.loop.create_task(self._poll_sender(chain_serial))
             self._poll_task[chain_serial].add_done_callback(self._done)
 
-    @asyncio.coroutine
-    def start(self):
-        """Start listening for commands."""
+        # start listening for commands
         for connection in self.serial_connections:
             yield from connection.start_read_loop()
+
+        self._incand_task = self.machine.clock.schedule_interval(self.update_incand,
+                                                                 1 / self.config['incand_update_hz'])
 
     def stop(self):
         """Stop hardware and close connections."""
@@ -123,6 +130,10 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             task.cancel()
 
         self._poll_task = {}
+
+        if self._incand_task:
+            self._incand_task.cancel()
+            self._incand_task = None
 
         for connections in self.serial_connections:
             connections.stop()
@@ -780,14 +791,13 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             raise AssertionError("Unknown subtype {}".format(subtype))
 
     def light_sync(self):
-        """Update lights."""
-        # first neo pixels
+        """Update lights.
+
+        Currently we only update neo pixels. Incands are updated separately in a task to provide better batching.
+        """
         for light in self.neoDict.values():
             if light.dirty:
                 light.update_color()
-
-        # then incandescents
-        self.update_incand()
 
     @staticmethod
     def _done(future):  # pragma: no cover
@@ -837,8 +847,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         Pulses a driver when a switch is hit. When the switch is released the pulse continues. Typically used for
         autofire coils such as pop bumpers.
         """
-        # OPP always does the full pulse
-        self._write_hw_rule(enable_switch, coil, False)
+        self._write_hw_rule(enable_switch, coil, use_hold=False, can_cancel=False)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and release rule to driver.
@@ -846,8 +855,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         Pulses a driver when a switch is hit. When the switch is released the pulse is canceled. Typically used on
         the main coil for dual coil flippers without eos switch.
         """
-        # OPP always does the full pulse. So this is not 100% correct
-        self.set_pulse_on_hit_rule(enable_switch, coil)
+        self._write_hw_rule(enable_switch, coil, use_hold=False, can_cancel=True)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and enable and relase rule on driver.
@@ -855,8 +863,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
         the pulse is canceled and the driver gets disabled. Typically used for single coil flippers.
         """
-        # OPP always does the full pulse. Therefore, this is mostly right.
-        self._write_hw_rule(enable_switch, coil, True)
+        self._write_hw_rule(enable_switch, coil, use_hold=True, can_cancel=True)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
                                                                  disable_switch: SwitchSettings, coil: DriverSettings):
@@ -868,7 +875,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """
         raise AssertionError("Not implemented in OPP currently")
 
-    def _write_hw_rule(self, switch_obj: SwitchSettings, driver_obj: DriverSettings, use_hold):
+    def _write_hw_rule(self, switch_obj: SwitchSettings, driver_obj: DriverSettings, use_hold, can_cancel=False):
         if switch_obj.invert:
             raise AssertionError("Cannot handle inverted switches")
 
@@ -880,7 +887,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self.log.debug("Setting HW Rule. Driver: %s", driver_obj.hw_driver.number)
 
         driver_obj.hw_driver.switches.append(switch_obj.hw_switch.number)
-        driver_obj.hw_driver.set_switch_rule(driver_obj.pulse_settings, driver_obj.hold_settings, driver_obj.recycle)
+        driver_obj.hw_driver.set_switch_rule(driver_obj.pulse_settings, driver_obj.hold_settings, driver_obj.recycle,
+                                             can_cancel)
         _, _, switch_num = switch_obj.hw_switch.number.split("-")
         switch_num = int(switch_num)
         self._add_switch_coil_mapping(switch_num, driver_obj.hw_driver)

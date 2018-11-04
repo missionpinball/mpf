@@ -101,6 +101,9 @@ class FileManager:
     @staticmethod
     def save(filename, data):
         """Save data to file."""
+        if not FileManager.initialized:
+            FileManager.init()
+
         ext = os.path.splitext(filename)[1]
 
         # save to temp file and move afterwards. prevents broken files

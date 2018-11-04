@@ -142,12 +142,12 @@ class DeviceManager(MpfController):
         for device_name in config:
 
             if not config[device_name] and not cls.allow_empty_configs:
-                raise AssertionError("Device '{}' has an empty config."
-                                     .format(device_name))
+                self.raise_config_error("Device '{}' has an empty config.".format(device_name), 2,
+                                        context=collection_name + "." + device_name)
 
             elif not isinstance(config[device_name], dict):
-                raise AssertionError("Device '{}' does not have a valid config."
-                                     .format(device_name))
+                self.raise_config_error("Device '{}' does not have a valid config. Expected a dictionary.".format(
+                    device_name), 3, context=collection_name + "." + device_name)
 
             collection[device_name] = cls(self.machine, device_name)
 

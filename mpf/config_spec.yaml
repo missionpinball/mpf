@@ -121,6 +121,7 @@ ball_devices:
     hold_events: event_handler|str:ms|None
     hold_switches: list|machine(switches)|None
     entrance_switch: single|machine(switches)|None
+    entrance_switch_ignore_window_ms: single|ms|0
     entrance_switch_full_timeout: single|ms|0
     entrance_events: event_handler|str:ms|None
     entrance_event_timeout: single|secs|5s
@@ -520,11 +521,13 @@ flippers:
     __valid_in__: machine
     main_coil: single|machine(coils)|
     hold_coil: single|machine(coils)|None
-    activation_switch: single|machine(switches)|
+    activation_switch: single|machine(switches)|None
     eos_switch: single|machine(switches)|None
     use_eos: single|bool|False
     enable_events: event_handler|str:ms|ball_started
     disable_events: event_handler|str:ms|ball_will_end, service_mode_entered
+    sw_flip_events: event_handler|str:ms|None
+    sw_release_events: event_handler|str:ms|None
     # enable_no_hold_events: event_handler|str:ms|None
     # invert_events: event_handler|str:ms|None
     main_coil_overwrite: single|subconfig(coil_overwrites)|None
@@ -541,7 +544,9 @@ game:
     balls_per_game: single|template_int|3
     max_players: single|template_int|4
     start_game_switch_tag: single|str|start
+    start_game_event: single|str|None
     add_player_switch_tag: single|str|start
+    add_player_event: single|str|None
     allow_start_with_loose_balls: single|bool|False
     allow_start_with_ball_in_drain: single|bool|False
 hardware:
@@ -697,6 +702,8 @@ machine_vars:
     initial_value: single|str|
     value_type: single|enum(str,float,int)|int
     persist: single|bool|True
+mc_custom_code:
+    __valid_in__: machine  # used by the MC, ignored by MPF
 mc_scriptlets:
     __valid_in__: machine  # used by the MC, ignored by MPF
 mma8451_accelerometer:
@@ -800,6 +807,13 @@ mypinballs:
     debug: single|bool|False
 named_colors:
     __valid_in__: machine
+osc:
+    __valid_in__: machine
+    server_ip: single|str|127.0.0.1
+    server_port: single|int|9000
+    client_ip: single|str|127.0.0.1
+    client_port: single|int|8000
+    enabled: single|bool|False
 opp:
     __valid_in__: machine
     ports: list|str|
@@ -809,6 +823,7 @@ opp:
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
     poll_hz: single|int|100
+    incand_update_hz: single|int|25
 open_pixel_control:
     __valid_in__: machine
     host: single|str|localhost
@@ -826,6 +841,7 @@ p_roc:
     debug: single|bool|False
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
+    pd_led_boards: dict|int:subconfig(pd_led_boards)|none
 p3_roc:
     lamp_matrix_strobe_time: single|ms|100ms
     watchdog_time: single|ms|1s
@@ -838,6 +854,33 @@ p3_roc:
     burst_number_of_idle_pulses_before_next: single|int(0,63)|8
     burst_number_of_burst_pulses_before_check: single|int(0,63)|10
     burst_ms_between_scans: single|int(1,64)|1
+    pd_led_boards: dict|int:subconfig(pd_led_boards)|none
+pd_led_boards:
+    use_ws281x_0: single|bool|false
+    use_ws281x_1: single|bool|false
+    use_ws281x_2: single|bool|false
+    use_lpd880x_0: single|bool|false
+    use_lpd880x_1: single|bool|false
+    use_lpd880x_2: single|bool|false
+    ws281x_0_first_address: single|int|100
+    ws281x_0_last_address: single|int|249
+    ws281x_1_first_address: single|int|250
+    ws281x_1_last_address: single|int|399
+    ws281x_2_first_address: single|int|400
+    ws281x_2_last_address: single|int|599
+    ws281x_low_bit_time: single|int|13
+    ws281x_high_bit_time: single|int|24
+    ws281x_end_bit_time: single|int|40
+    ws281x_reset_bit_time: single|int|1603
+    lpd880x_0_first_address: single|int|100
+    lpd880x_0_last_address: single|int|249
+    lpd880x_1_first_address: single|int|250
+    lpd880x_1_last_address: single|int|399
+    lpd880x_2_first_address: single|int|400
+    lpd880x_2_last_address: single|int|599
+#    serial_a_start: single|int|0
+#    serial_a_end: single|int|0
+#    serial_b_start: single|int|0
 psus:
     __valid_in__: machine
     voltage: single|int|None
@@ -937,6 +980,7 @@ rgb_dmds:
     source_display: single|str|dmd
     only_send_changes: single|bool|False
     brightness: single|float|1.0
+    channel_order: single|lstr|rgb
     gamma: single|float|2.2
     hardware_brightness: single|template_float|1.0
 score_reels:
@@ -1452,7 +1496,7 @@ trinamics_steprocker:
     port: single|str|
 variable_player:
     __valid_in__: modes
-    int: single|template_int|0
+    int: single|template_int|None
     float: single|template_float|None
     string: single|str|None
     block: single|bool|False
@@ -1493,13 +1537,14 @@ widgets:
         animations: ignore
         reset_animations_events: event_handler|str:ms|None
         color: single|kivycolor|ffffffff
-        style: single|str|None
+        style: list|str|None
         adjust_top: single|int|0
         adjust_bottom: single|int|0
         adjust_left: single|int|0
         adjust_right: single|int|0
         expire: single|secs|None
         key: single|str|None
+        widget: single|str|None
     animations:
         property: list|str|
         value: list|str|

@@ -8,6 +8,12 @@ from mpf.tests.loop import MockQueueSocket
 
 class TestBcpSocketClientEncoding(unittest.TestCase):
 
+    def test_roundtrip(self):
+        test_kwargs = {"registered_handlers": [{"calling_context": "logicblock_baby_bonus_hit{count%10==5}"}]}
+        encoded_cmd = encode_command_string("test", **test_kwargs)
+        decoded_cmd, decoded_cmd_kwargs = decode_command_string(encoded_cmd)
+        self.assertEqual(decoded_cmd_kwargs, test_kwargs)
+
     def test_decode_command_string(self):
         # test strings
         string_in = 'play?some_value=7&another_value=2'
