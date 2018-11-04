@@ -85,17 +85,24 @@ class SmartMatrixDevice(DmdPlatformInterface):
         self.log = logging.getLogger('SmartMatrixDevice')
 
     def _feed_hardware(self):
-        """Feed hardware in separate thread."""
+        """Feed hardware in separate thread.
+
+        Wait for new_frame_event and send the last frame. If no event happened for 1s refresh the last frame.
+        """
         while not self.machine.thread_stopper.is_set():
-            # wait for new frame
-            if not self.new_frame_event.wait(1):
-                continue
+            # wait for new frame or timeout
+            self.new_frame_event.wait(1)
+
             # clear event
             self.new_frame_event.clear()
 
             # check if we need to send any control data
             while self.control_data_queue:
                 self.port.write(self.control_data_queue.pop())
+
+            # do not crash on missing frame
+            if self.current_frame is None:
+                continue
 
             # send frame
             if self.config['old_cookie']:
