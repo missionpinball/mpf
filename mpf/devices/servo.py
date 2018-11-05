@@ -76,11 +76,13 @@ class Servo(SystemWideDevice):
 
     def _go_to_position(self, position):
         # linearly interpolate between servo limits
-        position = self.config['servo_min'] + position * (
+        corrected_position = self.config['servo_min'] + position * (
             self.config['servo_max'] - self.config['servo_min'])
 
+        self.debug_log("Moving to position %s (corrected: %s)", position, corrected_position)
+
         # call platform with calculated position
-        self.hw_servo.go_to_position(position)
+        self.hw_servo.go_to_position(corrected_position)
 
     def set_speed_limit(self, speed_limit):
         """Set speed parameter."""
