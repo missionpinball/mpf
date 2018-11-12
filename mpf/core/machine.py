@@ -621,6 +621,11 @@ class MachineController(LogMixin):
 
             self.hardware_platforms[name] = (
                 hardware_platform(self))
+            config_spec = self.hardware_platforms[name].get_config_spec()
+
+            if config_spec:
+                # add specific config spec if platform has any
+                self.config_validator.load_device_config_spec(config_spec[0], config_spec[1])
 
     def set_default_platform(self, name: str) -> None:
         """Set the default platform.
