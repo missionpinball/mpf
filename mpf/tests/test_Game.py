@@ -388,6 +388,29 @@ class TestGame(MpfGameTestCase):
         self.assertEqual('game_ending', self._events.call_args_list[7][1]['event_name'])
         self.assertEqual('game_ended', self._events.call_args_list[8][1]['event_name'])
 
+    def testGameEvents(self):
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.advance_time_and_run(10)
+        self.assertEqual(2, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+
+        self.post_event("start_my_game")
+        self.assertGameIsRunning()
+        self.advance_time_and_run()
+        self.assertPlayerCount(1)
+        self.post_event("start_my_game")
+        self.assertPlayerCount(1)
+
+        self.post_event("add_my_player")
+        self.assertPlayerCount(2)
+        self.post_event("add_my_player")
+        self.assertPlayerCount(3)
+        self.post_event("add_my_player")
+        self.assertPlayerCount(4)
+        self.post_event("add_my_player")
+        self.assertPlayerCount(4)
+
 
 class TestGameLogic(MpfFakeGameTestCase):
 

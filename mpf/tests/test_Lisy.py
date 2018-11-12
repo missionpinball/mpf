@@ -1,5 +1,7 @@
 import time
 
+import sys
+
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.tests.loop import MockSerial, MockSocket
 
@@ -78,12 +80,16 @@ class TestLisy(MpfTestCase):
             self.advance_time_and_run(.01)
 
     def setUp(self):
+        if sys.version_info[0] == 3 and sys.version_info[1] == 4:
+            # this fails on python 3.4 because of some asyncio bugs
+            self.skipTest("Test is unstable in Python 3.4")
+            return
         self.expected_duration = 1.5
         self.serialMock = MockLisySocket()
 
         self.serialMock.permanent_commands = {
             b'\x29': b'\x7F',           # changed switches? -> no
-            b'\x65': None               # watchdog
+            b'\x65': b'\x00'            # watchdog
         }
 
         self.serialMock.expected_commands = {
@@ -112,7 +118,7 @@ class TestLisy(MpfTestCase):
     def test_platform(self):
         # wait for watchdog
         self.serialMock.expected_commands = {
-            b'\x65': None           # watchdog
+            b'\x65': b'\x00'            # watchdog
         }
         self._wait_for_processing()
 

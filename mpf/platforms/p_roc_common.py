@@ -140,16 +140,12 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
                       "Hardware Board ID: %s",
                       self.version, self.revision, self.hardware_version)
 
-        # configure servos
-        #self._write_pdled_config_reg(0x04, 20, 0x01)
-        #self._write_pdled_config_reg(0x04, 21, 300)
+        # for unknown reasons we have to postpone this a bit after init
+        self.machine.delay.add(100, self._configure_pd_led)
 
-        #self._write_addr(0x04, 72)
-        #self._write_color(0x04, 200)
-
-        # configure pd_leds
+    def _configure_pd_led(self):
+        """Configure PD-LEDs."""
         for pd_number, config in self.config['pd_led_boards'].items():
-            print(pd_number, config)
             self._write_ws2811_ctrl(pd_number, config['ws281x_low_bit_time'], config['ws281x_high_bit_time'],
                                     config['ws281x_end_bit_time'], config['ws281x_reset_bit_time'])
             self._write_ws2811_range(pd_number, 0, config['ws281x_0_first_address'], config['ws281x_0_last_address'])
@@ -164,8 +160,6 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
                                              (config['use_lpd880x_0'] * 1 << 3) +
                                              (config['use_lpd880x_1'] * 1 << 4) +
                                              (config['use_lpd880x_2'] * 1 << 5))
-
-        self.proc.flush()
 
     def _write_pdled_config_reg(self, board_addr, addr, reg_data):
         """Write a pdled config register.

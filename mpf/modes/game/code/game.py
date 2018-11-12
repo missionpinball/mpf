@@ -73,6 +73,9 @@ class Game(AsyncMode):
                     '%', self.machine.config['game']['add_player_switch_tag']),
                 self.request_player_add)
 
+        if self.machine.config['game']['add_player_event']:
+            self.add_mode_event_handler(self.machine.config['game']['add_player_event'], self.request_player_add)
+
         self.max_players = self.machine.config['game']['max_players'].evaluate({})
 
         yield from self._start_game()

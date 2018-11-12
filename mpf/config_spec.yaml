@@ -521,11 +521,13 @@ flippers:
     __valid_in__: machine
     main_coil: single|machine(coils)|
     hold_coil: single|machine(coils)|None
-    activation_switch: single|machine(switches)|
+    activation_switch: single|machine(switches)|None
     eos_switch: single|machine(switches)|None
     use_eos: single|bool|False
     enable_events: event_handler|str:ms|ball_started
     disable_events: event_handler|str:ms|ball_will_end, service_mode_entered
+    sw_flip_events: event_handler|str:ms|None
+    sw_release_events: event_handler|str:ms|None
     # enable_no_hold_events: event_handler|str:ms|None
     # invert_events: event_handler|str:ms|None
     main_coil_overwrite: single|subconfig(coil_overwrites)|None
@@ -542,7 +544,9 @@ game:
     balls_per_game: single|template_int|3
     max_players: single|template_int|4
     start_game_switch_tag: single|str|start
+    start_game_event: single|str|None
     add_player_switch_tag: single|str|start
+    add_player_event: single|str|None
     allow_start_with_loose_balls: single|bool|False
     allow_start_with_ball_in_drain: single|bool|False
 hardware:
@@ -803,6 +807,13 @@ mypinballs:
     debug: single|bool|False
 named_colors:
     __valid_in__: machine
+osc:
+    __valid_in__: machine
+    server_ip: single|str|127.0.0.1
+    server_port: single|int|9000
+    client_ip: single|str|127.0.0.1
+    client_port: single|int|8000
+    enabled: single|bool|False
 opp:
     __valid_in__: machine
     ports: list|str|

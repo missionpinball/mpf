@@ -426,6 +426,11 @@ class ConfigValidator:
 
         section = getattr(self.machine, param, [])
 
+        if not isinstance(item, str):
+            return self.validation_error(item, validation_failure_info,
+                                         "Expected {} in {} to be string".format(item, param),
+                                         10)
+
         if item in section:
             return section[item]
         else:

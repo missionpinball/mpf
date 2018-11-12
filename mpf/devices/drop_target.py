@@ -326,11 +326,18 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         del kwargs
         self.debug_log('Resetting')
 
+        if self.down == 0:
+            self.info_log('All targets are already up. Will not reset bank.')
+            return
+        else:
+            self.info_log('%s targets are down. Will reset those.', self.down)
+
         # figure out all the coils we need to pulse
         coils = set()       # type: Set[Driver]
 
         for drop_target in self.drop_targets:
-            if drop_target.reset_coil:
+            # add all reset coil for targets which are down
+            if drop_target.reset_coil and drop_target.complete:
                 coils.add(drop_target.reset_coil)
 
         for coil in self.reset_coils:

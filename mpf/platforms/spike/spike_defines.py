@@ -1,11 +1,12 @@
 """Spike defines."""
+from typing import List
 
 
 class SpikeNodebus:
 
     """Spike message defines."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     Poll = 0x00
     GetInputState = 0x11

@@ -38,6 +38,9 @@ class Attract(Mode):
                 self.machine.switch_controller.add_switch_handler(
                     switch.name, self.start_button_released, 0))
 
+        if self.machine.config['game']['start_game_event']:
+            self.add_mode_event_handler(self.machine.config['game']['start_game_event'], self.start_button_released)
+
         if hasattr(self.machine, 'ball_devices'):
             self.machine.ball_controller.collect_balls()
 
@@ -61,7 +64,7 @@ class Attract(Mode):
         """
         self.start_button_pressed_time = self.machine.clock.get_time()
 
-    def start_button_released(self):
+    def start_button_released(self, **kwargs):
         """Handle start button release.
 
         Called when the a switch tagged with *start* is deactivated.
@@ -70,6 +73,7 @@ class Attract(Mode):
         called *request_to_start_game*. If that event comes back True, this
         method calls :meth:`result_of_start_request`.
         """
+        del kwargs
         self.start_hold_time = self.machine.clock.get_time() - self.start_button_pressed_time
         self.start_buttons_held = list()
 
@@ -111,8 +115,11 @@ class Attract(Mode):
                                      buttons=self.start_buttons_held,
                                      hold_time=self.start_hold_time)
             '''event: game_start
-            desc: A game is starting. (Do not use this event to start a game.
-            Instead, use the *request_to_start_game* event.
+            desc: Starts game while bypassing the many systems which have to
+            "approve" the start. (Are the balls in the right places, are there
+            enough credits, etc.) Use of this method is not recommended but may
+            be useful in testing code. Instead, use the *request_to_start_game*
+            event.
 
             args:
             buttons: A list of switches tagged with *player* that were held in

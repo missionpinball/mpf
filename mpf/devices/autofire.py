@@ -72,7 +72,8 @@ class AutofireCoil(SystemWideDevice):
                     self.name, self.config['switch'].name, self.config['playfield'].name,
                     self.config['playfield'].name), 1)
 
-    @event_handler(10)
+    @event_handler(1)
+    # to prevent multiple rules at the same time we prioritize disable > enable
     def enable(self, **kwargs):
         """Enable the autofire device.
 
@@ -109,7 +110,8 @@ class AutofireCoil(SystemWideDevice):
                               power=self.config['coil_overwrite'].get('pulse_power', None))
         )
 
-    @event_handler(1)
+    @event_handler(10)
+    # to prevent multiple rules at the same time we prioritize disable > enable
     def disable(self, **kwargs):
         """Disable the autofire device.
 

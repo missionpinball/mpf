@@ -2,6 +2,8 @@
 
 game:
     balls_per_game: 3
+    start_game_event: start_my_game
+    add_player_event: add_my_player
 
 coils:
     eject_coil1:
