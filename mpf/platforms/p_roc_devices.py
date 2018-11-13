@@ -2,6 +2,8 @@
 import logging
 from typing import Callable, Tuple
 
+from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
+
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade, LightPlatformInterface
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
@@ -359,3 +361,24 @@ class PDBLight:
             if not self.pdb.is_pdb_address(addr):
                 return False
         return True
+
+
+class PdLedServo(ServoPlatformInterface):
+
+    """A servo on a PD-LED board."""
+
+    def __init__(self, board, number, proc, debug):
+        """Initialise PDB LED."""
+        self.board = int(board)
+        self.number = int(number)
+        self.debug = debug
+        self.log = logging.getLogger('PD-LED')
+        self.proc = proc
+
+    def go_to_position(self, position):
+        """Move servo to a certain position."""
+        value = int(position * 128) + 127
+        if self.debug:
+            self.log.debug("Setting servo to position: %s value: %s", position, value)
+
+        self.proc.led_color(self.board, 72 + self.number, value)
