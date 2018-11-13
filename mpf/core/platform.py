@@ -294,7 +294,7 @@ class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def configure_servo(self, number: str) -> "ServoPlatformInterface":
-        """Configure a servo device in paltform.
+        """Configure a servo device in platform.
 
         Args:
             number: Number of the servo
