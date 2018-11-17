@@ -391,6 +391,7 @@ class PdLedStepper(StepperPlatformInterface):
 
     """A stepper on a PD-LED board."""
 
+    # pylint: disable-msg=too-many-arguments
     def __init__(self, board, number, platform, debug, stepper_ticks_per_half_period):
         """Initialise PDB LED."""
         self.board = int(board)
