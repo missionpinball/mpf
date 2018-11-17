@@ -14,3 +14,18 @@ steppers:
             -5: test_00
             999: test_01
             500: test_10
+
+
+# this is needed to test ball search
+coils:
+  coil1:
+    number: 1
+
+switches:
+  switch1:
+    number: 1
+
+autofire_coils:
+  ac_test:
+    coil: coil1
+    switch: switch1

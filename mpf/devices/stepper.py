@@ -24,7 +24,7 @@ class Stepper(SystemWideDevice):
     class_label = 'stepper'
 
     __slots__ = ["hw_stepper", "platform", "_target_position", "_current_position", "_ball_search_started",
-                 "_ball_search_old_target", "_is_homed", "_is_moving", "_move_task"]
+                 "_ball_search_old_target", "_is_homed", "_is_moving", "_move_task", "delay"]
 
     def __init__(self, machine, name):
         """Initialise stepper."""
@@ -37,6 +37,7 @@ class Stepper(SystemWideDevice):
         self._is_homed = False
         self._is_moving = asyncio.Event(loop=machine.clock.loop)
         self._move_task = None          # type: Optional[asyncio.Task]
+        self.delay = DelayManager(machine.delayRegistry)
         super().__init__(machine, name)
 
     @asyncio.coroutine
@@ -93,12 +94,15 @@ class Stepper(SystemWideDevice):
             # store target position in local variable since it may change in the meantime
             target_position = self._target_position
             delta = target_position - self._current_position
-            self.debug_log("Got move command. Current position: %s Target position: %s Delta: %s",
-                           self._current_position, target_position, delta)
-            # move stepper
-            self.hw_stepper.move_rel_pos(delta)
-            # wait for the move to complte
-            yield from self.hw_stepper.wait_for_move_completed()
+            if delta != 0:
+                self.debug_log("Got move command. Current position: %s Target position: %s Delta: %s",
+                               self._current_position, target_position, delta)
+                # move stepper
+                self.hw_stepper.move_rel_pos(delta)
+                # wait for the move to complte
+                yield from self.hw_stepper.wait_for_move_completed()
+            else:
+                self.debug_log("Got move command. Stepper already at target. Not moving.")
             # set current position
             self._current_position = target_position
             # post ready event

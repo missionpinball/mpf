@@ -90,26 +90,57 @@ class TestStepper(MpfTestCase):
         stepper = self.machine.steppers.linearAxis_stepper
 
         # post reset event
+        event_future = self.machine.events.wait_for_event("stepper_linearAxis_stepper_ready")
         self.post_event("test_reset")
-        self.machine.clock.loop.run_until_complete(
-            self.machine.events.wait_for_event("stepper_linearAxis_stepper_ready"))
+        self.machine.clock.loop.run_until_complete(event_future)
         # should go to reset position
         self.assertEqual(0.0, stepper._current_position)
 
         # post another defined event
+        event_future = self.machine.events.wait_for_event("stepper_linearAxis_stepper_ready")
         self.post_event("test_00")
-        self.machine.clock.loop.run_until_complete(
-            self.machine.events.wait_for_event("stepper_linearAxis_stepper_ready"))
+        self.machine.clock.loop.run_until_complete(event_future)
         self.assertEqual(-5.0, stepper._current_position, 0)
 
         # post another defined event
+        event_future = self.machine.events.wait_for_event("stepper_linearAxis_stepper_ready")
         self.post_event("test_01")
-        self.machine.clock.loop.run_until_complete(
-            self.machine.events.wait_for_event("stepper_linearAxis_stepper_ready"))
+        self.machine.clock.loop.run_until_complete(event_future)
         self.assertEqual(999.0, stepper._current_position, 0)
 
         # post another defined event
+        event_future = self.machine.events.wait_for_event("stepper_linearAxis_stepper_ready")
         self.post_event("test_10")
-        self.machine.clock.loop.run_until_complete(
-            self.machine.events.wait_for_event("stepper_linearAxis_stepper_ready"))
+        self.machine.clock.loop.run_until_complete(event_future)
         self.assertEqual(500.0, stepper._current_position, 0)
+
+    def test_ball_search(self):
+        stepper = self.machine.steppers.linearAxis_stepper
+
+        self.machine.playfields.playfield.config['enable_ball_search'] = True
+        self.machine.playfields.playfield.balls += 1
+
+        event_future = self.machine.events.wait_for_event("stepper_linearAxis_stepper_ready")
+        self.post_event("test_10")
+        self.machine.clock.loop.run_until_complete(event_future)
+        self.assertEqual(500, stepper._current_position)
+
+        # wait until ball search started
+        event_future = self.machine.events.wait_for_event("ball_search_started")
+        self.machine.clock.loop.run_until_complete(event_future)
+
+        # it will first go to ball search max
+        self.advance_time_and_run(.5)
+        self.assertEqual(0, stepper._current_position)
+
+        self.advance_time_and_run(5)
+        # and then to min
+        self.assertEqual(1, stepper._current_position)
+
+        # wait until ball search failed
+        event_future = self.machine.events.wait_for_event("ball_search_failed")
+        self.machine.clock.loop.run_until_complete(event_future)
+
+        # stepper should restore to previous location
+        self.advance_time_and_run(.5)
+        self.assertEqual(500, stepper._current_position)
