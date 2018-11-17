@@ -58,6 +58,10 @@ class Stepper(SystemWideDevice):
             self.machine.events.add_handler("ball_search_stopped",
                                             self._ball_search_stop)
 
+        if self.config['homing_mode'] == "switch" and not self.config['homing_switch']:
+            self.raise_config_error("Cannot use homing_mode switch without a homing_switch. Please add homing_switch or"
+                                    " use homing_mode hardware.", 1)
+
         self._move_task = self.machine.clock.loop.create_task(self._run())
         self._move_task.add_done_callback(self._done)
 
@@ -80,6 +84,9 @@ class Stepper(SystemWideDevice):
 
     @asyncio.coroutine
     def _run(self):
+        # wait for switches to be initialised
+        yield from self.machine.events.wait_for_event("init_phase_3")
+
         # first home the stepper
         self.debug_log("Homing stepper")
         yield from self._home()
@@ -134,7 +141,7 @@ class Stepper(SystemWideDevice):
                 self.hw_stepper.move_vel_mode(-1)
 
             # wait until home switch becomes active
-            yield from self.machine.switch_controller.wait_for_switch(self.config['homing_switch'],
+            yield from self.machine.switch_controller.wait_for_switch(self.config['homing_switch'].name,
                                                                       only_on_change=False)
             self.hw_stepper.stop()
 

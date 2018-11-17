@@ -339,7 +339,7 @@ class StepperPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def configure_stepper(self, number: str, config: dict) -> "StepperPlatformInterface":
-        """Configure a smart stepper (axis) device in paltform.
+        """Configure a smart stepper (axis) device in platform.
 
         Args:
             number: Number of the smart servo

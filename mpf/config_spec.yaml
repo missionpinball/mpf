@@ -893,6 +893,7 @@ pd_led_boards:
     max_servo_value: single|int|250
     use_stepper_0: single|bool|false
     use_stepper_1: single|bool|false
+    stepper_speed: single|int|13524
 psus:
     __valid_in__: machine
     voltage: single|int|None
@@ -1363,7 +1364,7 @@ spike:
 steppers:
     __valid_in__: machine
     named_positions: dict|float:str|None
-    homing_mode: single|enum(hardware, switch)|None
+    homing_mode: single|enum(hardware,switch)|None
     homing_switch: single|machine(switches)|None
     homing_direction: single|enum(clockwise,counterclockwise)|clockwise
     pos_min: single|int|0

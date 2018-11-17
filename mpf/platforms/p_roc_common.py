@@ -9,10 +9,11 @@ from typing import Any, List, Union
 
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 
-from mpf.platforms.p_roc_devices import PROCSwitch, PROCMatrixLight, PDBLED, PDBLight, PDBCoil, PDBSwitch, PdLedServo
+from mpf.platforms.p_roc_devices import PROCSwitch, PROCMatrixLight, PDBLED, PDBLight, PDBCoil, PDBSwitch, PdLedServo, \
+    PdLedStepper
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
-    SwitchConfig, ServoPlatform
+    SwitchConfig, ServoPlatform, StepperPlatform
 
 # pylint: disable-msg=ungrouped-imports
 try:    # pragma: no cover
@@ -55,7 +56,8 @@ except ImportError:     # pragma: no cover
 
 # pylint does not understand that this class is abstract
 # pylint: disable-msg=abstract-method
-class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlatform, metaclass=abc.ABCMeta):
+class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlatform, StepperPlatform,
+                       metaclass=abc.ABCMeta):
 
     """Platform class for the P-Roc and P3-ROC hardware controller.
 
@@ -166,25 +168,25 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
                                              (config['use_stepper_1'] * 1 << 9))
 
             # configure servos
-            self._write_pdled_config_reg(pd_number, 20, (config['use_servo_0'] * 1 << 0) +
-                                         (config['use_servo_1'] * 1 << 1) +
-                                         (config['use_servo_2'] * 1 << 2) +
-                                         (config['use_servo_3'] * 1 << 3) +
-                                         (config['use_servo_4'] * 1 << 4) +
-                                         (config['use_servo_5'] * 1 << 5) +
-                                         (config['use_servo_6'] * 1 << 6) +
-                                         (config['use_servo_7'] * 1 << 7) +
-                                         (config['use_servo_8'] * 1 << 8) +
-                                         (config['use_servo_9'] * 1 << 9) +
-                                         (config['use_servo_10'] * 1 << 10) +
-                                         (config['use_servo_11'] * 1 << 11))
-            self._write_pdled_config_reg(pd_number, 21, config['max_servo_value'])
+            self.write_pdled_config_reg(pd_number, 20, (config['use_servo_0'] * 1 << 0) +
+                                        (config['use_servo_1'] * 1 << 1) +
+                                        (config['use_servo_2'] * 1 << 2) +
+                                        (config['use_servo_3'] * 1 << 3) +
+                                        (config['use_servo_4'] * 1 << 4) +
+                                        (config['use_servo_5'] * 1 << 5) +
+                                        (config['use_servo_6'] * 1 << 6) +
+                                        (config['use_servo_7'] * 1 << 7) +
+                                        (config['use_servo_8'] * 1 << 8) +
+                                        (config['use_servo_9'] * 1 << 9) +
+                                        (config['use_servo_10'] * 1 << 10) +
+                                        (config['use_servo_11'] * 1 << 11))
+            self.write_pdled_config_reg(pd_number, 21, config['max_servo_value'])
 
             # configure steppers
             if config['use_stepper_0'] or config['use_stepper_1']:
-                self._write_pdled_config_reg(pd_number, 22, 13524)
+                self.write_pdled_config_reg(pd_number, 22, config['stepper_speed'])
 
-    def _write_pdled_config_reg(self, board_addr, addr, reg_data):
+    def write_pdled_config_reg(self, board_addr, addr, reg_data):
         """Write a pdled config register.
 
         Args:
@@ -233,21 +235,21 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
     # pylint: disable-msg=too-many-arguments
     def _write_ws2811_ctrl(self, board_addr, lbt, hbt, ebt, rbt):
-        self._write_pdled_config_reg(board_addr, 4, lbt)
-        self._write_pdled_config_reg(board_addr, 5, hbt)
-        self._write_pdled_config_reg(board_addr, 6, ebt)
-        self._write_pdled_config_reg(board_addr, 7, rbt)
+        self.write_pdled_config_reg(board_addr, 4, lbt)
+        self.write_pdled_config_reg(board_addr, 5, hbt)
+        self.write_pdled_config_reg(board_addr, 6, ebt)
+        self.write_pdled_config_reg(board_addr, 7, rbt)
 
     def _write_pdled_serial_control(self, board_addr, index_mask):
-        self._write_pdled_config_reg(board_addr, 0, index_mask)
+        self.write_pdled_config_reg(board_addr, 0, index_mask)
 
     def _write_ws2811_range(self, board_addr, index, first_addr, last_addr):
-        self._write_pdled_config_reg(board_addr, 8 + index * 2, first_addr)
-        self._write_pdled_config_reg(board_addr, 9 + index * 2, last_addr)
+        self.write_pdled_config_reg(board_addr, 8 + index * 2, first_addr)
+        self.write_pdled_config_reg(board_addr, 9 + index * 2, last_addr)
 
     def _write_lpd8806_range(self, board_addr, index, first_addr, last_addr):
-        self._write_pdled_config_reg(board_addr, 16 + index * 2, first_addr)
-        self._write_pdled_config_reg(board_addr, 17 + index * 2, last_addr)
+        self.write_pdled_config_reg(board_addr, 16 + index * 2, first_addr)
+        self.write_pdled_config_reg(board_addr, 17 + index * 2, last_addr)
 
     @classmethod
     def _get_event_type(cls, sw_activity, debounced):
@@ -489,7 +491,28 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
             board, number = number.split("-")
         except ValueError:
             self.raise_config_error("Servo number should be board-number but is {}".format(number), 1)
+        if 0 > int(number) >= 12:
+            self.raise_config_error("PD-LED only supports 12 servos {}".format(number), 5)
+
         return PdLedServo(board, number, self.proc, self.config.get("debug", False))
+
+    def configure_stepper(self, number: str, config: dict) -> PdLedStepper:
+        """Configure a stepper (axis) device in platform.
+
+        Args:
+            number: Number of the smart servo
+        """
+        try:
+            board, number = number.split("-")
+        except ValueError:
+            self.raise_config_error("Stepper number should be board-number but is {}".format(number), 3)
+        if 0 > int(number) >= 2:
+            self.raise_config_error("PD-LED only supports two steppers {}".format(number), 4)
+
+        pd_led = self.config['pd_led_boards'].get(board, {})
+        stepper_speed = pd_led.get("stepper_speed", 13524)
+
+        return PdLedStepper(board, number, self, self.config.get("debug", False), stepper_speed)
 
 
 class PDBConfig:
