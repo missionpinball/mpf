@@ -1,5 +1,6 @@
 """Platform interface for smart steppers."""
 import abc
+import asyncio
 
 
 class StepperPlatformInterface(metaclass=abc.ABCMeta):
@@ -17,18 +18,25 @@ class StepperPlatformInterface(metaclass=abc.ABCMeta):
     __slots__ = []
 
     @abc.abstractmethod
-    def home(self):
-        """Home an axis, resetting 0 position."""
+    def home(self, direction):
+        """Home an axis, resetting 0 position.
+
+        direction can be clockwise or counterclockwise.
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def move_abs_pos(self, position):
-        """Move axis to a certain absolute position."""
+    @asyncio.coroutine
+    def wait_for_move_completed(self):
+        """Return after the last move completed.
+
+        This is also used to check if homing is completed.
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
     def move_rel_pos(self, position):
-        """Move axis to a relative position."""
+        """Move axis to a certain relative position."""
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -37,11 +45,6 @@ class StepperPlatformInterface(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def current_position(self):
-        """Return the current position of the stepper."""
-        raise NotImplementedError
-
-    @abc.abstractmethod
     def stop(self):
-        """Stop a motor."""
+        """Stop the stepper."""
         raise NotImplementedError

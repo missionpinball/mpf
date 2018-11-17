@@ -51,7 +51,12 @@ class TrinamicsStepRocker(StepperPlatform):
         Args:
             config (dict): Configuration of device
         """
-        return TrinamicsTMCLStepper(config['number'], config, self.TMCL)
+        return TrinamicsTMCLStepper(number, config, self.TMCL, self.machine)
+
+    @classmethod
+    def get_stepper_config_section(cls):
+        """Return config validator name."""
+        return "steprocker_stepper_settings"
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -59,7 +64,7 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
 
     """A stepper on a TMCL based controller such as Trinamics StepRocker."""
 
-    def __init__(self, number, config, tmcl_device):
+    def __init__(self, number, config, tmcl_device, machine):
         """Initialise stepper."""
         self._pulse_div = 5     # tbd add to config
         self._ramp_div = 9      # tbd add to config
@@ -74,10 +79,8 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
         self._fullstep_per_userunit = self.config['fullstep_per_userunit']
         self._velocity_limit = self._uu_to_velocity_cmd(self.config['velocity_limit'])
         self._acceleration_limit = self._uu_to_accel_cmd(self.config['acceleration_limit'])
-        mode = self.config['mode']
-        if mode == 'position':
-            self._home_direction = self.config['homing_direction']
-            self._homing_speed = self._uu_to_velocity_cmd(self.config['homing_speed'])
+        self.machine = machine
+        self._homing_speed = self._uu_to_velocity_cmd(self.config['homing_speed'])
 
         self._set_important_parameters(self._velocity_limit, self._acceleration_limit,
                                        self._move_current, self._hold_current,
@@ -88,10 +91,10 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
         self._homingActive = False
 
     # Public Stepper Platform Interface
-    def home(self):
+    def home(self, direction):
         """Home an axis, resetting 0 position."""
         self.TMCL.rfs(self._mn, 'STOP')  # in case in progress
-        self._set_home_parameters()
+        self._set_home_parameters(direction)
         self.TMCL.rfs(self._mn, 'START')
         self._homingActive = True
 
@@ -117,6 +120,12 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
     def stop(self) -> None:
         """Stop stepper."""
         self.TMCL.mst(self._mn)
+
+    @asyncio.coroutine
+    def wait_for_move_completed(self):
+        """Wait until move completed."""
+        while not self.is_move_complete():
+            yield from asyncio.sleep(1 / self.config['poll_ms'], loop=self.machine.clock.loop)
 
     def is_move_complete(self) -> bool:
         """Return true if move is complete."""
@@ -216,7 +225,7 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
         self.TMCL.stap(self._mn, 6)
         self.TMCL.stap(self._mn, 7)
 
-    def _set_home_parameters(self):
+    def _set_home_parameters(self, direction):
         # self.TMCL.sap(self._mn, 9,  ) #ref. switch status
         # self.TMCL.sap(self._mn, 10, ) #right limit switch status
         # self.TMCL.sap(self._mn, 11, ) #left limit switch status
@@ -225,9 +234,9 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
         # self.TMCL.sap(self._mn, 141, ) #ref. switch tolerance
         # self.TMCL.sap(self._mn, 149, ) #soft stop flag
         self.TMCL.sap(self._mn, 194, self._homing_speed)    # referencing search speed
-        if self._home_direction == 'clockwise':
+        if direction == 'clockwise':
             self.TMCL.sap(self._mn, 193, 8)     # ref. search mode
-        elif self._home_direction == 'counterclockwise':
+        elif direction == 'counterclockwise':
             self.TMCL.sap(self._mn, 193, 7)
         # self.TMCL.sap(self._mn, 195, ) #referencing switch speed
         # self.TMCL.sap(self._mn, 196, ) # distance end switches

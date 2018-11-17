@@ -1,5 +1,8 @@
 """Implements a servo in MPF."""
 import asyncio
+from typing import Optional
+
+from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
 
 from mpf.core.delays import DelayManager
 
@@ -8,8 +11,7 @@ from mpf.core.events import event_handler
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-# pylint: disable-msg=too-many-instance-attributes
-@DeviceMonitor(_position="position")
+@DeviceMonitor(_current_position="position", _target_position="target_position", _is_home="is_homed")
 class Stepper(SystemWideDevice):
 
     """Represents an stepper motor based axis in a pinball machine.
@@ -21,24 +23,20 @@ class Stepper(SystemWideDevice):
     collection = 'steppers'
     class_label = 'stepper'
 
+    __slots__ = ["hw_stepper", "platform", "_target_position", "_current_position", "_ball_search_started",
+                 "_ball_search_old_target", "_is_homed", "_is_moving", "_move_task"]
+
     def __init__(self, machine, name):
         """Initialise stepper."""
-        self.hw_stepper = None
-        self.platform = None        # type: Stepper
-        self._cachedPosition = 0    # in user units
+        self.hw_stepper = None          # type: Optional[StepperPlatformInterface]
+        self.platform = None            # type: Optional[Stepper]
+        self._target_position = 0       # in user units
+        self._current_position = 0      # in user units
         self._ball_search_started = False
-        self._min_pos = 0
-        self._max_pos = 1
-        self.positionMode = False
-        self._cachedVelocity = 0
-        self._isHomed = False
-        self._isMoving = False
-        self._move_complete_pollrate = 100  # ms
-        self._resetPosition = 0
-        self._position = None
-        self._max_velocity = None
-
-        self.delay = DelayManager(machine.delayRegistry)
+        self._ball_search_old_target = 0
+        self._is_homed = False
+        self._is_moving = asyncio.Event(loop=machine.clock.loop)
+        self._move_task = None          # type: Optional[asyncio.Task]
         super().__init__(machine, name)
 
     @asyncio.coroutine
@@ -51,20 +49,7 @@ class Stepper(SystemWideDevice):
                                             self._position_event,
                                             position=position)
 
-        self.hw_stepper = self.platform.configure_stepper(self.config['number'], self.config)
-        self._position = self.config['reset_position']
-        self._max_pos = self.config['pos_max']
-        self._min_pos = self.config['pos_min']
-        self._max_velocity = self.config['velocity_limit']
-        self._resetPosition = self.config['reset_position']
-
-        mode = self.config['mode']
-        if mode == 'position':
-            self.positionMode = True
-        elif mode == 'velocity':
-            self.positionMode = False
-        else:
-            raise AssertionError("Operating Mode not defined")
+        self.hw_stepper = self.platform.configure_stepper(self.config['number'], self.config['platform_settings'])
 
         if self.config['include_in_ball_search']:
             self.machine.events.add_handler("ball_search_started",
@@ -72,121 +57,129 @@ class Stepper(SystemWideDevice):
             self.machine.events.add_handler("ball_search_stopped",
                                             self._ball_search_stop)
 
-    def current_position(self):
-        """Return position in user units (vs microsteps)."""
-        return self.hw_stepper.current_position()
+        self._move_task = self.machine.clock.loop.create_task(self._run())
+        self._move_task.add_done_callback(self._done)
 
-    def move_abs_pos(self, position):
+    @staticmethod
+    def _done(future):
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            pass
+
+    def validate_and_parse_config(self, config, is_mode_config, debug_prefix: str = None):
+        """Validate stepper config."""
+        config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
+        platform = self.machine.get_platform_sections(
+            'stepper_controllers', getattr(config, "platform", None))
+        config['platform_settings'] = platform.validate_stepper_section(
+            self, config.get('platform_settings', None))
+        self._configure_device_logging(config)
+        return config
+
+    @asyncio.coroutine
+    def _run(self):
+        # first home the stepper
+        self.debug_log("Homing stepper")
+        yield from self._home()
+
+        # move to reset position
+        self.debug_log("Moving to reset position")
+        self.reset()
+        while True:
+            # wait until we should be moving
+            yield from self._is_moving.wait()
+            self._is_moving.clear()
+            # store target position in local variable since it may change in the meantime
+            target_position = self._target_position
+            delta = target_position - self._current_position
+            self.debug_log("Got move command. Current position: %s Target position: %s Delta: %s",
+                           self._current_position, target_position, delta)
+            # move stepper
+            self.hw_stepper.move_rel_pos(delta)
+            # wait for the move to complte
+            yield from self.hw_stepper.wait_for_move_completed()
+            # set current position
+            self._current_position = target_position
+            # post ready event
+            self._post_ready_event()
+            self.debug_log("Move completed")
+
+    def _move_to_absolute_position(self, position):
         """Move servo to position."""
-        if self._ball_search_started:
-            return
-        if not self.positionMode:
-            raise RuntimeError("Cannot do a position move in velocity mode")
-        if self._min_pos <= position <= self._max_pos:
-            self.hw_stepper.move_abs_pos(position)
-            if self._isMoving is False:     # already moving, don't re-kickoff polling
-                self._isMoving = True
-                self._schedule_move_complete_check()
+        self.debug_log("Moving to position %s", position)
+        if self.config['pos_min'] <= position <= self.config['pos_max']:
+            self._target_position = position
+            self._is_moving.set()
         else:
-            raise ValueError("move_abs: position argument beyond limits")
+            raise ValueError("_move_to_absolute_position: position argument beyond limits")
 
-    def home(self):
+    @asyncio.coroutine
+    def _home(self):
         """Home an axis, resetting 0 position."""
-        if self.positionMode:
-            self.hw_stepper.home()
-            self._isHomed = False
-            if self._isMoving is False:     # already moving, don't re-kickoff polling
-                self._isMoving = True
-                self._schedule_home_complete_check()
+        self._is_homed = False
+        self._is_moving.set()
+        if self.config['homing_mode'] == "hardware":
+            self.hw_stepper.home(self.config['homing_direction'])
+            yield from self.hw_stepper.wait_for_move_completed()
         else:
-            raise RuntimeError("Cannot home in velocity mode")
+            # move the stepper manually
+            if self.config['homing_direction'] == "clockwise":
+                self.hw_stepper.move_vel_mode(1)
+            else:
+                self.hw_stepper.move_vel_mode(-1)
 
-    def move_rel_pos(self, delta):
-        """Move axis to a relative position."""
-        start = self.current_position()
-        self.move_abs_pos(start + delta)
+            # wait until home switch becomes active
+            yield from self.machine.switch_controller.wait_for_switch(self.config['homing_switch'],
+                                                                      only_on_change=False)
+            self.hw_stepper.stop()
 
-    def move_vel_mode(self, velocity):
-        """Move at a specific velocity indefinitely."""
-        if self.positionMode:
-            raise RuntimeError("Cannot do a velocity move in position mode")
-        if velocity <= self._max_velocity:
-            self.hw_stepper.move_vel_mode(velocity)
-            self._cachedVelocity = velocity
-        else:
-            raise ValueError("move_vel_mode: velocity argument is above limit")
+        self._is_homed = True
+        self._is_moving.clear()
+        # home position is 0
+        self._current_position = self._target_position = 0
+
+    def _post_ready_event(self):
+        if not self._ball_search_started:
+            self.machine.events.post('stepper_' + self.name + "_ready", position=self._current_position)
+            '''event: stepper_(name)_ready'''
 
     def stop(self):
         """Stop motor."""
         self.hw_stepper.stop()
-        self._isMoving = False
-        self._cachedVelocity = 0.0
-        self.delay.remove('stepper_move_complete_check')
-        self.delay.remove('stepper_home_complete_check')
-
-    def _schedule_move_complete_check(self):
-        self.delay.add(name='stepper_move_complete_check',
-                       ms=self._move_complete_pollrate,
-                       callback=self._check_mv_complete)
-
-    def _check_mv_complete(self):
-        # TODO add timeout that stops this with error event if it hasn't made it in some amount of time
-        if not self._isMoving:
-            return
-        if self.hw_stepper.is_move_complete():
-            self._isMoving = False
-            self._cachedPosition = self.current_position()
-            self.machine.events.post('stepper_' + self.name + "_ready")
-            '''event: stepper_(name)_ready'''
-        else:
-            # reschedule
-            self._schedule_move_complete_check()
-
-    def _schedule_home_complete_check(self):
-        self.delay.add(name='stepper_home_complete_check',
-                       ms=self._move_complete_pollrate,
-                       callback=self._check_home_complete)
-
-    def _check_home_complete(self):
-        # TODO add timeout that stops this with error event if it hasn't made it in some amount of time
-        if self._isHomed:
-            return
-        if self.hw_stepper.is_move_complete():
-            self._isMoving = False
-            self._isHomed = True
-            self.machine.events.post('stepper_' + self.name + "_ready")
-            '''event: stepper_(name)_ready'''
-        else:
-            # reschedule
-            self._schedule_home_complete_check()
+        self._is_moving.clear()
+        if self._move_task:
+            self._move_task.cancel()
+            self._move_task = None
 
     @event_handler(1)
     def reset(self, **kwargs):
-        """Stop Motor."""
+        """Move to reset position."""
         del kwargs
-        self.stop()
-        if self.positionMode:
-            self.home()
-            self.move_abs_pos(self._resetPosition)
+        self._move_to_absolute_position(self.config['reset_position'])
 
     @event_handler(5)
     def _position_event(self, position, **kwargs):
         del kwargs
-        self.move_abs_pos(position)
+        self._target_position = position
+        if self._ball_search_started:
+            return
+        self._move_to_absolute_position(position)
 
     def _ball_search_start(self, **kwargs):
         del kwargs
         # we do not touch self._position during ball search so we can reset to
         # it later
+        self._ball_search_old_target = self._target_position
         self._ball_search_started = True
         self._ball_search_go_to_min()
 
     def _ball_search_go_to_min(self):
-        self._move_abs_pos(self.config['ball_search_min'])
+        self._move_to_absolute_position(self.config['ball_search_min'])
         self.delay.add(name="ball_search", callback=self._ball_search_go_to_max, ms=self.config['ball_search_wait'])
 
     def _ball_search_go_to_max(self):
-        self._move_abs_pos(self.config['ball_search_max'])
+        self._move_to_absolute_position(self.config['ball_search_max'])
         self.delay.add(name="ball_search", callback=self._ball_search_go_to_min, ms=self.config['ball_search_wait'])
 
     def _ball_search_stop(self, **kwargs):
@@ -195,8 +188,6 @@ class Stepper(SystemWideDevice):
         self.delay.remove("ball_search")
         self._ball_search_started = False
 
-        # move to last commanded
-        if self.positionMode:
-            self.move_abs_pos(self._cachedPosition)
-        else:
-            self.move_vel_mode(self._cachedVelocity)
+        # move to last position
+        self._target_position = self._ball_search_old_target
+        self._move_to_absolute_position(self._target_position)

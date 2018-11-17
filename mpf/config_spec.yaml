@@ -1362,26 +1362,30 @@ spike:
     wait_times: dict|int:int|None
 steppers:
     __valid_in__: machine
-    mode: single|enum(position,velocity)|position
     named_positions: dict|float:str|None
-    pos_min: single|float|0.0
-    pos_max: single|float|1.0
-    move_current: single|int|20
-    hold_current: single|int|0
-    microstep_per_fullstep: single|int|16
-    velocity_limit: single|float|1.0
-    acceleration_limit: single|float|1.0
+    homing_mode: single|enum(hardware, switch)|None
+    homing_switch: single|machine(switches)|None
     homing_direction: single|enum(clockwise,counterclockwise)|clockwise
-    homing_speed: single|float|1.0
-    fullstep_per_userunit: single|float|1.0
-    ball_search_min: single|float|0.0
-    ball_search_max: single|float|1.0
+    pos_min: single|int|0
+    pos_max: single|int|1000
+    ball_search_min: single|int|0
+    ball_search_max: single|int|1
     ball_search_wait: single|ms|5s
     include_in_ball_search: single|bool|True
-    reset_position: single|float|0.0
+    reset_position: single|int|0
     reset_events: event_handler|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
     number: single|str|
     platform: single|str|None
+    platform_settings: single|dict|None
+steprocker_stepper_settings:
+    homing_speed: single|float|1.0
+    fullstep_per_userunit: single|float|1.0
+    move_current: single|int|20
+    hold_current: single|int|0
+    poll_ms: single|ms|100ms
+    microstep_per_fullstep: single|int|16
+    velocity_limit: single|float|1.0
+    acceleration_limit: single|float|1.0
 switch_player:
     __valid_in__: machine
     start_event: single|str|machine_reset_phase_3
