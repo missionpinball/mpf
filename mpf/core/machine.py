@@ -586,10 +586,10 @@ class MachineController(LogMixin):
 
         '''
 
-    def _load_platform_config_specs(self):
+    def load_external_platform_config_specs(self):
         """Load config spec for external platforms."""
-        for platform in iter_entry_points(group='mpf.platforms'):
-            config_spec = platform.load().get_config_spec()
+        for platform_entry in iter_entry_points(group='mpf.platforms'):
+            config_spec = platform_entry.load().get_config_spec()
 
             if config_spec:
                 # add specific config spec if platform has any

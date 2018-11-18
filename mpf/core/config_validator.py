@@ -126,7 +126,7 @@ class ConfigValidator:
         config = self._process_config_spec(config, "root")
 
         self.config_spec = config
-        self.machine._load_platform_config_specs()
+        self.machine.load_external_platform_config_specs()
 
         with open(cache_file, 'wb') as f:
             pickle.dump(config, f, protocol=4)
