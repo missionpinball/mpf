@@ -125,12 +125,14 @@ class ConfigValidator:
         config = YamlInterface.process(config_str)
         config = self._process_config_spec(config, "root")
 
+        self.config_spec = config
+        self.machine.load_external_platform_config_specs()
+
         with open(cache_file, 'wb') as f:
             pickle.dump(config, f, protocol=4)
             self.log.info('Config spec file cache created: %s', cache_file)
 
         ConfigValidator.class_cache = deepcopy(self.config_spec)
-        self.config_spec = config
 
     def _process_config_spec(self, spec, path):
         if not isinstance(spec, dict):

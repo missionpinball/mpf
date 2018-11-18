@@ -54,6 +54,11 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         self.features['hardware_sounds'] = False
         self.features['has_steppers'] = False
 
+    @classmethod
+    def get_config_spec(cls):
+        """Return config spec for this platform."""
+        return False
+
     # pylint: disable-msg=no-self-use
     def get_info_string(self) -> str:
         """Return information string about this platform."""

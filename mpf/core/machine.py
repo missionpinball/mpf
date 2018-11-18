@@ -586,6 +586,15 @@ class MachineController(LogMixin):
 
         '''
 
+    def load_external_platform_config_specs(self):
+        """Load config spec for external platforms."""
+        for platform_entry in iter_entry_points(group='mpf.platforms'):
+            config_spec = platform_entry.load().get_config_spec()
+
+            if config_spec:
+                # add specific config spec if platform has any
+                self.config_validator.load_device_config_spec(config_spec[0], config_spec[1])
+
     def add_platform(self, name: str) -> None:
         """Make an additional hardware platform interface available to MPF.
 
@@ -619,8 +628,7 @@ class MachineController(LogMixin):
                 else:
                     raise AssertionError("Unknown platform {}".format(name))
 
-            self.hardware_platforms[name] = (
-                hardware_platform(self))
+            self.hardware_platforms[name] = hardware_platform(self)
 
     def set_default_platform(self, name: str) -> None:
         """Set the default platform.
