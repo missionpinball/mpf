@@ -53,8 +53,8 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         self.features['hardware_sounds'] = False
         self.features['has_steppers'] = False
 
-    @staticmethod
-    def get_config_spec():
+    @classmethod
+    def get_config_spec(cls):
         """Return config spec for this platform."""
         return False
 
