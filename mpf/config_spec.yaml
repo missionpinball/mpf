@@ -1364,7 +1364,7 @@ spike:
 steppers:
     __valid_in__: machine
     named_positions: dict|float:str|None
-    homing_mode: single|enum(hardware,switch)|None
+    homing_mode: single|enum(hardware,switch)|hardware
     homing_switch: single|machine(switches)|None
     homing_direction: single|enum(clockwise,counterclockwise)|clockwise
     pos_min: single|int|0
