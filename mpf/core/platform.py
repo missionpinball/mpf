@@ -10,6 +10,7 @@ from mpf.core.logging import LogMixin
 MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.devices.switch import Switch
+    from mpf.devices.stepper import Stepper
     from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
     from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
     from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
@@ -313,9 +314,32 @@ class StepperPlatform(BasePlatform, metaclass=abc.ABCMeta):
         super().__init__(machine)
         self.features['has_steppers'] = True
 
+    @classmethod
+    def get_stepper_config_section(cls) -> Optional[str]:
+        """Return config section for additional stepper config items."""
+        return None
+
+    def validate_stepper_section(self, stepper: "Stepper", config: dict) -> dict:
+        """Validate a stepper config for platform.
+
+        Args:
+            stepper: Stepper to validate.
+            config: Config to validate.
+
+        Returns: Validated config.
+        """
+        if self.get_stepper_config_section():
+            spec = self.get_stepper_config_section()    # pylint: disable-msg=assignment-from-none
+            config = stepper.machine.config_validator.validate_config(spec, config, stepper.name)
+        elif config:
+            raise AssertionError("No platform_config supported but not empty {} for stepper {}".
+                                 format(config, stepper.name))
+
+        return config
+
     @abc.abstractmethod
     def configure_stepper(self, number: str, config: dict) -> "StepperPlatformInterface":
-        """Configure a smart stepper (axis) device in paltform.
+        """Configure a smart stepper (axis) device in platform.
 
         Args:
             number: Number of the smart servo

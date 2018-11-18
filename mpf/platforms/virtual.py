@@ -66,13 +66,13 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
     @asyncio.coroutine
     def configure_servo(self, number: str):
-        """Configure a servo device in paltform."""
+        """Configure a servo device in platform."""
         return VirtualServo(number)
 
     def configure_stepper(self, number: str, config: dict):
         """Configure a smart stepper / axis device in platform."""
         del config
-        return VirtualStepper(number)
+        return VirtualStepper(number, self.machine)
 
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Configure driver."""
@@ -134,6 +134,10 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
                 continue
             platforms.append(Util.string_to_class(platform))
         return platforms
+
+    def validate_stepper_section(self, stepper, config):
+        """Validate stepper sections."""
+        return config
 
     def validate_switch_section(self, switch, config):
         """Validate switch sections."""
@@ -445,23 +449,25 @@ class VirtualStepper(StepperPlatformInterface):
 
     """Virtual Stepper."""
 
-    __slots__ = ["log", "number", "_current_position", "velocity", "direction"]
+    __slots__ = ["log", "number", "_current_position", "velocity", "direction", "machine"]
 
-    def __init__(self, number) -> None:
+    def __init__(self, number, machine) -> None:
         """Initialise servo."""
         self.log = logging.getLogger('VirtualStepper')
         self.number = number
         self._current_position = 0
         self.velocity = 0
         self.direction = 0  # clockwise
+        self.machine = machine
 
-    def home(self):
+    def home(self, direction):
         """Home an axis, resetting 0 position."""
         self._current_position = 0
 
-    def move_abs_pos(self, position):
-        """Move axis to a certain absolute position."""
-        self._current_position = position
+    @asyncio.coroutine
+    def wait_for_move_completed(self):
+        """Wait until move completed."""
+        yield from asyncio.sleep(0.1, loop=self.machine.clock.loop)
 
     def move_rel_pos(self, position):
         """Move axis to a relative position."""

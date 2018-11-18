@@ -1,6 +1,9 @@
 """P-Roc hardware platform devices."""
+import asyncio
 import logging
 from typing import Callable, Tuple
+
+from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
 
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 
@@ -372,7 +375,7 @@ class PdLedServo(ServoPlatformInterface):
         self.board = int(board)
         self.number = int(number)
         self.debug = debug
-        self.log = logging.getLogger('PD-LED')
+        self.log = logging.getLogger('PD-LED.Servo.{}-{}'.format(board, number))
         self.proc = proc
 
     def go_to_position(self, position):
@@ -382,3 +385,76 @@ class PdLedServo(ServoPlatformInterface):
             self.log.debug("Setting servo to position: %s value: %s", position, value)
 
         self.proc.led_color(self.board, 72 + self.number, value)
+
+
+class PdLedStepper(StepperPlatformInterface):
+
+    """A stepper on a PD-LED board."""
+
+    # pylint: disable-msg=too-many-arguments
+    def __init__(self, board, number, platform, debug, stepper_ticks_per_half_period):
+        """Initialise PDB LED."""
+        self.board = int(board)
+        self.number = int(number)
+        self.debug = debug
+        self.log = logging.getLogger('PD-LED.Stepper.{}-{}'.format(board, number))
+        self.platform = platform
+        self._move_complete = asyncio.Event(loop=platform.machine.clock.loop)
+        self._move_complete.set()
+        self._move_timer = None
+        self.stepper_ticks_per_half_period = stepper_ticks_per_half_period
+
+    def move_vel_mode(self, velocity):
+        """Turn stepper on at a certain speed."""
+        if velocity == 0:
+            self.stop()
+        elif velocity > 0:
+            self.move_rel_pos(16384)
+        else:
+            self.move_rel_pos(-16384)
+
+    def move_rel_pos(self, position):
+        """Move stepper by x steps."""
+        if abs(position) > 16384:
+            raise ValueError("Cannot move more than 16384 steps but tried {}".format(position))
+
+        if position > 0:
+            value = int(position)
+        else:
+            value = int(abs(position)) + (1 << 15)
+        self.platform.write_pdled_config_reg(self.board, self.number + 23, value)
+
+        self._move_complete.clear()
+        # we need to time the steps and add 30ms for usb latency/jitter
+        wait_time = ((int(abs(position)) * 2 * self.stepper_ticks_per_half_period) / 32000000) + 0.03
+        self._move_timer = asyncio.sleep(wait_time, loop=self.platform.machine.clock.loop)
+        if self.debug:
+            self.log.debug("Moving %s ticks. This will take %s", position, wait_time)
+        self._move_timer = Util.ensure_future(self._move_timer, self.platform.machine.clock.loop)
+        self._move_timer.add_done_callback(self._move_done)
+
+    def _move_done(self, future):
+        if self.debug:
+            self.log.debug("Move done")
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            return
+
+        self._move_complete.set()
+
+    def home(self, direction):
+        """Not implemented."""
+        del direction
+        self.platform.raise_config_error("Use homing_mode switch for steppers on PD-LED.", 2)
+
+    def stop(self):
+        """Stop stepper."""
+        self.platform.write_pdled_config_reg(self.board, self.number + 23, 0)
+        self._move_complete.set()
+        if self._move_timer:
+            self._move_timer.cancel()
+
+    def wait_for_move_completed(self):
+        """Wait for move complete."""
+        return self._move_complete.wait()
