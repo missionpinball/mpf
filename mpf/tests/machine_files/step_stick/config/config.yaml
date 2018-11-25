@@ -1,0 +1,31 @@
+#config_version=5
+
+hardware:
+    platform: virtual
+    stepper_controllers: step_stick
+
+
+digital_outputs:
+  c_direction:
+    number: 1
+    type: driver
+  c_step:
+    number: 2
+    type: driver
+  c_enable:
+    number: 3
+    type: driver
+
+switches:
+  s_home:
+    number: 1
+
+steppers:
+  stepper1:
+    number: c_direction:c_step:c_enable
+    homing_mode: switch
+    homing_switch: s_home
+    named_positions:
+      10: test_00
+      20: test_01
+      50: test_10

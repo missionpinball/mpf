@@ -114,6 +114,7 @@ mpf:
         mma8451: mpf.platforms.mma8451.MMA8451Platform
         virtual_pinball: mpf.platforms.virtual_pinball.virtual_pinball.VirtualPinballPlatform
         drivers: mpf.platforms.driver_light_platform.DriverLightPlatform
+        step_stick: mpf.platforms.step_stick.StepStickDigitalOutputPlatform
 
     paths:
         scriptlets: scriptlets
