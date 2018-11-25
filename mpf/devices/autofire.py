@@ -66,8 +66,8 @@ class AutofireCoil(SystemWideDevice):
 
         if '{}_active'.format(self.config['playfield'].name) in self.config['switch'].tags:
             self.raise_config_error(
-                "Ball device '{}' uses switch '{}' which has a "
-                "'{}_active' tag. This is handled internally by the defive. Remove the "
+                "Autofire device '{}' uses switch '{}' which has a "
+                "'{}_active' tag. This is handled internally by the device. Remove the "
                 "redundant '{}_active' tag from that switch.".format(
                     self.name, self.config['switch'].name, self.config['playfield'].name,
                     self.config['playfield'].name), 1)
