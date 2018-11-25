@@ -1387,6 +1387,9 @@ steprocker_stepper_settings:
     microstep_per_fullstep: single|int|16
     velocity_limit: single|float|1.0
     acceleration_limit: single|float|1.0
+step_stick_stepper_settings:
+    low_time: single|secs|20ms
+    high_time: single|secs|20ms
 switch_player:
     __valid_in__: machine
     start_event: single|str|machine_reset_phase_3
