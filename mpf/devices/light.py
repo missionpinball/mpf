@@ -17,29 +17,6 @@ from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftw
 from mpf.devices.device_mixins import DevicePositionMixin
 
 
-class DriverLight(LightPlatformSoftwareFade):
-
-    """A coil which is used to drive a light."""
-
-    __slots__ = ["driver"]
-
-    def __init__(self, driver, loop, software_fade_ms):
-        """Initialise coil as light."""
-        super().__init__(driver.hw_driver.number, loop, software_fade_ms)
-        self.driver = driver
-
-    def set_brightness(self, brightness: float):
-        """Set pwm to coil."""
-        if brightness <= 0:
-            self.driver.disable()
-        else:
-            self.driver.enable(hold_power=brightness)
-
-    def get_board_name(self):
-        """Return board name of underlaying driver."""
-        return self.driver.hw_driver.get_board_name()
-
-
 class LightStackEntry:
 
     """Data class for a light stack entry."""
@@ -195,16 +172,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
 
     def _load_hw_drivers(self):
         """Load hw drivers."""
-        if self.config['platform'] == "drivers":
-            channel_list = [
-                {
-                    "number": self.config['number'],
-                    "platform": "drivers"
-                }
-            ]
-            # map channel to color
-            channels = self._map_channels_to_colors(channel_list)
-        elif not self.config['channels']:
+        if not self.config['channels']:
             # get channels from number + platform
             platform = self.machine.get_platform_sections('lights', self.config['platform'])
             try:
@@ -244,17 +212,13 @@ class Light(SystemWideDevice, DevicePositionMixin):
 
     def _load_hw_driver(self, channel):
         """Load one channel."""
-        if channel['platform'] == "drivers":
-            return DriverLight(self.machine.coils[channel['number'].strip()], self.machine.clock.loop,
-                               int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000))
-        else:
-            platform = self.machine.get_platform_sections('lights', channel['platform'])
-            self.platforms.add(platform)
-            try:
-                return platform.configure_light(channel['number'], channel['subtype'], channel['platform_settings'])
-            except AssertionError as e:
-                raise AssertionError("Failed to configure light {} in platform. See error above".
-                                     format(self.name)) from e
+        platform = self.machine.get_platform_sections('lights', channel['platform'])
+        self.platforms.add(platform)
+        try:
+            return platform.configure_light(channel['number'], channel['subtype'], channel['platform_settings'])
+        except AssertionError as e:
+            raise AssertionError("Failed to configure light {} in platform. See error above".
+                                 format(self.name)) from e
 
     @asyncio.coroutine
     def _initialize(self):
