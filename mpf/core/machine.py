@@ -469,6 +469,10 @@ class MachineController(LogMixin):
     def _load_hardware_platforms(self) -> None:
         """Load all hardware platforms."""
         self.validate_machine_config_section('hardware')
+
+        # load internal platforms
+        self.add_platform("drivers")
+
         # if platform is forced use that one
         if self.options['force_platform']:
             self.add_platform(self.options['force_platform'])
@@ -896,6 +900,9 @@ class MachineController(LogMixin):
 
     def get_platform_sections(self, platform_section: str, overwrite: str) -> "SmartVirtualHardwarePlatform":
         """Return platform section."""
+        if overwrite == "drivers":
+            return self.hardware_platforms[overwrite]
+
         if self.options['force_platform']:
             return self.default_platform
 

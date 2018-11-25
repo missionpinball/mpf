@@ -88,6 +88,11 @@ class LightPlatformDirectFade(LightPlatformInterface, metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
+    def stop(self):
+        """Stop light."""
+        if self.task:
+            self.task.cancel()
+
 
 class LightPlatformSoftwareFade(LightPlatformDirectFade, metaclass=abc.ABCMeta):
 
