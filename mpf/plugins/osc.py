@@ -22,15 +22,15 @@ except ImportError:
 
 class Osc:
 
-    """Plays back switch sequences from a config file, used for testing."""
+    """Control switches via OSC."""
 
     def __init__(self, machine):
         """Initialise switch player."""
-        self.log = logging.getLogger('osc')
+        self.log = logging.getLogger('OSC Plugin')
         self.machine = machine  # type: MachineController
 
-        if 'osc' not in machine.config:
-            machine.log.debug('"osc:" section not found in '
+        if 'osc_plugin' not in machine.config:
+            machine.log.debug('"osc_plugin:" section not found in '
                               'machine configuration, so the OSC'
                               'plugin will not be used.')
             return
@@ -38,8 +38,8 @@ class Osc:
         if not Dispatcher:
             raise AssertionError("To use the OSC plugin you need to install the pythonosc extension.")
 
-        self.config = self.machine.config['osc']
-        self.machine.config_validator.validate_config("osc", self.config)
+        self.config = self.machine.config['osc_plugin']
+        self.machine.config_validator.validate_config("osc_plugin", self.config)
         if not self.config['enabled']:
             return
 

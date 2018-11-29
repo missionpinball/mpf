@@ -115,6 +115,7 @@ mpf:
         virtual_pinball: mpf.platforms.virtual_pinball.virtual_pinball.VirtualPinballPlatform
         drivers: mpf.platforms.driver_light_platform.DriverLightPlatform
         step_stick: mpf.platforms.step_stick.StepStickDigitalOutputPlatform
+        osc: mpf.platforms.osc.OscPlatform
 
     paths:
         scriptlets: scriptlets
