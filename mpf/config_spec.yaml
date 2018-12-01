@@ -809,6 +809,10 @@ named_colors:
     __valid_in__: machine
 osc:
     __valid_in__: machine
+    ip: single|str|127.0.0.1
+    port: single|int|8000
+osc_plugin:
+    __valid_in__: machine
     server_ip: single|str|127.0.0.1
     server_port: single|int|9000
     client_ip: single|str|127.0.0.1
