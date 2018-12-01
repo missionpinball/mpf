@@ -1,6 +1,9 @@
 """A platform to control lights via OSC."""
 import asyncio
-from pythonosc.udp_client import SimpleUDPClient
+try:
+    from pythonosc.udp_client import SimpleUDPClient
+except ImportError:
+    SimpleUDPClient = None
 
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface, LightPlatformSoftwareFade
 
@@ -34,6 +37,8 @@ class OscPlatform(LightsPlatform):
         super().__init__(machine)
         self.config = None
         self.client = None
+        if not SimpleUDPClient:
+            raise AssertionError("python-osc is not installed. Please run 'pip3 install python-osc'.")
 
     @asyncio.coroutine
     def initialize(self):
