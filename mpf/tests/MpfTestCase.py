@@ -215,6 +215,11 @@ class MpfTestCase(unittest.TestCase):
         self.machine.events.post(event_name, **params)
         self.machine_run()
 
+    def assertPlaceholderEvaluates(self, expected, condition):
+        result = self.machine.placeholder_manager.build_raw_template(condition).evaluate([],
+                                                                                         fail_on_missing_params=True)
+        self.assertEqual(expected, result, "{} = {} != {}".format(condition, result, expected))
+
     def assertNumBallsKnown(self, balls):
         """Assert that a certain number of balls are known in the machine."""
         self.assertEqual(balls, self.machine.ball_controller.num_balls_known)
