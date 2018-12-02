@@ -35,6 +35,7 @@ class TestShotGroups(MpfFakeGameTestCase):
         self.assertEventCalledWith("test_group_complete", state="unlit")
         self.mock_event("test_group_complete")
         self.mock_event("test_group_hit")
+        self.assertPlaceholderEvaluates("unlit", "device.shot_groups.test_group.common_state")
 
         self.hit_and_release_switch("switch_1")
 
@@ -43,11 +44,13 @@ class TestShotGroups(MpfFakeGameTestCase):
         self.assertEventNotCalled("test_group_complete")
 
         self.hit_and_release_switch("switch_2")
+        self.assertPlaceholderEvaluates(None, "device.shot_groups.test_group.common_state")
         self.hit_and_release_switch("switch_3")
         self.hit_and_release_switch("switch_4")
 
         self.assertEventCalled("test_group_hit")
         self.assertEventCalledWith("test_group_complete", state="lit")
+        self.assertPlaceholderEvaluates("lit", "device.shot_groups.test_group.common_state")
 
         self.stop_game()
 
