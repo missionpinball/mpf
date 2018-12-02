@@ -224,7 +224,7 @@ class MachineController(LogMixin):
 
         # remember exception
         self._exception = context
-        self.stop()
+        self.stop("Exception thrown")
 
     # pylint: disable-msg=no-self-use
     def _load_clock(self) -> ClockBase:  # pragma: no cover
@@ -708,12 +708,12 @@ class MachineController(LogMixin):
         self.info_log("Starting the main run loop.")
         self._run_loop()
 
-    def stop(self, **kwargs) -> None:
+    def stop(self, reason=None, **kwargs) -> None:
         """Perform a graceful exit of MPF."""
         del kwargs
         if self.stop_future.done():
             return
-        self.stop_future.set_result(True)
+        self.stop_future.set_result(reason)
 
     def _do_stop(self) -> None:
         self.log.info("Shutting down...")
@@ -744,7 +744,7 @@ class MachineController(LogMixin):
         # specifies the MPF should control the main timer
 
         try:
-            self.clock.run(self.stop_future)
+            reason = self.clock.run(self.stop_future)
         except KeyboardInterrupt:
             print("Shutdown because of keyboard interrupts")
 
@@ -753,6 +753,8 @@ class MachineController(LogMixin):
         if self._exception:
             print("Shutdown because of an exception:")
             raise self._exception['exception']
+        else:
+            print("Shutdown reason: {}".format(reason))
 
     def _platform_stop(self) -> None:
         """Stop all platforms."""

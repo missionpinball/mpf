@@ -83,7 +83,7 @@ class ClockBase(LogMixin):
 
     def run(self, stop_future):
         """Run the clock."""
-        self.loop.run_until_complete(stop_future)
+        return self.loop.run_until_complete(stop_future)
 
     def get_time(self):
         """Get the last tick made by the clock."""

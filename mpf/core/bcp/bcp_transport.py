@@ -84,7 +84,7 @@ class BcpTransportManager:
             del self._readers[transport]
 
         if transport.exit_on_close:
-            self._machine.stop()
+            self._machine.stop("BCP client {} disconnected and exit_on_close is set".format(transport.name))
 
     def get_all_clients(self):
         """Get a list of all clients."""
