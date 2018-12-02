@@ -686,21 +686,24 @@ class MachineController(LogMixin):
         except asyncio.TimeoutError:
             self.shutdown()
             self.error_log("MPF needed more than {}s for initialisation. Aborting!".format(timeout))
-            return
+            return False
         except RuntimeError:
             self.shutdown()
             # do not show a runtime useless runtime error
             self.error_log("Failed to initialise MPF")
-            return
+            return False
         if init.exception():
             self.shutdown()
-            self.error_log("Failed to initialise MPF: %s", init.exception())
             traceback.print_tb(init.exception().__traceback__)  # noqa
-            return
+            self.error_log("Failed to initialise MPF: %s", init.exception())
+            return False
+
+        return True
 
     def run(self) -> None:
         """Start the main machine run loop."""
-        self.initialise_mpf()
+        if not self.initialise_mpf():
+            return
 
         self.info_log("Starting the main run loop.")
         self._run_loop()
