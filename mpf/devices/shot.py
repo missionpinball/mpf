@@ -3,6 +3,8 @@ import asyncio
 import uuid
 from copy import copy, deepcopy
 
+from mpf.core.device_monitor import DeviceMonitor
+
 from mpf.core.enable_disable_mixin import EnableDisableMixin
 
 import mpf.core.delays
@@ -12,6 +14,7 @@ from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
 
 
+@DeviceMonitor("state", "state_name")
 class Shot(EnableDisableMixin, ModeDevice):
 
     """A device which represents a generic shot."""
