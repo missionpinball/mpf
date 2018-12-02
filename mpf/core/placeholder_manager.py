@@ -44,10 +44,11 @@ class BaseTemplate(metaclass=abc.ABCMeta):
 
     """Base class for templates."""
 
-    __slots__ = ["template", "placeholder_manager", "default_value"]
+    __slots__ = ["template", "placeholder_manager", "default_value", "text"]
 
-    def __init__(self, template, placeholder_manger, default_value):
+    def __init__(self, template, text, placeholder_manger, default_value):
         """Initialise template."""
+        self.text = text
         self.template = template
         self.placeholder_manager = placeholder_manger
         self.default_value = default_value
@@ -166,7 +167,7 @@ class RawTemplate(BaseTemplate):
             result = self.placeholder_manager.evaluate_template(self.template, parameters)
         except (ValueError, IndexError):
             if fail_on_missing_params:
-                raise
+                raise ValueError("Error while evaluating: {} with paramters {}".format(self.text, parameters))
             return self.default_value
         return result
 
@@ -301,11 +302,12 @@ class DeviceClassPlaceholder:
 
     """Wrap a monitorable device."""
 
-    __slots__ = ["_devices"]
+    __slots__ = ["_devices", "_device_name"]
 
-    def __init__(self, devices):
+    def __init__(self, devices, device_name):
         """Initialise placeholder."""
         self._devices = devices
+        self._device_name = device_name
 
     def __getitem__(self, item):
         """Array access."""
@@ -315,7 +317,7 @@ class DeviceClassPlaceholder:
         """Attribute access."""
         device = self._devices.get(item)
         if not device:
-            raise AssertionError("Device {} does not exist in placeholders.".format(item))
+            raise AssertionError("Device {} of type {} does not exist.".format(item, self._device_name))
 
         return device.get_monitorable_state()
 
@@ -339,7 +341,7 @@ class DevicesPlaceholder:
         device = self._machine.device_manager.get_monitorable_devices().get(item)
         if not device:
             raise AssertionError("Device Collection {} not usable in placeholders.".format(item))
-        return DeviceClassPlaceholder(device)
+        return DeviceClassPlaceholder(device, item)
 
 
 class ModeClassPlaceholder:
@@ -611,7 +613,7 @@ class BasePlaceholderManager(MpfController):
         else:
             try:
                 ret_value = getattr(slice_value, node.attr)
-            except ValueError:
+            except (ValueError, AttributeError):
                 if subscribe:
                     raise TemplateEvalError(subscription + [slice_value.subscribe_attribute(node.attr)])
                 else:
@@ -662,27 +664,27 @@ class BasePlaceholderManager(MpfController):
         """Build a float template from a string."""
         if isinstance(template_str, (float, int)):
             return NativeTypeTemplate(float(template_str), self.machine)
-        return FloatTemplate(self._parse_template(template_str), self, default_value)
+        return FloatTemplate(self._parse_template(template_str), template_str, self, default_value)
 
     def build_int_template(self, template_str, default_value=0):
         """Build a int template from a string."""
         if isinstance(template_str, (float, int)):
             return NativeTypeTemplate(int(template_str), self.machine)
-        return IntTemplate(self._parse_template(template_str), self, default_value)
+        return IntTemplate(self._parse_template(template_str), template_str, self, default_value)
 
     def build_bool_template(self, template_str, default_value=False):
         """Build a bool template from a string."""
         if isinstance(template_str, bool):
             return NativeTypeTemplate(template_str, self.machine)
-        return BoolTemplate(self._parse_template(template_str), self, default_value)
+        return BoolTemplate(self._parse_template(template_str), template_str, self, default_value)
 
     def build_string_template(self, template_str, default_value=""):
         """Build a string template from a string."""
-        return StringTemplate(self._parse_template(template_str), self, default_value)
+        return StringTemplate(self._parse_template(template_str), template_str, self, default_value)
 
     def build_raw_template(self, template_str, default_value=None):
         """Build a raw template from a string."""
-        return RawTemplate(self._parse_template(template_str), self, default_value)
+        return RawTemplate(self._parse_template(template_str), template_str, self, default_value)
 
     def get_global_parameters(self, name):
         """Return global params."""
