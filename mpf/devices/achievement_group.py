@@ -143,6 +143,9 @@ class AchievementGroup(ModeDevice):
             self._selected_member.enable()
 
         achievements = self._get_available_achievements()
+        if not achievements:
+            # there is nothing to rotate
+            return
 
         try:
             current_index = achievements.index(self._get_current())
@@ -203,12 +206,15 @@ class AchievementGroup(ModeDevice):
 
     def _is_ok_to_change_selection(self):
         self.debug_log("Checking if it's ok to change selection...")
-        if (not self._enabled and
-                not self.config['allow_selection_change_while_disabled']):
-            self.debug_log("Not ok")
-            return False
-        self.debug_log("ok")
-        return True
+        if self._enabled:
+            self.debug_log("Ok because enabled")
+            return True
+        elif self.config['allow_selection_change_while_disabled']:
+            self.debug_log("Ok because allow_selection_change_while_disabled is set (but disabled)")
+            return True
+
+        self.debug_log("not ok")
+        return False
 
     def member_state_changed(self):
         """Notify the group that one of its members has changed state."""
