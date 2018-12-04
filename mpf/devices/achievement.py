@@ -135,7 +135,7 @@ class Achievement(ModeDevice):
         if self._state == 'enabled':
             self._state = 'selected'
 
-        self._run_state()
+            self._run_state()
 
     def _run_state(self, restore=False):
         """Run shows and post events for current step."""
