@@ -269,9 +269,110 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertLightColor('led5', 'off')
         self.assertLightColor('led6', 'off')
 
-        self.post_event('group2_random', 2)
+        self.post_event('group2_random')
         selected_achievements = [x for x in (a4, a5, a6) if x._state == 'selected']
         self.assertEqual(len(selected_achievements), 0)
+
+    def test_rotation_when_all_complete(self):
+        a14 = self.machine.achievements['achievement14']
+        a15 = self.machine.achievements['achievement15']
+        a16 = self.machine.achievements['achievement16']
+        g4 = self.machine.achievement_groups.group4
+        g4.enable()
+
+
+        self.start_game()
+        # complete all achievements
+        a14.enable()
+        a15.enable()
+        a16.enable()
+        a14.start()
+        a15.start()
+        a16.start()
+        a14.complete()
+        a14.complete()
+        a15.complete()
+        a16.complete()
+
+        self.assertFalse(g4.enabled)
+        self.advance_time_and_run()
+        self.assertEqual("completed", a14._state)
+        self.assertEqual("completed", a15._state)
+        self.assertEqual("completed", a16._state)
+        # rotate should not crash
+        self.post_event('group4_rotate_right')
+
+    def test_events_for_achievements(self):
+        a17 = self.machine.achievements['achievement17']
+        self.start_game()
+
+        self.assertEqual("enabled", a17._state)
+
+        # do not post enable event again
+        self.mock_event("achievement_achievement17_state_enabled")
+        a17.enable()
+        self.machine_run()
+        self.assertEventNotCalled("achievement_achievement17_state_enabled")
+
+        # test disable
+        self.mock_event("achievement_achievement17_state_disabled")
+        a17.disable()
+        self.machine_run()
+        self.assertEventCalled("achievement_achievement17_state_disabled")
+
+        # but only once
+        self.mock_event("achievement_achievement17_state_disabled")
+        a17.disable()
+        self.machine_run()
+        self.assertEventNotCalled("achievement_achievement17_state_disabled")
+
+        # test enable
+        self.mock_event("achievement_achievement17_state_enabled")
+        a17.enable()
+        self.machine_run()
+        self.assertEventCalled("achievement_achievement17_state_enabled")
+
+        # but only once
+        self.mock_event("achievement_achievement17_state_enabled")
+        a17.enable()
+        self.machine_run()
+        self.assertEventNotCalled("achievement_achievement17_state_enabled")
+
+        # test select
+        self.mock_event("achievement_achievement17_state_selected")
+        a17.select()
+        self.machine_run()
+        self.assertEventCalled("achievement_achievement17_state_selected")
+
+        # but only once
+        self.mock_event("achievement_achievement17_state_selected")
+        a17.select()
+        self.machine_run()
+        self.assertEventNotCalled("achievement_achievement17_state_selected")
+
+        # test start
+        self.mock_event("achievement_achievement17_state_started")
+        a17.start()
+        self.machine_run()
+        self.assertEventCalled("achievement_achievement17_state_started")
+
+        # but only once
+        self.mock_event("achievement_achievement17_state_started")
+        a17.start()
+        self.machine_run()
+        self.assertEventNotCalled("achievement_achievement17_state_started")
+
+        # test complete
+        self.mock_event("achievement_achievement17_state_completed")
+        a17.complete()
+        self.machine_run()
+        self.assertEventCalled("achievement_achievement17_state_completed")
+
+        # but only once
+        self.mock_event("achievement_achievement17_state_completed")
+        a17.complete()
+        self.machine_run()
+        self.assertEventNotCalled("achievement_achievement17_state_completed")
 
     def test_rotation(self):
 
