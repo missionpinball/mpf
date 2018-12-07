@@ -19,6 +19,7 @@ from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, Sw
 try:    # pragma: no cover
     import pinproc
     pinproc_imported = True
+    import_error = None
 except ImportError:     # pragma: no cover
     try:
         if sys.platform == 'darwin':
@@ -48,10 +49,12 @@ except ImportError:     # pragma: no cover
             raise ImportError
 
         pinproc_imported = True
+        import_error = None
 
-    except ImportError:
+    except ImportError as e:
         pinproc_imported = False
         pinproc = None
+        import_error = e
 
 
 # pylint does not understand that this class is abstract
@@ -80,7 +83,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
             raise AssertionError('Could not import "pinproc". Most likely you do not '
                                  'have libpinproc and/or pypinproc installed. You can '
                                  'run MPF in software-only "virtual" mode by using '
-                                 'the -x command like option for now instead.')
+                                 'the -x command like option for now instead.') from import_error
 
         self.pdbconfig = None
         self.pinproc = pinproc
