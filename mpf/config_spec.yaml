@@ -1000,6 +1000,27 @@ rgb_dmds:
     channel_order: single|lstr|rgb
     gamma: single|float|2.2
     hardware_brightness: single|template_float|1.0
+rpi_dmd:
+    __valid_in__:       machine
+    hardware_mapping:   single|enum(regular,adafruit-hat,adafruit-hat-pwm)|regular
+    rows:               single|int|32
+    cols:               single|int|32
+    chain_length:       single|int|1
+    parallel:           single|int|1
+    pwm_bits:           single|int|11
+    pwm_lsb_nanoseconds: single|int|130
+    brightness:         single|int|100
+    scan_mode:          single|int|0
+    multiplexing:       single|int|0
+    row_address_type:   single|int|0
+    disable_hardware_pulsing: single|bool|False
+    show_refresh_rate:  single|bool|False
+    inverse_colors:     single|bool|False
+    led_rgb_sequence:   single|str|RGB
+    pixel_mapper_config: single|str|""
+    gpio_slowdown:      single|int|1
+    daemon:             single|bool|False
+    drop_privileges:    single|bool|True
 score_reels:
     __valid_in__: machine
     coil_inc: single|machine(coils)|None
