@@ -71,7 +71,6 @@ class RpiRgbDmdDevice(DmdPlatformInterface):
         ys = config["rows"]
         self.img = Image.frombytes("RGB", (xs, ys), b'\x11' * xs * ys * 3)
         self.rgbOpts = RGBMatrixOptions()
-        self.rgbOpts.drop_privileges = 1
         # Rudeboy way of setting the RGBMatrixOptions
         for k, v in config.items():
             try:
