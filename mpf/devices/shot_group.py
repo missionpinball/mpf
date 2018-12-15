@@ -2,6 +2,8 @@
 
 from collections import deque
 
+from mpf.core.device_monitor import DeviceMonitor
+
 from mpf.core.events import event_handler
 from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
@@ -10,6 +12,7 @@ from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.utility_functions import Util
 
 
+@DeviceMonitor("common_state")
 class ShotGroup(ModeDevice):
 
     """Represents a group of shots in a pinball machine by grouping together multiple `Shot` class devices.
@@ -51,13 +54,26 @@ class ShotGroup(ModeDevice):
         super().device_removed_from_mode(mode)
         self.machine.events.remove_handler(self._hit)
 
-    def _check_for_complete(self):
-        """Check if all shots in this group are in the same state."""
+    @property
+    def common_state(self):
+        """Return common state if all shots in this group are in the same state.
+
+        Will return None otherwise.
+        """
         state = self.config['shots'][0].state_name
         for shot in self.config['shots']:
             if state != shot.state_name:
                 # shots do not have a common state
-                return
+                return None
+
+        return state
+
+    def _check_for_complete(self):
+        """Check if all shots in this group are in the same state."""
+        state = self.common_state
+        if not state:
+            # shots do not have a common state
+            return
 
         # if we reached this point we got a common state
 

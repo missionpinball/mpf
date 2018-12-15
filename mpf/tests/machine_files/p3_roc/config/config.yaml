@@ -7,6 +7,10 @@ hardware:
 
 p_roc:
     debug: true
+    pd_led_boards:
+      4:
+        use_stepper_0: True
+        use_stepper_1: True
 
 switches:
     s_test_000:
@@ -27,6 +31,10 @@ switches:
         number: 1
     s_flipper_eos:
         number: 2
+    s_stepper1_home:
+        number: A4-B0-0
+    s_stepper2_home:
+        number: A4-B0-1
 
 coils:
     c_test:
@@ -113,3 +121,15 @@ lights:
     platform_settings:
       polarity: True
     subtype: led
+
+steppers:
+  stepper1:
+    number: 4-0
+    debug: True
+    homing_mode: switch
+    homing_switch: s_stepper1_home
+  stepper2:
+    number: 4-1
+    debug: True
+    homing_mode: switch
+    homing_switch: s_stepper2_home

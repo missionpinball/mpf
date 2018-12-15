@@ -96,7 +96,7 @@ class TestDeviceLight(MpfTestCase):
         led.color(RGBColor("red"), key="upper", priority=2, fade_ms=1000)
         self.advance_time_and_run(.5)
         self.assertLightColor("led1", [127, 0, 0])
-        self.advance_time_and_run(.5)
+        self.advance_time_and_run(.51)
         self.assertLightColor("led1", "red")
         self.advance_time_and_run(2) # lower is at 3/10
         led.remove_from_stack_by_key("upper", fade_ms=4000)

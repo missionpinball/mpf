@@ -201,6 +201,5 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
         self.assertBallsInPlay(int(balls))
 
     def command_assert_bool_condition(self, expected, condition):
-        result = self.machine.placeholder_manager.build_bool_template(condition).evaluate([])
         expected_bool = expected == "True"
-        self.assertEqual(bool(expected_bool), result, "{} = {} != {}".format(condition, result, expected_bool))
+        self.assertPlaceholderEvaluates(expected_bool, condition)

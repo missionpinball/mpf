@@ -1,0 +1,19 @@
+#config_version=5
+
+hardware:
+    platform: osc
+
+osc:
+  ip: 3.4.5.6
+
+lights:
+  test_light1:
+    channels:
+      red:
+        - number: /thing/light/red/17
+      blue:
+        - number: /thing/light/blue/17
+      green:
+        - number: /thing/light/green/17
+  test_light2:
+    number: /thing/light/green/14

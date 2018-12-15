@@ -148,7 +148,7 @@ class BaseSerialCommunicator:
             # we either got empty response (-> socket closed) or and error
             if not resp:
                 self.log.warning("Serial closed.")
-                self.machine.stop()
+                self.machine.stop("Serial {} closed.".format(self.port))
                 return
 
             if self.debug:

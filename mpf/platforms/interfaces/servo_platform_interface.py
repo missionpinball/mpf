@@ -17,3 +17,11 @@ class ServoPlatformInterface(metaclass=abc.ABCMeta):
     def go_to_position(self, position):
         """Move servo to a certain position."""
         raise NotImplementedError
+
+    def set_speed_limit(self, speed_limit):
+        """Set speed limit."""
+        pass
+
+    def set_acceleration_limit(self, acceleration_limit):
+        """Set acceleration limit."""
+        pass

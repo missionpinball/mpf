@@ -254,11 +254,15 @@ class TestShots(MpfTestCase):
         # unlit and two states in the beginning
         self.assertEqual(2, len(self.machine.shots.shot_1.config['profile'].config['states']))
         self.assertEqual("unlit", self.machine.shots.shot_1.state_name)
+        self.assertPlaceholderEvaluates("unlit", "device.shots.shot_1.state_name")
+        self.assertPlaceholderEvaluates(0, "device.shots.shot_1.state")
 
         # one hit and it lits
         self.hit_and_release_switch("switch_1")
         self.assertEqual("lit", self.machine.shots.shot_1.state_name)
         self.assertEqual(1, self.machine.game.player["shot_shot_1"])
+        self.assertPlaceholderEvaluates("lit", "device.shots.shot_1.state_name")
+        self.assertPlaceholderEvaluates(1, "device.shots.shot_1.state")
 
         # it stays lit
         self.hit_and_release_switch("switch_1")

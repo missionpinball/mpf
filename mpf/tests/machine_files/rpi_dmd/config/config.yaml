@@ -1,0 +1,17 @@
+#config_version=5
+
+hardware:
+    platform: rpi_dmd
+
+rpi_dmd:
+  gpio_slowdown: 2
+  pwm_lsb_nanoseconds: 300
+
+displays:
+  dmd:
+    width: 32
+    height: 32
+
+rgb_dmds:
+  rpi_dmd:
+    label: RPi RGB DMD

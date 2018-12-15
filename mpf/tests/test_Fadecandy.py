@@ -1,4 +1,3 @@
-from unittest.mock import MagicMock
 import json
 
 from mpf.core.rgb_color import RGBColor

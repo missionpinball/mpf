@@ -809,6 +809,10 @@ named_colors:
     __valid_in__: machine
 osc:
     __valid_in__: machine
+    ip: single|str|127.0.0.1
+    port: single|int|8000
+osc_plugin:
+    __valid_in__: machine
     server_ip: single|str|127.0.0.1
     server_port: single|int|9000
     client_ip: single|str|127.0.0.1
@@ -878,9 +882,22 @@ pd_led_boards:
     lpd880x_1_last_address: single|int|399
     lpd880x_2_first_address: single|int|400
     lpd880x_2_last_address: single|int|599
-#    serial_a_start: single|int|0
-#    serial_a_end: single|int|0
-#    serial_b_start: single|int|0
+    use_servo_0: single|bool|false
+    use_servo_1: single|bool|false
+    use_servo_2: single|bool|false
+    use_servo_3: single|bool|false
+    use_servo_4: single|bool|false
+    use_servo_5: single|bool|false
+    use_servo_6: single|bool|false
+    use_servo_7: single|bool|false
+    use_servo_8: single|bool|false
+    use_servo_9: single|bool|false
+    use_servo_10: single|bool|false
+    use_servo_11: single|bool|false
+    max_servo_value: single|int|250
+    use_stepper_0: single|bool|false
+    use_stepper_1: single|bool|false
+    stepper_speed: single|int|13524
 psus:
     __valid_in__: machine
     voltage: single|int|None
@@ -983,6 +1000,27 @@ rgb_dmds:
     channel_order: single|lstr|rgb
     gamma: single|float|2.2
     hardware_brightness: single|template_float|1.0
+rpi_dmd:
+    __valid_in__:       machine
+    hardware_mapping:   single|enum(regular,adafruit-hat,adafruit-hat-pwm)|regular
+    rows:               single|int|32
+    cols:               single|int|32
+    chain_length:       single|int|1
+    parallel:           single|int|1
+    pwm_bits:           single|int|11
+    pwm_lsb_nanoseconds: single|int|130
+    brightness:         single|int|100
+    scan_mode:          single|int|0
+    multiplexing:       single|int|0
+    row_address_type:   single|int|0
+    disable_hardware_pulsing: single|bool|False
+    show_refresh_rate:  single|bool|False
+    inverse_colors:     single|bool|False
+    led_rgb_sequence:   single|str|RGB
+    pixel_mapper_config: single|str|""
+    gpio_slowdown:      single|int|1
+    daemon:             single|bool|False
+    drop_privileges:    single|bool|True
 score_reels:
     __valid_in__: machine
     coil_inc: single|machine(coils)|None
@@ -1350,26 +1388,33 @@ spike:
     wait_times: dict|int:int|None
 steppers:
     __valid_in__: machine
-    mode: single|enum(position,velocity)|position
     named_positions: dict|float:str|None
-    pos_min: single|float|0.0
-    pos_max: single|float|1.0
-    move_current: single|int|20
-    hold_current: single|int|0
-    microstep_per_fullstep: single|int|16
-    velocity_limit: single|float|1.0
-    acceleration_limit: single|float|1.0
+    homing_mode: single|enum(hardware,switch)|hardware
+    homing_switch: single|machine(switches)|None
     homing_direction: single|enum(clockwise,counterclockwise)|clockwise
-    homing_speed: single|float|1.0
-    fullstep_per_userunit: single|float|1.0
-    ball_search_min: single|float|0.0
-    ball_search_max: single|float|1.0
+    pos_min: single|int|0
+    pos_max: single|int|1000
+    ball_search_min: single|int|0
+    ball_search_max: single|int|1
     ball_search_wait: single|ms|5s
     include_in_ball_search: single|bool|True
-    reset_position: single|float|0.0
+    reset_position: single|int|0
     reset_events: event_handler|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
     number: single|str|
     platform: single|str|None
+    platform_settings: single|dict|None
+steprocker_stepper_settings:
+    homing_speed: single|float|1.0
+    fullstep_per_userunit: single|float|1.0
+    move_current: single|int|20
+    hold_current: single|int|0
+    poll_ms: single|ms|100ms
+    microstep_per_fullstep: single|int|16
+    velocity_limit: single|float|1.0
+    acceleration_limit: single|float|1.0
+step_stick_stepper_settings:
+    low_time: single|secs|20ms
+    high_time: single|secs|20ms
 switch_player:
     __valid_in__: machine
     start_event: single|str|machine_reset_phase_3

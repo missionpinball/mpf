@@ -115,7 +115,7 @@ class TestSwitchController(MpfTestCase):
         cb.assert_not_called()
         self.advance_time_and_run(.1)
         cb.assert_not_called()
-        self.advance_time_and_run(.1)
+        self.advance_time_and_run(.2)
         cb.assert_called_with()
 
         cb = MagicMock()
@@ -127,7 +127,7 @@ class TestSwitchController(MpfTestCase):
         cb.assert_not_called()
         self.advance_time_and_run(.1)
         cb.assert_not_called()
-        self.advance_time_and_run(.1)
+        self.advance_time_and_run(.2)
         cb.assert_called_with()
 
     def test_activation_and_deactivation_events(self):
@@ -167,7 +167,7 @@ class TestSwitchController(MpfTestCase):
         self.assertEqual(1, self._events['test_inactive'])
         self.assertEqual(0, self._events['test_inactive2'])
 
-        self.advance_time_and_run(1)
+        self.advance_time_and_run(1.1)
         self.assertEqual(1, self._events['test_active'])
         self.assertEqual(1, self._events['test_active2'])
         self.assertEqual(1, self._events['test_inactive'])

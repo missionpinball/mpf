@@ -224,7 +224,7 @@ class MachineController(LogMixin):
 
         # remember exception
         self._exception = context
-        self.stop()
+        self.stop("Exception thrown")
 
     # pylint: disable-msg=no-self-use
     def _load_clock(self) -> ClockBase:  # pragma: no cover
@@ -469,6 +469,10 @@ class MachineController(LogMixin):
     def _load_hardware_platforms(self) -> None:
         """Load all hardware platforms."""
         self.validate_machine_config_section('hardware')
+
+        # load internal platforms
+        self.add_platform("drivers")
+
         # if platform is forced use that one
         if self.options['force_platform']:
             self.add_platform(self.options['force_platform'])
@@ -586,6 +590,15 @@ class MachineController(LogMixin):
 
         '''
 
+    def load_external_platform_config_specs(self):
+        """Load config spec for external platforms."""
+        for platform_entry in iter_entry_points(group='mpf.platforms'):
+            config_spec = platform_entry.load().get_config_spec()
+
+            if config_spec:
+                # add specific config spec if platform has any
+                self.config_validator.load_device_config_spec(config_spec[0], config_spec[1])
+
     def add_platform(self, name: str) -> None:
         """Make an additional hardware platform interface available to MPF.
 
@@ -619,8 +632,7 @@ class MachineController(LogMixin):
                 else:
                     raise AssertionError("Unknown platform {}".format(name))
 
-            self.hardware_platforms[name] = (
-                hardware_platform(self))
+            self.hardware_platforms[name] = hardware_platform(self)
 
     def set_default_platform(self, name: str) -> None:
         """Set the default platform.
@@ -674,31 +686,34 @@ class MachineController(LogMixin):
         except asyncio.TimeoutError:
             self.shutdown()
             self.error_log("MPF needed more than {}s for initialisation. Aborting!".format(timeout))
-            return
+            return False
         except RuntimeError:
             self.shutdown()
             # do not show a runtime useless runtime error
             self.error_log("Failed to initialise MPF")
-            return
+            return False
         if init.exception():
             self.shutdown()
-            self.error_log("Failed to initialise MPF: %s", init.exception())
             traceback.print_tb(init.exception().__traceback__)  # noqa
-            return
+            self.error_log("Failed to initialise MPF: %s", init.exception())
+            return False
+
+        return True
 
     def run(self) -> None:
         """Start the main machine run loop."""
-        self.initialise_mpf()
+        if not self.initialise_mpf():
+            return
 
         self.info_log("Starting the main run loop.")
         self._run_loop()
 
-    def stop(self, **kwargs) -> None:
+    def stop(self, reason=None, **kwargs) -> None:
         """Perform a graceful exit of MPF."""
         del kwargs
         if self.stop_future.done():
             return
-        self.stop_future.set_result(True)
+        self.stop_future.set_result(reason)
 
     def _do_stop(self) -> None:
         self.log.info("Shutting down...")
@@ -729,7 +744,7 @@ class MachineController(LogMixin):
         # specifies the MPF should control the main timer
 
         try:
-            self.clock.run(self.stop_future)
+            reason = self.clock.run(self.stop_future)
         except KeyboardInterrupt:
             print("Shutdown because of keyboard interrupts")
 
@@ -738,6 +753,8 @@ class MachineController(LogMixin):
         if self._exception:
             print("Shutdown because of an exception:")
             raise self._exception['exception']
+        else:
+            print("Shutdown reason: {}".format(reason))
 
     def _platform_stop(self) -> None:
         """Stop all platforms."""
@@ -888,6 +905,9 @@ class MachineController(LogMixin):
 
     def get_platform_sections(self, platform_section: str, overwrite: str) -> "SmartVirtualHardwarePlatform":
         """Return platform section."""
+        if overwrite == "drivers":
+            return self.hardware_platforms[overwrite]
+
         if self.options['force_platform']:
             return self.default_platform
 

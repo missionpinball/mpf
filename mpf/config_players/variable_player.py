@@ -1,4 +1,5 @@
 """Variable Config Player (used for scoring and more)."""
+import re
 from collections import namedtuple
 from typing import Dict, List, Any
 
@@ -99,7 +100,7 @@ class VariablePlayer(ConfigPlayer):
         elif entry['action'] == "set_machine":
             self.machine.set_machine_var(var, value)
         else:
-            raise AssertionError("Invalid value: {}".format(entry))
+            self.raise_config_error("Invalid value: {}".format(entry), 8, context=context)
 
     def clear_context(self, context: str) -> None:
         """Clear context."""
@@ -112,13 +113,16 @@ class VariablePlayer(ConfigPlayer):
         """Validate one entry of this player."""
         config = {}
         if not isinstance(settings, dict):
-            raise AssertionError("Settings of variable_player {} should "
-                                 "be a dict. But are: {}".format(name, settings))
+            self.raise_config_error("Settings of variable_player should "
+                                    "be a dict. But are: {}".format(settings), 5, context=name)
         for var, s in settings.items():
             var_dict = self.machine.placeholder_manager.parse_conditional_template(var)
             value_dict = self._parse_config(s, name)
             value_dict["condition"] = var_dict["condition"]
             config[var_dict["name"]] = value_dict
+            if not bool(re.match('^[0-9a-zA-Z_-]+$', var_dict["name"])):
+                self.raise_config_error("Variable may only contain letters, numbers, dashes and underscores. "
+                                        "Name: {}".format(var_dict["name"]), 4, context=name)
         return config
 
     def get_express_config(self, value: Any) -> dict:
@@ -132,12 +136,11 @@ class VariablePlayer(ConfigPlayer):
                 block = False
             else:
                 if block_str != "block":
-                    raise AssertionError(
-                        "Invalid action in variable_player entry: {}".format(value))
+                    self.raise_config_error("Invalid action in variable_player entry: {}".format(value), 6)
                 block = True
 
         return {"int": value, "block": block}
 
     def get_list_config(self, value: Any):
         """Parse list."""
-        raise AssertionError("Variable player does not support lists.")
+        self.raise_config_error("Variable player does not support lists.", 7)

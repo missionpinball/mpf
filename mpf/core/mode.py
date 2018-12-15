@@ -88,6 +88,10 @@ class Mode(LogMixin):
         player in the 'restart_modes_on_next_ball' player variable.
         '''
 
+        if self.config['mode']['game_mode'] and not self.config['mode']['stop_on_ball_end']:
+            self.raise_config_error("All game modes need to stop at ball end. If you want to set stop_on_ball_end to "
+                                    "False also set game_mode to False.", 1)
+
     @staticmethod
     def get_config_spec() -> str:
         """Return config spec for mode_settings."""

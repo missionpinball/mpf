@@ -3,6 +3,8 @@ import asyncio
 import uuid
 from copy import copy, deepcopy
 
+from mpf.core.device_monitor import DeviceMonitor
+
 from mpf.core.enable_disable_mixin import EnableDisableMixin
 
 import mpf.core.delays
@@ -12,6 +14,7 @@ from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
 
 
+@DeviceMonitor("state", "state_name")
 class Shot(EnableDisableMixin, ModeDevice):
 
     """A device which represents a generic shot."""
@@ -55,14 +58,6 @@ class Shot(EnableDisableMixin, ModeDevice):
         for switch in self.config['switch']:
             if switch not in self.config['switches']:
                 self.config['switches'].append(switch)
-
-            if '{}_active'.format(self.config['playfield'].name) in switch.tags:
-                self.raise_config_error(
-                    "Ball device '{}' uses switch '{}' which has a "
-                    "'{}_active' tag. This is handled internally by the defive. Remove the "
-                    "redundant '{}_active' tag from that switch.".format(
-                        self.name, switch.name, self.config['playfield'].name,
-                        self.config['playfield'].name), 1)
 
     def _register_switch_handlers(self):
         self._handlers = []

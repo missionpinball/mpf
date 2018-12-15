@@ -148,7 +148,11 @@ class OpenPixelClient:
     def connect(self):
         """Connect to the hardware."""
         connector = self.machine.clock.open_connection(self.openpixel_config['host'], self.openpixel_config['port'])
-        _, self.socket_sender = yield from connector
+        try:
+            _, self.socket_sender = yield from connector
+        except OSError:
+            raise AssertionError("Cannot connect to {} at {}:{}".format(self.log.name, self.openpixel_config['host'],
+                                                                        self.openpixel_config['port']))
 
         self.max_fade_ms = int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000)
 

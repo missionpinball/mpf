@@ -45,7 +45,7 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
 
     @asyncio.coroutine
     def configure_servo(self, number: str):
-        """Configure a servo device in paltform.
+        """Configure a servo device in platform.
 
         Args:
             config (dict): Configuration of device

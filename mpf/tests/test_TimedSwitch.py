@@ -14,7 +14,7 @@ class TestTimedSwitch(MpfTestCase):
         self.mock_event('mode_switch_active')
         self.mock_event('mode_switch_released')
 
-        self.hit_switch_and_run("switch2", 1)
+        self.hit_switch_and_run("switch2", 1.1)
         self.assertEventNotCalled("mode_switch_active")
         self.advance_time_and_run()
         self.assertEventCalled("mode_switch_active")
