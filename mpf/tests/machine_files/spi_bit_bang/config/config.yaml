@@ -1,0 +1,47 @@
+#config_version=5
+
+hardware:
+    platform: virtual, spi_bit_bang
+
+spi_bit_bang:
+    miso_pin: s_miso
+    cs_pin: o_cs
+    clock_pin: o_clock
+
+
+digital_outputs:
+    o_cs:
+        number: 1
+        type: driver
+    o_clock:
+        number: 2
+        type: driver
+
+switches:
+    s_trough_0:
+        number: 0
+        platform: spi_bit_bang
+    s_trough_1:
+        number: 1
+        platform: spi_bit_bang
+    s_trough_2:
+        number: 2
+        platform: spi_bit_bang
+    s_trough_3:
+        number: 3
+        platform: spi_bit_bang
+    s_trough_4:
+        number: 4
+        platform: spi_bit_bang
+    s_trough_5:
+        number: 5
+        platform: spi_bit_bang
+    s_trough_6:
+        number: 6
+        platform: spi_bit_bang
+    s_trough_7:
+        number: 7
+        platform: spi_bit_bang
+    s_miso:
+        number: 10
+        platform: virtual

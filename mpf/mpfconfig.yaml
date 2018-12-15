@@ -117,6 +117,7 @@ mpf:
         step_stick: mpf.platforms.step_stick.StepStickDigitalOutputPlatform
         osc: mpf.platforms.osc.OscPlatform
         rpi_dmd: mpf.platforms.rpi_dmd.RpiDmdPlatform
+        spi_bit_bang: mpf.platforms.spi_bit_bang.SpiBitBangPlatform
 
     paths:
         scriptlets: scriptlets
