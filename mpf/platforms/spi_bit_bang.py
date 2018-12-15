@@ -78,7 +78,7 @@ class SpiBitBangPlatform(SwitchPlatform):
         yield from asyncio.sleep(self.config['bit_time'], loop=self.machine.clock.loop)
 
         read_bits = 0
-        for i in range(bits):
+        for _ in range(bits):
             # read in bits on clk high
             read_bits <<= 1
             if self.config['miso_pin'].state:
