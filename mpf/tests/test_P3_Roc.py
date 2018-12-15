@@ -1048,47 +1048,48 @@ SW-16 boards found:
             call(2, 6, 255 - 42)], True)
 
     def _test_steppers(self):
-        stepper1 = self.machine.steppers.stepper1
-        stepper2 = self.machine.steppers.stepper2
+        stepper1 = self.machine.steppers["stepper1"]
+        stepper2 = self.machine.steppers["stepper2"]
 
-        self.machine.default_platform.proc.get_events = MagicMock(return_value=[
+        self.pinproc.get_events = MagicMock(return_value=[
             {'type': 1, 'value': 64}, {'type': 1, 'value': 65}])
+        self.wait_for_platform()
         self.advance_time_and_run(.01)
         self.assertTrue(self.machine.switch_controller.is_active("s_stepper1_home"))
         self.assertTrue(self.machine.switch_controller.is_active("s_stepper2_home"))
-        self.machine.default_platform.proc.get_events = MagicMock(return_value=[])
+        self.pinproc.get_events = MagicMock(return_value=[])
 
         # test stepper 1
-        self.machine.default_platform.proc.write_data = MagicMock()
+        self.pinproc.write_data = MagicMock()
         stepper1._move_to_absolute_position(11)
         self.advance_time_and_run(.1)
 
-        self.machine.default_platform.proc.write_data.assert_has_calls([
+        self.pinproc.write_data.assert_has_calls([
             call(3, 3072, 0x1040000 + 11),
             call(3, 3072, 0x1040600),
             call(3, 3072, 0x1040700 + 23)
-        ])
+        ], True)
 
         # test stepper 2
-        self.machine.default_platform.proc.write_data = MagicMock()
+        self.pinproc.write_data = MagicMock()
         stepper2._move_to_absolute_position(500)
         self.advance_time_and_run(.1)
 
-        self.machine.default_platform.proc.write_data.assert_has_calls([
+        self.pinproc.write_data.assert_has_calls([
             call(3, 3072, 0x1040000 + (500 & 0xFF)),
             call(3, 3072, 0x1040600 + ((500 >> 8) & 0xFF)),
             call(3, 3072, 0x1040700 + 24)
-        ])
+        ], True)
 
         # move again. it should wait
-        self.machine.default_platform.proc.write_data = MagicMock()
+        self.pinproc.write_data = MagicMock()
         stepper2._move_to_absolute_position(450)
         self.advance_time_and_run(.1)
-        self.assertEqual(0, self.machine.default_platform.proc.write_data.call_count)
+        self.assertEqual(0, self.pinproc.write_data.call_count)
 
         self.advance_time_and_run(1)
-        self.machine.default_platform.proc.write_data.assert_has_calls([
+        self.pinproc.write_data.assert_has_calls([
             call(3, 3072, 0x1040000 + 50),
             call(3, 3072, 0x1040600 + (1 << 7)),
             call(3, 3072, 0x1040700 + 24)
-        ])
+        ], True)
