@@ -5,12 +5,10 @@ import asyncio
 import logging
 import platform
 import sys
+from threading import Thread
+
 import time
-from queue import Empty
 from typing import Any, List, Union
-
-
-import aioprocessing
 
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 
@@ -71,9 +69,12 @@ class ProcProcess:
         """Initialise process."""
         self.proc = None
         self.dmd = None
+        self.loop = None
+        self.stop_future = None
 
-    def proc_process(self, machine_type, command_queue, response_queue, event_queue):
+    def start_proc_process(self, machine_type, loop):
         """Run the pinproc communication."""
+        self.loop = loop
         while not self.proc:
             try:
                 self.proc = pinproc.PinPROC(machine_type)
@@ -82,35 +83,24 @@ class ProcProcess:
                 print("Retrying...")
                 time.sleep(1)
 
-        last_poll = time.time()
-        poll_wait = 0.01
-        while True:
-            time_since_last_poll = time.time() - last_poll
-            if time_since_last_poll > poll_wait:
-                max_wait = 0
-            else:
-                max_wait = poll_wait - time_since_last_poll
+        self.stop_future = asyncio.Future(loop=self.loop)
+        loop.run_until_complete(self.stop_future)
+        loop.close()
 
-            try:
-                needs_response, cmd = command_queue.get(timeout=max_wait)
-            except Empty:
-                pass
-            else:
-                if cmd[0].startswith("_"):
-                    result = getattr(self, cmd[0])(*(cmd[1:]))
-                else:
-                    result = getattr(self.proc, cmd[0])(*(cmd[1:]))
-                if needs_response:
-                    response_queue.put(result)
-                if cmd[0] == "reset":
-                    event_queue.put("exit")
-                    return
+    @staticmethod
+    def _sync(num):
+        return "sync", num
 
-            if time.time() - last_poll >= poll_wait:
-                events = self._get_events()
-                if events:
-                    event_queue.put(events)
-                last_poll = time.time()
+    @asyncio.coroutine
+    def run_command(self, cmd, *args):
+        """Run command in proc thread."""
+        if cmd.startswith("_"):
+            return getattr(self, cmd)(*args)
+        elif cmd == "reset":
+            self.stop_future.set_result(True)
+            return "exit"
+        else:
+            return getattr(self.proc, cmd)(*args)
 
     def _dmd_send(self, data):
         if not self.dmd:
@@ -145,8 +135,8 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
     """
 
     __slots__ = ["pdbconfig", "pinproc", "proc", "log", "hw_switch_rules", "version", "revision", "hardware_version",
-                 "dipswitches", "machine_type", "event_task", "command_queue", "response_queue", "event_queue",
-                 "proc_lock", "proc_executor", "proc_process", "proc_process_instance", "_commands_running", "config"]
+                 "dipswitches", "machine_type", "event_task",
+                 "proc_thread", "proc_process", "proc_process_instance", "_commands_running", "config"]
 
     def __init__(self, machine):
         """Make sure pinproc was loaded."""
@@ -167,12 +157,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         self.hardware_version = None
         self.dipswitches = None
         self.event_task = None
-
-        self.command_queue = aioprocessing.AioQueue()
-        self.response_queue = aioprocessing.AioQueue()
-        self.event_queue = aioprocessing.AioQueue()
-        self.proc_lock = asyncio.Lock(loop=self.machine.clock.loop)
-        self.proc_executor = None
+        self.proc_thread = None
         self.proc_process = None
         self.proc_process_instance = None
         self._commands_running = 0
@@ -185,21 +170,19 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         del future
         self._commands_running -= 1
 
-    @asyncio.coroutine
-    def run_proc_cmd(self, *cmd):
+    def run_proc_cmd(self, cmd, *args):
         """Run a command in the p-roc thread and return a future."""
-        with (yield from self.proc_lock):
-            self.command_queue.put((True, cmd))
-            result = yield from self.response_queue.coro_get(loop=self.machine.clock.loop)
-        return result
+        return asyncio.wrap_future(
+            asyncio.run_coroutine_threadsafe(self.proc_process.run_command(cmd, *args), self.proc_process_instance),
+            loop=self.machine.clock.loop)
 
-    def run_proc_cmd_no_wait(self, *cmd):
-        """Run a command in the p-roc thread and return a future."""
-        self.command_queue.put((False, cmd))
+    def run_proc_cmd_no_wait(self, cmd, *args):
+        """Run a command in the p-roc thread."""
+        asyncio.run_coroutine_threadsafe(self.proc_process.run_command(cmd, *args), self.proc_process_instance)
 
-    def run_proc_cmd_sync(self, *cmd):
+    def run_proc_cmd_sync(self, cmd, *args):
         """Run a command in the p-roc thread and return the result."""
-        return self.machine.clock.loop.run_until_complete(self.run_proc_cmd(*cmd))
+        return self.machine.clock.loop.run_until_complete(self.run_proc_cmd(cmd, *args))
 
     @asyncio.coroutine
     def initialize(self):
@@ -239,24 +222,27 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
     @asyncio.coroutine
     def _poll_events(self):
         while True:
-            events = yield from self.event_queue.coro_get(loop=self.machine.clock.loop)
+            events = yield from self.run_proc_cmd("get_events")
             if events == "exit":
                 return
             self.process_events(events)
 
     def stop(self):
         """Stop proc."""
-        if self.proc_process_instance:
+        if self.proc_thread:
             self.run_proc_cmd_sync("reset", 1)
-            self.proc_process_instance.join()
-            self.proc_process_instance = None
+            self.proc_thread.join()
+            self.proc_thread = None
 
     def _start_proc_process(self):
+        # Create a new loop
+        self.proc_process_instance = asyncio.new_event_loop()
         self.proc_process = ProcProcess()
-        self.proc_process_instance = aioprocessing.AioProcess(target=self.proc_process.proc_process,
-                                                              args=(self.machine_type, self.command_queue,
-                                                                    self.response_queue, self.event_queue))
-        self.proc_process_instance.start()
+
+        # Assign the loop to another thread
+        self.proc_thread = Thread(target=self.proc_process.start_proc_process,
+                                  args=(self.machine_type, self.proc_process_instance))
+        self.proc_thread.start()
 
     @asyncio.coroutine
     def connect(self):

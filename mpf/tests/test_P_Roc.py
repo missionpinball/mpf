@@ -2,8 +2,6 @@ import time
 
 import sys
 
-from mpf.tests.test_P3_Roc import MockProcProcess, MockProcProcessObject
-
 from mpf.tests.MpfTestCase import MpfTestCase
 from unittest.mock import MagicMock, call
 from mpf.platforms import p_roc_common, p_roc
@@ -221,15 +219,6 @@ class TestPRoc(MpfTestCase):
                 0x03: 0x0000,       # dip switches
             }
         }
-
-        def _start_proc_process(s):
-            s.proc_process = MockProcProcess()
-            s.proc_process_instance = MockProcProcessObject(self.loop.create_task(
-                s.proc_process.proc_process(self.loop, s.machine_type, s.command_queue, s.response_queue,
-                                            s.event_queue)))
-
-            s.proc_process_instance.task.add_done_callback(s._done)
-        p_roc_common.PROCBasePlatform._start_proc_process = _start_proc_process
 
         self.pinproc.aux_send_commands = MagicMock(return_value=True)
         super().setUp()

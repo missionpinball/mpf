@@ -51,13 +51,18 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
 
         self.dmd = None
         self.alpha_display = None
+        self.aux_port = None
 
-        self.connect()
+        self._use_extended_matrix = False
+        self._use_first_eight_direct_inputs = False
+
+    @asyncio.coroutine
+    def connect(self):
+        """Connect to the P-Roc."""
+        yield from super().connect()
 
         self.aux_port = AuxPort(self)
         self.aux_port.reset()
-        self._use_extended_matrix = False
-        self._use_first_eight_direct_inputs = False
 
         # Because PDBs can be configured in many different ways, we need to
         # traverse the YAML settings to see how many PDBs are being used.

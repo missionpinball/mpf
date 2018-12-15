@@ -13,80 +13,6 @@ from unittest.mock import MagicMock, call
 from mpf.platforms import p_roc_common
 
 
-class MockProcProcessObject(object):
-
-    def __init__(self, task):
-        self.task = task
-
-    def join(self):
-        pass
-
-
-class MockProcProcess(object):
-
-    def __init__(self):
-        self.proc = None
-        self.event_queue = None
-        self.dmd = None
-
-    def _sync(self, num):
-        events = self._get_events()
-        if events:
-            self.event_queue.put(events)
-        return "sync", num
-
-    @asyncio.coroutine
-    def proc_process(self, loop, machine_type, command_queue, response_queue, event_queue):
-        self.event_queue = event_queue
-        self.proc = p_roc_common.pinproc.PinPROC(machine_type)
-        self.proc.reset(1)
-
-        last_poll = loop.time()
-        poll_wait = 0.01
-        while True:
-            time_since_last_poll = loop.time() - last_poll
-            if time_since_last_poll > poll_wait:
-                max_wait = 0
-            else:
-                max_wait = poll_wait - time_since_last_poll
-
-            try:
-                needs_response, cmd = yield from command_queue.coro_get(loop=loop, timeout=max_wait)
-            except Empty:
-                pass
-            else:
-                if cmd[0].startswith("_"):
-                    result = getattr(self, cmd[0])(*(cmd[1:]))
-                else:
-                    result = getattr(self.proc, cmd[0])(*(cmd[1:]))
-                if needs_response:
-                    response_queue.put(result)
-                if cmd[0] == "reset":
-                    event_queue.put("exit")
-                    return
-
-            if loop.time() - last_poll >= poll_wait:
-                events = self._get_events()
-                if events:
-                    event_queue.put(events)
-                last_poll = loop.time()
-
-    def _dmd_send(self, data):
-        if not self.dmd:
-            # size is hardcoded here since 128x32 is all the P-ROC hw supports
-            self.dmd = p_roc_common.pinproc.DMDBuffer(128, 32)
-
-        self.dmd.set_data(data)
-        self.proc.dmd_draw(self.dmd)
-
-    def _get_events(self):
-        """Return all events."""
-        events = self.proc.get_events()
-        self.proc.watchdog_tickle()
-        self.proc.flush()
-        return list(events)
-
-
 class MockPinProcModule(MagicMock):
     DriverCount = 256
 
@@ -202,15 +128,6 @@ class TestP3Roc(MpfTestCase):
                           'patterOffTime': 0,
                           'patterEnable': False,
                           'futureEnable': False})
-
-        def _start_proc_process(s):
-            s.proc_process = MockProcProcess()
-            s.proc_process_instance = MockProcProcessObject(self.loop.create_task(
-                s.proc_process.proc_process(self.loop, s.machine_type, s.command_queue, s.response_queue,
-                                            s.event_queue)))
-
-            s.proc_process_instance.task.add_done_callback(s._done)
-        p_roc_common.PROCBasePlatform._start_proc_process = _start_proc_process
 
         self.pinproc.switch_get_states = MagicMock(return_value=[0, 1] + [0] * 100)
         self.pinproc.read_data = self.read_data

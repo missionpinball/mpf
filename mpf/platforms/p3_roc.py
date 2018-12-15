@@ -64,7 +64,6 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         # the collections.
 
         self.debug_log("Configuring P3-ROC for PDB driver boards.")
-        self.pdbconfig = PDBConfig(self, self.machine.config, self.pinproc.DriverCount)
         self._burst_opto_drivers_to_switch_map = {}
         self._burst_switches = []
         self._bursts_enabled = False
@@ -76,6 +75,8 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
     def connect(self):
         """Connect to the P3-Roc."""
         yield from super().connect()
+
+        self.pdbconfig = PDBConfig(self, self.machine.config, self.pinproc.DriverCount)
 
         if self.dipswitches & 0x01:
             self.log.info("Burst drivers are configured as outputs (DIP Switch 1 set). "
