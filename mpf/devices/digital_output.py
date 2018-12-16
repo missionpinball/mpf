@@ -3,6 +3,8 @@ import asyncio
 from functools import partial
 from typing import Union, Tuple
 
+from mpf.core.delays import DelayManager
+
 from mpf.core.machine import MachineController
 from mpf.core.platform import DriverConfig
 from mpf.core.system_wide_device import SystemWideDevice
@@ -31,6 +33,7 @@ class DigitalOutput(SystemWideDevice):
         self.platform = None            # type: Union[DriverPlatform, LightsPlatform]
         self.type = None                # type: str
         super().__init__(machine, name)
+        self.delay = DelayManager(self.machine.delayRegistry)
 
     @asyncio.coroutine
     def _initialize(self):
@@ -81,6 +84,20 @@ class DigitalOutput(SystemWideDevice):
         else:
             return 0.0, -1
 
+    def pulse(self, pulse_ms, **kwargs):
+        """Pulse digital output."""
+        del kwargs
+        if self.type == "driver":
+            self.hw_driver.pulse(PulseSettings(power=1.0, duration=pulse_ms))
+        elif self.type == "light":
+            self.hw_driver.set_fade(partial(self._get_state, state=True))
+            self.platform.light_sync()
+            self.delay.reset(name='timed_disable',
+                             ms=pulse_ms,
+                             callback=self.disable)
+        else:
+            raise AssertionError("Invalid type {}".format(self.type))
+
     def enable(self, **kwargs):
         """Enable digital output."""
         del kwargs
@@ -90,6 +107,7 @@ class DigitalOutput(SystemWideDevice):
         elif self.type == "light":
             self.hw_driver.set_fade(partial(self._get_state, state=True))
             self.platform.light_sync()
+            self.delay.remove(name='timed_disable')
         else:
             raise AssertionError("Invalid type {}".format(self.type))
 
@@ -101,5 +119,6 @@ class DigitalOutput(SystemWideDevice):
         elif self.type == "light":
             self.hw_driver.set_fade(partial(self._get_state, state=False))
             self.platform.light_sync()
+            self.delay.remove(name='timed_disable')
         else:
             raise AssertionError("Invalid type {}".format(self.type))

@@ -140,7 +140,7 @@ class SnuxHardwarePlatform(DriverPlatform):
         """
         orig_number = number
 
-        if number and (number.endswith('a') or number.lower().endswith('c')):
+        if number and (number.lower().endswith('a') or number.lower().endswith('c')):
 
             number = number[:-1]
 

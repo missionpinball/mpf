@@ -1372,6 +1372,15 @@ sounds:
         attenuation: single|gain|1.0
         release_point: single|secs|0
         release: single|secs|10ms
+spi_bit_bang:
+    __valid_in__: machine
+    debug: single|bool|False
+    miso_pin: single|machine(switches)|
+    clock_pin: single|machine(digital_outputs)|
+    cs_pin: single|machine(digital_outputs)|
+    bit_time: single|secs|50ms
+    clock_time: single|ms|1ms
+    inputs: single|int|8
 spike:
     __valid_in__: machine
     debug: single|bool|False
