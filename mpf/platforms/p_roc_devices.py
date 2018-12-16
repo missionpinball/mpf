@@ -57,7 +57,7 @@ class PROCDriver(DriverPlatformInterface):
         """Initialise driver."""
         self.log = logging.getLogger('PROCDriver')
         super().__init__(config, number)
-        self.proc = platform.proc
+        self.platform = platform
         self.string_number = string_number
         self.pdbconfig = getattr(platform, "pdbconfig", None)
 
@@ -80,7 +80,7 @@ class PROCDriver(DriverPlatformInterface):
     def disable(self):
         """Disable (turn off) this driver."""
         self.log.debug('Disabling Driver')
-        self.proc.driver_disable(self.number)
+        self.platform.run_proc_cmd_no_wait("driver_disable", self.number)
 
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable (turn on) this driver."""
@@ -92,12 +92,12 @@ class PROCDriver(DriverPlatformInterface):
             self.log.debug('Enabling. Initial pulse_ms:%s, pwm_on_ms: %s'
                            'pwm_off_ms: %s', pwm_on, pwm_off, pulse_settings.duration)
 
-            self.proc.driver_patter(self.number, pwm_on, pwm_off, pulse_settings.duration, True)
+            self.platform.run_proc_cmd_no_wait("driver_patter", self.number, pwm_on, pwm_off,
+                                               pulse_settings.duration, True)
         else:
             self.log.debug('Enabling at 100%')
 
-            self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
-                                      cycle_seconds=0, now=True)
+            self.platform.run_proc_cmd_no_wait("driver_schedule", self.number, 0xffffffff, 0, True)
 
     def pulse(self, pulse_settings: PulseSettings):
         """Enable this driver for `milliseconds`.
@@ -109,92 +109,52 @@ class PROCDriver(DriverPlatformInterface):
         if pulse_settings.power != 1:
             raise AssertionError("Not pulse_power not supported in P-Roc currently.")
         self.log.debug('Pulsing for %sms', pulse_settings.duration)
-        self.proc.driver_pulse(self.number, pulse_settings.duration)
+        self.platform.run_proc_cmd_no_wait("driver_pulse", self.number, pulse_settings.duration)
 
     def state(self):
         """Return a dictionary representing this driver's current configuration state."""
-        return self.proc.driver_get_state(self.number)
+        return {
+            "driverNum": self.number,
+            "polarity": 0,
+            "outputDriveTime": 0,
+            "state": 0,
+            "waitForFirstTimeSlot": 0,
+            "timeslots": 0,
+            "patterOnTime": 0,
+            "patterOffTime": 0,
+            "patterEnable": 0,
+            "futureEnable": 0
+        }
 
 
 class PROCMatrixLight(LightPlatformSoftwareFade):
 
     """A P-ROC matrix light device."""
 
-    __slots__ = ["log", "proc"]
+    __slots__ = ["log", "proc", "platform"]
 
-    def __init__(self, number, proc_driver, machine):
+    def __init__(self, number, machine, platform):
         """Initialise matrix light device."""
         super().__init__(number, machine.clock.loop,
                          int(1 / machine.config['mpf']['default_light_hw_update_hz'] * 1000))
         self.log = logging.getLogger('PROCMatrixLight')
-        self.proc = proc_driver
+        self.platform = platform
 
     def set_brightness(self, brightness: float):
         """Enable (turns on) this driver."""
         if brightness >= 1:
-            self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
-                                      cycle_seconds=0, now=True)
+            self.platform.run_proc_cmd_no_wait("driver_schedule", self.number, 0xffffffff, 0, True)
         elif brightness > 0:
             pwm_on_ms, pwm_off_ms = Util.power_to_on_off(brightness)
-            self.proc.driver_patter(self.number, pwm_on_ms, pwm_off_ms, 0, True)
+            self.platform.run_proc_cmd_no_wait("driver_patter", self.number, pwm_on_ms, pwm_off_ms, 0, True)
         else:
-            self.proc.driver_disable(self.number)
+            self.platform.run_proc_cmd_no_wait("driver_disable", self.number)
 
     def get_board_name(self):
         """Return board of the light."""
         # TODO: Implement this for PDB matrixes
         return "P-Roc Matrix"
 
-
-class PDBLED(LightPlatformInterface):
-
-    """Represents an RGB LED connected to a PD-LED board."""
-
-    __slots__ = ["board", "address", "debug", "log", "proc", "polarity"]
-
-    # pylint: disable-msg=too-many-arguments
-    def __init__(self, board, address, polarity, proc_driver, debug):
-        """Initialise PDB LED."""
-        self.board = board
-        self.address = address
-        self.debug = debug
-        super().__init__("{}-{}".format(self.board, self.address))
-        self.log = logging.getLogger('PDBLED')
-        self.proc = proc_driver
-        self.polarity = polarity
-
-        self.log.debug("Creating PD-LED item: board: %s, "
-                       "RGB output: %s", self.board, self.address)
-
-    def _normalise_color(self, value: int) -> int:
-        if self.polarity:
-            return 255 - value
-
-        return value
-
-    def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
-        """Set or fade this LED to the color passed.
-
-        Can fade for up to 100 days so do not bother about too long fades.
-
-        Args:
-            color_and_fade_callback: brightness of this channel via callback
-        """
-        brightness, fade_ms = color_and_fade_callback(int(pow(2, 31) * 4))
-        if self.debug:
-            self.log.debug("Setting color %s with fade_ms %s to %s-%s",
-                           self._normalise_color(int(brightness * 255)), fade_ms, self.board, self.address)
-
-        if fade_ms <= 0:
-            # just set color
-            self.proc.led_color(self.board, self.address, self._normalise_color(int(brightness * 255)))
-        else:
-            # fade to color
-            self.proc.led_fade(self.board, self.address, self._normalise_color(int(brightness * 255)), int(fade_ms / 4))
-
-    def get_board_name(self):
-        """Return board of the light."""
-        return "PD-LED Board {}".format(self.board)
 
 class PDBSwitch:
 
@@ -366,17 +326,71 @@ class PDBLight:
         return True
 
 
+
+class PDBLED(LightPlatformInterface):
+
+    """Represents an RGB LED connected to a PD-LED board."""
+
+    __slots__ = ["board", "address", "debug", "log", "polarity", "platform"]
+
+    # pylint: disable-msg=too-many-arguments
+    def __init__(self, board, address, polarity, debug, driver_platform):
+        """Initialise PDB LED."""
+        self.board = board
+        self.address = address
+        self.debug = debug
+        self.platform = driver_platform
+        super().__init__("{}-{}".format(self.board, self.address))
+        self.log = logging.getLogger('PDBLED')
+        self.polarity = polarity
+
+        self.log.debug("Creating PD-LED item: board: %s, "
+                       "RGB output: %s", self.board, self.address)
+
+    def _normalise_color(self, value: int) -> int:
+        if self.polarity:
+            return 255 - value
+
+        return value
+
+    def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
+        """Set or fade this LED to the color passed.
+
+        Can fade for up to 100 days so do not bother about too long fades.
+
+        Args:
+            color_and_fade_callback: brightness of this channel via callback
+        """
+        brightness, fade_ms = color_and_fade_callback(int(pow(2, 31) * 4))
+        if self.debug:
+            self.log.debug("Setting color %s with fade_ms %s to %s-%s",
+                           self._normalise_color(int(brightness * 255)), fade_ms, self.board, self.address)
+
+        if fade_ms <= 0:
+            # just set color
+            self.platform.run_proc_cmd_no_wait("led_color", self.board, self.address,
+                                               self._normalise_color(int(brightness * 255)))
+        else:
+            # fade to color
+            self.platform.run_proc_cmd_no_wait("led_fade", self.board, self.address,
+                                               self._normalise_color(int(brightness * 255)), int(fade_ms / 4))
+
+    def get_board_name(self):
+        """Return board of the light."""
+        return "PD-LED Board {}".format(self.board)
+
+
 class PdLedServo(ServoPlatformInterface):
 
     """A servo on a PD-LED board."""
 
-    def __init__(self, board, number, proc, debug):
+    def __init__(self, board, number, platform, debug):
         """Initialise PDB LED."""
         self.board = int(board)
         self.number = int(number)
         self.debug = debug
         self.log = logging.getLogger('PD-LED.Servo.{}-{}'.format(board, number))
-        self.proc = proc
+        self.platform = platform
 
     def go_to_position(self, position):
         """Move servo to a certain position."""
@@ -384,7 +398,7 @@ class PdLedServo(ServoPlatformInterface):
         if self.debug:
             self.log.debug("Setting servo to position: %s value: %s", position, value)
 
-        self.proc.led_color(self.board, 72 + self.number, value)
+        self.platform.run_proc_cmd_no_wait("led_color", self.board, 72 + self.number, value)
 
 
 class PdLedStepper(StepperPlatformInterface):

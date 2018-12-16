@@ -1,6 +1,20 @@
+import time
+
+import sys
+
 from mpf.tests.MpfTestCase import MpfTestCase
 from unittest.mock import MagicMock, call
 from mpf.platforms import p_roc_common, p_roc
+
+
+class MockDMD():
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.data = None
+
+    def set_data(self, data):
+        self.data = data
 
 
 class MockPinProcModule(MagicMock):
@@ -104,12 +118,47 @@ class TestPRoc(MpfTestCase):
     def read_data(self, module, address):
         return self._memory[module][address]
 
+    def wait_for_platform(self):
+        self._sync_count += 1
+        num = self._sync_count
+        result = self.machine.default_platform.run_proc_cmd_sync("_sync", num)
+        assert result[0] == "sync"
+        assert result[1] == num
+
+    def _mock_loop(self):
+        super()._mock_loop()
+        self.loop._wait_for_external_executor = True
+
     def setUp(self):
+        if sys.version_info[0] == 3 and sys.version_info[1] == 4:
+            # this fails on python 3.4 because of some asyncio bugs
+            self.skipTest("Test is unstable in Python 3.4")
+            return
+        self._sync_count = 0
         self.expected_duration = 2
         p_roc_common.pinproc_imported = True
         p_roc_common.pinproc = MockPinProcModule()
         p_roc.pinproc = p_roc_common.pinproc
-        self.pinproc = MagicMock()
+        self.pinproc = MagicMock(return_value=True)
+        self.pinproc.aux_command_disable = MagicMock(return_value="disable")
+        self.pinproc.aux_command_delay = MagicMock(return_value="delay")
+        self.pinproc.aux_command_output_custom = MagicMock(return_value="output_custom")
+        self.pinproc.aux_command_jump = MagicMock(return_value="jump")
+        self.pinproc.read_data = self.read_data
+        self.pinproc.aux_send_commands = MagicMock(return_value=True)
+        self.pinproc.write_data = MagicMock(return_value=True)
+        self.pinproc.flush = MagicMock(return_value=True)
+        self.pinproc.switch_update_rule = MagicMock(return_value=True)
+        self.pinproc.driver_update_group_config = MagicMock(return_value=True)
+        self.pinproc.driver_update_global_config = MagicMock(return_value=True)
+        self.pinproc.driver_update_state = MagicMock(return_value=True)
+        self.pinproc.driver_pulse = MagicMock(return_value=True)
+        self.pinproc.driver_schedule = MagicMock(return_value=True)
+        self.pinproc.driver_patter = MagicMock(return_value=True)
+        self.pinproc.driver_disable = MagicMock(return_value=True)
+        self.pinproc.reset = MagicMock(return_value=True)
+        self.pinproc.get_events = MagicMock(return_value=[])
+        self.pinproc.dmd_update_config = MagicMock(return_value=True)
         p_roc_common.pinproc.PinPROC = MagicMock(return_value=self.pinproc)
         p_roc_common.pinproc.normalize_machine_type = self._normalize
         p_roc_common.pinproc.driver_state_pulse = MagicMock(
@@ -171,7 +220,7 @@ class TestPRoc(MpfTestCase):
             }
         }
 
-        self.pinproc.aux_send_commands = MagicMock()
+        self.pinproc.aux_send_commands = MagicMock(return_value=True)
         super().setUp()
 
         self.pinproc.aux_send_commands.assert_called_with(0, ["disable"] + ["jump0"] * 254)
@@ -197,25 +246,28 @@ class TestPRoc(MpfTestCase):
         self.assertEqual("PD-16 Board 1 Bank 1", self.machine.coils.c_test.hw_driver.get_board_name())
         # pulse coil A1-B1-2
         self.machine.coils.c_test.pulse()
+        self.wait_for_platform()
         # A1-B1-2 -> address 16 + 8 + 2 = 26 in P3-Roc
         # for 23ms (from config)
         number = self.machine.coils.c_test.hw_driver.number
-        self.machine.coils.c_test.hw_driver.proc.driver_pulse.assert_called_with(
+        self.pinproc.driver_pulse.assert_called_with(
             number, 23)
-        assert not self.machine.coils.c_test.hw_driver.proc.driver_schedule.called
+        assert not self.pinproc.driver_schedule.called
 
     def _test_alpha_display(self):
-        self.pinproc.aux_send_commands = MagicMock()
+        self.pinproc.aux_send_commands = MagicMock(return_value=True)
         self.machine.segment_displays.display1.add_text("1234", key="score")
         self.advance_time_and_run(.1)
+        self.wait_for_platform()
         self.pinproc.aux_send_commands.assert_has_calls([
             call(0, ['disable', 'output_custom_0_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_1_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_2_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_3_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_4_0_8_False_0', 'output_custom_6_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_5_0_8_False_0', 'output_custom_91_0_9_False_0', 'output_custom_8_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_6_0_8_False_0', 'output_custom_79_0_9_False_0', 'output_custom_8_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_7_0_8_False_0', 'output_custom_102_0_9_False_0', 'output_custom_8_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_8_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_9_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_10_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_11_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_12_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_13_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_14_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_15_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40']),
             call(0, ["jump1"])
         ], any_order=False)
 
-        self.pinproc.aux_send_commands = MagicMock()
+        self.pinproc.aux_send_commands = MagicMock(return_value=True)
         self.machine.segment_displays.display1.remove_text_by_key("score")
         self.advance_time_and_run(.1)
+        self.wait_for_platform()
         self.pinproc.aux_send_commands.assert_has_calls([
             call(0, ['disable', 'output_custom_0_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_1_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_2_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_3_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_4_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_5_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_6_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_7_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_8_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_9_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_10_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_11_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_12_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_13_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_14_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_15_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40']),
             call(0, ["jump1"])
@@ -228,14 +280,16 @@ class TestPRoc(MpfTestCase):
 
     def _test_allow_enable(self):
         self.machine.coils.c_test_allow_enable.enable()
+        self.wait_for_platform()
         number = self.machine.coils.c_test_allow_enable.hw_driver.number
-        self.machine.coils.c_test.hw_driver.proc.driver_schedule.assert_called_with(
-            number=number, cycle_seconds=0, now=True, schedule=0xffffffff)
+        self.pinproc.driver_schedule.assert_called_with(
+            number, 0xffffffff, 0, True)
 
     def _test_hw_rule_pulse(self):
         self.machine.coils.c_slingshot_test.hw_driver.state = MagicMock(return_value=8)
         self.machine.autofires.ac_slingshot_test.enable()
-        self.machine.coils.c_slingshot_test.platform.proc.switch_update_rule.assert_any_call(
+        self.wait_for_platform()
+        self.pinproc.switch_update_rule.assert_any_call(
             40, 'closed_nondebounced',
             {'notifyHost': False, 'reloadActive': True},
             [{'patterEnable': False,
@@ -262,7 +316,8 @@ class TestPRoc(MpfTestCase):
         self.assertTrue(self.machine.switch_controller.is_active("s_direct"))
 
     def _test_switches(self):
-        self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
+        self.wait_for_platform()
+        self.pinproc.switch_update_rule.assert_has_calls([
             call(23, 'closed_debounced', {'notifyHost': True, 'reloadActive': False}, [], False),
             call(23, 'open_debounced', {'notifyHost': True, 'reloadActive': False}, [], False),
             call(24, 'closed_nondebounced', {'notifyHost': True, 'reloadActive': False}, [], False),
@@ -271,35 +326,53 @@ class TestPRoc(MpfTestCase):
 
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
         # closed debounced -> switch active
-        self.machine.default_platform.proc.get_events = MagicMock(return_value=[
+        self.pinproc.get_events = MagicMock(return_value=[
             {'type': 1, 'value': 23}])
-        self.advance_time_and_run(.01)
+        self.wait_for_platform()
+        self.advance_time_and_run(.1)
+        self.wait_for_platform()
+        self.advance_time_and_run(.1)
         self.assertTrue(self.machine.switch_controller.is_active("s_test"))
 
         # open debounces -> inactive
-        self.machine.default_platform.proc.get_events = MagicMock(return_value=[
+        self.pinproc.get_events = MagicMock(return_value=[
             {'type': 2, 'value': 23}])
-        self.advance_time_and_run(.01)
+        self.wait_for_platform()
+        self.advance_time_and_run(.1)
+        self.wait_for_platform()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
 
         self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
         # closed non debounced -> should be active
-        self.machine.default_platform.proc.get_events = MagicMock(return_value=[
+        self.pinproc.get_events = MagicMock(return_value=[
             {'type': 3, 'value': 24}])
-        self.advance_time_and_run(.01)
+        self.wait_for_platform()
+        self.wait_for_platform()
+        self.advance_time_and_run(.1)
+        self.wait_for_platform()
+        self.advance_time_and_run(.1)
         self.assertTrue(self.machine.switch_controller.is_active("s_test_no_debounce"))
 
         # open non debounced -> should be inactive
-        self.machine.default_platform.proc.get_events = MagicMock(return_value=[
+        self.pinproc.get_events = MagicMock(return_value=[
             {'type': 4, 'value': 24}])
-        self.advance_time_and_run(.01)
+        self.wait_for_platform()
+        self.advance_time_and_run(.1)
+        self.wait_for_platform()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
 
     def _test_dmd_update(self):
+
+        self.machine.default_platform.pinproc.DMDBuffer = MockDMD
+        self.pinproc.dmd_draw = MagicMock(return_value=True)
+
         # test configure
         self.machine.default_platform.configure_dmd()
+        self.wait_for_platform()
 
-        self.pinproc.dmd_update_config.assert_called_with(high_cycles=[1, 2, 3, 4])
+        self.pinproc.dmd_update_config.assert_called_with([1, 2, 3, 4])
 
         # test set frame to buffer
         frame = bytearray()
@@ -308,31 +381,31 @@ class TestPRoc(MpfTestCase):
 
         dmd = self.machine.default_platform.dmd
 
-        dmd.proc = MagicMock()
-
         dmd.update(frame)
+        self.wait_for_platform()
 
-        dmd.dmd.set_data.assert_called_with(frame)
-        dmd.proc.dmd_draw.assert_called_with(dmd.dmd)
+        self.assertEqual(self.pinproc.dmd_draw.call_args[0][0].data, frame)
 
         # frame displayed
-        self.machine.default_platform.proc.get_events = MagicMock(return_value=[
+        self.pinproc.get_events = MagicMock(return_value=[
             {'type': 5, 'value': 123}])
 
         self.advance_time_and_run(0.04)
-        dmd.proc.dmd_draw.assert_called_with(dmd.dmd)
+        self.wait_for_platform()
+        self.assertEqual(self.pinproc.dmd_draw.call_args[0][0].data, frame)
 
-        # draw broken frame
-        dmd.dmd.set_data = MagicMock()
+        self.pinproc.dmd_draw = MagicMock(return_value=True)
 
         # test set frame to buffer
         frame = bytearray()
         for i in range(1234):
             frame.append(i % 256)
-        self.pinproc.update(frame)
+
+        dmd.update(frame)
+        self.wait_for_platform()
 
         # should not be rendered
-        assert not dmd.dmd.set_data.called
+        assert not self.pinproc.dmd_draw.called
 
     def _test_pdb_matrix_light(self):
         # very simple check for matrix config
@@ -341,87 +414,98 @@ class TestPRoc(MpfTestCase):
         )
 
         # test enable of matrix light
-        assert not self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_patter.called
-        assert not self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_schedule.called
+        assert not self.pinproc.driver_patter.called
+        assert not self.pinproc.driver_schedule.called
         self.machine.lights.test_pdb_light.on()
         self.advance_time_and_run(.02)
-        self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_schedule.assert_called_with(
-            cycle_seconds=0, schedule=4294967295, now=True, number=32
+        self.wait_for_platform()
+        self.pinproc.driver_schedule.assert_called_with(
+            32, 4294967295, 0, True
         )
 
         self.machine.lights.test_pdb_light.on(brightness=128)
         self.advance_time_and_run(.02)
-
-        self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_patter.assert_called_with(
+        self.wait_for_platform()
+        self.pinproc.driver_patter.assert_called_with(
             32, 1, 1, 0, True
         )
 
         # test disable of matrix light
-        assert not self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_disable.called
+        assert not self.pinproc.driver_disable.called
         self.machine.lights.test_pdb_light.off()
         self.advance_time_and_run(.1)
-        self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_disable.assert_called_with(32)
+        self.wait_for_platform()
+        self.pinproc.driver_disable.assert_called_with(32)
 
-        self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_patter = MagicMock()
-        self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_schedule = MagicMock()
-        self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_disable = MagicMock()
+        self.pinproc.driver_patter = MagicMock(return_value=True)
+        self.pinproc.driver_schedule = MagicMock(return_value=True)
+        self.pinproc.driver_disable = MagicMock(return_value=True)
 
         self.post_event("play_test_show")
-        self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_schedule.assert_called_with(
-            cycle_seconds=0, schedule=4294967295, now=True, number=32
+        self.wait_for_platform()
+        self.pinproc.driver_schedule.assert_called_with(
+            32, 4294967295, 0, True
         )
 
         self.advance_time_and_run(1)
-        self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_patter.assert_called_with(
+        self.wait_for_platform()
+        self.pinproc.driver_patter.assert_called_with(
             32, 3, 1, 0, True
         )
 
         self.advance_time_and_run(1)
-        self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_disable.assert_called_with(32)
-        self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_disable = MagicMock()
+        self.wait_for_platform()
+        self.pinproc.driver_disable.assert_called_with(32)
+        self.pinproc.driver_disable = MagicMock(return_value=True)
 
         self.advance_time_and_run(1)
-        self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_schedule.assert_called_with(
-            cycle_seconds=0, schedule=4294967295, now=True, number=32
+        self.wait_for_platform()
+        self.pinproc.driver_schedule.assert_called_with(
+            32, 4294967295, 0, True
         )
         self.advance_time_and_run(10)
-        self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_schedule.assert_called_with(
-            cycle_seconds=0, schedule=4294967295, now=True, number=32
+        self.wait_for_platform()
+        self.pinproc.driver_schedule.assert_called_with(
+            32, 4294967295, 0, True
         )
-        assert not self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_disable.called
+        assert not self.pinproc.driver_disable.called
 
     def _test_pdb_gi_light(self):
         # test gi on
         device = self.machine.lights.test_gi
         num = self.machine.coils.test_gi.hw_driver.number
-        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter = MagicMock()
-        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_schedule = MagicMock()
+        self.pinproc.driver_patter = MagicMock(return_value=True)
+        self.pinproc.driver_schedule = MagicMock(return_value=True)
         device.color("white")
         self.advance_time_and_run(.1)
-        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_schedule.assert_has_calls([
-            call(now=True, number=num, cycle_seconds=0, schedule=4294967295)])
-        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter = MagicMock()
-        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_schedule = MagicMock()
+        self.wait_for_platform()
+        self.pinproc.driver_schedule.assert_has_calls([
+            call(num, 4294967295, 0, True)])
+        self.pinproc.driver_patter = MagicMock(return_value=True)
+        self.pinproc.driver_schedule = MagicMock(return_value=True)
 
         device.color([128, 128, 128])
         self.advance_time_and_run(.1)
-        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter.assert_has_calls([
+        self.wait_for_platform()
+        self.pinproc.driver_patter.assert_has_calls([
             call(num, 1, 1, 0, True)])
-        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter = MagicMock()
-        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_schedule = MagicMock()
+        self.pinproc.driver_patter = MagicMock(return_value=True)
+        self.pinproc.driver_schedule = MagicMock(return_value=True)
 
         device.color([245, 245, 245])
         self.advance_time_and_run(.1)
-        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter.assert_has_calls([
+        self.wait_for_platform()
+        self.pinproc.driver_patter.assert_has_calls([
             call(num, 19, 1, 0, True)])
-        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter = MagicMock()
-        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_schedule = MagicMock()
+        self.pinproc.driver_patter = MagicMock(return_value=True)
+        self.pinproc.driver_schedule = MagicMock(return_value=True)
 
         # test gi off
-        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_disable = MagicMock()
+        self.pinproc.driver_disable = MagicMock(return_value=True)
         device.color("off")
         self.advance_time_and_run(.1)
-        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_disable.assert_has_calls([
+        self.wait_for_platform()
+        self.pinproc.driver_disable.assert_has_calls([
             call(num)])
 
     def test_load_wpc(self):
@@ -432,26 +516,36 @@ class TestPRoc(MpfTestCase):
         """Test snux."""
         # test enable
         self.machine.coils.c_flipper_enable_driver.enable()
-        self.machine.coils.c_flipper_enable_driver.hw_driver.proc.driver_schedule.assert_called_with(
-            number=9923, cycle_seconds=0, now=True, schedule=0xffffffff)
+        self.wait_for_platform()
+        self.pinproc.driver_schedule.assert_called_with(
+            9923, 0xffffffff, 0, True)
 
         # assert diag flash
         self.advance_time_and_run(1)
-        self.machine.coils.c_diag_led_driver.hw_driver.proc.driver_pulse.assert_called_with(
+        self.wait_for_platform()
+        self.pinproc.driver_pulse.assert_called_with(
             9924, 250)
 
+        self.advance_time_and_run()
+        self.wait_for_platform()
+
         # pulse a and c side
-        self.machine.coils.c_ac_relay.hw_driver.proc.driver_schedule = MagicMock()
+        self.pinproc.driver_schedule = MagicMock(return_value=True)
         self.machine.coils.c_test_a_side.pulse(100)
+        self.advance_time_and_run(.001)
         self.machine.coils.c_test_c_side.pulse(50)
-        self.advance_time_and_run(.050)
-        self.machine.coils.c_diag_led_driver.hw_driver.proc.driver_pulse.assert_called_with(
+        self.advance_time_and_run(.040)
+        self.wait_for_platform()
+        self.advance_time_and_run(.001)
+        self.wait_for_platform()
+        self.pinproc.driver_pulse.assert_called_with(
             9902, 100)
-        self.assertFalse(self.machine.coils.c_ac_relay.hw_driver.proc.driver_schedule.called)
+        self.assertFalse(self.pinproc.driver_schedule.called)
 
         # afterwards service c side
         self.advance_time_and_run(.2)
-        self.machine.coils.c_ac_relay.hw_driver.proc.driver_schedule.assert_called_with(
-            number=9925, cycle_seconds=0, now=True, schedule=0xffffffff)
-        self.machine.coils.c_diag_led_driver.hw_driver.proc.driver_pulse.assert_called_with(
+        self.wait_for_platform()
+        self.pinproc.driver_schedule.assert_called_with(
+            9925, 0xffffffff, 0, True)
+        self.pinproc.driver_pulse.assert_called_with(
             9902, 50)
