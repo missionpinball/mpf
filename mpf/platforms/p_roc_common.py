@@ -110,8 +110,9 @@ class ProcProcess:
         self.dmd.set_data(data)
         self.proc.dmd_draw(self.dmd)
 
-    def _get_events(self):
-        """Return all events."""
+    @asyncio.coroutine
+    def reads_events_and_watchdog(self):
+        """Return all events and tickle watchdog."""
         events = self.proc.get_events()
         self.proc.watchdog_tickle()
         self.proc.flush()
@@ -221,11 +222,15 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
     @asyncio.coroutine
     def _poll_events(self):
+        poll_sleep = 1 / self.machine.config['mpf']['default_platform_hz']
         while True:
-            events = yield from self.run_proc_cmd("get_events")
-            if events == "exit":
-                return
-            self.process_events(events)
+            events = yield from asyncio.wrap_future(
+                asyncio.run_coroutine_threadsafe(self.proc_process.reads_events_and_watchdog(),
+                                                 self.proc_process_instance),
+                loop=self.machine.clock.loop)
+            if events:
+                self.process_events(events)
+            yield from asyncio.sleep(poll_sleep, loop=self.machine.clock.loop)
 
     def stop(self):
         """Stop proc."""
