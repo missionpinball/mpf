@@ -692,7 +692,7 @@ class MachineController(LogMixin):
             # do not show a runtime useless runtime error
             self.error_log("Failed to initialise MPF")
             return False
-        if init.exception():
+        if init.done() and init.exception():
             self.shutdown()
             traceback.print_tb(init.exception().__traceback__)  # noqa
             self.error_log("Failed to initialise MPF: %s", init.exception())
