@@ -17,6 +17,8 @@ class LightGroup(SystemWideDevice):
 
     """An abstract group of lights."""
 
+    __slots__ = ["lights"]
+
     def __init__(self, machine: MachineController, name) -> None:
         """Initialise light group."""
         super().__init__(machine, name)
@@ -89,6 +91,8 @@ class LightStrip(LightGroup):
     collection = 'light_stripes'
     class_label = 'light_stripe'
 
+    __slots__ = []
+
     def _create_lights(self):
         distance = 0
         for index in range(self.config['number_start'], self.config['number_start'] + self.config['count']):
@@ -110,6 +114,8 @@ class LightRing(LightGroup):
     config_section = 'light_rings'
     collection = 'light_rings'
     class_label = 'light_ring'
+
+    __slots__ = []
 
     def _create_lights(self):
         angle = self.config['start_angle'] / 180 * math.pi

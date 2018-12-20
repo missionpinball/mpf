@@ -13,6 +13,8 @@ class HardwareSoundSystem(SystemWideDevice):
     collection = 'hardware_sound_systems'
     class_label = 'hardware_sound_system'
 
+    __slots__ = ["hw_device", "_volume"]
+
     def __init__(self, machine, name):
         """Initialise hardware sound system."""
         super().__init__(machine, name)

@@ -19,6 +19,8 @@ class ExtraBall(ModeDevice):
     collection = 'extra_balls'
     class_label = 'extra_ball'
 
+    __slots__ = ["player", "group"]
+
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise extra ball."""
         super().__init__(machine, name)

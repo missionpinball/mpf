@@ -30,6 +30,8 @@ class DropTarget(SystemWideDevice):
     collection = 'drop_targets'
     class_label = 'drop_target'
 
+    __slots__ = ["reset_coil", "knockdown_coil", "banks", "_in_ball_search", "complete", "delay", "_ignore_switch_hits"]
+
     def __init__(self, machine: "MachineController", name: str) -> None:
         """Initialise drop target."""
         self.reset_coil = None              # type: Driver

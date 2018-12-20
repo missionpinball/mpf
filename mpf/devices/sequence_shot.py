@@ -21,6 +21,8 @@ class SequenceShot(SystemWideDevice, ModeDevice):
     collection = 'sequence_shots'
     class_label = 'sequence_shot'
 
+    __slots__ = ["delay", "active_sequences", "active_delays", "_sequence_events", "_delay_events"]
+
     def __init__(self, machine, name):
         """Initialise sequence shot."""
         super().__init__(machine, name)

@@ -17,6 +17,9 @@ class BallHold(SystemWideDevice, ModeDevice):
     collection = 'ball_holds'
     class_label = 'ball_hold'
 
+    __slots__ = ["hold_devices", "source_playfield", "balls_held", "enabled", "_release_hold", "_released_balls",
+                 "hold_queue"]
+
     def __init__(self, machine, name):
         """Initialise ball hold."""
         self.hold_devices = None

@@ -1,7 +1,7 @@
 """Contains the Combo Switch device class."""
 import asyncio
 
-from mpf.core.delays import DelayManager, DelayManagerRegistry
+from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
@@ -18,6 +18,8 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
     collection = 'combo_switches'
     class_label = 'combo_switch'
 
+    __slots__ = ["states", "_state", "_switches_1_active", "_switches_2_active", "delay"]
+
     def __init__(self, machine, name):
         """Initialize Combo Switch."""
         super().__init__(machine, name)
@@ -26,8 +28,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
         self._switches_1_active = False
         self._switches_2_active = False
 
-        self.delay_registry = DelayManagerRegistry(self.machine)
-        self.delay = DelayManager(self.delay_registry)
+        self.delay = DelayManager(self.machine.delayRegistry)
 
     def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Validate and parse config."""

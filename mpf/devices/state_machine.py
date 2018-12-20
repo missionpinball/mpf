@@ -15,6 +15,8 @@ class StateMachine(SystemWideDevice, ModeDevice):
     collection = 'state_machines'
     class_label = 'state_machine'
 
+    __slots__ = ["player", "_state", "_handlers", "_show"]
+
     def __init__(self, machine, name):
         """Initialise state machine."""
         super().__init__(machine, name)

@@ -28,6 +28,8 @@ class Shot(EnableDisableMixin, ModeDevice):
     to track shots.
     """
 
+    __slots__ = ["delay", "active_sequences", "active_delays", "running_show", "_handlers"]
+
     def __init__(self, machine, name):
         """Initialise shot."""
         # If this device is setup in a machine-wide config, make sure it has

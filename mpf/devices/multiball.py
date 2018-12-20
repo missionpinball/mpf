@@ -18,6 +18,9 @@ class Multiball(SystemWideDevice, ModeDevice):
     collection = 'multiballs'
     class_label = 'multiball'
 
+    __slots__ = ["ball_locks", "source_playfield", "delay", "balls_added_live", "balls_live_target", "enabled",
+                 "shoot_again"]
+
     def __init__(self, machine, name):
         """Initialise multiball."""
         self.ball_locks = None

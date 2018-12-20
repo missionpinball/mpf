@@ -14,6 +14,8 @@ class ShotProfile(ModeDevice, SystemWideDevice):
     collection = 'shot_profiles'
     class_label = 'shot_profile'
 
+    __slots__ = []
+
     def device_removed_from_mode(self, mode: Mode) -> None:
         """Remove from mode."""
         pass

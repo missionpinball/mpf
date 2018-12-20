@@ -15,6 +15,8 @@ class PlayfieldTransfer(SystemWideDevice):
     collection = 'playfield_transfers'
     class_label = 'playfield_transfer'
 
+    __slots__ = ["target", "source"]
+
     def __init__(self, machine, name):
         """Initialise playfield transfer."""
         self.target = None

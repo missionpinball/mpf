@@ -15,6 +15,8 @@ class ExtraBallGroup(SystemWideDevice):
     collection = 'extra_ball_groups'
     class_label = 'extra_ball_group'
 
+    __slots__ = ["player"]
+
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialize ExtraBallGroup."""
         super().__init__(machine, name)

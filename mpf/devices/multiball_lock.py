@@ -19,6 +19,8 @@ class MultiballLock(ModeDevice):
     collection = 'multiball_locks'
     class_label = 'multiball_lock'
 
+    __slots__ = ["lock_devices", "source_playfield", "enabled", "_events", "_locked_balls"]
+
     def __init__(self, machine, name):
         """Initialise ball lock."""
         self.lock_devices = []

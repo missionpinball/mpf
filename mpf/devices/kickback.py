@@ -13,6 +13,8 @@ class Kickback(AutofireCoil):
     collection = 'kickbacks'
     class_label = 'kickback'
 
+    __slots__ = []
+
     def _hit(self):
         """Post fired event."""
         super()._hit()

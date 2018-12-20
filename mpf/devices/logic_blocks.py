@@ -16,6 +16,8 @@ class LogicBlockState:
 
     """Represents the state of a logic_block."""
 
+    __slots__ = ["enabled", "completed", "value"]
+
     def __init__(self, start_value):
         """Initialise state."""
         self.enabled = False
@@ -27,6 +29,8 @@ class LogicBlockState:
 class LogicBlock(SystemWideDevice, ModeDevice):
 
     """Parent class for each of the logic block classes."""
+
+    __slots__ = ["_state", "_start_enabled", "player_state_variable"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialize logic block."""
@@ -279,6 +283,8 @@ class Counter(LogicBlock):
     collection = 'counters'
     class_label = 'counter'
 
+    __slots__ = ["delay", "ignore_hits", "hit_value"]
+
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise counter."""
         super().__init__(machine, name)
@@ -377,6 +383,8 @@ class Accrual(LogicBlock):
     collection = 'accruals'
     class_label = 'accrual'
 
+    __slots__ = []
+
     @property
     def config_section_name(self):
         """Return config section."""
@@ -436,6 +444,8 @@ class Sequence(LogicBlock):
     config_section = 'sequences'
     collection = 'sequences'
     class_label = 'sequence'
+
+    __slots__ = []
 
     @property
     def config_section_name(self):

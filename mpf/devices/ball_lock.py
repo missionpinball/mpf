@@ -18,6 +18,9 @@ class BallLock(SystemWideDevice, ModeDevice):
     collection = 'ball_locks'
     class_label = 'ball_lock'
 
+    __slots__ = ["lock_devices", "source_playfield", "balls_locked", "enabled", "_released_balls", "_release_lock",
+                 "lock_queue"]
+
     def __init__(self, machine, name):
         """Initialise ball lock."""
         self.lock_devices = None

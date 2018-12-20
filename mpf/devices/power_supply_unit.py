@@ -10,6 +10,8 @@ class PowerSupplyUnit(SystemWideDevice):
     collection = 'psus'
     class_label = 'psu'
 
+    __slots__ = ["_busy_until"]
+
     def __init__(self, machine, name):
         """Initialise PSU."""
         super().__init__(machine, name)
