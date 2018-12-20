@@ -1738,7 +1738,7 @@ window:
     __valid_in__: machine
     icon: single|str|None
     title: single|str|Mission Pinball Framework
-    source_display: single|str|default
+    source_display: single|str|window
     borderless: single|bool_int|0
     resizable: single|bool_int|1
     fullscreen: single|bool_int|0
