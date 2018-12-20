@@ -241,6 +241,9 @@ class PROCDMD(DmdPlatformInterface):
         # size is hardcoded here since 128x32 is all the P-ROC hw supports
         self.dmd = pinproc.DMDBuffer(128, 32)
 
+        # work around pypinproc bug (fixed upstream)
+        self.proc.set_dmd_color_mapping(list(range(0, 16)))
+
         # dmd_timing defaults should be 250, 400, 180, 800
         if self.machine.config['p_roc']['dmd_timing_cycles']:
             dmd_timing = Util.string_to_list(
