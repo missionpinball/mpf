@@ -17,6 +17,8 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
     show_section = 'segment_displays'
     machine_collection_name = 'segment_displays'
 
+    __slots__ = ["delay"]
+
     def __init__(self, machine):
         """Initialise SegmentDisplayPlayer."""
         super().__init__(machine)

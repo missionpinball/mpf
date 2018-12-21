@@ -11,6 +11,8 @@ class RandomEventPlayer(ConfigPlayer):
     config_file_section = 'random_event_player'
     show_section = 'random_events'
 
+    __slots__ = ["_machine_wide_dict"]
+
     def __init__(self, machine):
         """Initialise random event player."""
         super().__init__(machine)
