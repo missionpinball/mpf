@@ -1,0 +1,11 @@
+#config_version=5
+mode:
+    start_events: start_mode1
+    stop_events: stop_mode1
+    priority: 200
+
+score_queue_player:
+    score_2k:
+        score: 2000
+    score_200:
+        score: 200

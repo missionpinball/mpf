@@ -1021,6 +1021,13 @@ rpi_dmd:
     gpio_slowdown:      single|int|1
     daemon:             single|bool|False
     drop_privileges:    single|bool|True
+score_queue_player:
+    __valid_in__: modes
+    int: single|template_int|None
+score_queues:
+    __valid_in__: machine
+    chimes: list|machine(coils)|
+    delay: single|secs|200ms
 score_reels:
     __valid_in__: machine
     coil_inc: single|machine(coils)|None

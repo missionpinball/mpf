@@ -1,0 +1,17 @@
+#config_version=5
+
+modes:
+  - mode1
+
+coils:
+    c_chime_1000:
+        number:
+    c_chime_100:
+        number:
+    c_chime_10:
+        number:
+
+score_queues:
+    score:
+        chimes: c_chime_1000, c_chime_100, c_chime_10,  None
+        debug: True
