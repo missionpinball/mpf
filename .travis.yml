@@ -34,11 +34,11 @@ matrix:
      sudo: required
      language: python
      python: "3.5"
-   - os: linux  # testing
-     env: LINUX=debian:buster
-     sudo: required
-     language: python
-     python: "3.6"
+#   - os: linux  # testing
+#     env: LINUX=debian:buster
+#     sudo: required
+#     language: python
+#     python: "3.6"
    - os: osx
      language: generic
      osx_image: xcode8.3  # OS 10.12
