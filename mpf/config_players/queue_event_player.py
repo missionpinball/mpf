@@ -10,6 +10,8 @@ class QueueEventPlayer(ConfigPlayer):
 
     config_file_section = 'queue_event_player'
 
+    __slots__ = []
+
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Post queue events."""
         del kwargs

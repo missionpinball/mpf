@@ -10,6 +10,8 @@ class QueueRelayPlayer(ConfigPlayer):
 
     config_file_section = 'queue_relay_player'
 
+    __slots__ = []
+
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Block queue event."""
         del calling_context
