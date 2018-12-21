@@ -1,7 +1,7 @@
-from mpf.tests.MpfGameTestCase import MpfGameTestCase
+from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 
-class TestVariablePlayer(MpfGameTestCase):
+class TestVariablePlayer(MpfFakeGameTestCase):
 
     def getConfigFile(self):
         return 'config.yaml'
@@ -11,14 +11,7 @@ class TestVariablePlayer(MpfGameTestCase):
 
     def test_variable_player(self):
         # start game with two players
-        self.hit_switch_and_run("s_ball_switch1", 1)
-        self.advance_time_and_run(2)
-
-        # start game with two players
         self.start_two_player_game()
-
-        self.advance_time_and_run(1)
-        self.release_switch_and_run("s_ball_switch1", 20)
 
         self.assertFalse(self.machine.mode_controller.is_active('mode1'))
 
@@ -81,8 +74,7 @@ class TestVariablePlayer(MpfGameTestCase):
         self.assertEqual(33, self.machine.game.player.var_c)
 
         # switch players
-        self.hit_switch_and_run("s_ball_switch1", 1)
-        self.release_switch_and_run("s_ball_switch1", 20)
+        self.drain_ball()
         self.assertEqual(2, self.machine.game.player.number)
 
         self.assertEqual(0, self.machine.game.player.score)
@@ -107,8 +99,7 @@ class TestVariablePlayer(MpfGameTestCase):
         self.assertEqual(1, self.machine.game.player.vars['var_b'])
 
         # switch players again
-        self.hit_switch_and_run("s_ball_switch1", 1)
-        self.release_switch_and_run("s_ball_switch1", 20)
+        self.drain_ball()
         self.assertEqual(1, self.machine.game.player.number)
 
         # mode2 should auto start
@@ -166,12 +157,7 @@ class TestVariablePlayer(MpfGameTestCase):
         self.machine.set_machine_var("player2_score", 23)
 
         # start game
-        self.hit_switch_and_run("s_ball_switch1", 1)
-        self.advance_time_and_run(2)
         self.start_game()
-
-        self.advance_time_and_run(1)
-        self.release_switch_and_run("s_ball_switch1", 20)
 
         # start mode 1
         self.post_event("start_mode1", 1)
@@ -200,11 +186,7 @@ class TestVariablePlayer(MpfGameTestCase):
         # we still see the old score here
         self.assertMachineVarEqual(42, "player1_score")
 
-        self.machine.game.end_ball()
-        self.advance_time_and_run()
-        self.machine.game.end_ball()
-        self.advance_time_and_run(10)
-        self.assertGameIsNotRunning()
+        self.stop_game()
 
         self.assertMachineVarEqual(1200, "player1_score")
         self.assertFalse(self.machine.is_machine_var("player2_score"))
@@ -214,12 +196,7 @@ class TestVariablePlayer(MpfGameTestCase):
     def test_blocking_multiple_with_logic_block(self):
         # this test was adapted from a real game
         # start game
-        self.hit_switch_and_run("s_ball_switch1", 1)
-        self.advance_time_and_run(2)
         self.start_game()
-
-        self.advance_time_and_run(1)
-        self.release_switch_and_run("s_ball_switch1", 20)
 
         # start mode 1
         self.post_event("start_mode1", 1)
