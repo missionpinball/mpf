@@ -972,6 +972,7 @@ SW-16 boards found:
             {'type': 1, 'value': 64}, {'type': 1, 'value': 65}])
         self.wait_for_platform()
         self.advance_time_and_run(.01)
+        self.wait_for_platform()
         self.assertTrue(self.machine.switch_controller.is_active("s_stepper1_home"))
         self.assertTrue(self.machine.switch_controller.is_active("s_stepper2_home"))
         self.pinproc.get_events = MagicMock(return_value=[])
