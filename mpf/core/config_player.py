@@ -142,9 +142,13 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         return context + "." + self.config_file_section
 
     def _get_instance_dict(self, context):
+        if context not in self.instances or self.config_file_section not in self.instances[context]:
+            return {}
         return self.instances[context][self.config_file_section]
 
     def _reset_instance_dict(self, context):
+        if context not in self.instances:
+            self.instances[context] = {}
         self.instances[context][self.config_file_section] = dict()
 
     @classmethod
