@@ -241,6 +241,16 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             yield from comm.connect()
             self.serial_connections.add(comm)
 
+        for chain_serial, versions in self.gen2AddrArr.items():
+            for id, version in versions.items():
+                if self.minVersion != version:
+                    self.raise_config_error("Version mismatch. Board {}-{} has version {:d}.{:d}.{:d}.{:d} which is not"
+                                            " the minimal version {:d}.{:d}.{:d}.{:d}".format(
+                        chain_serial, id,
+                        (version >> 24) & 0xFF, (version >> 16) & 0xFF, (version >> 8) & 0xFF, version & 0xFF,
+                        (self.minVersion >> 24) & 0xFF, (self.minVersion >> 16) & 0xFF,
+                        (self.minVersion >> 8) & 0xFF, self.minVersion & 0xFF), 1)
+
     def register_processor_connection(self, serial_number, communicator):
         """Register the processors to the platform.
 
