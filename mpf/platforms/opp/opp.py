@@ -90,7 +90,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         elif self.machine_type == 'gen2':
             self.log.debug("Configuring the OPP Gen2 boards")
         else:
-            raise AssertionError('Invalid driverboards type: {}'.format(self.machine_type))
+            self.raise_config_error('Invalid driverboards type: {}'.format(self.machine_type), 15)
 
         # Only including responses that should be received
         self.opp_commands = {
@@ -242,14 +242,16 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             self.serial_connections.add(comm)
 
         for chain_serial, versions in self.gen2AddrArr.items():
-            for id, version in versions.items():
+            for chain_id, version in versions.items():
                 if self.minVersion != version:
                     self.raise_config_error("Version mismatch. Board {}-{} has version {:d}.{:d}.{:d}.{:d} which is not"
-                                            " the minimal version {:d}.{:d}.{:d}.{:d}".format(
-                        chain_serial, id,
-                        (version >> 24) & 0xFF, (version >> 16) & 0xFF, (version >> 8) & 0xFF, version & 0xFF,
-                        (self.minVersion >> 24) & 0xFF, (self.minVersion >> 16) & 0xFF,
-                        (self.minVersion >> 8) & 0xFF, self.minVersion & 0xFF), 1)
+                                            " the minimal version"
+                                            "{:d}.{:d}.{:d}.{:d}".format(chain_serial, chain_id, (version >> 24) & 0xFF,
+                                                                         (version >> 16) & 0xFF, (version >> 8) & 0xFF,
+                                                                         version & 0xFF, (self.minVersion >> 24) & 0xFF,
+                                                                         (self.minVersion >> 16) & 0xFF,
+                                                                         (self.minVersion >> 8) & 0xFF,
+                                                                         self.minVersion & 0xFF), 1)
 
     def register_processor_connection(self, serial_number, communicator):
         """Register the processors to the platform.
@@ -677,8 +679,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     def _get_dict_index(self, input_str):
         if not isinstance(input_str, str):
-            raise AssertionError("Invalid number format for OPP. Number should be card-number or chain-card-number " +
-                                 " (e.g. 0-1)")
+            self.raise_config_error("Invalid number format for OPP. Number should be card-number or chain-card-number "
+                                    "(e.g. 0-1)", 2)
 
         try:
             chain_str, card_str, number_str = input_str.split("-")
@@ -692,7 +694,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         if chain_str not in self.config['chains']:
             if len(self.config['ports']) > 1:
-                raise AssertionError("Chain {} is unconfigured".format(chain_str))
+                self.raise_config_error("Chain {} is unconfigured".format(chain_str), 3)
             else:
                 # when there is only one port, use only available chain
                 chain_serial = list(self.serial_connections)[0].chain_serial
@@ -708,14 +710,14 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             config: Config dict.
         """
         if not self.opp_connection:
-            raise AssertionError("A request was made to configure an OPP solenoid, "
-                                 "but no OPP connection is available")
+            self.raise_config_error("A request was made to configure an OPP solenoid, "
+                                    "but no OPP connection is available", 4)
 
         number = self._get_dict_index(number)
 
         if number not in self.solDict:
-            raise AssertionError("A request was made to configure an OPP solenoid "
-                                 "with number {} which doesn't exist".format(number))
+            self.raise_config_error("A request was made to configure an OPP solenoid "
+                                    "with number {} which doesn't exist".format(number), 5)
 
         # Use new update individual solenoid command
         opp_sol = self.solDict[number]
@@ -741,14 +743,14 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         del config
         # A switch is termed as an input to OPP
         if not self.opp_connection:
-            raise AssertionError("A request was made to configure an OPP switch, "
-                                 "but no OPP connection is available")
+            self.raise_config_error("A request was made to configure an OPP switch, "
+                                    "but no OPP connection is available", 6)
 
         number = self._get_dict_index(number)
 
         if number not in self.inpDict:
-            raise AssertionError("A request was made to configure an OPP switch "
-                                 "with number {} which doesn't exist".format(number))
+            self.raise_config_error("A request was made to configure an OPP switch "
+                                    "with number {} which doesn't exist".format(number), 7)
 
         return self.inpDict[number]
 
@@ -773,32 +775,34 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                 },
             ]
         else:
-            raise AssertionError("Unknown subtype {}".format(subtype))
+            self.raise_config_error("Unknown subtype {}".format(subtype), 8)
+            return []
 
     def configure_light(self, number, subtype, platform_settings):
         """Configure a led or matrix light."""
         if not self.opp_connection:
-            raise AssertionError("A request was made to configure an OPP light, "
-                                 "but no OPP connection is available")
+            self.raise_config_error("A request was made to configure an OPP light, "
+                                    "but no OPP connection is available", 9)
         if not subtype or subtype == "led":
             chain_serial, card, pixel_num, index_str = number.split('-')
             index = chain_serial + '-' + card
             if index not in self.neoCardDict:
-                raise AssertionError("A request was made to configure an OPP neopixel "
-                                     "with card number {} which doesn't exist".format(card))
+                self.raise_config_error("A request was made to configure an OPP neopixel "
+                                        "with card number {} which doesn't exist".format(card), 10)
 
             neo = self.neoCardDict[index]
             channel = neo.add_channel(int(pixel_num), self.neoDict, index_str)
             return channel
         elif subtype == "matrix":
             if number not in self.incandDict:
-                raise AssertionError("A request was made to configure a OPP matrix "
-                                     "light (incand board), with number {} "
-                                     "which doesn't exist".format(number))
+                self.raise_config_error("A request was made to configure a OPP matrix "
+                                        "light (incand board), with number {} "
+                                        "which doesn't exist".format(number), 11)
 
             return self.incandDict[number]
         else:
-            raise AssertionError("Unknown subtype {}".format(subtype))
+            self.raise_config_error("Unknown subtype {}".format(subtype), 12)
+            return None
 
     def light_sync(self):
         """Update lights.
@@ -841,15 +845,16 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         sw_chain_serial, sw_card, sw_num = switch.hw_switch.number.split('-')
         if self.minVersion >= 0x00020000:
             if chain_serial != sw_chain_serial or card != sw_card:
-                raise AssertionError('Invalid switch being configured for driver. Driver = %s '
-                                     'Switch = %s. For Firmware 0.2.0+ driver and switch have to be on the same board.'
-                                     % (coil.hw_driver.number, switch.hw_switch.number))
+                self.raise_config_error('Invalid switch being configured for driver. Driver = {} '
+                                        'Switch = {}. Driver and switch have to be on the same '
+                                        'board.'.format(coil.hw_driver.number, switch.hw_switch.number), 13)
         else:
             matching_sw = ((int(solenoid) & 0x0c) << 1) | (int(solenoid) & 0x03)
             if chain_serial != sw_chain_serial or card != sw_card or matching_sw != int(sw_num):
-                raise AssertionError('Invalid switch being configured for driver. Driver = %s '
-                                     'Switch = %s. For Firmware < 0.2.0 they have to be on the same board and have the '
-                                     'same number' % (coil.hw_driver.number, switch.hw_switch.number))
+                self.raise_config_error('Invalid switch being configured for driver. Driver = {} '
+                                        'Switch = {}. For Firmware < 0.2.0 they have to be on the same board and '
+                                        'have the same number'.format(coil.hw_driver.number, switch.hw_switch.number),
+                                        14)
 
     def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit rule on driver.
