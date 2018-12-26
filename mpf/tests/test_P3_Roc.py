@@ -981,6 +981,7 @@ SW-16 boards found:
         self.pinproc.write_data = MagicMock()
         stepper1._move_to_absolute_position(11)
         self.advance_time_and_run(.1)
+        self.wait_for_platform()
 
         self.pinproc.write_data.assert_has_calls([
             call(3, 3072, 0x1040000 + 11),
@@ -992,6 +993,7 @@ SW-16 boards found:
         self.pinproc.write_data = MagicMock()
         stepper2._move_to_absolute_position(500)
         self.advance_time_and_run(.1)
+        self.wait_for_platform()
 
         self.pinproc.write_data.assert_has_calls([
             call(3, 3072, 0x1040000 + (500 & 0xFF)),
@@ -1003,9 +1005,11 @@ SW-16 boards found:
         self.pinproc.write_data = MagicMock()
         stepper2._move_to_absolute_position(450)
         self.advance_time_and_run(.1)
+        self.wait_for_platform()
         self.assertEqual(0, self.pinproc.write_data.call_count)
 
         self.advance_time_and_run(1)
+        self.wait_for_platform()
         self.pinproc.write_data.assert_has_calls([
             call(3, 3072, 0x1040000 + 50),
             call(3, 3072, 0x1040600 + (1 << 7)),
