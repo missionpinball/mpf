@@ -79,7 +79,7 @@ class TestGame(MpfGameTestCase):
         self._events.reset_mock()
 
         # Drain the first ball
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run()
         self.assertPlayerNumber(1)
         self.assertBallNumber(2)
@@ -102,7 +102,7 @@ class TestGame(MpfGameTestCase):
         self._events.reset_mock()
 
         # Drain the second ball
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run()
         self.assertPlayerNumber(1)
         self.assertBallNumber(3)
@@ -125,7 +125,7 @@ class TestGame(MpfGameTestCase):
         self._events.reset_mock()
 
         # Drain the third (and last) ball
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run()
         self.assertGameIsNotRunning()
 
@@ -218,7 +218,7 @@ class TestGame(MpfGameTestCase):
         self._events.reset_mock()
 
         # Drain the first ball (player 1)
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(5)
         self.assertPlayerNumber(2)
         self.assertBallNumber(1)
@@ -244,7 +244,7 @@ class TestGame(MpfGameTestCase):
         self._events.reset_mock()
 
         # Drain the first ball (player 2)
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(5)
         self.assertPlayerNumber(1)
         self.assertBallNumber(2)
@@ -270,7 +270,7 @@ class TestGame(MpfGameTestCase):
         self._events.reset_mock()
 
         # Drain the second ball (player 1)
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(5)
         self.assertPlayerNumber(2)
         self.assertBallNumber(2)
@@ -300,7 +300,7 @@ class TestGame(MpfGameTestCase):
 
         # Drain the ball (player 2 has earned an extra ball so it should still be
         # player 2's turn)
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(5)
         self.assertPlayerNumber(2)
         self.assertBallNumber(2)
@@ -320,7 +320,7 @@ class TestGame(MpfGameTestCase):
         self._events.reset_mock()
 
         # Drain the second ball (player 2)
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(5)
         self.assertPlayerNumber(1)
         self.assertBallNumber(3)
@@ -346,7 +346,7 @@ class TestGame(MpfGameTestCase):
         self._events.reset_mock()
 
         # Drain the third ball (player 1)
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(5)
         self.assertPlayerNumber(2)
         self.assertBallNumber(3)
@@ -372,7 +372,7 @@ class TestGame(MpfGameTestCase):
         self._events.reset_mock()
 
         # Drain the third (and last) ball for player 2
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run()
         self.assertGameIsNotRunning()
 
@@ -428,13 +428,13 @@ class TestGameLogic(MpfFakeGameTestCase):
         self.add_player()
         self.machine.game.player.score = 100
         self.assertPlayerNumber(1)
-        self.drain_ball()
+        self.drain_all_balls()
         self.machine.game.player.score = 200
         self.assertPlayerNumber(2)
-        self.drain_ball()
+        self.drain_all_balls()
         self.machine.game.player.score = 0
         self.assertPlayerNumber(3)
-        self.drain_ball()
+        self.drain_all_balls()
         self.machine.game.player.score = 42
         self.assertPlayerNumber(4)
 
@@ -456,10 +456,10 @@ class TestGameLogic(MpfFakeGameTestCase):
         self.add_player()
         self.machine.game.player.score = 100
         self.assertPlayerNumber(1)
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertPlayerNumber(2)
         self.machine.game.player.score = 200
-        self.drain_ball()
+        self.drain_all_balls()
         # old scores should still be active
         self.assertMachineVarEqual(100, "player1_score")
         self.assertMachineVarEqual(200, "player2_score")
@@ -475,14 +475,14 @@ class TestGameLogic(MpfFakeGameTestCase):
         # start one player game
         self.start_game()
         self.machine.game.player.score = 1337
-        self.drain_ball()
-        self.drain_ball()
+        self.drain_all_balls()
+        self.drain_all_balls()
         # still the old scores
         self.assertMachineVarEqual(100, "player1_score")
         self.assertMachineVarEqual(200, "player2_score")
         self.assertFalse(self.machine.is_machine_var("player3_score"))
         self.assertFalse(self.machine.is_machine_var("player4_score"))
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertGameIsNotRunning()
 
         self.assertMachineVarEqual(1337, "player1_score")

@@ -166,7 +166,7 @@ class TestPlaceholderManagerWithMachine(MpfFakeGameTestCase):
         game = template_game.evaluate([])
         self.assertEqual(2, game)
 
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(.1)
         value, subscription = template_current.evaluate_and_subscribe([])
         value1, subscription1 = template1.evaluate_and_subscribe([])

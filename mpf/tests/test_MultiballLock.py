@@ -44,7 +44,7 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEqual(1, lock.locked_balls)
 
         # player change
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(10)
 
         # start mode
@@ -68,7 +68,7 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEqual(2, lock.locked_balls)
 
         # player change
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(10)
         self.assertEqual(0, lock.locked_balls)
 
@@ -76,7 +76,7 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEqual(1, self.machine.ball_devices.bd_lock.balls)
         self.assertEqual(1, self.machine.playfield.balls)
         # ball drains
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(10)
 
         # start mode
@@ -94,7 +94,7 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEqual(1, lock.locked_balls)
 
         # player change
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(10)
 
         # start mode
@@ -121,7 +121,7 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEqual(2, lock.locked_balls)
 
         # game ends
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(10)
         self.assertGameIsNotRunning()
 
@@ -134,8 +134,8 @@ class TestMultiballLock(MpfGameTestCase):
         self.advance_time_and_run()
         self.assertGameIsNotRunning()
 
-        self.drain_ball()
-        self.drain_ball()
+        self.drain_all_balls()
+        self.drain_all_balls()
         self.advance_time_and_run()
 
         # game should start again
@@ -172,7 +172,7 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEqual(1, lock.locked_balls)
 
         # player change
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(10)
 
         # start mode
@@ -196,14 +196,14 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEqual(2, lock.locked_balls)
 
         # player change
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(10)
 
         # lock ejects one ball
         self.assertEqual(1, self.machine.ball_devices.bd_lock.balls)
         self.assertEqual(1, self.machine.playfield.balls)
         # ball drains
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(10)
 
         # start mode
@@ -221,7 +221,7 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEqual(2, lock.locked_balls)
 
         # player change
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(10)
 
         # start mode
@@ -234,7 +234,7 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEqual(2, lock.locked_balls)
 
         # game ends
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(10)
         self.assertGameIsNotRunning()
 
@@ -247,8 +247,8 @@ class TestMultiballLock(MpfGameTestCase):
         self.advance_time_and_run()
         self.assertGameIsNotRunning()
 
-        self.drain_ball()
-        self.drain_ball()
+        self.drain_all_balls()
+        self.drain_all_balls()
         self.advance_time_and_run()
 
         # game should start again
@@ -285,7 +285,7 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEqual(1, lock.locked_balls)
 
         # player change
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(10)
 
         # start mode
@@ -303,7 +303,7 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEqual(2, lock.locked_balls)
 
         # player change
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(10)
 
         # start mode
@@ -324,7 +324,7 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEqual(1, lock.locked_balls)
 
         # player change
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(10)
 
         # start mode
@@ -337,7 +337,7 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEqual(1, lock.locked_balls)
 
         # game ends
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(10)
         self.assertGameIsNotRunning()
 
@@ -350,8 +350,8 @@ class TestMultiballLock(MpfGameTestCase):
         self.advance_time_and_run()
         self.assertGameIsNotRunning()
 
-        self.drain_ball()
-        self.drain_ball()
+        self.drain_all_balls()
+        self.drain_all_balls()
         self.advance_time_and_run()
 
         # game should start again
@@ -394,14 +394,14 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEqual(2, lock.locked_balls)
 
         # player change
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(10)
 
         # lock ejects one ball
         self.assertEqual(1, self.machine.ball_devices.bd_lock.balls)
         self.assertEqual(1, self.machine.playfield.balls)
         # ball drains
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(10)
 
         # start mode
@@ -432,7 +432,7 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEqual(1, lock.locked_balls)
 
         # player change
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(10)
 
         # start mode
@@ -451,7 +451,7 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEqual(2, lock.locked_balls)
 
         # player change
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(10)
 
         # start mode
@@ -463,7 +463,7 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEqual(2, self.machine.playfield.balls)
         self.assertEqual(2, lock.locked_balls)
         # game ends
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run(10)
         self.assertGameIsNotRunning()
 
@@ -476,9 +476,9 @@ class TestMultiballLock(MpfGameTestCase):
         self.advance_time_and_run()
         self.assertGameIsNotRunning()
 
-        self.drain_ball()
-        self.drain_ball()
-        self.drain_ball()
+        self.drain_all_balls()
+        self.drain_all_balls()
+        self.drain_all_balls()
         self.advance_time_and_run()
 
         # game should start again

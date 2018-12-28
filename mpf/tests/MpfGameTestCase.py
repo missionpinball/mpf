@@ -126,7 +126,7 @@ class MpfGameTestCase(MpfTestCase):
         """
         self.assertEqual(balls, self.machine.game.balls_in_play)
 
-    def drain_ball(self):
+    def drain_all_balls(self):
         """Drain a single ball.
         
         If more than 1 ball is in play, this method will need to

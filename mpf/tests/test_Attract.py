@@ -38,7 +38,7 @@ class TestAttract(MpfGameTestCase):
             self.assertModeNotRunning("attract")
             self.assertModeRunning("game")
             self.advance_time_and_run(9)
-            self.drain_ball()
+            self.drain_all_balls()
 
         self.advance_time_and_run(1)
 

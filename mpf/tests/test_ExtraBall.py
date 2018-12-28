@@ -86,7 +86,7 @@ class TestExtraBall(MpfGameTestCase):
 
         # drain and start new ball, but should still be ball 1 since the player
         # has an EB
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run()
         self.assertEqual(1, self.machine.game.player.number)
         self.assertEventNotCalled("first_ball")
@@ -227,7 +227,7 @@ class TestExtraBall(MpfGameTestCase):
         self.mock_event('extra_ball_group_main_lit')
         self.mock_event('extra_ball_group_main_lit_awarded')
 
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run()
         self.assertEqual(1, self.machine.game.player.number)
         self.assertEventCalled('extra_ball_group_main_lit')
@@ -264,7 +264,7 @@ class TestExtraBall(MpfGameTestCase):
         self.mock_event('extra_ball_group_main_lit')
         self.mock_event('extra_ball_group_main_lit_awarded')
 
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run()
         self.assertEventCalled('extra_ball_group_main_lit')
         self.assertEventNotCalled('extra_ball_group_main_lit_awarded')
@@ -297,7 +297,7 @@ class TestExtraBall(MpfGameTestCase):
              self.machine.game.player.extra_ball_group_main_num_awarded_ball)
 
         # drain and make sure we get to player 2
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run()
         self.assertEqual(2, self.machine.game.player.number)
 
@@ -354,7 +354,7 @@ class TestExtraBall(MpfGameTestCase):
         # drain and move to next ball, EB should be unlit
         self.mock_event('extra_ball_group_no_memory_lit')
         self.mock_event('extra_ball_group_no_memory_lit_awarded')
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run()
         self.assertEqual(2, self.machine.game.player.ball)
         self.assertEqual(0,

@@ -56,7 +56,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual("achievement1_started", achievement._show.name)
         self.assertFalse(self._last_event_kwargs['achievement_achievement1_state_started']['restore'])
 
-        self.drain_ball()
+        self.drain_all_balls()
 
         self.assertPlayerNumber(2)
         self.assertBallNumber(1)
@@ -68,7 +68,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual("achievement1_enabled", achievement._show.name)
         self.assertEqual("enabled", achievement._state)
 
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertPlayerNumber(1)
         self.assertBallNumber(2)
         self.assertEqual("achievement1_started", achievement._show.name)
@@ -85,7 +85,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.post_event("achievement1_stop")
         self.assertEqual("completed", achievement._state)
 
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertPlayerNumber(2)
         self.assertBallNumber(2)
 
@@ -106,7 +106,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual("stopped", achievement._state)
         self.assertEqual("achievement1_stopped", achievement._show.name)
 
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertPlayerNumber(1)
         self.assertBallNumber(3)
 
@@ -119,7 +119,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual("disabled", achievement._state)
         self.assertFalse(self._last_event_kwargs['achievement_achievement1_state_disabled']['restore'])
 
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertPlayerNumber(2)
         self.assertBallNumber(3)
 
@@ -130,7 +130,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.post_event("achievement1_start")
         self.assertEqual("started", achievement._state)
 
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertGameIsNotRunning()
 
         self.assertEqual(None, achievement._show)
@@ -151,7 +151,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual("enabled", achievement._state)
         self.assertLightColor('led1', 'yellow')
 
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertPlayerNumber(1)
         self.assertBallNumber(2)
 
@@ -173,7 +173,7 @@ class TestAchievement(MpfFakeGameTestCase):
 
         self.assertEqual(1, self._events['test_event'])
         self.assertEqual(1, self._events['test_event2'])
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertPlayerNumber(1)
         self.assertBallNumber(3)
 

@@ -331,7 +331,7 @@ class TestShotGroups(MpfFakeGameTestCase):
         self.assertEqual('unlit_toggle', shot.state_name)
 
         # drain ball and try on the second ball
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertBallNumber(2)
 
         self.assertEqual('unlit_toggle', shot.state_name)
@@ -348,7 +348,7 @@ class TestShotGroups(MpfFakeGameTestCase):
         self.assertLightChannel("l_special_left", 0)
         self.assertEqual('unlit_toggle', shot.state_name)
 
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertBallNumber(3)
 
         # toggle on
@@ -369,7 +369,7 @@ class TestShotGroups(MpfFakeGameTestCase):
         self.assertLightChannel("l_special_left", 255)
         self.assertEqual('lit_toggle', shot.state_name)
 
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertGameIsNotRunning()
 
         # shot should turn off after game

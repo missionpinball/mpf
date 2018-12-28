@@ -28,7 +28,7 @@ class TestMatchMode(MpfFakeGameTestCase):
 
         with patch("mpf.modes.match.code.match.random.randint") as randint:
             randint.return_value = 50
-            self.drain_ball()
+            self.drain_all_balls()
             self.advance_time_and_run()
         self.assertGameIsNotRunning()
         self.assertEventCalled("match_no_match")
@@ -50,7 +50,7 @@ class TestMatchMode(MpfFakeGameTestCase):
 
         with patch("mpf.modes.match.code.match.random.randint") as randint:
             randint.return_value = 5
-            self.drain_ball()
+            self.drain_all_balls()
             self.advance_time_and_run()
         self.assertGameIsNotRunning()
         self.assertEventNotCalled("match_no_match")

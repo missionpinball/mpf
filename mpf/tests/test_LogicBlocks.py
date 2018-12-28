@@ -403,7 +403,7 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.assertEqual(1, self._events["logicblock_accrual5_complete"])
 
         # player2
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertPlayerNumber(2)
         self.post_event("start_mode1")
         self.advance_time_and_run(.1)
@@ -413,7 +413,7 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.assertEqual(1, self._events["logicblock_accrual5_complete"])
 
         # player1 again
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertPlayerNumber(1)
         self.post_event("start_mode1")
         self.advance_time_and_run(.1)
@@ -424,7 +424,7 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.assertEqual(1, self._events["logicblock_accrual5_complete"])
 
         # player2 again
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertPlayerNumber(2)
         self.post_event("start_mode1")
         self.advance_time_and_run(.1)
@@ -513,13 +513,13 @@ class TestLogicBlocks(MpfFakeGameTestCase):
 
         self.assertEqual(0, self._events["logicblock_counter_persist_complete"])
 
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertPlayerNumber(2)
 
         for i in range(10):
             self.post_event("counter_persist_count")
 
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertPlayerNumber(1)
         self.post_event("start_mode1")
         self.post_event("counter_persist_enable")

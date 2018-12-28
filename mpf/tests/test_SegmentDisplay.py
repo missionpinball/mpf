@@ -54,7 +54,7 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.advance_time_and_run()
         self.assertEqual("100", display1.hw_display.text)
 
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertEqual("100", display1.hw_display.text)
         self.assertFalse(display1.hw_display.flashing)
         self.assertEqual("0", display2.hw_display.text)
@@ -71,7 +71,7 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.assertEqual("100", display1.hw_display.text)
         self.assertEqual("23", display2.hw_display.text)
 
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertEqual("100", display1.hw_display.text)
         self.assertTrue(display1.hw_display.flashing)
         self.assertEqual("23", display2.hw_display.text)
@@ -83,7 +83,7 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.assertEqual("2", display5.hw_display.text)
         self.assertFalse(display5.hw_display.flashing)
 
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertEqual("100", display1.hw_display.text)
         self.assertFalse(display1.hw_display.flashing)
         self.assertEqual("23", display2.hw_display.text)
@@ -95,7 +95,7 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.assertEqual("2", display5.hw_display.text)
         self.assertFalse(display5.hw_display.flashing)
 
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertEqual("100", display1.hw_display.text)
         self.assertTrue(display1.hw_display.flashing)
         self.assertEqual("23", display2.hw_display.text)
@@ -107,7 +107,7 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.assertEqual("3", display5.hw_display.text)
         self.assertFalse(display5.hw_display.flashing)
 
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertEqual("100", display1.hw_display.text)
         self.assertFalse(display1.hw_display.flashing)
         self.assertEqual("23", display2.hw_display.text)
@@ -120,7 +120,7 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.assertFalse(display5.hw_display.flashing)
 
         # game ended
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertGameIsNotRunning()
         self.assertEqual("100", display1.hw_display.text)
         self.assertFalse(display1.hw_display.flashing)

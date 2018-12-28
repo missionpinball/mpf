@@ -416,7 +416,7 @@ class TestBallSave(MpfGameTestCase):
         self.post_event("enable5")
 
         # drain ball
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run()
 
         # ball should not end
@@ -446,7 +446,7 @@ class TestBallSave(MpfGameTestCase):
         self.post_event("start_mode2")
 
         # drain ball
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run()
 
         # ball should not end
@@ -463,7 +463,7 @@ class TestBallSave(MpfGameTestCase):
         self.assertBallNumber(1)
 
         # save again/drain ball
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run()
 
         # ball should not end
@@ -481,6 +481,6 @@ class TestBallSave(MpfGameTestCase):
         self.assertBallNumber(1)
 
         # ball should end now
-        self.drain_ball()
+        self.drain_all_balls()
         self.advance_time_and_run()
         self.assertGameIsNotRunning()

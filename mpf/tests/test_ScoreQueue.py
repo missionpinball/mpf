@@ -65,7 +65,7 @@ class TestScoreQueue(MpfFakeGameTestCase):
 
         # test scoring during drain
         self.machine.score_queues["score"].score(90)
-        self.drain_ball()
+        self.drain_all_balls()
 
         self.advance_time_and_run(2)
         self.assertEqual(2210, self.machine.game.player_list[0].score)

@@ -119,14 +119,17 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
             except AssertionError as e:
                 raise AssertionError("Error in line {}".format(line_no), e)
 
-    def command_start_game(self):
-        self.start_game()
+    def command_start_game(self, num_balls_known=3):
+        self.start_game(num_balls_known=int(num_balls_known))
 
     def command_stop_game(self, stop_time=1):
         self.stop_game(float(stop_time))
 
-    def command_drain_ball(self):
-        self.drain_ball()
+    def command_drain_all_balls(self):
+        self.drain_all_balls()
+
+    def command_drain_one_ball(self):
+        self.drain_one_ball()
 
     def command_start_mode(self, mode):
         self.machine.modes[mode].start()
@@ -203,3 +206,11 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
     def command_assert_bool_condition(self, expected, condition):
         expected_bool = expected == "True"
         self.assertPlaceholderEvaluates(expected_bool, condition)
+
+    def command_assert_int_condition(self, expected, condition):
+        expected_int = int(expected)
+        self.assertPlaceholderEvaluates(expected_int, condition)
+
+    def command_assert_float_condition(self, expected, condition):
+        expected_float = float(expected)
+        self.assertPlaceholderEvaluates(expected_float, condition)

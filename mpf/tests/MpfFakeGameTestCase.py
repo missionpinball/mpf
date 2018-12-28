@@ -24,24 +24,44 @@ class MpfFakeGameTestCase(MpfGameTestCase):
         self.machine_config_patches['machine'] = dict()
         self.machine_config_patches['machine']['min_balls'] = 0
 
-    def start_game(self):
+    def start_game(self, num_balls_known=3):
         """Start a game.
         
         Does not require ball devices or a start button to be present in the
         config file. Sets the number of known balls to 3.
         
         """
+        def _add_ball(**kwargs):
+            del kwargs
+            self.machine.playfield.balls += 1
+            self.machine.playfield.available_balls += 1
+
         # game start should work
-        self.machine.playfield.add_ball = MagicMock()
-        self.machine.ball_controller.num_balls_known = 3
+        self.machine.playfield.add_ball = _add_ball
+        self.machine.ball_controller.num_balls_known = num_balls_known
         super().start_game()
 
-    def drain_ball(self):
+    def drain_all_balls(self):
         """Drain all the balls in play.
         
         Does not actually require any ball devices to be present in the config
         file.
         
         """
-        self.machine.game.balls_in_play = 0
+        for _ in range(self.machine.game.balls_in_play):
+            self.post_event_with_params("ball_drain", balls=1)
+        self.machine.playfield.balls = 0
+        self.machine.playfield.available_balls = 0
+        self.advance_time_and_run()
+
+    def drain_one_ball(self):
+        """Drain one ball.
+
+        Does not actually require any ball devices to be present in the config
+        file.
+
+        """
+        self.post_event_with_params("ball_drain", balls=1)
+        self.machine.playfield.balls -= 1
+        self.machine.playfield.available_balls -= 1
         self.advance_time_and_run()

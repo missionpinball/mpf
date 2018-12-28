@@ -74,7 +74,7 @@ class TestVariablePlayer(MpfFakeGameTestCase):
         self.assertEqual(33, self.machine.game.player.var_c)
 
         # switch players
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertEqual(2, self.machine.game.player.number)
 
         self.assertEqual(0, self.machine.game.player.score)
@@ -99,7 +99,7 @@ class TestVariablePlayer(MpfFakeGameTestCase):
         self.assertEqual(1, self.machine.game.player.vars['var_b'])
 
         # switch players again
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertEqual(1, self.machine.game.player.number)
 
         # mode2 should auto start

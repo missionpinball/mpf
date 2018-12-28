@@ -216,7 +216,7 @@ class TestModesInGame(MpfFakeGameTestCase):
         self.start_game()
 
         self.assertModeNotRunning("mode_restart_on_next_ball")
-        self.drain_ball()
+        self.drain_all_balls()
 
         # mode shoud not be started
         self.assertModeNotRunning("mode_restart_on_next_ball")
@@ -231,6 +231,6 @@ class TestModesInGame(MpfFakeGameTestCase):
 
         # check that mode is restarted on next ball
         self.mock_event("mode_mode_restart_on_next_ball_will_start")
-        self.drain_ball()
+        self.drain_all_balls()
         self.assertModeRunning("mode_restart_on_next_ball")
         self.assertEventCalled("mode_mode_restart_on_next_ball_will_start", 1)
