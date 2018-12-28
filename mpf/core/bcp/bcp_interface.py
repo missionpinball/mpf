@@ -61,6 +61,7 @@ class BcpInterface(MpfController):
             switch=self._bcp_receive_switch,
             trigger=self._bcp_receive_trigger,
             register_trigger=self._bcp_receive_register_trigger,
+            evaluate_placeholder=self._evaluate_placeholder,
             remove_trigger=self._bcp_receive_deregister_trigger,
             monitor_start=self._bcp_receive_monitor_start,
             monitor_stop=self._bcp_receive_monitor_stop,
@@ -648,6 +649,23 @@ class BcpInterface(MpfController):
         self.machine.switch_controller.process_switch(name=name,
                                                       state=state,
                                                       logical=True)
+
+    @asyncio.coroutine
+    def _evaluate_placeholder(self, client, placeholder, parameters=None, **kwargs):
+        """Evaluate and return placeholder."""
+        del kwargs
+        if parameters is None:
+            parameters = []
+        placeholder_obj = self.machine.placeholder_manager.build_raw_template(placeholder, None)
+        try:
+            value = placeholder_obj.evaluate(parameters=parameters)
+        except AssertionError as e:
+            self.machine.bcp.transport.send_to_client(client=client, bcp_command='evaluate_placeholder',
+                                                      error=str(e))
+            return
+
+        self.machine.bcp.transport.send_to_client(client=client, bcp_command='evaluate_placeholder', value=value,
+                                                  error=False)
 
     @asyncio.coroutine
     def _bcp_receive_register_trigger(self, client, event, **kwargs):
