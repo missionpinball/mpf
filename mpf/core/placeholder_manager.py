@@ -298,16 +298,54 @@ class BasePlaceholder:
         raise AssertionError("Not possible to subscribe to item {}.".format(item))
 
 
-class DeviceClassPlaceholder:
+class DevicePlaceholder:
 
     """Wrap a monitorable device."""
 
-    __slots__ = ["_devices", "_device_name"]
+    __slots__ = ["_device", "_attribute", "_machine"]
 
-    def __init__(self, devices, device_name):
+    def __init__(self, device, attribute, machine):
+        """Initialise placeholder."""
+        self._device = device
+        self._attribute = attribute
+        self._machine = machine
+
+    def subscribe(self):
+        """Subscribe to object changes."""
+        return asyncio.Future(loop=self._machine.clock.loop)
+
+    def subscribe_attribute(self, item):
+        """Subscribe to device changes."""
+        return self._device.subscribe_attribute(item, self._machine)
+
+    def __getitem__(self, item):
+        """Array access."""
+        return self.__getattr__(item)
+
+    def __getattr__(self, item):
+        """Attribute access."""
+        return self._device.get_placeholder_value(item)
+
+class DeviceClassPlaceholder:
+
+    """Wrap a monitorable device class."""
+
+    __slots__ = ["_devices", "_device_name", "_machine"]
+
+    def __init__(self, devices, device_name, machine):
         """Initialise placeholder."""
         self._devices = devices
         self._device_name = device_name
+        self._machine = machine
+
+    def subscribe(self):
+        """Subscribe to object changes."""
+        return asyncio.Future(loop=self._machine.clock.loop)
+
+    def subscribe_attribute(self, item):
+        """Subscribe to device changes."""
+        del item
+        return asyncio.Future(loop=self._machine.clock.loop)
 
     def __getitem__(self, item):
         """Array access."""
@@ -319,7 +357,7 @@ class DeviceClassPlaceholder:
         if not device:
             raise AssertionError("Device {} of type {} does not exist.".format(item, self._device_name))
 
-        return device.get_monitorable_state()
+        return DevicePlaceholder(device, item, self._machine)
 
 
 class DevicesPlaceholder:
@@ -336,12 +374,21 @@ class DevicesPlaceholder:
         """Array access."""
         return self.__getattr__(item)
 
+    def subscribe(self):
+        """Subscribe to object changes."""
+        return asyncio.Future(loop=self._machine.clock.loop)
+
+    def subscribe_attribute(self, item):
+        """Subscribe to device changes."""
+        del item
+        return asyncio.Future(loop=self._machine.clock.loop)
+
     def __getattr__(self, item):
         """Attribute access."""
         device = self._machine.device_manager.get_monitorable_devices().get(item)
         if not device:
             raise AssertionError("Device Collection {} not usable in placeholders.".format(item))
-        return DeviceClassPlaceholder(device, item)
+        return DeviceClassPlaceholder(device, item, self._machine)
 
 
 class ModeClassPlaceholder:

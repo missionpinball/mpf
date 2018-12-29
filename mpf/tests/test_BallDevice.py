@@ -21,6 +21,15 @@ class TestBallDevice(MpfTestCase):
         del kwargs
         self._missing += 1
 
+    def test_placeholder(self):
+        template = self.machine.placeholder_manager.build_int_template(
+            "device.ball_devices.test_launcher.balls", None)
+        value, future = template.evaluate_and_subscribe([])
+        self.assertEqual(0, value)
+        self.assertFalse(future.done())
+        self.hit_switch_and_run("s_ball_switch_launcher", 1)
+        self.assertTrue(future.done())
+
     def test_ball_count_during_eject(self):
         coil2 = self.machine.coils['eject_coil2']
         device2 = self.machine.ball_devices['test_launcher']

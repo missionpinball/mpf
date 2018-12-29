@@ -290,6 +290,15 @@ class ServiceCli(cmd.Cmd):
         pass
         # TODO: implement
 
+    def do_placeholder_evaluate(self, args):
+        """Evaluate a placeholder."""
+        self.bcp_client.send("evaluate_placeholder", {"placeholder": args})
+        message = self.loop.run_until_complete(self.bcp_client.wait_for_response("evaluate_placeholder"))
+        if message[1]["error"]:
+            self.stdout.write("Error: {}\n".format(message[1]["error"]))
+        else:
+            self.stdout.write("Result: {}\n".format(message[1]["value"]))
+
     def do_exit(self, args):
         """Exit service mode."""
         del args
