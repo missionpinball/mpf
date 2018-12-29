@@ -1,6 +1,6 @@
 """Decorator to monitor devices."""
 import asyncio
-from typing import DefaultDict
+from collections import defaultdict
 
 from mpf.core.utility_functions import Util
 
@@ -87,6 +87,6 @@ class DeviceMonitor:
         cls.get_monitorable_state = get_monitorable_state
         cls.get_placeholder_value = get_placeholder_value
         cls.subscribe_attribute = subscribe_attribute
-        cls.attribute_futures = DefaultDict(list)
+        cls.attribute_futures = defaultdict(list)
 
         return cls
