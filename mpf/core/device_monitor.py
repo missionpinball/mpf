@@ -50,9 +50,9 @@ class DeviceMonitor:
 
             if attribute_name:
                 self_inner.machine.device_manager.notify_device_changes(self_inner, attribute_name, old, value)
-                for future in self_inner._attribute_futures[attribute_name]:
+                for future in self_inner.attribute_futures[attribute_name]:
                     future.set_result(True)
-                    self_inner._attribute_futures[attribute_name] = []
+                    self_inner.attribute_futures[attribute_name] = []
 
         def get_monitorable_state(self_inner):
             """Return monitorable state of device."""
@@ -68,7 +68,7 @@ class DeviceMonitor:
         def subscribe_attribute(self_inner, item, machine):
             """Subscribe to an attribute."""
             future = asyncio.Future(loop=machine.clock.loop)
-            self_inner._attribute_futures[item].append(future)
+            self_inner.attribute_futures[item].append(future)
             return future
 
         def get_placeholder_value(self_inner, item):
@@ -87,6 +87,6 @@ class DeviceMonitor:
         cls.get_monitorable_state = get_monitorable_state
         cls.get_placeholder_value = get_placeholder_value
         cls.subscribe_attribute = subscribe_attribute
-        cls._attribute_futures = DefaultDict(list)
+        cls.attribute_futures = DefaultDict(list)
 
         return cls
