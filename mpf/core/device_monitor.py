@@ -1,4 +1,7 @@
 """Decorator to monitor devices."""
+import asyncio
+from typing import DefaultDict
+
 from mpf.core.utility_functions import Util
 
 
@@ -47,6 +50,9 @@ class DeviceMonitor:
 
             if attribute_name:
                 self_inner.machine.device_manager.notify_device_changes(self_inner, attribute_name, old, value)
+                for future in self_inner._attribute_futures[attribute_name]:
+                    future.set_result(True)
+                    self_inner._attribute_futures[attribute_name] = []
 
         def get_monitorable_state(self_inner):
             """Return monitorable state of device."""
@@ -59,8 +65,28 @@ class DeviceMonitor:
 
             return state
 
+        def subscribe_attribute(self_inner, item, machine):
+            """Subscribe to an attribute."""
+            future = asyncio.Future(loop=machine.clock.loop)
+            self_inner._attribute_futures[item].append(future)
+            return future
+
+        def get_placeholder_value(self_inner, item):
+            """Get the value of a placeholder."""
+            if item in self._attributes_to_monitor:
+                return Util.convert_to_simply_type(getattr(self_inner, item))
+
+            for attribute, name in self._aliased_attributes_to_monitor.items():
+                if name == item:
+                    return Util.convert_to_simply_type(getattr(self_inner, attribute))
+
+            raise ValueError("Attribute {} does not exist.".format(item))
+
         cls.__init__ = __init__
         cls.__setattr__ = __setattr__
         cls.get_monitorable_state = get_monitorable_state
+        cls.get_placeholder_value = get_placeholder_value
+        cls.subscribe_attribute = subscribe_attribute
+        cls._attribute_futures = DefaultDict(list)
 
         return cls

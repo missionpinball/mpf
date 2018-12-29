@@ -104,7 +104,6 @@ class TestPlaceholderManagerWithMachine(MpfFakeGameTestCase):
         self.machine.game.player.b = 8
         self.advance_time_and_run()
 
-
     def test_player_vars(self):
         self.start_game()
         template_game = self.machine.placeholder_manager.build_int_template(
