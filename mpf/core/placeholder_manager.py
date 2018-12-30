@@ -205,7 +205,7 @@ class NativeTypeTemplate:
 
 class MpfFormatter(string.Formatter):
 
-    """String formater which replaces placeholders."""
+    """String formatter which replaces placeholders."""
 
     __slots__ = ["machine", "parameters", "subscriptions", "subscribe"]
 
@@ -706,6 +706,10 @@ class BasePlaceholderManager(MpfController):
             return self._eval_methods[type(node)](node, variables, subscribe)
         else:
             raise TypeError(type(node))
+
+    def build_text_template(self, template_str):
+        """Build a text template from a string."""
+        return TextTemplate(self.machine, template_str)
 
     def build_float_template(self, template_str, default_value=0.0):
         """Build a float template from a string."""

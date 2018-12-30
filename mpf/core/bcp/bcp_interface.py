@@ -38,7 +38,7 @@ class BcpInterface(MpfController):
     config_name = "bcp_interface"
 
     __slots__ = ["configured", "config", "_client_reset_queue", "_client_reset_complete_status", "bcp_receive_commands",
-                 "_shows"]
+                 "_shows", "_placeholder_update_tasks"]
 
     def __init__(self, machine):
         """Initialise BCP."""
@@ -62,6 +62,9 @@ class BcpInterface(MpfController):
             trigger=self._bcp_receive_trigger,
             register_trigger=self._bcp_receive_register_trigger,
             evaluate_placeholder=self._evaluate_placeholder,
+            subscribe_placeholder=self._subscribe_placeholder,
+            subscribe_placeholder_text=self._subscribe_placeholder_text,
+            cancel_placeholder_subscribe=self._cancel_placeholder_subscribe,
             remove_trigger=self._bcp_receive_deregister_trigger,
             monitor_start=self._bcp_receive_monitor_start,
             monitor_stop=self._bcp_receive_monitor_stop,
@@ -69,6 +72,7 @@ class BcpInterface(MpfController):
             service=self._service,
         )
         self._shows = {}
+        self._placeholder_update_tasks = {}
 
         self.machine.events.add_handler('machine_reset_phase_1', self.bcp_reset)
 
@@ -666,6 +670,63 @@ class BcpInterface(MpfController):
 
         self.machine.bcp.transport.send_to_client(client=client, bcp_command='evaluate_placeholder', value=value,
                                                   error=False)
+
+    @asyncio.coroutine
+    def _update_placeholder(self, client, placeholder_obj, id, parameters):
+        while True:
+            try:
+                value, future = placeholder_obj.evaluate_and_subscribe(parameters=parameters)
+            except AssertionError as e:
+                self.machine.bcp.transport.send_to_client(client=client, bcp_command='evaluate_placeholder',
+                                                          id=id,
+                                                          error=str(e))
+                return
+
+            self.machine.bcp.transport.send_to_client(client=client, bcp_command='evaluate_placeholder', value=value,
+                                                      id=id,
+                                                      error=False)
+
+            yield from future
+
+    @asyncio.coroutine
+    def _cancel_placeholder_subscribe(self, client, id, **kwargs):
+        del kwargs
+        del client
+        self._placeholder_update_tasks[id].cancel()
+        del self._placeholder_update_tasks[id]
+
+    @asyncio.coroutine
+    def _subscribe_placeholder(self, client, placeholder, id, parameters=None, **kwargs):
+        """Subscribe and return placeholder."""
+        del kwargs
+        if parameters is None:
+            parameters = []
+        placeholder_obj = self.machine.placeholder_manager.build_raw_template(placeholder, None)
+        self._placeholder_update_tasks[id] = self.machine.clock.loop.create_task(
+            self._update_placeholder(client, placeholder_obj, id, parameters))
+        self._placeholder_update_tasks[id].add_done_callback(self._done)
+
+    @asyncio.coroutine
+    def _subscribe_placeholder_text(self, client, placeholder, id, parameters=None, **kwargs):
+        """Subscribe and return text placeholder."""
+        del kwargs
+        if parameters is None:
+            parameters = []
+        placeholder_obj = self.machine.placeholder_manager.build_text_template(placeholder)
+        self._placeholder_update_tasks[id] = self.machine.clock.loop.create_task(
+            self._update_placeholder(client, placeholder_obj, id, parameters))
+        self._placeholder_update_tasks[id].add_done_callback(self._done)
+
+    @staticmethod
+    def _done(future):  # pragma: no cover
+        """Evaluate result of task.
+
+        Will raise exceptions from within task.
+        """
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            pass
 
     @asyncio.coroutine
     def _bcp_receive_register_trigger(self, client, event, **kwargs):

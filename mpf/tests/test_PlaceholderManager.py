@@ -211,3 +211,21 @@ class TestPlaceholderManagerWithMachine(MpfFakeGameTestCase):
         self.assertEqual("Number: 7   ", t.evaluate({"test": 7}))
         self.assertEqual("Number: 0   ", t.evaluate({"test": None}))
 
+        value, future =  t.evaluate_and_subscribe({"test": 7})
+        self.assertEqual("Number: 7   ", value)
+        self.assertFalse(future.done())
+        self.machine_run()
+        self.assertFalse(future.done())
+
+        t = TextTemplate(self.machine, "Test: {machine.test}")
+        value, future = t.evaluate_and_subscribe([])
+        self.assertEqual("Test: None", value)
+        self.assertFalse(future.done())
+        self.machine.set_machine_var("test", "asd")
+        self.machine_run()
+
+        self.assertTrue(future.done())
+        value, future = t.evaluate_and_subscribe([])
+        self.assertEqual("Test: asd", value)
+        self.assertFalse(future.done())
+
