@@ -11,6 +11,8 @@ import pickle   # nosec
 from typing import Any
 from typing import Dict
 
+from pkg_resources import iter_entry_points
+
 import mpf
 from mpf.core.rgb_color import named_rgb_colors, RGBColor
 from mpf.exceptions.ConfigFileError import ConfigFileError
@@ -38,11 +40,15 @@ class ConfigValidator:
 
     class_cache = None
 
-    def __init__(self, machine):
+    __slots__ = ["machine", "config_spec", "log", "_load_cache", "_store_cache", "validator_list"]
+
+    def __init__(self, machine, load_cache, store_cache):
         """Initialise validator."""
         self.machine = machine      # type: MachineController
         self.config_spec = None     # type: Any
         self.log = logging.getLogger('ConfigValidator')
+        self._load_cache = load_cache
+        self._store_cache = store_cache
 
         self.validator_list = {
             "str": self._validate_type_str,
@@ -110,7 +116,8 @@ class ConfigValidator:
 
         cache_file = os.path.join(self.get_cache_dir(), "config_spec.mpf_cache")
         config_spec_file = os.path.abspath(os.path.join(mpf.core.__path__[0], os.pardir, "config_spec.yaml"))
-        if os.path.isfile(cache_file) and os.path.getmtime(cache_file) >= os.path.getmtime(config_spec_file):
+        if self._load_cache and os.path.isfile(cache_file) and \
+                os.path.getmtime(cache_file) >= os.path.getmtime(config_spec_file):
             try:
                 with open(cache_file, 'rb') as f:
                     self.config_spec = pickle.load(f)   # nosec
@@ -126,13 +133,23 @@ class ConfigValidator:
         config = self._process_config_spec(config, "root")
 
         self.config_spec = config
-        self.machine.load_external_platform_config_specs()
+        self.load_external_platform_config_specs()
 
-        with open(cache_file, 'wb') as f:
-            pickle.dump(config, f, protocol=4)
-            self.log.info('Config spec file cache created: %s', cache_file)
+        if self._store_cache:
+            with open(cache_file, 'wb') as f:
+                pickle.dump(config, f, protocol=4)
+                self.log.info('Config spec file cache created: %s', cache_file)
 
         ConfigValidator.class_cache = deepcopy(self.config_spec)
+
+    def load_external_platform_config_specs(self):
+        """Load config spec for external platforms."""
+        for platform_entry in iter_entry_points(group='mpf.platforms'):
+            config_spec = platform_entry.load().get_config_spec()
+
+            if config_spec:
+                # add specific config spec if platform has any
+                self.load_device_config_spec(config_spec[0], config_spec[1])
 
     def _process_config_spec(self, spec, path):
         if not isinstance(spec, dict):
