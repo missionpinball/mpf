@@ -95,7 +95,7 @@ class MachineController(LogMixin):
 
         self.log.info("Command line arguments: %s", options)
         self.options = options
-        self.config_validator = ConfigValidator(self)
+        self.config_validator = ConfigValidator(self, not options["no_load_cache"], options["create_config_cache"])
         self.config_processor = ConfigProcessor(self.config_validator)
 
         self.log.info("MPF path: %s", mpf_path)
@@ -589,15 +589,6 @@ class MachineController(LogMixin):
         desc: The machine reset process is complete
 
         '''
-
-    def load_external_platform_config_specs(self):
-        """Load config spec for external platforms."""
-        for platform_entry in iter_entry_points(group='mpf.platforms'):
-            config_spec = platform_entry.load().get_config_spec()
-
-            if config_spec:
-                # add specific config spec if platform has any
-                self.config_validator.load_device_config_spec(config_spec[0], config_spec[1])
 
     def add_platform(self, name: str) -> None:
         """Make an additional hardware platform interface available to MPF.
