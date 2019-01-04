@@ -205,6 +205,8 @@ LEDs:
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x00\x0a\x26')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x17\x03\x83')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x17\x03\x82')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x00\x00\x08', False)] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x00\x00\x04', False)] = False
         self.machine.flippers.f_test_hold.disable()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
@@ -428,6 +430,7 @@ LEDs:
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x00\x02\x17\x20')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x00\x00\x01', False)] = False
         self.machine.autofires.ac_slingshot_test.disable()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
@@ -437,6 +440,7 @@ LEDs:
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x00\x00\x02', False)] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x01\x00\x17\x3f')] = False
         self.machine.autofires.ac_slingshot_test2.disable()
         self._wait_for_processing()
@@ -449,6 +453,7 @@ LEDs:
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x00\x0a\x26')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x00\x00\x08', False)] = False
         self.machine.flippers.f_test_single.disable()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)

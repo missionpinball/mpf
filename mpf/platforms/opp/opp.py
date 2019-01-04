@@ -967,3 +967,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         # are changed, so this might need to be called each time.
         if not coil.hw_driver.switches:
             coil.hw_driver.remove_switch_rule()
+
+        # disable coil. there seem to be conditions where a coil can stay active when we remove a rule
+        # while a driver pulse is ongoing.
+        coil.hw_driver.disable()
