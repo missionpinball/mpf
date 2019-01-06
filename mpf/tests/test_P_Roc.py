@@ -88,7 +88,7 @@ class MockPinProcModule(MagicMock):
                 raise AssertionError("cannot decode {}".format(device_str))
 
         else:
-            raise AssertionError("asd")
+            raise AssertionError("Unknown Machine Type {}".format(machine_type))
 
 
 class TestPRoc(MpfTestCase):
@@ -219,6 +219,14 @@ class TestPRoc(MpfTestCase):
                 0x03: 0x0000,       # dip switches
             }
         }
+
+        def _start_proc_process(self_inner):
+            # reuse normal loop
+            self_inner.proc_process_instance = self.loop
+            self_inner.proc_process = p_roc_common.ProcProcess()
+            self_inner.proc_process.proc = self.pinproc
+
+        p_roc_common.PROCBasePlatform._start_proc_process = _start_proc_process
 
         self.pinproc.aux_send_commands = MagicMock(return_value=True)
         super().setUp()

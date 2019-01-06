@@ -160,6 +160,14 @@ class TestP3Roc(MpfTestCase):
             }
         }
 
+        def _start_proc_process(self_inner):
+            # reuse normal loop
+            self_inner.proc_process_instance = self.loop
+            self_inner.proc_process = p_roc_common.ProcProcess()
+            self_inner.proc_process.proc = self.pinproc
+
+        p_roc_common.PROCBasePlatform._start_proc_process = _start_proc_process
+
         super().setUp()
 
     def test_platform(self):
