@@ -1,0 +1,61 @@
+#config_version=5
+modes:
+    - mode1
+
+playfields:
+    playfield:
+        default_source_device: test_trough
+        tags: default
+
+coils:
+    c_trough:
+        number:
+    c_device1:
+        number:
+    c_device2:
+        number:
+    c_device3:
+        number:
+    c_device4:
+        number:
+
+switches:
+    s_ball_switch1:
+        number:
+    s_ball_switch2:
+        number:
+    s_device1:
+        number:
+    s_device2:
+        number:
+    s_device3:
+        number:
+    s_device4:
+        number:
+
+ball_devices:
+    test_trough:
+        eject_coil: c_trough
+        ball_switches: s_ball_switch1, s_ball_switch2
+        eject_targets: playfield
+        tags: trough, drain, home
+    test_device1:
+        eject_coil: c_device1
+        ball_switches: s_device1
+        debug: True
+        eject_targets: test_device2, test_device3
+    test_device2:
+        eject_coil: c_device2
+        ball_switches: s_device2
+        debug: True
+        eject_targets: playfield
+    test_device3:
+        eject_coil: c_device3
+        ball_switches: s_device3
+        debug: True
+        eject_targets: test_device4
+    test_device4:
+        eject_coil: c_device4
+        ball_switches: s_device4
+        debug: True
+        eject_targets: playfield

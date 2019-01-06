@@ -54,7 +54,7 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
         del config
         raise AssertionError("Device {} cannot be overloaded.".format(self))
 
-    def enable(self, **kwarg) -> None:
+    def enable(self, **kwargs) -> None:
         """Enable handler."""
         pass
 

@@ -301,7 +301,7 @@ class BallSave(SystemWideDevice, ModeDevice):
 
     def device_removed_from_mode(self, mode: Mode) -> None:
         """Disable ball save when mode ends."""
-        del mode
+        super().device_removed_from_mode(mode)
         self.debug_log("Removing...")
 
         self.disable()
