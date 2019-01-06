@@ -27,16 +27,22 @@ class CoilPlayer(DeviceConfigPlayer):
             if not isinstance(coil, Driver):
                 self.raise_config_error("Invalid coil name {}".format(coil), 2, context=context)
             action = s.pop('action')
-            coil_action = getattr(coil, action, None)
-            if not coil_action:
-                self.raise_config_error("Invalid action {}".format(action), 1, context=context)
 
-            if action in ("disable", "off") and coil.name in instance_dict:
+            # delete coil from dict
+            try:
                 del instance_dict[coil.name]
+            except KeyError:
+                pass
+
+            if action in ("disable", "off"):
+                coil.disable(**s)
             elif action in ("on", "enable"):
                 instance_dict[coil.name] = coil
-
-            coil_action(**s)
+                coil.enable(**s)
+            elif action == "pulse":
+                coil.pulse(**s)
+            else:
+                self.raise_config_error("Invalid action {}".format(action), 1, context=context)
 
     def clear_context(self, context):
         """Disable enabled coils."""

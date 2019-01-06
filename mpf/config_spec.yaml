@@ -266,7 +266,7 @@ fast_coils:
     recycle_ms: single|ms|None
 coil_player:
     __valid_in__: machine, mode, show
-    action: single|lstr|pulse
+    action: single|enum(pulse,on,off,enable,disable)|pulse
     hold_power: single|float|None
     pulse_power: single|float|None
     pulse_ms: single|int|None

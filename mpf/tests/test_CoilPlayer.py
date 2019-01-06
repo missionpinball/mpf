@@ -127,6 +127,22 @@ class TestCoilPlayer(MpfTestCase):
 
         coil.hw_driver.disable.assert_called_with()
 
+        # same again but use on and off instead of enable and disable
+        coil.hw_driver.enable = MagicMock()
+        coil.hw_driver.pulse = MagicMock()
+        coil.hw_driver.disable = MagicMock()
+
+        self.machine.events.post('event10')
+        self.advance_time_and_run()
+
+        coil.hw_driver.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=1.0))
+        assert not coil.hw_driver.pulse.called
+
+        self.machine.events.post('event11')
+        self.advance_time_and_run()
+
+        coil.hw_driver.disable.assert_called_with()
+
     def test_coil_player_in_mode(self):
         coil = self.machine.coils['coil_3']
         coil.hw_driver.enable = MagicMock()
