@@ -47,6 +47,11 @@ class SnuxHardwarePlatform(DriverPlatform):
         self.c_side_enabled = False
 
         self.ac_relay_in_transition = False
+        # Specify whether the AC relay should favour the A or C side when at rest.
+        # Typically during a game the 'C' side should be preferred, since that is
+        # normally where the flashers are which need a quick response without having to wait on the relay.
+        # At game over though, it should prefer the 'A' side so that the relay isn't permanently energised.
+        self.prefer_a_side = True
 
     def stop(self):
         """Stop the overlay. Nothing to do here because stop is also called on parent platform."""
@@ -61,6 +66,16 @@ class SnuxHardwarePlatform(DriverPlatform):
     def c_side_active(self):
         """Return if C side cannot be switches off right away."""
         return self.drivers_holding_c_side or self.c_side_done_time > self.machine.clock.get_time()
+
+    @property
+    def c_side_busy(self):
+        """Return if C side cannot be switches off right away."""
+        return self.drivers_holding_c_side or self.c_side_done_time > self.machine.clock.get_time() or self.c_side_queue
+
+    @property
+    def a_side_active(self):
+        """Return if A side cannot be switches off right away."""
+        return self.drivers_holding_a_side or self.a_side_done_time > self.machine.clock.get_time()
 
     def _null_log_handler(self, *args, **kwargs):
         pass
@@ -105,6 +120,22 @@ class SnuxHardwarePlatform(DriverPlatform):
         self.machine.events.add_handler('init_phase_5',
                                         self._initialize_phase_2)
 
+        self.machine.events.add_handler(self.snux_config['prefer_a_side_event'], self._prefer_a_side)
+        self.log.info("Configuring Snux driver to prefer A side on event %s", self.snux_config['prefer_a_side_event'])
+
+        self.machine.events.add_handler(self.snux_config['prefer_c_side_event'], self._prefer_c_side)
+        self.log.info("Configuring Snux driver to prefer C side on event %s", self.snux_config['prefer_c_side_event'])
+
+    def _prefer_a_side(self, **kwargs):
+        del kwargs
+        self.prefer_a_side = True
+        self._enable_a_side()
+
+    def _prefer_c_side(self, **kwargs):
+        del kwargs
+        self.prefer_a_side = False
+        self._enable_c_side()
+
     def _initialize_phase_2(self, **kwargs):
         del kwargs
         self.machine.clock.schedule_interval(self._flash_diag_led, 0.5)
@@ -121,12 +152,20 @@ class SnuxHardwarePlatform(DriverPlatform):
 
         Called based on the timer_tick event
         """
-        if self.a_side_queue:
-            self._service_a_side()
-        elif self.c_side_queue:
-            self._service_c_side()
-        elif self.c_side_enabled and not self.c_side_active:
-            self._enable_a_side()
+        if self.prefer_a_side:
+            if self.a_side_queue:
+                self._service_a_side()
+            elif self.c_side_queue:
+                self._service_c_side()
+            elif self.c_side_enabled and not self.c_side_active:
+                self._enable_a_side()
+        else:
+            if self.c_side_queue:
+                self._service_c_side()
+            elif self.a_side_queue:
+                self._service_a_side()
+            elif self.a_side_enabled and not self.a_side_active:
+                self._enable_c_side()
 
     def _flash_diag_led(self):
         """Flash diagnosis LED."""
@@ -216,13 +255,22 @@ class SnuxHardwarePlatform(DriverPlatform):
 
         This action will be serviced immediately if it can, or ASAP otherwise.
         """
-        if driver in self.a_drivers:
-            self.a_side_queue.add((driver, pulse_settings, hold_settings))
-            self._service_a_side()
-        elif driver in self.c_drivers:
-            self.c_side_queue.add((driver, pulse_settings, hold_settings))
-            if not self.ac_relay_in_transition and not self.a_side_busy:
+        if self.prefer_a_side:
+            if driver in self.a_drivers:
+                self.a_side_queue.add((driver, pulse_settings, hold_settings))
+                self._service_a_side()
+            elif driver in self.c_drivers:
+                self.c_side_queue.add((driver, pulse_settings, hold_settings))
+                if not self.ac_relay_in_transition and not self.a_side_busy:
+                    self._service_c_side()
+        else:
+            if driver in self.c_drivers:
+                self.c_side_queue.add((driver, pulse_settings, hold_settings))
                 self._service_c_side()
+            elif driver in self.a_drivers:
+                self.a_side_queue.add((driver, pulse_settings, hold_settings))
+                if not self.ac_relay_in_transition and not self.c_side_busy:
+                    self._service_a_side()
 
     def _enable_ac_relay(self):
         self.system11_config['ac_relay_driver'].enable()
@@ -245,27 +293,46 @@ class SnuxHardwarePlatform(DriverPlatform):
     # -------------------------------- A SIDE ---------------------------------
 
     def _enable_a_side(self):
-        if not self.a_side_enabled and not self.ac_relay_in_transition:
+        if self.prefer_a_side:
+            if not self.a_side_enabled and not self.ac_relay_in_transition:
 
-            if self.c_side_active:
-                self._disable_all_c_side_drivers()
+                if self.c_side_active:
+                    self._disable_all_c_side_drivers()
+                    self._disable_ac_relay()
+                    self.delay.add(ms=self.system11_config['ac_relay_delay_ms'],
+                                   callback=self._enable_a_side,
+                                   name='enable_a_side')
+                    return
+
+                elif self.c_side_enabled:
+                    self._disable_ac_relay()
+
+                else:
+                    self._a_side_enabled()
+        else:
+            if (not self.ac_relay_in_transition and
+                    not self.a_side_enabled and
+                    not self.c_side_busy):
                 self._disable_ac_relay()
-                self.delay.add(ms=self.system11_config['ac_relay_delay_ms'],
-                               callback=self._enable_a_side,
-                               name='enable_a_side')
-                return
 
-            elif self.c_side_enabled:
-                self._disable_ac_relay()
-
-            else:
-                self._a_side_enabled()
+            elif self.a_side_enabled and self.a_side_queue:
+                self._service_a_side()
 
     def _a_side_enabled(self):
         self.ac_relay_in_transition = False
-        self.a_side_enabled = True
-        self.c_side_enabled = False
-        self._service_a_side()
+        if self.prefer_a_side:
+            self.a_side_enabled = True
+            self.c_side_enabled = False
+            self._service_a_side()
+        else:
+
+            if self.c_side_queue:
+                self._enable_c_side()
+                return
+
+            self.c_side_enabled = False
+            self.a_side_enabled = True
+            self._service_a_side()
 
     def _service_a_side(self):
         if not self.a_side_queue:
@@ -300,24 +367,47 @@ class SnuxHardwarePlatform(DriverPlatform):
     # -------------------------------- C SIDE ---------------------------------
 
     def _enable_c_side(self):
-        if (not self.ac_relay_in_transition and
-                not self.c_side_enabled and
-                not self.a_side_busy):
-            self._enable_ac_relay()
+        if self.prefer_a_side:
+            if not self.c_side_enabled and not self.ac_relay_in_transition:
 
-        elif self.c_side_enabled and self.c_side_queue:
-            self._service_c_side()
+                if self.a_side_active:
+                    self._disable_all_a_side_drivers()
+                    self._enable_ac_relay()
+                    self.delay.add(ms=self.system11_config['ac_relay_delay_ms'],
+                                   callback=self._enable_c_side,
+                                   name='enable_c_side')
+                    return
+
+                elif self.a_side_enabled:
+                    self._enable_ac_relay()
+
+                else:
+                    self._c_side_enabled()
+        else:
+            if (not self.ac_relay_in_transition and
+                    not self.c_side_enabled and
+                    not self.a_side_busy):
+                self._enable_ac_relay()
+
+            elif self.c_side_enabled and self.c_side_queue:
+                self._service_c_side()
 
     def _c_side_enabled(self):
         self.ac_relay_in_transition = False
 
-        if self.a_side_queue:
-            self._enable_a_side()
-            return
+        if self.prefer_a_side:
+            self.c_side_enabled = True
+            self.a_side_enabled = False
+            self._service_c_side()
+        else:
 
-        self.a_side_enabled = False
-        self.c_side_enabled = True
-        self._service_c_side()
+            if self.a_side_queue:
+                self._enable_a_side()
+                return
+
+            self.a_side_enabled = False
+            self.c_side_enabled = True
+            self._service_c_side()
 
     def _service_c_side(self):
         if not self.c_side_queue:
@@ -358,6 +448,14 @@ class SnuxHardwarePlatform(DriverPlatform):
             self.drivers_holding_c_side = set()
             self.c_side_done_time = 0
             self.c_side_enabled = False
+
+    def _disable_all_a_side_drivers(self):
+        if self.a_side_active:
+            for driver in self.drivers_holding_a_side:
+                driver.disable()
+            self.drivers_holding_a_side = set()
+            self.a_side_done_time = 0
+            self.a_side_enabled = False
 
     def validate_coil_section(self, driver, config):
         """Validate coil config for platform."""
