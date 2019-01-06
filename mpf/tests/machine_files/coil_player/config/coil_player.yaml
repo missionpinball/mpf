@@ -41,6 +41,12 @@ coil_player:
     coil_3: disable
   event9:
     coil_3: 30
+  event10:
+    coil_1:
+      action: on
+  event11:
+    coil_1:
+      action: off
   pulse_1_100:
     coil_1:
       action: pulse
