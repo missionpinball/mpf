@@ -143,6 +143,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
 
     def _get_instance_dict(self, context):
         if context not in self.instances or self.config_file_section not in self.instances[context]:
+            self.warning_log("Config player {} is missing context {}".format(self.config_file_section, context))
             return {}
         return self.instances[context][self.config_file_section]
 
