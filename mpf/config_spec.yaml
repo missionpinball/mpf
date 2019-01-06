@@ -1232,6 +1232,8 @@ snux:
     platform: single|str|None
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
+    prefer_a_side_event: single|str|game_ended
+    prefer_c_side_event: single|str|game_will_start
 smartmatrix:
     __valid_in__: machine
     port: single|str|

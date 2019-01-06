@@ -1,10 +1,9 @@
 """Test snux platform."""
+from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase, MagicMock
 from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
 
-from mpf.tests.MpfTestCase import MpfTestCase, MagicMock
 
-
-class TestSnux(MpfTestCase):
+class TestSnux(MpfFakeGameTestCase):
     def getConfigFile(self):
         return 'config.yaml'
 
@@ -29,6 +28,22 @@ class TestSnux(MpfTestCase):
             if driver.number + "c" == coil.hw_driver.number:
                 return driver
         return False
+
+    def test_ac_relay_default(self):
+        # outside game it should be default off
+        c_ac_relay = self.machine.coils["c_ac_relay"]
+        self.assertEqual("disabled", c_ac_relay.hw_driver.state)
+
+        self.start_game()
+        # during a game it should be default on to allow fast flashers
+        self.assertEqual("enabled", c_ac_relay.hw_driver.state)
+
+        # after the game ended it should turn back to default off
+        self.drain_all_balls()
+        self.drain_all_balls()
+        self.drain_all_balls()
+        self.assertGameIsNotRunning()
+        self.assertEqual("disabled", c_ac_relay.hw_driver.state)
 
     def test_ac_switch_and_pulse(self):
         # test diag led flashing. otherwise snux is not running
