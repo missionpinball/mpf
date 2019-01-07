@@ -1,0 +1,14 @@
+#config_version=5
+ball_routings:
+    route_to_ball_device2:
+      source_devices: test_device1
+      target_device: test_device2
+      debug: True
+      enable_events: route_to_2
+      disable_events: route_to_4
+    route_to_ball_device4:
+      source_devices: test_device1
+      target_device: test_device4
+      debug: True
+      enable_events: route_to_4
+      disable_events: route_to_2

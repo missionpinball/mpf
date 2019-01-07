@@ -143,7 +143,9 @@ class BallDevice(SystemWideDevice):
     def expected_ball_received(self):
         """Handle an expected ball."""
         # post enter event
-        yield from self._post_enter_event(unclaimed_balls=0)
+        unclaimed_balls = yield from self._post_enter_event(unclaimed_balls=0)
+        # there might still be unclaimed balls (e.g. because of a ball_routing)
+        self._balls_added_callback(0, unclaimed_balls)
 
     @asyncio.coroutine
     def unexpected_ball_received(self):

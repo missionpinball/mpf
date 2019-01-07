@@ -87,6 +87,7 @@ mpf:
         - mpf.devices.stepper.Stepper
         - mpf.devices.state_machine.StateMachine
         - mpf.devices.score_queue.ScoreQueue
+        - mpf.devices.ball_routing.BallRouting
 
     plugins:
         mpf.plugins.auditor.Auditor
