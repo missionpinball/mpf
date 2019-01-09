@@ -192,7 +192,7 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
         self.mock_event(name)
 
     def command_assert_event_called(self, name, times=1):
-        self.assertEventCalled(name, times)
+        self.assertEventCalled(name, int(times))
 
     def command_assert_event_not_called(self, name):
         self.assertEventNotCalled(name)
