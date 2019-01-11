@@ -171,7 +171,8 @@ class PololuTICStepper(StepperPlatformInterface):
     def is_move_complete(self) -> bool:
         """Return true if move is complete."""
         _currentstatus = self.TIC.currentstatus(True)
-        self.log.debug("Target Position: " + str(self.TIC.targetposition) + " Current Position: " + str(self.TIC.currentposition))
+        self.log.debug("Target Position: " + str(self.TIC.targetposition) + \
+            " Current Position: " + str(self.TIC.currentposition))
         if self.TIC.targetposition == self.TIC.currentposition:
             return True
         else:
