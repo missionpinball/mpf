@@ -10,7 +10,8 @@ class TICError(Exception):
 
 
 class PololuTICDevice(object):
-        """A Pololu TIC Device"""
+
+    """A Pololu TIC Device"""
 
     def __init__(self, serial_number, machine, debug=True):
         self._debug = debug

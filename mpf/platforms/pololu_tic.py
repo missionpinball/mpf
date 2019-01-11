@@ -170,12 +170,13 @@ class PololuTICStepper(StepperPlatformInterface):
     def is_move_complete(self) -> bool:
         """Return true if move is complete."""
         self.TIC.currentstatus(True)
-        self.log.debug("Target Position: {} Current Position: {}".format(
-            str(self.TIC.targetposition),str(self.TIC.currentposition))
-        return bool(self.TIC.targetposition == self.TIC.currentposition)
+        self.log.debug("Target Position: {} Current Position: {}".format( \
+            str(self.TIC.targetposition),str(self.TIC.currentposition)))
+        complete = bool(self.TIC.targetposition == self.TIC.currentposition)
+        return complete
 
 class pololuCommandTimer():
-"""A timer wrapper for the command refresh."""
+    """A timer wrapper for the command refresh."""
 
     def __init__(self, t, hFunction):
         self.t = t
@@ -183,19 +184,19 @@ class pololuCommandTimer():
         self.thread = Timer(self.t, self.handle_function)
 
     def handle_function(self):
-    """Handles the assigned function upon timer trigger."""
+        """Handles the assigned function upon timer trigger."""
         self.hFunction()
         self.thread = Timer(self.t, self.handle_function)
         self.thread.start()
 
     def start(self):
-    """Starts the timer thread."""
+        """Starts the timer thread."""
         self.thread.start()
 
     def cancel(self):
-    """Cancels the timer thread."""
+        """Cancels the timer thread."""
         self.thread.cancel()
 
     def is_alive(self):
-    """Checks to see if the timer thread is alive."""
+        """Checks to see if the timer thread is alive."""
         return self.is_alive()
