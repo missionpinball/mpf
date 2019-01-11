@@ -11,7 +11,7 @@ from mpf.core.events import event_handler
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor(_current_position="position", _target_position="target_position", _is_home="is_homed")
+@DeviceMonitor(_current_position="position", _target_position="target_position", _is_homed="is_homed")
 class Stepper(SystemWideDevice):
 
     """Represents an stepper motor based axis in a pinball machine.
@@ -144,6 +144,8 @@ class Stepper(SystemWideDevice):
             yield from self.machine.switch_controller.wait_for_switch(self.config['homing_switch'].name,
                                                                       only_on_change=False)
             self.hw_stepper.stop()
+            if self.config['homing_set_zero'] == True:
+                self.hw_stepper.set_position(0)
 
         self._is_homed = True
         self._is_moving.clear()

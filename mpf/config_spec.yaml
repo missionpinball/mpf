@@ -979,6 +979,9 @@ pololu_maestro:
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
     debug: single|bool|False
+pololu_tic:
+    __valid_in__: machine
+    debug: single|bool|False
 random_event_player:
     __valid_in__: machine, mode, show
     events: ignore
@@ -1408,6 +1411,7 @@ steppers:
     homing_mode: single|enum(hardware,switch)|hardware
     homing_switch: single|machine(switches)|None
     homing_direction: single|enum(clockwise,counterclockwise)|clockwise
+    homing_set_zero: single|bool|False
     pos_min: single|int|0
     pos_max: single|int|1000
     ball_search_min: single|int|0
@@ -1467,6 +1471,14 @@ system11:
     ac_relay_driver: single|machine(coils)|
 text_strings:
     __valid_in__: machine, mode                 # todo add to validator
+tic_stepper_settings:
+    max_speed: single|int|2000000
+    starting_speed: single|int|0
+    max_acceleration: single|int|40000
+    max_deceleration: single|int|40000
+    step_mode: single|int|1
+    poll_ms: single|ms|100ms
+    current_limit: single|int|192
 tilt:
     __valid_in__: machine, mode
     tilt_slam_tilt_events: event_handler|str:ms|None
