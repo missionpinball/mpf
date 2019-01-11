@@ -89,7 +89,7 @@ class PololuTICStepper(StepperPlatformInterface):
         if self.config['max_speed'] > 500000000:
             raise ConfigFileError("max_speed must be less than or equal to 500,000,000", 3, self.log.name)
 
-        self.log.debug("Looking for TIC Device with serial number " + str(self.serial_number) + ".")
+        self.log.debug("Looking for TIC Device with serial number {}.".format(str(self.serial_number)))
         self.TIC = PololuTICDevice(self.serial_number, False)
 
         if "Low VIN" in self.TIC.currentstatus(False)['Errors currently stopping the motor']:
@@ -116,7 +116,7 @@ class PololuTICStepper(StepperPlatformInterface):
     def resetCommandTimeout(self):
         """Reset the command timeout."""
         self.TIC.reset_command_timeout()
-    
+
     def home(self, direction):
         """Home an axis, resetting 0 position."""
         self.TIC.haltandhold() #stop the stepper in case its moving
@@ -145,7 +145,7 @@ class PololuTICStepper(StepperPlatformInterface):
             self.TIC.haltandhold()     # motor stop
         else:
             calculatedvelocity = velocity * self.config['max_speed']
-            self.log.debug("Rotating By Velocity (velocity * max_speed): {}".format(str(calculatedvelocity)))
+            self.log.debug("Rotating By Velocity (velocity * max_speed): {}".format(calculatedvelocity))
             self.TIC.rotate_by_velocity(calculatedvelocity)
 
     def set_position(self, position):
@@ -171,32 +171,34 @@ class PololuTICStepper(StepperPlatformInterface):
         """Return true if move is complete."""
         self.TIC.currentstatus(True)
         self.log.debug("Target Position: {} Current Position: {}".format( \
-            str(self.TIC.targetposition),str(self.TIC.currentposition)))
+            str(self.TIC.targetposition), str(self.TIC.currentposition)))
         complete = bool(self.TIC.targetposition == self.TIC.currentposition)
         return complete
 
 class pololuCommandTimer():
+
     """A timer wrapper for the command refresh."""
 
     def __init__(self, t, hFunction):
+        """Initialize the object."""
         self.t = t
         self.hFunction = hFunction
         self.thread = Timer(self.t, self.handle_function)
 
     def handle_function(self):
-        """Handles the assigned function upon timer trigger."""
+        """Handle the assigned function upon timer trigger."""
         self.hFunction()
         self.thread = Timer(self.t, self.handle_function)
         self.thread.start()
 
     def start(self):
-        """Starts the timer thread."""
+        """Start the timer thread."""
         self.thread.start()
 
     def cancel(self):
-        """Cancels the timer thread."""
+        """Cancel the timer thread."""
         self.thread.cancel()
 
     def is_alive(self):
-        """Checks to see if the timer thread is alive."""
+        """Check to see if the timer thread is alive."""
         return self.is_alive()

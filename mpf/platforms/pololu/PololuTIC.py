@@ -1,3 +1,4 @@
+"""Pololu TIC Device."""
 import subprocess
 import logging
 import asyncio
@@ -6,14 +7,22 @@ import ruamel.yaml as yaml
 
 
 class TICError(Exception):
+    """A Pololu TIC Error."""
     pass
 
 
-class PololuTICDevice(object):
+class PololuTICDevice():
 
-    """A Pololu TIC Device"""
+    """A Pololu TIC Device."""
 
     def __init__(self, serial_number, machine, debug=True):
+        """Returns the current status of the TIC device.
+
+        Args:
+            serial_number (number): The serial number of the TIC to control
+            machine (object): The machine object
+            debug (boolean): Turn on debugging or not
+        """
         self._debug = debug
         self.log = logging.getLogger('TIC Stepper')
         self._serial_number = serial_number
@@ -44,7 +53,7 @@ class PololuTICDevice(object):
             raise TICError(e.output)
 
     def currentstatus(self, refresh=True):
-        """Returns the current status of the TIC device.
+        """Return the current status of the TIC device.
 
         Args:
             refresh (boolean): Refresh the cached status by asking the TIC
@@ -59,15 +68,15 @@ class PololuTICDevice(object):
         self.currentposition = self._status['Current position']
 
     def haltandhold(self):
-        """Stops the motor abruptly without respecting the deceleration limit."""
+        """Stop the motor abruptly without respecting the deceleration limit."""
         self._ticcmd('--halt-and-hold')
 
     def haltandsetposition(self, position):
-        """Stops the motor abruptly without respecting the deceleration limit and sets the current position."""
+        """Stop the motor abruptly without respecting the deceleration limit and sets the current position."""
         self._ticcmd('--halt-and-set-position', str(position))
 
     def rotate_to_position(self, position):
-        """Tells the TIC to move the stepper to the target position
+        """Tells the TIC to move the stepper to the target position.
 
         Args:
             position (number): The desired position in microsteps
@@ -76,7 +85,7 @@ class PololuTICDevice(object):
         self._ticcmd('--position', str(position))
 
     def rotate_by_velocity(self, velocity):
-        """Tells the TIC to move the stepper continuously at the specified velocity
+        """Tells the TIC to move the stepper continuously at the specified velocity.
 
         Args:
             velocity (number): The desired speed in microsteps per 10,000 s
@@ -92,7 +101,7 @@ class PololuTICDevice(object):
         self._ticcmd('--exit-safe-start')
 
     def set_step_mode(self, mode):
-        """Sets the Step Mode of the stepper
+        """Set the Step Mode of the stepper.
 
         Args:
             mode (number): One of 1, 2, 4, 8, 16, 32, the number of microsteps per step
@@ -100,7 +109,7 @@ class PololuTICDevice(object):
         self._ticcmd('--step-mode', str(mode))
 
     def set_max_speed(self, speed):
-        """Sets the max speed of the stepper
+        """Set the max speed of the stepper.
 
         Args:
             speed (number): The maximum speed of the stepper in microsteps per 10,000s
@@ -108,7 +117,7 @@ class PololuTICDevice(object):
         self._ticcmd('--max-speed', str(speed))
 
     def set_starting_speed(self, speed):
-        """Sets the starting speed of the stepper
+        """Set the starting speed of the stepper.
 
         Args:
             speed (number): The starting speed of the stepper in microsteps per 10,000s
@@ -116,7 +125,7 @@ class PololuTICDevice(object):
         self._ticcmd('--starting-speed', str(speed))
 
     def set_max_acceleration(self, acceleration):
-        """Sets the max acceleration of the stepper
+        """Set the max acceleration of the stepper.
 
         Args:
             acceleration (number): The maximum acceleration of the stepper in microsteps per 100 s^2
@@ -124,7 +133,7 @@ class PololuTICDevice(object):
         self._ticcmd('--max-accel', str(acceleration))
 
     def set_max_deceleration(self, deceleration):
-        """Sets the max deceleration of the stepper
+        """Set the max deceleration of the stepper.
 
         Args:
             deceleration (number): The maximum deceleration of the stepper in microsteps per 100 s^2
@@ -132,7 +141,7 @@ class PololuTICDevice(object):
         self._ticcmd('--max-decel', str(deceleration))
 
     def set_current_limit(self, current):
-        """Sets the max current of the stepper driver
+        """Set the max current of the stepper driver.
 
         Args:
             current (number): The maximum current of the stepper in milliamps
@@ -140,5 +149,5 @@ class PololuTICDevice(object):
         self._ticcmd('--current', str(current))
 
     def energize(self):
-        """Energizes the Stepper"""
+        """Energize the Stepper."""
         self._ticcmd('--energize')
