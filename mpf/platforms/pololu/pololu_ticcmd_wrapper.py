@@ -47,8 +47,9 @@ class PololuTiccmdWrapper:
         self.loop.close()
 
     def stop(self):
-        """Stop loop."""
+        """Stop loop and join thread."""
         self.stop_future.set_result(True)
+        self.thread.join()
 
     def _ticcmd(self, *args):
         """Run ticcmd in another thread."""
