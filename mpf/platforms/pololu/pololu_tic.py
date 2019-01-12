@@ -49,8 +49,8 @@ class PololuTICHardwarePlatform(StepperPlatform):
             config (dict): Configuration of device
         """
         stepper = PololuTICStepper(number, config, self.machine)
-        yield from stepper.initialize()
         self._steppers.append(stepper)
+        yield from stepper.initialize()
         return stepper
 
     @classmethod
