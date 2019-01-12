@@ -46,9 +46,17 @@ class PololuTiccmdWrapper:
         self.loop.run_until_complete(self.stop_future)
         self.loop.close()
 
+    @asyncio.coroutine
+    def stop_async(self):
+        """Stop loop."""
+        self.stop_future.set_result(True)
+
     def stop(self):
         """Stop loop and join thread."""
-        self.stop_future.set_result(True)
+        asyncio.run_coroutine_threadsafe(self.stop_async(), self.loop),
+        self._stop_thread()
+
+    def _stop_thread(self):
         self.thread.join()
 
     def _ticcmd(self, *args):

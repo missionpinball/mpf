@@ -1,4 +1,5 @@
 import asyncio
+import sys
 
 from mpf.platforms.pololu import pololu_tic
 from mpf.tests.MpfTestCase import MpfTestCase
@@ -54,7 +55,11 @@ class TestPololuTic(MpfTestCase):
             self_inner.stop_future = asyncio.Future(loop=self.loop)
             self_inner.loop = self.loop
 
+        def _stop_thread(self_inner):
+            pass
+
         pololu_tic.PololuTiccmdWrapper._start_thread = _create_fake_thread
+        pololu_tic.PololuTiccmdWrapper._stop_thread = _stop_thread
         pololu_tic.PololuTiccmdWrapper._ticcmd_async = self._ticcmd_async
 
         super().setUp()
@@ -73,7 +78,7 @@ class TestPololuTic(MpfTestCase):
 
         # move stepper
         self.expected_commands = {
-            ('--position', '20.0'): ""
+            ('--position', '20'): ""
         }
         self.post_event("test_01")
         self.advance_time_and_run(.1)
@@ -89,7 +94,7 @@ class TestPololuTic(MpfTestCase):
 
         # move stepper
         self.expected_commands = {
-            ('--position', '50.0'): ""
+            ('--position', '50'): ""
         }
         self.post_event("test_10")
         self.advance_time_and_run(.1)
