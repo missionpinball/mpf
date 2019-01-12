@@ -3,11 +3,13 @@ import subprocess
 import logging
 import asyncio
 from threading import Timer, Thread, Event
-import ruamel.yaml as yaml
+import ruamel.yaml
 
 
 class TICError(Exception):
+
     """A Pololu TIC Error."""
+
     pass
 
 
@@ -16,7 +18,7 @@ class PololuTICDevice():
     """A Pololu TIC Device."""
 
     def __init__(self, serial_number, machine, debug=True):
-        """Returns the current status of the TIC device.
+        """Return the current status of the TIC device.
 
         Args:
             serial_number (number): The serial number of the TIC to control
@@ -49,7 +51,7 @@ class PololuTICDevice():
             self._commandrunning = False
             return output
         except subprocess.CalledProcessError as e:
-            self.log.debug("Exception: {}".format(str(e.output)))
+            self.log.debug("Exception: {}".format(e.output))
             raise TICError(e.output)
 
     def currentstatus(self, refresh=True):
