@@ -50,7 +50,8 @@ class Stepper(SystemWideDevice):
                                             self._position_event,
                                             position=position)
 
-        self.hw_stepper = self.platform.configure_stepper(self.config['number'], self.config['platform_settings'])
+        self.hw_stepper = yield from self.platform.configure_stepper(self.config['number'],
+                                                                     self.config['platform_settings'])
 
         if self.config['include_in_ball_search']:
             self.machine.events.add_handler("ball_search_started",
@@ -106,7 +107,7 @@ class Stepper(SystemWideDevice):
                                self._current_position, target_position, delta)
                 # move stepper
                 self.hw_stepper.move_rel_pos(delta)
-                # wait for the move to complte
+                # wait for the move to complete
                 yield from self.hw_stepper.wait_for_move_completed()
             else:
                 self.debug_log("Got move command. Stepper already at target. Not moving.")

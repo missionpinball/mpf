@@ -343,6 +343,7 @@ class StepperPlatform(BasePlatform, metaclass=abc.ABCMeta):
         return config
 
     @abc.abstractmethod
+    @asyncio.coroutine
     def configure_stepper(self, number: str, config: dict) -> "StepperPlatformInterface":
         """Configure a smart stepper (axis) device in platform.
 

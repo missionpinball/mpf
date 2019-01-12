@@ -69,6 +69,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         """Configure a servo device in platform."""
         return VirtualServo(number)
 
+    @asyncio.coroutine
     def configure_stepper(self, number: str, config: dict):
         """Configure a smart stepper / axis device in platform."""
         del config
