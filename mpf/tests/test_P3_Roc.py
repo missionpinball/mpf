@@ -1,8 +1,3 @@
-import asyncio
-import time
-from concurrent.futures import ThreadPoolExecutor
-from queue import Empty
-
 import sys
 
 from mpf.core.platform_controller import SwitchRuleSettings, DriverRuleSettings, PulseRuleSettings

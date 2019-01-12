@@ -173,13 +173,15 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
     def run_proc_cmd(self, cmd, *args):
         """Run a command in the p-roc thread and return a future."""
-        return asyncio.wrap_future(
+        future = asyncio.wrap_future(
             asyncio.run_coroutine_threadsafe(self.proc_process.run_command(cmd, *args), self.proc_process_instance),
             loop=self.machine.clock.loop)
+        future.add_done_callback(self._done)
+        return future
 
     def run_proc_cmd_no_wait(self, cmd, *args):
         """Run a command in the p-roc thread."""
-        asyncio.run_coroutine_threadsafe(self.proc_process.run_command(cmd, *args), self.proc_process_instance)
+        self.run_proc_cmd(cmd, *args)
 
     def run_proc_cmd_sync(self, cmd, *args):
         """Run a command in the p-roc thread and return the result."""
