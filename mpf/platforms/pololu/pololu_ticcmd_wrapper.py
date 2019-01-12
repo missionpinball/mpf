@@ -52,13 +52,18 @@ class PololuTiccmdWrapper:
 
     def _ticcmd(self, *args):
         """Run ticcmd in another thread."""
-        return asyncio.wrap_future(
+        future = asyncio.wrap_future(
             asyncio.run_coroutine_threadsafe(self._ticcmd_async(*args), self.loop),
             loop=self._machine.clock.loop)
+        future.add_done_callback(self._done)
+        return future
 
-    def _ticcmd_no_wait(self, *args):
-        """Run ticcmd without waiting for the response.."""
-        asyncio.run_coroutine_threadsafe(self._ticcmd_async(*args), self.loop)
+    @staticmethod
+    def _done(future):
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            pass
 
     @asyncio.coroutine
     def _ticcmd_async(self, *args):
@@ -86,11 +91,11 @@ class PololuTiccmdWrapper:
 
     def halt_and_hold(self):
         """Stop the motor abruptly without respecting the deceleration limit."""
-        self._ticcmd_no_wait('--halt-and-hold')
+        self._ticcmd('--halt-and-hold')
 
     def halt_and_set_position(self, position):
         """Stop the motor abruptly without respecting the deceleration limit and sets the current position."""
-        self._ticcmd_no_wait('--halt-and-set-position', str(position))
+        self._ticcmd('--halt-and-set-position', str(position))
 
     def rotate_to_position(self, position):
         """Tells the TIC to move the stepper to the target position.
@@ -98,7 +103,7 @@ class PololuTiccmdWrapper:
         Args:
             position (number): The desired position in microsteps
         """
-        self._ticcmd_no_wait('--position', str(position))
+        self._ticcmd('--position', str(position))
 
     def rotate_by_velocity(self, velocity):
         """Tells the TIC to move the stepper continuously at the specified velocity.
@@ -106,15 +111,15 @@ class PololuTiccmdWrapper:
         Args:
             velocity (number): The desired speed in microsteps per 10,000 s
         """
-        self._ticcmd_no_wait('--velocity', str(velocity))
+        self._ticcmd('--velocity', str(velocity))
 
     def reset_command_timeout(self):
         """Tells the TIC to reset the internal command timeout."""
-        self._ticcmd_no_wait('--reset-command-timeout')
+        self._ticcmd('--reset-command-timeout')
 
     def exit_safe_start(self):
         """Tells the TIC to exit the safe start mode."""
-        self._ticcmd_no_wait('--exit-safe-start')
+        self._ticcmd('--exit-safe-start')
 
     def set_step_mode(self, mode):
         """Set the Step Mode of the stepper.
@@ -122,7 +127,7 @@ class PololuTiccmdWrapper:
         Args:
             mode (number): One of 1, 2, 4, 8, 16, 32, the number of microsteps per step
         """
-        self._ticcmd_no_wait('--step-mode', str(mode))
+        self._ticcmd('--step-mode', str(mode))
 
     def set_max_speed(self, speed):
         """Set the max speed of the stepper.
@@ -130,7 +135,7 @@ class PololuTiccmdWrapper:
         Args:
             speed (number): The maximum speed of the stepper in microsteps per 10,000s
         """
-        self._ticcmd_no_wait('--max-speed', str(speed))
+        self._ticcmd('--max-speed', str(speed))
 
     def set_starting_speed(self, speed):
         """Set the starting speed of the stepper.
@@ -138,7 +143,7 @@ class PololuTiccmdWrapper:
         Args:
             speed (number): The starting speed of the stepper in microsteps per 10,000s
         """
-        self._ticcmd_no_wait('--starting-speed', str(speed))
+        self._ticcmd('--starting-speed', str(speed))
 
     def set_max_acceleration(self, acceleration):
         """Set the max acceleration of the stepper.
@@ -146,7 +151,7 @@ class PololuTiccmdWrapper:
         Args:
             acceleration (number): The maximum acceleration of the stepper in microsteps per 100 s^2
         """
-        self._ticcmd_no_wait('--max-accel', str(acceleration))
+        self._ticcmd('--max-accel', str(acceleration))
 
     def set_max_deceleration(self, deceleration):
         """Set the max deceleration of the stepper.
@@ -154,7 +159,7 @@ class PololuTiccmdWrapper:
         Args:
             deceleration (number): The maximum deceleration of the stepper in microsteps per 100 s^2
         """
-        self._ticcmd_no_wait('--max-decel', str(deceleration))
+        self._ticcmd('--max-decel', str(deceleration))
 
     def set_current_limit(self, current):
         """Set the max current of the stepper driver.
@@ -162,8 +167,8 @@ class PololuTiccmdWrapper:
         Args:
             current (number): The maximum current of the stepper in milliamps
         """
-        self._ticcmd_no_wait('--current', str(current))
+        self._ticcmd('--current', str(current))
 
     def energize(self):
         """Energize the Stepper."""
-        self._ticcmd_no_wait('--energize')
+        self._ticcmd('--energize')

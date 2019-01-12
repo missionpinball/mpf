@@ -37,7 +37,8 @@ class PololuTICHardwarePlatform(StepperPlatform):
     def stop(self):
         """De-energize the stepper and stop sending the command timeout refresh."""
         for stepper in self._steppers:
-            stepper.stop()
+            stepper.tic.halt_and_hold()
+            stepper.tic.stop()
         self._steppers = []
 
     @asyncio.coroutine
@@ -157,7 +158,6 @@ class PololuTICStepper(StepperPlatformInterface):
         """Stop stepper."""
         self.log.debug("Commanded To Stop")
         self.tic.halt_and_hold()
-        self.tic.stop()
 
     @asyncio.coroutine
     def wait_for_move_completed(self):
