@@ -129,12 +129,12 @@ class PololuTICStepper(StepperPlatformInterface):
 
     def move_abs_pos(self, position):
         """Move axis to a certain absolute position."""
-        self.log.debug("Moving To Absolute Position: {}".format(str(position)))
+        self.log.debug("Moving To Absolute Position: %s", str(position))
         self.TIC.rotate_to_position(position)
 
     def move_rel_pos(self, position):
         """Move axis to a relative position."""
-        self.log.debug("Moving To Relative Position: {}".format(str(position)))
+        self.log.debug("Moving To Relative Position: %s", str(position))
         _newposition = int(position) - int(self.TIC.currentstatus(True)['Current position'])
         self.TIC.rotate_to_position(_newposition)
 
@@ -145,7 +145,7 @@ class PololuTICStepper(StepperPlatformInterface):
             self.TIC.haltandhold()     # motor stop
         else:
             calculatedvelocity = velocity * self.config['max_speed']
-            self.log.debug("Rotating By Velocity (velocity * max_speed): {}".format(calculatedvelocity))
+            self.log.debug("Rotating By Velocity (velocity * max_speed): %s", calculatedvelocity)
             self.TIC.rotate_by_velocity(calculatedvelocity)
 
     def set_position(self, position):
@@ -154,7 +154,7 @@ class PololuTICStepper(StepperPlatformInterface):
         Args:
             position (number): The position to set
         """
-        self.log.debug("Setting Position To {}".format(str(position)))
+        self.log.debug("Setting Position To %s", str(position))
         self.TIC.haltandsetposition(position)
 
     def current_position(self):
@@ -175,8 +175,8 @@ class PololuTICStepper(StepperPlatformInterface):
     def is_move_complete(self) -> bool:
         """Return true if move is complete."""
         self.TIC.currentstatus(True)
-        self.log.debug("Target Position: {} Current Position: {}".format( \
-            str(self.TIC.targetposition), str(self.TIC.currentposition)))
+        self.log.debug("Target Position: %s Current Position: %s", \
+            str(self.TIC.targetposition), str(self.TIC.currentposition))
         complete = bool(self.TIC.targetposition == self.TIC.currentposition)
         return complete
 
