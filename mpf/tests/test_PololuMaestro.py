@@ -1,4 +1,3 @@
-import sys
 from unittest.mock import MagicMock
 from mpf.tests.MpfTestCase import MpfTestCase
 import mpf.platforms.pololu_maestro
@@ -16,11 +15,6 @@ class TestPololuMaestro(MpfTestCase):
         return False
 
     def setUp(self):
-        if sys.version_info[0] == 3 and sys.version_info[1] == 4:
-            # this fails on python 3.4 because of some asyncio bugs
-            self.skipTest("Test is unstable in Python 3.4")
-            return
-
         self.serial = MagicMock()
         mpf.platforms.pololu_maestro.serial = MagicMock()
         mpf.platforms.pololu_maestro.serial.Serial.return_value = self.serial
