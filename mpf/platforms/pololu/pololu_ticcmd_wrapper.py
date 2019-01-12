@@ -53,7 +53,7 @@ class PololuTiccmdWrapper:
 
     def stop(self):
         """Stop loop and join thread."""
-        asyncio.run_coroutine_threadsafe(self.stop_async(), self.loop),
+        asyncio.run_coroutine_threadsafe(self.stop_async(), self.loop)
         self._stop_thread()
 
     def _stop_thread(self):
