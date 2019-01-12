@@ -17,7 +17,7 @@ class PololuTiccmdWrapper:
 
     """A Pololu TIC Device."""
 
-    def __init__(self, serial_number, machine, debug=True, loop=None):
+    def __init__(self, serial_number, machine, debug=True):
         """Return the current status of the TIC device.
 
         Args:
@@ -29,17 +29,14 @@ class PololuTiccmdWrapper:
         self.log = logging.getLogger('TIC Stepper')
         self._serial_number = serial_number
         self._machine = machine
+        self.loop = None
 
-        if not loop:
-            # Create a new loop
-            self.loop = asyncio.new_event_loop()
-        else:
-            # Allow overwrite for tests and sync operations
-            self.loop = loop
-
-        self.stop_future = asyncio.Future(loop=self.loop)
+        self._start_thread()
 
     def _start_thread(self):
+        # Create a new loop
+        self.loop = asyncio.new_event_loop()
+        self.stop_future = asyncio.Future(loop=self.loop)
         # Assign the loop to another thread
         self.thread = Thread(target=self._run_loop)
         self.thread.start()

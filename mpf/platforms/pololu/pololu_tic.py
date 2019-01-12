@@ -17,7 +17,7 @@ class PololuTICHardwarePlatform(StepperPlatform):
         super().__init__(machine)
         self.log = logging.getLogger("Pololu TIC")
         self.log.debug("Configuring template hardware interface.")
-        self.config = self.machine.config['pololu_tic']
+        self.config = self.machine.config.get('pololu_tic', {})
         self.features['tickless'] = True
         self._steppers = []
 
@@ -58,7 +58,6 @@ class PololuTICHardwarePlatform(StepperPlatform):
         return "tic_stepper_settings"
 
 
-# pylint: disable-msg=too-many-instance-attributes
 class PololuTICStepper(StepperPlatformInterface):
 
     """A stepper on a pololu TIC."""
