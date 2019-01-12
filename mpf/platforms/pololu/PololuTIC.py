@@ -51,7 +51,7 @@ class PololuTICDevice():
             self._commandrunning = False
             return output
         except subprocess.CalledProcessError as e:
-            self.log.debug("Exception: {}".format(e.output))
+            self.log.debug("Exception: %s", str(e.output))
             raise TICError(e.output)
 
     def currentstatus(self, refresh=True):
@@ -66,7 +66,7 @@ class PololuTICDevice():
 
     def _getstatus(self):
         cmd_return = self._ticcmd('-s', '--full')
-        self._status = yaml.load(cmd_return)
+        self._status = ruamel.yaml.load(cmd_return)
         self.currentposition = self._status['Current position']
 
     def haltandhold(self):

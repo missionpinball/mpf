@@ -89,7 +89,7 @@ class PololuTICStepper(StepperPlatformInterface):
         if self.config['max_speed'] > 500000000:
             raise ConfigFileError("max_speed must be less than or equal to 500,000,000", 3, self.log.name)
 
-        self.log.debug("Looking for TIC Device with serial number {}.".format(self.serial_number))
+        self.log.debug("Looking for TIC Device with serial number %s.", self.serial_number)
         self.TIC = PololuTICDevice(self.serial_number, False)
 
         if "Low VIN" in self.TIC.currentstatus(False)['Errors currently stopping the motor']:
