@@ -1,19 +1,12 @@
 """Pololu TIC controller platform."""
 import asyncio
 import logging
-import subprocess
-
-from threading import Timer, Thread, Event
-
-from mpf.platforms.pololu import PololuTIC
-
-from mpf.platforms.pololu.PololuTIC import PololuTICDevice
-
-from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
-
-from mpf.core.platform import StepperPlatform
 
 from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.platforms.pololu.pololu_ticcmd_wrapper import PololuTiccmdWrapper
+from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
+from mpf.core.platform import StepperPlatform
+
 
 class PololuTICHardwarePlatform(StepperPlatform):
 
@@ -25,8 +18,8 @@ class PololuTICHardwarePlatform(StepperPlatform):
         self.log = logging.getLogger("Pololu TIC")
         self.log.debug("Configuring template hardware interface.")
         self.config = self.machine.config['pololu_tic']
-        self.platform = None
         self.features['tickless'] = True
+        self._steppers = []
 
     def __repr__(self):
         """Return string representation."""
@@ -43,15 +36,21 @@ class PololuTICHardwarePlatform(StepperPlatform):
 
     def stop(self):
         """De-energize the stepper and stop sending the command timeout refresh."""
-        #self.TMCL.stop()
+        for stepper in self._steppers:
+            stepper.stop()
+        self._steppers = []
 
+    @asyncio.coroutine
     def configure_stepper(self, number: str, config: dict) -> "PololuTICStepper":
         """Configure a smart stepper device in platform.
 
         Args:
             config (dict): Configuration of device
         """
-        return PololuTICStepper(number, config, self.machine)
+        stepper = PololuTICStepper(number, config, self.machine)
+        yield from stepper.initialize()
+        self._steppers.append(stepper)
+        return stepper
 
     @classmethod
     def get_stepper_config_section(cls):
@@ -70,15 +69,9 @@ class PololuTICStepper(StepperPlatformInterface):
         self.log = logging.getLogger('TIC Stepper')
         self.log.debug("Configuring Stepper Parameters.")
         self.serial_number = number
-        self.TIC = PololuTICDevice(self.serial_number, machine, False)
-        self.max_speed = self.config['max_speed']
-        self.starting_speed = self.config['starting_speed']
-        self.max_acceleration = self.config['max_acceleration']
-        self.max_deceleration = self.config['max_deceleration']
-        self.current_limit = self.config['current_limit']
-        self.step_mode = self.config['step_mode']
+        self.tic = PololuTiccmdWrapper(self.serial_number, machine, False)
         self.machine = machine
-        self.commandTimer = None
+        self._position = None
 
         if self.config['step_mode'] not in [1, 2, 4, 8, 16, 32]:
             raise ConfigFileError("step_mode must be one of (1, 2, 4, 8, 16, or 32)", 1, self.log.name)
@@ -89,64 +82,67 @@ class PololuTICStepper(StepperPlatformInterface):
         if self.config['max_speed'] > 500000000:
             raise ConfigFileError("max_speed must be less than or equal to 500,000,000", 3, self.log.name)
 
+    @asyncio.coroutine
+    def initialize(self):
+        """Configure the stepper."""
         self.log.debug("Looking for TIC Device with serial number %s.", self.serial_number)
-        self.TIC = PololuTICDevice(self.serial_number, False)
+        status = yield from self.tic.get_status()
 
-        if "Low VIN" in self.TIC.currentstatus(False)['Errors currently stopping the motor']:
+        if "Low VIN" in status['Errors currently stopping the motor']:
             self.log.debug("WARNING: Reporting Low VIN")
 
+        self._position = status['Current position']
+
         self.log.debug("TIC Status: ")
-        self.log.debug(self.TIC.currentstatus(True))
+        self.log.debug(status)
 
-        #start the thread that continuously resets the command timeout
-        self.commandTimer = pololuCommandTimer(0.5, self.resetCommandTimeout)
-        self.commandTimer.start()
+        self.tic.set_step_mode(self.config['step_mode'])
+        self.tic.set_max_speed(self.config['max_speed'])
+        self.tic.set_starting_speed(self.config['starting_speed'])
+        self.tic.set_max_acceleration(self.config['max_acceleration'])
+        self.tic.set_max_deceleration(self.config['max_deceleration'])
+        self.tic.set_current_limit(self.config['current_limit'])
 
-        self.TIC.set_step_mode(self.step_mode)
-        self.TIC.set_max_speed(self.max_speed)
-        self.TIC.set_starting_speed(self.starting_speed)
-        self.TIC.set_max_acceleration(self.max_acceleration)
-        self.TIC.set_max_deceleration(self.max_deceleration)
-        self.TIC.set_current_limit(self.current_limit)
+        self.tic.exit_safe_start()
+        self.tic.energize()
 
-        self.TIC.exit_safe_start()
-        self.TIC.energize()
+        self.machine.clock.schedule_interval(self._reset_command_timeout, .5)
 
-    # Public Stepper Platform Interface
-    def resetCommandTimeout(self):
+    def _reset_command_timeout(self):
         """Reset the command timeout."""
-        self.TIC.reset_command_timeout()
+        self.tic.reset_command_timeout()
 
     def home(self, direction):
         """Home an axis, resetting 0 position."""
-        self.TIC.haltandhold() #stop the stepper in case its moving
+        self.tic.halt_and_hold()    # stop the stepper in case its moving
         if direction == 'clockwise':
             self.log.debug("Homing clockwise")
-            self.TIC.rotate_to_position(2147483647)
+            self.tic.rotate_by_velocity(self.config['max_speed'])
         elif direction == 'counterclockwise':
             self.log.debug("Homing counterclockwise")
-            self.TIC.rotate_to_position(-2147483647)
+            self.tic.rotate_by_velocity(-self.config['max_speed'])
 
     def move_abs_pos(self, position):
         """Move axis to a certain absolute position."""
-        self.log.debug("Moving To Absolute Position: %s", str(position))
-        self.TIC.rotate_to_position(position)
+        self.log.debug("Moving To Absolute Position: %s", position)
+        self._position = position
+        self.tic.rotate_to_position(self._position)
 
     def move_rel_pos(self, position):
         """Move axis to a relative position."""
-        self.log.debug("Moving To Relative Position: %s", str(position))
-        _newposition = int(position) - int(self.TIC.currentstatus(True)['Current position'])
-        self.TIC.rotate_to_position(_newposition)
+        self._position += position
+        self.log.debug("Moving To Relative Position: %s (Absolute: %s)", position, self._position)
+        self.tic.rotate_to_position(self._position)
 
     def move_vel_mode(self, velocity):
         """Move at a specific velocity and direction (pos = clockwise, neg = counterclockwise)."""
         if velocity == 0:
             self.log.debug("Stopping Due To Velocity Set To 0")
-            self.TIC.haltandhold()     # motor stop
+            self.tic.halt_and_hold()     # motor stop
         else:
-            calculatedvelocity = velocity * self.config['max_speed']
-            self.log.debug("Rotating By Velocity (velocity * max_speed): %s", calculatedvelocity)
-            self.TIC.rotate_by_velocity(calculatedvelocity)
+            calculated_velocity = velocity * self.config['max_speed']
+            self.log.debug("Rotating By Velocity (velocity * max_speed): %s", calculated_velocity)
+            self.tic.rotate_by_velocity(calculated_velocity)
 
     def set_position(self, position):
         """Set the current position of the stepper.
@@ -154,56 +150,26 @@ class PololuTICStepper(StepperPlatformInterface):
         Args:
             position (number): The position to set
         """
-        self.log.debug("Setting Position To %s", str(position))
-        self.TIC.haltandsetposition(position)
-
-    def current_position(self):
-        """Return current position."""
-        return int(self.log.debug(self.TIC.currentstatus(True)['Current position']))
+        self.log.debug("Setting Position To %s", position)
+        self._position = position
+        self.tic.halt_and_set_position(position)
 
     def stop(self) -> None:
         """Stop stepper."""
         self.log.debug("Commanded To Stop")
-        self.TIC.haltandhold()
+        self.tic.halt_and_hold()
+        self.tic.stop()
 
     @asyncio.coroutine
     def wait_for_move_completed(self):
         """Wait until move completed."""
-        while not self.is_move_complete():
+        while not (yield from self.is_move_complete()):
             yield from asyncio.sleep(1 / self.config['poll_ms'], loop=self.machine.clock.loop)
 
+    @asyncio.coroutine
     def is_move_complete(self) -> bool:
         """Return true if move is complete."""
-        self.TIC.currentstatus(True)
-        self.log.debug("Target Position: %s Current Position: %s", \
-            str(self.TIC.targetposition), str(self.TIC.currentposition))
-        complete = bool(self.TIC.targetposition == self.TIC.currentposition)
-        return complete
-
-class pololuCommandTimer():
-
-    """A timer wrapper for the command refresh."""
-
-    def __init__(self, t, hFunction):
-        """Initialize the object."""
-        self.t = t
-        self.hFunction = hFunction
-        self.thread = Timer(self.t, self.handle_function)
-
-    def handle_function(self):
-        """Handle the assigned function upon timer trigger."""
-        self.hFunction()
-        self.thread = Timer(self.t, self.handle_function)
-        self.thread.start()
-
-    def start(self):
-        """Start the timer thread."""
-        self.thread.start()
-
-    def cancel(self):
-        """Cancel the timer thread."""
-        self.thread.cancel()
-
-    def is_alive(self):
-        """Check to see if the timer thread is alive."""
-        return self.is_alive()
+        status = yield from self.tic.get_status()
+        current_position = status['Current position']
+        self.log.debug("Target Position: %s Current Position: %s", self._position, current_position)
+        return bool(self._position == current_position)

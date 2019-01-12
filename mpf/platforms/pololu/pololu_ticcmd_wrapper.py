@@ -2,22 +2,22 @@
 import subprocess
 import logging
 import asyncio
-from threading import Timer, Thread, Event
+from threading import Thread
 import ruamel.yaml
 
 
-class TICError(Exception):
+class TicError(Exception):
 
     """A Pololu TIC Error."""
 
     pass
 
 
-class PololuTICDevice():
+class PololuTiccmdWrapper:
 
     """A Pololu TIC Device."""
 
-    def __init__(self, serial_number, machine, debug=True):
+    def __init__(self, serial_number, machine, debug=True, loop=None):
         """Return the current status of the TIC device.
 
         Args:
@@ -29,53 +29,71 @@ class PololuTICDevice():
         self.log = logging.getLogger('TIC Stepper')
         self._serial_number = serial_number
         self._machine = machine
-        self._status = None
-        self._commandrunning = False
-        self.currentposition = None
-        self.targetposition = None
-        self._getstatus()
+
+        if not loop:
+            # Create a new loop
+            self.loop = asyncio.new_event_loop()
+        else:
+            # Allow overwrite for tests and sync operations
+            self.loop = loop
+
+        self.stop_future = asyncio.Future(loop=self.loop)
+
+    def _start_thread(self):
+        # Assign the loop to another thread
+        self.thread = Thread(target=self._run_loop)
+        self.thread.start()
+
+    def _run_loop(self):
+        """Run the asyncio loop in this thread."""
+        self.loop.run_until_complete(self.stop_future)
+        self.loop.close()
+
+    def stop(self):
+        """Stop loop."""
+        self.stop_future.set_result(True)
 
     def _ticcmd(self, *args):
-        # this is my cheat to control threading, because self._commandrunning appears to
-        # be shared memory between the threads, I can use it to prevent collisions with
-        # ticcmd but potentially risk deadlock.  if someone knows a more proper way to do
-        # this in python, feel free
-        while self._commandrunning:
-            asyncio.sleep(0.005)
-        self._commandrunning = True
+        """Run ticcmd in another thread."""
+        return asyncio.wrap_future(
+            asyncio.run_coroutine_threadsafe(self._ticcmd_async(*args), self.loop),
+            loop=self._machine.clock.loop)
+
+    def _ticcmd_no_wait(self, *args):
+        """Run ticcmd without waiting for the response.."""
+        asyncio.run_coroutine_threadsafe(self._ticcmd_async(*args), self.loop)
+
+    @asyncio.coroutine
+    def _ticcmd_async(self, *args):
+        """Run ticcmd.
+
+        This will block the asyncio loop in the thread so only one command can run at a time.
+        However, it will not block MPF because we will call this via run_coroutine_threadsafe from another thread.
+        """
         args = list(args)
         args.append('-d')
         args.append(str(self._serial_number))
         try:
             output = subprocess.check_output(['ticcmd'] + args, stderr=subprocess.STDOUT)
-            self._commandrunning = False
             return output
         except subprocess.CalledProcessError as e:
             self.log.debug("Exception: %s", str(e.output))
-            raise TICError(e.output)
+            raise TicError(e.output)
 
-    def currentstatus(self, refresh=True):
-        """Return the current status of the TIC device.
+    @asyncio.coroutine
+    def get_status(self):
+        """Return the current status of the TIC device."""
+        cmd_return = yield from self._ticcmd('-s', '--full')
+        status = ruamel.yaml.load(cmd_return)
+        return status
 
-        Args:
-            refresh (boolean): Refresh the cached status by asking the TIC
-        """
-        if refresh:
-            self._getstatus()
-        return self._status
-
-    def _getstatus(self):
-        cmd_return = self._ticcmd('-s', '--full')
-        self._status = ruamel.yaml.load(cmd_return)
-        self.currentposition = self._status['Current position']
-
-    def haltandhold(self):
+    def halt_and_hold(self):
         """Stop the motor abruptly without respecting the deceleration limit."""
-        self._ticcmd('--halt-and-hold')
+        self._ticcmd_no_wait('--halt-and-hold')
 
-    def haltandsetposition(self, position):
+    def halt_and_set_position(self, position):
         """Stop the motor abruptly without respecting the deceleration limit and sets the current position."""
-        self._ticcmd('--halt-and-set-position', str(position))
+        self._ticcmd_no_wait('--halt-and-set-position', str(position))
 
     def rotate_to_position(self, position):
         """Tells the TIC to move the stepper to the target position.
@@ -83,8 +101,7 @@ class PololuTICDevice():
         Args:
             position (number): The desired position in microsteps
         """
-        self.targetposition = position
-        self._ticcmd('--position', str(position))
+        self._ticcmd_no_wait('--position', str(position))
 
     def rotate_by_velocity(self, velocity):
         """Tells the TIC to move the stepper continuously at the specified velocity.
@@ -92,15 +109,15 @@ class PololuTICDevice():
         Args:
             velocity (number): The desired speed in microsteps per 10,000 s
         """
-        self._ticcmd('--velocity', str(velocity))
+        self._ticcmd_no_wait('--velocity', str(velocity))
 
     def reset_command_timeout(self):
         """Tells the TIC to reset the internal command timeout."""
-        self._ticcmd('--reset-command-timeout')
+        self._ticcmd_no_wait('--reset-command-timeout')
 
     def exit_safe_start(self):
         """Tells the TIC to exit the safe start mode."""
-        self._ticcmd('--exit-safe-start')
+        self._ticcmd_no_wait('--exit-safe-start')
 
     def set_step_mode(self, mode):
         """Set the Step Mode of the stepper.
@@ -108,7 +125,7 @@ class PololuTICDevice():
         Args:
             mode (number): One of 1, 2, 4, 8, 16, 32, the number of microsteps per step
         """
-        self._ticcmd('--step-mode', str(mode))
+        self._ticcmd_no_wait('--step-mode', str(mode))
 
     def set_max_speed(self, speed):
         """Set the max speed of the stepper.
@@ -116,7 +133,7 @@ class PololuTICDevice():
         Args:
             speed (number): The maximum speed of the stepper in microsteps per 10,000s
         """
-        self._ticcmd('--max-speed', str(speed))
+        self._ticcmd_no_wait('--max-speed', str(speed))
 
     def set_starting_speed(self, speed):
         """Set the starting speed of the stepper.
@@ -124,7 +141,7 @@ class PololuTICDevice():
         Args:
             speed (number): The starting speed of the stepper in microsteps per 10,000s
         """
-        self._ticcmd('--starting-speed', str(speed))
+        self._ticcmd_no_wait('--starting-speed', str(speed))
 
     def set_max_acceleration(self, acceleration):
         """Set the max acceleration of the stepper.
@@ -132,7 +149,7 @@ class PololuTICDevice():
         Args:
             acceleration (number): The maximum acceleration of the stepper in microsteps per 100 s^2
         """
-        self._ticcmd('--max-accel', str(acceleration))
+        self._ticcmd_no_wait('--max-accel', str(acceleration))
 
     def set_max_deceleration(self, deceleration):
         """Set the max deceleration of the stepper.
@@ -140,7 +157,7 @@ class PololuTICDevice():
         Args:
             deceleration (number): The maximum deceleration of the stepper in microsteps per 100 s^2
         """
-        self._ticcmd('--max-decel', str(deceleration))
+        self._ticcmd_no_wait('--max-decel', str(deceleration))
 
     def set_current_limit(self, current):
         """Set the max current of the stepper driver.
@@ -148,8 +165,8 @@ class PololuTICDevice():
         Args:
             current (number): The maximum current of the stepper in milliamps
         """
-        self._ticcmd('--current', str(current))
+        self._ticcmd_no_wait('--current', str(current))
 
     def energize(self):
         """Energize the Stepper."""
-        self._ticcmd('--energize')
+        self._ticcmd_no_wait('--energize')
