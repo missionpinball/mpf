@@ -4,6 +4,7 @@
     This example code is released into the public domain
 */
 
+#include <SmartLEDShieldV4.h> // this line must be first if using a V4 shield
 #include <SmartMatrix3.h>
 #include <usb_serial.h>
 
@@ -32,6 +33,13 @@ boolean frameOn = false;
 int dataPos = 0;
 int dataExpected = 0;
 
+bool gotCommand = false;
+int commandPos = 0;
+
+const int USB_MARKER_LENGTH = 4;
+const int USB_COMMAND_LENGTH = 8;
+const uint8_t usbMarker[USB_MARKER_LENGTH] = {0xBA, 0x11, 0x00, 0x03};
+uint8_t usbCommand[USB_COMMAND_LENGTH];
 
 // the setup() method runs once, when the sketch starts
 void setup() {
@@ -71,25 +79,42 @@ void loop() {
     }
   }
   else if (bytesAvail) {
-    char val = Serial.read();
-    if ( val == 1 )
-    {
-      backgroundLayer.swapBuffers(true);
-      dataPos=0;
-      dataExpected = kMatrixWidth * kMatrixHeight * 3;
-      digitalWrite(ledPin, HIGH);
-    }
-    else {
+      char val = Serial.read();
+
+   if (gotCommand)
+   {
       buffer[dataPos++] = val;
       dataExpected--;
       if (dataExpected == 0) {
         swap = true;
       }
     }
+   else if (commandPos < USB_MARKER_LENGTH) {
+      usbCommand[commandPos] = val;
+      if (usbCommand[commandPos] == usbMarker[commandPos]) {
+        commandPos++;
+      }
+      else {
+        commandPos = 0;
+      }
+    }
+    else if (commandPos < USB_COMMAND_LENGTH) {
+      usbCommand[commandPos] = val;
+      commandPos++;
+      if (commandPos >= USB_COMMAND_LENGTH)
+      {
+      gotCommand = true;
+      backgroundLayer.swapBuffers(true);
+      dataPos=0;
+      dataExpected = kMatrixWidth * kMatrixHeight * 3;
+      }
+    }
   }
 
   if (swap) {
     frameCount++;
+    gotCommand = false;
+    commandPos = 0;
     char frameText[12];
     itoa(frameCount, frameText, 10);
     backgroundLayer.swapBuffers(true);
@@ -99,4 +124,3 @@ void loop() {
     frameOn = !frameOn;
   }
 }
-
