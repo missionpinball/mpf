@@ -114,6 +114,7 @@ class StepStickDigitalOutputPlatform(StepperPlatform):
         """Return config section."""
         return "step_stick_stepper_settings"
 
+    @asyncio.coroutine
     def configure_stepper(self, number: str, config: dict) -> "StepperPlatformInterface":
         """Configure a stepper driven by StepStick on a digital output."""
         try:

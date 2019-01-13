@@ -11,7 +11,7 @@ from mpf.core.events import event_handler
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor(_current_position="position", _target_position="target_position", _is_home="is_homed")
+@DeviceMonitor(_current_position="position", _target_position="target_position", _is_homed="is_homed")
 class Stepper(SystemWideDevice):
 
     """Represents an stepper motor based axis in a pinball machine.
@@ -50,7 +50,8 @@ class Stepper(SystemWideDevice):
                                             self._position_event,
                                             position=position)
 
-        self.hw_stepper = self.platform.configure_stepper(self.config['number'], self.config['platform_settings'])
+        self.hw_stepper = yield from self.platform.configure_stepper(self.config['number'],
+                                                                     self.config['platform_settings'])
 
         if self.config['include_in_ball_search']:
             self.machine.events.add_handler("ball_search_started",
@@ -106,7 +107,7 @@ class Stepper(SystemWideDevice):
                                self._current_position, target_position, delta)
                 # move stepper
                 self.hw_stepper.move_rel_pos(delta)
-                # wait for the move to complte
+                # wait for the move to complete
                 yield from self.hw_stepper.wait_for_move_completed()
             else:
                 self.debug_log("Got move command. Stepper already at target. Not moving.")
@@ -144,6 +145,8 @@ class Stepper(SystemWideDevice):
             yield from self.machine.switch_controller.wait_for_switch(self.config['homing_switch'].name,
                                                                       only_on_change=False)
             self.hw_stepper.stop()
+            if self.config['homing_set_zero']:
+                self.hw_stepper.set_position(0)
 
         self._is_homed = True
         self._is_moving.clear()

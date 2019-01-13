@@ -618,6 +618,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
         return PdLedServo(board, number, self, self.config.get("debug", False))
 
+    @asyncio.coroutine
     def configure_stepper(self, number: str, config: dict) -> PdLedStepper:
         """Configure a stepper (axis) device in platform.
 

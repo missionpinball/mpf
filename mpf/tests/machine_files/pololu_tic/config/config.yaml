@@ -1,0 +1,19 @@
+#config_version=5
+
+hardware:
+  platform: virtual
+  stepper_controllers: pololu_tic
+
+switches:
+  s_home:
+    number: 1
+
+steppers:
+  stepper1:
+    number: 1337
+    homing_mode: switch
+    homing_switch: s_home
+    named_positions:
+      10: test_00
+      20: test_01
+      50: test_10

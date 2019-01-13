@@ -61,6 +61,7 @@ if MYPY:   # pragma: no cover
     from mpf.devices.digital_output import DigitalOutput
     from logging import Logger  # noqa
     from mpf.devices.autofire import AutofireCoil
+    from mpf.devices.stepper import Stepper
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -148,6 +149,7 @@ class MachineController(LogMixin):
             self.shots = None                           # type: Dict[str, Shot]
             self.shot_groups = None                     # type: Dict[str, ShotGroup]
             self.switches = None                        # type: Dict[str, Switch]
+            self.steppers = None                        # type: Dict[str, Stepper]
             self.coils = None                           # type: Dict[str, Driver]
             self.lights = None                          # type: Dict[str, Light]
             self.ball_devices = None                    # type: Dict[str, BallDevice]
