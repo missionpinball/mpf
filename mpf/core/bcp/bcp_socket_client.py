@@ -19,7 +19,7 @@ class MpfJSONEncoder(json.JSONEncoder):
 
 
 def decode_command_string(bcp_string):
-    """Decode a BCP command string into separate command and paramter parts.
+    """Decode a BCP command string into separate command and parameter parts.
 
     Args:
         bcp_string: The incoming UTF-8, URL encoded BCP command string.
@@ -40,7 +40,7 @@ def decode_command_string(bcp_string):
 
     if bcp_command.query[0:5] == "json=":
         kwargs = json.loads(bcp_command.query[5:])
-        return bcp_command.path.lower(), kwargs
+        return bcp_command.path, kwargs
 
     try:
         kwargs = parse_qs(bcp_command.query, keep_blank_values=True)
@@ -64,8 +64,8 @@ def decode_command_string(bcp_string):
 
             kwargs[k] = v
 
-    return (bcp_command.path.lower(),
-            dict((k.lower(), v[0]) for k, v in kwargs.items()))
+    return (bcp_command.path,
+            dict((k, v[0]) for k, v in kwargs.items()))
 
 
 def encode_command_string(bcp_command, **kwargs):
@@ -109,7 +109,7 @@ def encode_command_string(bcp_command, **kwargs):
         else:  # cast anything else as a string
             value = str(value)
 
-        kwarg_string += '{}={}&'.format(quote(k.lower(), ''),
+        kwarg_string += '{}={}&'.format(quote(k, ''),
                                         value)
 
     kwarg_string = kwarg_string[:-1]
@@ -117,7 +117,7 @@ def encode_command_string(bcp_command, **kwargs):
     if json_needed:
         kwarg_string = 'json={}'.format(json.dumps(kwargs, cls=MpfJSONEncoder))
 
-    return str(urlunparse(('', '', bcp_command.lower(), '', kwarg_string, '')))
+    return str(urlunparse(('', '', bcp_command, '', kwarg_string, '')))
 
 
 class AsyncioBcpClientSocket():
