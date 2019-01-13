@@ -5,10 +5,20 @@ ball_routings:
       target_device: test_device2
       debug: True
       enable_events: route_to_2
-      disable_events: route_to_4
+      disable_events: route_to_4, no_route
     route_to_ball_device4:
       source_devices: test_device1
       target_device: test_device4
       debug: True
       enable_events: route_to_4
-      disable_events: route_to_2
+      disable_events: route_to_2, no_route
+
+
+multiball_locks:
+   lock1:
+      balls_to_lock: 1
+      lock_devices: test_device4
+      enable_events: lock_enable
+      disable_events: lock_disable
+      balls_to_replace: 1
+      debug: true

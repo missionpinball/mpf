@@ -164,10 +164,10 @@ class MultiballLock(ModeDevice):
         for device in self.lock_devices:
             self.machine.events.add_handler(
                 'balldevice_' + device.name + '_ball_enter',
-                self._lock_ball, device=device)
+                self._lock_ball, device=device, priority=self.mode.priority)
             self.machine.events.add_handler(
                 'balldevice_' + device.name + '_ball_entered',
-                self._post_events, device=device)
+                self._post_events, device=device, priority=self.mode.priority)
 
     def _unregister_handlers(self):
         # unregister ball_enter handlers
@@ -215,9 +215,10 @@ class MultiballLock(ModeDevice):
 
         return balls
 
-    def _lock_ball(self, unclaimed_balls: int, device: "BallDevice", **kwargs):
+    def _lock_ball(self, unclaimed_balls: int, new_available_balls: int, device: "BallDevice", **kwargs):
         """Handle result of the _ball_enter event of lock_devices."""
         del kwargs
+        #print("XXXXXXX", unclaimed_balls)
         # if full do not take any balls
         if self.is_virtually_full:
             self.debug_log("Cannot lock balls. Lock is full.")
@@ -251,7 +252,7 @@ class MultiballLock(ModeDevice):
 
         if self.config['locked_ball_counting_strategy'] in ("virtual_only", "min_virtual_physical"):
             # only keep ball if any player could use it
-            if self._max_balls_locked_by_any_player <= self._physically_locked_balls:
+            if self._max_balls_locked_by_any_player < self._physically_locked_balls + new_available_balls:
                 balls_to_lock_physically = 0
 
         if self.config['locked_ball_counting_strategy'] == "min_virtual_physical":

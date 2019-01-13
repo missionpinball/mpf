@@ -143,7 +143,7 @@ class BallDevice(SystemWideDevice):
     def expected_ball_received(self):
         """Handle an expected ball."""
         # post enter event
-        unclaimed_balls = yield from self._post_enter_event(unclaimed_balls=0)
+        unclaimed_balls = yield from self._post_enter_event(unclaimed_balls=0, new_available_balls=0)
         # there might still be unclaimed balls (e.g. because of a ball_routing)
         self._balls_added_callback(0, unclaimed_balls)
 
@@ -153,7 +153,7 @@ class BallDevice(SystemWideDevice):
         # capture from playfield
         yield from self._post_capture_from_playfield_event()
         # post enter event
-        unclaimed_balls = yield from self._post_enter_event(unclaimed_balls=1)
+        unclaimed_balls = yield from self._post_enter_event(unclaimed_balls=1, new_available_balls=1)
         # add available_balls and route unclaimed ball to the default target
         self._balls_added_callback(1, unclaimed_balls)
 
@@ -251,12 +251,13 @@ class BallDevice(SystemWideDevice):
         '''
 
     @asyncio.coroutine
-    def _post_enter_event(self, unclaimed_balls):
+    def _post_enter_event(self, unclaimed_balls, new_available_balls):
         self.debug_log("Processing new ball")
         result = yield from self.machine.events.post_relay_async('balldevice_{}_ball_enter'.format(
             self.name),
             new_balls=1,
             unclaimed_balls=unclaimed_balls,
+            new_available_balls=new_available_balls,
             device=self)
         '''event: balldevice_(name)_ball_enter
 
