@@ -1,6 +1,7 @@
 """Contains the MachineController base class."""
 import logging
 import os
+import signal
 
 import sys
 import threading
@@ -732,14 +733,28 @@ class MachineController(LogMixin):
         self.clock.loop.run_forever()
         self.clock.loop.close()
 
+    def signal_handler(self, sig, frame):
+        """Signal handler for SIGINT."""
+        del sig, frame
+        print('Shutdown because of keyboard interrupts')
+        self.stop_future.set_result("SIGINT received.")
+        sys.exit(0)
+
     def _run_loop(self) -> None:    # pragma: no cover
         # Main machine run loop with when the default platform interface
         # specifies the MPF should control the main timer
+
+        signal.signal(signal.SIGINT, self.signal_handler)
 
         try:
             reason = self.clock.run(self.stop_future)
         except KeyboardInterrupt:
             print("Shutdown because of keyboard interrupts")
+            return
+        except BaseException as e:
+            # this happens when receiving a signal
+            self.log.debug("Loop exited with exception: %s", e)
+            return
 
         self._do_stop()
 

@@ -37,8 +37,7 @@ class PololuTICHardwarePlatform(StepperPlatform):
     def stop(self):
         """De-energize the stepper and stop sending the command timeout refresh."""
         for stepper in self._steppers:
-            stepper.tic.halt_and_hold()
-            stepper.tic.stop()
+            stepper.shutdown()
         self._steppers = []
 
     @asyncio.coroutine
@@ -72,6 +71,7 @@ class PololuTICStepper(StepperPlatformInterface):
         self.tic = PololuTiccmdWrapper(self.serial_number, machine, False)
         self.machine = machine
         self._position = None
+        self._watchdog_task = None
 
         if self.config['step_mode'] not in [1, 2, 4, 8, 16, 32]:
             raise ConfigFileError("step_mode must be one of (1, 2, 4, 8, 16, or 32)", 1, self.log.name)
@@ -106,7 +106,7 @@ class PololuTICStepper(StepperPlatformInterface):
         self.tic.exit_safe_start()
         self.tic.energize()
 
-        self.machine.clock.schedule_interval(self._reset_command_timeout, .5)
+        self._watchdog_task = self.machine.clock.schedule_interval(self._reset_command_timeout, .5)
 
     def _reset_command_timeout(self):
         """Reset the command timeout."""
@@ -158,6 +158,14 @@ class PololuTICStepper(StepperPlatformInterface):
         """Stop stepper."""
         self.log.debug("Commanded To Stop")
         self.tic.halt_and_hold()
+
+    def shutdown(self):
+        """Shutdown stepper."""
+        if self._watchdog_task:
+            self._watchdog_task.cancel()
+            self._watchdog_task = None
+        self.tic.halt_and_hold()
+        self.tic.stop()
 
     @asyncio.coroutine
     def wait_for_move_completed(self):
