@@ -216,3 +216,20 @@ class TestEventPlayer(MpfTestCase):
         self.assertEqual({"foo": True, "priority": 0}, self._last_event_kwargs['loaded_event_bool'])
         self.assertEqual({"foo": "foobar", "priority": 0}, self._last_event_kwargs['loaded_event_string'])
         self.assertEqual({"foo": "barfoo", "priority": 0}, self._last_event_kwargs['loaded_event_notype'])
+
+    def test_kwarg_placeholder(self):
+        self.mock_event('event_always')
+        self.mock_event('event_foobar')
+        self.mock_event('event_(name)')
+
+        self.post_event_with_params("play_event_with_kwargs", name="foobar")
+        self.assertEventCalled("event_always")
+        self.assertEventCalled("event_foobar")
+        self.assertEventNotCalled("event_(name)")
+
+    def test_value_kwarg_evaluation(self):
+        self.mock_event('event_with_param_kwargs')
+
+        self.post_event_with_params("play_event_with_param_kwargs", result="bar", initial=6)
+        self.assertEqual({"foo": "bar", "maths": 30, "priority": 0}, self._last_event_kwargs["event_with_param_kwargs"])
+

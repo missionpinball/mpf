@@ -59,7 +59,17 @@ event_player:
       loaded_event_notype:
         foo:
           value: machine.testnotype
-
+    play_event_with_kwargs:
+      - event_always
+      - event_(name)
+    play_event_with_param_kwargs:
+      event_with_param_kwargs:
+        foo:
+          value: (result)
+          type: string
+        maths:
+          value: 5 * (initial)
+          type: int
 
 shows:
   test_event_show:
