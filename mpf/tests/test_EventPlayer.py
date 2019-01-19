@@ -230,6 +230,6 @@ class TestEventPlayer(MpfTestCase):
     def test_value_kwarg_evaluation(self):
         self.mock_event('event_with_param_kwargs')
 
-        self.post_event_with_params("play_event_with_param_kwargs", result="bar")
-        self.assertEqual({"foo": "bar", "priority": 0}, self._last_event_kwargs["event_with_param_kwargs"])
+        self.post_event_with_params("play_event_with_param_kwargs", result="bar", initial=6)
+        self.assertEqual({"foo": "bar", "maths": 30, "priority": 0}, self._last_event_kwargs["event_with_param_kwargs"])
 
