@@ -2,7 +2,7 @@
 import ruamel.yaml as yaml  # pylint: disable-msg=useless-import-alias
 from ruamel.yaml.reader import Reader
 from ruamel.yaml.scanner import RoundTripScanner
-from ruamel.yaml.parser_ import Parser
+from ruamel.yaml.parser import Parser
 from ruamel.yaml.composer import Composer
 from ruamel.yaml.constructor import RoundTripConstructor
 from ruamel.yaml.dumper import RoundTripDumper
@@ -13,14 +13,14 @@ class MpfRoundTripLoader(Reader, RoundTripScanner, Parser, Composer, RoundTripCo
 
     """Config loader which can roundtrip."""
 
-    def __init__(self, stream):
+    def __init__(self, stream, version=None, preserve_quotes=None):
         """Initialise loader."""
-        Reader.__init__(self, stream)
-        RoundTripScanner.__init__(self)
-        Parser.__init__(self)
-        Composer.__init__(self)
-        RoundTripConstructor.__init__(self)
-        MpfResolver.__init__(self)
+        Reader.__init__(self, stream, loader=self)
+        RoundTripScanner.__init__(self, loader=self)
+        Parser.__init__(self, loader=self)
+        Composer.__init__(self, loader=self)
+        RoundTripConstructor.__init__(self, preserve_quotes=preserve_quotes, loader=self)
+        MpfResolver.__init__(self, loadumper=self)
 
 
 class YamlRoundtrip(YamlInterface):     # pragma: no cover

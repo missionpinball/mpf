@@ -15,7 +15,7 @@ from ruamel.yaml.error import MarkedYAMLError
 from ruamel.yaml.reader import Reader
 from ruamel.yaml.resolver import BaseResolver, Resolver
 from ruamel.yaml.scanner import Scanner
-from ruamel.yaml.parser_ import Parser
+from ruamel.yaml.parser import Parser
 from ruamel.yaml.composer import Composer
 from ruamel.yaml.constructor import Constructor, ConstructorError
 
@@ -25,6 +25,11 @@ from mpf.core.file_interface import FileInterface
 class MpfResolver(BaseResolver):
 
     """Resolver with mentioned fixes."""
+
+    @property
+    def processing_version(self):
+        """Return yaml version."""
+        return (1, 2)
 
 
 MpfResolver.add_implicit_resolver(
@@ -139,14 +144,15 @@ class MpfLoader(Reader, Scanner, Parser, Composer, MpfConstructor, MpfResolver):
     """Config loader."""
 
     # pylint: disable-msg=super-init-not-called
-    def __init__(self, stream):
+    def __init__(self, stream, version=None, preserve_quotes=None):
         """Initialise loader."""
-        Reader.__init__(self, stream)
-        Scanner.__init__(self)
-        Parser.__init__(self)
-        Composer.__init__(self)
-        MpfConstructor.__init__(self)
-        MpfResolver.__init__(self)
+        del preserve_quotes
+        Reader.__init__(self, stream, loader=self)
+        Scanner.__init__(self, loader=self)
+        Parser.__init__(self, loader=self)
+        Composer.__init__(self, loader=self)
+        MpfConstructor.__init__(self, loader=self)
+        MpfResolver.__init__(self, loadumper=self)
 
 
 for ch in list(u'yYnNoO'):
