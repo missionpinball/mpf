@@ -139,6 +139,7 @@ class MpfConstructor(Constructor):
         return mapping
 
 
+# pylint: disable-msg=abstract-method
 class MpfLoader(Reader, Scanner, Parser, Composer, MpfConstructor, MpfResolver):
 
     """Config loader."""
@@ -147,6 +148,7 @@ class MpfLoader(Reader, Scanner, Parser, Composer, MpfConstructor, MpfResolver):
     def __init__(self, stream, version=None, preserve_quotes=None):
         """Initialise loader."""
         del preserve_quotes
+        del version
         Reader.__init__(self, stream, loader=self)
         Scanner.__init__(self, loader=self)
         Parser.__init__(self, loader=self)
