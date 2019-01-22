@@ -1324,7 +1324,7 @@ sound_player:
     fade_in: single|secs|None
     fade_out: single|secs|None
     about_to_finish_time: single|secs|-1
-    max_queue_time: single|secs|-1
+    max_queue_time: single|secs|None
     events_when_played: list|str|use_sound_setting
     events_when_stopped: list|str|use_sound_setting
     events_when_looping: list|str|use_sound_setting
