@@ -366,9 +366,9 @@ class TimeTravelLoop(base_events.BaseEventLoop):
         if self._wait_for_external_executor:
             self._waiting_since = None
 
-    def call_at(self, when, callback, *args):
+    def call_at(self, when, callback, *args, context=None):
         self._timers.add(when)
-        return super().call_at(when, callback, *args)
+        return super().call_at(when, callback, *args, context=context)
 
     def _process_events(self, event_list):
         for key, mask in event_list:
