@@ -582,7 +582,7 @@ hardware_sound_player:
 high_score:
     __valid_in__: mode
     award_slide_display_time: single|ms|4s
-    high_score_reverse_sort: single|bool|False
+    reverse_sort: single|bool|False
     categories: omap|str:list|
     defaults: dict|str:list|None
     enter_initials_timeout: single|secs|20s
