@@ -8,6 +8,7 @@ from mpf.file_interfaces.yaml_interface import MpfLoader
 class TestYamlInterface(unittest.TestCase):
 
     def test_round_trip(self):
+        self.maxDiff = None
 
         orig_config = """\
 hardware:
@@ -16,13 +17,13 @@ hardware:
     dmd: smartmatrix
 
 config:
-- portconfig.yaml
-- switches.yaml
-- coils.yaml
-- devices.yaml
-- keyboard.yaml
-- virtual.yaml
-- images.yaml
+-   portconfig.yaml
+-   switches.yaml
+-   coils.yaml
+-   devices.yaml
+-   keyboard.yaml
+-   virtual.yaml
+-   images.yaml
 
 dmd:
     physical: false
@@ -48,8 +49,8 @@ window:
         thickness: 2
 
 modes:
-- base
-- airlock_multiball
+-   base
+-   airlock_multiball
 
 sound_system:
     buffer: 512
@@ -108,7 +109,7 @@ bool_3: true
 bool_4: false
 str_6: hi
 int_1: 123
-float_1: 1.0
+yaml.scalarfloat.ScalarFloat_1: 1.0
 
         """
 

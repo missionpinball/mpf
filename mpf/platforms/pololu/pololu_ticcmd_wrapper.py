@@ -95,7 +95,7 @@ class PololuTiccmdWrapper:
     def get_status(self):
         """Return the current status of the TIC device."""
         cmd_return = yield from self._ticcmd('-s', '--full')
-        status = ruamel.yaml.load(cmd_return)
+        status = ruamel.yaml.safe_load(cmd_return)
         return status
 
     def halt_and_hold(self):
