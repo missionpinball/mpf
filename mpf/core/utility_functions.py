@@ -701,7 +701,12 @@ class Util:
     @staticmethod
     def ensure_future(coro_or_future, loop):
         """Wrap ensure_future."""
-        return asyncio.ensure_future(coro_or_future, loop=loop)
+        if hasattr(asyncio, "ensure_future"):
+            return asyncio.ensure_future(coro_or_future, loop=loop)
+        else:
+            # hack to support 3.4 and 3.7 at the same time
+            _wrap_awaitable = getattr(asyncio, 'async')
+            return _wrap_awaitable(coro_or_future, loop=loop)
 
     @staticmethod
     @asyncio.coroutine
