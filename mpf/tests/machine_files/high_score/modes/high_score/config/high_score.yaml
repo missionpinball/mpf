@@ -19,3 +19,4 @@ high_score:
       - MPF: 23
     loops:
       - JK: 42
+  reverse_sort: False
