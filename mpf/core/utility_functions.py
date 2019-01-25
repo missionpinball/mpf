@@ -706,7 +706,7 @@ class Util:
         else:
             # hack to support 3.4 and 3.7 at the same time
             _wrap_awaitable = getattr(asyncio, 'async')
-            return _wrap_awaitable(coro_or_future, loop=loop)
+            return _wrap_awaitable(coro_or_future, loop=loop)   # pylint: disable-msg=deprecated-method
 
     @staticmethod
     @asyncio.coroutine
