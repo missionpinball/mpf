@@ -445,9 +445,9 @@ class MachineController(LogMixin):
         """
         python_version_info = sys.version_info
 
-        if not (python_version_info[0] == 3 and python_version_info[1] in (4, 5, 6)):
+        if not (python_version_info[0] == 3 and python_version_info[1] in (4, 5, 6, 7)):
             raise AssertionError("Incorrect Python version. MPF requires "
-                                 "Python 3.4, 3.5 or 3.6. You have Python {}.{}.{}."
+                                 "Python 3.4, 3.5, 3.6 or 3.7. You have Python {}.{}.{}."
                                  .format(python_version_info[0], python_version_info[1],
                                          python_version_info[2]))
 

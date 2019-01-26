@@ -704,7 +704,9 @@ class Util:
         if hasattr(asyncio, "ensure_future"):
             return asyncio.ensure_future(coro_or_future, loop=loop)
         else:
-            return asyncio.async(coro_or_future, loop=loop)     # pylint: disable-msg=deprecated-method
+            # hack to support 3.4 and 3.7 at the same time
+            _wrap_awaitable = getattr(asyncio, 'async')
+            return _wrap_awaitable(coro_or_future, loop=loop)   # pylint: disable-msg=deprecated-method
 
     @staticmethod
     @asyncio.coroutine
