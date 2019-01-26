@@ -1,21 +1,18 @@
 """Test the LED device."""
 from mpf.core.rgb_color import RGBColor
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfTestCase import MpfTestCase, test_config
 
 
 class TestDeviceLight(MpfTestCase):
 
     def getConfigFile(self):
-        if self._testMethodName == "test_default_color_correction":
-            return 'light_default_color_correction.yaml'
-        else:
-            return 'light.yaml'
+        return 'light.yaml'
 
     def getMachinePath(self):
         return 'tests/machine_files/light/'
 
     def test_default_on_color(self):
-        led = self.machine.lights.led1
+        led = self.machine.lights["led1"]
 
         # color on should map to red
         led.color("on")
@@ -33,8 +30,9 @@ class TestDeviceLight(MpfTestCase):
         led.on(127)
         self.assertLightColor("led1", RGBColor("red%50"))
 
+    @test_config("light_default_color_correction.yaml")
     def test_default_color_correction(self):
-        led = self.machine.lights.led1
+        led = self.machine.lights["led1"]
         led.color(RGBColor("white"))
         self.advance_time_and_run()
         # color is uncorrected
@@ -98,19 +96,19 @@ class TestDeviceLight(MpfTestCase):
         self.assertLightColor("led1", [127, 0, 0])
         self.advance_time_and_run(.51)
         self.assertLightColor("led1", "red")
-        self.advance_time_and_run(2) # lower is at 3/10
+        self.advance_time_and_run(2)    # lower is at 3/10
         led.remove_from_stack_by_key("upper", fade_ms=4000)
         self.assertLightColor("led1", "red")
-        self.advance_time_and_run(2) # lower is at 5/10 -> [0, 0, 127]. upper at 2/4 (50% alpha)
+        self.advance_time_and_run(2)    # lower is at 5/10 -> [0, 0, 127]. upper at 2/4 (50% alpha)
         self.assertLightColor("led1", [128, 0, 63])
-        self.advance_time_and_run(2)  # lower is at 7/10. upper is gone
+        self.advance_time_and_run(2)    # lower is at 7/10. upper is gone
         self.assertLightColor("led1", [0, 0, 178])
-        self.advance_time_and_run(3)  # lower is at 10/10. upper is gone
+        self.advance_time_and_run(3)    # lower is at 10/10. upper is gone
         self.assertLightColor("led1", [0, 0, 255])
         self.assertEqual(1, len(led.stack))
 
     def test_color_and_stack(self):
-        led1 = self.machine.lights.led1
+        led1 = self.machine.lights["led1"]
 
         # set led1 to red and check the color and stack
         led1.color('red')
@@ -218,7 +216,7 @@ class TestDeviceLight(MpfTestCase):
         self.assertEqual(RGBColor('orange'), led1.stack[3].dest_color)
 
     def test_named_colors(self):
-        led1 = self.machine.lights.led1
+        led1 = self.machine.lights["led1"]
         led1.color('jans_red')
         self.machine_run()
 
@@ -226,7 +224,7 @@ class TestDeviceLight(MpfTestCase):
         self.assertLightColor(led1.name, [251, 23, 42])
 
     def test_fades(self):
-        led1 = self.machine.lights.led1
+        led1 = self.machine.lights["led1"]
 
         led1.color('red', fade_ms=2000)
         self.machine_run()
@@ -265,7 +263,7 @@ class TestDeviceLight(MpfTestCase):
         self.assertFalse(color_setting.key)
         self.assertLightColor("led1", "red")
 
-        led = self.machine.lights.led4
+        led = self.machine.lights["led4"]
         self.assertEqual(1000, led.default_fade_ms)
         led.color('white')
         self.advance_time_and_run(.02)
@@ -275,7 +273,7 @@ class TestDeviceLight(MpfTestCase):
         self.assertLightColor("led4", [255, 255, 255])
 
     def test_restore_to_fade_in_progress(self):
-        led1 = self.machine.lights.led1
+        led1 = self.machine.lights["led1"]
 
         led1.color('red', fade_ms=4000, priority=50)
         self.advance_time_and_run(0.02)
@@ -305,7 +303,7 @@ class TestDeviceLight(MpfTestCase):
         # start one fade, and while that's in progress, start a second fade.
         # the second fade should start from the wherever the current fade was.
 
-        led1 = self.machine.lights.led1
+        led1 = self.machine.lights["led1"]
 
         led1.color('red', fade_ms=4000, priority=50)
         self.advance_time_and_run(0.02)
@@ -332,7 +330,7 @@ class TestDeviceLight(MpfTestCase):
         self.assertFalse(led1.fade_in_progress)
 
     def test_color_correction(self):
-        led = self.machine.lights.led_corrected
+        led = self.machine.lights["led_corrected"]
         led.color(RGBColor("white"))
         self.advance_time_and_run()
         # color is uncorrected
@@ -362,7 +360,7 @@ class TestDeviceLight(MpfTestCase):
 
     def test_non_rgb_leds(self):
         # test bgr
-        led = self.machine.lights.led2
+        led = self.machine.lights["led2"]
 
         led.color(RGBColor((11, 23, 42)))
         self.advance_time_and_run(1)
@@ -373,7 +371,7 @@ class TestDeviceLight(MpfTestCase):
         self.assertEqual(11 / 255, led.hw_drivers["red"][0].current_brightness)
         self.assertEqual('led-4', led.hw_drivers["red"][0].number)
 
-        led = self.machine.lights.led_bgr_2
+        led = self.machine.lights["led_bgr_2"]
         led.color(RGBColor((11, 23, 42)))
         self.advance_time_and_run(1)
         self.assertEqual(42 / 255, led.hw_drivers["blue"][0].current_brightness)
@@ -384,7 +382,7 @@ class TestDeviceLight(MpfTestCase):
         self.assertEqual('led-42-b', led.hw_drivers["red"][0].number)
 
         # test rgbw
-        led = self.machine.lights.led3
+        led = self.machine.lights["led3"]
 
         led.color(RGBColor((11, 23, 42)))
         self.advance_time_and_run(1)
@@ -393,7 +391,7 @@ class TestDeviceLight(MpfTestCase):
         self.assertEqual('led-10', led.hw_drivers["white"][0].number)
 
         # test www light
-        led = self.machine.lights.led_www
+        led = self.machine.lights["led_www"]
         led.on(128)
         self.advance_time_and_run(1)
         self.assertLightColor("led_www", [128, 128, 128])
@@ -405,7 +403,7 @@ class TestDeviceLight(MpfTestCase):
         self.assertEqual('led-23-b', led.hw_drivers["white"][2].number)
 
     def test_brightness_correction(self):
-        led = self.machine.lights.led1
+        led = self.machine.lights["led1"]
 
         led.color(RGBColor((100, 100, 100)))
         self.advance_time_and_run(1)

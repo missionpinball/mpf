@@ -1,24 +1,23 @@
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
+from mpf.tests.MpfTestCase import test_config
 
 
 class TestSegmentDisplay(MpfFakeGameTestCase):
 
     def getConfigFile(self):
-        if self._testMethodName == "test_game":
-            return 'game.yaml'
-        else:
-            return 'config.yaml'
+        return 'config.yaml'
 
     def getMachinePath(self):
         return 'tests/machine_files/segment_display/'
 
+    @test_config("game.yaml")
     def test_game(self):
         """Test segment displays in a game for the documentation."""
-        display1 = self.machine.segment_displays.display1
-        display2 = self.machine.segment_displays.display2
-        display3 = self.machine.segment_displays.display3
-        display4 = self.machine.segment_displays.display4
-        display5 = self.machine.segment_displays.display5
+        display1 = self.machine.segment_displays["display1"]
+        display2 = self.machine.segment_displays["display2"]
+        display3 = self.machine.segment_displays["display3"]
+        display4 = self.machine.segment_displays["display4"]
+        display5 = self.machine.segment_displays["display5"]
 
         self.assertEqual("", display1.hw_display.text)
         self.assertEqual("", display2.hw_display.text)
@@ -134,8 +133,8 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.assertFalse(display5.hw_display.flashing)
 
     def test_player(self):
-        display1 = self.machine.segment_displays.display1
-        display2 = self.machine.segment_displays.display2
+        display1 = self.machine.segment_displays["display1"]
+        display2 = self.machine.segment_displays["display2"]
 
         self.post_event("test_event1")
         self.advance_time_and_run()
@@ -214,8 +213,8 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.assertEqual("2: 1337", display2.hw_display.text)
 
     def test_scoring(self):
-        display1 = self.machine.segment_displays.display1
-        display2 = self.machine.segment_displays.display2
+        display1 = self.machine.segment_displays["display1"]
+        display2 = self.machine.segment_displays["display2"]
 
         # default scoring
         self.post_event("test_score_two_player")

@@ -2,7 +2,7 @@ import time
 
 import sys
 
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfTestCase import MpfTestCase, test_config
 from unittest.mock import MagicMock, call
 from mpf.platforms import p_roc_common, p_roc
 
@@ -92,13 +92,9 @@ class MockPinProcModule(MagicMock):
 
 
 class TestPRoc(MpfTestCase):
+
     def getConfigFile(self):
-        if "snux" in self._testMethodName:
-            return "snux.yaml"
-        elif "wpc" in self._testMethodName:
-            return "wpc.yaml"
-        else:
-            return 'config.yaml'
+        return 'config.yaml'
 
     def getMachinePath(self):
         return 'tests/machine_files/p_roc/'
@@ -516,10 +512,12 @@ class TestPRoc(MpfTestCase):
         self.pinproc.driver_disable.assert_has_calls([
             call(num)])
 
+    @test_config("wpc.yaml")
     def test_load_wpc(self):
         # make sure p-roc properly initialises with WPC config
         pass
 
+    @test_config("snux.yaml")
     def test_load_snux(self):
         """Test snux."""
         # test enable

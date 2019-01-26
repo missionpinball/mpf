@@ -1,14 +1,13 @@
 from mpf.tests.MpfBcpTestCase import MpfBcpTestCase
+from mpf.tests.MpfTestCase import test_config
 
 
 class TestDmd(MpfBcpTestCase):
 
-    def getConfigFile(self):
-        return self._testMethodName + ".yaml"
-
     def getMachinePath(self):
         return 'tests/machine_files/dmd/'
 
+    @test_config("testDmd.yaml")
     def testDmd(self):
         self.machine.dmds.test_dmd.update(b'12345')
         self.assertEqual(b'12345', self.machine.dmds.test_dmd.hw_device.data)
@@ -18,6 +17,7 @@ class TestDmd(MpfBcpTestCase):
 
         self.assertEqual(b'1337', self.machine.dmds.test_dmd.hw_device.data)
 
+    @test_config("testRgbDmd.yaml")
     def testRgbDmd(self):
         self.machine.rgb_dmds.test_dmd.update(b'12345')
         self.assertEqual(b'12345', self.machine.rgb_dmds.test_dmd.hw_device.data)

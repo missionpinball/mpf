@@ -1,16 +1,13 @@
 from mpf.tests.MpfGameTestCase import MpfGameTestCase
 from unittest.mock import MagicMock
 
+from mpf.tests.MpfTestCase import test_config
+
 
 class TestBallSearch(MpfGameTestCase):
 
     def getConfigFile(self):
-        if self._testMethodName == "test_missing_initial" or self._testMethodName == "test_missing_initial2":
-            return 'missing_initial.yaml'
-        elif self._testMethodName == "test_mechanical_eject":
-            return 'mechanical_eject.yaml'
-        else:
-            return 'config.yaml'
+        return 'config.yaml'
 
     def getMachinePath(self):
         return 'tests/machine_files/ball_search/'
@@ -19,7 +16,7 @@ class TestBallSearch(MpfGameTestCase):
         return 'smart_virtual'
 
     def test_ball_search_does_not_start_when_disabled(self):
-        self.machine.playfields.playfield.config['enable_ball_search'] = False
+        self.machine.playfields["playfield"].config['enable_ball_search'] = False
 
         self.machine.ball_controller.num_balls_known = 0
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
@@ -37,14 +34,14 @@ class TestBallSearch(MpfGameTestCase):
         self.assertFalse(self.machine.ball_devices['playfield'].ball_search.enabled)
         self.assertFalse(self.machine.ball_devices['playfield'].ball_search.started)
 
-        self.machine.playfields.playfield.config['enable_ball_search'] = None
+        self.machine.playfields["playfield"].config['enable_ball_search'] = None
         self.machine.config['mpf']['default_ball_search'] = True
         self.machine.ball_devices['playfield'].ball_search.enable()
         self.assertTrue(self.machine.ball_devices['playfield'].ball_search.enabled)
         self.machine.ball_devices['playfield'].ball_search.disable()
         self.assertFalse(self.machine.ball_devices['playfield'].ball_search.enabled)
 
-        self.machine.playfields.playfield.config['enable_ball_search'] = None
+        self.machine.playfields["playfield"].config['enable_ball_search'] = None
         self.machine.config['mpf']['default_ball_search'] = False
         self.machine.ball_devices['playfield'].ball_search.enable()
         self.assertFalse(self.machine.ball_devices['playfield'].ball_search.enabled)
@@ -400,7 +397,7 @@ class TestBallSearch(MpfGameTestCase):
         self.assertNotEqual(None, self.machine.game)
 
     def test_give_up_with_end_ball(self):
-        self.machine.playfields.playfield.config['ball_search_failed_action'] = "end_ball"
+        self.machine.playfields["playfield"].config['ball_search_failed_action'] = "end_ball"
 
         self.machine.ball_controller.num_balls_known = 0
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
@@ -456,6 +453,7 @@ class TestBallSearch(MpfGameTestCase):
         self.assertEqual(0, self.machine.ball_controller.num_balls_known)
         self.assertEqual(None, self.machine.game)
 
+    @test_config("missing_initial.yaml")
     def test_missing_initial(self):
         self.assertEqual(1, self.machine.ball_controller.num_balls_known)
         self.assertEqual(0, self.machine.playfield.available_balls)
@@ -468,6 +466,7 @@ class TestBallSearch(MpfGameTestCase):
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
         self.assertEqual(0, self.machine.playfield.available_balls)
 
+    @test_config("missing_initial.yaml")
     def test_missing_initial2(self):
         self.assertEqual(1, self.machine.ball_controller.num_balls_known)
         self.assertEqual(0, self.machine.playfield.available_balls)
@@ -545,6 +544,7 @@ class TestBallSearch(MpfGameTestCase):
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
 
+    @test_config("mechanical_eject.yaml")
     def test_mechanical_eject(self):
         self.mock_event("ball_search_started")
         self.hit_switch_and_run("s_ball_switch1", 0)
