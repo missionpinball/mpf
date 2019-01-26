@@ -63,6 +63,9 @@ if MYPY:   # pragma: no cover
     from logging import Logger  # noqa
     from mpf.devices.autofire import AutofireCoil
     from mpf.devices.stepper import Stepper
+    from mpf.config_players.show_player import ShowPlayer
+    from mpf.devices.dmd import Dmd
+    from mpf.devices.rgb_dmd import RgbDmd
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -141,6 +144,7 @@ class MachineController(LogMixin):
             self.auditor = None                         # type: Auditor
             self.tui = None                             # type: TextUi
             self.service = None                         # type: ServiceController
+            self.show_player = None                     # type: ShowPlayer
 
             # devices
             self.autofires = None                       # type: Dict[str, AutofireCoil]
@@ -163,6 +167,8 @@ class MachineController(LogMixin):
             self.drop_targets = None                    # type: Dict[str, DropTarget]
             self.servos = None                          # type: Dict[str, Servo]
             self.segment_displays = None                # type: Dict[str, SegmentDisplay]
+            self.dmds = None                            # type: Dict[str, Dmd]
+            self.rgb_dmds = None                        # type: Dict[str, RgbDmd]
 
         self._set_machine_path()
 
