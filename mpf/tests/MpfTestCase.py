@@ -28,6 +28,28 @@ from mpf.file_interfaces.yaml_interface import YamlInterface
 YamlInterface.cache = True
 
 
+def test_config(config_file):
+
+    """Decorator to overwrite config file for one test."""
+
+    def test_decorator(fn):
+        """Decorate function."""
+        fn.config_file = config_file
+        return fn
+    return test_decorator
+
+
+def test_config_directory(config_directory):
+
+    """Decorator to overwrite config directory for one test."""
+
+    def test_decorator(fn):
+        """Decorate function."""
+        fn.config_directory = config_directory
+        return fn
+    return test_decorator
+
+
 class TestMachineController(MachineController):
 
     """A patched version of the MachineController used in tests.
@@ -165,9 +187,15 @@ class MpfTestCase(unittest.TestCase):
         return 'tests/machine_files/null/'
 
     def getAbsoluteMachinePath(self):
+        """Return absolute machine path."""
+        # check if there is a decorator
+        config_directory = getattr(getattr(self, self._testMethodName), "config_directory", None)
+        if not config_directory:
+            config_directory = self.getMachinePath()
+
         # creates an absolute path based on machine_path
         return os.path.abspath(os.path.join(
-            mpf.core.__path__[0], os.pardir, self.getMachinePath()))
+            mpf.core.__path__[0], os.pardir, config_directory))
 
     @staticmethod
     def get_abs_path(path):
@@ -291,6 +319,14 @@ class MpfTestCase(unittest.TestCase):
         """
         return False
 
+    def _getConfigFile(self):
+        """Return test decorator value or the return of getConfigFile."""
+        config_file = getattr(getattr(self, self._testMethodName), "config_file", None)
+        if config_file:
+            return config_file
+        else:
+            return self.getConfigFile()
+
     def getOptions(self):
 
         mpfconfig = os.path.abspath(os.path.join(
@@ -300,7 +336,7 @@ class MpfTestCase(unittest.TestCase):
             'force_platform': self.get_platform(),
             'production': False,
             'mpfconfigfile': mpfconfig,
-            'configfile': Util.string_to_list(self.getConfigFile()),
+            'configfile': Util.string_to_list(self._getConfigFile()),
             'debug': True,
             'bcp': self.get_use_bcp(),
             'no_load_cache': False,

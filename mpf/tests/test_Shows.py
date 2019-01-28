@@ -3,17 +3,14 @@ import time
 
 from unittest.mock import MagicMock
 
-from mpf.core.rgb_color import RGBColor
 from mpf.platforms.interfaces.driver_platform_interface import PulseSettings
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfTestCase import MpfTestCase, test_config
 
 
 class TestShows(MpfTestCase):
+
     def getConfigFile(self):
-        if self._testMethodName == "test_sync_ms":
-            return "test_sync_ms.yaml"
-        else:
-            return 'test_shows.yaml'
+        return 'test_shows.yaml'
 
     def getMachinePath(self):
         return 'tests/machine_files/shows/'
@@ -125,8 +122,8 @@ class TestShows(MpfTestCase):
         self.machine.events.post('start_mode1')
         self.advance_time_and_run(.2)
         self.assertTrue(self.machine.mode_controller.is_active('mode1'))
-        self.assertTrue(self.machine.modes.mode1.active)
-        self.assertIn(self.machine.modes.mode1,
+        self.assertTrue(self.machine.modes["mode1"].active)
+        self.assertIn(self.machine.modes["mode1"],
                       self.machine.mode_controller.active_modes)
 
         # Grab the running show instance
@@ -138,51 +135,51 @@ class TestShows(MpfTestCase):
 
         # Check LEDs, lights, and GI after first show step
         self.assertLightColor("led_01", '006400')
-        self.assertEqual(200, self.machine.lights.led_01.stack[0].priority)
+        self.assertEqual(200, self.machine.lights["led_01"].stack[0].priority)
         self.assertLightColor("led_02", 'CCCCCC')
-        self.assertEqual(200, self.machine.lights.led_02.stack[0].priority)
+        self.assertEqual(200, self.machine.lights["led_02"].stack[0].priority)
         self.assertLightChannel("light_01", 204)
-        self.assertEqual(200, self.machine.lights.light_01.stack[0].priority)
+        self.assertEqual(200, self.machine.lights["light_01"].stack[0].priority)
         self.assertLightChannel("light_02", 120)
-        self.assertEqual(200, self.machine.lights.light_02.stack[0].priority)
+        self.assertEqual(200, self.machine.lights["light_02"].stack[0].priority)
         self.assertLightChannel("gi_01", 255)
 
         # Check LEDs, lights, and GI after 2nd step
         self.advance_time_and_run()
         self.assertLightColor("led_01", 'DarkGreen')
-        self.assertEqual(200, self.machine.lights.led_01.stack[0].priority)
+        self.assertEqual(200, self.machine.lights["led_01"].stack[0].priority)
 
         self.assertLightColor("led_02", 'Black')
-        self.assertEqual(200, self.machine.lights.led_02.stack[0].priority)
+        self.assertEqual(200, self.machine.lights["led_02"].stack[0].priority)
         self.assertLightChannel("light_01", 204)
-        self.assertEqual(200, self.machine.lights.light_01.stack[0].priority)
+        self.assertEqual(200, self.machine.lights["light_01"].stack[0].priority)
         self.assertLightChannel("light_02", 120)
-        self.assertEqual(200, self.machine.lights.light_02.stack[0].priority)
+        self.assertEqual(200, self.machine.lights["light_02"].stack[0].priority)
         self.assertLightChannel("gi_01", 255)
 
         # Check LEDs, lights, and GI after 3rd step
         self.advance_time_and_run()
         self.assertLightColor("led_01", 'DarkSlateGray')
-        self.assertEqual(200, self.machine.lights.led_01.stack[0].priority)
+        self.assertEqual(200, self.machine.lights["led_01"].stack[0].priority)
         self.assertLightColor("led_02", 'Tomato')
-        self.assertEqual(200, self.machine.lights.led_02.stack[0].priority)
+        self.assertEqual(200, self.machine.lights["led_02"].stack[0].priority)
         self.assertLightChannel("light_01", 255)
-        self.assertEqual(200, self.machine.lights.light_01.stack[0].priority)
+        self.assertEqual(200, self.machine.lights["light_01"].stack[0].priority)
         self.assertLightChannel("light_02", 51)
-        self.assertEqual(200, self.machine.lights.light_02.stack[0].priority)
+        self.assertEqual(200, self.machine.lights["light_02"].stack[0].priority)
         self.assertLightChannel("gi_01", 153)
 
         # Check LEDs, lights, and GI after 4th step (includes a fade to next
         #  color)
         self.advance_time_and_run()
         self.assertNotLightColor("led_01", 'MidnightBlue')
-        self.assertEqual(200, self.machine.lights.led_01.stack[0].priority)
+        self.assertEqual(200, self.machine.lights["led_01"].stack[0].priority)
         self.assertNotLightColor("led_02", 'DarkOrange')
-        self.assertEqual(200, self.machine.lights.led_02.stack[0].priority)
+        self.assertEqual(200, self.machine.lights["led_02"].stack[0].priority)
         self.assertLightChannel("light_01", 255)
-        self.assertEqual(200, self.machine.lights.light_01.stack[0].priority)
+        self.assertEqual(200, self.machine.lights["light_01"].stack[0].priority)
         self.assertLightChannel("light_02", 51)
-        self.assertEqual(200, self.machine.lights.light_02.stack[0].priority)
+        self.assertEqual(200, self.machine.lights["light_02"].stack[0].priority)
         self.assertLightChannel("gi_01", 51)
 
         # Advance time so fade should have completed
@@ -240,13 +237,13 @@ class TestShows(MpfTestCase):
         # states from before the show started
 
         self.assertLightColor("led_01", "off")
-        self.assertFalse(self.machine.lights.led_01.stack)
+        self.assertFalse(self.machine.lights["led_01"].stack)
         self.assertLightColor("led_01", "off")
-        self.assertFalse(self.machine.lights.led_02.stack)
+        self.assertFalse(self.machine.lights["led_02"].stack)
         self.assertLightChannel("light_01", 0)
-        self.assertFalse(self.machine.lights.light_01.stack)
+        self.assertFalse(self.machine.lights["light_01"].stack)
         self.assertLightChannel("light_02", 0)
-        self.assertFalse(self.machine.lights.light_02.stack)
+        self.assertFalse(self.machine.lights["light_02"].stack)
         self.assertLightChannel("gi_01", 0)
 
         # --------------------------------------------------------
@@ -271,8 +268,8 @@ class TestShows(MpfTestCase):
         self.machine.events.post('start_mode2')
         self.machine_run()
         self.assertTrue(self.machine.mode_controller.is_active('mode2'))
-        self.assertTrue(self.machine.modes.mode2.active)
-        self.assertIn(self.machine.modes.mode2,
+        self.assertTrue(self.machine.modes["mode2"].active)
+        self.assertIn(self.machine.modes["mode2"],
                       self.machine.mode_controller.active_modes)
         self.assertTrue(self.machine.show_player.instances['mode2']['show_player']['test_show2'])
         self.machine_run()
@@ -322,8 +319,8 @@ class TestShows(MpfTestCase):
         self.machine.events.post('start_mode3')
         self.machine_run()
         self.assertTrue(self.machine.mode_controller.is_active('mode3'))
-        self.assertTrue(self.machine.modes.mode3.active)
-        self.assertIn(self.machine.modes.mode3,
+        self.assertTrue(self.machine.modes["mode3"].active)
+        self.assertIn(self.machine.modes["mode3"],
                       self.machine.mode_controller.active_modes)
         self.machine.show_player.instances['mode3']['show_player']['test_show3']
         self.machine_run()
@@ -375,7 +372,7 @@ class TestShows(MpfTestCase):
         show.stop()
 
         # test passing tag instead of LED name
-        self.machine.lights.led_01.clear_stack()
+        self.machine.lights["led_01"].clear_stack()
         self.advance_time_and_run()
 
         show = self.machine.shows['leds_name_token'].play(show_tokens=dict(
@@ -386,7 +383,7 @@ class TestShows(MpfTestCase):
         show.stop()
 
         # test passing multiple LEDs as string list
-        self.machine.lights.led_01.clear_stack()
+        self.machine.lights["led_01"].clear_stack()
         self.advance_time_and_run()
 
         show = self.machine.shows['leds_name_token'].play(show_tokens=dict(leds='led_01, led_02'))
@@ -396,8 +393,8 @@ class TestShows(MpfTestCase):
         show.stop()
 
         # test passing color as a token
-        self.machine.lights.led_01.clear_stack()
-        self.machine.lights.led_02.clear_stack()
+        self.machine.lights["led_01"].clear_stack()
+        self.machine.lights["led_02"].clear_stack()
         self.advance_time_and_run()
 
         show = self.machine.shows['leds_color_token'].play(
@@ -418,8 +415,8 @@ class TestShows(MpfTestCase):
         show.stop()
 
         # test single LED in show with extended LED config
-        self.machine.lights.led_01.clear_stack()
-        self.machine.lights.led_02.clear_stack()
+        self.machine.lights["led_01"].clear_stack()
+        self.machine.lights["led_02"].clear_stack()
         self.advance_time_and_run()
 
         # led should be off
@@ -435,8 +432,8 @@ class TestShows(MpfTestCase):
         show.stop()
 
         # test tag in show with extended LED config
-        self.machine.lights.led_01.clear_stack()
-        self.machine.lights.led_02.clear_stack()
+        self.machine.lights["led_01"].clear_stack()
+        self.machine.lights["led_02"].clear_stack()
         self.advance_time_and_run()
 
         show = self.machine.shows['leds_extended'].play(
@@ -458,7 +455,7 @@ class TestShows(MpfTestCase):
         show.stop()
 
         # test light tag in show
-        self.machine.lights.light_01.off(force=True)
+        self.machine.lights["light_01"].off(force=True)
         self.advance_time_and_run()
 
         show = self.machine.shows['lights_basic'].play(
@@ -470,7 +467,7 @@ class TestShows(MpfTestCase):
         show.stop()
 
         # test lights as string list in show
-        self.machine.lights.light_01.off(force=True)
+        self.machine.lights["light_01"].off(force=True)
         self.advance_time_and_run()
 
         show = self.machine.shows['lights_basic'].play(
@@ -482,10 +479,10 @@ class TestShows(MpfTestCase):
         show.stop()
 
         # test led and light tags in the same show
-        self.machine.lights.led_01.clear_stack()
-        self.machine.lights.led_02.clear_stack()
-        self.machine.lights.light_01.off(force=True)
-        self.machine.lights.light_02.off(force=True)
+        self.machine.lights["led_01"].clear_stack()
+        self.machine.lights["led_02"].clear_stack()
+        self.machine.lights["light_01"].off(force=True)
+        self.machine.lights["light_02"].off(force=True)
         self.advance_time_and_run()
 
         show = self.machine.shows['multiple_tokens'].play(
@@ -525,13 +522,13 @@ class TestShows(MpfTestCase):
         self.assertEqual(copied_show[1]['duration'], 1.0)
         self.assertEqual(copied_show[2]['duration'], 1.0)
         self.assertEqual(copied_show[4]['duration'], 2.0)
-        self.assertIn(self.machine.lights.led_01, copied_show[0]['lights'])
-        self.assertIn(self.machine.lights.led_02, copied_show[0]['lights'])
-        self.assertEqual(copied_show[0]['lights'][self.machine.lights.led_01],
+        self.assertIn(self.machine.lights["led_01"], copied_show[0]['lights'])
+        self.assertIn(self.machine.lights["led_02"], copied_show[0]['lights'])
+        self.assertEqual(copied_show[0]['lights'][self.machine.lights["led_01"]],
                          dict(color='006400', fade=None, priority=0))
-        self.assertEqual(copied_show[0]['lights'][self.machine.lights.led_02],
+        self.assertEqual(copied_show[0]['lights'][self.machine.lights["led_02"]],
                          dict(color='cccccc', fade=None, priority=0))
-        self.assertEqual(copied_show[3]['lights'][self.machine.lights.led_01],
+        self.assertEqual(copied_show[3]['lights'][self.machine.lights["led_01"]],
                          dict(color='midnightblue', fade=500, priority=0))
 
     def test_show_player(self):
@@ -599,6 +596,7 @@ class TestShows(MpfTestCase):
         delta = (self.clock.get_time() * 1000) % ms
         self.assertTrue(delta == ms or delta < 1, "Delta {} too large".format(delta))
 
+    @test_config("test_sync_ms.yaml")
     def test_sync_ms(self):
         self.advance_to_sync_ms(250)
         # shortly after sync point. start initial show

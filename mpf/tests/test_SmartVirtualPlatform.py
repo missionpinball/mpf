@@ -1,15 +1,10 @@
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfTestCase import MpfTestCase, test_config
 
 
 class TestSmartVirtualPlatform(MpfTestCase):
 
     def getConfigFile(self):
-        if self._testMethodName in ["test_eject", "test_eject_with_plunger"]:
-            return "test_smart_virtual_initial.yaml"
-        elif self._testMethodName == 'test_coil_fired_plunger':
-            return "test_coil_fired_plunger.yaml"
-        else:
-            return 'test_smart_virtual.yaml'
+        return 'test_smart_virtual.yaml'
 
     def getMachinePath(self):
         return 'tests/machine_files/smart_virtual_platform/'
@@ -17,6 +12,7 @@ class TestSmartVirtualPlatform(MpfTestCase):
     def get_platform(self):
         return 'smart_virtual'
 
+    @test_config("test_smart_virtual_initial.yaml")
     def test_eject(self):
         # device1_s1 is active in this test initially
         self.advance_time_and_run(.6)
@@ -38,6 +34,7 @@ class TestSmartVirtualPlatform(MpfTestCase):
         self.assertEqual(False, self.machine.switch_controller.is_active('device1_s1'))
         self.assertEqual(False, self.machine.switch_controller.is_active('device1_s2'))
 
+    @test_config("test_smart_virtual_initial.yaml")
     def test_eject_with_plunger(self):
         trough = self.machine.ball_devices.trough2
         plunger = self.machine.ball_devices.plunger2
@@ -197,6 +194,7 @@ class TestSmartVirtualPlatform(MpfTestCase):
         self.assertFalse(self.machine.drop_targets['left2'].complete)
         self.assertFalse(self.machine.drop_target_banks['left_bank'].complete)
 
+    @test_config("test_coil_fired_plunger.yaml")
     def test_coil_fired_plunger(self):
         self.advance_time_and_run(2)
         self.assertEqual(5, self.machine.ball_devices.trough.balls)

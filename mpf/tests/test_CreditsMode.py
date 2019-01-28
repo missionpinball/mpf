@@ -1,15 +1,12 @@
 from unittest.mock import MagicMock
 
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfTestCase import MpfTestCase, test_config
 
 
 class TestCreditsMode(MpfTestCase):
 
     def getConfigFile(self):
-         if self._testMethodName == "test_free_play_at_start":
-            return 'config_freeplay.yaml'
-         else:
-            return 'config.yaml'
+        return 'config.yaml'
 
     def getMachinePath(self):
         return 'tests/machine_files/credits/'
@@ -49,13 +46,13 @@ class TestCreditsMode(MpfTestCase):
         self.assertIsNone(self.machine.game)
 
     def testFreePlay(self):
-        self.machine.modes.credits.stop()
+        self.machine.modes["credits"].stop()
         self.machine_run()
         self.assertEqual("FREE PLAY", self.machine.get_machine_var('credits_string'))
 
-        self.machine.modes.credits.credits_config['free_play'] = True
-        self.machine.modes.credits.credits_config['free_play_string'] = "FREEEE"
-        self.machine.modes.credits.start()
+        self.machine.modes["credits"].credits_config['free_play'] = True
+        self.machine.modes["credits"].credits_config['free_play_string'] = "FREEEE"
+        self.machine.modes["credits"].start()
         self.machine_run()
 
         self.assertEqual("FREEEE", self.machine.get_machine_var('credits_string'))
@@ -65,6 +62,7 @@ class TestCreditsMode(MpfTestCase):
 
         self.start_two_player_game()
 
+    @test_config("config_freeplay.yaml")
     def test_free_play_at_start(self):
         self.assertEqual("FREE PLAY", self.machine.get_machine_var('credits_string'))
 
