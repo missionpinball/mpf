@@ -1315,7 +1315,7 @@ sound_loop_sets:
 sound_player:
     __valid_in__: machine, mode, show
     action: single|enum(play,stop,stop_looping,load,unload)|play
-    track: single|str|use_sound_setting
+    track: single|str|None
     volume: single|gain|None
     pan: single|float_or_token|0
     loops: single|int_or_token|None
@@ -1325,11 +1325,11 @@ sound_player:
     fade_out: single|secs|None
     about_to_finish_time: single|secs|-1
     max_queue_time: single|secs|None
-    events_when_played: list|str|use_sound_setting
-    events_when_stopped: list|str|use_sound_setting
-    events_when_looping: list|str|use_sound_setting
-    events_when_about_to_finish: list|str|use_sound_setting
-    mode_end_action: single|enum(stop,stop_looping,use_sound_setting)|use_sound_setting
+    events_when_played: list|str|None
+    events_when_stopped: list|str|None
+    events_when_looping: list|str|None
+    events_when_about_to_finish: list|str|None
+    mode_end_action: single|enum(stop,stop_looping,use_sound_setting,None)|None
     key: single|str|None
 sound_pools:
     __valid_in__: machine, mode                      # todo add to validator
