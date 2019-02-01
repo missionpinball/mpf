@@ -103,11 +103,12 @@ str_2: 032
 str_3: on
 str_4: off
 str_5: 123e45
+str_6: hi
+str_7: 2:10
 bool_1: yes
 bool_2: no
 bool_3: true
 bool_4: false
-str_6: hi
 int_1: 123
 yaml.scalarfloat.ScalarFloat_1: 1.0
 
