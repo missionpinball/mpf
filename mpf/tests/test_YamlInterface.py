@@ -105,6 +105,7 @@ str_4: off
 str_5: 123e45
 str_6: hi
 str_7: 2:10
+str_8: 2:10.1
 bool_1: yes
 bool_2: no
 bool_3: true

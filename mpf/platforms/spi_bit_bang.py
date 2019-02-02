@@ -10,6 +10,8 @@ class SpiBitBangSwitch(SwitchPlatformInterface):
 
     """Switch on SPI Bit Bang."""
 
+    __slots__ = []
+
     def get_board_name(self):
         """Return board name."""
         return "SPI Big Bang"
@@ -18,6 +20,8 @@ class SpiBitBangSwitch(SwitchPlatformInterface):
 class SpiBitBangPlatform(SwitchPlatform):
 
     """Platform which reads switch via SPI using bit banging."""
+
+    __slots__ = ["_read_task", "config", "_switch_states"]
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict) -> "SwitchPlatformInterface":
         """Configure switch."""
