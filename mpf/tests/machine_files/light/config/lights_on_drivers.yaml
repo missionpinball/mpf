@@ -1,0 +1,15 @@
+#config_version=5
+
+hardware:
+  platform: virtual
+
+coils:
+    coil_01:
+        number: 1
+        allow_enable: True
+
+lights:
+    light_on_driver:
+        number: coil_01
+        platform: drivers
+        debug: True

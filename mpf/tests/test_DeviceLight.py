@@ -420,3 +420,24 @@ class TestDeviceLight(MpfTestCase):
         self.assertEqual(80 / 255.0, led.hw_drivers["red"][0].current_brightness)
         self.assertEqual(80 / 255.0, led.hw_drivers["green"][0].current_brightness)
         self.assertEqual(80 / 255.0, led.hw_drivers["blue"][0].current_brightness)
+
+
+class TestLightOnDriver(MpfTestCase):
+
+    def getConfigFile(self):
+        return 'lights_on_drivers.yaml'
+
+    def getMachinePath(self):
+        return 'tests/machine_files/light/'
+
+    def get_platform(self):
+        # no force platform. we are testing the drivers platform
+        return False
+
+    def test_driver_platform(self):
+        driver = self.machine.coils["coil_01"].hw_driver
+        self.assertEqual("disabled", driver.state)
+        self.machine.lights["light_on_driver"].on()
+        self.assertEqual("enabled", driver.state)
+        self.machine.lights["light_on_driver"].off()
+        self.assertEqual("disabled", driver.state)
