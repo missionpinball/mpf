@@ -617,11 +617,15 @@ class ConfigValidator:
         else:
             return None
 
-    def _validate_type_dict(self, item, validation_failure_info):
+    def _validate_type_dict(self, item, validation_failure_info, param=None):
         if not item:
             return {}
         if not isinstance(item, dict):
             self.validation_error(item, validation_failure_info, "Item is not a dict.")
+
+        if param:
+            return self._validate_dict_or_omap("dict", param, validation_failure_info, item)
+
         return item
 
     def _validate_type_omap(self, item, validation_failure_info):
@@ -705,7 +709,7 @@ class ConfigValidator:
             pass
 
         if '(' in validator and ')' in validator[-1:] == ')':
-            validator_parts = validator.split('(')
+            validator_parts = validator.split('(', maxsplit=1)
             validator = validator_parts[0]
             param = validator_parts[1][:-1]
             return self.validator_list[validator](item, validation_failure_info=validation_failure_info, param=param)
