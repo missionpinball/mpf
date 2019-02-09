@@ -4,6 +4,8 @@ from collections import namedtuple
 from operator import attrgetter
 from typing import List
 
+from mpf.exceptions.ConfigFileError import ConfigFileError
+
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.placeholder_manager import TextTemplate
 from mpf.core.system_wide_device import SystemWideDevice
@@ -41,7 +43,13 @@ class SegmentDisplay(SystemWideDevice):
         # load platform
         self.platform = self.machine.get_platform_sections('segment_displays', self.config['platform'])
         # configure hardware
-        self.hw_display = self.platform.configure_segment_display(self.config['number'])
+        try:
+            self.hw_display = self.platform.configure_segment_display(self.config['number'],
+                                                                      self.config['platform_settings'])
+        except AssertionError as e:
+            raise AssertionError("Error in platform while configuring segment display {}. "
+                                 "See error above.".format(self.name)) from e
+
 
     def add_text(self, text: str, priority: int = 0, key: str = None) -> None:
         """Add text to display stack.

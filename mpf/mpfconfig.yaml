@@ -122,6 +122,7 @@ mpf:
         osc: mpf.platforms.osc.OscPlatform
         rpi_dmd: mpf.platforms.rpi_dmd.RpiDmdPlatform
         spi_bit_bang: mpf.platforms.spi_bit_bang.SpiBitBangPlatform
+        light_segment_displays: mpf.platforms.light_segment_displays.LightSegmentDisplaysPlatform
 
     paths:
         scriptlets: scriptlets

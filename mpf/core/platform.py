@@ -187,7 +187,7 @@ class SegmentDisplayPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['segment_display'] = True
 
     @abc.abstractmethod
-    def configure_segment_display(self, number: str) -> "SegmentDisplayPlatformInterface":
+    def configure_segment_display(self, number: str, platform_settings) -> "SegmentDisplayPlatformInterface":
         """Subclass this method in a platform module to configure a segment display.
 
         This method should return a reference to the segment display platform interface
