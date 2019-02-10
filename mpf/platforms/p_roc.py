@@ -181,8 +181,9 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         self.dmd = PROCDMD(self, self.machine)
         return self.dmd
 
-    def configure_segment_display(self, number: str) -> "SegmentDisplayPlatformInterface":
+    def configure_segment_display(self, number: str, platform_settings) -> "SegmentDisplayPlatformInterface":
         """Configure display."""
+        del platform_settings
         number_int = int(number)
         if 0 < number_int >= 4:
             raise AssertionError("Number must be between 0 and 3 for p_roc segment display.")

@@ -411,8 +411,9 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
         return LisyDriver(config=config, number=number, platform=self)
 
-    def configure_segment_display(self, number: str) -> SegmentDisplaySoftwareFlashPlatformInterface:
+    def configure_segment_display(self, number: str, platform_settings) -> SegmentDisplaySoftwareFlashPlatformInterface:
         """Configure a segment display."""
+        del platform_settings
         assert self._number_of_displays is not None
 
         if 0 < int(number) >= self._number_of_displays:

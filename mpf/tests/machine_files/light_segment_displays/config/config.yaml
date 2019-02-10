@@ -1,0 +1,55 @@
+#config_version=5
+
+hardware:
+  segment_displays: light_segment_displays
+
+lights:
+  segment1_a:
+    number:
+  segment1_b:
+    number:
+  segment1_c:
+    number:
+  segment1_d:
+    number:
+  segment1_e:
+    number:
+  segment1_f:
+    number:
+  segment1_g:
+    number:
+  segment2_a:
+    number:
+  segment2_b:
+    number:
+  segment2_c:
+    number:
+  segment2_d:
+    number:
+  segment2_e:
+    number:
+  segment2_f:
+    number:
+  segment2_g:
+    number:
+
+segment_displays:
+  display1:
+    number: 1
+    platform_settings:
+      lights:
+        - a: segment1_a
+          b: segment1_b
+          c: segment1_c
+          d: segment1_d
+          e: segment1_e
+          f: segment1_f
+          g: segment1_g
+        - a: segment2_a
+          b: segment2_b
+          c: segment2_c
+          d: segment2_d
+          e: segment2_e
+          f: segment2_f
+          g: segment2_g
+      type: 7segment

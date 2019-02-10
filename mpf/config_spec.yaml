@@ -616,6 +616,9 @@ light_settings:
     color_correction_profiles: single|dict|None
     default_color_correction_profile: single|str|None
     default_fade_ms: single|int|0
+light_segment_displays:
+    lights: list|dict(str:machine(lights))|
+    type: single|enum(7segment)|
 light_stripes:
     __valid_in__: machine
     number_start: single|int|
@@ -1068,6 +1071,7 @@ segment_displays:
     __valid_in__: machine
     number: single|str|
     platform: single|str|None
+    platform_settings: single|dict|None
 segment_display_player:
     __valid_in__: machine, mode, show
     priority: single|int_or_token|0

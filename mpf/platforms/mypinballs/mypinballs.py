@@ -78,8 +78,9 @@ class MyPinballsHardwarePlatform(SegmentDisplayPlatform):
             self.log.debug("Sending cmd: %s", cmd)
         self._writer.write(cmd)
 
-    def configure_segment_display(self, number: str) -> "SegmentDisplayPlatformInterface":
+    def configure_segment_display(self, number: str, platform_settings) -> "SegmentDisplayPlatformInterface":
         """Configure display."""
+        del platform_settings
         number_int = int(number)
         if 1 > number_int > 6:
             raise AssertionError("Number {} invalid for mypinballs display. 1-6 are valid.".format(number))
