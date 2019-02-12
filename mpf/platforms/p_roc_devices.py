@@ -114,16 +114,16 @@ class PROCDriver(DriverPlatformInterface):
     def state(self):
         """Return a dictionary representing this driver's current configuration state."""
         return {
-            "driverNum": self.number,
-            "polarity": 0,
-            "outputDriveTime": 0,
-            "state": 0,
-            "waitForFirstTimeSlot": 0,
-            "timeslots": 0,
-            "patterOnTime": 0,
-            "patterOffTime": 0,
-            "patterEnable": 0,
-            "futureEnable": 0
+            'driverNum': self.number,
+            'outputDriveTime': 0,
+            'polarity': True,
+            'state': False,
+            'waitForFirstTimeSlot': False,
+            'timeslots': 0,
+            'patterOnTime': 0,
+            'patterOffTime': 0,
+            'patterEnable': False,
+            'futureEnable': False
         }
 
 
