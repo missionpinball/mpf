@@ -35,6 +35,8 @@ switches:
         number: A4-B0-0
     s_stepper2_home:
         number: A4-B0-1
+    s_sling_default:  # just defaults
+        number: A4-B0-2
 
 coils:
     c_test:
@@ -60,6 +62,10 @@ coils:
         number: A2-B0-3
         default_hold_power: 1.0
         default_pulse_ms: 0
+    c_sling_pulse_power:  # just defaults
+        number: A2-B0-4
+        default_pulse_power: 0.5
+        default_pulse_ms: 12
 
 autofire_coils:
     ac_slingshot_test:
@@ -68,6 +74,9 @@ autofire_coils:
     ac_switch_nc_test:
         coil: c_coil_pwm_test
         switch: s_test_nc
+    ac_sling_pulse_power:
+        coil: c_sling_pulse_power
+        switch: s_sling_default
 
 servos:
     servo1:

@@ -63,6 +63,39 @@ class TestP3Roc(MpfTestCase):
         super()._mock_loop()
         self.loop._wait_for_external_executor = True
 
+    def _driver_state_pulse(self, driver, milliseconds):
+        driver["state"] = 1
+        driver["timeslots"] = 0
+        driver["waitForFirstTimeSlot"] = False
+        driver["outputDriveTime"] = milliseconds
+        driver["patterOnTime"] = 0
+        driver["patterOffTime"] = 0
+        driver["patterEnable"] = False
+        driver["futureEnable"] = False
+        return driver
+
+    def _driver_state_disable(self, driver):
+        driver["state"] = 0
+        driver["timeslots"] = 0
+        driver["waitForFirstTimeSlot"] = False
+        driver["outputDriveTime"] = 0
+        driver["patterOnTime"] = 0
+        driver["patterOffTime"] = 0
+        driver["patterEnable"] = False
+        driver["futureEnable"] = False
+        return driver
+
+    def _driver_state_patter(self, driver, millisecondsOn, millisecondsOff, originalOnTime, now):
+        driver["state"] = True
+        driver["timeslots"] = 0
+        driver["waitForFirstTimeSlot"] = not now
+        driver["outputDriveTime"] = originalOnTime
+        driver["patterOnTime"] = millisecondsOn
+        driver["patterOffTime"] = millisecondsOff
+        driver["patterEnable"] = True
+        driver["futureEnable"] = False
+        return driver
+
     def setUp(self):
         if sys.version_info[0] == 3 and sys.version_info[1] == 4:
             # this fails on python 3.4 because of some asyncio bugs
@@ -76,53 +109,13 @@ class TestP3Roc(MpfTestCase):
         p_roc_common.pinproc.PinPROC = MagicMock(return_value=self.pinproc)
         p_roc_common.pinproc.normalize_machine_type = MagicMock(return_value=7)
         p_roc_common.pinproc.decode = None  # should not be called and therefore fail
-        p_roc_common.pinproc.driver_state_pulse = MagicMock(
-            return_value={'driverNum': 8,
-                          'outputDriveTime': 0,
-                          'polarity': True,
-                          'state': False,
-                          'waitForFirstTimeSlot': False,
-                          'timeslots': 0,
-                          'patterOnTime': 0,
-                          'patterOffTime': 0,
-                          'patterEnable': False,
-                          'futureEnable': False})
+        p_roc_common.pinproc.driver_state_pulse = self._driver_state_pulse
 
-        p_roc_common.pinproc.driver_state_pulsed_patter = MagicMock(
-            return_value={'driverNum': 9,
-                          'outputDriveTime': 0,
-                          'polarity': True,
-                          'state': False,
-                          'waitForFirstTimeSlot': False,
-                          'timeslots': 0,
-                          'patterOnTime': 0,
-                          'patterOffTime': 0,
-                          'patterEnable': False,
-                          'futureEnable': False})
+        p_roc_common.pinproc.driver_state_pulsed_patter = None
 
-        p_roc_common.pinproc.driver_state_disable = MagicMock(
-            return_value={'driverNum': 10,
-                          'outputDriveTime': 0,
-                          'polarity': True,
-                          'state': False,
-                          'waitForFirstTimeSlot': False,
-                          'timeslots': 0,
-                          'patterOnTime': 0,
-                          'patterOffTime': 0,
-                          'patterEnable': False,
-                          'futureEnable': False})
+        p_roc_common.pinproc.driver_state_disable = self._driver_state_disable
 
-        p_roc_common.pinproc.driver_state_patter = MagicMock(
-            return_value={'driverNum': 11,
-                          'outputDriveTime': 0,
-                          'polarity': True,
-                          'state': False,
-                          'waitForFirstTimeSlot': False,
-                          'timeslots': 0,
-                          'patterOnTime': 0,
-                          'patterOffTime': 0,
-                          'patterEnable': False,
-                          'futureEnable': False})
+        p_roc_common.pinproc.driver_state_patter = self._driver_state_patter
 
         self.pinproc.switch_get_states = MagicMock(return_value=[0, 1] + [0] * 100)
         self.pinproc.read_data = self.read_data
@@ -225,25 +218,21 @@ SW-16 boards found:
         self.pinproc.driver_disable.assert_called_with(number)
 
     def _test_hw_rule_pulse(self):
-        self.machine.coils.c_slingshot_test.hw_driver.state = MagicMock(return_value=8)
+        coil_number = self.machine.coils["c_slingshot_test"].hw_driver.number
+        self.pinproc.switch_update_rule = MagicMock(return_value=True)
+        self.wait_for_platform()
         self.machine.autofires.ac_slingshot_test.enable()
         self.wait_for_platform()
-        self.pinproc.switch_update_rule.assert_any_call(
-            40, 'closed_nondebounced',
-            {'notifyHost': False, 'reloadActive': True},
-            [{'patterEnable': False,
-              'patterOnTime': 0,
-              'timeslots': 0,
-              'futureEnable': False,
-              'state': False,
-              'patterOffTime': 0,
-              'outputDriveTime': 0,
-              'driverNum': 8,
-              'polarity': True,
-              'waitForFirstTimeSlot': False}],
-            False)
+        self.pinproc.switch_update_rule.assert_has_calls([
+            call(40, 'open_nondebounced', {'notifyHost': False, 'reloadActive': True}, [], False),
+            call(40, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': True},
+                 [{'futureEnable': False, 'patterOffTime': 0, 'polarity': True, 'waitForFirstTimeSlot': False,
+                   'timeslots': 0, 'patterOnTime': 0, 'outputDriveTime': 10, 'patterEnable': False, 'state': 1,
+                   'driverNum': coil_number}], False),
+            call(40, 'open_debounced', {'notifyHost': True, 'reloadActive': True}, [], False),
+            call(40, 'closed_debounced', {'notifyHost': True, 'reloadActive': True}, [], False),
+        ], any_order=True)
 
-        p_roc_common.pinproc.driver_state_pulse.assert_called_with(8, 10)
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
 
         # test disable
@@ -257,36 +246,50 @@ SW-16 boards found:
             call(40, 'closed_debounced', {'notifyHost': True, 'reloadActive': True}, []),
         ], any_order=True)
 
-        self.pinproc.driver_disable.assert_called_with(8)
+        self.pinproc.driver_disable.assert_called_with(coil_number)
+
+        # sling with pulse power (currently not implemented)
+        coil_number = self.machine.coils["c_sling_pulse_power"].hw_driver.number
+        self.pinproc.switch_update_rule = MagicMock(return_value=True)
+        self.wait_for_platform()
+        self.machine.autofires["ac_sling_pulse_power"].enable()
+        self.wait_for_platform()
+        self.pinproc.switch_update_rule.assert_has_calls([
+            call(66, 'open_nondebounced', {'notifyHost': False, 'reloadActive': True}, [], False),
+            call(66, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': True},
+                 [{'futureEnable': False, 'patterOffTime': 0, 'polarity': True, 'waitForFirstTimeSlot': False,
+                   'timeslots': 0, 'patterOnTime': 0, 'outputDriveTime': 12, 'patterEnable': False, 'state': 1,
+                   'driverNum': coil_number}], False),
+            call(66, 'open_debounced', {'notifyHost': True, 'reloadActive': True}, [], False),
+            call(66, 'closed_debounced', {'notifyHost': True, 'reloadActive': True}, [], False),
+        ], any_order=True)
 
     def _test_hw_rule_pulse_inverted_switch(self):
-        self.machine.coils.c_coil_pwm_test.hw_driver.state = MagicMock(return_value=8)
+        coil_number = self.machine.coils["c_coil_pwm_test"].hw_driver.number
+        self.pinproc.switch_update_rule = MagicMock(return_value=True)
+        self.wait_for_platform()
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
         self.machine.autofires.ac_switch_nc_test.enable()
         self.wait_for_platform()
-        self.pinproc.switch_update_rule.assert_any_call(
-            41, 'open_nondebounced',
-            {'notifyHost': False, 'reloadActive': True},
-            [{'patterEnable': False,
-              'patterOnTime': 0,
-              'timeslots': 0,
-              'futureEnable': False,
-              'state': False,
-              'patterOffTime': 0,
-              'outputDriveTime': 0,
-              'driverNum': 8,
-              'polarity': True,
-              'waitForFirstTimeSlot': False}],
-            False)
-
-        p_roc_common.pinproc.driver_state_pulse.assert_called_with(8, 10)
+        self.pinproc.switch_update_rule.assert_has_calls([
+            call(41, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': True}, [], False),
+            call(41, 'open_nondebounced', {'notifyHost': False, 'reloadActive': True},
+                 [{'futureEnable': False, 'patterOffTime': 0, 'polarity': True, 'waitForFirstTimeSlot': False,
+                   'timeslots': 0, 'patterOnTime': 0, 'outputDriveTime': 10, 'patterEnable': False, 'state': 1,
+                   'driverNum': coil_number}], False),
+            call(41, 'open_debounced', {'notifyHost': True, 'reloadActive': True}, [], False),
+            call(41, 'closed_debounced', {'notifyHost': True, 'reloadActive': True}, [], False),
+        ], any_order=True)
 
         # test disable
         self.machine.autofires.ac_switch_nc_test.disable()
-        self.pinproc.driver_disable.assert_called_with(8)
+        self.wait_for_platform()
+        self.pinproc.driver_disable.assert_called_with(coil_number)
 
     def _test_hw_rule_pulse_disable_on_release(self):
-        self.machine.coils.c_test.hw_driver.state = MagicMock(return_value=8)
+        coil_number = self.machine.coils["c_test"].hw_driver.number
+        self.pinproc.switch_update_rule = MagicMock(return_value=True)
+        self.wait_for_platform()
         rule = self.machine.platform_controller.set_pulse_on_hit_and_release_rule(
             SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
             DriverRuleSettings(driver=self.machine.coils.c_test, recycle=False),
@@ -294,44 +297,34 @@ SW-16 boards found:
         self.wait_for_platform()
 
         self.pinproc.switch_update_rule.assert_has_calls([
-            call(
-                23, 'closed_debounced',
-                {'notifyHost': True, 'reloadActive': False},
-                [{'patterEnable': False,
-                  'patterOnTime': 0,
-                  'timeslots': 0,
-                  'futureEnable': False,
-                  'state': False,
-                  'patterOffTime': 0,
-                  'outputDriveTime': 0,
-                  'driverNum': 8,
-                  'polarity': True,
-                  'waitForFirstTimeSlot': False}],
-                False),
-            call(
-                23, 'open_debounced',
-                {'notifyHost': True, 'reloadActive': False},
-                [{'patterEnable': False,
-                  'patterOnTime': 0,
-                  'timeslots': 0,
-                  'futureEnable': False,
-                  'state': False,
-                  'patterOffTime': 0,
-                  'outputDriveTime': 0,
-                  'driverNum': 10,
-                  'polarity': True,
-                  'waitForFirstTimeSlot': False}],
-                False),
+            call(23, 'closed_nondebounced', {'reloadActive': False, 'notifyHost': False}, [], False),
+            call(23, 'open_nondebounced', {'reloadActive': False, 'notifyHost': False}, [], False),
+            call(23, 'open_debounced', {'reloadActive': False, 'notifyHost': True}, [
+                {'patterOnTime': 0, 'driverNum': coil_number, 'waitForFirstTimeSlot': False, 'patterOffTime': 0,
+                 'polarity': True,
+                 'timeslots': 0, 'state': 0, 'patterEnable': False, 'outputDriveTime': 0, 'futureEnable': False}],
+                 False),
+            call(23, 'closed_debounced', {'reloadActive': False, 'notifyHost': True}, [
+                {'patterOnTime': 0, 'driverNum': coil_number, 'waitForFirstTimeSlot': False, 'patterOffTime': 0,
+                 'polarity': True,
+                 'timeslots': 0, 'state': 1, 'patterEnable': False, 'outputDriveTime': 23, 'futureEnable': False}],
+                 False),
         ], any_order=True)
 
-        p_roc_common.pinproc.driver_state_pulse.assert_called_with(8, 23)
-        p_roc_common.pinproc.driver_state_disable.assert_called_with(8)
-
+        self.pinproc.switch_update_rule = MagicMock(return_value=True)
         self.machine.platform_controller.clear_hw_rule(rule)
+        self.wait_for_platform()
+
+        self.pinproc.switch_update_rule.assert_has_calls([
+            call(23, 'closed_nondebounced', {'reloadActive': False, 'notifyHost': False}, []),
+            call(23, 'open_nondebounced', {'reloadActive': False, 'notifyHost': False}, []),
+            call(23, 'open_debounced', {'reloadActive': False, 'notifyHost': True}, []),
+            call(23, 'closed_debounced', {'reloadActive': False, 'notifyHost': True}, []),
+        ], any_order=True)
+
 
     def _test_hw_rule_hold_pwm(self):
         return  # currently not cupported
-        self.machine.coils.c_coil_pwm_test.hw_driver.state = MagicMock(return_value=8)
         self.machine.default_platform.set_hw_rule(
                 sw_name="s_test",
                 sw_activity=1,
@@ -388,7 +381,9 @@ SW-16 boards found:
         self.machine.default_platform.clear_hw_rule("s_test", "c_coil_pwm_test")
 
     def _test_hw_rule_hold_allow_enable(self):
-        self.machine.coils.c_test_allow_enable.hw_driver.state = MagicMock(return_value=8)
+        coil_number = self.machine.coils["c_test_allow_enable"].hw_driver.number
+        self.pinproc.switch_update_rule = MagicMock(return_value=True)
+        self.wait_for_platform()
         rule = self.machine.platform_controller.set_pulse_on_hit_and_enable_and_release_rule(
             SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
             DriverRuleSettings(driver=self.machine.coils.c_test_allow_enable, recycle=False),
@@ -397,39 +392,31 @@ SW-16 boards found:
         self.wait_for_platform()
 
         self.pinproc.switch_update_rule.assert_has_calls([
-            call(
-                23, 'closed_debounced',
-                {'notifyHost': True, 'reloadActive': False},
-                [{'patterEnable': False,
-                  'patterOnTime': 0,
-                  'timeslots': 0,
-                  'futureEnable': False,
-                  'state': False,
-                  'patterOffTime': 0,
-                  'outputDriveTime': 0,
-                  'driverNum': 8,
-                  'polarity': True,
-                  'waitForFirstTimeSlot': False}],
-                False),
-            call(
-                23, 'open_debounced',
-                {'notifyHost': True, 'reloadActive': False},
-                [{'patterEnable': False,
-                  'patterOnTime': 0,
-                  'timeslots': 0,
-                  'futureEnable': False,
-                  'state': False,
-                  'patterOffTime': 0,
-                  'outputDriveTime': 0,
-                  'driverNum': 10,
-                  'polarity': True,
-                  'waitForFirstTimeSlot': False}],
-                False),
+            call(23, 'closed_nondebounced', {'reloadActive': False, 'notifyHost': False}, [], False),
+            call(23, 'open_nondebounced', {'reloadActive': False, 'notifyHost': False}, [], False),
+            call(23, 'open_debounced', {'reloadActive': False, 'notifyHost': True}, [
+                {'patterOnTime': 0, 'driverNum': coil_number, 'waitForFirstTimeSlot': False, 'patterOffTime': 0,
+                 'polarity': True,
+                 'timeslots': 0, 'state': 0, 'patterEnable': False, 'outputDriveTime': 0, 'futureEnable': False}],
+                 False),
+            call(23, 'closed_debounced', {'reloadActive': False, 'notifyHost': True}, [
+                {'patterOnTime': 0, 'driverNum': coil_number, 'waitForFirstTimeSlot': False, 'patterOffTime': 0,
+                 'polarity': True,
+                 'timeslots': 0, 'state': 1, 'patterEnable': False, 'outputDriveTime': 0, 'futureEnable': False}],
+                 False),
         ], any_order=True)
 
-        p_roc_common.pinproc.driver_state_pulse.assert_called_with(8, 0)
-        p_roc_common.pinproc.driver_state_disable.assert_called_with(8)
+        self.pinproc.switch_update_rule = MagicMock(return_value=True)
         self.machine.platform_controller.clear_hw_rule(rule)
+        self.wait_for_platform()
+
+        self.pinproc.switch_update_rule.assert_has_calls([
+            call(23, 'closed_nondebounced', {'reloadActive': False, 'notifyHost': False}, []),
+            call(23, 'open_nondebounced', {'reloadActive': False, 'notifyHost': False}, []),
+            call(23, 'open_debounced', {'reloadActive': False, 'notifyHost': True}, []),
+            call(23, 'closed_debounced', {'reloadActive': False, 'notifyHost': True}, []),
+        ], any_order=True)
+
 
     def _test_hw_rule_hold_no_allow_enable(self):
         # enable coil which does not have allow_enable
@@ -440,7 +427,10 @@ SW-16 boards found:
                 PulseRuleSettings(duration=23, power=1.0))
 
     def _test_hw_rule_multiple_pulse(self):
-        self.machine.coils.c_test.hw_driver.state = MagicMock(return_value=8)
+        coil_number = self.machine.coils["c_test"].hw_driver.number
+        coil_number2 = self.machine.coils["c_coil_pwm_test"].hw_driver.number
+        self.pinproc.switch_update_rule = MagicMock(return_value=True)
+        self.wait_for_platform()
         self.machine.platform_controller.set_pulse_on_hit_rule(
             SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
             DriverRuleSettings(driver=self.machine.coils.c_test, recycle=False),
@@ -448,29 +438,19 @@ SW-16 boards found:
 
         self.wait_for_platform()
         self.pinproc.switch_update_rule.assert_has_calls([
-            call(
-                23, 'closed_debounced',
-                {'notifyHost': True, 'reloadActive': False},
-                [{'patterEnable': False,
-                  'patterOnTime': 0,
-                  'timeslots': 0,
-                  'futureEnable': False,
-                  'state': False,
-                  'patterOffTime': 0,
-                  'outputDriveTime': 0,
-                  'driverNum': 8,
-                  'polarity': True,
-                  'waitForFirstTimeSlot': False}],
-                False),
+            call(23, 'closed_nondebounced', {'reloadActive': False, 'notifyHost': False}, [], False),
+            call(23, 'open_nondebounced', {'reloadActive': False, 'notifyHost': False}, [], False),
+            call(23, 'open_debounced', {'reloadActive': False, 'notifyHost': True}, [], False),
+            call(23, 'closed_debounced', {'reloadActive': False, 'notifyHost': True}, [
+                {'patterOnTime': 0, 'driverNum': coil_number, 'waitForFirstTimeSlot': False, 'patterOffTime': 0,
+                 'polarity': True,
+                 'timeslots': 0, 'state': 1, 'patterEnable': False, 'outputDriveTime': 23, 'futureEnable': False}],
+                 False),
         ], any_order=True)
 
-        p_roc_common.pinproc.driver_state_pulse.assert_called_with(8, 23)
-
-        p_roc_common.pinproc.driver_state_pulse.assert_called_with = MagicMock(return_value=True)
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
 
         # test setting the same rule again
-        self.machine.coils.c_test.hw_driver.state = MagicMock(return_value=8)
         self.machine.platform_controller.set_pulse_on_hit_rule(
             SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
             DriverRuleSettings(driver=self.machine.coils.c_test, recycle=False),
@@ -478,23 +458,16 @@ SW-16 boards found:
         self.wait_for_platform()
 
         self.pinproc.switch_update_rule.assert_has_calls([
-            call(
-                23, 'closed_debounced',
-                {'notifyHost': True, 'reloadActive': False},
-                [{'patterEnable': False,
-                  'patterOnTime': 0,
-                  'timeslots': 0,
-                  'futureEnable': False,
-                  'state': False,
-                  'patterOffTime': 0,
-                  'outputDriveTime': 0,
-                  'driverNum': 8,
-                  'polarity': True,
-                  'waitForFirstTimeSlot': False}],
-                False),
+            call(23, 'closed_nondebounced', {'reloadActive': False, 'notifyHost': False}, [], False),
+            call(23, 'open_nondebounced', {'reloadActive': False, 'notifyHost': False}, [], False),
+            call(23, 'open_debounced', {'reloadActive': False, 'notifyHost': True}, [], False),
+            call(23, 'closed_debounced', {'reloadActive': False, 'notifyHost': True}, [
+                {'patterOnTime': 0, 'driverNum': coil_number, 'waitForFirstTimeSlot': False, 'patterOffTime': 0,
+                 'polarity': True,
+                 'timeslots': 0, 'state': 1, 'patterEnable': False, 'outputDriveTime': 23, 'futureEnable': False}],
+                 False),
         ], any_order=True)
 
-        self.machine.coils.c_coil_pwm_test.hw_driver.state = MagicMock(return_value=9)
         self.machine.platform_controller.set_pulse_on_hit_rule(
             SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
             DriverRuleSettings(driver=self.machine.coils.c_coil_pwm_test, recycle=False),
@@ -503,34 +476,19 @@ SW-16 boards found:
         self.wait_for_platform()
 
         self.pinproc.switch_update_rule.assert_has_calls([
-            call(
-                23, 'closed_debounced',
-                {'notifyHost': True, 'reloadActive': False},
-                [{'patterEnable': False,
-                  'patterOnTime': 0,
-                  'timeslots': 0,
-                  'futureEnable': False,
-                  'state': False,
-                  'patterOffTime': 0,
-                  'outputDriveTime': 0,
-                  'driverNum': 8,
-                  'polarity': True,
-                  'waitForFirstTimeSlot': False},
-                 {'patterEnable': False,
-                  'patterOnTime': 0,
-                  'timeslots': 0,
-                  'futureEnable': False,
-                  'state': False,
-                  'patterOffTime': 0,
-                  'outputDriveTime': 0,
-                  'driverNum': 8,
-                  'polarity': True,
-                  'waitForFirstTimeSlot': False},
-                 ],
-                False),
-        ], any_order=False)
-
-        p_roc_common.pinproc.driver_state_pulse.assert_called_with(9, 23)
+            call(23, 'closed_nondebounced', {'reloadActive': False, 'notifyHost': False}, [], False),
+            call(23, 'open_nondebounced', {'reloadActive': False, 'notifyHost': False}, [], False),
+            call(23, 'open_debounced', {'reloadActive': False, 'notifyHost': True}, [], False),
+            call(23, 'closed_debounced', {'reloadActive': False, 'notifyHost': True}, [
+                {'patterOnTime': 0, 'driverNum': coil_number, 'waitForFirstTimeSlot': False, 'patterOffTime': 0,
+                 'polarity': True,
+                 'timeslots': 0, 'state': 1, 'patterEnable': False, 'outputDriveTime': 23, 'futureEnable': False},
+                {'patterOnTime': 0, 'driverNum': coil_number2, 'waitForFirstTimeSlot': False, 'patterOffTime': 0,
+                 'polarity': True,
+                 'timeslots': 0, 'state': 1, 'patterEnable': False, 'outputDriveTime': 23, 'futureEnable': False},
+            ],
+                 False),
+        ], any_order=True)
 
     def _test_servo_via_i2c(self):
         # assert on init
@@ -632,46 +590,28 @@ SW-16 boards found:
         self.pinproc.get_events = MagicMock(return_value=[])
 
     def _test_flipper_single_coil(self):
-        # enable
+        coil_number = self.machine.coils["c_flipper_main"].hw_driver.number
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
+        self.wait_for_platform()
+        # enable
         self.machine.flippers.f_test_single.enable()
 
         self.wait_for_platform()
 
         self.pinproc.switch_update_rule.assert_has_calls([
-            call(
-                1, 'open_nondebounced',
-                {'reloadActive': False, 'notifyHost': False},
-                [{'state': False,
-                  'waitForFirstTimeSlot': False,
-                  'patterOnTime': 0,
-                  'timeslots': 0,
-                  'polarity': True,
-                  'patterOffTime': 0,
-                  'patterEnable': False,
-                  'driverNum': 10,
-                  'outputDriveTime': 0,
-                  'futureEnable': False}],
-                False),
-            call(
-                1, 'closed_nondebounced',
-                {'notifyHost': False, 'reloadActive': False},
-                [{'patterEnable': False,
-                  'patterOnTime': 0,
-                  'timeslots': 0,
-                  'futureEnable': False,
-                  'state': False,
-                  'patterOffTime': 0,
-                  'outputDriveTime': 0,
-                  'driverNum': 11,
-                  'polarity': True,
-                  'waitForFirstTimeSlot': False},
-                 ],
-                False),
-            call(1, 'open_debounced', {'reloadActive': False, 'notifyHost': True}, [], False),
-            call(1, 'closed_debounced', {'reloadActive': False, 'notifyHost': True}, [], False)
+            call(1, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': False}, [
+                {'timeslots': 0, 'waitForFirstTimeSlot': False, 'polarity': True, 'driverNum': coil_number,
+                 'outputDriveTime': 11,
+                 'futureEnable': False, 'patterEnable': True, 'patterOnTime': 3, 'patterOffTime': 5, 'state': True}],
+                 False),
+            call(1, 'open_debounced', {'notifyHost': True, 'reloadActive': False}, [], False),
+            call(1, 'closed_debounced', {'notifyHost': True, 'reloadActive': False}, [], False),
+            call(1, 'open_nondebounced', {'notifyHost': False, 'reloadActive': False}, [
+                {'timeslots': 0, 'waitForFirstTimeSlot': False, 'polarity': True, 'driverNum': coil_number,
+                 'outputDriveTime': 0,
+                 'futureEnable': False, 'patterEnable': False, 'patterOnTime': 0, 'patterOffTime': 0, 'state': 0}],
+                 False),
         ], any_order=True)
-        self.assertEqual(4, self.pinproc.switch_update_rule.call_count)
 
         # disable
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
@@ -686,139 +626,75 @@ SW-16 boards found:
         self.assertEqual(4, self.pinproc.switch_update_rule.call_count)
 
     def _test_flipper_two_coils(self):
+        coil_number = self.machine.coils["c_flipper_main"].hw_driver.number
+        coil_number2 = self.machine.coils["c_flipper_hold"].hw_driver.number
         # we pulse the main coil (20)
         # hold coil (21) is pulsed + enabled
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
         self.machine.flippers.f_test_hold.enable()
         self.wait_for_platform()
+
         self.pinproc.switch_update_rule.assert_has_calls([
-            call(
-                1, 'open_nondebounced',
-                {'notifyHost': False, 'reloadActive': False},
-                [{'patterEnable': False,
-                  'patterOnTime': 0,
-                  'timeslots': 0,
-                  'futureEnable': False,
-                  'state': False,
-                  'patterOffTime': 0,
-                  'outputDriveTime': 0,
-                  'driverNum': 10,
-                  'polarity': True,
-                  'waitForFirstTimeSlot': False},
-                 {'patterEnable': False,
-                  'patterOnTime': 0,
-                  'timeslots': 0,
-                  'futureEnable': False,
-                  'state': False,
-                  'patterOffTime': 0,
-                  'outputDriveTime': 0,
-                  'driverNum': 10,
-                  'polarity': True,
-                  'waitForFirstTimeSlot': False},
-                 ],
-                False),
-            call(
-                1, 'closed_nondebounced',
-                {'notifyHost': False, 'reloadActive': False},
-                [
-                 {'patterEnable': False,
-                  'patterOnTime': 0,
-                  'timeslots': 0,
-                  'futureEnable': False,
-                  'state': False,
-                  'patterOffTime': 0,
-                  'outputDriveTime': 0,
-                  'driverNum': 8,
-                  'polarity': True,
-                  'waitForFirstTimeSlot': False},
-                 {'patterEnable': False,
-                  'patterOnTime': 0,
-                  'timeslots': 0,
-                  'futureEnable': False,
-                  'state': False,
-                  'patterOffTime': 0,
-                  'outputDriveTime': 0,
-                  'driverNum': 11,
-                  'polarity': True,
-                  'waitForFirstTimeSlot': False},
-                 ],
-                False),
+            call(1, 'open_nondebounced', {'reloadActive': False, 'notifyHost': False}, [
+                {'patterEnable': False, 'waitForFirstTimeSlot': False, 'state': 0, 'timeslots': 0, 'patterOffTime': 0,
+                 'outputDriveTime': 0, 'driverNum': coil_number, 'polarity': True, 'patterOnTime': 0,
+                 'futureEnable': False},
+                {'patterEnable': False, 'waitForFirstTimeSlot': False, 'state': 0, 'timeslots': 0, 'patterOffTime': 0,
+                 'outputDriveTime': 0, 'driverNum': coil_number2, 'polarity': True, 'patterOnTime': 0,
+                 'futureEnable': False}],
+                 False),
+            call(1, 'closed_debounced', {'reloadActive': False, 'notifyHost': True}, [], False),
+            call(1, 'closed_nondebounced', {'reloadActive': False, 'notifyHost': False}, [
+                {'patterEnable': False, 'waitForFirstTimeSlot': False, 'state': 1, 'timeslots': 0, 'patterOffTime': 0,
+                 'outputDriveTime': 10, 'driverNum': coil_number, 'polarity': True, 'patterOnTime': 0,
+                 'futureEnable': False},
+                {'patterEnable': True, 'waitForFirstTimeSlot': False, 'state': True, 'timeslots': 0, 'patterOffTime': 7,
+                 'outputDriveTime': 10, 'driverNum': coil_number2, 'polarity': True, 'patterOnTime': 1,
+                 'futureEnable': False}],
+                 False),
+            call(1, 'open_debounced', {'reloadActive': False, 'notifyHost': True}, [], False),
         ], any_order=True)
 
+        self.pinproc.switch_update_rule = MagicMock(return_value=True)
         self.machine.flippers.f_test_hold.disable()
+        self.wait_for_platform()
+        self.pinproc.switch_update_rule.assert_has_calls([
+            call(1, 'open_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
+            call(1, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
+            call(1, 'open_debounced', {'notifyHost': True, 'reloadActive': False}, []),
+            call(1, 'closed_debounced', {'notifyHost': True, 'reloadActive': False}, []),
+        ], any_order=True)
 
     def _test_flipper_two_coils_with_eos(self):
+        coil_number = self.machine.coils["c_flipper_main"].hw_driver.number
+        coil_number2 = self.machine.coils["c_flipper_hold"].hw_driver.number
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
         self.machine.flippers.f_test_hold_eos.enable()
         self.wait_for_platform()
         self.pinproc.switch_update_rule.assert_has_calls([
-            call(
-                1, 'open_nondebounced',
-                {'notifyHost': False, 'reloadActive': False},
-                [{'patterEnable': False,
-                  'patterOnTime': 0,
-                  'timeslots': 0,
-                  'futureEnable': False,
-                  'state': False,
-                  'patterOffTime': 0,
-                  'outputDriveTime': 0,
-                  'driverNum': 10,
-                  'polarity': True,
-                  'waitForFirstTimeSlot': False},
-                 {'patterEnable': False,
-                  'patterOnTime': 0,
-                  'timeslots': 0,
-                  'futureEnable': False,
-                  'state': False,
-                  'patterOffTime': 0,
-                  'outputDriveTime': 0,
-                  'driverNum': 10,
-                  'polarity': True,
-                  'waitForFirstTimeSlot': False},
-                 ],
-                False),
-            call(
-                1, 'closed_nondebounced',
-                {'notifyHost': False, 'reloadActive': False},
-                [
-                 {'patterEnable': False,
-                  'patterOnTime': 0,
-                  'timeslots': 0,
-                  'futureEnable': False,
-                  'state': False,
-                  'patterOffTime': 0,
-                  'outputDriveTime': 0,
-                  'driverNum': 11,
-                  'polarity': True,
-                  'waitForFirstTimeSlot': False},
-                 {'patterEnable': False,
-                  'patterOnTime': 0,
-                  'timeslots': 0,
-                  'futureEnable': False,
-                  'state': False,
-                  'patterOffTime': 0,
-                  'outputDriveTime': 0,
-                  'driverNum': 11,
-                  'polarity': True,
-                  'waitForFirstTimeSlot': False},
-                 ],
-                False),
-            call(
-                2, 'closed_nondebounced',
-                {'notifyHost': False, 'reloadActive': False},
-                [
-                 {'patterEnable': False,
-                  'patterOnTime': 0,
-                  'timeslots': 0,
-                  'futureEnable': False,
-                  'state': False,
-                  'patterOffTime': 0,
-                  'outputDriveTime': 0,
-                  'driverNum': 10,
-                  'polarity': True,
-                  'waitForFirstTimeSlot': False},
-                 ],
-                False)
+            call(2, 'open_nondebounced', {'reloadActive': False, 'notifyHost': False}, [], False),
+            call(2, 'closed_debounced', {'reloadActive': False, 'notifyHost': True}, [], False),
+            call(2, 'open_debounced', {'reloadActive': False, 'notifyHost': True}, [], False),
+            call(2, 'closed_nondebounced', {'reloadActive': False, 'notifyHost': False}, [
+                {'patterOnTime': 0, 'outputDriveTime': 0, 'timeslots': 0, 'patterOffTime': 0, 'polarity': True,
+                 'driverNum': coil_number, 'state': 0, 'futureEnable': False, 'patterEnable': False,
+                 'waitForFirstTimeSlot': False}], False),
+            call(1, 'open_nondebounced', {'reloadActive': False, 'notifyHost': False}, [
+                {'patterOnTime': 0, 'outputDriveTime': 0, 'timeslots': 0, 'patterOffTime': 0, 'polarity': True,
+                 'driverNum': coil_number, 'state': 0, 'futureEnable': False, 'patterEnable': False,
+                 'waitForFirstTimeSlot': False},
+                {'patterOnTime': 0, 'outputDriveTime': 0, 'timeslots': 0, 'patterOffTime': 0, 'polarity': True,
+                 'driverNum': coil_number2, 'state': 0, 'futureEnable': False, 'patterEnable': False,
+                 'waitForFirstTimeSlot': False}], False),
+            call(1, 'closed_debounced', {'reloadActive': False, 'notifyHost': True}, [], False),
+            call(1, 'open_debounced', {'reloadActive': False, 'notifyHost': True}, [], False),
+            call(1, 'closed_nondebounced', {'reloadActive': False, 'notifyHost': False}, [
+                {'patterOnTime': 3, 'outputDriveTime': 10, 'timeslots': 0, 'patterOffTime': 5, 'polarity': True,
+                 'driverNum': coil_number, 'state': True, 'futureEnable': False, 'patterEnable': True,
+                 'waitForFirstTimeSlot': False},
+                {'patterOnTime': 1, 'outputDriveTime': 10, 'timeslots': 0, 'patterOffTime': 7, 'polarity': True,
+                 'driverNum': coil_number2, 'state': True, 'futureEnable': False, 'patterEnable': True,
+                 'waitForFirstTimeSlot': False}], False)
         ], any_order=True)
 
         # disable
