@@ -86,6 +86,12 @@ slide_player:
     service_settings:
       action: play
       priority: 2
+    service_settings_edit:
+      action: remove
+  service_settings_edit:
+    service_settings_edit:
+      action: play
+      priority: 3
   service_settings_stop:
     service_settings:
       action: remove
@@ -239,6 +245,23 @@ slides:
     text: "(settings_label)"
     style: small
     y: center+6
+  - type: text
+    text: "(value_label)"
+    style: small
+    y: center
+    opacity: 0.5
+  service_settings_edit:
+  - type: text
+    text: "Settings"
+    style: small
+    anchor_y: top
+    x: center
+    y: top
+  - type: text
+    text: "(settings_label)"
+    style: small
+    y: center+6
+    opacity: 0.5
   - type: text
     text: "(value_label)"
     style: small

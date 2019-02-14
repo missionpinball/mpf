@@ -223,10 +223,11 @@ down_events: list|str|sw_service_down_active
 
         self.machine.events.post("service_light_test_stop")
 
-    def _update_settings_slide(self, items, position):
+    def _update_settings_slide(self, items, position, is_change=False):
         setting = items[position]
         label = self.machine.settings.get_setting_value_label(setting.name)
-        self.machine.events.post("service_settings_start",
+        event = "service_settings_{}".format("edit" if is_change else "start")
+        self.machine.events.post(event,
                                  settings_label=setting.label,
                                  value_label=label)
 
@@ -267,20 +268,22 @@ down_events: list|str|sw_service_down_active
 
         values = list(items[position].values.keys())
         value_position = values.index(self.machine.settings.get_setting_value(items[position].name))
+        self._update_settings_slide(items, position, is_change=True)
 
         while True:
             key = yield from self._get_key()
             if key == 'ESC':
+                self._update_settings_slide(items, position)
                 break
             elif key == 'UP':
                 value_position += 1
                 if value_position >= len(values):
                     value_position = 0
                 self.machine.settings.set_setting_value(items[position].name, values[value_position])
-                self._update_settings_slide(items, position)
+                self._update_settings_slide(items, position, is_change=True)
             elif key == 'DOWN':
                 value_position -= 1
                 if value_position < 0:
                     value_position = len(values) - 1
                 self.machine.settings.set_setting_value(items[position].name, values[value_position])
-                self._update_settings_slide(items, position)
+                self._update_settings_slide(items, position, is_change=True)
