@@ -411,6 +411,8 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         # writing a config write.  The config register is mapped to 0.
         word = base_reg_addr | (7 << 8) | data
         self.run_proc_cmd_no_wait("write_data", proc_output_module, proc_pdb_bus_addr, word)
+        # invalidate addr
+        self.pdled_state[board_addr].addr = None
 
     def _write_color(self, board_addr, color):
         base_reg_addr = 0x01000000 | (board_addr & 0x3F) << 16
