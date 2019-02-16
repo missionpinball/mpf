@@ -847,13 +847,12 @@ SW-16 boards found:
         device.color(RGBColor((13, 37, 238)), fade_ms=42)
         self.wait_for_platform()
         self.pinproc.write_data.assert_has_calls([
-            # first LED addr
-            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | 7),               # low byte of address (7)
-            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (6 << 8)),        # high byte of address (0)
             # fade ms
             call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (3 << 8) | 10),   # set fade lower (42/4 = 10)
             call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (4 << 8) | 0),    # set fade higher (0)
-            # first LED
+            # first LED addr
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | 7),               # low byte of address (7)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (6 << 8)),        # high byte of address (0)
             call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (2 << 8) | 13),   # set color (13)
             # second LED
             call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (2 << 8) | 37),   # set color (37)

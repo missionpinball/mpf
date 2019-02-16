@@ -359,8 +359,8 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         It will only set the fade time if it changes.
         Therefore, it will be much more efficient if you set colors for addresses sequentially.
         """
-        self._write_addr(board_addr, addr)
         self._write_fade_time(board_addr, fade_time)
+        self._write_addr(board_addr, addr)
         self._write_fade_color(board_addr, color)
 
     def _write_fade_time(self, board_addr, fade_time):
@@ -379,6 +379,8 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
         # remember fade time
         self.pdled_state[board_addr].fade_time = fade_time
+        # invalidate addr
+        self.pdled_state[board_addr].addr = None
 
     def _write_addr(self, board_addr, addr):
         """Write an address to pdled."""
