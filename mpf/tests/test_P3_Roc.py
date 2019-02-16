@@ -778,70 +778,136 @@ SW-16 boards found:
             call(num)])
 
     def _test_leds(self):
-        device = self.machine.lights.test_led
-        self.pinproc.led_color = MagicMock(return_value=True)
+        device = self.machine.lights["test_led"]
+        self.pinproc.write_data = MagicMock(return_value=True)
 
         # test led on
         device.on()
         self.wait_for_platform()
-        self.pinproc.led_color.assert_has_calls([
-            call(2, 1, 255),
-            call(2, 2, 255),
-            call(2, 3, 255)], True)
-        self.pinproc.led_color = MagicMock(return_value=True)
+        self.pinproc.write_data.assert_has_calls([
+            # first LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | 1),               # low byte of address (1)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (6 << 8)),        # high byte of address (0)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8) | 255),  # set color (255)
+            # second LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8) | 255),  # set color (255)
+            # third LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8) | 255),  # set color (255)
+            ], False)
+        self.pinproc.write_data = MagicMock(return_value=True)
 
         # test led off
         device.off()
         self.wait_for_platform()
-        self.pinproc.led_color.assert_has_calls([
-            call(2, 1, 0),
-            call(2, 2, 0),
-            call(2, 3, 0)], True)
+        self.pinproc.write_data.assert_has_calls([
+            # first LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | 1),               # low byte of address (1)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (6 << 8)),        # high byte of address (0)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8) | 0),    # set color (0)
+            # second LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8) | 0),    # set color (0)
+            # third LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8) | 0),    # set color (0)
+            ], False)
+        self.pinproc.write_data = MagicMock(return_value=True)
 
         # test led color
         device.color(RGBColor((2, 23, 42)))
         self.wait_for_platform()
-        self.pinproc.led_color.assert_has_calls([
-            call(2, 1, 2),
-            call(2, 2, 23),
-            call(2, 3, 42)], True)
 
-        device = self.machine.lights.test_led2
+        self.pinproc.write_data.assert_has_calls([
+            # first LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | 1),               # low byte of address (1)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (6 << 8)),        # high byte of address (0)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8) | 2),    # set color (2)
+            # second LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8) | 23),   # set color (23)
+            # third LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8) | 42),   # set color (42)
+            ], False)
+        self.pinproc.write_data = MagicMock(return_value=True)
+
+        device = self.machine.lights["test_led2"]
         device.on()
         self.advance_time_and_run(1)
         self.wait_for_platform()
-        self.pinproc.led_color.assert_has_calls([
-            call(2, 7, 255),
-            call(2, 8, 255),
-            call(2, 9, 255)], True)
+        self.pinproc.write_data.assert_has_calls([
+            # first LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | 7),               # low byte of address (1)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (6 << 8)),        # high byte of address (0)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8) | 255),  # set color (255)
+            # second LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8) | 255),  # set color (255)
+            # third LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8) | 255),  # set color (255)
+            ], False)
+        self.pinproc.write_data = MagicMock(return_value=True)
+
+        # test led color with fade
+        device.color(RGBColor((13, 37, 238)), fade_ms=42)
+        self.wait_for_platform()
+        self.pinproc.write_data.assert_has_calls([
+            # first LED addr
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | 7),               # low byte of address (7)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (6 << 8)),        # high byte of address (0)
+            # fade ms
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (3 << 8) | 10),   # set fade lower (42/4 = 10)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (4 << 8) | 0),    # set fade higher (0)
+            # first LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (2 << 8) | 13),   # set color (13)
+            # second LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (2 << 8) | 37),   # set color (37)
+            # third LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (2 << 8) | 238),  # set color (238)
+            ], False)
 
     def _test_leds_inverted(self):
-        device = self.machine.lights.test_led_inverted
-        self.pinproc.led_color = MagicMock(return_value=True)
+        device = self.machine.lights["test_led_inverted"]
+        self.pinproc.write_data = MagicMock(return_value=True)
         # test led on
         device.on()
         self.wait_for_platform()
-        self.pinproc.led_color.assert_has_calls([
-            call(2, 4, 0),
-            call(2, 5, 0),
-            call(2, 6, 0)], True)
-        self.pinproc.led_color = MagicMock(return_value=True)
+        self.pinproc.write_data.assert_has_calls([
+            # first LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | 4),               # low byte of address (4)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (6 << 8)),        # high byte of address (0)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8) | 0),    # set color (0)
+            # second LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8) | 0),    # set color (0)
+            # third LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8) | 0),    # set color (0)
+            ], False)
+        self.pinproc.write_data = MagicMock(return_value=True)
 
         # test led off
         device.color("off")
         self.wait_for_platform()
-        self.pinproc.led_color.assert_has_calls([
-            call(2, 4, 255),
-            call(2, 5, 255),
-            call(2, 6, 255)], True)
+        self.pinproc.write_data.assert_has_calls([
+            # first LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | 4),               # low byte of address (4)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (6 << 8)),        # high byte of address (0)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8) | 255),  # set color (255)
+            # second LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8) | 255),  # set color (255)
+            # third LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8) | 255),  # set color (255)
+            ], False)
+        self.pinproc.write_data = MagicMock(return_value=True)
 
         # test led color
         device.color(RGBColor((2, 23, 42)))
         self.wait_for_platform()
-        self.pinproc.led_color.assert_has_calls([
-            call(2, 4, 255 - 2),
-            call(2, 5, 255 -23),
-            call(2, 6, 255 - 42)], True)
+        self.pinproc.write_data.assert_has_calls([
+            # first LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | 4),               # low byte of address (4)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (6 << 8)),        # high byte of address (0)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8) | 253),  # set color (255 - 2)
+            # second LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8) | 232),  # set color (255 - 23)
+            # third LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8) | 213),  # set color (255 - 42)
+            ], False)
+        self.pinproc.write_data = MagicMock(return_value=True)
 
     def _test_steppers(self):
         stepper1 = self.machine.steppers["stepper1"]

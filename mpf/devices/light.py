@@ -1,7 +1,6 @@
 """Contains the Light class."""
 import asyncio
 from functools import partial
-from operator import itemgetter
 
 from typing import Set, Dict, List, Tuple, Any
 
@@ -13,7 +12,6 @@ from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.machine import MachineController
 from mpf.core.rgb_color import RGBColor, ColorException
 from mpf.core.system_wide_device import SystemWideDevice
-from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
 from mpf.devices.device_mixins import DevicePositionMixin
 
 
@@ -209,6 +207,9 @@ class Light(SystemWideDevice, DevicePositionMixin):
                 driver = self._load_hw_driver(channel)
                 self.hw_drivers[color].append(driver)
                 self.hw_driver_functions.append((driver, partial(self._get_brightness_and_fade, color=color)))
+
+        # sort drivers by number because it will make updates more efficient in some platforms
+        self.hw_driver_functions.sort(key=lambda x: x[0].number)
 
     def _load_hw_driver(self, channel):
         """Load one channel."""
@@ -426,10 +427,11 @@ class Light(SystemWideDevice, DevicePositionMixin):
             fade_ms = None
 
         if fade_ms:
+            # fade to underlaying color
             color_of_key = self._get_color_and_fade(stack, 0)[0]
 
-        self._remove_from_stack_by_key(key)
-        if fade_ms:
+            self._remove_from_stack_by_key(key)
+
             start_time = self.machine.clock.get_time()
             self.stack.append(LightStackEntry(priority,
                                               key,
@@ -440,6 +442,9 @@ class Light(SystemWideDevice, DevicePositionMixin):
             self.delay.reset(ms=fade_ms, callback=partial(self._remove_fade_out, key=key), name="remove_fade")
             if len(self.stack) > 1:
                 self.stack.sort(reverse=True)
+        else:
+            # no fade -> just remove color from stack
+            self._remove_from_stack_by_key(key)
 
         if color_changes:
             self._schedule_update()
