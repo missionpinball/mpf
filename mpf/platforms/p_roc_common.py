@@ -5,6 +5,7 @@ import asyncio
 import logging
 import platform
 import sys
+from collections import defaultdict
 from threading import Thread
 
 import time
@@ -119,6 +120,18 @@ class ProcProcess:
         return list(events)
 
 
+class PdLedStatus:
+
+    """Internal state of an PD-LED board."""
+
+    __slots__ = ["addr", "fade_time"]
+
+    def __init__(self):
+        """Initialise board to unknown state."""
+        self.addr = None
+        self.fade_time = None
+
+
 # pylint does not understand that this class is abstract
 # pylint: disable-msg=abstract-method
 # pylint: disable-msg=too-many-instance-attributes
@@ -136,7 +149,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
     """
 
     __slots__ = ["pdbconfig", "pinproc", "proc", "log", "hw_switch_rules", "version", "revision", "hardware_version",
-                 "dipswitches", "machine_type", "event_task",
+                 "dipswitches", "machine_type", "event_task", "pdled_state",
                  "proc_thread", "proc_process", "proc_process_instance", "_commands_running", "config"]
 
     def __init__(self, machine):
@@ -163,6 +176,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         self.proc_process_instance = None
         self._commands_running = 0
         self.config = {}
+        self.pdled_state = defaultdict(PdLedStatus)
 
         self.machine_type = pinproc.normalize_machine_type(
             self.machine.config['hardware']['driverboards'])
@@ -329,8 +343,51 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         self._write_addr(board_addr, reg_data)
         self._write_reg_data(board_addr, addr)
 
+    def write_pdled_color(self, board_addr, addr, color):
+        """Set a color instantly.
+
+        This command will internally increment the index on the PD-LED board.
+        Therefore, it will be much more efficient if you set colors for addresses sequentially.
+        """
+        self._write_addr(board_addr, addr)
+        self._write_color(board_addr, color)
+
+    def write_pdled_color_fade(self, board_addr, addr, color, fade_time):
+        """Fade a LED to a color.
+
+        This command will internally increment the index on the PD-LED board.
+        It will only set the fade time if it changes.
+        Therefore, it will be much more efficient if you set colors for addresses sequentially.
+        """
+        self._write_fade_time(board_addr, fade_time)
+        self._write_addr(board_addr, addr)
+        self._write_fade_color(board_addr, color)
+
+    def _write_fade_time(self, board_addr, fade_time):
+        """Set the fade time for a board."""
+        if self.pdled_state[board_addr].fade_time == fade_time:
+            # fade time is already set
+            return
+
+        proc_output_module = 3
+        proc_pdb_bus_addr = 0xC00
+        base_reg_addr = 0x01000000 | (board_addr & 0x3F) << 16
+        data = base_reg_addr | (3 << 8) | (fade_time & 0xFF)
+        self.run_proc_cmd_no_wait("write_data", proc_output_module, proc_pdb_bus_addr, data)
+        data = base_reg_addr | (4 << 8) | ((fade_time >> 8) & 0xFF)
+        self.run_proc_cmd_no_wait("write_data", proc_output_module, proc_pdb_bus_addr, data)
+
+        # remember fade time
+        self.pdled_state[board_addr].fade_time = fade_time
+        # invalidate addr
+        self.pdled_state[board_addr].addr = None
+
     def _write_addr(self, board_addr, addr):
         """Write an address to pdled."""
+        if self.pdled_state[board_addr].addr == addr:
+            # addr is already set
+            return
+
         base_reg_addr = 0x01000000 | (board_addr & 0x3F) << 16
         proc_output_module = 3
         proc_pdb_bus_addr = 0xC00
@@ -343,6 +400,9 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         data = base_reg_addr | (6 << 8) | ((addr >> 8) & 0xFF)
         self.run_proc_cmd_no_wait("write_data", proc_output_module, proc_pdb_bus_addr, data)
 
+        # remember the address
+        self.pdled_state[board_addr].addr = addr
+
     def _write_reg_data(self, board_addr, data):
         """Write data to pdled."""
         base_reg_addr = 0x01000000 | (board_addr & 0x3F) << 16
@@ -353,14 +413,29 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         # writing a config write.  The config register is mapped to 0.
         word = base_reg_addr | (7 << 8) | data
         self.run_proc_cmd_no_wait("write_data", proc_output_module, proc_pdb_bus_addr, word)
+        # invalidate addr
+        self.pdled_state[board_addr].addr = None
 
     def _write_color(self, board_addr, color):
         base_reg_addr = 0x01000000 | (board_addr & 0x3F) << 16
         proc_output_module = 3
         proc_pdb_bus_addr = 0xC00
 
-        data = base_reg_addr | (1<<8) | (color & 0xFF)
+        data = base_reg_addr | (1 << 8) | (color & 0xFF)
         self.run_proc_cmd_no_wait("write_data", proc_output_module, proc_pdb_bus_addr, data)
+
+        # writing a color increases the addr on the board internally
+        self.pdled_state[board_addr].addr += 1
+
+    def _write_fade_color(self, board_addr, fade_color):
+        """Fade the LED at the current index for a board to a certain color."""
+        proc_output_module = 3
+        proc_pdb_bus_addr = 0xC00
+        base_reg_addr = 0x01000000 | (board_addr & 0x3F) << 16
+        data = base_reg_addr | (2 << 8) | (fade_color & 0xFF)
+        self.run_proc_cmd_no_wait("write_data", proc_output_module, proc_pdb_bus_addr, data)
+        # writing a fade color increases the addr on the board internally
+        self.pdled_state[board_addr].addr += 1
 
     # pylint: disable-msg=too-many-arguments
     def _write_ws2811_ctrl(self, board_addr, lbt, hbt, ebt, rbt):

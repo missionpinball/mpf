@@ -12,6 +12,10 @@ from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInt
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.core.utility_functions import Util
 
+MYPY = False
+if MYPY:    # pragma: no cover
+    from mpf.platforms.p_roc_common import PROCBasePlatform
+
 
 class PROCSwitch(SwitchPlatformInterface):
 
@@ -326,7 +330,6 @@ class PDBLight:
         return True
 
 
-
 class PDBLED(LightPlatformInterface):
 
     """Represents an RGB LED connected to a PD-LED board."""
@@ -339,7 +342,7 @@ class PDBLED(LightPlatformInterface):
         self.board = board
         self.address = address
         self.debug = debug
-        self.platform = driver_platform
+        self.platform = driver_platform     # type: PROCBasePlatform
         super().__init__("{}-{}".format(self.board, self.address))
         self.log = logging.getLogger('PDBLED')
         self.polarity = polarity
@@ -362,18 +365,17 @@ class PDBLED(LightPlatformInterface):
             color_and_fade_callback: brightness of this channel via callback
         """
         brightness, fade_ms = color_and_fade_callback(int(pow(2, 31) * 4))
+        normalized_brightness = self._normalise_color(int(brightness * 255))
         if self.debug:
             self.log.debug("Setting color %s with fade_ms %s to %s-%s",
-                           self._normalise_color(int(brightness * 255)), fade_ms, self.board, self.address)
+                           normalized_brightness, fade_ms, self.board, self.address)
 
         if fade_ms <= 0:
             # just set color
-            self.platform.run_proc_cmd_no_wait("led_color", self.board, self.address,
-                                               self._normalise_color(int(brightness * 255)))
+            self.platform.write_pdled_color(self.board, self.address, normalized_brightness)
         else:
             # fade to color
-            self.platform.run_proc_cmd_no_wait("led_fade", self.board, self.address,
-                                               self._normalise_color(int(brightness * 255)), int(fade_ms / 4))
+            self.platform.write_pdled_color_fade(self.board, self.address, normalized_brightness, int(fade_ms / 4))
 
     def get_board_name(self):
         """Return board of the light."""
@@ -390,7 +392,7 @@ class PdLedServo(ServoPlatformInterface):
         self.number = int(number)
         self.debug = debug
         self.log = logging.getLogger('PD-LED.Servo.{}-{}'.format(board, number))
-        self.platform = platform
+        self.platform = platform    # type: PROCBasePlatform
 
     def go_to_position(self, position):
         """Move servo to a certain position."""
@@ -398,7 +400,7 @@ class PdLedServo(ServoPlatformInterface):
         if self.debug:
             self.log.debug("Setting servo to position: %s value: %s", position, value)
 
-        self.platform.run_proc_cmd_no_wait("led_color", self.board, 72 + self.number, value)
+        self.platform.write_pdled_color(self.board, 72 + self.number, value)
 
 
 class PdLedStepper(StepperPlatformInterface):
