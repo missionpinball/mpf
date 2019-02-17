@@ -5,6 +5,7 @@ hardware:
     platform: p_roc
 
 p_roc:
+  use_separate_thread: False
   dmd_timing_cycles: 1, 2, 3, 4
   debug: true
 

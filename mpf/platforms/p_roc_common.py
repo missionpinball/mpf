@@ -73,9 +73,10 @@ class ProcProcess:
         self.loop = None
         self.stop_future = None
 
-    def start_proc_process(self, machine_type, loop):
-        """Run the pinproc communication."""
+    def start_pinproc(self, machine_type, loop):
+        """Initialise libpinproc."""
         self.loop = loop
+        self.stop_future = asyncio.Future(loop=self.loop)
         while not self.proc:
             try:
                 self.proc = pinproc.PinPROC(machine_type)
@@ -84,9 +85,17 @@ class ProcProcess:
                 print("Retrying...")
                 time.sleep(1)
 
-        self.stop_future = asyncio.Future(loop=self.loop)
+    def start_proc_process(self, machine_type, loop):
+        """Run the pinproc communication."""
+        self.start_pinproc(machine_type, loop)
+
         loop.run_until_complete(self.stop_future)
         loop.close()
+
+    @asyncio.coroutine
+    def stop(self):
+        """Stop thread."""
+        self.stop_future.set_result(True)
 
     @staticmethod
     def _sync(num):
@@ -97,9 +106,6 @@ class ProcProcess:
         """Run command in proc thread."""
         if cmd.startswith("_"):
             return getattr(self, cmd)(*args)
-        elif cmd == "reset":
-            self.stop_future.set_result(True)
-            return "exit"
         else:
             return getattr(self.proc, cmd)(*args)
 
@@ -112,12 +118,18 @@ class ProcProcess:
         self.proc.dmd_draw(self.dmd)
 
     @asyncio.coroutine
-    def reads_events_and_watchdog(self):
+    def read_events_and_watchdog(self, poll_sleep):
         """Return all events and tickle watchdog."""
-        events = self.proc.get_events()
-        self.proc.watchdog_tickle()
-        self.proc.flush()
-        return list(events)
+        while not self.stop_future.done():
+            events = self.proc.get_events()
+            self.proc.watchdog_tickle()
+            self.proc.flush()
+            if events:
+                return list(events)
+
+            yield from asyncio.sleep(poll_sleep, loop=self.loop)
+
+        return []
 
 
 class PdLedStatus:
@@ -241,29 +253,36 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         poll_sleep = 1 / self.machine.config['mpf']['default_platform_hz']
         while True:
             events = yield from asyncio.wrap_future(
-                asyncio.run_coroutine_threadsafe(self.proc_process.reads_events_and_watchdog(),
+                asyncio.run_coroutine_threadsafe(self.proc_process.read_events_and_watchdog(poll_sleep),
                                                  self.proc_process_instance),
                 loop=self.machine.clock.loop)
             if events:
                 self.process_events(events)
+
             yield from asyncio.sleep(poll_sleep, loop=self.machine.clock.loop)
 
     def stop(self):
         """Stop proc."""
+        asyncio.run_coroutine_threadsafe(self.proc_process.stop(),
+                                         self.proc_process_instance)
         if self.proc_thread:
-            self.run_proc_cmd_sync("reset", 1)
             self.proc_thread.join()
             self.proc_thread = None
 
     def _start_proc_process(self):
-        # Create a new loop
-        self.proc_process_instance = asyncio.new_event_loop()
         self.proc_process = ProcProcess()
+        if self.config["use_separate_thread"]:
+            # Create a new loop
+            self.proc_process_instance = asyncio.new_event_loop()
+            # Assign the loop to another thread
+            self.proc_thread = Thread(target=self.proc_process.start_proc_process,
+                                      args=(self.machine_type, self.proc_process_instance))
+            self.proc_thread.start()
 
-        # Assign the loop to another thread
-        self.proc_thread = Thread(target=self.proc_process.start_proc_process,
-                                  args=(self.machine_type, self.proc_process_instance))
-        self.proc_thread.start()
+        else:
+            # use existing loop
+            self.proc_process_instance = self.machine.clock.loop
+            self.proc_process.start_pinproc(loop=self.machine.clock.loop, machine_type=self.machine_type)
 
     @asyncio.coroutine
     def connect(self):

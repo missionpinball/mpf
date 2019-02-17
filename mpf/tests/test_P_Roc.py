@@ -216,14 +216,6 @@ class TestPRoc(MpfTestCase):
             }
         }
 
-        def _start_proc_process(self_inner):
-            # reuse normal loop
-            self_inner.proc_process_instance = self.loop
-            self_inner.proc_process = p_roc_common.ProcProcess()
-            self_inner.proc_process.proc = self.pinproc
-
-        p_roc_common.PROCBasePlatform._start_proc_process = _start_proc_process
-
         self.pinproc.aux_send_commands = MagicMock(return_value=True)
         super().setUp()
 

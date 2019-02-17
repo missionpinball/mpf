@@ -6,6 +6,7 @@ hardware:
     servo_controllers: i2c_servo_controller
 
 p_roc:
+    use_separate_thread: False
     debug: true
     pd_led_boards:
       4:
