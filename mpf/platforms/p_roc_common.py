@@ -73,9 +73,8 @@ class ProcProcess:
         self.loop = None
         self.stop_future = None
 
-    def start_proc_process(self, machine_type, loop):
-        """Run the pinproc communication."""
-        self.loop = loop
+    def start_pinproc(self, machine_type):
+        """Initialise libpinproc."""
         while not self.proc:
             try:
                 self.proc = pinproc.PinPROC(machine_type)
@@ -83,6 +82,11 @@ class ProcProcess:
             except IOError:     # pragma: no cover
                 print("Retrying...")
                 time.sleep(1)
+
+    def start_proc_process(self, machine_type, loop):
+        """Run the pinproc communication."""
+        self.loop = loop
+        self.start_pinproc(machine_type)
 
         self.stop_future = asyncio.Future(loop=self.loop)
         loop.run_until_complete(self.stop_future)
@@ -256,14 +260,19 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
             self.proc_thread = None
 
     def _start_proc_process(self):
-        # Create a new loop
-        self.proc_process_instance = asyncio.new_event_loop()
         self.proc_process = ProcProcess()
+        if self.config["use_separate_thread"]:
+            # Create a new loop
+            self.proc_process_instance = asyncio.new_event_loop()
+            # Assign the loop to another thread
+            self.proc_thread = Thread(target=self.proc_process.start_proc_process,
+                                      args=(self.machine_type, self.proc_process_instance))
+            self.proc_thread.start()
 
-        # Assign the loop to another thread
-        self.proc_thread = Thread(target=self.proc_process.start_proc_process,
-                                  args=(self.machine_type, self.proc_process_instance))
-        self.proc_thread.start()
+        else:
+            # use existing loop
+            self.proc_process_instance = self.machine.clock.loop
+            self.proc_process.start_pinproc(machine_type=self.machine_type)
 
     @asyncio.coroutine
     def connect(self):
