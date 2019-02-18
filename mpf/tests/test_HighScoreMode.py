@@ -479,10 +479,6 @@ class TestHighScoreMode(MpfBcpTestCase):
     def test_reverse_sort(self):
         self.start_game(4)
         self.machine.game.game_ending()
-<<<<<<< HEAD
-=======
-        self.machine.modes.high_score.high_score_config['reverse_sort'] = True
->>>>>>> 34e4cdea73ed653a6ec8583fc1d24c9e7a162d16
         self.advance_time_and_run()
 
         new_score_data = OrderedDict()
