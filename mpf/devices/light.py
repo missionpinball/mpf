@@ -14,6 +14,10 @@ from mpf.core.rgb_color import RGBColor, ColorException
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.device_mixins import DevicePositionMixin
 
+MYPY=False
+if MYPY:
+    from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+
 
 class LightStackEntry:
 
@@ -50,7 +54,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
 
     def __init__(self, machine, name):
         """Initialise light."""
-        self.hw_drivers = {}
+        self.hw_drivers = {}        # type: Dict[str, LightPlatformInterface]
         self.hw_driver_functions = []
         self.platforms = set()      # type: Set[LightsPlatform]
         super().__init__(machine, name)
@@ -439,7 +443,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
                                               color_of_key,
                                               start_time + fade_ms / 1000.0,
                                               None))
-            self.delay.reset(ms=fade_ms, callback=partial(self._remove_fade_out, key=key), name="remove_fade")
+            self.delay.reset(ms=fade_ms, callback=partial(self._remove_fade_out, key=key),
+                             name="remove_fade_{}".format(key))
             if len(self.stack) > 1:
                 self.stack.sort(reverse=True)
         else:
@@ -465,7 +470,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
                 color_change = False
 
         if found:
-            self.debug_log("Removing fadeout for key '%s' from stack", key)
+            if self._debug:
+                self.debug_log("Removing fadeout for key '%s' from stack", key)
             self.stack = [x for x in self.stack if x.key != key or x.dest_color is not None]
 
         if found and color_change:
