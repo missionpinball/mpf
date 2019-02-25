@@ -59,10 +59,20 @@ class BenchmarkLightShows(MpfGameTestCase):
             ))
 
     def _event_and_run(self, event, event2, num, test):
+        channel_list = []
+        for light in self.machine.lights.values():
+            for color, channels in light.hw_drivers.items():
+                channel_list.extend(channels)
+
         start = time.time()
         for i in range(num):
             self.post_event(event)
+            for channel in channel_list:
+                brightness = channel.current_brightness
             self.advance_time_and_run(.01)
+            for channel in channel_list:
+                brightness = channel.current_brightness
+
         end = time.time()
         self.advance_time_and_run()
         end2 = time.time()
