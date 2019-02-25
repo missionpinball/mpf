@@ -236,7 +236,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
     """Stern Spike Platform."""
 
     __slots__ = ["_writer", "_reader", "_inputs", "config", "_poll_task", "_sender_task", "_send_key_task", "dmd",
-                 "_nodes", "_bus_busy", "_cmd_queue"]
+                 "_nodes", "_bus_read", "_bus_write", "_cmd_queue"]
 
     def __init__(self, machine):
         """Initialise spike hardware platform."""
@@ -253,7 +253,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
         self.dmd = None
 
         self._nodes = None
-        self._bus_busy = asyncio.Lock(loop=self.machine.clock.loop)
+        self._bus_read = asyncio.Lock(loop=self.machine.clock.loop)
+        self._bus_write = asyncio.Lock(loop=self.machine.clock.loop)
         self._cmd_queue = asyncio.Queue(loop=self.machine.clock.loop)
 
     # pylint: disable-msg=too-many-arguments
@@ -460,7 +461,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
     def _sender(self):
         while True:
             cmd, wait_ms = yield from self._cmd_queue.get()
-            with (yield from self._bus_busy):
+            with (yield from self._bus_write):
                 yield from self._send_raw(cmd)
                 if wait_ms:
                     yield from self._send_raw(bytearray([1, wait_ms]))
@@ -487,8 +488,9 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
     @asyncio.coroutine
     def _poll(self):
         while True:
-            with (yield from self._bus_busy):
-                yield from self._send_raw(bytearray([0]))
+            with (yield from self._bus_read):
+                with (yield from self._bus_write):
+                    yield from self._send_raw(bytearray([0]))
 
                 try:
                     result = yield from asyncio.wait_for(self._read_raw(1), 0.5, loop=self.machine.clock.loop)
@@ -630,8 +632,9 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
         cmd_str.extend(data)
         cmd_str.append(self._checksum(cmd_str))
         cmd_str.append(response_len)
-        with (yield from self._bus_busy):
-            yield from self._send_raw(cmd_str)
+        with (yield from self._bus_read):
+            with (yield from self._bus_write):
+                yield from self._send_raw(cmd_str)
             if response_len:
                 try:
                     response = yield from asyncio.wait_for(self._read_raw(response_len), 0.2,
@@ -673,7 +676,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
             wait_ms = self.config['wait_times'][0x80] if 0x80 in self.config['wait_times'] else 0
         else:
             wait_ms = self.config['wait_times'][cmd] if cmd in self.config['wait_times'] else 0
-        with (yield from self._bus_busy):
+        with (yield from self._bus_write):
             yield from self._send_raw(cmd_str)
             if wait_ms:
                 yield from self._send_raw(bytearray([1, wait_ms]))
@@ -681,7 +684,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
     @asyncio.coroutine
     def send_cmd_raw(self, data, wait_ms=0):
         """Send raw command."""
-        with (yield from self._bus_busy):
+        with (yield from self._bus_write):
             yield from self._send_raw(data)
             if wait_ms:
                 yield from self._send_raw(bytearray([1, wait_ms]))
