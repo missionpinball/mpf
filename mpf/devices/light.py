@@ -14,7 +14,7 @@ from mpf.core.rgb_color import RGBColor, ColorException
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.device_mixins import DevicePositionMixin
 
-MYPY=False
+MYPY = False
 if MYPY:
     from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
