@@ -166,7 +166,11 @@ class BcpInterface(MpfController):
             return
         if show_name in self._shows:
             self._shows[show_name].stop()
-        self._shows[show_name] = show.play(show_tokens=token, priority=100000)
+        try:
+            self._shows[show_name] = show.play(show_tokens=token, priority=100000)
+        except (ValueError, AssertionError) as e:
+            self.machine.bcp.transport.send_to_client(client, "show_play", error="Show error: {}".format(e))
+            return
         self.machine.bcp.transport.send_to_client(client, "show_play", error=False)
 
     def _show_stop(self, client, show_name):
