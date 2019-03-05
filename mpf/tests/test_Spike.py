@@ -31,7 +31,7 @@ class MockSpikeSocket(MockSerial):
     def write(self, encoded_msg):
         """Write message."""
         # currently needed for the bridge
-        if encoded_msg == '\n\r'.encode() or encoded_msg == b'\x03reset\n':
+        if encoded_msg == '\n\r'.encode() or encoded_msg == b'\x03reset\n' or encoded_msg == b'\xf5':
             return len(encoded_msg)
 
         if encoded_msg == "/bin/bridge 921600\r\n".encode():
@@ -43,7 +43,7 @@ class MockSpikeSocket(MockSerial):
         msg = bytes(msg)
 
         if msg in self.permanent_commands and msg not in self.expected_commands:
-            self.queue.append("".join("%02x " % b for b in self.permanent_commands[msg]).encode())
+            self.queue.append(self.permanent_commands[msg])
             return len(encoded_msg)
 
         # ignore SendKey
@@ -69,7 +69,7 @@ class MockSpikeSocket(MockSerial):
             ))
 
         if len(self.expected_commands[msg]) > 0:
-            self.queue.append("".join("%02x " % b for b in self.expected_commands[msg]).encode())
+            self.queue.append(self.expected_commands[msg])
 
         del self.expected_commands[msg]
         return len(encoded_msg)

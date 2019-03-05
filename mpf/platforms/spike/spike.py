@@ -103,7 +103,7 @@ class SpikeDMD(DmdPlatformInterface):
             self.new_frame_event.clear()
             yield from self.send_update()
             # sleep at least 5ms
-            yield from asyncio.sleep(.005)
+            yield from asyncio.sleep(.005, loop=self.platform.machine.clock.loop)
 
     @asyncio.coroutine
     def send_update(self):
