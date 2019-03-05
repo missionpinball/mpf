@@ -102,6 +102,8 @@ class SpikeDMD(DmdPlatformInterface):
             yield from self.new_frame_event.wait()
             self.new_frame_event.clear()
             yield from self.send_update()
+            # sleep at least 5ms
+            yield from asyncio.sleep(.005)
 
     @asyncio.coroutine
     def send_update(self):
@@ -560,10 +562,11 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
                 pass
 
         if self._writer:
+            # shutdown the bridge
+            self._writer.write(b'\xf5')
             # send ctrl+c to stop the mpf-spike-bridge
             self._writer.write(b'\x03reset\n')
-
-        self._writer.close()
+            self._writer.close()
 
     @staticmethod
     def _done(future):  # pragma: no cover
@@ -593,24 +596,12 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
         if self.debug:
             self.log.debug("Reading %s bytes", msg_len)
 
-        data = yield from self._reader.readexactly(msg_len * 3)
-        # if we got a space
-        if data[0] == ' ':
-            data = data[1:]
-            data += yield from self._reader.readexactly(1)
+        data = yield from self._reader.readexactly(msg_len)
 
-        result = bytearray()
         if self.debug:
-            self.log.debug("Data: %s", data)
+            self.log.debug("Data: %s", "".join("%02x " % b for b in data))
 
-        for i in range(msg_len):
-            try:
-                result.append(int(data[i * 3:(i * 3) + 2], 16))
-            except ValueError:
-                self.log.warning("Read/encoding error.")
-                return bytearray()
-
-        return result
+        return data
 
     @staticmethod
     def _checksum(cmd_str):
@@ -623,6 +614,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
     def send_cmd_and_wait_for_response(self, node, cmd, data, response_len)\
             -> Generator[int, None, Optional[bytearray]]:
         """Send cmd and wait for response."""
+        assert response_len > 0
         if node > 15:
             raise AssertionError("Node must be 0-15.")
         cmd_str = bytearray()
@@ -635,25 +627,22 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
         with (yield from self._bus_read):
             with (yield from self._bus_write):
                 yield from self._send_raw(cmd_str)
-            if response_len:
-                try:
-                    response = yield from asyncio.wait_for(self._read_raw(response_len), 0.2,
-                                                           loop=self.machine.clock.loop)    # type: bytearray
-                except asyncio.TimeoutError:    # pragma: no cover
-                    self.log.warning("Failed to read %s bytes from Spike", response_len)
-                    return None
+            try:
+                response = yield from asyncio.wait_for(self._read_raw(response_len), 0.2,
+                                                       loop=self.machine.clock.loop)    # type: bytearray
+            except asyncio.TimeoutError:    # pragma: no cover
+                self.log.warning("Failed to read %s bytes from Spike", response_len)
+                return None
 
-                if self._checksum(response) != 0:   # pragma: no cover
-                    self.log.warning("Checksum mismatch for response: %s", "".join("%02x " % b for b in response))
-                    # we resync by flushing the input
-                    self._writer.transport.serial.reset_input_buffer()
-                    # pylint: disable-msg=protected-access
-                    self._reader._buffer = bytearray()
-                    return None
+            if self._checksum(response) != 0:   # pragma: no cover
+                self.log.warning("Checksum mismatch for response: %s", "".join("%02x " % b for b in response))
+                # we resync by flushing the input
+                self._writer.transport.serial.reset_input_buffer()
+                # pylint: disable-msg=protected-access
+                self._reader._buffer = bytearray()
+                return None
 
-                return response
-
-            return None
+            return response
 
     def _create_cmd_str(self, node, cmd, data):
         if node > 15:
@@ -730,12 +719,19 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
         self._reader._buffer = bytearray()
         # start mpf-spike-bridge
         self.log.debug("Starting MPF bridge")
+        # self._writer.write("RUST_BACKTRACE=1 /mnt/mpf-spike {} 2>/mnt/spike.log\r\n".format(self.config['runtime_baud']).encode())
         self._writer.write("/bin/bridge {}\r\n".format(self.config['runtime_baud']).encode())
-        welcome_str = b'MPF Spike Bridge!\r\n'
+        welcome_str = b'MPF Spike Bridge!'
         yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
+        # read until first capital M
+        while True:
+            byte = yield from self._reader.readexactly(1)
+            if ord(byte) == welcome_str[0]:
+                break
+
         data = yield from self._reader.read(100)
-        if data[-len(welcome_str):] != welcome_str:
-            raise AssertionError("Expected '{}' got '{}'".format(welcome_str, data[:len(welcome_str)]))
+        if data[:len(welcome_str) - 1] != welcome_str[1:]:
+            raise AssertionError("Expected '{}' got '{}'".format(welcome_str[1:], data[:len(welcome_str) - 1]))
         self.log.debug("Bridge started")
 
         if self.config['runtime_baud']:
