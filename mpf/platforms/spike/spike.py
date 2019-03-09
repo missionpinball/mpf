@@ -40,7 +40,7 @@ class SpikeLight(LightPlatformDirectFade):
 
     """A light on a Stern Spike node board."""
 
-    __slots__ = ["node", "index", "platform"]
+    __slots__ = ["node", "index", "platform", "_max_fade"]
 
     def __init__(self, number, platform):
         """Initialise light."""
@@ -48,15 +48,20 @@ class SpikeLight(LightPlatformDirectFade):
         node, index = number.split("-")
         self.node = int(node)
         self.index = int(index)
-        self.platform = platform
+        self.platform = platform        # type: SpikePlatform
+        self._max_fade = None
 
     def get_max_fade_ms(self):
         """Return max fade ms."""
-        return 199  # int(199 * 1.28) = 255
+        if self.node == 0:
+            return 0
+        if self._max_fade is None:
+            self._max_fade = int(255 / self.platform.ticks_per_sec[self.node])  # calculate max fade time
+        return self._max_fade
 
     def set_brightness_and_fade(self, brightness: float, fade_ms: int):
         """Set brightness of channel."""
-        fade_time = int(fade_ms * 1.28)
+        fade_time = int(fade_ms * self.platform.ticks_per_sec[self.node] / 1000)
         brightness = int(brightness * 255)
         if 0 > brightness > 255:
             raise AssertionError("Brightness out of bound.")
@@ -180,7 +185,7 @@ class SpikeDriver(DriverPlatformInterface):
 
         # initial pulse
         power1 = int(pulse_settings.power * 255)
-        duration1 = int(pulse_settings.duration * 1.28)
+        duration1 = int(pulse_settings.duration * self.platform.ticks_per_sec[self.node] / 1000)
 
         if duration1 > 0x1FF:
             raise AssertionError("Initial pulse too long.")
@@ -210,7 +215,7 @@ class SpikeDriver(DriverPlatformInterface):
     def pulse(self, pulse_settings: PulseSettings):
         """Pulse coil for a certain time."""
         power1 = power2 = int(pulse_settings.power * 255)
-        duration1 = int(pulse_settings.duration * 1.28)
+        duration1 = int(pulse_settings.duration * self.platform.ticks_per_sec[self.node] / 1000)
         duration2 = duration1 - 0x1FF if duration1 > 0x1FF else 0
         if duration2 > 0x1FF:
             raise AssertionError("Pulse ms too long.")
@@ -238,7 +243,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
     """Stern Spike Platform."""
 
     __slots__ = ["_writer", "_reader", "_inputs", "config", "_poll_task", "_sender_task", "_send_key_task", "dmd",
-                 "_nodes", "_bus_read", "_bus_write", "_cmd_queue"]
+                 "_nodes", "_bus_read", "_bus_write", "_cmd_queue", "ticks_per_sec"]
 
     def __init__(self, machine):
         """Initialise spike hardware platform."""
@@ -259,6 +264,10 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
         self._bus_write = asyncio.Lock(loop=self.machine.clock.loop)
         self._cmd_queue = asyncio.Queue(loop=self.machine.clock.loop)
 
+        self.ticks_per_sec = {
+            0: 1
+        }
+
     # pylint: disable-msg=too-many-arguments
     def _write_rule(self, node, enable_switch_index, disable_switch_index, coil_index, pulse_settings: PulseSettings,
                     hold_settings: Optional[HoldSettings], param1, param2, param3):
@@ -270,7 +279,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
         param2 == 6 -> ??
         param3 == 5 -> allow enable
         """
-        pulse_value = int(pulse_settings.duration * 1.28)
+        pulse_value = int(pulse_settings.duration * self.ticks_per_sec[node] / 1000)
 
         self.send_cmd_async(node, SpikeNodebus.CoilSetReflex, bytearray(
             [coil_index,
@@ -777,6 +786,12 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
             fw_version = yield from self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetVersion, bytearray(), 12)
             if fw_version:
                 self.log.debug("Node: %s Version: %s", node, "".join("0x%02x " % b for b in fw_version))
+            if fw_version[0] != node:
+                self.log.warning("Node: %s Version Response looks bogus (node ID does not match): %s",
+                                 node, "".join("0x%02x " % b for b in fw_version))
+
+            # we need this to calculate the right times for this node
+            self.ticks_per_sec[node] = (fw_version[9] << 8) + fw_version[8]
 
         for node in self._nodes:
             self.log.debug("Initial read inputs on node %s", node)
