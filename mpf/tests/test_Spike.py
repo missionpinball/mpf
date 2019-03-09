@@ -34,7 +34,7 @@ class MockSpikeSocket(MockSerial):
         if encoded_msg == '\n\r'.encode() or encoded_msg == b'\x03reset\n' or encoded_msg == b'\xf5':
             return len(encoded_msg)
 
-        if encoded_msg == "/bin/bridge 921600\r\n".encode():
+        if encoded_msg == "/bin/bridge 921600 2>/dev/null\r\n".encode():
             self.queue.append(b'MPF Spike Bridge!\r\n')
             return len(encoded_msg)
 
@@ -135,19 +135,14 @@ class SpikePlatformTest(MpfTestCase):
             self._checksummed_cmd(b'\x8b\x03\xf0\x20'): b'',
             self._checksummed_cmd(b'\x81\x02\xfe', 12):
                 b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
-            self._checksummed_cmd(b'\x81\x02\xf5', 4): b'\x00\x00\x00\x00',
             self._checksummed_cmd(b'\x88\x02\xfe', 12):
                 b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
-            self._checksummed_cmd(b'\x88\x02\xf5', 4): b'\x00\x00\x00\x00',
             self._checksummed_cmd(b'\x89\x02\xfe', 12):
                 b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
-            self._checksummed_cmd(b'\x89\x02\xf5', 4): b'\x00\x00\x00\x00',
             self._checksummed_cmd(b'\x8a\x02\xfe', 12):
                 b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
-            self._checksummed_cmd(b'\x8a\x02\xf5', 4): b'\x00\x00\x00\x00',
             self._checksummed_cmd(b'\x8b\x02\xfe', 12):
                 b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
-            self._checksummed_cmd(b'\x8b\x02\xf5', 4): b'\x00\x00\x00\x00',
         }
         self.serialMock.permanent_commands = {
             self._checksummed_cmd(b'\x80\x03\xf0\x22'): b'',    # send twice during init
