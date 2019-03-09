@@ -724,6 +724,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
         self.dmd = SpikeDMD(self)
         return self.dmd
 
+    # pylint: disable-msg=too-many-statements
+    # pylint: disable-msg=too-many-branches
     @asyncio.coroutine
     def _initialize(self) -> Generator[int, None, None]:
         # send ctrl+c to stop whatever is running
