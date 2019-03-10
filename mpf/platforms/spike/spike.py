@@ -3,14 +3,11 @@ import asyncio
 
 import logging
 import random
-from typing import Optional, Generator
+from typing import Optional, Generator, List
 
+from mpf.core.platform_batch_light_system import PlatformBatchLight, PlatformBatchLightSystem
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
-
-from mpf.platforms.interfaces.light_platform_interface import LightPlatformDirectFade
-
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
-
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.platforms.spike.spike_defines import SpikeNodebus
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
@@ -36,19 +33,19 @@ class SpikeSwitch(SwitchPlatformInterface):
         return "Spike Node {}".format(self.node)
 
 
-class SpikeLight(LightPlatformDirectFade):
+class SpikeLight(PlatformBatchLight):
 
     """A light on a Stern Spike node board."""
 
     __slots__ = ["node", "index", "platform", "_max_fade"]
 
-    def __init__(self, number, platform):
+    def __init__(self, number, platform, light_system):
         """Initialise light."""
-        super().__init__(number, platform.machine.clock.loop)
+        super().__init__(number, light_system)
         node, index = number.split("-")
         self.node = int(node)
         self.index = int(index)
-        self.platform = platform        # type: SpikePlatform
+        self.platform = platform
         self._max_fade = None
 
     def get_max_fade_ms(self):
@@ -58,17 +55,6 @@ class SpikeLight(LightPlatformDirectFade):
         if self._max_fade is None:
             self._max_fade = int(255 / self.platform.ticks_per_sec[self.node])  # calculate max fade time
         return self._max_fade
-
-    def set_brightness_and_fade(self, brightness: float, fade_ms: int):
-        """Set brightness of channel."""
-        fade_time = int(fade_ms * self.platform.ticks_per_sec[self.node] / 1000)
-        brightness = int(brightness * 255)
-        if 0 > brightness > 255:
-            raise AssertionError("Brightness out of bound.")
-        if 0 > fade_time > 255:
-            raise AssertionError("Fade time out of bound.")
-        data = bytearray([fade_time, brightness])
-        self.platform.send_cmd_async(self.node, SpikeNodebus.SetLed + self.index, data)
 
     def get_board_name(self):
         """Return name for service mode."""
@@ -243,7 +229,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
     """Stern Spike Platform."""
 
     __slots__ = ["_writer", "_reader", "_inputs", "config", "_poll_task", "_sender_task", "_send_key_task", "dmd",
-                 "_nodes", "_bus_read", "_bus_write", "_cmd_queue", "ticks_per_sec"]
+                 "_nodes", "_bus_read", "_bus_write", "_cmd_queue", "ticks_per_sec", "_light_system"]
 
     def __init__(self, machine):
         """Initialise spike hardware platform."""
@@ -264,9 +250,56 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
         self._bus_write = asyncio.Lock(loop=self.machine.clock.loop)
         self._cmd_queue = asyncio.Queue(loop=self.machine.clock.loop)
 
+        self._light_system = PlatformBatchLightSystem(self.machine.clock.loop, self._light_key,
+                                                      self._are_lights_sequential, self._update_lights)
+
         self.ticks_per_sec = {
             0: 1
         }
+
+    @asyncio.coroutine
+    def _update_lights(self, sequential_lights: List[SpikeLight]):
+        """Set brightness for lights."""
+        first_light = sequential_lights[0]
+
+        sequential_brightness_list = []
+        common_fade_ms = None
+        for light in sequential_lights:
+            brightness, fade_ms = light.get_fade_and_brightness()
+            if common_fade_ms is None or common_fade_ms == fade_ms:
+                common_fade_ms = fade_ms
+                sequential_brightness_list.append(brightness)
+            else:
+                yield from self._send_multiple_light_update(first_light, common_fade_ms, sequential_brightness_list)
+                # start new list
+                first_light = light
+                common_fade_ms = fade_ms
+                sequential_brightness_list = [brightness]
+
+        if sequential_brightness_list:
+            yield from self._send_multiple_light_update(first_light, common_fade_ms, sequential_brightness_list)
+
+    @asyncio.coroutine
+    def _send_multiple_light_update(self, first_light: SpikeLight, common_fade_ms, sequential_brightness_list):
+        if common_fade_ms < 0:
+            common_fade_ms = 0
+        fade_time = int(common_fade_ms * self.ticks_per_sec[first_light.node] / 1000)
+
+        data = bytearray([fade_time])
+        for brightness in sequential_brightness_list:
+            data.append(int(255 * brightness))
+
+        self.send_cmd_async(first_light.node, SpikeNodebus.SetLed + first_light.index, data)
+
+    @staticmethod
+    def _light_key(light: SpikeLight):
+        """Sort lights by this key."""
+        return light.node * 100 + light.index
+
+    @staticmethod
+    def _are_lights_sequential(a, b):
+        """Return True if lights are sequential."""
+        return a.node == b.node and a.index + 1 == b.index
 
     # pylint: disable-msg=too-many-arguments
     def _write_rule(self, node, enable_switch_index, disable_switch_index, coil_index, pulse_settings: PulseSettings,
@@ -379,7 +412,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
     def configure_light(self, number, subtype, platform_settings) -> SpikeLight:
         """Configure a light on Stern Spike."""
         del platform_settings, subtype
-        return SpikeLight(number, self)
+        return SpikeLight(number, self, self._light_system)
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure switch on Stern Spike."""
@@ -422,6 +455,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
         if self.config['use_send_key']:
             self._send_key_task = self.machine.clock.loop.create_task(self._send_key())
             self._send_key_task.add_done_callback(self._done)
+
+        self._light_system.start()
 
     @asyncio.coroutine
     def _connect_to_hardware(self, port, baud, *, flow_control=False, xonxoff=False):
@@ -549,6 +584,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
 
     def stop(self):
         """Stop hardware and close connections."""
+        self._light_system.stop()
         if self._poll_task:
             self._poll_task.cancel()
             try:

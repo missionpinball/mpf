@@ -379,10 +379,9 @@ class SpikePlatformTest(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.serialMock.expected_commands)
 
+        # batched light updates
         self.serialMock.expected_commands = {
-            self._checksummed_cmd(b'\x81\x04\x8a\x00\xaa'): b'',
-            self._checksummed_cmd(b'\x81\x04\x8b\x00\xbb'): b'',
-            self._checksummed_cmd(b'\x81\x04\x8c\x00\xcc'): b'',
+            self._checksummed_cmd(b'\x81\x06\x8a\x00\xaa\xbb\xcc'): b'',
         }
         self.machine.lights.l_rgb_insert.color([0xaa, 0xbb, 0xcc])
         self.advance_time_and_run(.1)
