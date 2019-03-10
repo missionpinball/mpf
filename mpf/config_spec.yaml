@@ -905,7 +905,7 @@ pd_led_boards:
     use_servo_9: single|bool|false
     use_servo_10: single|bool|false
     use_servo_11: single|bool|false
-    max_servo_value: single|int|250
+    max_servo_value: single|int|300
     use_stepper_0: single|bool|false
     use_stepper_1: single|bool|false
     stepper_speed: single|int|13524
