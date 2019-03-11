@@ -555,12 +555,12 @@ class Light(SystemWideDevice, DevicePositionMixin):
             return self._color_correction_profile.apply(color)
 
     # pylint: disable-msg=too-many-return-statements
-    def _get_color_and_fade(self, stack, max_fade_ms: int) -> Tuple[RGBColor, int]:
+    def _get_color_and_fade(self, stack, max_fade_ms: int, *, current_time=None) -> Tuple[RGBColor, int, bool]:
         try:
             color_settings = stack[0]
         except IndexError:
             # no stack
-            return RGBColor('off'), -1
+            return RGBColor('off'), -1, True
 
         dest_color = color_settings.dest_color
 
@@ -569,26 +569,27 @@ class Light(SystemWideDevice, DevicePositionMixin):
             # if we are transparent just return the lower layer
             if dest_color is None:
                 return self._get_color_and_fade(stack[1:], max_fade_ms)
-            return dest_color, -1
+            return dest_color, -1, True
 
-        current_time = self.machine.clock.get_time()
+        if current_time is None:
+            current_time = self.machine.clock.get_time()
 
         # fade is done
         if current_time >= color_settings.dest_time:
             # if we are transparent just return the lower layer
             if dest_color is None:
                 return self._get_color_and_fade(stack[1:], max_fade_ms)
-            return color_settings.dest_color, -1
+            return color_settings.dest_color, -1, True
 
         if dest_color is None:
-            dest_color, lower_fade_ms = self._get_color_and_fade(stack[1:], max_fade_ms)
+            dest_color, lower_fade_ms, _ = self._get_color_and_fade(stack[1:], max_fade_ms)
             if lower_fade_ms > 0:
                 max_fade_ms = lower_fade_ms
 
         target_time = current_time + (max_fade_ms / 1000.0)
         # check if fade will be done before max_fade_ms
         if target_time > color_settings.dest_time:
-            return dest_color, int((color_settings.dest_time - current_time) * 1000)
+            return dest_color, int((color_settings.dest_time - current_time) * 1000), True
 
         # figure out the ratio of how far along we are
         try:
@@ -597,10 +598,10 @@ class Light(SystemWideDevice, DevicePositionMixin):
         except ZeroDivisionError:
             ratio = 1.0
 
-        return RGBColor.blend(color_settings.start_color, dest_color, ratio), max_fade_ms
+        return RGBColor.blend(color_settings.start_color, dest_color, ratio), max_fade_ms, False
 
-    def _get_brightness_and_fade(self, max_fade_ms: int, color: str) -> Tuple[float, int]:
-        uncorrected_color, fade_ms = self._get_color_and_fade(self.stack, max_fade_ms)
+    def _get_brightness_and_fade(self, max_fade_ms: int, color: str, *, current_time=None) -> Tuple[float, int, bool]:
+        uncorrected_color, fade_ms, done = self._get_color_and_fade(self.stack, max_fade_ms, current_time=current_time)
         corrected_color = self.gamma_correct(uncorrected_color)
         corrected_color = self.color_correct(corrected_color)
 
@@ -610,7 +611,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
             brightness = min(corrected_color.red, corrected_color.green, corrected_color.blue) / 255.0
         else:
             raise ColorException("Invalid color {}".format(color))
-        return brightness, fade_ms
+        return brightness, fade_ms, done
 
     @property
     def _color(self):

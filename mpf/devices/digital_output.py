@@ -76,13 +76,13 @@ class DigitalOutput(SystemWideDevice):
             raise AssertionError("Failed to configure driver {} in platform. See error above".format(self.name)) from e
 
     @staticmethod
-    def _get_state(max_fade_ms: int, state: bool) -> Tuple[float, int]:
+    def _get_state(max_fade_ms: int, state: bool) -> Tuple[float, int, bool]:
         """Return the current state without any fade."""
         del max_fade_ms
         if state:
-            return 1.0, -1
+            return 1.0, -1, True
         else:
-            return 0.0, -1
+            return 0.0, -1, True
 
     def pulse(self, pulse_ms, **kwargs):
         """Pulse digital output."""
