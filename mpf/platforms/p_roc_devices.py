@@ -356,7 +356,7 @@ class PDBLED(LightPlatformInterface):
 
         return value
 
-    def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
+    def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int, bool]]):
         """Set or fade this LED to the color passed.
 
         Can fade for up to 100 days so do not bother about too long fades.
@@ -364,7 +364,7 @@ class PDBLED(LightPlatformInterface):
         Args:
             color_and_fade_callback: brightness of this channel via callback
         """
-        brightness, fade_ms = color_and_fade_callback(int(pow(2, 31) * 4))
+        brightness, fade_ms, _ = color_and_fade_callback(int(pow(2, 31) * 4))
         normalized_brightness = self._normalise_color(int(brightness * 255))
         if self.debug:
             self.log.debug("Setting color %s with fade_ms %s to %s-%s",

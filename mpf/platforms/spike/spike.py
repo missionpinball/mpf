@@ -53,7 +53,8 @@ class SpikeLight(PlatformBatchLight):
         if self.node == 0:
             return 0
         if self._max_fade is None:
-            self._max_fade = int(255 / self.platform.ticks_per_sec[self.node])  # calculate max fade time
+            # calculate max fade time. 255 is reserved so 254 is the max value
+            self._max_fade = int(254 * 1000 / self.platform.ticks_per_sec[self.node])
         return self._max_fade
 
     def get_board_name(self):
@@ -250,46 +251,26 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
         self._bus_write = asyncio.Lock(loop=self.machine.clock.loop)
         self._cmd_queue = asyncio.Queue(loop=self.machine.clock.loop)
 
-        self._light_system = PlatformBatchLightSystem(self.machine.clock.loop, self._light_key,
-                                                      self._are_lights_sequential, self._update_lights)
+        self._light_system = PlatformBatchLightSystem(self.machine.clock, self._light_key,
+                                                      self._are_lights_sequential, self._send_multiple_light_update)
 
         self.ticks_per_sec = {
             0: 1
         }
 
     @asyncio.coroutine
-    def _update_lights(self, sequential_lights: List[SpikeLight]):
-        """Set brightness for lights."""
-        first_light = sequential_lights[0]
-
-        sequential_brightness_list = []
-        common_fade_ms = None
-        for light in sequential_lights:
-            brightness, fade_ms = light.get_fade_and_brightness()
-            if common_fade_ms is None or common_fade_ms == fade_ms:
-                common_fade_ms = fade_ms
-                sequential_brightness_list.append(brightness)
-            else:
-                yield from self._send_multiple_light_update(first_light, common_fade_ms, sequential_brightness_list)
-                # start new list
-                first_light = light
-                common_fade_ms = fade_ms
-                sequential_brightness_list = [brightness]
-
-        if sequential_brightness_list:
-            yield from self._send_multiple_light_update(first_light, common_fade_ms, sequential_brightness_list)
-
-    @asyncio.coroutine
-    def _send_multiple_light_update(self, first_light: SpikeLight, common_fade_ms, sequential_brightness_list):
+    def _send_multiple_light_update(self, sequential_brightness_list):
+        common_fade_ms = sequential_brightness_list[0][2]
         if common_fade_ms < 0:
             common_fade_ms = 0
-        fade_time = int(common_fade_ms * self.ticks_per_sec[first_light.node] / 1000)
+        fade_time = int(common_fade_ms * self.ticks_per_sec[sequential_brightness_list[0][0].node] / 1000)
 
         data = bytearray([fade_time])
-        for brightness in sequential_brightness_list:
+        for _, brightness, _ in sequential_brightness_list:
             data.append(int(255 * brightness))
 
-        self.send_cmd_async(first_light.node, SpikeNodebus.SetLed + first_light.index, data)
+        self.send_cmd_async(sequential_brightness_list[0][0].node,
+                            SpikeNodebus.SetLed + sequential_brightness_list[0][0].index, data)
 
     @staticmethod
     def _light_key(light: SpikeLight):
