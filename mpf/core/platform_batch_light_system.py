@@ -1,7 +1,7 @@
 """A light system for platforms which batches all updates."""
 import abc
 import asyncio
-from typing import Callable, Tuple, Set, List
+from typing import Callable, Tuple, Set
 from sortedcontainers import SortedSet, SortedList
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
@@ -38,13 +38,15 @@ class PlatformBatchLightSystem:
 
     """Batch light system for platforms."""
 
-    __slots__ = ["dirty_lights", "dirty_schedule", "clock", "is_sequential_function", "update_task", "update_callback"]
+    __slots__ = ["dirty_lights", "dirty_schedule", "clock", "is_sequential_function", "update_task", "update_callback",
+                 "sort_function"]
 
     def __init__(self, clock, sort_function, is_sequential_function, update_callback):
         """Initialise light system."""
         self.dirty_lights = SortedSet(key=sort_function)    # type: Set[PlatformBatchLight]
         self.dirty_schedule = SortedList(key=lambda x: x[0] + sort_function(x[1]))
         self.is_sequential_function = is_sequential_function
+        self.sort_function = sort_function
         self.update_task = None
         self.clock = clock
         self.update_callback = update_callback
@@ -70,12 +72,12 @@ class PlatformBatchLightSystem:
     @asyncio.coroutine
     def _send_updates(self):
         while True:
-            while self.dirty_schedule and self.dirty_schedule[0][0] < self.clock.get_time():
+            while self.dirty_schedule and self.dirty_schedule[0][0] <= self.clock.get_time():
                 self.dirty_lights.add(self.dirty_schedule[0][1])
                 del self.dirty_schedule[0]
 
             sequential_lights = []
-            for light in self.dirty_lights:
+            for light in list(self.dirty_lights):
                 if not sequential_lights:
                     # first light
                     sequential_lights = [light]
@@ -90,6 +92,8 @@ class PlatformBatchLightSystem:
 
             if sequential_lights:
                 yield from self._send_update_batch(sequential_lights)
+
+            self.dirty_lights.clear()
 
             yield from asyncio.sleep(.001, loop=self.clock.loop)
 
@@ -117,12 +121,8 @@ class PlatformBatchLightSystem:
         if sequential_brightness_list:
             yield from self.update_callback(sequential_brightness_list)
 
-        self.dirty_lights.clear()
-
     def mark_dirty(self, light: "PlatformBatchLight"):
         """Mark as dirty."""
         self.dirty_lights.add(light)
-
-    def mark_clean(self, light: "PlatformBatchLight"):
-        """Mark as clean."""
-        self.dirty_lights.remove(light)
+        self.dirty_schedule = SortedList([x for x in self.dirty_schedule if x[1] != light],
+                                         key=lambda x: x[0] + self.sort_function(x[1]))
