@@ -11,7 +11,10 @@ class TestHighScoreMode(MpfBcpTestCase):
         return 'high_score.yaml'
 
     def getMachinePath(self):
-        return 'tests/machine_files/high_score/'
+        if self._testMethodName == "test_reverse_sort":
+            return 'tests/machine_files/high_score_reverse/'
+        else:
+            return 'tests/machine_files/high_score/'
 
     def start_game(self, num_players=1):
         self._bcp_client.send = MagicMock()
@@ -470,5 +473,22 @@ class TestHighScoreMode(MpfBcpTestCase):
                                    ('MPF', 23)]
         new_score_data['loops'] = [('JK', 42)]
 
+        self.assertEqual(new_score_data, self.machine.modes.high_score.high_scores)
+        self.assertEqual(new_score_data, self.machine.modes.high_score.data_manager.written_data)
+
+    def test_reverse_sort(self):
+        self.start_game(4)
+        self.machine.game.game_ending()
+        self.advance_time_and_run()
+
+        new_score_data = OrderedDict()
+        new_score_data['score'] = [('BRI', 4242),
+                                   ('GHK', 2323),
+                                   ('JK', 1337),
+                                   ('QC', 42),
+                                   ('MPF', 23)]
+        new_score_data['loops'] = [('JK', 42)]
+        new_score_data['time_to_wizard'] = [('JK', 300),
+                                            ('BM', 350)]
         self.assertEqual(new_score_data, self.machine.modes.high_score.high_scores)
         self.assertEqual(new_score_data, self.machine.modes.high_score.data_manager.written_data)
