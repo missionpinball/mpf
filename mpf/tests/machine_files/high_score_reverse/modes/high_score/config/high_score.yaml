@@ -10,6 +10,9 @@ high_score:
       - HIGH SCORE 4
   - loops:
       - LOOP CHAMP
+  - time_to_wizard:
+      - FASTEST WIZARD
+      - ALMOST FASTEST WIZARD
   defaults:
     score:
       - BRI: 4242
@@ -19,4 +22,8 @@ high_score:
       - MPF: 23
     loops:
       - JK: 42
-  reverse_sort: True
+    time_to_wizard:
+      - JK: 300
+      - BM: 350
+  reverse_sort:
+    - time_to_wizard

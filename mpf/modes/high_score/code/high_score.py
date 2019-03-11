@@ -148,7 +148,7 @@ class HighScore(AsyncMode):
                     new_list.append((player, player[category_name]))
 
             # sort if from highest to lowest
-            new_list.sort(key=lambda x: x[1], reverse=(not self.high_score_config['reverse_sort']))
+            new_list.sort(key=lambda x: x[1], reverse=(not category_name in self.high_score_config['reverse_sort']))
 
             # scan through and see if any of our players are in this list
             i = 0

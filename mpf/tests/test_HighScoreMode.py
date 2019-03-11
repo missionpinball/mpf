@@ -479,17 +479,16 @@ class TestHighScoreMode(MpfBcpTestCase):
     def test_reverse_sort(self):
         self.start_game(4)
         self.machine.game.game_ending()
-<<<<<<< HEAD
-=======
-        self.machine.modes.high_score.high_score_config['reverse_sort'] = True
->>>>>>> 34e4cdea73ed653a6ec8583fc1d24c9e7a162d16
         self.advance_time_and_run()
 
         new_score_data = OrderedDict()
-        new_score_data['score'] = [('MPF', 23),
-                                   ('QC', 42),
-                                   ('JK', 1337),
+        new_score_data['score'] = [('BRI', 4242),
                                    ('GHK', 2323),
-                                   ('BRI', 4242)]
+                                   ('JK', 1337),
+                                   ('QC', 42),
+                                   ('MPF', 23)]
         new_score_data['loops'] = [('JK', 42)]
+        new_score_data['time_to_wizard'] = [('JK', 300),
+                                            ('BM', 350)]
         self.assertEqual(new_score_data, self.machine.modes.high_score.high_scores)
+        self.assertEqual(new_score_data, self.machine.modes.high_score.data_manager.written_data)
