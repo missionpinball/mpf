@@ -9,6 +9,9 @@ class SpikeNodebus:
     __slots__ = []  # type: List[str]
 
     Poll = 0x00
+    GetBridgeVersion = 0x03
+    GetBridgeState = 0x05
+    SetResponseTime = 0x06
     SetInputMask = 0x09         # unused
     GetInputState = 0x11        # unused
     GetInputMask = 0x12         # unused
