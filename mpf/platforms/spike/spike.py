@@ -251,8 +251,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
         self._bus_write = asyncio.Lock(loop=self.machine.clock.loop)
         self._cmd_queue = asyncio.Queue(loop=self.machine.clock.loop)
 
-        self._light_system = PlatformBatchLightSystem(self.machine.clock, self._light_key,
-                                                      self._are_lights_sequential, self._send_multiple_light_update)
+        self._light_system = None
 
         self.ticks_per_sec = {
             0: 1
@@ -296,12 +295,30 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
         pulse_value = int(pulse_settings.duration * self.ticks_per_sec[node] / 1000)
 
         self.send_cmd_async(node, SpikeNodebus.CoilSetReflex, bytearray(
-            [coil_index,
-             int(pulse_settings.power * 255), pulse_value & 0xFF, (pulse_value & 0xFF00) >> 8,
-             int(hold_settings.power * 255) if hold_settings else 0, 0x00, 0x00, 0x00, 0x00,
-             0, 0, 0, 0, 0, 0, 0, 0,
-             0x40 ^ enable_switch_index, 0x40 ^ disable_switch_index if disable_switch_index is not None else 0, 0,
-             param1, param2, param3]))
+            [coil_index,                                                # coil [3]
+             int(pulse_settings.power * 255),                           # pulse power [4]
+             pulse_value & 0xFF,                                        # pulse time lower [5]
+             (pulse_value & 0xFF00) >> 8,                               # pulse time upper [6]
+             int(hold_settings.power * 255) if hold_settings else 0,    # hold power [7]
+             0x00,                                                      # some time lower (probably hold) [8]
+             0x00,                                                      # some time upper (probably hold) [9]
+             0x00,                                                      # some time lower (unknown) [10]
+             0x00,                                                      # some time upper (unknown) [11]
+             0,                                                         # a unknown time lower (1) [12]
+             0,                                                         # a unknown time upper (1) [13]
+             0,                                                         # a unknown time lower (2) [14]
+             0,                                                         # a unknown time upper (2) [15]
+             0,                                                         # a unknown time lower (3) [16]
+             0,                                                         # a unknown time upper (3) [17]
+             0,                                                         # a unknown time lower (4) [18]
+             0,                                                         # a unknown time upper (4) [19]
+             0x40 ^ enable_switch_index,                                # enable switch [20]
+             0x40 ^ disable_switch_index if disable_switch_index is not None else 0,    # disable switch [21]
+             0,                                                         # another switch? [22]
+             param1,                                                    # param5 [23]
+             param2,                                                    # some time (param6) [24]
+             param3                                                     # param7 [25]
+             ]))
 
     @staticmethod
     def _check_coil_switch_combination(switch, coil):
@@ -437,6 +454,9 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
             self._send_key_task = self.machine.clock.loop.create_task(self._send_key())
             self._send_key_task.add_done_callback(self._done)
 
+        self._light_system = PlatformBatchLightSystem(self.machine.clock, self._light_key,
+                                                      self._are_lights_sequential, self._send_multiple_light_update,
+                                                      self.machine.machine_config['mpf']['default_light_hw_update_hz'])
         self._light_system.start()
 
     @asyncio.coroutine
@@ -488,10 +508,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
     def _sender(self):
         while True:
             cmd, wait_ms = yield from self._cmd_queue.get()
-            with (yield from self._bus_write):
-                yield from self._send_raw(cmd)
-                if wait_ms:
-                    yield from self._send_raw(bytearray([1, wait_ms]))
+            yield from self._send_cmd_without_response(cmd, wait_ms)
 
     @asyncio.coroutine
     def _send_key(self):
@@ -553,7 +570,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
                     self._reader._buffer = bytearray()
             elif ready_node > 0:    # pragma: no cover
                 # invalid node ids
-                self.log.warning("Spike desynced.")
+                self.log.warning("Spike desynced (invalid node %s).", ready_node)
                 # give it a break of 50ms
                 yield from asyncio.sleep(.05, loop=self.machine.clock.loop)
                 # clear buffer
@@ -660,7 +677,9 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
                 self.log.warning("Failed to read %s bytes from Spike", response_len)
                 return None
 
-            if self._checksum(response) != 0:   # pragma: no cover
+            if response[-1] != 0:
+                self.log.info("Bridge Status: %s != 0", response[-1])
+            if self._checksum(response[0:-1]) != 0:   # pragma: no cover
                 self.log.warning("Checksum mismatch for response: %s", "".join("%02x " % b for b in response))
                 # we resync by flushing the input
                 self._writer.transport.serial.reset_input_buffer()
@@ -692,14 +711,17 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
         else:
             wait_ms = self.config['wait_times'][cmd] if cmd in self.config['wait_times'] else 0
 
+        yield from self._send_cmd_without_response(cmd_str, wait_ms)
+
+    @asyncio.coroutine
+    def _send_cmd_without_response(self, cmd_str, wait_ms):
         if wait_ms:
             with (yield from self._bus_read):
                 with (yield from self._bus_write):
                     yield from self._send_raw(cmd_str)
-                    if wait_ms:
-                        yield from self._send_raw(bytearray([1, wait_ms]))
+                    yield from self._send_raw(bytearray([1, wait_ms]))
 
-                # block reads without write lock (to prevent them from timing out)
+                # block reads without write lock (to prevent reads from timing out)
                 yield from asyncio.sleep(wait_ms / 1000, loop=self.machine.clock.loop)
         else:
             with (yield from self._bus_write):
@@ -787,6 +809,12 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
 
         self.log.debug("Resetting node bus and configuring traffic.")
         yield from self.send_cmd_sync(0, SpikeNodebus.Reset, bytearray())
+
+        # Set response time
+        response_time = 0x345   # wait time based on the baud rate of the bus: (460800 * 0x98852841 * 200) >> 0x30
+        yield from self.send_cmd_raw([SpikeNodebus.SetResponseTime, 0x02, int(response_time & 0xff),
+                                      int(response_time >> 8), 0], 0)
+
         yield from self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([34]))  # block traffic (false)
         yield from self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([17]))  # set traffic
 
@@ -797,6 +825,22 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
             yield from self.send_cmd_sync(node, SpikeNodebus.SetTraffic, bytearray([32]))   # block traffic (true)
 
         yield from self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([34]))  # block traffic (false)
+        yield from self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([17]))  # set traffic
+
+        # get bridge version
+        yield from self.send_cmd_raw([SpikeNodebus.GetBridgeVersion, 0, 3], 0)
+        bridge_version = yield from self._read_raw(3)
+        self.log.debug("Bridge version: %s", "".join("0x%02x " % b for b in bridge_version))
+
+        # get bridge state
+        yield from self.send_cmd_raw([SpikeNodebus.GetBridgeState, 0, 1], 0)
+        bridge_state = yield from self._read_raw(1)
+        self.log.debug("Bridge state: %s", "".join("0x%02x " % b for b in bridge_state))
+
+        # poll once (with wait for nodes to settle)
+        yield from self.send_cmd_raw([0], 100)
+        poll = yield from self._read_raw(1)
+        self.log.debug("Poll nodes: %s", "".join("0x%02x " % b for b in poll))
 
         for node in self._nodes:
             if node == 0:

@@ -9,6 +9,7 @@ import traceback
 from platform import platform, python_version, system, release, version, system_alias, machine
 
 import copy
+
 from typing import Any, Callable, Dict, List, Set, Generator
 
 import asyncio
@@ -66,6 +67,7 @@ if MYPY:   # pragma: no cover
     from mpf.config_players.show_player import ShowPlayer
     from mpf.devices.dmd import Dmd
     from mpf.devices.rgb_dmd import RgbDmd
+    from mpf.devices.flipper import Flipper
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -169,6 +171,7 @@ class MachineController(LogMixin):
             self.segment_displays = None                # type: Dict[str, SegmentDisplay]
             self.dmds = None                            # type: Dict[str, Dmd]
             self.rgb_dmds = None                        # type: Dict[str, RgbDmd]
+            self.flippers = None                        # type: Dict[str, Flipper]
 
         self._set_machine_path()
 
