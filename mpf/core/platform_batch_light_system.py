@@ -39,9 +39,10 @@ class PlatformBatchLightSystem:
     """Batch light system for platforms."""
 
     __slots__ = ["dirty_lights", "dirty_schedule", "clock", "is_sequential_function", "update_task", "update_callback",
-                 "sort_function"]
+                 "sort_function", "update_hz"]
 
-    def __init__(self, clock, sort_function, is_sequential_function, update_callback):
+    # pylint: disable-msg=too-many-arguments
+    def __init__(self, clock, sort_function, is_sequential_function, update_callback, update_hz):
         """Initialise light system."""
         self.dirty_lights = SortedSet(key=sort_function)    # type: Set[PlatformBatchLight]
         self.dirty_schedule = SortedList(key=lambda x: x[0] + sort_function(x[1]))
@@ -50,6 +51,7 @@ class PlatformBatchLightSystem:
         self.update_task = None
         self.clock = clock
         self.update_callback = update_callback
+        self.update_hz = update_hz
 
     def start(self):
         """Start light system."""

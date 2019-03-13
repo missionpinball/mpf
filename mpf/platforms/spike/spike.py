@@ -251,8 +251,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
         self._bus_write = asyncio.Lock(loop=self.machine.clock.loop)
         self._cmd_queue = asyncio.Queue(loop=self.machine.clock.loop)
 
-        self._light_system = PlatformBatchLightSystem(self.machine.clock, self._light_key,
-                                                      self._are_lights_sequential, self._send_multiple_light_update)
+        self._light_system = None
 
         self.ticks_per_sec = {
             0: 1
@@ -455,6 +454,9 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
             self._send_key_task = self.machine.clock.loop.create_task(self._send_key())
             self._send_key_task.add_done_callback(self._done)
 
+        self._light_system = PlatformBatchLightSystem(self.machine.clock, self._light_key,
+                                                      self._are_lights_sequential, self._send_multiple_light_update,
+                                                      self.machine.machine_config['mpf']['default_light_hw_update_hz'])
         self._light_system.start()
 
     @asyncio.coroutine
@@ -671,12 +673,12 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
             try:
                 response = yield from asyncio.wait_for(self._read_raw(response_len), 0.5,
                                                        loop=self.machine.clock.loop)    # type: bytearray
-                if response[-1] != b'\x00':
-                    self.log.info("Bridge Status: %s != 0", response[-1])
             except asyncio.TimeoutError:    # pragma: no cover
                 self.log.warning("Failed to read %s bytes from Spike", response_len)
                 return None
 
+            if response[-1] != 0:
+                self.log.info("Bridge Status: %s != 0", response[-1])
             if self._checksum(response[0:-1]) != 0:   # pragma: no cover
                 self.log.warning("Checksum mismatch for response: %s", "".join("%02x " % b for b in response))
                 # we resync by flushing the input
@@ -811,7 +813,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
         # Set response time
         response_time = 0x345   # wait time based on the baud rate of the bus: (460800 * 0x98852841 * 200) >> 0x30
         yield from self.send_cmd_raw([SpikeNodebus.SetResponseTime, 0x02, int(response_time & 0xff),
-                                      int(response_time >> 8)], 0)
+                                      int(response_time >> 8), 0], 0)
 
         yield from self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([34]))  # block traffic (false)
         yield from self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([17]))  # set traffic
@@ -826,14 +828,19 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
         yield from self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([17]))  # set traffic
 
         # get bridge version
-        yield from self.send_cmd_raw([SpikeNodebus.GetBridgeVersion, 0], 0)
+        yield from self.send_cmd_raw([SpikeNodebus.GetBridgeVersion, 0, 3], 0)
         bridge_version = yield from self._read_raw(3)
         self.log.debug("Bridge version: %s", "".join("0x%02x " % b for b in bridge_version))
 
         # get bridge state
-        yield from self.send_cmd_raw([SpikeNodebus.GetBridgeState, 0], 0)
+        yield from self.send_cmd_raw([SpikeNodebus.GetBridgeState, 0, 1], 0)
         bridge_state = yield from self._read_raw(1)
         self.log.debug("Bridge state: %s", "".join("0x%02x " % b for b in bridge_state))
+
+        # poll once (with wait for nodes to settle)
+        yield from self.send_cmd_raw([0], 100)
+        poll = yield from self._read_raw(1)
+        self.log.debug("Poll nodes: %s", "".join("0x%02x " % b for b in poll))
 
         for node in self._nodes:
             if node == 0:
