@@ -784,7 +784,13 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
         else:
             log_file = "/dev/null"
             binary = self.config['bridge_path']
-        self._writer.write("{} {} 2>{}\r\n".format(binary, self.config['runtime_baud'], log_file).encode())
+
+        if self.config['spike_version'] == "1":
+            spike_version = "SPIKE1"
+        else:
+            spike_version = "SPIKE2"
+        self._writer.write("{} {} {} 2>{}\r\n".format(binary, self.config['runtime_baud'], spike_version,
+                                                      log_file).encode())
 
         welcome_str = b'MPF Spike Bridge!'
         yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
