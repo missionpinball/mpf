@@ -37,12 +37,36 @@ class MockSpikeSocket(MockSerial):
         if encoded_msg == "/bin/bridge 921600 SPIKE1 2>/dev/null\r\n".encode():
             self.queue.append(b'MPF Spike Bridge!\r\n')
             return len(encoded_msg)
+        elif bytearray(encoded_msg) == bytearray(b'\x00'):
+            # special case for poll
+            if self.dirty_nodes:
+                if self.dirty_nodes[0] == 0:
+                    self.queue.append(bytearray([0xf0]))
+                else:
+                    self.queue.append(bytearray([self.dirty_nodes[0]]))
+            else:
+                # everything clean
+                self.queue.append(b'\x00')
+            return len(encoded_msg)
 
         msg = encoded_msg
 
         msg = bytes(msg)
 
+        if msg and msg[0] & 0x80 and (msg[2] == 0x11 or (msg[2] == 0xf0 and msg[3] == 0x10)):
+
+            try:
+                self.dirty_nodes.remove(msg[0] & 0x0f)
+            except:
+                pass
+
         if msg in self.permanent_commands and msg not in self.expected_commands:
+            if msg[0] & 0x80 > 0 and len(self.permanent_commands[msg]) != msg[-1] and len(msg) < 255:
+                print("Readback did not match")
+                raise AssertionError("Readback did not match for msg {} and resp: {} {}".format(
+                    "".join("\\x%02x" % b for b in msg),
+                    len(self.permanent_commands[msg]), self.permanent_commands[msg]
+                ))
             self.queue.append(self.permanent_commands[msg])
             return len(encoded_msg)
 
@@ -61,7 +85,7 @@ class MockSpikeSocket(MockSerial):
             raise AssertionError("Unexpected command: " + "".join("\\x%02x" % b for b in msg) +
                                  " len: " + str(len(msg)))
 
-        if len(msg) > 1 and msg[0] & 0x80 > 0 and len(self.expected_commands[msg]) != msg[-1]:
+        if msg[0] & 0x80 > 0 and len(self.expected_commands[msg]) != msg[-1]:
             print("Readback did not match")
             raise AssertionError("Readback did not match for msg {} and resp: {} {}".format(
                 "".join("\\x%02x" % b for b in msg),
@@ -81,6 +105,7 @@ class MockSpikeSocket(MockSerial):
         self.queue = []
         self.permanent_commands = {}
         self.crashed = False
+        self.dirty_nodes = []
 
 
 class SpikePlatformTest(MpfTestCase):
@@ -123,9 +148,10 @@ class SpikePlatformTest(MpfTestCase):
         self.expected_duration = 1.5
         self.serialMock = MockSpikeSocket()
 
+        self.serialMock.dirty_nodes = [0, 1, 8, 9, 10, 11]
+
         self.serialMock.expected_commands = {
             self._checksummed_cmd(b'\x80\x02\xf1'): b'',
-            b'\x06\x02\x45\x03\x00': b'',       # SetResponseTime
             b'\x03\x00\x03': b'\x01\x00\x03',   # GetBridgeVersion
             b'\x05\x00\x01': b'\x18',           # GetBridgeState
             self._checksummed_cmd(b'\x81\x03\xf0\x10'): b'',
@@ -148,24 +174,6 @@ class SpikePlatformTest(MpfTestCase):
                 b'\x0a\x00\x12\x04\x2b\xd0\x24\x25\x00\x05\x97\x00',
             self._checksummed_cmd(b'\x8b\x02\xfe', 12):
                 b'\x0b\x00\x12\x04\x2b\xd0\x24\x25\x00\x05\x96\x00',
-        }
-        self.serialMock.permanent_commands = {
-            self._checksummed_cmd(b'\x80\x03\xf0\x22'): b'',    # send twice during init
-            self._checksummed_cmd(b'\x80\x03\xf0\x11'): b'',    # send twice during init
-            self._checksummed_cmd(b'\x80\x02\x11', 10):
-                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff'),    # read inputs
-            self._checksummed_cmd(b'\x81\x02\x11', 10):
-                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff'),    # read inputs
-            self._checksummed_cmd(b'\x88\x02\x11', 10):
-                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff'),    # read inputs
-            self._checksummed_cmd(b'\x89\x02\x11', 10):
-                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff'),    # read inputs
-            self._checksummed_cmd(b'\x8a\x02\x11', 10):
-                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff'),    # read inputs
-            self._checksummed_cmd(b'\x8b\x02\x11', 10):
-                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff'),    # read inputs
-            self._checksummed_cmd(b'\x81\x02\xff', 10):
-                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff'),
             self._checksummed_cmd(b'\x81\x03\xfa\x00', 12):
                 self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff'),
             self._checksummed_cmd(b'\x88\x02\xff', 10):
@@ -184,7 +192,35 @@ class SpikePlatformTest(MpfTestCase):
                 self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff'),
             self._checksummed_cmd(b'\x8b\x03\xfa\x00', 12):
                 self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff'),
-            b'\x00': b'\00',
+        }
+        self.serialMock.permanent_commands = {
+            self._checksummed_cmd(b'\x80\x03\xf0\x22'): b'',    # send twice during init
+            self._checksummed_cmd(b'\x80\x03\xf0\x11'): b'',    # send twice during init
+            self._checksummed_cmd(b'\x80\x02\x11', 10):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff'),    # read inputs
+            self._checksummed_cmd(b'\x81\x02\x11', 10):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff'),    # read inputs
+            self._checksummed_cmd(b'\x88\x02\x11', 10):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff'),    # read inputs
+            self._checksummed_cmd(b'\x89\x02\x11', 10):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff'),    # read inputs
+            self._checksummed_cmd(b'\x8a\x02\x11', 10):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff'),    # read inputs
+            self._checksummed_cmd(b'\x8b\x02\x11', 10):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff'),    # read inputs
+            self._checksummed_cmd(b'\x81\x02\xff', 10):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff'),
+            self._checksummed_cmd(b'\x81\x04\xf5\xff\x00', 4):
+                self._checksummed_response(b'\x00\x00'),
+            self._checksummed_cmd(b'\x88\x04\xf5\xff\x00', 4):
+                self._checksummed_response(b'\x00\x00'),
+            self._checksummed_cmd(b'\x89\x04\xf5\xff\x00', 4):
+                self._checksummed_response(b'\x00\x00'),
+            self._checksummed_cmd(b'\x8a\x04\xf5\xff\x00', 4):
+                self._checksummed_response(b'\x00\x00'),
+            self._checksummed_cmd(b'\x8b\x04\xf5\xff\x00', 4):
+                self._checksummed_response(b'\x00\x00'),
+            b'\x06\x02\x45\x03\x00': b'',  # SetResponseTime
 
         }
         super().setUp()
@@ -192,8 +228,13 @@ class SpikePlatformTest(MpfTestCase):
         self._wait_for_processing()
 
         self.assertFalse(self.serialMock.expected_commands)
+        self.assertFalse(self.serialMock.dirty_nodes)
         del self.serialMock.permanent_commands[self._checksummed_cmd(b'\x80\x03\xf0\x22')]
         del self.serialMock.permanent_commands[self._checksummed_cmd(b'\x80\x03\xf0\x11')]
+
+        # this seems to happen in real spike
+        self.serialMock.dirty_nodes = [0, 1, 8, 9, 10, 11]
+        self.advance_time_and_run()
 
     def testPlatform(self):
         self._testCoils()
@@ -358,14 +399,15 @@ class SpikePlatformTest(MpfTestCase):
     def _testSwitches(self):
         self.assertSwitchState("s_start", False)
         # board 1 has a change
+        self.serialMock.dirty_nodes = [1]
         self.serialMock.expected_commands = {
-            b'\x00': b'\x01',
             self._checksummed_cmd(b'\x81\x02\x11', 10):
                 self._checksummed_response(b'\xff\xf7\xff\xff\xff\xff\xff\xff'),    # read inputs
         }
 
         self.advance_time_and_run(.2)
         self.assertFalse(self.serialMock.expected_commands)
+        self.assertFalse(self.serialMock.dirty_nodes)
 
         self.assertSwitchState("s_start", True)
 

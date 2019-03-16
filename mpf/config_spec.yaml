@@ -1423,6 +1423,8 @@ spike:
     file_log: single|enum(none,basic,full)|basic
     wait_times: dict|int:int|None
     spike_version: single|enum(1,2)|1
+    max_led_batch_size: single|int|15
+    response_time: single|int|837
 steppers:
     __valid_in__: machine
     named_positions: dict|float:str|None

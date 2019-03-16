@@ -39,10 +39,10 @@ class PlatformBatchLightSystem:
     """Batch light system for platforms."""
 
     __slots__ = ["dirty_lights", "dirty_schedule", "clock", "is_sequential_function", "update_task", "update_callback",
-                 "sort_function", "update_hz"]
+                 "sort_function", "update_hz", "max_batch_size"]
 
     # pylint: disable-msg=too-many-arguments
-    def __init__(self, clock, sort_function, is_sequential_function, update_callback, update_hz):
+    def __init__(self, clock, sort_function, is_sequential_function, update_callback, update_hz, max_batch_size):
         """Initialise light system."""
         self.dirty_lights = SortedSet(key=sort_function)    # type: Set[PlatformBatchLight]
         self.dirty_schedule = SortedList(key=lambda x: x[0] + sort_function(x[1]))
@@ -52,6 +52,7 @@ class PlatformBatchLightSystem:
         self.clock = clock
         self.update_callback = update_callback
         self.update_hz = update_hz
+        self.max_batch_size = max_batch_size
 
     def start(self):
         """Start light system."""
@@ -111,7 +112,7 @@ class PlatformBatchLightSystem:
             if common_fade_ms is None:
                 common_fade_ms = fade_ms
 
-            if common_fade_ms == fade_ms:
+            if common_fade_ms == fade_ms and len(sequential_brightness_list) < self.max_batch_size:
                 sequential_brightness_list.append((light, brightness, common_fade_ms))
             else:
                 yield from self.update_callback(sequential_brightness_list)

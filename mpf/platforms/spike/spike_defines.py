@@ -48,6 +48,7 @@ class SpikeNodebus:
     SetSyncTime = 0x73          # Spike 2
     SetLed = 0x80               # can set one or multiple LEDs
     SetTraffic = 0xF0
+    SetRGBMulti = 0xC0          # Spike 2; name unknown; part of NODEBUS_SetLEDMultiple when LED > 0x40
     SetRGB = 0xC1               # Spike 2
     RGBSuspend = 0xC3           # Spike 2
     RGBResume = 0xC4            # Spike 2
