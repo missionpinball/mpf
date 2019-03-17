@@ -359,7 +359,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
                                "stack.", priority, key)
             return
 
-        if self._debug and self.stack and priority == self.stack[0].priority and key == self.stack[0].key:
+        if self._debug and self.stack and priority == self.stack[0].priority and key != self.stack[0].key:
             self.debug_log("Light stack contains two entries with the same priority %s but different keys: %s",
                            priority, self.stack)
 
