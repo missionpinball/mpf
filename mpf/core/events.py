@@ -213,7 +213,7 @@ class EventManager(MpfController):
                     handler.callback == self.machine.device_manager._control_event_handler:
                 cls = (handler.kwargs["callback"].__self__, handler.kwargs["ms_delay"])
 
-            if cls in devices:
+            if cls in devices and not event.startswith("init_phase_"):
                 handlers = [h for h in sorted_handlers if h.priority == priority and
                             inspect.ismethod(h.callback) and
                             h.condition == handler.condition and
