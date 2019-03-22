@@ -41,7 +41,9 @@ class BallCountHandler(BallDeviceStateHandler):
     def stop(self):
         """Stop counter."""
         super().stop()
-        self.counter.stop()
+        if self.counter:
+            self.counter.stop()
+            self.counter = None
 
     @property
     def handled_balls(self):
