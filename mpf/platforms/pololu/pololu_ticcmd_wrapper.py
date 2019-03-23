@@ -181,3 +181,11 @@ class PololuTiccmdWrapper:
     def energize(self):
         """Energize the Stepper."""
         self._ticcmd('--energize')
+
+    def go_home(self, forward):
+        """Energize the Stepper."""
+        if forward:
+            direction = "fwd"
+        else:
+            direction = "rev"
+        self._ticcmd('--home {}'.format(direction))

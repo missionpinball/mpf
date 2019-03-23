@@ -99,6 +99,10 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
         self.TMCL.rfs(self._mn, 'START')
         self._homingActive = True
 
+    def set_home_position(self):
+        """Tell the stepper that we are at the home position."""
+        self.TMCL.sap(self._mn, 1, 0)
+
     def move_abs_pos(self, position):
         """Move axis to a certain absolute position."""
         microstep_pos = self._uu_to_microsteps(position)
