@@ -115,12 +115,13 @@ class PololuTICStepper(StepperPlatformInterface):
     def home(self, direction):
         """Home an axis, resetting 0 position."""
         self.tic.halt_and_hold()    # stop the stepper in case its moving
+        self._position = 0
         if direction == 'clockwise':
             self.log.debug("Homing clockwise")
-            self.tic.rotate_by_velocity(self.config['max_speed'])
+            self.tic.go_home(True)
         elif direction == 'counterclockwise':
             self.log.debug("Homing counterclockwise")
-            self.tic.rotate_by_velocity(-self.config['max_speed'])
+            self.tic.go_home(False)
 
     def move_abs_pos(self, position):
         """Move axis to a certain absolute position."""
@@ -143,6 +144,10 @@ class PololuTICStepper(StepperPlatformInterface):
             calculated_velocity = velocity * self.config['max_speed']
             self.log.debug("Rotating By Velocity (velocity * max_speed): %s", calculated_velocity)
             self.tic.rotate_by_velocity(calculated_velocity)
+
+    def set_home_position(self):
+        """Set position to home."""
+        self.set_position(0)
 
     def set_position(self, position):
         """Set the current position of the stepper.

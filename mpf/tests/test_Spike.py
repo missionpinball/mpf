@@ -192,6 +192,8 @@ class SpikePlatformTest(MpfTestCase):
                 self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff'),
             self._checksummed_cmd(b'\x8b\x03\xfa\x00', 12):
                 self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff'),
+            self._checksummed_cmd(b'\x8a\x08\x32\x00\xc8\x00\x00\x4a\xff'): b'',        # Configure stepper
+            self._checksummed_cmd(b'\x8a\x06\x31\x00\xc8\x00\x0a'): b'',                # Stepper Move
         }
         self.serialMock.permanent_commands = {
             self._checksummed_cmd(b'\x80\x03\xf0\x22'): b'',    # send twice during init
@@ -242,6 +244,7 @@ class SpikePlatformTest(MpfTestCase):
         self._testLeds()
         self._testSwitches()
         self._testDmd()
+        self._testStepper()
 
     def _testCoils(self):
         # test board string
@@ -469,3 +472,57 @@ class SpikePlatformTest(MpfTestCase):
         frame = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 0, 0, 0, 0, 128, 128, 128, 128, 0, 0, 0, 0] * 128
         self.machine.dmds["spike_dmd"].update(frame)
         self.advance_time_and_run()
+
+    def _testStepper(self):
+        self.mock_event("stepper_stepper1_ready")
+        # trigger home switch
+        self.assertSwitchState("s_stepper_home", False)
+        # board 10 has a change
+        self.serialMock.dirty_nodes = [10]
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x8a\x02\x11', 10):
+                self._checksummed_response(b'\xf0\xff\xff\xff\xff\xff\xff\xff'),    # read inputs
+            self._checksummed_cmd(b'\x8a\x08\x32\x00\xc8\x00\x00\x4a\xff'): b'',    # stop stepper
+            self._checksummed_cmd(b'\x8a\x03\x34\x00'): b''                         # stepper set home
+        }
+
+        self.advance_time_and_run(.2)
+        self.assertFalse(self.serialMock.expected_commands)
+        self.assertFalse(self.serialMock.dirty_nodes)
+
+        self.assertSwitchState("s_stepper_home", True)
+
+        self.serialMock.permanent_commands[self._checksummed_cmd(b'\x8a\x02\x38', 5)] = self._checksummed_response(
+            b'\x00\x00\x00')
+
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x8a\x06\x31\x00\xc8\x00\x14'): b''
+        }
+        self.assertEventCalled("stepper_stepper1_ready")
+        self.mock_event("stepper_stepper1_ready")
+
+        self.post_event("test_01")
+        self.advance_time_and_run(.05)
+        self.assertFalse(self.serialMock.expected_commands)
+        self.assertEventNotCalled("stepper_stepper1_ready")
+
+        self.serialMock.permanent_commands[self._checksummed_cmd(b'\x8a\x02\x38', 5)] = self._checksummed_response(
+            b'\xc8\x00\x00')
+        self.advance_time_and_run(.05)
+        self.assertEventCalledWith("stepper_stepper1_ready", position=200)
+
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x8a\x06\x31\x00\xf4\x01\x14'): b''
+        }
+        self.assertEventCalled("stepper_stepper1_ready")
+        self.mock_event("stepper_stepper1_ready")
+
+        self.post_event("test_10")
+        self.advance_time_and_run(.05)
+        self.assertFalse(self.serialMock.expected_commands)
+        self.assertEventNotCalled("stepper_stepper1_ready")
+
+        self.serialMock.permanent_commands[self._checksummed_cmd(b'\x8a\x02\x38', 5)] = self._checksummed_response(
+            b'\xf4\x01\x00')
+        self.advance_time_and_run(.05)
+        self.assertEventCalledWith("stepper_stepper1_ready", position=500)

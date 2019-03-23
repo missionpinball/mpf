@@ -71,7 +71,8 @@ class TestPololuTic(MpfTestCase):
 
         # stepper arrives at home
         self.expected_commands = {
-            ('--halt-and-hold',): ""
+            ('--halt-and-hold',): "",
+            ('--halt-and-set-position', '0'): ""
         }
         self.hit_switch_and_run("s_home", 1)
         self.assertFalse(self.expected_commands)

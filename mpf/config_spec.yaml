@@ -1431,7 +1431,6 @@ steppers:
     homing_mode: single|enum(hardware,switch)|hardware
     homing_switch: single|machine(switches)|None
     homing_direction: single|enum(clockwise,counterclockwise)|clockwise
-    homing_set_zero: single|bool|False
     pos_min: single|int|0
     pos_max: single|int|1000
     ball_search_min: single|int|0
@@ -1443,6 +1442,11 @@ steppers:
     number: single|str|
     platform: single|str|None
     platform_settings: single|dict|None
+spike_stepper_settings:
+    homing_speed: single|int|10
+    speed: single|int|20
+    poll_ms: single|ms|100ms
+    light_number: single|str|
 steprocker_stepper_settings:
     homing_speed: single|float|1.0
     fullstep_per_userunit: single|float|1.0

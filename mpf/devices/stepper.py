@@ -145,8 +145,7 @@ class Stepper(SystemWideDevice):
             yield from self.machine.switch_controller.wait_for_switch(self.config['homing_switch'].name,
                                                                       only_on_change=False)
             self.hw_stepper.stop()
-            if self.config['homing_set_zero']:
-                self.hw_stepper.set_position(0)
+            self.hw_stepper.set_home_position()
 
         self._is_homed = True
         self._is_moving.clear()

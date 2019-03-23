@@ -31,7 +31,7 @@ class LightPlayer(DeviceConfigPlayer):
             if isinstance(light, str):
                 light_names = Util.string_to_list(light)
                 for light_name in light_names:
-                    # skip non-replaces placeholders
+                    # skip non-replaced placeholders
                     if not light_name or light_name[0:1] == "(" and light_name[-1:] == ")":
                         continue
                     self._light_named_color(light_name, instance_dict, full_context, s['color'], s["fade"],
