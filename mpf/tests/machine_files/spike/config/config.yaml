@@ -59,6 +59,8 @@ switches:
   s_pop2:
     number: 8-5
     type: NC
+  s_stepper_home:
+    number: 10-1
 
 autofire_coils:
   ac_pops:
@@ -88,3 +90,16 @@ flippers:
 dmds:
   spike_dmd:
     fps: 5
+
+steppers:
+  stepper1:
+    number: 10-0
+    homing_mode: switch
+    homing_switch: s_stepper_home
+    platform_settings:
+      speed: 20
+      light_number: 10-10
+    named_positions:
+      100: test_00
+      200: test_01
+      500: test_10

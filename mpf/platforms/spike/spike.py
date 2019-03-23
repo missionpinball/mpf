@@ -1,18 +1,19 @@
+# pylint: disable-msg=too-many-lines
 """Stern Spike Platform."""
 import asyncio
 
 import logging
 import random
-
 from typing import Optional, Generator
 
+from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
 from mpf.core.platform_batch_light_system import PlatformBatchLight, PlatformBatchLightSystem
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.platforms.spike.spike_defines import SpikeNodebus
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
-    DriverConfig, SwitchConfig, DmdPlatform
+    DriverConfig, SwitchConfig, DmdPlatform, StepperPlatform
 
 
 class SpikeSwitch(SwitchPlatformInterface):
@@ -225,8 +226,116 @@ class SpikeDriver(DriverPlatformInterface):
         return "Spike Node {}".format(self.node)
 
 
+class SpikeStepper(StepperPlatformInterface):
+
+    """A stepper in Spike."""
+
+    def __init__(self, number, config, platform):
+        """Initialise stepper."""
+        node, index = number.split("-", 2)
+        self.node = int(node)
+        self.stepper_id = int(index)
+        self.config = config
+        self.platform = platform    # type: SpikePlatform
+        self._position = 0
+        light_node, light_index = self.config['light_number'].split("-", 2)
+        if light_node != node:
+            self.platform.raise_config_error("Light and Stepper have to be on the same node."
+                                             " Light: {} Stepper: {}".format(number, self.config['light_number']), 1)
+        self.light_index = int(light_index)
+        self._configure()
+
+    def home(self, direction):
+        """Unsupported."""
+        raise AssertionError("Use a switch.")
+
+    def set_home_position(self):
+        """Set position to home."""
+        self._mark_as_home()
+
+    def _configure(self):
+        """Configure stepper in spike."""
+        unknown1 = 200
+        unknown2 = 0
+        unknown3 = 0xff
+        self.platform.send_cmd_async(self.node, SpikeNodebus.StepperConfig, [
+            self.stepper_id,
+            unknown1,                   # unclear what it does
+            unknown2 & 0xff,            # unclear what it does
+            (unknown2 >> 8) & 0xff,
+            self.light_index + 0x40,
+            unknown3                    # unclear what it does
+        ])
+
+    def _mark_as_home(self):
+        """Tell the node that the stepper is home."""
+        self.platform.send_cmd_async(self.node, SpikeNodebus.StepperHome, [
+            self.stepper_id
+        ])
+
+    @asyncio.coroutine
+    def _get_stepper_info(self):
+        """Get info about the stepper."""
+        '''
+        position (u16), unknown (u16), flags (u8)
+        flags:
+            0 - unknown
+            1 - is_active
+            2 - unknown
+            3 - unknown
+            4 - unknown
+            5 - unknown
+            6 - unknown
+            7 - unknown
+        '''
+        result = yield from self.platform.send_cmd_and_wait_for_response(
+            self.node, SpikeNodebus.StepperInfo + self.stepper_id, [], 5)
+        return {
+            "position": result[0] + (result[1] << 8),
+            "is_active": bool((result[4] >> 1) & 1)
+        }
+
+    def _move_to_absolute_position(self, position, speed):
+        """Move the stepper to a certain position."""
+        self.platform.send_cmd_async(self.node, SpikeNodebus.StepperSet, [
+            self.stepper_id,
+            position & 0xff,
+            (position >> 8) & 0xff,
+            speed
+        ])
+
+    @asyncio.coroutine
+    def wait_for_move_completed(self):
+        """Wait until move completed."""
+        while not (yield from self.is_move_complete()):
+            yield from asyncio.sleep(1 / self.config['poll_ms'], loop=self.platform.machine.clock.loop)
+
+    def is_move_complete(self) -> bool:
+        """Return true if move is complete."""
+        info = yield from self._get_stepper_info()
+        return info['position'] == self._position
+
+    def move_rel_pos(self, position):
+        """Move relative to current position."""
+        self._position += int(position)
+        self._move_to_absolute_position(self._position, self.config['speed'])
+
+    def move_vel_mode(self, velocity):
+        """Move stepper in a direction."""
+        # this is not really supported and we could do better here
+        # also we do not know how to move to the other direciton
+        if velocity < 0:
+            raise AssertionError("We do not know how to do this in Spike. Let us know if you need it.")
+        self._move_to_absolute_position(200, self.config['homing_speed'])
+
+    def stop(self):
+        """Stop the stepper."""
+        # reconfiguring seems to be used to stop the stepper
+        self._configure()
+
+
 # pylint: disable-msg=too-many-instance-attributes
-class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform):
+class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform, StepperPlatform):
 
     """Stern Spike Platform."""
 
@@ -411,6 +520,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
     def configure_light(self, number, subtype, platform_settings) -> SpikeLight:
         """Configure a light on Stern Spike."""
         del platform_settings, subtype
+        # TODO: validate that light number is not used in a stepper and a light
         return SpikeLight(number, self, self._light_system)
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
@@ -758,6 +868,17 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
             raise AssertionError("Can only configure dmd once.")
         self.dmd = SpikeDMD(self)
         return self.dmd
+
+    @asyncio.coroutine
+    def configure_stepper(self, number: str, config: dict) -> "StepperPlatformInterface":
+        """Configure a stepper in Spike."""
+        # TODO: validate that light number is not used in a stepper and a light
+        return SpikeStepper(number, config, self)
+
+    @classmethod
+    def get_stepper_config_section(cls):
+        """Return config validator name."""
+        return "spike_stepper_settings"
 
     # pylint: disable-msg=too-many-statements
     # pylint: disable-msg=too-many-locals

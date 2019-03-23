@@ -1442,6 +1442,11 @@ steppers:
     number: single|str|
     platform: single|str|None
     platform_settings: single|dict|None
+spike_stepper_settings:
+    homing_speed: single|int|10
+    speed: single|int|20
+    poll_ms: single|ms|100ms
+    light_number: single|str|
 steprocker_stepper_settings:
     homing_speed: single|float|1.0
     fullstep_per_userunit: single|float|1.0
