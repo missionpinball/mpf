@@ -15,7 +15,7 @@ class SpikeNodebus:
     SetBackboxLight = 0x09      # Spike 2
     SetInputMask = 0x09         # unused
     SetBackboxPWMFreqDiv = 0x0b     # Spike 2
-    GetInputState = 0x11        # unused
+    GetInputState = 0x11
     GetInputMask = 0x12         # unused
     GetLEDMask = 0x13           # Spike 2
     SetNumLEDsInputs = 0x14     # Spike 2
@@ -33,6 +33,7 @@ class SpikeNodebus:
     CoilGetPriority = 0x43      # unused; dunno if this is right
     CoilSetOCIgnoreMap = 0x44   # Spike 1
     CoilSetOCBehavior = 0x44    # Spike 2; Same as CoilSetOCIgnoreMap
+    CoilShiftData = 0x45        # Spike 2; Uses SendData (F4)
     OCGetFault = 0x4a           # Spike 2
     SetAC = 0x50                # unused; len: 4
     MotorConfigure = 0x51       # unused; len: 12; 10 bytes of motor config

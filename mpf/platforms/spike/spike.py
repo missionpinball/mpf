@@ -4,8 +4,9 @@ import asyncio
 
 import logging
 import random
-from typing import Optional, Generator
+from typing import Optional, Generator, Union
 
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
 from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
 from mpf.core.platform_batch_light_system import PlatformBatchLight, PlatformBatchLightSystem
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
@@ -33,6 +34,30 @@ class SpikeSwitch(SwitchPlatformInterface):
     def get_board_name(self):
         """Return name for service mode."""
         return "Spike Node {}".format(self.node)
+
+
+class SpikeBacklight(LightPlatformSoftwareFade):
+
+    """The backlight on the CPU node."""
+
+    __slots__ = ["platform"]
+
+    def __init__(self, number, platform, loop, fade_interval_ms):
+        """Initialise backlight."""
+        super().__init__(number, loop, fade_interval_ms)
+        self.platform = platform        # type: SpikePlatform
+
+    def set_brightness(self, brightness: float):
+        """Set brightness."""
+        # we use the Spike 2 command. it will be intercepted in the mpf-spike bridge for Spike 1
+        brightness_u16 = int(brightness * 65535)
+        self.platform.send_cmd_raw_async([SpikeNodebus.SetBackboxLight, 2,
+                                          brightness_u16 >> 8, brightness_u16 & 0xFF,
+                                          0])
+
+    def get_board_name(self):
+        """Return name for service mode."""
+        return "Spike Node 0"
 
 
 class SpikeLight(PlatformBatchLight):
@@ -517,11 +542,14 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             }
         ]
 
-    def configure_light(self, number, subtype, platform_settings) -> SpikeLight:
+    def configure_light(self, number, subtype, platform_settings) -> Union[SpikeLight, SpikeBacklight]:
         """Configure a light on Stern Spike."""
         del platform_settings, subtype
-        # TODO: validate that light number is not used in a stepper and a light
-        return SpikeLight(number, self, self._light_system)
+        if number == "0-0":
+            return SpikeBacklight(number, self, self.machine.clock.loop, 3)
+        else:
+            # TODO: validate that light number is not used in a stepper and a light
+            return SpikeLight(number, self, self._light_system)
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure switch on Stern Spike."""
@@ -847,6 +875,11 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         wait_ms = self.config['wait_times'][cmd] if cmd in self.config['wait_times'] else 0
         # queue command
         self._cmd_queue.put_nowait((cmd_str, wait_ms))
+
+    def send_cmd_raw_async(self, data, wait_ms=0):
+        """Send raw cmd which does not require a response."""
+        # queue command
+        self._cmd_queue.put_nowait((data, wait_ms))
 
     def _read_inputs(self, node):
         return self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetInputState, bytearray(), 10)
