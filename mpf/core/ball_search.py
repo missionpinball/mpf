@@ -258,7 +258,7 @@ class BallSearch(MpfController):
                 self.iteration += 1
                 self.machine.events.post('ball_search_phase_{}'.format(self.phase),
                                          iteration=self.iteration)
-                '''event: 'ball_search_phase_(num)
+                '''event: ball_search_phase_(num)
 
                 desc: The ball search phase (num) has started.
                 args:

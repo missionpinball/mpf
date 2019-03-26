@@ -324,12 +324,22 @@ class Game(AsyncMode):
         yield from self.machine.events.post_async('ball_will_start', **event_args)
         '''event: ball_will_start
         desc: The ball is about to start. This event is posted just before
-        :doc:`ball_starting`.'''
+        :doc:`ball_starting`.
+        args:
+        ball: The ball number
+        balls_remaining: The number of balls left in the game (not including this one)
+        is_extra_ball: True if this ball is an extra ball (default False)
+        player: The player number'''
 
         yield from self.machine.events.post_queue_async('ball_starting', **event_args)
         '''event: ball_starting
         desc: A ball is starting. This is a queue event, so the ball won't
-        actually start until the queue is cleared.'''
+        actually start until the queue is cleared.
+        args:
+        ball: The ball number
+        balls_remaining: The number of balls left in the game (not including this one)
+        is_extra_ball: True if this ball is an extra ball (default False)
+        player: The player number'''
 
         # register handlers to watch for ball drain and live ball removed
         self.add_mode_event_handler('ball_drain', self.ball_drained)
@@ -342,8 +352,10 @@ class Game(AsyncMode):
         '''event: ball_started
         desc: A new ball has started.
         args:
-        ball: The ball number.
-        player: The player number.'''
+        ball: The ball number
+        balls_remaining: The number of balls left in the game (not including this one)
+        is_extra_ball: True if this ball is an extra ball (default False)
+        player: The player number'''
 
         if self.num_players == 1:
             yield from self.machine.events.post_async('single_player_ball_started')
