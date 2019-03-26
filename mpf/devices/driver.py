@@ -172,7 +172,12 @@ class Driver(SystemWideDevice):
         return pulse_ms
 
     @event_handler(2)
-    def enable(self, pulse_ms: int = None, pulse_power: float = None, hold_power: float = None, **kwargs):
+    def event_enable(self, pulse_ms: int = None, pulse_power: float = None, hold_power: float = None, **kwargs):
+        """Event handler for control enable."""
+        del kwargs
+        self.enable(pulse_ms, pulse_power, hold_power)
+
+    def enable(self, pulse_ms: int = None, pulse_power: float = None, hold_power: float = None):
         """Enable a driver by holding it 'on'.
 
         Args:
@@ -192,8 +197,6 @@ class Driver(SystemWideDevice):
 
         allow_enable: True
         """
-        del kwargs
-
         pulse_ms = self.get_and_verify_pulse_ms(pulse_ms)
 
         pulse_power = self.get_and_verify_pulse_power(pulse_power)
@@ -211,9 +214,13 @@ class Driver(SystemWideDevice):
                                                      pulse_ms=pulse_ms, pulse_power=pulse_power, hold_power=hold_power)
 
     @event_handler(1)
-    def disable(self, **kwargs):
-        """Disable this driver."""
+    def event_disable(self, **kwargs):
+        """Event handler for disable control event."""
         del kwargs
+        self.disable()
+
+    def disable(self):
+        """Disable this driver."""
         self.info_log("Disabling Driver")
         self.machine.delay.remove(name='{}_timed_enable'.format(self.name))
         self.hw_driver.disable()
@@ -245,7 +252,12 @@ class Driver(SystemWideDevice):
                                                      pulse_ms=pulse_ms, pulse_power=pulse_power)
 
     @event_handler(3)
-    def pulse(self, pulse_ms: int = None, pulse_power: float = None, max_wait_ms: int = None, **kwargs) -> int:
+    def event_pulse(self, pulse_ms: int = None, pulse_power: float = None, max_wait_ms: int = None, **kwargs) -> None:
+        """Event handler for pulse control events."""
+        del kwargs
+        self.pulse(pulse_ms, pulse_power, max_wait_ms)
+
+    def pulse(self, pulse_ms: int = None, pulse_power: float = None, max_wait_ms: int = None) -> int:
         """Pulse this driver.
 
         Args:
@@ -254,8 +266,6 @@ class Driver(SystemWideDevice):
                 enabled for the value specified in the config dictionary.
             pulse_power: The pulse power. A float between 0.0 and 1.0.
         """
-        del kwargs
-
         pulse_ms = self.get_and_verify_pulse_ms(pulse_ms)
         pulse_power = self.get_and_verify_pulse_power(pulse_power)
         wait_ms = self._get_wait_ms(pulse_ms, max_wait_ms)

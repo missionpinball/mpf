@@ -245,6 +245,20 @@ class DeviceManager(MpfController):
                                 raise AssertionError("Type of {}:{} should be dict|str:ms| in config_spec".format(
                                     collection, control_event))
                             for event, delay in settings[control_event].items():
+                                # try the new style first
+                                try:
+                                    method = getattr(self.collections[collection][device],
+                                                     "event_{}".format(control_event[:-7]))
+                                except AttributeError:
+                                    pass
+                                else:
+                                    yield (event,
+                                           method,
+                                           delay,
+                                           self.collections[collection][device])
+                                    continue
+
+                                # fall back to the old style
                                 try:
                                     method = getattr(self.collections[collection][device], control_event[:-7])
                                 except Exception:   # pylint: disable-msg=broad-except
