@@ -22,6 +22,55 @@ class TestDiverter(MpfTestCase):
         self.queue = queue
         queue.wait()
 
+    @test_config("only_events_no_coils.yaml")
+    def test_diverter_with_servo_and_stepper(self):
+        self.queue = None
+        diverter = self.machine.diverters["d_test_with_events"]
+        self.advance_time_and_run(.1)
+
+        self.assertEqual(.2, self.machine.servos["s_diverter"].hw_servo.current_position)
+        self.assertEqual(400, self.machine.steppers["s_diverter"].hw_stepper._current_position)
+
+
+        self.assertFalse(diverter.enabled)
+        self.assertFalse(diverter.active)
+
+        self.machine.playfield.config['default_source_device'] = self.machine.ball_devices["test_trough"]
+        self.machine.playfield.add_ball()
+
+        self.advance_time_and_run(1)
+
+        self.assertTrue(diverter.enabled)
+        self.assertTrue(diverter.active)
+        self.assertEqual(.7, self.machine.servos["s_diverter"].hw_servo.current_position)
+        self.assertEqual(20, self.machine.steppers["s_diverter"].hw_stepper._current_position)
+
+        self.hit_and_release_switch("s_playfield")
+        self.machine_run()
+        self.assertFalse(diverter.active)
+
+        self.assertEqual(.2, self.machine.servos["s_diverter"].hw_servo.current_position)
+        self.assertEqual(400, self.machine.steppers["s_diverter"].hw_stepper._current_position)
+
+        self.hit_switch_and_run("s_ball_switch1", 1)
+        self.machine.playfield.config['default_source_device'] = self.machine.ball_devices["test_target"]
+        self.machine.playfield.add_ball()
+
+        self.advance_time_and_run(3)
+        self.assertFalse(diverter.enabled)
+        self.assertFalse(diverter.active)
+
+        self.hit_and_release_switch("s_diverter")
+        self.advance_time_and_run(0.5)
+        self.assertFalse(diverter.enabled)
+        self.assertFalse(diverter.active)
+
+        self.assertEqual(.2, self.machine.servos["s_diverter"].hw_servo.current_position)
+        self.assertEqual(400, self.machine.steppers["s_diverter"].hw_stepper._current_position)
+
+        self.advance_time_and_run(4)
+        self.assertEqual(0, diverter.diverting_ejects_count)
+
     @test_config("test_delayed_eject.yaml")
     def test_delayed_eject(self):
         self.queue = None
