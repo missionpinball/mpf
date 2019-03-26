@@ -45,6 +45,9 @@ class Stepper(SystemWideDevice):
         yield from super()._initialize()
         self.platform = self.machine.get_platform_sections('stepper_controllers', self.config['platform'])
 
+        # first target is the reset position but we might get an early target during startup via events
+        self._target_position = self.config['reset_position']
+
         for position in self.config['named_positions']:
             self.machine.events.add_handler(self.config['named_positions'][position],
                                             self._position_event,
@@ -92,9 +95,9 @@ class Stepper(SystemWideDevice):
         self.debug_log("Homing stepper")
         yield from self._home()
 
-        # move to reset position
-        self.debug_log("Moving to reset position")
-        self.reset()
+        # run the loop at least once
+        self._is_moving.set()
+
         while True:
             # wait until we should be moving
             yield from self._is_moving.wait()
@@ -150,7 +153,7 @@ class Stepper(SystemWideDevice):
         self._is_homed = True
         self._is_moving.clear()
         # home position is 0
-        self._current_position = self._target_position = 0
+        self._current_position = 0
 
     def _post_ready_event(self):
         if not self._ball_search_started:

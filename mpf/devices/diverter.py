@@ -168,14 +168,16 @@ class Diverter(SystemWideDevice):
 
     def _coil_activate(self):
         """Activate the coil."""
-        if self.config['type'] == 'pulse':
-            self.config['activation_coil'].pulse()
-        elif self.config['type'] == 'hold':
-            self.config['activation_coil'].enable()
+        if self.config['activation_coil']:
+            if self.config['type'] == 'pulse':
+                self.config['activation_coil'].pulse()
+            elif self.config['type'] == 'hold':
+                self.config['activation_coil'].enable()
 
     def _coil_deactivate(self):
         """Deactivate the coil."""
-        self.config['activation_coil'].disable()
+        if self.config['activation_coil']:
+            self.config['activation_coil'].disable()
 
         if self.config['deactivation_coil']:
             self.config['deactivation_coil'].pulse()

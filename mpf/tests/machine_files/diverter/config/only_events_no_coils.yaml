@@ -1,0 +1,25 @@
+#config_version=5
+
+config:
+- config.yaml
+
+diverters:
+    d_test_with_events:
+        debug: true
+        feeder_devices: test_trough
+        targets_when_active: playfield
+        targets_when_inactive: test_target
+
+servos:
+    s_diverter:
+        number:
+        positions:
+            0.7: diverter_d_test_with_events_activating
+            0.2: diverter_d_test_with_events_deactivating
+
+steppers:
+    s_diverter:
+        number:
+        named_positions:
+            20: diverter_d_test_with_events_activating
+            400: diverter_d_test_with_events_deactivating
