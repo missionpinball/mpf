@@ -68,6 +68,7 @@ if MYPY:   # pragma: no cover
     from mpf.devices.dmd import Dmd
     from mpf.devices.rgb_dmd import RgbDmd
     from mpf.devices.flipper import Flipper
+    from mpf.devices.diverter import Diverter
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -172,6 +173,7 @@ class MachineController(LogMixin):
             self.dmds = None                            # type: Dict[str, Dmd]
             self.rgb_dmds = None                        # type: Dict[str, RgbDmd]
             self.flippers = None                        # type: Dict[str, Flipper]
+            self.diverters = None                       # type: Dict[str, Diverter]
 
         self._set_machine_path()
 
