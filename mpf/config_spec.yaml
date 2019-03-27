@@ -482,7 +482,9 @@ extra_balls:
 extra_ball_groups:
     __valid_in__: machine
     enabled: single|bool|True
+    light_events: event_handler|str:ms|None
     award_events: event_handler|str:ms|None
+    award_lit_events: event_handler|str:ms|None
     max_per_game: single|int|None
     max_per_ball: single|int|None
     max_lit: single|int|None
