@@ -39,9 +39,13 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
         pass
 
     @event_handler(100)
-    def enable(self, **kwargs) -> None:
-        """Enable device."""
+    def event_enable(self, **kwargs) -> None:
+        """Handle enable control event."""
         del kwargs
+        self.enable()
+
+    def enable(self) -> None:
+        """Enable device."""
         if self.enabled is True:
             return
         self.enabled = True
@@ -52,9 +56,13 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
         pass
 
     @event_handler(0)
-    def disable(self, **kwargs):
-        """Disable device."""
+    def event_disable(self, **kwargs):
+        """Handle disable control event."""
         del kwargs
+        self.disable()
+
+    def disable(self):
+        """Disable device."""
         if self.enabled is False:
             return
         self.enabled = False

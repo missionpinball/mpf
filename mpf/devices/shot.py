@@ -1,7 +1,6 @@
 """A shot in MPF."""
 import asyncio
-import uuid
-from copy import copy, deepcopy
+from copy import deepcopy
 
 from mpf.core.device_monitor import DeviceMonitor
 
@@ -65,7 +64,7 @@ class Shot(EnableDisableMixin, ModeDevice):
         self._handlers = []
         for switch in self.config['switches']:
             self._handlers.append(self.machine.events.add_handler("{}_active".format(switch.name),
-                                                                  self.hit, priority=self.mode.priority,
+                                                                  self.event_hit, priority=self.mode.priority,
                                                                   blocking_facility="shot"))
 
         for switch in list(self.config['delay_switch'].keys()):
@@ -83,15 +82,18 @@ class Shot(EnableDisableMixin, ModeDevice):
         self._handlers = []
 
     @event_handler(6)
-    def advance(self, force=False, **kwargs) -> bool:
+    def event_advance(self, force=False, **kwargs):
+        """Handle advance control event."""
+        del kwargs
+        self.advance(force)
+
+    def advance(self, force=False) -> bool:
         """Advance a shot profile forward.
 
         If this profile is at the last step and configured to loop, it will
         roll over to the first step. If this profile is at the last step and not
         configured to loop, this method has no effect.
         """
-        del kwargs
-
         if not self.enabled and not force:
             return False
 
@@ -220,7 +222,19 @@ class Shot(EnableDisableMixin, ModeDevice):
             self.running_show = None
 
     @event_handler(5)
-    def hit(self, **kwargs):
+    def event_hit(self, **kwargs):
+        """Handle hit control event."""
+        self.hit()
+
+        if self.profile.config['block']:
+            min_priority = kwargs.get("_min_priority", {"all": 0})
+            min_shots = min_priority.get("shot", 0)
+            min_priority["shot"] = self.mode.priority if self.mode.priority > min_shots else min_shots
+            return {"_min_priority": min_priority}
+
+        return None
+
+    def hit(self):
         """Advance the currently-active shot profile.
 
         Note that the shot must be enabled in order for this hit to be
@@ -324,14 +338,6 @@ class Shot(EnableDisableMixin, ModeDevice):
         profile: The name of the profile that was active when hit.
         state: The name of the state the profile was in when it was hit'''
 
-        if self.profile.config['block']:
-            min_priority = kwargs.get("_min_priority", {"all": 0})
-            min_shots = min_priority.get("shot", 0)
-            min_priority["shot"] = self.mode.priority if self.mode.priority > min_shots else min_shots
-            return {"_min_priority": min_priority}
-
-        return None
-
     def _notify_monitors(self, profile, state):
         if Shot.monitor_enabled and "shots" in self.machine.monitors:
             for callback in self.machine.monitors['shots']:
@@ -360,10 +366,7 @@ class Shot(EnableDisableMixin, ModeDevice):
         Args:
             state: int of the state number you want to jump to. Note that states
                 are zero-based, so the first state is 0.
-            show_step: The step number that the associated light script
-                should start playing at. Useful with rotations so this shot can
-                pick up right where it left off. Default is 1 (the first step
-                in the show)
+            force: if try also jumps if disabled
 
         """
         self.debug_log("Received jump request. State: %s, Force: %s", state, force)
@@ -389,20 +392,28 @@ class Shot(EnableDisableMixin, ModeDevice):
         self._update_show()
 
     @event_handler(1)
-    def reset(self, **kwargs):
-        """Reset the shot profile for the passed mode back to the first state (State 0) and reset all sequences."""
+    def event_reset(self, **kwargs):
+        """Handle reset control event."""
         del kwargs
+        self.reset()
+
+    def reset(self):
+        """Reset the shot profile for the passed mode back to the first state (State 0) and reset all sequences."""
         self.debug_log("Resetting.")
 
         self.jump(state=0)
 
     @event_handler(2)
-    def restart(self, **kwargs):
+    def event_restart(self, **kwargs):
+        """Handle restart control event."""
+        del kwargs
+        self.restart()
+
+    def restart(self):
         """Restart the shot profile by calling reset() and enable().
 
         Automatically called when one fo the restart_events is called.
         """
-        del kwargs
         self.reset()
         self.enable()
 

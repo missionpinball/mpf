@@ -163,23 +163,35 @@ class DropTarget(SystemWideDevice):
             self._update_state_from_switch, 1)
 
     @event_handler(6)
-    def enable_keep_up(self, **kwargs):
-        """Keep the target up by enabling the coil."""
+    def event_enable_keep_up(self, **kwargs):
+        """Handle enable_keep_up control event."""
         del kwargs
+        self.enable_keep_up()
+
+    def enable_keep_up(self):
+        """Keep the target up by enabling the coil."""
         if self.reset_coil:
             self.reset_coil.enable()
 
     @event_handler(5)
-    def disable_keep_up(self, **kwargs):
-        """No longer keep up the target up."""
+    def event_disable_keep_up(self, **kwargs):
+        """Handle disable_keep_up control event."""
         del kwargs
+        self.disable_keep_up()
+
+    def disable_keep_up(self):
+        """No longer keep up the target up."""
         if self.reset_coil:
             self.reset_coil.disable()
 
     @event_handler(7)
-    def knockdown(self, **kwargs):
-        """Pulse the knockdown coil to knock down this drop target."""
+    def event_knockdown(self, **kwargs):
+        """Handle knockdown control event."""
         del kwargs
+        self.knockdown()
+
+    def knockdown(self):
+        """Pulse the knockdown coil to knock down this drop target."""
         if self.knockdown_coil and not self.machine.switch_controller.is_active(self.config['switch'].name):
             self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
             self.knockdown_coil.pulse(max_wait_ms=self.config['knockdown_coil_max_wait_ms'])
@@ -242,7 +254,12 @@ class DropTarget(SystemWideDevice):
         self.banks.remove(bank)
 
     @event_handler(1)
-    def reset(self, **kwargs):
+    def event_reset(self, **kwargs):
+        """Handle reset control event."""
+        del kwargs
+        self.reset()
+
+    def reset(self):
         """Reset this drop target.
 
         If this drop target is configured with a reset coil, then this method
@@ -254,8 +271,6 @@ class DropTarget(SystemWideDevice):
         handler should reset the target profile on its own when the drop target
         physically moves back to the up position.
         """
-        del kwargs
-
         if self.reset_coil and self.machine.switch_controller.is_active(self.config['switch'].name):
             self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
             self.reset_coil.pulse(max_wait_ms=self.config['reset_coil_max_wait_ms'])
@@ -315,7 +330,12 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         self.debug_log('Drop Targets: %s', self.drop_targets)
 
     @event_handler(5)
-    def reset(self, **kwargs):
+    def event_reset(self, **kwargs):
+        """Handle reset control event."""
+        del kwargs
+        self.reset()
+
+    def reset(self):
         """Reset this bank of drop targets.
 
         This method has some intelligence to figure out what coil(s) it should
@@ -325,7 +345,6 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         coil list is a "set" which means it only sends a single pulse to each
         coil, even if each drop target is configured with its own coil.)
         """
-        del kwargs
         self.debug_log('Resetting')
 
         if self.down == 0:

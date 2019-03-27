@@ -44,7 +44,12 @@ class ExtraBall(ModeDevice):
         self.group = self.config['group']
 
     @event_handler(2)
-    def light(self, **kwargs):
+    def event_light(self, **kwargs):
+        """Handle light control event."""
+        del kwargs
+        self.light()
+
+    def light(self):
         """Light an extra ball for potential collection by the player.
 
         Lighting an extra ball will immediately increase count against the
@@ -55,8 +60,6 @@ class ExtraBall(ModeDevice):
         Note that this only really does anything if this extra ball is a
         member of a group.
         """
-        del kwargs
-
         if self.is_ok_to_light():
             self.machine.events.post('extra_ball_{}_lit'.format(self.name))
             '''event: extra_ball_(name)_lit
@@ -69,10 +72,13 @@ class ExtraBall(ModeDevice):
             self._award_disabled()
 
     @event_handler(1)
-    def award(self, **kwargs):
-        """Award extra ball to player (if enabled)."""
+    def event_award(self, **kwargs):
+        """Handle award control event."""
         del kwargs
+        self.award()
 
+    def award(self):
+        """Award extra ball to player (if enabled)."""
         if self.is_ok_to_award():
             self.player['extra_ball_{}_num_awarded'.format(self.name)] += 1
             self.machine.events.post('extra_ball_{}_awarded'.format(self.name))
