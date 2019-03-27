@@ -73,8 +73,15 @@ class AutofireCoil(SystemWideDevice):
                     self.config['playfield'].name), 1)
 
     @event_handler(1)
-    # to prevent multiple rules at the same time we prioritize disable > enable
-    def enable(self, **kwargs):
+    def event_enable(self, **kwargs):
+        """Handle enable control event.
+
+        To prevent multiple rules at the same time we prioritize disable > enable.
+        """
+        del kwargs
+        self.enable()
+
+    def enable(self):
         """Enable the autofire device.
 
         This causes the coil to respond to the switch hits. This is typically
@@ -91,8 +98,6 @@ class AutofireCoil(SystemWideDevice):
                 event callback.
 
         """
-        del kwargs
-
         if self._enabled:
             return
         self._enabled = True
@@ -111,8 +116,15 @@ class AutofireCoil(SystemWideDevice):
         )
 
     @event_handler(10)
-    # to prevent multiple rules at the same time we prioritize disable > enable
-    def disable(self, **kwargs):
+    def event_disable(self, **kwargs):
+        """Handle disable control event.
+
+        To prevent multiple rules at the same time we prioritize disable > enable.
+        """
+        del kwargs
+        self.disable()
+
+    def disable(self):
         """Disable the autofire device.
 
         This is typically called at the end of a ball and when a tilt event
@@ -123,8 +135,6 @@ class AutofireCoil(SystemWideDevice):
                 event callback.
 
         """
-        del kwargs
-
         self.delay.remove("_timeout_enable_delay")
 
         if not self._enabled:
