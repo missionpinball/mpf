@@ -255,8 +255,11 @@ class SpikeStepper(StepperPlatformInterface):
 
     """A stepper in Spike."""
 
+    __slots__ = ["number", "node", "stepper_id", "config", "platform", "_position", "light_index"]
+
     def __init__(self, number, config, platform):
         """Initialise stepper."""
+        self.number = number
         node, index = number.split("-", 2)
         self.node = int(node)
         self.stepper_id = int(index)
@@ -314,7 +317,10 @@ class SpikeStepper(StepperPlatformInterface):
             7 - unknown
         '''
         result = yield from self.platform.send_cmd_and_wait_for_response(
-            self.node, SpikeNodebus.StepperInfo + self.stepper_id, [], 5)
+            self.node, SpikeNodebus.StepperInfo + self.stepper_id, [], 7)
+        if result is None:
+            self.platform.warning_log("Failed to read stepper %s positon", self.number)
+            return None
         return {
             "position": result[0] + (result[1] << 8),
             "is_active": bool((result[4] >> 1) & 1)
@@ -338,6 +344,9 @@ class SpikeStepper(StepperPlatformInterface):
     def is_move_complete(self) -> bool:
         """Return true if move is complete."""
         info = yield from self._get_stepper_info()
+        if info is None:
+            # read did fail
+            return False
         return info['position'] == self._position
 
     def move_rel_pos(self, position):

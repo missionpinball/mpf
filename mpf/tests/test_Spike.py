@@ -492,8 +492,8 @@ class SpikePlatformTest(MpfTestCase):
 
         self.assertSwitchState("s_stepper_home", True)
 
-        self.serialMock.permanent_commands[self._checksummed_cmd(b'\x8a\x02\x38', 5)] = self._checksummed_response(
-            b'\x00\x00\x00')
+        self.serialMock.permanent_commands[self._checksummed_cmd(b'\x8a\x02\x38', 7)] = self._checksummed_response(
+            b'\x00\x00\x00\x00\x00')
 
         self.serialMock.expected_commands = {
             self._checksummed_cmd(b'\x8a\x06\x31\x00\xc8\x00\x14'): b''
@@ -506,8 +506,8 @@ class SpikePlatformTest(MpfTestCase):
         self.assertFalse(self.serialMock.expected_commands)
         self.assertEventNotCalled("stepper_stepper1_ready")
 
-        self.serialMock.permanent_commands[self._checksummed_cmd(b'\x8a\x02\x38', 5)] = self._checksummed_response(
-            b'\xc8\x00\x00')
+        self.serialMock.permanent_commands[self._checksummed_cmd(b'\x8a\x02\x38', 7)] = self._checksummed_response(
+            b'\xc8\x00\x00\x00\x00')
         self.advance_time_and_run(.05)
         self.assertEventCalledWith("stepper_stepper1_ready", position=200)
 
@@ -522,7 +522,7 @@ class SpikePlatformTest(MpfTestCase):
         self.assertFalse(self.serialMock.expected_commands)
         self.assertEventNotCalled("stepper_stepper1_ready")
 
-        self.serialMock.permanent_commands[self._checksummed_cmd(b'\x8a\x02\x38', 5)] = self._checksummed_response(
-            b'\xf4\x01\x00')
+        self.serialMock.permanent_commands[self._checksummed_cmd(b'\x8a\x02\x38', 7)] = self._checksummed_response(
+            b'\xf4\x01\x00\x00\x00')
         self.advance_time_and_run(.05)
         self.assertEventCalledWith("stepper_stepper1_ready", position=500)
