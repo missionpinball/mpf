@@ -93,9 +93,13 @@ class Multiball(SystemWideDevice, ModeDevice):
         self.balls_added_live += balls_to_replace
 
     @event_handler(10)
-    def start(self, **kwargs):
-        """Start multiball."""
+    def event_start(self, **kwargs):
+        """Event handler for start event."""
         del kwargs
+        self.start()
+
+    def start(self):
+        """Start multiball."""
         if not self.enabled:
             return
 
@@ -186,9 +190,13 @@ class Multiball(SystemWideDevice, ModeDevice):
             self.debug_log("Ball drained. MB ended.")
 
     @event_handler(5)
-    def stop(self, **kwargs):
-        """Stop shoot again."""
+    def event_stop(self, **kwargs):
+        """Event handler for stop event."""
         del kwargs
+        self.stop()
+
+    def stop(self):
+        """Stop shoot again."""
         self.debug_log("Stopping shoot again of multiball")
         self.shoot_again = False
 
@@ -205,9 +213,13 @@ class Multiball(SystemWideDevice, ModeDevice):
         self.machine.events.add_handler('ball_drain', self._ball_drain_count_balls)
 
     @event_handler(8)
-    def add_a_ball(self, **kwargs):
-        """Add a ball if multiball has started."""
+    def event_add_a_ball(self, **kwargs):
+        """Event handler for add_a_ball event."""
         del kwargs
+        self.add_a_ball()
+
+    def add_a_ball(self):
+        """Add a ball if multiball has started."""
         if self.balls_live_target > 0:
             self.debug_log("Adding a ball.")
             self.balls_live_target += 1
@@ -216,48 +228,49 @@ class Multiball(SystemWideDevice, ModeDevice):
             self.source_playfield.add_ball(balls=1)
 
     @event_handler(9)
-    def start_or_add_a_ball(self, **kwargs):
-        """Start multiball or add a ball if multiball has started."""
+    def event_start_or_add_a_ball(self, **kwargs):
+        """Event handler for start_or_add_a_ball event."""
         del kwargs
+        self.start_or_add_a_ball()
+
+    def start_or_add_a_ball(self):
+        """Start multiball or add a ball if multiball has started."""
         if self.balls_live_target > 0:
             self.add_a_ball()
         else:
             self.start()
 
-    @event_handler(20)
-    def enable(self, **kwargs):
+    def enable(self):
         """Enable the multiball.
 
         If the multiball is not enabled, it cannot start.
-
-        Args:
-            **kwargs: unused
         """
-        del kwargs
+        super().enable()
         self.debug_log("Enabling...")
         self.enabled = True
 
     @event_handler(1)
-    def disable(self, **kwargs):
+    def event_disable(self, **kwargs):
+        """Event handler for disable event."""
+        del kwargs
+        self.disable()
+
+    def disable(self):
         """Disable the multiball.
 
         If the multiball is not enabled, it cannot start. Will not stop a running multiball.
-
-        Args:
-            **kwargs: unused
         """
-        del kwargs
         self.debug_log("Disabling...")
         self.enabled = False
 
     @event_handler(2)
-    def reset(self, **kwargs):
-        """Reset the multiball and disable it.
-
-        Args:
-            **kwargs: unused
-        """
+    def event_reset(self, **kwargs):
+        """Event handler for reset event."""
         del kwargs
+        self.reset()
+
+    def reset(self):
+        """Reset the multiball and disable it."""
         self.enabled = False
         self.shoot_again = False
         self.balls_added_live = 0

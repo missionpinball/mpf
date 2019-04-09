@@ -62,21 +62,24 @@ class Achievement(ModeDevice):
 
         return config
 
-    @event_handler(10)
-    def enable(self, **kwargs):
+    def enable(self):
         """Enable the achievement.
 
         It can only start if it was enabled before.
         """
-        del kwargs
+        super().enable()
         if self._state in ("disabled", "selected", "started"):
             self._state = "enabled"
             self._run_state()
 
     @event_handler(5)
-    def start(self, **kwargs):
-        """Start achievement."""
+    def event_start(self, **kwargs):
+        """Event handler for start event."""
         del kwargs
+        self.start()
+
+    def start(self):
+        """Start achievement."""
         if self._state in ("enabled", "selected") or (
             self.config['restart_after_stop_possible'] and
                 self._state == "stopped"):
@@ -84,25 +87,37 @@ class Achievement(ModeDevice):
             self._run_state()
 
     @event_handler(4)
-    def complete(self, **kwargs):
-        """Complete achievement."""
+    def event_complete(self, **kwargs):
+        """Event handler for complete event."""
         del kwargs
+        self.complete()
+
+    def complete(self):
+        """Complete achievement."""
         if self._state in ("started", "selected"):
             self._state = "completed"
             self._run_state()
 
     @event_handler(2)
-    def stop(self, **kwargs):
-        """Stop achievement."""
+    def event_stop(self, **kwargs):
+        """Event handler for stop event."""
         del kwargs
+        self.stop()
+
+    def stop(self):
+        """Stop achievement."""
         if self._state in ("started", "selected"):
             self._state = "stopped"
             self._run_state()
 
     @event_handler(0)
-    def disable(self, **kwargs):
-        """Disable achievement."""
+    def event_disable(self, **kwargs):
+        """Event handler for disable event."""
         del kwargs
+        self.disable()
+
+    def disable(self):
+        """Disable achievement."""
         if self._state in ("enabled", "selected") or (
             self.config['restart_after_stop_possible'] and
                 self._state == "stopped"):
@@ -110,9 +125,13 @@ class Achievement(ModeDevice):
             self._run_state()
 
     @event_handler(1)
-    def reset(self, **kwargs):
-        """Reset the achievement to its initial state."""
+    def event_reset(self, **kwargs):
+        """Event handler for reset event."""
         del kwargs
+        self.reset()
+
+    def reset(self):
+        """Reset the achievement to its initial state."""
         # if there is no player active
         if not self._player:
             return
@@ -125,10 +144,13 @@ class Achievement(ModeDevice):
         self._run_state()
 
     @event_handler(9)
-    def select(self, **kwargs):
-        """Highlight (select) this achievement."""
+    def event_select(self, **kwargs):
+        """Event handler for select event."""
         del kwargs
+        self.select()
 
+    def select(self):
+        """Highlight (select) this achievement."""
         if not self._player:
             return
 

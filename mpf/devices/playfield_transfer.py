@@ -4,6 +4,7 @@ E.g. lower to upper playfield via a ramp.
 """
 import asyncio
 
+from mpf.core.events import event_handler
 from mpf.core.system_wide_device import SystemWideDevice
 
 
@@ -41,9 +42,14 @@ class PlayfieldTransfer(SystemWideDevice):
             callback=self.transfer,
             state=1, ms=0)
 
-    def transfer(self, **kwargs):
-        """Transfer a ball to the target playfield."""
+    @event_handler(1)
+    def event_transfer(self, **kwargs):
+        """Event handler for transfer event."""
         del kwargs
+        self.transfer()
+
+    def transfer(self):
+        """Transfer a ball to the target playfield."""
         self.debug_log("Ball went from %s to %s", self.source.name,
                        self.target.name)
 
@@ -74,7 +80,7 @@ class PlayfieldTransfer(SystemWideDevice):
             balls=1)
         # event docstring covered elsewhere
 
-        # inform target playfield about incomming ball
+        # inform target playfield about incoming ball
         self.machine.events.post(
             'balldevice_' + self.name + '_ejecting_ball',
             balls=1,

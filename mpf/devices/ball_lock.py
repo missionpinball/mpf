@@ -64,46 +64,44 @@ class BallLock(SystemWideDevice, ModeDevice):
 
         self.source_playfield = self.config['source_playfield']
 
-    @event_handler(10)
-    def enable(self, **kwargs):
+    def enable(self):
         """Enable the lock.
 
         If the lock is not enabled, no balls will be locked.
-
-        Args:
-            **kwargs: unused
         """
-        del kwargs
         self.debug_log("Enabling...")
+        super().enable()
         if not self.enabled:
             self._register_handlers()
         self.enabled = True
 
     @event_handler(0)
-    def disable(self, **kwargs):
+    def event_disable(self, **kwargs):
+        """Event handler for disable event."""
+        del kwargs
+        self.disable()
+
+    def disable(self):
         """Disable the lock.
 
         If the lock is not enabled, no balls will be locked.
-
-        Args:
-            **kwargs: unused
         """
-        del kwargs
         self.debug_log("Disabling...")
         self._unregister_handlers()
         self.enabled = False
 
     @event_handler(1)
-    def reset(self, **kwargs):
+    def event_reset(self, **kwargs):
+        """Event handler for reset event."""
+        del kwargs
+        self.reset()
+
+    def reset(self):
         """Reset the lock.
 
         Will release locked balls. Device will status will stay the same (enabled/disabled). It will wait for those
         balls to drain and block ball_ending until they did. Those balls are not included in ball_in_play.
-
-        Args:
-            **kwargs: unused
         """
-        del kwargs
         self._released_balls += self.release_all_balls()
         self.balls_locked = 0
 
@@ -146,23 +144,32 @@ class BallLock(SystemWideDevice, ModeDevice):
             self._release_lock = queue
 
     @event_handler(9)
-    def release_one_if_full(self, **kwargs):
-        """Release one ball if lock is full."""
+    def event_release_one_if_full(self, **kwargs):
+        """Event handler for release_one_if_full event."""
         del kwargs
+        self.release_one_if_full()
+
+    def release_one_if_full(self):
+        """Release one ball if lock is full."""
         if self.is_full():
             self.release_one()
 
     @event_handler(8)
-    def release_one(self, **kwargs):
-        """Release one ball.
-
-        Args:
-            **kwargs: unused
-        """
+    def event_release_one(self, **kwargs):
+        """Event handler for release_one event."""
         del kwargs
+        self.release_one()
+
+    def release_one(self):
+        """Release one ball."""
         self.release_balls(balls_to_release=1)
 
     @event_handler(7)
+    def event_release_all_balls(self, **kwargs):
+        """Event handler for release_all_balls event."""
+        del kwargs
+        self.release_all_balls()
+
     def release_all_balls(self):
         """Release all balls in lock."""
         return self.release_balls(self.balls_locked)

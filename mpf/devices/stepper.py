@@ -50,7 +50,7 @@ class Stepper(SystemWideDevice):
 
         for position in self.config['named_positions']:
             self.machine.events.add_handler(self.config['named_positions'][position],
-                                            self._position_event,
+                                            self.event_move_to_position,
                                             position=position)
 
         self.hw_stepper = yield from self.platform.configure_stepper(self.config['number'],
@@ -169,14 +169,26 @@ class Stepper(SystemWideDevice):
             self._move_task = None
 
     @event_handler(1)
-    def reset(self, **kwargs):
-        """Move to reset position."""
+    def event_reset(self, **kwargs):
+        """Event handler for reset event."""
         del kwargs
+        self.reset()
+
+    def reset(self):
+        """Move to reset position."""
         self._move_to_absolute_position(self.config['reset_position'])
 
     @event_handler(5)
-    def _position_event(self, position, **kwargs):
+    def event_move_to_position(self, position=None, **kwargs):
+        """Event handler for move_to_position event."""
         del kwargs
+        if position is None:
+            raise AssertionError("move_to_position event is missing a position.")
+
+        self.move_to_position(position)
+
+    def move_to_position(self, position):
+        """Move stepper to a position."""
         self._target_position = position
         if self._ball_search_started:
             return

@@ -126,6 +126,7 @@ class Flipper(SystemWideDevice):
 
         To prevent multiple rules at the same time we prioritize disable > enable.
         """
+        del kwargs
         self.disable()
 
     def disable(self):

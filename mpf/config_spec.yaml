@@ -175,6 +175,7 @@ ball_locks:
     disable_events: event_handler|str:ms|None
     reset_events: event_handler|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
     release_one_events: event_handler|str:ms|None
+    release_all_balls_events: event_handler|str:ms|None
     release_one_if_full_events: event_handler|str:ms|None
 ball_routings:
     __valid_in__: mode

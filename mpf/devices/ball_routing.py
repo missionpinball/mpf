@@ -3,6 +3,7 @@ from collections import defaultdict
 
 import asyncio
 
+from mpf.core.events import event_handler
 from mpf.devices.ball_device.ball_device import BallDevice
 
 from mpf.core.machine import MachineController
@@ -26,9 +27,14 @@ class BallRouting(ModeDevice):
         self._balls_at_target = 0
         self._handler = []
 
-    def enable(self, **kwargs):
-        """Enable routing."""
+    @event_handler(2)
+    def event_enable(self, **kwargs):
+        """Event handler for enable events."""
         del kwargs
+        self.enable()
+
+    def enable(self):
+        """Enable routing."""
         if self._enabled:
             return
         self._enabled = True
@@ -85,9 +91,14 @@ class BallRouting(ModeDevice):
 
         return {}
 
-    def disable(self, **kwargs):
-        """Disable routing."""
+    @event_handler(1)
+    def event_disable(self, **kwargs):
+        """Event handler for disable events."""
         del kwargs
+        self.disable()
+
+    def disable(self):
+        """Disable routing."""
         if not self._enabled:
             return
         self.debug_log("Disabling")

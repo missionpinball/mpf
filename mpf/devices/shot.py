@@ -224,7 +224,9 @@ class Shot(EnableDisableMixin, ModeDevice):
     @event_handler(5)
     def event_hit(self, **kwargs):
         """Handle hit control event."""
-        self.hit()
+        success = self.hit()
+        if not success:
+            return None
 
         if self.profile.config['block']:
             min_priority = kwargs.get("_min_priority", {"all": 0})
@@ -234,26 +236,28 @@ class Shot(EnableDisableMixin, ModeDevice):
 
         return None
 
-    def hit(self):
+    def hit(self) -> bool:
         """Advance the currently-active shot profile.
 
         Note that the shot must be enabled in order for this hit to be
         processed.
+
+        Returns true if the shot was enabled or false if the hit has been ignored.
         """
         # mark the playfield active no matter what
         self.config['playfield'].mark_playfield_active_from_device_action()
 
         if not self.enabled or not self.player:
-            return None
+            return False
 
         # Stop if there is an active delay but no sequence
         if self.active_delays:
-            return None
+            return False
 
         profile_settings = self._get_profile_settings()
 
         if not profile_settings:
-            return None
+            return False
 
         state = profile_settings['name']
 
@@ -337,6 +341,8 @@ class Shot(EnableDisableMixin, ModeDevice):
         args:
         profile: The name of the profile that was active when hit.
         state: The name of the state the profile was in when it was hit'''
+
+        return True
 
     def _notify_monitors(self, profile, state):
         if Shot.monitor_enabled and "shots" in self.machine.monitors:

@@ -250,21 +250,10 @@ class DeviceManager(MpfController):
                                     method = getattr(self.collections[collection][device],
                                                      "event_{}".format(control_event[:-7]))
                                 except AttributeError:
-                                    pass
-                                else:
-                                    yield (event,
-                                           method,
-                                           delay,
-                                           self.collections[collection][device])
-                                    continue
-
-                                # fall back to the old style
-                                try:
-                                    method = getattr(self.collections[collection][device], control_event[:-7])
-                                except Exception:   # pylint: disable-msg=broad-except
-                                    raise AssertionError("Class {} needs to have method {} to handle {}".format(
+                                    raise AssertionError("Class {} needs to have method event_{} to handle {}".format(
                                         self.collections[collection][device], control_event[:-7], control_event
                                     ))
+
                                 yield (event,
                                        method,
                                        delay,

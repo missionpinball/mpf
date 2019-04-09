@@ -94,16 +94,15 @@ class Diverter(SystemWideDevice):
     def event_enable(self, auto=False, **kwargs):
         """Handle enable control event."""
         del kwargs
-        self.enable(self, auto)
+        self.enable(auto)
 
     def enable(self, auto=False):
         """Enable this diverter.
 
         Args:
             auto: Boolean value which is used to indicate whether this
-                diverter enabled itself automatically. This is passed to the
-                event which is posted.
-            **kwargs: unused
+                  diverter enabled itself automatically. This is passed to the
+                  event which is posted.
 
         If an 'activation_switches' is configured, then this method writes a
         hardware autofire rule to the pinball controller which fires the
@@ -137,7 +136,7 @@ class Diverter(SystemWideDevice):
     def event_disable(self, auto=False, **kwargs):
         """Handle disable control event."""
         del kwargs
-        self.disable(self, auto)
+        self.disable(auto)
 
     def disable(self, auto=False):
         """Disable this diverter.

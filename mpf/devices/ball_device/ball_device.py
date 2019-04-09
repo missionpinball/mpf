@@ -716,7 +716,7 @@ class BallDevice(SystemWideDevice):
     def event_eject(self, balls=1, target=None, **kwargs):
         """Handle eject control event."""
         del kwargs
-        self.eject_all(balls, target)
+        self.eject(balls, target)
 
     def eject(self, balls=1, target=None) -> int:
         """Eject balls to target.
