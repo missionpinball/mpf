@@ -699,8 +699,10 @@ class MachineController(LogMixin):
             return False
         if init.done() and init.exception():
             self.shutdown()
-            traceback.print_tb(init.exception().__traceback__)  # noqa
-            self.error_log("Failed to initialise MPF: %s", init.exception())
+            try:
+                raise init.exception()
+            except: # noqa
+                self.log.exception("Failed to initialise MPF")
             return False
 
         return True
@@ -762,9 +764,9 @@ class MachineController(LogMixin):
         except KeyboardInterrupt:
             print("Shutdown because of keyboard interrupts")
             return
-        except BaseException as e:
+        except BaseException:
             # this happens when receiving a signal
-            self.log.debug("Loop exited with exception: %s", e)
+            self.log.exception("Loop exited with exception")
             return
 
         self._do_stop()
