@@ -274,6 +274,9 @@ class TextUi(MpfController):
             self.screen.print_at(
                 'SCORE: {:,}'.format(self.machine.game.player.score),
                 self.columns[3], self.player_start_row + 2)
+            self.screen.print_at(
+                'INDEX: {}'.format(self.machine.game.player.index),
+                self.columns[3], self.player_start_row + 3) 
         except AttributeError:
             self._update_player_no_game()
 
