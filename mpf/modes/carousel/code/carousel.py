@@ -45,11 +45,13 @@ class Carousel(Mode):
         self._register_handlers(self._previous_item_events, self._previous_item)
         self._register_handlers(self._select_item_events, self._select_item)
 
-        player = self.machine.game.player
-        if not player.is_player_var('available_items_{}'.format(self.name)):
-            player['available_items_{}'.format(self.name)] = copy.deepcopy(self._items)
-        self._highlighted_item_index = 0
+        # If there is a player, track the carousel items as a variable
+        if self.machine.game:
+            player = self.machine.game.player
+            if not player.is_player_var('available_items_{}'.format(self.name)):
+                player['available_items_{}'.format(self.name)] = copy.deepcopy(self._items)
 
+        self._highlighted_item_index = 0
         self._update_highlighted_item(None)
 
     def _register_handlers(self, events, handler):
@@ -71,8 +73,12 @@ class Carousel(Mode):
             '''
 
     def _get_available_items(self):
-        player = self.machine.game.player
-        return player['available_items_{}'.format(self.name)]
+        # If items were stored in the player, use them
+        if self.machine.game:
+            player = self.machine.game.player
+            return player['available_items_{}'.format(self.name)]
+        # Otherwise, return the default items
+        return self._items
 
     def _next_item(self, **kwargs):
         del kwargs
