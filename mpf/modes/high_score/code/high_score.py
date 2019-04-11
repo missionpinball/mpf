@@ -124,7 +124,8 @@ class HighScore(AsyncMode):
     @asyncio.coroutine
     def _run(self) -> Generator[int, None, None]:
         """Run high score mode."""
-        if not self.machine.game.player_list:
+        if not self.machine.game or not self.machine.game.player_list:
+            self.log.warning("High Score started but there was no game. Will not start.")
             return
 
         new_high_score_list = {}
