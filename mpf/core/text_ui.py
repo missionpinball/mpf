@@ -285,9 +285,9 @@ class TextUi(MpfController):
             player_vars.pop('score')
             player_vars.pop('number')
             player_vars.pop('ball')
-            for x, y in enumerate(player_vars):
+            for _index, _name in enumerate(player_vars):
                 self.screen.print_at(
-                '{}: {}'.format(y, player_vars[y]),
+                '{}: {}'.format(_name, player_vars[_name]),
                 self.columns[3], self.player_start_row  + add_row)
                 add_row = add_row + 1
             self.screen.print_at(
@@ -298,14 +298,14 @@ class TextUi(MpfController):
                 self.columns[3], self.player_start_row + add_row + 1)
             add_row = add_row + 2
             machine_vars = self.machine.machine_vars
-            for x, y in enumerate(machine_vars):
+            for _index, _name in enumerate(machine_vars):
                 self.screen.print_at(
-                '{}'.format(y),
+                '{}'.format(_name),
                 self.columns[3], self.player_start_row + add_row)
                 add_row = add_row + 1
-                for k, v in enumerate(machine_vars[y]):
+                for _key, _value in enumerate(machine_vars[_name]):
                     self.screen.print_at(
-                    '   {}: {}'.format(v, machine_vars[y][v]),
+                    '   {}: {}'.format(_value, machine_vars[_name][_value]),
                     self.columns[3], self.player_start_row + add_row)
                     add_row = add_row + 1
 
@@ -319,9 +319,27 @@ class TextUi(MpfController):
                 ' ' * (int(self.screen.width * (1 / len(self.columns))) + 1),
                 self.columns[3],
                 self.player_start_row + i)
-
         self.screen.print_at('NO GAME IN PROGRESS', self.columns[3],
                              self.player_start_row)
+        add_row = 1
+        self.screen.print_at(
+            'MACHINE VARIABLES',
+            self.columns[3], self.player_start_row + add_row)
+        self.screen.print_at(
+            '---------------------------------',
+            self.columns[3], self.player_start_row + add_row + 1)
+        add_row = add_row + 2
+        machine_vars = self.machine.machine_vars
+        for _index, _name in enumerate(machine_vars):
+            self.screen.print_at(
+            '{}'.format(_name),
+            self.columns[3], self.player_start_row + add_row)
+            add_row = add_row + 1
+            for _key, _value in enumerate(machine_vars[_name]):
+                self.screen.print_at(
+                '   {}: {}'.format(_value, machine_vars[_name][_value]),
+                self.columns[3], self.player_start_row + add_row)
+                add_row = add_row + 1
 
     def _tick(self):
         if self.screen.has_resized():
