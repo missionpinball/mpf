@@ -275,15 +275,39 @@ class TextUi(MpfController):
                 'SCORE: {:,}'.format(self.machine.game.player.score),
                 self.columns[3], self.player_start_row + 2)
             self.screen.print_at(
-                'ADDITIONAL VARIABLES',
+                'ADDITIONAL PLAYER VARIABLES',
                 self.columns[3], self.player_start_row + 3)
-            add_row = 1
-            player_vars = self.machine.game.player.vars
+            self.screen.print_at(
+                '---------------------------------',
+                self.columns[3], self.player_start_row + 4)
+            add_row = 5
+            player_vars = self.machine.game.player.vars.copy()
+            player_vars.pop('score')
+            player_vars.pop('number')
+            player_vars.pop('ball')
             for x, y in enumerate(player_vars):
                 self.screen.print_at(
                 '{}: {}'.format(y, player_vars[y]),
-                self.columns[3], self.player_start_row + 3 + add_row)
+                self.columns[3], self.player_start_row  + add_row)
                 add_row = add_row + 1
+            self.screen.print_at(
+                'MACHINE VARIABLES',
+                self.columns[3], self.player_start_row + add_row)
+            self.screen.print_at(
+                '---------------------------------',
+                self.columns[3], self.player_start_row + add_row + 1)
+            add_row = add_row + 2
+            machine_vars = self.machine.machine_vars
+            for x, y in enumerate(machine_vars):
+                self.screen.print_at(
+                '{}'.format(y),
+                self.columns[3], self.player_start_row + add_row)
+                add_row = add_row + 1
+                for k, v in enumerate(machine_vars[y]):
+                    self.screen.print_at(
+                    '   {}: {}'.format(v, machine_vars[y][v]),
+                    self.columns[3], self.player_start_row + add_row)
+                    add_row = add_row + 1
 
         except AttributeError:
             self._update_player_no_game()
