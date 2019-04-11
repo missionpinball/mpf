@@ -163,7 +163,7 @@ class Tilt(Mode):
         self.machine.game.tilted = True
 
         self._balls_to_collect = 0
-        for device in self.machine.ball_devices:
+        for device in self.machine.ball_devices.values():
             if device.is_playfield():
                 self._balls_to_collect += device.available_balls
 
@@ -177,7 +177,7 @@ class Tilt(Mode):
         self.tilt_event_handlers.add(
             self.machine.events.add_handler('player_turn_ending', self._ball_ending_tilted))
 
-        for device in self.machine.ball_devices:
+        for device in self.machine.ball_devices.values():
             if 'drain' in device.tags:
                 self.tilt_event_handlers.add(
                     self.machine.events.add_handler(

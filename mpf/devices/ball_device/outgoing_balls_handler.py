@@ -370,7 +370,13 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             ball_left = ball_eject_process.wait_for_ball_left()
             waiters = [ball_left]
             trigger = None
+            tilt = None
             if self.ball_device.ejector:
+                # eject on tilt
+                if eject_request.mechanical:
+                    tilt = self.machine.events.wait_for_event("tilt")
+                    waiters.append(tilt)
+
                 # wait for trigger event
                 if eject_request.mechanical and self.ball_device.config['player_controlled_eject_event']:
                     trigger = self.machine.events.wait_for_event(
@@ -395,7 +401,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 yield from self.ball_device.ball_count_handler.end_eject(ball_eject_process, False)
                 return False
 
-            if trigger and trigger.done():
+            if (trigger and trigger.done()) or (tilt and tilt.done()):
                 yield from self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try)
                 # TODO: add timeout here
                 yield from ball_left
