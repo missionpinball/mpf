@@ -29,6 +29,15 @@ class TestHighScoreMode(MpfBcpTestCase):
             self.machine.game.request_player_add()
             self.advance_time_and_run()
 
+    def test_high_score_without_game(self):
+        # try to start high score mode without a running game
+        self.assertIn("high_score", self.machine.modes)
+        self.assertModeNotRunning("high_score")
+        self.machine.modes["high_score"].start()
+        self.advance_time_and_run()
+        # mode should not start (neither crash)
+        self.assertModeNotRunning("high_score")
+
     def test_default_high_scores(self):
         new_score_data = OrderedDict()
         new_score_data['score'] = [('BRI', 4242),
