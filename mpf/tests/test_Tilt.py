@@ -1,4 +1,4 @@
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfTestCase import MpfTestCase, test_config
 from unittest.mock import MagicMock
 
 
@@ -16,6 +16,46 @@ class TestTilt(MpfTestCase):
     def _tilted(self, **kwargs):
         del kwargs
         self._is_tilted = True
+
+    @test_config("config_mechanical_eject.yaml")
+    def test_mechanical_eject(self):
+        """Test that tilt triggers auto launch."""
+        self._is_tilted = False
+        self.machine.events.add_handler("tilt", self._tilted)
+
+        self.machine.ball_controller.num_balls_known = 0
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.advance_time_and_run(2)
+
+        self.assertEqual(None, self.machine.game)
+        self.assertEqual(2, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough"].balls)
+        self.machine.switch_controller.process_switch('s_start', 1)
+        self.machine.switch_controller.process_switch('s_start', 0)
+        self.advance_time_and_run(10)
+
+        self.assertBallsOnPlayfield(0)
+        self.assertAvailableBallsOnPlayfield(1)
+        self.assertEqual(1, self.machine.ball_devices["bd_launcher"].balls)
+
+        self.assertFalse(self._is_tilted)
+        self.machine.switch_controller.process_switch('s_tilt', 1)
+        self.machine.switch_controller.process_switch('s_tilt', 0)
+        self.advance_time_and_run(10)
+        self.assertTrue(self._is_tilted)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(True, self.machine.game.tilted)
+
+        # ball ejects
+        self.assertBallsOnPlayfield(1)
+        self.assertAvailableBallsOnPlayfield(1)
+        self.assertEqual(0, self.machine.ball_devices["bd_launcher"].balls)
+
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.advance_time_and_run(1)
+
+        self.assertEqual(False, self.machine.game.tilted)
 
     def test_simple_tilt(self):
         self._is_tilted = False
