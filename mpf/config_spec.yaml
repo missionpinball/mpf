@@ -1642,6 +1642,7 @@ widgets:
         expire: single|secs|None
         key: single|str|None
         widget: single|str|None
+        events_when_added: list|str|None
         events_when_removed: list|str|None
     animations:
         property: list|str|
