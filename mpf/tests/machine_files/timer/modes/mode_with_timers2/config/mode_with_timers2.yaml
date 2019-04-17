@@ -10,3 +10,14 @@ timers:
         direction: up
         tick_interval: 1s
         start_running: yes
+    timer_with_player_var_control_events:
+        start_value: 0
+        control_events:
+            - action: start
+              event: start_player_var_timer
+            - action: add
+              event: add_player_var_timer
+              value: current_player.timer_amount
+            - action: subtract
+              event: subtract_player_var_timer
+              value: current_player.timer_amount
