@@ -166,7 +166,8 @@ class Timer(ModeDevice):
                 raise AssertionError("Invalid control_event action {} in mode".
                                      format(entry['action']), self.name)
 
-            self.event_keys.append(self.machine.events.add_handler(entry['event'], handler, **kwargs))
+            self.event_keys.append(
+                self.machine.events.add_handler(entry['event'], handler, **kwargs))
 
     def _remove_control_events(self):
         self.debug_log("Removing control events")
@@ -480,7 +481,8 @@ class Timer(ModeDevice):
                 self.ticks >= self.end_value):
             self.timer_complete()
             return True
-        elif (self.direction == 'down' and
+
+        if (self.direction == 'down' and
                 self.ticks <= self.end_value):
             self.timer_complete()
             return True
@@ -505,7 +507,8 @@ class Timer(ModeDevice):
             self.machine.clock.unschedule(self.timer)
             self.timer = None
 
-    def _get_timer_value(self, timer_value):
+    @staticmethod
+    def _get_timer_value(timer_value):
         if hasattr(timer_value, "evaluate"):
             # Convert to int for ticks; config_spec must be float for change_tick_interval
             return int(timer_value.evaluate([]))
