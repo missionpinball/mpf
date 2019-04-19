@@ -166,7 +166,8 @@ class Timer(ModeDevice):
                 raise AssertionError("Invalid control_event action {} in mode".
                                      format(entry['action']), self.name)
 
-            self.event_keys.append(self.machine.events.add_handler(entry['event'], handler, **kwargs))
+            self.event_keys.append(
+                self.machine.events.add_handler(entry['event'], handler, **kwargs))
 
     def _remove_control_events(self):
         self.debug_log("Removing control events")
@@ -293,13 +294,13 @@ class Timer(ModeDevice):
         del kwargs
 
         if not timer_value:
-            timer_value = 0  # make sure it's not None, etc.
+            pause_ms = 0  # make sure it's not None, etc.
+        else:
+            pause_ms = self._get_timer_value(timer_value) * 1000  # delays happen in ms
 
-        self.info_log("Pausing Timer for %s secs", timer_value)
+        self.info_log("Pausing Timer for %s ms", pause_ms)
 
         self.running = False
-
-        pause_ms = timer_value * 1000 # delays happen in ms
 
         self._remove_system_timer()
         self.machine.events.post('timer_' + self.name + '_paused',
@@ -406,6 +407,7 @@ class Timer(ModeDevice):
         """
         del kwargs
 
+        timer_value = self._get_timer_value(timer_value)
         ticks_added = timer_value
 
         new_value = self.ticks + ticks_added
@@ -444,7 +446,7 @@ class Timer(ModeDevice):
         """
         del kwargs
 
-        ticks_subtracted = timer_value
+        ticks_subtracted = self._get_timer_value(timer_value)
 
         self.ticks -= ticks_subtracted
 
@@ -479,7 +481,8 @@ class Timer(ModeDevice):
                 self.ticks >= self.end_value):
             self.timer_complete()
             return True
-        elif (self.direction == 'down' and
+
+        if (self.direction == 'down' and
                 self.ticks <= self.end_value):
             self.timer_complete()
             return True
@@ -504,21 +507,29 @@ class Timer(ModeDevice):
             self.machine.clock.unschedule(self.timer)
             self.timer = None
 
+    @staticmethod
+    def _get_timer_value(timer_value):
+        if hasattr(timer_value, "evaluate"):
+            # Convert to int for ticks; config_spec must be float for change_tick_interval
+            return int(timer_value.evaluate([]))
+        return timer_value
+
     def change_tick_interval(self, change=0.0, **kwargs):
         """Change the interval for each "tick" of this timer.
 
         Args:
             change: Float or int of the change you want to make to this timer's
-                tick rate. Note this value is added to the current tick
-                interval. To set an absolute value, use the set_tick_interval()
-                method. To shorten the tick rate, use a negative value.
+                tick rate. Note this value is multiplied by the current tick
+                interval: >1 will increase the tick interval (slow the timer) and
+                <1 will decrease the tick interval (accelerate the timer).
+                To set an absolute value, use the set_tick_interval() method.
             **kwargs: Not used in this method. Only exists since this method is
                 often registered as an event handler which may contain
                 additional keyword arguments.
         """
         del kwargs
 
-        self.tick_secs *= change
+        self.tick_secs *= change.evaluate([])
         self._create_system_timer()
 
     def set_tick_interval(self, timer_value, **kwargs):
@@ -536,7 +547,7 @@ class Timer(ModeDevice):
         """
         del kwargs
 
-        self.tick_secs = abs(timer_value)
+        self.tick_secs = abs(self._get_timer_value(timer_value))
         self._create_system_timer()
 
     def jump(self, timer_value, **kwargs):
@@ -553,7 +564,7 @@ class Timer(ModeDevice):
         """
         del kwargs
 
-        self.ticks = int(timer_value)
+        self.ticks = self._get_timer_value(timer_value)
 
         if self.max_value and self.ticks > self.max_value:
             self.ticks = self.max_value

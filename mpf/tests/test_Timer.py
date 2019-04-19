@@ -377,3 +377,28 @@ class TestTimer(MpfFakeGameTestCase):
 
         self.assertEventCalled("timer_timer_player_var_complete")
         self.machine.events.post('stop_mode_with_timers')
+
+    def test_timer_control_with_player_var(self):
+        self.start_game()
+        self.machine.game.player.timer_amount = 10
+        timer = self.machine.timers['timer_with_player_var_control_events']
+
+        self.machine.events.post('start_player_var_timer')
+        self.advance_time_and_run(.1)
+        self.assertTrue(timer.running)
+        self.assertEqual(0, timer.ticks)
+        self.advance_time_and_run(1)
+        self.assertEqual(1, timer.ticks)
+
+        self.machine.events.post('add_player_var_timer')
+        self.advance_time_and_run(.1)
+        self.assertEqual(11, timer.ticks)
+        self.advance_time_and_run(1)
+        self.assertEqual(12, timer.ticks)
+
+        self.machine.game.player.timer_amount = 5
+        self.machine.events.post('subtract_player_var_timer')
+        self.advance_time_and_run(.1)
+        self.assertEqual(7, timer.ticks)
+        self.advance_time_and_run(1)
+        self.assertEqual(8, timer.ticks)
