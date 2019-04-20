@@ -116,8 +116,9 @@ class ConfigValidator:
 
         cache_file = os.path.join(self.get_cache_dir(), "config_spec.mpf_cache")
         config_spec_file = os.path.abspath(os.path.join(mpf.core.__path__[0], os.pardir, "config_spec.yaml"))
+        stats_config_spec_file = os.stat(config_spec_file)
         if self._load_cache and os.path.isfile(cache_file) and \
-                os.path.getmtime(cache_file) >= os.path.getmtime(config_spec_file):
+                os.path.getmtime(cache_file) == stats_config_spec_file.st_mtime:
             try:
                 with open(cache_file, 'rb') as f:
                     self.config_spec = pickle.load(f)   # nosec
@@ -138,6 +139,7 @@ class ConfigValidator:
         if self._store_cache:
             with open(cache_file, 'wb') as f:
                 pickle.dump(config, f, protocol=4)
+                os.utime(cache_file, ns=(stats_config_spec_file.st_atime_ns, stats_config_spec_file.st_mtime_ns))
                 self.log.info('Config spec file cache created: %s', cache_file)
 
         ConfigValidator.class_cache = deepcopy(self.config_spec)
