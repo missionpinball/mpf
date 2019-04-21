@@ -225,12 +225,12 @@ class Mode(LogMixin):
 
         for item in self.machine.mode_controller.start_methods:
             if item.config_section in self.config or not item.config_section:
-                self.stop_methods.append(
-                    item.method(config=self.config.get(item.config_section,
-                                                       self.config),
-                                priority=self.priority,
-                                mode=self,
-                                **item.kwargs))
+                result = item.method(config=self.config.get(item.config_section, self.config),
+                                     priority=self.priority,
+                                     mode=self,
+                                     **item.kwargs)
+                if result:
+                    self.stop_methods.append(result)
 
         self._setup_device_control_events()
 
@@ -346,8 +346,7 @@ class Mode(LogMixin):
             callback[0](self)
 
         for item in self.stop_methods:
-            if item:
-                item[0](item[1])
+            item[0](item[1])
 
         self.stop_methods = list()
 
