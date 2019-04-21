@@ -3,6 +3,7 @@ from collections import OrderedDict
 
 from unittest.mock import MagicMock, call
 from mpf.tests.MpfBcpTestCase import MpfBcpTestCase
+from mpf.tests.MpfTestCase import test_config_directory
 
 
 class TestHighScoreMode(MpfBcpTestCase):
@@ -11,10 +12,7 @@ class TestHighScoreMode(MpfBcpTestCase):
         return 'high_score.yaml'
 
     def getMachinePath(self):
-        if self._testMethodName == "test_reverse_sort":
-            return 'tests/machine_files/high_score_reverse/'
-        else:
-            return 'tests/machine_files/high_score/'
+        return 'tests/machine_files/high_score/'
 
     def start_game(self, num_players=1):
         self._bcp_client.send = MagicMock()
@@ -485,6 +483,7 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.assertEqual(new_score_data, self.machine.modes.high_score.high_scores)
         self.assertEqual(new_score_data, self.machine.modes.high_score.data_manager.written_data)
 
+    @test_config_directory("tests/machine_files/high_score_reverse/")
     def test_reverse_sort(self):
         self.start_game(4)
         self.machine.game.game_ending()
