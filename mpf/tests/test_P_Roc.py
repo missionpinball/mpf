@@ -529,6 +529,7 @@ class TestPRoc(MpfTestCase):
 
         # pulse a and c side
         self.pinproc.driver_schedule = MagicMock(return_value=True)
+        self.pinproc.driver_pulse = MagicMock(return_value=True)
         self.machine.coils.c_test_a_side.pulse(100)
         self.advance_time_and_run(.001)
         self.machine.coils.c_test_c_side.pulse(50)
@@ -536,14 +537,17 @@ class TestPRoc(MpfTestCase):
         self.wait_for_platform()
         self.advance_time_and_run(.001)
         self.wait_for_platform()
-        self.pinproc.driver_pulse.assert_called_with(
-            9902, 100)
+        self.pinproc.driver_pulse.assert_has_calls([
+            call(9902, 100)]
+        )
         self.assertFalse(self.pinproc.driver_schedule.called)
+        self.pinproc.driver_pulse = MagicMock(return_value=True)
 
         # afterwards service c side
         self.advance_time_and_run(.2)
         self.wait_for_platform()
         self.pinproc.driver_schedule.assert_called_with(
             9925, 0xffffffff, 0, True)
-        self.pinproc.driver_pulse.assert_called_with(
-            9902, 50)
+        self.pinproc.driver_pulse.assert_has_calls([
+            call(9902, 50)]
+        )
