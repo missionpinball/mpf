@@ -2,14 +2,16 @@
 import asyncio
 from collections import deque
 
+from mpf.core.enable_disable_mixin import EnableDisableMixin
+
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor("balls_held", "enabled")
-class BallHold(SystemWideDevice, ModeDevice):
+@DeviceMonitor("balls_held", enabled="_enabled")
+class BallHold(EnableDisableMixin, SystemWideDevice, ModeDevice):
 
     """Ball hold device which can be used to keep balls in ball devices and control their eject later on."""
 
@@ -17,7 +19,7 @@ class BallHold(SystemWideDevice, ModeDevice):
     collection = 'ball_holds'
     class_label = 'ball_hold'
 
-    __slots__ = ["hold_devices", "source_playfield", "balls_held", "enabled", "_release_hold", "_released_balls",
+    __slots__ = ["hold_devices", "source_playfield", "balls_held", "_release_hold", "_released_balls",
                  "hold_queue"]
 
     def __init__(self, machine, name):
@@ -28,15 +30,9 @@ class BallHold(SystemWideDevice, ModeDevice):
 
         # initialise variables
         self.balls_held = 0
-        self.enabled = False
         self._released_balls = 0
         self._release_hold = None
         self.hold_queue = deque()
-
-    def device_removed_from_mode(self, mode):
-        """Disable ball hold when mode ends."""
-        del mode
-        self.disable()
 
     @property
     def can_exist_outside_of_game(self):
@@ -68,35 +64,21 @@ class BallHold(SystemWideDevice, ModeDevice):
 
         self.source_playfield = self.config['source_playfield']
 
-    def enable(self):
+    def _enable(self):
         """Enable the hold.
 
         If the hold is not enabled, no balls will be held.
         """
-        super().enable()
-        if not self.enabled:
-            self.debug_log("Enabling...")
-            self._register_handlers()
-            self.enabled = True
-        else:
-            self.debug_log(
-                "Received request to enable, but this device is already "
-                "enabled")
+        self.debug_log("Enabling...")
+        self._register_handlers()
 
-    @event_handler(0)
-    def event_disable(self, **kwargs):
-        """Event handler for disable event."""
-        del kwargs
-        self.disable()
-
-    def disable(self):
+    def _disable(self):
         """Disable the hold.
 
         If the hold is not enabled, no balls will be held.
         """
         self.debug_log("Disabling...")
         self._unregister_handlers()
-        self.enabled = False
 
     @event_handler(1)
     def event_reset(self, **kwargs):

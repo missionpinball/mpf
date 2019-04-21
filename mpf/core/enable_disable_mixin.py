@@ -1,5 +1,6 @@
 """Implements enable and disable events for devices."""
 import abc
+import asyncio
 
 from mpf.core.events import event_handler
 
@@ -37,12 +38,6 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
         This can be caused by a mode stop or by an disable_event.
         """
         pass
-
-    @event_handler(100)
-    def event_enable(self, **kwargs) -> None:
-        """Handle enable control event."""
-        del kwargs
-        self.enable()
 
     def enable(self) -> None:
         """Enable device."""
@@ -128,6 +123,8 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
         self.player = None
         self._enabled = None
 
+    @asyncio.coroutine
     def device_added_system_wide(self) -> None:
         """Check enable on boot."""
+        yield from super().device_added_system_wide()
         self._load_enable_based_on_config_default()
