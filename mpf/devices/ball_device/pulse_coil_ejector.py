@@ -66,6 +66,8 @@ class PulseCoilEjector(BallDeviceEjector):
     def ball_search(self, phase, iteration):
         """Run ball search."""
         del iteration
+        if 'no-eject-on-ballsearch' in self.ball_device.config['tags']:
+            return False
         if phase == 1:
             # round 1: only idle + no ball
             # only run ball search when the device is idle and contains no balls

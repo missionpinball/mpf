@@ -1,0 +1,168 @@
+#config_version=5
+
+game:
+    balls_per_game: 3
+
+machine:
+    min_balls: 1
+
+coils:
+    eject_coil1:
+        number:
+    eject_coil2:
+        number:
+    eject_coil3:
+        number:
+    hold_coil:
+        number:
+    drop_target_reset1:
+        number:
+    drop_target_reset2:
+        number:
+    drop_target_knockdown2:
+        number:
+    drop_target_reset3:
+        number:
+    drop_target_reset4:
+        number:
+    drop_target_knockdown4:
+        number:
+    flipper_coil:
+        number:
+        default_hold_power: 0.125
+    diverter_coil:
+        number:
+        default_hold_power: 0.250
+    autofire_coil:
+        number:
+
+digital_outputs:
+    c_motor_run:
+        number:
+        type: driver
+
+playfields:
+    playfield:
+        enable_ball_search: True
+        ball_search_timeout: 20s
+        ball_search_wait_after_iteration: 10s
+        ball_search_interval: 250ms
+        default_source_device: test_launcher
+
+servos:
+    servo1:
+        number:
+        reset_events:
+
+motors:
+    motor1:
+        motor_left_output: c_motor_run
+        position_switches:  !!omap
+            - up: s_position_up
+            - down: s_position_down
+        reset_position: down
+
+switches:
+    s_start:
+        number:
+        tags: start
+    s_ball_switch1:
+        number:
+    s_ball_switch2:
+        number:
+    s_ball_switch3:
+        number:
+    s_ball_switch4:
+        number:
+    s_ball_switch_launcher:
+        number:
+    s_vuk:
+        number:
+    s_lock:
+        number:
+    s_playfield:
+        number:
+        tags: playfield_active
+    s_drop_target1:
+        number:
+    s_drop_target2:
+        number:
+    s_drop_target3:
+        number:
+    s_drop_target4:
+        number:
+    s_autofire:
+        number:
+    s_flipper:
+        number:
+    s_position_up:
+        number:
+    s_position_down:
+        number:
+
+drop_targets:
+    target1:
+        reset_coil: drop_target_reset1
+        switch: s_drop_target1
+        ball_search_order: 10
+    target2:
+        reset_coil: drop_target_reset2
+        knockdown_coil: drop_target_knockdown2
+        switch: s_drop_target2
+        ball_search_order: 11
+    target3:
+        reset_coil: drop_target_reset3
+        switch: s_drop_target3
+        ball_search_order: 12
+    target4:
+        reset_coil: drop_target_reset4
+        knockdown_coil: drop_target_knockdown4
+        switch: s_drop_target4
+        ball_search_order: 13
+
+ball_devices:
+    test_trough:
+        eject_coil: eject_coil1
+        ball_switches: s_ball_switch1, s_ball_switch2, s_ball_switch3, s_ball_switch4
+        debug: true
+        eject_targets: test_launcher
+        tags: trough, drain, home
+        ball_search_order: 1
+    test_launcher:
+        eject_coil: eject_coil2
+        ball_switches: s_ball_switch_launcher
+        eject_timeouts: 5s
+        eject_coil_jam_pulse: 5ms
+        debug: true
+        ball_search_order: 2
+        tags: no-eject-on-ballsearch
+    test_vuk:
+        eject_coil: eject_coil3
+        ball_switches: s_vuk
+        eject_timeouts: 2s
+        debug: true
+        ball_search_order: 3
+    test_lock:
+        hold_coil: hold_coil
+        ball_switches: s_lock
+        eject_timeouts: 2s
+        debug: true
+        ball_search_order: 4
+
+diverters:
+    diverter1:
+        activation_coil: diverter_coil
+        ball_search_order: 14
+
+flippers:
+    flipper1:
+        main_coil: flipper_coil
+        activation_switch: s_flipper
+        ball_search_order: 15
+        include_in_ball_search: True
+
+autofire_coils:
+    autofire1:
+        coil: autofire_coil
+        switch: s_autofire
+        ball_search_order: 16
