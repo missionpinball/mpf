@@ -320,6 +320,87 @@ class Counter(LogicBlock):
             self.hit_value *= -1
         elif self.config['direction'] == 'up' and self.hit_value < 0:
             self.hit_value *= -1
+        # Add control events if included in the config
+        if self.config['control_events']:
+            self._setup_control_events(self.config['control_events'])
+
+    def add_control_events_in_mode(self, mode: Mode) -> None:
+        """Do not auto enable this device in modes."""
+        pass
+
+    def _setup_control_events(self, event_list):
+        self.debug_log("Setting up control events")
+
+        kwargs = {}
+        for entry in event_list:
+            if entry['action'] in ('add', 'subtract', 'set_value'):
+                handler = getattr(self, entry['action'])
+                kwargs = {'value': entry['value']}
+            else:
+                raise AssertionError("Invalid control_event action {} in mode".
+                                     format(entry['action']), self.name)
+            self.machine.events.add_handler(entry['event'], handler, **kwargs)
+
+    def check_complete(self, count_complete_value=None):
+        '''
+        Returns true if the counter has reached or surpassed its specified
+        completion value, returns False if no completion criteria or is
+        not complete.
+        '''
+        # If count_complete_value was not passed, obtain it
+        if count_complete_value is None:
+            count_complete_value = self.config['count_complete_value']\
+                .evaluate([]) if self.config['count_complete_value']\
+                is not None else None
+
+        if count_complete_value is not None:
+
+            if self.config['direction'] == 'up' and self._state.value >= count_complete_value:
+                return True
+
+            elif self.config['direction'] == 'down' and self._state.value <=\
+                    count_complete_value:
+                return True
+        return False
+
+    def add(self, **kwargs):
+        '''Add to the value of this counter.
+
+        Args:
+            kwargs: Used for the "value" member which contains how much to add
+            to the counter.
+        '''
+        # Add to the counter the specified value
+        self._state.value += kwargs['value']
+        # Check if count is complete given the updated value
+        if self.check_complete():
+            self.complete()
+
+    def subtract(self, **kwargs):
+        '''Subtract from the value of this counter.
+
+        Args:
+            kwargs: Used for the "value" member which contains how much to
+            subtract from the counter.
+        '''
+        # Subtract from the counter the specified value
+        self._state.value -= kwargs['value']
+        # Check if count is complete given the updated value
+        if self.check_complete():
+            self.complete()
+
+    def set_value(self, **kwargs):
+        '''Set the internal value of the counter.
+
+        Args:
+            kwargs: Used for the "value" member which contains what to set
+            the counter value to.
+        '''
+        # Set the internal value of the counter to the specified value
+        self._state.value = kwargs['value']
+        # Check if count is complete given the updated value
+        if self.check_complete():
+            self.complete()
 
     def get_start_value(self) -> int:
         """Return start count."""
@@ -368,13 +449,8 @@ class Counter(LogicBlock):
 
             self._post_hit_events(**args)
 
-            if count_complete_value is not None:
-
-                if self.config['direction'] == 'up' and self._state.value >= count_complete_value:
-                    self.complete()
-
-                elif self.config['direction'] == 'down' and self._state.value <= count_complete_value:
-                    self.complete()
+            if self.check_complete(count_complete_value):
+                self.complete()
 
             if self.config['multiple_hit_window']:
                 self.debug_log("Beginning Ignore Hits")

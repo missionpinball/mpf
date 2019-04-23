@@ -295,6 +295,97 @@ class TestLogicBlocks(MpfFakeGameTestCase):
             self.assertEqual(2, self._events["counter2_complete"])
             self.assertEqual(6, self._events["counter2_hit"])
 
+    def test_counter_control_events(self):
+        '''
+        Tests the add, subtract, and set_value control events
+        for the Counter class.
+        '''
+        def reset_event_mocks():
+            # Reset mocks
+            self.mock_event("counter6_complete")
+            self.mock_event("counter6_hit")
+            self.mock_event("counter7_complete")
+            self.mock_event("counter7_hit")
+        self.start_game()
+        reset_event_mocks()
+        # Start mode with control events and counter6
+        self.post_event("start_mode4")
+        self.assertTrue("mode4" in self.machine.modes)
+
+        # Adds zero to the counter 10 times, counter should not reach completion
+        for i in range(10):
+            self.post_event("increase_counter6_0")
+            self.assertEqual(0, self._events["counter6_complete"])
+        # Counts the counter once, and then adds 3 to it 3 times,
+        # The last adding of three should cause the counter to complete once
+        for i in range(0, 2):
+            self.post_event("increase_counter6_3")
+            self.assertEqual(0, self._events["counter6_complete"])
+        self.post_event("counter6_count")
+        self.assertEventCalledWith("counter6_hit", count=7, remaining=3)
+        self.post_event("increase_counter6_3")
+        self.assertEqual(1, self._events["counter6_complete"])
+
+        # Test the adding of five to the counter
+        reset_event_mocks()
+        self.post_event("increase_counter6_5")
+        self.assertEqual(0, self._events["counter6_complete"])
+        self.post_event("increase_counter6_5")
+        self.assertEqual(1, self._events["counter6_complete"])
+
+        # Test subtraction
+        reset_event_mocks()
+        self.post_event("counter6_count")
+        self.assertEventCalledWith("counter6_hit", count=1, remaining=9)
+        self.post_event("reduce_counter6_5")
+        self.post_event("counter6_count")
+        self.assertEventCalledWith("counter6_hit", count=-3, remaining=13)
+        self.post_event("reduce_counter6_3")
+        self.post_event("counter6_count")
+        self.assertEventCalledWith("counter6_hit", count=-5, remaining=15)
+        self.post_event("reduce_counter6_0")
+        self.post_event("counter6_count")
+        self.assertEventCalledWith("counter6_hit", count=-4, remaining=14)
+
+        # Test Setting the Counter to a value
+        reset_event_mocks()
+        # Make sure that the counter holds a nonzero value
+        self.post_event("counter6_count")
+        self.assertEventCalledWith("counter6_hit", count=-3, remaining=13)
+        self.post_event("set_counter6_0")
+        self.post_event("counter6_count")
+        self.assertEventCalledWith("counter6_hit", count=1, remaining=9)
+        # Set the counter to a value above the completion value
+        self.assertEqual(0, self._events["counter6_complete"])
+        self.post_event("set_counter6_25")
+        self.assertEqual(1, self._events["counter6_complete"])
+
+        # Test using counter with direction down
+        # Test increasing and reducing
+        reset_event_mocks()
+        self.post_event("counter7_count")
+        self.assertEventCalledWith("counter7_hit", count=4, remaining=-4)
+        self.post_event("increase_counter7_5")
+        self.post_event("counter7_count")
+        self.assertEventCalledWith("counter7_hit", count=8, remaining=-8)
+        self.post_event("reduce_counter7_5")
+        self.post_event("counter7_count")
+        self.assertEventCalledWith("counter7_hit", count=2, remaining=-2)
+        self.assertEqual(0, self._events["counter7_complete"])
+        self.post_event("reduce_counter7_3")
+        self.assertEqual(1, self._events["counter7_complete"])
+
+        # Test setting the value with direction down counter
+        reset_event_mocks()
+        self.assertEqual(0, self._events["counter7_complete"])
+        self.post_event("set_counter7_negative25")
+        self.assertEqual(1, self._events["counter7_complete"])
+        self.post_event("set_counter7_0")
+        self.assertEqual(2, self._events["counter7_complete"])
+        self.post_event("set_counter7_3")
+        self.post_event("counter7_count")
+        self.assertEventCalledWith("counter7_hit", count=2, remaining=-2)
+
     def test_logic_block_outside_game(self):
         self.mock_event("logicblock_accrual2_complete")
 
