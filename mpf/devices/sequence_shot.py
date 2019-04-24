@@ -27,7 +27,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
         """Initialise sequence shot."""
         super().__init__(machine, name)
 
-        self.delay = mpf.core.delays.DelayManager(self.machine.delayRegistry)
+        self.delay = mpf.core.delays.DelayManager(self.machine)
         self.active_sequences = list()  # type: List[ActiveSequence]
         self.active_delays = set()      # type: Set[str]
 

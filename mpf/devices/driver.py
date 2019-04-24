@@ -36,7 +36,7 @@ class Driver(SystemWideDevice):
         """Initialise driver."""
         self.hw_driver = None   # type: DriverPlatformInterface
         super().__init__(machine, name)
-        self.delay = DelayManager(self.machine.delayRegistry)
+        self.delay = DelayManager(self.machine)
         self.platform = None                # type: DriverPlatform
 
     @classmethod

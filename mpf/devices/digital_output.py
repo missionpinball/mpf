@@ -33,7 +33,7 @@ class DigitalOutput(SystemWideDevice):
         self.platform = None            # type: Union[DriverPlatform, LightsPlatform]
         self.type = None                # type: str
         super().__init__(machine, name)
-        self.delay = DelayManager(self.machine.delayRegistry)
+        self.delay = DelayManager(self.machine)
 
     @asyncio.coroutine
     def _initialize(self):

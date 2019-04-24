@@ -33,7 +33,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         self.source_playfield = None        # type: Playfield
         super().__init__(machine, name)
 
-        self.delay = DelayManager(machine.delayRegistry)
+        self.delay = DelayManager(machine)
         self.enabled = False
         self.timer_started = False
         self.saves_remaining = 0

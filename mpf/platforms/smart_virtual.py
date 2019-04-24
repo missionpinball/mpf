@@ -27,7 +27,7 @@ class BaseSmartVirtualCoilAction:
         self.log = logging.getLogger("SmartVirtual Coil Action")
         self.actions = actions
         self.machine = machine
-        self.delay = DelayManager(self.machine.delayRegistry)
+        self.delay = DelayManager(self.machine)
         self.machine.config['smart_virtual'] = self.machine.config_validator.validate_config(
             "smart_virtual", self.machine.config.get('smart_virtual', {}))
 
@@ -254,7 +254,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
     def __init__(self, machine):
         """Initialise smart virtual platform."""
         super().__init__(machine)
-        self.delay = DelayManager(self.machine.delayRegistry)
+        self.delay = DelayManager(self.machine)
         self.actions = {}       # type: Dict[BallDevice, AddBallToTargetAction]
 
     def __repr__(self):

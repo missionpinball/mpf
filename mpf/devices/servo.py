@@ -29,7 +29,7 @@ class Servo(SystemWideDevice):
         self.speed_limit = None
         self.acceleration_limit = None
         self._ball_search_started = False
-        self.delay = DelayManager(machine.delayRegistry)
+        self.delay = DelayManager(machine)
         super().__init__(machine, name)
 
     @asyncio.coroutine

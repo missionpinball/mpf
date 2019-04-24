@@ -20,7 +20,7 @@ class SwitchPlayer:
             return
 
         self.machine = machine
-        self.delay = DelayManager(self.machine.delayRegistry)
+        self.delay = DelayManager(self.machine)
         self.current_step = 0
 
         self.config = self.machine.config['switch_player']

@@ -27,7 +27,7 @@ class ScoreReel(SystemWideDevice):
     def __init__(self, machine, name):
         """Initialise score reel."""
         super().__init__(machine, name)
-        self.delay = DelayManager(machine.delayRegistry)
+        self.delay = DelayManager(machine)
 
         self.value_switches = []
         # This is a list with each element corresponding to a value on the

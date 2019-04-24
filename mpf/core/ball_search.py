@@ -35,7 +35,7 @@ class BallSearch(MpfController):
         self.playfield = playfield
         """The playfield device this ball search instance is attached to."""
 
-        self.delay = DelayManager(self.machine.delayRegistry)
+        self.delay = DelayManager(self.machine)
 
         self.started = False
         """Is the ball search process started (running) now."""

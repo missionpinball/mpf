@@ -15,7 +15,7 @@ class EnableCoilEjector(PulseCoilEjector):
     def __init__(self, config, ball_device, machine):
         """Initialise ejector."""
         super().__init__(config, ball_device, machine)
-        self.delay = DelayManager(self.ball_device.machine.delayRegistry)
+        self.delay = DelayManager(self.ball_device.machine)
 
     def _validate_config(self):
         # overwrite validation from pulse_coil_ejector

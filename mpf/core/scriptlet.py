@@ -22,7 +22,7 @@ class Scriptlet(LogMixin):
         self.name = name
 
         self.configure_logging('Scriptlet.' + name, 'basic', 'full')
-        self.delay = DelayManager(self.machine.delayRegistry)
+        self.delay = DelayManager(self.machine)
         self.on_load()
 
     def __repr__(self):

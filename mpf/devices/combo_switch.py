@@ -28,7 +28,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
         self._switches_1_active = False
         self._switches_2_active = False
 
-        self.delay = DelayManager(self.machine.delayRegistry)
+        self.delay = DelayManager(self.machine)
 
     def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Validate and parse config."""

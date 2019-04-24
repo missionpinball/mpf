@@ -20,7 +20,7 @@ class Magnet(SystemWideDevice):
     def __init__(self, machine, name):
         """Initialise magnet."""
         super().__init__(machine, name)
-        self.delay = DelayManager(machine.delayRegistry)
+        self.delay = DelayManager(machine)
         self._enabled = False
         self._active = False
         self._release_in_progress = False

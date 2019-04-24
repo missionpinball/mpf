@@ -16,7 +16,7 @@ class CustomCode(LogMixin):
         self.name = name
 
         self.configure_logging('CustomCode.' + name, 'basic', 'full')
-        self.delay = DelayManager(self.machine.delayRegistry)
+        self.delay = DelayManager(self.machine)
         self.on_load()
 
     def __repr__(self):

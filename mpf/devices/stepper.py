@@ -37,7 +37,7 @@ class Stepper(SystemWideDevice):
         self._is_homed = False
         self._is_moving = asyncio.Event(loop=machine.clock.loop)
         self._move_task = None          # type: Optional[asyncio.Task]
-        self.delay = DelayManager(machine.delayRegistry)
+        self.delay = DelayManager(machine)
         super().__init__(machine, name)
 
     @asyncio.coroutine

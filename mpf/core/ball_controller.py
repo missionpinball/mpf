@@ -29,7 +29,7 @@ class BallController(MpfController):
         """
         super().__init__(machine)
 
-        self.delay = DelayManager(self.machine.delayRegistry)
+        self.delay = DelayManager(self.machine)
 
         self.num_balls_known = 0
 

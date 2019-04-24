@@ -66,7 +66,7 @@ class Timer(ModeDevice):
         self.tick_secs = None
         self.timer = None
         self.event_keys = list()
-        self.delay = DelayManager(self.machine.delayRegistry)
+        self.delay = DelayManager(self.machine)
 
         self.restart_on_complete = self.config['restart_on_complete']
         self.end_value = None

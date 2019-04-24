@@ -1,39 +1,15 @@
-"""Contains the DelayManager and DelayManagerRegistry base classes."""
+"""Contains the DelayManager base classes."""
 
 import uuid
 from functools import partial
-
-from typing import Any, Callable, Dict, Set
-
+from typing import Any, Callable, Dict
 from mpf.core.mpf_controller import MpfController
 
-MYPY = False
-if MYPY:   # pragma: no cover
+MYPY = False    # noqa
+if MYPY:
     from mpf.core.machine import MachineController
 
-__api__ = ['DelayManager', 'DelayManagerRegistry']
-
-
-class DelayManagerRegistry:
-
-    """Keeps references to all DelayManager instances."""
-
-    __slots__ = ["delay_managers", "machine"]
-
-    def __init__(self, machine: "MachineController") -> None:
-        """Initialise delay registry."""
-        self.delay_managers = set()     # type: Set["DelayManager"]
-        self.machine = machine
-
-    def add_delay_manager(self, delay_manager: "DelayManager") -> None:
-        """Add a delay manager to the list.
-
-        Args:
-            delay_manager: The :class:`DelayManager` instance you're adding to
-                this registry.
-
-        """
-        self.delay_managers.add(delay_manager)
+__api__ = ['DelayManager']
 
 
 class DelayManager(MpfController):
@@ -53,12 +29,10 @@ class DelayManager(MpfController):
 
     config_name = "delay_manager"
 
-    def __init__(self, registry: DelayManagerRegistry) -> None:
+    def __init__(self, machine: "MachineController") -> None:
         """Initialise delay manager."""
         self.delays = {}        # type: Dict[str, Any]
-        super().__init__(registry.machine)
-        self.registry = registry
-        self.registry.add_delay_manager(self)
+        super().__init__(machine)
 
     def add(self, ms: int, callback: Callable[..., None], name: str = None,
             **kwargs) -> str:
