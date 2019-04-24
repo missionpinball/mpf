@@ -51,11 +51,12 @@ class BenchmarkLightShows(MpfGameTestCase):
         all_leds = self._benchmark(partial(self._event_and_run, "play_single_step_tag_playfield", "stop_single_step_tag_playfield"), "all_leds_tag")
         multi_step = self._benchmark(partial(self._event_and_run, "play_multi_step", "stop_multi_step"), "multi_step", num=500)
 
-        print("Baseline: {:.5f}ms One LED: +{:.5f}ms 30 LEDs: +{:.5f}ms Multi Step: +{:.5f}".format(
+        print("Baseline: {:.5f}ms One LED: +{:.5f}ms {:.2f} fps; 30 LEDs: +{:.5f}ms {:.2f} fps; "
+              "Multi Step: +{:.5f} {:.2f} fps;".format(
             baseline * 1000,
-            (minimal_show - baseline) * 1000,
-            (all_leds - baseline) * 1000,
-            (multi_step - baseline) * 1000
+            (minimal_show - baseline) * 1000, 1 / (minimal_show - baseline),
+            (all_leds - baseline) * 1000, 1 / (all_leds - baseline),
+            (multi_step - baseline) * 1000, 1 / (multi_step - baseline)
             ))
 
     def _event_and_run(self, event, event2, num, test):
@@ -66,7 +67,7 @@ class BenchmarkLightShows(MpfGameTestCase):
 
         start = time.time()
         for i in range(num):
-            self.post_event(event)
+            self.machine.events.post(event)
             for channel in channel_list:
                 brightness = channel.current_brightness
             self.advance_time_and_run(.01)
@@ -76,5 +77,5 @@ class BenchmarkLightShows(MpfGameTestCase):
         end = time.time()
         self.advance_time_and_run()
         end2 = time.time()
-        self.post_event(event2)
+        self.machine.events.post(event2)
         return start, end, end2
