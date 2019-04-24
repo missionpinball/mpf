@@ -365,10 +365,11 @@ class Light(SystemWideDevice, DevicePositionMixin):
 
         if fade_ms:
             dest_time = start_time + (fade_ms / 1000)
+            color_below = self.get_color_below(priority, key)
         else:
             dest_time = 0
+            color_below = None
 
-        color_below = self.get_color_below(priority, key)
         self._remove_from_stack_by_key(key)
 
         self.stack.append(LightStackEntry(priority,
