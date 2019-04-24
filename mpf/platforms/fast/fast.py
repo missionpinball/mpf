@@ -817,4 +817,3 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                            "hardware rules or switch configs). This is likely cause by an unstable power supply but it "
                            "might as well be a firmware bug. MPF will exit now.")
             self.machine.stop("FAST Nano rebooted during game")
-
