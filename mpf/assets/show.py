@@ -2,8 +2,11 @@
 import tempfile
 import hashlib
 import os
+
 import re
 from collections import namedtuple
+
+from typing import List, Dict, Any
 
 from mpf.core.assets import Asset, AssetPool
 from mpf.core.config_validator import RuntimeToken
@@ -49,7 +52,7 @@ class Show(Asset):
     asset_group_class = ShowPool
 
     __slots__ = ["_autoplay_settings", "tokens", "token_values", "token_keys", "name", "total_steps", "show_steps",
-                 "loaded", "mode"]
+                 "loaded", "mode", "_step_cache"]
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, machine, name, file=None, config=None, data=None):
@@ -66,7 +69,8 @@ class Show(Asset):
 
         self.name = name
         self.total_steps = None
-        self.show_steps = None
+        self.show_steps = None      # type: List[Dict[str, Any]]
+        self._step_cache = {}
 
         if data:
             self._do_load_show(data=data)
@@ -230,23 +234,26 @@ class Show(Asset):
         else:
             self._check_token(path, data, 'value')
 
-    def get_show_steps(self, data='dummy_default!#$'):
-        """Return a copy of the show steps."""
-        if data == 'dummy_default!#$':
-            data = self.show_steps
-
+    @classmethod
+    def _copy_recursive(cls, data):
         if isinstance(data, dict):
             new_dict = dict()
             for k, v in data.items():
-                new_dict[k] = self.get_show_steps(v)
+                new_dict[k] = cls._copy_recursive(v)
             return new_dict
         elif isinstance(data, list):
             new_list = list()
             for i in data:
-                new_list.append(self.get_show_steps(i))
+                new_list.append(cls._copy_recursive(i))
             return new_list
-
         return data
+
+    def get_show_steps(self):
+        """Return a copy of the show steps."""
+        copied_steps = []
+        for step in self.show_steps:
+            copied_steps.append(self._copy_recursive(step))
+        return copied_steps
 
     def _check_token(self, path, data, token_type):
         if isinstance(data, RuntimeToken):
@@ -288,7 +295,6 @@ class Show(Asset):
 
         running_show = RunningShow(machine=self.machine,
                                    show=self,
-                                   show_steps=show_steps,
                                    start_time=start_time,
                                    start_step=int(start_step),
                                    callback=stop_callback,
@@ -405,109 +411,34 @@ class Show(Asset):
             [self.file], "show", load_from_cache=not self.machine.options['no_load_cache'],
             store_to_cache=self.machine.options['create_config_cache'])
 
+    def get_show_steps_with_token(self, show_tokens):
+        """Get show steps and replace additional tokens."""
+        if show_tokens and self.tokens:
+            token_hash = hash(str(show_tokens))
+            if token_hash in self._step_cache:
+                return self._step_cache[token_hash]
 
-# This class is more or less a container
-# pylint: disable-msg=too-many-instance-attributes
-class RunningShow:
+            show_steps = self.get_show_steps()
+            # if we need to replace more tokens copy the show
+            self._replace_token_values(show_steps, show_tokens)
+            self._replace_token_keys(show_steps, show_tokens)
 
-    """A running instance of a show."""
+            for step in show_steps:
+                for key, value in step.items():
+                    if key in self.machine.show_controller.show_players.keys():
+                        step[key] = self.machine.show_controller.show_players[key].expand_config_entry(value)
 
-    __slots__ = ["machine", "show", "show_steps", "show_config", "callback", "start_step", "start_callback",
-                 "_delay_handler", "next_step_index", "current_step_index", "next_step_time", "name", "loops",
-                 "id", "_players", "debug", "_stopped", "_show_loaded", "_total_steps", "context"]
-
-    # pylint: disable-msg=too-many-arguments
-    # pylint: disable-msg=too-many-locals
-    def __init__(self, machine, show, show_steps, start_step, callback, start_time, start_callback, show_config):
-        """Initialise an instance of a show."""
-        self.machine = machine
-        self.show = show
-        self.show_steps = show_steps
-        self.show_config = show_config
-        self.callback = callback
-        self.start_step = start_step
-        self.start_callback = start_callback
-        self._delay_handler = None
-        self.next_step_index = None
-        self.current_step_index = None
-        self.next_step_time = start_time
-        self.name = show.name
-        self.loops = self.show_config.loops
-
-        self.id = self.machine.show_controller.get_next_show_id()
-        self.context = "show_{}".format(self.id)
-        self._players = set()
-
-        # if show_tokens:
-        #     self.show_tokens = show_tokens
-        # else:
-        #     self.show_tokens = dict()
-        self.debug = False
-        self._stopped = False
-        self._total_steps = None
-
-        if show_steps:
-            self._show_loaded = True
-            self._start_play()
+            self._step_cache[token_hash] = show_steps
+            return show_steps
         else:
-            self._show_loaded = False
+            # otherwise return show steps. the caller should not change them
+            return self.show_steps
 
-    def show_loaded(self, show):
-        """Handle that a deferred show was loaded.
-
-        Start playing the show as if it started earlier.
-        """
-        del show
-        self._show_loaded = True
-        self.show_steps = self.show.get_show_steps()
-        self._start_play()
-
-    def _start_play(self):
-        if self._stopped:
-            return
-
-        self._total_steps = len(self.show_steps)
-
-        if self.start_step > 0:
-            self.next_step_index = self.start_step - 1
-        elif self.start_step < 0:
-            self.next_step_index = self.start_step % self._total_steps
-        else:
-            self.next_step_index = 0
-
-        if self.show_config.show_tokens and self.show.tokens:
-            self._replace_token_values(**self.show_config.show_tokens)
-            self._replace_token_keys(**self.show_config.show_tokens)
-
-        # Figure out the show start time
-        if self.show_config.sync_ms:
-            # calculate next step based on synchronized start time
-            self.next_step_time += (self.show_config.sync_ms / 1000.0) - (self.next_step_time %
-                                                                          (self.show_config.sync_ms / 1000.0))
-            # but wait relative to real time
-            delay_secs = self.next_step_time - self.machine.clock.get_time()
-            self._delay_handler = self.machine.clock.schedule_once(
-                self._start_now, delay_secs)
-        else:  # run now
-            self._start_now()
-
-    def _post_events(self, actions):
-        for action in actions:
-            events = getattr(self.show_config, "events_when_{}".format(action), None)
-            if events:
-                for event in events:
-                    self.machine.events.post(event)
-
-    def __repr__(self):
-        """Return str representation."""
-        return 'Running Show Instance: "{}" {} {}'.format(self.name, self.show_config.show_tokens, self.next_step_index)
-
-    def _replace_token_values(self, **kwargs):
-
-        for token, replacement in kwargs.items():
-            if token in self.show.token_values:
-                for token_path in self.show.token_values[token]:
-                    target = self.show_steps
+    def _replace_token_values(self, show_steps, show_tokens):
+        for token, replacement in show_tokens.items():
+            if token in self.token_values:
+                for token_path in self.token_values[token]:
+                    target = show_steps
                     for x in token_path[:-1]:
                         target = target[x]
 
@@ -517,15 +448,16 @@ class RunningShow:
                         target[token_path[-1]] = replacement
                     else:
                         target[token_path[-1]] = target[token_path[-1]].replace("(" + token + ")", replacement)
+        return show_steps
 
-    def _replace_token_keys(self, **kwargs):
+    def _replace_token_keys(self, show_steps, show_tokens):
         keys_replaced = dict()
         # pylint: disable-msg=too-many-nested-blocks
-        for token, replacement in kwargs.items():
-            if token in self.show.token_keys:
+        for token, replacement in show_tokens.items():
+            if token in self.token_keys:
                 key_name = '({})'.format(token)
-                for token_path in self.show.token_keys[token]:
-                    target = self.show_steps
+                for token_path in self.token_keys[token]:
+                    target = show_steps
                     token_str = ""
                     for x in token_path[:-1]:
                         if token_str in keys_replaced:
@@ -550,6 +482,94 @@ class RunningShow:
                         raise KeyError("Could not find token {} ({}) in {}".format(final_key, key_name, target))
 
                     keys_replaced[token_str] = replaced_key
+        return show_steps
+
+
+# This class is more or less a container
+# pylint: disable-msg=too-many-instance-attributes
+class RunningShow:
+
+    """A running instance of a show."""
+
+    __slots__ = ["machine", "show", "show_steps", "show_config", "callback", "start_step", "start_callback",
+                 "_delay_handler", "next_step_index", "current_step_index", "next_step_time", "name", "loops",
+                 "id", "_players", "debug", "_stopped", "_show_loaded", "_total_steps", "context"]
+
+    # pylint: disable-msg=too-many-arguments
+    # pylint: disable-msg=too-many-locals
+    def __init__(self, machine, show, start_step, callback, start_time, start_callback, show_config):
+        """Initialise an instance of a show."""
+        self.machine = machine
+        self.show = show
+        self.show_steps = None
+        self.show_config = show_config
+        self.callback = callback
+        self.start_step = start_step
+        self.start_callback = start_callback
+        self._delay_handler = None
+        self.next_step_index = None
+        self.current_step_index = None
+        self.next_step_time = start_time
+        self.name = show.name
+        self.loops = self.show_config.loops
+
+        self.id = self.machine.show_controller.get_next_show_id()
+        self.context = "show_{}".format(self.id)
+        self._players = set()
+
+        self.debug = False
+        self._stopped = False
+        self._total_steps = None
+        self._show_loaded = False
+
+        if show.loaded:
+            self.show_loaded()
+
+    def show_loaded(self, show=None):
+        """Handle that a deferred show was loaded.
+
+        Start playing the show as if it started earlier.
+        """
+        del show
+        self._show_loaded = True
+        self.show_steps = self.show.get_show_steps_with_token(self.show_config.show_tokens)
+        self._start_play()
+
+    def _start_play(self):
+        if self._stopped:
+            return
+
+        self._total_steps = len(self.show_steps)
+
+        if self.start_step > 0:
+            self.next_step_index = self.start_step - 1
+        elif self.start_step < 0:
+            self.next_step_index = self.start_step % self._total_steps
+        else:
+            self.next_step_index = 0
+
+        # Figure out the show start time
+        if self.show_config.sync_ms:
+            # calculate next step based on synchronized start time
+            self.next_step_time += (self.show_config.sync_ms / 1000.0) - (self.next_step_time %
+                                                                          (self.show_config.sync_ms / 1000.0))
+            # but wait relative to real time
+            delay_secs = self.next_step_time - self.machine.clock.get_time()
+            self._delay_handler = self.machine.clock.schedule_once(
+                self._start_now, delay_secs)
+        else:  # run now
+            self._start_now()
+
+    def _post_events(self, actions):
+        for action in actions:
+            events = getattr(self.show_config, "events_when_{}".format(action), None)
+            if events:
+                for event in events:
+                    self.machine.events.post(event)
+
+    def __repr__(self):
+        """Return str representation."""
+        return 'Running Show Instance: "{}" {} {}'.format(self.name, self.show_config.show_tokens, self.next_step_index)
 
     @property
     def stopped(self):

@@ -90,10 +90,10 @@ class LightPlayer(DeviceConfigPlayer):
 
     # pylint: disable-msg=too-many-arguments
     def _light_color(self, light, instance_dict, full_context, color, fade_ms, priority):
-        if color == "stop":
+        if isinstance(color, str) and color == "stop":
             self._light_remove(light, instance_dict, full_context, fade_ms)
             return
-        if color != "on":
+        if isinstance(color, str) and color != "on":
             # hack to keep compatibility for matrix_light values
             if len(color) == 1:
                 color = "0" + color + "0" + color + "0" + color
@@ -111,6 +111,19 @@ class LightPlayer(DeviceConfigPlayer):
             light.remove_from_stack_by_key(full_context)
 
         self._reset_instance_dict(context)
+
+    def _expand_device_config(self, device_settings):
+        # convert all colors to RGBColor
+        device_settings = super()._expand_device_config(device_settings)
+        color = device_settings['color']
+        if isinstance(color, str) and "(" not in color and color not in ("on", "stop"):
+            # hack to keep compatibility for matrix_light values
+            if len(color) == 1:
+                color = "0" + color + "0" + color + "0" + color
+            elif len(color) == 2:
+                color = color + color + color
+            device_settings['color'] = RGBColor(color)
+        return device_settings
 
     def get_express_config(self, value):
         """Parse express config."""

@@ -1,6 +1,8 @@
 """Base class for config players which have multiple entries."""
 import abc
 
+from mpf.core.utility_functions import Util
+
 from mpf.core.config_player import ConfigPlayer
 from mpf.exceptions.ConfigFileError import ConfigFileError
 
@@ -12,6 +14,19 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
     __slots__ = []
 
     allow_placeholders_in_keys = False
+
+    def expand_config_entry(self, settings):
+        """Expend objects in config entry idempotently."""
+        expanded_config = dict()
+        for device, device_settings in settings.items():
+            device_settings = self._expand_device_config(device_settings)
+
+            devices = self._expand_device(device)
+
+            for this_device in devices:
+                expanded_config[this_device] = device_settings
+
+        return expanded_config
 
     def validate_config_entry(self, settings, name):
         """Validate one entry of this player."""
@@ -58,31 +73,49 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
             device_settings = device
 
         device_settings = self._parse_config(device_settings, device)
+        device_settings = self._expand_device_config(device_settings)
 
-        try:
-            if self.device_collection:
-                devices = self.device_collection.items_tagged(device)
-                if not devices:
-                    devices = [self.device_collection[device]]
-
-            else:
-                devices = [device]
-
-        except KeyError:
-            if not self.__class__.allow_placeholders_in_keys or "(" not in device:
-                # no placeholders
-                return self.raise_config_error(
-                    "Could not find a {} device with name or tag {}.".format(self.device_collection.name, device),
-                    1)
-            else:
-                # placeholders may be evaluated later
-                devices = [device]
+        devices = self._expand_device(device)
 
         return_dict = dict()
         for this_device in devices:
             return_dict[this_device] = device_settings
 
         return return_dict
+
+    def _expand_device(self, device):
+        """Idempotently expand device if it is a placeholder."""
+        if not isinstance(device, str):
+            return [device]
+
+        device_or_tag_names = Util.string_to_list(device)
+        if not self.device_collection:
+            return device_or_tag_names
+
+        device_list = []
+        for device_name in device_or_tag_names:
+            try:
+                devices = self.device_collection.items_tagged(device_name)
+                if not devices:
+                    device_list.append(self.device_collection[device_name])
+                else:
+                    device_list.extend(devices)
+
+            except KeyError:
+                if not self.__class__.allow_placeholders_in_keys or "(" not in device_name:
+                    # no placeholders
+                    return self.raise_config_error(
+                        "Could not find a {} device with name or tag {}.".format(
+                            self.device_collection.name, device_name),
+                        1)
+                else:
+                    # placeholders may be evaluated later
+                    device_list.append(device_name)
+        return device_list
+
+    def _expand_device_config(self, device_config):
+        """Idempotently expand device config."""
+        return device_config
 
     @abc.abstractmethod
     def play(self, settings, context: str, calling_context: str, priority: int = 0, **kwargs):
