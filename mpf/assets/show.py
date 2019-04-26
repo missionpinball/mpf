@@ -285,11 +285,6 @@ class Show(Asset):
     def play_with_config(self, show_config: ShowConfig, start_time=None, start_callback=None, stop_callback=None,
                          start_step=None) -> "RunningShow":
         """Play this show with config."""
-        if self.loaded:
-            show_steps = self.get_show_steps()
-        else:
-            show_steps = False
-
         if not start_time:
             start_time = self.machine.clock.get_time()
 
