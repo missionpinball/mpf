@@ -113,9 +113,9 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
                     device_list.append(device_name)
         return device_list
 
-    def _expand_device_config(self, device_config):
+    def _expand_device_config(self, device_settings):
         """Idempotently expand device config."""
-        return device_config
+        return device_settings
 
     @abc.abstractmethod
     def play(self, settings, context: str, calling_context: str, priority: int = 0, **kwargs):
