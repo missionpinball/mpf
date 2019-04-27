@@ -370,3 +370,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         """Directly play player."""
         # **kwargs since this is an event callback
         raise NotImplementedError
+
+    def expand_config_entry(self, settings):
+        """Expend objects in config entry idempotently."""
+        return settings

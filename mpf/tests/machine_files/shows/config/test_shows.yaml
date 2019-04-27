@@ -15,8 +15,10 @@ lights:
         tags: tag1, row0
     led_03:
         number: 2
+        tags: row1
     led_04:
         number: 3
+        tags: row2
     light_01:
         number: 0
         label: Test 0
@@ -190,15 +192,15 @@ show_player:
          line2color: orange
          line3num: row2
          line3color: yellow
-         line4num: row3
+         line4num: row2
          line4color: green
-         line5num: row4
+         line5num: row2
          line5color: blue
-         line6num: row5
+         line6num: row2
          line6color: indigo
-         line7num: row6
+         line7num: row2
          line7color: violet
-         line8num: row7
+         line8num: row2
          line8color: midnightblue
   test_mode_stopped:
     8linesweep:

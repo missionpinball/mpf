@@ -1,4 +1,4 @@
 #show_version=5
 - duration: .001
   lights:
-    (tag): (color)
+    (led): red

@@ -6,7 +6,7 @@ from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.tests.loop import MockSerial, MockSocket
 
 
-class MockLisySocket(MockSerial, MockSocket):
+class MockLisySocket(MockSocket):
 
     def read(self, length):
         del length
@@ -64,7 +64,6 @@ class TestLisy(MpfTestCase):
         return 'tests/machine_files/lisy/'
 
     def _mock_loop(self):
-        self.clock.mock_serial("com1", self.serialMock)
         self.clock.mock_socket("localhost", 1234, self.serialMock)
 
     def tearDown(self):

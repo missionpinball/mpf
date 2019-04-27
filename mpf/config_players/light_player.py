@@ -1,5 +1,4 @@
 """Light config player."""
-from copy import deepcopy
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 from mpf.core.rgb_color import RGBColor
 from mpf.core.utility_functions import Util
@@ -23,11 +22,11 @@ class LightPlayer(DeviceConfigPlayer):
         del kwargs
 
         for light, s in settings.items():
-            s = deepcopy(s)
+            final_priority = s["priority"]
             try:
-                s['priority'] += priority
+                final_priority += priority
             except KeyError:
-                s['priority'] = priority
+                final_priority = priority
             if isinstance(light, str):
                 light_names = Util.string_to_list(light)
                 for light_name in light_names:
@@ -35,20 +34,15 @@ class LightPlayer(DeviceConfigPlayer):
                     if not light_name or light_name[0:1] == "(" and light_name[-1:] == ")":
                         continue
                     self._light_named_color(light_name, instance_dict, full_context, s['color'], s["fade"],
-                                            s['priority'])
+                                            final_priority)
             else:
-                self._light_color(light, instance_dict, full_context, s['color'], s["fade"], s['priority'])
+                self._light_color(light, instance_dict, full_context, s['color'], s["fade"], final_priority)
 
-    def _remove(self, settings, context, priority):
+    def _remove(self, settings, context):
         instance_dict = self._get_instance_dict(context)
         full_context = self._get_full_context(context)
 
         for light, s in settings.items():
-            s = deepcopy(s)
-            try:
-                s['priority'] += priority
-            except KeyError:
-                s['priority'] = priority
             if isinstance(light, str):
                 light_names = Util.string_to_list(light)
                 for light_name in light_names:
@@ -78,7 +72,7 @@ class LightPlayer(DeviceConfigPlayer):
         if value:
             self.play(settings, context, "", priority)
         else:
-            self._remove(settings, context, priority)
+            self._remove(settings, context)
 
     # pylint: disable-msg=too-many-arguments
     def _light_named_color(self, light_name, instance_dict,
@@ -96,10 +90,10 @@ class LightPlayer(DeviceConfigPlayer):
 
     # pylint: disable-msg=too-many-arguments
     def _light_color(self, light, instance_dict, full_context, color, fade_ms, priority):
-        if color == "stop":
+        if isinstance(color, str) and color == "stop":
             self._light_remove(light, instance_dict, full_context, fade_ms)
             return
-        if color != "on":
+        if isinstance(color, str) and color != "on":
             # hack to keep compatibility for matrix_light values
             if len(color) == 1:
                 color = "0" + color + "0" + color + "0" + color
@@ -117,6 +111,19 @@ class LightPlayer(DeviceConfigPlayer):
             light.remove_from_stack_by_key(full_context)
 
         self._reset_instance_dict(context)
+
+    def _expand_device_config(self, device_settings):
+        # convert all colors to RGBColor
+        device_settings = super()._expand_device_config(device_settings)
+        color = device_settings['color']
+        if isinstance(color, str) and "(" not in color and color not in ("on", "stop"):
+            # hack to keep compatibility for matrix_light values
+            if len(color) == 1:
+                color = "0" + color + "0" + color + "0" + color
+            elif len(color) == 2:
+                color = color + color + color
+            device_settings['color'] = RGBColor(color)
+        return device_settings
 
     def get_express_config(self, value):
         """Parse express config."""

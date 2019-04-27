@@ -92,6 +92,12 @@ show_player:
   stop_minimal_light_show:
     minimal_light_show: stop
   play_minimal_light_show: minimal_light_show
+  stop_minimal_light_show_token:
+    minimal_light_show_token: stop
+  play_minimal_light_show_token:
+    minimal_light_show_token:
+      show_tokens:
+        led: light_1
   stop_single_step_tag_playfield:
     single_step_tag: stop
   play_single_step_tag_playfield:

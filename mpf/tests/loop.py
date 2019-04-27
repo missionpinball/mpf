@@ -16,13 +16,18 @@ from serial_asyncio import SerialTransport
 
 
 class NextTimers:
+
+    """Next timers."""
+
+    __slots__ = ["_timers_set", "_timers_heap"]
+
     def __init__(self):
         # Timers set. Used to check uniqueness:
         self._timers_set = set()
         # Timers heap. Used to get the closest timer event:
         self._timers_heap = []
 
-    def add(self,when):
+    def add(self, when):
         """
         Add a timer (Future event).
         """
@@ -33,7 +38,7 @@ class NextTimers:
         # Add to set:
         self._timers_set.add(when)
         # Add to heap:
-        heapq.heappush(self._timers_heap,when)
+        heapq.heappush(self._timers_heap, when)
 
     def is_empty(self):
         return (len(self._timers_set) == 0)
@@ -52,6 +57,9 @@ class NextTimers:
 
 
 class _TestTransport:
+
+    __slots__ = ["_loop", "_sock"]
+
     def __init__(self, loop, sock):
         self._loop = loop
         self._sock = sock
@@ -68,6 +76,9 @@ class _TestTransport:
 
 
 class MockFd:
+
+    __slots__ = ["is_open"]
+
     def __init__(self):
         self.is_open = False
 
@@ -88,6 +99,9 @@ class MockFd:
 
 
 class MockSocket(MockFd):
+
+    __slots__ = ["family", "type", "proto", "__dict__"]
+
     def __init__(self):
         super().__init__()
         self.family = socket.AF_INET
@@ -108,6 +122,9 @@ class MockSocket(MockFd):
 
 
 class MockQueueSocket(MockSocket):
+
+    __slots__ = ["send_queue", "recv_queue"]
+
     def __init__(self, loop):
         super().__init__()
         self.send_queue = asyncio.Queue(loop=loop)
@@ -128,6 +145,9 @@ class MockQueueSocket(MockSocket):
 
 
 class MockServer:
+
+    __slots__ = ["loop", "is_bound", "client_connected_cb"]
+
     def __init__(self, loop):
         self.loop = loop
         self.is_bound = asyncio.Future(loop=loop)
@@ -159,6 +179,9 @@ class MockServer:
 
 
 class MockSerial(MockFd):
+
+    __slots__ = ["fd", "timeout"]
+
     def __init__(self):
         super().__init__()
         self.fd = self
@@ -192,6 +215,9 @@ class MockSerial(MockFd):
 
 
 class TestSelector(selectors.BaseSelector):
+
+    __slots__ = ["keys"]
+
     def __init__(self):
         self.keys = {}
 
@@ -224,6 +250,9 @@ class TimeTravelLoop(base_events.BaseEventLoop):
     Loop for unittests. Passes time without waiting, but makes sure events
     happen in the correct order.
     """
+
+    __slots__ = ["readers", "writers", "_time", "_clock_resolution", "_timers", "_selector", "_transports",
+                 "_wait_for_external_executor"]
 
     def __init__(self):
         self.readers = {}
@@ -389,6 +418,8 @@ class TimeTravelLoop(base_events.BaseEventLoop):
 
 
 class TestClock(ClockBase):
+
+    __slots__ = ["_test_loop", "_mock_sockets", "_mock_servers", "_mock_serials"]
 
     def __init__(self, loop):
         self._test_loop = loop
