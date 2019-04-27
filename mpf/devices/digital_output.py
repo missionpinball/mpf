@@ -4,6 +4,7 @@ from functools import partial
 from typing import Union, Tuple
 
 from mpf.core.delays import DelayManager
+from mpf.core.events import event_handler
 
 from mpf.core.machine import MachineController
 from mpf.core.platform import DriverConfig
@@ -84,9 +85,14 @@ class DigitalOutput(SystemWideDevice):
         else:
             return 0.0, -1, True
 
-    def pulse(self, pulse_ms, **kwargs):
-        """Pulse digital output."""
+    @event_handler(3)
+    def event_pulse(self, pulse_ms, **kwargs):
+        """Handle pulse control event."""
         del kwargs
+        self.pulse(pulse_ms)
+
+    def pulse(self, pulse_ms):
+        """Pulse digital output."""
         if self.type == "driver":
             self.hw_driver.pulse(PulseSettings(power=1.0, duration=pulse_ms))
         elif self.type == "light":
@@ -98,9 +104,14 @@ class DigitalOutput(SystemWideDevice):
         else:
             raise AssertionError("Invalid type {}".format(self.type))
 
-    def enable(self, **kwargs):
-        """Enable digital output."""
+    @event_handler(2)
+    def event_enable(self, **kwargs):
+        """Handle enable control event."""
         del kwargs
+        self.enable()
+
+    def enable(self):
+        """Enable digital output."""
         if self.type == "driver":
             self.hw_driver.enable(PulseSettings(power=1.0, duration=0),
                                   HoldSettings(power=1.0))
@@ -111,9 +122,14 @@ class DigitalOutput(SystemWideDevice):
         else:
             raise AssertionError("Invalid type {}".format(self.type))
 
-    def disable(self, **kwargs):
-        """Disable digital output."""
+    @event_handler(1)
+    def event_disable(self, **kwargs):
+        """Handle disable control event."""
         del kwargs
+        self.disable()
+
+    def disable(self):
+        """Disable digital output."""
         if self.type == "driver":
             self.hw_driver.disable()
         elif self.type == "light":

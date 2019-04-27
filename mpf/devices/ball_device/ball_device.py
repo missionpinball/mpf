@@ -4,7 +4,7 @@ from collections import deque
 
 import asyncio
 
-from mpf.core.events import QueuedEvent
+from mpf.core.events import QueuedEvent, event_handler
 from mpf.devices.ball_device.ball_count_handler import BallCountHandler
 from mpf.devices.ball_device.ball_device_ejector import BallDeviceEjector
 
@@ -80,7 +80,8 @@ class BallDevice(SystemWideDevice):
             return self.counted_balls - 1
         return self.counted_balls
 
-    def entrance(self, **kwargs):
+    @event_handler(11)
+    def event_entrance(self, **kwargs):
         """Event handler for entrance events."""
         del kwargs
         self.ball_count_handler.counter.received_entrance_event()
@@ -572,7 +573,13 @@ class BallDevice(SystemWideDevice):
 
         return False
 
-    def request_ball(self, balls=1, **kwargs):
+    @event_handler(1)
+    def event_request_ball(self, balls=1, **kwargs):
+        """Handle request_ball control event."""
+        del kwargs
+        self.request_ball(balls)
+
+    def request_ball(self, balls=1):
         """Request that one or more balls is added to this device.
 
         Args:
@@ -581,7 +588,6 @@ class BallDevice(SystemWideDevice):
                 itself.
             **kwargs: unused
         """
-        del kwargs
         self.debug_log("Requesting Ball(s). Balls=%s", balls)
 
         for dummy_iterator in range(balls):
@@ -706,12 +712,17 @@ class BallDevice(SystemWideDevice):
 
         return False
 
-    def eject(self, balls=1, target=None, **kwargs) -> int:
+    @event_handler(2)
+    def event_eject(self, balls=1, target=None, **kwargs):
+        """Handle eject control event."""
+        del kwargs
+        self.eject(balls, target)
+
+    def eject(self, balls=1, target=None) -> int:
         """Eject balls to target.
 
         Return the number of balls found for eject. The remaining balls are queued for eject when available.
         """
-        del kwargs
         if not target:
             target = self._target_on_unexpected_ball
 
@@ -726,7 +737,13 @@ class BallDevice(SystemWideDevice):
 
         return balls_found
 
-    def eject_all(self, target=None, **kwargs):
+    @event_handler(3)
+    def event_eject_all(self, target=None, **kwargs):
+        """Handle eject_all control event."""
+        del kwargs
+        self.eject_all(target)
+
+    def eject_all(self, target=None):
         """Eject all the balls from this device.
 
         Args:
@@ -737,7 +754,6 @@ class BallDevice(SystemWideDevice):
         Returns:
             True if there are balls to eject. False if this device is empty.
         """
-        del kwargs
         self.debug_log("Ejecting all balls")
         if self.available_balls > 0:
             self.eject(balls=self.available_balls, target=target)
@@ -745,7 +761,8 @@ class BallDevice(SystemWideDevice):
         else:
             return False
 
-    def hold(self, **kwargs):
+    @event_handler(10)
+    def event_hold(self, **kwargs):
         """Event handler for hold event."""
         del kwargs
         # TODO: remove when migrating config to ejectors

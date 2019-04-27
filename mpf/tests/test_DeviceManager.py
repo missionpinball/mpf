@@ -17,8 +17,8 @@ class TestDeviceManager(MpfTestCase):
                 if not k.endswith('_events') or k == "control_events":
                     continue
                 method_name = k[:-7]
-                method = getattr(device_cls, method_name, None)
-                self.assertIsNotNone(method, "Method {}.{} is missing for {}".format(device_type, method_name, k))
+                method = getattr(device_cls, "event_{}".format(method_name), None)
+                self.assertIsNotNone(method, "Method {}.event_{} is missing for {}".format(device_type, method_name, k))
 
                 sig = inspect.signature(method)
 
@@ -33,3 +33,7 @@ class TestDeviceManager(MpfTestCase):
                 self.assertEqual(sig.parameters['kwargs'].kind, inspect._VAR_KEYWORD,
                     "Method {}.{} kwargs param is missing '**'".format(
                     device_type, method_name))
+
+                self.assertTrue(hasattr(method, "relative_priority"),
+                                "Method {}.{} is missing a relative_priority. Did you apply the event_handler "
+                                "decorator?".format(device_type, method_name))

@@ -53,7 +53,7 @@ class Motor(SystemWideDevice):
         for event, position in self.config['go_to_position'].items():
             if position not in self.config['position_switches']:
                 self.raise_config_error("Invalid position {} in go_to_position".format(position), 4)
-            self.machine.events.add_handler(event, self.go_to_position, position=position)
+            self.machine.events.add_handler(event, self.event_go_to_position, position=position)
 
         if self.config['include_in_ball_search']:
             self.machine.events.add_handler("ball_search_started",
@@ -62,15 +62,26 @@ class Motor(SystemWideDevice):
                                             self._ball_search_stop)
 
     @event_handler(1)
-    def reset(self, **kwargs):
-        """Go to reset position."""
+    def event_reset(self, **kwargs):
+        """Event handler for reset event."""
         del kwargs
+        self. reset()
+
+    def reset(self):
+        """Go to reset position."""
         self.go_to_position(self.config['reset_position'])
 
     @event_handler(10)
-    def go_to_position(self, position, **kwargs):
-        """Move motor to a specific position."""
+    def event_go_to_position(self, position=None, **kwargs):
+        """Event handler for go_to_position event."""
         del kwargs
+        if position is None:
+            raise AssertionError("Got go_to_position event without position.")
+
+        self.go_to_position(position)
+
+    def go_to_position(self, position):
+        """Move motor to a specific position."""
         self.log.info("Moving motor to position %s", position)
         self._target_position = position
         self._move_to_position(position)

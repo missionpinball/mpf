@@ -25,10 +25,14 @@ class Magnet(SystemWideDevice):
         self._active = False
         self._release_in_progress = False
 
-    @event_handler(10)
-    def enable(self, **kwargs):
-        """Enable magnet."""
+    @event_handler(20)
+    def event_enable(self, **kwargs):
+        """Event handler for enable event."""
         del kwargs
+        self.enable()
+
+    def enable(self):
+        """Enable magnet."""
         if self._enabled:
             return
 
@@ -39,9 +43,13 @@ class Magnet(SystemWideDevice):
             self.config['grab_switch'].add_handler(self.grab_ball)
 
     @event_handler(0)
-    def disable(self, **kwargs):
-        """Disable magnet."""
+    def event_disable(self, **kwargs):
+        """Event handler for disable event."""
         del kwargs
+        self.disable()
+
+    def disable(self):
+        """Disable magnet."""
         if not self._enabled:
             return
 
@@ -52,17 +60,25 @@ class Magnet(SystemWideDevice):
             self.config['grab_switch'].remove_handler(self.grab_ball)
 
     @event_handler(1)
-    def reset(self, **kwargs):
-        """Release ball and disable magnet."""
+    def event_reset(self, **kwargs):
+        """Event handler for reset event."""
         del kwargs
+        self.reset()
+
+    def reset(self):
+        """Release ball and disable magnet."""
         self.debug_log("Resetting Magnet")
         self.release_ball()
         self.disable()
 
     @event_handler(9)
-    def grab_ball(self, **kwargs):
-        """Grab a ball."""
+    def event_grab_ball(self, **kwargs):
+        """Event handler for grab_ball event."""
         del kwargs
+        self.grab_ball()
+
+    def grab_ball(self):
+        """Grab a ball."""
         # mark the playfield active no matter what
         self.config['playfield'].mark_playfield_active_from_device_action()
         # check if magnet is enabled or already active
@@ -91,9 +107,13 @@ class Magnet(SystemWideDevice):
         '''
 
     @event_handler(8)
-    def release_ball(self, **kwargs):
-        """Release the grabbed ball."""
+    def event_release_ball(self, **kwargs):
+        """Event handler for release_ball event."""
         del kwargs
+        self.release_ball()
+
+    def release_ball(self):
+        """Release the grabbed ball."""
         if not self._active or self._release_in_progress:
             return
 
@@ -118,9 +138,13 @@ class Magnet(SystemWideDevice):
         '''
 
     @event_handler(7)
-    def fling_ball(self, **kwargs):
-        """Fling the grabbed ball."""
+    def event_fling_ball(self, **kwargs):
+        """Event handler for fling_ball event."""
         del kwargs
+        self.fling_ball()
+
+    def fling_ball(self):
+        """Fling the grabbed ball."""
         if not self._active or self._release_in_progress:
             return
 

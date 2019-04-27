@@ -102,14 +102,17 @@ class ExtraBallGroup(SystemWideDevice):
             self.player['extra_ball_group_{}_num_lit'.format(self.name)])
 
     @event_handler(2)
-    def award_lit(self, **kwargs):
+    def event_award_lit(self, **kwargs):
+        """Handle award_lit control event."""
+        del kwargs
+        self.award_lit()
+
+    def award_lit(self):
         """Award a lit extra ball.
 
         If the player does not have any lit extra balls, this method does
         nothing.
         """
-        del kwargs
-
         if not self.player:
             return
 
@@ -128,10 +131,15 @@ class ExtraBallGroup(SystemWideDevice):
         else:
             posted_unlit_events = True
 
-        self.award(posted_unlit_event=posted_unlit_events)
+        self.award(posted_unlit_events=posted_unlit_events)
 
     @event_handler(1)
-    def award(self, posted_unlit_events=False, **kwargs):
+    def event_award(self, posted_unlit_events=False, **kwargs):
+        """Handle award control event."""
+        del kwargs
+        self.award(posted_unlit_events)
+
+    def award(self, posted_unlit_events=False):
         """Immediately awards an extra ball.
 
         This event first checks to make sure the limits of the max extra
@@ -141,8 +149,6 @@ class ExtraBallGroup(SystemWideDevice):
         extra balls or extra balls lit. You can use this to directly award an
         extra ball.
         """
-        del kwargs
-
         if not self.enabled:
             self.award_disabled()
             return
@@ -165,15 +171,18 @@ class ExtraBallGroup(SystemWideDevice):
                 self._post_unlit_events()
 
     @event_handler(3)
-    def light(self, **kwargs):
+    def event_light(self, **kwargs):
+        """Handle light control event."""
+        del kwargs
+        self.light()
+
+    def light(self):
         """Light the extra ball for possible collection by the player.
 
         This method checks that the group is enabled and that the max lit
         value has not been exceeded. If so, this method will post the extra
         ball disabled events.
         """
-        del kwargs
-
         if self.is_ok_to_light():
             self.player['extra_ball_group_{}_num_lit'.format(self.name)] += 1
 

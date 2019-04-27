@@ -1,5 +1,6 @@
 """Implements enable and disable events for devices."""
 import abc
+import asyncio
 
 from mpf.core.events import event_handler
 
@@ -38,10 +39,8 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
         """
         pass
 
-    @event_handler(100)
-    def enable(self, **kwargs) -> None:
+    def enable(self) -> None:
         """Enable device."""
-        del kwargs
         if self.enabled is True:
             return
         self.enabled = True
@@ -52,9 +51,13 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
         pass
 
     @event_handler(0)
-    def disable(self, **kwargs):
-        """Disable device."""
+    def event_disable(self, **kwargs):
+        """Handle disable control event."""
         del kwargs
+        self.disable()
+
+    def disable(self):
+        """Disable device."""
         if self.enabled is False:
             return
         self.enabled = False
@@ -120,6 +123,8 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
         self.player = None
         self._enabled = None
 
+    @asyncio.coroutine
     def device_added_system_wide(self) -> None:
         """Check enable on boot."""
+        yield from super().device_added_system_wide()
         self._load_enable_based_on_config_default()

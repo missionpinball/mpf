@@ -35,12 +35,12 @@ class CoilPlayer(DeviceConfigPlayer):
                 pass
 
             if action in ("disable", "off"):
-                coil.disable(**s)
+                coil.disable()
             elif action in ("on", "enable"):
                 instance_dict[coil.name] = coil
-                coil.enable(**s)
+                coil.enable(pulse_ms=s["pulse_ms"], pulse_power=s["pulse_power"], hold_power=s["hold_power"])
             elif action == "pulse":
-                coil.pulse(**s)
+                coil.pulse(pulse_ms=s['pulse_ms'], pulse_power=s['pulse_power'], max_wait_ms=s['max_wait_ms'])
             else:
                 self.raise_config_error("Invalid action {}".format(action), 1, context=context)
 

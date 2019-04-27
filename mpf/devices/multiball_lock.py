@@ -1,6 +1,8 @@
 """Contains the BallLock device class."""
 import asyncio
 
+from mpf.core.enable_disable_mixin import EnableDisableMixin
+
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
 from mpf.core.mode_device import ModeDevice
@@ -10,8 +12,8 @@ if MYPY:   # pragma: no cover
     from mpf.devices.ball_device.ball_device import BallDevice
 
 
-@DeviceMonitor("enabled", "locked_balls")
-class MultiballLock(ModeDevice):
+@DeviceMonitor("locked_balls", enabled="_enabled")
+class MultiballLock(EnableDisableMixin, ModeDevice):
 
     """Ball lock device which locks balls for a multiball."""
 
@@ -19,7 +21,7 @@ class MultiballLock(ModeDevice):
     collection = 'multiball_locks'
     class_label = 'multiball_lock'
 
-    __slots__ = ["lock_devices", "source_playfield", "enabled", "_events", "_locked_balls"]
+    __slots__ = ["lock_devices", "source_playfield", "_events", "_locked_balls"]
 
     def __init__(self, machine, name):
         """Initialise ball lock."""
@@ -27,23 +29,12 @@ class MultiballLock(ModeDevice):
         self.source_playfield = None
 
         # initialise variables
-        self.enabled = False
         self._events = {}
 
         self._locked_balls = 0
         # Locked balls in case we are keep_virtual_ball_count_per_player is false
 
         super().__init__(machine, name)
-
-    def device_removed_from_mode(self, mode):
-        """Disable ball lock when mode ends."""
-        del mode
-        self.disable()
-
-    @property
-    def can_exist_outside_of_game(self):
-        """Return true if this device can exist outside of a game."""
-        return False
 
     @asyncio.coroutine
     def _initialize(self):
@@ -59,20 +50,13 @@ class MultiballLock(ModeDevice):
 
         self.machine.events.add_handler("player_turn_starting", self._player_turn_starting)
 
-    @event_handler(10)
-    def enable(self, **kwargs):
+    def _enable(self):
         """Enable the lock.
 
         If the lock is not enabled, no balls will be locked.
-
-        Args:
-            **kwargs: unused
         """
-        del kwargs
         self.debug_log("Enabling...")
-        if not self.enabled:
-            self._register_handlers()
-        self.enabled = True
+        self._register_handlers()
 
     def _player_turn_starting(self, queue, **kwargs):
         del kwargs
@@ -81,7 +65,7 @@ class MultiballLock(ModeDevice):
 
         # check if the lock is physically full and not virtually full and release balls in that case
         if self._physically_remaining_space <= 0 and not self.is_virtually_full:
-            self.log.info("Will release a ball because the lock is phyiscally full but not virtually for the player.")
+            self.log.info("Will release a ball because the lock is physically full but not virtually for the player.")
             # TODO: eject to next playfield
             self.lock_devices[0].eject()
             queue.wait()
@@ -100,33 +84,35 @@ class MultiballLock(ModeDevice):
 
         return {'balls': balls - 1}
 
-    @event_handler(0)
-    def disable(self, **kwargs):
+    def _disable(self):
         """Disable the lock.
 
         If the lock is not enabled, no balls will be locked.
-
-        Args:
-            **kwargs: unused
         """
-        del kwargs
         self.debug_log("Disabling...")
         self._unregister_handlers()
-        self.enabled = False
 
     @event_handler(1)
-    def reset_all_counts(self, **kwargs):
-        """Reset the locked balls for all players."""
+    def event_reset_all_counts(self, **kwargs):
+        """Event handler for reset_all_counts event."""
         del kwargs
+        self.reset_all_counts()
+
+    def reset_all_counts(self):
+        """Reset the locked balls for all players."""
         if self.config['locked_ball_counting_strategy'] not in ("virtual_only", "min_virtual_physical"):
             raise AssertionError("Count is only tracked per player")
         for player in self.machine.game.player_list:
             player['{}_locked_balls'.format(self.name)] = 0
 
     @event_handler(2)
-    def reset_count_for_current_player(self, **kwargs):
-        """Reset the locked balls for the current player."""
+    def event_reset_count_for_current_player(self, **kwargs):
+        """Event handler for reset_count_for_current_player event."""
         del kwargs
+        self.reset_count_for_current_player()
+
+    def reset_count_for_current_player(self):
+        """Reset the locked balls for the current player."""
         if self.config['locked_ball_counting_strategy'] in ("virtual_only", "min_virtual_physical"):
             self.machine.game.player['{}_locked_balls'.format(self.name)] = 0
         elif self.config['locked_ball_counting_strategy'] == "no_virtual":

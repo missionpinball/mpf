@@ -5,6 +5,7 @@ from collections import namedtuple
 from typing import List, Dict, Set
 
 import mpf.core.delays
+from mpf.core.events import event_handler
 from mpf.core.mode import Mode
 from mpf.core.player import Player
 from mpf.core.mode_device import ModeDevice
@@ -54,7 +55,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
         """Unregister switch handlers on mode end."""
         del mode
         self._remove_handlers()
-        self._reset_all_sequences()
+        self.reset_all_sequences()
         self.delay.clear()
 
     @asyncio.coroutine
@@ -74,7 +75,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
 
         for switch in self.config['cancel_switches']:
             self.machine.switch_controller.add_switch_handler(
-                switch.name, self.cancel, 1)
+                switch.name, self.event_cancel, 1)
 
         for switch, ms in list(self.config['delay_switch_list'].items()):
             self.machine.switch_controller.add_switch_handler(
@@ -89,7 +90,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
 
         for switch in self.config['cancel_switches']:
             self.machine.switch_controller.remove_switch_handler(
-                switch.name, self.cancel, 1)
+                switch.name, self.event_cancel, 1)
 
         for switch in list(self.config['delay_switch_list'].keys()):
             self.machine.switch_controller.remove_switch_handler(
@@ -177,12 +178,14 @@ class SequenceShot(SystemWideDevice, ModeDevice):
         desc: The sequence_shot called (sequence_shot) was just completed.
         '''
 
-    def cancel(self, **kwargs):
-        """Reset all sequences."""
+    @event_handler(0)
+    def event_cancel(self, **kwargs):
+        """Event handler for cancel event."""
         del kwargs
-        self._reset_all_sequences()
+        self.reset_all_sequences()
 
-    def _reset_all_sequences(self):
+    def reset_all_sequences(self):
+        """Reset all sequences."""
         seq_ids = [x.id for x in self.active_sequences]
 
         for seq_id in seq_ids:

@@ -4,6 +4,7 @@ from typing import Any, List
 
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
+from mpf.core.events import event_handler
 from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
@@ -108,14 +109,14 @@ class LogicBlock(SystemWideDevice, ModeDevice):
                 # enable device ONLY when we create a new entry in the player
                 if self._start_enabled:
                     mode.add_mode_event_handler("mode_{}_starting".format(mode.name),
-                                                self.enable, priority=mode.priority + 1)
+                                                self.event_enable, priority=mode.priority + 1)
 
             self._state = player[self.player_state_variable]
         else:
             self._state = LogicBlockState(self.get_start_value())
             if self._start_enabled:
                 mode.add_mode_event_handler("mode_{}_starting".format(mode.name),
-                                            self.enable, priority=mode.priority + 1)
+                                            self.event_enable, priority=mode.priority + 1)
 
         mode.add_mode_event_handler("mode_{}_starting".format(mode.name), self.post_update_event)
 
@@ -169,13 +170,13 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         enabled: Whatever this block is enabled or not.
         '''
 
-    def enable(self, **kwargs):
+    def enable(self):
         """Enable this logic block.
 
         Automatically called when one of the
         enable_event events is posted. Can also manually be called.
         """
-        del kwargs
+        super().enable()
         self.debug_log("Enabling")
         self.enabled = True
         self.post_update_event()
@@ -196,36 +197,51 @@ class LogicBlock(SystemWideDevice, ModeDevice):
             args: depend on the type
             '''
 
-    def disable(self, **kwargs):
+    @event_handler(0)
+    def event_disable(self, **kwargs):
+        """Event handler for disable event."""
+        del kwargs
+        self.disable()
+
+    def disable(self):
         """Disable this logic block.
 
         Automatically called when one of the
         disable_event events is posted. Can also manually be called.
         """
-        del kwargs
         self.debug_log("Disabling")
         self.enabled = False
         self.post_update_event()
 
-    def reset(self, **kwargs):
+    @event_handler(4)
+    def event_reset(self, **kwargs):
+        """Event handler for reset event."""
+        del kwargs
+        self.reset()
+
+    def reset(self):
         """Reset the progress towards completion of this logic block.
 
         Automatically called when one of the reset_event events is called.
         Can also be manually called.
         """
-        del kwargs
         self.completed = False
         self._state.value = self.get_start_value()
         self.debug_log("Resetting")
         self.post_update_event()
 
-    def restart(self, **kwargs):
+    @event_handler(5)
+    def event_restart(self, **kwargs):
+        """Event handler for restart event."""
+        del kwargs
+        self.restart()
+
+    def restart(self):
         """Restart this logic block by calling reset() and enable().
 
         Automatically called when one of the restart_event events is called.
         Can also be manually called.
         """
-        del kwargs
         self.debug_log("Restarting (resetting then enabling)")
         self.reset()
         self.enable()
@@ -321,14 +337,19 @@ class Counter(LogicBlock):
 
         return super().validate_and_parse_config(config, is_mode_config, debug_prefix)
 
-    def count(self, **kwargs):
+    @event_handler(0)
+    def event_count(self, **kwargs):
+        """Event handler for count events."""
+        del kwargs
+        self.count()
+
+    def count(self):
         """Increase the hit progress towards completion.
 
         This method is also automatically called when one of the
         ``count_events`` is posted.
 
         """
-        del kwargs
         if not self.enabled:
             return
 

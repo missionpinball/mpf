@@ -5,6 +5,7 @@ import asyncio
 from typing import Generator
 
 from mpf.core.device import Device
+from mpf.core.events import event_handler
 from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.core.player import Player
@@ -54,7 +55,13 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
         del config
         raise AssertionError("Device {} cannot be overloaded.".format(self))
 
-    def enable(self, **kwargs) -> None:
+    @event_handler(20)
+    def event_enable(self, **kwargs):
+        """Event handler for enable event."""
+        del kwargs
+        self.enable()
+
+    def enable(self) -> None:
         """Enable handler."""
         pass
 
@@ -66,7 +73,7 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
         """
         if "enable_events" in self.config and not self.config['enable_events']:
             mode.add_mode_event_handler("mode_{}_started".format(mode.name),
-                                        self.enable, priority=100)
+                                        self.event_enable, priority=100)
 
     def remove_control_events_in_mode(self) -> None:
         """Remove control events."""

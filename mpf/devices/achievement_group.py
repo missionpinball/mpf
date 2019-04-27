@@ -43,11 +43,9 @@ class AchievementGroup(ModeDevice):
         """Return enabled state."""
         return self._enabled
 
-    @event_handler(10)
-    def enable(self, **kwargs):
+    def enable(self):
         """Enable achievement group."""
-        del kwargs
-
+        super().enable()
         self.debug_log("Call to enable this group")
 
         if self._enabled:
@@ -73,9 +71,13 @@ class AchievementGroup(ModeDevice):
         self._process_current_member_state()
 
     @event_handler(0)
-    def disable(self, **kwargs):
-        """Disable achievement group."""
+    def event_disable(self, **kwargs):
+        """Event handler for disable event."""
         del kwargs
+        self.disable()
+
+    def disable(self):
+        """Disable achievement group."""
         self.debug_log("Call to disable this group")
         if not self._enabled:
             self.debug_log("Group is already disabled. Aborting")
@@ -111,9 +113,13 @@ class AchievementGroup(ModeDevice):
         return self._selected_member
 
     @event_handler(5)
-    def start_selected(self, **kwargs):
-        """Start the currently selected achievement."""
+    def event_start_selected(self, **kwargs):
+        """Event handler for start_selected event."""
         del kwargs
+        self.start_selected()
+
+    def start_selected(self):
+        """Start the currently selected achievement."""
         self.debug_log("Call to start selected achievement")
         if not self._enabled:
             self.debug_log("Group not enabled. Aborting")
@@ -126,9 +132,13 @@ class AchievementGroup(ModeDevice):
             pass
 
     @event_handler(6)
-    def rotate_right(self, reverse=False, **kwargs):
-        """Rotate to the right."""
+    def event_rotate_right(self, reverse=False, **kwargs):
+        """Event handler for rotate_right event."""
         del kwargs
+        self.rotate_right(reverse)
+
+    def rotate_right(self, reverse=False):
+        """Rotate to the right."""
         self.debug_log("Call to rotate")
         if not self._is_ok_to_change_selection():
             return
@@ -162,9 +172,13 @@ class AchievementGroup(ModeDevice):
         self._rotation_in_progress = False
 
     @event_handler(7)
-    def rotate_left(self, **kwargs):
-        """Rotate to the left."""
+    def event_rotate_left(self, **kwargs):
+        """Event handler for rotate_left event."""
         del kwargs
+        self.rotate_left()
+
+    def rotate_left(self):
+        """Rotate to the left."""
         self.rotate_right(reverse=True)
 
     def _no_more_enabled(self):
@@ -175,16 +189,19 @@ class AchievementGroup(ModeDevice):
 
     def _all_complete(self):
         self.debug_log("All achievements are complete")
-        self.disable()  # disable before event post so event can reenable
+        self.disable()  # disable before event post so event can re-enable
 
         for e in self.config['events_when_all_completed']:
             self.machine.events.post(e)
 
     @event_handler(9)
-    def select_random_achievement(self, **kwargs):
-        """Select a random achievement."""
+    def event_select_random_achievement(self, **kwargs):
+        """Event handler for select_random_achievement event."""
         del kwargs
+        self.select_random_achievement()
 
+    def select_random_achievement(self):
+        """Select a random achievement."""
         self.debug_log("Selecting random achievement")
 
         if not self._is_ok_to_change_selection():

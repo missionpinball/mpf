@@ -50,8 +50,15 @@ class Flipper(SystemWideDevice):
                 self.config['ball_search_order'], self._ball_search, self.name)
 
     @event_handler(1)
-    # to prevent multiple rules at the same time we prioritize disable > enable
-    def enable(self, **kwargs):
+    def event_enable(self, **kwargs):
+        """Handle enable control event.
+
+        To prevent multiple rules at the same time we prioritize disable > enable.
+        """
+        del kwargs
+        self.enable()
+
+    def enable(self):
         """Enable the flipper by writing the necessary hardware rules to the hardware controller.
 
         The hardware rules for coils can be kind of complex given all the
@@ -91,8 +98,6 @@ class Flipper(SystemWideDevice):
         rules). Note that this rule is the letter "i", not a numeral 1.
         I. Enable power if button is active and EOS is not active
         """
-        del kwargs
-
         # prevent duplicate enable
         if self._enabled:
             return
@@ -116,15 +121,21 @@ class Flipper(SystemWideDevice):
                 self._enable_hold_coil_rule()
 
     @event_handler(10)
-    # to prevent multiple rules at the same time we prioritize disable > enable
-    def disable(self, **kwargs):
+    def event_disable(self, **kwargs):
+        """Handle disable control event.
+
+        To prevent multiple rules at the same time we prioritize disable > enable.
+        """
+        del kwargs
+        self.disable()
+
+    def disable(self):
         """Disable the flipper.
 
         This method makes it so the cabinet flipper buttons no longer control
         the flippers. Used when no game is active and when the player has
         tilted.
         """
-        del kwargs
         if not self._enabled:
             return
 
@@ -223,7 +234,12 @@ class Flipper(SystemWideDevice):
         self._active_rules.append(rule)
 
     @event_handler(6)
-    def sw_flip(self, **kwargs):
+    def event_sw_flip(self, **kwargs):
+        """Handle sw_flip control event."""
+        del kwargs
+        self.sw_flip()
+
+    def sw_flip(self):
         """Activate the flipper via software as if the flipper button was pushed.
 
         This is needed because the real flipper activations are handled in
@@ -233,7 +249,6 @@ class Flipper(SystemWideDevice):
         Note this method will keep this flipper enabled until you call
         sw_release().
         """
-        del kwargs
         if not self._enabled:
             return
 
@@ -246,12 +261,16 @@ class Flipper(SystemWideDevice):
             self.config['main_coil'].enable()
 
     @event_handler(5)
-    def sw_release(self, **kwargs):
+    def event_sw_release(self, **kwargs):
+        """Handle sw_release control event."""
+        del kwargs
+        self.sw_release()
+
+    def sw_release(self):
         """Deactive the flipper via software as if the flipper button was released.
 
         See the documentation for sw_flip() for details.
         """
-        del kwargs
         self._sw_flipped = False
 
         # disable the flipper coil(s)

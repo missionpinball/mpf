@@ -66,10 +66,9 @@ class BallSave(SystemWideDevice, ModeDevice):
 
         return config
 
-    @event_handler(10)
-    def enable(self, **kwargs) -> None:
+    def enable(self) -> None:
         """Enable ball save."""
-        del kwargs
+        super().enable()
         if self.enabled:
             return
 
@@ -96,9 +95,13 @@ class BallSave(SystemWideDevice, ModeDevice):
         '''
 
     @event_handler(1)
-    def disable(self, **kwargs) -> None:
-        """Disable ball save."""
+    def event_disable(self, **kwargs):
+        """Event handler for disable event."""
         del kwargs
+        self.disable()
+
+    def disable(self) -> None:
+        """Disable ball save."""
         if not self.enabled:
             return
 
@@ -117,12 +120,16 @@ class BallSave(SystemWideDevice, ModeDevice):
         '''
 
     @event_handler(9)
-    def timer_start(self, **kwargs) -> None:
+    def event_timer_start(self, **kwargs):
+        """Event handler for timer start event."""
+        del kwargs
+        self.timer_start()
+
+    def timer_start(self) -> None:
         """Start the timer.
 
         This is usually called after the ball was ejected while the ball save may have been enabled earlier.
         """
-        del kwargs
         if self.timer_started or not self.enabled:
             return
 
@@ -220,7 +227,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         balls_to_save = self._get_number_of_balls_to_save(balls)
 
         self.debug_log("Ball(s) drained while active. Requesting new one(s). "
-                       "Autolaunch: %s", self.config['auto_launch'])
+                       "Auto launch: %s", self.config['auto_launch'])
 
         self.machine.events.post('ball_save_{}_saving_ball'.format(self.name),
                                  balls=balls_to_save, early_save=False)
@@ -239,9 +246,13 @@ class BallSave(SystemWideDevice, ModeDevice):
         return {'balls': balls - balls_to_save}
 
     @event_handler(8)
-    def early_ball_save(self, **kwargs) -> None:
-        """Perform early ball save if enabled."""
+    def event_early_ball_save(self, **kwargs):
+        """Event handler for early_ball_save event."""
         del kwargs
+        self.early_ball_save()
+
+    def early_ball_save(self) -> None:
+        """Perform early ball save if enabled."""
         if not self.enabled:
             return
 
@@ -288,9 +299,13 @@ class BallSave(SystemWideDevice, ModeDevice):
             self._add_balls(balls_to_save)
 
     @event_handler(4)
-    def delayed_eject(self, **kwargs):
-        """Trigger eject of all scheduled balls."""
+    def event_delayed_eject(self, **kwargs):
+        """Event handler for delayed_eject event."""
         del kwargs
+        self.delayed_eject()
+
+    def delayed_eject(self):
+        """Trigger eject of all scheduled balls."""
         self._add_balls(self._scheduled_balls)
         self._scheduled_balls = 0
 

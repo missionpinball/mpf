@@ -81,20 +81,28 @@ class Diverter(SystemWideDevice):
                 switch.name, self.disable)
 
     @event_handler(1)
-    def reset(self, **kwargs):
-        """Reset and deactivate the diverter."""
+    def event_reset(self, **kwargs):
+        """Handle reset control event."""
         del kwargs
+        self.reset()
+
+    def reset(self):
+        """Reset and deactivate the diverter."""
         self.deactivate()
 
     @event_handler(10)
-    def enable(self, auto=False, **kwargs):
+    def event_enable(self, auto=False, **kwargs):
+        """Handle enable control event."""
+        del kwargs
+        self.enable(auto)
+
+    def enable(self, auto=False):
         """Enable this diverter.
 
         Args:
             auto: Boolean value which is used to indicate whether this
-                diverter enabled itself automatically. This is passed to the
-                event which is posted.
-            **kwargs: unused
+                  diverter enabled itself automatically. This is passed to the
+                  event which is posted.
 
         If an 'activation_switches' is configured, then this method writes a
         hardware autofire rule to the pinball controller which fires the
@@ -103,7 +111,6 @@ class Diverter(SystemWideDevice):
         If no `activation_switches` is specified, then the diverter is activated
         immediately.
         """
-        del kwargs
         self.enabled = True
 
         self.machine.events.post('diverter_' + self.name + '_enabling',
@@ -126,7 +133,12 @@ class Diverter(SystemWideDevice):
             self.activate()
 
     @event_handler(0)
-    def disable(self, auto=False, **kwargs):
+    def event_disable(self, auto=False, **kwargs):
+        """Handle disable control event."""
+        del kwargs
+        self.disable(auto)
+
+    def disable(self, auto=False):
         """Disable this diverter.
 
         This method will remove the hardware rule if this diverter is activated
@@ -141,7 +153,6 @@ class Diverter(SystemWideDevice):
                 configuration file, so we don't know what event that might be
                 or whether it has random kwargs attached to it.
         """
-        del kwargs
         self.enabled = False
 
         self.machine.events.post('diverter_' + self.name + '_disabling',
@@ -183,9 +194,13 @@ class Diverter(SystemWideDevice):
             self.config['deactivation_coil'].pulse()
 
     @event_handler(9)
-    def activate(self, **kwargs):
-        """Physically activate this diverter's coil."""
+    def event_activate(self, **kwargs):
+        """Handle activate control event."""
         del kwargs
+        self.activate()
+
+    def activate(self):
+        """Physically activate this diverter's coil."""
         self.debug_log("Activating Diverter")
         self.active = True
 
@@ -199,13 +214,17 @@ class Diverter(SystemWideDevice):
         self.schedule_deactivation()
 
     @event_handler(2)
-    def deactivate(self, **kwargs):
+    def event_deactivate(self, **kwargs):
+        """Handle deactivate control event."""
+        del kwargs
+        self.deactivate()
+
+    def deactivate(self):
         """Deactivate this diverter.
 
         This method will disable the activation_coil, and (optionally) if it's
         configured with a deactivation coil, it will pulse it.
         """
-        del kwargs
         self.debug_log("Deactivating Diverter")
         self.active = False
 

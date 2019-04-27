@@ -18,24 +18,37 @@ class DualWoundCoil(SystemWideDevice):
         self.machine.coils[name] = self
 
     @event_handler(2)
-    def enable(self, **kwargs):
+    def event_enable(self, **kwargs):
+        """Event handler for enable event."""
+        del kwargs
+        self.enable()
+
+    def enable(self):
         """Enable a dual wound coil.
 
         Pulse main coil and enable hold coil.
         """
-        del kwargs
         self.config['main_coil'].pulse()
         self.config['hold_coil'].enable()
 
     @event_handler(1)
-    def disable(self, **kwargs):
-        """Disable a driver."""
+    def event_disable(self, **kwargs):
+        """Event handler for disable event."""
         del kwargs
+        self.disable()
+
+    def disable(self):
+        """Disable a driver."""
         self.config['main_coil'].disable()
         self.config['hold_coil'].disable()
 
     @event_handler(3)
-    def pulse(self, milliseconds: int = None, power: float = None, **kwargs):
+    def event_pulse(self, milliseconds: int = None, power: float = None, **kwargs):
+        """Event handler for pulse event."""
+        del kwargs
+        self.pulse(milliseconds, power)
+
+    def pulse(self, milliseconds: int = None, power: float = None):
         """Pulse this driver.
 
         Args:
@@ -46,6 +59,5 @@ class DualWoundCoil(SystemWideDevice):
                 typically a float between 0.0 and 1.0. (Note this is can only be used
                 if milliseconds is also specified.)
         """
-        del kwargs
         self.config['main_coil'].pulse(milliseconds, power)
         self.config['hold_coil'].pulse(milliseconds, power)

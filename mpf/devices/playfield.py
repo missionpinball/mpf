@@ -2,6 +2,7 @@
 import asyncio
 
 from mpf.core.device_monitor import DeviceMonitor
+from mpf.core.events import event_handler
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.ball_search import BallSearch
 from mpf.core.delays import DelayManager
@@ -253,7 +254,7 @@ class Playfield(SystemWideDevice):
             for _ in range(balls):
                 source_device.setup_player_controlled_eject(target=self)
         else:
-            source_device.eject(balls=balls, target=self, get_ball=True)
+            source_device.eject(balls=balls, target=self)
 
         return True
 
@@ -373,7 +374,8 @@ class Playfield(SystemWideDevice):
         """Stop tracking an incoming ball."""
         self._incoming_balls.remove(incoming_ball)
 
-    def ball_search_disable(self, **kwargs):
+    @event_handler(1)
+    def event_ball_search_disable(self, **kwargs):
         """Disable ball search for this playfield.
 
         If the ball search timer is running, it will stop and disable it. If
@@ -382,7 +384,8 @@ class Playfield(SystemWideDevice):
         del kwargs
         self.ball_search.disable()
 
-    def ball_search_enable(self, **kwargs):
+    @event_handler(2)
+    def event_ball_search_enable(self, **kwargs):
         """Enable ball search for this playfield.
 
         Note this does not start the ball search process, rather, it starts the
@@ -391,7 +394,8 @@ class Playfield(SystemWideDevice):
         del kwargs
         self.ball_search.enable()
 
-    def ball_search_block(self, **kwargs):
+    @event_handler(3)
+    def event_ball_search_block(self, **kwargs):
         """Block ball search for this playfield.
 
         Blocking will disable ball search if it's enabled or running, and will
@@ -401,7 +405,8 @@ class Playfield(SystemWideDevice):
         del kwargs
         self.ball_search.block()
 
-    def ball_search_unblock(self, **kwargs):
+    @event_handler(4)
+    def event_ball_search_unblock(self, **kwargs):
         """Unblock ball search for this playfield.
 
         This will check to see if there are balls on the playfield, and if so,

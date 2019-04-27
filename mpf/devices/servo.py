@@ -57,9 +57,13 @@ class Servo(SystemWideDevice):
         self.set_acceleration_limit(self.acceleration_limit)
 
     @event_handler(1)
-    def reset(self, **kwargs):
-        """Go to reset position."""
+    def event_reset(self, **kwargs):
+        """Event handler for reset event."""
         del kwargs
+        self.reset()
+
+    def reset(self):
+        """Go to reset position."""
         self.go_to_position(self.config['reset_position'])
 
     @event_handler(5)

@@ -3,6 +3,11 @@ from collections import defaultdict
 
 import asyncio
 
+from mpf.core.device_monitor import DeviceMonitor
+
+from mpf.core.enable_disable_mixin import EnableDisableMixin
+
+from mpf.core.events import event_handler
 from mpf.devices.ball_device.ball_device import BallDevice
 
 from mpf.core.machine import MachineController
@@ -10,7 +15,8 @@ from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
 
 
-class BallRouting(ModeDevice):
+@DeviceMonitor("balls_routing", enabled="_enabled")
+class BallRouting(EnableDisableMixin, ModeDevice):
 
     """Route balls from one device to another when captured."""
 
@@ -18,21 +24,17 @@ class BallRouting(ModeDevice):
     collection = 'ball_routings'
     class_label = 'ball_routing'
 
+    __slots__ = ["_routing_queue", "_balls_at_target", "_handler"]
+
     def __init__(self, machine: "MachineController", name: str) -> None:
         """Initialise device."""
         super().__init__(machine, name)
-        self._enabled = False
         self._routing_queue = defaultdict(int)
         self._balls_at_target = 0
         self._handler = []
 
-    def enable(self, **kwargs):
+    def _enable(self):
         """Enable routing."""
-        del kwargs
-        if self._enabled:
-            return
-        self._enabled = True
-
         for device in self.config['source_devices']:
             self._handler.append(
                 self.machine.events.add_handler(
@@ -85,11 +87,8 @@ class BallRouting(ModeDevice):
 
         return {}
 
-    def disable(self, **kwargs):
+    def _disable(self):
         """Disable routing."""
-        del kwargs
-        if not self._enabled:
-            return
         self.debug_log("Disabling")
         self._enabled = False
         self.machine.events.remove_handlers_by_keys(self._handler)

@@ -97,37 +97,49 @@ class ShotGroup(ModeDevice):
         are in the same state named (state).
         '''
 
-    def enable(self, **kwargs):
-        """Enable all member shots.
+    @event_handler(2)
+    def event_enable(self, **kwargs):
+        """Handle enable control event."""
+        del kwargs
+        self.enable()
 
-        Args:
-            kwargs: passed to member shots
-        """
+    def enable(self):
+        """Enable all member shots."""
         for shot in self.config['shots']:
-            shot.enable(**kwargs)
+            shot.enable()
 
-    def disable(self, **kwargs):
-        """Disable all member shots.
+    @event_handler(3)
+    def event_disable(self, **kwargs):
+        """Handle disable control event."""
+        del kwargs
+        self.disable()
 
-        Args:
-            kwargs: passed to member shots
-        """
+    def disable(self):
+        """Disable all member shots."""
         for shot in self.config['shots']:
-            shot.disable(**kwargs)
+            shot.disable()
 
-    def reset(self, **kwargs):
-        """Reset all member shots.
+    @event_handler(1)
+    def event_reset(self, **kwargs):
+        """Handle reset control event."""
+        del kwargs
+        self.reset()
 
-        Args:
-            kwargs: passed to member shots
-        """
+    def reset(self):
+        """Reset all member shots."""
         for shot in self.config['shots']:
-            shot.reset(**kwargs)
+            shot.reset()
 
-    def restart(self, **kwargs):
+    @event_handler(4)
+    def event_restart(self, **kwargs):
+        """Handle restart control event."""
+        del kwargs
+        self.restart()
+
+    def restart(self):
         """Restart all member shots."""
         for shot in self.config['shots']:
-            shot.restart(**kwargs)
+            shot.restart()
 
     def _hit(self, advancing, **kwargs):
         """One of the member shots in this shot group was hit.
@@ -154,27 +166,40 @@ class ShotGroup(ModeDevice):
         '''
 
     @event_handler(9)
-    def enable_rotation(self, **kwargs):
+    def event_enable_rotation(self, **kwargs):
+        """Handle enable_rotation control event."""
+        del kwargs
+        self.enable_rotation()
+
+    def enable_rotation(self):
         """Enable shot rotation.
 
         If disabled, rotation events do not actually rotate the shots.
         """
-        del kwargs
         self.debug_log('Enabling rotation')
         self.rotation_enabled = True
 
     @event_handler(2)
-    def disable_rotation(self, **kwargs):
+    def event_disable_rotation(self, **kwargs):
+        """Handle disable rotation control event."""
+        del kwargs
+        self.disable_rotation()
+
+    def disable_rotation(self):
         """Disable shot rotation.
 
         If disabled, rotation events do not actually rotate the shots.
         """
-        del kwargs
         self.debug_log('Disabling rotation')
         self.rotation_enabled = False
 
     @event_handler(4)
-    def rotate(self, direction=None, **kwargs):
+    def event_rotate(self, direction=None, **kwargs):
+        """Handle rotate control event."""
+        del kwargs
+        self.rotate(direction)
+
+    def rotate(self, direction=None):
         """Rotate (or "shift") the state of all the shots in this group.
 
         This is used for things like lane change, where hitting the flipper
@@ -190,21 +215,10 @@ class ShotGroup(ModeDevice):
                 to the left or right. Values are 'right' or 'left'. Default of
                 None will cause the shot group to rotate in the direction as
                 specified by the rotation_pattern.
-            states: A string of a state or a list of strings that represent the
-                targets that will be selected to rotate. If None (default), then
-                all targets will be included.
-            exclude_states: A string of a state or a list of strings that
-                controls whether any targets will *not* be rotated. (Any
-                targets with an active profile in one of these states will not
-                be included in the rotation. Default is None which means all
-                targets will be rotated)
-            kwargs: unused
 
         Note that this shot group must, and rotation_events for this
         shot group, must both be enabled for the rotation events to work.
         """
-        del kwargs
-
         if not self.rotation_enabled:
             self.debug_log("Received rotation request. "
                            "Rotation Enabled: %s. Will NOT rotate",
@@ -236,27 +250,27 @@ class ShotGroup(ModeDevice):
             shot.jump(state=shot_state_list[i], force=True)
 
     @event_handler(8)
-    def rotate_right(self, mode=None, **kwargs):
+    def event_rotate_right(self, **kwargs):
+        """Handle rotate right control event."""
+        del kwargs
+        self.rotate_right()
+
+    def rotate_right(self):
         """Rotate the state of the shots to the right.
 
         This method is the same as calling rotate('right')
-
-        Args:
-            kwargs: unused
-
         """
-        del kwargs
-        self.rotate(direction='right', mode=mode)
+        self.rotate(direction='right')
 
     @event_handler(7)
-    def rotate_left(self, mode=None, **kwargs):
+    def event_rotate_left(self, **kwargs):
+        """Handle rotate left control event."""
+        del kwargs
+        self.rotate_left()
+
+    def rotate_left(self):
         """Rotate the state of the shots to the left.
 
         This method is the same as calling rotate('left')
-
-        Args:
-            kwargs: unused
-
         """
-        del kwargs
-        self.rotate(direction='left', mode=mode)
+        self.rotate(direction='left')
