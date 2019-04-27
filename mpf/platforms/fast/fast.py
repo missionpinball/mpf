@@ -37,6 +37,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     """Platform class for the FAST hardware controller."""
 
+    __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "serial_connections", "fast_leds",
+                 "flag_led_tick_registered", "config", "machine_type", "hw_switch_data", "io_boards", "fast_commands"]
+
     def __init__(self, machine):
         """Initialise fast hardware platform.
 
@@ -76,6 +79,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                               '-N': self.receive_nw_closed,  # nw switch closed
                               '/L': self.receive_local_open,    # local sw open
                               '-L': self.receive_local_closed,  # local sw cls
+                              '!B': self.receive_bootloader,    # nano bootloader message
                               }
 
     def get_info_string(self):
@@ -804,3 +808,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         driver = coil.hw_driver
 
         driver.clear_autofire(driver.get_config_cmd(), driver.number)
+
+    def receive_bootloader(self, msg):
+        """Process bootloader message."""
+        self.debug_log("Got Bootloader message: %s", msg)
+        if msg in ('00', '02'):
+            self.error_log("The FAST Nano rebooted. Unfortunately, that means that is lost all it's state (such as "
+                           "hardware rules or switch configs). This is likely cause by an unstable power supply but it "
+                           "might as well be a firmware bug. MPF will exit now.")
+            self.machine.stop("FAST Nano rebooted during game")

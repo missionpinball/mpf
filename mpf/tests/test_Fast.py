@@ -308,6 +308,13 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
+    def test_nano_reboot(self):
+        # NANO reboots
+        self.net_cpu.queue.append("!B:00")
+        self.advance_time_and_run(.1)
+        # assert that MPF will stop
+        self.assertTrue(self.machine.stop_future.done())
+
     def test_rules(self):
         self._test_enable_exception_hw_rule()
         self._test_two_rules_one_switch()
