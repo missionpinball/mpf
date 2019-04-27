@@ -3,7 +3,6 @@ import asyncio
 from collections import OrderedDict, defaultdict
 
 from datetime import datetime
-import logging
 from psutil import cpu_percent, virtual_memory, Process
 
 from asciimatics.scene import Scene
@@ -479,6 +478,5 @@ class TextUi(MpfController):
 
         if self.screen:
             self.machine.clock.unschedule(self._tick_task)
-            logger = logging.getLogger()
-            logger.addHandler(logging.StreamHandler())
             self.screen.close(True)
+            self.screen = None
