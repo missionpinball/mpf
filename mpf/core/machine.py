@@ -1,7 +1,6 @@
 """Contains the MachineController base class."""
 import logging
 import os
-import signal
 
 import sys
 import threading
@@ -92,7 +91,7 @@ class MachineController(LogMixin):
                  "stop_future", "events", "switch_controller", "mode_controller", "settings", "asset_manager",
                  "bcp", "ball_controller", "show_controller", "placeholder_manager", "device_manager", "auditor",
                  "tui", "service", "switches", "shows", "coils", "ball_devices", "lights", "playfield", "playfields",
-                 "autofires", "__dict__"]
+                 "autofires", "_crash_handlers", "__dict__"]
 
     # pylint: disable-msg=too-many-statements
     def __init__(self, mpf_path: str, machine_path: str, options: dict) -> None:
@@ -100,6 +99,7 @@ class MachineController(LogMixin):
         super().__init__()
         self.log = logging.getLogger("Machine")     # type: Logger
         self.log.info("Mission Pinball Framework Core Engine v%s", __version__)
+        self._crash_handlers = []
 
         self.log.info("Command line arguments: %s", options)
         self.options = options
@@ -191,6 +191,13 @@ class MachineController(LogMixin):
 
         self.clock = self._load_clock()
         self.stop_future = asyncio.Future(loop=self.clock.loop)     # type: asyncio.Future
+
+    def add_crash_handler(self, handler: Callable):
+        """Add a crash handler which is called on a crash.
+
+        This can be used to restore the output and prepare logging.
+        """
+        self._crash_handlers.append(handler)
 
     @asyncio.coroutine
     def initialise_core_and_hardware(self) -> Generator[int, None, None]:
@@ -688,16 +695,16 @@ class MachineController(LogMixin):
             self.clock.loop.run_until_complete(Util.first([init, self.stop_future], cancel_others=False,
                                                           loop=self.clock.loop, timeout=timeout))
         except asyncio.TimeoutError:
-            self.shutdown()
+            self._crash_shutdown()
             self.error_log("MPF needed more than {}s for initialisation. Aborting!".format(timeout))
             return False
         except RuntimeError:
-            self.shutdown()
+            self._crash_shutdown()
             # do not show a runtime useless runtime error
             self.error_log("Failed to initialise MPF")
             return False
         if init.done() and init.exception():
-            self.shutdown()
+            self._crash_shutdown()
             try:
                 raise init.exception()
             except: # noqa
@@ -719,6 +726,11 @@ class MachineController(LogMixin):
         del kwargs
         if self.stop_future.done():
             return
+
+        asyncio.run_coroutine_threadsafe(self._stop_loop(reason), self.clock.loop)
+
+    @asyncio.coroutine
+    def _stop_loop(self, reason):
         self.stop_future.set_result(reason)
 
     def _do_stop(self) -> None:
@@ -733,6 +745,17 @@ class MachineController(LogMixin):
         self.events.process_event_queue()
         self.shutdown()
 
+    def _crash_shutdown(self):
+        """MPF crashed. Cleanup as good as we can."""
+        if hasattr(self, "events") and hasattr(self, "clock"):
+            # if we already got events and a clock use normal shutdown
+            self._do_stop()
+        else:
+            # call crash handlers
+            for handler in self._crash_handlers:
+                handler()
+            self.shutdown()
+
     def shutdown(self) -> None:
         """Shutdown the machine."""
         self.thread_stopper.set()
@@ -745,18 +768,9 @@ class MachineController(LogMixin):
         self.clock.loop.run_forever()
         self.clock.loop.close()
 
-    def signal_handler(self, sig, frame):
-        """Signal handler for SIGINT."""
-        del sig, frame
-        print('Shutdown because of keyboard interrupts')
-        self.stop_future.set_result("SIGINT received.")
-        sys.exit(0)
-
     def _run_loop(self) -> None:    # pragma: no cover
         # Main machine run loop with when the default platform interface
         # specifies the MPF should control the main timer
-
-        signal.signal(signal.SIGINT, self.signal_handler)
 
         try:
             reason = self.clock.run(self.stop_future)
