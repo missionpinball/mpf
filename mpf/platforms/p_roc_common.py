@@ -266,8 +266,10 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         asyncio.run_coroutine_threadsafe(self.proc_process.stop(),
                                          self.proc_process_instance)
         if self.proc_thread:
+            self.debug_log("Waiting for pinproc thread.")
             self.proc_thread.join()
             self.proc_thread = None
+            self.debug_log("pinproc thread finished.")
 
     def _start_proc_process(self):
         self.proc_process = ProcProcess()
