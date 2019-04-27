@@ -727,7 +727,11 @@ class MachineController(LogMixin):
         if self.stop_future.done():
             return
 
-        asyncio.run_coroutine_threadsafe(self._stop_loop(reason), self.clock.loop)
+        if hasattr(asyncio, "run_coroutine_threadsafe"):
+            asyncio.run_coroutine_threadsafe(self._stop_loop(reason), self.clock.loop)
+        else:
+            # fallback for python 3.4 versions without run_coroutine_threadsafe
+            self.stop_future.set_result(reason)
 
     @asyncio.coroutine
     def _stop_loop(self, reason):
