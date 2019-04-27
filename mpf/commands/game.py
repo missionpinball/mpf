@@ -11,8 +11,6 @@ import logging
 from logging.handlers import QueueHandler, SysLogHandler
 from queue import Queue
 
-from asciimatics.screen import Screen
-
 from mpf.core.machine import MachineController
 from mpf.core.utility_functions import Util
 from mpf.commands.logging_formatters import JSONFormatter
@@ -25,7 +23,8 @@ class Command:
     # pylint: disable-msg=too-many-locals,too-many-statements
     def __init__(self, mpf_path, machine_path, args):
         """Run mpf game."""
-        signal.signal(signal.SIGINT, self.exit)
+        self.machine = None
+        self._sigint_count = 0
 
         parser = argparse.ArgumentParser(
             description='Starts the MPF game engine')
@@ -216,8 +215,11 @@ class Command:
 
             logger.addHandler(syslog_logger)
 
+        signal.signal(signal.SIGINT, self.sigint_handler)
         try:
-            MachineController(mpf_path, machine_path, vars(self.args)).run()
+            self.machine = MachineController(mpf_path, machine_path, vars(self.args))
+            self.machine.add_crash_handler(self.restore_logger)
+            self.machine.run()
             logging.info("MPF run loop ended.")
             self.exit()
 
@@ -225,25 +227,31 @@ class Command:
         except Exception as e:
             self.exit(exception=e)
 
-    def exit(self, signum=None, frame=None, exception=None):
+    def sigint_handler(self, signum=None, frame=None):
+        """Handle SIGINT."""
+        del signum, frame
+        self._sigint_count += 1
+        if self._sigint_count > 1:
+            self.exit("Received second SIGINT. Will exit ungracefully!")
+        elif self.machine:
+            self.machine.stop("SIGINT or keyboard interrupt")
+        else:
+            self.exit("Shutdown because of SIGINT or keyboard interrupt.")
+
+    def restore_logger(self):
+        """Restore logger."""
+        if self.args.text_ui:
+            # Re-enable console logging
+            logger = logging.getLogger()
+            logger.addHandler(logging.StreamHandler())
+
+    def exit(self, exception=None):
         """Handle MPF exit from either a clean shutdown or from a crash.
 
         Cleanly shuts down logging and restores the console window if the Text
         UI option is used.
         """
-        del signum, frame
-
-        if self.args.text_ui:
-            # restore the console to the old state
-            Screen.open().close(True)
-
         if exception:
-            logger = logging.getLogger()
-
-            if self.args.text_ui:
-                # Re-enable console logging to show the exception
-                logger.addHandler(logging.StreamHandler())
-
             logging.exception(exception)
 
         logging.shutdown()

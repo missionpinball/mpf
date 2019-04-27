@@ -5,6 +5,10 @@ from typing import Union
 
 from mpf.core.bcp.bcp_client import BaseBcpClient
 
+MYPY = False  # noqa
+if MYPY:
+    from mpf.core.machine import MachineController
+
 
 class BcpTransportManager:
 
@@ -14,7 +18,7 @@ class BcpTransportManager:
 
     def __init__(self, machine):
         """Initialise BCP transport manager."""
-        self._machine = machine
+        self._machine = machine     # type: MachineController
         self._transports = []
         self._readers = {}
         self._handlers = {}

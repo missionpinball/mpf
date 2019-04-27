@@ -162,6 +162,7 @@ class TextUi(MpfController):
         self.machine.events.add_handler('bcp_clients_connected',
                                         self._bcp_connected)
         self.machine.events.add_handler('shutdown', self.stop)
+        self.machine.add_crash_handler(self.stop)
         self.machine.events.add_handler('player_number', self._update_player)
         self.machine.events.add_handler('player_ball', self._update_player)
         self.machine.events.add_handler('player_score', self._update_player)
