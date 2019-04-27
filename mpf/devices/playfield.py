@@ -28,7 +28,7 @@ class Playfield(SystemWideDevice):
         """An instance of :class:`mpf.core.ball_search.BallSearch` which
         handles ball search for this playfield."""
 
-        self.delay = DelayManager(self.machine.delayRegistry)
+        self.delay = DelayManager(self.machine)
         """An instance of :class:`mpf.core.delays.DelayManager` which
         handles delays for this playfield."""
 

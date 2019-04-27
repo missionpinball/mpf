@@ -41,7 +41,7 @@ class DropTarget(SystemWideDevice):
 
         self._in_ball_search = False
         self.complete = False
-        self.delay = DelayManager(machine.delayRegistry)
+        self.delay = DelayManager(machine)
 
         self._ignore_switch_hits = False
 
@@ -280,7 +280,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         self.complete = False
         self.down = 0
         self.up = 0
-        self.delay = DelayManager(machine.delayRegistry)
+        self.delay = DelayManager(machine)
         self._ignore_switch_hits = False
 
     @property

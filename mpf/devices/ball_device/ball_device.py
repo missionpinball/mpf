@@ -41,7 +41,7 @@ class BallDevice(SystemWideDevice):
         """Initialise ball device."""
         super().__init__(machine, name)
 
-        self.delay = DelayManager(machine.delayRegistry)
+        self.delay = DelayManager(machine)
 
         self.available_balls = 0
         """Number of balls that are available to be ejected. This differs from

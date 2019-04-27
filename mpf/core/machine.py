@@ -21,7 +21,7 @@ from mpf.core.clock import ClockBase
 from mpf.core.config_processor import ConfigProcessor
 from mpf.core.config_validator import ConfigValidator
 from mpf.core.data_manager import DataManager
-from mpf.core.delays import DelayManager, DelayManagerRegistry
+from mpf.core.delays import DelayManager
 from mpf.core.device_manager import DeviceCollection
 from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
@@ -88,7 +88,7 @@ class MachineController(LogMixin):
     __slots__ = ["log", "options", "config_processor", "mpf_path", "machine_path", "_exception", "_boot_holds",
                  "is_init_done", "_done", "monitors", "plugins", "custom_code", "modes", "game", "machine_vars",
                  "machine_var_monitor", "machine_var_data_manager", "thread_stopper", "config", "config_validator",
-                 "machine_config", "delayRegistry", "delay", "hardware_platforms", "default_platform", "clock",
+                 "machine_config", "delay", "hardware_platforms", "default_platform", "clock",
                  "stop_future", "events", "switch_controller", "mode_controller", "settings", "asset_manager",
                  "bcp", "ball_controller", "show_controller", "placeholder_manager", "device_manager", "auditor",
                  "tui", "service", "switches", "shows", "coils", "ball_devices", "lights", "playfield", "playfields",
@@ -184,8 +184,7 @@ class MachineController(LogMixin):
             self.config['logging']['console']['machine_controller'],
             self.config['logging']['file']['machine_controller'])
 
-        self.delayRegistry = DelayManagerRegistry(self)
-        self.delay = DelayManager(self.delayRegistry)
+        self.delay = DelayManager(self)
 
         self.hardware_platforms = dict()    # type: Dict[str, SmartVirtualHardwarePlatform]
         self.default_platform = None        # type: SmartVirtualHardwarePlatform

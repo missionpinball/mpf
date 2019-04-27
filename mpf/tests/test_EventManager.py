@@ -776,7 +776,7 @@ class TestEventManager(MpfFakeGameTestCase, MpfTestCase):
         self.machine.events.add_handler('event2', self.event2_cb)
         self.machine.events.add_handler('event3', self.event3_cb)
         self.correct = False
-        self.delay = DelayManager(self.machine.delayRegistry)
+        self.delay = DelayManager(self.machine)
 
         self.machine.events.post("event1")
         self.advance_time_and_run(1)
@@ -795,7 +795,7 @@ class TestEventManager(MpfFakeGameTestCase, MpfTestCase):
 
     def test_delay_order(self):
         self.called = False
-        self.delay = DelayManager(self.machine.delayRegistry)
+        self.delay = DelayManager(self.machine)
 
         self.delay.add(ms=6001, name="second", callback=self.delay_second)
         self.delay.add(ms=6000, name="first", callback=self.delay_first)
@@ -810,7 +810,7 @@ class TestEventManager(MpfFakeGameTestCase, MpfTestCase):
 
     def test_zero_ms_delay(self):
         self.called = False
-        self.delay = DelayManager(self.machine.delayRegistry)
+        self.delay = DelayManager(self.machine)
 
         self.delay.add(ms=0, name="first", callback=self.delay_zero_ms, start=self.machine.clock.get_time())
         self.advance_time_and_run(10)

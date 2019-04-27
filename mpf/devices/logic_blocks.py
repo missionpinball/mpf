@@ -290,7 +290,7 @@ class Counter(LogicBlock):
         super().__init__(machine, name)
         self.debug_log("Creating Counter LogicBlock")
 
-        self.delay = DelayManager(self.machine.delayRegistry)
+        self.delay = DelayManager(self.machine)
 
         self.ignore_hits = False
         self.hit_value = -1

@@ -20,7 +20,7 @@ class EventPlayer(FlatConfigPlayer):
     def __init__(self, machine):
         """Initialise EventPlayer."""
         super().__init__(machine)
-        self.delay = DelayManager(self.machine.delayRegistry)
+        self.delay = DelayManager(self.machine)
 
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Post (delayed) events."""

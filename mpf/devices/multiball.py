@@ -27,7 +27,7 @@ class Multiball(SystemWideDevice, ModeDevice):
         self.source_playfield = None
         super().__init__(machine, name)
 
-        self.delay = DelayManager(machine.delayRegistry)
+        self.delay = DelayManager(machine)
         self.balls_added_live = 0
         self.balls_live_target = 0
         self.enabled = False

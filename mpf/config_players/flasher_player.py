@@ -16,7 +16,7 @@ class FlasherPlayer(DeviceConfigPlayer):
     def __init__(self, machine):
         """Initialise flasher_player."""
         super().__init__(machine)
-        self.delay = DelayManager(self.machine.delayRegistry)
+        self.delay = DelayManager(self.machine)
 
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Flash flashers."""

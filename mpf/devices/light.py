@@ -59,7 +59,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         self.platforms = set()      # type: Set[LightsPlatform]
         super().__init__(machine, name)
         self.machine.light_controller.initialise_light_subsystem()
-        self.delay = DelayManager(self.machine.delayRegistry)
+        self.delay = DelayManager(self.machine)
 
         self.default_fade_ms = None
 

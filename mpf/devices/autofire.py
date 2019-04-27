@@ -44,7 +44,7 @@ class AutofireCoil(SystemWideDevice):
         self._enabled = False
         self._rule = None       # type: HardwareRule
         super().__init__(machine, name)
-        self.delay = DelayManager(self.machine.delayRegistry)
+        self.delay = DelayManager(self.machine)
         self._ball_search_in_progress = False
         self._timeout_watch_time = None
         self._timeout_max_hits = None

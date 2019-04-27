@@ -40,7 +40,7 @@ class RpiDriver(DriverPlatformInterface):
         super().__init__(config, number)
         self.platform = platform            # type: RaspberryPiHardwarePlatform
         self.gpio = int(self.number)
-        self.delay = DelayManager(self.platform.machine.delayRegistry)
+        self.delay = DelayManager(self.platform.machine)
 
     def get_board_name(self):
         """Return name."""

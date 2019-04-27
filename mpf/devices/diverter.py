@@ -25,7 +25,7 @@ class Diverter(SystemWideDevice):
         """Initialise diverter."""
         super().__init__(machine, name)
 
-        self.delay = DelayManager(machine.delayRegistry)
+        self.delay = DelayManager(machine)
 
         # Attributes
         self.active = False

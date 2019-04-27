@@ -64,7 +64,7 @@ class Mode(LogMixin):
         self.start_event_kwargs = None          # type: Dict[str, Any]
         self.stopping = False
 
-        self.delay = DelayManager(self.machine.delayRegistry)
+        self.delay = DelayManager(self.machine)
         '''DelayManager instance for delays in this mode. Note that all delays
         scheduled here will be automatically canceled when the mode stops.'''
 

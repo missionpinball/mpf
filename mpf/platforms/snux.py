@@ -26,7 +26,7 @@ class SnuxHardwarePlatform(DriverPlatform):
         super().__init__(machine)
 
         self.log = logging.getLogger('Platform.Snux')
-        self.delay = DelayManager(machine.delayRegistry)
+        self.delay = DelayManager(machine)
 
         self.platform = None            # type: DriverPlatform
 

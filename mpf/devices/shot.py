@@ -36,7 +36,7 @@ class Shot(EnableDisableMixin, ModeDevice):
         # a default enable event.
         super(Shot, self).__init__(machine, name)
 
-        self.delay = mpf.core.delays.DelayManager(self.machine.delayRegistry)
+        self.delay = mpf.core.delays.DelayManager(self.machine)
 
         self.active_sequences = list()
         """List of tuples: (id, current_position_index, next_switch)"""
