@@ -1,5 +1,4 @@
 from mpf.tests.MpfTestCase import MpfTestCase, test_config
-from unittest.mock import MagicMock
 
 
 class TestTilt(MpfTestCase):
@@ -16,6 +15,51 @@ class TestTilt(MpfTestCase):
     def _tilted(self, **kwargs):
         del kwargs
         self._is_tilted = True
+
+    @test_config("config_system_11_trough.yaml")
+    def test_tilt_in_outhole(self):
+        """Test that the ball does not stay in the outhole."""
+        self._is_tilted = False
+        self.machine.events.add_handler("tilt", self._tilted)
+
+        self.machine.ball_controller.num_balls_known = 0
+        self.hit_switch_and_run('s_ball_switch1', 0)
+        self.hit_switch_and_run('s_ball_switch2', 0)
+        self.advance_time_and_run(2)
+
+        self.assertEqual(None, self.machine.game)
+        self.assertEqual(2, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough"].balls)
+        self.hit_and_release_switch("s_start")
+        self.advance_time_and_run(10)
+
+        self.assertBallsOnPlayfield(0)
+        self.assertAvailableBallsOnPlayfield(1)
+        self.assertEqual(1, self.machine.ball_devices["bd_plunger"].balls)
+
+        # ball ejects and ends up on playfield
+        self.release_switch_and_run("s_plunger", 10)
+        self.assertBallsOnPlayfield(1)
+        self.assertAvailableBallsOnPlayfield(1)
+
+        # machine tilts
+        self.assertFalse(self._is_tilted)
+        self.hit_and_release_switch("s_tilt")
+        self.advance_time_and_run(10)
+        self.assertTrue(self._is_tilted)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(True, self.machine.game.tilted)
+        self.assertEqual(0, self.machine.ball_devices["bd_outhole"].balls)
+        self.assertEqual(0, self.machine.ball_devices["bd_plunger"].balls)
+        self.assertBallsOnPlayfield(1)
+        self.assertAvailableBallsOnPlayfield(1)
+
+        # ball drains and gets kicked to trough
+        self.machine.switch_controller.process_switch('s_outhole', 1)
+        self.advance_time_and_run(20)
+        self.assertEqual(0, self.machine.ball_devices["bd_outhole"].balls)
+
+        self.assertEqual(False, self.machine.game.tilted)
 
     @test_config("config_mechanical_eject.yaml")
     def test_mechanical_eject(self):

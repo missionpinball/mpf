@@ -199,8 +199,6 @@ class Tilt(Mode):
         if self._balls_to_collect <= 0:
             self._tilt_done()
 
-        return {'unclaimed_balls': 0}
-
     def _tilt_switch_handler(self):
         self.tilt()
 

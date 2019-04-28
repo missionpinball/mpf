@@ -1,0 +1,70 @@
+#config_version=5
+
+game:
+    balls_per_game: 3
+    allow_start_with_ball_in_drain: True
+
+modes:
+    - tilt
+    - base
+
+playfields:
+    playfield:
+        default_source_device: bd_plunger
+        tags: default
+
+coils:
+    c_outhole:
+        number:
+        default_pulse_ms: 20
+    c_trough:
+        number:
+        default_pulse_ms: 20
+
+switches:
+    s_start:
+        number:
+        tags: start
+    s_outhole:
+        number:
+    s_ball_switch1:
+        number:
+    s_ball_switch2:
+        number:
+    s_ball_switch3:
+        number:
+    s_plunger:
+        number:
+    s_playfield:
+        number:
+        tags: playfield_active
+    s_tilt:
+        number:
+        tags: tilt
+    s_tilt_warning:
+        number:
+        tags: tilt_warning
+    s_slam_tilt:
+        number:
+        tags: slam_tilt
+
+ball_devices:
+    bd_outhole:
+        tags: drain
+        ball_switches: s_outhole
+        eject_coil: c_outhole
+        eject_targets: bd_trough
+        confirm_eject_type: target
+        debug: true
+    bd_trough:
+        tags: trough, home
+        ball_switches: s_ball_switch1, s_ball_switch2, s_ball_switch3
+        eject_coil: c_trough
+        eject_targets: bd_plunger
+        confirm_eject_type: target
+        debug: true
+    bd_plunger:
+        ball_switches: s_plunger
+        mechanical_eject: true
+        eject_timeouts: 4s
+        debug: true
