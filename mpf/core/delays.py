@@ -2,9 +2,7 @@
 
 import uuid
 from functools import partial
-
-from typing import Any, Callable, Dict, Set
-
+from typing import Any, Callable, Dict, Tuple, Set
 from mpf.core.mpf_controller import MpfController
 
 MYPY = False
@@ -87,9 +85,9 @@ class DelayManager(MpfController):
             self.machine.clock.unschedule(self.delays[name])
             del self.delays[name]
 
-        self.delays[name] = self.machine.clock.schedule_once(
+        self.delays[name] = (self.machine.clock.schedule_once(
             partial(self._process_delay_callback, name, callback, **kwargs),
-            ms / 1000.0)
+            ms / 1000.0), callback)
 
         return name
 
@@ -104,12 +102,12 @@ class DelayManager(MpfController):
                 delay with this name, that's ok. Nothing happens.
         """
         self.debug_log("Removing delay: '%s'", name)
-        if name in self.delays:
-            self.machine.clock.unschedule(self.delays[name])
-            try:
-                del self.delays[name]
-            except KeyError:
-                pass
+        try:
+            delay = self.delays.pop(name)
+        except KeyError:
+            pass
+        else:
+            self.machine.clock.unschedule(delay[0])
 
     def add_if_doesnt_exist(self, ms: int, callback: Callable[..., None],
                             name: str, **kwargs) -> str:
@@ -175,7 +173,7 @@ class DelayManager(MpfController):
     def clear(self) -> None:
         """Remove (clear) all the delays associated with this DelayManager."""
         for name in list(self.delays.keys()):
-            self.machine.clock.unschedule(self.delays[name])
+            self.machine.clock.unschedule(self.delays[name][0])
             self.remove(name)
 
         self.delays = {}
@@ -194,8 +192,7 @@ class DelayManager(MpfController):
                 # have to save the callback ref first, since if the callback
                 # schedules a new delay with the same name, then the removal
                 # will remove it
-                # pylint: disable-msg=protected-access
-                cb = self.delays[name]._callback
+                cb = self.delays[name][1]
                 self.remove(name)
                 cb()
             except KeyError:
