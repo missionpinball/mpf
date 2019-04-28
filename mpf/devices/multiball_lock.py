@@ -113,10 +113,8 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
 
     def reset_count_for_current_player(self):
         """Reset the locked balls for the current player."""
-        if self.config['locked_ball_counting_strategy'] in ("virtual_only", "min_virtual_physical"):
-            self.machine.game.player['{}_locked_balls'.format(self.name)] = 0
-        elif self.config['locked_ball_counting_strategy'] == "no_virtual":
-            self._locked_balls = 0
+        if self.config['locked_ball_counting_strategy'] in ("virtual_only", "min_virtual_physical", "no_virtual"):
+            self.locked_balls = 0
         else:
             raise AssertionError("Cannot reset physical balls")
 
@@ -144,6 +142,9 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
             self.machine.game.player['{}_locked_balls'.format(self.name)] = value
         elif self.config['locked_ball_counting_strategy'] in "no_virtual":
             self._locked_balls = value
+        else:
+            raise AssertionError("Cannot write locked_balls for strategy {}".format(
+                self.config['locked_ball_counting_strategy']))
 
     def _register_handlers(self):
         # register on ball_enter of lock_devices
@@ -204,15 +205,19 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
     def _lock_ball(self, unclaimed_balls: int, new_available_balls: int, device: "BallDevice", **kwargs):
         """Handle result of the _ball_enter event of lock_devices."""
         del kwargs
-        # if full do not take any balls
-        if self.is_virtually_full:
-            self.debug_log("Cannot lock balls. Lock is full.")
-            return {'unclaimed_balls': unclaimed_balls}
-
         # if there are no balls do not claim anything
         if unclaimed_balls <= 0:
             return {'unclaimed_balls': unclaimed_balls}
 
+        # MPF will make sure that devices get one event per ball
+        assert unclaimed_balls == 1
+
+        # if already full do not take any balls
+        if self.is_virtually_full:
+            self.debug_log("Cannot lock balls. Lock is full.")
+            return {'unclaimed_balls': unclaimed_balls}
+
+        # first take care of virtual ball count in lock
         capacity = self.remaining_virtual_space_in_lock
         # take ball up to capacity limit
         if unclaimed_balls > capacity:
@@ -220,38 +225,53 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
         else:
             balls_to_lock = unclaimed_balls
 
+        new_locked_balls = self.locked_balls + 1
+        # post event for ball capture
+        self._events[device].append({"event": 'multiball_lock_' + self.name + '_locked_ball',
+                                     "total_balls_locked": new_locked_balls})
+        '''event: multiball_lock_(name)_locked_ball
+        desc: The multiball lock device (name) has just locked one additional ball.
+
+        args:
+            total_balls_locked: The current total number of balls this device
+                has locked.
+        '''
+        if self.config['locked_ball_counting_strategy'] != "physical_only":
+            self.locked_balls = new_locked_balls
+
+        # now check how many balls we want physically in the lock
         balls_to_lock_physically = balls_to_lock
 
-        for _ in range(balls_to_lock):
-            self.locked_balls += 1
-            # post event for ball capture
-            self._events[device].append({"event": 'multiball_lock_' + self.name + '_locked_ball',
-                                         "total_balls_locked": self.locked_balls})
-            '''event: multiball_lock_(name)_locked_ball
-            desc: The multiball lock device (name) has just locked one additional ball.
-
-            args:
-                total_balls_locked: The current total number of balls this device
-                    has locked.
-            '''
+        if self._physically_remaining_space < new_available_balls:
+            # we cannot lock if there isn't any space left
+            balls_to_lock_physically = 0
+            self.debug_log("Will not keep the ball. Device is full. Remaining space: %s. Balls to lock: %s",
+                           self._physically_remaining_space, balls_to_lock)
 
         if self.config['locked_ball_counting_strategy'] in ("virtual_only", "min_virtual_physical"):
             # only keep ball if any player could use it
             if self._max_balls_locked_by_any_player < self._physically_locked_balls + new_available_balls:
+                self.debug_log("Will not keep ball because no player could use it. Max locked balls by any player "
+                               "is %s and we physically got %s", self._max_balls_locked_by_any_player,
+                               self._physically_locked_balls)
                 balls_to_lock_physically = 0
 
         if self.config['locked_ball_counting_strategy'] == "min_virtual_physical":
             # do not lock if the lock would be physically full but not virtually
-            if (self._physically_remaining_space <= 1 and
+            if (self._physically_remaining_space <= new_available_balls and
                     self.config['balls_to_lock'] - self.machine.game.player['{}_locked_balls'.format(self.name)] > 0):
+                self.debug_log("Will not keep ball because the lock would be physically full but virtually still "
+                               "has space for this player.")
                 balls_to_lock_physically = 0
         elif self.config['locked_ball_counting_strategy'] != "physical_only":
             # do not lock if the lock would be physically full but not virtually
-            if not self.is_virtually_full and self._physically_remaining_space <= 1:
+            if not self.is_virtually_full and self._physically_remaining_space <= new_available_balls:
                 balls_to_lock_physically = 0
+                self.debug_log("Will not keep ball because the lock would be physically full but virtually still "
+                               "has space for this player.")
 
         # check if we are full now and post event if yes
-        if self.is_virtually_full:
+        if self.remaining_virtual_space_in_lock - new_locked_balls < 0:
             self._events[device].append({'event': 'multiball_lock_' + self.name + '_full',
                                          'balls': self.locked_balls})
         '''event: multiball_lock_(name)_full
