@@ -78,6 +78,8 @@ class TestBallRouting(MpfGameTestCase):
         self.assertEventCalledWith("balldevice_test_device4_ball_enter",
                                    device=self.machine.ball_devices["test_device4"], new_balls=1, unclaimed_balls=1,
                                    new_available_balls=0)
+        self.assertEqual(0, self.machine.ball_devices["test_device4"].balls)
+        self.assertEqual(0, self.machine.ball_devices["test_device4"].available_balls)
 
         # route ball to device4 and lock it
         self.post_event("lock_enable")

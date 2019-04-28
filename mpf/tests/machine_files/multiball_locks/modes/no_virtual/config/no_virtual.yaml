@@ -7,3 +7,4 @@ multiball_locks:
         lock_devices: bd_lock
         balls_to_lock: 2
         locked_ball_counting_strategy: no_virtual
+        debug: True
