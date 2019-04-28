@@ -4,7 +4,6 @@ import os
 
 import sys
 import threading
-import traceback
 from platform import platform, python_version, system, release, version, system_alias, machine
 
 import copy
@@ -68,6 +67,8 @@ if MYPY:   # pragma: no cover
     from mpf.devices.rgb_dmd import RgbDmd
     from mpf.devices.flipper import Flipper
     from mpf.devices.diverter import Diverter
+    from mpf.devices.multiball_lock import MultiballLock
+    from mpf.devices.multiball import Multiball
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -174,6 +175,8 @@ class MachineController(LogMixin):
             self.rgb_dmds = None                        # type: Dict[str, RgbDmd]
             self.flippers = None                        # type: Dict[str, Flipper]
             self.diverters = None                       # type: Dict[str, Diverter]
+            self.multiball_locks = None                 # type: Dict[str, MultiballLock]
+            self.multiballs = None                      # type: Dict[str, Multiball]
 
         self._set_machine_path()
 

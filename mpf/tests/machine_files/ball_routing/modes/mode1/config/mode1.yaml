@@ -20,5 +20,4 @@ multiball_locks:
       lock_devices: test_device4
       enable_events: lock_enable
       disable_events: lock_disable
-      balls_to_replace: 1
       debug: true
