@@ -69,8 +69,19 @@ Then enter the newly-created virtualenv:
 
     source mpf-venv/bin/activate
 
+On Macs, you will need to uninstall and reinstall kivy in the the virtual envirment to avoid ambiguous kivy library errors.
+
+::
+
+    1) pip uninstall kivy
+    2) pip install kivy -no-binary :all:
 
 Each time you'll work with your MPF development version you'll have to switch to this environment.
+
+::
+
+    source mpf-venv/bin/activate
+
 Note: in this environment, thanks to the "-p python3" option of virtualenv, the version of Python and
 pip is 3.x automatically.
 
