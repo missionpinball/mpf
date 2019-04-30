@@ -420,6 +420,10 @@ class TextUi(MpfController):
         self.layout.set_max_height(self.screen.height - 2)
 
     def _draw_screen(self):
+        if not self.screen:
+            # probably drawing during game end
+            return
+
         self.layout.clear_columns()
         self._draw_modes()
         self._draw_machine_variables()
