@@ -81,9 +81,12 @@ class DelayManager(MpfController):
         self.debug_log("Adding delay. Name: '%s' ms: %s, callback: %s, "
                        "kwargs: %s", name, ms, callback, kwargs)
 
-        if name in self.delays:
-            self.machine.clock.unschedule(self.delays[name])
-            del self.delays[name]
+        try:
+            delay = self.delays.pop(name)
+        except KeyError:
+            pass
+        else:
+            self.machine.clock.unschedule(delay[0])
 
         self.delays[name] = (self.machine.clock.schedule_once(
             partial(self._process_delay_callback, name, callback, **kwargs),
