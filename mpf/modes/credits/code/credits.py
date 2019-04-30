@@ -1,6 +1,7 @@
 """Contains the Credit (coin play) mode code."""
 
 from math import floor
+from mpf.core.settings_controller import SettingEntry
 
 from mpf.core.mode import Mode
 
@@ -41,6 +42,11 @@ class Credits(Mode):
             source=self._get_merged_settings('credits'),
             section_name='credits')
 
+        # add setting
+        self.machine.settings.add_setting(SettingEntry("free_play", "Free Play", 500,
+                                                       "free_play", self.credits_config['free_play'],
+                                                       {True: "Free Play", False: "Credit Play"}))
+
     def mode_start(self, **kwargs):
         """Start mode."""
         self.add_mode_event_handler('enable_free_play',
@@ -52,7 +58,7 @@ class Credits(Mode):
         self.add_mode_event_handler('slam_tilt',
                                     self.clear_all_credits)
 
-        if self.credits_config['free_play']:
+        if self.machine.settings.get_setting_value("free_play"):
             self.enable_free_play(post_event=False)
         else:
             self._calculate_credit_units()
