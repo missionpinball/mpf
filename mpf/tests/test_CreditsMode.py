@@ -45,26 +45,11 @@ class TestCreditsMode(MpfTestCase):
         self.advance_time_and_run()
         self.assertIsNone(self.machine.game)
 
-    def testFreePlay(self):
-        self.machine.modes["credits"].stop()
-        self.machine_run()
-        self.assertEqual("FREE PLAY", self.machine.get_machine_var('credits_string'))
-
-        self.machine.modes["credits"].credits_config['free_play'] = True
-        self.machine.modes["credits"].credits_config['free_play_string'] = "FREEEE"
-        self.machine.modes["credits"].start()
-        self.machine_run()
-
-        self.assertEqual("FREEEE", self.machine.get_machine_var('credits_string'))
-
-        self.assertFalse(self.machine.is_machine_var("price_per_game_raw_0"))
-        self.assertFalse(self.machine.is_machine_var("price_per_game_string_0"))
-
-        self.start_two_player_game()
-
     @test_config("config_freeplay.yaml")
     def test_free_play_at_start(self):
         self.assertEqual("FREE PLAY", self.machine.get_machine_var('credits_string'))
+        self.assertFalse(self.machine.is_machine_var("price_per_game_raw_0"))
+        self.assertFalse(self.machine.is_machine_var("price_per_game_string_0"))
 
         self.start_two_player_game()
 
