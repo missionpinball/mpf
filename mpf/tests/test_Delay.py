@@ -61,6 +61,18 @@ class TestDelay(MpfTestCase):
         self.assertTrue(self.machine.delay.check('delay_test'))
         self.assertFalse(self.machine.delay.check('delay_test_fake'))
 
+    def test_double_add(self):
+        self.callback = MagicMock()
+        # add delay
+        self.machine.delay.add(100, self.callback, "delay_test")
+        self.advance_time_and_run(.05)
+        # add same name again. it should reset the time
+        self.machine.delay.add(100, self.callback, "delay_test")
+        self.advance_time_and_run(.06)
+        self.callback.assert_not_called()
+        self.advance_time_and_run(.05)
+        self.callback.assert_any_call()
+
     def test_reset(self):
         self.callback = MagicMock()
         self.machine.delay.add(1000, self.callback, "delay_test")
