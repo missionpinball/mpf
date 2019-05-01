@@ -193,6 +193,38 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Return changed lamps since last call."""
         return self._get_changed_lights_by_subtype("gi")
 
+    def vpx_changed_solenoids2(self):
+        """Return changed solenoids since last call. Number type string"""
+        changed_drivers = []
+        for number, driver in self._drivers.items():
+            if driver.state != self._last_drivers[number]:
+                changed_drivers.append((number, driver.state))
+                self._last_drivers[number] = driver.state
+
+        return changed_drivers
+
+    def _get_changed_lights_by_subtype2(self, subtype):
+        """Return changed lights since last call. Number type string"""
+        changed_lamps = []
+        for number, light in self._lights.items():
+            if light.subtype != subtype:
+                continue
+            brightness = light.current_brightness
+            state = bool(brightness > 0.5)
+            if state != self._last_lights[number]:
+                changed_lamps.append((light.hw_number, state))
+                self._last_lights[number] = state
+
+        return changed_lamps
+
+    def vpx_changed_lamps2(self):
+        """Return changed lamps since last call. Number type string"""
+        return self._get_changed_lights_by_subtype2("matrix")
+
+    def vpx_changed_gi_strings2(self):
+        """Return changed lamps since last call. Number type string"""
+        return self._get_changed_lights_by_subtype2("gi")
+
     def vpx_mech(self, number):
         """Not implemented."""
         self.log.warning("Command \"mech\" unimplemented: %s", number)
