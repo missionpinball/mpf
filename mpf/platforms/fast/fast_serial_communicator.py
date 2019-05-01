@@ -186,15 +186,15 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         If so, queries the IO boards to log them and make sure they're the  proper firmware version.
         """
         # reset CPU early
-        if StrictVersion(self.remote_firmware) >= StrictVersion("1.03"):
-            self.platform.debug_log('Resetting NET CPU.')
-            self.writer.write('BC:\r'.encode())
-            msg = ''
-            while not msg.startswith('BC:P\r'):
-                msg = (yield from self.readuntil(b'\r')).decode()
-            yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
-        else:
-            self.platform.log.warning("Not resetting FAST NET because firmware is currently broken.")
+        self.platform.debug_log('Resetting NET CPU.')
+        self.writer.write('BC:\r'.encode())
+        msg = ''
+        while not msg.startswith('BC:P\r') and not msg.startswith('XX:F\r'):
+            msg = (yield from self.readuntil(b'\r')).decode()
+        if msg != 'BC:P\r':
+            self.platform.warning_log("Reset on the NET CPU failed (this might be normal on older firmwares)")
+
+        yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
 
         self.platform.debug_log('Reading all switches.')
         self.writer.write('SA:\r'.encode())
