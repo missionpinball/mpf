@@ -167,9 +167,21 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     def stop(self):
         """Stop platform and close connections."""
-        for connection in self.serial_connections:
-            connection.writer.write(b'BL:AA55\r')   # reset CPU using bootloader
-            connection.stop()
+        if self.net_connection:
+            # set watchdog to expire in 1ms
+            self.net_connection.writer.write(b'WD:1\r')
+            self.net_connection.stop()
+            self.net_connection = None
+
+        if self.rgb_connection:
+            self.rgb_connection.writer.write(b'BL:AA55\r')  # reset CPU using bootloader
+            self.rgb_connection.stop()
+            self.rgb_connection = None
+
+        if self.dmd_connection:
+            self.dmd_connection.writer.write(b'BL:AA55\r')  # reset CPU using bootloader
+            self.dmd_connection.stop()
+            self.dmd_connection = None
 
         self.serial_connections = set()
 

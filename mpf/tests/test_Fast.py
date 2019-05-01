@@ -40,7 +40,7 @@ class BaseMockFast(MockSerial):
         if cmd == (' ' * 256 * 4):
             return msg_len
 
-        if cmd[:3] == "WD:":
+        if cmd[:3] == "WD:" and cmd != "WD:1":
             self.queue.append("WD:P")
             return msg_len
 
@@ -141,7 +141,7 @@ class TestFast(MpfTestCase):
             "BL:AA55": "!SRE"
         }
         self.net_cpu.expected_commands = {
-            "BL:AA55": "!SRE"
+            "WD:1": "WD:P"
         }
         super().tearDown()
         self.assertFalse(self.net_cpu.expected_commands)
