@@ -187,11 +187,11 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         """
         # reset CPU early
         self.platform.debug_log('Resetting NET CPU.')
-        self.writer.write('BC:\r'.encode())
+        self.writer.write('BR:\r'.encode())
         msg = ''
-        while not msg.startswith('BC:P\r') and not msg.startswith('XX:F\r'):
+        while not msg.startswith('BR:P\r') and not msg.startswith('XX:F\r'):
             msg = (yield from self.readuntil(b'\r')).decode()
-        if msg != 'BC:P\r':
+        if msg != 'BR:P\r':
             self.platform.warning_log("Reset on the NET CPU failed (this might be normal on older firmwares)")
 
         yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
