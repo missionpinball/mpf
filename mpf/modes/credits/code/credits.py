@@ -149,8 +149,6 @@ class Credits(Mode):
         """Enable credits play."""
         del kwargs
 
-        self.credits_config['free_play'] = False
-
         credit_units = self._get_credit_units()
 
         if self.credits_config['persist_credits_while_off_time']:
@@ -170,7 +168,7 @@ class Credits(Mode):
         self.machine.set_machine_var('credits_string', ' ')
         # doc string is in machine.py for credits_string
 
-        self.machine.set_machine_var('free_play', False)
+        self.machine.settings.set_setting_value('free_play', False)
 
         self.machine.set_machine_var('credits_value', '0')
         '''machine_var: credits_value
@@ -243,9 +241,7 @@ class Credits(Mode):
     def enable_free_play(self, post_event=True, **kwargs):
         """Enable free play."""
         del kwargs
-        self.credits_config['free_play'] = True
-
-        self.machine.set_machine_var('free_play', True)
+        self.machine.settings.set_setting_value('free_play', True)
 
         for index in range(len(self.credits_config['pricing_tiers'])):
             self.machine.remove_machine_var("price_per_game_raw_{}".format(index))
@@ -269,7 +265,7 @@ class Credits(Mode):
         """Toggle between free and credits play."""
         del kwargs
 
-        if self.credits_config['free_play']:
+        if self.machine.settings.get_setting_value('free_play'):
             self.enable_credit_play()
         else:
             self.enable_free_play()
@@ -440,7 +436,7 @@ class Credits(Mode):
         self.machine.set_machine_var('credits_string', display_string)
 
     def _update_credit_strings(self):
-        if self.credits_config['free_play']:
+        if self.machine.settings.get_setting_value('free_play'):
             self._set_free_play_string()
             return
 
