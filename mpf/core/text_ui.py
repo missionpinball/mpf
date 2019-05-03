@@ -53,9 +53,9 @@ class TextUi(MpfController):
     config_name = "text_ui"
 
     __slots__ = ["start_time", "machine", "_tick_task", "screen", "mpf_process", "ball_devices", "switches",
-                 "player_start_row", "column_positions", "columns", "_pending_bcp_connection", "_asset_percent",
+                 "_pending_bcp_connection", "_asset_percent", "_player_widgets", "_machine_widgets",
                  "_bcp_status", "frame", "layout", "scene", "footer_memory", "switch_widgets", "mode_widgets",
-                 "ball_device_widgets", "footer_cpu", "footer_mc_cpu", "footer_uptime", "delay"]
+                 "ball_device_widgets", "footer_cpu", "footer_mc_cpu", "footer_uptime", "delay", "_layout_change"]
 
     def __init__(self, machine: "MachineController") -> None:
         """Initialize TextUi."""
@@ -90,9 +90,6 @@ class TextUi(MpfController):
         self.ball_devices = list()      # type: List[BallDevice]
 
         self.switches = {}
-        self.player_start_row = 0
-        self.column_positions = [0, .25, .5, .75]
-        self.columns = [0] * len(self.column_positions)
 
         self.machine.events.add_handler('init_phase_2', self._init)
         # self.machine.events.add_handler('init_phase_3', self._init2)
@@ -118,10 +115,13 @@ class TextUi(MpfController):
         self.switch_widgets = []
         self.mode_widgets = []
         self.ball_device_widgets = []
+        self._machine_widgets = []
+        self._player_widgets = []
         self.footer_memory = None
         self.footer_cpu = None
         self.footer_mc_cpu = None
         self.footer_uptime = None
+        self._layout_change = True
 
         self._tick_task = self.machine.clock.schedule_interval(self._tick, 1)
         self._create_window()
@@ -134,6 +134,8 @@ class TextUi(MpfController):
             self.machine.events.add_handler("mode_{}_stopped".format(mode.name), self._mode_change)
 
         self.machine.switch_controller.add_monitor(self._update_switches)
+        self.machine.register_monitor("machine_vars", self._update_machine_vars)
+        self.machine.machine_var_monitor = True
         self.machine.bcp.interface.register_command_callback(
             "status_report", self._bcp_status_report)
 
@@ -243,6 +245,7 @@ class TextUi(MpfController):
         # empty line at the end
         self.mode_widgets.append(Label(""))
 
+        self._layout_change = True
         self._schedule_draw_screen()
 
     def _draw_modes(self):
@@ -255,6 +258,7 @@ class TextUi(MpfController):
 
     def _update_ball_devices(self, **kwargs):
         del kwargs
+        # TODO: do not create widgets. just update contents
         self.ball_device_widgets = []
         self.ball_device_widgets.append(Label("BALL COUNTS"))
         self.ball_device_widgets.append(Divider())
@@ -282,22 +286,22 @@ class TextUi(MpfController):
 
         self.ball_device_widgets.append(Label(""))
 
-    def _update_player(self, **kwargs):
-        del kwargs
+        self._layout_change = True
         self._schedule_draw_screen()
 
-    def _draw_player(self, **kwargs):
+    def _update_player(self, **kwargs):
         del kwargs
-        self.layout.add_widget(Label("CURRENT PLAYER"), 3)
-        self.layout.add_widget(Divider(), 3)
+        self._player_widgets = []
+        self._player_widgets.append(Label("CURRENT PLAYER"))
+        self._player_widgets.append(Divider())
 
         try:
             player = self.machine.game.player
-            self.layout.add_widget(Label('PLAYER: {}'.format(player.number)), 3)
-            self.layout.add_widget(Label('BALL: {}'.format(player.ball)), 3)
-            self.layout.add_widget(Label('SCORE: {:,}'.format(player.score)), 3)
+            self._player_widgets.append(Label('PLAYER: {}'.format(player.number)))
+            self._player_widgets.append(Label('BALL: {}'.format(player.ball)))
+            self._player_widgets.append(Label('SCORE: {:,}'.format(player.score)))
         except AttributeError:
-            self.layout.add_widget(Label("NO GAME IN PROGRESS"), 3)
+            self._player_widgets.append(Label("NO GAME IN PROGRESS"))
             return
 
         player_vars = player.vars.copy()
@@ -306,14 +310,32 @@ class TextUi(MpfController):
         player_vars.pop('ball')
 
         for name, value in player_vars.items():
-            self.layout.add_widget(Label('{}: {}'.format(name, value)), 3)
+            self._player_widgets.append(Label('{}: {}'.format(name, value)))
 
-    def _draw_machine_variables(self):
-        self.layout.add_widget(Label("MACHINE VARIABLES"), 0)
-        self.layout.add_widget(Divider(), 0)
+        self._layout_change = True
+        self._schedule_draw_screen()
+
+    def _draw_player(self, **kwargs):
+        del kwargs
+        for widget in self._player_widgets:
+            self.layout.add_widget(widget, 3)
+
+    def _update_machine_vars(self, **kwargs):
+        """Update machine vars."""
+        del kwargs
+        self._machine_widgets = []
+        self._machine_widgets.append(Label("MACHINE VARIABLES"))
+        self._machine_widgets.append(Divider())
         machine_vars = self.machine.machine_vars
         for name, value in machine_vars.items():
-            self.layout.add_widget(Label("{}: {}".format(name, value['value'])), 0)
+            self._machine_widgets.append(Label("{}: {}".format(name, value['value'])))
+        self._layout_change = True
+        self._schedule_draw_screen()
+
+    def _draw_machine_variables(self):
+        """Draw machine vars."""
+        for widget in self._machine_widgets:
+            self.layout.add_widget(widget, 0)
 
     def _create_window(self):
         self.screen = Screen.open()
@@ -377,17 +399,16 @@ class TextUi(MpfController):
             # probably drawing during game end
             return
 
-        self.layout.clear_columns()
-        self._draw_modes()
-        self._draw_machine_variables()
+        if self._layout_change:
+            self.layout.clear_columns()
+            self._draw_modes()
+            self._draw_machine_variables()
+            self._draw_switches()
+            self._draw_ball_devices()
+            self._draw_player()
+            self.frame.fix()
+            self._layout_change = False
 
-        self._draw_switches()
-
-        self._draw_ball_devices()
-
-        self._draw_player()
-
-        self.frame.fix()
         self.screen.force_update()
         self.screen.draw_next_frame()
 
@@ -432,7 +453,6 @@ class TextUi(MpfController):
     def stop(self, **kwargs):
         """Stop the Text UI and restore the original console screen."""
         del kwargs
-
         if self.screen:
             self.machine.clock.unschedule(self._tick_task)
             self.screen.close(True)
