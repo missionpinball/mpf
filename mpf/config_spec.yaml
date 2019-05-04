@@ -323,7 +323,7 @@ credits:
         type: single|str|replay
     pricing_tiers:
         price: single|template_float|.50
-        credits: single|int|1
+        credits: single|template_int|1
 device:     # base for all devices
     __valid_in__: None
     label: single|str|%

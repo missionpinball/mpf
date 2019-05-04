@@ -1,6 +1,8 @@
 """Contains the Credit (coin play) mode code."""
 
 from math import floor
+
+from mpf.core.placeholder_manager import NativeTypeTemplate
 from mpf.core.settings_controller import SettingEntry
 
 from mpf.core.mode import Mode
@@ -93,7 +95,7 @@ class Credits(Mode):
 
         try:
             price_per_game = self.credits_config['pricing_tiers'][0]['price'].evaluate([])
-            if self.credits_config['pricing_tiers'][0]['credits'] != 1:
+            if self.credits_config['pricing_tiers'][0]['credits'] != NativeTypeTemplate(1, self.machine):
                 raise AssertionError("First pricing_tier entry has to give exactly one credits.")
         except IndexError:
             price_per_game = 1
@@ -128,18 +130,19 @@ class Credits(Mode):
         for pricing_tier in self.credits_config['pricing_tiers']:
             price = pricing_tier['price'].evaluate([])
             credit_units = price / self.credit_unit
-            actual_credit_units = self.credit_units_per_game * pricing_tier['credits']
+            credits_in_tier = pricing_tier['credits'].evaluate([])
+            actual_credit_units = self.credit_units_per_game * credits_in_tier
             bonus = actual_credit_units - credit_units
 
             self.machine.set_machine_var("price_per_game_raw_{}".format(index), price)
             self.machine.set_machine_var("price_per_game_string_{}".format(index),
                                          self.credits_config['price_tier_template'].format(
-                                             price=price, credits=pricing_tier['credits']))
+                                             price=price, credits=credits_in_tier))
 
             self.debug_log("Pricing Tier Bonus. Price: %s, Credits: %s. "
                            "Credit units for this tier: %s, Credit units this "
                            "tier buys: %s, Bonus bump needed: %s",
-                           pricing_tier['price'].evaluate([]), pricing_tier['credits'],
+                           price, credits_in_tier,
                            credit_units, actual_credit_units, bonus)
 
             self.pricing_tiers.add((credit_units, bonus))
