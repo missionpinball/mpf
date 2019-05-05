@@ -41,7 +41,9 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
 
     def stop(self):
         """Close serial."""
-        self.serial.close()
+        if self.serial:
+            self.serial.close()
+            self.serial = None
 
     @asyncio.coroutine
     def configure_servo(self, number: str):

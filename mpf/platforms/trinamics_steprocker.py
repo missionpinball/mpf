@@ -43,7 +43,9 @@ class TrinamicsStepRocker(StepperPlatform):
 
     def stop(self):
         """Close serial."""
-        self.TMCL.stop()
+        if self.TMCL:
+            self.TMCL.stop()
+            self.TMCL = None
 
     @asyncio.coroutine
     def configure_stepper(self, number: str, config: dict) -> "TrinamicsTMCLStepper":

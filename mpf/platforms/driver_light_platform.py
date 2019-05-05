@@ -42,6 +42,7 @@ class DriverLightPlatform(LightsPlatform):
         """Stop all fades."""
         for light in self._lights:
             light.stop()
+        self._lights = []
 
     def configure_light(self, number: str, subtype: str, platform_settings: dict) -> "LightPlatformInterface":
         """Configure a light on a driver."""

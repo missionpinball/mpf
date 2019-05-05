@@ -58,6 +58,7 @@ class OpenpixelHardwarePlatform(LightsPlatform):
             if self.opc_client.socket_sender:
                 self.opc_client.socket_sender.close()
                 self.opc_client.socket_sender = None
+            self.opc_client = None
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Parse number to three channels."""

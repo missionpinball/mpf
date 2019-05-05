@@ -113,6 +113,7 @@ class MMA8451Platform(AccelerometerPlatform):
             if accelerometer.task:
                 accelerometer.task.cancel()
                 accelerometer.task = None
+        self.accelerometers = {}
 
     def configure_accelerometer(self, number, config, callback) -> MMA8451Device:
         """Configure MMA8451 accelerometer."""

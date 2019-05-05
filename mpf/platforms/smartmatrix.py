@@ -50,6 +50,8 @@ class SmartMatrixHardwarePlatform(RgbDmdPlatform):
         for device in self.devices.values():
             device.stop()
 
+        self.devices = {}
+
     def __repr__(self):
         """Return string representation."""
         return '<Platform.SmartMatrix>'
