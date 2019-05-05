@@ -1,5 +1,8 @@
 #config_version=5
 
+config:
+    - settings.yaml
+
 game:
     balls_per_game: 3
     allow_start_with_ball_in_drain: True

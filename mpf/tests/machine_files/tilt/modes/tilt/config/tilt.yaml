@@ -3,3 +3,6 @@
 tilt:
   reset_warnings_events: tilt_reset_warnings
   tilt_events: tilt_event
+  multiple_hit_window: settings.multiple_hit_window
+  settle_time: settings.settle_time
+  warnings_to_tilt: settings.warnings_to_tilt

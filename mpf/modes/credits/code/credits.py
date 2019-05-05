@@ -39,7 +39,7 @@ class Credits(Mode):
 
         self.credits_config = self.machine.config_validator.validate_config(
             config_spec='credits',
-            source=self._get_merged_settings('credits'),
+            source=self.machine.config.get('credits', {}),
             section_name='credits')
 
         # add setting

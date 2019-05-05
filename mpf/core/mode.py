@@ -126,20 +126,6 @@ class Mode(LogMixin):
                                             priority=self.config['mode']['priority'] +
                                             self.config['mode']['start_priority'])
 
-    def _get_merged_settings(self, section_name: str) -> dict:
-        """Return a dict of a config section from the machine-wide config with the mode-specific config merged in."""
-        if section_name in self.machine.config:
-            return_dict = copy.deepcopy(self.machine.config[section_name])
-        else:
-            return_dict = dict()
-
-        if section_name in self.config:
-            return_dict = Util.dict_merge(return_dict,
-                                          self.config[section_name],
-                                          combine_lists=False)
-
-        return return_dict
-
     @property
     def is_game_mode(self) -> bool:
         """Return true if this is a game mode."""

@@ -16,7 +16,7 @@ class Tilt(Mode):
     """
 
     __slots__ = ["_balls_to_collect", "_last_warning", "ball_ending_tilted_queue", "tilt_event_handlers",
-                 "last_tilt_warning_switch", "tilt_config"]
+                 "last_tilt_warning_switch", "tilt_config", "_settle_time", "_warnings_to_tilt", "_multiple_hit_window"]
 
     def __init__(self, machine: MachineController, config: dict, name: str, path) -> None:
         """Create mode."""
@@ -26,6 +26,9 @@ class Tilt(Mode):
         self.tilt_event_handlers = None         # type: Set[EventHandlerKey]
         self.last_tilt_warning_switch = None    # type: int
         self.tilt_config = None                 # type: Any
+        self._settle_time = None
+        self._warnings_to_tilt = None
+        self._multiple_hit_window = None
         super().__init__(machine, config, name, path)
 
     def mode_init(self):
@@ -38,7 +41,7 @@ class Tilt(Mode):
 
         self.tilt_config = self.machine.config_validator.validate_config(
             config_spec='tilt',
-            source=self._get_merged_settings('tilt'),
+            source=self.config.get('tilt', {}),
             section_name='tilt')
 
     def mode_start(self, **kwargs):
@@ -56,6 +59,10 @@ class Tilt(Mode):
 
         for event in self.tilt_config['tilt_slam_tilt_events']:
             self.add_mode_event_handler(event, self.slam_tilt)
+
+        self._settle_time = self.tilt_config['settle_time'].evaluate([])
+        self._warnings_to_tilt = self.tilt_config['warnings_to_tilt'].evaluate([])
+        self._multiple_hit_window = self.tilt_config['multiple_hit_window'].evaluate([])
 
     def mode_stop(self, **kwargs):
         """Stop mode."""
@@ -118,15 +125,14 @@ class Tilt(Mode):
 
         warnings = self.machine.game.player[self.tilt_config['tilt_warnings_player_var']]
 
-        if warnings >= self.tilt_config['warnings_to_tilt'].evaluate([]):
+        warnings_to_tilt = self._warnings_to_tilt
+        if warnings >= warnings_to_tilt:
             self.tilt()
         else:
             self.machine.events.post(
                 'tilt_warning',
                 warnings=warnings,
-                warnings_remaining=(
-                    self.tilt_config['warnings_to_tilt'].evaluate([]) -
-                    warnings))
+                warnings_remaining=warnings_to_tilt - warnings)
             '''event: tilt_warning
             desc: A tilt warning just happened.
             args:
@@ -204,7 +210,7 @@ class Tilt(Mode):
 
     def _tilt_warning_switch_handler(self):
         if (not self._last_warning or
-                (self._last_warning + (self.tilt_config['multiple_hit_window'] * 0.001) <=
+                (self._last_warning + (self._multiple_hit_window * 0.001) <=
                  self.machine.clock.get_time())):
 
             self.tilt_warning()
@@ -250,7 +256,7 @@ class Tilt(Mode):
         if not self.last_tilt_warning_switch:
             return 0
 
-        delta = (self.tilt_config['settle_time'] -
+        delta = (self._settle_time -
                  (self.machine.clock.get_time() -
                   self.last_tilt_warning_switch) * 1000)
         if delta > 0:
