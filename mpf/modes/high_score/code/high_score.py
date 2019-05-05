@@ -33,7 +33,7 @@ class HighScore(AsyncMode):
 
         self.high_score_config = self.machine.config_validator.validate_config(
             config_spec='high_score',
-            source=self._get_merged_settings('high_score'),
+            source=self.config.get('high_score', {}),
             section_name='high_score')
 
         # if data is invalid. do not use it

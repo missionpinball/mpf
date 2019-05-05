@@ -64,6 +64,7 @@ class ConfigValidator:
             "template_int": self._validate_type_template_int,
             "template_bool": self._validate_type_template_bool,
             "template_secs": self._validate_type_template_secs,
+            "template_ms": self._validate_type_template_ms,
             "boolean": self._validate_type_bool,
             "ms": self._validate_type_ms,
             "ms_or_token": self._validate_type_or_token(self._validate_type_ms),
@@ -514,6 +515,20 @@ class ConfigValidator:
             pass
 
         return self.machine.placeholder_manager.build_float_template(item)
+
+    def _validate_type_template_ms(self, item, validation_failure_info):
+        if item is None:
+            return None
+        if not isinstance(item, (str, int)):
+            self.validation_error(item, validation_failure_info, "Template has to be string/int.")
+
+        # try to convert to int. if we fail it will be a template
+        try:
+            item = Util.string_to_ms(item)
+        except ValueError:
+            pass
+
+        return self.machine.placeholder_manager.build_int_template(item)
 
     def _validate_type_template_int(self, item, validation_failure_info):
         if item is None:

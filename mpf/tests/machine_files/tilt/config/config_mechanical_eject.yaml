@@ -1,5 +1,8 @@
 #config_version=5
 
+config:
+    - settings.yaml
+
 modes:
     - tilt
     - base
