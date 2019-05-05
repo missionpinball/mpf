@@ -202,6 +202,10 @@ class NativeTypeTemplate:
         future = asyncio.Future(loop=self.machine.clock.loop)   # type: asyncio.Future
         return self.value, future
 
+    def __eq__(self, other):
+        """Templates are equal if values are equal."""
+        return other.value == self.value
+
 
 class MpfFormatter(string.Formatter):
 

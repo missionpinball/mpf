@@ -33,6 +33,46 @@ settings:
     default: 500000
     key_type: int
     sort: 100
+  credits_price_one_credit:
+    label: Price for one credit
+    values:
+      .25: "25ct"
+      .5: "50ct"
+      .75: "75ct"
+      1: "1 dollar"
+      2: "2 dollar"
+    default: .5
+    key_type: float
+    sort: 500
+  credits_price_tier2:
+    label: Price for price tier 2
+    values:
+      .25: "25ct"
+      .5: "50ct"
+      .75: "75ct"
+      1: "1 dollar"
+      2: "2 dollar"
+      3: "3 dollar"
+      4: "4 dollar"
+      5: "5 dollar"
+    default: 2
+    key_type: float
+    sort: 510
+  credits_credits_tier2:
+    label: Number of credits for tier 2
+    values:
+      2: "2"
+      3: "3"
+      4: "4"
+      5: "5"
+      6: "6"
+      7: "7"
+      8: "8"
+      9: "9"
+      10: "10"
+    default: 5
+    key_type: int
+    sort: 520
 
 credits:
   max_credits: 12
@@ -53,10 +93,10 @@ credits:
       type: award
       credits: 1
   pricing_tiers:
-    - price: .50
+    - price: settings.credits_price_one_credit
       credits: 1
-    - price: 2
-      credits: 5
+    - price: settings.credits_price_tier2
+      credits: settings.credits_credits_tier2
   fractional_credit_expiration_time: 15m
   credit_expiration_time: 2h
   persist_credits_while_off_time: 1h
