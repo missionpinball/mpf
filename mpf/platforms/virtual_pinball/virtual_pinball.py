@@ -27,7 +27,6 @@ class VirtualPinballSwitch(SwitchPlatformInterface):
         """Return the name of the board of this switch."""
         return "VPX"
 
-
 class VirtualPinballLight(LightPlatformInterface):
 
     """A light in VPX."""
@@ -107,6 +106,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self._started = asyncio.Event(loop=self.machine.clock.loop)
         self.log = logging.getLogger("VPX Platform")
         self.log.debug("Configuring VPX hardware interface.")
+        self.rules = {}
 
     @asyncio.coroutine
     def initialize(self):
@@ -161,12 +161,24 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                                                              platform=self)
         return True
 
+    def vpx_pulsesw(self, number):
+        """Pulse switch from VPX."""
+        self._switches[str(number)].state = True
+        self.machine.switch_controller.process_switch_by_num(state=1,
+                                                             num=str(number),
+                                                             platform=self)
+        self._switches[str(number)].state = False
+        self.machine.switch_controller.process_switch_by_num(state=0,
+                                                             num=str(number),
+                                                             platform=self)
+        return True
+
     def vpx_changed_solenoids(self):
         """Return changed solenoids since last call."""
         changed_drivers = []
         for number, driver in self._drivers.items():
             if driver.state != self._last_drivers[number]:
-                changed_drivers.append((int(number), driver.state))
+                changed_drivers.append((number, driver.state))
                 self._last_drivers[number] = driver.state
 
         return changed_drivers
@@ -180,7 +192,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             brightness = light.current_brightness
             state = bool(brightness > 0.5)
             if state != self._last_lights[number]:
-                changed_lamps.append((int(light.hw_number), state))
+                changed_lamps.append((light.hw_number, state))
                 self._last_lights[number] = state
 
         return changed_lamps
@@ -192,38 +204,6 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
     def vpx_changed_gi_strings(self):
         """Return changed lamps since last call."""
         return self._get_changed_lights_by_subtype("gi")
-
-    def vpx_changed_solenoids2(self):
-        """Return changed solenoids since last call. Number type string"""
-        changed_drivers = []
-        for number, driver in self._drivers.items():
-            if driver.state != self._last_drivers[number]:
-                changed_drivers.append((number, driver.state))
-                self._last_drivers[number] = driver.state
-
-        return changed_drivers
-
-    def _get_changed_lights_by_subtype2(self, subtype):
-        """Return changed lights since last call. Number type string"""
-        changed_lamps = []
-        for number, light in self._lights.items():
-            if light.subtype != subtype:
-                continue
-            brightness = light.current_brightness
-            state = bool(brightness > 0.5)
-            if state != self._last_lights[number]:
-                changed_lamps.append((light.hw_number, state))
-                self._last_lights[number] = state
-
-        return changed_lamps
-
-    def vpx_changed_lamps2(self):
-        """Return changed lamps since last call. Number type string"""
-        return self._get_changed_lights_by_subtype2("matrix")
-
-    def vpx_changed_gi_strings2(self):
-        """Return changed lamps since last call. Number type string"""
-        return self._get_changed_lights_by_subtype2("gi")
 
     def vpx_mech(self, number):
         """Not implemented."""
@@ -255,26 +235,62 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self._last_drivers[number] = False
         return driver
 
+    def vpx_get_hardwarerules(self):
+        """Return hardware rules."""
+        hardware_rules = []
+        for rswitchandcoil, hold in self.rules.items():
+            hardware_rules.append((rswitchandcoil[0].number, rswitchandcoil[1].number, hold))
+        return hardware_rules
+
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
-        """Write rule."""
-        pass
+        """Pulse on hit and hold."""
+        if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
+            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
+                enable_switch.hw_switch, coil.hw_driver))
+        else:
+            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = True
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
                                                                  disable_switch: SwitchSettings, coil: DriverSettings):
-        """Write rule."""
-        pass
+        """Pulse on hit and hold, disable on disable_switch hit."""
+        if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
+            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
+                enable_switch.hw_switch, coil.hw_driver))
+        else:
+            """disable_switch missing"""
+            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = True
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
-        """Write rule."""
-        pass
+        """Pulse on hit and hold."""
+        if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
+            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
+                enable_switch.hw_switch, coil.hw_driver))
+        else:
+            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = True
 
-    def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
-        """Write rule."""
-        pass
+    def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings,
+                              coil: DriverSettings):
+        """Pulse on hit and release."""
+        if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
+            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
+                enable_switch.hw_switch, coil.hw_driver))
+        else:
+            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = False
 
     def clear_hw_rule(self, switch: SwitchSettings, coil: DriverSettings):
-        """Clear a hw rule."""
-        pass
+        """Clear hw rule. (from Virtual)"""
+        if (switch.hw_switch, coil.hw_driver) in self.rules:
+            del self.rules[(switch.hw_switch, coil.hw_driver)]
+        else:
+            self.log.debug("Tried to clear a non-existing rules %s <-> %s", switch, coil)
+
+    def vpx_get_coilactive(self, number):
+        """Return True if a MPF Hardware Rule for the coil(number) exists."""
+        for rswitchandcoil, hold in self.rules.items():
+            if rswitchandcoil[1].number == number:
+                return True
+
+        return False
 
     @asyncio.coroutine
     def get_hw_switch_states(self):
