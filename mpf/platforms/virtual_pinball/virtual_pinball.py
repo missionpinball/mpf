@@ -278,14 +278,14 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             self.rules[(enable_switch.hw_switch, coil.hw_driver)] = False
 
     def clear_hw_rule(self, switch: SwitchSettings, coil: DriverSettings):
-        """Clear hw rule. (from Virtual)"""
+        """Clear hw rule."""
         if (switch.hw_switch, coil.hw_driver) in self.rules:
             del self.rules[(switch.hw_switch, coil.hw_driver)]
         else:
             self.log.debug("Tried to clear a non-existing rules %s <-> %s", switch, coil)
 
     def vpx_get_coilactive(self, number):
-        """Return True if a MPF Hardware Rule for the coil(number) exists."""
+        """Return True if a MPF hw rule for the coil(number) exists."""
         for rswitchandcoil, hold in self.rules.items():
             if rswitchandcoil[1].number == number:
                 return True
