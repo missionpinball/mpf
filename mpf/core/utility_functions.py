@@ -102,8 +102,12 @@ class Util:
 
         """
         if isinstance(string, str):
-            # Convert commas to spaces, then split the string into a list
-            new_list = string.replace(',', ' ').split()
+            if "{" in string:
+                # Split the string on spaces/commas EXCEPT regions within braces
+                new_list = re.findall(r'([\w|-]+?\{.*?\}|[\w|-]+)', string)
+            else:
+                # Convert commas to spaces, then split the string into a list
+                new_list = string.replace(",", " ").split()
             # Look for string values of "None" and convert them to Nonetypes.
             for index, value in enumerate(new_list):
                 if isinstance(value, str) and len(value) == 4 and value.lower() == 'none':
