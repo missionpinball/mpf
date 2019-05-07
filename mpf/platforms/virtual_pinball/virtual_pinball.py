@@ -21,7 +21,7 @@ class VirtualPinballSwitch(SwitchPlatformInterface):
     def __init__(self, config, number):
         """Initialise switch."""
         super().__init__(config, number)
-        self.state = False
+        self.state = self.config.invert
 
     def get_board_name(self):
         """Return the name of the board of this switch."""
