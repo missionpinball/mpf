@@ -147,7 +147,10 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     def vpx_get_switch(self, number):
         """Return switch value."""
-        return self._switches[str(number)].state
+        if self._switches[str(number)].config.invert:
+            return not self._switches[str(number)].state
+        else:
+            return self._switches[str(number)].state
 
     def vpx_switch(self, number):
         """Return switch value."""
