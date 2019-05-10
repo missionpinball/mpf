@@ -120,6 +120,12 @@ class Command:
                             help="Forces the virtual platform to be "
                                  "used for all devices")
 
+        parser.add_argument("--vpx",
+                            action="store_const", dest="force_platform",
+                            const='virtual_pinball',
+                            help="Forces the virtual_pinball platform to be "
+                                 "used for all devices")
+
         parser.add_argument("--syslog_address",
                             action="store", dest="syslog_address",
                             help="Log to the specified syslog address. This "
