@@ -208,6 +208,14 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Return changed lamps since last call."""
         return self._get_changed_lights_by_subtype("gi")
 
+    def vpx_changed_leds(self):
+        """Return changed lamps since last call."""
+        return self._get_changed_lights_by_subtype("led")
+
+    def vpx_changed_flashers(self):
+        """Return changed lamps since last call."""
+        return self._get_changed_lights_by_subtype("flasher")
+
     def vpx_mech(self, number):
         """Not implemented."""
         self.log.warning("Command \"mech\" unimplemented: %s", number)
@@ -305,7 +313,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     def configure_light(self, number: str, subtype: str, platform_settings: dict) -> "LightPlatformInterface":
         """Configure a VPX light."""
-        if subtype and subtype not in ("gi", "matrix"):
+        if subtype and subtype not in ("gi", "matrix", "led", "flasher"):
             raise AssertionError("Unknown subtype: {}".format(subtype))
         if not subtype:
             subtype = "matrix"
@@ -318,7 +326,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Parse channel str to a list of channels."""
-        if subtype in ("gi", "matrix") or not subtype:
+        if subtype in ("gi", "matrix", "led", "flasher") or not subtype:
             return [
                 {
                     "number": str(number)
