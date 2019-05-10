@@ -754,13 +754,14 @@ class MachineController(LogMixin):
 
     def _crash_shutdown(self):
         """MPF crashed. Cleanup as good as we can."""
+        # call crash handlers
+        for handler in self._crash_handlers:
+            handler()
         if hasattr(self, "events") and hasattr(self, "clock"):
             # if we already got events and a clock use normal shutdown
             self._do_stop()
         else:
-            # call crash handlers
-            for handler in self._crash_handlers:
-                handler()
+            # otherwise just shutdown
             self.shutdown()
 
     def shutdown(self) -> None:
@@ -789,12 +790,16 @@ class MachineController(LogMixin):
             self.log.exception("Loop exited with exception")
             return
 
-        self._do_stop()
-
         if self._exception:
+            self._crash_shutdown()
+
             print("Shutdown because of an exception:")
-            raise self._exception['exception']
+            try:
+                raise self._exception['exception']
+            except: # noqa
+                self.log.exception("Runtime Exception")
         else:
+            self._do_stop()
             print("Shutdown reason: {}".format(reason))
 
     def _platform_stop(self) -> None:

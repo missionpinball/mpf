@@ -76,7 +76,7 @@ community.''',
                       'pyserial-asyncio>=0.3',
                       'sortedcontainers',
                       'typing',
-                      'asciimatics',
+                      'asciimatics>=1.11.0',
                       'terminaltables',
                       'psutil',
                       # asciimatic depends on pypiwin32 but newer version will not install
