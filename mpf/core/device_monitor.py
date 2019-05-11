@@ -49,6 +49,10 @@ class DeviceMonitor:
                 self_inner.__dict__[name] = value
 
             if attribute_name:
+                _notify_placeholder_change(self_inner, attribute_name, old, value)
+
+        def _notify_placeholder_change(self_inner, attribute_name, old, value):
+            if old != value:
                 self_inner.machine.device_manager.notify_device_changes(self_inner, attribute_name, old, value)
                 for future in self_inner.attribute_futures[attribute_name]:
                     future.set_result(True)
@@ -87,6 +91,7 @@ class DeviceMonitor:
         cls.get_monitorable_state = get_monitorable_state
         cls.get_placeholder_value = get_placeholder_value
         cls.subscribe_attribute = subscribe_attribute
+        cls.notify_virtual_change = _notify_placeholder_change
         cls.attribute_futures = defaultdict(list)
 
         return cls

@@ -1,12 +1,15 @@
 """A generic state machine."""
 import asyncio
 
+from mpf.core.device_monitor import DeviceMonitor
+
 from mpf.core.mode import Mode
 from mpf.core.player import Player
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
 
+@DeviceMonitor("state")
 class StateMachine(SystemWideDevice, ModeDevice):
 
     """A generic state machine."""
@@ -46,10 +49,14 @@ class StateMachine(SystemWideDevice, ModeDevice):
     @state.setter
     def state(self, value):
         """Set the current state."""
+        old = self.state
         if self.config['persist_state']:
             self.player["state_machine_{}".format(self.name)] = value
         else:
             self._state = value
+
+        # notify monitors
+        self.notify_virtual_change("state", old, self.state)
 
     def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Restore internal state from player if persist_state is set or create new state."""

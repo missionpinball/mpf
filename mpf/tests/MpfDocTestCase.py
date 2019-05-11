@@ -203,6 +203,10 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
     def command_assert_balls_in_play(self, balls):
         self.assertBallsInPlay(int(balls))
 
+    def command_assert_str_condition(self, expected, condition):
+        expected_str = str(expected)
+        self.assertPlaceholderEvaluates(expected_str, condition)
+
     def command_assert_bool_condition(self, expected, condition):
         expected_bool = expected == "True"
         self.assertPlaceholderEvaluates(expected_bool, condition)
