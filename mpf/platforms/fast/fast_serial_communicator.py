@@ -189,8 +189,9 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         self.platform.debug_log('Resetting NET CPU.')
         self.writer.write('BR:\r'.encode())
         msg = ''
-        while not msg.startswith('BR:P\r') and not msg.startswith('XX:F\r'):
+        while msg != 'BR:P\r' and not msg.startswith('XX:'):
             msg = (yield from self.readuntil(b'\r')).decode()
+            self.platform.debug_log("Got: {}".format(msg))
         if msg != 'BR:P\r':
             self.platform.warning_log("Reset on the NET CPU failed (this might be normal on older firmwares)")
 
