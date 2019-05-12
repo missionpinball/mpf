@@ -63,17 +63,17 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.hw_switch_data = None
         self.io_boards = {}     # type: Dict[int, FastIoBoard]
 
-        self.fast_commands = {'ID': lambda x: None,  # processor ID
-                              'WX': lambda x: None,  # watchdog
-                              'NI': lambda x: None,  # node ID
-                              'RX': lambda x: None,  # RGB cmd received
-                              'RA': lambda x: None,  # RGB all cmd received
-                              'RF': lambda x: None,  # RGB fade cmd received
-                              'DX': lambda x: None,  # DMD cmd received
-                              'SX': lambda x: None,  # sw config received
-                              'LX': lambda x: None,  # lamp cmd received
-                              'PX': lambda x: None,  # segment cmd received
-                              'WD': lambda x: None,  # watchdog
+        self.fast_commands = {'ID': lambda x, y: None,  # processor ID
+                              'WX': lambda x, y: None,  # watchdog
+                              'NI': lambda x, y: None,  # node ID
+                              'RX': lambda x, y: None,  # RGB cmd received
+                              'RA': lambda x, y: None,  # RGB all cmd received
+                              'RF': lambda x, y: None,  # RGB fade cmd received
+                              'DX': lambda x, y: None,  # DMD cmd received
+                              'SX': lambda x, y: None,  # sw config received
+                              'LX': lambda x, y: None,  # lamp cmd received
+                              'PX': lambda x, y: None,  # segment cmd received
+                              'WD': lambda x, y: None,  # watchdog
                               'SA': self.receive_sa,  # all switch states
                               '/N': self.receive_nw_open,    # nw switch open
                               '-N': self.receive_nw_closed,  # nw switch closed
@@ -211,7 +211,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Send Watchdog command."""
         self.net_connection.send('WD:' + str(hex(self.config['watchdog']))[2:])
 
-    def process_received_message(self, msg: str):
+    def process_received_message(self, msg: str, remote_processor: str):
         """Send an incoming message from the FAST controller to the proper method for servicing.
 
         Args:
@@ -219,23 +219,21 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """
         if msg == "!SRE":
             # ignore system interrupt
-            self.log.info("Received system interrupt.")
+            self.log.info("Received system interrupt from %s.", remote_processor)
             return
 
         if msg[2:3] == ':':
             cmd = msg[0:2]
             payload = msg[3:].replace('\r', '')
         else:   # pragma: no cover
-            self.log.warning("Received malformed message: %s", msg)
+            self.log.warning("Received malformed message: %s from %s", msg, remote_processor)
             return
 
         # Can't use try since it swallows too many errors for now
         if cmd in self.fast_commands:
-            self.fast_commands[cmd](payload)
+            self.fast_commands[cmd](payload, remote_processor)
         else:   # pragma: no cover
-            self.log.warning("Received unknown serial command? %s. (This is ok"
-                             " to ignore for now while the FAST platform is "
-                             "in development)", msg)
+            self.log.warning("Received unknown serial command? %s from %s.", msg, remote_processor)
 
     @asyncio.coroutine
     def _connect_to_hardware(self):
@@ -296,52 +294,57 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Return hardware states."""
         return self.hw_switch_data
 
-    def receive_nw_open(self, msg):
+    def receive_nw_open(self, msg, remote_processor):
         """Process network switch open.
 
         Args:
             msg: switch number
         """
+        assert remote_processor == "NET"
         self.machine.switch_controller.process_switch_by_num(state=0,
                                                              num=(msg, 1),
                                                              platform=self)
 
-    def receive_nw_closed(self, msg):
+    def receive_nw_closed(self, msg, remote_processor):
         """Process network switch closed.
 
         Args:
             msg: switch number
         """
+        assert remote_processor == "NET"
         self.machine.switch_controller.process_switch_by_num(state=1,
                                                              num=(msg, 1),
                                                              platform=self)
 
-    def receive_local_open(self, msg):
+    def receive_local_open(self, msg, remote_processor):
         """Process local switch open.
 
         Args:
             msg: switch number
         """
+        assert remote_processor == "NET"
         self.machine.switch_controller.process_switch_by_num(state=0,
                                                              num=(msg, 0),
                                                              platform=self)
 
-    def receive_local_closed(self, msg):
+    def receive_local_closed(self, msg, remote_processor):
         """Process local switch closed.
 
         Args:
             msg: switch number
         """
+        assert remote_processor == "NET"
         self.machine.switch_controller.process_switch_by_num(state=1,
                                                              num=(msg, 0),
                                                              platform=self)
 
-    def receive_sa(self, msg):
+    def receive_sa(self, msg, remote_processor):
         """Receive all switch states.
 
         Args:
             msg: switch states as bytearray
         """
+        assert remote_processor == "NET"
         self.debug_log("Received SA: %s", msg)
 
         hw_states = dict()
@@ -821,11 +824,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         driver.clear_autofire(driver.get_config_cmd(), driver.number)
 
-    def receive_bootloader(self, msg):
+    def receive_bootloader(self, msg, remote_processor):
         """Process bootloader message."""
-        self.debug_log("Got Bootloader message: %s", msg)
+        self.debug_log("Got Bootloader message: %s from", msg, remote_processor)
         if msg in ('00', '02'):
-            self.error_log("The FAST Nano rebooted. Unfortunately, that means that is lost all it's state (such as "
-                           "hardware rules or switch configs). This is likely cause by an unstable power supply but it "
-                           "might as well be a firmware bug. MPF will exit now.")
-            self.machine.stop("FAST Nano rebooted during game")
+            self.error_log("The FAST %s processor rebooted. Unfortunately, that means that it lost all it's state "
+                           "(such as hardware rules or switch configs). This is likely cause by an unstable power "
+                           "supply but it might as well be a firmware bug. MPF will exit now.", remote_processor)
+            self.machine.stop("FAST {} rebooted during game".format(remote_processor))

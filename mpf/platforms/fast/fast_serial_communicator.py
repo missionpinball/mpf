@@ -180,22 +180,29 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         self.write_task.add_done_callback(self._done)
 
     @asyncio.coroutine
+    def reset_net_cpu(self):
+        """Reset the NET CPU."""
+        self.platform.debug_log('Resetting NET CPU.')
+        self.writer.write('BR:\r'.encode())
+        msg = ''
+        while msg != 'BR:P\r' and not msg.endswith('!B:02\r'):
+            msg = (yield from self.readuntil(b'\r')).decode()
+            self.platform.debug_log("Got: {}".format(msg))
+
+    @asyncio.coroutine
     def query_fast_io_boards(self):
         """Query the NET processor to see if any FAST IO boards are connected.
 
         If so, queries the IO boards to log them and make sure they're the  proper firmware version.
         """
         # reset CPU early
-        self.platform.debug_log('Resetting NET CPU.')
-        self.writer.write('BR:\r'.encode())
-        msg = ''
-        while msg != 'BR:P\r' and not msg.startswith('XX:'):
-            msg = (yield from self.readuntil(b'\r')).decode()
-            self.platform.debug_log("Got: {}".format(msg))
-        if msg != 'BR:P\r':
-            self.platform.warning_log("Reset on the NET CPU failed (this might be normal on older firmwares)")
-
-        yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
+        try:
+            yield from asyncio.wait_for(self.reset_net_cpu(), 5, loop=self.machine.clock.loop)
+        except asyncio.TimeoutError:
+            self.platform.warning_log("Reset of NET CPU failed. This might be a firmware bug in your version.")
+            yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
+        else:
+            self.platform.debug_log("Reset successful")
 
         self.platform.debug_log('Reading all switches.')
         self.writer.write('SA:\r'.encode())
@@ -205,7 +212,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             if not msg.startswith('SA:'):
                 self.platform.log.warning("Got unexpected message from FAST: {}".format(msg))
 
-        self.platform.process_received_message(msg)
+        self.platform.process_received_message(msg, "NET")
         self.platform.debug_log('Querying FAST IO boards...')
 
         firmware_ok = True
@@ -294,6 +301,10 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
             self._send(msg)
 
+    def __repr__(self):
+        """Return str representation."""
+        return "{} ({})".format(self.port, self.remote_processor)
+
     def _parse_msg(self, msg):
         self.received_msg += msg
 
@@ -322,4 +333,4 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                 continue
 
             if msg.decode() not in self.ignored_messages:
-                self.platform.process_received_message(msg.decode())
+                self.platform.process_received_message(msg.decode(), self.remote_processor)
