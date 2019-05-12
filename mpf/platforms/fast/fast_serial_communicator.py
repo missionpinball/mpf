@@ -200,9 +200,10 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             yield from asyncio.wait_for(self.reset_net_cpu(), 5, loop=self.machine.clock.loop)
         except asyncio.TimeoutError:
             self.platform.warning_log("Reset of NET CPU failed. This might be a firmware bug in your version.")
-            yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
         else:
             self.platform.debug_log("Reset successful")
+
+        yield from asyncio.sleep(.5, loop=self.machine.clock.loop)
 
         self.platform.debug_log('Reading all switches.')
         self.writer.write('SA:\r'.encode())
