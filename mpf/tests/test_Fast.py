@@ -165,7 +165,7 @@ class TestFast(MpfTestCase):
             "RF:00": "RF:P",
         }
         self.net_cpu.expected_commands = {
-            'BR:': 'BR:P',
+            'BR:': '#!B:02',    # there might be some garbage in front of the command
             'ID:': 'ID:NET FP-CPU-002-1 01.03',
             'NN:00': 'NN:00,FP-I/O-3208-2   ,01.00,08,20,04,06,00,00,00,00',     # 3208 board
             'NN:01': 'NN:01,FP-I/O-0804-1   ,01.00,04,08,04,06,00,00,00,00',     # 0804 board
@@ -498,7 +498,7 @@ Update done.
         self.assertFalse(self.switch_hit)
 
         self.machine.events.add_handler("s_test_active", self._switch_hit_cb)
-        self.machine.default_platform.process_received_message("-N:07")
+        self.machine.default_platform.process_received_message("-N:07", "NET")
         self.advance_time_and_run(1)
 
         self.assertTrue(self.switch_hit)
@@ -509,7 +509,7 @@ Update done.
         self.assertFalse(self.switch_hit)
         self.assertTrue(self.machine.switch_controller.is_active("s_test"))
 
-        self.machine.default_platform.process_received_message("/N:07")
+        self.machine.default_platform.process_received_message("/N:07", "NET")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
@@ -524,13 +524,13 @@ Update done.
         self.assertFalse(self.switch_hit)
         self.assertTrue(self.machine.switch_controller.is_active("s_test_nc"))
 
-        self.machine.default_platform.process_received_message("-N:1A")
+        self.machine.default_platform.process_received_message("-N:1A", "NET")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
         self.assertFalse(self.machine.switch_controller.is_active("s_test_nc"))
 
         self.machine.events.add_handler("s_test_nc_active", self._switch_hit_cb)
-        self.machine.default_platform.process_received_message("/N:1A")
+        self.machine.default_platform.process_received_message("/N:1A", "NET")
         self.advance_time_and_run(1)
 
         self.assertTrue(self.machine.switch_controller.is_active("s_test_nc"))

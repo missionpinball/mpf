@@ -134,6 +134,10 @@ class BaseSerialCommunicator:
         """
         raise NotImplementedError("Implement!")
 
+    def __repr__(self):
+        """Return str representation."""
+        return self.port
+
     @asyncio.coroutine
     def _socket_reader(self):
         while True:
@@ -152,5 +156,5 @@ class BaseSerialCommunicator:
                 return
 
             if self.debug:
-                self.log.debug("Received: %s (%s)", resp, "".join(" 0x%02x" % b for b in resp))
+                self.log.debug("%s received: %s (%s)", self, resp, "".join(" 0x%02x" % b for b in resp))
             self._parse_msg(resp)
