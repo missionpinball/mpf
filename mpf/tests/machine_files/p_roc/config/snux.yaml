@@ -8,11 +8,10 @@ hardware:
 system11:
     ac_relay_delay_ms: 75
     ac_relay_driver: c_ac_relay
+    platform: p_roc
 
 snux:
-    flipper_enable_driver: c_flipper_enable_driver
     diag_led_driver: c_diag_led_driver
-    platform:
 
 switches:
     s_test_fliptronics:

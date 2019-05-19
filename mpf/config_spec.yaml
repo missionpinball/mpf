@@ -1246,13 +1246,9 @@ slides:
     __allow_others__:
 snux:
     __valid_in__: machine
-    flipper_enable_driver: single|machine(coils)|
     diag_led_driver: single|machine(coils)|
-    platform: single|str|None
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
-    prefer_a_side_event: single|str|game_ended
-    prefer_c_side_event: single|str|game_will_start
 smartmatrix:
     __valid_in__: machine
     port: single|str|
@@ -1496,6 +1492,11 @@ system11:
     __valid_in__: machine
     ac_relay_delay_ms: single|ms|75ms
     ac_relay_driver: single|machine(coils)|
+    prefer_a_side_event: single|str|game_ended
+    prefer_c_side_event: single|str|game_will_start
+    platform: single|str|None
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
 text_strings:
     __valid_in__: machine, mode                 # todo add to validator
 tic_stepper_settings:

@@ -85,7 +85,7 @@ class SnuxHardwarePlatform(DriverPlatform):
         """Automatically called by the Platform class after all the core modules are loaded."""
         # load coil platform
         self.platform = self.machine.get_platform_sections(
-            "platform", getattr(self.machine.config['snux'], 'platform', None))
+            "platform", getattr(self.machine.config['system11'], 'platform', None))
 
         # we have to wait for coils to be initialized
         self.machine.events.add_handler("init_phase_1", self._initialize)
@@ -112,19 +112,16 @@ class SnuxHardwarePlatform(DriverPlatform):
         self.log.debug("Configuring A/C Select Relay transition delay for "
                        "%sms", self.system11_config['ac_relay_delay_ms'])
 
-        self.log.debug("Configuring Flipper Enable for driver %s",
-                       self.snux_config['flipper_enable_driver'].name)
-
-        self.snux_config['flipper_enable_driver'].get_and_verify_hold_power(1.0)
-
         self.machine.events.add_handler('init_phase_5',
                                         self._initialize_phase_2)
 
-        self.machine.events.add_handler(self.snux_config['prefer_a_side_event'], self._prefer_a_side)
-        self.log.info("Configuring Snux driver to prefer A side on event %s", self.snux_config['prefer_a_side_event'])
+        self.machine.events.add_handler(self.system11_config['prefer_a_side_event'], self._prefer_a_side)
+        self.log.info("Configuring Snux driver to prefer A side on event %s",
+                      self.system11_config['prefer_a_side_event'])
 
-        self.machine.events.add_handler(self.snux_config['prefer_c_side_event'], self._prefer_c_side)
-        self.log.info("Configuring Snux driver to prefer C side on event %s", self.snux_config['prefer_c_side_event'])
+        self.machine.events.add_handler(self.system11_config['prefer_c_side_event'], self._prefer_c_side)
+        self.log.info("Configuring Snux driver to prefer C side on event %s",
+                      self.system11_config['prefer_c_side_event'])
 
     def _prefer_a_side(self, **kwargs):
         del kwargs
