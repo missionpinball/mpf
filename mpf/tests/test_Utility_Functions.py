@@ -55,6 +55,13 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(type(result), list)
         self.assertFalse(result)
 
+        my_string = '0 1 2{not split here} 3 4 5'
+        result = Util.string_to_list(my_string)
+        self.assertEqual(type(result), list)
+        self.assertEqual(result[1], '1')
+        self.assertEqual(result[2], '2{not split here}')
+        self.assertEqual(result[3], '3')
+
     def test_string_to_lowercase_list(self):
         my_string = 'A B c d e'
         result = Util.string_to_lowercase_list(my_string)
