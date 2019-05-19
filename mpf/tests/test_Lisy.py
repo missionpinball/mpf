@@ -2,7 +2,7 @@ import time
 
 import sys
 
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfTestCase import MpfTestCase, test_config
 from mpf.tests.loop import MockSerial, MockSocket
 
 
@@ -152,7 +152,7 @@ class TestLisy(MpfTestCase):
             b'\x18\x00\x0a': None,      # set pulse_ms to 10ms
             b'\x17\x00': None
         }
-        self.machine.coils.c_test.pulse()
+        self.machine.coils["c_test"].pulse()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -161,7 +161,7 @@ class TestLisy(MpfTestCase):
             b'\x18\x67\x00': None,  # set pulse_ms to 10ms
             b'\x15\x67': None       # enable
         }
-        self.machine.coils.c_trough_eject.pulse()
+        self.machine.coils["c_trough_eject"].pulse()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -178,7 +178,7 @@ class TestLisy(MpfTestCase):
             b'\x18\x01\x0a': None,  # set pulse_ms to 10ms
             b'\x15\x01': None
         }
-        self.machine.coils.c_test_allow_enable.enable()
+        self.machine.coils["c_test_allow_enable"].enable()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -186,7 +186,7 @@ class TestLisy(MpfTestCase):
         self.serialMock.expected_commands = {
             b'\x16\x01': None
         }
-        self.machine.coils.c_test_allow_enable.disable()
+        self.machine.coils["c_test_allow_enable"].disable()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -194,7 +194,7 @@ class TestLisy(MpfTestCase):
         self.serialMock.expected_commands = {
             b'\x0b\x03': None
         }
-        self.machine.lights.test_light.on(key="test")
+        self.machine.lights["test_light"].on(key="test")
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -202,7 +202,7 @@ class TestLisy(MpfTestCase):
         self.serialMock.expected_commands = {
             b'\x0c\x03': None
         }
-        self.machine.lights.test_light.remove_from_stack_by_key("test")
+        self.machine.lights["test_light"].remove_from_stack_by_key("test")
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -228,7 +228,7 @@ class TestLisy(MpfTestCase):
         self.serialMock.expected_commands = {
             b'\x1ETEST\x00': None
         }
-        self.machine.segment_displays.info_display.add_text("TEST")
+        self.machine.segment_displays["info_display"].add_text("TEST")
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -236,7 +236,7 @@ class TestLisy(MpfTestCase):
         self.serialMock.expected_commands = {
             b'\x1F42000\x00': None
         }
-        self.machine.segment_displays.player1_display.add_text("42000")
+        self.machine.segment_displays["player1_display"].add_text("42000")
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -244,7 +244,7 @@ class TestLisy(MpfTestCase):
         self.serialMock.expected_commands = {
             b'\x1F42000\x00': None,
         }
-        self.machine.segment_displays.player1_display.set_flashing(True)
+        self.machine.segment_displays["player1_display"].set_flashing(True)
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -259,7 +259,7 @@ class TestLisy(MpfTestCase):
         self.serialMock.expected_commands = {
             b'\x1F42000\x00': None,
         }
-        self.machine.segment_displays.player1_display.set_flashing(False)
+        self.machine.segment_displays["player1_display"].set_flashing(False)
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -332,5 +332,87 @@ class TestLisy(MpfTestCase):
             b'\x33': None
         }
         self.post_event("test_stop")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+    @test_config("config_system11.yaml")
+    def test_system11(self):
+        # test normal coil
+        self.serialMock.expected_commands = {
+            b'\x18\x00\x14': None,  # set pulse_ms to 20ms
+            b'\x17\x00': None       # pulse coil 0
+        }
+        self.machine.coils["c_test"].pulse(20)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # test C-side coil
+        self.serialMock.expected_commands = {
+            b'\x18\x08\x0a': None,  # set pulse_ms to 10ms to A/C relay
+            b'\x15\x08': None,      # enable A/C relay
+            b'\x18\x01\x14': None,  # set pulse_ms to 20ms
+            b'\x17\x01': None       # pulse coil 1
+        }
+        self.machine.coils["c_test1_c_side"].pulse(20)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # wait for A/C disable
+        self.serialMock.expected_commands = {
+            b'\x16\x08': None,      # disable A/C relay
+        }
+        self.advance_time_and_run(.2)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # test C-side coil
+        self.serialMock.expected_commands = {
+            b'\x15\x08': None,      # enable A/C relay
+            b'\x17\x01': None       # pulse coil 1
+        }
+        self.machine.coils["c_test1_c_side"].pulse(20)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # wait for A/C disable
+        self.serialMock.expected_commands = {
+            b'\x16\x08': None,      # disable A/C relay
+        }
+        self.advance_time_and_run(.2)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # test A-side coil
+        self.serialMock.expected_commands = {
+            b'\x17\x01': None       # pulse coil 1
+        }
+        self.machine.coils["c_test1_a_side"].pulse(20)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # test C-side coil
+        self.serialMock.expected_commands = {
+            b'\x18\x01\x0f': None,  # set pulse_ms to 15ms
+            b'\x17\x01': None       # pulse coil 1
+        }
+        self.machine.coils["c_test1_a_side"].pulse(15)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # test C-side coil
+        self.serialMock.expected_commands = {
+            b'\x15\x08': None,      # enable A/C relay
+            b'\x18\x01\x14': None,  # set pulse_ms to 20ms
+            b'\x17\x01': None       # pulse coil 1
+        }
+        self.machine.coils["c_test1_c_side"].pulse(20)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # wait for A/C disable
+        self.serialMock.expected_commands = {
+            b'\x16\x08': None,      # disable A/C relay
+        }
+        self.advance_time_and_run(.2)
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)

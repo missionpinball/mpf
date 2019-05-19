@@ -5,7 +5,7 @@ This is based on the Snux platform to generically support all kinds of System11 
 import asyncio
 import logging
 
-from typing import Any, Optional, Set, Tuple
+from typing import Any, Optional, Set, Tuple, Dict
 
 from mpf.core.machine import MachineController
 from mpf.core.platform import DriverPlatform, DriverConfig
@@ -20,9 +20,9 @@ class System11OverlayPlatform(DriverPlatform):
 
     """Overlay platform to drive system11 machines using a WPC controller."""
 
-    __slots__ = ["delay", "platform", "system11_config", "a_side_queue", "c_side_queue", "a_drivers", "c_drivers",
+    __slots__ = ["delay", "platform", "system11_config", "a_side_queue", "c_side_queue",
                  "a_side_done_time", "c_side_done_time", "drivers_holding_a_side", "drivers_holding_c_side",
-                 "a_side_enabled", "c_side_enabled", "ac_relay_in_transition", "prefer_a_side"]
+                 "a_side_enabled", "c_side_enabled", "ac_relay_in_transition", "prefer_a_side", "drivers"]
 
     def __init__(self, machine: MachineController) -> None:
         """Initialise the board."""
@@ -37,15 +37,13 @@ class System11OverlayPlatform(DriverPlatform):
         self.a_side_queue = set()       # type: Set[Tuple[DriverPlatformInterface, PulseSettings, HoldSettings]]
         self.c_side_queue = set()       # type: Set[Tuple[DriverPlatformInterface, PulseSettings, HoldSettings]]
 
-        self.a_drivers = set()          # type: Set[DriverPlatformInterface]
-        self.c_drivers = set()          # type: Set[DriverPlatformInterface]
-
         self.a_side_done_time = 0
         self.c_side_done_time = 0
         self.drivers_holding_a_side = set()     # type: Set[DriverPlatformInterface]
         self.drivers_holding_c_side = set()     # type: Set[DriverPlatformInterface]
         self.a_side_enabled = True
         self.c_side_enabled = False
+        self.drivers = {}               # type: Dict[str, DriverPlatformInterface]
 
         self.ac_relay_in_transition = False
         # Specify whether the AC relay should favour the A or C side when at rest.
@@ -86,7 +84,7 @@ class System11OverlayPlatform(DriverPlatform):
         """Automatically called by the Platform class after all the core modules are loaded."""
         # load coil platform
         self.platform = self.machine.get_platform_sections(
-            "platform", getattr(self.machine.config['system11'], 'platform', None))
+            "platform", getattr(self.machine.config.get('system11', {}), 'platform', None))
 
         # we have to wait for coils to be initialized
         self.machine.events.add_handler("init_phase_1", self._initialize)
@@ -126,7 +124,7 @@ class System11OverlayPlatform(DriverPlatform):
 
     def _validate_config(self):
         self.system11_config = self.machine.config_validator.validate_config(
-            'system11', self.machine.config['system11'])
+            'system11', self.machine.config.get('system11', {}))
 
     def tick(self):
         """System11 main loop.
@@ -158,16 +156,14 @@ class System11OverlayPlatform(DriverPlatform):
 
         if number and (number.lower().endswith('a') or number.lower().endswith('c')):
 
+            side = number[-1:].upper()
             number = number[:-1]
 
-            platform_driver = self.platform.configure_driver(config, number, platform_settings)
+            # only configure driver once
+            if number not in self.drivers:
+                self.drivers[number] = self.platform.configure_driver(config, number, platform_settings)
 
-            system11_driver = System11Driver(orig_number, platform_driver, self)
-
-            if orig_number.lower().endswith('a'):
-                self._add_a_driver(system11_driver.platform_driver)
-            elif orig_number.lower().endswith('c'):
-                self._add_c_driver(system11_driver.platform_driver)
+            system11_driver = System11Driver(orig_number, self.drivers[number], self, side)
 
             return system11_driver
 
@@ -179,7 +175,7 @@ class System11OverlayPlatform(DriverPlatform):
 
         Will pass the call onto the parent platform if the driver is not on A/C relay.
         """
-        if coil.hw_driver in self.a_drivers or coil.hw_driver in self.c_drivers:
+        if coil.hw_driver in self.drivers.values():
             raise AssertionError("Received a request to set a hardware rule for a System11 driver {}. "
                                  "This is not supported.".format(coil))
         else:
@@ -190,7 +186,7 @@ class System11OverlayPlatform(DriverPlatform):
 
         Will pass the call onto the parent platform if the driver is not on A/C relay.
         """
-        if coil.hw_driver in self.a_drivers or coil.hw_driver in self.c_drivers:
+        if coil.hw_driver in self.drivers.values():
             raise AssertionError("Received a request to set a hardware rule for a System11 driver {}. "
                                  "This is not supported.".format(coil))
         else:
@@ -201,7 +197,7 @@ class System11OverlayPlatform(DriverPlatform):
 
         Will pass the call onto the parent platform if the driver is not on A/C relay.
         """
-        if coil.hw_driver in self.a_drivers or coil.hw_driver in self.c_drivers:
+        if coil.hw_driver in self.drivers.values():
             raise AssertionError("Received a request to set a hardware rule for a System11 driver {}. "
                                  "This is not supported.".format(coil))
         else:
@@ -212,7 +208,7 @@ class System11OverlayPlatform(DriverPlatform):
 
         Will pass the call onto the parent platform if the driver is not on A/C relay.
         """
-        if coil.hw_driver in self.a_drivers or coil.hw_driver in self.c_drivers:
+        if coil.hw_driver in self.drivers.values():
             raise AssertionError("Received a request to set a hardware rule for a System11 driver {}. "
                                  "This is not supported.".format(coil))
         else:
@@ -220,13 +216,14 @@ class System11OverlayPlatform(DriverPlatform):
 
     def clear_hw_rule(self, switch, coil):
         """Clear a rule for a driver on the system11 overlay."""
-        if coil.hw_driver in self.a_drivers or coil.hw_driver in self.c_drivers:
+        if coil.hw_driver in self.drivers.values():
             raise AssertionError("Received a request to clear a hardware rule for a System11 driver {}. "
                                  "This is not supported.".format(coil))
         else:
             self.platform.clear_hw_rule(switch, coil)
 
-    def driver_action(self, driver, pulse_settings: Optional[PulseSettings], hold_settings: Optional[HoldSettings]):
+    def driver_action(self, driver, pulse_settings: Optional[PulseSettings], hold_settings: Optional[HoldSettings],
+                      side: str):
         """Add a driver action for a switched driver to the queue (for either the A-side or C-side queue).
 
         Args:
@@ -237,21 +234,25 @@ class System11OverlayPlatform(DriverPlatform):
         This action will be serviced immediately if it can, or ASAP otherwise.
         """
         if self.prefer_a_side:
-            if driver in self.a_drivers:
+            if side == "A":
                 self.a_side_queue.add((driver, pulse_settings, hold_settings))
                 self._service_a_side()
-            elif driver in self.c_drivers:
+            elif side == "C":
                 self.c_side_queue.add((driver, pulse_settings, hold_settings))
                 if not self.ac_relay_in_transition and not self.a_side_busy:
                     self._service_c_side()
+            else:
+                raise AssertionError("Invalid side {}".format(side))
         else:
-            if driver in self.c_drivers:
+            if side == "C":
                 self.c_side_queue.add((driver, pulse_settings, hold_settings))
                 self._service_c_side()
-            elif driver in self.a_drivers:
+            elif side == "A":
                 self.a_side_queue.add((driver, pulse_settings, hold_settings))
                 if not self.ac_relay_in_transition and not self.c_side_busy:
                     self._service_a_side()
+            else:
+                raise AssertionError("Invalid side {}".format(side))
 
     def _enable_ac_relay(self):
         self.system11_config['ac_relay_driver'].enable()
@@ -342,9 +343,6 @@ class System11OverlayPlatform(DriverPlatform):
                 except KeyError:
                     pass
 
-    def _add_a_driver(self, driver):
-        self.a_drivers.add(driver)
-
     # -------------------------------- C SIDE ---------------------------------
 
     def _enable_c_side(self):
@@ -419,9 +417,6 @@ class System11OverlayPlatform(DriverPlatform):
                 except KeyError:
                     pass
 
-    def _add_c_driver(self, driver):
-        self.c_drivers.add(driver)
-
     def _disable_all_c_side_drivers(self):
         if self.c_side_active:
             for driver in self.drivers_holding_c_side:
@@ -450,12 +445,13 @@ class System11Driver(DriverPlatformInterface):
     Two of those drivers may be created for one real driver. One for the A and one for the C side.
     """
 
-    def __init__(self, number, platform_driver: DriverPlatformInterface, overlay) -> None:
+    def __init__(self, number, platform_driver: DriverPlatformInterface, overlay, side) -> None:
         """Initialize driver."""
         super().__init__(platform_driver.config, number)
         self.number = number
         self.platform_driver = platform_driver
         self.overlay = overlay
+        self.side = side
 
     def __repr__(self):
         """Pretty print."""
@@ -467,7 +463,7 @@ class System11Driver(DriverPlatformInterface):
 
     def pulse(self, pulse_settings: PulseSettings):
         """Pulse driver."""
-        self.overlay.driver_action(self.platform_driver, pulse_settings, None)
+        self.overlay.driver_action(self.platform_driver, pulse_settings, None, self.side)
 
         # Usually pulse() returns the value (in ms) that the driver will pulse
         # for so we can update Driver.time_when_done. But with A/C switched
@@ -476,8 +472,8 @@ class System11Driver(DriverPlatformInterface):
 
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable driver."""
-        self.overlay.driver_action(self.platform_driver, pulse_settings, hold_settings)
+        self.overlay.driver_action(self.platform_driver, pulse_settings, hold_settings, self.side)
 
     def disable(self):
         """Disable driver."""
-        self.overlay.driver_action(self.platform_driver, None, None)
+        self.overlay.driver_action(self.platform_driver, None, None, self.side)
