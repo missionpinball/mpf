@@ -11,7 +11,7 @@ from mpf.core.placeholder_manager import NativeTypeTemplate
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor("shoot_again", "balls_added_live", "balls_live_target", enabled="_enabled")
+@DeviceMonitor("shoot_again", "balls_added_live", "balls_live_target", "enabled")
 class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
 
     """Multiball device for MPF."""

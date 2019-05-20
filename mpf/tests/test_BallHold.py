@@ -533,6 +533,26 @@ class TestBallHold(MpfTestCase):
     def test_auto_capacity(self):
         self.assertEqual(self.machine.ball_holds.hold_test3.config['balls_to_hold'], 2)
 
+    def test_enabled_state_in_placeholder(self):
+        self.mock_event("should_post_when_enabled")
+        self.mock_event("should_post_when_disabled")
+        self.mock_event("should_not_post_when_enabled")
+        self.mock_event("should_not_post_when_disabled")
+        hold = self.machine.ball_holds['hold_test']
+
+        hold.enable()
+        self.assertTrue(hold.enabled)
+        self.post_event("test_event_when_enabled")
+        self.assertEventCalled("should_post_when_enabled")
+        self.assertEventNotCalled("should_not_post_when_enabled")
+
+        hold.disable()
+        self.assertFalse(hold.enabled)
+        self.post_event("test_event_when_disabled")
+        self.assertEventCalled("should_post_when_disabled")
+        self.assertEventNotCalled("should_not_post_when_disabled")
+
+
 class TestBallHoldSmart(MpfTestCase):
 
     def getConfigFile(self):

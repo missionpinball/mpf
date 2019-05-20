@@ -13,6 +13,28 @@ class TestMultiballLock(MpfGameTestCase):
     def get_platform(self):
         return 'smart_virtual'
 
+    def testDefault(self):
+        self.fill_troughs()
+        self.start_game()
+
+        self.post_event("start_default")
+        self.mock_event("should_post_when_enabled")
+        self.mock_event("should_post_when_disabled")
+        self.mock_event("should_not_post_when_enabled")
+        self.mock_event("should_not_post_when_disabled")
+        lock = self.machine.multiball_locks["lock_default"]
+
+        self.assertTrue(lock.enabled)
+        self.post_event("test_event_when_enabled")
+        self.assertEventCalled("should_post_when_enabled")
+        self.assertEventNotCalled("should_not_post_when_enabled")
+
+        lock.disable()
+        self.assertFalse(lock.enabled)
+        self.post_event("test_event_when_disabled")
+        self.assertEventCalled("should_post_when_disabled")
+        self.assertEventNotCalled("should_not_post_when_disabled")
+
     def testNoVirtual(self):
         # prepare game
         self.fill_troughs()

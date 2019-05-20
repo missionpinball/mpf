@@ -11,6 +11,14 @@ coils:
     eject_coil3:
         number:
 
+event_player:
+    test_event_when_enabled:
+        - should_post_when_enabled{device.multiballs.mb1.enabled}
+        - should_not_post_when_enabled{not device.multiballs.mb1.enabled}
+    test_event_when_disabled:
+        - should_post_when_disabled{not device.multiballs.mb1.enabled}
+        - should_not_post_when_disabled{device.multiballs.mb1.enabled}
+
 switches:
     s_start:
         number:
