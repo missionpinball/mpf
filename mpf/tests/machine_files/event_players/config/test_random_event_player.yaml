@@ -1,0 +1,52 @@
+#config_version=5
+
+modes:
+  - mode2
+
+game:
+  balls_per_game: 1
+
+switches:
+  s_ball:
+    number:
+
+coils:
+  c_eject:
+    number:
+
+playfields:
+  playfield:
+    default_source_device: s_trough
+    tags: default
+
+ball_devices:
+  s_trough:
+    ball_switches: s_ball
+    eject_coil: c_eject
+    tags: trough, drain, home
+
+random_event_player:
+  test_machine_force_different:
+    scope: machine
+    force_different: true
+    events:
+      - event1
+      - event2
+      - event3
+      - event4
+  test_machine_force_all:
+    scope: machine
+    force_all: true
+    events:
+      - event1
+      - event2
+      - event3
+      - event4
+  test_machine_disable_random:
+    scope: machine
+    disable_random: true
+    events:
+      - event1
+      - event2
+      - event3
+      - event4
