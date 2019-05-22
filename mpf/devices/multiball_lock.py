@@ -12,7 +12,7 @@ if MYPY:   # pragma: no cover
     from mpf.devices.ball_device.ball_device import BallDevice
 
 
-@DeviceMonitor("locked_balls", "enabled")
+@DeviceMonitor("locked_balls", _enabled="enabled")
 class MultiballLock(EnableDisableMixin, ModeDevice):
 
     """Ball lock device which locks balls for a multiball."""
