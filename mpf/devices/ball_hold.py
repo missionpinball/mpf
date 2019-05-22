@@ -10,7 +10,7 @@ from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor("balls_held", "enabled")
+@DeviceMonitor("balls_held", _enabled="enabled")
 class BallHold(EnableDisableMixin, SystemWideDevice, ModeDevice):
 
     """Ball hold device which can be used to keep balls in ball devices and control their eject later on."""
