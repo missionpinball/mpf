@@ -110,6 +110,7 @@ mpf:
         smart_virtual: mpf.platforms.smart_virtual.SmartVirtualHardwarePlatform
         smartmatrix: mpf.platforms.smartmatrix.SmartMatrixHardwarePlatform
         snux: mpf.platforms.snux.SnuxHardwarePlatform
+        system11: mpf.platforms.system11.System11OverlayPlatform
         virtual: mpf.platforms.virtual.VirtualHardwarePlatform
         spike: mpf.platforms.spike.spike.SpikePlatform
         trinamics_steprocker: mpf.platforms.trinamics_steprocker.TrinamicsStepRocker

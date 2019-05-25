@@ -1,0 +1,41 @@
+#config_version=5
+
+hardware:
+    platform: lisy
+    coils: system11
+
+lisy:
+    connection: network
+    network_port: 1234
+    network_host: "localhost"
+
+system11:
+  ac_relay_driver: c_ac_relay
+
+switches:
+    s_test00:
+        number: 00
+    s_test37:
+        number: 37
+    s_test77_nc:
+        number: 77
+        type: 'NC'
+
+coils:
+    c_test:
+        number: 0
+    c_test1_c_side:
+        number: 1c
+    c_test1_a_side:
+        number: 1a
+    c_ac_relay:
+        number: 8
+        allow_enable: True
+
+segment_displays:
+  info_display:
+    number: 0
+  player1_display:
+    number: 1
+  player2_display:
+    number: 2
