@@ -43,7 +43,7 @@ class TestMpfTestCase(MpfTestCase):
         self.switch_callback = MagicMock()
         self.machine.switch_controller.add_switch_handler('switch1', self.switch_callback, ms=1000)
 
-        self.machine.switch_controller.process_switch('switch1')
+        self.machine.switch_controller.process_switch('switch1', 1)
         self.advance_time_and_run(.5)
         self.switch_callback.assert_not_called()
 
@@ -71,7 +71,7 @@ class TestMpfTestCase(MpfTestCase):
         self.machine.switch_controller.add_switch_handler(
             'switch1', self._callback, ms=3000, callback_kwargs={'_id': 's3'})
 
-        self.machine.switch_controller.process_switch('switch1')
+        self.machine.switch_controller.process_switch('switch1', 1)
         self.advance_time_and_run(10)
 
         # make sure the callback was called in the right order

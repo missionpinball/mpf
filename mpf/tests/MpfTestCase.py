@@ -780,7 +780,7 @@ class MpfTestCase(unittest.TestCase):
         switch inactive, use the :meth:`release_switch_and_run`.
 
         """
-        self.machine.switch_controller.process_switch(name, logical=True)
+        self.machine.switch_controller.process_switch(name, state=1, logical=True)
         self.advance_time_and_run(delta)
 
     def release_switch_and_run(self, name, delta):
@@ -791,7 +791,7 @@ class MpfTestCase(unittest.TestCase):
             delta: The time (in seconds) to advance the clock.
 
         """
-        self.machine.switch_controller.process_switch(name, 0, True)
+        self.machine.switch_controller.process_switch(name, state=0, logical=True)
         self.advance_time_and_run(delta)
 
     def hit_and_release_switch(self, name):
@@ -804,7 +804,7 @@ class MpfTestCase(unittest.TestCase):
         time in between.
 
         """
-        self.machine.switch_controller.process_switch(name, logical=True)
+        self.machine.switch_controller.process_switch(name, state=1, logical=True)
         self.machine.switch_controller.process_switch(name, state=0, logical=True)
         self.machine_run()
 
@@ -820,7 +820,7 @@ class MpfTestCase(unittest.TestCase):
 
         """
         for name in names:
-            self.machine.switch_controller.process_switch(name, logical=True)
+            self.machine.switch_controller.process_switch(name, state=1, logical=True)
         for name in names:
             self.machine.switch_controller.process_switch(name, state=0, logical=True)
         self.machine_run()
