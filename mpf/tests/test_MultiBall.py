@@ -957,3 +957,26 @@ class TestMultiBall(MpfGameTestCase):
         # game should end
         self.advance_time_and_run(1)
         self.assertEqual(None, self.machine.game)
+
+    def testMultiballStateInPlaceholder(self):
+        self.fill_troughs()
+        self.start_game()
+
+        self.post_event("start_default")
+        self.mock_event("should_post_when_enabled")
+        self.mock_event("should_post_when_disabled")
+        self.mock_event("should_not_post_when_enabled")
+        self.mock_event("should_not_post_when_disabled")
+        mb = self.machine.multiballs["mb1"]
+
+        self.assertFalse(mb.enabled)
+        self.post_event("test_event_when_disabled")
+        self.assertEventCalled("should_post_when_disabled")
+        self.assertEventNotCalled("should_not_post_when_disabled")
+
+        mb.enable()
+        self.assertTrue(mb.enabled)
+        self.post_event("test_event_when_enabled")
+        self.assertEventCalled("should_post_when_enabled")
+        self.assertEventNotCalled("should_not_post_when_enabled")
+        

@@ -83,3 +83,9 @@ event_player:
         - "yes"
     test_conditional_event.2{device.ball_holds.hold_test["balls_held"] == 0}:
         - "no"
+    test_event_when_enabled:
+        - should_post_when_enabled{device.ball_holds.hold_test.enabled}
+        - should_not_post_when_enabled{not device.ball_holds.hold_test.enabled}
+    test_event_when_disabled:
+        - should_post_when_disabled{not device.ball_holds.hold_test.enabled}
+        - should_not_post_when_disabled{device.ball_holds.hold_test.enabled}
