@@ -156,7 +156,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
     """LISY platform."""
 
     __slots__ = ["config", "_writer", "_reader", "_poll_task", "_watchdog_task", "_number_of_lamps",
-                 "_number_of_solenoids", "_number_of_displays", "_inputs", "_coils_start_at_zero",
+                 "_number_of_solenoids", "_number_of_displays", "_inputs", "_coils_start_at_one",
                  "_bus_lock"]  # type: List[str]
 
     def __init__(self, machine) -> None:
@@ -172,7 +172,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         self._number_of_solenoids = None    # type: Optional[int]
         self._number_of_displays = None     # type: Optional[int]
         self._inputs = dict()               # type: Dict[str, bool]
-        self._coils_start_at_zero = None            # type: Optional[str]
+        self._coils_start_at_one = None     # type: Optional[str]
         self.features['max_pulse'] = 255
 
     @asyncio.coroutine
@@ -207,9 +207,9 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             type_str = yield from self.read_string()
 
             if type_str in (b'LISY1', b'LISY35', b'APC'):
-                self._coils_start_at_zero = False
+                self._coils_start_at_one = True
             elif type_str == b'LISY80':
-                self._coils_start_at_zero = True
+                self._coils_start_at_one = False
             else:
                 raise AssertionError("Invalid LISY hardware version {}".format(type_str))
 
@@ -361,7 +361,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         del platform_settings, subtype
         assert self._number_of_lamps is not None
 
-        if self._coils_start_at_zero:
+        if not self._coils_start_at_one:
             if 0 < int(number) >= self._number_of_lamps:
                 raise AssertionError("LISY only has {} lamps. Cannot configure lamp {} (zero indexed).".
                                      format(self._number_of_lamps, number))
@@ -400,7 +400,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         if 1 < int(number) > self._number_of_solenoids and int(number) < 100:
             raise AssertionError("LISY only has {} drivers. Cannot configure driver {} (zero indexed).".
                                  format(self._number_of_solenoids, number))
-        elif self._coils_start_at_zero:
+        elif not self._coils_start_at_one:
             if 100 < int(number) >= self._number_of_lamps + 100:
                 raise AssertionError("LISY only has {} lamps. Cannot configure lamp driver {} (zero indexed).".
                                      format(self._number_of_lamps, number))
