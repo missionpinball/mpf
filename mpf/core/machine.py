@@ -1,3 +1,4 @@
+# pylint: disable-msg=too-many-lines
 """Contains the MachineController base class."""
 import logging
 import os
@@ -69,6 +70,7 @@ if MYPY:   # pragma: no cover
     from mpf.devices.diverter import Diverter
     from mpf.devices.multiball_lock import MultiballLock
     from mpf.devices.multiball import Multiball
+    from mpf.devices.ball_hold import BallHold
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -177,6 +179,7 @@ class MachineController(LogMixin):
             self.diverters = None                       # type: Dict[str, Diverter]
             self.multiball_locks = None                 # type: Dict[str, MultiballLock]
             self.multiballs = None                      # type: Dict[str, Multiball]
+            self.ball_holds = None                      # type: Dict[str, BallHold]
 
         self._set_machine_path()
 
