@@ -220,9 +220,9 @@ class EventManager(MpfController):
                             h.callback.__self__ == handler.callback.__self__]
 
                 self.info_log(
-                    "Duplicate handler for class {} on event {} with priority {}. Handlers: {}".format(
-                        cls, event, priority, handlers
-                    )
+                    "Unordered handler for class {} on event {} with priority {}. Handlers: {}. The order of those "
+                    "handlers is not defined and they will be executed in random order. This might lead to race "
+                    "conditions and potential bugs.".format(cls, event, priority, handlers)
                 )
             devices.append(cls)
 
