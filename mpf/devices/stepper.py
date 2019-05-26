@@ -53,6 +53,9 @@ class Stepper(SystemWideDevice):
                                             self.event_move_to_position,
                                             position=position)
 
+        if not self.platform.features['allow_empty_numbers'] and self.config['number'] is None:
+            self.raise_config_error("Stepper must have a number.", 2)
+
         self.hw_stepper = yield from self.platform.configure_stepper(self.config['number'],
                                                                      self.config['platform_settings'])
 
