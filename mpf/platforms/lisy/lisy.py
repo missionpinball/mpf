@@ -195,12 +195,22 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
             self._reader, self._writer = yield from connector
 
-            # reset platform
-            self.debug_log("Sending reset.")
-            self.send_byte(LisyDefines.GeneralReset)
-            return_code = yield from self.read_byte()
-            if return_code != 0:
-                raise AssertionError("Reset of LISY failed. Got {} instead of 0".format(return_code))
+            while True:
+                # reset platform
+                self.debug_log("Sending reset.")
+                self.send_byte(LisyDefines.GeneralReset)
+                try:
+                    return_code = yield from asyncio.wait_for(self.read_byte(), timeout=0.2, loop=self.machine.clock.loop)
+                except asyncio.TimeoutError:
+                    self.warning_log("Reset of LISY failed. Did not get a response in 200ms. Will retry.")
+                    continue
+                if return_code != 0:
+                    # reset failed
+                    self.warning_log("Reset of LISY failed. Got %s instead of 0. Will retry.", return_code)
+                    continue
+
+                # if we made it here reset succeeded
+                break
 
             # get type (system 1 vs system 80)
             self.send_byte(LisyDefines.InfoGetConnectedLisyHardware)
