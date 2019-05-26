@@ -128,6 +128,9 @@ class Switch(SystemWideDevice, DevicePositionMixin):
 
         config = SwitchConfig(invert=self.invert,
                               debounce=self.config['debounce'])
+        if not self.platform.features['allow_empty_numbers'] and self.config['number'] is None:
+            self.raise_config_error("Switch must have a number.", 1)
+
         try:
             self.hw_switch = self.platform.configure_switch(
                 self.config['number'], config, self.config['platform_settings'])

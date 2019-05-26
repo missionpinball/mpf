@@ -46,6 +46,10 @@ class Accelerometer(SystemWideDevice):
         yield from super()._initialize()
         self.platform = self.machine.get_platform_sections(
             'accelerometers', self.config['platform'])
+
+        if not self.platform.features['allow_empty_numbers'] and self.config['number'] is None:
+            self.raise_config_error("Accelerometer must have a number.", 1)
+
         self.hw_device = self.platform.configure_accelerometer(self.config['number'],
                                                                self.config['platform_settings'], self)
 

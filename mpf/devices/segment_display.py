@@ -42,6 +42,10 @@ class SegmentDisplay(SystemWideDevice):
         """Initialise display."""
         # load platform
         self.platform = self.machine.get_platform_sections('segment_displays', self.config['platform'])
+
+        if not self.platform.features['allow_empty_numbers'] and self.config['number'] is None:
+            self.raise_config_error("Segment Display must have a number.", 1)
+
         # configure hardware
         try:
             self.hw_display = self.platform.configure_segment_display(self.config['number'],

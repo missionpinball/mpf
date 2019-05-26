@@ -53,6 +53,7 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         self.features['segment_display'] = False
         self.features['hardware_sounds'] = False
         self.features['has_steppers'] = False
+        self.features['allow_empty_numbers'] = False
 
     @classmethod
     def get_config_spec(cls):

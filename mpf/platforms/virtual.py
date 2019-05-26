@@ -42,6 +42,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         self.hw_switches = dict()
         self.initial_states_sent = False
         self.features['tickless'] = True
+        self.features['allow_empty_numbers'] = True
         self._next_driver = 1000
         self._next_switch = 1000
         self._next_light = 1000
