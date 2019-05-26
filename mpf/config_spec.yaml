@@ -671,7 +671,7 @@ lisy:
     __valid_in__: machine
     port: single|str|None
     baud: single|int|None
-    poll_hz: single|int|1000
+    poll_hz: single|int|100
     console_log: single|enum(none,basic,full)|none
     display_flash_frequency: single|float|1.0
     file_log: single|enum(none,basic,full)|basic
