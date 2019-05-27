@@ -70,9 +70,9 @@ class LisyDriver(DriverPlatformInterface):
         return "LISY"
 
 
-class LisyLight(LightPlatformSoftwareFade):
+class LisySimpleLamp(LightPlatformSoftwareFade):
 
-    """A light in the LISY platform."""
+    """A simple light in the LISY platform which only supports on/off."""
 
     __slots__ = ["platform", "_state"]
 
@@ -175,6 +175,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         self._coils_start_at_one = None     # type: Optional[str]
         self.features['max_pulse'] = 255
 
+    # pylint: disable-msg=too-many-statements
     @asyncio.coroutine
     def initialize(self):
         """Initialise platform."""
@@ -195,12 +196,23 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
             self._reader, self._writer = yield from connector
 
-            # reset platform
-            self.debug_log("Sending reset.")
-            self.send_byte(LisyDefines.GeneralReset)
-            return_code = yield from self.read_byte()
-            if return_code != 0:
-                raise AssertionError("Reset of LISY failed. Got {} instead of 0".format(return_code))
+            while True:
+                # reset platform
+                self.debug_log("Sending reset.")
+                self.send_byte(LisyDefines.GeneralReset)
+                try:
+                    return_code = yield from asyncio.wait_for(self.read_byte(), timeout=0.5,
+                                                              loop=self.machine.clock.loop)
+                except asyncio.TimeoutError:
+                    self.warning_log("Reset of LISY failed. Did not get a response in 500ms. Will retry.")
+                    continue
+                if return_code != 0:
+                    # reset failed
+                    self.warning_log("Reset of LISY failed. Got %s instead of 0. Will retry.", return_code)
+                    continue
+
+                # if we made it here reset succeeded
+                break
 
             # get type (system 1 vs system 80)
             self.send_byte(LisyDefines.InfoGetConnectedLisyHardware)
@@ -370,7 +382,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 raise AssertionError("LISY only has {} lamps. Cannot configure lamp {} (one indexed).".
                                      format(self._number_of_lamps, number))
 
-        return LisyLight(int(number), self)
+        return LisySimpleLamp(int(number), self)
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Return a single light."""
