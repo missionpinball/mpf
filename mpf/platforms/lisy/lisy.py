@@ -70,9 +70,9 @@ class LisyDriver(DriverPlatformInterface):
         return "LISY"
 
 
-class LisyLight(LightPlatformSoftwareFade):
+class LisySimpleLamp(LightPlatformSoftwareFade):
 
-    """A light in the LISY platform."""
+    """A simple light in the LISY platform which only supports on/off."""
 
     __slots__ = ["platform", "_state"]
 
@@ -382,7 +382,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 raise AssertionError("LISY only has {} lamps. Cannot configure lamp {} (one indexed).".
                                      format(self._number_of_lamps, number))
 
-        return LisyLight(int(number), self)
+        return LisySimpleLamp(int(number), self)
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Return a single light."""
