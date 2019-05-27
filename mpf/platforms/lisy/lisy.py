@@ -175,6 +175,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         self._coils_start_at_one = None     # type: Optional[str]
         self.features['max_pulse'] = 255
 
+    # pylint: disable-msg=too-many-statements
     @asyncio.coroutine
     def initialize(self):
         """Initialise platform."""
@@ -200,9 +201,10 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 self.debug_log("Sending reset.")
                 self.send_byte(LisyDefines.GeneralReset)
                 try:
-                    return_code = yield from asyncio.wait_for(self.read_byte(), timeout=0.2, loop=self.machine.clock.loop)
+                    return_code = yield from asyncio.wait_for(self.read_byte(), timeout=0.5,
+                                                              loop=self.machine.clock.loop)
                 except asyncio.TimeoutError:
-                    self.warning_log("Reset of LISY failed. Did not get a response in 200ms. Will retry.")
+                    self.warning_log("Reset of LISY failed. Did not get a response in 500ms. Will retry.")
                     continue
                 if return_code != 0:
                     # reset failed
