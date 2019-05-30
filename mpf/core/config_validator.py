@@ -362,7 +362,7 @@ class ConfigValidator:
 
         for k, v in item.items():
             item_dict[self.validate_item(k, validators[0], validation_failure_info)] = (
-                self.validate_item(v, validators[1], validation_failure_info))
+                self.validate_item(v, validators[1], (validation_failure_info, k)))
         return item_dict
 
     def check_for_invalid_sections(self, spec, config,
