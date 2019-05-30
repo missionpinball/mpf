@@ -863,6 +863,14 @@ class TestShows(MpfTestCase):
         self.advance_time_and_run()
         self.assertLightColor("led_01", "red")
 
+    def test_placeholder_in_token(self):
+        self.assertNotLightColor("led_02", "blue")
+        self.machine.set_machine_var("test_color", "blue")
+        self.machine.set_machine_var("test_num", "02")
+        self.post_event("play_show_with_placeholder_in_token")
+        self.advance_time_and_run()
+        self.assertLightColor("led_02", "blue")
+
     def test_non_string_token(self):
         self.start_mode("mode4")
         self.assertLightColor("led_01", "black")

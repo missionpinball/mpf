@@ -733,6 +733,12 @@ class BasePlaceholderManager(MpfController):
         """Build a string template from a string."""
         return StringTemplate(self._parse_template(template_str), template_str, self, default_value)
 
+    def build_quoted_string_template(self, template_str, default_value=""):
+        """Build a string template from a string if enclosed in brackets."""
+        if isinstance(template_str, str) and (template_str[0:1] != "(" or template_str[-1:] != ")"):
+            return NativeTypeTemplate(template_str, self.machine)
+        return StringTemplate(self._parse_template(template_str), template_str, self, default_value)
+
     def build_raw_template(self, template_str, default_value=None) -> RawTemplate:
         """Build a raw template from a string."""
         return RawTemplate(self._parse_template(template_str), template_str, self, default_value)
