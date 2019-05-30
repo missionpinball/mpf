@@ -1204,7 +1204,7 @@ show_player:
     sync_ms: single|int_or_token|None
     manual_advance: single|bool|False
     key: single|str|None
-    show_tokens: dict|str:str|None
+    show_tokens: dict|str:template_str|None
     events_when_played: list|str|None
     events_when_stopped: list|str|None
     events_when_looped: list|str|None

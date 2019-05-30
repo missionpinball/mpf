@@ -248,4 +248,8 @@ show_player:
       show_tokens:
         num: "01"
         color: red
-
+  play_show_with_placeholder_in_token:
+    test_show_key_token:
+      show_tokens:
+        num: (machine.test_num)
+        color: (machine.test_color)
