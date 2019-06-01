@@ -72,7 +72,7 @@ class LogMixin:
         if self.unit_test:
             self._info_to_console = True
 
-    def debug_log(self, msg: str, *args, **kwargs) -> None:
+    def debug_log(self, msg: str, context=None, error_no=None, *args, **kwargs) -> None:
         """Log a message at the debug level.
 
         Note that whether this message shows up in the console or log file is
@@ -82,11 +82,18 @@ class LogMixin:
             self._logging_not_configured()
 
         if self._debug_to_console:
-            self.log.log(12, msg, *args, **kwargs)
+            level = 12
         elif self._debug_to_file:
-            self.log.log(11, msg, *args, **kwargs)
+            level = 11
+        else:
+            return
 
-    def info_log(self, msg: str, *args, context=None, **kwargs) -> None:
+        if not self.log.isEnabledFor(level):
+            return
+
+        self.log.log(level, self.format_log_line(msg, context, error_no), *args, **kwargs)
+
+    def info_log(self, msg: str, *args, context=None, error_no=None, **kwargs) -> None:
         """Log a message at the info level.
 
         Whether this message shows up in the console or log file is controlled
@@ -95,20 +102,19 @@ class LogMixin:
         if not self.log:
             self._logging_not_configured()
 
-        code = None
         if self._info_to_console or self._debug_to_console:
-            code = 22
+            level = 22
         elif self._info_to_file or self._debug_to_file:
-            code = 21
+            level = 21
         else:
             return
 
-        if context:
-            self.log.log(code, msg + " context: " + context, *args, **kwargs)
-        else:
-            self.log.log(code, msg, *args, **kwargs)
+        if not self.log.isEnabledFor(level):
+            return
 
-    def warning_log(self, msg: str, *args, context=None, **kwargs) -> None:
+        self.log.log(level, self.format_log_line(msg, context, error_no), *args, **kwargs)
+
+    def warning_log(self, msg: str, *args, context=None, error_no=None, **kwargs) -> None:
         """Log a message at the warning level.
 
         These messages will always be shown in the console and the log file.
@@ -116,12 +122,12 @@ class LogMixin:
         if not self.log:
             self._logging_not_configured()
 
-        if context:
-            self.log.log(30, 'WARNING: {} context: {}'.format(msg, context), *args, **kwargs)
-        else:
-            self.log.log(30, 'WARNING: {}'.format(msg), *args, **kwargs)
+        if not self.log.isEnabledFor(30):
+            return
 
-    def error_log(self, msg: str, *args, context=None, **kwargs) -> None:
+        self.log.log(30, self.format_log_line(msg, context, error_no), *args, **kwargs)
+
+    def error_log(self, msg: str, *args, context=None, error_no=None, **kwargs) -> None:
         """Log a message at the error level.
 
         These messages will always be shown in the console and the log file.
@@ -129,10 +135,24 @@ class LogMixin:
         if not self.log:
             self._logging_not_configured()
 
-        if context:
-            self.log.log(40, 'ERROR: {} context: {}'.format(msg, context), *args, **kwargs)
+        if not self.log.isEnabledFor(40):
+            return
+
+        self.log.log(40, self.format_log_line(msg, context, error_no), *args, **kwargs)
+
+    def format_log_line(self, msg, context, error_no) -> str:
+        """Return a formatted log line with log link and context."""
+        if error_no:
+            error_slug = "Log-{}-{}".format(self.log.name, error_no)
+            error_url = "https://docs.missionpinball.org/logs/{}.html".format(error_slug)
+        if error_no and context:
+            return "{} Context: {} Log Code: {} ({})".format(msg, context, error_slug, error_url)
+        elif context:
+            return "{} Context: {} ".format(msg, context)
+        elif error_no:
+            return "{} Log Code: {} ({})".format(msg, error_slug, error_url)
         else:
-            self.log.log(40, 'ERROR: {}'.format(msg), *args, **kwargs)
+            return msg
 
     def raise_config_error(self, msg, error_no, *, context=None):
         """Raise a ConfigFileError exception."""

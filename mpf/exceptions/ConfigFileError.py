@@ -14,9 +14,11 @@ class ConfigFileError(AssertionError):
 
     def __str__(self):
         """Return nice string."""
+        error_slug = "CFE-{}-{}".format(self._logger_name, self._error_no)
+        error_url = "https://docs.missionpinball.org/logs/{}.html".format(error_slug)
         if self._context:
-            return "Config File Error in {}: {} Error Code: CFE-{}-{} Context: {}".format(
-                self._logger_name, super().__str__(), self._logger_name, self._error_no, self._context)
+            return "Config File Error in {}: {} Context: {} Error Code: {} ({})".format(
+                self._logger_name, super().__str__(), self._context, error_slug, error_url)
         else:
-            return "Config File Error in {}: {} Error Code: CFE-{}-{}".format(
-                self._logger_name, super().__str__(), self._logger_name, self._error_no)
+            return "Config File Error in {}: {} Error Code: {} ({})".format(
+                self._logger_name, super().__str__(), error_slug, error_url)
