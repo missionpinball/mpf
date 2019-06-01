@@ -42,8 +42,10 @@ class TestModesConfigValidation(MpfTestCase):
 
         self.loop.close()
 
+        self.maxDiff = None
         self.assertEqual('Config File Error in ConfigValidator: Your config contains a value for the setting '
-                         '"mode:invalid_key", but this is not a valid setting name. Error Code: CFE-ConfigValidator-2',
+                         '"mode:invalid_key", but this is not a valid setting name. Error Code: CFE-ConfigValidator-2 '
+                         '(https://docs.missionpinball.org/logs/CFE-ConfigValidator-2.html)',
                          str(context.exception))
 
     def test_missing_mode_section(self):
