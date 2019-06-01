@@ -364,10 +364,8 @@ class SwitchController(MpfController):
         if obj.state == state:
             if not self.machine.options['production']:
                 self.warning_log(
-                    "Received duplicate switch state, which means this switch "
-                    "had some non-debounced state changes. This could be "
-                    "nothing, but if it happens a lot it could indicate noise "
-                    "or interference on the line. Switch: %s", obj.name, error_no=1)
+                    "Received duplicate switch state %s for switch %s from the platform interface.",
+                    state, obj.name, error_no=1)
             return
 
         # Update the hardware state since we always want this to match real hw

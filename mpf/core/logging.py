@@ -72,7 +72,7 @@ class LogMixin:
         if self.unit_test:
             self._info_to_console = True
 
-    def debug_log(self, msg: str, context=None, error_no=None, *args, **kwargs) -> None:
+    def debug_log(self, msg: str, *args, context=None, error_no=None, **kwargs) -> None:
         """Log a message at the debug level.
 
         Note that whether this message shows up in the console or log file is
