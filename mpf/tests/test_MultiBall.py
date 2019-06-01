@@ -72,6 +72,7 @@ class TestMultiBall(MpfGameTestCase):
         # another ball should be ejected to pf
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.playfield.balls)
+        self.assertBallsInPlay(2)
 
         # ball drains
         self.drain_all_balls()
@@ -84,6 +85,7 @@ class TestMultiBall(MpfGameTestCase):
         # it should be readded because of shoot again
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.playfield.balls)
+        self.assertBallsInPlay(2)
 
         # two balls drain
         self.drain_all_balls()
@@ -94,6 +96,7 @@ class TestMultiBall(MpfGameTestCase):
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.playfield.balls)
         self.assertEventNotCalled("multiball_mb1_ball_lost")
+        self.assertBallsInPlay(2)
 
         # shoot again ends
         self.advance_time_and_run(10)
@@ -102,6 +105,7 @@ class TestMultiBall(MpfGameTestCase):
         self.drain_all_balls()
         self.advance_time_and_run(1)
         self.assertEventCalled("multiball_mb1_ball_lost", 1)
+        self.assertBallsInPlay(1)
 
         # mb ends
         self.assertEqual(1, self._events['multiball_mb1_ended'])

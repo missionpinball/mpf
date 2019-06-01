@@ -243,6 +243,12 @@ class MpfTestCase(unittest.TestCase):
         self.machine.events.post(event_name, **params)
         self.machine_run()
 
+    def post_relay_event_with_params(self, event_name, **params):
+        """Post a relay event synchronously and return the result."""
+        future = self.machine.events.post_relay_async(event_name, **params)
+        result = self.machine.clock.loop.run_until_complete(future)
+        return result
+
     def assertPlaceholderEvaluates(self, expected, condition):
         result = self.machine.placeholder_manager.build_raw_template(condition).evaluate([],
                                                                                          fail_on_missing_params=True)

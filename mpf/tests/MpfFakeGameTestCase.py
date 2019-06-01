@@ -48,10 +48,12 @@ class MpfFakeGameTestCase(MpfGameTestCase):
         file.
         
         """
+        drained_balls = 0
         for _ in range(self.machine.game.balls_in_play):
-            self.post_event_with_params("ball_drain", balls=1)
-        self.machine.playfield.balls = 0
-        self.machine.playfield.available_balls = 0
+            result = self.post_relay_event_with_params("ball_drain", balls=1)
+            drained_balls += result['balls']
+        self.machine.playfield.balls -= drained_balls
+        self.machine.playfield.available_balls -= drained_balls
         self.advance_time_and_run()
 
     def drain_one_ball(self):
@@ -61,7 +63,7 @@ class MpfFakeGameTestCase(MpfGameTestCase):
         file.
 
         """
-        self.post_event_with_params("ball_drain", balls=1)
-        self.machine.playfield.balls -= 1
-        self.machine.playfield.available_balls -= 1
+        result = self.post_relay_event_with_params("ball_drain", balls=1)
+        self.machine.playfield.balls -= result['balls']
+        self.machine.playfield.available_balls -= result['balls']
         self.advance_time_and_run()
