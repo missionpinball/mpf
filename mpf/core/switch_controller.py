@@ -367,7 +367,7 @@ class SwitchController(MpfController):
                     "Received duplicate switch state, which means this switch "
                     "had some non-debounced state changes. This could be "
                     "nothing, but if it happens a lot it could indicate noise "
-                    "or interference on the line. Switch: %s", obj.name)
+                    "or interference on the line. Switch: %s", obj.name, error_no=1)
             return
 
         # Update the hardware state since we always want this to match real hw
