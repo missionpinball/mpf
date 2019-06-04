@@ -46,9 +46,6 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
     def __init__(self, machine) -> None:
         """Initialise OPP platform."""
         super().__init__(machine)
-        self.log = logging.getLogger('OPP')
-        self.log.info("Configuring OPP hardware.")
-
         self.opp_connection = {}            # type: Dict[str, OPPSerialCommunicator]
         self.serial_connections = set()     # type: Set[OPPSerialCommunicator]
         self.opp_incands = []               # type: List[OPPIncandCard]
@@ -78,8 +75,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         self.features['tickless'] = True
 
-        self.config = self.machine.config['opp']
-        self.machine.config_validator.validate_config("opp", self.config)
+        self.config = self.machine.config_validator.validate_config("opp", self.machine.config['opp'])
+        self._configure_device_logging_and_debug("OPP", self.config)
         self._poll_response_received = {}   # type: Dict[str, asyncio.Event]
 
         self.machine_type = (

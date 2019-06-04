@@ -28,7 +28,7 @@ class FadecandyHardwarePlatform(OpenpixelHardwarePlatform):
         super().__init__(machine)
 
         self.log = logging.getLogger("FadeCandy")
-        self.debug_log("Configuring FadeCandy hardware interface.")
+        self.log.debug("Configuring FadeCandy hardware interface.")
 
     def __repr__(self):
         """Return string representation."""

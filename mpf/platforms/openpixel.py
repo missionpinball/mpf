@@ -33,7 +33,7 @@ class OpenpixelHardwarePlatform(LightsPlatform):
         super().__init__(machine)
 
         self.log = logging.getLogger("OpenPixel")
-        self.debug_log("Configuring Open Pixel hardware interface.")
+        self.log.debug("Configuring Open Pixel hardware interface.")
         self.opc_client = None      # type: OpenPixelClient
         self.features['tickless'] = True
 

@@ -1,6 +1,7 @@
 """Contains the parent class for all platforms."""
 import abc
 import asyncio
+import logging
 from collections import namedtuple
 
 from typing import Optional, Generator
@@ -55,6 +56,17 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         self.features['has_steppers'] = False
         self.features['allow_empty_numbers'] = False
 
+    def _configure_device_logging_and_debug(self, logger_name, config):
+        """Configure logging for platform."""
+        if config['debug']:
+            self.debug = True
+            config['console_log'] = 'full'
+            config['file_log'] = 'full'
+
+        self.configure_logging(logger_name,
+                               config['console_log'],
+                               config['file_log'])
+
     @classmethod
     def get_config_spec(cls):
         """Return config spec for this platform."""
@@ -69,11 +81,6 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
     def update_firmware(self) -> str:
         """Perform a firmware update."""
         pass
-
-    def debug_log(self, msg, *args, **kwargs):
-        """Log when debug is set to True for platform."""
-        if self.debug:
-            self.log.debug(msg, *args, **kwargs)
 
     @asyncio.coroutine
     def initialize(self):

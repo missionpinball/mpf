@@ -168,18 +168,17 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
             raise AssertionError("To use the Raspberry Pi platform you need to install the apigpio extension.")
 
         self.pi = None          # type: apigpio.Pi
-        self.config = None      # type: dict
+        # load config
+        self.config = self.machine.config_validator.validate_config("raspberry_pi", self.machine.config['raspberry_pi'])
         self._switches = None   # type: int
 
         self._cmd_queue = None  # type: asyncio.Queue
         self._cmd_task = None   # type: asyncio.Task
+        self._configure_device_logging_and_debug("Raspberry Pi", self.config)
 
     @asyncio.coroutine
     def initialize(self):
         """Initialise platform."""
-        # load config
-        self.config = self.machine.config_validator.validate_config("raspberry_pi", self.machine.config['raspberry_pi'])
-
         # create pi object and connect
         self.pi = apigpio.Pi(self.machine.clock.loop)
         yield from self.pi.connect((self.config['ip'], self.config['port']))

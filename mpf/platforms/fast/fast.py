@@ -47,8 +47,18 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             machine: The main ``MachineController`` instance.
         """
         super().__init__(machine)
-        self.log = logging.getLogger('FAST')
-        self.log.debug("Configuring FAST hardware.")
+
+        self.config = self.machine.config_validator.validate_config("fast", self.machine.config['fast'])
+        self._configure_device_logging_and_debug("FAST", self.config)
+
+        self.machine_type = (
+            self.machine.config['hardware']['driverboards'].lower())
+
+        if self.machine_type == 'wpc':
+            self.debug_log("Configuring the FAST Controller for WPC driver "
+                           "board")
+        else:
+            self.debug_log("Configuring FAST Controller for FAST IO boards.")
 
         self.features['tickless'] = True
 
@@ -58,8 +68,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.serial_connections = set()         # type: Set[FastSerialCommunicator]
         self.fast_leds = {}
         self.flag_led_tick_registered = False
-        self.config = None
-        self.machine_type = None
         self.hw_switch_data = None
         self.io_boards = {}     # type: Dict[int, FastIoBoard]
 
@@ -148,21 +156,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     @asyncio.coroutine
     def initialize(self):
         """Initialise platform."""
-        self.config = self.machine.config['fast']
-        self.machine.config_validator.validate_config("fast", self.config)
-
-        if self.config['debug']:
-            self.debug = True
-
-        self.machine_type = (
-            self.machine.config['hardware']['driverboards'].lower())
-
-        if self.machine_type == 'wpc':
-            self.debug_log("Configuring the FAST Controller for WPC driver "
-                           "board")
-        else:
-            self.debug_log("Configuring FAST Controller for FAST IO boards.")
-
         yield from self._connect_to_hardware()
 
     def stop(self):

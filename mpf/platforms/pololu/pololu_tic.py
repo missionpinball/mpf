@@ -15,9 +15,8 @@ class PololuTICHardwarePlatform(StepperPlatform):
     def __init__(self, machine):
         """Initialise TIC platform."""
         super().__init__(machine)
-        self.log = logging.getLogger("Pololu TIC")
-        self.log.debug("Configuring template hardware interface.")
         self.config = self.machine.config.get('pololu_tic', {})
+        self._configure_device_logging_and_debug("Pololu TIC", self.config)
         self.features['tickless'] = True
         self._steppers = []
 

@@ -673,6 +673,7 @@ lisy:
     baud: single|int|None
     poll_hz: single|int|100
     console_log: single|enum(none,basic,full)|none
+    debug: single|bool|False
     display_flash_frequency: single|float|1.0
     file_log: single|enum(none,basic,full)|basic
     connection: single|enum(network,serial)|network
@@ -1008,6 +1009,9 @@ raspberry_pi:
     __valid_in__: machine
     ip: single|str|
     port: single|int|8888
+    debug: single|bool|False
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
 rgb_dmds:
     __valid_in__: machine
     platform: single|str|None
@@ -1091,6 +1095,8 @@ servo_controllers:
     servo_min: single|int|150
     servo_max: single|int|600
     debug: single|bool|False
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
 servos:
     __valid_in__: machine
     positions: dict|float:str|None
