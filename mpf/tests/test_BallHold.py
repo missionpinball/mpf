@@ -531,7 +531,40 @@ class TestBallHold(MpfTestCase):
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
 
     def test_auto_capacity(self):
-        self.assertEqual(self.machine.ball_holds.hold_test3.config['balls_to_hold'], 2)
+        self.assertEqual(self.machine.ball_holds["hold_test3"].config['balls_to_hold'], 2)
+
+    def test_enabled_state_in_placeholder(self):
+        placeholder = self.machine.placeholder_manager.build_bool_template("device.ball_holds.hold_test.enabled")
+        value, subscription = placeholder.evaluate_and_subscribe([])
+        self.assertFalse(value)
+        self.assertFalse(subscription.done())
+
+        self.mock_event("should_post_when_enabled")
+        self.mock_event("should_post_when_disabled")
+        self.mock_event("should_not_post_when_enabled")
+        self.mock_event("should_not_post_when_disabled")
+        hold = self.machine.ball_holds['hold_test']
+
+        hold.enable()
+        self.assertTrue(hold.enabled)
+        self.post_event("test_event_when_enabled")
+        self.assertEventCalled("should_post_when_enabled")
+        self.assertEventNotCalled("should_not_post_when_enabled")
+        self.assertTrue(subscription.done())
+        value, subscription = placeholder.evaluate_and_subscribe([])
+        self.assertTrue(value)
+
+        hold.disable()
+        self.assertFalse(hold.enabled)
+        self.post_event("test_event_when_disabled")
+        self.assertEventCalled("should_post_when_disabled")
+        self.assertEventNotCalled("should_not_post_when_disabled")
+        self.assertTrue(subscription.done())
+        value, subscription = placeholder.evaluate_and_subscribe([])
+        self.assertFalse(value)
+
+        # we need to chancel the subscription or it will crash later
+        subscription.cancel()
 
 class TestBallHoldSmart(MpfTestCase):
 
@@ -562,12 +595,12 @@ class TestBallHoldSmart(MpfTestCase):
         self.assertEqual(1, self.machine.playfield.balls)
 
         # hold one ball
-        self.machine.ball_holds.hold_test.enable()
+        self.machine.ball_holds["hold_test"].enable()
         self.hit_switch_and_run("s_ball_switch_hold1", 1)
 
         # still held
         self.advance_time_and_run(10)
-        self.assertEqual(1, self.machine.ball_holds.hold_test.balls_held)
+        self.assertEqual(1, self.machine.ball_holds["hold_test"].balls_held)
         self.assertEqual(0, self.machine.playfield.balls)
 
         # request another ball
@@ -578,7 +611,7 @@ class TestBallHoldSmart(MpfTestCase):
         self.assertEqual(1, self.machine.playfield.balls)
 
         # drain ball on pf
-        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.test_trough)
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices["test_trough"])
         self.advance_time_and_run(1)
 
         # machine waits for the hold
@@ -587,11 +620,11 @@ class TestBallHoldSmart(MpfTestCase):
 
         # release the hold
         self.post_event('release_test')
-        self.assertEqual(0, self.machine.ball_holds.hold_test.balls_held)
+        self.assertEqual(0, self.machine.ball_holds["hold_test"].balls_held)
         self.assertEqual(1, self.machine.playfield.balls)
 
         # once the ball drains move on to the ball 2
-        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.test_trough)
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices["test_trough"])
         self.advance_time_and_run(1)
         self.assertEqual(2, self.machine.game.player.ball)
 
@@ -600,7 +633,7 @@ class TestBallHoldSmart(MpfTestCase):
         self.assertBallsOnPlayfield(1)
 
         # drain again
-        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.test_trough)
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices["test_trough"])
         self.advance_time_and_run(1)
 
         # there should be no hold this time

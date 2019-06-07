@@ -63,7 +63,7 @@ class SettingsController(MpfController):
 
     def __getattr__(self, item):
         """Return setting."""
-        if "_settings" not in self.__dict__ or item not in self.__dict__['settings']:
+        if "_settings" not in self.__dict__ or item not in self.__dict__['_settings']:
             raise AttributeError()
         return self.get_setting_value(item)
 

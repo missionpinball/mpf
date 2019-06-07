@@ -88,6 +88,9 @@ class Driver(SystemWideDevice):
             max_hold_power=self.config['max_hold_power'])
         platform_settings = dict(self.config['platform_settings']) if self.config['platform_settings'] else dict()
 
+        if not self.platform.features['allow_empty_numbers'] and self.config['number'] is None:
+            self.raise_config_error("Driver must have a number.", 1)
+
         try:
             self.hw_driver = self.platform.configure_driver(config, self.config['number'], platform_settings)
         except AssertionError as e:

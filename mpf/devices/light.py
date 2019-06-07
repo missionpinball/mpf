@@ -219,6 +219,10 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """Load one channel."""
         platform = self.machine.get_platform_sections('lights', channel['platform'])
         self.platforms.add(platform)
+
+        if not platform.features['allow_empty_numbers'] and channel['number'] is None:
+            self.raise_config_error("Light must have a number.", 1)
+
         try:
             return platform.configure_light(channel['number'], channel['subtype'], channel['platform_settings'])
         except AssertionError as e:

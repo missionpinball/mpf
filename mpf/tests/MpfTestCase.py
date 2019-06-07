@@ -243,6 +243,12 @@ class MpfTestCase(unittest.TestCase):
         self.machine.events.post(event_name, **params)
         self.machine_run()
 
+    def post_relay_event_with_params(self, event_name, **params):
+        """Post a relay event synchronously and return the result."""
+        future = self.machine.events.post_relay_async(event_name, **params)
+        result = self.machine.clock.loop.run_until_complete(future)
+        return result
+
     def assertPlaceholderEvaluates(self, expected, condition):
         result = self.machine.placeholder_manager.build_raw_template(condition).evaluate([],
                                                                                          fail_on_missing_params=True)
@@ -780,7 +786,7 @@ class MpfTestCase(unittest.TestCase):
         switch inactive, use the :meth:`release_switch_and_run`.
 
         """
-        self.machine.switch_controller.process_switch(name, logical=True)
+        self.machine.switch_controller.process_switch(name, state=1, logical=True)
         self.advance_time_and_run(delta)
 
     def release_switch_and_run(self, name, delta):
@@ -791,7 +797,7 @@ class MpfTestCase(unittest.TestCase):
             delta: The time (in seconds) to advance the clock.
 
         """
-        self.machine.switch_controller.process_switch(name, 0, True)
+        self.machine.switch_controller.process_switch(name, state=0, logical=True)
         self.advance_time_and_run(delta)
 
     def hit_and_release_switch(self, name):
@@ -804,7 +810,7 @@ class MpfTestCase(unittest.TestCase):
         time in between.
 
         """
-        self.machine.switch_controller.process_switch(name, logical=True)
+        self.machine.switch_controller.process_switch(name, state=1, logical=True)
         self.machine.switch_controller.process_switch(name, state=0, logical=True)
         self.machine_run()
 
@@ -820,7 +826,7 @@ class MpfTestCase(unittest.TestCase):
 
         """
         for name in names:
-            self.machine.switch_controller.process_switch(name, logical=True)
+            self.machine.switch_controller.process_switch(name, state=1, logical=True)
         for name in names:
             self.machine.switch_controller.process_switch(name, state=0, logical=True)
         self.machine_run()

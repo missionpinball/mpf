@@ -1,0 +1,18 @@
+#config_version=5
+mode:
+  start_events: start_default
+
+event_player:
+  test_event_when_enabled:
+    - should_post_when_enabled{device.multiball_locks.lock_default.enabled}
+    - should_not_post_when_enabled{not device.multiball_locks.lock_default.enabled}
+  test_event_when_disabled:
+    - should_post_when_disabled{not device.multiball_locks.lock_default.enabled}
+    - should_not_post_when_disabled{device.multiball_locks.lock_default.enabled}
+
+multiball_locks:
+    lock_default:
+        lock_devices: bd_lock
+        balls_to_lock: 2
+        locked_ball_counting_strategy: virtual_only
+        debug: True

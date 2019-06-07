@@ -10,9 +10,7 @@ system11:
     ac_relay_driver: c_ac_relay
 
 snux:
-    flipper_enable_driver: c_flipper_enable_driver
     diag_led_driver: c_diag_led_driver
-    platform:
 
 coils:
     c_diag_led_driver:
@@ -34,5 +32,3 @@ coils:
     c_side_c2:
         number: c12c
         default_hold_power: 0.5
-    c_virtual:
-        number:

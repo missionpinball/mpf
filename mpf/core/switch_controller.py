@@ -280,7 +280,7 @@ class SwitchController(MpfController):
                 monitor(MonitoredSwitchChange(name=str(num), label="{}-{}".format(str(platform), str(num)),
                                               platform=platform, num=str(num), state=state))
 
-    def process_switch(self, name, state=1, logical=False):
+    def process_switch(self, name, state, logical=False):
         """Process a new switch state change for a switch by name.
 
         This is the method that is called by the platform driver whenever a

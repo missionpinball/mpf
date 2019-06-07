@@ -52,6 +52,9 @@ class DigitalOutput(SystemWideDevice):
         self.platform = self.machine.get_platform_sections('lights', self.config['platform'])
         self.type = "light"
 
+        if not self.platform.features['allow_empty_numbers'] and self.config['number'] is None:
+            self.raise_config_error("Digital Output must have a number.", 1)
+
         try:
             self.hw_driver = self.platform.configure_light(self.config['number'], self.config['light_subtype'], {})
         except AssertionError as e:
@@ -70,6 +73,9 @@ class DigitalOutput(SystemWideDevice):
             max_pulse_ms=255,
             max_pulse_power=1.0,
             max_hold_power=1.0)
+
+        if not self.platform.features['allow_empty_numbers'] and self.config['number'] is None:
+            self.raise_config_error("Digital Output must have a number.", 2)
 
         try:
             self.hw_driver = self.platform.configure_driver(config, self.config['number'], {})

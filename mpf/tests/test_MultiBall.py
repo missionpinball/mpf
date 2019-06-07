@@ -72,6 +72,7 @@ class TestMultiBall(MpfGameTestCase):
         # another ball should be ejected to pf
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.playfield.balls)
+        self.assertBallsInPlay(2)
 
         # ball drains
         self.drain_all_balls()
@@ -84,6 +85,7 @@ class TestMultiBall(MpfGameTestCase):
         # it should be readded because of shoot again
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.playfield.balls)
+        self.assertBallsInPlay(2)
 
         # two balls drain
         self.drain_all_balls()
@@ -94,6 +96,7 @@ class TestMultiBall(MpfGameTestCase):
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.playfield.balls)
         self.assertEventNotCalled("multiball_mb1_ball_lost")
+        self.assertBallsInPlay(2)
 
         # shoot again ends
         self.advance_time_and_run(10)
@@ -102,6 +105,7 @@ class TestMultiBall(MpfGameTestCase):
         self.drain_all_balls()
         self.advance_time_and_run(1)
         self.assertEventCalled("multiball_mb1_ball_lost", 1)
+        self.assertBallsInPlay(1)
 
         # mb ends
         self.assertEqual(1, self._events['multiball_mb1_ended'])
@@ -957,3 +961,26 @@ class TestMultiBall(MpfGameTestCase):
         # game should end
         self.advance_time_and_run(1)
         self.assertEqual(None, self.machine.game)
+
+    def testMultiballStateInPlaceholder(self):
+        self.fill_troughs()
+        self.start_game()
+
+        self.post_event("start_default")
+        self.mock_event("should_post_when_enabled")
+        self.mock_event("should_post_when_disabled")
+        self.mock_event("should_not_post_when_enabled")
+        self.mock_event("should_not_post_when_disabled")
+        mb = self.machine.multiballs["mb1"]
+
+        self.assertFalse(mb.enabled)
+        self.post_event("test_event_when_disabled")
+        self.assertEventCalled("should_post_when_disabled")
+        self.assertEventNotCalled("should_not_post_when_disabled")
+
+        mb.enable()
+        self.assertTrue(mb.enabled)
+        self.post_event("test_event_when_enabled")
+        self.assertEventCalled("should_post_when_enabled")
+        self.assertEventNotCalled("should_not_post_when_enabled")
+        

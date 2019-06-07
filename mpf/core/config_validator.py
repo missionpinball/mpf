@@ -65,6 +65,7 @@ class ConfigValidator:
             "template_bool": self._validate_type_template_bool,
             "template_secs": self._validate_type_template_secs,
             "template_ms": self._validate_type_template_ms,
+            "template_str": self._validate_type_template_str,
             "boolean": self._validate_type_bool,
             "ms": self._validate_type_ms,
             "ms_or_token": self._validate_type_or_token(self._validate_type_ms),
@@ -362,7 +363,7 @@ class ConfigValidator:
 
         for k, v in item.items():
             item_dict[self.validate_item(k, validators[0], validation_failure_info)] = (
-                self.validate_item(v, validators[1], validation_failure_info))
+                self.validate_item(v, validators[1], (validation_failure_info, k)))
         return item_dict
 
     def check_for_invalid_sections(self, spec, config,
@@ -493,6 +494,13 @@ class ConfigValidator:
             return str(item).lower()
         else:
             return None
+
+    def _validate_type_template_str(self, item, validation_failure_info):
+        del validation_failure_info
+        if item is None:
+            return None
+
+        return self.machine.placeholder_manager.build_quoted_string_template(str(item))
 
     def _validate_type_template_float(self, item, validation_failure_info):
         if item is None:

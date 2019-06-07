@@ -42,6 +42,9 @@ class Servo(SystemWideDevice):
                                             self._position_event,
                                             position=position)
 
+        if not self.platform.features['allow_empty_numbers'] and self.config['number'] is None:
+            self.raise_config_error("Servo must have a number.", 1)
+
         self.hw_servo = yield from self.platform.configure_servo(self.config['number'])
         self._position = self.config['reset_position']
         self.speed_limit = self.config['speed_limit']

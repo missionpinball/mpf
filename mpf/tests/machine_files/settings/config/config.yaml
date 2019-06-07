@@ -1,0 +1,21 @@
+#config_version=5
+
+settings:
+    custom_setting_int:
+        label: "Int Setting"
+        key_type: int
+        default: 0
+        sort: 1
+        values:
+            0: "Zero"
+            1: "One"
+            2: "Two"
+    custom_setting_str:
+        label: "String Setting"
+        key_type: str
+        default: "one"
+        sort: 2
+        values:
+            zero: "Zero"
+            one: "One"
+            two: "Two"
