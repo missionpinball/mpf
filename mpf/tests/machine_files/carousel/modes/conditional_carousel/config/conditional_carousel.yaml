@@ -6,7 +6,7 @@ mode:
 
 mode_settings:
   selectable_items:
-    - item1
+    - item1{not current_player.hide_item1}
     - item2{false}
     - item3{machine.player2_score}
     - item4{current_player.show_item4}

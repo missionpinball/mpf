@@ -33,6 +33,7 @@ class TestCarouselMode(MpfTestCase):
 
         # Start the mode without any conditions true
         self.post_event("start_mode3")
+        self.assertIn(self.machine.modes.conditional_carousel, self.machine.mode_controller.active_modes)
         self.assertEqual(1, self._events["conditional_carousel_item1_highlighted"])
         self.assertEqual(0, self._events["conditional_carousel_item2_highlighted"])
         self.assertEqual(0, self._events["conditional_carousel_item3_highlighted"])
@@ -92,6 +93,14 @@ class TestCarouselMode(MpfTestCase):
         self.assertEqual(1, self._events["conditional_carousel_item3_highlighted"])
         self.assertEqual(0, self._events["conditional_carousel_item4_highlighted"])
         self.post_event("stop_mode3")
+
+        # The mode shouldn't start if all conditions are false (i.e. no items)
+        self.mock_event("conditional_carousel_items_empty")
+        self.machine.game.player["hide_item1"] = "truthy"
+        self.machine.set_machine_var("player2_score", 0)
+        self.post_event("start_mode3")
+        self.assertEqual(1, self._events["conditional_carousel_items_empty"])
+        self.assertNotIn(self.machine.modes.conditional_carousel, self.machine.mode_controller.active_modes)
 
     def testExtraBall(self):
         self.mock_event("carousel_item1_highlighted")

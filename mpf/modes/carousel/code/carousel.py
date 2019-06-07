@@ -49,7 +49,13 @@ class Carousel(Mode):
             elif not item['condition'] or item['condition'].evaluate({}):
                 self._items.append(item['name'])
         if not self._items:
-            raise AssertionError("All carousel items evaluated to false, unable to create carousel")
+            self.machine.events.post("{}_items_empty".format(self.name))
+            '''event (carousel_name)_items_empty
+                desc: A carousel's items are all conditional and all evaluated false.
+                    If this event is posted, the carousel mode will not be started.
+                '''
+            self.stop()
+            return
 
         super().mode_start(**kwargs)
         self._done = False
