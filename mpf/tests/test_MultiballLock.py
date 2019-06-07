@@ -3,9 +3,8 @@ from mpf.tests.MpfGameTestCase import MpfGameTestCase
 
 
 class TestMultiballLock(MpfGameTestCase):
-
     def getConfigFile(self):
-        return self._testMethodName + '.yaml'
+        return 'testDefault.yaml'
 
     def getMachinePath(self):
         return 'tests/machine_files/multiball_locks/'
@@ -13,7 +12,77 @@ class TestMultiballLock(MpfGameTestCase):
     def get_platform(self):
         return 'smart_virtual'
 
-    def testDefault(self):
+    def test_filling_two(self):
+        self.fill_troughs()
+        self.start_game()
+        self.mock_event("multiball_lock_lock_default_locked_ball")
+        self.mock_event("multiball_lock_lock_default_full")
+        self.post_event("start_default")
+
+        lock_device = self.machine.ball_devices["bd_lock"]
+        mb_lock = self.machine.multiball_locks["lock_default"]
+
+        # Add one ball, should lock but not be full
+        self.machine.default_platform.add_ball_to_device(lock_device)
+        self.advance_time_and_run(10)
+        self.assertEqual(1, lock_device.balls)
+        self.assertEqual(1, mb_lock.locked_balls)
+        self.assertEventCalled("multiball_lock_lock_default_locked_ball")
+        self.assertEqual({'total_balls_locked': 1}, 
+                         self._last_event_kwargs["multiball_lock_lock_default_locked_ball"])
+        self.assertEventNotCalled("multiball_lock_lock_default_full")
+
+        # Add a second ball, should lock and be full
+        self.machine.default_platform.add_ball_to_device(lock_device)
+        self.advance_time_and_run(10)
+        self.assertEqual(2, lock_device.balls)
+        self.assertEqual(2, mb_lock.locked_balls)
+        self.assertEventCalled("multiball_lock_lock_default_locked_ball")
+        self.assertEqual({'total_balls_locked': 2},
+                         self._last_event_kwargs["multiball_lock_lock_default_locked_ball"])
+        self.assertEventCalled("multiball_lock_lock_default_full")
+
+    def test_filling_three(self):
+        self.fill_troughs()
+        self.start_game()
+        self.mock_event("multiball_lock_lock_triple_locked_ball")
+        self.mock_event("multiball_lock_lock_triple_full")
+        self.post_event("start_default")
+
+        lock_device_3 = self.machine.ball_devices["bd_lock_triple"]
+        mb_lock_3 = self.machine.multiball_locks["lock_triple"]
+
+        # Add one ball, should lock but not be full
+        self.machine.default_platform.add_ball_to_device(lock_device_3)
+        self.advance_time_and_run(10)
+        self.assertEqual(1, lock_device_3.balls)
+        self.assertEqual(1, mb_lock_3.locked_balls)
+        self.assertEventCalled("multiball_lock_lock_triple_locked_ball")
+        self.assertEqual({'total_balls_locked': 1},
+                         self._last_event_kwargs["multiball_lock_lock_triple_locked_ball"])
+        self.assertEventNotCalled("multiball_lock_lock_triple_full")
+
+        # Add a second ball, should lock but not be full
+        self.machine.default_platform.add_ball_to_device(lock_device_3)
+        self.advance_time_and_run(10)
+        self.assertEqual(2, lock_device_3.balls)
+        self.assertEqual(2, mb_lock_3.locked_balls)
+        self.assertEventCalled("multiball_lock_lock_triple_locked_ball")
+        self.assertEqual({'total_balls_locked': 2},
+                         self._last_event_kwargs["multiball_lock_lock_triple_locked_ball"])
+        self.assertEventNotCalled("multiball_lock_lock_triple_full")
+
+        # Add a third ball, should lock but not be full
+        self.machine.default_platform.add_ball_to_device(lock_device_3)
+        self.advance_time_and_run(10)
+        self.assertEqual(3, lock_device_3.balls)
+        self.assertEqual(3, mb_lock_3.locked_balls)
+        self.assertEventCalled("multiball_lock_lock_triple_locked_ball")
+        self.assertEqual({'total_balls_locked': 3},
+                         self._last_event_kwargs["multiball_lock_lock_triple_locked_ball"])
+        self.assertEventCalled("multiball_lock_lock_triple_full")
+
+    def test_placeholder_events(self):
         self.fill_troughs()
         self.start_game()
 
@@ -34,6 +103,18 @@ class TestMultiballLock(MpfGameTestCase):
         self.post_event("test_event_when_disabled")
         self.assertEventCalled("should_post_when_disabled")
         self.assertEventNotCalled("should_not_post_when_disabled")
+
+
+class TestMultiballLockCountingStrategies(MpfGameTestCase):
+
+    def getConfigFile(self):
+        return self._testMethodName + '.yaml'
+
+    def getMachinePath(self):
+        return 'tests/machine_files/multiball_locks/'
+
+    def get_platform(self):
+        return 'smart_virtual'
 
     def testNoVirtual(self):
         # prepare game

@@ -11,8 +11,11 @@ event_player:
     - should_not_post_when_disabled{device.multiball_locks.lock_default.enabled}
 
 multiball_locks:
-    lock_default:
-        lock_devices: bd_lock
-        balls_to_lock: 2
-        locked_ball_counting_strategy: virtual_only
-        debug: True
+  lock_default:
+    lock_devices: bd_lock
+    balls_to_lock: 2
+    locked_ball_counting_strategy: virtual_only
+  lock_triple:
+    lock_devices: bd_lock_triple
+    balls_to_lock: 3
+    locked_ball_counting_strategy: virtual_only
