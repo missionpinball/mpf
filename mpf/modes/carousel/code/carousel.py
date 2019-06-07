@@ -1,6 +1,4 @@
 """Mode which allows the player to select another mode to run."""
-import copy
-
 from mpf.core.utility_functions import Util
 
 from mpf.core.mode import Mode
@@ -15,6 +13,7 @@ class Carousel(Mode):
 
     def __init__(self, machine, config, name, path):
         """Initialise carousel mode."""
+        self._all_items = None
         self._items = None
         self._select_item_events = None
         self._next_item_events = None
@@ -28,7 +27,7 @@ class Carousel(Mode):
         super().mode_init()
         mode_settings = self.config.get("mode_settings", [])
         self._all_items = [self.machine.placeholder_manager.parse_conditional_template(item)
-            for item in Util.string_to_list(mode_settings.get("selectable_items", ""))]
+                           for item in Util.string_to_list(mode_settings.get("selectable_items", ""))]
         self._select_item_events = Util.string_to_list(mode_settings.get("select_item_events", ""))
         self._next_item_events = Util.string_to_list(mode_settings.get("next_item_events", ""))
         self._previous_item_events = Util.string_to_list(mode_settings.get("previous_item_events", ""))
@@ -40,7 +39,7 @@ class Carousel(Mode):
     def mode_start(self, **kwargs):
         """Start mode and let the player select."""
         self._items = [item['name'] for item in self._all_items
-            if (not item['condition']) or item['condition'].evaluate({})]
+                       if (not item['condition']) or item['condition'].evaluate({})]
         if not self._items:
             raise AssertionError("All carousel items evaluated to false, unable to create carousel")
 
