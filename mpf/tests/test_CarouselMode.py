@@ -23,6 +23,85 @@ class TestCarouselMode(MpfTestCase):
         self.advance_time_and_run()
         self.assertIsNone(self.machine.game)
 
+    def testConditionalCarousel(self):
+        self.mock_event("conditional_carousel_item1_highlighted")
+        self.mock_event("conditional_carousel_item2_highlighted")
+        self.mock_event("conditional_carousel_item3_highlighted")
+        self.mock_event("conditional_carousel_item4_highlighted")
+
+        self._start_game()
+
+        # Start the mode without any conditions true
+        self.post_event("start_mode3")
+        self.assertIn(self.machine.modes.conditional_carousel, self.machine.mode_controller.active_modes)
+        self.assertEqual(1, self._events["conditional_carousel_item1_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item2_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item3_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item4_highlighted"])
+        self.post_event("next")
+        self.assertEqual(2, self._events["conditional_carousel_item1_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item2_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item3_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item4_highlighted"])
+        self.post_event("next")
+        self.assertEqual(3, self._events["conditional_carousel_item1_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item2_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item3_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item4_highlighted"])
+        self.post_event("stop_mode3")
+
+        # Reset the count for item 1
+        self.mock_event("conditional_carousel_item1_highlighted")
+        # Start the mode with a player variable condition
+        self.machine.game.player["show_item4"] = True
+        self.post_event("start_mode3")
+        self.assertEqual(1, self._events["conditional_carousel_item1_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item2_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item3_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item4_highlighted"])
+        self.post_event("next")
+        self.assertEqual(1, self._events["conditional_carousel_item1_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item2_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item3_highlighted"])
+        self.assertEqual(1, self._events["conditional_carousel_item4_highlighted"])
+        self.post_event("next")
+        self.assertEqual(2, self._events["conditional_carousel_item1_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item2_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item3_highlighted"])
+        self.assertEqual(1, self._events["conditional_carousel_item4_highlighted"])
+        self.post_event("stop_mode3")
+
+        # Reset the count for items 1 and 4
+        self.mock_event("conditional_carousel_item1_highlighted")
+        self.mock_event("conditional_carousel_item4_highlighted")
+        # Start the mode with a machine variable condition
+        self.machine.set_machine_var("player2_score", 500000)
+        self.machine.game.player["show_item4"] = False
+        self.post_event("start_mode3")
+        self.assertEqual(1, self._events["conditional_carousel_item1_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item2_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item3_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item4_highlighted"])
+        self.post_event("next")
+        self.assertEqual(1, self._events["conditional_carousel_item1_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item2_highlighted"])
+        self.assertEqual(1, self._events["conditional_carousel_item3_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item4_highlighted"])
+        self.post_event("next")
+        self.assertEqual(2, self._events["conditional_carousel_item1_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item2_highlighted"])
+        self.assertEqual(1, self._events["conditional_carousel_item3_highlighted"])
+        self.assertEqual(0, self._events["conditional_carousel_item4_highlighted"])
+        self.post_event("stop_mode3")
+
+        # The mode shouldn't start if all conditions are false (i.e. no items)
+        self.mock_event("conditional_carousel_items_empty")
+        self.machine.game.player["hide_item1"] = "truthy"
+        self.machine.set_machine_var("player2_score", 0)
+        self.post_event("start_mode3")
+        self.assertEqual(1, self._events["conditional_carousel_items_empty"])
+        self.assertNotIn(self.machine.modes.conditional_carousel, self.machine.mode_controller.active_modes)
+
     def testExtraBall(self):
         self.mock_event("carousel_item1_highlighted")
         self.mock_event("carousel_item1_selected")

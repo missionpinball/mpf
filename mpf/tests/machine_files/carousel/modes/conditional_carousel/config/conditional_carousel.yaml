@@ -1,0 +1,15 @@
+#config_version=5
+mode:
+  start_events: start_mode3
+  stop_events: stop_mode3, conditional_carousel_item_selected
+  code: mpf.modes.carousel.code.carousel.Carousel
+
+mode_settings:
+  selectable_items:
+    - item1{not current_player.hide_item1}
+    - item2{false}
+    - item3{machine.player2_score}
+    - item4{current_player.show_item4}
+  select_item_events: select
+  next_item_events: next
+  previous_item_events: previous
