@@ -379,12 +379,9 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
     def __init__(self, machine):
         """Initialise spike hardware platform."""
         super().__init__(machine)
-        self.log = logging.getLogger('Spike')
-        self.log.debug("Configuring Stern Spike hardware.")
         self._writer = None
         self._reader = None
         self._inputs = {}
-        self.config = None
         self._poll_task = None
         self._sender_task = None
         self._send_key_task = None
@@ -400,6 +397,9 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         self.ticks_per_sec = {
             0: 1
         }
+
+        self.config = self.machine.config_validator.validate_config("spike", self.machine.config['spike'])
+        self._configure_device_logging_and_debug("Spike", self.config)
 
     @asyncio.coroutine
     def _send_multiple_light_update(self, sequential_brightness_list):
@@ -579,8 +579,6 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
     @asyncio.coroutine
     def initialize(self):
         """Initialise platform."""
-        self.config = self.machine.config_validator.validate_config("spike", self.machine.config['spike'])
-
         port = self.config['port']
         baud = self.config['baud']
         flow_control = self.config['flow_control']

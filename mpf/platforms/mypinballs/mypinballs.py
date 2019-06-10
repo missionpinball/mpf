@@ -50,14 +50,12 @@ class MyPinballsHardwarePlatform(SegmentDisplayPlatform):
 
         self._writer = None
         self._reader = None
-        self.config = None
-        self.log = logging.getLogger('mypinballs')
+        self.config = self.machine.config_validator.validate_config("mypinballs", self.machine.config['mypinballs'])
+        self._configure_device_logging_and_debug("MyPinballs", self.config)
 
     @asyncio.coroutine
     def initialize(self):
         """Initialise hardware."""
-        self.config = self.machine.config_validator.validate_config("mypinballs", self.machine.config['mypinballs'])
-
         # connect to serial
         connector = self.machine.clock.open_serial_connection(
             url=self.config['port'], baudrate=self.config['baud'])

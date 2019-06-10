@@ -162,7 +162,6 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
     def __init__(self, machine) -> None:
         """Initialise platform."""
         super().__init__(machine)
-        self.config = dict()                # type: Dict[str, Any]
         self._writer = None                 # type: Optional[asyncio.StreamWriter]
         self._reader = None                 # type: Optional[asyncio.StreamReader]
         self._poll_task = None
@@ -175,14 +174,14 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         self._coils_start_at_one = None     # type: Optional[str]
         self.features['max_pulse'] = 255
 
+        self.config = self.machine.config_validator.validate_config("lisy", self.machine.config['lisy'])
+        self._configure_device_logging_and_debug("lisy", self.config)
+
     # pylint: disable-msg=too-many-statements
     @asyncio.coroutine
     def initialize(self):
         """Initialise platform."""
         with (yield from self._bus_lock):
-            self.config = self.machine.config_validator.validate_config("lisy", self.machine.config['lisy'])
-
-            self.configure_logging("lisy", self.config['console_log'], self.config['file_log'])
 
             yield from super().initialize()
 

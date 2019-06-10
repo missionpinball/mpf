@@ -18,12 +18,12 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
     def __init__(self, machine):
         """Initialise Pololu Servo Controller platform."""
         super().__init__(machine)
-        self.log = logging.getLogger("Pololu Maestro")
-        self.log.debug("Configuring template hardware interface.")
-        self.config = self.machine.config['pololu_maestro']
+        self.config = self.machine.config_validator.validate_config("pololu_maestro",
+                                                                    self.machine.config['pololu_maestro'])
         self.platform = None
         self.serial = None
         self.features['tickless'] = True
+        self._configure_device_logging_and_debug("Pololu Maestro", self.config)
 
     def __repr__(self):
         """Return string representation."""
@@ -33,10 +33,6 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
     def initialize(self):
         """Initialise platform."""
         yield from super().initialize()
-
-        # validate our config (has to be in intialize since config_processor
-        # is not read in __init__)
-        self.config = self.machine.config_validator.validate_config("pololu_maestro", self.config)
         self.serial = serial.Serial(self.config['port'])
 
     def stop(self):

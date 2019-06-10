@@ -15,12 +15,12 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
     def __init__(self, machine):
         """Initialise I2C servo platform."""
         super().__init__(machine)
-        self.log = logging.getLogger("I2C Servo Controller Platform")
-        self.log.debug("Configuring template hardware interface.")
-        self.config = self.machine.config.get('servo_controllers', {})
+        self.config = self.machine.config_validator.validate_config("servo_controllers",
+                                                                    self.machine.config.get('servo_controllers', {}))
         self.platform = None
         self.i2c_devices = {}
         self.features['tickless'] = True
+        self._configure_device_logging_and_debug("I2C Servo Controller", self.config)
 
     def __repr__(self):
         """Return string representation."""
@@ -30,11 +30,6 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
     def initialize(self):
         """Initialise platform."""
         yield from super().initialize()
-
-        # validate our config (has to be in intialize since config_processor
-        # is not read in __init__)
-        self.config = self.machine.config_validator.validate_config("servo_controllers", self.config)
-
         # load i2c platform
         self.platform = self.machine.get_platform_sections(
             "i2c", self.config['platform'])

@@ -99,7 +99,7 @@ class MMA8451Platform(AccelerometerPlatform):
         """Configure MMA8451 based accelerometers."""
         super().__init__(machine)
         self.log = logging.getLogger('mma8451')
-        self.debug_log("Configuring MMA8451 based accelerometers.")
+        self.log.debug("Configuring MMA8451 based accelerometers.")
         self.accelerometers = {}
 
     @asyncio.coroutine
