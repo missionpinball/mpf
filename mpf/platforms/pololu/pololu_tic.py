@@ -15,7 +15,8 @@ class PololuTICHardwarePlatform(StepperPlatform):
     def __init__(self, machine):
         """Initialise TIC platform."""
         super().__init__(machine)
-        self.config = self.machine.config.get('pololu_tic', {})
+        self.config = self.machine.config_validator.validate_config("pololu_tic",
+                                                                    self.machine.config.get('pololu_tic', {}))
         self._configure_device_logging_and_debug("Pololu TIC", self.config)
         self.features['tickless'] = True
         self._steppers = []
@@ -23,15 +24,6 @@ class PololuTICHardwarePlatform(StepperPlatform):
     def __repr__(self):
         """Return string representation."""
         return '<Platform.PololuTICHardwarePlatform>'
-
-    @asyncio.coroutine
-    def initialize(self):
-        """Initialise TIC platform."""
-        yield from super().initialize()
-
-        # validate our config (has to be in initialize since config_processor
-        # is not read in __init__)
-        self.config = self.machine.config_validator.validate_config("pololu_tic", self.config)
 
     def stop(self):
         """De-energize the stepper and stop sending the command timeout refresh."""

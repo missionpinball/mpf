@@ -998,6 +998,8 @@ pololu_maestro:
 pololu_tic:
     __valid_in__: machine
     debug: single|bool|False
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
 random_event_player:
     __valid_in__: machine, mode, show
     events: ignore
