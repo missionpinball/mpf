@@ -1,0 +1,84 @@
+#config_version=5
+
+hardware:
+    platform: lisy
+
+lisy:
+    connection: serial
+    port: com1
+    baud: 115200
+
+switches:
+    s_test00:
+        number: 00
+    s_test37:
+        number: 37
+    s_test77_nc:
+        number: 77
+        type: 'NC'
+
+coils:
+    c_test:
+        number: 0
+    c_test_allow_enable:
+        number: 1
+        default_hold_power: 1.0
+    c_trough_eject:
+        number: 103
+        default_pulse_ms: 3s
+
+digital_outputs:
+    game_over_relay:
+        number: 1
+        type: light
+        enable_events: ball_started
+        disable_events: ball_will_end
+
+lights:
+  test_light:
+    number: 3
+
+segment_displays:
+  info_display:
+    number: 0
+  player1_display:
+    number: 1
+  player2_display:
+    number: 2
+
+hardware_sound_systems:
+    default:
+        label: APC
+
+hardware_sound_player:
+    test2:
+        2:
+            action: play
+    play_file:
+        "some_file": play_file
+    play_file_loop:
+        "some_file":
+          action: play_file
+          platform_options:
+            loop: True
+            no_cache: False
+    play_text:
+        text:
+          action: text_to_speech
+          value: "Hello MPF"
+          platform_options:
+            loop: False
+            no_cache: True
+    volume_05:
+        set_volume:
+          action: set_volume
+          value: 0.5
+    increase_volume:
+        0.1: increase_volume
+    decrease_volume:
+        decrease_volume:
+          action: decrease_volume
+          value: 0.01
+    test3:
+        3: play
+    test_stop: stop
