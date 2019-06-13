@@ -27,6 +27,7 @@ class VirtualPinballSwitch(SwitchPlatformInterface):
         """Return the name of the board of this switch."""
         return "VPX"
 
+
 class VirtualPinballLight(LightPlatformInterface):
 
     """A light in VPX."""
@@ -98,11 +99,11 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
     def __init__(self, machine):
         """Initialise VPX platform."""
         super().__init__(machine)
-        self._lights = {}       # type: Dict[str, VirtualPinballLight]
-        self._switches = {}     # type: Dict[str, VirtualPinballSwitch]
-        self._drivers = {}      # type: Dict[str, VirtualPinballDriver]
-        self._last_drivers = {} # type: Dict[str, bool]
-        self._last_lights = {}  # type: Dict[str, bool]
+        self._lights = {}           # type: Dict[str, VirtualPinballLight]
+        self._switches = {}         # type: Dict[str, VirtualPinballSwitch]
+        self._drivers = {}          # type: Dict[str, VirtualPinballDriver]
+        self._last_drivers = {}     # type: Dict[str, bool]
+        self._last_lights = {}      # type: Dict[str, bool]
         self._started = asyncio.Event(loop=self.machine.clock.loop)
         self.log = logging.getLogger("VPX Platform")
         self.log.debug("Configuring VPX hardware interface.")

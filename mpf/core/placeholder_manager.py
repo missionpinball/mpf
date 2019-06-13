@@ -330,6 +330,7 @@ class DevicePlaceholder:
         """Attribute access."""
         return self._device.get_placeholder_value(item)
 
+
 class DeviceClassPlaceholder:
 
     """Wrap a monitorable device class."""

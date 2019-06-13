@@ -180,7 +180,6 @@ class MockServer:
 
 class MockSerial(MockFd):
 
-    __slots__ = ["fd", "timeout"]
 
     def __init__(self):
         super().__init__()

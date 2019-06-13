@@ -69,19 +69,19 @@ class TextUi(MpfController):
 
         # hack to add themes until https://github.com/peterbrittain/asciimatics/issues/207 is implemented
         THEMES["mpf_theme"] = defaultdict(
-        lambda: (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK),
-        {
-            "active_switch": (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_GREEN),
-            "pf_active": (Screen.COLOUR_GREEN, Screen.A_NORMAL, Screen.COLOUR_BLACK),
-            "pf_inactive": (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK),
-            "label": (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK),
-            "title": (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_RED),
-            "title_exit": (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_RED),
-            "footer_cpu": (Screen.COLOUR_CYAN, Screen.A_NORMAL, Screen.COLOUR_BLACK),
-            "footer_path": (Screen.COLOUR_YELLOW, Screen.A_NORMAL, Screen.COLOUR_BLACK),
-            "footer_memory": (Screen.COLOUR_GREEN, Screen.A_NORMAL, Screen.COLOUR_BLACK),
-            "footer_mc_cpu": (Screen.COLOUR_MAGENTA, Screen.A_NORMAL, Screen.COLOUR_BLACK),
-        })
+            lambda: (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK),
+            {
+                "active_switch": (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_GREEN),
+                "pf_active": (Screen.COLOUR_GREEN, Screen.A_NORMAL, Screen.COLOUR_BLACK),
+                "pf_inactive": (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK),
+                "label": (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK),
+                "title": (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_RED),
+                "title_exit": (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_RED),
+                "footer_cpu": (Screen.COLOUR_CYAN, Screen.A_NORMAL, Screen.COLOUR_BLACK),
+                "footer_path": (Screen.COLOUR_YELLOW, Screen.A_NORMAL, Screen.COLOUR_BLACK),
+                "footer_memory": (Screen.COLOUR_GREEN, Screen.A_NORMAL, Screen.COLOUR_BLACK),
+                "footer_mc_cpu": (Screen.COLOUR_MAGENTA, Screen.A_NORMAL, Screen.COLOUR_BLACK),
+            })
 
         self.start_time = datetime.now()
         self.machine = machine

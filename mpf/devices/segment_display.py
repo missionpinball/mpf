@@ -54,7 +54,6 @@ class SegmentDisplay(SystemWideDevice):
             raise AssertionError("Error in platform while configuring segment display {}. "
                                  "See error above.".format(self.name)) from e
 
-
     def add_text(self, text: str, priority: int = 0, key: str = None) -> None:
         """Add text to display stack.
 

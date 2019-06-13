@@ -6,7 +6,7 @@ from mpf.tests.MpfTestCase import MpfTestCase, test_config
 from mpf.tests.loop import MockSerial, MockSocket
 
 
-class MockLisySocket(MockSocket):
+class MockLisySocket(MockSocket, MockSerial):
 
     def read(self, length):
         del length
