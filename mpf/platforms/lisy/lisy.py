@@ -1,7 +1,10 @@
 """LISY platform for System 1 and System 80."""
 import asyncio
-from typing import Generator, Dict, Optional, List, Any
+from distutils.version import StrictVersion
 
+from typing import Generator, Dict, Optional, List
+
+from mpf.core.platform_batch_light_system import PlatformBatchLight, PlatformBatchLightSystem
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
@@ -12,7 +15,7 @@ from mpf.core.logging import LogMixin
 
 from mpf.platforms.lisy.defines import LisyDefines
 
-from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade, LightPlatformInterface
 
 from mpf.core.platform import SwitchPlatform, LightsPlatform, DriverPlatform, SwitchSettings, DriverSettings, \
     DriverConfig, SwitchConfig, SegmentDisplaySoftwareFlashPlatform, HardwareSoundPlatform
@@ -96,6 +99,26 @@ class LisySimpleLamp(LightPlatformSoftwareFade):
         return "LISY"
 
 
+class LisyModernLight(PlatformBatchLight):
+
+    """A modern light in LISY."""
+
+    __slots__ = ["platform"]
+
+    def __init__(self, number, platform, light_system):
+        """Initialise Lisy Light."""
+        super().__init__(number, light_system)
+        self.platform = platform
+
+    def get_max_fade_ms(self) -> int:
+        """Return max fade time."""
+        return 65535
+
+    def get_board_name(self):
+        """Return board name."""
+        return "LISY"
+
+
 class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
 
     """A segment display in the LISY platform."""
@@ -142,13 +165,17 @@ class LisySound(HardwareSoundPlatformInterface):
 
     def set_volume(self, volume: float):
         """Set volume."""
-        self.platform.send_byte(LisyDefines.SoundSetVolume, bytes([int(volume * 100)]))
+        if self.platform.api_version >= StrictVersion("0.9"):
+            self.platform.send_byte(LisyDefines.SoundSetVolume, bytes([0, int(volume * 100)]))
+        else:
+            self.platform.send_byte(LisyDefines.SoundSetVolume, bytes([int(volume * 100)]))
 
     def stop_all_sounds(self):
         """Stop all sounds."""
         self.platform.send_byte(LisyDefines.SoundStopAllSounds)
 
 
+# pylint: disable-msg=too-many-instance-attributes
 class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                            SegmentDisplaySoftwareFlashPlatform,
                            HardwareSoundPlatform, LogMixin):
@@ -157,7 +184,8 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
     __slots__ = ["config", "_writer", "_reader", "_poll_task", "_watchdog_task", "_number_of_lamps",
                  "_number_of_solenoids", "_number_of_displays", "_inputs", "_coils_start_at_one",
-                 "_bus_lock"]  # type: List[str]
+                 "_bus_lock", "api_version", "_number_of_switches", "_number_of_modern_lights",
+                 "_light_system"]  # type: List[str]
 
     def __init__(self, machine) -> None:
         """Initialise platform."""
@@ -170,12 +198,16 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         self._number_of_lamps = None        # type: Optional[int]
         self._number_of_solenoids = None    # type: Optional[int]
         self._number_of_displays = None     # type: Optional[int]
+        self._number_of_switches = None     # type: Optional[int]
+        self._number_of_modern_lights = None    # type: Optional[int]
         self._inputs = dict()               # type: Dict[str, bool]
         self._coils_start_at_one = None     # type: Optional[str]
         self.features['max_pulse'] = 255
 
         self.config = self.machine.config_validator.validate_config("lisy", self.machine.config['lisy'])
         self._configure_device_logging_and_debug("lisy", self.config)
+        self.api_version = None
+        self._light_system = None
 
     # pylint: disable-msg=too-many-statements
     @asyncio.coroutine
@@ -232,6 +264,8 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             self.debug_log("Connected to %s hardware. LISY version: %s. API version: %s.",
                            type_str, lisy_version, api_version)
 
+            self.api_version = StrictVersion(api_version.decode())
+
             self.machine.set_machine_var("lisy_hardware", type_str)
             '''machine_var: lisy_hardware
 
@@ -260,27 +294,60 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             self.send_byte(LisyDefines.InfoGetNumberOfDisplays)
             self._number_of_displays = yield from self.read_byte()
 
-            self.debug_log("Number of lamps: %s. Number of coils: %s. Numbers of display: %s",
-                           self._number_of_lamps, self._number_of_solenoids, self._number_of_displays)
+            # get number of switches
+            self.send_byte(LisyDefines.InfoGetSwitchCount)
+            self._number_of_switches = yield from self.read_byte()
+
+            if self.api_version >= StrictVersion("0.9"):
+                # get number of modern lights
+                self.send_byte(LisyDefines.GetModernLightsCount)
+                self._number_of_modern_lights = yield from self.read_byte()
+            else:
+                self._number_of_modern_lights = 0
+
+            if self._number_of_modern_lights > 0:
+                self._light_system = PlatformBatchLightSystem(self.machine.clock, lambda x: x.number,
+                                                              lambda x, y: x.number + 1 == y.number,
+                                                              self._send_multiple_light_update,
+                                                              self.machine.machine_config['mpf'][
+                                                                  'default_light_hw_update_hz'],
+                                                              self.config['max_led_batch_size'])
+                self._light_system.start()
+
+            self.debug_log("Number of lamps: %s. Number of coils: %s. Numbers of display: %s. Number of switches: %s",
+                           self._number_of_lamps, self._number_of_solenoids, self._number_of_displays,
+                           self._number_of_switches)
 
             # initially read all switches
             self.debug_log("Reading all switches.")
-            for row in range(8):
-                for col in range(8):
-                    number = row * 10 + col
-                    self.send_byte(LisyDefines.SwitchesGetStatusOfSwitch, bytes([number]))
-                    state = yield from self.read_byte()
-                    if state == 2:
-                        self.warning_log("Switch %s does not exist in platform.", number)
-                    elif state > 2:
-                        raise AssertionError("Invalid switch {}. Got response: {}".format(number, state))
+            for number in range(self._number_of_switches):
+                self.send_byte(LisyDefines.SwitchesGetStatusOfSwitch, bytes([number]))
+                state = yield from self.read_byte()
+                if state == 2:
+                    self.warning_log("Switch %s does not exist in platform.", number)
+                elif state > 2:
+                    raise AssertionError("Invalid switch {}. Got response: {}".format(number, state))
 
-                    self._inputs[str(number)] = state == 1
+                self._inputs[str(number)] = state == 1
 
             self._watchdog_task = self.machine.clock.loop.create_task(self._watchdog())
             self._watchdog_task.add_done_callback(self._done)
 
             self.debug_log("Init of LISY done.")
+
+    @asyncio.coroutine
+    def _send_multiple_light_update(self, sequential_brightness_list):
+        common_fade_ms = sequential_brightness_list[0][2]
+        if common_fade_ms < 0:
+            common_fade_ms = 0
+        fade_time = int(common_fade_ms)
+
+        data = bytearray([sequential_brightness_list[0][0].number, int(fade_time / 255), int(fade_time & 0xFF),
+                          len(sequential_brightness_list)])
+        for _, brightness, _ in sequential_brightness_list:
+            data.append(int(255 * brightness))
+
+        self.send_byte(LisyDefines.FadeModernLights, data)
 
     @asyncio.coroutine
     def start(self):
@@ -367,21 +434,29 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         """No rules on LISY."""
         raise AssertionError("Hardware rules are not support in LISY.")
 
-    def configure_light(self, number: str, subtype: str, platform_settings: dict) -> LightPlatformSoftwareFade:
+    def configure_light(self, number: str, subtype: str, platform_settings: dict) -> LightPlatformInterface:
         """Configure light on LISY."""
-        del platform_settings, subtype
+        del platform_settings
         assert self._number_of_lamps is not None
 
-        if not self._coils_start_at_one:
-            if 0 < int(number) >= self._number_of_lamps:
-                raise AssertionError("LISY only has {} lamps. Cannot configure lamp {} (zero indexed).".
-                                     format(self._number_of_lamps, number))
-        else:
-            if 1 < int(number) > self._number_of_lamps:
-                raise AssertionError("LISY only has {} lamps. Cannot configure lamp {} (one indexed).".
-                                     format(self._number_of_lamps, number))
+        if subtype is None or subtype == "matrix":
+            if not self._coils_start_at_one:
+                if 0 < int(number) >= self._number_of_lamps:
+                    raise AssertionError("LISY only has {} lamps. Cannot configure lamp {} (zero indexed).".
+                                         format(self._number_of_lamps, number))
+            else:
+                if 1 < int(number) > self._number_of_lamps:
+                    raise AssertionError("LISY only has {} lamps. Cannot configure lamp {} (one indexed).".
+                                         format(self._number_of_lamps, number))
 
-        return LisySimpleLamp(int(number), self)
+            return LisySimpleLamp(int(number), self)
+        elif subtype == "light":
+            if 0 < int(number) >= self._number_of_modern_lights:
+                raise AssertionError("LISY only has {} modern lights. Cannot configure light {}.".
+                                     format(self._number_of_modern_lights, number))
+            return LisyModernLight(int(number), self, self._light_system)
+        else:
+            raise self.raise_config_error("Invalid subtype {}".format(subtype), 1)
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Return a single light."""

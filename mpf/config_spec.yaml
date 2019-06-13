@@ -679,6 +679,7 @@ lisy:
     connection: single|enum(network,serial)|network
     network_port: single|int|None
     network_host: single|str|None
+    max_led_batch_size: single|int|3
 logic_blocks_common:
     enable_events: event_handler|str:ms|None
     disable_events: event_handler|str:ms|None

@@ -14,16 +14,22 @@ class LisyDefines:
     InfoGetNumberOfDisplays = 6
     InfoGetDisplayDetails = 7
     InfoGetGameInfo = 8
+    InfoGetSwitchCount = 9
 
     LampsGetStatusOfLamps = 10
     LampsSetLampOn = 11
     LampsSetLampOff = 12
+    FadeModernLights = 13
+
+    GetModernLightsCount = 19
 
     SolenoidsGetStatusOfSolenoid = 20
     SolenoidsSetSolenoidToOn = 21
     SolenoidsSetSolenoidToOff = 22
     SolenoidsPulseSolenioid = 23
     SolenoidsSetSolenoidPulseTime = 24
+    SetSolenoidsRecycleTime = 25
+    PulseAndEnableSolenoidWithPWM = 26
 
     DisplaysSetDisplay0To = 30
     DisplaysSetDisplay1To = 31
@@ -41,6 +47,8 @@ class LisyDefines:
     SoundPlaySoundFile = 52
     SoundTextToSpeech = 53
     SoundSetVolume = 54
+
+    ConfigureHardwareRuleForSolenoid = 60
 
     GeneralReset = 100
     GeneralWatchdog = 101

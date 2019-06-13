@@ -94,20 +94,22 @@ class TestLisy(MpfTestCase):
         self.serialMock.expected_commands = {
             b'\x00': b'LISY1\00',       # hw LISY1
             b'\x01': b'4.01\00',        # lisy version
-            b'\x02': b'0.05\00',        # api version
+            b'\x02': b'0.08\00',        # api version
             b'\x64': b'\x00',           # reset -> ok
             b'\x03': b'\x28',           # get number of lamps -> 40
             b'\x04': b'\x09',           # get number of solenoids -> 9
             b'\x06': b'\x05',           # get number of displays -> 5
+            b'\x09': b'\x58',           # get number of switches -> 88
             b'\x1e\x00': None,          # clear display
             b'\x1f\x00': None,          # clear display
             b'\x20\x00': None,          # clear display
         }
 
-        for row in range(8):
-            for col in range(8):
-                self.serialMock.expected_commands[bytes([40, row * 10 + col])] = b'\x00'\
-                    if row * 10 + col != 37 else b'\x01'
+        for number in range(88):
+            if number % 10 >= 8:
+                self.serialMock.expected_commands[bytes([40, number])] = b'\x02'
+            else:
+                self.serialMock.expected_commands[bytes([40, number])] = b'\x00' if number != 37 else b'\x01'
 
         super().setUp()
 
@@ -416,3 +418,73 @@ class TestLisy(MpfTestCase):
         self.advance_time_and_run(.2)
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
+
+
+class TestAPC(MpfTestCase):
+
+    def getConfigFile(self):
+        return 'config.yaml'
+
+    def getMachinePath(self):
+        return 'tests/machine_files/apc/'
+
+    def _mock_loop(self):
+        self.clock.mock_serial("com1", self.serialMock)
+
+    def tearDown(self):
+        self.assertFalse(self.serialMock.crashed)
+        super().tearDown()
+
+    def get_platform(self):
+        return False
+
+    def _wait_for_processing(self):
+        start = time.time()
+        while self.serialMock.expected_commands and not self.serialMock.crashed and time.time() < start + 10:
+            self.advance_time_and_run(.01)
+
+    def setUp(self):
+        if sys.version_info[0] == 3 and sys.version_info[1] == 4:
+            # this fails on python 3.4 because of some asyncio bugs
+            self.skipTest("Test is unstable in Python 3.4")
+            return
+        self.expected_duration = 1.5
+        self.serialMock = MockLisySocket()
+
+        self.serialMock.permanent_commands = {
+            b'\x29': b'\x7F',           # changed switches? -> no
+            b'\x65': b'\x00'            # watchdog
+        }
+
+        self.serialMock.expected_commands = {
+            b'\x00': b'APC\00',         # hw APC
+            b'\x01': b'0.02\00',        # APC version
+            b'\x02': b'0.09\00',        # api version
+            b'\x64': b'\x00',           # reset -> ok
+            b'\x03': b'\x28',           # get number of lamps -> 40
+            b'\x04': b'\x09',           # get number of solenoids -> 9
+            b'\x06': b'\x05',           # get number of displays -> 5
+            b'\x09': b'\x58',           # get number of switches -> 88
+            b'\x13': b'\x00',           # get number of modern lights -> 0
+            b'\x1e\x00': None,          # clear display
+            b'\x1f\x00': None,          # clear display
+            b'\x20\x00': None,          # clear display
+        }
+
+        for number in range(88):
+            if number % 10 >= 8:
+                self.serialMock.expected_commands[bytes([40, number])] = b'\x02'
+            else:
+                self.serialMock.expected_commands[bytes([40, number])] = b'\x00' if number != 37 else b'\x01'
+
+        super().setUp()
+
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+    def test_platform(self):
+        # wait for watchdog
+        self.serialMock.expected_commands = {
+            b'\x65': b'\x00'            # watchdog
+        }
+        self._wait_for_processing()
