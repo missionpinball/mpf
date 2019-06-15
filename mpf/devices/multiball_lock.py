@@ -218,7 +218,6 @@ class MultiballLock(ModeDevice):
     def _lock_ball(self, unclaimed_balls: int, new_available_balls: int, device: "BallDevice", **kwargs):
         """Handle result of the _ball_enter event of lock_devices."""
         del kwargs
-        #print("XXXXXXX", unclaimed_balls)
         # if full do not take any balls
         if self.is_virtually_full:
             self.debug_log("Cannot lock balls. Lock is full.")

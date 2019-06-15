@@ -299,7 +299,7 @@ class Timer(ModeDevice):
 
         self.running = False
 
-        pause_ms = timer_value * 1000 # delays happen in ms
+        pause_ms = timer_value * 1000   # delays happen in ms
 
         self._remove_system_timer()
         self.machine.events.post('timer_' + self.name + '_paused',

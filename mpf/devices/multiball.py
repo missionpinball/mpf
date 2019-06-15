@@ -55,11 +55,11 @@ class Multiball(SystemWideDevice, ModeDevice):
         self.source_playfield = self.config['source_playfield']
 
         if self.config['ball_count_type'] == "total" and isinstance(self.config['ball_count'], NativeTypeTemplate) and \
-                        self.config['ball_count'].evaluate([]) <= 1:
+                self.config['ball_count'].evaluate([]) <= 1:
             self.raise_config_error("ball_count should be at least 2 for a multiball to have an effect when "
                                     "ball_count_type is set to total.", 1)
         elif self.config['ball_count_type'] == "add" and isinstance(self.config['ball_count'], NativeTypeTemplate) and \
-                        self.config['ball_count'].evaluate([]) <= 0:
+                self.config['ball_count'].evaluate([]) <= 0:
             self.raise_config_error("ball_count should be at least 1 for a multiball to have an effect when "
                                     "ball_count_type is set to add.", 2)
 

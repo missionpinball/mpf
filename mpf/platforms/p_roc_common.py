@@ -359,7 +359,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         proc_output_module = 3
         proc_pdb_bus_addr = 0xC00
 
-        data = base_reg_addr | (1<<8) | (color & 0xFF)
+        data = base_reg_addr | (1 << 8) | (color & 0xFF)
         self.run_proc_cmd_no_wait("write_data", proc_output_module, proc_pdb_bus_addr, data)
 
     # pylint: disable-msg=too-many-arguments

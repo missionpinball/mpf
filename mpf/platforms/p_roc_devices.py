@@ -326,7 +326,6 @@ class PDBLight:
         return True
 
 
-
 class PDBLED(LightPlatformInterface):
 
     """Represents an RGB LED connected to a PD-LED board."""

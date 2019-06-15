@@ -5,8 +5,8 @@ from datetime import datetime
 import logging
 from typing import Tuple
 
-from asciimatics.screen import Screen
 from psutil import cpu_percent, virtual_memory, Process
+from asciimatics.screen import Screen
 
 import mpf._version
 from mpf.core.mpf_controller import MpfController
