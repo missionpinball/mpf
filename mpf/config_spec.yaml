@@ -702,6 +702,12 @@ counters:
     count_interval: single|int|1
     direction: single|str|up
     starting_count: single|template_int|0
+    control_events: list|subconfig(counter_control_events)|None
+counter_control_events:  # subconfig for mode counters
+    __valid_in__: None
+    action: single|enum(add,subtract,jump)|
+    event: single|str|
+    value: single|template_int|None
 sequences:
     __valid_in__: machine, mode
     events: list|str|

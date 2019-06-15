@@ -1,0 +1,84 @@
+#config_version=5
+mode:
+  start_events: start_mode4
+  stop_events: stop_mode4
+
+counters:
+  counter6:
+      count_events: counter6_count
+      events_when_hit: counter6_hit
+      events_when_complete: counter6_complete
+      starting_count: 0
+      count_complete_value: 10
+      direction: up
+      reset_on_complete: True
+      disable_on_complete: False
+      control_events:
+          - event: increase_counter6_5
+            action: add
+            value: 5
+          - event: increase_counter6_3
+            action: add
+            value: 3
+          - event: increase_counter6_0
+            action: add
+            value: 0
+          - event: reduce_counter6_5
+            action: subtract
+            value: 5
+          - event: reduce_counter6_3
+            action: subtract
+            value: 3
+          - event: reduce_counter6_0
+            action: subtract
+            value: 0
+          - event: set_counter6_25
+            action: jump
+            value: 25
+          - event: set_counter6_0
+            action: jump
+            value: 0
+  counter7:
+      count_events: counter7_count
+      events_when_hit: counter7_hit
+      events_when_complete: counter7_complete
+      starting_count: 5
+      count_complete_value: 0
+      direction: down
+      reset_on_complete: True
+      disable_on_complete: False
+      control_events:
+          - event: increase_counter7_5
+            action: add
+            value: 5
+          - event: reduce_counter7_5
+            action: subtract
+            value: 5
+          - event: reduce_counter7_3
+            action: subtract
+            value: 3
+          - event: set_counter7_negative25
+            action: jump
+            value: -25
+          - event: set_counter7_3
+            action: jump
+            value: 3
+          - event: set_counter7_0
+            action: jump
+            value: 0
+          - event: set_counter_placeholder
+            action: jump
+            value: machine.test2
+          - event: subtract_counter_placeholder
+            action: subtract
+            value: machine.test3
+          - event: add_counter_placeholder
+            action: add
+            value: machine.test4
+
+accruals:
+  accrual6:
+      events:
+        - accrual6_step1
+        - accrual6_step2
+      persist_state: True
