@@ -33,10 +33,10 @@ counters:
             action: subtract
             value: 0
           - event: set_counter6_25
-            action: set_value
+            action: jump
             value: 25
           - event: set_counter6_0
-            action: set_value
+            action: jump
             value: 0
   counter7:
       count_events: counter7_count
@@ -58,13 +58,13 @@ counters:
             action: subtract
             value: 3
           - event: set_counter7_negative25
-            action: set_value
+            action: jump
             value: -25
           - event: set_counter7_3
-            action: set_value
+            action: jump
             value: 3
           - event: set_counter7_0
-            action: set_value
+            action: jump
             value: 0
 accruals:
   accrual6:

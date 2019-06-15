@@ -333,8 +333,8 @@ class Counter(LogicBlock):
 
         kwargs = {}
         for entry in event_list:
-            if entry['action'] in ('add', 'subtract', 'set_value'):
-                handler = getattr(self, entry['action'])
+            if entry['action'] in ('add', 'subtract', 'jump'):
+                handler = getattr(self, "event_{}".format(entry['action']))
                 kwargs = {'value': entry['value']}
             else:
                 raise AssertionError("Invalid control_event action {} in mode".
@@ -342,60 +342,57 @@ class Counter(LogicBlock):
             self.machine.events.add_handler(entry['event'], handler, **kwargs)
 
     def check_complete(self, count_complete_value=None):
-        '''
-        Returns true if the counter has reached or surpassed its specified
-        completion value, returns False if no completion criteria or is
+        """Check if counter is completed.
+
+        Return true if the counter has reached or surpassed its specified
+        completion value, return False if no completion criteria or is
         not complete.
-        '''
+        """
         # If count_complete_value was not passed, obtain it
-        if count_complete_value is None:
-            count_complete_value = self.config['count_complete_value']\
-                .evaluate([]) if self.config['count_complete_value']\
-                is not None else None
+        if count_complete_value is None and self.config.get("count_complete_value"):
+            count_complete_value = self.config["count_complete_value"].evaluate([])
 
         if count_complete_value is not None:
+            if self.config['direction'] == 'up':
+                return self._state.value >= count_complete_value
 
-            if self.config['direction'] == 'up' and self._state.value >= count_complete_value:
-                return True
-
-            elif self.config['direction'] == 'down' and self._state.value <=\
-                    count_complete_value:
-                return True
+            elif self.config['direction'] == 'down':
+                return self._state.value <= count_complete_value
         return False
 
-    def add(self, **kwargs):
-        '''Add to the value of this counter.
+    def event_add(self, **kwargs):
+        """Add to the value of this counter.
 
         Args:
             kwargs: Used for the "value" member which contains how much to add
             to the counter.
-        '''
+        """
         # Add to the counter the specified value
         self._state.value += kwargs['value']
         # Check if count is complete given the updated value
         if self.check_complete():
             self.complete()
 
-    def subtract(self, **kwargs):
-        '''Subtract from the value of this counter.
+    def event_subtract(self, **kwargs):
+        """Subtract from the value of this counter.
 
         Args:
             kwargs: Used for the "value" member which contains how much to
             subtract from the counter.
-        '''
+        """
         # Subtract from the counter the specified value
         self._state.value -= kwargs['value']
         # Check if count is complete given the updated value
         if self.check_complete():
             self.complete()
 
-    def set_value(self, **kwargs):
-        '''Set the internal value of the counter.
+    def event_jump(self, **kwargs):
+        """Set the internal value of the counter.
 
         Args:
             kwargs: Used for the "value" member which contains what to set
             the counter value to.
-        '''
+        """
         # Set the internal value of the counter to the specified value
         self._state.value = kwargs['value']
         # Check if count is complete given the updated value
