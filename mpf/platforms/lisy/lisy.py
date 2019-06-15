@@ -240,6 +240,9 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 if return_code != 0:
                     # reset failed
                     self.warning_log("Reset of LISY failed. Got %s instead of 0. Will retry.", return_code)
+                    # clear buffer
+                    # pylint: disable-msg=protected-access
+                    self._reader._buffer = bytearray()
                     continue
 
                 # if we made it here reset succeeded
