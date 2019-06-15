@@ -360,41 +360,53 @@ class Counter(LogicBlock):
                 return self._state.value <= count_complete_value
         return False
 
-    def event_add(self, **kwargs):
+    def event_add(self, value, **kwargs):
         """Add to the value of this counter.
 
         Args:
             kwargs: Used for the "value" member which contains how much to add
             to the counter.
         """
+        evaluated_value = value.evaluate_or_none(kwargs)
+        if evaluated_value is None:
+            self.log.warning("Placeholder %s for counter add did not evaluate with args %s", value, kwargs)
+            return
         # Add to the counter the specified value
-        self._state.value += kwargs['value']
+        self._state.value += evaluated_value
         # Check if count is complete given the updated value
         if self.check_complete():
             self.complete()
 
-    def event_subtract(self, **kwargs):
+    def event_subtract(self, value, **kwargs):
         """Subtract from the value of this counter.
 
         Args:
             kwargs: Used for the "value" member which contains how much to
             subtract from the counter.
         """
+        evaluated_value = value.evaluate_or_none(kwargs)
+        if evaluated_value is None:
+            self.log.warning("Placeholder %s for counter substract did not evaluate with args %s", value, kwargs)
+            return
         # Subtract from the counter the specified value
-        self._state.value -= kwargs['value']
+        self._state.value -= evaluated_value
         # Check if count is complete given the updated value
         if self.check_complete():
             self.complete()
 
-    def event_jump(self, **kwargs):
+    def event_jump(self, value, **kwargs):
         """Set the internal value of the counter.
 
         Args:
             kwargs: Used for the "value" member which contains what to set
             the counter value to.
         """
+        evaluated_value = value.evaluate_or_none(kwargs)
+        if evaluated_value is None:
+            self.log.warning("Placeholder %s for counter jump did not evaluate with args %s", value, kwargs)
+            return
         # Set the internal value of the counter to the specified value
-        self._state.value = kwargs['value']
+        self._state.value = evaluated_value
         # Check if count is complete given the updated value
         if self.check_complete():
             self.complete()

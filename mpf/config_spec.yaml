@@ -707,7 +707,7 @@ counter_control_events:  # subconfig for mode counters
     __valid_in__: None
     action: single|enum(add,subtract,jump)|
     event: single|str|
-    value: single|int|None  # int for all
+    value: single|template_int|None
 sequences:
     __valid_in__: machine, mode
     events: list|str|

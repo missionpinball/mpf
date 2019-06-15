@@ -53,10 +53,41 @@ class BaseTemplate(metaclass=abc.ABCMeta):
         self.placeholder_manager = placeholder_manger
         self.default_value = default_value
 
-    @abc.abstractmethod
     def evaluate(self, parameters, fail_on_missing_params=False):
-        """Evaluate template."""
-        raise NotImplementedError
+        """Evaluate template and convert the result."""
+        try:
+            result = self.placeholder_manager.evaluate_template(self.template, parameters)
+        except ValueError:
+            if fail_on_missing_params:
+                raise
+            return self.default_value
+        except TemplateEvalError:
+            return self.default_value
+        if result is None:
+            return self.default_value
+        return self.convert_result(result)
+
+    def evaluate_or_none(self, parameters):
+        """Evaluate template and convert the result or return None."""
+        try:
+            result = self.placeholder_manager.evaluate_template(self.template, parameters)
+        except ValueError:
+            return None
+        if result is None:
+            return None
+        return self.convert_result(result)
+
+    def evaluate_and_subscribe(self, parameters) -> Tuple[bool, asyncio.Future]:
+        """Evaluate template and subscribe."""
+        result, subscriptions = self.placeholder_manager.evaluate_and_subscribe_template(self.template, parameters)
+        if isinstance(result, TemplateEvalError):
+            result = self.default_value
+        return self.convert_result(result), subscriptions
+
+    @abc.abstractmethod
+    def convert_result(self, value):
+        """Convert the result of the template."""
+        pass
 
 
 class BoolTemplate(BaseTemplate):
@@ -65,24 +96,9 @@ class BoolTemplate(BaseTemplate):
 
     __slots__ = []
 
-    def evaluate(self, parameters, fail_on_missing_params=False):
-        """Evaluate template to bool."""
-        try:
-            result = self.placeholder_manager.evaluate_template(self.template, parameters)
-        except ValueError:
-            if fail_on_missing_params:
-                raise
-            return self.default_value
-        except TemplateEvalError:
-            return self.default_value
-        return bool(result)
-
-    def evaluate_and_subscribe(self, parameters) -> Tuple[bool, asyncio.Future]:
-        """Evaluate template to bool and subscribe."""
-        result, subscriptions = self.placeholder_manager.evaluate_and_subscribe_template(self.template, parameters)
-        if isinstance(result, TemplateEvalError):
-            result = self.default_value
-        return bool(result), subscriptions
+    def convert_result(self, value):
+        """Convert the result to bool."""
+        return bool(value)
 
 
 class FloatTemplate(BaseTemplate):
@@ -91,25 +107,9 @@ class FloatTemplate(BaseTemplate):
 
     __slots__ = []
 
-    def evaluate(self, parameters, fail_on_missing_params=False):
-        """Evaluate template to float."""
-        try:
-            result = self.placeholder_manager.evaluate_template(self.template, parameters)
-        except ValueError:
-            if fail_on_missing_params:
-                raise
-            return self.default_value
-        except TemplateEvalError:
-            return self.default_value
-        return float(result)
-
-    def evaluate_and_subscribe(self, parameters) -> Tuple[float, asyncio.Future]:
-        """Evaluate template to float and subscribe."""
-        result, subscriptions = self.placeholder_manager.evaluate_and_subscribe_template(self.template, parameters)
-        if isinstance(result, TemplateEvalError):
-            result = self.default_value
-
-        return float(result), subscriptions
+    def convert_result(self, value):
+        """Convert the result to float."""
+        return float(value)
 
 
 class IntTemplate(BaseTemplate):
@@ -118,24 +118,9 @@ class IntTemplate(BaseTemplate):
 
     __slots__ = []
 
-    def evaluate(self, parameters, fail_on_missing_params=False):
-        """Evaluate template to float."""
-        try:
-            result = self.placeholder_manager.evaluate_template(self.template, parameters)
-        except ValueError:
-            if fail_on_missing_params:
-                raise
-            return self.default_value
-        except TemplateEvalError:
-            return self.default_value
-        return int(result)
-
-    def evaluate_and_subscribe(self, parameters) -> Tuple[int, asyncio.Future]:
-        """Evaluate template to int and subscribe."""
-        result, subscriptions = self.placeholder_manager.evaluate_and_subscribe_template(self.template, parameters)
-        if isinstance(result, TemplateEvalError):
-            result = self.default_value
-        return int(result), subscriptions
+    def convert_result(self, value):
+        """Convert the result to int."""
+        return int(value)
 
 
 class StringTemplate(BaseTemplate):
@@ -144,15 +129,9 @@ class StringTemplate(BaseTemplate):
 
     __slots__ = []
 
-    def evaluate(self, parameters, fail_on_missing_params=False):
-        """Evaluate template to string."""
-        try:
-            result = self.placeholder_manager.evaluate_template(self.template, parameters)
-        except ValueError:
-            if fail_on_missing_params:
-                raise
-            return self.default_value
-        return str(result)
+    def convert_result(self, value):
+        """Convert the result to str."""
+        return str(value)
 
 
 class RawTemplate(BaseTemplate):
@@ -161,22 +140,9 @@ class RawTemplate(BaseTemplate):
 
     __slots__ = []
 
-    def evaluate(self, parameters, fail_on_missing_params=False):
-        """Evaluate template."""
-        try:
-            result = self.placeholder_manager.evaluate_template(self.template, parameters)
-        except (ValueError, IndexError):
-            if fail_on_missing_params:
-                raise ValueError("Error while evaluating: {} with paramters {}".format(self.text, parameters))
-            return self.default_value
-        return result
-
-    def evaluate_and_subscribe(self, parameters) -> Tuple[bool, asyncio.Future]:
-        """Evaluate template to bool and subscribe."""
-        result, subscriptions = self.placeholder_manager.evaluate_and_subscribe_template(self.template, parameters)
-        if isinstance(result, TemplateEvalError):
-            result = self.default_value
-        return result, subscriptions
+    def convert_result(self, value):
+        """Keep the value."""
+        return value
 
 
 class NativeTypeTemplate:
@@ -194,6 +160,11 @@ class NativeTypeTemplate:
         """Return value."""
         del parameters
         del fail_on_missing_params
+        return self.value
+
+    def evaluate_or_none(self, parameters):
+        """Return value."""
+        del parameters
         return self.value
 
     def evaluate_and_subscribe(self, parameters) -> Tuple[int, asyncio.Future]:

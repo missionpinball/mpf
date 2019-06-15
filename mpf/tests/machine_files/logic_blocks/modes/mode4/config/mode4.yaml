@@ -66,6 +66,16 @@ counters:
           - event: set_counter7_0
             action: jump
             value: 0
+          - event: set_counter_placeholder
+            action: jump
+            value: machine.test2
+          - event: subtract_counter_placeholder
+            action: subtract
+            value: machine.test3
+          - event: add_counter_placeholder
+            action: add
+            value: machine.test4
+
 accruals:
   accrual6:
       events:

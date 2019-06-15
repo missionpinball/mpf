@@ -386,6 +386,30 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.post_event("counter7_count")
         self.assertEventCalledWith("counter7_hit", count=2, remaining=-2)
 
+        self.assertPlaceholderEvaluates(2, "device.counters.counter7.value")
+
+        # nothing happens because machine.test2 is undefined
+        self.post_event("set_counter_placeholder")
+        self.assertPlaceholderEvaluates(2, "device.counters.counter7.value")
+
+        self.machine.set_machine_var("test2", 4)
+        self.post_event("set_counter_placeholder")
+        self.assertPlaceholderEvaluates(4, "device.counters.counter7.value")
+
+        self.post_event("subtract_counter_placeholder")
+        self.assertPlaceholderEvaluates(4, "device.counters.counter7.value")
+
+        self.machine.set_machine_var("test3", 3)
+        self.post_event("subtract_counter_placeholder")
+        self.assertPlaceholderEvaluates(1, "device.counters.counter7.value")
+
+        self.post_event("add_counter_placeholder")
+        self.assertPlaceholderEvaluates(1, "device.counters.counter7.value")
+
+        self.machine.set_machine_var("test4", 1)
+        self.post_event("add_counter_placeholder")
+        self.assertPlaceholderEvaluates(2, "device.counters.counter7.value")
+
     def test_logic_block_outside_game(self):
         self.mock_event("logicblock_accrual2_complete")
 
