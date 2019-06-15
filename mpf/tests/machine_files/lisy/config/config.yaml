@@ -4,6 +4,7 @@ hardware:
     platform: lisy
 
 lisy:
+    debug: True
     connection: network
     network_port: 1234
     network_host: "localhost"
