@@ -82,19 +82,31 @@ class MockFd:
     def __init__(self):
         self.is_open = False
 
+    def open(self):
+        if self.is_open:
+            raise AssertionError("Serial already open")
+        self.is_open = True
+
     def read_ready(self):
+        if not self.is_open:
+            raise AssertionError("Serial not open")
         return False
 
     def send(self, data):
+        if not self.is_open:
+            raise AssertionError("Serial not open")
         return len(data)
 
     def fileno(self):
         return self
 
     def write_ready(self):
+        if not self.is_open:
+            raise AssertionError("Serial not open")
         return False
 
     def close(self):
+        self.is_open = False
         return
 
 
@@ -495,15 +507,16 @@ class TestClock(ClockBase):
         """Mock a socket and use it for connections."""
         self._mock_serials[url] = serial
 
-    def _open_mock_serial(self, url):
+    def _open_mock_serial(self, url, do_not_open):
         key = url
         if key not in self._mock_serials:
             raise AssertionError("serial not mocked for key {}".format(key))
         serial = self._mock_serials[key]
-        if serial.is_open:
-            raise AssertionError("serial already open for key {}".format(key))
+        if not do_not_open:
+            if serial.is_open:
+                raise AssertionError("serial already open for key {}".format(key))
 
-        serial.is_open = True
+            serial.is_open = True
         return serial
 
     @coroutine
@@ -526,6 +539,7 @@ class TestClock(ClockBase):
 
         reader = asyncio.StreamReader(limit=limit, loop=self.loop)
         protocol = asyncio.StreamReaderProtocol(reader, loop=self.loop)
-        transport = SerialTransport(self.loop, protocol, self._open_mock_serial(kwargs['url']))
+        transport = SerialTransport(self.loop, protocol, self._open_mock_serial(kwargs['url'],
+                                                                                kwargs.get("do_not_open", False)))
         writer = asyncio.StreamWriter(transport, protocol, reader, self.loop)
         return reader, writer

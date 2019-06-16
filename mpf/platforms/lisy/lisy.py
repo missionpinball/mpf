@@ -209,7 +209,35 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         self.api_version = None
         self._light_system = None
 
+    def _disable_dts_on_start_of_serial(self):
+        """Prevent DTS toggling when opening the serial.
+
+        This works only on unix. On other platforms import of termios will fail.
+        """
+        try:
+            import termios
+        except ImportError:
+            self.warning_log("Could not import terminos (this is ok on windows).")
+            return
+        serial_port = open(self.config['port'])
+        attrs = termios.tcgetattr(serial_port)
+        attrs[2] = attrs[2] & ~termios.HUPCL
+        termios.tcsetattr(serial_port, termios.TCSAFLUSH, attrs)
+        serial_port.close()
+
+    @asyncio.coroutine
+    def _clear_read_buffer(self):
+        """Clear read buffer."""
+        if hasattr(self._writer.transport, "_serial"):
+            # pylint: disable-msg=protected-access
+            self._writer.transport._serial.reset_input_buffer()
+        # pylint: disable-msg=protected-access
+        self._reader._buffer = bytearray()
+        # pylint: disable-msg=protected-access
+        self._reader._maybe_resume_transport()
+
     # pylint: disable-msg=too-many-statements
+    # pylint: disable-msg=too-many-branches
     @asyncio.coroutine
     def initialize(self):
         """Initialise platform."""
@@ -219,20 +247,30 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
             if self.config['connection'] == "serial":
                 self.log.info("Connecting to %s at %sbps", self.config['port'], self.config['baud'])
+                if self.config['disable_dtr']:
+                    self._disable_dts_on_start_of_serial()
                 connector = self.machine.clock.open_serial_connection(
-                    url=self.config['port'], baudrate=self.config['baud'], limit=0)
+                    url=self.config['port'], baudrate=self.config['baud'], limit=0, do_not_open=True)
             else:
                 self.log.info("Connecting to %s:%s", self.config['network_host'], self.config['network_port'])
                 connector = self.machine.clock.open_connection(self.config['network_host'], self.config['network_port'])
 
             self._reader, self._writer = yield from connector
 
+            if self.config['connection'] == "serial":
+                if self.config['disable_dtr']:
+                    # pylint: disable-msg=protected-access
+                    self._writer.transport._serial.dtr = False
+                    # pylint: disable-msg=protected-access
+                self._writer.transport._serial.open()
+
+            # give the serial a few ms to read the first bytes
+            yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
+
             while True:
                 # reset platform
                 self.debug_log("Sending reset.")
-                # clear buffer
-                # pylint: disable-msg=protected-access
-                self._reader._buffer = bytearray()
+                yield from self._clear_read_buffer()
                 # send command
                 self.send_byte(LisyDefines.GeneralReset)
                 try:

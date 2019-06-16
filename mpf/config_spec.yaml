@@ -672,6 +672,7 @@ lisy:
     port: single|str|None
     baud: single|int|None
     poll_hz: single|int|100
+    disable_dtr: single|bool|True
     console_log: single|enum(none,basic,full)|none
     debug: single|bool|False
     display_flash_frequency: single|float|1.0

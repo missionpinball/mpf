@@ -2,7 +2,9 @@ import time
 
 import sys
 
-from mpf.tests.MpfTestCase import MpfTestCase, test_config
+from mpf.platforms.lisy import lisy
+
+from mpf.tests.MpfTestCase import MpfTestCase, test_config, MagicMock
 from mpf.tests.loop import MockSerial, MockSocket
 
 
@@ -477,7 +479,12 @@ class TestAPC(MpfTestCase):
             else:
                 self.serialMock.expected_commands[bytes([40, number])] = b'\x00' if number != 37 else b'\x01'
 
+        # prevent changes on real hardware
+        lisy.LisyHardwarePlatform._disable_dts_on_start_of_serial = MagicMock()
+
         super().setUp()
+
+        lisy.LisyHardwarePlatform._disable_dts_on_start_of_serial.assert_called_with()
 
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
