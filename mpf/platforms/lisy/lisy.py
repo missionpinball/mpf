@@ -230,6 +230,10 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             while True:
                 # reset platform
                 self.debug_log("Sending reset.")
+                # clear buffer
+                # pylint: disable-msg=protected-access
+                self._reader._buffer = bytearray()
+                # send command
                 self.send_byte(LisyDefines.GeneralReset)
                 try:
                     return_code = yield from asyncio.wait_for(self.read_byte(), timeout=0.5,
@@ -240,9 +244,6 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 if return_code != 0:
                     # reset failed
                     self.warning_log("Reset of LISY failed. Got %s instead of 0. Will retry.", return_code)
-                    # clear buffer
-                    # pylint: disable-msg=protected-access
-                    self._reader._buffer = bytearray()
                     continue
 
                 # if we made it here reset succeeded
