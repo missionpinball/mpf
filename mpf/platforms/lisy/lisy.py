@@ -510,8 +510,9 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict) -> SwitchPlatformInterface:
         """Configure a switch."""
-        if (int(number) % 10) > 7 or 0 < int(number) > 77:
-            raise AssertionError("Invalid switch number {}".format(number))
+        if number not in self._inputs:
+            raise AssertionError("Invalid switch number {}. Platform reports the following switches as "
+                                 "valid: {}".format(number, list(self._inputs.keys())))
 
         return LisySwitch(config=config, number=number)
 
