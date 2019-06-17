@@ -32,13 +32,15 @@ class Command(MpfCommandLineParser):
         if ".. code-block:: mpf-config" in test_string:
             print("Parsing documentation page")
             blocks = re.finditer(".. code-block:: mpf-config\n\n(?P<code>( {2,4}[^\n]+|\n)+)", test_string)
-            for block in blocks:
+            for num, block in enumerate(blocks):
                 text = block.group("code")
                 indent_len = None
                 test_case = ''
                 for line in text.split("\n"):
                     if indent_len is None:
                         indent = re.search("^( )+", line)
+                        if not indent:
+                            raise AssertionError("Block {} (starting at 0) is incorrectly indented.".format(num))
                         indent_len = len(indent.group(0))
                     test_case += line[indent_len:] + "\n"
 
