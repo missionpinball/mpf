@@ -131,6 +131,11 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
     def command_drain_one_ball(self):
         self.drain_one_ball()
 
+    def command_add_ball_to_device(self, device_name):
+        if device_name not in self.machine.ball_devices:
+            raise AssertionError("Invalid ball device {}".format(device_name))
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices[device_name])
+
     def command_start_mode(self, mode):
         self.machine.modes[mode].start()
         self.machine_run()
