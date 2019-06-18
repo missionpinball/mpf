@@ -33,6 +33,10 @@ class RuntimeToken:
         self.token = token
         self.validator_function = validator_function
 
+    def __repr__(self):
+        """Return string representation."""
+        return "<RuntimeToken ({})>".format(self.token)
+
 
 class ConfigValidator:
 
@@ -60,6 +64,7 @@ class ConfigValidator:
             "num": self._validate_type_num,
             "num_or_token": self._validate_type_or_token(self._validate_type_num),
             "bool": self._validate_type_bool,
+            "bool_or_token": self._validate_type_or_token(self._validate_type_bool),
             "template_float": self._validate_type_template_float,
             "template_int": self._validate_type_template_int,
             "template_bool": self._validate_type_template_bool,
@@ -70,6 +75,7 @@ class ConfigValidator:
             "ms": self._validate_type_ms,
             "ms_or_token": self._validate_type_or_token(self._validate_type_ms),
             "secs": self._validate_type_secs,
+            "secs_or_token": self._validate_type_or_token(self._validate_type_secs),
             "list": self._validate_type_list,
             "int_from_hex": self._validate_type_int_from_hex,
             "dict": self._validate_type_dict,
@@ -614,7 +620,8 @@ class ConfigValidator:
         return value
 
     @classmethod
-    def _validate_type_bool(cls, item, validation_failure_info):
+    def _validate_type_bool(cls, item, validation_failure_info, param=None):
+        assert not param
         del validation_failure_info
         if item is None:
             return None
@@ -635,7 +642,8 @@ class ConfigValidator:
             return None
 
     @classmethod
-    def _validate_type_secs(cls, item, validation_failure_info):
+    def _validate_type_secs(cls, item, validation_failure_info, param=None):
+        assert not param
         del validation_failure_info
         if item is not None:
             return Util.string_to_secs(item)

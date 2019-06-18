@@ -1649,17 +1649,17 @@ widgets:
         anchor_y: single|str|center
         round_anchor_x: single|str|None
         round_anchor_y: single|str|None
-        opacity: single|float|1.0
-        z: single|int|0
+        opacity: single|float_or_token|1.0
+        z: single|int_or_token|0
         animations: ignore
         reset_animations_events: event_handler|str:ms|None
         color: single|kivycolor|ffffffff
         style: list|str|None
-        adjust_top: single|int|0
-        adjust_bottom: single|int|0
-        adjust_left: single|int|0
-        adjust_right: single|int|0
-        expire: single|secs|None
+        adjust_top: single|int_or_token|0
+        adjust_bottom: single|int_or_token|0
+        adjust_left: single|int_or_token|0
+        adjust_right: single|int_or_token|0
+        expire: single|secs_or_token|None
         key: single|str|None
         widget: single|str|None
         events_when_added: list|str|None
@@ -1667,103 +1667,103 @@ widgets:
     animations:
         property: list|str|
         value: list|str|
-        relative: single|bool|False
-        duration: single|secs|1
+        relative: single|bool_or_token|False
+        duration: single|secs_or_token|1
         timing: single|enum(after_previous,with_previous)|after_previous
-        repeat: single|bool|False
+        repeat: single|bool_or_token|False
         easing: single|str|linear
     bezier:
-        points: list|num|
-        thickness: single|float|1.0
+        points: list|num_or_token|
+        thickness: single|float_or_token|1.0
         cap: single|str|round
         joint: single|str|round
-        cap_precision: single|int|10
-        joint_precision: single|int|10
-        close: single|bool|False
-        precision: single|int|180
-        rotation: single|float|0
-        scale: single|float|1.0
+        cap_precision: single|int_or_token|10
+        joint_precision: single|int_or_token|10
+        close: single|bool_or_token|False
+        precision: single|int_or_token|180
+        rotation: single|float_or_token|0
+        scale: single|float_or_token|1.0
     camera:
-        width: single|num|
-        height: single|num|
-        camera_index: single|int|-1
+        width: single|num_or_token|
+        height: single|num_or_token|
+        camera_index: single|int_or_token|-1
     display:
-        width: single|num|
-        height: single|num|
+        width: single|num_or_token|
+        height: single|num_or_token|
         source_display: single|str|dmd
         effects: ignore
     ellipse:
-        width: single|num|
-        height: single|num|
-        segments: single|int|180
-        angle_start: single|int|0
-        angle_end: single|int|360
-        rotation: single|float|0
-        scale: single|float|1.0
+        width: single|num_or_token|
+        height: single|num_or_token|
+        segments: single|int_or_token|180
+        angle_start: single|int_or_token|0
+        angle_end: single|int_or_token|360
+        rotation: single|float_or_token|0
+        scale: single|float_or_token|1.0
     image:
-        fps: single|int|10
-        loops: single|int|-1
+        fps: single|int_or_token|10
+        loops: single|int_or_token|-1
         image: single|str|
-        auto_play: single|bool|True
-        start_frame: single|int|0
-        rotation: single|int|0
-        scale: single|float|1.0
+        auto_play: single|bool_or_token|True
+        start_frame: single|int_or_token|0
+        rotation: single|int_or_token|0
+        scale: single|float_or_token|1.0
     line:
-        points: list|num|
-        thickness: single|float|1.0
+        points: list|num_or_token|
+        thickness: single|float_or_token|1.0
         cap: single|str|round
         joint: single|str|round
-        cap_precision: single|int|10
-        joint_precision: single|int|10
-        close: single|bool|False
+        cap_precision: single|int_or_token|10
+        joint_precision: single|int_or_token|10
+        close: single|bool_or_token|False
     points:
-        points: list|num|
-        pointsize: single|float|1.0
-        rotation: single|int|0
-        scale: single|float|1.0
+        points: list|num_or_token|
+        pointsize: single|float_or_token|1.0
+        rotation: single|int_or_token|0
+        scale: single|float_or_token|1.0
     quad:
-        points: list|num|
-        rotation: single|int|0
-        scale: single|float|1.0
+        points: list|num_or_token|
+        rotation: single|int_or_token|0
+        scale: single|float_or_token|1.0
     rectangle:
-        width: single|float|
-        height: single|float|
-        corner_radius: single|int|0
-        corner_segments: single|int|10
-        rotation: single|int|0
-        scale: single|float|1.0
+        width: single|float_or_token|
+        height: single|float_or_token|
+        corner_radius: single|int_or_token|0
+        corner_segments: single|int_or_token|10
+        rotation: single|int_or_token|0
+        scale: single|float_or_token|1.0
     text:
         text: single|str|
-        font_size: single|num|15
+        font_size: single|num_or_token|15
         font_name: ignore
-        bitmap_font: single|bool|False
-        font_kerning: single|bool|True
-        bold: single|bool|False
-        italic: single|bool|False
-        number_grouping: single|bool|False
-        min_digits: single|int|0
+        bitmap_font: single|bool_or_token|False
+        font_kerning: single|bool_or_token|True
+        bold: single|bool_or_token|False
+        italic: single|bool_or_token|False
+        number_grouping: single|bool_or_token|False
+        min_digits: single|int_or_token|0
         halign: single|str|center
         valign: single|str|middle
-        rotation: single|int|0
-        scale: single|float|1.0
+        rotation: single|int_or_token|0
+        scale: single|float_or_token|1.0
         casing: single|str|None
         # outline_color: single|kivycolor|ffffffff
-        # outline_width: single|int|0
-        # text_size: single|int|None  # sets width of bounding box, not font
-        # shorten: single|bool|None
-        # mipmap: single|bool|None
-        # markup: single|bool|None
-        # line_height: single|float|None
-        # max_lines: single|int|None
-        # strip: single|bool|None
+        # outline_width: single|int_or_token|0
+        # text_size: single|int_or_token|None  # sets width of bounding box, not font
+        # shorten: single|bool_or_token|None
+        # mipmap: single|bool_or_token|None
+        # markup: single|bool_or_token|None
+        # line_height: single|float_or_token|None
+        # max_lines: single|int_or_token|None
+        # strip: single|bool_or_token|None
         # shorten_from: single|str|None
         # split_str: single|str|None
         # unicode_errors: single|str|None
-        # antialias: single|bool|False      # todo
+        # antialias: single|bool_or_token|False      # todo
     text_input:
         key: single|str|
         initial_char: single|str|A
-        font_size: single|num|15
+        font_size: single|num_or_token|15
         font_name: ignore
         halign: single|str|center
         valign: single|str|middle
@@ -1772,25 +1772,25 @@ widgets:
         select_event: single|str|sw_start
         abort_event: single|str|sw_esc
         force_complete_event: single|str|None
-        bold: single|bool|False
-        italic: single|bool|False
-        number_grouping: single|bool|False
-        min_digits: single|int|0
-        max_chars: single|int|3
+        bold: single|bool_or_token|False
+        italic: single|bool_or_token|False
+        number_grouping: single|bool_or_token|False
+        min_digits: single|int_or_token|0
+        max_chars: single|int_or_token|3
         char_list: "single|str|ABCDEFGHIJKLMNOPQRSTUVWXYZ_- "
-        keep_selected_char: single|bool|True
-        dynamic_x: single|bool|True
-        dynamic_x_pad: single|int|0
+        keep_selected_char: single|bool_or_token|True
+        dynamic_x: single|bool_or_token|True
+        dynamic_x_pad: single|int_or_token|0
     triangle:
-        points: list|num|
-        rotation: single|int|0
-        scale: single|float|1.0
+        points: list|num_or_token|
+        rotation: single|int_or_token|0
+        scale: single|float_or_token|1.0
     video:
         video: single|str|
-        height: single|int|0
-        width: single|int|0
-        volume: single|float|1.0
-        auto_play: single|bool|True
+        height: single|int_or_token|0
+        width: single|int_or_token|0
+        volume: single|float_or_token|1.0
+        auto_play: single|bool_or_token|True
         end_behavior: single|enum(loop,pause,stop)|stop
         control_events: list|subconfig(video_control_events)|None
 video_control_events:
