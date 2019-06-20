@@ -129,6 +129,8 @@ class Diverter(SystemWideDevice):
 
         if self.config['activation_switches']:
             self._enable_switches()
+        elif self.config['activate_events']:
+            pass
         else:
             self.activate()
 
