@@ -61,7 +61,7 @@ class PlatformController(MpfController):
     @staticmethod
     def _get_configured_driver_with_hold(driver: DriverRuleSettings, pulse_setting: PulseRuleSettings,
                                          hold_settings: HoldRuleSettings) -> DriverSettings:
-        """Return configured driver for rule."""
+        """Return configured driver with hold > 0 for rule."""
         pulse_duration = driver.driver.get_and_verify_pulse_ms(pulse_setting.duration if pulse_setting else None)
         pulse_power = driver.driver.get_and_verify_pulse_power(pulse_setting.power if pulse_setting else None)
         hold_power = driver.driver.get_and_verify_hold_power(hold_settings.power if hold_settings else None)
@@ -76,8 +76,22 @@ class PlatformController(MpfController):
             recycle=driver.recycle)
 
     @staticmethod
+    def _get_configured_driver_with_optional_hold(driver: DriverRuleSettings, pulse_setting: PulseRuleSettings,
+                                                  hold_settings: HoldRuleSettings) -> DriverSettings:
+        """Return configured driver for rule which might have hold."""
+        pulse_duration = driver.driver.get_and_verify_pulse_ms(pulse_setting.duration if pulse_setting else None)
+        pulse_power = driver.driver.get_and_verify_pulse_power(pulse_setting.power if pulse_setting else None)
+        hold_power = driver.driver.get_and_verify_hold_power(hold_settings.power if hold_settings else None)
+
+        return DriverSettings(
+            hw_driver=driver.driver.hw_driver,
+            pulse_settings=PulseSettings(duration=pulse_duration, power=pulse_power),
+            hold_settings=HoldSettings(power=hold_power),
+            recycle=driver.recycle)
+
+    @staticmethod
     def _get_configured_driver_no_hold(driver: DriverRuleSettings, pulse_setting: PulseRuleSettings) -> DriverSettings:
-        """Return configured driver for rule."""
+        """Return configured driver without hold for rule."""
         pulse_duration = driver.driver.get_and_verify_pulse_ms(pulse_setting.duration if pulse_setting else None)
         pulse_power = driver.driver.get_and_verify_pulse_power(pulse_setting.power if pulse_setting else None)
         return DriverSettings(
@@ -225,7 +239,7 @@ class PlatformController(MpfController):
 
         enable_settings = self._get_configured_switch(enable_switch)
         disable_settings = self._get_configured_switch(disable_switch)
-        driver_settings = self._get_configured_driver_with_hold(driver, pulse_setting, hold_settings)
+        driver_settings = self._get_configured_driver_with_optional_hold(driver, pulse_setting, hold_settings)
 
         platform.set_pulse_on_hit_and_enable_and_release_and_disable_rule(
             enable_settings, disable_settings, driver_settings)

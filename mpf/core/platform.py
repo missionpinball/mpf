@@ -537,7 +537,7 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
-        """Set pulse on hit and enable and relase rule on driver.
+        """Set pulse on hit and enable and release rule on driver.
 
         Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
         the pulse is canceled and the driver gets disabled. Typically used for single coil flippers.

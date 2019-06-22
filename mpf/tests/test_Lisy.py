@@ -495,3 +495,23 @@ class TestAPC(MpfTestCase):
             b'\x65': b'\x00'            # watchdog
         }
         self._wait_for_processing()
+
+    def test_rules(self):
+        """Test HW Rules."""
+        self.serialMock.expected_commands = {
+            b'\x3c\x05\x01\x02\x00\x1e\xff\x00\x03\x02\x00': None,      # create rule for main
+            b'\x3c\x06\x01\x00\x00\x0a\xff\xff\x03\x00\x00': None,      # create rule for hold
+        }
+        self.machine.flippers["f_test_hold_eos"].enable()
+        self.advance_time_and_run(.2)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands = {
+            b'\x3c\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00': None,      # remove rule for main
+            b'\x3c\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00': None,      # remove rule for hold
+        }
+        self.machine.flippers["f_test_hold_eos"].disable()
+        self.advance_time_and_run(.2)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)

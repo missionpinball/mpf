@@ -25,7 +25,12 @@ class LisySwitch(SwitchPlatformInterface):
 
     """A switch in the LISY platform."""
 
-    __slots__ = []  # type: List[str]
+    __slots__ = ["index"]  # type: List[str]
+
+    def __init__(self, config, number):
+        """Initialise switch."""
+        super().__init__(config, number)
+        self.index = int(number)
 
     def get_board_name(self):
         """Return board name."""
@@ -36,13 +41,15 @@ class LisyDriver(DriverPlatformInterface):
 
     """A driver in the LISY platform."""
 
-    __slots__ = ["platform", "_pulse_ms"]   # type: List[str]
+    __slots__ = ["platform", "_pulse_ms", "index", "has_rule"]   # type: List[str]
 
     def __init__(self, config, number, platform):
         """Initialise driver."""
         super().__init__(config, number)
         self.platform = platform
         self._pulse_ms = -1
+        self.index = int(number)
+        self.has_rule = False
 
     def _configure_pulse_ms(self, pulse_ms):
         """Configure pulse ms for this driver if it changed."""
@@ -455,26 +462,68 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             # sleep 500ms
             yield from asyncio.sleep(.5, loop=self.machine.clock.loop)
 
+    # pylint: disable-msg=too-many-arguments
+    def _configure_hardware_rule(self, coil: DriverSettings, switch1: SwitchSettings,
+                                 switch2: Optional[SwitchSettings], flags1, flags2):
+        """Configure hardware rule in LISY."""
+        if coil.pulse_settings.duration > 255:
+            raise AssertionError("Pulse settings to long for LISY protocol. Got pulse_settings: {}".format(
+                coil.pulse_settings))
+
+        coil.hw_driver.has_rule = True
+
+        data = bytearray([coil.hw_driver.index,
+                          switch1.hw_switch.index + (0x80 if switch1.invert else 0),
+                          switch2.hw_switch.index if switch2 else 0 + 0x80 if switch2 and switch2.invert else 0,
+                          0,
+                          int(coil.pulse_settings.duration),
+                          int(coil.pulse_settings.power * 255),
+                          int(coil.hold_settings.power * 255),
+                          flags1,
+                          flags2,
+                          0
+                          ])
+        self.send_byte(LisyDefines.ConfigureHardwareRuleForSolenoid, data)
+
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
-        """No rules on LISY."""
-        raise AssertionError("Hardware rules are not support in LISY.")
+        """Set pulse on hit and enable and release rule on driver."""
+        assert coil.hold_settings.power > 0
+        self._configure_hardware_rule(coil, enable_switch, None, 3, 0)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
                                                                  disable_switch: SwitchSettings, coil: DriverSettings):
-        """No rules on LISY."""
-        raise AssertionError("Hardware rules are not support in LISY.")
+        """Set pulse on hit and enable and release and disable rule on driver."""
+        self._configure_hardware_rule(coil, enable_switch, disable_switch, 3, 2)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
-        """No rules on LISY."""
-        raise AssertionError("Hardware rules are not support in LISY.")
+        """Set pulse on hit and release rule to driver."""
+        assert coil.hold_settings.power == 0
+        self._configure_hardware_rule(coil, enable_switch, None, 3, 0)
 
     def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
-        """No rules on LISY."""
-        raise AssertionError("Hardware rules are not support in LISY.")
+        """Set pulse on hit rule on driver."""
+        assert coil.hold_settings.power == 0
+        self._configure_hardware_rule(coil, enable_switch, None, 1, 0)
 
     def clear_hw_rule(self, switch: SwitchSettings, coil: DriverSettings):
-        """No rules on LISY."""
-        raise AssertionError("Hardware rules are not support in LISY.")
+        """Clear hw rule for driver."""
+        del switch
+        if not coil.hw_driver.has_rule:
+            return
+        coil.hw_driver.has_rule = False
+
+        data = bytearray([coil.hw_driver.index,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0
+                          ])
+        self.send_byte(LisyDefines.ConfigureHardwareRuleForSolenoid, data)
 
     def configure_light(self, number: str, subtype: str, platform_settings: dict) -> LightPlatformInterface:
         """Configure light on LISY."""

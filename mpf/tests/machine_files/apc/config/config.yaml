@@ -11,6 +11,10 @@ lisy:
 switches:
     s_test00:
         number: 00
+    s_flipper:
+        number: 1
+    s_flipper_eos:
+        number: 2
     s_test37:
         number: 37
     s_test77_nc:
@@ -26,6 +30,12 @@ coils:
     c_trough_eject:
         number: 103
         default_pulse_ms: 3s
+    c_flipper_main:
+        number: 5
+        default_pulse_ms: 30
+    c_flipper_hold:
+        number: 6
+        allow_enable: True
 
 digital_outputs:
     game_over_relay:
@@ -33,6 +43,15 @@ digital_outputs:
         type: light
         enable_events: ball_started
         disable_events: ball_will_end
+
+flippers:
+    f_test_hold_eos:
+        debug: true
+        main_coil: c_flipper_main
+        hold_coil: c_flipper_hold
+        activation_switch: s_flipper
+        eos_switch: s_flipper_eos
+        use_eos: true
 
 lights:
   test_light:
