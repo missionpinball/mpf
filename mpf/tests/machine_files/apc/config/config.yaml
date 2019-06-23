@@ -15,6 +15,8 @@ switches:
         number: 1
     s_flipper_eos:
         number: 2
+    s_slingshot:
+        number: 3
     s_test37:
         number: 37
     s_test77_nc:
@@ -36,6 +38,8 @@ coils:
     c_flipper_hold:
         number: 6
         allow_enable: True
+    c_slingshot:
+        number: 7
 
 digital_outputs:
     game_over_relay:
@@ -52,6 +56,11 @@ flippers:
         activation_switch: s_flipper
         eos_switch: s_flipper_eos
         use_eos: true
+
+autofire_coils:
+    ac_slingshot:
+        coil: c_slingshot
+        switch: s_slingshot
 
 lights:
   test_light:

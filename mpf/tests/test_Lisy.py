@@ -515,3 +515,19 @@ class TestAPC(MpfTestCase):
         self.advance_time_and_run(.2)
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands = {
+            b'\x3c\x07\x03\x00\x00\x0a\xff\x00\x01\x00\x00': None,      # add rule for slingshot
+        }
+        self.machine.autofires["ac_slingshot"].enable()
+        self.advance_time_and_run(.2)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands = {
+            b'\x3c\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00': None,      # remove rule for slingshot
+        }
+        self.machine.autofires["ac_slingshot"].disable()
+        self.advance_time_and_run(.2)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)

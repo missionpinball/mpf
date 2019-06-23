@@ -478,7 +478,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                           0,
                           int(coil.pulse_settings.duration),
                           int(coil.pulse_settings.power * 255),
-                          int(coil.hold_settings.power * 255),
+                          int(coil.hold_settings.power * 255) if coil.hold_settings else 0,
                           flags1,
                           flags2,
                           0
@@ -497,12 +497,12 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and release rule to driver."""
-        assert coil.hold_settings.power == 0
+        assert not coil.hold_settings or coil.hold_settings.power == 0
         self._configure_hardware_rule(coil, enable_switch, None, 3, 0)
 
     def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit rule on driver."""
-        assert coil.hold_settings.power == 0
+        assert not coil.hold_settings or coil.hold_settings.power == 0
         self._configure_hardware_rule(coil, enable_switch, None, 1, 0)
 
     def clear_hw_rule(self, switch: SwitchSettings, coil: DriverSettings):
