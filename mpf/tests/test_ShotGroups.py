@@ -180,6 +180,7 @@ class TestShotGroups(MpfFakeGameTestCase):
         self.assertLightColor("led_32", 'red')
         self.assertLightColor("led_33", 'off')
         self.assertFalse(group32.rotation_enabled)
+        self.assertPlaceholderEvaluates(False, "device.shot_groups.shot_group_32.rotation_enabled")
 
         self.machine.events.post('group32_rotate')
         self.advance_time_and_run()
@@ -192,6 +193,7 @@ class TestShotGroups(MpfFakeGameTestCase):
         self.machine.events.post('group32_enable_rotation')
         self.advance_time_and_run()
         self.assertTrue(group32.rotation_enabled)
+        self.assertPlaceholderEvaluates(True, "device.shot_groups.shot_group_32.rotation_enabled")
 
         # test that rotate works now
         self.machine.events.post('group32_rotate_left')

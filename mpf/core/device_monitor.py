@@ -16,7 +16,7 @@ class DeviceMonitor:
         self._attributes_to_monitor = attributes_to_monitor
         self._aliased_attributes_to_monitor = aliased_attributes_to_monitor
 
-    def __call__(self, cls):
+    def __call__(self, cls):    # noqa
         """Decorate class."""
         _sentinel = object()
 
@@ -28,6 +28,7 @@ class DeviceMonitor:
             self_inner.machine.device_manager.register_monitorable_device(self_inner)
 
         old_setattr = getattr(cls, '__setattr__', None)
+        super_get_placeholder_value = getattr(cls, "get_placeholder_value", None)
 
         # pylint: disable-msg=
         def __setattr__(self_inner, name, value):   # noqa
@@ -83,6 +84,9 @@ class DeviceMonitor:
             for attribute, name in self._aliased_attributes_to_monitor.items():
                 if name == item:
                     return Util.convert_to_simply_type(getattr(self_inner, attribute))
+
+            if super_get_placeholder_value:
+                return super_get_placeholder_value(self_inner, item)
 
             raise ValueError("Attribute {} does not exist.".format(item))
 

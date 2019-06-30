@@ -15,7 +15,7 @@ from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
 
 
-@DeviceMonitor("balls_routing", enabled="_enabled")
+@DeviceMonitor("balls_routing")
 class BallRouting(EnableDisableMixin, ModeDevice):
 
     """Route balls from one device to another when captured."""
