@@ -1,6 +1,7 @@
 from mpf.core.utility_functions import Util
 from mpf.exceptions.ConfigFileError import ConfigFileError
 from mpf.tests.MpfTestCase import MpfTestCase
+from mpf._version import log_url
 
 
 class TestConfig(MpfTestCase):
@@ -428,7 +429,7 @@ class TestConfig(MpfTestCase):
         self.assertEqual('Config File Error in ConfigValidator: Config validation error: Entry '
                          'key:entry:subkey = "something else" is not valid. Entry "something else" is not valid for enum. '
                          'Valid values are: None,test Error Code: CFE-ConfigValidator-5 '
-                         '(https://docs.missionpinball.org/logs/CFE-ConfigValidator-5.html)', str(e.exception))
+                         '({})'.format(log_url.format("CFE-ConfigValidator-5")), str(e.exception))
 
         # test enum with 'NO' setting
         validation_string = 'single|enum(nc,no)|no'.split("|")

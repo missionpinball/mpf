@@ -1,4 +1,5 @@
 """Config file error in a MPF config file."""
+from mpf._version import log_url
 
 
 class ConfigFileError(AssertionError):
@@ -15,7 +16,7 @@ class ConfigFileError(AssertionError):
     def __str__(self):
         """Return nice string."""
         error_slug = "CFE-{}-{}".format(self._logger_name, self._error_no)
-        error_url = "https://docs.missionpinball.org/logs/{}.html".format(error_slug)
+        error_url = log_url.format(error_slug)
         if self._context:
             return "Config File Error in {}: {} Context: {} Error Code: {} ({})".format(
                 self._logger_name, super().__str__(), self._context, error_slug, error_url)

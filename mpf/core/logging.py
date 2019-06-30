@@ -2,6 +2,7 @@
 import logging
 
 from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf._version import log_url
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -144,7 +145,7 @@ class LogMixin:
         """Return a formatted log line with log link and context."""
         if error_no:
             error_slug = "Log-{}-{}".format(self.log.name, error_no)
-            error_url = "https://docs.missionpinball.org/logs/{}.html".format(error_slug)
+            error_url = log_url.format(error_slug)
         if error_no and context:
             return "{} Context: {} Log Code: {} ({})".format(msg, context, error_slug, error_url)
         elif context:

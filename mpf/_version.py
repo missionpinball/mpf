@@ -34,10 +34,16 @@ extended_version = "MPF v{}, Config version:{}, Show version: {}, " \
 '''An extended version string that includes the MPF version, show version,
 and BCP versions used in this build of MPF.'''
 
+if "dev" in __version__:
+    log_url = "https://docs.missionpinball.org/en/dev/logs/{}.html"
+else:
+    log_url = "https://docs.missionpinball.org/en/{}/logs/{{}}.html".format(__short_version__)
+
 __api__ = ['version',
            '__short_version__',
            '__bcp_version__',
            '__config_version__',
            '__show_version__',
            'version',
-           'extended_version']
+           'extended_version',
+           'log_url']
