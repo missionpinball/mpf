@@ -2,6 +2,8 @@
 import abc
 import asyncio
 
+from mpf.core.device_monitor import DeviceMonitor
+
 from mpf.core.events import event_handler
 
 from mpf.core.mode_device import ModeDevice
@@ -12,6 +14,7 @@ if MYPY:   # pragma: no cover
     from mpf.core.mode import Mode
 
 
+@DeviceMonitor("enabled")
 class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
 
     """Implements enable and disable_events."""
@@ -44,6 +47,7 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
         if self.enabled is True:
             return
         self.enabled = True
+        self.notify_virtual_change("enabled", False, True)
         self._enable()
 
     def add_control_events_in_mode(self, mode) -> None:
@@ -61,6 +65,7 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
         if self.enabled is False:
             return
         self.enabled = False
+        self.notify_virtual_change("enabled", True, False)
         self._disable()
 
     def _load_enable_based_on_config_default(self) -> None:

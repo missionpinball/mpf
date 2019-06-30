@@ -12,7 +12,7 @@ from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.utility_functions import Util
 
 
-@DeviceMonitor("common_state")
+@DeviceMonitor("common_state", "rotation_enabled")
 class ShotGroup(ModeDevice):
 
     """Represents a group of shots in a pinball machine by grouping together multiple `Shot` class devices.

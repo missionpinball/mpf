@@ -28,7 +28,7 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEqual(1, lock_device.balls)
         self.assertEqual(1, mb_lock.locked_balls)
         self.assertEventCalled("multiball_lock_lock_default_locked_ball")
-        self.assertEqual({'total_balls_locked': 1}, 
+        self.assertEqual({'total_balls_locked': 1},
                          self._last_event_kwargs["multiball_lock_lock_default_locked_ball"])
         self.assertEventNotCalled("multiball_lock_lock_default_full")
 
@@ -94,12 +94,14 @@ class TestMultiballLock(MpfGameTestCase):
         lock = self.machine.multiball_locks["lock_default"]
 
         self.assertTrue(lock.enabled)
+        self.assertPlaceholderEvaluates(True, "device.multiball_locks.lock_default.enabled")
         self.post_event("test_event_when_enabled")
         self.assertEventCalled("should_post_when_enabled")
         self.assertEventNotCalled("should_not_post_when_enabled")
 
         lock.disable()
         self.assertFalse(lock.enabled)
+        self.assertPlaceholderEvaluates(False, "device.multiball_locks.lock_default.enabled")
         self.post_event("test_event_when_disabled")
         self.assertEventCalled("should_post_when_disabled")
         self.assertEventNotCalled("should_not_post_when_disabled")

@@ -480,6 +480,7 @@ class TestShots(MpfTestCase):
         self.start_mode("mode1")
         self.assertFalse(self.machine.shots.mode1_shot_17.enabled)
         self.assertTrue(self.machine.shots.mode1_shot_1.enabled)
+        self.assertPlaceholderEvaluates(True, "device.shots.mode1_shot_1.enabled")
 
         self.stop_mode("mode1")
         self.start_mode("mode1")
@@ -490,6 +491,7 @@ class TestShots(MpfTestCase):
         self.assertTrue(self.machine.shots.mode1_shot_17.enabled)
         self.post_event("custom_disable_1")
         self.assertFalse(self.machine.shots.mode1_shot_1.enabled)
+        self.assertPlaceholderEvaluates(False, "device.shots.mode1_shot_1.enabled")
 
         self.stop_mode("mode1")
         self.assertFalse(self.machine.shots.mode1_shot_17.enabled)
