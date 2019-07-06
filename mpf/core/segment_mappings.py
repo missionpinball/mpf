@@ -23,8 +23,13 @@ class BcdSegments:
         self.char = char
         self.dp = dp
 
+    def __repr__(self):
+        """Return str representation."""
+        return " ".join(["{}={}".format(attr, getattr(self, attr)) for attr in dir(self) if not attr.startswith("__")])
+
 
 bcd_segments = {
+    None: BcdSegments(dp=0, x3=0, x2=0, x1=0, x0=0, char="not mappable char"),
     33: BcdSegments(dp=1, x3=0, x2=0, x1=0, x0=1, char="!"),    # 1 with dot
 
     48: BcdSegments(dp=0, x3=0, x2=0, x1=0, x0=0, char="0"),
@@ -75,8 +80,13 @@ class SevenSegments:
         self.char = char
         self.dp = dp
 
+    def __repr__(self):
+        """Return str representation."""
+        return " ".join(["{}={}".format(attr, getattr(self, attr)) for attr in dir(self) if not attr.startswith("__")])
+
 
 seven_segments = {
+    None: SevenSegments(dp=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="not mappable char"),
     32: SevenSegments(dp=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="(space)"),
     33: SevenSegments(dp=1, g=0, f=0, e=0, d=0, c=1, b=1, a=0, char="!"),
     34: SevenSegments(dp=0, g=0, f=1, e=0, d=0, c=0, b=1, a=0, char="\""),
@@ -204,8 +214,14 @@ class FourteenSegments:
         self.char = char
         self.dp = dp
 
+    def __repr__(self):
+        """Return str representation."""
+        return " ".join(["{}={}".format(attr, getattr(self, attr)) for attr in dir(self) if not attr.startswith("__")])
+
 
 fourteen_segments = {
+    None: FourteenSegments(dp=0, l=0, m=0, n=0, k=0, j=0, h=0, g2=0, g1=0, f=0, e=0, d=0, c=0, b=0, a=0,    # noqa: E741
+                           char="not mappable char"),
     32: FourteenSegments(dp=0, l=0, m=0, n=0, k=0, j=0, h=0, g2=0, g1=0, f=0, e=0, d=0, c=0, b=0, a=0, char="(space)"), # noqa: E741
     33: FourteenSegments(dp=1, l=0, m=0, n=0, k=0, j=0, h=0, g2=0, g1=0, f=0, e=0, d=0, c=1, b=1, a=0, char="!"),   # noqa: E741
     34: FourteenSegments(dp=0, l=0, m=0, n=0, k=0, j=1, h=0, g2=0, g1=0, f=0, e=0, d=0, c=0, b=1, a=0, char="\""),  # noqa: E741
@@ -335,8 +351,14 @@ class SixteenSegments:
         self.char = char
         self.dp = dp
 
+    def __repr__(self):
+        """Return str representation."""
+        return " ".join(["{}={}".format(attr, getattr(self, attr)) for attr in dir(self) if not attr.startswith("__")])
+
 
 sixteen_segments = {
+    None: SixteenSegments(dp=0, u=0, t=0, s=0, r=0, p=0, n=0, m=0, k=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0,
+                          char="not mappable char"),
     32: SixteenSegments(dp=0, u=0, t=0, s=0, r=0, p=0, n=0, m=0, k=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0,
                         char="(space)"),
     33: SixteenSegments(dp=1, u=0, t=0, s=0, r=0, p=0, n=0, m=0, k=0, h=0, g=0, f=0, e=0, d=1, c=1, b=0, a=0, char="!"),

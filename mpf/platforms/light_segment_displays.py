@@ -1,34 +1,8 @@
 """Segment displays on light drivers."""
-import asyncio
 import logging
-from collections import namedtuple
-
+from mpf.core.segment_mappings import seven_segments
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
-
 from mpf.core.platform import SegmentDisplayPlatform
-
-SevenSegmentDisplayMap = namedtuple("SevenSegmentDisplayMap", ["a", "b", "c", "d", "e", "f", "g"])
-
-
-seven_segments_mapping = {
-    None: SevenSegmentDisplayMap(0, 0, 0, 0, 0, 0, 0),
-    "0": SevenSegmentDisplayMap(1, 1, 1, 1, 1, 1, 0),
-    "1": SevenSegmentDisplayMap(0, 1, 1, 0, 0, 0, 0),
-    "2": SevenSegmentDisplayMap(1, 1, 0, 1, 1, 0, 1),
-    "3": SevenSegmentDisplayMap(1, 1, 1, 1, 0, 0, 1),
-    "4": SevenSegmentDisplayMap(0, 1, 1, 0, 0, 1, 1),
-    "5": SevenSegmentDisplayMap(1, 0, 1, 1, 0, 1, 1),
-    "6": SevenSegmentDisplayMap(1, 0, 1, 1, 1, 1, 1),
-    "7": SevenSegmentDisplayMap(1, 1, 1, 0, 0, 0, 0),
-    "8": SevenSegmentDisplayMap(1, 1, 1, 1, 1, 1, 1),
-    "9": SevenSegmentDisplayMap(1, 1, 1, 1, 0, 1, 1),
-    "A": SevenSegmentDisplayMap(1, 1, 1, 0, 1, 1, 1),
-    "b": SevenSegmentDisplayMap(0, 0, 1, 1, 1, 1, 1),
-    "C": SevenSegmentDisplayMap(1, 0, 0, 1, 1, 1, 0),
-    "D": SevenSegmentDisplayMap(0, 1, 1, 1, 1, 0, 1),
-    "E": SevenSegmentDisplayMap(1, 0, 0, 1, 1, 1, 1),
-    "F": SevenSegmentDisplayMap(1, 0, 0, 0, 1, 1, 1),
-}
 
 
 class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
@@ -51,10 +25,10 @@ class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
         # iterate lights and chars
         for char, lights_for_char in zip(text, self._lights):
             try:
-                char_map = seven_segments_mapping[char]
+                char_map = seven_segments[ord(char)]
             except KeyError:
                 # if there is no
-                char_map = seven_segments_mapping[None]
+                char_map = seven_segments[None]
             for name, light in lights_for_char.items():
                 if getattr(char_map, name):
                     light.on(key=self._key)
