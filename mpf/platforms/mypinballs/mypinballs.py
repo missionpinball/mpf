@@ -76,6 +76,7 @@ class MyPinballsHardwarePlatform(SegmentDisplayPlatform):
             self.log.debug("Sending cmd: %s", cmd)
         self._writer.write(cmd)
 
+    @asyncio.coroutine
     def configure_segment_display(self, number: str, platform_settings) -> "SegmentDisplayPlatformInterface":
         """Configure display."""
         del platform_settings

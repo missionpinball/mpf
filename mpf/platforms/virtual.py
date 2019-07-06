@@ -243,6 +243,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         del name
         return VirtualDmd()
 
+    @asyncio.coroutine
     def configure_segment_display(self, number: str, platform_settings) -> SegmentDisplayPlatformInterface:
         """Configure segment display."""
         del platform_settings

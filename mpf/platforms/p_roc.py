@@ -177,6 +177,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         self.dmd = PROCDMD(self, self.machine)
         return self.dmd
 
+    @asyncio.coroutine
     def configure_segment_display(self, number: str, platform_settings) -> "SegmentDisplayPlatformInterface":
         """Configure display."""
         del platform_settings

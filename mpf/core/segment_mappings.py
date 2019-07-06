@@ -23,6 +23,14 @@ class BcdSegments:
         self.char = char
         self.dp = dp
 
+    def get_dpx4x3x2x1_mapping(self) -> bytes:
+        """Return segment in dpx3x2x1x0 order."""
+        return bytes([(self.dp << 7) | (self.x3 << 3) | (self.x2 << 2) | (self.x1 << 1) | self.x0])
+
+    def get_x4x3x2x1_mapping(self) -> bytes:
+        """Return segment in x3x2x1x0 order."""
+        return bytes([(self.x3 << 3) | (self.x2) << 2 | (self.x1) << 1 | self.x0])
+
     def __repr__(self):
         """Return str representation."""
         return " ".join(["{}={}".format(attr, getattr(self, attr)) for attr in dir(self) if not attr.startswith("__")])
@@ -79,6 +87,16 @@ class SevenSegments:
         self.g = g
         self.char = char
         self.dp = dp
+
+    def get_gfedcba_mapping(self) -> bytes:
+        """Return segment in gfedcba order."""
+        return bytes([(self.g << 6) | (self.f << 5) | (self.e << 4) | (self.d << 3) | (self.c << 2) | (self.b << 1) |
+                      self.a])
+
+    def get_dpgfedcba_mapping(self) -> bytes:
+        """Return segment in dp gfedcba order."""
+        return bytes([(self.dp << 7) | (self.g << 6) | (self.f << 5) | (self.e << 4) | (self.d << 3) | (self.c << 2) |
+                      (self.b << 1) | self.a])
 
     def __repr__(self):
         """Return str representation."""
@@ -213,6 +231,13 @@ class FourteenSegments:
         self.l = l  # noqa: E741
         self.char = char
         self.dp = dp
+
+    def get_pinmame_mapping(self) -> bytes:
+        """Return segment in pinmame order."""
+        return bytes([
+            (self.g1 << 6) | (self.f << 5) | (self.e << 4) | (self.d << 3) | (self.c << 2) | (self.b << 1) | self.a,
+            (self.dp << 7) | (self.l << 6) | (self.m << 5) | (self.n << 4) | (self.g2 << 3) | (self.k << 2) |
+            (self.j << 1) | self.h])
 
     def __repr__(self):
         """Return str representation."""

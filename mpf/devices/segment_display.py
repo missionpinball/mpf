@@ -48,8 +48,8 @@ class SegmentDisplay(SystemWideDevice):
 
         # configure hardware
         try:
-            self.hw_display = self.platform.configure_segment_display(self.config['number'],
-                                                                      self.config['platform_settings'])
+            self.hw_display = yield from self.platform.configure_segment_display(self.config['number'],
+                                                                                 self.config['platform_settings'])
         except AssertionError as e:
             raise AssertionError("Error in platform while configuring segment display {}. "
                                  "See error above.".format(self.name)) from e

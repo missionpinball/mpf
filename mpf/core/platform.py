@@ -195,6 +195,7 @@ class SegmentDisplayPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['segment_display'] = True
 
     @abc.abstractmethod
+    @asyncio.coroutine
     def configure_segment_display(self, number: str, platform_settings) -> "SegmentDisplayPlatformInterface":
         """Subclass this method in a platform module to configure a segment display.
 

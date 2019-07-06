@@ -466,11 +466,18 @@ class TestAPC(MpfTestCase):
             b'\x03': b'\x28',           # get number of lamps -> 40
             b'\x04': b'\x09',           # get number of solenoids -> 9
             b'\x06': b'\x05',           # get number of displays -> 5
+            b'\x07\x00': b'\x10\x02',   # get type of display 0
+            b'\x07\x01': b'\x05\x03',   # get type of display 1
+            b'\x07\x02': b'\x07\x04',   # get type of display 2
+            b'\x07\x03': b'\x03\x05',   # get type of display 3
+            b'\x07\x04': b'\x10\x06',   # get type of display 4
             b'\x09': b'\x58',           # get number of switches -> 88
             b'\x13': b'\x00',           # get number of modern lights -> 0
-            b'\x1e\x00': None,          # clear display
-            b'\x1f\x00': None,          # clear display
-            b'\x20\x00': None,          # clear display
+            b'\x1e\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00': None,  # clear display
+            b'\x1f\x00\x00\x00\x00\x00': None,                                              # clear display
+            b'\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00': None,          # clear display
+            b'\x21\x20\x20\x20': None,                                                      # clear display
+            b'\x22\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20': None,  # clear display
         }
 
         for number in range(88):
