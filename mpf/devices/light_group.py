@@ -32,8 +32,6 @@ class LightGroup(SystemWideDevice):
         Args:
             config: unparsed config
             is_mode_config: if in mode (not used)
-
-        Returns:
         """
         del is_mode_config
         if 'light_template' not in config:

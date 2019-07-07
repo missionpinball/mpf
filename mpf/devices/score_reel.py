@@ -193,6 +193,7 @@ class ScoreReel(SystemWideDevice):
         """Return the integer value of the destination this reel is moving to.
 
         Args:
+            value: Destination value which this reel should try to reach.
 
         Returns: The value of the destination. If the current
             `self.assumed_value` is -999, this method will always return -999

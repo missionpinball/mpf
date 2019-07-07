@@ -157,6 +157,7 @@ class ClockBase(LogMixin):
 
         If <timeout> is unspecified
         or 0, the callback will be called after the next frame is rendered.
+
         Args:
             callback: callback to call on timeout
             timeout: seconds to wait

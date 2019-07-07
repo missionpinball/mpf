@@ -129,6 +129,7 @@ class BaseSerialCommunicator:
         """Parse a message.
 
         Msg may be partial.
+
         Args:
             msg: Bytes of the message (part) received.
         """
