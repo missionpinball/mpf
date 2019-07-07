@@ -73,6 +73,10 @@ segment_displays:
     number: 1
   player2_display:
     number: 2
+  player3_display:
+    number: 3
+  player4_display:
+    number: 4
 
 hardware_sound_systems:
     default:

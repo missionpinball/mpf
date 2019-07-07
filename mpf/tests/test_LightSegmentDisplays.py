@@ -73,7 +73,7 @@ class TestLightSegmentDisplays(MpfTestCase):
         self.assertLightColor("segment2_g", "off")
 
         # set invalid chars (for 7segment). should be "1 "
-        display1.add_text("1K")
+        display1.add_text("1{}".format(chr(244)))
         self.advance_time_and_run()
 
         self.assertLightColor("segment1_a", "off")

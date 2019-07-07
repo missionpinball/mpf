@@ -41,9 +41,6 @@ class Mode(LogMixin):
             config: config dict for mode
             name: name of mode
             path: path of mode
-
-        Returns:
-
         """
         super().__init__()
         self.machine = machine                  # type: MachineController

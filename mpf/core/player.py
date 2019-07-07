@@ -136,7 +136,6 @@ class Player:
         """Enable/disable player variable events.
 
         Args:
-
             enable: Flag to enable/disable player variable events
             send_all_variables: Flag indicating whether or not to send an event
                 with the current value of every player variable.

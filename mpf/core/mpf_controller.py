@@ -21,9 +21,6 @@ class MpfController(LogMixin, metaclass=abc.ABCMeta):
 
         Args:
             machine(mpf.core.machine.MachineController): the machine controller
-
-        Returns:
-
         """
         super().__init__()
         self.machine = machine
