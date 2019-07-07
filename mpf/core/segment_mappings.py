@@ -7,33 +7,101 @@ BCD were created by us.
 """
 
 
-class BcdSegments:
+class TextToSegmentMapper:
+
+    """Helper to map text to segments."""
+
+    @classmethod
+    def map_text_to_segments(cls, text, display_width, segment_mapping, embed_dots=True):
+        """Map text to a list of segments.
+
+        Text is aligned to the right.
+        Optionally, it can embed dots into segments.
+        """
+        segments = []
+        text_position = 0
+        while text_position < len(text):
+            char = text[text_position]
+            text_position += 1
+            mapping = segment_mapping.get(ord(char), segment_mapping[None])
+            if embed_dots and not mapping.dp:
+                # embed dots is enabled and dot is inactive
+                try:
+                    next_char = text[text_position]
+                except IndexError:
+                    next_char = " "
+                if next_char == ".":
+                    # next char is a dot -> turn dot on
+                    mapping = mapping.copy_with_dp_on()
+                    text_position += 1
+            segments.append(mapping)
+
+        # remove leading segments if mapping is too long
+        if display_width < len(segments):
+            segments = segments[:-display_width]
+
+        while display_width > len(segments):
+            # prepend spaces to pad mapping
+            segments.insert(0, segment_mapping.get(ord(" "), segment_mapping[None]))
+
+        return segments
+
+
+class Segment:
+
+    """Mapping for a segment."""
+
+    __slots__ = ["dp", "char"]
+
+    def __init__(self, dp, char):
+        """Initialise segment."""
+        self.dp = dp
+        self.char = char
+
+    def __repr__(self):
+        """Return str representation."""
+        return "<" + " ".join(["{}={}".format(attr, getattr(self, attr)) for attr in dir(self) if
+                               not attr.startswith("__") and not callable(getattr(self, attr))]) + ">"
+
+    def copy_with_dp_on(self):
+        """Return a copy of the segment with dp on."""
+        attr = {attr: getattr(self, attr) for attr in dir(self) if not attr.startswith("__") and
+                not callable(getattr(self, attr))}
+        attr['dp'] = 1
+        new_segment = self.__class__(**attr)
+        return new_segment
+
+    def __eq__(self, other):
+        """Compare to segments."""
+        attr_self = {attr: getattr(self, attr) for attr in dir(self) if not attr.startswith("__") and
+                     not callable(getattr(self, attr))}
+        attr_other = {attr: getattr(other, attr) for attr in dir(other) if not attr.startswith("__") and
+                      not callable(getattr(other, attr))}
+        return attr_self == attr_other
+
+
+class BcdSegments(Segment):
 
     """Mapping for BCD segments with dot."""
 
-    __slots__ = ["dp", "x3", "x2", "x1", "x0", "char"]
+    __slots__ = ["x3", "x2", "x1", "x0"]
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, dp, x3, x2, x1, x0, char):
         """Create segment entry."""
+        super().__init__(dp, char)
         self.x0 = x0
         self.x1 = x1
         self.x2 = x2
         self.x3 = x3
-        self.char = char
-        self.dp = dp
 
-    def get_dpx4x3x2x1_mapping(self) -> bytes:
+    def get_dpx4x3x2x1_encoding(self) -> bytes:
         """Return segment in dpx3x2x1x0 order."""
         return bytes([(self.dp << 7) | (self.x3 << 3) | (self.x2 << 2) | (self.x1 << 1) | self.x0])
 
-    def get_x4x3x2x1_mapping(self) -> bytes:
+    def get_x4x3x2x1_encoding(self) -> bytes:
         """Return segment in x3x2x1x0 order."""
         return bytes([(self.x3 << 3) | (self.x2) << 2 | (self.x1) << 1 | self.x0])
-
-    def __repr__(self):
-        """Return str representation."""
-        return " ".join(["{}={}".format(attr, getattr(self, attr)) for attr in dir(self) if not attr.startswith("__")])
 
 
 bcd_segments = {
@@ -69,15 +137,16 @@ bcd_segments = {
 }
 
 
-class SevenSegments:
+class SevenSegments(Segment):
 
     """Mapping for seven segments."""
 
-    __slots__ = ["dp", "g", "f", "e", "d", "c", "b", "a", "char"]
+    __slots__ = ["g", "f", "e", "d", "c", "b", "a"]
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, dp, g, f, e, d, c, b, a, char):
         """Create segment entry."""
+        super().__init__(dp, char)
         self.a = a
         self.b = b
         self.c = c
@@ -85,22 +154,16 @@ class SevenSegments:
         self.e = e
         self.f = f
         self.g = g
-        self.char = char
-        self.dp = dp
 
-    def get_gfedcba_mapping(self) -> bytes:
+    def get_gfedcba_encoding(self) -> bytes:
         """Return segment in gfedcba order."""
         return bytes([(self.g << 6) | (self.f << 5) | (self.e << 4) | (self.d << 3) | (self.c << 2) | (self.b << 1) |
                       self.a])
 
-    def get_dpgfedcba_mapping(self) -> bytes:
+    def get_dpgfedcba_encoding(self) -> bytes:
         """Return segment in dp gfedcba order."""
         return bytes([(self.dp << 7) | (self.g << 6) | (self.f << 5) | (self.e << 4) | (self.d << 3) | (self.c << 2) |
                       (self.b << 1) | self.a])
-
-    def __repr__(self):
-        """Return str representation."""
-        return " ".join(["{}={}".format(attr, getattr(self, attr)) for attr in dir(self) if not attr.startswith("__")])
 
 
 seven_segments = {
@@ -205,16 +268,17 @@ seven_segments = {
 
 
 # pylint: disable-msg=too-many-instance-attributes
-class FourteenSegments:
+class FourteenSegments(Segment):
 
     """Mapping for fourteen segments."""
 
-    __slots__ = ["dp", "l", "m", "n", "k", "j", "h", "g2", "g1", "f", "e", "d", "c", "b", "a", "char"]
+    __slots__ = ["l", "m", "n", "k", "j", "h", "g2", "g1", "f", "e", "d", "c", "b", "a"]
 
     # pylint: disable-msg=too-many-arguments
     # pylint: disable-msg=too-many-locals
     def __init__(self, dp, l, m, n, k, j, h, g2, g1, f, e, d, c, b, a, char):
         """Create segment entry."""
+        super().__init__(dp, char)
         self.a = a
         self.b = b
         self.c = c
@@ -229,19 +293,13 @@ class FourteenSegments:
         self.n = n
         self.m = m
         self.l = l  # noqa: E741
-        self.char = char
-        self.dp = dp
 
-    def get_pinmame_mapping(self) -> bytes:
+    def get_pinmame_encoding(self) -> bytes:
         """Return segment in pinmame order."""
         return bytes([
             (self.g1 << 6) | (self.f << 5) | (self.e << 4) | (self.d << 3) | (self.c << 2) | (self.b << 1) | self.a,
             (self.dp << 7) | (self.l << 6) | (self.m << 5) | (self.n << 4) | (self.g2 << 3) | (self.k << 2) |
             (self.j << 1) | self.h])
-
-    def __repr__(self):
-        """Return str representation."""
-        return " ".join(["{}={}".format(attr, getattr(self, attr)) for attr in dir(self) if not attr.startswith("__")])
 
 
 fourteen_segments = {
@@ -347,16 +405,17 @@ fourteen_segments = {
 
 
 # pylint: disable-msg=too-many-instance-attributes
-class SixteenSegments:
+class SixteenSegments(Segment):
 
     """Mapping for sixteen segments."""
 
-    __slots__ = ["dp", "u", "t", "s", "r", "p", "m", "n", "k", "h", "g", "f", "e", "d", "c", "b", "a", "char"]
+    __slots__ = ["u", "t", "s", "r", "p", "m", "n", "k", "h", "g", "f", "e", "d", "c", "b", "a"]
 
     # pylint: disable-msg=too-many-arguments
     # pylint: disable-msg=too-many-locals
     def __init__(self, dp, u, t, s, r, p, m, n, k, h, g, f, e, d, c, b, a, char):
         """Create segment entry."""
+        super().__init__(dp, char)
         self.a = a
         self.b = b
         self.c = c
@@ -373,12 +432,6 @@ class SixteenSegments:
         self.s = s
         self.t = t
         self.u = u
-        self.char = char
-        self.dp = dp
-
-    def __repr__(self):
-        """Return str representation."""
-        return " ".join(["{}={}".format(attr, getattr(self, attr)) for attr in dir(self) if not attr.startswith("__")])
 
 
 sixteen_segments = {
@@ -512,3 +565,30 @@ sixteen_segments = {
     127: SixteenSegments(dp=0, u=0, t=0, s=0, r=0, p=0, n=0, m=0, k=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0,
                          char="(del)"),
 }
+
+
+class AsciiSegment(Segment):
+
+    """Ascii segment mapping."""
+
+    __slots__ = ["ascii_value"]
+
+    def __init__(self, dp, ascii_value, char):
+        """Initialise ascii segment."""
+        super().__init__(dp, char)
+        self.ascii_value = ascii_value
+
+    def get_ascii_encoding(self):
+        """Return ascii encoding."""
+        return bytes([self.ascii_value])
+
+    def get_ascii_with_dp_encoding(self):
+        """Return ascii encoding with bit 7 for dp."""
+        return bytes([self.ascii_value + (128 if self.dp else 0)])
+
+
+ascii_segments = {
+    None: AsciiSegment(dp=0, ascii_value=ord(" "), char=" ")
+}
+for i in range(128):
+    ascii_segments[i] = AsciiSegment(dp=0, ascii_value=i, char=chr(i))

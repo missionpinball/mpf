@@ -4,7 +4,8 @@ from distutils.version import StrictVersion
 
 from typing import Generator, Dict, Optional, List
 
-from mpf.core.segment_mappings import seven_segments, bcd_segments, fourteen_segments
+from mpf.core.segment_mappings import seven_segments, bcd_segments, fourteen_segments, TextToSegmentMapper, \
+    ascii_segments
 from mpf.core.platform_batch_light_system import PlatformBatchLight, PlatformBatchLightSystem
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
@@ -157,38 +158,30 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
         self._set_text("")
 
     def _format_text(self, text):
-        result = bytearray()
-        for i in range(self._length_of_display):
-            try:
-                char = text[i]
-            except IndexError:
-                char = " "
-            # TODO: handle comma
-            if self._type_of_display == 1:
-                segment = bcd_segments.get(ord(char), bcd_segments[None])
-                result.extend(segment.get_x4x3x2x1_mapping())
-            elif self._type_of_display == 2:
-                segment = bcd_segments.get(ord(char), bcd_segments[None])
-                result.extend(segment.get_dpx4x3x2x1_mapping())
-            elif self._type_of_display == 3:
-                segment = seven_segments.get(ord(char), seven_segments[None])
-                result.extend(segment.get_dpgfedcba_mapping())
-            elif self._type_of_display == 4:
-                segment = fourteen_segments.get(ord(char), fourteen_segments[None])
-                result.extend(segment.get_pinmame_mapping())
-            elif self._type_of_display == 5:
-                segment = ord(char)
-                if 0 > segment > 127:
-                    segment = 0
-                result.append(segment)
-            elif self._type_of_display == 6:
-                segment = ord(char)
-                if 0 > segment > 127:
-                    segment = 0
-                result.append(segment)
-            else:
-                raise AssertionError("Invalid type {}".format(self._type_of_display))
-        return result
+        if self._type_of_display == 1:
+            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, bcd_segments,
+                                                               embed_dots=False)
+            result = map(lambda x: x.get_x4x3x2x1_encoding(), mapping)
+        elif self._type_of_display == 2:
+            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, bcd_segments)
+            result = map(lambda x: x.get_dpx4x3x2x1_encoding(), mapping)
+        elif self._type_of_display == 3:
+            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, seven_segments)
+            result = map(lambda x: x.get_dpgfedcba_encoding(), mapping)
+        elif self._type_of_display == 4:
+            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, fourteen_segments)
+            result = map(lambda x: x.get_pinmame_encoding(), mapping)
+        elif self._type_of_display == 5:
+            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, ascii_segments,
+                                                               embed_dots=False)
+            result = map(lambda x: x.get_ascii_encoding(), mapping)
+        elif self._type_of_display == 6:
+            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, ascii_segments)
+            result = map(lambda x: x.get_ascii_with_dp_encoding(), mapping)
+        else:
+            raise AssertionError("Invalid type {}".format(self._type_of_display))
+
+        return b''.join(result)
 
     def _set_text(self, text: str):
         """Set text to display."""

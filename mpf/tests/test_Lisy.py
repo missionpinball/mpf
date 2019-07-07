@@ -538,3 +538,11 @@ class TestAPC(MpfTestCase):
         self.advance_time_and_run(.2)
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
+
+        # set info display to TEST
+        self.serialMock.expected_commands = {
+            b'\x1e\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x03\x03\x07': None
+        }
+        self.machine.segment_displays["info_display"].add_text("1337")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
