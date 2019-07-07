@@ -38,7 +38,7 @@ class TextToSegmentMapper:
 
         # remove leading segments if mapping is too long
         if display_width < len(segments):
-            segments = segments[:-display_width]
+            segments = segments[-display_width:]
 
         while display_width > len(segments):
             # prepend spaces to pad mapping
