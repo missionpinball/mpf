@@ -669,6 +669,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             self.log.debug("Sending %s", cmd)
             self._writer.write(bytes([cmd]))
 
+    @asyncio.coroutine
     def send_byte_and_read_response(self, cmd: int, byte: bytes = None, read_bytes=0):
         """Send byte and read response."""
         with (yield from self._bus_lock):
