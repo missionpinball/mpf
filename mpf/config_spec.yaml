@@ -1251,6 +1251,7 @@ slide_player:
     widgets: ignore
     expire: single|secs|None
     slide: single|str|None
+    tokens: dict|str:str|None
     action: single|enum(play,remove)|play
 slides:
     __valid_in__: machine, mode
