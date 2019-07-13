@@ -32,6 +32,7 @@ if MYPY:   # pragma: no cover
     from mpf.core.switch_controller import SwitchController
     from mpf.core.show_controller import ShowController
     from mpf.core.service_controller import ServiceController
+    from mpf.core.light_controller import LightController
 
     from mpf.core.custom_code import CustomCode
     from mpf.core.mode_controller import ModeController
@@ -151,6 +152,7 @@ class MachineController(LogMixin):
             self.tui = None                             # type: TextUi
             self.service = None                         # type: ServiceController
             self.show_player = None                     # type: ShowPlayer
+            self.light_controller = None                # type: LightController
 
             # devices
             self.autofires = None                       # type: Dict[str, AutofireCoil]

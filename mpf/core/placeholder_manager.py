@@ -80,7 +80,7 @@ class BaseTemplate(metaclass=abc.ABCMeta):
     def evaluate_and_subscribe(self, parameters) -> Tuple[bool, asyncio.Future]:
         """Evaluate template and subscribe."""
         result, subscriptions = self.placeholder_manager.evaluate_and_subscribe_template(self.template, parameters)
-        if isinstance(result, TemplateEvalError):
+        if isinstance(result, TemplateEvalError) or result is None:
             result = self.default_value
         return self.convert_result(result), subscriptions
 
