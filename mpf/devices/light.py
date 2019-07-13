@@ -40,7 +40,7 @@ class LightStackEntry:
         return self.priority > other.priority or (self.priority == other.priority and self.key > other.key)
 
 
-@DeviceMonitor(_color="color")
+@DeviceMonitor(_color="color", _do_not_overwrite_setter=True)
 class Light(SystemWideDevice, DevicePositionMixin):
 
     """A light in a pinball machine."""
@@ -487,7 +487,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
         # tune the common case
         if not self.stack:
             return
-        self.debug_log("Removing key '%s' from stack", key)
+        if self._debug:
+            self.debug_log("Removing key '%s' from stack", key)
         if len(self.stack) == 1:
             if self.stack[0].key == key:
                 self.stack = []
@@ -505,7 +506,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """Remove all entries from the stack and resets this light to 'off'."""
         self.stack = []
 
-        self.debug_log("Clearing Stack")
+        if self._debug:
+            self.debug_log("Clearing Stack")
 
         self._schedule_update()
 
@@ -528,8 +530,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
         Returns:
             An updated RGBColor() instance with gamma corrected.
         """
-        factor = self.machine.get_machine_var("brightness")
-        if not factor:
+        factor = self.machine.light_controller.brightness_factor
+        if factor == 1.0:
             return color
         else:
             return RGBColor([int(x * factor) for x in color])
