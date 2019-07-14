@@ -178,7 +178,9 @@ class EventManager(MpfController):
                                "kwargs: %s",
                                (str(handler).split(' '))[2], event, priority, kwargs)
             except IndexError:
-                pass
+                self.debug_log("Registered %s as a handler for '%s', priority: %s, "
+                               "kwargs: %s",
+                               str(handler), event, priority, kwargs)
 
         # Sort the handlers for this event based on priority. We do it now
         # so the list is pre-sorted so we don't have to do that with each
@@ -635,9 +637,14 @@ class EventManager(MpfController):
                     kwargs['_min_priority'][handler.blocking_facility] > handler.priority)):
                 continue
 
-            # merge the post's kwargs with the registered handler's kwargs
-            # in case of conflict, handler kwargs will win
-            merged_kwargs = dict(list(kwargs.items()) + list(handler.kwargs.items()))
+            if handler.kwargs and kwargs:
+                # merge the post's kwargs with the registered handler's kwargs
+                # in case of conflict, handler kwargs will win
+                merged_kwargs = dict(list(kwargs.items()) + list(handler.kwargs.items()))
+            elif handler.kwargs:
+                merged_kwargs = handler.kwargs
+            else:
+                merged_kwargs = kwargs
 
             # if condition exists and is not true skip
             if handler.condition is not None and not handler.condition.evaluate(merged_kwargs):
