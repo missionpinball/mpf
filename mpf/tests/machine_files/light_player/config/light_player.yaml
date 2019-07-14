@@ -25,6 +25,9 @@ lights:
     debug: True
     number:
     default_on_color: red
+  led6:
+    debug: True
+    number:
 
 light_player:
   "{machine.a == 7}":
@@ -82,3 +85,14 @@ shows:
       led1: red
       led2: red
       led3: red
+
+show_player:
+  play_show1: show_ext1
+  play_show3:
+    show_ext3:
+      show_tokens:
+        color_on: blue
+        color_off: off
+        led1: led1
+        led2: led2
+        led3: led3

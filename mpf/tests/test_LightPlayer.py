@@ -3,13 +3,55 @@ from mpf.core.rgb_color import RGBColor
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 
-class TestLedPlayer(MpfFakeGameTestCase):
+class TestLightPlayer(MpfFakeGameTestCase):
 
     def getConfigFile(self):
         return 'light_player.yaml'
 
     def getMachinePath(self):
         return 'tests/machine_files/light_player/'
+
+    def test_light_player_in_show(self):
+        self.post_event("play_show1")
+        self.advance_time_and_run(.5)
+        self.assertLightColor("led1", "blue")
+        self.assertLightColor("led2", "off")
+        self.assertLightColor("led3", "off")
+        self.assertLightColor("led4", "blue")
+        self.assertLightColor("led5", "off")
+        self.assertLightColor("led6", "off")
+
+        self.advance_time_and_run(1)
+        self.assertLightColor("led1", "off")
+        self.assertLightColor("led2", "blue")
+        self.assertLightColor("led3", "off")
+        self.assertLightColor("led4", "off")
+        self.assertLightColor("led5", "blue")
+        self.assertLightColor("led6", "off")
+
+        self.advance_time_and_run(1)
+        self.assertLightColor("led1", "off")
+        self.assertLightColor("led2", "off")
+        self.assertLightColor("led3", "blue")
+        self.assertLightColor("led4", "off")
+        self.assertLightColor("led5", "off")
+        self.assertLightColor("led6", "blue")
+
+        self.advance_time_and_run(1)
+        self.assertLightColor("led1", "red")
+        self.assertLightColor("led2", "off")
+        self.assertLightColor("led3", "off")
+        self.assertLightColor("led4", "red")
+        self.assertLightColor("led5", "off")
+        self.assertLightColor("led6", "off")
+
+        self.advance_time_and_run(1)
+        self.assertLightColor("led1", "off")
+        self.assertLightColor("led2", "red")
+        self.assertLightColor("led3", "off")
+        self.assertLightColor("led4", "off")
+        self.assertLightColor("led5", "red")
+        self.assertLightColor("led6", "off")
 
     def test_config_player_config_processing(self):
         led1 = self.machine.lights.led1
