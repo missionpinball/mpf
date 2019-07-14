@@ -688,9 +688,9 @@ class RunningShow:
             if item_type == 'duration':
                 continue
 
-            player = self.machine.show_controller.show_players.get(item_type, None)
-
-            if not player:
+            try:
+                player = self.machine.show_controller.show_players[item_type]
+            except KeyError:
                 raise ValueError("Invalid entry in show: {}".format(item_type))
 
             player.show_play_callback(
