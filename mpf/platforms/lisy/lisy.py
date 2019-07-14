@@ -187,7 +187,8 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
         """Set text to display."""
         if self.platform.api_version >= StrictVersion("0.9"):
             formatted_text = self._format_text(text)
-            self.platform.send_byte(LisyDefines.DisplaysSetDisplay0To + self.number, formatted_text)
+            self.platform.send_byte(LisyDefines.DisplaysSetDisplay0To + self.number,
+                                    bytearray([len(formatted_text)]) + formatted_text)
         else:
             self.platform.send_string(LisyDefines.DisplaysSetDisplay0To + self.number, text)
 

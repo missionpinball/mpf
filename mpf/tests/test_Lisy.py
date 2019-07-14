@@ -473,11 +473,11 @@ class TestAPC(MpfTestCase):
             b'\x07\x04': b'\x10\x06',   # get type of display 4
             b'\x09': b'\x58',           # get number of switches -> 88
             b'\x13': b'\x00',           # get number of modern lights -> 0
-            b'\x1e\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00': None,  # clear display
-            b'\x1f\x00\x00\x00\x00\x00': None,                                              # clear display
-            b'\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00': None,          # clear display
-            b'\x21\x20\x20\x20': None,                                                      # clear display
-            b'\x22\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20': None,  # clear display
+            b'\x1e\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00': None,  # clear display
+            b'\x1f\x05\x00\x00\x00\x00\x00': None,                                              # clear display
+            b'\x20\x0e\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00': None,          # clear display
+            b'\x21\x03\x20\x20\x20': None,                                                      # clear display
+            b'\x22\x10\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20': None,  # clear display
         }
 
         for number in range(88):
@@ -541,7 +541,7 @@ class TestAPC(MpfTestCase):
 
         # set info display to TEST
         self.serialMock.expected_commands = {
-            b'\x1e\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x03\x03\x07': None
+            b'\x1e\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x03\x03\x07': None
         }
         self.machine.segment_displays["info_display"].add_text("1337")
         self._wait_for_processing()
