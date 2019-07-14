@@ -88,11 +88,3 @@ shows:
 
 show_player:
   play_show1: show_ext1
-  play_show3:
-    show_ext3:
-      show_tokens:
-        color_on: blue
-        color_off: off
-        led1: led1
-        led2: led2
-        led3: led3
