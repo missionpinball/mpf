@@ -9,12 +9,13 @@ class PluginPlayer(DeviceConfigPlayer):
     This class is created on the MPF side of things.
     """
 
-    __slots__ = ["bcp_client"]
+    __slots__ = ["bcp_client", "_show_keys"]
 
     def __init__(self, machine):
         """Initialise plugin player."""
         super().__init__(machine)
         self.bcp_client = None
+        self._show_keys = {}
 
     def __repr__(self):
         """Return str representation."""
@@ -61,6 +62,20 @@ class PluginPlayer(DeviceConfigPlayer):
             self.bcp_client, '{}_clear'.format(self.show_section))
 
         return events
+
+    # pylint: disable-msg=too-many-arguments
+    def show_play_callback(self, settings, priority, calling_context, show_tokens, context, start_time):
+        """Register BCP events."""
+        config = {'bcp_connection': settings['bcp_connection']} if 'bcp_connection' in settings else {}
+        event_keys = self.register_player_events(config, None, priority)
+        self._show_keys[context + self.config_file_section] = event_keys
+        super().show_play_callback(settings, priority, calling_context, show_tokens, context, start_time)
+
+    def show_stop_callback(self, context):
+        """Remove BCP events."""
+        self.unload_player_events(self._show_keys[context + self.config_file_section])
+        del self._show_keys[context + self.config_file_section]
+        super().show_stop_callback(context)
 
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Trigger remote player via BCP."""
