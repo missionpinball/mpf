@@ -4,6 +4,8 @@ import string
 import asyncio
 import operator as op
 import abc
+from functools import lru_cache
+
 import re
 from typing import Tuple, List, Any
 
@@ -88,6 +90,10 @@ class BaseTemplate(metaclass=abc.ABCMeta):
     def convert_result(self, value):
         """Convert the result of the template."""
         pass
+
+    def __repr__(self):
+        """Return string representation."""
+        return "<Template {}>".format(self.text)
 
 
 class BoolTemplate(BaseTemplate):
@@ -176,6 +182,10 @@ class NativeTypeTemplate:
     def __eq__(self, other):
         """Templates are equal if values are equal."""
         return other.value == self.value
+
+    def __repr__(self):
+        """Return String."""
+        return "<NativeTemplate {}>".format(self.value)
 
 
 class MpfFormatter(string.Formatter):
@@ -685,14 +695,26 @@ class BasePlaceholderManager(MpfController):
 
     def build_float_template(self, template_str, default_value=0.0) -> FloatTemplate:
         """Build a float template from a string."""
-        if isinstance(template_str, (float, int)):
-            return NativeTypeTemplate(float(template_str), self.machine)
+        # try to convert to int
+        try:
+            value = float(template_str)
+        except ValueError:
+            pass
+        else:
+            return NativeTypeTemplate(value, self.machine)
+
         return FloatTemplate(self._parse_template(template_str), template_str, self, default_value)
 
     def build_int_template(self, template_str, default_value=0) -> IntTemplate:
         """Build a int template from a string."""
-        if isinstance(template_str, (float, int)):
-            return NativeTypeTemplate(int(template_str), self.machine)
+        # try to convert to int
+        try:
+            value = int(template_str)
+        except ValueError:
+            pass
+        else:
+            return NativeTypeTemplate(value, self.machine)
+
         return IntTemplate(self._parse_template(template_str), template_str, self, default_value)
 
     def build_bool_template(self, template_str, default_value=False) -> BoolTemplate:
@@ -740,6 +762,7 @@ class BasePlaceholderManager(MpfController):
         future = Util.ensure_future(future, loop=self.machine.clock.loop)
         return value, future
 
+    @lru_cache(typed=True)
     def parse_conditional_template(self, template, default_number=None):
         """Parse a template for condition and number and return a dict."""
         # The following regex will make a dict for event name, condition, and number

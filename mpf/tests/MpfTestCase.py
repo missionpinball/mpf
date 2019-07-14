@@ -602,7 +602,8 @@ class MpfTestCase(unittest.TestCase):
             color = self.machine.lights[light_name].config['default_on_color']
 
         self.assertEqual(RGBColor(color), self.machine.lights[light_name].get_color(),
-                         "{} != {}".format(RGBColor(color).name, self.machine.lights[light_name].get_color().name))
+                         "Light {}: {} != {}".format(light_name, RGBColor(color).name,
+                                                     self.machine.lights[light_name].get_color().name))
 
     def assertNotLightColor(self, light_name, color):
         if isinstance(color, str) and color.lower() == 'on':

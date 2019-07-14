@@ -10,7 +10,20 @@ class ShowPlayer(DeviceConfigPlayer):
     show_section = 'shows'
     allow_placeholders_in_keys = True
 
-    __slots__ = []
+    __slots__ = ["_actions"]
+
+    def __init__(self, machine):
+        """Initialise show player."""
+        super().__init__(machine)
+        self._actions = {
+            'play': self._play,
+            'stop': self._stop,
+            'pause': self._pause,
+            'resume': self._resume,
+            'advance': self._advance,
+            'step_back': self._step_back,
+            'update': self._update
+        }
 
     # pylint: disable-msg=too-many-arguments
     def play(self, settings, context, calling_context, priority=0, **kwargs):
@@ -66,7 +79,8 @@ class ShowPlayer(DeviceConfigPlayer):
             stop_callback = queue.clear
 
         start_step = show_settings['start_step'].evaluate(placeholder_args)
-        show_tokens = {k: v.evaluate(placeholder_args) for k, v in show_settings['show_tokens'].items()}
+        show_tokens = {k: v.evaluate(placeholder_args.get("show_tokens", {}))
+                       for k, v in show_settings['show_tokens'].items()}
 
         show_config = self.machine.show_controller.create_show_config(
             show, show_settings['priority'], show_settings['speed'], show_settings['loops'], show_settings['sync_ms'],
@@ -151,19 +165,9 @@ class ShowPlayer(DeviceConfigPlayer):
         else:
             key = show
 
-        actions = {
-            'play': self._play,
-            'stop': self._stop,
-            'pause': self._pause,
-            'resume': self._resume,
-            'advance': self._advance,
-            'step_back': self._step_back,
-            'update': self._update
-        }
-
-        action = actions.get(show_settings['action'], None)
-
-        if not callable(action):
+        try:
+            action = self._actions[show_settings['action']]
+        except KeyError:
             raise AssertionError("Invalid action {} in show_player {}".format(
                 show_settings['action'], key))
 

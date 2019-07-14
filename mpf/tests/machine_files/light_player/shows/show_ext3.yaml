@@ -1,0 +1,16 @@
+#show_version=5
+- lights:
+    (led1): (color_on)
+    (led2): (color_off)
+    (led3): (color_off)
+  duration: 1s
+- lights:
+    (led1): (color_off)
+    (led2): (color_on)
+    (led3): (color_off)
+  duration: 1s
+- lights:
+    (led1): (color_off)
+    (led2): (color_off)
+    (led3): (color_on)
+  duration: 1s

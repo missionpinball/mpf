@@ -12,7 +12,7 @@ class ShowController(MpfController):
 
     """
 
-    __slots__ = ["show_players", "running_shows", "_next_show_id"]
+    __slots__ = ["show_players", "_next_show_id"]
 
     config_name = "show_controller"
 
@@ -25,7 +25,6 @@ class ShowController(MpfController):
         super().__init__(machine)
 
         self.show_players = {}
-        self.running_shows = list()
         self._next_show_id = 0
 
         # Registers Show with the asset manager

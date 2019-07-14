@@ -1,0 +1,19 @@
+#show_version=5
+- duration: -1
+  shows:
+    instance1:
+      show: show_ext3
+      show_tokens:
+        led1: led1
+        led2: led2
+        led3: led3
+        color_on: (light_color)
+        color_off: black
+    instance2:
+      show: show_ext3
+      show_tokens:
+        led1: led4
+        led2: led5
+        led3: led6
+        color_on: (light_color)
+        color_off: black

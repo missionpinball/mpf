@@ -555,12 +555,9 @@ class RunningShow:
         else:  # run now
             self._start_now()
 
-    def _post_events(self, actions):
-        for action in actions:
-            events = getattr(self.show_config, "events_when_{}".format(action), None)
-            if events:
-                for event in events:
-                    self.machine.events.post(event)
+    def _post_events(self, events):
+        for event in events:
+            self.machine.events.post(event)
 
     def __repr__(self):
         """Return str representation."""
@@ -594,7 +591,8 @@ class RunningShow:
         if self.callback and callable(self.callback):
             self.callback()
 
-        self._post_events(['stopped'])
+        if self.show_config.events_when_stopped:
+            self._post_events(self.show_config.events_when_stopped)
 
     def _remove_delay_handler(self):
         if self._delay_handler:
@@ -604,14 +602,15 @@ class RunningShow:
     def pause(self):
         """Pause show."""
         self._remove_delay_handler()
-        self._post_events(['paused'])
+        if self.show_config.events_when_stopped:
+            self._post_events(self.show_config.events_when_paused)
 
     def resume(self):
         """Resume paused show."""
         if not self._show_loaded:
             return
         self.next_step_time = self.machine.clock.get_time()
-        self._run_next_step(post_events='resumed')
+        self._run_next_step(post_events=self.show_config.events_when_resumed)
 
     def update(self, **kwargs):
         """Update show.
@@ -638,7 +637,7 @@ class RunningShow:
             self.next_step_index = show_step - 1
 
         if self._show_loaded:
-            self._run_next_step(post_events='advanced')
+            self._run_next_step(post_events=self.show_config.events_when_advanced)
 
     def step_back(self, steps=1):
         """Manually step back this show to a previous step."""
@@ -647,20 +646,20 @@ class RunningShow:
         self.next_step_index -= steps + 1
 
         if self._show_loaded:
-            self._run_next_step(post_events='stepped_back')
+            self._run_next_step(post_events=self.show_config.events_when_stepped_back)
 
     def _start_now(self) -> None:
         """Start playing the show."""
         if self.start_callback:
             self.start_callback()
             self.start_callback = None
-        self._run_next_step(post_events='played')
+        self._run_next_step(post_events=self.show_config.events_when_played)
 
     def _run_next_step(self, post_events=None) -> None:
         """Run the next show step."""
         events = []
         if post_events:
-            events.append(post_events)
+            events.extend(post_events)
 
         if self.next_step_index < 0:
             self.next_step_index %= self._total_steps
@@ -671,13 +670,16 @@ class RunningShow:
             if self.loops > 0:
                 self.loops -= 1
                 self.next_step_index = 0
-                events.append('looped')
+                if self.show_config.events_when_looped:
+                    events.extend(self.show_config.events_when_looped)
             elif self.loops < 0:
                 self.next_step_index = 0
-                events.append('looped')
+                if self.show_config.events_when_looped:
+                    events.extend(self.show_config.events_when_looped)
             else:
                 self.stop()
-                events.append("completed")
+                if self.show_config.events_when_completed:
+                    events.extend(self.show_config.events_when_completed)
                 self._post_events(events)
                 return
 
@@ -688,9 +690,9 @@ class RunningShow:
             if item_type == 'duration':
                 continue
 
-            player = self.machine.show_controller.show_players.get(item_type, None)
-
-            if not player:
+            try:
+                player = self.machine.show_controller.show_players[item_type]
+            except KeyError:
                 raise ValueError("Invalid entry in show: {}".format(item_type))
 
             player.show_play_callback(
@@ -703,12 +705,13 @@ class RunningShow:
 
             self._players.add(item_type)
 
-        self._post_events(events)
+        if events:
+            self._post_events(events)
 
         self.next_step_index += 1
 
         time_to_next_step = self.show_steps[self.current_step_index]['duration'] / self.show_config.speed
         if not self.show_config.manual_advance and time_to_next_step > 0:
             self.next_step_time += time_to_next_step
-            self._delay_handler = self.machine.clock.schedule_once(self._run_next_step,
-                                                                   self.next_step_time - self.machine.clock.get_time())
+            self._delay_handler = self.machine.clock.loop.call_at(when=self.next_step_time,
+                                                                  callback=self._run_next_step)
