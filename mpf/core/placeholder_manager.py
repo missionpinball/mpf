@@ -691,14 +691,26 @@ class BasePlaceholderManager(MpfController):
 
     def build_float_template(self, template_str, default_value=0.0) -> FloatTemplate:
         """Build a float template from a string."""
-        if isinstance(template_str, (float, int)):
-            return NativeTypeTemplate(float(template_str), self.machine)
+        # try to convert to int
+        try:
+            value = float(template_str)
+        except ValueError:
+            pass
+        else:
+            return NativeTypeTemplate(value, self.machine)
+
         return FloatTemplate(self._parse_template(template_str), template_str, self, default_value)
 
     def build_int_template(self, template_str, default_value=0) -> IntTemplate:
         """Build a int template from a string."""
-        if isinstance(template_str, (float, int)):
-            return NativeTypeTemplate(int(template_str), self.machine)
+        # try to convert to int
+        try:
+            value = int(template_str)
+        except ValueError:
+            pass
+        else:
+            return NativeTypeTemplate(value, self.machine)
+
         return IntTemplate(self._parse_template(template_str), template_str, self, default_value)
 
     def build_bool_template(self, template_str, default_value=False) -> BoolTemplate:
