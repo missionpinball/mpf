@@ -4,6 +4,8 @@ import string
 import asyncio
 import operator as op
 import abc
+from functools import lru_cache
+
 import re
 from typing import Tuple, List, Any
 
@@ -88,6 +90,10 @@ class BaseTemplate(metaclass=abc.ABCMeta):
     def convert_result(self, value):
         """Convert the result of the template."""
         pass
+
+    def __repr__(self):
+        """Return string representation."""
+        return "<Template {}>".format(self.text)
 
 
 class BoolTemplate(BaseTemplate):
@@ -740,6 +746,7 @@ class BasePlaceholderManager(MpfController):
         future = Util.ensure_future(future, loop=self.machine.clock.loop)
         return value, future
 
+    @lru_cache(typed=True)
     def parse_conditional_template(self, template, default_number=None):
         """Parse a template for condition and number and return a dict."""
         # The following regex will make a dict for event name, condition, and number
