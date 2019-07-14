@@ -183,6 +183,10 @@ class NativeTypeTemplate:
         """Templates are equal if values are equal."""
         return other.value == self.value
 
+    def __repr__(self):
+        """Return String."""
+        return "<NativeTemplate {}>".format(self.value)
+
 
 class MpfFormatter(string.Formatter):
 
