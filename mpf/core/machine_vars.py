@@ -56,12 +56,15 @@ class MachineVariables(LogMixin):
         self.set_machine_var(name="platform_machine", value=platform_machine())
 
     def __getitem__(self, key):
+        """Allow the user to access a machine variable with []. This would be used is machine.variables["var_name"]."""
         return self.get_machine_var(key)
 
     def __setitem__(self, key, value):
+        """Allow the user to set a machine variable with []. Used as machine.variables["var_name"] = value."""
         return self.set_machine_var(key, value)
 
     def get(self, key):
+        """Allow the user to get a machine variable with .get ."""
         return self.get_machine_var(key)
 
     def _load_initial_machine_vars(self) -> None:

@@ -127,7 +127,8 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                                self.remote_processor, self.remote_model,
                                self.remote_firmware)
 
-        self.machine.variables.set_machine_var("fast_{}_firmware".format(self.remote_processor.lower()), self.remote_firmware)
+        self.machine.variables.set_machine_var("fast_{}_firmware".format(self.remote_processor.lower()),
+                                               self.remote_firmware)
         '''machine_var: fast_(x)_firmware
 
         desc: Holds the version number of the firmware for the processor on

@@ -136,8 +136,8 @@ class Credits(Mode):
 
             self.machine.variables.set_machine_var("price_per_game_raw_{}".format(index), price)
             self.machine.variables.set_machine_var("price_per_game_string_{}".format(index),
-                                         self.credits_config['price_tier_template'].format(
-                                             price=price, credits=credits_in_tier))
+                                                   self.credits_config['price_tier_template'].format(
+                                                       price=price, credits=credits_in_tier))
 
             self.debug_log("Pricing Tier Bonus. Price: %s, Credits: %s. "
                            "Credit units for this tier: %s, Credit units this "
@@ -156,7 +156,8 @@ class Credits(Mode):
 
         if self.credits_config['persist_credits_while_off_time']:
             self.machine.variables.configure_machine_var(name='credit_units', persist=True,
-                                               expire_secs=self.credits_config['persist_credits_while_off_time'])
+                                                         expire_secs=self.credits_config[
+                                                             'persist_credits_while_off_time'])
         self.machine.variables.set_machine_var(name='credit_units', value=credit_units)
 
         '''machine_var: credit_units
