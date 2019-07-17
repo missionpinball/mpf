@@ -55,6 +55,15 @@ class MachineVariables(LogMixin):
         self.set_machine_var(name="platform_version", value=platform_info[2])
         self.set_machine_var(name="platform_machine", value=platform_machine())
 
+    def __getitem__(self, key):
+        return self.get_machine_var(key)
+
+    def __setitem__(self, key, value):
+        return self.set_machine_var(key, value)
+
+    def get(self, key):
+        return self.get_machine_var(key)
+
     def _load_initial_machine_vars(self) -> None:
         """Load initial machine var values from config if they did not get loaded from data."""
         if 'machine_vars' not in self.machine.config:

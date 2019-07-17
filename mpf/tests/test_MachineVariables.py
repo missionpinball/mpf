@@ -68,6 +68,15 @@ class TestMachineVariables(MpfTestCase):
         self.assertEqual({'test1': {'value': 42, 'expire': None}, 'test2': {'value': '5', 'expire': None}},
                          self.machine.variables.machine_var_data_manager.data)
 
+    def testVarSetAndGet(self):
+        self.assertEqual(118208660, self.machine.variables["player2_score"])
+
+        self.assertEqual(None, self.machine.variables["player1_score"])
+        self.machine.variables["player1_score"] = 123
+        self.assertEqual(123, self.machine.variables["player1_score"])
+
+        self.assertEqual(17789290, self.machine.variables.get("player3_score"))
+
 
 class TestMalformedMachineVariables(MpfTestCase):
 
@@ -84,3 +93,4 @@ class TestMalformedMachineVariables(MpfTestCase):
         self.assertEqual(118208660, self.machine.variables.get_machine_var("player2_score"))
         self.assertFalse(self.machine.variables.is_machine_var("player5_score"))
         self.assertEqual(None, self.machine.variables.get_machine_var("player5_score"))
+
