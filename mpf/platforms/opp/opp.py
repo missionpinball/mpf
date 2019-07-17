@@ -325,7 +325,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                     curr_bit <<= 1
             else:
                 for index in range(0, 64):
-                    if ((1 << (index & 0x1f)) & opp_inp.oldState[(index & 0x20) >> 5]) == 0:
+                    if ((1 << index) & opp_inp.oldState) == 0:
                         hw_states[opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index + 32)] = 1
                     else:
                         hw_states[opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index + 32)] = 0
@@ -619,8 +619,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                                  "".join(" 0x%02x" % b for b in msg))
                 return
             opp_inp = self.matrixInpAddrDict[chain_serial + '-' + str(msg[0])]
-            opp_inp.oldState[0] = (msg[2] << 24) | (msg[3] << 16) | (msg[4] << 8) | msg[5]
-            opp_inp.oldState[1] = (msg[6] << 24) | (msg[7] << 16) | (msg[8] << 8) | msg[9]
+            opp_inp.oldState = ((msg[2] << 56) | (msg[3] << 48) | (msg[4] << 40) | (msg[5] << 32) |
+                                (msg[6] << 24) | (msg[7] << 16) | (msg[8] << 8) | msg[9])
 
     # pylint: disable-msg=too-many-nested-blocks
     def read_matrix_inp_resp(self, chain_serial, msg):
@@ -648,28 +648,26 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                                  "".join(" 0x%02x" % b for b in msg))
                 return
             opp_inp = self.matrixInpAddrDict[chain_serial + '-' + str(msg[0])]
-            new_state = [(msg[2] << 24) | (msg[3] << 16) | (msg[4] << 8) | msg[5],
-                         (msg[6] << 24) | (msg[7] << 16) | (msg[8] << 8) | msg[9]]
+            new_state = ((msg[2] << 56) | (msg[3] << 48) | (msg[4] << 40) | (msg[5] << 32) |
+                         (msg[6] << 24) | (msg[7] << 16) | (msg[8] << 8) | msg[9])
 
-            # Using a bank so 32 bit python works properly
-            for bank in range(0, 2):
-                changes = opp_inp.oldState[bank] ^ new_state[bank]
-                if changes != 0:
-                    curr_bit = 1
-                    for index in range(0, 32):
-                        if (curr_bit & changes) != 0:
-                            if (curr_bit & new_state[bank]) == 0:
-                                self.machine.switch_controller.process_switch_by_num(
-                                    state=1,
-                                    num=opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index),
-                                    platform=self)
-                            else:
-                                self.machine.switch_controller.process_switch_by_num(
-                                    state=0,
-                                    num=opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index),
-                                    platform=self)
-                        curr_bit <<= 1
-                opp_inp.oldState[bank] = new_state[bank]
+            changes = opp_inp.oldState ^ new_state
+            if changes != 0:
+                curr_bit = 1
+                for index in range(32, 96):
+                    if (curr_bit & changes) != 0:
+                        if (curr_bit & new_state) == 0:
+                            self.machine.switch_controller.process_switch_by_num(
+                                state=1,
+                                num=opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index),
+                                platform=self)
+                        else:
+                            self.machine.switch_controller.process_switch_by_num(
+                                state=0,
+                                num=opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index),
+                                platform=self)
+                    curr_bit <<= 1
+            opp_inp.oldState = new_state
 
         # we can continue to poll
         self._poll_response_received[chain_serial].set()

@@ -153,7 +153,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         strlen = len(self.partMsg)
         message_found = 0
         # Split into individual responses
-        while strlen >= 7:
+        while strlen > 0:
             if self._lost_synch:
                 while strlen > 0:
                     # wait for next gen2 card message
@@ -162,23 +162,25 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
                         break
                     self.partMsg = self.partMsg[1:]
                     strlen -= 1
-                # continue because we could have less then 7 bytes in the buffer
+                # continue because the buffer could be empty
                 continue
 
             # Check if this is a gen2 card address
             if (self.partMsg[0] & 0xe0) == 0x20:
                 # Check if read input
                 if self.partMsg[1] == ord(OppRs232Intf.READ_GEN2_INP_CMD):
-                    self.platform.process_received_message(self.chain_serial, self.partMsg[:7])
-                    message_found += 1
-                    self.partMsg = self.partMsg[7:]
-                    strlen -= 7
+                    if strlen >= 7:
+                        self.platform.process_received_message(self.chain_serial, self.partMsg[:7])
+                        message_found += 1
+                        self.partMsg = self.partMsg[7:]
+                        strlen -= 7
                 # Check if read matrix input
                 elif self.partMsg[1] == ord(OppRs232Intf.READ_MATRIX_INP):
-                    self.platform.process_received_message(self.chain_serial, self.partMsg[:11])
-                    message_found += 1
-                    self.partMsg = self.partMsg[11:]
-                    strlen -= 11
+                    if strlen >= 11:
+                        self.platform.process_received_message(self.chain_serial, self.partMsg[:11])
+                        message_found += 1
+                        self.partMsg = self.partMsg[11:]
+                        strlen -= 11
                 else:
                     # Lost synch
                     self.partMsg = self.partMsg[2:]
