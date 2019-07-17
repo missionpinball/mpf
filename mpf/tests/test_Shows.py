@@ -220,7 +220,7 @@ class TestShows(MpfTestCase):
         self.assertLightChannel("gi_01", 255)
 
         self.assertNotIn("show_from_mode", self.machine.show_player.instances['mode1']['show_player'])
-        self.machine.set_machine_var("test", 42)
+        self.machine.variables.set_machine_var("test", 42)
         self.advance_time_and_run(.01)
         self.assertTrue(self.machine.show_player.instances['mode1']['show_player']['show_from_mode'])
 
@@ -865,8 +865,8 @@ class TestShows(MpfTestCase):
 
     def test_placeholder_in_token(self):
         self.assertNotLightColor("led_02", "blue")
-        self.machine.set_machine_var("test_color", "blue")
-        self.machine.set_machine_var("test_num", "02")
+        self.machine.variables.set_machine_var("test_color", "blue")
+        self.machine.variables.set_machine_var("test_num", "02")
         self.post_event("play_show_with_placeholder_in_token")
         self.advance_time_and_run()
         self.assertLightColor("led_02", "blue")

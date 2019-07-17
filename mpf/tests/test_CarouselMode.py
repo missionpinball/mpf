@@ -75,7 +75,7 @@ class TestCarouselMode(MpfTestCase):
         self.mock_event("conditional_carousel_item1_highlighted")
         self.mock_event("conditional_carousel_item4_highlighted")
         # Start the mode with a machine variable condition
-        self.machine.set_machine_var("player2_score", 500000)
+        self.machine.variables.set_machine_var("player2_score", 500000)
         self.machine.game.player["show_item4"] = False
         self.post_event("start_mode3")
         self.assertEqual(1, self._events["conditional_carousel_item1_highlighted"])
@@ -97,7 +97,7 @@ class TestCarouselMode(MpfTestCase):
         # The mode shouldn't start if all conditions are false (i.e. no items)
         self.mock_event("conditional_carousel_items_empty")
         self.machine.game.player["hide_item1"] = "truthy"
-        self.machine.set_machine_var("player2_score", 0)
+        self.machine.variables.set_machine_var("player2_score", 0)
         self.post_event("start_mode3")
         self.assertEqual(1, self._events["conditional_carousel_items_empty"])
         self.assertNotIn(self.machine.modes.conditional_carousel, self.machine.mode_controller.active_modes)

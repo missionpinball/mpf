@@ -1,6 +1,5 @@
 from unittest.mock import MagicMock
 
-from mpf.core.rgb_color import RGBColor
 from mpf.tests.MpfTestCase import MpfTestCase
 
 

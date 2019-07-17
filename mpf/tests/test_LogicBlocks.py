@@ -392,21 +392,21 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.post_event("set_counter_placeholder")
         self.assertPlaceholderEvaluates(2, "device.counters.counter7.value")
 
-        self.machine.set_machine_var("test2", 4)
+        self.machine.variables.set_machine_var("test2", 4)
         self.post_event("set_counter_placeholder")
         self.assertPlaceholderEvaluates(4, "device.counters.counter7.value")
 
         self.post_event("subtract_counter_placeholder")
         self.assertPlaceholderEvaluates(4, "device.counters.counter7.value")
 
-        self.machine.set_machine_var("test3", 3)
+        self.machine.variables.set_machine_var("test3", 3)
         self.post_event("subtract_counter_placeholder")
         self.assertPlaceholderEvaluates(1, "device.counters.counter7.value")
 
         self.post_event("add_counter_placeholder")
         self.assertPlaceholderEvaluates(1, "device.counters.counter7.value")
 
-        self.machine.set_machine_var("test4", 1)
+        self.machine.variables.set_machine_var("test4", 1)
         self.post_event("add_counter_placeholder")
         self.assertPlaceholderEvaluates(2, "device.counters.counter7.value")
 
@@ -598,7 +598,7 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.assertEqual(1, self._events["logicblock_counter4_complete"])
         self.advance_time_and_run(1)
 
-        self.machine.set_machine_var("start", 1)
+        self.machine.variables.set_machine_var("start", 1)
         self.machine.game.player.hits = 5
         self.mock_event("logicblock_counter4_complete")
         self.mock_event("counter_counter4_hit")

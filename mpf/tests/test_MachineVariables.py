@@ -24,49 +24,49 @@ class TestMachineVariables(MpfTestCase):
                 }
 
     def testSystemInfoVariables(self):
-        self.assertTrue(self.machine.is_machine_var("mpf_version"))
-        self.assertTrue(self.machine.is_machine_var("mpf_extended_version"))
-        self.assertTrue(self.machine.is_machine_var("python_version"))
-        self.assertTrue(self.machine.is_machine_var("platform"))
-        self.assertTrue(self.machine.is_machine_var("platform_system"))
-        self.assertTrue(self.machine.is_machine_var("platform_release"))
-        self.assertTrue(self.machine.is_machine_var("platform_version"))
-        self.assertTrue(self.machine.is_machine_var("platform_machine"))
-        self.assertEqual(version, self.machine.get_machine_var("mpf_version"))
-        self.assertEqual(extended_version, self.machine.get_machine_var("mpf_extended_version"))
+        self.assertTrue(self.machine.variables.is_machine_var("mpf_version"))
+        self.assertTrue(self.machine.variables.is_machine_var("mpf_extended_version"))
+        self.assertTrue(self.machine.variables.is_machine_var("python_version"))
+        self.assertTrue(self.machine.variables.is_machine_var("platform"))
+        self.assertTrue(self.machine.variables.is_machine_var("platform_system"))
+        self.assertTrue(self.machine.variables.is_machine_var("platform_release"))
+        self.assertTrue(self.machine.variables.is_machine_var("platform_version"))
+        self.assertTrue(self.machine.variables.is_machine_var("platform_machine"))
+        self.assertEqual(version, self.machine.variables.get_machine_var("mpf_version"))
+        self.assertEqual(extended_version, self.machine.variables.get_machine_var("mpf_extended_version"))
 
     def testVarLoadAndRemove(self):
-        self.assertFalse(self.machine.is_machine_var("expired_value"))
-        self.assertTrue(self.machine.is_machine_var("not_expired_value"))
-        self.assertTrue(self.machine.is_machine_var("player2_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("expired_value"))
+        self.assertTrue(self.machine.variables.is_machine_var("not_expired_value"))
+        self.assertTrue(self.machine.variables.is_machine_var("player2_score"))
         # should always persist
-        #self.assertTrue(self.machine.machine_vars["player2_score"]["persist"])
+        #self.assertTrue(self.machine.variables.machine_vars["player2_score"]["persist"])
         # random variable does not persist
-        self.assertFalse(self.machine.machine_vars["another_score"]["persist"])
+        self.assertFalse(self.machine.variables.machine_vars["another_score"]["persist"])
         # configured to persist
-        self.assertTrue(self.machine.machine_vars["test1"]["persist"])
-        self.assertTrue(self.machine.machine_vars["test2"]["persist"])
+        self.assertTrue(self.machine.variables.machine_vars["test1"]["persist"])
+        self.assertTrue(self.machine.variables.machine_vars["test2"]["persist"])
         # configured to not persist
-        self.assertFalse(self.machine.machine_vars["test3"]["persist"])
-        self.assertEqual(118208660, self.machine.get_machine_var("player2_score"))
+        self.assertFalse(self.machine.variables.machine_vars["test3"]["persist"])
+        self.assertEqual(118208660, self.machine.variables.get_machine_var("player2_score"))
 
-        self.machine.remove_machine_var("player2_score")
+        self.machine.variables.remove_machine_var("player2_score")
 
-        self.assertFalse(self.machine.is_machine_var("player2_score"))
-        self.assertTrue(self.machine.is_machine_var("player3_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player2_score"))
+        self.assertTrue(self.machine.variables.is_machine_var("player3_score"))
 
-        self.machine.machine_var_data_manager._trigger_save = MagicMock()
-        self.machine.remove_machine_var_search(startswith="player", endswith="_score")
-        self.assertFalse(self.machine.is_machine_var("player2_score"))
-        self.assertFalse(self.machine.is_machine_var("player3_score"))
+        self.machine.variables.machine_var_data_manager._trigger_save = MagicMock()
+        self.machine.variables.remove_machine_var_search(startswith="player", endswith="_score")
+        self.assertFalse(self.machine.variables.is_machine_var("player2_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player3_score"))
 
-        self.assertEqual(123, self.machine.get_machine_var("another_score"))
+        self.assertEqual(123, self.machine.variables.get_machine_var("another_score"))
 
         self.advance_time_and_run(10)
 
-        self.machine.machine_var_data_manager._trigger_save.assert_called_with()
+        self.machine.variables.machine_var_data_manager._trigger_save.assert_called_with()
         self.assertEqual({'test1': {'value': 42, 'expire': None}, 'test2': {'value': '5', 'expire': None}},
-                         self.machine.machine_var_data_manager.data)
+                         self.machine.variables.machine_var_data_manager.data)
 
 
 class TestMalformedMachineVariables(MpfTestCase):
@@ -80,7 +80,7 @@ class TestMalformedMachineVariables(MpfTestCase):
                                  "value": 0}}
 
     def testVarLoads(self):
-        self.assertTrue(self.machine.is_machine_var("player2_score"))
-        self.assertEqual(118208660, self.machine.get_machine_var("player2_score"))
-        self.assertFalse(self.machine.is_machine_var("player5_score"))
-        self.assertEqual(None, self.machine.get_machine_var("player5_score"))
+        self.assertTrue(self.machine.variables.is_machine_var("player2_score"))
+        self.assertEqual(118208660, self.machine.variables.get_machine_var("player2_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player5_score"))
+        self.assertEqual(None, self.machine.variables.get_machine_var("player5_score"))

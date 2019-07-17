@@ -93,12 +93,12 @@ class VariablePlayer(ConfigPlayer):
                 # default to current player
                 self.machine.game.player[var] = value
         elif entry['action'] == "add_machine":
-            old_value = self.machine.get_machine_var(var)
+            old_value = self.machine.variables.get_machine_var(var)
             if old_value is None:
                 old_value = 0
-            self.machine.set_machine_var(var, old_value + value)
+            self.machine.variables.set_machine_var(var, old_value + value)
         elif entry['action'] == "set_machine":
-            self.machine.set_machine_var(var, value)
+            self.machine.variables.set_machine_var(var, value)
         else:
             self.raise_config_error("Invalid value: {}".format(entry), 8, context=context)
 

@@ -81,7 +81,7 @@ class HighScore(AsyncMode):
                         enumerate(zip(entries,
                                       self.high_scores[category]))):
 
-                    self.machine.set_machine_var(
+                    self.machine.variables.set_machine_var(
                         name=category + str(position + 1) + '_label',
                         value=label)
 
@@ -95,7 +95,7 @@ class HighScore(AsyncMode):
 
                     '''
 
-                    self.machine.set_machine_var(
+                    self.machine.variables.set_machine_var(
                         name=category + str(position + 1) + '_name',
                         value=name)
 
@@ -106,7 +106,7 @@ class HighScore(AsyncMode):
 
                     '''
 
-                    self.machine.set_machine_var(
+                    self.machine.variables.set_machine_var(
                         name=category + str(position + 1) + '_value',
                         value=value)
 
