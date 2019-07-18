@@ -1340,20 +1340,20 @@ sound_player:
     action: single|enum(play,stop,stop_looping,load,unload)|play
     track: single|str|None
     volume: single|gain|None
-    pan: single|float_or_token|0
+    pan: single|float_or_token|None
     loops: single|int_or_token|None
     priority: single|int_or_token|None
     start_at: single|secs|None
     fade_in: single|secs|None
     fade_out: single|secs|None
     about_to_finish_time: single|secs|-1
-    max_queue_time: single|secs|None
-    events_when_played: list|str|None
-    events_when_stopped: list|str|None
-    events_when_looping: list|str|None
-    events_when_about_to_finish: list|str|None
-    mode_end_action: single|enum(stop,stop_looping,use_sound_setting,None)|None
-    key: single|str|None
+    max_queue_time: single|secs|-1
+    events_when_played: list|str|use_sound_setting
+    events_when_stopped: list|str|use_sound_setting
+    events_when_looping: list|str|use_sound_setting
+    events_when_about_to_finish: list|str|use_sound_setting
+    mode_end_action: single|enum(stop,stop_looping,use_sound_setting)|use_sound_setting
+    key: single|str|use_sound_setting
 sound_pools:
     __valid_in__: machine, mode                      # todo add to validator
 sound_system:
@@ -1389,6 +1389,7 @@ sounds:
     file: single|str|None
     track: single|str|None
     volume: single|gain|0.5
+    pan: single|float|0
     streaming: single|bool|False
     loops: single|int|0
     priority: single|int|0
