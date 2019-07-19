@@ -364,17 +364,17 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
             self.api_version = StrictVersion(api_version.decode())
 
-            self.machine.set_machine_var("lisy_hardware", type_str)
+            self.machine.variables.set_machine_var("lisy_hardware", type_str)
             '''machine_var: lisy_hardware
 
             desc: Connected LISY hardware. Either LISY1 or LISY80.
             '''
-            self.machine.set_machine_var("lisy_version", lisy_version)
+            self.machine.variables.set_machine_var("lisy_version", lisy_version)
             '''machine_var: lisy_version
 
             desc: LISY version.
             '''
-            self.machine.set_machine_var("lisy_api_version", api_version)
+            self.machine.variables.set_machine_var("lisy_api_version", api_version)
             '''machine_var: lisy_api_version
 
             desc: LISY API version.

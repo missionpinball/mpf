@@ -575,8 +575,8 @@ class MpfTestCase(unittest.TestCase):
         self.assertEqual(balls, self.machine.playfields[playfield].available_balls)
 
     def assertMachineVarEqual(self, value, machine_var):
-        self.assertTrue(self.machine.is_machine_var(machine_var), "Machine Var {} does not exist.".format(machine_var))
-        self.assertEqual(value, self.machine.get_machine_var(machine_var))
+        self.assertTrue(self.machine.variables.is_machine_var(machine_var), "Machine Var {} does not exist.".format(machine_var))
+        self.assertEqual(value, self.machine.variables.get_machine_var(machine_var))
 
     def assertPlayerVarEqual(self, value, player_var):
         self.assertIsNotNone(self.machine.game, "There is no game.")

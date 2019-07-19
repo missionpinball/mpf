@@ -87,13 +87,13 @@ class TestLightPlayer(MpfFakeGameTestCase):
 
     def test_light_player(self):
         self.assertLightColor("led1", 'black')
-        self.machine.set_machine_var("a", 6)
+        self.machine.variables.set_machine_var("a", 6)
         self.advance_time_and_run()
         self.assertLightColor("led1", 'black')
-        self.machine.set_machine_var("a", 7)
+        self.machine.variables.set_machine_var("a", 7)
         self.advance_time_and_run()
         self.assertLightColor("led1", 'red')
-        self.machine.set_machine_var("a", 8)
+        self.machine.variables.set_machine_var("a", 8)
         self.advance_time_and_run()
         self.assertLightColor("led1", 'black')
 
@@ -270,7 +270,7 @@ class TestLightPlayer(MpfFakeGameTestCase):
     def test_led_player_in_game_mode(self):
         self.assertLightColor("led4", 'black')
         self.assertLightColor("led5", 'black')
-        self.machine.set_machine_var("test", 23)
+        self.machine.variables.set_machine_var("test", 23)
         self.advance_time_and_run()
         self.assertLightColor("led4", 'black')
         self.assertLightColor("led5", 'black')
@@ -285,7 +285,7 @@ class TestLightPlayer(MpfFakeGameTestCase):
         self.assertLightColor("led5", 'red')
 
         self.machine.game.player.test = 43
-        self.machine.set_machine_var("test", 24)
+        self.machine.variables.set_machine_var("test", 24)
         self.advance_time_and_run()
 
         self.assertLightColor("led4", 'black')
@@ -300,7 +300,7 @@ class TestLightPlayer(MpfFakeGameTestCase):
         self.assertLightColor("led4", 'black')
         self.assertLightColor("led5", 'black')
 
-        self.machine.set_machine_var("test", 23)
+        self.machine.variables.set_machine_var("test", 23)
         self.advance_time_and_run()
         self.assertLightColor("led4", 'black')
         self.assertLightColor("led5", 'black')
@@ -327,7 +327,7 @@ class TestLightPlayer(MpfFakeGameTestCase):
 
         # mode not loaded. does nothing
         self.assertLightColor("led4", 'black')
-        self.machine.set_machine_var("test", 23)
+        self.machine.variables.set_machine_var("test", 23)
         self.advance_time_and_run()
         self.assertLightColor("led4", 'black')
 

@@ -207,12 +207,12 @@ class TestFast(MpfTestCase):
         self.assertEqual(16, self.machine.default_platform.io_boards[3].switch_count)
         self.assertEqual(16, self.machine.default_platform.io_boards[3].driver_count)
 
-        self.assertEqual("00.88", self.machine.get_machine_var("fast_dmd_firmware"))
-        self.assertEqual("FP-CPU-002-1", self.machine.get_machine_var("fast_dmd_model"))
-        self.assertEqual("00.89", self.machine.get_machine_var("fast_rgb_firmware"))
-        self.assertEqual("FP-CPU-002-1", self.machine.get_machine_var("fast_rgb_model"))
-        self.assertEqual("01.03", self.machine.get_machine_var("fast_net_firmware"))
-        self.assertEqual("FP-CPU-002-1", self.machine.get_machine_var("fast_net_model"))
+        self.assertEqual("00.88", self.machine.variables.get_machine_var("fast_dmd_firmware"))
+        self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_dmd_model"))
+        self.assertEqual("00.89", self.machine.variables.get_machine_var("fast_rgb_firmware"))
+        self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_rgb_model"))
+        self.assertEqual("01.03", self.machine.variables.get_machine_var("fast_net_firmware"))
+        self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_net_model"))
 
     def test_coils(self):
         self._test_pulse()

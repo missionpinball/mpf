@@ -513,11 +513,11 @@ class MachinePlaceholder(BasePlaceholder):
 
     def __getitem__(self, item):
         """Array access."""
-        return self._machine.get_machine_var(item)
+        return self._machine.variables.get_machine_var(item)
 
     def __getattr__(self, item):
         """Attribute access."""
-        return self._machine.get_machine_var(item)
+        return self._machine.variables.get_machine_var(item)
 
 
 class SettingsPlaceholder(BasePlaceholder):

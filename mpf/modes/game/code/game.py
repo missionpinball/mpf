@@ -415,8 +415,8 @@ class Game(AsyncMode):
         # set playerX_score variables
         if self.player_list:
             for player in self.player_list:
-                self.machine.configure_machine_var(name='player{}_score'.format(player.number), persist=True)
-                self.machine.set_machine_var(
+                self.machine.variables.configure_machine_var(name='player{}_score'.format(player.number), persist=True)
+                self.machine.variables.set_machine_var(
                     name='player{}_score'.format(player.number),
                     value=player.score)
                 '''machine_var: player(x)_score
@@ -437,7 +437,7 @@ class Game(AsyncMode):
 
             # remove all other vars
             for i in range(len(self.player_list) + 1, self.max_players + 1):
-                self.machine.remove_machine_var('player{}_score'.format(i))
+                self.machine.variables.remove_machine_var('player{}_score'.format(i))
 
         yield from self.machine.events.post_async('game_ended')
         '''event: game_ended

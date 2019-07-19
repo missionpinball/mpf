@@ -77,11 +77,11 @@ class TestPlaceholderManagerWithMachine(MpfFakeGameTestCase):
         self.assertFalse(subscription.done())
         self.assertEqual(0, value)
 
-        self.machine.set_machine_var("c", 3)
+        self.machine.variables.set_machine_var("c", 3)
         self.advance_time_and_run()
         self.assertFalse(subscription.done())
 
-        self.machine.set_machine_var("a", 3)
+        self.machine.variables.set_machine_var("a", 3)
         self.advance_time_and_run()
         self.assertTrue(subscription.done())
 

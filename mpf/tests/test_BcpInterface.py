@@ -265,7 +265,7 @@ class TestBcpInterface(MpfBcpTestCase):
         self._bcp_external_client.reset_and_return_queue()
 
         # Create a new machine variable
-        self.machine.set_machine_var("test_var", "testing")
+        self.machine.variables.set_machine_var("test_var", "testing")
         queue = self._bcp_external_client.reset_and_return_queue()
 
         self.assertIn(
@@ -275,7 +275,7 @@ class TestBcpInterface(MpfBcpTestCase):
                                   "prev_value": None}),
             queue)
 
-        self.machine.set_machine_var("test_var", "2nd")
+        self.machine.variables.set_machine_var("test_var", "2nd")
         queue = self._bcp_external_client.reset_and_return_queue()
         self.assertIn(
             ("machine_variable", {"value": "2nd",
@@ -288,7 +288,7 @@ class TestBcpInterface(MpfBcpTestCase):
         self._bcp_external_client.send('monitor_stop', {'category': 'machine_vars'})
         self.advance_time_and_run()
         self._bcp_external_client.reset_and_return_queue()
-        self.machine.set_machine_var("test_var", "3rd")
+        self.machine.variables.set_machine_var("test_var", "3rd")
 
         # The BCP queue should be empty
         queue = self._bcp_external_client.reset_and_return_queue()
@@ -339,7 +339,7 @@ class TestBcpInterface(MpfBcpTestCase):
         self._bcp_external_client.send('monitor_stop', {'category': 'player_vars'})
         self.advance_time_and_run()
         self._bcp_external_client.reset_and_return_queue()
-        self.machine.set_machine_var("test_var", "3rd")
+        self.machine.variables.set_machine_var("test_var", "3rd")
 
         # The BCP queue should be empty
         queue = self._bcp_external_client.reset_and_return_queue()
