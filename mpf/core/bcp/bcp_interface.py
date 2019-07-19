@@ -402,7 +402,7 @@ class BcpInterface(MpfController):
     def _monitor_machine_vars(self, client):
         # Setup machine variables to be monitored (if necessary)
         if not self.machine.bcp.transport.get_transports_for_handler("_machine_vars"):
-            self.machine.machine_var_monitor = True
+            self.machine.variables.machine_var_monitor = True
             self.machine.register_monitor('machine_vars', self._machine_var_change)
 
         # Send initial machine variable values
