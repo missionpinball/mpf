@@ -576,7 +576,10 @@ class BasePlaceholderManager(MpfController):
 
     @staticmethod
     def _parse_template(template_str):
-        return ast.parse(template_str, mode='eval').body
+        try:
+            return ast.parse(template_str, mode='eval').body
+        except SyntaxError:
+            raise AssertionError("Failed to parse template {}".format(template_str))
 
     @staticmethod
     def _eval_num(node, variables, subscribe):
