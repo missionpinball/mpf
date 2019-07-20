@@ -177,6 +177,9 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
                         message_found += 1
                         self.partMsg = self.partMsg[7:]
                         strlen -= 7
+                    else:
+                        # message not complete yet
+                        break
                 # Check if read matrix input
                 elif self.partMsg[1] == ord(OppRs232Intf.READ_MATRIX_INP):
                     if strlen >= 11:
@@ -184,6 +187,9 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
                         message_found += 1
                         self.partMsg = self.partMsg[11:]
                         strlen -= 11
+                    else:
+                        # message not complete yet
+                        break
                 else:
                     # Lost synch
                     self.partMsg = self.partMsg[2:]
