@@ -98,7 +98,33 @@ class BaseSerialCommunicator:
             char = yield from self.reader.readexactly(1)
             buffer += char
             if char == separator and len(buffer) > min_chars:
+                if self.debug:
+                    self.log.debug("%s received: %s (%s)", self, buffer, "".join(" 0x%02x" % b for b in buffer))
                 return buffer
+
+    @asyncio.coroutine
+    def read(self, n=-1):
+        """Read up to `n` bytes from the stream and log the result if debug is true.
+
+        See :func:`StreamReader.read` for details about read and the `n` parameter.
+        """
+        try:
+            resp = yield from self.reader.read(n)
+        except asyncio.CancelledError:  # pylint: disable-msg=try-except-raise
+            raise
+        except Exception as e:  # pylint: disable-msg=broad-except
+            self.log.warning("Serial error: {}".format(e))
+            return None
+
+        # we either got empty response (-> socket closed) or and error
+        if not resp:
+            self.log.warning("Serial closed.")
+            self.machine.stop("Serial {} closed.".format(self.port))
+            return None
+
+        if self.debug:
+            self.log.debug("%s received: %s (%s)", self, resp, "".join(" 0x%02x" % b for b in resp))
+        return resp
 
     @asyncio.coroutine
     def _identify_connection(self):
@@ -142,20 +168,7 @@ class BaseSerialCommunicator:
     @asyncio.coroutine
     def _socket_reader(self):
         while True:
-            try:
-                resp = yield from self.reader.read(100)
-            except asyncio.CancelledError:  # pylint: disable-msg=try-except-raise
-                raise
-            except Exception as e:  # pylint: disable-msg=broad-except
-                self.log.warning("Serial error: {}".format(e))
-                resp = None
-
-            # we either got empty response (-> socket closed) or and error
-            if not resp:
-                self.log.warning("Serial closed.")
-                self.machine.stop("Serial {} closed.".format(self.port))
+            resp = yield from self.read(128)
+            if resp is None:
                 return
-
-            if self.debug:
-                self.log.debug("%s received: %s (%s)", self, resp, "".join(" 0x%02x" % b for b in resp))
             self._parse_msg(resp)
