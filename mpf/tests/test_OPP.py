@@ -101,7 +101,7 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         board2_version = b'\x21\x02\x00\x02\x00\x00'  # 0.2.0.0
         board3_version = b'\x22\x02\x00\x02\x00\x00'  # 0.2.0.0
         board4_version = b'\x23\x02\x00\x02\x00\x00'  # 0.2.0.0
-        inputs1_message = b"\x20\x08\x00\x00\x00\x0c"    # inputs 0+1 off, 2+3 on, 8 on
+        inputs1_message = b"\x20\x08\x00\xff\x00\x0c"    # inputs 0+1 off, 2+3 on, 8 on
         inputs2_message = b"\x21\x08\x00\x00\x00\x00"
         inputs3a_message = b"\x23\x08\x00\x00\x00\x00"
         inputs3b_message = b"\x23\x19\x00\x00\x00\x00\x00\x00\x00\x01"
