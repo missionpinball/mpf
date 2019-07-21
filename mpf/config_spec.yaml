@@ -669,18 +669,18 @@ light_player:
     priority: single|int_or_token|0
 lisy:
     __valid_in__: machine
-    port: single|str|None
     baud: single|int|None
-    poll_hz: single|int|100
-    disable_dtr: single|bool|True
-    console_log: single|enum(none,basic,full)|none
     debug: single|bool|False
     display_flash_frequency: single|float|1.0
-    file_log: single|enum(none,basic,full)|basic
+    disable_dtr: single|bool|True
     connection: single|enum(network,serial)|network
-    network_port: single|int|None
-    network_host: single|str|None
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
     max_led_batch_size: single|int|3
+    network_host: single|str|None
+    network_port: single|int|None
+    poll_hz: single|int|100
+    port: single|str|None
 logic_blocks_common:
     enable_events: event_handler|str:ms|None
     disable_events: event_handler|str:ms|None
