@@ -242,7 +242,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
     __slots__ = ["config", "_writer", "_reader", "_poll_task", "_watchdog_task", "_number_of_lamps",
                  "_number_of_solenoids", "_number_of_displays", "_inputs", "_coils_start_at_one",
                  "_bus_lock", "api_version", "_number_of_switches", "_number_of_modern_lights",
-                 "_light_system"]  # type: List[str]
+                 "_light_system", "_send_length_of_command"]  # type: List[str]
 
     def __init__(self, machine) -> None:
         """Initialise platform."""
@@ -265,6 +265,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         self._configure_device_logging_and_debug("lisy", self.config)
         self.api_version = None
         self._light_system = None
+        self._send_length_of_command = self.config['send_length_after_command']
 
     def _disable_dts_on_start_of_serial(self):
         """Prevent DTS toggling when opening the serial.
@@ -662,14 +663,17 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         """Send a command with optional payload."""
         assert self._writer is not None
 
-        if byte is not None:
-            cmd_str = bytes([cmd])
-            cmd_str += byte
-            self.log.debug("Sending %s %s", cmd, byte)
-            self._writer.write(cmd_str)
-        else:
-            self.log.debug("Sending %s", cmd)
-            self._writer.write(bytes([cmd]))
+        if not byte:
+            byte = bytes()
+
+        if self._send_length_of_command:
+            length = len(byte) + 2  # include command and length byte
+            byte = bytes([length]) + byte
+
+        cmd_str = bytes([cmd])
+        cmd_str += byte
+        self.log.debug("Sending %s %s", cmd, byte)
+        self._writer.write(cmd_str)
 
     @asyncio.coroutine
     def send_byte_and_read_response(self, cmd: int, byte: bytes = None, read_bytes=0):

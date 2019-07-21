@@ -681,6 +681,7 @@ lisy:
     network_port: single|int|None
     poll_hz: single|int|100
     port: single|str|None
+    send_length_after_command: single|bool|False
 logic_blocks_common:
     enable_events: event_handler|str:ms|None
     disable_events: event_handler|str:ms|None
