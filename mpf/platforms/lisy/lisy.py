@@ -171,7 +171,7 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
             result = map(lambda x: x.get_dpgfedcba_encoding(), mapping)
         elif self._type_of_display == 4:
             mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, fourteen_segments)
-            result = map(lambda x: x.get_pinmame_encoding(), mapping)
+            result = map(lambda x: x.get_apc_encoding(), mapping)
         elif self._type_of_display == 5:
             mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, ascii_segments,
                                                                embed_dots=False)
