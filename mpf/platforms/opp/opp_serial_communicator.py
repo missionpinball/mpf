@@ -156,7 +156,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         strlen = len(self.partMsg)
         message_found = 0
         # Split into individual responses
-        while strlen > 0:
+        while strlen > 2:
             if self._lost_synch:
                 while strlen > 0:
                     # wait for next gen2 card message
@@ -165,11 +165,8 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
                         break
                     self.partMsg = self.partMsg[1:]
                     strlen -= 1
-                # continue because the buffer could be empty
-                continue
-
             # Check if this is a gen2 card address
-            if (self.partMsg[0] & 0xe0) == 0x20:
+            elif (self.partMsg[0] & 0xe0) == 0x20:
                 # Check if read input
                 if self.partMsg[1] == ord(OppRs232Intf.READ_GEN2_INP_CMD):
                     if strlen >= 7:
