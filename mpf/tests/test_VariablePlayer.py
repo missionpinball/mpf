@@ -153,8 +153,8 @@ class TestVariablePlayer(MpfFakeGameTestCase):
         self.advance_time_and_run()
 
     def test_blocking(self):
-        self.machine.set_machine_var("player1_score", 42)
-        self.machine.set_machine_var("player2_score", 23)
+        self.machine.variables.set_machine_var("player1_score", 42)
+        self.machine.variables.set_machine_var("player2_score", 23)
 
         # start game
         self.start_game()
@@ -189,9 +189,9 @@ class TestVariablePlayer(MpfFakeGameTestCase):
         self.stop_game()
 
         self.assertMachineVarEqual(1200, "player1_score")
-        self.assertFalse(self.machine.is_machine_var("player2_score"))
-        self.assertFalse(self.machine.is_machine_var("player3_score"))
-        self.assertFalse(self.machine.is_machine_var("player4_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player2_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player3_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player4_score"))
 
     def test_blocking_multiple_with_logic_block(self):
         # this test was adapted from a real game
@@ -235,8 +235,8 @@ class TestVariablePlayer(MpfFakeGameTestCase):
         # start non game mode outside of game
         self.post_event("start_non_game_mode")
 
-        self.machine.set_machine_var("test", "321")
-        self.machine.set_machine_var("test2", 3)
+        self.machine.variables.set_machine_var("test", "321")
+        self.machine.variables.set_machine_var("test2", 3)
 
         self.post_event("test_event")
 

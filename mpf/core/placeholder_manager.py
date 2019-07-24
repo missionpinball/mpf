@@ -513,11 +513,11 @@ class MachinePlaceholder(BasePlaceholder):
 
     def __getitem__(self, item):
         """Array access."""
-        return self._machine.get_machine_var(item)
+        return self._machine.variables.get_machine_var(item)
 
     def __getattr__(self, item):
         """Attribute access."""
-        return self._machine.get_machine_var(item)
+        return self._machine.variables.get_machine_var(item)
 
 
 class SettingsPlaceholder(BasePlaceholder):
@@ -576,7 +576,10 @@ class BasePlaceholderManager(MpfController):
 
     @staticmethod
     def _parse_template(template_str):
-        return ast.parse(template_str, mode='eval').body
+        try:
+            return ast.parse(template_str, mode='eval').body
+        except SyntaxError:
+            raise AssertionError("Failed to parse template {}".format(template_str))
 
     @staticmethod
     def _eval_num(node, variables, subscribe):

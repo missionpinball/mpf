@@ -101,10 +101,10 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         board2_version = b'\x21\x02\x00\x02\x00\x00'  # 0.2.0.0
         board3_version = b'\x22\x02\x00\x02\x00\x00'  # 0.2.0.0
         board4_version = b'\x23\x02\x00\x02\x00\x00'  # 0.2.0.0
-        inputs1_message = b"\x20\x08\x00\x00\x00\x0c"    # inputs 0+1 off, 2+3 on, 8 on
+        inputs1_message = b"\x20\x08\x00\xff\x00\x0c"    # inputs 0+1 off, 2+3 on, 8 on
         inputs2_message = b"\x21\x08\x00\x00\x00\x00"
         inputs3a_message = b"\x23\x08\x00\x00\x00\x00"
-        inputs3b_message = b"\x23\x19\x00\x00\x00\x00\x00\x00\x00\x00"
+        inputs3b_message = b"\x23\x19\x00\x00\x00\x00\x00\x00\x00\x01"
 
         self.serialMock.expected_commands = {
             b'\xf0\xff': b'\xf0\x20\x21\x22\x23\xff',     # boards 20 + 21 + 22 + 23 installed
@@ -170,7 +170,50 @@ LEDs:
 """
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
-    def testDualWoundCoils(self):
+    def testOpp(self):
+        self._test_dual_wound_coils()
+        self._test_switches()
+
+    def _test_switches(self):
+        # initial switches
+        self.assertTrue(self.machine.switch_controller.is_active("s_test"))
+        self.assertTrue(self.machine.switch_controller.is_active("s_test_no_debounce"))
+        self.assertTrue(self.machine.switch_controller.is_active("s_test_nc"))
+        self.assertFalse(self.machine.switch_controller.is_active("s_flipper"))
+        self.assertTrue(self.machine.switch_controller.is_active("s_test_card2"))
+        self.assertTrue(self.machine.switch_controller.is_active("s_matrix_test"))
+        self.assertFalse(self.machine.switch_controller.is_active("s_matrix_test2"))
+        self.assertTrue(self.machine.switch_controller.is_active("s_matrix_test3"))
+
+        # switch change
+        permanent_commands = copy.deepcopy(self.serialMock.permanent_commands)
+
+        inputs1_message = b"\x20\x08\x00\x00\x01\x08"  # inputs 0+1+2 off, 3 on, 8 off
+        inputs2_message = b'\x21\x08\x00\x00\x00\x00'
+        inputs3a_message = b"\x23\x08\x00\x00\x00\x00"
+        inputs3b_message = b"\x23\x19\x80\x00\x00\x00\x00\x01\x00\x00"
+        self.serialMock.permanent_commands = {
+            self._crc_message(b'\x20\x08\x00\x00\x00\x00', False) + self._crc_message(b'\x21\x08\x00\x00\x00\x00', False) +
+                self._crc_message(b'\x23\x08\x00\x00\x00\x00', False) + self._crc_message(b'\x23\x19\x00\x00\x00\x00\x00\x00\x00\x00'):
+                self._crc_message(inputs1_message, False) + self._crc_message(inputs2_message, False) +
+                self._crc_message(inputs3a_message, False) + self._crc_message(inputs3b_message),  # read inputs
+        }
+
+        while self.machine.switch_controller.is_active("s_test_nc"):
+            self.advance_time_and_run(0.1)
+
+        self.assertTrue(self.machine.switch_controller.is_active("s_test"))
+        self.assertTrue(self.machine.switch_controller.is_active("s_test_no_debounce"))
+        self.assertFalse(self.machine.switch_controller.is_active("s_test_nc"))
+        self.assertFalse(self.machine.switch_controller.is_active("s_flipper"))
+        self.assertFalse(self.machine.switch_controller.is_active("s_test_card2"))
+        self.assertFalse(self.machine.switch_controller.is_active("s_matrix_test"))
+        self.assertTrue(self.machine.switch_controller.is_active("s_matrix_test2"))
+        self.assertFalse(self.machine.switch_controller.is_active("s_matrix_test3"))
+
+        self.serialMock.permanent_commands = permanent_commands
+
+    def _test_dual_wound_coils(self):
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x02\x24\x0a\x00')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x23\x0a\x00')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x17\x03\x03')] = False

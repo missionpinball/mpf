@@ -135,7 +135,7 @@ class TextUi(MpfController):
 
         self.machine.switch_controller.add_monitor(self._update_switches)
         self.machine.register_monitor("machine_vars", self._update_machine_vars)
-        self.machine.machine_var_monitor = True
+        self.machine.variables.machine_var_monitor = True
         self.machine.bcp.interface.register_command_callback(
             "status_report", self._bcp_status_report)
 
@@ -326,7 +326,7 @@ class TextUi(MpfController):
         self._machine_widgets = []
         self._machine_widgets.append(Label("MACHINE VARIABLES"))
         self._machine_widgets.append(Divider())
-        machine_vars = self.machine.machine_vars
+        machine_vars = self.machine.variables.machine_vars
         for name, value in machine_vars.items():
             self._machine_widgets.append(Label("{}: {}".format(name, value['value'])))
         self._layout_change = True

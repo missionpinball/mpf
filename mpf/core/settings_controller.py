@@ -76,10 +76,10 @@ class SettingsController(MpfController):
         if setting_name not in self._settings:
             raise AssertionError("Invalid setting {}".format(setting_name))
 
-        if not self.machine.is_machine_var(self._settings[setting_name].machine_var):
+        if not self.machine.variables.is_machine_var(self._settings[setting_name].machine_var):
             value = self._settings[setting_name].default
         else:
-            value = self.machine.get_machine_var(self._settings[setting_name].machine_var)
+            value = self.machine.variables.get_machine_var(self._settings[setting_name].machine_var)
 
         self.debug_log("Retrieving value: {}={}".format(setting_name, value))
 
@@ -95,5 +95,5 @@ class SettingsController(MpfController):
         if value not in self._settings[setting_name].values:
             raise AssertionError("Invalid value {} for setting {}".format(value, setting_name))
 
-        self.machine.configure_machine_var(name=self._settings[setting_name].machine_var, persist=True)
-        self.machine.set_machine_var(name=self._settings[setting_name].machine_var, value=value)
+        self.machine.variables.configure_machine_var(name=self._settings[setting_name].machine_var, persist=True)
+        self.machine.variables.set_machine_var(name=self._settings[setting_name].machine_var, value=value)

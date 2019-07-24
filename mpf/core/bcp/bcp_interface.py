@@ -105,7 +105,7 @@ class BcpInterface(MpfController):
     def _bcp_receive_set_machine_var(self, client, name, value):
         """Set machine var via bcp."""
         del client
-        self.machine.set_machine_var(name, value)
+        self.machine.variables.set_machine_var(name, value)
 
     @asyncio.coroutine
     def _service_stop(self, client):
@@ -402,7 +402,7 @@ class BcpInterface(MpfController):
     def _monitor_machine_vars(self, client):
         # Setup machine variables to be monitored (if necessary)
         if not self.machine.bcp.transport.get_transports_for_handler("_machine_vars"):
-            self.machine.machine_var_monitor = True
+            self.machine.variables.machine_var_monitor = True
             self.machine.register_monitor('machine_vars', self._machine_var_change)
 
         # Send initial machine variable values
@@ -421,7 +421,7 @@ class BcpInterface(MpfController):
     def _send_machine_vars(self, client):
         self.machine.bcp.transport.send_to_client(
             client, bcp_command='settings', settings=Util.convert_to_simply_type(self.machine.settings.get_settings()))
-        for var_name, settings in self.machine.machine_vars.items():
+        for var_name, settings in self.machine.variables.machine_vars.items():
             self.machine.bcp.transport.send_to_client(client, bcp_command='machine_variable',
                                                       name=var_name,
                                                       value=settings['value'])

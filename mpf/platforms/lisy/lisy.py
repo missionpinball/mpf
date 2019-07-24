@@ -148,8 +148,9 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
             # display info for display
             display_info = yield from (self.platform.send_byte_and_read_response(
                 LisyDefines.InfoGetDisplayDetails, bytearray([self.number]), 2))
-            if 0 > display_info[1] > 6:
-                raise AssertionError("Invalid display type {} in hardware".format(self._type_of_display))
+            if 1 > display_info[1] > 6:
+                raise AssertionError("Invalid display type {} reported by hardware for display {}".format(
+                    self._type_of_display, self.number))
 
             self._length_of_display = int(display_info[0])
             self._type_of_display = display_info[1]
@@ -170,7 +171,7 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
             result = map(lambda x: x.get_dpgfedcba_encoding(), mapping)
         elif self._type_of_display == 4:
             mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, fourteen_segments)
-            result = map(lambda x: x.get_pinmame_encoding(), mapping)
+            result = map(lambda x: x.get_apc_encoding(), mapping)
         elif self._type_of_display == 5:
             mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, ascii_segments,
                                                                embed_dots=False)
@@ -241,7 +242,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
     __slots__ = ["config", "_writer", "_reader", "_poll_task", "_watchdog_task", "_number_of_lamps",
                  "_number_of_solenoids", "_number_of_displays", "_inputs", "_coils_start_at_one",
                  "_bus_lock", "api_version", "_number_of_switches", "_number_of_modern_lights",
-                 "_light_system"]  # type: List[str]
+                 "_light_system", "_send_length_of_command"]  # type: List[str]
 
     def __init__(self, machine) -> None:
         """Initialise platform."""
@@ -264,6 +265,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         self._configure_device_logging_and_debug("lisy", self.config)
         self.api_version = None
         self._light_system = None
+        self._send_length_of_command = self.config['send_length_after_command']
 
     def _disable_dts_on_start_of_serial(self):
         """Prevent DTS toggling when opening the serial.
@@ -364,17 +366,17 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
             self.api_version = StrictVersion(api_version.decode())
 
-            self.machine.set_machine_var("lisy_hardware", type_str)
+            self.machine.variables.set_machine_var("lisy_hardware", type_str)
             '''machine_var: lisy_hardware
 
             desc: Connected LISY hardware. Either LISY1 or LISY80.
             '''
-            self.machine.set_machine_var("lisy_version", lisy_version)
+            self.machine.variables.set_machine_var("lisy_version", lisy_version)
             '''machine_var: lisy_version
 
             desc: LISY version.
             '''
-            self.machine.set_machine_var("lisy_api_version", api_version)
+            self.machine.variables.set_machine_var("lisy_api_version", api_version)
             '''machine_var: lisy_api_version
 
             desc: LISY API version.
@@ -661,14 +663,17 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         """Send a command with optional payload."""
         assert self._writer is not None
 
-        if byte is not None:
-            cmd_str = bytes([cmd])
-            cmd_str += byte
-            self.log.debug("Sending %s %s", cmd, byte)
-            self._writer.write(cmd_str)
-        else:
-            self.log.debug("Sending %s", cmd)
-            self._writer.write(bytes([cmd]))
+        if not byte:
+            byte = bytes()
+
+        if self._send_length_of_command:
+            length = len(byte) + 2  # include command and length byte
+            byte = bytes([length]) + byte
+
+        cmd_str = bytes([cmd])
+        cmd_str += byte
+        self.log.debug("Sending %s %s", cmd, byte)
+        self._writer.write(cmd_str)
 
     @asyncio.coroutine
     def send_byte_and_read_response(self, cmd: int, byte: bytes = None, read_bytes=0):

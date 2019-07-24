@@ -1,29 +1,24 @@
 # pylint: disable-msg=too-many-lines
 """Contains the MachineController base class."""
+import asyncio
 import logging
 import os
-
 import sys
 import threading
-from platform import platform, python_version, system, release, version, system_alias, machine
-
-import copy
-
 from typing import Any, Callable, Dict, List, Set, Generator
-
-import asyncio
 
 from pkg_resources import iter_entry_points
 
-from mpf._version import __version__, version as mpf_version, extended_version as mpf_extended_version
+from mpf._version import __version__
 from mpf.core.clock import ClockBase
 from mpf.core.config_processor import ConfigProcessor
 from mpf.core.config_validator import ConfigValidator
 from mpf.core.data_manager import DataManager
 from mpf.core.delays import DelayManager
 from mpf.core.device_manager import DeviceCollection
-from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
+from mpf.core.machine_vars import MachineVariables
+from mpf.core.utility_functions import Util
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -89,8 +84,8 @@ class MachineController(LogMixin):
     """
 
     __slots__ = ["log", "options", "config_processor", "mpf_path", "machine_path", "_exception", "_boot_holds",
-                 "is_init_done", "_done", "monitors", "plugins", "custom_code", "modes", "game", "machine_vars",
-                 "machine_var_monitor", "machine_var_data_manager", "thread_stopper", "config", "config_validator",
+                 "is_init_done", "_done", "monitors", "plugins", "custom_code", "modes", "game",
+                 "variables", "thread_stopper", "config", "config_validator",
                  "machine_config", "delay", "hardware_platforms", "default_platform", "clock",
                  "stop_future", "events", "switch_controller", "mode_controller", "settings", "asset_manager",
                  "bcp", "ball_controller", "show_controller", "placeholder_manager", "device_manager", "auditor",
@@ -127,9 +122,7 @@ class MachineController(LogMixin):
         self.custom_code = list()   # type: List[CustomCode]
         self.modes = DeviceCollection(self, 'modes', None)          # type: Dict[str, Mode]
         self.game = None            # type: Game
-        self.machine_vars = dict()
-        self.machine_var_monitor = False
-        self.machine_var_data_manager = None    # type: DataManager
+        self.variables = MachineVariables(self)                     # type: MachineVariables
         self.thread_stopper = threading.Event()
 
         self.config = None      # type: Any
@@ -336,7 +329,7 @@ class MachineController(LogMixin):
         except KeyError:
             credit_string = 'FREE PLAY'
 
-        self.set_machine_var('credits_string', credit_string)
+        self.variables.set_machine_var('credits_string', credit_string)
         '''machine_var: credits_string
 
         desc: Holds a displayable string which shows how many
@@ -399,48 +392,10 @@ class MachineController(LogMixin):
 
     def _load_machine_vars(self) -> None:
         """Load machine vars from data manager."""
-        self.machine_var_data_manager = self.create_data_manager('machine_vars')
-
+        machine_var_data_manager = self.create_data_manager('machine_vars')
         current_time = self.clock.get_time()
 
-        for name, settings in (
-                iter(self.machine_var_data_manager.get_data().items())):
-
-            if not isinstance(settings, dict) or "value" not in settings:
-                continue
-
-            if ('expire' in settings and settings['expire'] and
-                    settings['expire'] < current_time):
-
-                continue
-
-            self.set_machine_var(name=name, value=settings['value'])
-
-        self._load_initial_machine_vars()
-
-        # Create basic system information machine variables
-        self.set_machine_var(name="mpf_version", value=mpf_version)
-        self.set_machine_var(name="mpf_extended_version", value=mpf_extended_version)
-        self.set_machine_var(name="python_version", value=python_version())
-        self.set_machine_var(name="platform", value=platform(aliased=True))
-        platform_info = system_alias(system(), release(), version())
-        self.set_machine_var(name="platform_system", value=platform_info[0])
-        self.set_machine_var(name="platform_release", value=platform_info[1])
-        self.set_machine_var(name="platform_version", value=platform_info[2])
-        self.set_machine_var(name="platform_machine", value=machine())
-
-    def _load_initial_machine_vars(self) -> None:
-        """Load initial machine var values from config if they did not get loaded from data."""
-        if 'machine_vars' not in self.config:
-            return
-
-        config = self.config['machine_vars']
-        for name, element in config.items():
-            if name not in self.machine_vars:
-                element = self.config_validator.validate_config("machine_vars", copy.deepcopy(element))
-                self.set_machine_var(name=name,
-                                     value=Util.convert_to_type(element['initial_value'], element['value_type']))
-            self.configure_machine_var(name=name, persist=element.get('persist', False))
+        self.variables.load_machine_vars(machine_var_data_manager, current_time)
 
     def _set_machine_path(self) -> None:
         """Add the machine folder to sys.path so we can import modules from it."""
@@ -811,148 +766,6 @@ class MachineController(LogMixin):
         """Stop all platforms."""
         for hardware_platform in list(self.hardware_platforms.values()):
             hardware_platform.stop()
-
-    def _write_machine_var_to_disk(self, name: str) -> None:
-        """Write value to disk."""
-        if self.machine_vars[name]['persist'] and self.config['mpf']['save_machine_vars_to_disk']:
-            self._write_machine_vars_to_disk()
-
-    def _write_machine_vars_to_disk(self):
-        """Update machine vars on disk."""
-        self.machine_var_data_manager.save_all(
-            {name: {"value": var["value"], "expire": var['expire_secs']}
-             for name, var in self.machine_vars.items() if var["persist"]})
-
-    def get_machine_var(self, name: str) -> Any:
-        """Return the value of a machine variable.
-
-        Args:
-            name: String name of the variable you want to get that value for.
-
-        Returns:
-            The value of the variable if it exists, or None if the variable
-            does not exist.
-
-        """
-        try:
-            return self.machine_vars[name]['value']
-        except KeyError:
-            return None
-
-    def is_machine_var(self, name: str) -> bool:
-        """Return true if machine variable exists."""
-        return name in self.machine_vars
-
-    def configure_machine_var(self, name: str, persist: bool, expire_secs: int = None) -> None:
-        """Create a new machine variable.
-
-        Args:
-            name: String name of the variable.
-            persist: Boolean as to whether this variable should be saved to
-                disk so it's available the next time MPF boots.
-            expire_secs: Optional number of seconds you'd like this variable
-                to persist on disk for. When MPF boots, if the expiration time
-                of the variable is in the past, it will not be loaded.
-                For example, this lets you write the number of credits on
-                the machine to disk to persist even during power off, but you
-                could set it so that those only stay persisted for an hour.
-        """
-        if name not in self.machine_vars:
-            self.machine_vars[name] = {'value': None, 'persist': persist, 'expire_secs': expire_secs}
-        else:
-            self.machine_vars[name]['persist'] = persist
-            self.machine_vars[name]['expire_secs'] = expire_secs
-
-    def set_machine_var(self, name: str, value: Any) -> None:
-        """Set the value of a machine variable.
-
-        Args:
-            name: String name of the variable you're setting the value for.
-            value: The value you're setting. This can be any Type.
-        """
-        if name not in self.machine_vars:
-            self.configure_machine_var(name=name, persist=False)
-            prev_value = None
-            change = True
-        else:
-            prev_value = self.machine_vars[name]['value']
-            try:
-                change = value - prev_value
-            except TypeError:
-                change = prev_value != value
-
-        # set value
-        self.machine_vars[name]['value'] = value
-
-        if change:
-            self._write_machine_var_to_disk(name)
-
-            self.debug_log("Setting machine_var '%s' to: %s, (prior: %s, "
-                           "change: %s)", name, value, prev_value,
-                           change)
-            self.events.post('machine_var_' + name,
-                             value=value,
-                             prev_value=prev_value,
-                             change=change)
-            '''event: machine_var_(name)
-
-            desc: Posted when a machine variable is added or changes value.
-            (Machine variables are like player variables, except they're
-            maintained machine-wide instead of per-player or per-game.)
-
-            args:
-
-            value: The new value of this machine variable.
-
-            prev_value: The previous value of this machine variable, e.g. what
-            it was before the current value.
-
-            change: If the machine variable just changed, this will be the
-            amount of the change. If it's not possible to determine a numeric
-            change (for example, if this machine variable is a list), then this
-            *change* value will be set to the boolean *True*.
-            '''
-
-            if self.machine_var_monitor:
-                for callback in self.monitors['machine_vars']:
-                    callback(name=name, value=value,
-                             prev_value=prev_value, change=change)
-
-    def remove_machine_var(self, name: str) -> None:
-        """Remove a machine variable by name.
-
-        If this variable persists to disk, it will remove it from there too.
-
-        Args:
-            name: String name of the variable you want to remove.
-        """
-        try:
-            prev_value = self.machine_vars[name]
-            del self.machine_vars[name]
-            self._write_machine_vars_to_disk()
-        except KeyError:
-            pass
-        else:
-            if self.machine_var_monitor:
-                for callback in self.monitors['machine_vars']:
-                    callback(name=name, value=None,
-                             prev_value=prev_value, change=True)
-
-    def remove_machine_var_search(self, startswith: str = '', endswith: str = '') -> None:
-        """Remove a machine variable by matching parts of its name.
-
-        Args:
-            startswith: Optional start of the variable name to match.
-            endswith: Optional end of the variable name to match.
-
-        For example, if you pass startswit='player' and endswith='score', this
-        method will match and remove player1_score, player2_score, etc.
-        """
-        for var in list(self.machine_vars.keys()):
-            if var.startswith(startswith) and var.endswith(endswith):
-                del self.machine_vars[var]
-
-        self._write_machine_vars_to_disk()
 
     def get_platform_sections(self, platform_section: str, overwrite: str) -> "SmartVirtualHardwarePlatform":
         """Return platform section."""
