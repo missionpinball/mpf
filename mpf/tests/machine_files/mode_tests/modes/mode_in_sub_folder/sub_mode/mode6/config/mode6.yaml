@@ -1,0 +1,14 @@
+#config_version=5
+mode:
+  start_events: start_mode6
+  stop_events: stop_mode6
+  priority: 200
+  start_priority: 1
+  stop_on_ball_end: false
+  game_mode: False
+
+mode_settings:
+  this: true
+
+config:
+  - test.yaml

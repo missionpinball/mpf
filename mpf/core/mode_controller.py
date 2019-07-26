@@ -156,7 +156,7 @@ class ModeController(MpfController):
                 self.machine.config['mpf']['paths']['modes'],
                 self._machine_mode_folders[mode_string],
                 'config',
-                self._machine_mode_folders[mode_string] + '.yaml')
+                os.path.basename(self._machine_mode_folders[mode_string]) + '.yaml')
             if not os.path.isfile(mode_config_file):
                 return False
         except KeyError:
@@ -310,9 +310,28 @@ class ModeController(MpfController):
                 folder)
 
             if os.path.isdir(this_mode_folder) and not folder.startswith('_'):
-                final_mode_folders[folder] = folder
+                if 'config' not in os.listdir(this_mode_folder):
+                    sub_folders = self._get_sub_folders(base_folder, this_mode_folder)
+                    final_mode_folders.update(sub_folders)
+                else:
+                    final_mode_folders[folder] = folder
 
         return final_mode_folders
+
+    def _get_sub_folders(self, root_folder, base_folder):
+        final_sub_folders = dict()
+
+        for folder in os.listdir(base_folder):
+            this_mode_folder = os.path.join(base_folder, folder)
+
+            if os.path.isdir(this_mode_folder) and not folder.startswith('_'):
+                if 'config' not in os.listdir(this_mode_folder):
+                    final_sub_folders.update(self._get_sub_folders(root_folder, this_mode_folder))
+                else:
+                    final_sub_folders[folder] = os.path.relpath(this_mode_folder, os.path.join(
+                        root_folder, self.machine.config['mpf']['paths']['modes']))
+
+        return final_sub_folders
 
     @classmethod
     def _player_added(cls, player, num, **kwargs):
