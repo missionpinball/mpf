@@ -277,7 +277,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """
         self._color_correction_profile = profile
 
-    def color(self, color, fade_ms=None, priority=0, key=None):
+    # pylint: disable-msg=too-many-arguments
+    def color(self, color, fade_ms=None, priority=0, key=None, start_time=None):
         """Add or update a color entry in this light's stack.
 
         Calling this methods is how you tell this light what color you want it to be.
@@ -312,7 +313,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
         if fade_ms is None:
             fade_ms = self.default_fade_ms
 
-        start_time = self.machine.clock.get_time()
+        if not start_time:
+            start_time = self.machine.clock.get_time()
 
         color_changes = not self.stack or self.stack[0].priority <= priority or self.stack[0].dest_color is None
 
@@ -357,14 +359,14 @@ class Light(SystemWideDevice, DevicePositionMixin):
         elif not isinstance(key, str):
             raise AssertionError("Key should be string")
 
-        if priority < self._get_priority_from_key(key):
+        if self.stack and priority < self._get_priority_from_key(key):
             if self._debug:
                 self.debug_log("Incoming priority %s is lower than an existing "
                                "stack item with the same key %s. Not adding to "
                                "stack.", priority, key)
             return
 
-        if self._debug and self.stack and priority == self.stack[0].priority and key != self.stack[0].key:
+        if self.stack and self._debug and priority == self.stack[0].priority and key != self.stack[0].key:
             self.debug_log("Light stack contains two entries with the same priority %s but different keys: %s",
                            priority, self.stack)
 
@@ -375,7 +377,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
             dest_time = 0
             color_below = None
 
-        self._remove_from_stack_by_key(key)
+        if self.stack:
+            self._remove_from_stack_by_key(key)
 
         self.stack.append(LightStackEntry(priority,
                                           key,
