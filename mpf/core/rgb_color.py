@@ -254,45 +254,25 @@ class RGBColor:
         """Return the red component of the RGB color representation."""
         return self._color[0]
 
-    @red.setter
-    def red(self, value: int):
-        self._color = (value, self._color[1], self._color[2])
-
     @property
     def green(self) -> int:
         """Return the green component of the RGB color representation."""
         return self._color[1]
-
-    @green.setter
-    def green(self, value: int):
-        self._color = (self._color[0], value, self._color[2])
 
     @property
     def blue(self) -> int:
         """Return the blue component of the RGB color representation."""
         return self._color[2]
 
-    @blue.setter
-    def blue(self, value: int):
-        self._color = (self._color[0], self._color[1], value)
-
     @property
     def rgb(self) -> Tuple[int, int, int]:
         """Return an RGB representation of the color."""
         return self._color
 
-    @rgb.setter
-    def rgb(self, value: Tuple[int, int, int]):
-        self._color = value
-
     @property
     def hex(self) -> str:
         """Return a 6-char HEX representation of the color."""
         return RGBColor.rgb_to_hex(self.rgb)
-
-    @hex.setter
-    def hex(self, value: str):
-        self._color = RGBColor.hex_to_rgb(value)
 
     @property
     def name(self) -> str:
@@ -305,10 +285,6 @@ class RGBColor:
         return dict(
             [(_v, _k) for _k, _v in list(named_rgb_colors.items())]).get(
             self._color)
-
-    @name.setter
-    def name(self, value: str):
-        self._color = RGBColor.name_to_rgb(value)
 
     @staticmethod
     def rgb_to_hex(rgb: Tuple[int, int, int]) -> str:
@@ -424,7 +400,7 @@ class RGBColor:
             # instead we just add the upper case string to the color hash map so next time we will hit the fast path
             rgb = named_rgb_colors.get(value.lower())
             if rgb:
-                named_rgb_colors[value] = rgb
+                named_rgb_colors[value.lower()] = rgb
         if rgb is None:
             rgb = RGBColor.hex_to_rgb(value)
             if rgb is None:
