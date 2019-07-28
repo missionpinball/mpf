@@ -30,7 +30,7 @@ class Carousel(Mode):
         for item in Util.string_to_list(mode_settings.get("selectable_items", "")):
             placeholder = self.machine.placeholder_manager.parse_conditional_template(item)
             # Only add a placeholder if there's a condition, otherwise just the string
-            self._all_items.append(placeholder if placeholder['condition'] else item)
+            self._all_items.append(placeholder if placeholder.condition else item)
         self._select_item_events = Util.string_to_list(mode_settings.get("select_item_events", ""))
         self._next_item_events = Util.string_to_list(mode_settings.get("next_item_events", ""))
         self._previous_item_events = Util.string_to_list(mode_settings.get("previous_item_events", ""))
@@ -46,8 +46,8 @@ class Carousel(Mode):
             # All strings go in, but only conditional templates if they evaluate true
             if isinstance(item, str):
                 self._items.append(item)
-            elif not item['condition'] or item['condition'].evaluate({}):
-                self._items.append(item['name'])
+            elif not item.condition or item.condition.evaluate({}):
+                self._items.append(item.name)
         if not self._items:
             self.machine.events.post("{}_items_empty".format(self.name))
             '''event (carousel_name)_items_empty
