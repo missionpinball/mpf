@@ -28,6 +28,23 @@ bool_operators = {ast.And: lambda a, b: a and b, ast.Or: lambda a, b: a or b}
 comparisons = {ast.Eq: op.eq, ast.Lt: op.lt, ast.Gt: op.gt, ast.LtE: op.le, ast.GtE: op.ge, ast.NotEq: op.ne}
 
 
+class ConditionalEvent:
+
+    """An conditional event."""
+
+    __slots__ = ["name", "condition", "number"]
+
+    def __init__(self, name, condition, number):
+        """Initialise conditional event."""
+        self.name = name
+        self.condition = condition
+        self.number = number
+
+    def __repr__(self):
+        """Return string representation."""
+        return "{}-{}-{}".format(self.name, self.condition, self.number)
+
+
 class TemplateEvalError(Exception):
 
     """An error occurred during a template evaluation."""
@@ -794,7 +811,7 @@ class BasePlaceholderManager(MpfController):
                     self.warning_log("Condition '{}' has invalid number value '{}'".format(
                                      template, match_dict['number']))
                     match_dict['number'] = default_number
-        return match_dict
+        return ConditionalEvent(match_dict["name"], match_dict["condition"], match_dict["number"])
 
 
 class PlaceholderManager(BasePlaceholderManager):

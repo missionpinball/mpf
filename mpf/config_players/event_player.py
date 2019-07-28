@@ -28,15 +28,15 @@ class EventPlayer(FlatConfigPlayer):
             s = deepcopy(s)
             event_dict = self.machine.placeholder_manager.parse_conditional_template(event)
 
-            if event_dict['condition'] and not event_dict['condition'].evaluate(kwargs):
+            if event_dict.condition and not event_dict.condition.evaluate(kwargs):
                 continue
 
-            if event_dict['number']:
-                delay = Util.string_to_ms(event_dict['number'])
+            if event_dict.number:
+                delay = Util.string_to_ms(event_dict.number)
                 self.delay.add(callback=self._post_event, ms=delay,
-                               event=event_dict['name'], s=s, **kwargs)
+                               event=event_dict.name, s=s, **kwargs)
             else:
-                self._post_event(event_dict['name'], s, **kwargs)
+                self._post_event(event_dict.name, s, **kwargs)
 
     def _post_event(self, event, s, **kwargs):
         event_name_placeholder = TextTemplate(self.machine, event.replace("(", "{").replace(")", "}"))

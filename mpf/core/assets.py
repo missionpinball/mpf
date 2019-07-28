@@ -661,18 +661,18 @@ class AssetPool:
             config['type'] = 'sequence'
 
         for asset in Util.string_to_list(self.config[self.member_cls.config_section]):
-            asset_dict = self.machine.placeholder_manager.parse_conditional_template(asset, default_number=1)
+            asset_condition = self.machine.placeholder_manager.parse_conditional_template(asset, default_number=1)
 
             # For efficiency, track whether any assets have conditions
-            if asset_dict['condition']:
+            if asset_condition.condition:
                 self._has_conditions = True
 
             try:
                 self.assets.append((
-                    getattr(self.machine, self.member_cls.attribute)[asset_dict['name']],
-                    asset_dict['number'], asset_dict['condition']))
+                    getattr(self.machine, self.member_cls.attribute)[asset_condition.name],
+                    asset_condition.number, asset_condition.condition))
             except KeyError:    # pragma: no cover
-                raise ValueError("No asset named {}".format(asset_dict['name']))
+                raise ValueError("No asset named {}".format(asset_condition.name))
 
         self._configure_return_asset()
 

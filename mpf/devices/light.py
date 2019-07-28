@@ -50,7 +50,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
     class_label = 'light'
 
     __slots__ = ["hw_drivers", "platforms", "delay", "default_fade_ms", "_color_correction_profile", "stack",
-                 "hw_driver_functions"]
+                 "hw_driver_functions", "_off_color"]
 
     def __init__(self, machine, name):
         """Initialise light."""
@@ -62,6 +62,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         self.delay = DelayManager(self.machine)
 
         self.default_fade_ms = None
+        self._off_color = RGBColor("off")
 
         self._color_correction_profile = None
 
@@ -276,7 +277,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """
         self._color_correction_profile = profile
 
-    def color(self, color, fade_ms=None, priority=0, key=None):
+    # pylint: disable-msg=too-many-arguments
+    def color(self, color, fade_ms=None, priority=0, key=None, start_time=None):
         """Add or update a color entry in this light's stack.
 
         Calling this methods is how you tell this light what color you want it to be.
@@ -311,7 +313,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
         if fade_ms is None:
             fade_ms = self.default_fade_ms
 
-        start_time = self.machine.clock.get_time()
+        if not start_time:
+            start_time = self.machine.clock.get_time()
 
         color_changes = not self.stack or self.stack[0].priority <= priority or self.stack[0].dest_color is None
 
@@ -344,7 +347,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
             fade_ms: duration of fade
         """
         del kwargs
-        self.color(color=RGBColor(), fade_ms=fade_ms, priority=priority,
+        self.color(color=self._off_color, fade_ms=fade_ms, priority=priority,
                    key=key)
 
     # pylint: disable-msg=too-many-arguments
@@ -356,14 +359,14 @@ class Light(SystemWideDevice, DevicePositionMixin):
         elif not isinstance(key, str):
             raise AssertionError("Key should be string")
 
-        if priority < self._get_priority_from_key(key):
+        if self.stack and priority < self._get_priority_from_key(key):
             if self._debug:
                 self.debug_log("Incoming priority %s is lower than an existing "
                                "stack item with the same key %s. Not adding to "
                                "stack.", priority, key)
             return
 
-        if self._debug and self.stack and priority == self.stack[0].priority and key != self.stack[0].key:
+        if self.stack and self._debug and priority == self.stack[0].priority and key != self.stack[0].key:
             self.debug_log("Light stack contains two entries with the same priority %s but different keys: %s",
                            priority, self.stack)
 
@@ -374,7 +377,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
             dest_time = 0
             color_below = None
 
-        self._remove_from_stack_by_key(key)
+        if self.stack:
+            self._remove_from_stack_by_key(key)
 
         self.stack.append(LightStackEntry(priority,
                                           key,
@@ -567,7 +571,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
             color_settings = stack[0]
         except IndexError:
             # no stack
-            return RGBColor('off'), -1, True
+            return self._off_color, -1, True
 
         dest_color = color_settings.dest_color
 
@@ -632,7 +636,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """
         if not self.stack:
             # no stack -> we are black
-            return RGBColor("off")
+            return self._off_color
 
         if self.stack[0].key == key and self.stack[0].priority == priority:
             # fast path for resetting the top element

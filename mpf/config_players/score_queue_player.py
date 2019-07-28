@@ -37,13 +37,13 @@ class ScoreQueuePlayer(ConfigPlayer):
             self.raise_config_error("Settings of score_queue_player should "
                                     "be a dict. But are: {}".format(settings), 5, context=name)
         for var, s in settings.items():
-            var_dict = self.machine.placeholder_manager.parse_conditional_template(var)
+            var_conditional_event = self.machine.placeholder_manager.parse_conditional_template(var)
             value_dict = self._parse_config(s, name)
-            value_dict["condition"] = var_dict["condition"]
-            config[var_dict["name"]] = value_dict
-            if not bool(re.match('^[0-9a-zA-Z_-]+$', var_dict["name"])):
+            value_dict["condition"] = var_conditional_event.condition
+            config[var_conditional_event.name] = value_dict
+            if not bool(re.match('^[0-9a-zA-Z_-]+$', var_conditional_event.name)):
                 self.raise_config_error("Variable may only contain letters, numbers, dashes and underscores. "
-                                        "Name: {}".format(var_dict["name"]), 4, context=name)
+                                        "Name: {}".format(var_conditional_event.name), 4, context=name)
         return config
 
     def get_express_config(self, value: Any) -> dict:

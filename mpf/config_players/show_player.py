@@ -35,8 +35,7 @@ class ShowPlayer(DeviceConfigPlayer):
             start_time = self.machine.clock.get_time()
         for show, show_settings in settings.items():
             # Look for a conditional event in the show name
-            show_dict = self.machine.placeholder_manager.parse_conditional_template(show)
-            if show_dict['condition'] and not show_dict['condition'].evaluate(kwargs):
+            if show.condition and show.condition.evaluate(kwargs):
                 continue
 
             show_settings = dict(show_settings)
@@ -49,7 +48,14 @@ class ShowPlayer(DeviceConfigPlayer):
                 show_settings['priority'] = priority
             # todo need to add this key back to the config player
 
-            self._update_show(show_dict["name"], show_settings, context, queue, start_time, kwargs)
+            self._update_show(show.name, show_settings, context, queue, start_time, kwargs)
+
+    def _expand_device(self, device):
+        # parse conditionals
+        devices = super()._expand_device(device)
+        for index, device_entry in enumerate(devices):
+            devices[index] = self.machine.placeholder_manager.parse_conditional_template(device_entry)
+        return devices
 
     def handle_subscription_change(self, value, settings, priority, context):
         """Handle subscriptions."""
@@ -62,12 +68,12 @@ class ShowPlayer(DeviceConfigPlayer):
             if 'key' in show_settings and show_settings['key']:
                 key = show_settings['key']
             else:
-                key = show
+                key = show.name
 
             if value:
-                self._play(key, instance_dict, show, show_settings, False, None, {})
+                self._play(key, instance_dict, show.name, show_settings, False, None, {})
             else:
-                self._stop(key, instance_dict, show, show_settings, False, None, {})
+                self._stop(key, instance_dict, show.name, show_settings, False, None, {})
 
     # pylint: disable-msg=too-many-arguments
     def _play(self, key, instance_dict, show, show_settings, queue, start_time, placeholder_args):

@@ -200,11 +200,12 @@ class BCPClientSocket(BaseBcpClient):
         bcp: The bcp object.
     """
 
+    config_name = 'bcp_client'
+
+    __slots__ = ["_sender", "_receiver", "_send_goodbye", "_receive_buffer", "_bcp_client_socket_commands", "__dict__"]
+
     def __init__(self, machine, name, bcp):
         """Initialise BCP client socket."""
-        self.module_name = 'BCPClientSocket.{}'.format(name)
-        self.config_name = 'bcp_client'
-
         super().__init__(machine, name, bcp)
 
         self._sender = None
@@ -217,7 +218,7 @@ class BCPClientSocket(BaseBcpClient):
 
     def __repr__(self):
         """Return str representation."""
-        return self.module_name
+        return 'BCPClientSocket.{}'.format(self.name)
 
     def connect(self, config):
         """Actively connect to server."""
