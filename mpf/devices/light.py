@@ -50,7 +50,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
     class_label = 'light'
 
     __slots__ = ["hw_drivers", "platforms", "delay", "default_fade_ms", "_color_correction_profile", "stack",
-                 "hw_driver_functions"]
+                 "hw_driver_functions", "_off_color"]
 
     def __init__(self, machine, name):
         """Initialise light."""
@@ -62,6 +62,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         self.delay = DelayManager(self.machine)
 
         self.default_fade_ms = None
+        self._off_color = RGBColor("off")
 
         self._color_correction_profile = None
 
@@ -344,7 +345,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
             fade_ms: duration of fade
         """
         del kwargs
-        self.color(color=RGBColor(), fade_ms=fade_ms, priority=priority,
+        self.color(color=self._off_color, fade_ms=fade_ms, priority=priority,
                    key=key)
 
     # pylint: disable-msg=too-many-arguments
@@ -567,7 +568,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
             color_settings = stack[0]
         except IndexError:
             # no stack
-            return RGBColor('off'), -1, True
+            return self._off_color, -1, True
 
         dest_color = color_settings.dest_color
 
@@ -632,7 +633,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """
         if not self.stack:
             # no stack -> we are black
-            return RGBColor("off")
+            return self._off_color
 
         if self.stack[0].key == key and self.stack[0].priority == priority:
             # fast path for resetting the top element
