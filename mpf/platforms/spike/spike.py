@@ -973,6 +973,9 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
         self.log.debug("Resetting node bus and configuring traffic.")
         yield from self.send_cmd_sync(0, SpikeNodebus.Reset, bytearray())
+        # wait 3s (same as spike)
+        for _ in range(12):
+            yield from self._send_raw(bytearray([1, 250]))
 
         yield from self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([34]))  # block traffic (false)
         yield from self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([17]))  # set traffic
