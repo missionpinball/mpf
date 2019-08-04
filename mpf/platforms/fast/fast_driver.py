@@ -8,7 +8,7 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.platforms.fast.fast import FastHardwarePlatform
+    from mpf.platforms.fast.fast import FastHardwarePlatform    # noqa
 
 
 class FASTDriver(DriverPlatformInterface):

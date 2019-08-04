@@ -10,9 +10,9 @@ from mpf.exceptions.ConfigFileError import ConfigFileError
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.placeholder_manager import BoolTemplate
-    from typing import Dict
-    import asyncio
+    from mpf.core.placeholder_manager import BoolTemplate   # noqa
+    from typing import Dict     # noqa
+    import asyncio  # noqa
 
 
 class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):

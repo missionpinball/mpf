@@ -1,12 +1,11 @@
 """Baseclass for ball device ejectors."""
-
 import asyncio
 
 
 MYPY = False
 if MYPY:    # pragma: no cover
-    from mpf.core.machine import MachineController
-    from mpf.devices.ball_device.ball_device import BallDevice
+    from mpf.core.machine import MachineController  # noqa
+    from mpf.devices.ball_device.ball_device import BallDevice  # noqa
 
 
 class BallDeviceEjector:

@@ -3,7 +3,6 @@
 This is based on the Snux platform to generically support all kinds of System11 platforms.
 """
 import asyncio
-import logging
 
 from typing import Any, Optional, Set, Tuple, Dict
 

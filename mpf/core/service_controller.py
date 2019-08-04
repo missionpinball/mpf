@@ -3,7 +3,6 @@
 Controller provides all service information and can perform service tasks. Displaying the information is performed by
 the service mode or other components.
 """
-import logging
 import re
 from collections import namedtuple
 

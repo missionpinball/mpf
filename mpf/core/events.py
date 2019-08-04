@@ -13,9 +13,9 @@ from mpf.core.mpf_controller import MpfController
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.machine import MachineController
-    from mpf.core.placeholder_manager import BaseTemplate
-    from typing import Deque
+    from mpf.core.machine import MachineController      # noqa
+    from mpf.core.placeholder_manager import BaseTemplate   # noqa
+    from typing import Deque    # noqa
 
 EventHandlerKey = namedtuple("EventHandlerKey", ["key", "event"])
 RegisteredHandler = namedtuple("RegisteredHandler", ["callback", "priority", "kwargs", "key", "condition",

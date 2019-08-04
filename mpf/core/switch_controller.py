@@ -3,8 +3,6 @@
 Contains the SwitchController class which is responsible for reading switch
 states and posting events to the framework.
 """
-
-import logging
 from collections import defaultdict, namedtuple
 import asyncio
 from functools import partial

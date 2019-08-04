@@ -4,7 +4,6 @@ Contains the hardware interface and drivers for the Open Pinball Project
 platform hardware, including the solenoid, input, incandescent, and neopixel
 boards.
 """
-import logging
 import asyncio
 
 from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings

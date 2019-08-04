@@ -1,6 +1,5 @@
 """A kickback device which will fire a ball back into the playfield."""
 from mpf.core.device_monitor import DeviceMonitor
-from mpf.core.events import event_handler
 from mpf.devices.autofire import AutofireCoil
 
 

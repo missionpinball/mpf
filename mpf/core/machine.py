@@ -22,51 +22,51 @@ from mpf.core.utility_functions import Util
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.modes.game.code.game import Game
-    from mpf.core.events import EventManager
-    from mpf.core.switch_controller import SwitchController
-    from mpf.core.show_controller import ShowController
-    from mpf.core.service_controller import ServiceController
-    from mpf.core.light_controller import LightController
+    from mpf.modes.game.code.game import Game   # noqa
+    from mpf.core.events import EventManager    # noqa
+    from mpf.core.switch_controller import SwitchController # noqa
+    from mpf.core.show_controller import ShowController # noqa
+    from mpf.core.service_controller import ServiceController   # noqa
+    from mpf.core.light_controller import LightController   # noqa
 
-    from mpf.core.custom_code import CustomCode
-    from mpf.core.mode_controller import ModeController
-    from mpf.core.settings_controller import SettingsController
-    from mpf.core.bcp.bcp import Bcp
-    from mpf.core.text_ui import TextUi
-    from mpf.assets.show import Show
-    from mpf.core.assets import BaseAssetManager
-    from mpf.devices.switch import Switch
-    from mpf.devices.driver import Driver
-    from mpf.core.mode import Mode
-    from mpf.devices.ball_device.ball_device import BallDevice
-    from mpf.core.ball_controller import BallController
-    from mpf.devices.playfield import Playfield
-    from mpf.core.placeholder_manager import PlaceholderManager
-    from mpf.platforms.smart_virtual import SmartVirtualHardwarePlatform
-    from mpf.core.device_manager import DeviceManager
-    from mpf.plugins.auditor import Auditor
-    from mpf.devices.light import Light
-    from mpf.devices.accelerometer import Accelerometer
-    from mpf.devices.drop_target import DropTarget
-    from mpf.devices.logic_blocks import Accrual, Sequence, Counter
-    from mpf.devices.servo import Servo
-    from mpf.devices.segment_display import SegmentDisplay
-    from mpf.devices.shot_group import ShotGroup
-    from mpf.devices.shot import Shot
-    from mpf.devices.motor import Motor
-    from mpf.devices.digital_output import DigitalOutput
+    from mpf.core.custom_code import CustomCode # noqa
+    from mpf.core.mode_controller import ModeController # noqa
+    from mpf.core.settings_controller import SettingsController # noqa
+    from mpf.core.bcp.bcp import Bcp    # noqa
+    from mpf.core.text_ui import TextUi # noqa
+    from mpf.assets.show import Show    # noqa
+    from mpf.core.assets import BaseAssetManager    # noqa
+    from mpf.devices.switch import Switch   # noqa
+    from mpf.devices.driver import Driver   # noqa
+    from mpf.core.mode import Mode  # noqa
+    from mpf.devices.ball_device.ball_device import BallDevice  # noqa
+    from mpf.core.ball_controller import BallController     # noqa
+    from mpf.devices.playfield import Playfield     # noqa
+    from mpf.core.placeholder_manager import PlaceholderManager     # noqa
+    from mpf.platforms.smart_virtual import SmartVirtualHardwarePlatform    # noqa
+    from mpf.core.device_manager import DeviceManager   # noqa
+    from mpf.plugins.auditor import Auditor     # noqa
+    from mpf.devices.light import Light     # noqa
+    from mpf.devices.accelerometer import Accelerometer     # noqa
+    from mpf.devices.drop_target import DropTarget  # noqa
+    from mpf.devices.logic_blocks import Accrual, Sequence, Counter     # noqa
+    from mpf.devices.servo import Servo     # noqa
+    from mpf.devices.segment_display import SegmentDisplay      # noqa
+    from mpf.devices.shot_group import ShotGroup    # noqa
+    from mpf.devices.shot import Shot   # noqa
+    from mpf.devices.motor import Motor     # noqa
+    from mpf.devices.digital_output import DigitalOutput    # noqa
     from logging import Logger  # noqa
-    from mpf.devices.autofire import AutofireCoil
-    from mpf.devices.stepper import Stepper
-    from mpf.config_players.show_player import ShowPlayer
-    from mpf.devices.dmd import Dmd
-    from mpf.devices.rgb_dmd import RgbDmd
-    from mpf.devices.flipper import Flipper
-    from mpf.devices.diverter import Diverter
-    from mpf.devices.multiball_lock import MultiballLock
-    from mpf.devices.multiball import Multiball
-    from mpf.devices.ball_hold import BallHold
+    from mpf.devices.autofire import AutofireCoil   # noqa
+    from mpf.devices.stepper import Stepper     # noqa
+    from mpf.config_players.show_player import ShowPlayer   # noqa
+    from mpf.devices.dmd import Dmd     # noqa
+    from mpf.devices.rgb_dmd import RgbDmd  # noqa
+    from mpf.devices.flipper import Flipper     # noqa
+    from mpf.devices.diverter import Diverter   # noqa
+    from mpf.devices.multiball_lock import MultiballLock    # noqa
+    from mpf.devices.multiball import Multiball     # noqa
+    from mpf.devices.ball_hold import BallHold      # noqa
 
 
 # pylint: disable-msg=too-many-instance-attributes

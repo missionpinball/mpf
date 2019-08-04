@@ -700,7 +700,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         return switch
 
     @asyncio.coroutine
-    def configure_servo(self, number: str) -> "ServoPlatformInterface":
+    def configure_servo(self, number: str) -> ServoPlatformInterface:
         """Configure a servo on a PD-LED board.
 
         Args:

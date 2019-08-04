@@ -1,7 +1,6 @@
 """Contains the parent class for all platforms."""
 import abc
 import asyncio
-import logging
 from collections import namedtuple
 
 from typing import Optional, Generator
@@ -10,17 +9,17 @@ from mpf.core.logging import LogMixin
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.devices.switch import Switch
-    from mpf.devices.stepper import Stepper
-    from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
-    from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
-    from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
-    from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
-    from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
-    from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
-    from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
-    from mpf.platforms.interfaces.accelerometer_platform_interface import AccelerometerPlatformInterface
-    from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
+    from mpf.devices.switch import Switch   # noqa
+    from mpf.devices.stepper import Stepper # noqa
+    from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface  # noqa
+    from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface  # noqa
+    from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface    # noqa
+    from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface    # noqa
+    from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface # noqa
+    from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface   # noqa
+    from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface    # noqa
+    from mpf.platforms.interfaces.accelerometer_platform_interface import AccelerometerPlatformInterface    # noqa
+    from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface    # noqa
 
 
 class BasePlatform(LogMixin, metaclass=abc.ABCMeta):

@@ -1,7 +1,7 @@
 """Handles outgoing balls."""
 import asyncio
 
-from typing import Generator, Optional
+from typing import Generator
 from typing import List
 
 from mpf.core.utility_functions import Util

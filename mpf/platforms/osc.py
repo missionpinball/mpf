@@ -56,7 +56,7 @@ class OscPlatform(LightsPlatform):
             }
         ]
 
-    def configure_light(self, number: str, subtype: str, platform_settings: dict) -> "LightPlatformInterface":
+    def configure_light(self, number: str, subtype: str, platform_settings: dict) -> LightPlatformInterface:
         """Configure an OSC light."""
         return OscLight(number, self.machine.clock.loop,
                         int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000), self.client)

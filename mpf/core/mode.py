@@ -1,6 +1,5 @@
 """Contains the Mode base class."""
 import asyncio
-import copy
 
 from typing import Any
 from typing import Callable
@@ -10,7 +9,6 @@ from typing import Set
 from typing import Tuple
 
 from mpf.core.delays import DelayManager
-from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
 from mpf.core.switch_controller import SwitchHandler
 

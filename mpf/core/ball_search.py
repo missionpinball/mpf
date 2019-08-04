@@ -9,7 +9,7 @@ from mpf.core.mpf_controller import MpfController
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.devices.playfield import Playfield
+    from mpf.devices.playfield import Playfield     # noqa
 
 BallSearchCallback = namedtuple("BallSearchCallback", ["priority", "callback", "name", "restore_callback"])
 
@@ -22,7 +22,6 @@ class BallSearch(MpfController):
     device, rather than being done at the global level. (In other words, each
     playfield is responsible for making sure no balls get stuck on it, and it
     leverages an instance of this BallSearch class to handle it.)
-
     """
 
     def __init__(self, machine: MachineController, playfield: "Playfield") -> None:

@@ -6,7 +6,7 @@ from datetime import datetime
 from psutil import cpu_percent, virtual_memory, Process
 
 from asciimatics.scene import Scene
-from asciimatics.widgets import Frame, Layout, THEMES, Label, Divider, PopUpDialog, wcswidth
+from asciimatics.widgets import Frame, Layout, THEMES, Label, Divider, PopUpDialog
 from asciimatics.screen import Screen
 
 import mpf._version
@@ -15,9 +15,9 @@ from mpf.core.mpf_controller import MpfController
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.machine import MachineController
-    from typing import List, Tuple
-    from mpf.devices.ball_device.ball_device import BallDevice
+    from mpf.core.machine import MachineController                  # noqa
+    from typing import List, Tuple                                  # noqa
+    from mpf.devices.ball_device.ball_device import BallDevice      # noqa
 
 
 class MpfLayout(Layout):

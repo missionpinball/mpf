@@ -1,10 +1,8 @@
 """Score Queue player for SS style scoring."""
 import re
-from collections import namedtuple
 from typing import Dict, List, Any
 
 from mpf.core.config_player import ConfigPlayer
-from mpf.core.machine import MachineController
 
 
 class ScoreQueuePlayer(ConfigPlayer):
