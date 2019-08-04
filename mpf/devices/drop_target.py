@@ -15,7 +15,7 @@ from mpf.core.system_wide_device import SystemWideDevice
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.devices.driver import Driver
+    from mpf.devices.driver import Driver   # pylint: disable-msg=cyclic-import,unused-import
 
 
 @DeviceMonitor("complete")

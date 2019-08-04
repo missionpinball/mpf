@@ -1,7 +1,7 @@
 """Handles outgoing balls."""
 import asyncio
 
-from typing import Generator, Optional
+from typing import Generator
 from typing import List
 
 from mpf.core.utility_functions import Util
@@ -11,7 +11,7 @@ from mpf.devices.ball_device.incoming_balls_handler import IncomingBall
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.devices.ball_device.ball_device import BallDevice
+    from mpf.devices.ball_device.ball_device import BallDevice  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class OutgoingBall:

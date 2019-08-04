@@ -13,9 +13,9 @@ from mpf.platforms.virtual import (VirtualHardwarePlatform as VirtualPlatform, V
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from typing import Dict
-    from mpf.devices.ball_device.ball_device import BallDevice
-    from mpf.core.machine import MachineController
+    from typing import Dict     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.ball_device.ball_device import BallDevice  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class BaseSmartVirtualCoilAction:

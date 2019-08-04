@@ -3,7 +3,7 @@ from mpf.config_players.device_config_player import DeviceConfigPlayer
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.devices.hardware_sound_system import HardwareSoundSystem
+    from mpf.devices.hardware_sound_system import HardwareSoundSystem   # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 
 class HardwareSoundPlayer(DeviceConfigPlayer):

@@ -11,8 +11,8 @@ from mpf.devices.device_mixins import DevicePositionMixin
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
-    from mpf.core.platform import SwitchPlatform
+    from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface  # pylint: disable-msg=cyclic-import,unused-import; # noqa
+    from mpf.core.platform import SwitchPlatform    # pylint: disable-msg=cyclic-import,unused-import
 
 
 @DeviceMonitor("state", "recycle_jitter_count")

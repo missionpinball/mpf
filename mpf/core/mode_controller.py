@@ -2,10 +2,6 @@
 import importlib
 import asyncio
 import os
-import tempfile
-import hashlib
-import errno
-import pickle
 from collections import namedtuple
 
 from typing import Callable
@@ -17,7 +13,6 @@ from typing import Optional
 from mpf.core.events import QueuedEvent
 from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
-from mpf.core.config_processor import ConfigProcessor
 from mpf.core.utility_functions import Util
 from mpf.core.mpf_controller import MpfController
 

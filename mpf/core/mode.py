@@ -1,6 +1,5 @@
 """Contains the Mode base class."""
 import asyncio
-import copy
 
 from typing import Any
 from typing import Callable
@@ -10,17 +9,16 @@ from typing import Set
 from typing import Tuple
 
 from mpf.core.delays import DelayManager
-from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
 from mpf.core.switch_controller import SwitchHandler
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.events import QueuedEvent
-    from mpf.core.mode_device import ModeDevice
-    from mpf.core.events import EventHandlerKey
-    from mpf.core.player import Player
-    from mpf.core.machine import MachineController
+    from mpf.core.events import QueuedEvent     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.mode_device import ModeDevice     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.events import EventHandlerKey     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.player import Player  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
 # pylint: disable-msg=too-many-instance-attributes

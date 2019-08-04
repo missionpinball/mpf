@@ -2,7 +2,6 @@
 """Stern Spike Platform."""
 import asyncio
 
-import logging
 import random
 from typing import Optional, Generator, Union
 
@@ -924,7 +923,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
     # pylint: disable-msg=too-many-locals
     # pylint: disable-msg=too-many-branches
     @asyncio.coroutine
-    def _initialize(self) -> Generator[int, None, None]:
+    def _initialize(self) -> Generator[int, None, None]:    # noqa: MC0001
         # send ctrl+c to stop whatever is running
         self.log.debug("Resetting console")
         self._writer.write(b'\x03reset\n')

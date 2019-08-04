@@ -10,9 +10,9 @@ from mpf.core.mode import Mode
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.machine import MachineController
-    from mpf.core.clock import PeriodicTask
-    from mpf.core.events import EventHandlerKey
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.clock import PeriodicTask     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.events import EventHandlerKey     # pylint: disable-msg=cyclic-import,unused-import
 
 
 # pylint: disable-msg=too-many-instance-attributes

@@ -9,10 +9,10 @@ from typing import Generator, List
 from mpf.core.utility_functions import Util
 
 MYPY = False
-if MYPY:
-    from mpf.devices.ball_device.ball_device import BallDevice
-    from mpf.core.machine import MachineController
-    from mpf.devices.ball_device.ball_count_handler import BallCountHandler
+if MYPY:    # pragma: no cover
+    from mpf.devices.ball_device.ball_device import BallDevice  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.ball_device.ball_count_handler import BallCountHandler     # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 
 class EjectTracker:

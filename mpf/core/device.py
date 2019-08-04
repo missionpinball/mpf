@@ -9,8 +9,8 @@ from mpf.core.logging import LogMixin
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.mode import Mode
-    from mpf.platforms.smart_virtual import SmartVirtualHardwarePlatform
+    from mpf.core.mode import Mode      # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.platforms.smart_virtual import SmartVirtualHardwarePlatform    # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 
 class Device(LogMixin, metaclass=abc.ABCMeta):

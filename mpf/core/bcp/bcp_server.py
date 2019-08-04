@@ -1,6 +1,5 @@
 """Bcp server for clients which connect and disconnect randomly."""
 import asyncio
-import socket
 
 from mpf.core.utility_functions import Util
 from mpf.core.mpf_controller import MpfController

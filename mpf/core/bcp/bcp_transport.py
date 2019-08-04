@@ -7,7 +7,7 @@ from mpf.core.bcp.bcp_client import BaseBcpClient
 
 MYPY = False  # noqa
 if MYPY:
-    from mpf.core.machine import MachineController
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class BcpTransportManager:

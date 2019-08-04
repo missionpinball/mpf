@@ -4,7 +4,7 @@ import abc
 from mpf.core.logging import LogMixin
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.machine import MachineController
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class MpfController(LogMixin, metaclass=abc.ABCMeta):

@@ -4,15 +4,13 @@ from collections import namedtuple
 from operator import attrgetter
 from typing import List
 
-from mpf.exceptions.ConfigFileError import ConfigFileError
-
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.placeholder_manager import TextTemplate
 from mpf.core.system_wide_device import SystemWideDevice
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
+    from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface     # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 TextStack = namedtuple("TextStack", ["text", "priority", "key"])
 

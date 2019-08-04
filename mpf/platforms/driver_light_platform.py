@@ -44,7 +44,7 @@ class DriverLightPlatform(LightsPlatform):
             light.stop()
         self._lights = []
 
-    def configure_light(self, number: str, subtype: str, platform_settings: dict) -> "LightPlatformInterface":
+    def configure_light(self, number: str, subtype: str, platform_settings: dict) -> LightPlatformInterface:
         """Configure a light on a driver."""
         driver = DriverLight(self.machine.coils[number.strip()], self.machine.clock.loop,
                              int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000))

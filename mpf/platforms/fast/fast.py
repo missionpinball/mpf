@@ -5,7 +5,6 @@ hardware, including the FAST Core and WPC controllers as well as FAST I/O
 boards.
 """
 import asyncio
-import logging
 import os
 from copy import deepcopy
 from distutils.version import StrictVersion

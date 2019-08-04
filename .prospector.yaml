@@ -24,8 +24,6 @@ pylint:
     - pointless-string-statement  # pointless statement, which is how our event docstrings are seen
     - invalid-name  # we got ms and dt as defaults for a lot of functions
     - too-few-public-methods
-    - cyclic-import     # remove when type checking is supported https://github.com/PyCQA/pylint/issues/647
-    - unused-import     # remove when type checking is supported https://github.com/PyCQA/pylint/issues/647
     - no-else-return
 
   options:

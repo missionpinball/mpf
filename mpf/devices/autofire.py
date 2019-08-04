@@ -10,8 +10,8 @@ from mpf.core.system_wide_device import SystemWideDevice
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.machine import MachineController
-    from typing import List
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
+    from typing import List     # pylint: disable-msg=cyclic-import,unused-import
 
 
 @DeviceMonitor(_enabled="enabled")

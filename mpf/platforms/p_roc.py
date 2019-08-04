@@ -12,8 +12,6 @@ More info on the P-ROC hardware platform: http://pinballcontrollers.com/
 Original code source on which this module was based:
 https://github.com/preble/pyprocgame
 """
-
-import logging
 import asyncio
 
 from mpf.core.platform import DmdPlatform, DriverConfig, SwitchConfig, SegmentDisplayPlatform

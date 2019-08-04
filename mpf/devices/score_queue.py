@@ -2,7 +2,6 @@
 import asyncio
 import math
 
-from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.system_wide_device import SystemWideDevice
 
 

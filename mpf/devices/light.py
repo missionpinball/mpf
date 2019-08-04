@@ -16,7 +16,7 @@ from mpf.devices.device_mixins import DevicePositionMixin
 
 MYPY = False
 if MYPY:
-    from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+    from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 
 class LightStackEntry:

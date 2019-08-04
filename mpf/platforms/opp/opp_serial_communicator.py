@@ -7,7 +7,7 @@ from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
 
 MYPY = False
 if MYPY:    # pragma: no cover
-    from mpf.platforms.opp.opp import OppHardwarePlatform
+    from mpf.platforms.opp.opp import OppHardwarePlatform   # pylint: disable-msg=cyclic-import,unused-import
 
 # Minimum firmware versions needed for this module
 MIN_FW = 0x00000100

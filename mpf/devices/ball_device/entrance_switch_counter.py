@@ -2,7 +2,7 @@
 import asyncio
 
 from mpf.core.utility_functions import Util
-from mpf.devices.ball_device.physical_ball_counter import PhysicalBallCounter, EjectTracker, BallEntranceActivity, \
+from mpf.devices.ball_device.physical_ball_counter import PhysicalBallCounter, BallEntranceActivity, \
     BallLostActivity
 
 

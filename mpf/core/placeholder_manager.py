@@ -15,7 +15,7 @@ from mpf.core.mpf_controller import MpfController
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.machine import MachineController
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
 # supported operators
