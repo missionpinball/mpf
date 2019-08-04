@@ -11,7 +11,7 @@ from mpf.devices.ball_device.incoming_balls_handler import IncomingBall
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.devices.ball_device.ball_device import BallDevice
+    from mpf.devices.ball_device.ball_device import BallDevice  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class OutgoingBall:

@@ -10,8 +10,8 @@ from mpf.core.device_monitor import DeviceMonitor
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.devices.achievement import Achievement
-    from mpf.assets.show import RunningShow
+    from mpf.devices.achievement import Achievement     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.assets.show import RunningShow     # pylint: disable-msg=cyclic-import,unused-import
 
 
 @DeviceMonitor(_enabled="enabled", _selected_member="selected_member")

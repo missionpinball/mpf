@@ -14,7 +14,7 @@ from mpf.platforms.interfaces.light_platform_interface import LightPlatformInter
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.machine import MachineController
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class OpenpixelHardwarePlatform(LightsPlatform):

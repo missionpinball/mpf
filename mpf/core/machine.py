@@ -22,51 +22,51 @@ from mpf.core.utility_functions import Util
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.modes.game.code.game import Game   # noqa
-    from mpf.core.events import EventManager    # noqa
-    from mpf.core.switch_controller import SwitchController # noqa
-    from mpf.core.show_controller import ShowController # noqa
-    from mpf.core.service_controller import ServiceController   # noqa
-    from mpf.core.light_controller import LightController   # noqa
+    from mpf.modes.game.code.game import Game   # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.events import EventManager    # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.switch_controller import SwitchController     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.show_controller import ShowController     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.service_controller import ServiceController   # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.light_controller import LightController   # pylint: disable-msg=cyclic-import,unused-import
 
-    from mpf.core.custom_code import CustomCode # noqa
-    from mpf.core.mode_controller import ModeController # noqa
-    from mpf.core.settings_controller import SettingsController # noqa
-    from mpf.core.bcp.bcp import Bcp    # noqa
-    from mpf.core.text_ui import TextUi # noqa
-    from mpf.assets.show import Show    # noqa
-    from mpf.core.assets import BaseAssetManager    # noqa
-    from mpf.devices.switch import Switch   # noqa
-    from mpf.devices.driver import Driver   # noqa
-    from mpf.core.mode import Mode  # noqa
-    from mpf.devices.ball_device.ball_device import BallDevice  # noqa
-    from mpf.core.ball_controller import BallController     # noqa
-    from mpf.devices.playfield import Playfield     # noqa
-    from mpf.core.placeholder_manager import PlaceholderManager     # noqa
-    from mpf.platforms.smart_virtual import SmartVirtualHardwarePlatform    # noqa
-    from mpf.core.device_manager import DeviceManager   # noqa
-    from mpf.plugins.auditor import Auditor     # noqa
-    from mpf.devices.light import Light     # noqa
-    from mpf.devices.accelerometer import Accelerometer     # noqa
-    from mpf.devices.drop_target import DropTarget  # noqa
-    from mpf.devices.logic_blocks import Accrual, Sequence, Counter     # noqa
-    from mpf.devices.servo import Servo     # noqa
-    from mpf.devices.segment_display import SegmentDisplay      # noqa
-    from mpf.devices.shot_group import ShotGroup    # noqa
-    from mpf.devices.shot import Shot   # noqa
-    from mpf.devices.motor import Motor     # noqa
-    from mpf.devices.digital_output import DigitalOutput    # noqa
+    from mpf.core.custom_code import CustomCode     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.mode_controller import ModeController     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.settings_controller import SettingsController     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.bcp.bcp import Bcp    # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.text_ui import TextUi     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.assets.show import Show    # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.assets import BaseAssetManager    # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.switch import Switch   # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.driver import Driver   # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.mode import Mode  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.ball_device.ball_device import BallDevice  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.ball_controller import BallController     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.playfield import Playfield     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.placeholder_manager import PlaceholderManager     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.platforms.smart_virtual import SmartVirtualHardwarePlatform    # pylint: disable-msg=cyclic-import,unused-import; # noqa
+    from mpf.core.device_manager import DeviceManager   # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.plugins.auditor import Auditor     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.light import Light     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.accelerometer import Accelerometer     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.drop_target import DropTarget  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.logic_blocks import Accrual, Sequence, Counter     # pylint: disable-msg=cyclic-import,unused-import; # noqa
+    from mpf.devices.servo import Servo     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.segment_display import SegmentDisplay      # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.shot_group import ShotGroup    # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.shot import Shot   # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.motor import Motor     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.digital_output import DigitalOutput    # pylint: disable-msg=cyclic-import,unused-import
     from logging import Logger  # noqa
-    from mpf.devices.autofire import AutofireCoil   # noqa
-    from mpf.devices.stepper import Stepper     # noqa
-    from mpf.config_players.show_player import ShowPlayer   # noqa
-    from mpf.devices.dmd import Dmd     # noqa
-    from mpf.devices.rgb_dmd import RgbDmd  # noqa
-    from mpf.devices.flipper import Flipper     # noqa
-    from mpf.devices.diverter import Diverter   # noqa
-    from mpf.devices.multiball_lock import MultiballLock    # noqa
-    from mpf.devices.multiball import Multiball     # noqa
-    from mpf.devices.ball_hold import BallHold      # noqa
+    from mpf.devices.autofire import AutofireCoil   # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.stepper import Stepper     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.config_players.show_player import ShowPlayer   # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.dmd import Dmd     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.rgb_dmd import RgbDmd  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.flipper import Flipper     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.diverter import Diverter   # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.multiball_lock import MultiballLock    # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.multiball import Multiball     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.ball_hold import BallHold      # pylint: disable-msg=cyclic-import,unused-import
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -128,7 +128,6 @@ class MachineController(LogMixin):
         self.config = None      # type: Any
 
         # add some type hints
-        MYPY = False    # noqa
         if MYPY:   # pragma: no cover
             # controllers
             self.events = None                          # type: EventManager
@@ -670,7 +669,7 @@ class MachineController(LogMixin):
             self._crash_shutdown()
             try:
                 raise init.exception()
-            except: # noqa
+            except:     # noqa
                 self.log.exception("Failed to initialise MPF")
             return False
 
@@ -756,7 +755,7 @@ class MachineController(LogMixin):
             print("Shutdown because of an exception:")
             try:
                 raise self._exception['exception']
-            except: # noqa
+            except:     # noqa
                 self.log.exception("Runtime Exception")
         else:
             self._do_stop()

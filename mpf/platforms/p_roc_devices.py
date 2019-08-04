@@ -14,7 +14,7 @@ from mpf.core.utility_functions import Util
 
 MYPY = False
 if MYPY:    # pragma: no cover
-    from mpf.platforms.p_roc_common import PROCBasePlatform
+    from mpf.platforms.p_roc_common import PROCBasePlatform     # pylint: disable-msg=cyclic-import,unused-import
 
 
 class PROCSwitch(SwitchPlatformInterface):

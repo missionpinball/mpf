@@ -14,11 +14,11 @@ from mpf.core.switch_controller import SwitchHandler
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.events import QueuedEvent
-    from mpf.core.mode_device import ModeDevice
-    from mpf.core.events import EventHandlerKey
-    from mpf.core.player import Player
-    from mpf.core.machine import MachineController
+    from mpf.core.events import QueuedEvent     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.mode_device import ModeDevice     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.events import EventHandlerKey     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.player import Player  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
 # pylint: disable-msg=too-many-instance-attributes

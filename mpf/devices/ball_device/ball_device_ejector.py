@@ -4,8 +4,8 @@ import asyncio
 
 MYPY = False
 if MYPY:    # pragma: no cover
-    from mpf.core.machine import MachineController  # noqa
-    from mpf.devices.ball_device.ball_device import BallDevice  # noqa
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.ball_device.ball_device import BallDevice  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class BallDeviceEjector:

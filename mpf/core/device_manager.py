@@ -7,7 +7,7 @@ from mpf.core.mpf_controller import MpfController
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.device import Device
+    from mpf.core.device import Device  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class DeviceManager(MpfController):

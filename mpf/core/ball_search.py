@@ -9,7 +9,7 @@ from mpf.core.mpf_controller import MpfController
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.devices.playfield import Playfield     # noqa
+    from mpf.devices.playfield import Playfield     # pylint: disable-msg=cyclic-import,unused-import
 
 BallSearchCallback = namedtuple("BallSearchCallback", ["priority", "callback", "name", "restore_callback"])
 

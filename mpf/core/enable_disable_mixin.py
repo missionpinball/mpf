@@ -11,7 +11,7 @@ from mpf.core.machine import MachineController
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.mode import Mode
+    from mpf.core.mode import Mode  # pylint: disable-msg=cyclic-import,unused-import
 
 
 @DeviceMonitor("enabled")

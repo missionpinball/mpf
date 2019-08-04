@@ -7,8 +7,8 @@ from mpf.devices.shot import Shot
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.machine import MachineController
-    from typing import Any, Set
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
+    from typing import Any, Set     # pylint: disable-msg=cyclic-import,unused-import
 
 
 class Auditor:

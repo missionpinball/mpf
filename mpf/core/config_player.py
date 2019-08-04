@@ -10,9 +10,9 @@ from mpf.exceptions.ConfigFileError import ConfigFileError
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.placeholder_manager import BoolTemplate   # noqa
-    from typing import Dict     # noqa
-    import asyncio  # noqa
+    from mpf.core.placeholder_manager import BoolTemplate   # pylint: disable-msg=cyclic-import,unused-import
+    from typing import Dict     # pylint: disable-msg=cyclic-import,unused-import
+    import asyncio  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
