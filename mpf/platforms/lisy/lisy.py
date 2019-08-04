@@ -672,7 +672,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
         cmd_str = bytes([cmd])
         cmd_str += byte
-        self.log.debug("Sending %s %s", cmd, byte)
+        self.log.debug("Sending %s %s", cmd, "".join(" 0x%02x" % b for b in byte))
         self._writer.write(cmd_str)
 
     @asyncio.coroutine
@@ -686,7 +686,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         """Send a command with null terminated string."""
         assert self._writer is not None
 
-        self.log.debug("Sending %s %s", cmd, string)
+        self.log.debug("Sending %s %s (%s)", cmd, string, "".join(" 0x%02x" % ord(b) for b in string))
         self._writer.write(bytes([cmd]) + string.encode() + bytes([0]))
 
     @asyncio.coroutine
