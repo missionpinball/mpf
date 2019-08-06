@@ -478,6 +478,12 @@ class TestAPC(MpfTestCase):
             b'\x20\x0e\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00': None,          # clear display
             b'\x21\x03\x20\x20\x20': None,                                                      # clear display
             b'\x22\x10\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20': None,  # clear display
+            b'\x19\x00\x0a': None,
+            b'\x19\x01\x0a': None,
+            b'\x19\x67\xff': None,
+            b'\x19\x05\x1e': None,
+            b'\x19\x06\x0a': None,
+            b'\x19\x07\x0a': None,
         }
 
         for number in range(88):
@@ -525,6 +531,7 @@ class TestAPC(MpfTestCase):
 
         self.serialMock.expected_commands = {
             b'\x3c\x07\x03\x00\x00\x0a\xff\x00\x01\x00\x00': None,      # add rule for slingshot
+            b'\x19\x07\x14': None
         }
         self.machine.autofires["ac_slingshot"].enable()
         self.advance_time_and_run(.2)
@@ -544,5 +551,15 @@ class TestAPC(MpfTestCase):
             b'\x1e\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x03\x03\x07': None
         }
         self.machine.segment_displays["info_display"].add_text("1337")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # test recycle
+        # pulse coil
+        self.serialMock.expected_commands = {
+            b'\x18\x00\x0a': None,      # set pulse_ms to 10ms
+            b'\x17\x00': None
+        }
+        self.machine.coils["c_test"].pulse()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
