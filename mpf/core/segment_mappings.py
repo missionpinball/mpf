@@ -168,6 +168,11 @@ class SevenSegments(Segment):
         return bytes([(self.dp << 7) | (self.g << 6) | (self.f << 5) | (self.e << 4) | (self.d << 3) | (self.c << 2) |
                       (self.b << 1) | self.a])
 
+    def get_dpgfeabcd_encoding(self) -> bytes:
+        """Return segment in dp gfeabcd order."""
+        return bytes([(self.dp << 7) | (self.g << 6) | (self.f << 5) | (self.e << 4) | (self.a << 3) | (self.b << 2) |
+                      (self.c << 1) | self.d])
+
 
 seven_segments = {
     None: SevenSegments(dp=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="not mappable char"),
@@ -312,7 +317,7 @@ class FourteenSegments(Segment):
         return bytes([
             (self.dp << 7) | (self.g1 << 6) | (self.f << 5) | (self.e << 4) | (self.a << 3) | (self.b << 2) |
             (self.c << 1) | self.d,
-            (self.n << 7) | (self.dp << 6) | (self.l << 5) | (self.m << 4) | (self.k << 3) | (self.g2 << 2) |
+            (self.l << 7) | (self.dp << 6) | (self.n << 5) | (self.m << 4) | (self.k << 3) | (self.g2 << 2) |
             (self.h << 1) | self.j])
 
 
