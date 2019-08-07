@@ -123,7 +123,7 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
         if self.balls_added_live - balls_added > 0:
             self.source_playfield.add_ball(balls=self.balls_added_live - balls_added)
 
-        if not self.config['shoot_again']:
+        if not self.config['shoot_again'].evaluate([]):
             # No shoot again. Just stop multiball right away
             self.stop()
         else:
@@ -132,9 +132,9 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
                                             self._ball_drain_shoot_again,
                                             priority=1000)
             # Register stop handler
-            if self.config['shoot_again'] > 0:
+            if self.config['shoot_again'].evaluate([]) > 0:
                 self.delay.add(name='disable_shoot_again',
-                               ms=self.config['shoot_again'],
+                               ms=self.config['shoot_again'].evaluate([]),
                                callback=self.stop)
 
         self.machine.events.post("multiball_" + self.name + "_started",
