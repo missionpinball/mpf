@@ -57,7 +57,7 @@ class TextUi(MpfController):
                  "_bcp_status", "frame", "layout", "scene", "footer_memory", "switch_widgets", "mode_widgets",
                  "ball_device_widgets", "footer_cpu", "footer_mc_cpu", "footer_uptime", "delay", "_layout_change"]
 
-    def __init__(self, machine: "MachineController", **kwargs) -> None:
+    def __init__(self, machine: "MachineController") -> None:
         """Initialize TextUi."""
         super().__init__(machine)
         self.delay = DelayManager(machine)
