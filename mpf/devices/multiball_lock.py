@@ -9,7 +9,7 @@ from mpf.core.mode_device import ModeDevice
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.devices.ball_device.ball_device import BallDevice
+    from mpf.devices.ball_device.ball_device import BallDevice  # pylint: disable-msg=cyclic-import,unused-import
 
 
 @DeviceMonitor("locked_balls")

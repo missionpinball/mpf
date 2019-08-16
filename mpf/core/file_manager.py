@@ -5,8 +5,8 @@ import os
 from mpf.file_interfaces.yaml_interface import YamlInterface
 
 MYPY = False
-if MYPY:    # noqa
-    from typing import Dict
+if MYPY:    # pragma: no cover
+    from typing import Dict     # pylint: disable-msg=cyclic-import,unused-import
 
 
 class FileManager:

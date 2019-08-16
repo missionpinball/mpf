@@ -1,13 +1,10 @@
 """Routes balls from one device to another when captured."""
 from collections import defaultdict
 
-import asyncio
-
 from mpf.core.device_monitor import DeviceMonitor
 
 from mpf.core.enable_disable_mixin import EnableDisableMixin
 
-from mpf.core.events import event_handler
 from mpf.devices.ball_device.ball_device import BallDevice
 
 from mpf.core.machine import MachineController

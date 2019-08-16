@@ -8,8 +8,6 @@ from mpf.core.events import event_handler
 from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
-from mpf.core.system_wide_device import SystemWideDevice
-from mpf.core.utility_functions import Util
 
 
 @DeviceMonitor("common_state", "rotation_enabled")

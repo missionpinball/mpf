@@ -1,11 +1,7 @@
 """MPF clock and main loop."""
 import asyncio
-from functools import partial
-
 from typing import Tuple, Generator
-
 from serial_asyncio import create_serial_connection
-
 from mpf.core.logging import LogMixin
 
 

@@ -5,9 +5,9 @@ from functools import partial
 from typing import Any, Callable, Dict, Tuple
 from mpf.core.mpf_controller import MpfController
 
-MYPY = False    # noqa
-if MYPY:
-    from mpf.core.machine import MachineController
+MYPY = False
+if MYPY:    # pragma: no cover
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 __api__ = ['DelayManager']
 

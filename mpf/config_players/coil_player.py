@@ -1,6 +1,5 @@
 """Coil config player."""
 from copy import deepcopy
-from typing import List
 
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 from mpf.devices.driver import Driver

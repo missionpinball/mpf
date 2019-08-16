@@ -6,7 +6,7 @@ from mpf.core.switch_controller import MonitoredSwitchChange
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.machine import MachineController
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 # pythonosc is not a requirement for MPF so we fail with a nice error when loading
 try:

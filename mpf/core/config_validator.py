@@ -20,8 +20,8 @@ from mpf.file_interfaces.yaml_interface import YamlInterface
 from mpf.core.utility_functions import Util
 
 MYPY = False
-if MYPY:    # noqa
-    from mpf.core.machine import MachineController
+if MYPY:    # pragma: no cover
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class RuntimeToken:

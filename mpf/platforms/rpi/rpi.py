@@ -1,17 +1,14 @@
 """Platform to control the hardware of a Raspberry Pi."""
 import asyncio
-from typing import Optional, Dict, Any
+from typing import Optional
 
 from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
 
 from mpf.core.delays import DelayManager
 
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
-
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
-
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
-
 from mpf.core.platform import SwitchPlatform, DriverPlatform, ServoPlatform, SwitchSettings, \
     DriverSettings, DriverConfig, SwitchConfig, I2cPlatform
 

@@ -7,7 +7,7 @@ from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInt
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.platforms.fast.fast import FastHardwarePlatform
+    from mpf.platforms.fast.fast import FastHardwarePlatform    # pylint: disable-msg=cyclic-import,unused-import
 
 
 class FASTSwitch(SwitchPlatformInterface):

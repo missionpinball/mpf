@@ -3,7 +3,6 @@
 This class overlays an existing WPC-compatible platform interface to work with
 Mark Sunnucks's System 11 interface board.
 """
-import logging
 from typing import Any
 
 from mpf.core.machine import MachineController

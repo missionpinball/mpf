@@ -2,7 +2,6 @@
 """Stern Spike Platform."""
 import asyncio
 
-import logging
 import random
 from typing import Optional, Generator, Union
 
@@ -924,7 +923,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
     # pylint: disable-msg=too-many-locals
     # pylint: disable-msg=too-many-branches
     @asyncio.coroutine
-    def _initialize(self) -> Generator[int, None, None]:
+    def _initialize(self) -> Generator[int, None, None]:    # noqa: MC0001
         # send ctrl+c to stop whatever is running
         self.log.debug("Resetting console")
         self._writer.write(b'\x03reset\n')
@@ -973,6 +972,9 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
         self.log.debug("Resetting node bus and configuring traffic.")
         yield from self.send_cmd_sync(0, SpikeNodebus.Reset, bytearray())
+        # wait 3s (same as spike)
+        for _ in range(12):
+            yield from self._send_raw(bytearray([1, 250]))
 
         yield from self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([34]))  # block traffic (false)
         yield from self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([17]))  # set traffic

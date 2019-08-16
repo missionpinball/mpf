@@ -26,7 +26,7 @@ from mpf.platforms.p_roc_devices import PROCDriver
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.devices.accelerometer import Accelerometer
+    from mpf.devices.accelerometer import Accelerometer     # pylint: disable-msg=cyclic-import,unused-import
 
 
 class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):

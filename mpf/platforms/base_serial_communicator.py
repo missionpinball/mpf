@@ -5,7 +5,7 @@ from serial import SerialException
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from typing import Generator
+    from typing import Generator    # pylint: disable-msg=cyclic-import,unused-import
 
 
 class BaseSerialCommunicator:

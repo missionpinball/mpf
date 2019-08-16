@@ -12,10 +12,10 @@ from mpf.core.system_wide_device import SystemWideDevice
 from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
 
 MYPY = False
-if MYPY:    # noqa
-    from mpf.core.platform import DriverPlatform, LightsPlatform
-    from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
-    from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+if MYPY:    # pragma: no cover
+    from mpf.core.platform import DriverPlatform, LightsPlatform    # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface  # pylint: disable-msg=cyclic-import,unused-import; # noqa
+    from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 
 class DigitalOutput(SystemWideDevice):

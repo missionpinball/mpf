@@ -4,7 +4,6 @@ Contains the hardware interface and drivers for the Open Pinball Project
 platform hardware, including the solenoid, input, incandescent, and neopixel
 boards.
 """
-import logging
 import asyncio
 
 from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
@@ -21,11 +20,11 @@ from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, Sw
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from typing import Dict, List, Set, Union
-    from mpf.platforms.opp.opp_coil import OPPSolenoid
-    from mpf.platforms.opp.opp_incand import OPPIncand
-    from mpf.platforms.opp.opp_neopixel import OPPNeopixel
-    from mpf.platforms.opp.opp_switch import OPPSwitch
+    from typing import Dict, List, Set, Union   # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.platforms.opp.opp_coil import OPPSolenoid  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.platforms.opp.opp_incand import OPPIncand  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.platforms.opp.opp_neopixel import OPPNeopixel  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.platforms.opp.opp_switch import OPPSwitch  # pylint: disable-msg=cyclic-import,unused-import
 
 
 # pylint: disable-msg=too-many-instance-attributes

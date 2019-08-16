@@ -3,8 +3,8 @@ import logging
 import os
 
 MYPY = False
-if MYPY:    # noqa
-    from typing import List
+if MYPY:    # pragma: no cover
+    from typing import List     # pylint: disable-msg=cyclic-import,unused-import
 
 
 class FileInterface:

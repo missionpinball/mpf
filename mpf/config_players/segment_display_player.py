@@ -5,8 +5,8 @@ from mpf.config_players.device_config_player import DeviceConfigPlayer
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from typing import Dict
-    from mpf.devices.segment_display import SegmentDisplay
+    from typing import Dict     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.segment_display import SegmentDisplay  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class SegmentDisplayPlayer(DeviceConfigPlayer):

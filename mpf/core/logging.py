@@ -6,7 +6,7 @@ from mpf._version import log_url
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from logging import Logger
+    from logging import Logger  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class LogMixin:
