@@ -40,7 +40,7 @@ class ShowPlayer(DeviceConfigPlayer):
             start_time = self.machine.clock.get_time()
         for show, show_settings in settings.items():
             # Look for a conditional event in the show name
-            if show.condition and show.condition.evaluate(kwargs):
+            if show.condition and not show.condition.evaluate(kwargs):
                 continue
 
             show_settings = dict(show_settings)
