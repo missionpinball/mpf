@@ -879,3 +879,21 @@ class TestShows(MpfTestCase):
         self.assertNotLightColor("led_01", "red")
         self.advance_time_and_run(.06)
         self.assertLightColor("led_01", "red")
+
+    def test_conditional_shows(self):
+        self.assertLightColor("led_01", "black")
+        self.post_event("play_show_with_condition_in_event")
+        self.advance_time_and_run()
+        # self.assertLightColor("led_01", "purple")
+        self.post_event_with_params("play_show_with_condition_in_event", green=True)
+        self.advance_time_and_run()
+        self.assertLightColor("led_01", "green")
+
+    def test_conditional_show_names(self):
+        self.assertLightColor("led_01", "black")
+        self.post_event_with_params("play_show_with_condition_in_show")
+        self.advance_time_and_run()
+        self.assertLightColor("led_01", "red")
+        self.post_event("play_show_with_condition_in_show", blue=True)
+        self.advance_time_and_run()
+        self.assertLightColor("led_01", "blue")

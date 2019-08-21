@@ -59,6 +59,10 @@ shows:
     - time: 0
       lights:
         (leds): red
+  leds_single_color:
+    - time: 0
+      lights:
+        led_01: (color)
   leds_color_token:
     - time: 0
       lights:
@@ -253,3 +257,22 @@ show_player:
       show_tokens:
         num: (machine.test_num)
         color: (machine.test_color)
+  play_show_with_condition_in_event:
+    leds_single_color:
+      action: play
+      show_tokens:
+        color: purple
+  play_show_with_condition_in_event{green==true}:
+    leds_single_color:
+      action: play
+      show_tokens:
+        color: green
+  play_show_with_condition_in_show:
+    leds_single_color{not blue}:
+      action: play
+      show_tokens:
+        color: blue
+    leds_single_color{blue}:
+      action: play
+      show_tokens:
+        color: red
