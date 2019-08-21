@@ -53,7 +53,7 @@ class TextUi(MpfController):
     config_name = "text_ui"
 
     __slots__ = ["start_time", "machine", "_tick_task", "screen", "mpf_process", "ball_devices", "switches",
-                 "_pending_bcp_connection", "_asset_percent", "_player_widgets", "_machine_widgets",
+                 "config", "_pending_bcp_connection", "_asset_percent", "_player_widgets", "_machine_widgets",
                  "_bcp_status", "frame", "layout", "scene", "footer_memory", "switch_widgets", "mode_widgets",
                  "ball_device_widgets", "footer_cpu", "footer_mc_cpu", "footer_uptime", "delay", "_layout_change"]
 
@@ -61,6 +61,7 @@ class TextUi(MpfController):
         """Initialize TextUi."""
         super().__init__(machine)
         self.delay = DelayManager(machine)
+        self.config = machine.config.get('text_ui', {})
 
         self.screen = None
 
@@ -309,8 +310,9 @@ class TextUi(MpfController):
         player_vars.pop('number')
         player_vars.pop('ball')
 
-        for name, value in player_vars.items():
-            self._player_widgets.append(Label('{}: {}'.format(name, value)))
+        names = self.config.get('player_vars', player_vars.keys())
+        for name in names:
+            self._player_widgets.append(Label("{}: {}".format(name, player_vars[name])))
 
         self._layout_change = True
         self._schedule_draw_screen()
@@ -327,8 +329,10 @@ class TextUi(MpfController):
         self._machine_widgets.append(Label("MACHINE VARIABLES"))
         self._machine_widgets.append(Divider())
         machine_vars = self.machine.variables.machine_vars
-        for name, value in machine_vars.items():
-            self._machine_widgets.append(Label("{}: {}".format(name, value['value'])))
+        # If config defines explict vars to show, only show those. Otherwise, all
+        names = self.config.get('machine_vars', machine_vars.keys())
+        for name in names:
+            self._machine_widgets.append(Label("{}: {}".format(name, machine_vars[name]['value'])))
         self._layout_change = True
         self._schedule_draw_screen()
 

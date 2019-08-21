@@ -1518,6 +1518,10 @@ system11:
     file_log: single|enum(none,basic,full)|basic
 text_strings:
     __valid_in__: machine, mode                 # todo add to validator
+text_ui:
+    __valid_in__: machine
+    player_vars: list|str|None
+    machine_vars: list|str|None
 tic_stepper_settings:
     max_speed: single|int|2000000
     starting_speed: single|int|0
