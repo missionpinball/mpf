@@ -55,17 +55,19 @@ class PROCDriver(DriverPlatformInterface):
 
     """
 
-    __slots__ = ["log", "proc", "string_number", "pdbconfig", "__dict__"]
+    __slots__ = ["log", "proc", "string_number", "pdbconfig", "polarity", "__dict__"]
 
-    def __init__(self, number, config, platform, string_number):
+    def __init__(self, number, config, platform, string_number, polarity):
         """Initialise driver."""
         self.log = logging.getLogger('PROCDriver')
         super().__init__(config, number)
         self.platform = platform
+        self.polarity = polarity
         self.string_number = string_number
         self.pdbconfig = getattr(platform, "pdbconfig", None)
 
         self.log.debug("Driver Settings for %s", self.number)
+        self.platform.run_proc_cmd_no_wait("driver_update_state", self.state())
 
     def get_board_name(self):
         """Return board of the driver."""
@@ -120,7 +122,7 @@ class PROCDriver(DriverPlatformInterface):
         return {
             'driverNum': self.number,
             'outputDriveTime': 0,
-            'polarity': True,
+            'polarity': self.polarity,
             'state': False,
             'waitForFirstTimeSlot': False,
             'timeslots': 0,

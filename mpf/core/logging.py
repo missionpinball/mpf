@@ -1,7 +1,7 @@
 """Contains the LogMixin class."""
 import logging
 
-from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.exceptions.config_file_error import ConfigFileError
 from mpf._version import log_url
 
 MYPY = False

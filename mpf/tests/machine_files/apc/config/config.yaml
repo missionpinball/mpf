@@ -86,6 +86,10 @@ hardware_sound_player:
     test2:
         2:
             action: play
+    test4:
+        5:
+            track: 2
+            action: play
     play_file:
         "some_file": play_file
     play_file_loop:

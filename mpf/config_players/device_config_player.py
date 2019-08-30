@@ -4,7 +4,7 @@ import abc
 from mpf.core.utility_functions import Util
 
 from mpf.core.config_player import ConfigPlayer
-from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.exceptions.config_file_error import ConfigFileError
 
 
 class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):

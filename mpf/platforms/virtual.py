@@ -7,7 +7,7 @@ from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareS
 from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
 
-from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
@@ -322,19 +322,19 @@ class VirtualSound(HardwareSoundPlatformInterface):
         self.playing = None
         self.volume = None
 
-    def play_sound(self, number: int):
+    def play_sound(self, number: int, track: int = 1):
         """Play virtual sound."""
         self.playing = number
 
-    def play_sound_file(self, file: str, platform_options: dict):
+    def play_sound_file(self, file: str, platform_options: dict, track: int = 1):
         """Play a sound file."""
         self.playing = file
 
-    def text_to_speech(self, text: str, platform_options: dict):
+    def text_to_speech(self, text: str, platform_options: dict, track: int = 1):
         """Text to speech output."""
         self.playing = text
 
-    def set_volume(self, volume: float):
+    def set_volume(self, volume: float, track: int = 1):
         """Set volume."""
         self.volume = volume
 

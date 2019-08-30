@@ -2,7 +2,7 @@
 import asyncio
 import logging
 
-from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.platforms.pololu.pololu_ticcmd_wrapper import PololuTiccmdWrapper
 from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
 from mpf.core.platform import StepperPlatform

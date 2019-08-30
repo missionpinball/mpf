@@ -11,6 +11,8 @@ switches:
         number: sd1
     s_test_matrix:
         number: s26
+    s_slingshot_test:
+        number: s20
 
 coils:
     c_test_direct:
@@ -22,7 +24,8 @@ coils:
     test_gi:
         number: g01
         default_pulse_ms: 0
-
+    c_slingshot_test:
+        number: c02
 lights:
   test_light:
     number: l11
@@ -30,3 +33,8 @@ lights:
   test_gi:
     platform: drivers
     number: test_gi
+
+autofire_coils:
+    ac_slingshot_test:
+        coil: c_slingshot_test
+        switch: s_slingshot_test

@@ -9,7 +9,7 @@ import serial
 
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 
-from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.exceptions.config_file_error import ConfigFileError
 
 from mpf.core.platform import RgbDmdPlatform
 
