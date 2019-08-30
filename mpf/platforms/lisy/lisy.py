@@ -148,12 +148,12 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
             # display info for display
             display_info = yield from (self.platform.send_byte_and_read_response(
                 LisyDefines.InfoGetDisplayDetails, bytearray([self.number]), 2))
-            if 1 > display_info[1] > 6:
+            if 1 > display_info[0] > 6:
                 raise AssertionError("Invalid display type {} reported by hardware for display {}".format(
                     self._type_of_display, self.number))
 
-            self._length_of_display = int(display_info[0])
-            self._type_of_display = display_info[1]
+            self._type_of_display = display_info[0]
+            self._length_of_display = int(display_info[1])
 
         # clear display initially
         self._set_text("")
