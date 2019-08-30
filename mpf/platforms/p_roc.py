@@ -116,10 +116,12 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
             proc_num = self.pdbconfig.get_proc_coil_number(str(number))
             if proc_num == -1:
                 raise AssertionError("Driver {} cannot be controlled by the P-ROC. ".format(str(number)))
+            polarity = True
         else:
             proc_num = self.pinproc.decode(self.machine_type, str(number))
+            polarity = self.machine_type in (self.pinproc.MachineTypeSternWhitestar, self.pinproc.MachineTypeSternSAM)
 
-        return PROCDriver(proc_num, config, self, number)
+        return PROCDriver(proc_num, config, self, number, polarity)
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure a P-ROC switch.
