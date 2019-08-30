@@ -349,6 +349,9 @@ class TestPRoc(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
 
+        # restore empty handler
+        self.pinproc.get_events = MagicMock(return_value=[])
+
     def _test_dmd_update(self):
         self.machine.default_platform.pinproc.DMDBuffer = MockDMD
         self.pinproc.dmd_draw = MagicMock(return_value=True)
@@ -391,6 +394,9 @@ class TestPRoc(MpfTestCase):
 
         # should not be rendered
         assert not self.pinproc.dmd_draw.called
+
+        # restore empty handler
+        self.pinproc.get_events = MagicMock(return_value=[])
 
     def _test_pdb_matrix_light(self):
         # very simple check for matrix config
