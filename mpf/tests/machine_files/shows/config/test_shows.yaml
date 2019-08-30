@@ -257,12 +257,12 @@ show_player:
       show_tokens:
         num: (machine.test_num)
         color: (machine.test_color)
-  play_show_with_condition_in_event:
+  play_show_with_condition_in_event{green==False}:
     leds_single_color:
       action: play
       show_tokens:
         color: purple
-  play_show_with_condition_in_event{green==true}:
+  play_show_with_condition_in_event{green==True}:
     leds_single_color:
       action: play
       show_tokens:
@@ -271,8 +271,8 @@ show_player:
     leds_single_color{not blue}:
       action: play
       show_tokens:
-        color: blue
+        color: red
     leds_single_color{blue}:
       action: play
       show_tokens:
-        color: red
+        color: blue
