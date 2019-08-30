@@ -919,11 +919,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         """Return config validator name."""
         return "spike_stepper_settings"
 
-    # pylint: disable-msg=too-many-statements
-    # pylint: disable-msg=too-many-locals
-    # pylint: disable-msg=too-many-branches
     @asyncio.coroutine
-    def _initialize(self) -> Generator[int, None, None]:    # noqa: MC0001
+    def _init_bridge(self):
         # send ctrl+c to stop whatever is running
         self.log.debug("Resetting console")
         self._writer.write(b'\x03reset\n')
@@ -969,6 +966,10 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
         yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
         self._reader._buffer = bytearray()
+
+    @asyncio.coroutine
+    def _initialize(self) -> Generator[int, None, None]:
+        yield from self._init_bridge()
 
         self.log.debug("Resetting node bus and configuring traffic.")
         yield from self.send_cmd_sync(0, SpikeNodebus.Reset, bytearray())
