@@ -6,7 +6,7 @@ from typing import List
 from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.core.logging import LogMixin
-from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.exceptions.config_file_error import ConfigFileError
 
 MYPY = False
 if MYPY:   # pragma: no cover

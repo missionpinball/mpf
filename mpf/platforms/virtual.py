@@ -7,7 +7,7 @@ from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareS
 from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
 
-from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface

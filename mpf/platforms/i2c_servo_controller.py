@@ -2,7 +2,7 @@
 import asyncio
 import logging
 
-from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 
 from mpf.core.platform import ServoPlatform

@@ -9,7 +9,7 @@ from mpf.core.player import Player
 from mpf.core.utility_functions import Util
 from mpf.core.mpf_controller import MpfController
 from mpf.core.switch_controller import MonitoredSwitchChange
-from mpf.exceptions.DriverLimitsError import DriverLimitsError
+from mpf.exceptions.driver_limits_error import DriverLimitsError
 
 
 class BcpInterface(MpfController):

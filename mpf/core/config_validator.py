@@ -15,7 +15,7 @@ from pkg_resources import iter_entry_points
 
 import mpf
 from mpf.core.rgb_color import named_rgb_colors, RGBColor
-from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.file_interfaces.yaml_interface import YamlInterface
 from mpf.core.utility_functions import Util
 

@@ -227,6 +227,3 @@ class YamlInterface(FileInterface):
         """Save config to yaml file."""
         with open(filename, 'w', encoding='utf8') as output_file:
             output_file.write(yaml.dump(data, default_flow_style=False))
-
-
-file_interface_class = YamlInterface

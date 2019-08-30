@@ -2,7 +2,7 @@
 import asyncio
 
 from mpf.devices.ball_device.ball_device_ejector import BallDeviceEjector
-from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.exceptions.config_file_error import ConfigFileError
 
 
 class PulseCoilEjector(BallDeviceEjector):

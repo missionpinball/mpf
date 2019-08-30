@@ -1,5 +1,5 @@
 from mpf.core.utility_functions import Util
-from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf._version import log_url
 

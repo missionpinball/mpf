@@ -7,7 +7,7 @@ from mpf.core.events import event_handler
 from mpf.core.machine import MachineController
 from mpf.core.platform import DriverPlatform, DriverConfig
 from mpf.core.system_wide_device import SystemWideDevice
-from mpf.exceptions.DriverLimitsError import DriverLimitsError
+from mpf.exceptions.driver_limits_error import DriverLimitsError
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 
