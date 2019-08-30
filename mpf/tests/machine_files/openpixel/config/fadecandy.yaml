@@ -2,3 +2,25 @@
 
 config:
 - config.yaml
+
+lights:
+  test_rgbw:
+    channels:
+      red:
+        - number: 2-0
+      green:
+        - number: 2-1
+      blue:
+        - number: 2-2
+      white:
+        - number: 2-3
+  test_rgbw2:
+    channels:
+      red:
+        - number: 2-4
+      green:
+        - number: 2-5
+      blue:
+        - number: 2-6
+      white:
+        - number: 2-7
