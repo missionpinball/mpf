@@ -72,6 +72,8 @@ class MockPinProcModule(MagicMock):
                 return 0
             elif device_str == "s26":
                 return 53
+            elif device_str == "s20":
+                return 47
             elif device_str == "l11":
                 return 80
             elif device_str == "g01":
@@ -232,6 +234,13 @@ class TestPRoc(MpfTestCase):
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
     def _test_pulse_and_hold(self):
+        # make sure polarity is right
+        number = self.machine.coils["c_test"].hw_driver.number
+        self.pinproc.driver_update_state.assert_has_calls([
+            call({'driverNum': number, 'outputDriveTime': 0, 'polarity': True, 'state': False, 'waitForFirstTimeSlot': False, 'timeslots': 0, 'patterOnTime': 0, 'patterOffTime': 0, 'patterEnable': False, 'futureEnable': False})],
+            False
+        )
+
         self.assertEqual("PD-16 Board 1 Bank 1", self.machine.coils["c_test"].hw_driver.get_board_name())
         # pulse coil A1-B1-2
         self.machine.coils["c_test"].pulse()
@@ -502,7 +511,29 @@ class TestPRoc(MpfTestCase):
     @test_config("wpc.yaml")
     def test_load_wpc(self):
         # make sure p-roc properly initialises with WPC config
-        pass
+
+        # make sure polarity is right
+        number = self.machine.coils["c_test_direct"].hw_driver.number
+        self.pinproc.driver_update_state.assert_has_calls([
+            call({'driverNum': number, 'outputDriveTime': 0, 'polarity': False, 'state': False, 'waitForFirstTimeSlot': False, 'timeslots': 0, 'patterOnTime': 0, 'patterOffTime': 0, 'patterEnable': False, 'futureEnable': False})],
+            False
+        )
+
+        # test polarity in rule
+        self.pinproc.switch_update_rule = MagicMock()
+        self.machine.autofires["ac_slingshot_test"].enable()
+        self.wait_for_platform()
+        coil_number = self.machine.coils["c_slingshot_test"].hw_driver.number
+        self.pinproc.switch_update_rule.assert_has_calls([
+            call(47, 'open_nondebounced', {'notifyHost': False, 'reloadActive': True}, [], False),
+            call(47, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': True},
+                 [{'futureEnable': False, 'patterOffTime': 0, 'polarity': False, 'waitForFirstTimeSlot': False,
+                   'timeslots': 0, 'patterOnTime': 0, 'outputDriveTime': 10, 'patterEnable': False, 'state': 1,
+                   'driverNum': coil_number}], False),
+            call(47, 'open_debounced', {'notifyHost': True, 'reloadActive': True}, [], False),
+            call(47, 'closed_debounced', {'notifyHost': True, 'reloadActive': True}, [], False),
+        ], any_order=True)
+        self.machine.autofires["ac_slingshot_test"].disable()
 
     @test_config("snux.yaml")
     def test_load_snux(self):
