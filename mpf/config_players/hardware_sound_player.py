@@ -29,17 +29,17 @@ class HardwareSoundPlayer(DeviceConfigPlayer):
             if s['action'] == "stop":
                 sound_system.stop_all_sounds()
             elif s['action'] == "play":
-                sound_system.play(item)
+                sound_system.play(item, s["track"])
             elif s['action'] == "play_file":
-                sound_system.play_file(item, s.get("platform_options", {}))
+                sound_system.play_file(item, s.get("platform_options", {}), s["track"])
             elif s['action'] == "text_to_speech":
-                sound_system.text_to_speech(item, s.get("platform_options", {}))
+                sound_system.text_to_speech(item, s.get("platform_options", {}), s["track"])
             elif s['action'] == "set_volume":
-                sound_system.set_volume(float(item))
+                sound_system.set_volume(float(item), s["track"])
             elif s['action'] == "increase_volume":
-                sound_system.increase_volume(float(item))
+                sound_system.increase_volume(float(item), s["track"])
             elif s['action'] == "decrease_volume":
-                sound_system.decrease_volume(float(item))
+                sound_system.decrease_volume(float(item), s["track"])
             else:
                 raise AssertionError("Invalid action {}".format(s['action']))
 

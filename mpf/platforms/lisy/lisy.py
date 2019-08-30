@@ -204,32 +204,49 @@ class LisySound(HardwareSoundPlatformInterface):
         """Initialise hardware sound."""
         self.platform = platform        # type: LisyHardwarePlatform
 
-    def play_sound(self, number: int):
+    def play_sound(self, number: int, track: int = 1):
         """Play sound with number."""
-        self.platform.send_byte(LisyDefines.SoundPlaySound, bytes([number]))
+        if self.platform.api_version >= StrictVersion("0.9"):
+            self.platform.send_byte(LisyDefines.SoundPlaySound, bytes([track, number]))
+        else:
+            assert track == 1
+            self.platform.send_byte(LisyDefines.SoundPlaySound, bytes([number]))
 
-    def play_sound_file(self, file: str, platform_options: dict):
+    def play_sound_file(self, file: str, platform_options: dict, track: int = 1):
         """Play sound file."""
         flags = 1 if platform_options.get("loop", False) else 0
         flags += 2 if platform_options.get("no_cache", False) else 0
-        self.platform.send_string(LisyDefines.SoundPlaySoundFile, chr(flags) + file)
+        if self.platform.api_version >= StrictVersion("0.9"):
+            self.platform.send_string(LisyDefines.SoundPlaySoundFile, chr(track) + chr(flags) + file)
+        else:
+            assert track == 1
+            self.platform.send_string(LisyDefines.SoundPlaySoundFile, chr(flags) + file)
 
-    def text_to_speech(self, text: str, platform_options: dict):
+    def text_to_speech(self, text: str, platform_options: dict, track: int = 1):
         """Text to speech."""
         flags = 1 if platform_options.get("loop", False) else 0
         flags += 2 if platform_options.get("no_cache", False) else 0
-        self.platform.send_string(LisyDefines.SoundTextToSpeech, chr(flags) + text)
+        if self.platform.api_version >= StrictVersion("0.9"):
+            self.platform.send_string(LisyDefines.SoundTextToSpeech, chr(track) + chr(flags) + text)
+        else:
+            assert track == 1
+            self.platform.send_string(LisyDefines.SoundTextToSpeech, chr(flags) + text)
 
-    def set_volume(self, volume: float):
+    def set_volume(self, volume: float, track: int = 1):
         """Set volume."""
         if self.platform.api_version >= StrictVersion("0.9"):
-            self.platform.send_byte(LisyDefines.SoundSetVolume, bytes([1, int(volume * 100)]))
+            self.platform.send_byte(LisyDefines.SoundSetVolume, bytes([track, int(volume * 100)]))
         else:
+            assert track == 1
             self.platform.send_byte(LisyDefines.SoundSetVolume, bytes([int(volume * 100)]))
 
-    def stop_all_sounds(self):
+    def stop_all_sounds(self, track: int = 1):
         """Stop all sounds."""
-        self.platform.send_byte(LisyDefines.SoundStopAllSounds)
+        if self.platform.api_version >= StrictVersion("0.9"):
+            self.platform.send_byte(LisyDefines.SoundStopAllSounds, bytes([track]))
+        else:
+            assert track == 1
+            self.platform.send_byte(LisyDefines.SoundStopAllSounds)
 
 
 # pylint: disable-msg=too-many-instance-attributes
