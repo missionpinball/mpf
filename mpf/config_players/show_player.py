@@ -1,7 +1,7 @@
 """Show config player."""
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 
-reserved_keys = ["show", "priority", "speed", "block_queue", "start_step", "loops", "sync_ms", "manual_advance",
+RESERVED_KEYS = ["show", "priority", "speed", "block_queue", "start_step", "loops", "sync_ms", "manual_advance",
                  "key", "show_tokens", "events_when_played", "events_when_stopped", "events_when_looped",
                  "events_when_paused", "events_when_resumed", "events_when_advanced",
                  "events_when_stepped_back", "events_when_updated", "events_when_completed"]
@@ -64,7 +64,7 @@ class ShowPlayer(DeviceConfigPlayer):
 
     def _expand_device_config(self, device_settings):
         """Validate show_tokens."""
-        for key in reserved_keys:
+        for key in RESERVED_KEYS:
             if key in device_settings["show_tokens"]:
                 self.raise_config_error("Key {} is not allowed in show_tokens of your show_player because it is also "
                                         "an option in show_player. Did indent that option too far?".format(key), 1)

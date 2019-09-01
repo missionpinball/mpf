@@ -4,8 +4,8 @@ from distutils.version import StrictVersion
 
 from typing import Generator, Dict, Optional, List
 
-from mpf.core.segment_mappings import seven_segments, bcd_segments, fourteen_segments, TextToSegmentMapper, \
-    ascii_segments
+from mpf.core.segment_mappings import SEVEN_SEGMENTS, BCD_SEGMENTS, FOURTEEN_SEGMENTS, TextToSegmentMapper, \
+    ASCII_SEGMENTS
 from mpf.core.platform_batch_light_system import PlatformBatchLight, PlatformBatchLightSystem
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
@@ -175,24 +175,24 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
 
     def _format_text(self, text):
         if self._type_of_display == 1:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, bcd_segments,
+            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, BCD_SEGMENTS,
                                                                embed_dots=False)
             result = map(lambda x: x.get_x4x3x2x1_encoding(), mapping)
         elif self._type_of_display == 2:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, bcd_segments)
+            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, BCD_SEGMENTS)
             result = map(lambda x: x.get_dpx4x3x2x1_encoding(), mapping)
         elif self._type_of_display == 3:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, seven_segments)
+            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, SEVEN_SEGMENTS)
             result = map(lambda x: x.get_dpgfeabcd_encoding(), mapping)
         elif self._type_of_display == 4:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, fourteen_segments)
+            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, FOURTEEN_SEGMENTS)
             result = map(lambda x: x.get_apc_encoding(), mapping)
         elif self._type_of_display == 5:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, ascii_segments,
+            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, ASCII_SEGMENTS,
                                                                embed_dots=False)
             result = map(lambda x: x.get_ascii_encoding(), mapping)
         elif self._type_of_display == 6:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, ascii_segments)
+            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, ASCII_SEGMENTS)
             result = map(lambda x: x.get_ascii_with_dp_encoding(), mapping)
         else:
             raise AssertionError("Invalid type {}".format(self._type_of_display))

@@ -23,8 +23,8 @@ from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, Sw
 # pylint: disable-msg=ungrouped-imports
 try:    # pragma: no cover
     import pinproc
-    pinproc_imported = True
-    import_error = None
+    PINPROC_IMPORTED = True
+    IMPORT_ERROR = None
 except ImportError:     # pragma: no cover
     try:
         if sys.platform == 'darwin':
@@ -53,13 +53,13 @@ except ImportError:     # pragma: no cover
         else:
             raise ImportError
 
-        pinproc_imported = True
-        import_error = None
+        PINPROC_IMPORTED = True
+        IMPORT_ERROR = None
 
     except ImportError as e:
-        pinproc_imported = False
+        PINPROC_IMPORTED = False
         pinproc = None
-        import_error = e
+        IMPORT_ERROR = e
 
 
 class ProcProcess:
@@ -168,11 +168,11 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         """Make sure pinproc was loaded."""
         super().__init__(machine)
 
-        if not pinproc_imported:
+        if not PINPROC_IMPORTED:
             raise AssertionError('Could not import "pinproc". Most likely you do not '
                                  'have libpinproc and/or pypinproc installed. You can '
                                  'run MPF in software-only "virtual" mode by using '
-                                 'the -x command like option for now instead.') from import_error
+                                 'the -x command like option for now instead.') from IMPORT_ERROR
 
         self.pdbconfig = None
         self.pinproc = pinproc

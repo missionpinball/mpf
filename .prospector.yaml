@@ -22,7 +22,6 @@ pep257:
 pylint:
   disable:
     - pointless-string-statement  # pointless statement, which is how our event docstrings are seen
-    - invalid-name  # we got ms and dt as defaults for a lot of functions
     - too-few-public-methods
     - no-else-return
 
@@ -32,6 +31,10 @@ pylint:
     max-branches: 30
     max-statements: 60
     max-public-methods: 40
+    variable-rgx: "^[a-z_][a-z0-9]*((_[a-z0-9]+)*)?$"   # pep8 style but not more
+    argument-rgx: "^[a-z_][a-z0-9]*((_[a-z0-9]+)*)?$"   # pep8 style but not more
+    attr-rgx: "^[a-z_][a-z0-9_]*$"                      # pep8 style but not more
+    method-rgx: "^[a-z_][a-z0-9_]*$"                    # pep8 style but not more
 
 ignore-paths:
   - mpf/tests/

@@ -156,7 +156,7 @@ class CommandLineUtility(MpfCommandLineParser):
 
         _module = import_module('mpf.commands.%s' % command)
 
-        if hasattr(_module, "subcommand") and _module.subcommand:
+        if hasattr(_module, "SUBCOMMAND") and _module.SUBCOMMAND:
             _module.Command(self.argv, self.path)
         else:
             machine_path, remaining_args = self.parse_args()

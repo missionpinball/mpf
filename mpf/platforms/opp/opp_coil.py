@@ -1,11 +1,16 @@
 """OPP solenoid wings."""
 import logging
 from collections import namedtuple
+
 from typing import Optional, Dict
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
+
+MYPY = False
+if MYPY:    # pragma: no cover
+    from mpf.platforms.opp.opp import OppHardwarePlatform
 
 SwitchRule = namedtuple("SwitchRule", ["pulse_settings", "hold_settings", "recycle", "can_cancel"])
 
@@ -14,21 +19,21 @@ class OPPSolenoid(DriverPlatformInterface):
 
     """Driver of an OPP solenoid card."""
 
-    __slots__ = ["solCard", "log", "switch_rule", "_switches", "_config_state", "platform_settings", "switches"]
+    __slots__ = ["sol_card", "log", "switch_rule", "_switches", "_config_state", "platform_settings", "switches"]
 
     def __init__(self, sol_card, number):
         """Initialise OPP solenoid driver."""
         super().__init__({}, number)
-        self.solCard = sol_card
+        self.sol_card = sol_card        # type: OPPSolenoidCard
         self.log = sol_card.log
-        self.switch_rule = None        # type: SwitchRule
+        self.switch_rule = None         # type: SwitchRule
         self.switches = []
         self._config_state = None
         self.platform_settings = dict()     # type: Dict
 
     def get_board_name(self):
         """Return OPP chain and addr."""
-        return "OPP {} Board {}".format(str(self.solCard.chain_serial), "0x%02x" % self.solCard.addr)
+        return "OPP {} Board {}".format(str(self.sol_card.chain_serial), "0x%02x" % self.sol_card.addr)
 
     def get_minimum_off_time(self, recycle):
         """Return minimum off factor.
@@ -48,7 +53,7 @@ class OPPSolenoid(DriverPlatformInterface):
     def _kick_coil(self, sol_int, on):
         mask = 1 << sol_int
         msg = bytearray()
-        msg.append(self.solCard.addr)
+        msg.append(self.sol_card.addr)
         msg.extend(OppRs232Intf.KICK_SOL_CMD)
         if on:
             msg.append((mask >> 8) & 0xff)
@@ -61,7 +66,7 @@ class OPPSolenoid(DriverPlatformInterface):
         msg.extend(OppRs232Intf.calc_crc8_whole_msg(msg))
         cmd = bytes(msg)
         self.log.debug("Triggering solenoid driver: %s", "".join(" 0x%02x" % b for b in cmd))
-        self.solCard.platform.send_to_processor(self.solCard.chain_serial, cmd)
+        self.sol_card.platform.send_to_processor(self.sol_card.chain_serial, cmd)
 
     def disable(self):
         """Disable (turns off) this driver."""
@@ -140,7 +145,7 @@ class OPPSolenoid(DriverPlatformInterface):
             cmd = 0
             hold = int(hold_settings.power * 16)
             if hold >= 16:
-                if self.solCard.platform.minVersion >= 0x00020000:
+                if self.sol_card.platform.min_version >= 0x00020000:
                     # set flag for full power
                     cmd += ord(OppRs232Intf.CFG_SOL_ON_OFF)
                     hold = 0
@@ -154,7 +159,7 @@ class OPPSolenoid(DriverPlatformInterface):
         # CFG_SOL_USE_SWITCH was used to enable/disable a solenoid.  This
         # will work as long as switches are added using _add_switch_coil_mapping
         if self.switch_rule:
-            if self.solCard.platform.minVersion < 0x00020000:
+            if self.sol_card.platform.min_version < 0x00020000:
                 cmd += ord(OppRs232Intf.CFG_SOL_USE_SWITCH)
             elif str(((int(solenoid) & 0x0c) << 1) | (int(solenoid) & 0x03)) in\
                     [switch.split('-')[2] for switch in self.switches]:
@@ -168,7 +173,7 @@ class OPPSolenoid(DriverPlatformInterface):
         pulse_len = pulse_settings.duration
 
         msg = bytearray()
-        msg.append(self.solCard.addr)
+        msg.append(self.sol_card.addr)
         msg.extend(OppRs232Intf.CFG_IND_SOL_CMD)
         msg.append(int(solenoid))
         msg.append(cmd)
@@ -179,14 +184,14 @@ class OPPSolenoid(DriverPlatformInterface):
         final_cmd = bytes(msg)
 
         self.log.debug("Writing individual config: %s", "".join(" 0x%02x" % b for b in final_cmd))
-        self.solCard.platform.send_to_processor(self.solCard.chain_serial, final_cmd)
+        self.sol_card.platform.send_to_processor(self.sol_card.chain_serial, final_cmd)
 
 
 class OPPSolenoidCard:
 
     """OPP solenoid card."""
 
-    __slots__ = ["log", "chain_serial", "addr", "mask", "platform", "state", "cardNum"]
+    __slots__ = ["log", "chain_serial", "addr", "mask", "platform", "state", "card_num"]
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, chain_serial, addr, mask, sol_dict, platform):
@@ -195,15 +200,15 @@ class OPPSolenoidCard:
         self.chain_serial = chain_serial
         self.addr = addr
         self.mask = mask
-        self.platform = platform
+        self.platform = platform    # type: OppHardwarePlatform
         self.state = 0
-        self.cardNum = str(addr - ord(OppRs232Intf.CARD_ID_GEN2_CARD))
+        self.card_num = str(addr - ord(OppRs232Intf.CARD_ID_GEN2_CARD))
 
         self.log.debug("Creating OPP Solenoid at hardware address: 0x%02x", addr)
 
         for index in range(0, 16):
             if ((1 << index) & mask) != 0:
-                number = chain_serial + '-' + self.cardNum + '-' + str(index)
+                number = chain_serial + '-' + self.card_num + '-' + str(index)
                 opp_sol = OPPSolenoid(self, number)
                 opp_sol.config = {}
                 sol_dict[number] = opp_sol

@@ -80,6 +80,3 @@ class SwitchPlayer:
             switch,
             state=0,
             logical=True)
-
-
-plugin_class = SwitchPlayer

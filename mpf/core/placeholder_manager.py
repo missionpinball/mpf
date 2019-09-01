@@ -19,13 +19,13 @@ if MYPY:   # pragma: no cover
 
 
 # supported operators
-operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
+OPERATORS = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
              ast.Div: op.truediv, ast.Pow: op.pow, ast.BitXor: op.xor,
              ast.USub: op.neg, ast.Not: op.not_, ast.Mod: op.mod}
 
-bool_operators = {ast.And: lambda a, b: a and b, ast.Or: lambda a, b: a or b}
+BOOL_OPERATORS = {ast.And: lambda a, b: a and b, ast.Or: lambda a, b: a or b}
 
-comparisons = {ast.Eq: op.eq, ast.Lt: op.lt, ast.Gt: op.gt, ast.LtE: op.le, ast.GtE: op.ge, ast.NotEq: op.ne}
+COMPARISONS = {ast.Eq: op.eq, ast.Lt: op.lt, ast.Gt: op.gt, ast.LtE: op.le, ast.GtE: op.ge, ast.NotEq: op.ne}
 
 
 class ConditionalEvent:
@@ -629,14 +629,14 @@ class BasePlaceholderManager(MpfController):
         left_value, left_subscription = self._eval(node.left, variables, subscribe)
         right_value, right_subscription = self._eval(node.right, variables, subscribe)
         try:
-            ret_value = operators[type(node.op)](left_value, right_value)
+            ret_value = OPERATORS[type(node.op)](left_value, right_value)
         except TypeError:
             raise TemplateEvalError(left_subscription + right_subscription)
         return ret_value, left_subscription + right_subscription
 
     def _eval_unary_op(self, node, variables, subscribe):
         value, subscription = self._eval(node.operand, variables, subscribe)
-        return operators[type(node.op)](value), subscription
+        return OPERATORS[type(node.op)](value), subscription
 
     def _eval_compare(self, node, variables, subscribe):
         if len(node.ops) > 1:
@@ -644,7 +644,7 @@ class BasePlaceholderManager(MpfController):
         left_value, left_subscription = self._eval(node.left, variables, subscribe)
         right_value, right_subscription = self._eval(node.comparators[0], variables, subscribe)
         try:
-            return comparisons[type(node.ops[0])](left_value, right_value), left_subscription + right_subscription
+            return COMPARISONS[type(node.ops[0])](left_value, right_value), left_subscription + right_subscription
         except TypeError:
             raise TemplateEvalError(left_subscription + right_subscription)
 
@@ -654,7 +654,7 @@ class BasePlaceholderManager(MpfController):
             value, new_subscription = self._eval(node.values[i], variables, subscribe)
             subscription += new_subscription
             try:
-                result = bool_operators[type(node.op)](result, value)
+                result = BOOL_OPERATORS[type(node.op)](result, value)
             except TypeError:
                 raise TemplateEvalError(subscription)
         return result, subscription

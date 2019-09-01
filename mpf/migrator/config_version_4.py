@@ -13,7 +13,7 @@ from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from mpf.file_interfaces.yaml_roundtrip import YamlRoundtrip, MpfRoundTripLoader
 from mpf.core.utility_functions import Util
 from mpf.migrator.migrator import VersionMigrator
-from mpf.core.rgb_color import named_rgb_colors, RGBColor
+from mpf.core.rgb_color import NAMED_RGB_COLORS, RGBColor
 
 
 class V4Migrator(VersionMigrator):
@@ -840,7 +840,7 @@ class V4Migrator(VersionMigrator):
     def _get_color(self, color):
         color_tuple = RGBColor.hex_to_rgb(color)
 
-        for color_name, val in named_rgb_colors.items():
+        for color_name, val in NAMED_RGB_COLORS.items():
             if color_tuple == val:
                 self.log.debug("Converting hex color '%s' to named color "
                                "'%s'", color, color_name)
