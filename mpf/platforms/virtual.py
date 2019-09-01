@@ -338,7 +338,7 @@ class VirtualSound(HardwareSoundPlatformInterface):
         """Set volume."""
         self.volume = volume
 
-    def stop_all_sounds(self):
+    def stop_all_sounds(self, track: int = 1):
         """Stop sound."""
         self.playing = None
 
