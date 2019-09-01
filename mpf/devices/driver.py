@@ -52,7 +52,7 @@ class Driver(SystemWideDevice):
             if not hasattr(coil, "hw_driver"):
                 # skip dual wound and other special devices
                 continue
-            key = (coil.platform, coil.hw_driver.number)
+            key = (coil.config['platform'], coil.hw_driver.number)
             if key in check_set:
                 raise AssertionError("Duplicate coil number {} for coil {}".format(coil.hw_driver.number, coil))
 

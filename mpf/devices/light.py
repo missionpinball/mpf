@@ -122,7 +122,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         for light in machine.lights:
             for drivers in light.hw_drivers.values():
                 for driver in drivers:
-                    key = (light.platform, driver.number, type(driver))
+                    key = (light.config['platform'], driver.number, type(driver))
                     if key in check_set:
                         raise AssertionError(
                             "Duplicate light number {} {} for light {}".format(
