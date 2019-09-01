@@ -43,15 +43,30 @@ class LisyDriver(DriverPlatformInterface):
 
     """A driver in the LISY platform."""
 
-    __slots__ = ["platform", "_pulse_ms", "index", "has_rule"]   # type: List[str]
+    __slots__ = ["platform", "_pulse_ms", "_recycle_time", "index", "has_rule"]     # type: List[str]
 
     def __init__(self, config, number, platform):
         """Initialise driver."""
         super().__init__(config, number)
         self.platform = platform
         self._pulse_ms = -1
+        self._recycle_time = None
         self.index = int(number)
         self.has_rule = False
+
+    def configure_recycle(self, recycle_time):
+        """Configure recycle time."""
+        if self.platform.api_version < StrictVersion("0.9"):
+            return
+        if recycle_time > 255:
+            recycle_time = 255
+        elif recycle_time < 0:
+            recycle_time = 0
+
+        if self._recycle_time != recycle_time:
+            self._recycle_time = recycle_time
+            self.platform.send_byte(LisyDefines.SetSolenoidsRecycleTime,
+                                    bytes([int(self.number), recycle_time]))
 
     def _configure_pulse_ms(self, pulse_ms):
         """Configure pulse ms for this driver if it changed."""
@@ -539,6 +554,8 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 coil.pulse_settings))
 
         coil.hw_driver.has_rule = True
+        coil.hw_driver.configure_recycle(coil.pulse_settings.duration * 2 if coil.recycle else
+                                         coil.pulse_settings.duration)
 
         data = bytearray([coil.hw_driver.index,
                           switch1.hw_switch.index + (0x80 if switch1.invert else 0),
@@ -655,7 +672,10 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 raise AssertionError("LISY only has {} lamps. Cannot configure lamp driver {} (one indexed).".
                                      format(self._number_of_lamps, number))
 
-        return LisyDriver(config=config, number=number, platform=self)
+        driver = LisyDriver(config=config, number=number, platform=self)
+        recycle_time = config.default_pulse_ms * 2 if config.default_recycle else config.default_pulse_ms
+        driver.configure_recycle(recycle_time)
+        return driver
 
     @asyncio.coroutine
     def configure_segment_display(self, number: str, platform_settings) -> SegmentDisplaySoftwareFlashPlatformInterface:
