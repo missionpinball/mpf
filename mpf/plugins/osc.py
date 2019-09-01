@@ -68,6 +68,3 @@ class Osc:
     def _notify_switch_changes(self, change: MonitoredSwitchChange):
         """Send switch change to OSC client."""
         self.client.send_message("/sw/{}".format(change.name), change.state)
-
-
-plugin_class = Osc

@@ -14,7 +14,7 @@ from typing import Dict
 from pkg_resources import iter_entry_points
 
 import mpf
-from mpf.core.rgb_color import named_rgb_colors, RGBColor
+from mpf.core.rgb_color import NAMED_RGB_COLORS, RGBColor
 from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.file_interfaces.yaml_interface import YamlInterface
 from mpf.core.utility_functions import Util
@@ -679,8 +679,8 @@ class ConfigValidator:
         if color_string[:1] == "(" and color_string[-1:] == ")":
             return color_string
 
-        if color_string in named_rgb_colors:
-            color = list(named_rgb_colors[color_string])
+        if color_string in NAMED_RGB_COLORS:
+            color = list(NAMED_RGB_COLORS[color_string])
 
         elif Util.is_hex_string(color_string):
             color = [int(x, 16) for x in
@@ -710,8 +710,8 @@ class ConfigValidator:
         # with individual values from 0-255
         color_string = str(item).lower()
 
-        if color_string in named_rgb_colors:
-            return named_rgb_colors[color_string]
+        if color_string in NAMED_RGB_COLORS:
+            return NAMED_RGB_COLORS[color_string]
         elif Util.is_hex_string(color_string):
             return RGBColor.hex_to_rgb(color_string)
 

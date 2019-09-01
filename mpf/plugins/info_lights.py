@@ -118,6 +118,3 @@ class InfoLights:
         match_str = 'match_' + str(match)
         if match_str in self.config:
             self.config[match_str]['light'].on()
-
-
-plugin_class = InfoLights

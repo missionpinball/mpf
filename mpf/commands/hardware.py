@@ -5,7 +5,7 @@ from mpf.commands import MpfCommandLineParser
 
 from mpf.core.machine import MachineController
 
-subcommand = True
+SUBCOMMAND = True
 
 
 class Command(MpfCommandLineParser):

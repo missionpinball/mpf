@@ -103,7 +103,7 @@ class TestP3Roc(MpfTestCase):
             return
         self._sync_count = 0
         self.expected_duration = 2
-        p_roc_common.pinproc_imported = True
+        p_roc_common.PINPROC_IMPORTED = True
         p_roc_common.pinproc = MockPinProcModule()
         self.pinproc = MagicMock(return_value=True)
         p_roc_common.pinproc.PinPROC = MagicMock(return_value=self.pinproc)

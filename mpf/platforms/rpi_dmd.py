@@ -70,14 +70,14 @@ class RpiRgbDmdDevice(DmdPlatformInterface):
         xs = config["cols"]
         ys = config["rows"]
         self.img = Image.frombytes("RGB", (xs, ys), b'\x11' * xs * ys * 3)
-        self.rgbOpts = RGBMatrixOptions()
+        self.rgb_opts = RGBMatrixOptions()
         # Rudeboy way of setting the RGBMatrixOptions
         for k, v in config.items():
             try:
-                setattr(self.rgbOpts, k, v)
+                setattr(self.rgb_opts, k, v)
             except Exception:   # pylint: disable-msg=broad-except
                 raise AssertionError("RpiRgbDmdDevice: couldn't set", k, v)
-        self.matrix = RGBMatrix(options=self.rgbOpts)
+        self.matrix = RGBMatrix(options=self.rgb_opts)
         self.matrix.SetImage(self.img)
 
     def update(self, data):

@@ -11,13 +11,13 @@ from typing import List, Union, Tuple
 
 from mpf.core.utility_functions import Util
 
-channel_min_val = 0
-channel_max_val = 255
-rgb_min = (0, 0, 0)
-rgb_max = (255, 255, 255)
+CHANNEL_MIN_VAL = 0
+CHANNEL_MAX_VAL = 255
+RGB_MIN = (0, 0, 0)
+RGB_MAX = (255, 255, 255)
 
 # Standard web color names and values
-named_rgb_colors = dict(
+NAMED_RGB_COLORS = dict(
     off=(0, 0, 0),
     aliceblue=(240, 248, 255),
     antiquewhite=(250, 235, 215),
@@ -178,7 +178,7 @@ class RGBColor:
         elif color:
             self._color = (color[0], color[1], color[2])
         else:
-            self._color = rgb_min
+            self._color = RGB_MIN
 
     def __eq__(self, other):
         """Return true if equal."""
@@ -201,9 +201,9 @@ class RGBColor:
                 "Unsupported operand type(s) for +: '{0}' and '{1}'".format(
                     type(self), type(other)))
 
-        return RGBColor((min(r1 + r2, channel_max_val),
-                         min(g1 + g2, channel_max_val),
-                         min(b1 + b2, channel_max_val)))
+        return RGBColor((min(r1 + r2, CHANNEL_MAX_VAL),
+                         min(g1 + g2, CHANNEL_MAX_VAL),
+                         min(b1 + b2, CHANNEL_MAX_VAL)))
 
     def __sub__(self, other):
         """Return difference of two RGB colors."""
@@ -218,9 +218,9 @@ class RGBColor:
                 "Unsupported operand type(s) for -: '{0}' and '{1}'".format(
                     type(self), type(other)))
 
-        return RGBColor((max(r1 - r2, channel_min_val),
-                         max(g1 - g2, channel_min_val),
-                         max(b1 - b2, channel_min_val)))
+        return RGBColor((max(r1 - r2, CHANNEL_MIN_VAL),
+                         max(g1 - g2, CHANNEL_MIN_VAL),
+                         max(b1 - b2, CHANNEL_MIN_VAL)))
 
     def __mul__(self, other):
         """Multiple color by scalar."""
@@ -233,9 +233,9 @@ class RGBColor:
             raise TypeError("Operand needs to be positive")
 
         r1, g1, b1 = self.rgb
-        return RGBColor((min(int(r1 * other), channel_max_val),
-                         min(int(g1 * other), channel_max_val),
-                         min(int(b1 * other), channel_max_val)))
+        return RGBColor((min(int(r1 * other), CHANNEL_MAX_VAL),
+                         min(int(g1 * other), CHANNEL_MAX_VAL),
+                         min(int(b1 * other), CHANNEL_MAX_VAL)))
 
     def __iter__(self):
         """Return iterator."""
@@ -283,7 +283,7 @@ class RGBColor:
         """
         # pylint: disable-msg=consider-using-dict-comprehension
         return dict(
-            [(_v, _k) for _k, _v in list(named_rgb_colors.items())]).get(
+            [(_v, _k) for _k, _v in list(NAMED_RGB_COLORS.items())]).get(
             self._color)
 
     @staticmethod
@@ -303,11 +303,11 @@ class RGBColor:
                                   hex(int(b))[2:].zfill(2))
 
     @staticmethod
-    def hex_to_rgb(_hex: str, default=None) -> Tuple[int, int, int]:
+    def hex_to_rgb(hex_string: str, default=None) -> Tuple[int, int, int]:
         """Convert a HEX color representation to an RGB color representation.
 
         Args:
-            _hex: The 3- or 6-char hexadecimal string representing the color
+            hex_string: The 3- or 6-char hexadecimal string representing the color
                 value.
             default: The default value to return if _hex is invalid.
 
@@ -315,15 +315,15 @@ class RGBColor:
             with each item being an integer 0-255.
 
         """
-        if not Util.is_hex_string(_hex):
+        if not Util.is_hex_string(hex_string):
             return default
 
-        _hex = str(_hex).strip('#')
+        hex_string = str(hex_string).strip('#')
 
-        n = len(_hex) // 3
-        r = int(_hex[:n], 16)
-        g = int(_hex[n:2 * n], 16)
-        b = int(_hex[2 * n:3 * n], 16)
+        n = len(hex_string) // 3
+        r = int(hex_string[:n], 16)
+        g = int(hex_string[n:2 * n], 16)
+        b = int(hex_string[2 * n:3 * n], 16)
         return r, g, b
 
     @staticmethod
@@ -364,7 +364,7 @@ class RGBColor:
             0, 255)
 
     @staticmethod
-    def name_to_rgb(name: str, default=rgb_min) -> Tuple[int, int, int]:
+    def name_to_rgb(name: str, default=RGB_MIN) -> Tuple[int, int, int]:
         """Convert a standard color name to an RGB value (tuple).
 
         If the name is not found, the default value is returned.
@@ -373,10 +373,10 @@ class RGBColor:
         :return: RGB representation of the named color.
         :rtype: tuple
         """
-        return named_rgb_colors.get(name.lower(), default)
+        return NAMED_RGB_COLORS.get(name.lower(), default)
 
     @staticmethod
-    def string_to_rgb(value: str, default=rgb_min) -> Tuple[int, int, int]:
+    def string_to_rgb(value: str, default=RGB_MIN) -> Tuple[int, int, int]:
         """Convert a string which could be either a standard color name or a hex value to an RGB value (tuple).
 
         If the name is not found and the supplied value is not a
@@ -394,13 +394,13 @@ class RGBColor:
         if '%' in value:
             value, brightness = value.split("%")
 
-        rgb = named_rgb_colors.get(value)
+        rgb = NAMED_RGB_COLORS.get(value)
         if rgb is None:
             # we do not want to call lower every time since this code path is very hot
             # instead we just add the upper case string to the color hash map so next time we will hit the fast path
-            rgb = named_rgb_colors.get(value.lower())
+            rgb = NAMED_RGB_COLORS.get(value.lower())
             if rgb:
-                named_rgb_colors[value.lower()] = rgb
+                NAMED_RGB_COLORS[value.lower()] = rgb
         if rgb is None:
             rgb = RGBColor.hex_to_rgb(value)
             if rgb is None:
@@ -409,9 +409,9 @@ class RGBColor:
         # apply brightness
         if brightness:
             factor = float(int(brightness) / 100)
-            rgb = (min(int(rgb[0] * factor), channel_max_val),
-                   min(int(rgb[1] * factor), channel_max_val),
-                   min(int(rgb[2] * factor), channel_max_val))
+            rgb = (min(int(rgb[0] * factor), CHANNEL_MAX_VAL),
+                   min(int(rgb[1] * factor), CHANNEL_MAX_VAL),
+                   min(int(rgb[2] * factor), CHANNEL_MAX_VAL))
 
         return rgb
 
@@ -433,7 +433,7 @@ class RGBColor:
                 a dictionart of red, green, blue key/value pairs.
 
         """
-        named_rgb_colors[str(name.lower())] = RGBColor(color).rgb
+        NAMED_RGB_COLORS[str(name.lower())] = RGBColor(color).rgb
 
 
 class ColorException(AssertionError):

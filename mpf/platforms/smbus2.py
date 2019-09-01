@@ -10,7 +10,7 @@ from mpf.core.utility_functions import Util
 
 from mpf.core.platform import I2cPlatform
 
-extension_loaded = True
+EXTENSION_LOADED = True
 # pylint: disable-msg=ungrouped-imports
 try:
     from smbus2_asyncio import SMBus2Asyncio

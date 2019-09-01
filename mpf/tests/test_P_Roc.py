@@ -167,7 +167,7 @@ class TestPRoc(MpfTestCase):
             return
         self._sync_count = 0
         self.expected_duration = 2
-        p_roc_common.pinproc_imported = True
+        p_roc_common.PINPROC_IMPORTED = True
         p_roc_common.pinproc = MockPinProcModule()
         p_roc.pinproc = p_roc_common.pinproc
         self.pinproc = MagicMock(return_value=True)

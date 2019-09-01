@@ -1,23 +1,21 @@
 """Mission Pinball Framework (mpf) setup.py."""
-
 import re
-
 from setuptools import setup
 
 #  http://stackoverflow.com/questions/458550/standard-way-to-embed-version-into-python-package
 VERSIONFILE = "mpf/_version.py"
-verstrline = open(VERSIONFILE, "rt").read()
+VERSION_STRING_LONG = open(VERSIONFILE, "rt").read()
 VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
-mo = re.search(VSRE, verstrline, re.M)
-if mo:
-    verstr = mo.group(1)
+_MO = re.search(VSRE, VERSION_STRING_LONG, re.M)
+if _MO:
+    VERSION_STRING = _MO.group(1)
 else:
     raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
 
 setup(
 
     name='mpf',
-    version=verstr,
+    version=VERSION_STRING,
     description='Mission Pinball Framework',
     long_description='''Let's build a pinball machine!
 
