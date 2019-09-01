@@ -235,7 +235,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         if not self.dipswitches & 0x01:
             raise AssertionError("Set DIP 1 on the P3-Roc to use burst switches as local outputs")
 
-        return PROCDriver(driver_number, config, self, number)
+        return PROCDriver(driver_number, config, self, number, True)
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure a P3-ROC switch.

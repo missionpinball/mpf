@@ -57,6 +57,7 @@ class PROCDriver(DriverPlatformInterface):
 
     __slots__ = ["log", "proc", "string_number", "pdbconfig", "polarity", "__dict__"]
 
+    # pylint: disable-msg=too-many-arguments
     def __init__(self, number, config, platform, string_number, polarity):
         """Initialise driver."""
         self.log = logging.getLogger('PROCDriver')
