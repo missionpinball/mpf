@@ -62,7 +62,7 @@ install:
 
 script:
 - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
-    docker run -v $PWD:$PWD -w $PWD $LINUX /bin/sh -c "_mpf_installer/install-mpf-dependencies && pip3 install --upgrade coveralls && pip3 install prospector==1.1.6.3 && pip3 install . && export PYTHONPATH=$PYTHONPATH:$(pwd):$(pwd)/_mpf-mc && prospector && coverage3 run --concurrency=thread -m unittest discover -s mpf/tests && python3 test_regression.py;";
+    docker run -v $PWD:$PWD -w $PWD $LINUX /bin/sh -c "_mpf_installer/install-mpf-dependencies && pip3 install --upgrade coveralls && pip3 install . && export PYTHONPATH=$PYTHONPATH:$(pwd):$(pwd)/_mpf-mc && coverage3 run --concurrency=thread -m unittest discover -s mpf/tests && python3 test_regression.py;";
   fi;
 - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
       export PYTHONPATH=$PYTHONPATH:$(pwd)/_mpf-mc;
