@@ -222,14 +222,21 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         self.machine.variables.set_machine_var("p_roc_version", self.version)
         '''machine_var: p_roc_version
 
-        desc: Holds the version number of the P-ROC or P3-ROC controller that's
+        desc: Holds the firmware version number of the P-ROC or P3-ROC controller that's
         attached to MPF.
         '''
 
         self.machine.variables.set_machine_var("p_roc_revision", self.revision)
         '''machine_var: p_roc_revision
 
-        desc: Holds the revision number of the P-ROC or P3-ROC controller
+        desc: Holds the firmware revision number of the P-ROC or P3-ROC controller
+        that's attached to MPF.
+        '''
+
+        self.machine.variables.set_machine_var("p_roc_hardware_version", self.hardware_version)
+        '''machine_var: p_roc_hardware_version
+
+        desc: Holds the hardware version number of the P-ROC or P3-ROC controller
         that's attached to MPF.
         '''
 
