@@ -209,7 +209,7 @@ class ConfigProcessor:
         """Return the expected config or show version tag, e.g. #config_version=5."""
         if config_type in ("machine", "mode"):
             return "#config_version={}".format(__config_version__)
-        elif config_type == "show":
+        if config_type == "show":
             return "#show_version={}".format(__show_version__)
-        else:
-            raise AssertionError("Invalid config_type {}".format(config_type))
+
+        raise AssertionError("Invalid config_type {}".format(config_type))

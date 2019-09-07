@@ -88,11 +88,9 @@ class RpiServo(ServoPlatformInterface):
 
     def set_speed_limit(self, speed_limit):
         """Not implemented."""
-        raise NotImplementedError("Not supported")
 
     def set_acceleration_limit(self, acceleration_limit):
         """Not implemented."""
-        raise NotImplementedError("Not supported")
 
 
 class RpiI2cDevice(I2cPlatformInterface):

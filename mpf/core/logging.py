@@ -148,12 +148,12 @@ class LogMixin:
             error_url = log_url.format(error_slug)
         if error_no and context:
             return "{} Context: {} Log Code: {} ({})".format(msg, context, error_slug, error_url)
-        elif context:
+        if context:
             return "{} Context: {} ".format(msg, context)
-        elif error_no:
+        if error_no:
             return "{} Log Code: {} ({})".format(msg, error_slug, error_url)
-        else:
-            return msg
+
+        return msg
 
     def raise_config_error(self, msg, error_no, *, context=None):
         """Raise a ConfigFileError exception."""

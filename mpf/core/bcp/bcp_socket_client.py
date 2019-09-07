@@ -333,8 +333,8 @@ class BCPClientSocket(BaseBcpClient):
         if cmd in self._bcp_client_socket_commands:
             self._bcp_client_socket_commands[cmd](**kwargs)
             return None
-        else:
-            return cmd, kwargs
+
+        return cmd, kwargs
 
     def _receive_hello(self, **kwargs):
         """Process incoming BCP 'hello' command."""

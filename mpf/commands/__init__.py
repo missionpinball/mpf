@@ -60,15 +60,15 @@ class MpfCommandLineParser:
 
         if machine_path:
             return machine_path
-        else:
-            if machine_path_hint:
-                wrong_path = os.path.abspath(machine_path_hint)
-            else:
-                wrong_path = os.path.abspath(os.curdir)
 
-            raise AssertionError("Error: Could not find machine in folder: '{}'. "
-                                 "Either start MPF from within your machine root folder or provide the path after the "
-                                 "command.".format(wrong_path))
+        if machine_path_hint:
+            wrong_path = os.path.abspath(machine_path_hint)
+        else:
+            wrong_path = os.path.abspath(os.curdir)
+
+        raise AssertionError("Error: Could not find machine in folder: '{}'. "
+                             "Either start MPF from within your machine root folder or provide the path after the "
+                             "command.".format(wrong_path))
 
     def parse_args(self):
         """Parse command line arguments."""
@@ -150,7 +150,7 @@ class CommandLineUtility(MpfCommandLineParser):
                 self.external_commands[command](self.mpf_path,
                                                 *self.parse_args())
                 return
-            elif self.argv[1] in commands:
+            if self.argv[1] in commands:
                 command = self.argv.pop(1)
 
         _module = import_module('mpf.commands.%s' % command)

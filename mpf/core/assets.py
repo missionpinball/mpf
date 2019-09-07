@@ -602,8 +602,8 @@ class AsyncioSyncAssetManager(BaseAssetManager):
         if not asset.loaded:
             asset.do_load()
             return True
-        else:
-            return False
+
+        return False
 
     @asyncio.coroutine
     def wait_for_asset_load(self, asset):
@@ -685,14 +685,14 @@ class AssetPool:
         """Pop one asset from the pool."""
         if self.config['type'] == 'random':
             return self._get_random_asset()
-        elif self.config['type'] == 'sequence':
+        if self.config['type'] == 'sequence':
             return self._get_sequence_asset()
-        elif self.config['type'] == 'random_force_next':
+        if self.config['type'] == 'random_force_next':
             return self._get_random_force_next_asset()
-        elif self.config['type'] == 'random_force_all':
+        if self.config['type'] == 'random_force_all':
             return self._get_random_force_all_asset()
-        else:
-            raise AssertionError("Invalid type {}".format(self.config['type']))
+
+        raise AssertionError("Invalid type {}".format(self.config['type']))
 
     @property
     def loaded(self):
@@ -837,8 +837,8 @@ class AssetPool:
         for asset in assets:
             if index_value >= value:
                 return asset
-            else:
-                index_value += asset[1]
+
+            index_value += asset[1]
 
         return assets[-1]
 

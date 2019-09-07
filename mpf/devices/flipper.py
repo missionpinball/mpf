@@ -160,8 +160,8 @@ class Flipper(SystemWideDevice):
             if not pulse_ms:
                 pulse_ms = self.machine.config['mpf']['default_pulse_ms']
             return int(pulse_ms * settings_factor)
-        else:
-            return pulse_ms
+
+        return pulse_ms
 
     def _get_hold_pulse_ms(self) -> Optional[int]:
         """Return pulse_ms for hold coil."""
@@ -171,8 +171,8 @@ class Flipper(SystemWideDevice):
             if not pulse_ms:
                 pulse_ms = self.machine.config['mpf']['default_pulse_ms']
             return int(pulse_ms * settings_factor)
-        else:
-            return pulse_ms
+
+        return pulse_ms
 
     def _get_pulse_power(self) -> Optional[float]:
         """Return pulse_power."""

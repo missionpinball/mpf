@@ -626,13 +626,13 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                                          format(self._number_of_lamps, number))
 
             return LisySimpleLamp(int(number), self)
-        elif subtype == "light":
+        if subtype == "light":
             if 0 < int(number) >= self._number_of_modern_lights:
                 raise AssertionError("LISY only has {} modern lights. Cannot configure light {}.".
                                      format(self._number_of_modern_lights, number))
             return LisyModernLight(int(number), self, self._light_system)
-        else:
-            raise self.raise_config_error("Invalid subtype {}".format(subtype), 1)
+
+        raise self.raise_config_error("Invalid subtype {}".format(subtype), 1)
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Return a single light."""

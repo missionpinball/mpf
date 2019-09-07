@@ -225,8 +225,8 @@ class MpfFormatter(string.Formatter):
             if future:
                 self.subscriptions.append(future)
             return value
-        else:
-            return placeholder.evaluate(self.parameters)
+
+        return placeholder.evaluate(self.parameters)
 
     def get_field(self, field_name, args, kwargs):
         """Return value of field."""
@@ -461,10 +461,10 @@ class PlayerPlaceholder(BasePlaceholder):
                 if len(self._machine.game.player_list) <= self._number:
                     raise ValueError("Player not in game")
                 return self._machine.game.player_list[self._number][item]
-            else:
-                return self._machine.game.player[item]
-        else:
-            raise ValueError("Not in a game")
+
+            return self._machine.game.player[item]
+
+        raise ValueError("Not in a game")
 
     def __getattr__(self, item):
         """Attribute access."""
@@ -473,10 +473,10 @@ class PlayerPlaceholder(BasePlaceholder):
                 if len(self._machine.game.player_list) <= self._number:
                     raise ValueError("Player not in game")
                 return getattr(self._machine.game.player_list[self._number], item)
-            else:
-                return getattr(self._machine.game.player, item)
-        else:
-            raise ValueError("Not in a game")
+
+            return getattr(self._machine.game.player, item)
+
+        raise ValueError("Not in a game")
 
 
 class PlayersPlaceholder(BasePlaceholder):
@@ -620,9 +620,9 @@ class BasePlaceholderManager(MpfController):
         if value:
             ret_value, ret_subscription = self._eval(node.body, variables, subscribe)
             return ret_value, subscription + ret_subscription
-        else:
-            ret_value, ret_subscription = self._eval(node.orelse, variables, subscribe)
-            return ret_value, subscription + ret_subscription
+
+        ret_value, ret_subscription = self._eval(node.orelse, variables, subscribe)
+        return ret_value, subscription + ret_subscription
 
     def _eval_bin_op(self, node, variables, subscribe):
         left_value, left_subscription = self._eval(node.left, variables, subscribe)
@@ -672,8 +672,8 @@ class BasePlaceholderManager(MpfController):
                     raise
         if subscribe:
             return ret_value, subscription + [slice_value.subscribe_attribute(node.attr)]
-        else:
-            return ret_value, subscription + []
+
+        return ret_value, subscription + []
 
     def _eval_subscript(self, node, variables, subscribe):
         value, subscription = self._eval(node.value, variables, subscribe)
@@ -696,21 +696,21 @@ class BasePlaceholderManager(MpfController):
         if var:
             if subscribe:
                 return var, [var.subscribe()]
-            else:
-                return var, []
-        elif node.id in variables:
+
+            return var, []
+        if node.id in variables:
             return variables[node.id], []
-        else:
-            raise ValueError("Missing variable {}".format(node.id))
+
+        raise ValueError("Missing variable {}".format(node.id))
 
     def _eval(self, node, variables, subscribe) -> Tuple[Any, List]:
         if node is None:
             return None, []
 
-        elif type(node) in self._eval_methods:  # pylint: disable-msg=unidiomatic-typecheck
+        if type(node) in self._eval_methods:  # pylint: disable-msg=unidiomatic-typecheck
             return self._eval_methods[type(node)](node, variables, subscribe)
-        else:
-            raise TypeError(type(node))
+
+        raise TypeError(type(node))
 
     def build_float_template(self, template_str, default_value=0.0) -> FloatTemplate:
         """Build a float template from a string."""
@@ -824,17 +824,17 @@ class PlaceholderManager(BasePlaceholderManager):
         """Return global params."""
         if name == "settings":
             return SettingsPlaceholder(self.machine)
-        elif name == "machine":
+        if name == "machine":
             return MachinePlaceholder(self.machine)
-        elif name == "device":
+        if name == "device":
             return DevicesPlaceholder(self.machine)
-        elif name == "mode":
+        if name == "mode":
             return ModePlaceholder(self.machine)
-        elif name == "current_player":
+        if name == "current_player":
             return PlayerPlaceholder(self.machine)
-        elif name == "players":
+        if name == "players":
             return PlayersPlaceholder(self.machine)
-        elif self.machine.game:
+        if self.machine.game:
             if name == "game":
                 return self.machine.game
 

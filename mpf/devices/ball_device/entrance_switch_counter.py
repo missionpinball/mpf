@@ -63,7 +63,7 @@ class EntranceSwitchCounter(PhysicalBallCounter):
             self.debug_log("Entrance switch hit within ignore window, taking no action")
             return
         # If a recycle time is configured, set a timeout to prevent future entrance activity
-        elif self.recycle_secs:
+        if self.recycle_secs:
             self.recycle_clear_time = self.machine.clock.get_time() + self.recycle_secs
             self.machine.clock.loop.call_at(self.recycle_clear_time, self._recycle_passed)
 

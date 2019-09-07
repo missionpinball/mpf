@@ -105,8 +105,8 @@ class DelayManager(MpfController):
         """
         if not self.check(name):
             return self.add(ms, callback, name, **kwargs)
-        else:
-            return name
+
+        return name
 
     def check(self, delay: str) -> bool:
         """Check to see if a delay exists.

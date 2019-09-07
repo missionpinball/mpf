@@ -51,5 +51,5 @@ class HardwareSoundPlayer(DeviceConfigPlayer):
         """Parse string config."""
         if string == "stop":
             return {string: dict(action="stop")}
-        else:
-            return super().get_string_config(string)
+
+        return super().get_string_config(string)

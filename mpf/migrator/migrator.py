@@ -231,7 +231,7 @@ class VersionMigrator:
                 return False
             self.log.debug("----------------------------------------")
             return self.fc
-        elif isinstance(self.fc, CommentedSeq):
+        if isinstance(self.fc, CommentedSeq):
             if self.is_show_file():
                 self._migrate_show_file()
                 self.log.debug("----------------------------------------")
@@ -268,30 +268,30 @@ class VersionMigrator:
         if not self.current_config_version:
             self.log.debug("Skipping non-config file: %s", self.file_name)
             return False
-        else:
-            if self.current_config_version == self.config_version:
-                if REPROCESS_CURRENT_VERSION:
-                    self.log.info('Reprocessing file which is already '
-                                  'config_version=%s', self.config_version)
-                    return True
-                else:
-                    self.log.info('File is already config_version=%s. '
-                                  'Skipping...', self.config_version)
-                    return False
-            else:  # config_version is less than current:
-                if self.config_version - self.current_config_version > 1:
-                    # use a different loader
-                    return True
-                elif self.config_version - self.current_config_version == 1:
-                    return True
-                else:
-                    self.log.warning('MPF version mismatch. File is '
-                                     'config_version=%s, but this version of'
-                                     'MPF is for config_version=%s. '
-                                     'Skipping...',
-                                     self.current_config_version,
-                                     self.config_version)
-                    return False
+
+        if self.current_config_version == self.config_version:
+            if REPROCESS_CURRENT_VERSION:
+                self.log.info('Reprocessing file which is already '
+                              'config_version=%s', self.config_version)
+                return True
+
+            self.log.info('File is already config_version=%s. '
+                          'Skipping...', self.config_version)
+            return False
+        # config_version is less than current:
+        if self.config_version - self.current_config_version > 1:
+            # use a different loader
+            return True
+        if self.config_version - self.current_config_version == 1:
+            return True
+
+        self.log.warning('MPF version mismatch. File is '
+                         'config_version=%s, but this version of'
+                         'MPF is for config_version=%s. '
+                         'Skipping...',
+                         self.current_config_version,
+                         self.config_version)
+        return False
 
     def _update_config_version(self):
         # Do a str.replace to preserve any spaces or comments in the header

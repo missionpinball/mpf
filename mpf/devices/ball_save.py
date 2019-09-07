@@ -284,8 +284,8 @@ class BallSave(SystemWideDevice, ModeDevice):
             self.debug_log("Early saved ball drained.")
             self.machine.events.remove_handler(self._early_ball_save_drain_handler)
             return {'balls': balls}
-        else:
-            return {}
+
+        return {}
 
     def _schedule_balls(self, balls_to_save: int) -> None:
         if self.config['eject_delay']:

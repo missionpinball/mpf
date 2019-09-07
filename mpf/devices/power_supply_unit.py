@@ -34,12 +34,11 @@ class PowerSupplyUnit(SystemWideDevice):
             # if we are busy for longer than possible. do pulse now
             self.notify_about_instant_pulse(pulse_ms)
             return 0
-        else:
 
-            # calculate wait time and return it
-            wait_ms = (self._busy_until - current_time) * 1000
-            self._busy_until += (pulse_ms + self.config['release_wait_ms']) / 1000.0
-            return wait_ms
+        # calculate wait time and return it
+        wait_ms = (self._busy_until - current_time) * 1000
+        self._busy_until += (pulse_ms + self.config['release_wait_ms']) / 1000.0
+        return wait_ms
 
     def notify_about_instant_pulse(self, pulse_ms):
         """Notify PSU about pulse."""

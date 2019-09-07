@@ -46,16 +46,16 @@ class FASTDriver(DriverPlatformInterface):
         """Return the board of this driver."""
         if self.platform.machine_type == 'wpc':
             return "FAST WPC"
-        else:
-            coil_index = 0
-            number = Util.hex_string_to_int(self.number)
-            for board_obj in self.platform.io_boards.values():
-                if coil_index <= number < coil_index + board_obj.driver_count:
-                    return "FAST Board {}".format(str(board_obj.node_id))
-                coil_index += board_obj.driver_count
 
-            # fall back if not found
-            return "FAST Unknown Board"
+        coil_index = 0
+        number = Util.hex_string_to_int(self.number)
+        for board_obj in self.platform.io_boards.values():
+            if coil_index <= number < coil_index + board_obj.driver_count:
+                return "FAST Board {}".format(str(board_obj.node_id))
+            coil_index += board_obj.driver_count
+
+        # fall back if not found
+        return "FAST Unknown Board"
 
     @classmethod
     def get_pwm_for_cmd(cls, power: float):
@@ -63,21 +63,21 @@ class FASTDriver(DriverPlatformInterface):
         # use PWM8 if sufficiently accurate
         if (power * 8) - int(power * 8) < 0.025:
             return Util.pwm8_to_hex_string(int(power * 8)).upper()
-        else:
-            return Util.pwm32_to_hex_string(int(power * 32)).upper()
+
+        return Util.pwm32_to_hex_string(int(power * 32)).upper()
 
     def get_recycle_ms_for_cmd(self, recycle, pulse_ms):
         """Return recycle ms."""
         if not recycle:
             return "00"
-        elif self.platform_settings['recycle_ms'] is not None:
+        if self.platform_settings['recycle_ms'] is not None:
             return Util.int_to_hex_string(self.platform_settings['recycle_ms'])
-        else:
-            # default recycle_ms to pulse_ms * 2
-            if pulse_ms * 2 > 255:
-                return "FF"
-            else:
-                return Util.int_to_hex_string(pulse_ms * 2)
+
+        # default recycle_ms to pulse_ms * 2
+        if pulse_ms * 2 > 255:
+            return "FF"
+
+        return Util.int_to_hex_string(pulse_ms * 2)
 
     def get_config_cmd(self) -> str:
         """Return config cmd str."""

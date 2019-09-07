@@ -245,14 +245,14 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         del platform_config
         if number.startswith("burst-"):
             return self._configure_burst_opto(config, number)
-        elif number.startswith("direct-"):
+        if number.startswith("direct-"):
             return self._configure_direct_switch(config, number)
-        else:
-            proc_num = self.pdbconfig.get_proc_switch_number(str(number))
-            if 0 <= proc_num < 64 and self.dipswitches & 0x02:
-                raise AssertionError("Cannot use SW-16 with ID 0-3 when DIP 2 is on the P3-Roc. Turn DIP 2 off or "
-                                     "renumber SW-16s. Switch: {}".format(number))
-            return self._configure_switch(config, proc_num)
+
+        proc_num = self.pdbconfig.get_proc_switch_number(str(number))
+        if 0 <= proc_num < 64 and self.dipswitches & 0x02:
+            raise AssertionError("Cannot use SW-16 with ID 0-3 when DIP 2 is on the P3-Roc. Turn DIP 2 off or "
+                                 "renumber SW-16s. Switch: {}".format(number))
+        return self._configure_switch(config, proc_num)
 
     def _configure_direct_switch(self, config, number):
         try:

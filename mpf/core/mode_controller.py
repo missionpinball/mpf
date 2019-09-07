@@ -120,14 +120,14 @@ class ModeController(MpfController):
             return os.path.join(self.machine.machine_path,
                                 self.machine.config['mpf']['paths']['modes'],
                                 self._machine_mode_folders[mode_string])
-        elif mode_string in self._mpf_mode_folders:
+        if mode_string in self._mpf_mode_folders:
             return os.path.join(self.machine.mpf_path,
                                 self.machine.config['mpf']['paths']['modes'],
                                 self._mpf_mode_folders[mode_string])
-        else:
-            raise ValueError("No folder found for mode '{}'. Is your mode "
-                             "folder in your machine's 'modes' folder?"
-                             .format(mode_string))
+
+        raise ValueError("No folder found for mode '{}'. Is your mode "
+                         "folder in your machine's 'modes' folder?"
+                         .format(mode_string))
 
     def _get_mpf_mode_config(self, mode_string):
         try:

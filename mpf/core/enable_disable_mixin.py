@@ -90,8 +90,8 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
             if not self.player:
                 return False
             return self.player["{}_{}_enabled".format(self.class_label, self.name)]
-        else:
-            return self._enabled
+
+        return self._enabled
 
     @enabled.setter
     def enabled(self, value):

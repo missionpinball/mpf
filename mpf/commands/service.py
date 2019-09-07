@@ -134,8 +134,8 @@ class ServiceCli(cmd.Cmd):
                 show for show in self._known_shows
                 if show.startswith(text)
             ]
-        else:
-            return self._known_shows
+
+        return self._known_shows
 
     def complete_light_xxx(self, text, line, start_index, end_index):
         """Autocomplete lights."""
@@ -152,8 +152,8 @@ class ServiceCli(cmd.Cmd):
                 light for light in self._known_lights
                 if light.startswith(text)
             ]
-        else:
-            return self._known_lights
+
+        return self._known_lights
 
     def complete_coil_xxx(self, text, line, start_index, end_index):
         """Autocomplete coils."""
@@ -170,8 +170,8 @@ class ServiceCli(cmd.Cmd):
                 coil for coil in self._known_coils
                 if coil.startswith(text)
             ]
-        else:
-            return self._known_coils
+
+        return self._known_coils
 
     def _parse_args(self, args, args_with_default):
         while args:

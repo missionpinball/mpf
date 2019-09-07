@@ -91,8 +91,8 @@ class V4Migrator(VersionMigrator):
 
         if display:
             return '{}_slide_{}'.format(display, cls.slides[display])
-        else:
-            return 'slide_{}'.format(cls.slides[display])
+
+        return 'slide_{}'.format(cls.slides[display])
 
     @classmethod
     def _add_display(cls, name, w, h):
@@ -687,8 +687,8 @@ class V4Migrator(VersionMigrator):
     def _format_anchor_and_value(cls, anchor, value):
         if value < 0:
             return '{}{}'.format(anchor, value)
-        else:
-            return '{}+{}'.format(anchor, value)
+
+        return '{}+{}'.format(anchor, value)
 
     def _migrate_element_y_and_anchor(self, element, display, height):
         if 'y' in element:

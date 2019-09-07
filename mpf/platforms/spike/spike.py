@@ -554,9 +554,9 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         del platform_settings, subtype
         if number == "0-0":
             return SpikeBacklight(number, self, self.machine.clock.loop, 3)
-        else:
-            # TODO: validate that light number is not used in a stepper and a light
-            return SpikeLight(number, self, self._light_system)
+
+        # TODO: validate that light number is not used in a stepper and a light
+        return SpikeLight(number, self, self._light_system)
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure switch on Stern Spike."""

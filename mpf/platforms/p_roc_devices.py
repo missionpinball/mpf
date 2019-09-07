@@ -221,7 +221,7 @@ class PDBCoil:
         """Return the bank number."""
         if self.coil_type == 'dedicated':
             return self.banknum
-        elif self.coil_type == 'pdb':
+        if self.coil_type == 'pdb':
             return self.boardnum * 2 + self.banknum
 
         return -1

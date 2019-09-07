@@ -19,7 +19,7 @@ class FileInterface:
         self.log = logging.getLogger('{} File Interface'.format(
             self.file_types[0][1:].upper()))
 
-    def find_file(self, filename) -> Union[bool, Tuple[str, Optional[str]]]:
+    def find_file(self, filename) -> Union[bool, Tuple[Union[str, bool], Optional[str]]]:
         """Test whether the passed file is valid.
 
         If the file does not have an externsion, this method will test for files with that base name with
@@ -38,8 +38,8 @@ class FileInterface:
                 if os.path.isfile(filename + extension):
                     return os.path.abspath(filename + extension), extension
             return False, None
-        else:
-            return filename, os.path.splitext(filename)[1]
+
+        return filename, os.path.splitext(filename)[1]
 
     def load(self, filename, expected_version_str=None, halt_on_error=True):
         """Load file."""

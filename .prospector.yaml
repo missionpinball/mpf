@@ -20,7 +20,6 @@ pylint:
   disable:
     - pointless-string-statement  # pointless statement, which is how our event docstrings are seen
     - too-few-public-methods
-    - no-else-return
 
   options:
     max-attributes: 12

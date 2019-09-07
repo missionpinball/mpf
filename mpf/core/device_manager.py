@@ -361,10 +361,10 @@ class DeviceCollection(dict):
         items_in_tag_cache = self._tag_cache.get(tag, None)
         if items_in_tag_cache is not None:
             return items_in_tag_cache
-        else:
-            items = [item for item in self if hasattr(item, "tags") and tag in item.tags]
-            self._tag_cache[tag] = items
-            return items
+
+        items = [item for item in self if hasattr(item, "tags") and tag in item.tags]
+        self._tag_cache[tag] = items
+        return items
 
     def number(self, number):
         """Return a device object based on its number."""

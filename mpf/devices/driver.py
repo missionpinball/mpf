@@ -235,8 +235,8 @@ class Driver(SystemWideDevice):
         if max_wait_ms is None:
             self.config['psu'].notify_about_instant_pulse(pulse_ms=pulse_ms)
             return 0
-        else:
-            return self.config['psu'].get_wait_time_for_pulse(pulse_ms=pulse_ms, max_wait_ms=max_wait_ms)
+
+        return self.config['psu'].get_wait_time_for_pulse(pulse_ms=pulse_ms, max_wait_ms=max_wait_ms)
 
     def _pulse_now(self, pulse_ms: int, pulse_power: float) -> None:
         """Pulse this driver now."""

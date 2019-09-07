@@ -165,8 +165,7 @@ class System11OverlayPlatform(DriverPlatform):
 
             return system11_driver
 
-        else:
-            return self.platform.configure_driver(config, number, platform_settings)
+        return self.platform.configure_driver(config, number, platform_settings)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         """Configure a rule for a driver on the system11 overlay.
@@ -284,7 +283,7 @@ class System11OverlayPlatform(DriverPlatform):
                                    name='enable_a_side')
                     return
 
-                elif self.c_side_enabled:
+                if self.c_side_enabled:
                     self._disable_ac_relay()
 
                 else:
@@ -318,7 +317,7 @@ class System11OverlayPlatform(DriverPlatform):
         if not self.a_side_queue:
             return
 
-        elif not self.a_side_enabled:
+        if not self.a_side_enabled:
             self._enable_a_side()
             return
 
@@ -355,7 +354,7 @@ class System11OverlayPlatform(DriverPlatform):
                                    name='enable_c_side')
                     return
 
-                elif self.a_side_enabled:
+                if self.a_side_enabled:
                     self._enable_ac_relay()
 
                 else:
@@ -393,7 +392,7 @@ class System11OverlayPlatform(DriverPlatform):
         if self.ac_relay_in_transition or self.a_side_busy:
             return
 
-        elif not self.c_side_enabled:
+        if not self.c_side_enabled:
             self._enable_c_side()
             return
 

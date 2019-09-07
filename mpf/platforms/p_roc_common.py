@@ -106,8 +106,8 @@ class ProcProcess:
         """Run command in proc thread."""
         if cmd.startswith("_"):
             return getattr(self, cmd)(*args)
-        else:
-            return getattr(self.proc, cmd)(*args)
+
+        return getattr(self.proc, cmd)(*args)
 
     def _dmd_send(self, data):
         if not self.dmd:
@@ -486,12 +486,12 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
     def _get_event_type(cls, sw_activity, debounced):
         if sw_activity == 0 and debounced:
             return "open_debounced"
-        elif sw_activity == 0 and not debounced:
+        if sw_activity == 0 and not debounced:
             return "open_nondebounced"
-        elif sw_activity == 1 and debounced:
+        if sw_activity == 1 and debounced:
             return "closed_debounced"
-        else:  # if sw_activity == 1 and not debounced:
-            return "closed_nondebounced"
+        # if sw_activity == 1 and not debounced:
+        return "closed_nondebounced"
 
     def _add_hw_rule(self, switch: SwitchSettings, coil: DriverSettings, rule, invert=False):
         rule_type = self._get_event_type(switch.invert == invert, switch.debounce)
@@ -624,7 +624,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
                     "number": number
                 }
             ]
-        elif subtype == "led":
+        if subtype == "led":
             # split the number (which comes in as a string like w-x-y-z) into parts
             number_parts = str(number).split('-')
 
@@ -642,8 +642,8 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
                     "number": number_parts[0] + "-" + number_parts[3]
                 },
             ]
-        else:
-            raise AssertionError("Unknown subtype {}".format(subtype))
+
+        raise AssertionError("Unknown subtype {}".format(subtype))
 
     def configure_light(self, number, subtype, platform_settings) -> LightPlatformInterface:
         """Configure a light channel."""
@@ -660,12 +660,12 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
                 proc_num = self.pinproc.decode(self.machine_type, str(number))
 
             return PROCMatrixLight(proc_num, self.machine, self)
-        elif subtype == "led":
+        if subtype == "led":
             board, index = number.split("-")
             polarity = platform_settings and platform_settings.get("polarity", False)
             return PDBLED(int(board), int(index), polarity, self.config.get("debug", False), self)
-        else:
-            raise AssertionError("unknown subtype {}".format(subtype))
+
+        raise AssertionError("unknown subtype {}".format(subtype))
 
     def _configure_switch(self, config: SwitchConfig, proc_num) -> PROCSwitch:
         """Configure a P3-ROC switch.
@@ -911,7 +911,7 @@ class PDBConfig:
             output = int(params[2][0:])
             return board, bank, output
 
-        elif '/' in addr:  # x/y/z form
+        if '/' in addr:  # x/y/z form
             params = addr.rsplit('/')
             if len(params) != 3:
                 raise ValueError('pdb address must have 3 components')
@@ -920,8 +920,7 @@ class PDBConfig:
             output = int(params[2])
             return board, bank, output
 
-        else:
-            raise ValueError('PDB address delimiter (- or /) not found.')
+        raise ValueError('PDB address delimiter (- or /) not found.')
 
     def _load_lamp_lists_from_config(self, config):
         lamp_source_bank_list = []
@@ -1043,7 +1042,7 @@ class PDBConfig:
         lamp = PDBLight(self, number_str)
         if lamp.lamp_type == 'unknown':
             return -1
-        elif lamp.lamp_type == 'dedicated':
+        if lamp.lamp_type == 'dedicated':
             return lamp.dedicated_output()
 
         lamp_dict_for_index = {'source_board': lamp.source_board(),

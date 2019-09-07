@@ -42,13 +42,13 @@ class OPPSolenoid(DriverPlatformInterface):
         """
         if not recycle:
             return 0
-        elif self.platform_settings['recycle_factor']:
+        if self.platform_settings['recycle_factor']:
             if self.platform_settings['recycle_factor'] > 7:
                 raise AssertionError("Maximum recycle_factor allowed is 7")
             return self.platform_settings['recycle_factor']
-        else:
-            # default to two times pulse_ms
-            return 2
+
+        # default to two times pulse_ms
+        return 2
 
     def _kick_coil(self, sol_int, on):
         mask = 1 << sol_int

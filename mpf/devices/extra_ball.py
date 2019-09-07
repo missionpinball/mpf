@@ -133,13 +133,12 @@ class ExtraBall(ModeDevice):
         if self.group and not self.group.enabled:
             return False
 
-        elif self.config['max_per_game'] and (
+        if self.config['max_per_game'] and (
                 self.config['max_per_game'] <=
                 self.player['extra_ball_{}_num_awarded'.format(self.name)]):
             return False
 
-        else:
-            return True
+        return True
 
     def _award_disabled(self):
         self.machine.events.post('extra_ball_award_disabled')

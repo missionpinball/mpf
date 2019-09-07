@@ -28,13 +28,13 @@ class FASTMatrixLight(LightPlatformSoftwareFade):
         """Return the board of this light."""
         if self.platform.machine_type == 'wpc':
             return "FAST WPC"
-        else:
-            coil_index = 0
-            number = Util.hex_string_to_int(self.number)
-            for board_obj in self.platform.io_boards.values():
-                if coil_index <= number < coil_index + board_obj.driver_count:
-                    return "FAST Board {}".format(str(board_obj.node_id))
-                coil_index += board_obj.driver_count
 
-            # fall back if not found
-            return "FAST Unknown Board"
+        coil_index = 0
+        number = Util.hex_string_to_int(self.number)
+        for board_obj in self.platform.io_boards.values():
+            if coil_index <= number < coil_index + board_obj.driver_count:
+                return "FAST Board {}".format(str(board_obj.node_id))
+            coil_index += board_obj.driver_count
+
+        # fall back if not found
+        return "FAST Unknown Board"

@@ -117,8 +117,8 @@ class Randomizer:
         """Return current item."""
         if self.data['current_item']:
             return self.data['current_item']
-        else:
-            return self.__next__()
+
+        return self.__next__()
 
     def get_next(self):
         """Return next item."""

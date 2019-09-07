@@ -95,8 +95,7 @@ class ConfigValidator:
         def _validate_type_or_token_real(item, validation_failure_info, param=None):
             if isinstance(item, str) and item.startswith("(") and item.endswith(")"):
                 return RuntimeToken(item[1:-1], func)
-            else:
-                return func(item, validation_failure_info, param)
+            return func(item, validation_failure_info, param)
         return _validate_type_or_token_real
 
     def load_device_config_spec(self, config_section, config_spec):
@@ -316,7 +315,7 @@ class ConfigValidator:
             return self.validate_item(item, validation,
                                       validation_failure_info)
 
-        elif item_type == 'list':
+        if item_type == 'list':
             item_list = Util.string_to_list(item)
 
             new_list = list()
@@ -326,7 +325,7 @@ class ConfigValidator:
 
             return new_list
 
-        elif item_type == 'set':
+        if item_type == 'set':
             item_set = set(Util.string_to_list(item))
 
             new_set = set()
@@ -335,16 +334,16 @@ class ConfigValidator:
                 new_set.add(self.validate_item(i, validation, validation_failure_info))
 
             return new_set
-        elif item_type == "event_handler":
+        if item_type == "event_handler":
             if validation != "str:ms":
                 raise AssertionError("event_handler should use str:ms in config_spec: {}".format(spec))
             return self._validate_dict_or_omap(item_type, validation, validation_failure_info, item)
-        elif item_type in ('dict', 'omap'):
+        if item_type in ('dict', 'omap'):
             return self._validate_dict_or_omap(item_type, validation, validation_failure_info, item)
-        else:
-            raise ConfigFileError("Invalid Type '{}' in config spec {}:{}".format(item_type,
-                                  validation_failure_info[0][0],
-                                  validation_failure_info[1]), 1, self.log.name)
+
+        raise ConfigFileError("Invalid Type '{}' in config spec {}:{}".format(item_type,
+                              validation_failure_info[0][0],
+                              validation_failure_info[1]), 1, self.log.name)
 
     def _validate_dict_or_omap(self, item_type, validation, validation_failure_info, item):
         if ':' not in validation:
@@ -435,19 +434,18 @@ class ConfigValidator:
 
         if item is None and "none" in enum_values:
             return None
-        elif item in enum_values:
+        if item in enum_values:
             return item
 
-        elif item is False and 'no' in enum_values:
+        if item is False and 'no' in enum_values:
             return 'no'
 
-        elif item is True and 'yes' in enum_values:
+        if item is True and 'yes' in enum_values:
             return 'yes'
 
-        else:
-            return self.validation_error(item, validation_failure_info,
-                                         "Entry \"{}\" is not valid for enum. Valid values are: {}".format(
-                                             item, str(param)))
+        return self.validation_error(item, validation_failure_info,
+                                     "Entry \"{}\" is not valid for enum. Valid values are: {}".format(
+                                         item, str(param)))
 
     def _validate_type_machine(self, item, param, validation_failure_info):
         if item is None:
@@ -462,10 +460,10 @@ class ConfigValidator:
 
         if item in section:
             return section[item]
-        else:
-            return self.validation_error(item, validation_failure_info,
-                                         "Device {} of type {} not defined".format(item, param),
-                                         6)
+
+        return self.validation_error(item, validation_failure_info,
+                                     "Device {} of type {} not defined".format(item, param),
+                                     6)
 
     @classmethod
     def _validate_type_list(cls, item, validation_failure_info):
@@ -490,16 +488,16 @@ class ConfigValidator:
         del validation_failure_info
         if item is not None:
             return str(item)
-        else:
-            return None
+
+        return None
 
     @classmethod
     def _validate_type_lstr(cls, item, validation_failure_info):
         del validation_failure_info
         if item is not None:
             return str(item).lower()
-        else:
-            return None
+
+        return None
 
     def _validate_type_template_str(self, item, validation_failure_info):
         del validation_failure_info
@@ -625,12 +623,12 @@ class ConfigValidator:
         del validation_failure_info
         if item is None:
             return None
-        elif isinstance(item, str):
+        if isinstance(item, str):
             return item.lower() not in ['false', 'f', 'no', 'disable', 'off']
-        elif not item:
+        if not item:
             return False
-        else:
-            return True
+
+        return True
 
     @classmethod
     def _validate_type_ms(cls, item, validation_failure_info, param=None):
@@ -638,8 +636,8 @@ class ConfigValidator:
         assert not param
         if item is not None:
             return Util.string_to_ms(item)
-        else:
-            return None
+
+        return None
 
     @classmethod
     def _validate_type_secs(cls, item, validation_failure_info, param=None):
@@ -647,8 +645,8 @@ class ConfigValidator:
         del validation_failure_info
         if item is not None:
             return Util.string_to_secs(item)
-        else:
-            return None
+
+        return None
 
     def _validate_type_dict(self, item, validation_failure_info, param=None):
         if not item:
@@ -712,26 +710,23 @@ class ConfigValidator:
 
         if color_string in NAMED_RGB_COLORS:
             return NAMED_RGB_COLORS[color_string]
-        elif Util.is_hex_string(color_string):
+        if Util.is_hex_string(color_string):
             return RGBColor.hex_to_rgb(color_string)
 
-        else:
-            color = Util.string_to_list(color_string)
-            return int(color[0]), int(color[1]), int(color[2])
+        color = Util.string_to_list(color_string)
+        return int(color[0]), int(color[1]), int(color[2])
 
     def _validate_type_bool_int(self, item, validation_failure_info):
         if self._validate_type_bool(item, validation_failure_info):
             return 1
-        else:
-            return 0
+        return 0
 
     def _validate_type_pow2(self, item, validation_failure_info):
         if item is None:
             return None
         if not Util.is_power2(item):
             return self.validation_error(item, validation_failure_info, "Could not convert {} to pow2".format(item))
-        else:
-            return item
+        return item
 
     def validate_item(self, item, validator, validation_failure_info):
         """Validate an item using a validator."""
@@ -746,20 +741,19 @@ class ConfigValidator:
             validator = validator_parts[0]
             param = validator_parts[1][:-1]
             return self.validator_list[validator](item, validation_failure_info=validation_failure_info, param=param)
-        elif validator in self.validator_list:
+        if validator in self.validator_list:
             return self.validator_list[validator](item, validation_failure_info=validation_failure_info)
 
-        else:
-            raise ConfigFileError("Invalid Validator '{}' in config spec {}:{}".format(
-                                  validator,
-                                  validation_failure_info[0][0],
-                                  validation_failure_info[1]), 4, self.log.name)
+        raise ConfigFileError("Invalid Validator '{}' in config spec {}:{}".format(
+                              validator,
+                              validation_failure_info[0][0],
+                              validation_failure_info[1]), 4, self.log.name)
 
     def _build_error_path(self, validation_failure_info):
         if isinstance(validation_failure_info[0], tuple):
             return "{}:{}".format(self._build_error_path(validation_failure_info[0]), validation_failure_info[1])
-        else:
-            return "{}:{}".format(validation_failure_info[0], validation_failure_info[1])
+
+        return "{}:{}".format(validation_failure_info[0], validation_failure_info[1])
 
     def validation_error(self, item, validation_failure_info, msg="", code=None):
         """Raise a validation error with all relevant infos."""

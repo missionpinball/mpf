@@ -287,15 +287,14 @@ class Credits(Mode):
             self.info_log("Received request to add player. Request Approved. Sufficient credits available.")
             return True
 
-        else:
-            self.info_log("Received request to add player. Request Denied. Not enough credits available.")
-            self.machine.events.post("not_enough_credits")
-            '''event: not_enough_credits
-            desc: A player has pushed the start button, but the game is not set
-            to free play and there are not enough credits to start a game or
-            add a player.
-            '''
-            return False
+        self.info_log("Received request to add player. Request Denied. Not enough credits available.")
+        self.machine.events.post("not_enough_credits")
+        '''event: not_enough_credits
+        desc: A player has pushed the start button, but the game is not set
+        to free play and there are not enough credits to start a game or
+        add a player.
+        '''
+        return False
 
     def _request_to_start_game(self, **kwargs):
         del kwargs
@@ -304,11 +303,10 @@ class Credits(Mode):
             self.info_log("Received request to start game. Request Approved. Sufficient credits available.")
             return True
 
-        else:
-            self.info_log("Received request to start game. Request Denied. Not enough credits available.")
-            self.machine.events.post("not_enough_credits")
-            # event docstring covered in _player_add_request() method
-            return False
+        self.info_log("Received request to start game. Request Denied. Not enough credits available.")
+        self.machine.events.post("not_enough_credits")
+        # event docstring covered in _player_add_request() method
+        return False
 
     def _player_added(self, **kwargs):
         del kwargs

@@ -73,8 +73,8 @@ class EventManager(MpfController):
             return (event_string[0:event_string.find("{")],
                     self.machine.placeholder_manager.build_bool_template(
                         event_string[event_string.find("{") + 1:-1]))
-        else:
-            return event_string, None
+
+        return event_string, None
 
     def add_async_handler(self, event: str, handler: Any, priority: int = 1, blocking_facility: Any = None,
                           **kwargs) -> EventHandlerKey:

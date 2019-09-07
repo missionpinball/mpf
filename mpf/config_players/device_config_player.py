@@ -108,9 +108,9 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
                         "Could not find a {} device with name or tag {}.".format(
                             self.device_collection.name, device_name),
                         1)
-                else:
-                    # placeholders may be evaluated later
-                    device_list.append(device_name)
+
+                # placeholders may be evaluated later
+                device_list.append(device_name)
         return device_list
 
     def _expand_device_config(self, device_settings):

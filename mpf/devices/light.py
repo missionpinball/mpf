@@ -536,8 +536,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
         factor = self.machine.light_controller.brightness_factor
         if factor == 1.0:
             return color
-        else:
-            return RGBColor([int(x * factor) for x in color])
+
+        return RGBColor([int(x * factor) for x in color])
 
     def color_correct(self, color):
         """Apply the current color correction profile to the color passed.
@@ -553,15 +553,14 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """
         if self._color_correction_profile is None:
             return color
-        else:
 
-            if self._debug:
-                self.debug_log("Applying color correction: %s (applied "
-                               "'%s' color correction profile)",
-                               self._color_correction_profile.apply(color),
-                               self._color_correction_profile.name)
+        if self._debug:
+            self.debug_log("Applying color correction: %s (applied "
+                           "'%s' color correction profile)",
+                           self._color_correction_profile.apply(color),
+                           self._color_correction_profile.name)
 
-            return self._color_correction_profile.apply(color)
+        return self._color_correction_profile.apply(color)
 
     # pylint: disable-msg=too-many-return-statements
     def _get_color_and_fade(self, stack, max_fade_ms: int, *, current_time=None) -> Tuple[RGBColor, int, bool]:

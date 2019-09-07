@@ -172,7 +172,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
                     "number": str(number)
                 }
             ]
-        elif subtype == "led" or not subtype:
+        if subtype == "led" or not subtype:
             return [
                 {
                     "number": str(number) + "-r",
@@ -184,8 +184,8 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
                     "number": str(number) + "-b",
                 }
             ]
-        else:
-            raise AssertionError("Unknown subtype {}".format(subtype))
+
+        raise AssertionError("Unknown subtype {}".format(subtype))
 
     def clear_hw_rule(self, switch, coil):
         """Clear hw rule."""

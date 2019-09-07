@@ -585,10 +585,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if subtype == "gi":
             return FASTGIString(number, self.net_connection.send, self.machine,
                                 int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000))
-        elif subtype == "matrix":
+        if subtype == "matrix":
             return FASTMatrixLight(number, self.net_connection.send, self.machine,
                                    int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000), self)
-        elif not subtype or subtype == "led":
+        if not subtype or subtype == "led":
             if not self.flag_led_tick_registered:
                 # Update leds every frame
                 self.machine.clock.schedule_interval(self.update_leds,
@@ -602,8 +602,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             fast_led_channel = FASTDirectLEDChannel(self.fast_leds[number_str], channel)
 
             return fast_led_channel
-        else:
-            raise AssertionError("Unknown subtype {}".format(subtype))
+
+        raise AssertionError("Unknown subtype {}".format(subtype))
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Parse light channels from number string."""
@@ -618,7 +618,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                     "number": number
                 }
             ]
-        elif subtype == "matrix":
+        if subtype == "matrix":
             if self.machine_type == 'wpc':  # translate number to FAST light num
                 number = fast_defines.WPC_LIGHT_MAP.get(str(number).upper())
             else:
@@ -629,7 +629,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                     "number": number
                 }
             ]
-        elif not subtype or subtype == "led":
+        if not subtype or subtype == "led":
             # if the LED number is in <channel> - <led> format, convert it to a
             # FAST hardware number
             if '-' in str(number):
@@ -648,8 +648,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                     "number": number + "-2"
                 },
             ]
-        else:
-            raise AssertionError("Unknown subtype {}".format(subtype))
+
+        raise AssertionError("Unknown subtype {}".format(subtype))
 
     def configure_dmd(self):
         """Configure a hardware DMD connected to a FAST controller."""

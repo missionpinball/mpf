@@ -230,7 +230,7 @@ class Playfield(SystemWideDevice):
         """
         if balls == 0:
             return False
-        elif balls < 0:
+        if balls < 0:
             raise AssertionError("Received request to add negative balls, which "
                                  "doesn't  make sense. Not adding any balls...")
 

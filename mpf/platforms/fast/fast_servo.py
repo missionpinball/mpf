@@ -30,8 +30,6 @@ class FastServo(ServoPlatformInterface):
 
     def set_speed_limit(self, speed_limit):
         """Not implemented."""
-        raise NotImplementedError("Unsupported")
 
     def set_acceleration_limit(self, acceleration_limit):
         """Not implemented."""
-        raise NotImplementedError("Unsupported")

@@ -750,7 +750,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                     "number": self._get_dict_index(number)
                 }
             ]
-        elif not subtype or subtype == "led":
+        if not subtype or subtype == "led":
             return [
                 {
                     "number": self._get_dict_index(number) + "-0"
@@ -762,9 +762,9 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                     "number": self._get_dict_index(number) + "-2"
                 },
             ]
-        else:
-            self.raise_config_error("Unknown subtype {}".format(subtype), 8)
-            return []
+
+        self.raise_config_error("Unknown subtype {}".format(subtype), 8)
+        return []
 
     def configure_light(self, number, subtype, platform_settings):
         """Configure a led or matrix light."""
@@ -781,16 +781,16 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             neo = self.neo_card_dict[index]
             channel = neo.add_channel(int(pixel_num), self.neo_dict, index_str)
             return channel
-        elif subtype == "matrix":
+        if subtype == "matrix":
             if number not in self.incand_dict:
                 self.raise_config_error("A request was made to configure a OPP matrix "
                                         "light (incand board), with number {} "
                                         "which doesn't exist".format(number), 11)
 
             return self.incand_dict[number]
-        else:
-            self.raise_config_error("Unknown subtype {}".format(subtype), 12)
-            return None
+
+        self.raise_config_error("Unknown subtype {}".format(subtype), 12)
+        return None
 
     def light_sync(self):
         """Update lights.

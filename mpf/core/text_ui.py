@@ -41,8 +41,8 @@ class MpfLayout(Layout):
         """Limit height."""
         if self.max_height:
             return min(super().fix(start_x, start_y, max_width, max_height), self.max_height)
-        else:
-            return super().fix(start_x, start_y, max_width, max_height)
+
+        return super().fix(start_x, start_y, max_width, max_height)
 
 
 # pylint: disable-msg=too-many-instance-attributes

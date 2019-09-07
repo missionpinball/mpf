@@ -260,8 +260,8 @@ class Tilt(Mode):
                   self.last_tilt_warning_switch) * 1000)
         if delta > 0:
             return delta
-        else:
-            return 0
+
+        return 0
 
     def slam_tilt(self, **kwargs):
         """Process a slam tilt.

@@ -700,15 +700,15 @@ class BallDevice(SystemWideDevice):
             path.appendleft(target)
             path.appendleft(self)
             return path
-        else:
-            # otherwise find any target which can
-            for target_device in self.config['eject_targets']:
-                if target_device.is_playfield():
-                    continue
-                path = target_device.find_path_to_target(target)
-                if path:
-                    path.appendleft(self)
-                    return path
+
+        # otherwise find any target which can
+        for target_device in self.config['eject_targets']:
+            if target_device.is_playfield():
+                continue
+            path = target_device.find_path_to_target(target)
+            if path:
+                path.appendleft(self)
+                return path
 
         return False
 
@@ -757,8 +757,8 @@ class BallDevice(SystemWideDevice):
         if self.available_balls > 0:
             self.eject(balls=self.available_balls, target=target)
             return True
-        else:
-            return False
+
+        return False
 
     @event_handler(10)
     def event_hold(self, **kwargs):

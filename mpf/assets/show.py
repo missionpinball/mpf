@@ -98,22 +98,22 @@ class Show(Asset):
                 if 'time' in step and len(step) == 1 and step_num != 0:
                     return False
                 return 1
-            elif 'time' in data[step_num + 1]:
+            if 'time' in data[step_num + 1]:
                 next_step_time = data[step_num + 1]['time']
                 if str(next_step_time)[0] == "+":
                     return Util.string_to_secs(next_step_time)
-                else:
-                    if total_step_time < 0:     # pragma: no cover
-                        self._show_validation_error("Absolute timing in step {} not possible because "
-                                                    "there was a duration of -1 before".format(step_num))
-                    return Util.string_to_secs(next_step_time) - total_step_time
-            else:
-                return 1
-        else:
-            if step_num < total_steps_num - 1 and 'time' in data[step_num + 1]:     # pragma: no cover
-                self._show_validation_error("Found invalid 'time' entry in step after {} which contains a duration. "
-                                            "Remove either of them!".format(step_num))
-            return Util.string_to_secs(step['duration'])
+
+                if total_step_time < 0:     # pragma: no cover
+                    self._show_validation_error("Absolute timing in step {} not possible because "
+                                                "there was a duration of -1 before".format(step_num))
+                return Util.string_to_secs(next_step_time) - total_step_time
+
+            return 1
+
+        if step_num < total_steps_num - 1 and 'time' in data[step_num + 1]:     # pragma: no cover
+            self._show_validation_error("Found invalid 'time' entry in step after {} which contains a duration. "
+                                        "Remove either of them!".format(step_num))
+        return Util.string_to_secs(step['duration'])
 
     def _do_load_show(self, data: Optional[Dict]):
         # do not use machine or the logger here because it will block
@@ -241,7 +241,7 @@ class Show(Asset):
             for k, v in data.items():
                 new_dict[k] = cls._copy_recursive(v)
             return new_dict
-        elif isinstance(data, list):
+        if isinstance(data, list):
             new_list = list()
             for i in data:
                 new_list.append(cls._copy_recursive(i))
@@ -424,9 +424,9 @@ class Show(Asset):
 
             self._step_cache[token_hash] = show_steps
             return show_steps
-        else:
-            # otherwise return show steps. the caller should not change them
-            return self.show_steps
+
+        # otherwise return show steps. the caller should not change them
+        return self.show_steps
 
     def _replace_token_values(self, show_steps, show_tokens):
         for token, replacement in show_tokens.items():
