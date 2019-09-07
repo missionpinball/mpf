@@ -24,12 +24,13 @@ def decode_command_string(bcp_string) -> Tuple[str, dict]:
     """Decode a BCP command string into separate command and parameter parts.
 
     Args:
+    ----
         bcp_string: The incoming UTF-8, URL encoded BCP command string.
 
     Returns a tuple of the command string and a dictionary of kwarg pairs.
 
     Example:
-    --------
+    -------
     Input: trigger?name=hello&foo=Foo%20Bar
     Output: ('trigger', {'name': 'hello', 'foo': 'Foo Bar'})
 
@@ -74,6 +75,7 @@ def encode_command_string(bcp_command, **kwargs) -> str:
     """Encode a BCP command and kwargs into a valid BCP command string.
 
     Args:
+    ----
         bcp_command: String of the BCP command name.
         **kwargs: Optional pair(s) of kwargs which will be appended to the
             command.
@@ -81,7 +83,7 @@ def encode_command_string(bcp_command, **kwargs) -> str:
     Returns a string.
 
     Example:
-    --------
+    -------
     Input: encode_command_string('trigger', {'name': 'hello', 'foo': 'Bar'})
     Output: trigger?name=hello&foo=Bar
 

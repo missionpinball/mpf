@@ -478,7 +478,7 @@ class EventManager(MpfController):
         numeric values will be processed first.)
 
         Args:
-        -----
+        ----
             event: A string name of the event you're posting. Note that you can
                 post whatever event you want. You don't have to set up anything
                 ahead of time, and if no handlers are registered for the event
@@ -492,7 +492,7 @@ class EventManager(MpfController):
                 methods if certain ones don't need them.)
 
         Examples:
-        ---------
+        --------
         Post the queue event called *pizza_time*, and then call
         ``self.pizza_done`` when done:
 
