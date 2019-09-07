@@ -111,7 +111,7 @@ class BcpInterface(MpfController):
 
         desc: Version of MC. This is set after MC got connected.
         '''
-        '''machine_var: mc_version
+        '''machine_var: mc_extended_version
 
         desc: Extended version of MC. This is set after MC got connected. Contains BCP and show version numbers.
         '''
