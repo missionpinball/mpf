@@ -28,8 +28,8 @@ def decode_command_string(bcp_string) -> Tuple[str, dict]:
 
     Returns a tuple of the command string and a dictionary of kwarg pairs.
 
-    Example
-    -------
+    Example:
+    --------
     Input: trigger?name=hello&foo=Foo%20Bar
     Output: ('trigger', {'name': 'hello', 'foo': 'Foo Bar'})
 
@@ -80,8 +80,8 @@ def encode_command_string(bcp_command, **kwargs) -> str:
 
     Returns a string.
 
-    Example
-    -------
+    Example:
+    --------
     Input: encode_command_string('trigger', {'name': 'hello', 'foo': 'Bar'})
     Output: trigger?name=hello&foo=Bar
 
