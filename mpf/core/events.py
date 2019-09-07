@@ -491,8 +491,8 @@ class EventManager(MpfController):
                 expecting them. You can add ``**kwargs`` to your handler
                 methods if certain ones don't need them.)
 
-        Examples:
-        --------
+        Example:
+        -------
         Post the queue event called *pizza_time*, and then call
         ``self.pizza_done`` when done:
 
