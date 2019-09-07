@@ -9,7 +9,7 @@ from collections import defaultdict
 from threading import Thread
 
 import time
-from typing import Any, List, Union, Awaitable
+from typing import Any, List, Union
 
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 
@@ -193,7 +193,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         del future
         self._commands_running -= 1
 
-    def run_proc_cmd(self, cmd, *args) -> Awaitable[int]:
+    def run_proc_cmd(self, cmd, *args):
         """Run a command in the p-roc thread and return a future."""
         if self.debug:
             self.debug_log("Calling P-Roc cmd: %s (%s)", cmd, args)
