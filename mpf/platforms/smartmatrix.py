@@ -133,7 +133,6 @@ class SmartMatrixDevice(DmdPlatformInterface):
 
     def stop(self):
         """Stop platform."""
-        pass
 
     def update(self, data):
         """Update DMD data."""

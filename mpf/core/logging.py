@@ -166,8 +166,8 @@ class LogMixin:
         """
         if self._debug_to_console:
             raise RuntimeError(msg)
-        else:
-            self.error_log(msg)
+
+        self.error_log(msg)
 
     def _logging_not_configured(self) -> None:
         raise RuntimeError(

@@ -315,7 +315,7 @@ class PDBLight:
         addrs_out = []
         for addr in addrs:
             bits = addr.split('-')
-            if len(bits) is 1:
+            if len(bits) == 1:
                 addrs_out.append(addr)  # Append unchanged.
             else:  # Generally this will be len(bits) 2 or 4.
                 # Remove the first bit and rejoin.

@@ -21,7 +21,6 @@ class PlatformBatchLight(LightPlatformInterface, abc.ABC):
     @abc.abstractmethod
     def get_max_fade_ms(self):
         """Return max fade ms."""
-        pass
 
     def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
         """Mark dirty and remember callback."""

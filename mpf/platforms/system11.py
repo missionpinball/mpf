@@ -53,7 +53,6 @@ class System11OverlayPlatform(DriverPlatform):
 
     def stop(self):
         """Stop the overlay. Nothing to do here because stop is also called on parent platform."""
-        pass
 
     @property
     def a_side_busy(self):
@@ -177,8 +176,8 @@ class System11OverlayPlatform(DriverPlatform):
         if coil.hw_driver in self.drivers.values():
             raise AssertionError("Received a request to set a hardware rule for a System11 driver {}. "
                                  "This is not supported.".format(coil))
-        else:
-            self.platform.set_pulse_on_hit_and_release_rule(enable_switch, coil)
+
+        self.platform.set_pulse_on_hit_and_release_rule(enable_switch, coil)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
         """Configure a rule for a driver on the system11 overlay.
@@ -188,8 +187,8 @@ class System11OverlayPlatform(DriverPlatform):
         if coil.hw_driver in self.drivers.values():
             raise AssertionError("Received a request to set a hardware rule for a System11 driver {}. "
                                  "This is not supported.".format(coil))
-        else:
-            self.platform.set_pulse_on_hit_and_enable_and_release_rule(enable_switch, coil)
+
+        self.platform.set_pulse_on_hit_and_enable_and_release_rule(enable_switch, coil)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
         """Configure a rule for a driver on the system11 overlay.
@@ -199,8 +198,8 @@ class System11OverlayPlatform(DriverPlatform):
         if coil.hw_driver in self.drivers.values():
             raise AssertionError("Received a request to set a hardware rule for a System11 driver {}. "
                                  "This is not supported.".format(coil))
-        else:
-            self.platform.set_pulse_on_hit_and_enable_and_release_and_disable_rule(enable_switch, disable_switch, coil)
+
+        self.platform.set_pulse_on_hit_and_enable_and_release_and_disable_rule(enable_switch, disable_switch, coil)
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
         """Configure a rule on the system11 overlay.
@@ -210,16 +209,16 @@ class System11OverlayPlatform(DriverPlatform):
         if coil.hw_driver in self.drivers.values():
             raise AssertionError("Received a request to set a hardware rule for a System11 driver {}. "
                                  "This is not supported.".format(coil))
-        else:
-            self.platform.set_pulse_on_hit_rule(enable_switch, coil)
+
+        self.platform.set_pulse_on_hit_rule(enable_switch, coil)
 
     def clear_hw_rule(self, switch, coil):
         """Clear a rule for a driver on the system11 overlay."""
         if coil.hw_driver in self.drivers.values():
             raise AssertionError("Received a request to clear a hardware rule for a System11 driver {}. "
                                  "This is not supported.".format(coil))
-        else:
-            self.platform.clear_hw_rule(switch, coil)
+
+        self.platform.clear_hw_rule(switch, coil)
 
     def driver_action(self, driver, pulse_settings: Optional[PulseSettings], hold_settings: Optional[HoldSettings],
                       side: str):

@@ -10,8 +10,6 @@ class TicError(Exception):
 
     """A Pololu TIC Error."""
 
-    pass
-
 
 class PololuTiccmdWrapper:
 

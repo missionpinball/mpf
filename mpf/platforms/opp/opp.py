@@ -77,7 +77,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         if self.machine_type == 'gen1':
             raise AssertionError("Original OPP boards not currently supported.")
-        elif self.machine_type == 'gen2':
+        if self.machine_type == 'gen2':
             self.log.debug("Configuring the OPP Gen2 boards")
         else:
             self.raise_config_error('Invalid driverboards type: {}'.format(self.machine_type), 15)
@@ -355,7 +355,6 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             msg: Message to parse.
         """
         # An EOM command can be used to resynchronize communications if message synch is lost
-        pass
 
     def _parse_gen2_board(self, chain_serial, msg, read_input_msg):
         has_neo = False

@@ -113,7 +113,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
     def _parse_config(self, config, name):
         if config is None:
             raise AssertionError("Empty config player {}".format(name))
-        elif isinstance(config, (str, int, float)):
+        if isinstance(config, (str, int, float)):
             # express config, convert to full
             config = self.get_express_config(config)
         elif isinstance(config, list):
@@ -213,7 +213,6 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
 
     def clear_context(self, context):
         """Clear the context."""
-        pass
 
     @staticmethod
     def _parse_event_priority(event, priority):

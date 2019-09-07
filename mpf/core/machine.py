@@ -744,7 +744,7 @@ class MachineController(LogMixin):
         except KeyboardInterrupt:
             print("Shutdown because of keyboard interrupts")
             return
-        except BaseException:
+        except BaseException:   # pylint: disable-msg=broad-except
             # this happens when receiving a signal
             self.log.exception("Loop exited with exception")
             return

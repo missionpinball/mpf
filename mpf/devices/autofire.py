@@ -104,8 +104,8 @@ class AutofireCoil(SystemWideDevice):
 
         self.debug_log("Enabling")
 
-        recycle = True if self.config['coil_overwrite'].get('recycle', None) in (True, None) else False
-        debounce = False if self.config['switch_overwrite'].get('debounce', None) in (None, "quick") else True
+        recycle = self.config['coil_overwrite'].get('recycle', None) in (True, None)
+        debounce = self.config['switch_overwrite'].get('debounce', None) not in (None, "quick")
 
         self._rule = self.machine.platform_controller.set_pulse_on_hit_rule(
             SwitchRuleSettings(switch=self.config['switch'], debounce=debounce,

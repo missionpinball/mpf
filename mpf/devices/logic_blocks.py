@@ -61,7 +61,6 @@ class LogicBlock(SystemWideDevice, ModeDevice):
 
     def add_control_events_in_mode(self, mode: Mode) -> None:
         """Do not auto enable this device in modes."""
-        pass
 
     def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Validate logic block config."""
@@ -326,7 +325,6 @@ class Counter(LogicBlock):
 
     def add_control_events_in_mode(self, mode: Mode) -> None:
         """Do not auto enable this device in modes."""
-        pass
 
     def _setup_control_events(self, event_list):
         self.debug_log("Setting up control events")

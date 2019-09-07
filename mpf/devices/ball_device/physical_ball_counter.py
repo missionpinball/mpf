@@ -204,7 +204,6 @@ class PhysicalBallCounter:
 
     def stop(self):
         """Stop counter."""
-        pass
 
     def invalidate_count(self):
         """Invalidate the count."""

@@ -63,7 +63,6 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
 
     def enable(self) -> None:
         """Enable handler."""
-        pass
 
     def add_control_events_in_mode(self, mode: Mode) -> None:
         """Add control events in mode if this device has any mode control events.
@@ -77,7 +76,6 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
 
     def remove_control_events_in_mode(self) -> None:
         """Remove control events."""
-        pass
 
     def device_removed_from_mode(self, mode: Mode) -> None:
         """Remove device because mode is unloading.

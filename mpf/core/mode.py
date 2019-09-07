@@ -578,16 +578,12 @@ class Mode(LogMixin):
 
     def mode_init(self) -> None:
         """User-overrideable method which will be called when this mode initializes as part of the MPF boot process."""
-        pass
 
     def mode_will_start(self, **kwargs) -> None:
         """User-overrideable method which will be called whenever this mode starts (i.e. before it becomes active)."""
-        pass
 
     def mode_start(self, **kwargs) -> None:
         """User-overrideable method which will be called whenever this mode starts (i.e. whenever it becomes active)."""
-        pass
 
     def mode_stop(self, **kwargs) -> None:
         """User-overrideable method which will be called whenever this mode stops."""
-        pass

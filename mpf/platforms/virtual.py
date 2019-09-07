@@ -59,11 +59,9 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
     @asyncio.coroutine
     def initialize(self) -> None:
         """Initialise platform."""
-        pass
 
     def stop(self):
         """Stop platform."""
-        pass
 
     @asyncio.coroutine
     def configure_servo(self, number: str):
@@ -151,7 +149,6 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
     def configure_accelerometer(self, number, config, callback):
         """Configure accelerometer."""
-        pass
 
     def configure_light(self, number, subtype, platform_settings):
         """Configure light channel."""
@@ -202,37 +199,38 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
             raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
                 enable_switch.hw_switch, coil.hw_driver))
-        else:
-            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_enable_and_release"
+
+        self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_enable_and_release"
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         """Set rule."""
         if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
             raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
                 enable_switch.hw_switch, coil.hw_driver))
-        else:
-            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_release"
+
+        self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_release"
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
         """Set rule."""
         if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
             raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
                 enable_switch.hw_switch, coil.hw_driver))
-        else:
-            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_enable_and_release_and_disable"
+
+        self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_enable_and_release_and_disable"
+
         if (disable_switch.hw_switch, coil.hw_driver) in self.rules:
             raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
                 disable_switch.hw_switch, coil.hw_driver))
-        else:
-            self.rules[(disable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_enable_and_release_and_disable"
+
+        self.rules[(disable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_enable_and_release_and_disable"
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
         """Set rule."""
         if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
             raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
                 enable_switch.hw_switch, coil.hw_driver))
-        else:
-            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit"
+
+        self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit"
 
     def configure_dmd(self):
         """Configure DMD."""
@@ -424,29 +422,27 @@ class VirtualServo(ServoPlatformInterface):
 
     """Virtual servo."""
 
-    __slots__ = ["log", "number", "current_position", "speed", "acceleration"]
+    __slots__ = ["log", "number", "current_position", "speed_limit", "acceleration_limit"]
 
     def __init__(self, number) -> None:
         """Initialise servo."""
         self.log = logging.getLogger('VirtualServo')
         self.number = number
         self.current_position = None
-        self.speed = None
-        self.acceleration = None
+        self.speed_limit = None
+        self.acceleration_limit = None
 
     def go_to_position(self, position):
         """Go to position."""
         self.current_position = position
 
-    @classmethod
-    def set_speed_limit(cls, speed_limit):
-        """Todo emulate speed parameter."""
-        pass
+    def set_speed_limit(self, speed_limit):
+        """Set speed parameter."""
+        self.speed_limit = speed_limit
 
-    @classmethod
-    def set_acceleration_limit(cls, acceleration_limit):
-        """Todo emulate acceleration parameter."""
-        pass
+    def set_acceleration_limit(self, acceleration_limit):
+        """Set acceleration parameter."""
+        self.acceleration_limit = acceleration_limit
 
 
 class VirtualStepper(StepperPlatformInterface):

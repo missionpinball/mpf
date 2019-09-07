@@ -96,13 +96,11 @@ class Playfield(SystemWideDevice):
     def expected_ball_received(self):
         """Handle an expected ball."""
         # We do nothing in that case
-        pass
 
     @asyncio.coroutine
     def unexpected_ball_received(self):
         """Handle an unexpected ball."""
         # We do nothing in that case
-        pass
 
     @staticmethod
     @asyncio.coroutine

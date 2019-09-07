@@ -185,7 +185,7 @@ class BallDevice(SystemWideDevice):
         # follow path and check if we should request a new ball to the target or cancel the path
         if target.is_playfield():
             raise AssertionError("Lost a ball to playfield {}. This should not happen".format(target))
-        elif target.cancel_path_if_target_is(self, self.config['ball_missing_target']):
+        if target.cancel_path_if_target_is(self, self.config['ball_missing_target']):
             # add ball to default target because it would have gone there anyway
             self.warning_log("Path to %s canceled. Assuming the ball jumped to %s.", target,
                              self.config['ball_missing_target'])

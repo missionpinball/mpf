@@ -106,7 +106,6 @@ class BaseTemplate(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def convert_result(self, value):
         """Convert the result of the template."""
-        pass
 
     def __repr__(self):
         """Return string representation."""
@@ -667,7 +666,7 @@ class BasePlaceholderManager(MpfController):
             try:
                 ret_value = getattr(slice_value, node.attr)
             except (ValueError, AttributeError):
-                if subscribe:
+                if subscribe:   # pylint: disable-msg=no-else-raise
                     raise TemplateEvalError(subscription + [slice_value.subscribe_attribute(node.attr)])
                 else:
                     raise

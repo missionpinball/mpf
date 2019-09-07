@@ -79,7 +79,6 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
     # pylint: disable-msg=no-self-use
     def update_firmware(self) -> str:
         """Perform a firmware update."""
-        pass
 
     @asyncio.coroutine
     def initialize(self):
@@ -87,12 +86,10 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
 
         This is called after all platforms have been created and core modules have been loaded.
         """
-        pass
 
     @asyncio.coroutine
     def start(self):
         """Start receiving switch changes from this platform."""
-        pass
 
     def tick(self):
         """Run task.
@@ -104,7 +101,6 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         light updates, etc.
 
         """
-        pass
 
     def stop(self):
         """Stop the platform.
@@ -118,7 +114,6 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         crashes.
 
         """
-        pass
 
 
 class DmdPlatform(BasePlatform, metaclass=abc.ABCMeta):
@@ -385,7 +380,6 @@ class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
         Called after channels of a light were updated. Can be used if multiple channels need to be flushed at once.
         """
-        pass
 
     @abc.abstractmethod
     def configure_light(self, number: str, subtype: str, platform_settings: dict) -> "LightPlatformInterface":

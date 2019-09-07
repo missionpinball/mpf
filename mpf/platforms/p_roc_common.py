@@ -810,26 +810,26 @@ class PDBConfig:
                 raise AssertionError("Lamp matrix banks can't be mapped to index "
                                      "{} because that's outside of the banks the "
                                      "P-ROC/P3-ROC can control.".format(lamp_dict['sink_bank']))
-            else:
-                self.log.debug("Driver group %02d (lamp sink): slow_time=%d "
-                               "enable_index=%d row_activate_index=%d "
-                               "row_enable_index=%d matrix=%s", group_ctr,
-                               self.lamp_matrix_strobe_time,
-                               lamp_dict['sink_bank'],
-                               lamp_dict['source_output'],
-                               lamp_dict['source_index'], True)
-                self.indexes[group_ctr] = lamp_list_for_index[i]
-                self.platform.run_proc_cmd_no_wait("driver_update_group_config",
-                                                   group_ctr,
-                                                   self.lamp_matrix_strobe_time,
-                                                   lamp_dict['sink_bank'],
-                                                   lamp_dict['source_output'],
-                                                   lamp_dict['source_index'],
-                                                   True,
-                                                   True,
-                                                   True,
-                                                   True)
-                group_ctr += 1
+
+            self.log.debug("Driver group %02d (lamp sink): slow_time=%d "
+                           "enable_index=%d row_activate_index=%d "
+                           "row_enable_index=%d matrix=%s", group_ctr,
+                           self.lamp_matrix_strobe_time,
+                           lamp_dict['sink_bank'],
+                           lamp_dict['source_output'],
+                           lamp_dict['source_index'], True)
+            self.indexes[group_ctr] = lamp_list_for_index[i]
+            self.platform.run_proc_cmd_no_wait("driver_update_group_config",
+                                               group_ctr,
+                                               self.lamp_matrix_strobe_time,
+                                               lamp_dict['sink_bank'],
+                                               lamp_dict['source_output'],
+                                               lamp_dict['source_index'],
+                                               True,
+                                               True,
+                                               True,
+                                               True)
+            group_ctr += 1
 
         for coil_bank in coil_bank_list:
             # If the bank is 16 or higher, the P-ROC/P3-ROC can't control it directly.

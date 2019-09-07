@@ -77,7 +77,6 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
 
     def stop(self):
         """Stop platform."""
-        pass
 
 
 class I2cServo(ServoPlatformInterface):
@@ -114,12 +113,10 @@ class I2cServo(ServoPlatformInterface):
         self.i2c_device.i2c_write8(0x08 + self.number * 4, value & 0xFF)
         self.i2c_device.i2c_write8(0x09 + self.number * 4, value >> 8)
 
-    @classmethod
-    def set_speed_limit(cls, speed_limit):
-        """Todo emulate speed parameter."""
-        pass
+    def set_speed_limit(self, speed_limit):
+        """Not implemented."""
+        raise NotImplementedError("Unsupported")
 
-    @classmethod
-    def set_acceleration_limit(cls, acceleration_limit):
-        """Todo emulate acceleration parameter."""
-        pass
+    def set_acceleration_limit(self, acceleration_limit):
+        """Not implemented."""
+        raise NotImplementedError("Unsupported")

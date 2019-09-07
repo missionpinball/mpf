@@ -58,12 +58,12 @@ class ShowController(MpfController):
             raise ValueError("Show named '{}' was just registered, but "
                              "there's already a show with that name. Shows are"
                              " shared machine-wide".format(name))
-        else:
-            self.debug_log("Registering show: {}".format(name))
-            self.machine.shows[name] = Show(self.machine,
-                                            name=name,
-                                            data=settings,
-                                            file=None)
+
+        self.debug_log("Registering show: {}".format(name))
+        self.machine.shows[name] = Show(self.machine,
+                                        name=name,
+                                        data=settings,
+                                        file=None)
 
     # pylint: disable-msg=too-many-arguments
     # pylint: disable-msg=too-many-locals

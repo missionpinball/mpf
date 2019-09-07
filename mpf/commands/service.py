@@ -287,7 +287,6 @@ class ServiceCli(cmd.Cmd):
 
     def do_monitor_switches(self, args):
         """Monitor switches."""
-        pass
         # TODO: implement
 
     def do_placeholder_evaluate(self, args):

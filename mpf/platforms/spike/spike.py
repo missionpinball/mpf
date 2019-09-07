@@ -159,7 +159,6 @@ class SpikeDMD(DmdPlatformInterface):
     def set_brightness(self, brightness: float):
         """Set brightness of the DMD."""
         # we do not yet know how that works in SPIKE
-        pass
 
 
 class SpikeDriver(DriverPlatformInterface):

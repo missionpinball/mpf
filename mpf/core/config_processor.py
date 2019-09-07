@@ -7,7 +7,7 @@ import os
 import pickle   # nosec
 import tempfile
 
-from typing import List, Tuple, Any
+from typing import List, Tuple, Any, Optional
 
 from mpf.core.file_manager import FileManager
 from mpf.core.utility_functions import Util
@@ -38,7 +38,7 @@ class ConfigProcessor:
         path_hash = hashlib.md5(bytes(filestring, 'UTF-8')).hexdigest()     # nosec
         return os.path.join(cache_dir, path_hash + ".mpf_cache")
 
-    def _load_config_from_cache(self, cache_file) -> Tuple[Any, List[str]]:     # nosec
+    def _load_config_from_cache(self, cache_file) -> Tuple[Any, Optional[List[str]]]:     # nosec
         """Return config from cache."""
         self.log.info("Loading config from cache: %s", cache_file)
         with open(cache_file, 'rb') as f:
@@ -61,9 +61,9 @@ class ConfigProcessor:
         except OSError as exception:
             if exception.errno != errno.ENOENT:
                 raise  # some unknown error?
-            else:
-                self.log.warning('Cache file not found: %s', filename)
-                return -1
+
+            self.log.warning('Cache file not found: %s', filename)
+            return -1
 
     # pylint: disable-msg=too-many-arguments
     def load_config_files_with_cache(self, filenames: List[str], config_type: str, load_from_cache=True,

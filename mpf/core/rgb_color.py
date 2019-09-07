@@ -440,8 +440,6 @@ class ColorException(AssertionError):
 
     """General exception thrown for color utilities non-exit exceptions."""
 
-    pass
-
 
 class RGBColorCorrectionProfile:
 
