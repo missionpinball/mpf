@@ -106,6 +106,15 @@ class BcpInterface(MpfController):
         """Set machine var via bcp."""
         del client
         self.machine.variables.set_machine_var(name, value)
+        # document variables injected by MC
+        '''machine_var: mc_version
+
+        desc: Version of MC. This is set after MC got connected.
+        '''
+        '''machine_var: mc_version
+
+        desc: Extended version of MC. This is set after MC got connected. Contains BCP and show version numbers.
+        '''
 
     @asyncio.coroutine
     def _service_stop(self, client):
