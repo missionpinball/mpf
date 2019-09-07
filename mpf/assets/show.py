@@ -6,7 +6,7 @@ import os
 import re
 from collections import namedtuple
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 from mpf.core.assets import Asset, AssetPool
 from mpf.core.config_validator import RuntimeToken
@@ -115,7 +115,7 @@ class Show(Asset):
                                             "Remove either of them!".format(step_num))
             return Util.string_to_secs(step['duration'])
 
-    def _do_load_show(self, data):
+    def _do_load_show(self, data: Optional[Dict]):
         # do not use machine or the logger here because it will block
         self.show_steps = list()
 
@@ -362,10 +362,9 @@ class Show(Asset):
                 False.
             show_tokens: Replacement tokens for the show
 
-        Returns:
-            The RunningShow() instance if this show plays now, or False if
-            the show is not loaded. (In this case the show will be loaded and
-            will automatically play once its loaded.)
+        Return the RunningShow() instance if this show plays now, or False if
+        the show is not loaded. (In this case the show will be loaded and will
+        automatically play once its loaded.)
         """
         if not show_tokens:
             show_tokens = dict()

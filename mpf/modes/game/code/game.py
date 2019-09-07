@@ -385,9 +385,7 @@ class Game(AsyncMode):
         Args:
             balls: The number of balls that just drained.
 
-        Returns:
-            A dictionary:
-                {balls: *number of balls drained*}
+        Returns a dictionary: {balls: *number of balls drained*}.
         """
         del kwargs
         self.debug_log("Entering Game.ball_drained()")

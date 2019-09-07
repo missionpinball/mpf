@@ -9,7 +9,7 @@ from collections import defaultdict
 from threading import Thread
 
 import time
-from typing import Any, List, Union
+from typing import Any, List, Union, Awaitable
 
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 
@@ -154,10 +154,6 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
     Args:
         machine: The MachineController instance.
-
-    Attributes:
-        proc: The pinproc.PinPROC device.
-        machine_type: Constant of the pinproc.MachineType
     """
 
     __slots__ = ["pdbconfig", "pinproc", "proc", "log", "hw_switch_rules", "version", "revision", "hardware_version",
@@ -197,7 +193,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         del future
         self._commands_running -= 1
 
-    def run_proc_cmd(self, cmd, *args):
+    def run_proc_cmd(self, cmd, *args) -> Awaitable[int]:
         """Run a command in the p-roc thread and return a future."""
         if self.debug:
             self.debug_log("Calling P-Roc cmd: %s (%s)", cmd, args)
@@ -671,19 +667,14 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         else:
             raise AssertionError("unknown subtype {}".format(subtype))
 
-    def _configure_switch(self, config: SwitchConfig, proc_num):
+    def _configure_switch(self, config: SwitchConfig, proc_num) -> PROCSwitch:
         """Configure a P3-ROC switch.
 
         Args:
             config: Dictionary of settings for the switch.
             proc_num: decoded switch number
 
-        Returns:
-            switch : A reference to the switch object that was just created.
-            proc_num : Integer of the actual hardware switch number the P3-ROC
-                uses to refer to this switch. Typically your machine
-                configuration files would specify a switch number like `SD12` or
-                `7/5`. This `proc_num` is an int between 0 and 255.
+        Returns a reference to the switch object that was just created.
         """
         if proc_num == -1:
             raise AssertionError("Switch {} cannot be controlled by the "
@@ -1007,7 +998,7 @@ class PDBConfig:
 
             self.platform.run_proc_cmd_no_wait("driver_update_state", state)
 
-    def _configure_lamp_banks(self, lamp_source_bank_list, enable=True):
+    def _configure_lamp_banks(self, lamp_source_bank_list, enable):
         self.platform.run_proc_cmd_no_wait("driver_update_global_config",
                                            enable,
                                            True,  # Polarity

@@ -24,15 +24,14 @@ class MpfCommandLineParser:
         self.mpf_path = os.path.abspath(os.path.join(mpf.core.__path__[0],
                                                      os.pardir))
 
-    def get_machine_path(self, machine_path_hint=None):
+    def get_machine_path(self, machine_path_hint=None) -> str:
         """Find the full machine path based on the current directory and option hint.
 
         Args:
             machine_path_hint: Helps MPF locate the machine path. If None,
                 the 'config' folder in the current working directory is used.
 
-        Returns:
-            String of full path of the machine folder that was located.
+        Returns a string of full path of the machine folder that was located.
         """
         machine_path = None
 

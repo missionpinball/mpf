@@ -178,8 +178,7 @@ class YamlInterface(FileInterface):
                 will raise an error and exit. If False, an empty config
                 dictionary will be returned.
 
-        Returns:
-            A dictionary of the settings from this YAML file.
+        Returns a dictionary of the settings from this YAML file.
         """
         if self.cache and filename in self.file_cache:
             return copy.deepcopy(self.file_cache[filename])

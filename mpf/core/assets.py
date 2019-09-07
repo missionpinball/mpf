@@ -232,8 +232,8 @@ class BaseAssetManager(MpfController, LogMixin):
             mode: Optional reference to the mode object which is used when
                   assets are being created from mode folders.
 
-        Returns:
-            An updated config dictionary. (See the "How it works" section below for details.)
+        Returns an updated config dictionary. (See the "How it works" section
+        below for details.)
 
         Note that this method merely creates the asset object so they can be
         referenced in MPF. It does not actually load the asset files into

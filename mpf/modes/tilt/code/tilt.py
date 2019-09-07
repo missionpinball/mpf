@@ -250,8 +250,7 @@ class Tilt(Mode):
     def tilt_settle_ms_remaining(self):
         """Return the amount of milliseconds remaining until the tilt settle time has cleared.
 
-        Returns:
-            Integer of the number of ms remaining until tilt settled is cleared.
+        Returns an integer of the number of ms remaining until tilt settled is cleared.
         """
         if not self.last_tilt_warning_switch:
             return 0

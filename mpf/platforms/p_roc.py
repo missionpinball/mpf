@@ -21,15 +21,16 @@ from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.p_roc_devices import PROCDriver
 
+MYPY = False
+if MYPY:   # pragma: no cover
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
+
 
 class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform):
 
     """Platform class for the P-ROC hardware controller.
 
     Args:
-        machine: The MachineController instance.
-
-    Attributes:
         machine: The MachineController instance.
     """
 
@@ -93,9 +94,8 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         Args:
             config: Dictionary of settings for the driver.
 
-        Returns:
-            A reference to the PROCDriver object which is the actual object you
-            can use to pulse(), patter(), enable(), etc.
+        Returns a reference to the PROCDriver object which is the actual object
+        you can use to pulse(), patter(), enable(), etc.
 
         """
         # todo need to add Aux Bus support
@@ -219,20 +219,16 @@ class PROCDMD(DmdPlatformInterface):
     """Parent class for a physical DMD attached to a P-ROC.
 
     Args:
-        proc: Reference to the MachineController's proc attribute.
+        platform: Reference to the MachineController's proc attribute.
         machine: Reference to the MachineController
-
-    Attributes:
-        dmd: Reference to the P-ROC's DMD buffer.
-
     """
 
     __slots__ = ["machine", "platform"]
 
     def __init__(self, platform, machine):
         """Set up DMD."""
-        self.platform = platform
-        self.machine = machine
+        self.platform = platform        # type: PROCBasePlatform
+        self.machine = machine          # type: MachineController
 
         # dmd_timing defaults should be 250, 400, 180, 800
         if self.machine.config['p_roc']['dmd_timing_cycles']:

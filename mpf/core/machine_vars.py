@@ -125,15 +125,10 @@ class MachineVariables(LogMixin):
              for name, var in self.machine_vars.items() if var["persist"]})
 
     def get_machine_var(self, name: str) -> Any:
-        """Return the value of a machine variable.
+        """Return the value of the variable if it exists, or None if the variable does not exist.
 
         Args:
             name: String name of the variable you want to get that value for.
-
-        Returns:
-            The value of the variable if it exists, or None if the variable
-            does not exist.
-
         """
         try:
             return self.machine_vars[name]['value']

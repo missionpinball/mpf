@@ -2,6 +2,8 @@
 import asyncio
 from collections import OrderedDict
 
+from typing import Callable, Tuple, Generator, List
+
 from mpf.core.utility_functions import Util
 from mpf.core.mpf_controller import MpfController
 
@@ -214,7 +216,7 @@ class DeviceManager(MpfController):
                 yield from collection[device_name].device_added_system_wide()
 
     # pylint: disable-msg=too-many-nested-blocks
-    def get_device_control_events(self, config):
+    def get_device_control_events(self, config) -> Generator[Tuple[str, Callable, int, "Device"], None, None]:
         """Scan a config dictionary for control_events.
 
          Yields events, methods, delays, and devices for all the devices and
@@ -224,12 +226,12 @@ class DeviceManager(MpfController):
             config: An MPF config dictionary (either machine-wide or mode-
                 specific).
 
-        Returns:
-            A generator of 4-item tuples:
-                * The event name
-                * The callback method of the device
-                * The delay in ms
-                * The device object
+        Returns a generator of 4-item tuples
+        ------------------------------------
+            * The event name
+            * The callback method of the device
+            * The delay in ms
+            * The device object
         """
         for collection in self.collections:
             if self.collections[collection].config_section in config:
@@ -346,16 +348,15 @@ class DeviceCollection(dict):
         for item in self.values():
             yield item
 
-    def items_tagged(self, tag):
+    def items_tagged(self, tag) -> List["Device"]:
         """Return of list of device objects which have a certain tag.
 
         Args:
             tag: A string of the tag name which specifies what devices are
                 returned.
 
-        Returns:
-            A list of device objects. If no devices are found with that tag, it
-            will return an empty list.
+        Returns a list of device objects. If no devices are found with that tag, it
+        will return an empty list.
         """
         items_in_tag_cache = self._tag_cache.get(tag, None)
         if items_in_tag_cache is not None:

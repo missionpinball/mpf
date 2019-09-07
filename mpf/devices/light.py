@@ -531,8 +531,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         Args:
             color: The RGBColor() instance you want to have gamma applied.
 
-        Returns:
-            An updated RGBColor() instance with gamma corrected.
+        Returns an updated RGBColor() instance with gamma corrected.
         """
         factor = self.machine.light_controller.brightness_factor
         if factor == 1.0:
@@ -546,9 +545,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
         Args:
             color: The RGBColor() instance you want to get color corrected.
 
-        Returns:
-            An updated RGBColor() instance with the current color correction
-            profile applied.
+        Returns an updated RGBColor() instance with the current color
+        correction profile applied.
 
         Note that if there is no current color correction profile applied, the
         returned color will be the same as the color that was passed.

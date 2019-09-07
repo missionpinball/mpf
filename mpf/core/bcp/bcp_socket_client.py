@@ -4,6 +4,8 @@ from urllib.parse import urlsplit, parse_qs, quote, unquote, urlunparse
 
 import asyncio
 
+from typing import Tuple
+
 from mpf._version import __version__, __bcp_version__
 from mpf.core.bcp.bcp_client import BaseBcpClient
 
@@ -18,18 +20,18 @@ class MpfJSONEncoder(json.JSONEncoder):
         return str(o)
 
 
-def decode_command_string(bcp_string):
+def decode_command_string(bcp_string) -> Tuple[str, dict]:
     """Decode a BCP command string into separate command and parameter parts.
 
     Args:
         bcp_string: The incoming UTF-8, URL encoded BCP command string.
 
-    Returns:
-        A tuple of the command string and a dictionary of kwarg pairs.
+    Returns a tuple of the command string and a dictionary of kwarg pairs.
 
-    Example:
-        Input: trigger?name=hello&foo=Foo%20Bar
-        Output: ('trigger', {'name': 'hello', 'foo': 'Foo Bar'})
+    Example
+    -------
+    Input: trigger?name=hello&foo=Foo%20Bar
+    Output: ('trigger', {'name': 'hello', 'foo': 'Foo Bar'})
 
     Note that BCP commands and parameter names are not case-sensitive and will
     be converted to lowercase. Parameter values are case sensitive, and case
@@ -68,7 +70,7 @@ def decode_command_string(bcp_string):
             dict((k, v[0]) for k, v in kwargs.items()))
 
 
-def encode_command_string(bcp_command, **kwargs):
+def encode_command_string(bcp_command, **kwargs) -> str:
     """Encode a BCP command and kwargs into a valid BCP command string.
 
     Args:
@@ -76,12 +78,12 @@ def encode_command_string(bcp_command, **kwargs):
         **kwargs: Optional pair(s) of kwargs which will be appended to the
             command.
 
-    Returns:
-        A string.
+    Returns a string.
 
-    Example:
-        Input: encode_command_string('trigger', {'name': 'hello', 'foo': 'Bar'})
-        Output: trigger?name=hello&foo=Bar
+    Example
+    -------
+    Input: encode_command_string('trigger', {'name': 'hello', 'foo': 'Bar'})
+    Output: trigger?name=hello&foo=Bar
 
     Note that BCP commands and parameter names are not case-sensitive and will
     be converted to lowercase. Parameter values are case sensitive, and case

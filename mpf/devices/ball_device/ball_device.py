@@ -743,7 +743,7 @@ class BallDevice(SystemWideDevice):
         del kwargs
         self.eject_all(target)
 
-    def eject_all(self, target=None):
+    def eject_all(self, target=None) -> bool:
         """Eject all the balls from this device.
 
         Args:
@@ -751,8 +751,7 @@ class BallDevice(SystemWideDevice):
                 None means `playfield`.
             **kwargs: unused
 
-        Returns:
-            True if there are balls to eject. False if this device is empty.
+        Returns True if there are balls to eject. False if this device is empty.
         """
         self.debug_log("Ejecting all balls")
         if self.available_balls > 0:

@@ -527,8 +527,7 @@ class RGBColorCorrectionProfile:
     def name(self) -> str:
         """Return the color correction profile name.
 
-        Returns:
-            str
+        Returns str name of color.
         """
         return self._name
 

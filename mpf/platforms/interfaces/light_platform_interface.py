@@ -76,15 +76,14 @@ class LightPlatformDirectFade(LightPlatformInterface, metaclass=abc.ABCMeta):
                 return
 
     @abc.abstractmethod
-    def set_brightness_and_fade(self, brightness: float, fade_ms: int):
+    def set_brightness_and_fade(self, brightness: float, fade_ms: int) -> None:
         """Set the light to the specified brightness.
 
         Args:
             brightness: float of the brightness
             fade_ms: ms to fade the light
 
-        Returns:
-            None
+        Does not return anything.
         """
         raise NotImplementedError
 
@@ -119,13 +118,12 @@ class LightPlatformSoftwareFade(LightPlatformDirectFade, metaclass=abc.ABCMeta):
         self.set_brightness(brightness)
 
     @abc.abstractmethod
-    def set_brightness(self, brightness: float):
+    def set_brightness(self, brightness: float) -> None:
         """Set the light to the specified brightness.
 
         Args:
             brightness: float of the brightness
 
-        Returns:
-            None
+        Does not return anything.
         """
         raise NotImplementedError

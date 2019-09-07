@@ -175,7 +175,7 @@ class Playfield(SystemWideDevice):
         return 999
 
     def add_ball(self, balls=1, source_device=None,
-                 player_controlled=False):
+                 player_controlled=False) -> bool:
         """Add live ball(s) to the playfield.
 
         Args:
@@ -185,9 +185,8 @@ class Playfield(SystemWideDevice):
             player_controlled: Boolean which specifies whether this event is
                 player controlled. (See not below for details)
 
-        Returns:
-            True if it's able to process the add_ball() request, False if it
-            cannot.
+        Returns True if it's able to process the add_ball() request, False if it
+        cannot.
 
         The source_device arg is included to give you an options for specifying
         the source of the ball(s) to be added. This argument is optional, so if
@@ -230,7 +229,6 @@ class Playfield(SystemWideDevice):
         If there is no player_controlled_eject_tag, MPF assumes it's a manual
         plunger and will wait for the ball to disappear from the device based
         on the device's ball count decreasing.
-
         """
         if balls == 0:
             return False

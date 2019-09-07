@@ -1,6 +1,7 @@
 """Interface for config file loaders."""
 import logging
 import os
+from typing import Union, Tuple, Optional
 
 MYPY = False
 if MYPY:    # pragma: no cover
@@ -18,7 +19,7 @@ class FileInterface:
         self.log = logging.getLogger('{} File Interface'.format(
             self.file_types[0][1:].upper()))
 
-    def find_file(self, filename):
+    def find_file(self, filename) -> Union[bool, Tuple[str, Optional[str]]]:
         """Test whether the passed file is valid.
 
         If the file does not have an externsion, this method will test for files with that base name with
@@ -28,10 +29,7 @@ class FileInterface:
             filename: Full absolute path of a file to check, with or without
                 an extension.
 
-        Returns:
-            False if a file is not found.
-            Tuple of (full file with path, extension) if a file is found
-
+        Returns false if a file is not found. Tuple of (full file with path, extension) if a file is found.
         """
         if not os.path.splitext(filename)[1]:
             # file has no extension

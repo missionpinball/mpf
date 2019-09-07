@@ -169,8 +169,7 @@ class VersionMigrator:
             file_contents: ruamel.load(ed) contents of the file which includes
                 the comments.
 
-        Returns:
-            Modified file_contents instance with the migrations applied.
+        Returns a modified file_contents instance with the migrations applied.
         """
         self.log = logging.getLogger(os.path.basename(file_name))
         self.file_name = file_name

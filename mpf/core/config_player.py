@@ -168,7 +168,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         raise AssertionError("Player {} does not support lists.".format(self.config_file_section))
 
     @abc.abstractmethod
-    def get_express_config(self, value):
+    def get_express_config(self, value) -> dict:
         """Parse short config version.
 
         Implements "express" settings for this config_player which is what
@@ -188,10 +188,8 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         Args:
             value: The single line string value from a config file.
 
-        Returns:
-            A dictionary (which will then be passed through the config
-            validator)
-
+        Returns a dictionary (which will then be passed through the config
+        validator).
         """
         raise NotImplementedError(self.config_file_section)
 

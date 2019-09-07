@@ -516,14 +516,11 @@ class ModeController(MpfController):
 
         self.debug_log('+-------------------------------------+')
 
-    def is_active(self, mode_name):
-        """Return true if the mode is active.
+    def is_active(self, mode_name) -> bool:
+        """Return true if the mode is active, False if it is not.
 
         Args:
             mode_name: String name of the mode to check.
-
-        Returns:
-            True if the mode is active, False if it is not.
         """
         return mode_name in [x.name for x in self.active_modes
                              if x.active is True]

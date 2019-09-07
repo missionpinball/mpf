@@ -66,19 +66,13 @@ class EventManager(MpfController):
         Args:
             event_string: String to parse
 
-        Returns:
-            2-item tuple:
-                First item is the event name
-
-                Second item is the condition (A BoolTemplate instance) if it
-                exists, or None if it doesn't.
-
+        Returns 2-item tuple- First item is the event name. Second item is the
+        condition (A BoolTemplate instance) if it exists, or None if it doesn't.
         """
         if event_string.find("{") > 0 and event_string[-1:] == "}":
             return (event_string[0:event_string.find("{")],
                     self.machine.placeholder_manager.build_bool_template(
                         event_string[event_string.find("{") + 1:-1]))
-
         else:
             return event_string, None
 
@@ -124,9 +118,8 @@ class EventManager(MpfController):
                 could be passed as part of the event post. If there's a
                 conflict, the event-level ones will win.
 
-        Returns:
-            A GUID reference to the handler which you can use to later remove
-            the handler via ``remove_handler_by_key``.
+        Returns EventHandlerKey to the handler which you can use to later remove
+        the handler via ``remove_handler_by_key``.
 
         For example:
 
@@ -385,8 +378,7 @@ class EventManager(MpfController):
         Args:
             event_name : The string name of the event you want to check.
 
-        Returns:
-            True or False
+        Returns True or False.
         """
         return event_name in self.registered_handlers
 
@@ -498,13 +490,14 @@ class EventManager(MpfController):
                 expecting them. You can add ``**kwargs`` to your handler
                 methods if certain ones don't need them.)
 
-        Examples:
-            Post the queue event called *pizza_time*, and then call
-            ``self.pizza_done`` when done:
+        Examples
+        --------
+        Post the queue event called *pizza_time*, and then call
+        ``self.pizza_done`` when done:
 
-            .. code::
+        .. code::
 
-                 self.machine.events.post_queue('pizza_time', self.pizza_done)
+             self.machine.events.post_queue('pizza_time', self.pizza_done)
 
         """
         self._post(event, 'queue', callback, **kwargs)

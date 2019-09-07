@@ -146,10 +146,8 @@ class ScoreReelGroup(SystemWideDevice):
         Args:
             value: The interger value you'd like to convert.
 
-        Returns:
-            A list containing the values for each corresponding score reel,
-            with the lowest reel digit position in list position 0.
-
+        Returns a list containing the values for each corresponding score reel,
+        with the lowest reel digit position in list position 0.
         """
         output_list = []
 

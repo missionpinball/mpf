@@ -60,15 +60,13 @@ class Util:
             raise AssertionError("Unknown type {}".format(type_name))
 
     @staticmethod
-    def keys_to_lower(source_dict):
+    def keys_to_lower(source_dict) -> dict:
         """Convert the keys of a dictionary to lowercase.
 
         Args:
             source_dict: The dictionary you want to convert.
 
-        Returns:
-            A dictionary with lowercase keys.
-
+        Returns a dictionary with lowercase keys.
         """
         if not source_dict:
             return dict()
@@ -96,10 +94,8 @@ class Util:
         Args:
             string: The string you'd like to convert.
 
-        Returns:
-            A python list object containing whatever was between commas and/or
-            spaces in the string.
-
+        Returns a python list object containing whatever was between commas and/or
+        spaces in the string.
         """
         if isinstance(string, str):
             if "{" in string:
@@ -141,10 +137,8 @@ class Util:
         Args:
             string: The string you'd like to convert.
 
-        Returns:
-            A python list object containing whatever was between commas and/or
-            spaces in the string, with each item converted to lowercase.
-
+        Returns a python list object containing whatever was between commas and/or
+        spaces in the string, with each item converted to lowercase.
         """
         new_list = Util.string_to_list(string)
 
@@ -173,7 +167,7 @@ class Util:
             yield l[i:i + n]
 
     @staticmethod
-    def dict_merge(a, b, combine_lists=True):
+    def dict_merge(a, b, combine_lists=True) -> dict:
         """Recursively merge dictionaries.
 
         Used to merge dictionaries of dictionaries, like when we're merging
@@ -215,9 +209,7 @@ class Util:
                 Controls whether lists should be combined (extended) or
                 overwritten. Default is `True` which combines them.
 
-        Returns:
-            The merged dictionaries.
-
+        Returns the merged dictionaries.
         """
         # log.info("Dict Merge incoming A %s", a)
         # log.info("Dict Merge incoming B %s", b)
@@ -248,11 +240,11 @@ class Util:
         return result
 
     @staticmethod
-    def hex_string_to_list(input_string, output_length=3):
+    def hex_string_to_list(input_string, output_length=3) -> List[int]:
         """Take a string input of hex numbers and return a list of integers.
 
         This always groups the hex string in twos, so an input of ffff00 will
-        be returned as [255, 255, 0]
+        be returned as [255, 255, 0].
 
         Args:
             input_string: A string of incoming hex colors, like ffff00.
@@ -261,12 +253,9 @@ class Util:
                 extra characters if the input_string is too long, and it will
                 pad the left with zeros if the input string is too short.
 
-        Returns:
-            List of integers, like [255, 255, 0]
+        Returns list of integers, like [255, 255, 0].
 
-        Raises:
-            ValueError if the input string contains non-hex chars
-
+        Raises ValueError if the input string contains non-hex chars.
         """
         output = []
         input_string = str(input_string).zfill(output_length * 2)
@@ -285,9 +274,7 @@ class Util:
             maxvalue: Integer of the max value you'd like to return. Default is
                 255. (This is the real value of why this method exists.)
 
-        Returns:
-            Integer representation of the hex string.
-
+        Returns integer representation of the hex string.
         """
         return_int = int(str(inputstring), 16)
 
@@ -297,7 +284,7 @@ class Util:
         return return_int
 
     @staticmethod
-    def event_config_to_dict(config):
+    def event_config_to_dict(config) -> dict:
         """Convert event config to a dict."""
         return_dict = dict()
 
@@ -487,11 +474,9 @@ class Util:
             num_chars: Total number of characters that will be returned. Default
                 is two.
 
-        Returns:
-            String, uppercase, zero padded to the num_chars.
+        Returns string, uppercase, zero padded to the num_chars.
 
         Example usage: Send "c" as source_hex, returns "0C".
-
         """
         if len(str(source_hex)) > num_chars:
             raise ValueError("Hex string is too long.")
@@ -524,9 +509,8 @@ class Util:
 
         If time is 'None' or a string of 'None', this method returns 0.
 
-        Returns:
-            Integer. The examples listed above return 200, 2000 and 0,
-            respectively
+        Returns an integer. The examples listed above return 200, 2000 and 0,
+        respectively.
         """
         if time_string is None:
             return 0
@@ -563,7 +547,6 @@ class Util:
         """Decode a string of real-world time into an float of seconds.
 
         See 'string_to_ms' for a description of the time string.
-
         """
         time_string = str(time_string)
 
@@ -579,12 +562,10 @@ class Util:
         Args:
             class_string(str): The input string
 
-        Returns:
-            A reference to the python class object
+        Returns a reference to the python class object.
 
         This function came from here:
         http://stackoverflow.com/questions/452969/does-python-have-an-equivalent-to-java-class-forname
-
         """
         # todo I think there's a better way to do this in Python 3
         parts = class_string.split('.')
@@ -602,13 +583,10 @@ class Util:
             dic: Nested dict of dicts to get the value from.
             key_path: iterable of key paths
 
-        Returns:
-            value
+        Returns the value from the dict.
 
         This code came from here:
         http://stackoverflow.com/questions/14692690/access-python-nested-dictionary-items-via-a-list-of-keys
-
-
         """
         try:
             res = reduce(lambda d, k: d[k], key_path, dic)
@@ -625,7 +603,6 @@ class Util:
             dic: Nested dict of dicts to set the value in.
             key_path: Iterable of the path to the key of the value to set.
             value: Value to set.
-
         """
         Util.get_from_dict(dic, key_path[:-1])[key_path[-1]] = value
 
@@ -636,8 +613,7 @@ class Util:
         Args:
             num: The number to check
 
-        Returns: True or False
-
+        Returns True or False.
         """
         try:
             num = int(num)
@@ -653,8 +629,7 @@ class Util:
         Args:
             db: The decibel value (float) to convert to a gain
 
-        Returns:
-            Float
+        Returns float.
         """
         try:
             db = float(db)
@@ -673,8 +648,7 @@ class Util:
         Args:
             gain_string: The string to convert to a gain value
 
-        Returns:
-            Float containing a gain value (0.0 to 1.0)
+        Returns float containing a gain value (0.0 to 1.0).
         """
         gain_string = str(gain_string).lower()
 

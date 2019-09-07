@@ -48,9 +48,8 @@ class DelayManager(MpfController):
             **kwargs: Any other (optional) kwarg pairs you pass will be
                 passed along as kwargs to the callback method.
 
-        Returns:
-            String name or UUID4 of the delay which you can use to remove it
-            later.
+        Returns string name or UUID4 of the delay which you can use to remove it
+        later.
         """
         if not name:
             name = str(uuid.uuid4())
@@ -102,8 +101,7 @@ class DelayManager(MpfController):
             **kwargs: Any other (optional) kwarg pairs you pass will be
                 passed along as kwargs to the callback method.
 
-        Returns:
-            String name of the delay which you can use to remove it later.
+        Returns string name of the delay which you can use to remove it later.
         """
         if not self.check(name):
             return self.add(ms, callback, name, **kwargs)
@@ -116,8 +114,7 @@ class DelayManager(MpfController):
         Args:
             delay: A string of the delay you're checking for.
 
-        Returns:
-            True if the delay exists. False otherwise.
+        Returns true if the delay exists. False otherwise.
         """
         return delay in self.delays
 
@@ -140,9 +137,8 @@ class DelayManager(MpfController):
             **kwargs: Any other (optional) kwarg pairs you pass will be
                 passed along as kwargs to the callback method.
 
-        Returns:
-            String name or UUID4 of the delay which you can use to remove it
-            later.
+        Returns string name or UUID4 of the delay which you can use to remove it
+        later.
         """
         if name in self.delays:
             self.remove(name)

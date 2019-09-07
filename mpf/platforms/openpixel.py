@@ -240,9 +240,8 @@ class OpenPixelClient:
                 pixel on the channel, the second item is the second one, etc.
             channel: Which OPC channel the pixel data will be written to.
 
-        Returns:
-            True on success. False if it was unable to connect to the OPC
-            server.
+        Returns True on success. False if it was unable to connect to the OPC
+        server.
 
         Note that you must send color data for all the pixels in a channel (or
         all the pixels up until the point you want. e.g. if you have 30 LEDs on

@@ -35,9 +35,6 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
 
     Args:
         machine: The MachineController instance.
-
-    Attributes:
-        machine: The MachineController instance.
     """
 
     __slots__ = ["_burst_opto_drivers_to_switch_map", "_burst_switches", "_bursts_enabled", "acceleration",
@@ -198,9 +195,8 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         Args:
             config: Dictionary of settings for the driver.
 
-        Returns:
-            A reference to the PROCDriver object which is the actual object you
-            can use to pulse(), patter(), enable(), etc.
+        Returns a reference to the PROCDriver object which is the actual object you
+        can use to pulse(), patter(), enable(), etc.
         """
         # todo need to add virtual driver support for driver counts > 256
 
@@ -483,7 +479,7 @@ class P3RocI2c(I2cPlatformInterface):
     @asyncio.coroutine
     def i2c_read8(self, register):
         """Read an 8-bit value from the I2C bus of the P3-Roc."""
-        data = yield from self.platform.run_proc_cmd("read_data", 7, int(self.address) << 9 | register)
+        data = yield from (self.platform.run_proc_cmd("read_data", 7, int(self.address) << 9 | register))
         return data & 0xFF
 
     @asyncio.coroutine
