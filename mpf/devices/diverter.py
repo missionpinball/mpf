@@ -330,7 +330,7 @@ class Diverter(SystemWideDevice):
                 queue.wait()
                 self.eject_attempt_queue.append(queue)
                 return
-            elif not self.config['allow_multiple_concurrent_ejects_to_same_side']:
+            if not self.config['allow_multiple_concurrent_ejects_to_same_side']:
                 self.debug_log("More than one eject and allow_multiple_concurrent_ejects_to_same_side is false")
                 queue.wait()
                 self.eject_attempt_queue.append(queue)

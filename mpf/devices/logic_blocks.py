@@ -61,7 +61,6 @@ class LogicBlock(SystemWideDevice, ModeDevice):
 
     def add_control_events_in_mode(self, mode: Mode) -> None:
         """Do not auto enable this device in modes."""
-        pass
 
     def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Validate logic block config."""
@@ -130,8 +129,8 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         """Return value or None if that is currently not possible."""
         if self._state:
             return self._state.value
-        else:
-            return None
+
+        return None
 
     @property
     def enabled(self):
@@ -326,7 +325,6 @@ class Counter(LogicBlock):
 
     def add_control_events_in_mode(self, mode: Mode) -> None:
         """Do not auto enable this device in modes."""
-        pass
 
     def _setup_control_events(self, event_list):
         self.debug_log("Setting up control events")
@@ -355,9 +353,9 @@ class Counter(LogicBlock):
         if count_complete_value is not None:
             if self.config['direction'] == 'up':
                 return self._state.value >= count_complete_value
-
-            elif self.config['direction'] == 'down':
+            if self.config['direction'] == 'down':
                 return self._state.value <= count_complete_value
+
         return False
 
     def event_add(self, value, **kwargs):

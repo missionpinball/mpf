@@ -1,7 +1,7 @@
 """Segment displays on light drivers."""
 import asyncio
 import logging
-from mpf.core.segment_mappings import seven_segments
+from mpf.core.segment_mappings import SEVEN_SEGMENTS
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
 from mpf.core.platform import SegmentDisplayPlatform
 
@@ -26,10 +26,10 @@ class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
         # iterate lights and chars
         for char, lights_for_char in zip(text, self._lights):
             try:
-                char_map = seven_segments[ord(char)]
+                char_map = SEVEN_SEGMENTS[ord(char)]
             except KeyError:
                 # if there is no
-                char_map = seven_segments[None]
+                char_map = SEVEN_SEGMENTS[None]
             for name, light in lights_for_char.items():
                 if getattr(char_map, name):
                     light.on(key=self._key)

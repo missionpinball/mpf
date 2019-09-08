@@ -35,9 +35,6 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
 
     Args:
         machine: The MachineController instance.
-
-    Attributes:
-        machine: The MachineController instance.
     """
 
     __slots__ = ["_burst_opto_drivers_to_switch_map", "_burst_switches", "_bursts_enabled", "acceleration",
@@ -198,9 +195,8 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         Args:
             config: Dictionary of settings for the driver.
 
-        Returns:
-            A reference to the PROCDriver object which is the actual object you
-            can use to pulse(), patter(), enable(), etc.
+        Returns a reference to the PROCDriver object which is the actual object you
+        can use to pulse(), patter(), enable(), etc.
         """
         # todo need to add virtual driver support for driver counts > 256
 
@@ -218,7 +214,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
             raise AssertionError("Cannot use PD-16 with ID 0 or 1 when DIP 1 is on the P3-Roc. Turn DIP 1 off or "
                                  "renumber PD-16s. Driver: {}".format(number))
 
-        proc_driver_object = PROCDriver(proc_num, config, self, number)
+        proc_driver_object = PROCDriver(proc_num, config, self, number, True)
 
         return proc_driver_object
 
@@ -235,7 +231,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         if not self.dipswitches & 0x01:
             raise AssertionError("Set DIP 1 on the P3-Roc to use burst switches as local outputs")
 
-        return PROCDriver(driver_number, config, self, number)
+        return PROCDriver(driver_number, config, self, number, True)
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure a P3-ROC switch.
@@ -249,14 +245,14 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         del platform_config
         if number.startswith("burst-"):
             return self._configure_burst_opto(config, number)
-        elif number.startswith("direct-"):
+        if number.startswith("direct-"):
             return self._configure_direct_switch(config, number)
-        else:
-            proc_num = self.pdbconfig.get_proc_switch_number(str(number))
-            if 0 <= proc_num < 64 and self.dipswitches & 0x02:
-                raise AssertionError("Cannot use SW-16 with ID 0-3 when DIP 2 is on the P3-Roc. Turn DIP 2 off or "
-                                     "renumber SW-16s. Switch: {}".format(number))
-            return self._configure_switch(config, proc_num)
+
+        proc_num = self.pdbconfig.get_proc_switch_number(str(number))
+        if 0 <= proc_num < 64 and self.dipswitches & 0x02:
+            raise AssertionError("Cannot use SW-16 with ID 0-3 when DIP 2 is on the P3-Roc. Turn DIP 2 off or "
+                                 "renumber SW-16s. Switch: {}".format(number))
+        return self._configure_switch(config, proc_num)
 
     def _configure_direct_switch(self, config, number):
         try:
@@ -483,7 +479,7 @@ class P3RocI2c(I2cPlatformInterface):
     @asyncio.coroutine
     def i2c_read8(self, register):
         """Read an 8-bit value from the I2C bus of the P3-Roc."""
-        data = yield from self.platform.run_proc_cmd("read_data", 7, int(self.address) << 9 | register)
+        data = yield from (self.platform.run_proc_cmd("read_data", 7, int(self.address) << 9 | register))
         return data & 0xFF
 
     @asyncio.coroutine

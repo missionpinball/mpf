@@ -55,17 +55,20 @@ class PROCDriver(DriverPlatformInterface):
 
     """
 
-    __slots__ = ["log", "proc", "string_number", "pdbconfig", "__dict__"]
+    __slots__ = ["log", "proc", "string_number", "pdbconfig", "polarity", "__dict__"]
 
-    def __init__(self, number, config, platform, string_number):
+    # pylint: disable-msg=too-many-arguments
+    def __init__(self, number, config, platform, string_number, polarity):
         """Initialise driver."""
         self.log = logging.getLogger('PROCDriver')
         super().__init__(config, number)
         self.platform = platform
+        self.polarity = polarity
         self.string_number = string_number
         self.pdbconfig = getattr(platform, "pdbconfig", None)
 
         self.log.debug("Driver Settings for %s", self.number)
+        self.platform.run_proc_cmd_no_wait("driver_update_state", self.state())
 
     def get_board_name(self):
         """Return board of the driver."""
@@ -120,7 +123,7 @@ class PROCDriver(DriverPlatformInterface):
         return {
             'driverNum': self.number,
             'outputDriveTime': 0,
-            'polarity': True,
+            'polarity': self.polarity,
             'state': False,
             'waitForFirstTimeSlot': False,
             'timeslots': 0,
@@ -218,7 +221,7 @@ class PDBCoil:
         """Return the bank number."""
         if self.coil_type == 'dedicated':
             return self.banknum
-        elif self.coil_type == 'pdb':
+        if self.coil_type == 'pdb':
             return self.boardnum * 2 + self.banknum
 
         return -1
@@ -312,7 +315,7 @@ class PDBLight:
         addrs_out = []
         for addr in addrs:
             bits = addr.split('-')
-            if len(bits) is 1:
+            if len(bits) == 1:
                 addrs_out.append(addr)  # Append unchanged.
             else:  # Generally this will be len(bits) 2 or 4.
                 # Remove the first bit and rejoin.

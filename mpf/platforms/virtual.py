@@ -7,7 +7,7 @@ from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareS
 from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
 
-from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
@@ -59,11 +59,9 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
     @asyncio.coroutine
     def initialize(self) -> None:
         """Initialise platform."""
-        pass
 
     def stop(self):
         """Stop platform."""
-        pass
 
     @asyncio.coroutine
     def configure_servo(self, number: str):
@@ -151,7 +149,6 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
     def configure_accelerometer(self, number, config, callback):
         """Configure accelerometer."""
-        pass
 
     def configure_light(self, number, subtype, platform_settings):
         """Configure light channel."""
@@ -175,7 +172,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
                     "number": str(number)
                 }
             ]
-        elif subtype == "led" or not subtype:
+        if subtype == "led" or not subtype:
             return [
                 {
                     "number": str(number) + "-r",
@@ -187,8 +184,8 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
                     "number": str(number) + "-b",
                 }
             ]
-        else:
-            raise AssertionError("Unknown subtype {}".format(subtype))
+
+        raise AssertionError("Unknown subtype {}".format(subtype))
 
     def clear_hw_rule(self, switch, coil):
         """Clear hw rule."""
@@ -202,37 +199,38 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
             raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
                 enable_switch.hw_switch, coil.hw_driver))
-        else:
-            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_enable_and_release"
+
+        self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_enable_and_release"
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         """Set rule."""
         if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
             raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
                 enable_switch.hw_switch, coil.hw_driver))
-        else:
-            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_release"
+
+        self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_release"
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
         """Set rule."""
         if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
             raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
                 enable_switch.hw_switch, coil.hw_driver))
-        else:
-            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_enable_and_release_and_disable"
+
+        self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_enable_and_release_and_disable"
+
         if (disable_switch.hw_switch, coil.hw_driver) in self.rules:
             raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
                 disable_switch.hw_switch, coil.hw_driver))
-        else:
-            self.rules[(disable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_enable_and_release_and_disable"
+
+        self.rules[(disable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_enable_and_release_and_disable"
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
         """Set rule."""
         if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
             raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
                 enable_switch.hw_switch, coil.hw_driver))
-        else:
-            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit"
+
+        self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit"
 
     def configure_dmd(self):
         """Configure DMD."""
@@ -322,23 +320,23 @@ class VirtualSound(HardwareSoundPlatformInterface):
         self.playing = None
         self.volume = None
 
-    def play_sound(self, number: int):
+    def play_sound(self, number: int, track: int = 1):
         """Play virtual sound."""
         self.playing = number
 
-    def play_sound_file(self, file: str, platform_options: dict):
+    def play_sound_file(self, file: str, platform_options: dict, track: int = 1):
         """Play a sound file."""
         self.playing = file
 
-    def text_to_speech(self, text: str, platform_options: dict):
+    def text_to_speech(self, text: str, platform_options: dict, track: int = 1):
         """Text to speech output."""
         self.playing = text
 
-    def set_volume(self, volume: float):
+    def set_volume(self, volume: float, track: int = 1):
         """Set volume."""
         self.volume = volume
 
-    def stop_all_sounds(self):
+    def stop_all_sounds(self, track: int = 1):
         """Stop sound."""
         self.playing = None
 
@@ -424,29 +422,27 @@ class VirtualServo(ServoPlatformInterface):
 
     """Virtual servo."""
 
-    __slots__ = ["log", "number", "current_position", "speed", "acceleration"]
+    __slots__ = ["log", "number", "current_position", "speed_limit", "acceleration_limit"]
 
     def __init__(self, number) -> None:
         """Initialise servo."""
         self.log = logging.getLogger('VirtualServo')
         self.number = number
         self.current_position = None
-        self.speed = None
-        self.acceleration = None
+        self.speed_limit = None
+        self.acceleration_limit = None
 
     def go_to_position(self, position):
         """Go to position."""
         self.current_position = position
 
-    @classmethod
-    def set_speed_limit(cls, speed_limit):
-        """Todo emulate speed parameter."""
-        pass
+    def set_speed_limit(self, speed_limit):
+        """Set speed parameter."""
+        self.speed_limit = speed_limit
 
-    @classmethod
-    def set_acceleration_limit(cls, acceleration_limit):
-        """Todo emulate acceleration parameter."""
-        pass
+    def set_acceleration_limit(self, acceleration_limit):
+        """Set acceleration parameter."""
+        self.acceleration_limit = acceleration_limit
 
 
 class VirtualStepper(StepperPlatformInterface):

@@ -20,8 +20,6 @@ class ServoPlatformInterface(metaclass=abc.ABCMeta):
 
     def set_speed_limit(self, speed_limit):
         """Set speed limit."""
-        pass
 
     def set_acceleration_limit(self, acceleration_limit):
         """Set acceleration limit."""
-        pass

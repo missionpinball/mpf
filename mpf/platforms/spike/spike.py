@@ -159,7 +159,6 @@ class SpikeDMD(DmdPlatformInterface):
     def set_brightness(self, brightness: float):
         """Set brightness of the DMD."""
         # we do not yet know how that works in SPIKE
-        pass
 
 
 class SpikeDriver(DriverPlatformInterface):
@@ -555,9 +554,9 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         del platform_settings, subtype
         if number == "0-0":
             return SpikeBacklight(number, self, self.machine.clock.loop, 3)
-        else:
-            # TODO: validate that light number is not used in a stepper and a light
-            return SpikeLight(number, self, self._light_system)
+
+        # TODO: validate that light number is not used in a stepper and a light
+        return SpikeLight(number, self, self._light_system)
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure switch on Stern Spike."""
@@ -919,11 +918,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         """Return config validator name."""
         return "spike_stepper_settings"
 
-    # pylint: disable-msg=too-many-statements
-    # pylint: disable-msg=too-many-locals
-    # pylint: disable-msg=too-many-branches
     @asyncio.coroutine
-    def _initialize(self) -> Generator[int, None, None]:    # noqa: MC0001
+    def _init_bridge(self):
         # send ctrl+c to stop whatever is running
         self.log.debug("Resetting console")
         self._writer.write(b'\x03reset\n')
@@ -969,6 +965,10 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
         yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
         self._reader._buffer = bytearray()
+
+    @asyncio.coroutine
+    def _initialize(self) -> Generator[int, None, None]:
+        yield from self._init_bridge()
 
         self.log.debug("Resetting node bus and configuring traffic.")
         yield from self.send_cmd_sync(0, SpikeNodebus.Reset, bytearray())

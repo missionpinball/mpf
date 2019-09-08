@@ -232,9 +232,8 @@ class Player:
         """Return value of attribute or initialise it with 0 when it does not exist."""
         if name in self.vars:
             return self.vars[name]
-        else:
-            self.vars[name] = 0
-            return 0
+
+        return 0
 
     def __setattr__(self, name, value):
         """Set value and post event to inform about the change."""

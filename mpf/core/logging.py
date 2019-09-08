@@ -1,7 +1,7 @@
 """Contains the LogMixin class."""
 import logging
 
-from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.exceptions.config_file_error import ConfigFileError
 from mpf._version import log_url
 
 MYPY = False
@@ -148,12 +148,12 @@ class LogMixin:
             error_url = log_url.format(error_slug)
         if error_no and context:
             return "{} Context: {} Log Code: {} ({})".format(msg, context, error_slug, error_url)
-        elif context:
+        if context:
             return "{} Context: {} ".format(msg, context)
-        elif error_no:
+        if error_no:
             return "{} Log Code: {} ({})".format(msg, error_slug, error_url)
-        else:
-            return msg
+
+        return msg
 
     def raise_config_error(self, msg, error_no, *, context=None):
         """Raise a ConfigFileError exception."""
@@ -166,8 +166,8 @@ class LogMixin:
         """
         if self._debug_to_console:
             raise RuntimeError(msg)
-        else:
-            self.error_log(msg)
+
+        self.error_log(msg)
 
     def _logging_not_configured(self) -> None:
         raise RuntimeError(

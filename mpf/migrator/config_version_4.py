@@ -13,7 +13,7 @@ from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from mpf.file_interfaces.yaml_roundtrip import YamlRoundtrip, MpfRoundTripLoader
 from mpf.core.utility_functions import Util
 from mpf.migrator.migrator import VersionMigrator
-from mpf.core.rgb_color import named_rgb_colors, RGBColor
+from mpf.core.rgb_color import NAMED_RGB_COLORS, RGBColor
 
 
 class V4Migrator(VersionMigrator):
@@ -91,8 +91,8 @@ class V4Migrator(VersionMigrator):
 
         if display:
             return '{}_slide_{}'.format(display, cls.slides[display])
-        else:
-            return 'slide_{}'.format(cls.slides[display])
+
+        return 'slide_{}'.format(cls.slides[display])
 
     @classmethod
     def _add_display(cls, name, w, h):
@@ -687,8 +687,8 @@ class V4Migrator(VersionMigrator):
     def _format_anchor_and_value(cls, anchor, value):
         if value < 0:
             return '{}{}'.format(anchor, value)
-        else:
-            return '{}+{}'.format(anchor, value)
+
+        return '{}+{}'.format(anchor, value)
 
     def _migrate_element_y_and_anchor(self, element, display, height):
         if 'y' in element:
@@ -840,7 +840,7 @@ class V4Migrator(VersionMigrator):
     def _get_color(self, color):
         color_tuple = RGBColor.hex_to_rgb(color)
 
-        for color_name, val in named_rgb_colors.items():
+        for color_name, val in NAMED_RGB_COLORS.items():
             if color_tuple == val:
                 self.log.debug("Converting hex color '%s' to named color "
                                "'%s'", color, color_name)

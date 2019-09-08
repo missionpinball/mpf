@@ -6,7 +6,7 @@ from typing import List
 from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.core.logging import LogMixin
-from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.exceptions.config_file_error import ConfigFileError
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -113,7 +113,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
     def _parse_config(self, config, name):
         if config is None:
             raise AssertionError("Empty config player {}".format(name))
-        elif isinstance(config, (str, int, float)):
+        if isinstance(config, (str, int, float)):
             # express config, convert to full
             config = self.get_express_config(config)
         elif isinstance(config, list):
@@ -168,7 +168,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         raise AssertionError("Player {} does not support lists.".format(self.config_file_section))
 
     @abc.abstractmethod
-    def get_express_config(self, value):
+    def get_express_config(self, value) -> dict:
         """Parse short config version.
 
         Implements "express" settings for this config_player which is what
@@ -188,10 +188,8 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         Args:
             value: The single line string value from a config file.
 
-        Returns:
-            A dictionary (which will then be passed through the config
-            validator)
-
+        Returns a dictionary (which will then be passed through the config
+        validator).
         """
         raise NotImplementedError(self.config_file_section)
 
@@ -215,7 +213,6 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
 
     def clear_context(self, context):
         """Clear the context."""
-        pass
 
     @staticmethod
     def _parse_event_priority(event, priority):

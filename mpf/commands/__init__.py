@@ -24,15 +24,14 @@ class MpfCommandLineParser:
         self.mpf_path = os.path.abspath(os.path.join(mpf.core.__path__[0],
                                                      os.pardir))
 
-    def get_machine_path(self, machine_path_hint=None):
+    def get_machine_path(self, machine_path_hint=None) -> str:
         """Find the full machine path based on the current directory and option hint.
 
         Args:
             machine_path_hint: Helps MPF locate the machine path. If None,
                 the 'config' folder in the current working directory is used.
 
-        Returns:
-            String of full path of the machine folder that was located.
+        Returns a string of full path of the machine folder that was located.
         """
         machine_path = None
 
@@ -61,15 +60,15 @@ class MpfCommandLineParser:
 
         if machine_path:
             return machine_path
-        else:
-            if machine_path_hint:
-                wrong_path = os.path.abspath(machine_path_hint)
-            else:
-                wrong_path = os.path.abspath(os.curdir)
 
-            raise AssertionError("Error: Could not find machine in folder: '{}'. "
-                                 "Either start MPF from within your machine root folder or provide the path after the "
-                                 "command.".format(wrong_path))
+        if machine_path_hint:
+            wrong_path = os.path.abspath(machine_path_hint)
+        else:
+            wrong_path = os.path.abspath(os.curdir)
+
+        raise AssertionError("Error: Could not find machine in folder: '{}'. "
+                             "Either start MPF from within your machine root folder or provide the path after the "
+                             "command.".format(wrong_path))
 
     def parse_args(self):
         """Parse command line arguments."""
@@ -151,12 +150,12 @@ class CommandLineUtility(MpfCommandLineParser):
                 self.external_commands[command](self.mpf_path,
                                                 *self.parse_args())
                 return
-            elif self.argv[1] in commands:
+            if self.argv[1] in commands:
                 command = self.argv.pop(1)
 
         _module = import_module('mpf.commands.%s' % command)
 
-        if hasattr(_module, "subcommand") and _module.subcommand:
+        if hasattr(_module, "SUBCOMMAND") and _module.SUBCOMMAND:
             _module.Command(self.argv, self.path)
         else:
             machine_path, remaining_args = self.parse_args()

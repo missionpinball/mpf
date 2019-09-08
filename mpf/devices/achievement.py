@@ -248,7 +248,6 @@ class Achievement(ModeDevice):
         Achievements use sophisticated logic to handle their mode-starting states
         during device_loaded_in_mode(). Therefore no default enabling is required.
         """
-        pass
 
     def add_to_group(self, group):
         """Add this achievement to an achievement group.

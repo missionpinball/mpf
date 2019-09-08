@@ -35,4 +35,3 @@ class Scriptlet(LogMixin):
         It's the intention that the Scriptlet writer will overwrite this method
         in the Scriptlet.
         """
-        pass

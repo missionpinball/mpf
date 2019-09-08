@@ -37,7 +37,6 @@ class ShotGroup(ModeDevice):
 
     def add_control_events_in_mode(self, mode) -> None:
         """Remove enable here."""
-        pass
 
     def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Add device in mode."""

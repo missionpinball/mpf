@@ -149,4 +149,3 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
     @asyncio.coroutine
     def _initialize(self):
         """Initialise device."""
-        pass

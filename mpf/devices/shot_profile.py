@@ -18,4 +18,3 @@ class ShotProfile(ModeDevice, SystemWideDevice):
 
     def device_removed_from_mode(self, mode: Mode) -> None:
         """Remove from mode."""
-        pass

@@ -4,7 +4,7 @@ import abc
 from mpf.core.utility_functions import Util
 
 from mpf.core.config_player import ConfigPlayer
-from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.exceptions.config_file_error import ConfigFileError
 
 
 class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
@@ -108,9 +108,9 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
                         "Could not find a {} device with name or tag {}.".format(
                             self.device_collection.name, device_name),
                         1)
-                else:
-                    # placeholders may be evaluated later
-                    device_list.append(device_name)
+
+                # placeholders may be evaluated later
+                device_list.append(device_name)
         return device_list
 
     def _expand_device_config(self, device_settings):
@@ -124,7 +124,7 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_express_config(self, value):
+    def get_express_config(self, value) -> dict:
         """Parse short config version.
 
         Implements "express" settings for this config_player which is what
@@ -144,9 +144,7 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
         Args:
             value: The single line string value from a config file.
 
-        Returns:
-            A dictionary (which will then be passed through the config
-            validator)
-
+        Returns a dictionary (which will then be passed through the config
+        validator)
         """
         raise NotImplementedError(self.config_file_section)

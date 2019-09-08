@@ -88,8 +88,8 @@ class DigitalOutput(SystemWideDevice):
         del max_fade_ms
         if state:
             return 1.0, -1, True
-        else:
-            return 0.0, -1, True
+
+        return 0.0, -1, True
 
     @event_handler(3)
     def event_pulse(self, pulse_ms, **kwargs):

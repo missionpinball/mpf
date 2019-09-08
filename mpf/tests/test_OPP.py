@@ -137,7 +137,7 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         super().setUp()
 
         self._wait_for_processing()
-        self.assertEqual(0x00020000, self.machine.default_platform.minVersion)
+        self.assertEqual(0x00020000, self.machine.default_platform.min_version)
 
         self.assertFalse(self.serialMock.expected_commands)
         self.maxDiff = 100000

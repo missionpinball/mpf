@@ -64,7 +64,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         del kwargs
         check_set = set()
         for switch in machine.switches:
-            key = (switch.platform, switch.hw_switch.number)
+            key = (switch.config['platform'], switch.hw_switch.number)
             if key in check_set:
                 raise AssertionError(
                     "Duplicate switch number {} for switch {}".format(

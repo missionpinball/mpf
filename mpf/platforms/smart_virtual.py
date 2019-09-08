@@ -1,4 +1,5 @@
 """Contains code for the smart_virtual platform."""
+import abc
 import asyncio
 import logging
 
@@ -18,7 +19,7 @@ if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
-class BaseSmartVirtualCoilAction:
+class BaseSmartVirtualCoilAction(metaclass=abc.ABCMeta):
 
     """A action for a coil."""
 
@@ -59,9 +60,9 @@ class BaseSmartVirtualCoilAction:
 
         return False
 
+    @abc.abstractmethod
     def _perform_action(self):
         """Implement your action here."""
-        pass
 
 
 class ResetDropTargetAction(BaseSmartVirtualCoilAction):

@@ -150,9 +150,9 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             if add_ball_to_target:
                 target.available_balls += 1
             return True
-        else:
-            target.remove_incoming_ball(incoming_ball_at_target)
-            yield from self._failed_eject(eject_request, 1, True)
+
+        target.remove_incoming_ball(incoming_ball_at_target)
+        yield from self._failed_eject(eject_request, 1, True)
 
         self.debug_log("No longer expecting incoming ball which may skip the device.")
         return False
@@ -247,10 +247,10 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                     if result or self._cancel_future.done() and not self._cancel_future.cancelled():
                         self._cancel_future = None
                         return True
-                    else:
-                        self._cancel_future.cancel()
-                        self._cancel_future = None
-                        continue
+
+                    self._cancel_future.cancel()
+                    self._cancel_future = None
+                    continue
 
                 if self._cancel_future.done() and not self._cancel_future.cancelled():
                     # eject cancelled
@@ -288,8 +288,8 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 '''
                 self._task.cancel()
                 return False
-            else:
-                yield from self._failed_eject(eject_request, eject_try, True)
+
+            yield from self._failed_eject(eject_request, eject_try, True)
 
     @asyncio.coroutine
     def _prepare_eject(self, eject_request: OutgoingBall, eject_try: int):
@@ -509,22 +509,22 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             yield from self.ball_device.lost_ejected_ball(target=eject_request.target)
             # ball is lost but the eject is finished -> return true
             return True
-        else:
-            if event == eject_success_future:
-                # we eventually got eject success
-                yield from self._handle_eject_success(eject_request)
-                return True
-            elif event == ball_return_future:
-                # ball returned. eject failed
-                self.debug_log("Ball returned. Eject failed.")
-                eject_request.already_left = False
-                incoming_ball_at_target.did_not_arrive()
-                return False
-            elif event == unknown_balls_future:
-                # TODO: this may be an option
-                self.debug_log("Got unknown balls. Assuming a ball returned.")
-                incoming_ball_at_target.did_not_arrive()
-                return False
+
+        if event == eject_success_future:
+            # we eventually got eject success
+            yield from self._handle_eject_success(eject_request)
+            return True
+        if event == ball_return_future:
+            # ball returned. eject failed
+            self.debug_log("Ball returned. Eject failed.")
+            eject_request.already_left = False
+            incoming_ball_at_target.did_not_arrive()
+            return False
+        if event == unknown_balls_future:
+            # TODO: this may be an option
+            self.debug_log("Got unknown balls. Assuming a ball returned.")
+            incoming_ball_at_target.did_not_arrive()
+            return False
         # throw an error if we got here
         raise AssertionError("Invalid state")
 

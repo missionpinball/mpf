@@ -46,7 +46,6 @@ class HoldCoilEjector(BallDeviceEjector):
     def reorder_balls(self):
         """Do nothing."""
         # TODO: disable coil for a short period
-        pass
 
     def _disable_hold_coil(self):
         self.ball_device.config['hold_coil'].disable()

@@ -178,8 +178,7 @@ class YamlInterface(FileInterface):
                 will raise an error and exit. If False, an empty config
                 dictionary will be returned.
 
-        Returns:
-            A dictionary of the settings from this YAML file.
+        Returns a dictionary of the settings from this YAML file.
         """
         if self.cache and filename in self.file_cache:
             return copy.deepcopy(self.file_cache[filename])
@@ -203,15 +202,14 @@ class YamlInterface(FileInterface):
 
             if halt_on_error:
                 raise ValueError(msg)
-            else:
-                self.log.warning(msg)
+
+            self.log.warning(msg)
         except Exception as e:   # pylint: disable-msg=broad-except
             msg = "Error found in file {}: {}".format(filename, e)
 
             if halt_on_error:
                 raise ValueError(msg)
-            else:
-                self.log.warning(msg)
+            self.log.warning(msg)
 
         if self.cache and config:
             self.file_cache[filename] = copy.deepcopy(config)
@@ -227,6 +225,3 @@ class YamlInterface(FileInterface):
         """Save config to yaml file."""
         with open(filename, 'w', encoding='utf8') as output_file:
             output_file.write(yaml.dump(data, default_flow_style=False))
-
-
-file_interface_class = YamlInterface

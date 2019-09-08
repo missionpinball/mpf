@@ -51,4 +51,3 @@ class StepperPlatformInterface(metaclass=abc.ABCMeta):
 
     def set_home_position(self):
         """Tell the hardware that it reached the home position."""
-        pass

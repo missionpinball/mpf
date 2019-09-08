@@ -104,7 +104,7 @@ class BcdSegments(Segment):
         return bytes([(self.x3 << 3) | (self.x2) << 2 | (self.x1) << 1 | self.x0])
 
 
-bcd_segments = {
+BCD_SEGMENTS = {
     None: BcdSegments(dp=0, x3=0, x2=0, x1=0, x0=0, char="not mappable char"),
     33: BcdSegments(dp=1, x3=0, x2=0, x1=0, x0=1, char="!"),    # 1 with dot
 
@@ -174,7 +174,7 @@ class SevenSegments(Segment):
                       (self.c << 1) | self.d])
 
 
-seven_segments = {
+SEVEN_SEGMENTS = {
     None: SevenSegments(dp=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="not mappable char"),
     32: SevenSegments(dp=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="(space)"),
     33: SevenSegments(dp=1, g=0, f=0, e=0, d=0, c=1, b=1, a=0, char="!"),
@@ -321,7 +321,7 @@ class FourteenSegments(Segment):
             (self.h << 1) | self.j])
 
 
-fourteen_segments = {
+FOURTEEN_SEGMENTS = {
     None: FourteenSegments(dp=0, l=0, m=0, n=0, k=0, j=0, h=0, g2=0, g1=0, f=0, e=0, d=0, c=0, b=0, a=0,    # noqa: E741
                            char="not mappable char"),
     32: FourteenSegments(dp=0, l=0, m=0, n=0, k=0, j=0, h=0, g2=0, g1=0, f=0, e=0, d=0, c=0, b=0, a=0, char="(space)"), # noqa: E741
@@ -456,7 +456,7 @@ class SixteenSegments(Segment):
         self.u = u
 
 
-sixteen_segments = {
+SIXTEEN_SEGMENTS = {
     None: SixteenSegments(dp=0, u=0, t=0, s=0, r=0, p=0, n=0, m=0, k=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0,
                           char="not mappable char"),
     32: SixteenSegments(dp=0, u=0, t=0, s=0, r=0, p=0, n=0, m=0, k=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0,
@@ -609,8 +609,8 @@ class AsciiSegment(Segment):
         return bytes([self.ascii_value + (128 if self.dp else 0)])
 
 
-ascii_segments = {
+ASCII_SEGMENTS = {
     None: AsciiSegment(dp=0, ascii_value=ord(" "), char=" ")
 }
 for i in range(128):
-    ascii_segments[i] = AsciiSegment(dp=0, ascii_value=i, char=chr(i))
+    ASCII_SEGMENTS[i] = AsciiSegment(dp=0, ascii_value=i, char=chr(i))

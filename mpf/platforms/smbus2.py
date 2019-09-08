@@ -10,7 +10,7 @@ from mpf.core.utility_functions import Util
 
 from mpf.core.platform import I2cPlatform
 
-extension_loaded = True
+EXTENSION_LOADED = True
 # pylint: disable-msg=ungrouped-imports
 try:
     from smbus2_asyncio import SMBus2Asyncio
@@ -42,10 +42,10 @@ class Smbus2I2cDevice(I2cPlatformInterface):
             except FileNotFoundError:
                 if not self.platform.machine.options["production"]:
                     raise
-                else:
-                    # if we are in production mode retry
-                    yield from asyncio.sleep(.1, loop=self.platform.machine.clock.loop)
-                    self.platform.log.debug("Connection to %s failed. Will retry.", self.number)
+
+                # if we are in production mode retry
+                yield from asyncio.sleep(.1, loop=self.platform.machine.clock.loop)
+                self.platform.log.debug("Connection to %s failed. Will retry.", self.number)
             else:
                 break
 

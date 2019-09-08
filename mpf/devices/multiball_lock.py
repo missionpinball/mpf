@@ -128,12 +128,12 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
 
         if self.config['locked_ball_counting_strategy'] == "virtual_only":
             return self.machine.game.player['{}_locked_balls'.format(self.name)]
-        elif self.config['locked_ball_counting_strategy'] == "min_virtual_physical":
+        if self.config['locked_ball_counting_strategy'] == "min_virtual_physical":
             return min(self.machine.game.player['{}_locked_balls'.format(self.name)], self._physically_locked_balls)
-        elif self.config['locked_ball_counting_strategy'] == "physical_only":
+        if self.config['locked_ball_counting_strategy'] == "physical_only":
             return self._physically_locked_balls
-        else:
-            return self._locked_balls
+
+        return self._locked_balls
 
     @locked_balls.setter
     def locked_balls(self, value):

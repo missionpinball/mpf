@@ -86,8 +86,8 @@ class BallSearch(MpfController):
             machine is looking for a missing ball.'''
 
             return False
-        else:
-            return True
+
+        return True
 
     def register(self, priority, callback, name, *, restore_callback=None):
         """Register a callback for sequential ball search.

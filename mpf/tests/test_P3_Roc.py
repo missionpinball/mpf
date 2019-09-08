@@ -103,7 +103,7 @@ class TestP3Roc(MpfTestCase):
             return
         self._sync_count = 0
         self.expected_duration = 2
-        p_roc_common.pinproc_imported = True
+        p_roc_common.PINPROC_IMPORTED = True
         p_roc_common.pinproc = MockPinProcModule()
         self.pinproc = MagicMock(return_value=True)
         p_roc_common.pinproc.PinPROC = MagicMock(return_value=self.pinproc)
@@ -136,7 +136,7 @@ class TestP3Roc(MpfTestCase):
             0x00: {         # manager
                 0x00: 0,            # chip id
                 0x01: 0x00020006,   # version
-                0x03: 0x00FF,       # dip switches
+                0x03: 0x01FF,       # dip switches
             },
             0x02: {         # switch controller
                 0x1000: 0xA3,       # SW-16 Address 0 Reg 0
@@ -175,13 +175,16 @@ class TestP3Roc(MpfTestCase):
         self._test_steppers()
 
         # test hardware scan
-        info_str = """Firmware Version: 2 Firmware Revision: 6 Hardware Board ID: 0
+        info_str = """Firmware Version: 2 Firmware Revision: 6 Hardware Board ID: 1
 SW-16 boards found:
  - Board: 0 Switches: 16 Device Type: A3 Board ID: 0
  - Board: 1 Switches: 16 Device Type: A3 Board ID: 13
  - Board: 2 Switches: 16 Device Type: A4 Board ID: 0
 """
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
+        self.assertEqual(2, self.machine.variables["p_roc_version"])
+        self.assertEqual(6, self.machine.variables["p_roc_revision"])
+        self.assertEqual(1, self.machine.variables["p_roc_hardware_version"])
 
     def _test_pulse(self):
         self.assertEqual("PD-16 Board 1 Bank 1", self.machine.coils.c_test.hw_driver.get_board_name())

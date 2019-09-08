@@ -210,14 +210,13 @@ class SwitchController(MpfController):
                              state=0,
                              ms=ms)
 
-    def ms_since_change(self, switch_name):
+    def ms_since_change(self, switch_name) -> int:
         """Return the number of ms that have elapsed since this switch last changed state.
 
         Args:
             switch_name: String name of the switch to check.
 
-        Returns:
-            Integer of milliseconds.
+        Returns integer of milliseconds.
         """
         return round((self.machine.clock.get_time() - self.machine.switches[switch_name].last_change) * 1000.0, 0)
 

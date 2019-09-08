@@ -5,6 +5,12 @@ switches:
         number: 1
         platform_settings:
             debounce_open: 20ms
+    switch1_p_roc:  # this should not cause duplicate switch exceptions
+        number: 1
+        platform: p_roc
+    switch1_p_fast:
+        number: 1
+        platform: fast
 
 coils:
     c_test:
@@ -18,3 +24,20 @@ coils:
     c_test_hold_power:
         number: 4
         default_hold_power: 0.1
+    coil1_p_roc:    # this should not cause duplicate coil exceptions
+        number: 1
+        platform: p_roc
+    coil1_fast:
+        number: 1
+        platform: fast
+
+# this should not cause duplicate light exceptions
+lights:
+    light1_p_roc:
+        number: 1
+        platform: p_roc
+    light1_fast:
+        number: 1
+        platform: fast
+    light1_virtual:
+        number: 1

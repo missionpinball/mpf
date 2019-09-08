@@ -101,7 +101,7 @@ down_events: list|str|sw_service_down_active
             if key == 'ESC':
                 self.machine.events.post("service_menu_hide")
                 return
-            elif key == 'UP':
+            if key == 'UP':
                 position += 1
                 if position >= len(items):
                     position = 0

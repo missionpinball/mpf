@@ -58,10 +58,9 @@ class YamlRoundtrip(YamlInterface):     # pragma: no cover
             logger: Optional logger instance which will be used to log this at
                 the debug level.
 
-        Returns:
-            The updated CommentedMap YAML dict. (Note that this method does not
-            change the dict object (e.g. it's changed in place), you you most
-            likely don't need to do anything with the returned dict.
+        Returns the updated CommentedMap YAML dict. (Note that this method does not
+        change the dict object (e.g. it's changed in place), you you most
+        likely don't need to do anything with the returned dict.
         """
         if old_key == new_key or old_key not in commented_map:
             return commented_map

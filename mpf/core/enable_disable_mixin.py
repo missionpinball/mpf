@@ -33,14 +33,12 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
         This can be caused by a mode restore, initial enable at boot or by an
         enable_event.
         """
-        pass
 
     def _disable(self):
         """Disable the device.
 
         This can be caused by a mode stop or by an disable_event.
         """
-        pass
 
     def enable(self) -> None:
         """Enable device."""
@@ -52,7 +50,6 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
 
     def add_control_events_in_mode(self, mode) -> None:
         """Remove enable here."""
-        pass
 
     @event_handler(0)
     def event_disable(self, **kwargs):
@@ -93,8 +90,8 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
             if not self.player:
                 return False
             return self.player["{}_{}_enabled".format(self.class_label, self.name)]
-        else:
-            return self._enabled
+
+        return self._enabled
 
     @enabled.setter
     def enabled(self, value):

@@ -19,13 +19,13 @@ if MYPY:   # pragma: no cover
 
 
 # supported operators
-operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
+OPERATORS = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
              ast.Div: op.truediv, ast.Pow: op.pow, ast.BitXor: op.xor,
              ast.USub: op.neg, ast.Not: op.not_, ast.Mod: op.mod}
 
-bool_operators = {ast.And: lambda a, b: a and b, ast.Or: lambda a, b: a or b}
+BOOL_OPERATORS = {ast.And: lambda a, b: a and b, ast.Or: lambda a, b: a or b}
 
-comparisons = {ast.Eq: op.eq, ast.Lt: op.lt, ast.Gt: op.gt, ast.LtE: op.le, ast.GtE: op.ge, ast.NotEq: op.ne}
+COMPARISONS = {ast.Eq: op.eq, ast.Lt: op.lt, ast.Gt: op.gt, ast.LtE: op.le, ast.GtE: op.ge, ast.NotEq: op.ne}
 
 
 class ConditionalEvent:
@@ -106,7 +106,6 @@ class BaseTemplate(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def convert_result(self, value):
         """Convert the result of the template."""
-        pass
 
     def __repr__(self):
         """Return string representation."""
@@ -226,8 +225,8 @@ class MpfFormatter(string.Formatter):
             if future:
                 self.subscriptions.append(future)
             return value
-        else:
-            return placeholder.evaluate(self.parameters)
+
+        return placeholder.evaluate(self.parameters)
 
     def get_field(self, field_name, args, kwargs):
         """Return value of field."""
@@ -462,10 +461,10 @@ class PlayerPlaceholder(BasePlaceholder):
                 if len(self._machine.game.player_list) <= self._number:
                     raise ValueError("Player not in game")
                 return self._machine.game.player_list[self._number][item]
-            else:
-                return self._machine.game.player[item]
-        else:
-            raise ValueError("Not in a game")
+
+            return self._machine.game.player[item]
+
+        raise ValueError("Not in a game")
 
     def __getattr__(self, item):
         """Attribute access."""
@@ -474,10 +473,10 @@ class PlayerPlaceholder(BasePlaceholder):
                 if len(self._machine.game.player_list) <= self._number:
                     raise ValueError("Player not in game")
                 return getattr(self._machine.game.player_list[self._number], item)
-            else:
-                return getattr(self._machine.game.player, item)
-        else:
-            raise ValueError("Not in a game")
+
+            return getattr(self._machine.game.player, item)
+
+        raise ValueError("Not in a game")
 
 
 class PlayersPlaceholder(BasePlaceholder):
@@ -621,22 +620,22 @@ class BasePlaceholderManager(MpfController):
         if value:
             ret_value, ret_subscription = self._eval(node.body, variables, subscribe)
             return ret_value, subscription + ret_subscription
-        else:
-            ret_value, ret_subscription = self._eval(node.orelse, variables, subscribe)
-            return ret_value, subscription + ret_subscription
+
+        ret_value, ret_subscription = self._eval(node.orelse, variables, subscribe)
+        return ret_value, subscription + ret_subscription
 
     def _eval_bin_op(self, node, variables, subscribe):
         left_value, left_subscription = self._eval(node.left, variables, subscribe)
         right_value, right_subscription = self._eval(node.right, variables, subscribe)
         try:
-            ret_value = operators[type(node.op)](left_value, right_value)
+            ret_value = OPERATORS[type(node.op)](left_value, right_value)
         except TypeError:
             raise TemplateEvalError(left_subscription + right_subscription)
         return ret_value, left_subscription + right_subscription
 
     def _eval_unary_op(self, node, variables, subscribe):
         value, subscription = self._eval(node.operand, variables, subscribe)
-        return operators[type(node.op)](value), subscription
+        return OPERATORS[type(node.op)](value), subscription
 
     def _eval_compare(self, node, variables, subscribe):
         if len(node.ops) > 1:
@@ -644,7 +643,7 @@ class BasePlaceholderManager(MpfController):
         left_value, left_subscription = self._eval(node.left, variables, subscribe)
         right_value, right_subscription = self._eval(node.comparators[0], variables, subscribe)
         try:
-            return comparisons[type(node.ops[0])](left_value, right_value), left_subscription + right_subscription
+            return COMPARISONS[type(node.ops[0])](left_value, right_value), left_subscription + right_subscription
         except TypeError:
             raise TemplateEvalError(left_subscription + right_subscription)
 
@@ -654,7 +653,7 @@ class BasePlaceholderManager(MpfController):
             value, new_subscription = self._eval(node.values[i], variables, subscribe)
             subscription += new_subscription
             try:
-                result = bool_operators[type(node.op)](result, value)
+                result = BOOL_OPERATORS[type(node.op)](result, value)
             except TypeError:
                 raise TemplateEvalError(subscription)
         return result, subscription
@@ -667,14 +666,14 @@ class BasePlaceholderManager(MpfController):
             try:
                 ret_value = getattr(slice_value, node.attr)
             except (ValueError, AttributeError):
-                if subscribe:
+                if subscribe:   # pylint: disable-msg=no-else-raise
                     raise TemplateEvalError(subscription + [slice_value.subscribe_attribute(node.attr)])
                 else:
                     raise
         if subscribe:
             return ret_value, subscription + [slice_value.subscribe_attribute(node.attr)]
-        else:
-            return ret_value, subscription + []
+
+        return ret_value, subscription + []
 
     def _eval_subscript(self, node, variables, subscribe):
         value, subscription = self._eval(node.value, variables, subscribe)
@@ -697,21 +696,21 @@ class BasePlaceholderManager(MpfController):
         if var:
             if subscribe:
                 return var, [var.subscribe()]
-            else:
-                return var, []
-        elif node.id in variables:
+
+            return var, []
+        if node.id in variables:
             return variables[node.id], []
-        else:
-            raise ValueError("Missing variable {}".format(node.id))
+
+        raise ValueError("Missing variable {}".format(node.id))
 
     def _eval(self, node, variables, subscribe) -> Tuple[Any, List]:
         if node is None:
             return None, []
 
-        elif type(node) in self._eval_methods:  # pylint: disable-msg=unidiomatic-typecheck
+        if type(node) in self._eval_methods:  # pylint: disable-msg=unidiomatic-typecheck
             return self._eval_methods[type(node)](node, variables, subscribe)
-        else:
-            raise TypeError(type(node))
+
+        raise TypeError(type(node))
 
     def build_float_template(self, template_str, default_value=0.0) -> FloatTemplate:
         """Build a float template from a string."""
@@ -825,17 +824,17 @@ class PlaceholderManager(BasePlaceholderManager):
         """Return global params."""
         if name == "settings":
             return SettingsPlaceholder(self.machine)
-        elif name == "machine":
+        if name == "machine":
             return MachinePlaceholder(self.machine)
-        elif name == "device":
+        if name == "device":
             return DevicesPlaceholder(self.machine)
-        elif name == "mode":
+        if name == "mode":
             return ModePlaceholder(self.machine)
-        elif name == "current_player":
+        if name == "current_player":
             return PlayerPlaceholder(self.machine)
-        elif name == "players":
+        if name == "players":
             return PlayersPlaceholder(self.machine)
-        elif self.machine.game:
+        if self.machine.game:
             if name == "game":
                 return self.machine.game
 

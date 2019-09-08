@@ -29,4 +29,3 @@ class CustomCode(LogMixin):
         It's the intention that the programmer will overwrite this method
         in his custom code.
         """
-        pass

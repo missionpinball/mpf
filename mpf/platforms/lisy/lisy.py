@@ -4,8 +4,8 @@ from distutils.version import StrictVersion
 
 from typing import Generator, Dict, Optional, List
 
-from mpf.core.segment_mappings import seven_segments, bcd_segments, fourteen_segments, TextToSegmentMapper, \
-    ascii_segments
+from mpf.core.segment_mappings import SEVEN_SEGMENTS, BCD_SEGMENTS, FOURTEEN_SEGMENTS, TextToSegmentMapper, \
+    ASCII_SEGMENTS
 from mpf.core.platform_batch_light_system import PlatformBatchLight, PlatformBatchLightSystem
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
@@ -43,15 +43,30 @@ class LisyDriver(DriverPlatformInterface):
 
     """A driver in the LISY platform."""
 
-    __slots__ = ["platform", "_pulse_ms", "index", "has_rule"]   # type: List[str]
+    __slots__ = ["platform", "_pulse_ms", "_recycle_time", "index", "has_rule"]     # type: List[str]
 
     def __init__(self, config, number, platform):
         """Initialise driver."""
         super().__init__(config, number)
         self.platform = platform
         self._pulse_ms = -1
+        self._recycle_time = None
         self.index = int(number)
         self.has_rule = False
+
+    def configure_recycle(self, recycle_time):
+        """Configure recycle time."""
+        if self.platform.api_version < StrictVersion("0.9"):
+            return
+        if recycle_time > 255:
+            recycle_time = 255
+        elif recycle_time < 0:
+            recycle_time = 0
+
+        if self._recycle_time != recycle_time:
+            self._recycle_time = recycle_time
+            self.platform.send_byte(LisyDefines.SetSolenoidsRecycleTime,
+                                    bytes([int(self.number), recycle_time]))
 
     def _configure_pulse_ms(self, pulse_ms):
         """Configure pulse ms for this driver if it changed."""
@@ -148,36 +163,36 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
             # display info for display
             display_info = yield from (self.platform.send_byte_and_read_response(
                 LisyDefines.InfoGetDisplayDetails, bytearray([self.number]), 2))
-            if 1 > display_info[1] > 6:
+            if 1 > display_info[0] > 6:
                 raise AssertionError("Invalid display type {} reported by hardware for display {}".format(
                     self._type_of_display, self.number))
 
-            self._length_of_display = int(display_info[0])
-            self._type_of_display = display_info[1]
+            self._type_of_display = display_info[0]
+            self._length_of_display = int(display_info[1])
 
         # clear display initially
         self._set_text("")
 
     def _format_text(self, text):
         if self._type_of_display == 1:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, bcd_segments,
+            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, BCD_SEGMENTS,
                                                                embed_dots=False)
             result = map(lambda x: x.get_x4x3x2x1_encoding(), mapping)
         elif self._type_of_display == 2:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, bcd_segments)
+            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, BCD_SEGMENTS)
             result = map(lambda x: x.get_dpx4x3x2x1_encoding(), mapping)
         elif self._type_of_display == 3:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, seven_segments)
+            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, SEVEN_SEGMENTS)
             result = map(lambda x: x.get_dpgfeabcd_encoding(), mapping)
         elif self._type_of_display == 4:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, fourteen_segments)
+            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, FOURTEEN_SEGMENTS)
             result = map(lambda x: x.get_apc_encoding(), mapping)
         elif self._type_of_display == 5:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, ascii_segments,
+            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, ASCII_SEGMENTS,
                                                                embed_dots=False)
             result = map(lambda x: x.get_ascii_encoding(), mapping)
         elif self._type_of_display == 6:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, ascii_segments)
+            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, ASCII_SEGMENTS)
             result = map(lambda x: x.get_ascii_with_dp_encoding(), mapping)
         else:
             raise AssertionError("Invalid type {}".format(self._type_of_display))
@@ -204,32 +219,49 @@ class LisySound(HardwareSoundPlatformInterface):
         """Initialise hardware sound."""
         self.platform = platform        # type: LisyHardwarePlatform
 
-    def play_sound(self, number: int):
+    def play_sound(self, number: int, track: int = 1):
         """Play sound with number."""
-        self.platform.send_byte(LisyDefines.SoundPlaySound, bytes([number]))
+        if self.platform.api_version >= StrictVersion("0.9"):
+            self.platform.send_byte(LisyDefines.SoundPlaySound, bytes([track, number]))
+        else:
+            assert track == 1
+            self.platform.send_byte(LisyDefines.SoundPlaySound, bytes([number]))
 
-    def play_sound_file(self, file: str, platform_options: dict):
+    def play_sound_file(self, file: str, platform_options: dict, track: int = 1):
         """Play sound file."""
         flags = 1 if platform_options.get("loop", False) else 0
         flags += 2 if platform_options.get("no_cache", False) else 0
-        self.platform.send_string(LisyDefines.SoundPlaySoundFile, chr(flags) + file)
+        if self.platform.api_version >= StrictVersion("0.9"):
+            self.platform.send_string(LisyDefines.SoundPlaySoundFile, chr(track) + chr(flags) + file)
+        else:
+            assert track == 1
+            self.platform.send_string(LisyDefines.SoundPlaySoundFile, chr(flags) + file)
 
-    def text_to_speech(self, text: str, platform_options: dict):
+    def text_to_speech(self, text: str, platform_options: dict, track: int = 1):
         """Text to speech."""
         flags = 1 if platform_options.get("loop", False) else 0
         flags += 2 if platform_options.get("no_cache", False) else 0
-        self.platform.send_string(LisyDefines.SoundTextToSpeech, chr(flags) + text)
+        if self.platform.api_version >= StrictVersion("0.9"):
+            self.platform.send_string(LisyDefines.SoundTextToSpeech, chr(track) + chr(flags) + text)
+        else:
+            assert track == 1
+            self.platform.send_string(LisyDefines.SoundTextToSpeech, chr(flags) + text)
 
-    def set_volume(self, volume: float):
+    def set_volume(self, volume: float, track: int = 1):
         """Set volume."""
         if self.platform.api_version >= StrictVersion("0.9"):
-            self.platform.send_byte(LisyDefines.SoundSetVolume, bytes([1, int(volume * 100)]))
+            self.platform.send_byte(LisyDefines.SoundSetVolume, bytes([track, int(volume * 100)]))
         else:
+            assert track == 1
             self.platform.send_byte(LisyDefines.SoundSetVolume, bytes([int(volume * 100)]))
 
-    def stop_all_sounds(self):
+    def stop_all_sounds(self, track: int = 1):
         """Stop all sounds."""
-        self.platform.send_byte(LisyDefines.SoundStopAllSounds)
+        if self.platform.api_version >= StrictVersion("0.9"):
+            self.platform.send_byte(LisyDefines.SoundStopAllSounds, bytes([track]))
+        else:
+            assert track == 1
+            self.platform.send_byte(LisyDefines.SoundStopAllSounds)
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -522,6 +554,8 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 coil.pulse_settings))
 
         coil.hw_driver.has_rule = True
+        coil.hw_driver.configure_recycle(coil.pulse_settings.duration * 2 if coil.recycle else
+                                         coil.pulse_settings.duration)
 
         data = bytearray([coil.hw_driver.index,
                           switch1.hw_switch.index + (0x80 if switch1.invert else 0),
@@ -592,13 +626,13 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                                          format(self._number_of_lamps, number))
 
             return LisySimpleLamp(int(number), self)
-        elif subtype == "light":
+        if subtype == "light":
             if 0 < int(number) >= self._number_of_modern_lights:
                 raise AssertionError("LISY only has {} modern lights. Cannot configure light {}.".
                                      format(self._number_of_modern_lights, number))
             return LisyModernLight(int(number), self, self._light_system)
-        else:
-            raise self.raise_config_error("Invalid subtype {}".format(subtype), 1)
+
+        raise self.raise_config_error("Invalid subtype {}".format(subtype), 1)
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Return a single light."""
@@ -629,7 +663,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         if 1 < int(number) > self._number_of_solenoids and int(number) < 100:
             raise AssertionError("LISY only has {} drivers. Cannot configure driver {} (zero indexed).".
                                  format(self._number_of_solenoids, number))
-        elif not self._coils_start_at_one:
+        if not self._coils_start_at_one:
             if 100 < int(number) >= self._number_of_lamps + 100:
                 raise AssertionError("LISY only has {} lamps. Cannot configure lamp driver {} (zero indexed).".
                                      format(self._number_of_lamps, number))
@@ -638,7 +672,10 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 raise AssertionError("LISY only has {} lamps. Cannot configure lamp driver {} (one indexed).".
                                      format(self._number_of_lamps, number))
 
-        return LisyDriver(config=config, number=number, platform=self)
+        driver = LisyDriver(config=config, number=number, platform=self)
+        recycle_time = config.default_pulse_ms * 2 if config.default_recycle else config.default_pulse_ms
+        driver.configure_recycle(recycle_time)
+        return driver
 
     @asyncio.coroutine
     def configure_segment_display(self, number: str, platform_settings) -> SegmentDisplaySoftwareFlashPlatformInterface:

@@ -105,7 +105,6 @@ class MMA8451Platform(AccelerometerPlatform):
     @asyncio.coroutine
     def initialize(self):
         """Initialise MMA8451 platform."""
-        pass
 
     def stop(self):
         """Stop accelerometer poll tasks."""

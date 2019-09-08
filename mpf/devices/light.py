@@ -122,7 +122,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         for light in machine.lights:
             for drivers in light.hw_drivers.values():
                 for driver in drivers:
-                    key = (light.platform, driver.number, type(driver))
+                    key = (light.config['platform'], driver.number, type(driver))
                     if key in check_set:
                         raise AssertionError(
                             "Duplicate light number {} {} for light {}".format(
@@ -531,14 +531,13 @@ class Light(SystemWideDevice, DevicePositionMixin):
         Args:
             color: The RGBColor() instance you want to have gamma applied.
 
-        Returns:
-            An updated RGBColor() instance with gamma corrected.
+        Returns an updated RGBColor() instance with gamma corrected.
         """
         factor = self.machine.light_controller.brightness_factor
         if factor == 1.0:
             return color
-        else:
-            return RGBColor([int(x * factor) for x in color])
+
+        return RGBColor([int(x * factor) for x in color])
 
     def color_correct(self, color):
         """Apply the current color correction profile to the color passed.
@@ -546,24 +545,22 @@ class Light(SystemWideDevice, DevicePositionMixin):
         Args:
             color: The RGBColor() instance you want to get color corrected.
 
-        Returns:
-            An updated RGBColor() instance with the current color correction
-            profile applied.
+        Returns an updated RGBColor() instance with the current color
+        correction profile applied.
 
         Note that if there is no current color correction profile applied, the
         returned color will be the same as the color that was passed.
         """
         if self._color_correction_profile is None:
             return color
-        else:
 
-            if self._debug:
-                self.debug_log("Applying color correction: %s (applied "
-                               "'%s' color correction profile)",
-                               self._color_correction_profile.apply(color),
-                               self._color_correction_profile.name)
+        if self._debug:
+            self.debug_log("Applying color correction: %s (applied "
+                           "'%s' color correction profile)",
+                           self._color_correction_profile.apply(color),
+                           self._color_correction_profile.name)
 
-            return self._color_correction_profile.apply(color)
+        return self._color_correction_profile.apply(color)
 
     # pylint: disable-msg=too-many-return-statements
     def _get_color_and_fade(self, stack, max_fade_ms: int, *, current_time=None) -> Tuple[RGBColor, int, bool]:

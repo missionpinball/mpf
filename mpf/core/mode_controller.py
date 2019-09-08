@@ -120,14 +120,14 @@ class ModeController(MpfController):
             return os.path.join(self.machine.machine_path,
                                 self.machine.config['mpf']['paths']['modes'],
                                 self._machine_mode_folders[mode_string])
-        elif mode_string in self._mpf_mode_folders:
+        if mode_string in self._mpf_mode_folders:
             return os.path.join(self.machine.mpf_path,
                                 self.machine.config['mpf']['paths']['modes'],
                                 self._mpf_mode_folders[mode_string])
-        else:
-            raise ValueError("No folder found for mode '{}'. Is your mode "
-                             "folder in your machine's 'modes' folder?"
-                             .format(mode_string))
+
+        raise ValueError("No folder found for mode '{}'. Is your mode "
+                         "folder in your machine's 'modes' folder?"
+                         .format(mode_string))
 
     def _get_mpf_mode_config(self, mode_string):
         try:
@@ -516,14 +516,11 @@ class ModeController(MpfController):
 
         self.debug_log('+-------------------------------------+')
 
-    def is_active(self, mode_name):
-        """Return true if the mode is active.
+    def is_active(self, mode_name) -> bool:
+        """Return true if the mode is active, False if it is not.
 
         Args:
             mode_name: String name of the mode to check.
-
-        Returns:
-            True if the mode is active, False if it is not.
         """
         return mode_name in [x.name for x in self.active_modes
                              if x.active is True]

@@ -46,14 +46,47 @@ class MachineVariables(LogMixin):
 
         # Create basic system information machine variables
         self.set_machine_var(name="mpf_version", value=mpf_version)
+        '''machine_var: mpf_version
+
+        desc: Full version string for MPF.
+        '''
         self.set_machine_var(name="mpf_extended_version", value=mpf_extended_version)
+        '''machine_var: mpf_extended_version
+
+        desc: Extended version string for MPF. Contains show and bcp version as well.
+        '''
         self.set_machine_var(name="python_version", value=python_version())
+        '''machine_var: python_version
+
+        desc: Python version.
+        '''
         self.set_machine_var(name="platform", value=platform(aliased=True))
+        '''machine_var: platform
+
+        desc: A single string identifying the underlying platform
+              with as much useful information as possible.
+        '''
         platform_info = system_alias(system(), release(), version())
         self.set_machine_var(name="platform_system", value=platform_info[0])
+        '''machine_var: platform_system
+
+        desc: Your system (Linux/Windows/Mac).
+        '''
         self.set_machine_var(name="platform_release", value=platform_info[1])
+        '''machine_var: platform_release
+
+        desc: Release of your operating system.
+        '''
         self.set_machine_var(name="platform_version", value=platform_info[2])
+        '''machine_var: platform_version
+
+        desc: Version of your operating system.
+        '''
         self.set_machine_var(name="platform_machine", value=platform_machine())
+        '''machine_var: platform_machine
+
+        desc: Architecture of your machine (32bit/64bit).
+        '''
 
     def __getitem__(self, key):
         """Allow the user to access a machine variable with []. This would be used is machine.variables["var_name"]."""
@@ -92,15 +125,10 @@ class MachineVariables(LogMixin):
              for name, var in self.machine_vars.items() if var["persist"]})
 
     def get_machine_var(self, name: str) -> Any:
-        """Return the value of a machine variable.
+        """Return the value of the variable if it exists, or None if the variable does not exist.
 
         Args:
             name: String name of the variable you want to get that value for.
-
-        Returns:
-            The value of the variable if it exists, or None if the variable
-            does not exist.
-
         """
         try:
             return self.machine_vars[name]['value']

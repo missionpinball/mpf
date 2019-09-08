@@ -226,7 +226,7 @@ class AchievementGroup(ModeDevice):
         if self._enabled:
             self.debug_log("Ok because enabled")
             return True
-        elif self.config['allow_selection_change_while_disabled']:
+        if self.config['allow_selection_change_while_disabled']:
             self.debug_log("Ok because allow_selection_change_while_disabled is set (but disabled)")
             return True
 
@@ -265,8 +265,8 @@ class AchievementGroup(ModeDevice):
                 self._selected_member = ach
                 self.debug_log("Already have a selected member is %s", ach)
                 return True
-            else:
-                self.debug_log("Do not have a current selected member")
+
+            self.debug_log("Do not have a current selected member")
 
         if self.config['auto_select']:
             self.debug_log("Auto select is true. Getting random achievement")

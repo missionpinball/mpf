@@ -86,15 +86,11 @@ class RpiServo(ServoPlatformInterface):
         position_translated = 1000 + position * 1000
         self.platform.send_command(self.platform.pi.set_servo_pulsewidth(self.gpio, position_translated))
 
-    @classmethod
-    def set_speed_limit(cls, speed_limit):
-        """Todo emulate speed parameter."""
-        pass
+    def set_speed_limit(self, speed_limit):
+        """Not implemented."""
 
-    @classmethod
-    def set_acceleration_limit(cls, acceleration_limit):
-        """Todo emulate acceleration parameter."""
-        pass
+    def set_acceleration_limit(self, acceleration_limit):
+        """Not implemented."""
 
 
 class RpiI2cDevice(I2cPlatformInterface):

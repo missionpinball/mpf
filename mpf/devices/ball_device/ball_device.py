@@ -185,7 +185,7 @@ class BallDevice(SystemWideDevice):
         # follow path and check if we should request a new ball to the target or cancel the path
         if target.is_playfield():
             raise AssertionError("Lost a ball to playfield {}. This should not happen".format(target))
-        elif target.cancel_path_if_target_is(self, self.config['ball_missing_target']):
+        if target.cancel_path_if_target_is(self, self.config['ball_missing_target']):
             # add ball to default target because it would have gone there anyway
             self.warning_log("Path to %s canceled. Assuming the ball jumped to %s.", target,
                              self.config['ball_missing_target'])
@@ -700,15 +700,15 @@ class BallDevice(SystemWideDevice):
             path.appendleft(target)
             path.appendleft(self)
             return path
-        else:
-            # otherwise find any target which can
-            for target_device in self.config['eject_targets']:
-                if target_device.is_playfield():
-                    continue
-                path = target_device.find_path_to_target(target)
-                if path:
-                    path.appendleft(self)
-                    return path
+
+        # otherwise find any target which can
+        for target_device in self.config['eject_targets']:
+            if target_device.is_playfield():
+                continue
+            path = target_device.find_path_to_target(target)
+            if path:
+                path.appendleft(self)
+                return path
 
         return False
 
@@ -743,7 +743,7 @@ class BallDevice(SystemWideDevice):
         del kwargs
         self.eject_all(target)
 
-    def eject_all(self, target=None):
+    def eject_all(self, target=None) -> bool:
         """Eject all the balls from this device.
 
         Args:
@@ -751,15 +751,14 @@ class BallDevice(SystemWideDevice):
                 None means `playfield`.
             **kwargs: unused
 
-        Returns:
-            True if there are balls to eject. False if this device is empty.
+        Returns True if there are balls to eject. False if this device is empty.
         """
         self.debug_log("Ejecting all balls")
         if self.available_balls > 0:
             self.eject(balls=self.available_balls, target=target)
             return True
-        else:
-            return False
+
+        return False
 
     @event_handler(10)
     def event_hold(self, **kwargs):

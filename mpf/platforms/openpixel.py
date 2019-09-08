@@ -181,16 +181,17 @@ class OpenPixelClient:
 
         """
         if len(self.channels) < channel + 1:
-
             channels_to_add = channel + 1 - len(self.channels)
 
             self.channels += [list() for _ in range(channels_to_add)]
             self.dirty_leds += [dict() for _ in range(channels_to_add)]
             self.msg += [None for _ in range(channels_to_add)]
 
-        if len(self.channels[channel]) < led + 1:
-
-            leds_to_add = led + 1 - len(self.channels[channel])
+        new_total = led + 1
+        if new_total % 3 != 0:
+            new_total += 3 - (new_total % 3)
+        leds_to_add = new_total - len(self.channels[channel])
+        if leds_to_add > 0:
             self.channels[channel] += [0 for _ in range(leds_to_add)]
 
     def set_pixel_color(self, channel, pixel, callback: Callable[[int], Tuple[float, int]]):
@@ -239,9 +240,8 @@ class OpenPixelClient:
                 pixel on the channel, the second item is the second one, etc.
             channel: Which OPC channel the pixel data will be written to.
 
-        Returns:
-            True on success. False if it was unable to connect to the OPC
-            server.
+        Returns True on success. False if it was unable to connect to the OPC
+        server.
 
         Note that you must send color data for all the pixels in a channel (or
         all the pixels up until the point you want. e.g. if you have 30 LEDs on

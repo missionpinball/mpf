@@ -99,8 +99,8 @@ class DataManager(MpfController):
 
         if isinstance(data, dict):
             return data
-        else:
-            return dict()
+
+        return dict()
 
     def _trigger_save(self):
         """Trigger a write of this DataManager's data to the disk."""

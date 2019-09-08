@@ -50,10 +50,10 @@ class BaseSerialCommunicator:
             except SerialException:
                 if not self.machine.options["production"]:
                     raise
-                else:
-                    # if we are in production mode retry
-                    yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
-                    self.log.debug("Connection to %s failed. Will retry.", port)
+
+                # if we are in production mode retry
+                yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
+                self.log.debug("Connection to %s failed. Will retry.", port)
             else:
                 # we got a connection
                 break

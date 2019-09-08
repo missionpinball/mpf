@@ -579,6 +579,7 @@ hardware_sound_systems:
 hardware_sound_player:
     __valid_in__: machine, mode, show
     action: single|enum(play,play_file,text_to_speech,set_volume,increase_volume,decrease_volume,stop)|play
+    track: single|int|1
     value: single|str|None
     platform_options: single|dict|None
     sound_system: single|machine(hardware_sound_systems)|default
@@ -1518,6 +1519,10 @@ system11:
     file_log: single|enum(none,basic,full)|basic
 text_strings:
     __valid_in__: machine, mode                 # todo add to validator
+text_ui:
+    __valid_in__: machine
+    player_vars: list|str|None
+    machine_vars: list|str|None
 tic_stepper_settings:
     max_speed: single|int|2000000
     starting_speed: single|int|0

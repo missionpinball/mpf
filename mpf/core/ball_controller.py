@@ -260,11 +260,11 @@ class BallController(MpfController):
         if count == self.machine.ball_controller.num_balls_known:
             self.debug_log("Yes, all balls are collected")
             return True
-        else:
-            self.debug_log("No, all balls are not collected. Balls Counted: %s. "
-                           "Total balls known: %s", count,
-                           self.machine.ball_controller.num_balls_known)
-            return False
+
+        self.debug_log("No, all balls are not collected. Balls Counted: %s. "
+                       "Total balls known: %s", count,
+                       self.machine.ball_controller.num_balls_known)
+        return False
 
     def collect_balls(self, target='home, trough') -> None:
         """Ensure that all balls are in contained in ball devices with the tag or list of tags you pass.

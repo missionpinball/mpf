@@ -31,12 +31,12 @@ class ServiceController(MpfController):
         self.configure_logging("service")
 
     @staticmethod
-    def _natural_key_sort(string_):
+    def _natural_key_sort(string_to_sort):
         """Sort by natural keys like humans do.
 
         See http://www.codinghorror.com/blog/archives/001018.html.
         """
-        return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', string_)]
+        return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', string_to_sort)]
 
     def is_in_service(self) -> bool:
         """Return true if in service mode."""

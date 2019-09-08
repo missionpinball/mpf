@@ -58,4 +58,3 @@ class AsyncMode(Mode, metaclass=abc.ABCMeta):
 
         Its automatically canceled when the mode stops. You can catch CancelError to handle mode stop.
         """
-        pass

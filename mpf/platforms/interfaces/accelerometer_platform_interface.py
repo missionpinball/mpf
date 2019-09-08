@@ -8,5 +8,3 @@ class AccelerometerPlatformInterface(metaclass=abc.ABCMeta):
 
     Currently no public methods.
     """
-
-    pass

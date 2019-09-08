@@ -744,7 +744,7 @@ class MachineController(LogMixin):
         except KeyboardInterrupt:
             print("Shutdown because of keyboard interrupts")
             return
-        except BaseException:
+        except BaseException:   # pylint: disable-msg=broad-except
             # this happens when receiving a signal
             self.log.exception("Loop exited with exception")
             return
@@ -777,14 +777,14 @@ class MachineController(LogMixin):
         if not overwrite:
             if self.config['hardware'][platform_section][0] != 'default':
                 return self.hardware_platforms[self.config['hardware'][platform_section][0]]
-            else:
-                return self.default_platform
-        else:
-            try:
-                return self.hardware_platforms[overwrite]
-            except KeyError:
-                raise AssertionError("Platform \"{}\" has not been loaded. Please add it to your \"hardware\" section.".
-                                     format(overwrite))
+
+            return self.default_platform
+
+        try:
+            return self.hardware_platforms[overwrite]
+        except KeyError:
+            raise AssertionError("Platform \"{}\" has not been loaded. Please add it to your \"hardware\" section.".
+                                 format(overwrite))
 
     def register_boot_hold(self, hold: str) -> None:
         """Register a boot hold."""
