@@ -32,3 +32,12 @@ settings:
      default: 300
      key_type: int
      sort: 620
+  shoot_again:
+     label: Multiball Ball Save Timeout
+     values:
+        10: "10 Seconds (default)"
+        20: "20 Seconds"
+        30: "30 Seconds"
+     default: 10000
+     key_type: int
+     sort: 630

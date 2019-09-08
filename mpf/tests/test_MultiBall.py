@@ -41,7 +41,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(1, self.machine.playfield.balls)
 
         # ball drains right away
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(1)
 
         # multiball not started. game should end
@@ -75,7 +75,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertBallsInPlay(2)
 
         # ball drains
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(1)
 
         # game should not end
@@ -88,8 +88,8 @@ class TestMultiBall(MpfGameTestCase):
         self.assertBallsInPlay(2)
 
         # two balls drain
-        self.drain_all_balls()
-        self.drain_all_balls()
+        self.drain_one_ball()
+        self.drain_one_ball()
         self.assertEqual(0, self._events['multiball_mb1_ended'])
 
         # they should be readded because of shoot again
@@ -102,7 +102,7 @@ class TestMultiBall(MpfGameTestCase):
         self.advance_time_and_run(10)
 
         # ball drains
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(1)
         self.assertEventCalled("multiball_mb1_ball_lost", 1)
         self.assertBallsInPlay(1)
@@ -111,7 +111,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(1, self._events['multiball_mb1_ended'])
 
         # the other ball also drains
-        self.drain_all_balls()
+        self.drain_one_ball()
 
         # game should end
         self.advance_time_and_run(1)
@@ -145,7 +145,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(2, self.machine.playfield.balls)
 
         # ball drains
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(1)
 
         # game should not end
@@ -172,7 +172,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(0, self._events['multiball_mb1_ended'])
 
         # ball drains
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(1)
 
         # mb ends
@@ -190,8 +190,8 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(2, self.machine.playfield.balls)
 
         # two balls drains
-        self.drain_all_balls()
-        self.drain_all_balls()
+        self.drain_one_ball()
+        self.drain_one_ball()
 
         # game should end
         self.advance_time_and_run(1)
@@ -226,7 +226,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(3, self.machine.playfield.balls)
 
         # ball drains
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(1)
 
         # game should not end
@@ -238,8 +238,8 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(3, self.machine.playfield.balls)
 
         # two balls drain
-        self.drain_all_balls()
-        self.drain_all_balls()
+        self.drain_one_ball()
+        self.drain_one_ball()
         self.advance_time_and_run(1)
         self.assertEqual(0, self._events['multiball_mb2_ended'])
 
@@ -251,9 +251,9 @@ class TestMultiBall(MpfGameTestCase):
         self.advance_time_and_run(100)
 
         # three balls drain
-        self.drain_all_balls()
-        self.drain_all_balls()
-        self.drain_all_balls()
+        self.drain_one_ball()
+        self.drain_one_ball()
+        self.drain_one_ball()
         self.advance_time_and_run(1)
         self.assertEqual(0, self.machine.playfield.balls)
 
@@ -265,21 +265,21 @@ class TestMultiBall(MpfGameTestCase):
         self.post_event("mb2_stop")
 
         # ball drains
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(1)
 
         # mb does not end yet
         self.assertEqual(0, self._events['multiball_mb2_ended'])
 
         # ball drains
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(1)
 
         # mb ends
         self.assertEqual(1, self._events['multiball_mb2_ended'])
 
         # the other ball also drains
-        self.drain_all_balls()
+        self.drain_one_ball()
 
         # game should end
         self.advance_time_and_run(1)
@@ -330,7 +330,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertFalse(self.machine.multiballs["mb2"].shoot_again)
 
         # ball drains
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(1)
 
         # game should not end
@@ -340,7 +340,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(0, self._events['multiball_mb3_ended'])
 
         # ball drains
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(1)
 
         self.assertNotEqual(None, self.machine.game)
@@ -349,7 +349,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(0, self._events['multiball_mb3_ended'])
 
         # ball drains
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(1)
 
         self.assertNotEqual(None, self.machine.game)
@@ -358,7 +358,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(1, self._events['multiball_mb3_ended'])
 
         # last ball drains
-        self.drain_all_balls()
+        self.drain_one_ball()
 
         # game should end
         self.advance_time_and_run(1)
@@ -400,7 +400,7 @@ class TestMultiBall(MpfGameTestCase):
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.playfield.balls)
 
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(1)
 
         # it should come back
@@ -416,13 +416,13 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(0, self._events['multiball_mb4_ended'])
 
         # next drain should end mb
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(1)
         self.assertEqual(1, self.machine.playfield.available_balls)
         self.assertEqual(1, self._events['multiball_mb4_ended'])
 
         # ball drains
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(1)
 
         # game should end
@@ -461,7 +461,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(2, self.machine.playfield.available_balls)
 
         # drain a ball
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(1)
 
         # it should come back
@@ -477,13 +477,13 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(0, self._events['multiball_mb5_ended'])
 
         # next drain should end mb
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(1)
         self.assertEqual(1, self.machine.playfield.available_balls)
         self.assertEqual(1, self._events['multiball_mb5_ended'])
 
         # ball drains
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(1)
 
         # game should end
@@ -567,7 +567,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(3, self.machine.playfield.balls)
 
         # drain one. should come back
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(5)
         self.assertEqual(3, self.machine.playfield.balls)
         self.assertEqual(2, self.machine.multiballs["mb10"].balls_added_live)
@@ -588,14 +588,14 @@ class TestMultiBall(MpfGameTestCase):
         self.assertTrue(self.machine.multiballs["mb11"].shoot_again)
 
         # drain one. should not come back
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(4)
         self.assertEqual(2, self.machine.playfield.balls)
         self.assertEqual(2, self.machine.game.balls_in_play)
         self.assertTrue(self.machine.multiballs["mb11"].shoot_again)
 
         # but the second one should come back
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(4)
         self.assertEqual(2, self.machine.playfield.balls)
         self.assertEqual(2, self.machine.game.balls_in_play)
@@ -610,7 +610,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(2, self.machine.game.balls_in_play)
 
         # drain one balls
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run()
         self.assertEqual(1, self.machine.game.balls_in_play)
 
@@ -682,7 +682,7 @@ class TestMultiBall(MpfGameTestCase):
         self.advance_time_and_run(5)
         self.assertBallsOnPlayfield(3)
 
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(5)
         self.assertBallsOnPlayfield(2)
         self.assertEventNotCalled("multiball_mb_add_a_ball_ended")
@@ -691,12 +691,12 @@ class TestMultiBall(MpfGameTestCase):
         self.advance_time_and_run(5)
         self.assertBallsOnPlayfield(3)
 
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(5)
         self.assertBallsOnPlayfield(2)
         self.assertEventNotCalled("multiball_mb_add_a_ball_ended")
 
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(5)
         self.assertBallsOnPlayfield(1)
         self.assertEventCalled("multiball_mb_add_a_ball_ended")
@@ -728,7 +728,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertBallsInPlay(1)
 
         # drain ball. player 2 should be up
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(5)
         self.post_event("start_mode1")
         self.assertPlayerNumber(2)
@@ -759,7 +759,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEventCalled("multiball_lock_lock_mb6_full")
 
         # drain ball. lock should release a ball because player1 need to be able to complete it
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(5)
         self.assertEqual(1, self.machine.game.player_list[0]["lock_mb6_locked_balls"])
         self.assertEqual(2, self.machine.game.player_list[1]["lock_mb6_locked_balls"])
@@ -769,7 +769,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertBallsInPlay(0)
 
         # ball from lock drains
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(5)
         self.assertPlayerNumber(1)
         self.assertBallNumber(2)
@@ -799,7 +799,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(3, self.machine.ball_devices["bd_trough"].balls)
 
         # drain ball
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run()
         self.assertPlayerNumber(1)
         self.assertBallNumber(2)
@@ -807,7 +807,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertBallsInPlay(2)
 
         # drain ball
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run()
         self.assertPlayerNumber(1)
         self.assertBallNumber(2)
@@ -815,7 +815,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertBallsInPlay(1)
 
         # drain ball
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(5)
         self.post_event("start_mode1")
         self.assertPlayerNumber(2)
@@ -837,7 +837,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(0, self.machine.game.player_list[1]["lock_mb6_locked_balls"])
 
         # drain ball
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run()
         self.assertPlayerNumber(2)
         self.assertBallNumber(2)
@@ -845,7 +845,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertBallsInPlay(2)
 
         # drain ball
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run()
         self.assertPlayerNumber(2)
         self.assertBallNumber(2)
@@ -853,7 +853,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertBallsInPlay(1)
 
         # drain last ball
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(5)
         self.post_event("start_mode1")
         self.assertPlayerNumber(1)
@@ -870,7 +870,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertBallsInPlay(1)
 
         # drain again
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run(5)
         self.assertPlayerNumber(2)
         self.assertBallNumber(3)
@@ -879,7 +879,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(0, self.machine.game.player_list[1]["lock_mb6_locked_balls"])
 
         # drain again. game should end
-        self.drain_all_balls()
+        self.drain_one_ball()
 
         # lock should eject all balls
         self.advance_time_and_run(5)
@@ -895,14 +895,14 @@ class TestMultiBall(MpfGameTestCase):
         self.assertGameIsNotRunning()
 
         # ball from lock drain
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run()
 
         # start new game
         self.start_game()
         self.post_event("start_mode1")
 
-        self.drain_all_balls()
+        self.drain_one_ball()
         self.advance_time_and_run()
 
     def testModeWithMultiballAutostart(self):
@@ -915,8 +915,8 @@ class TestMultiBall(MpfGameTestCase):
         self.advance_time_and_run(1)
 
         # multiball should be enabled now but not started
-        self.assertTrue(self.machine.multiballs.mb_autostart.enabled)
-        self.assertEqual(1, self.machine.multiballs.mb_autostart.balls_added_live)
+        self.assertTrue(self.machine.multiballs["mb_autostart"].enabled)
+        self.assertEqual(1, self.machine.multiballs["mb_autostart"].balls_added_live)
 
     def testMultiballWhichStartsAfterLock(self):
         self.mock_event("multiball_mb_autostart_ended")
@@ -924,7 +924,7 @@ class TestMultiBall(MpfGameTestCase):
 
         # prepare game
         self.fill_troughs()
-        self.assertFalse(self.machine.multiballs.mb4_autostart.enabled)
+        self.assertFalse(self.machine.multiballs["mb4_autostart"].enabled)
 
         # start game
         self.start_game()
@@ -937,16 +937,16 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(5, self.machine.ball_devices["bd_trough"].available_balls)
 
         # multiball should be enabled now but not started
-        self.assertTrue(self.machine.multiballs.mb4_autostart.enabled)
-        self.assertEqual(0, self.machine.multiballs.mb4_autostart.balls_added_live)
+        self.assertTrue(self.machine.multiballs["mb4_autostart"].enabled)
+        self.assertEqual(0, self.machine.multiballs["mb4_autostart"].balls_added_live)
 
         # lock a ball
         self.machine.default_platform.add_ball_to_device(self.machine.ball_devices["bd_lock"])
         self.advance_time_and_run(1)
 
         # mb should start
-        self.assertTrue(self.machine.multiballs.mb4_autostart.enabled)
-        self.assertEqual(1, self.machine.multiballs.mb4_autostart.balls_added_live)
+        self.assertTrue(self.machine.multiballs["mb4_autostart"].enabled)
+        self.assertEqual(1, self.machine.multiballs["mb4_autostart"].balls_added_live)
         self.assertBallsInPlay(2)
         self.assertAvailableBallsOnPlayfield(2)
 
@@ -955,7 +955,6 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(0, self.machine.ball_devices["bd_lock"].available_balls)
 
         # both balls drain
-        self.drain_all_balls()
         self.drain_all_balls()
 
         # game should end
@@ -983,4 +982,53 @@ class TestMultiBall(MpfGameTestCase):
         self.post_event("test_event_when_enabled")
         self.assertEventCalled("should_post_when_enabled")
         self.assertEventNotCalled("should_not_post_when_enabled")
-        
+
+    def testShootAgainPlaceholder(self):
+        self.fill_troughs()
+        self.start_game()
+        self.assertAvailableBallsOnPlayfield(1)
+
+        # start mb with no shoot again set in machine var
+        self.mock_event("multiball_mb_placeholder_shoot_again_ended")
+        self.mock_event("multiball_mb_placeholder_ended")
+        self.post_event("mb_placeholder_start")
+        self.advance_time_and_run(5)
+        self.assertAvailableBallsOnPlayfield(2)
+        # shoot again should end instantly
+        self.assertEventCalled("multiball_mb_placeholder_shoot_again_ended")
+
+        # drain one ball
+        self.drain_one_ball()
+        self.advance_time_and_run(5)
+        self.assertAvailableBallsOnPlayfield(1)
+        # mb should end
+        self.assertEventCalled("multiball_mb_placeholder_ended")
+
+        # set shoot again time
+        self.machine.variables.set_machine_var("shoot_again_sec", 30)
+        # start mb again
+        self.mock_event("multiball_mb_placeholder_shoot_again_ended")
+        self.mock_event("multiball_mb_placeholder_ended")
+        self.post_event("mb_placeholder_start")
+        self.advance_time_and_run(5)
+        self.assertAvailableBallsOnPlayfield(2)
+        # shoot again should not end instantly
+        self.assertEventNotCalled("multiball_mb_placeholder_shoot_again_ended")
+
+        # drain one ball
+        self.drain_one_ball()
+        self.advance_time_and_run(5)
+        # shoot again should bring it back
+        self.assertAvailableBallsOnPlayfield(2)
+        self.assertEventNotCalled("multiball_mb_placeholder_ended")
+
+        # wait 30s for shoot again to end
+        self.advance_time_and_run(30)
+        self.assertEventCalled("multiball_mb_placeholder_shoot_again_ended")
+
+        # drain one ball
+        self.drain_one_ball()
+        self.advance_time_and_run(5)
+        self.assertAvailableBallsOnPlayfield(1)
+        # mb should end
+        self.assertEventCalled("multiball_mb_placeholder_ended")

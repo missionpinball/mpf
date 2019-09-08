@@ -804,7 +804,7 @@ multiballs:
     ball_count_type: single|enum(add,total)|total
     replace_balls_in_play: single|bool|false
     source_playfield: single|machine(ball_devices)|playfield
-    shoot_again: single|ms|10s
+    shoot_again: single|template_ms|10s
     ball_locks: list|machine(ball_devices)|None
     enable_events: event_handler|str:ms|None
     disable_events: event_handler|str:ms|None
