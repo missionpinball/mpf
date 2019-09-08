@@ -104,3 +104,8 @@ multiballs:
         ball_count: 2
         start_or_add_a_ball_events: start_or_add
         add_a_ball_events: add_ball
+    mb_placeholder:
+        ball_count: 2
+        shoot_again: machine.shoot_again_sec * 1000
+        start_events: mb_placeholder_start
+        stop_events: mb_placeholder_stop
