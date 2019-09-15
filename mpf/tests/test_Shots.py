@@ -31,29 +31,29 @@ class TestShots(MpfTestCase):
 
     def test_block(self):
         self.start_game()
-        self.assertEqual("unlit", self.machine.shots.shot_3.state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_3"].state_name)
 
         self.hit_and_release_switch("switch_3")
         self.advance_time_and_run(.1)
-        self.assertTrue(self.machine.shots.shot_3.enabled)
-        self.assertEqual("lit", self.machine.shots.shot_3.state_name)
+        self.assertTrue(self.machine.shots["shot_3"].enabled)
+        self.assertEqual("lit", self.machine.shots["shot_3"].state_name)
 
-        self.machine.shots.shot_3.reset()
-        self.assertEqual("unlit", self.machine.shots.shot_3.state_name)
+        self.machine.shots["shot_3"].reset()
+        self.assertEqual("unlit", self.machine.shots["shot_3"].state_name)
 
         # Start the mode and make sure those shots load
         self.start_mode("mode1")
 
-        self.assertTrue(self.machine.shots.shot_3.enabled)
-        self.assertTrue(self.machine.shots.mode1_shot_3.enabled)
-        self.assertEqual("unlit", self.machine.shots.shot_3.state_name)
-        self.assertEqual("mode1_one", self.machine.shots.mode1_shot_3.state_name)
+        self.assertTrue(self.machine.shots["shot_3"].enabled)
+        self.assertTrue(self.machine.shots["mode1_shot_3"].enabled)
+        self.assertEqual("unlit", self.machine.shots["shot_3"].state_name)
+        self.assertEqual("mode1_one", self.machine.shots["mode1_shot_3"].state_name)
 
         self.hit_and_release_switch("switch_3")
         self.advance_time_and_run(.1)
 
-        self.assertEqual("unlit", self.machine.shots.shot_3.state_name)
-        self.assertEqual("mode1_two", self.machine.shots.mode1_shot_3.state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_3"].state_name)
+        self.assertEqual("mode1_two", self.machine.shots["mode1_shot_3"].state_name)
 
     def test_loading_shots(self):
         # Make sure machine-wide shots load & mode-specific shots do not
@@ -63,13 +63,13 @@ class TestShots(MpfTestCase):
         self.assertIn('shot_4', self.machine.shots)
         self.assertIn('led_1', self.machine.shots)
 
-        self.assertFalse(self.machine.shots.mode1_shot_1.enabled)
+        self.assertFalse(self.machine.shots["mode1_shot_1"].enabled)
 
         self.start_game()
 
         # Start the mode and make sure those shots load
         self.start_mode("mode1")
-        self.assertTrue(self.machine.shots.mode1_shot_1.enabled)
+        self.assertTrue(self.machine.shots["mode1_shot_1"].enabled)
 
         self.assertIn('shot_1', self.machine.shots)
         self.assertIn('shot_2', self.machine.shots)
@@ -79,7 +79,7 @@ class TestShots(MpfTestCase):
 
         # Stop the mode and make sure those shots go away
         self.stop_mode("mode1")
-        self.assertFalse(self.machine.shots.mode1_shot_1.enabled)
+        self.assertFalse(self.machine.shots["mode1_shot_1"].enabled)
 
         self.assertIn('shot_1', self.machine.shots)
         self.assertIn('shot_2', self.machine.shots)
@@ -93,29 +93,29 @@ class TestShots(MpfTestCase):
         # Start the mode
         self.start_mode("mode1")
         # check shot states
-        self.assertTrue(self.machine.shots.mode1_shot_2.enabled)
-        self.assertFalse(self.machine.shots.mode2_shot_2.enabled)
+        self.assertTrue(self.machine.shots["mode1_shot_2"].enabled)
+        self.assertFalse(self.machine.shots["mode2_shot_2"].enabled)
         self.assertLightColor("light_2", "aliceblue")
         self.hit_and_release_switch('switch_2')
         self.assertLightColor("light_2", "antiquewhite")
 
         self.start_mode("mode2")
-        self.assertTrue(self.machine.shots.mode1_shot_2.enabled)
-        self.assertTrue(self.machine.shots.mode2_shot_2.enabled)
+        self.assertTrue(self.machine.shots["mode1_shot_2"].enabled)
+        self.assertTrue(self.machine.shots["mode2_shot_2"].enabled)
 
         # mode2 takes priority
         self.assertLightColor("light_2", "red")
 
         # Stop the mode
         self.stop_mode("mode2")
-        self.assertTrue(self.machine.shots.mode1_shot_2.enabled)
-        self.assertFalse(self.machine.shots.mode2_shot_2.enabled)
+        self.assertTrue(self.machine.shots["mode1_shot_2"].enabled)
+        self.assertFalse(self.machine.shots["mode2_shot_2"].enabled)
 
         # check if color returns to mode1_shot_2 color
         self.assertLightColor("light_2", "antiquewhite")
 
     def test_hits(self):
-        self.assertFalse(self.machine.shots.mode1_shot_1.enabled)
+        self.assertFalse(self.machine.shots["mode1_shot_1"].enabled)
 
         self.shot_1_hit = MagicMock()
         self.shot_1_default_hit = MagicMock()
@@ -136,7 +136,7 @@ class TestShots(MpfTestCase):
 
         self.start_game()
         self.start_mode("mode1")
-        self.assertTrue(self.machine.shots.mode1_shot_1.enabled)
+        self.assertTrue(self.machine.shots["mode1_shot_1"].enabled)
 
         # hit shot_1, test all three event variations
         self.hit_and_release_switch('switch_1')
@@ -156,7 +156,7 @@ class TestShots(MpfTestCase):
                                                       state='unlit', advancing=True)
 
         # stop the mode
-        self.machine.modes.mode1.stop()
+        self.machine.modes["mode1"].stop()
         self.advance_time_and_run()
 
         # hit the mode shot and make sure it was not called
@@ -229,13 +229,13 @@ class TestShots(MpfTestCase):
         self.mock_event("shot_delay_hit")
         self.hit_and_release_switch("s_delay")
 
-        self.machine.modes.base2.stop()
+        self.machine.modes["base2"].stop()
         self.advance_time_and_run()
         self.hit_and_release_switch("switch_1")
         self.advance_time_and_run(.5)
         self.assertEventNotCalled("shot_delay_hit")
 
-        self.machine.modes.base2.start()
+        self.machine.modes["base2"].start()
         self.advance_time_and_run()
         self.hit_and_release_switch("switch_1")
         self.advance_time_and_run(.5)
@@ -251,21 +251,21 @@ class TestShots(MpfTestCase):
         self.start_game()
         self.mock_event("shot_27_hit")
         # unlit and two states in the beginning
-        self.assertEqual(2, len(self.machine.shots.shot_1.config['profile'].config['states']))
-        self.assertEqual("unlit", self.machine.shots.shot_1.state_name)
+        self.assertEqual(2, len(self.machine.shots["shot_1"].config['profile'].config['states']))
+        self.assertEqual("unlit", self.machine.shots["shot_1"].state_name)
         self.assertPlaceholderEvaluates("unlit", "device.shots.shot_1.state_name")
         self.assertPlaceholderEvaluates(0, "device.shots.shot_1.state")
 
         # one hit and it lits
         self.hit_and_release_switch("switch_1")
-        self.assertEqual("lit", self.machine.shots.shot_1.state_name)
+        self.assertEqual("lit", self.machine.shots["shot_1"].state_name)
         self.assertEqual(1, self.machine.game.player["shot_shot_1"])
         self.assertPlaceholderEvaluates("lit", "device.shots.shot_1.state_name")
         self.assertPlaceholderEvaluates(1, "device.shots.shot_1.state")
 
         # it stays lit
         self.hit_and_release_switch("switch_1")
-        self.assertEqual("lit", self.machine.shots.shot_1.state_name)
+        self.assertEqual("lit", self.machine.shots["shot_1"].state_name)
         self.assertEqual(1, self.machine.game.player["shot_shot_1"])
         self.assertEventCalled("shot_27_hit")
 
@@ -279,24 +279,24 @@ class TestShots(MpfTestCase):
     def test_profile_advancing_with_loop(self):
         self.start_game()
 
-        self.assertEqual(3, len(self.machine.shots.shot_2.config['profile'].config['states']))
+        self.assertEqual(3, len(self.machine.shots["shot_2"].config['profile'].config['states']))
 
-        self.assertEqual("one", self.machine.shots.shot_2.state_name)
+        self.assertEqual("one", self.machine.shots["shot_2"].state_name)
 
         self.hit_and_release_switch("switch_2")
-        self.assertEqual("two", self.machine.shots.shot_2.state_name)
+        self.assertEqual("two", self.machine.shots["shot_2"].state_name)
         self.assertEqual(1, self.machine.game.player["shot_shot_2"])
 
         self.hit_and_release_switch("switch_2")
-        self.assertEqual("three", self.machine.shots.shot_2.state_name)
+        self.assertEqual("three", self.machine.shots["shot_2"].state_name)
         self.assertEqual(2, self.machine.game.player["shot_shot_2"])
 
         self.hit_and_release_switch("switch_2")
-        self.assertEqual("one", self.machine.shots.shot_2.state_name)
+        self.assertEqual("one", self.machine.shots["shot_2"].state_name)
         self.assertEqual(0, self.machine.game.player["shot_shot_2"])
 
         self.hit_and_release_switch("switch_2")
-        self.assertEqual("two", self.machine.shots.shot_2.state_name)
+        self.assertEqual("two", self.machine.shots["shot_2"].state_name)
         self.assertEqual(1, self.machine.game.player["shot_shot_2"])
 
     def test_default_show_light(self):
@@ -477,32 +477,32 @@ class TestShots(MpfTestCase):
         self.start_game()
 
         self.start_mode("mode1")
-        self.assertFalse(self.machine.shots.mode1_shot_17.enabled)
-        self.assertTrue(self.machine.shots.mode1_shot_1.enabled)
+        self.assertFalse(self.machine.shots["mode1_shot_17"].enabled)
+        self.assertTrue(self.machine.shots["mode1_shot_1"].enabled)
         self.assertPlaceholderEvaluates(True, "device.shots.mode1_shot_1.enabled")
 
         self.stop_mode("mode1")
         self.start_mode("mode1")
-        self.assertFalse(self.machine.shots.mode1_shot_17.enabled)
-        self.assertTrue(self.machine.shots.mode1_shot_1.enabled)
+        self.assertFalse(self.machine.shots["mode1_shot_17"].enabled)
+        self.assertTrue(self.machine.shots["mode1_shot_1"].enabled)
 
         self.post_event("custom_enable_17")
-        self.assertTrue(self.machine.shots.mode1_shot_17.enabled)
+        self.assertTrue(self.machine.shots["mode1_shot_17"].enabled)
         self.post_event("custom_disable_1")
-        self.assertFalse(self.machine.shots.mode1_shot_1.enabled)
+        self.assertFalse(self.machine.shots["mode1_shot_1"].enabled)
         self.assertPlaceholderEvaluates(False, "device.shots.mode1_shot_1.enabled")
 
         self.stop_mode("mode1")
-        self.assertFalse(self.machine.shots.mode1_shot_17.enabled)
-        self.assertFalse(self.machine.shots.mode1_shot_1.enabled)
+        self.assertFalse(self.machine.shots["mode1_shot_17"].enabled)
+        self.assertFalse(self.machine.shots["mode1_shot_1"].enabled)
 
         self.start_mode("mode1")
-        self.assertTrue(self.machine.shots.mode1_shot_17.enabled)
-        self.assertFalse(self.machine.shots.mode1_shot_1.enabled)
+        self.assertTrue(self.machine.shots["mode1_shot_17"].enabled)
+        self.assertFalse(self.machine.shots["mode1_shot_1"].enabled)
 
     def test_control_events(self):
         # test control events from machine-wide shot
-        shot16 = self.machine.shots.shot_16
+        shot16 = self.machine.shots["shot_16"]
         self.mock_event("shot_16_hit")
         self.start_game()
 
@@ -551,7 +551,7 @@ class TestShots(MpfTestCase):
         self.assertEqual(shot16.state_name, 'lit')
 
         self.post_event("custom_enable_16")
-        self.assertTrue(self.machine.shots.shot_16.enabled)
+        self.assertTrue(self.machine.shots["shot_16"].enabled)
 
         self.post_event('custom_hit_16')
         self.assertEqual(2, self._events["shot_16_hit"])
@@ -562,16 +562,16 @@ class TestShots(MpfTestCase):
         self.advance_time_and_run()
         # make sure we are disabled and advanced in the profile
         self.assertEqual(shot16.state_name, 'lit')
-        self.assertFalse(self.machine.shots.shot_16.enabled)
+        self.assertFalse(self.machine.shots["shot_16"].enabled)
         self.machine.events.post('custom_restart_16')
         self.advance_time_and_run()
         self.assertEqual(shot16.state_name, 'unlit')
-        self.assertTrue(self.machine.shots.shot_16.enabled)
+        self.assertTrue(self.machine.shots["shot_16"].enabled)
 
         # mode1 is not active, so make sure none of the events from
         # mode1_shot_17
 
-        self.assertFalse(self.machine.shots.mode1_shot_17.enabled)
+        self.assertFalse(self.machine.shots["mode1_shot_17"].enabled)
         self.mock_event("mode1_shot_17_hit")
 
         # Also verify hit event does not register a hit
@@ -596,10 +596,10 @@ class TestShots(MpfTestCase):
         self.advance_time_and_run()
 
         # start the mode
-        self.machine.modes.mode1.start()
+        self.machine.modes["mode1"].start()
         self.advance_time_and_run()
 
-        shot17 = self.machine.shots.mode1_shot_17
+        shot17 = self.machine.shots["mode1_shot_17"]
 
         # Since this shot has custom enable events, it should not be enabled on
         # game start
@@ -640,7 +640,7 @@ class TestShots(MpfTestCase):
 
     def test_advance(self):
         self.mock_event("shot_17_hit")
-        shot17 = self.machine.shots.shot_17
+        shot17 = self.machine.shots["shot_17"]
 
         self.start_game()
 
@@ -677,7 +677,7 @@ class TestShots(MpfTestCase):
     def test_show_when_disabled(self):
         # first test show_when_disabled == true
 
-        shot19 = self.machine.shots.shot_19
+        shot19 = self.machine.shots["shot_19"]
 
         self.start_game()
         # shot19 config has enable_events: none, so it should be disabled
@@ -725,7 +725,7 @@ class TestShots(MpfTestCase):
         self.assertLightColor("led_19", 'aquamarine')
 
     def test_no_show_when_disabled(self):
-        shot20 = self.machine.shots.shot_20
+        shot20 = self.machine.shots["shot_20"]
 
         self.start_game()
 
@@ -809,7 +809,7 @@ class TestShots(MpfTestCase):
 
         self.assertLightColor("led_27", "black")
 
-        self.machine.modes.mode2.start()
+        self.machine.modes["mode2"].start()
         self.advance_time_and_run()
 
         # step1 red
@@ -821,14 +821,13 @@ class TestShots(MpfTestCase):
         # step2 orange
         self.assertLightColor("led_27", "orange")
 
-        self.machine.modes.mode2.stop()
+        self.machine.modes["mode2"].stop()
         self.advance_time_and_run()
 
         # mode stopped. led off
         self.assertLightColor("led_27", "black")
 
-
-        self.machine.modes.mode2.start()
+        self.machine.modes["mode2"].start()
         self.advance_time_and_run()
 
         # back to step2. orange
@@ -846,39 +845,75 @@ class TestShots(MpfTestCase):
 
         self.assertLightColor("led_28", "black")
 
-        self.machine.modes.mode2.start()
+        self.machine.modes["mode2"].start()
         self.advance_time_and_run()
-        self.assertTrue(self.machine.shots.mode2_shot_rainbow_start_step.enabled)
+        self.assertTrue(self.machine.shots["mode2_shot_rainbow_start_step"].enabled)
 
         # step1 red
         self.assertLightColor("led_28", "red")
-        self.assertEqual("red", self.machine.shots.mode2_shot_rainbow_start_step.state_name)
+        self.assertEqual("red", self.machine.shots["mode2_shot_rainbow_start_step"].state_name)
 
         self.hit_and_release_switch("switch_28")
         self.advance_time_and_run()
 
         # step2 orange
         self.assertLightColor("led_28", "orange")
-        self.assertEqual("orange", self.machine.shots.mode2_shot_rainbow_start_step.state_name)
+        self.assertEqual("orange", self.machine.shots["mode2_shot_rainbow_start_step"].state_name)
 
-        self.machine.modes.mode2.stop()
+        self.machine.modes["mode2"].stop()
         self.advance_time_and_run()
 
         # mode stopped. led off
         self.assertLightColor("led_28", "black")
-        self.assertFalse(self.machine.shots.mode2_shot_rainbow_start_step.enabled)
+        self.assertFalse(self.machine.shots["mode2_shot_rainbow_start_step"].enabled)
 
-        self.machine.modes.mode2.start()
+        self.machine.modes["mode2"].start()
         self.advance_time_and_run()
 
         # back to step2. orange
-        self.assertEqual("orange", self.machine.shots.mode2_shot_rainbow_start_step.state_name)
+        self.assertEqual("orange", self.machine.shots["mode2_shot_rainbow_start_step"].state_name)
         self.assertLightColor("led_28", "orange")
-        self.assertTrue(self.machine.shots.mode2_shot_rainbow_start_step.enabled)
+        self.assertTrue(self.machine.shots["mode2_shot_rainbow_start_step"].enabled)
 
         self.hit_and_release_switch("switch_28")
         self.advance_time_and_run()
 
         # step3
-        self.assertEqual("yellow", self.machine.shots.mode2_shot_rainbow_start_step.state_name)
+        self.assertEqual("yellow", self.machine.shots["mode2_shot_rainbow_start_step"].state_name)
         self.assertLightColor("led_28", "yellow")
+
+    def test_show_tokens_in_shot(self):
+        """Test show tokens in shots and shot_profiles."""
+        self.start_game()
+        self.machine.modes["mode2"].start()
+
+        self.assertLightColor("led_29", "black")
+
+        # make sure nothing crashes when variables are missing
+        self.post_event("mode2_shot_show_tokens_enable")
+        self.assertLightColor("led_29", "black")
+        self.assertEqual("one", self.machine.shots["mode2_shot_show_tokens"].state_name)
+
+        self.post_event("mode2_shot_show_tokens_advance")
+        self.assertLightColor("led_29", "black")
+        self.assertEqual("two", self.machine.shots["mode2_shot_show_tokens"].state_name)
+
+        # set variables
+        self.machine.variables.set_machine_var("leds", "led_29")
+        self.machine.variables.set_machine_var("color1", "red")
+        self.machine.variables.set_machine_var("color2", "green")
+        self.machine.variables.set_machine_var("color3", "blue")
+
+        # try again
+        self.post_event("mode2_shot_show_tokens_reset")
+
+        self.assertLightColor("led_29", "red")
+        self.assertEqual("one", self.machine.shots["mode2_shot_show_tokens"].state_name)
+
+        self.post_event("mode2_shot_show_tokens_advance")
+        self.assertLightColor("led_29", "green")
+        self.assertEqual("two", self.machine.shots["mode2_shot_show_tokens"].state_name)
+
+        self.post_event("mode2_shot_show_tokens_advance")
+        self.assertLightColor("led_29", "blue")
+        self.assertEqual("three", self.machine.shots["mode2_shot_show_tokens"].state_name)

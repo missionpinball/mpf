@@ -1147,7 +1147,7 @@ shots:
     restart_events: event_handler|str:ms|None
     advance_events: event_handler|str:ms|None
     hit_events: event_handler|str:ms|None
-    show_tokens: dict|str:str|None
+    show_tokens: dict|str:template_str|None
 shot_groups:
     __valid_in__: mode
     shots: list|machine(shots)|None
@@ -1179,7 +1179,7 @@ shot_profiles:
         loops: single|int|-1
         sync_ms: single|int|None
         manual_advance: single|bool|None
-        show_tokens: dict|str:str|None
+        show_tokens: dict|str:template_str|None
 state:
     __valid_in__: machine, mode
     enable_events: event_handler|str:ms|None

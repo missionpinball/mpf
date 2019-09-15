@@ -183,30 +183,48 @@ class Shot(EnableDisableMixin, ModeDevice):
             self._stop_show()
 
     def _play_show(self, settings, start_step=None):
-        s = deepcopy(settings)
+        manual_advance = settings['manual_advance']
         if settings['show']:
             show_name = settings['show']
-            if s['manual_advance'] is None:
-                s['manual_advance'] = False
-
+            if settings['manual_advance'] is None:
+                manual_advance = False
         else:
             show_name = self.profile.config['show']
-            if s['manual_advance'] is None:
-                s['manual_advance'] = True
+            if settings['manual_advance'] is None:
+                manual_advance = True
 
-        s['show_tokens'].update(self.config['show_tokens'])
-        s['priority'] += self.mode.priority
-        if not start_step:
-            start_step = s.pop('start_step')
+        if settings['show_tokens'] and self.config['show_tokens']:
+            show_tokens = dict(settings['show_tokens'])
+            show_tokens.update(self.config['show_tokens'])
+        elif settings['show_tokens']:
+            show_tokens = settings['show_tokens']
+        elif self.config['show_tokens']:
+            show_tokens = self.config['show_tokens']
         else:
-            s.pop('start_step')
+            show_tokens = {}
 
-        s.pop('show')
-        s.pop('name')
+        if show_tokens:
+            show_tokens = {k: v.evaluate({})
+                           for k, v in show_tokens.items()}
 
-        self.debug_log("Playing show: %s. %s", show_name, s)
+        priority = settings['priority'] + self.mode.priority
+        if not start_step:
+            start_step = settings['start_step']
 
-        show_config = self.machine.show_controller.create_show_config(show_name, **s)
+        self.debug_log("Playing show: %s. %s", show_name, settings)
+
+        show_config = self.machine.show_controller.create_show_config(
+            show_name, priority=priority, speed=settings.get("speed"),
+            loops=settings.get("loops", -1), sync_ms=settings.get("sync_ms"), manual_advance=manual_advance,
+            show_tokens=show_tokens, events_when_played=settings.get("events_when_played"),
+            events_when_stopped=settings.get("events_when_stopped"),
+            events_when_looped=settings.get("events_when_looped"),
+            events_when_paused=settings.get("events_when_paused"),
+            events_when_resumed=settings.get("events_when_resumed"),
+            events_when_advanced=settings.get("events_when_advanced"),
+            events_when_stepped_back=settings.get("events_when_stepped_back"),
+            events_when_updated=settings.get("events_when_updated"),
+            events_when_completed=settings.get("events_when_completed"))
         self.running_show = self.machine.show_controller.replace_or_advance_show(self.running_show, show_config,
                                                                                  start_step)
 
