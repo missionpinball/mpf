@@ -1,6 +1,5 @@
 """A shot in MPF."""
 import asyncio
-from copy import deepcopy
 
 from mpf.core.device_monitor import DeviceMonitor
 
