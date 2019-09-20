@@ -1,0 +1,16 @@
+#config_version=5
+
+coils:
+  test_coil:
+    number:
+    allow_enable: True
+
+diverters:
+    test_diverter:
+        activation_coil: test_coil
+        type: hold
+        activate_events: activate_test_diverter
+        enable_events: ball_started
+        disable_events: ball_ended
+        targets_when_active: playfield
+        targets_when_inactive: playfield
