@@ -126,7 +126,8 @@ lights:
     number:
   led_28:
     number:
-
+  led_29:
+    number:
 
 shows:
     rainbow:
