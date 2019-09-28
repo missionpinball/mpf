@@ -506,15 +506,27 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         )
 
     def _add_pulse_rule_to_switch(self, switch, coil):
-        # TODO: properly implement pulse_power. previously implemented pwm_on_ms/pwm_off_ms were incorrect here
-        # This method is called in the p-roc thread. we can call hw_driver.state()
-        self._add_hw_rule(switch, coil,
-                          self.pinproc.driver_state_pulse(coil.hw_driver.state(), coil.pulse_settings.duration))
+        """Add a rule to pulse a coil on switch hit for a certain duration and optional with PWM."""
+        if coil.pulse_settings.power < 1.0:
+            pwm_on, pwm_off = coil.hw_driver.get_pwm_on_off_ms(coil.pulse_settings)
+            self._add_hw_rule(switch, coil,
+                              self.pinproc.driver_pulsed_patter(coil.hw_driver.state(), pwm_on, pwm_off,
+                                                                coil.pulse_settings.duration, True))
+        else:
+            self._add_hw_rule(switch, coil,
+                              self.pinproc.driver_state_pulse(coil.hw_driver.state(), coil.pulse_settings.duration))
 
     def _add_pulse_and_hold_rule_to_switch(self, switch: SwitchSettings, coil: DriverSettings):
+        """Add a rule to pulse a coil on switch hit for a certain duration and enable the coil with optional PWM.
+
+        The initial pulse will always be at full power and this method will error out if it is set differently.
+        """
+        if coil.pulse_settings.power < 1.0:
+            self.raise_config_error("Any rules with hold need to have pulse_power set to 1.0. This is a limitation "
+                                    "with the P/P3-Roc.", 6)
+
         if coil.hold_settings.power < 1.0:
             pwm_on, pwm_off = coil.hw_driver.get_pwm_on_off_ms(coil.hold_settings)
-            # This method is called in the p-roc thread. we can call hw_driver.state()
             self._add_hw_rule(switch, coil,
                               self.pinproc.driver_state_patter(
                                   coil.hw_driver.state(), pwm_on, pwm_off, coil.pulse_settings.duration, True))
@@ -523,12 +535,10 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
             self._add_hw_rule(switch, coil, self.pinproc.driver_state_pulse(coil.hw_driver.state(), 0))
 
     def _add_release_disable_rule_to_switch(self, switch: SwitchSettings, coil: DriverSettings):
-        # This method is called in the p-roc thread. we can call hw_driver.state()
         self._add_hw_rule(switch, coil,
                           self.pinproc.driver_state_disable(coil.hw_driver.state()), invert=True)
 
     def _add_disable_rule_to_switch(self, switch: SwitchSettings, coil: DriverSettings):
-        # This method is called in the p-roc thread. we can call hw_driver.state()
         self._add_hw_rule(switch, coil,
                           self.pinproc.driver_state_disable(coil.hw_driver.state()))
 
