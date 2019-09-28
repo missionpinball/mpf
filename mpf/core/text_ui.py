@@ -306,9 +306,9 @@ class TextUi(MpfController):
             return
 
         player_vars = player.vars.copy()
-        player_vars.pop('score')
-        player_vars.pop('number')
-        player_vars.pop('ball')
+        player_vars.pop('score', None)
+        player_vars.pop('number', None)
+        player_vars.pop('ball', None)
 
         names = self.config.get('player_vars', player_vars.keys())
         for name in names:
