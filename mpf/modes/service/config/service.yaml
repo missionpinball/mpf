@@ -151,130 +151,117 @@ slides:
   - type: text
     text: Door Open
     style: medium
-    anchor_y: bottom
-    x: center
-    y: bottom+21
+    y: bottom + 75%
   - type: text
     text: Press enter for service
     style: small
-    anchor_y: bottom
-    x: center
-    y: bottom+12
+    y: bottom + 50%
   # menu
   service_menu:
   - type: text
     text: Service Menu
     style: small
-    anchor_y: top
     x: center
-    y: top
+    y: bottom + 80%
   # switch test
   service_switch_test:
   - type: text
     text: Switch Test
     style: small
-    anchor_y: top
     x: center
-    y: top
+    y: bottom + 85%
   - type: text
     text: "Last: (switch_num)"
     style: small
-    y: center+6
+    y: bottom + 67%
   - type: text
     text: "(switch_name)"
     style: small
-    y: center
+    y: bottom + 50%
   - type: text
     text: "(switch_label)"
     style: small
-    y: center-6
+    y: bottom + 31%
   - type: text
     text: (switch_state)
     style: small
-    anchor_y: bottom
-    y: bottom
+    y: bottom + 10%
   # coil test
   service_coil_test:
   - type: text
     text: "Coil Test - (board_name)"
     style: small
-    anchor_y: top
     x: center
-    y: top
+    y: bottom + 85%
   - type: text
     text: "(coil_name)"
     style: small
-    y: center+6
+    y: bottom + 67%
   - type: text
     text: "(coil_label)"
     style: small
-    y: center
+    y: bottom + 50%
   - type: text
     text: "(coil_num)"
     style: small
-    y: center-6
+    y: bottom + 31%
   # coil test
   service_light_test:
   - type: text
     text: "Light Test - (board_name)"
     style: small
-    anchor_y: top
     x: center
-    y: top
+    y: bottom + 80%
   - type: text
     text: "(light_name)"
     style: small
-    y: center+6
+    y: bottom + 60%
   - type: text
     text: "(light_label)"
     style: small
-    y: center
+    y: bottom + 40%
   - type: text
     text: "(light_num)/(test_color)"
     style: small
-    y: center-6
+    y: bottom + 20%
   # settings
   service_settings:
   - type: text
     text: "Settings"
     style: small
-    anchor_y: top
     x: center
-    y: top
+    y: bottom + 80%
   - type: text
     text: "(settings_label)"
     style: small
-    y: center+6
+    y: bottom + 60%
   - type: text
     text: "(value_label)"
     style: small
-    y: center
+    y: bottom + 40%
     opacity: 0.5
   service_settings_edit:
   - type: text
     text: "Settings"
     style: small
-    anchor_y: top
     x: center
-    y: top
+    y: bottom + 80%
   - type: text
     text: "(settings_label)"
     style: small
-    y: center+6
+    y: bottom + 60%
     opacity: 0.5
   - type: text
     text: "(value_label)"
     style: small
-    y: center
+    y: bottom + 40%
 
 widgets:
   # power off on door open slide
   service_power_off_door_open:
     type: text
     text: Coil Power Off
-    anchor_y: bottom
-    x: center
-    y: bottom+4
+    y: bottom + 25%
     style: medium
     animations:
       add_to_slide:
@@ -290,8 +277,7 @@ widgets:
     type: text
     text: Coil Power Off
     style: small
-    anchor_y: bottom
-    y: bottom-2
+    y: bottom + 10%
     animations:
       add_to_slide:
       - property: opacity
@@ -302,25 +288,20 @@ widgets:
         duration: 0.5s
         repeat: true
 
-
   # menu items
   service_menu_item_switch:
     type: text
     text: Switch Test
-    anchor_y: center
     style: medium
   service_menu_item_coil:
     type: text
     text: Coil Test
-    anchor_y: center
     style: medium
   service_menu_item_light:
     type: text
     text: Light Test
-    anchor_y: center
     style: medium
   service_menu_item_settings:
     type: text
     text: Settings
-    anchor_y: center
     style: medium
