@@ -28,6 +28,7 @@ if MYPY:   # pragma: no cover
     from mpf.core.show_controller import ShowController     # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.service_controller import ServiceController   # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.light_controller import LightController   # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.platform_controller import PlatformController     # pylint: disable-msg=cyclic-import,unused-import
 
     from mpf.core.custom_code import CustomCode     # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.mode_controller import ModeController     # pylint: disable-msg=cyclic-import,unused-import
@@ -145,6 +146,7 @@ class MachineController(LogMixin):
             self.service = None                         # type: ServiceController
             self.show_player = None                     # type: ShowPlayer
             self.light_controller = None                # type: LightController
+            self.platform_controller = None             # type: PlatformController
 
             # devices
             self.autofires = None                       # type: Dict[str, AutofireCoil]
