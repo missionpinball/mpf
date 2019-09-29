@@ -275,7 +275,7 @@ class DeviceManager(MpfController):
             try:
                 final_priority = int(priority)
             except ValueError:
-                self.raise_config_error("Invalid priority {} in event {} for {}".format(priority, event, event), 4)
+                self.raise_config_error("Invalid priority {} in event {} for {}".format(priority, event, method), 4)
                 return
 
             if delay:
