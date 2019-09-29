@@ -272,11 +272,17 @@ class DeviceManager(MpfController):
             except ValueError:
                 priority = 0
 
+            try:
+                final_priority = int(priority)
+            except ValueError:
+                self.raise_config_error("Invalid priority {} in event {} for {}".format(priority, event, event), 4)
+                return
+
             if delay:
                 self.machine.events.add_handler(
                     event=event,
                     handler=self._control_event_handler,
-                    priority=int(priority),
+                    priority=final_priority,
                     callback=method,
                     ms_delay=delay,
                     delay_mgr=self.machine.delay)
@@ -284,7 +290,7 @@ class DeviceManager(MpfController):
                 self.machine.events.add_handler(
                     event=event,
                     handler=method,
-                    priority=int(priority))
+                    priority=final_priority)
 
     def _control_event_handler(self, callback, ms_delay, delay_mgr=None, **kwargs):
         del kwargs

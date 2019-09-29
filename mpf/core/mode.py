@@ -480,17 +480,23 @@ class Mode(LogMixin):
             except ValueError:
                 priority = 0
 
+            try:
+                final_priority = int(priority) + 2
+            except ValueError:
+                self.raise_config_error("Invalid priority {} in device {} for {}".format(priority, device, event), 2)
+                return
+
             if not delay:
                 self.add_mode_event_handler(
                     event=event,
                     handler=method,
-                    priority=int(priority) + 2,
+                    priority=final_priority,
                     blocking_facility=device.class_label)
             else:
                 self.add_mode_event_handler(
                     event=event,
                     handler=self._control_event_handler,
-                    priority=int(priority) + 2,
+                    priority=final_priority,
                     callback=method,
                     ms_delay=delay,
                     blocking_facility=device.class_label)
