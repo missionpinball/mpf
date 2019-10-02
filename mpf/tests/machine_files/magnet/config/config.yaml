@@ -9,11 +9,17 @@ coils:
     number:
     default_pulse_ms: 100
     default_hold_power: 0.375
+  magnet_coil3:
+    number:
+    default_pulse_ms: 100
+    default_hold_power: 0.375
 
 switches:
   grab_switch1:
     number:
   grab_switch2:
+    number:
+  grab_switch3:
     number:
 
 magnets:
@@ -31,6 +37,10 @@ magnets:
     enable_events: magnet_ball_save_enable
     disable_events: magnet_magnet_ball_save_grabbed_ball
     fling_ball_events: magnet_magnet_ball_save_grabbed_ball
+
+  magnet_auto_enable:
+    magnet_coil: magnet_coil3
+    grab_switch: grab_switch3
 
 ball_saves:
   magnet_save:
