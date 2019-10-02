@@ -80,10 +80,9 @@ class Command:
     def __init__(self, mpf_path, machine_path, args):
         """Run service cli."""
         del mpf_path
-        del machine_path
         del args
 
-        cli = ScaffoldCli(os.getcwd())
+        cli = ScaffoldCli(machine_path)
         try:
             cli.cmdloop()
         except KeyboardInterrupt:
