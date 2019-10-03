@@ -2,6 +2,8 @@
 import cmd
 import os
 
+from mpf.file_interfaces.yaml_roundtrip import YamlRoundtrip
+
 
 class ScaffoldCli(cmd.Cmd):
 
@@ -35,6 +37,47 @@ mode:
     @staticmethod
     def _create_show(name):
         raise AssertionError("Not implemented")
+
+    def do_copy(self, args):
+        """Copy light positions from monitor to your config."""
+        arguments = args.split(" ")
+        if not arguments or len(arguments) != 2 or arguments[0] != "light_positions":
+            self.stdout.write("Usage: copy light_positions your_light_config_file\n")
+            return
+
+        config_loader = YamlRoundtrip()
+        config_name = arguments[1]
+        try:
+            monitor_config = config_loader.load("monitor/monitor.yaml")
+        except Exception as e:  # pylint: disable-msg=broad-except
+            self.stdout.write("Error while loading monitor/monitor.yaml: {}.\n".format(e))
+            return
+
+        try:
+            lights_config = config_loader.load(config_name)
+        except Exception as e:  # pylint: disable-msg=broad-except
+            self.stdout.write("Error while loading {}: {}.\n".format(config_name, e))
+            return
+
+        if "light" not in monitor_config:
+            self.stdout.write("Error: Monitor config does not contain a light section.\n")
+            return
+
+        if "lights" not in lights_config:
+            self.stdout.write("Error: Config does not contain a lights section.\n")
+            return
+
+        lights_found = 0
+        for light_name, light_config in lights_config['lights'].items():
+            if light_name in monitor_config['light']:
+                monitor_light_config = monitor_config['light'][light_name]
+                lights_found += 1
+
+                light_config['x'] = monitor_light_config['x']
+                light_config['y'] = monitor_light_config['y']
+
+        config_loader.save(config_name, lights_config)
+        self.stdout.write("Success: Found {} lights.\n".format(lights_found))
 
     def do_create(self, args):
         """Create something."""
