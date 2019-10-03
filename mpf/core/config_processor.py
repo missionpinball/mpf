@@ -8,6 +8,7 @@ import pickle   # nosec
 import tempfile
 
 from typing import List, Tuple, Any, Optional
+from difflib import SequenceMatcher
 
 from mpf.core.file_manager import FileManager
 from mpf.core.utility_functions import Util
@@ -121,6 +122,42 @@ class ConfigProcessor:
 
         return config
 
+    @staticmethod
+    def _find_similar_key(key, config_spec, config_type):
+        """Find the most similar key in config_spec."""
+        best_similarity = 0
+        best_key = ""
+        for existing_key, config in config_spec.items():
+            if '__valid_in__' not in config or config_type not in config['__valid_in__']:
+                continue
+            similarity = SequenceMatcher(None, existing_key, key).ratio()
+            if similarity > best_similarity:
+                best_key = existing_key
+                best_similarity = similarity
+
+        return best_key
+
+    def _check_sections(self, config, config_type, filename, ignore_unknown_sections):
+        config_spec = self.config_validator.get_config_spec()
+        if not isinstance(config, dict):
+            raise ConfigFileError("Config should be a dict: {}".format(config), 1, self.log.name, filename)
+        for k in config.keys():
+            try:
+                if config_type not in config_spec[k]['__valid_in__']:
+                    raise ConfigFileError('Found a "{}:" section in config file {}, '
+                                          'but that section is not valid in {} config '
+                                          'files (only in {}).'.format(k, filename, config_type,
+                                                                       config_spec[k]['__valid_in__']),
+                                          2, self.log.name, filename)
+            except KeyError:
+                if not ignore_unknown_sections:
+                    suggestion = self._find_similar_key(k, config_spec, config_type)
+
+                    raise ConfigFileError('Found a "{}:" section in config file {}, '
+                                          'but that section name is unknown. Did you mean "{}:" '
+                                          'instead?.'.format(k, filename, suggestion), 3, self.log.name,
+                                          filename)
+
     def _load_config_file_and_return_loaded_files(
             self, filename, config_type: str,
             ignore_unknown_sections=False) -> Tuple[dict, List[str]]:   # pragma: no cover
@@ -138,20 +175,7 @@ class ConfigProcessor:
         self.log.info('Loading config: %s', filename)
 
         if config_type in ("machine", "mode"):
-            if not isinstance(config, dict):
-                raise ConfigFileError("Config should be a dict: {}".format(config), self.log.name, "ConfigProcessor")
-            for k in config.keys():
-                try:
-                    if config_type not in self.config_validator.get_config_spec()[k][
-                            '__valid_in__']:
-                        raise ValueError('Found a "{}:" section in config file {}, '
-                                         'but that section is not valid in {} config '
-                                         'files.'.format(k, filename, config_type))
-                except KeyError:
-                    if not ignore_unknown_sections:
-                        raise ValueError('Found a "{}:" section in config file {}, '
-                                         'but that section is not valid in {} config '
-                                         'files.'.format(k, filename, config_type))
+            self._check_sections(config, config_type, filename, ignore_unknown_sections)
 
         try:
             if 'config' in config:
@@ -166,43 +190,6 @@ class ConfigProcessor:
             return config, subfiles
         except TypeError:
             return dict(), []
-
-    def load_config_file(self, filename, config_type: str,
-                         ignore_unknown_sections=False) -> dict:   # pragma: no cover
-        """Load a config file."""
-        # config_type is str 'machine' or 'mode', which specifies whether this
-        # file being loaded is a machine config or a mode config file
-        expected_version_str = ConfigProcessor.get_expected_version(config_type)
-        config = FileManager.load(filename, expected_version_str, True)
-
-        if not config:
-            return dict()
-
-        for k in config.keys():
-            try:
-                if config_type not in self.config_validator.get_config_spec()[k][
-                        '__valid_in__']:
-                    raise ValueError('Found a "{}:" section in config file {}, '
-                                     'but that section is not valid in {} config '
-                                     'files.'.format(k, filename, config_type))
-            except KeyError:
-                if not ignore_unknown_sections:
-                    raise ValueError('Found a "{}:" section in config file {}, '
-                                     'but that section is not valid in {} config '
-                                     'files.'.format(k, filename, config_type))
-
-        try:
-            if 'config' in config:
-                path = os.path.split(filename)[0]
-
-                for file in Util.string_to_list(config['config']):
-                    full_file = os.path.join(path, file)
-                    config = Util.dict_merge(config,
-                                             self.load_config_file(
-                                                 full_file, config_type))
-            return config
-        except TypeError:
-            return dict()
 
     @staticmethod
     def get_expected_version(config_type: str) -> str:

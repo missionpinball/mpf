@@ -1,0 +1,7 @@
+#config_version=5
+
+light:
+  light1:
+    number: 1
+  light2:
+    number: 2

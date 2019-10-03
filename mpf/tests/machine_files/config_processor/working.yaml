@@ -1,0 +1,10 @@
+#config_version=5
+
+config:
+  - working_subconfig.yaml
+
+lights:
+  light1:
+    number: 1
+  light2:
+    number: 2
