@@ -18,6 +18,7 @@ lights:
 
 modes:
   - base
+  - mode1
 
 shows:
   achievement1_enabled:

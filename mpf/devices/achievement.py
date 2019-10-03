@@ -6,7 +6,6 @@ from mpf.core.events import event_handler
 from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
-from mpf.devices.achievement_group import AchievementGroup
 
 
 @DeviceMonitor(_state="state")
@@ -29,7 +28,6 @@ class Achievement(ModeDevice):
         self._player = None
         self._mode = None
         self._show = None
-        self._group_memberships = set()
 
     @property
     def state(self):
@@ -136,10 +134,13 @@ class Achievement(ModeDevice):
         if not self._player:
             return
 
-        if self.config['enable_events']:
-            self._state = "disabled"
+        if self.config['start_enabled'] is None:
+            if self.config['enable_events']:
+                self._state = "disabled"
+            else:
+                self._state = "enabled"
         else:
-            self._state = "enabled"
+            self._state = self.config['start_enabled']
 
         self._run_state()
 
@@ -161,12 +162,26 @@ class Achievement(ModeDevice):
 
     def _run_state(self, restore=False):
         """Run shows and post events for current step."""
+        self.machine.events.post("achievement_{}_changed_state".format(self.name), restore=restore,
+                                 new_state=self._state)
+        '''event: achievement_(name)_changed_state
+        desc: Achievement (name) changed state.
+
+        Valid states are: disabled, enabled, started, completed, selected, stopped
+
+        This is only posted once per state. Its also posted on restart on the next ball to restore state.
+
+        args:
+            restore: true if this is reposted to restore state
+            new_state: The new state
+
+        '''
         for event in self.config['events_when_{}'.format(self._state)]:
             self.machine.events.post(event, restore=restore)
             '''event: achievement_(name)_state_(state)
             desc: Achievement (name) changed to state (state).
 
-            Valid states are: disabled, enabled, started, completed
+            Valid states are: disabled, enabled, started, completed, selected, stopped
 
             This is only posted once per state. Its also posted on restart on the next ball to restore state.
 
@@ -198,9 +213,6 @@ class Achievement(ModeDevice):
                 priority=self._mode.priority,
                 loops=-1, sync_ms=self.config['sync_ms'],
                 show_tokens=self.config['show_tokens'])
-
-        for group in self._group_memberships:
-            group.member_state_changed()
 
     def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Load device on mode start and restore state.
@@ -248,23 +260,3 @@ class Achievement(ModeDevice):
         Achievements use sophisticated logic to handle their mode-starting states
         during device_loaded_in_mode(). Therefore no default enabling is required.
         """
-
-    def add_to_group(self, group):
-        """Add this achievement to an achievement group.
-
-        Args:
-            group: The achievement group to add this achievement to.
-
-        """
-        assert isinstance(group, AchievementGroup)
-        self._group_memberships.add(group)
-
-    def remove_from_group(self, group):
-        """Remove this achievement from an achievement group.
-
-        Args:
-            group: The achievement group to remove this achievement from.
-
-        """
-        assert isinstance(group, AchievementGroup)
-        self._group_memberships.discard(group)
