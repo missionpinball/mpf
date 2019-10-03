@@ -67,7 +67,7 @@ class ShowPlayer(DeviceConfigPlayer):
         for key in RESERVED_KEYS:
             if key in device_settings["show_tokens"]:
                 self.raise_config_error("Key {} is not allowed in show_tokens of your show_player because it is also "
-                                        "an option in show_player. Did indent that option too far?".format(key), 1)
+                                        "an option in show_player. Did you indent that option too far?".format(key), 1)
         return device_settings
 
     def handle_subscription_change(self, value, settings, priority, context):
