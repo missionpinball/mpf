@@ -68,6 +68,8 @@ if MYPY:   # pragma: no cover
     from mpf.devices.multiball_lock import MultiballLock    # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.multiball import Multiball     # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.ball_hold import BallHold      # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.ball_save import BallSave      # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.magnet import Magnet           # pylint: disable-msg=cyclic-import,unused-import
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -176,6 +178,8 @@ class MachineController(LogMixin):
             self.multiball_locks = None                 # type: Dict[str, MultiballLock]
             self.multiballs = None                      # type: Dict[str, Multiball]
             self.ball_holds = None                      # type: Dict[str, BallHold]
+            self.ball_saves = None                      # type: Dict[str, BallSave]
+            self.magnets = None                         # type: Dict[str, Magnet]
 
         self._set_machine_path()
 

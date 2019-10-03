@@ -1,6 +1,7 @@
 """Implements enable and disable events for devices."""
 import abc
-import asyncio
+
+from mpf.core.system_wide_device import SystemWideDevice
 
 from mpf.core.device_monitor import DeviceMonitor
 
@@ -39,6 +40,12 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
 
         This can be caused by a mode stop or by an disable_event.
         """
+
+    @event_handler(10)
+    def event_enable(self, **kwargs):
+        """Handle enable control event."""
+        del kwargs
+        self.enable()
 
     def enable(self) -> None:
         """Enable device."""
@@ -125,8 +132,53 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
         self.player = None
         self._enabled = None
 
-    @asyncio.coroutine
-    def device_added_system_wide(self) -> None:
-        """Check enable on boot."""
-        yield from super().device_added_system_wide()
-        self._load_enable_based_on_config_default()
+
+@DeviceMonitor("enabled")
+class EnableDisableMixinSystemWideDevice(SystemWideDevice, metaclass=abc.ABCMeta):
+
+    """Implements enable and disable_events."""
+
+    __slots__ = ["enabled"]
+
+    def __init__(self, machine: MachineController, name: str) -> None:
+        """Remember the enable state."""
+        self.enabled = False    # type: bool
+        super().__init__(machine, name)
+
+    def _enable(self):
+        """Enable the device.
+
+        Overwrite this method.
+        """
+
+    def _disable(self):
+        """Disable the device.
+
+        Overwrite this method.
+        """
+
+    @event_handler(10)
+    def event_enable(self, **kwargs):
+        """Handle enable control event."""
+        del kwargs
+        self.enable()
+
+    def enable(self) -> None:
+        """Enable device."""
+        if self.enabled is True:
+            return
+        self.enabled = True
+        self._enable()
+
+    @event_handler(0)
+    def event_disable(self, **kwargs):
+        """Handle disable control event."""
+        del kwargs
+        self.disable()
+
+    def disable(self):
+        """Disable device."""
+        if self.enabled is False:
+            return
+        self.enabled = False
+        self._disable()

@@ -762,8 +762,8 @@ magnets:
     fling_drop_time: single|ms|250ms
     fling_regrab_time: single|ms|50ms
     playfield: single|machine(playfields)|playfield
-    enable_events: event_handler|str:ms|None
-    disable_events: event_handler|str:ms|None
+    enable_events: event_handler|str:ms|ball_started
+    disable_events: event_handler|str:ms|ball_will_end, service_mode_entered
     reset_events: event_handler|str:ms|machine_reset_phase_3, ball_starting
     grab_ball_events: event_handler|str:ms|None
     release_ball_events: event_handler|str:ms|None
