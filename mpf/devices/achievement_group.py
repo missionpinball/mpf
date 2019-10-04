@@ -23,7 +23,7 @@ class AchievementGroup(ModeDevice):
     ball.
     """
 
-    __slots__ = ["_mode", "_show", "_enabled", "_selected_member", "_rotation_in_progress", "_handlers"]
+    __slots__ = ["_show", "_enabled", "_selected_member", "_rotation_in_progress", "_handlers", "_loaded"]
 
     config_section = 'achievement_groups'
     collection = 'achievement_groups'
@@ -33,10 +33,10 @@ class AchievementGroup(ModeDevice):
         """Initialize achievement."""
         super().__init__(machine, name)
 
-        self._mode = None       # type: Mode
         self._show = None       # type: RunningShow
 
         self._enabled = False
+        self._loaded = False
         self._selected_member = None    # type: Achievement
         self._rotation_in_progress = False
         self._handlers = []
@@ -48,12 +48,19 @@ class AchievementGroup(ModeDevice):
 
     def enable(self):
         """Enable achievement group."""
-        super().enable()
-        self.debug_log("Call to enable this group")
+        if not self._loaded:
+            return
 
         if self._enabled:
             self.debug_log("Group is already enabled. Aborting")
             return
+
+        if self._is_member_started() and self.config['disable_while_achievement_started']:
+            self.debug_log("Not enabling because a member is started and disable_while_achievement_started is true.")
+            return
+
+        super().enable()
+        self.debug_log("Call to enable this group")
 
         self._enabled = True
         self.debug_log("Enabling group")
@@ -64,7 +71,7 @@ class AchievementGroup(ModeDevice):
 
         if show:
             self._show = self.machine.shows[show].play(
-                priority=self._mode.priority,
+                priority=self.mode.priority,
                 loops=-1,
                 show_tokens=self.config['show_tokens'])
 
@@ -81,7 +88,6 @@ class AchievementGroup(ModeDevice):
 
     def disable(self):
         """Disable achievement group."""
-        self.debug_log("Call to disable this group")
         if not self._enabled:
             self.debug_log("Group is already disabled. Aborting")
             return
@@ -100,7 +106,6 @@ class AchievementGroup(ModeDevice):
 
         available = [x for x in self.config['achievements'] if
                      x.state == 'enabled' or
-                     x.state == 'selected' or
                      (x.state == 'stopped' and
                      x.config['restart_after_stop_possible'])]
 
@@ -152,8 +157,8 @@ class AchievementGroup(ModeDevice):
         self._rotation_in_progress = True
 
         # if there's already one selected, set it back to enabled
-        if self._selected_member and self._selected_member.state == "selected":
-            self._selected_member.enable()
+        if self._selected_member and self._selected_member.selected:
+            self._selected_member.unselect()
 
         achievements = self._get_available_achievements()
         if not achievements:
@@ -211,9 +216,8 @@ class AchievementGroup(ModeDevice):
             self.debug_log("Not ok to change selection. Aborting")
             return
 
-        if self._selected_member and self._selected_member.state == "selected":
-            self.debug_log("Enabling selected member")
-            self._selected_member.enable()
+        if self._selected_member and self._selected_member.selected:
+            self._selected_member.unselect()
 
         try:
             ach = choice(self._get_available_achievements())
@@ -239,6 +243,8 @@ class AchievementGroup(ModeDevice):
     def member_state_changed(self, **kwargs):
         """Notify the group that one of its members has changed state."""
         del kwargs
+        if not self._loaded:
+            return
         self.debug_log("Member state has changed")
         if self._is_member_started():
             self.debug_log("A member is started")
@@ -278,7 +284,7 @@ class AchievementGroup(ModeDevice):
     def _update_selected(self):
         self.debug_log("Updating selected achievement")
         for ach in self.config['achievements']:
-            if ach.state == 'selected':
+            if ach.selected:
                 self._selected_member = ach
                 self.debug_log("Already have a selected member is %s", ach)
                 return True
@@ -309,7 +315,7 @@ class AchievementGroup(ModeDevice):
             self.debug_log("Group is disabled. Aborting...")
             return False
 
-        if not [x for x in self.config['achievements'] if x.state == "enabled"]:
+        if not self._get_available_achievements():
             self._no_more_enabled()
             return True
         return False
@@ -330,17 +336,14 @@ class AchievementGroup(ModeDevice):
             mode: mode which was contains the device
             player: player which is currently active
         """
-        self._mode = mode
+        super().device_loaded_in_mode(mode, player)
+        self._loaded = True
 
         for ach in self.config['achievements']:
             self._handlers.append(self.machine.events.add_handler("achievement_{}_changed_state".format(ach.name),
                                                                   self.member_state_changed))
 
-        self.member_state_changed()
-
-        if (not self._enabled and
-                not self.config['enable_events'] and
-                not self.config['disable_while_achievement_started']):
+        if self.config['enable_while_no_achievement_started'] and self._is_member_started() and not self._enabled:
             self.enable()
 
     def device_removed_from_mode(self, mode: Mode):
@@ -349,11 +352,13 @@ class AchievementGroup(ModeDevice):
         Args:
             mode: mode which stopped
         """
-        del mode
-        self._mode = None
+        super().device_removed_from_mode(mode)
 
         self.machine.events.remove_handlers_by_keys(self._handlers)
         self._handlers = []
+
+        self.disable()
+        self._loaded = False
 
         if self._show:
             self._show.stop()

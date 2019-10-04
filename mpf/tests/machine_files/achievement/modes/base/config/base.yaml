@@ -105,9 +105,11 @@ achievements:
 
   achievement9: {}
 
-  achievement10: {}
+  achievement10:
+    debug: True
 
-  achievement11: {}
+  achievement11:
+    debug: True
 
   achievement12:
     enable_events: enable_achievements
@@ -165,6 +167,7 @@ achievement_groups:
           achievement12
           achievement13
         auto_select: yes
+        debug: True
 
     group4:
         debug: True
