@@ -42,6 +42,7 @@ achievements:
     stop_events: event_handler|str:ms|None
     reset_events: event_handler|str:ms|None
     select_events: event_handler|str:ms|None
+    unselect_events: event_handler|str:ms|None
 
     events_when_enabled: list|str|None
     events_when_started: list|str|None
