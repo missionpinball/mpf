@@ -9,6 +9,16 @@ class TestAchievement(MpfFakeGameTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/achievement/'
 
+    def test_enable_when_all_done(self):
+        self.start_game()
+        self.mock_event("achievement_mode1_a1_state_selected")
+        self.mock_event("achievement_mode1_a2_state_selected")
+        self.mock_event("enable_all")
+        self.advance_time_and_run()
+        self.post_event("start_mode1")
+        self.advance_time_and_run()
+        self.assertEventCalled("enable_all", times=1)
+
     def test_two_players_restart_with_keep(self):
         self.mock_event("achievement_achievement1_state_disabled")
         self.mock_event("achievement_achievement1_state_enabled")
@@ -293,6 +303,7 @@ class TestAchievement(MpfFakeGameTestCase):
         a14.complete()
         a15.complete()
         a16.complete()
+        self.advance_time_and_run(.1)
 
         self.assertFalse(g4.enabled)
         self.advance_time_and_run()
@@ -584,15 +595,19 @@ class TestAchievement(MpfFakeGameTestCase):
 
         # group should auto disable
         selected.start()
+        self.advance_time_and_run(.1)
         self.assertFalse(g1.enabled)
 
         # group should auto enable
         selected.stop()
+        self.advance_time_and_run(.1)
         self.assertTrue(g1.enabled)
 
         selected.start()
+        self.advance_time_and_run(.1)
         self.assertFalse(g1.enabled)
         selected.complete()
+        self.advance_time_and_run(.1)
 
         # group should auto enable and select another
         self.assertTrue(g1.enabled)
@@ -600,7 +615,9 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertIsNot(selected, selected2)
 
         selected2.start()
+        self.advance_time_and_run(.1)
         selected2.complete()
+        self.advance_time_and_run(.1)
 
         # group should auto enable and select another
         self.assertTrue(g1.enabled)
@@ -608,7 +625,9 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertIsNot(selected2, selected3)
 
         selected3.start()
+        self.advance_time_and_run(.1)
         selected3.complete()
+        self.advance_time_and_run(.1)
 
         # should not re-enable since all members are complete
         self.assertFalse(g1.enabled)

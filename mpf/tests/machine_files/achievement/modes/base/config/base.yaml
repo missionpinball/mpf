@@ -123,6 +123,16 @@ achievements:
 
   achievement17: {}
 
+  mode1_a1:
+    enable_events: enable_all
+    start_events: start_all
+    stop_events: stop_all
+
+  mode1_a2:
+    enable_events: enable_all
+    start_events: start_all
+    stop_events: stop_all
+
 achievement_groups:
     group1:
         achievements: achievement7, achievement8, achievement9

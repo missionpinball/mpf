@@ -51,7 +51,9 @@ class StateMachine(SystemWideDevice, ModeDevice):
         """Set the current state."""
         old = self.state
         if self.config['persist_state']:
+            old = self.player["state_machine_{}".format(self.name)]
             self.player["state_machine_{}".format(self.name)] = value
+            self.notify_virtual_change(self, old, value)
         else:
             self._state = value
 
