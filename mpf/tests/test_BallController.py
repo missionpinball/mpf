@@ -8,7 +8,7 @@ class TestBallController(MpfTestCase):
         super().setUp()
         self.machine.ball_controller.num_balls_known = 0
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
     def getMachinePath(self):

@@ -7,7 +7,7 @@ from unittest.mock import create_autospec
 
 class TestServiceCli(MpfBcpTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
     def getMachinePath(self):

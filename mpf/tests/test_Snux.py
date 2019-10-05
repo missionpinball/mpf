@@ -4,7 +4,7 @@ from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, Ho
 
 
 class TestSnux(MpfFakeGameTestCase):
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
     def getMachinePath(self):

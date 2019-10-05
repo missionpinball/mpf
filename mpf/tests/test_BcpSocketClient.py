@@ -198,7 +198,7 @@ class TestBcpSocketMultipleClients(MpfTestCase):
         self.client_socket_2 = MockBcpQueueSocket(self.loop)
         self.clock.mock_socket("localhost", 9001, self.client_socket_2)
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'multiple_connections_config.yaml'
 
     def getMachinePath(self):

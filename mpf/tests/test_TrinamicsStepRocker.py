@@ -4,7 +4,7 @@ import mpf.platforms.trinamics_steprocker
 
 class TestTrinamicsStepRocker(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'trinamics_steprocker.yaml'
 
     def getMachinePath(self):

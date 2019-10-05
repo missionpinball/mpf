@@ -2,7 +2,7 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 
 class TestConfigOldVersion(MpfTestCase):
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_config_interface_missing_version.yaml'
 
     def getMachinePath(self):

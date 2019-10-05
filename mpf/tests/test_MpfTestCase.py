@@ -4,7 +4,7 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class TestMpfTestCase(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_mpftestcase.yaml'
 
     def getMachinePath(self):

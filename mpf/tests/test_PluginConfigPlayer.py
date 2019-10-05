@@ -130,7 +130,7 @@ class TestConfigPlayer3(PluginPlayer):
 
 
 class TestPluginConfigPlayer(MpfBcpTestCase):
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'plugin_config_player.yaml'
 
     def getMachinePath(self):

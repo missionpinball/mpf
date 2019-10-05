@@ -4,7 +4,7 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class TestQueueEventPlayer(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_queue_event_player.yaml'
 
     def getMachinePath(self):

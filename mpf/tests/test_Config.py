@@ -6,7 +6,7 @@ from mpf._version import log_url
 
 class TestConfig(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_config_interface.yaml'
 
     def getMachinePath(self):

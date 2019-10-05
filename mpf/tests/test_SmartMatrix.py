@@ -24,7 +24,7 @@ class SmartMatrixSerial(MockSerial):
 
 class TestSmartMatrix(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
     def getMachinePath(self):

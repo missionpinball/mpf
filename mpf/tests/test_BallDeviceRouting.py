@@ -8,7 +8,7 @@ class TestBallDeviceRouting(MpfTestCase):
         self._captured = 0
         self._missing = 0
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_ball_device_routing.yaml'
 
     def getMachinePath(self):

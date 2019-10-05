@@ -4,7 +4,7 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class TestAuditor(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
     def get_platform(self):

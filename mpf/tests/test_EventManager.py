@@ -35,7 +35,7 @@ class TestEventManager(MpfFakeGameTestCase, MpfTestCase):
         self._queue_callback_kwargs = dict()
         self._queue_callback_called = 0
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_event_manager.yaml'
 
     def getMachinePath(self):

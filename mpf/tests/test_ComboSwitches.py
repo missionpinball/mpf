@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 class TestComboSwitches(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'combo_switches.yaml'
 
     def getMachinePath(self):

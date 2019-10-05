@@ -5,7 +5,7 @@ from mpf.core.randomizer import Randomizer
 
 class TestRandomizer(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'randomizer.yaml'
 
     def getMachinePath(self):

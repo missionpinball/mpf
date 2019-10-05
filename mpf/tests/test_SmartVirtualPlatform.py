@@ -3,7 +3,7 @@ from mpf.tests.MpfTestCase import MpfTestCase, test_config
 
 class TestSmartVirtualPlatform(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_smart_virtual.yaml'
 
     def getMachinePath(self):

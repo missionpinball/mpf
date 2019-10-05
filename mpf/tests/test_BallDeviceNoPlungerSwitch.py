@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 class TestBallDeviceNoPlungerSwitch(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_ball_device_no_plunger_switch.yaml'
 
     def getMachinePath(self):

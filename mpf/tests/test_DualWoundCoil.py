@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 
 class TestDualWoundCoil(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config_dual_wound_coil.yaml'
 
     def getMachinePath(self):

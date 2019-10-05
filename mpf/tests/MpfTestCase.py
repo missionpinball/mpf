@@ -143,7 +143,7 @@ class MpfTestCase(unittest.TestCase):
         self.machine_run()
         self.assertModeNotRunning(mode)
 
-    def getConfigFile(self):
+    def get_config_file(self):
         """Return a string name of the machine config file to use for the tests
         in this class.
 
@@ -158,7 +158,7 @@ class MpfTestCase(unittest.TestCase):
 
         .. code::
 
-            def getConfigFile(self):
+            def get_config_file(self):
                 return 'my_config.yaml'
 
         """
@@ -325,13 +325,13 @@ class MpfTestCase(unittest.TestCase):
         """
         return False
 
-    def _getConfigFile(self):
-        """Return test decorator value or the return of getConfigFile."""
+    def _get_config_file(self):
+        """Return test decorator value or the return of get_config_file."""
         config_file = getattr(getattr(self, self._testMethodName), "config_file", None)
         if config_file:
             return config_file
         else:
-            return self.getConfigFile()
+            return self.get_config_file()
 
     def getOptions(self):
 
@@ -342,7 +342,7 @@ class MpfTestCase(unittest.TestCase):
             'force_platform': self.get_platform(),
             'production': False,
             'mpfconfigfile': mpfconfig,
-            'configfile': Util.string_to_list(self._getConfigFile()),
+            'configfile': Util.string_to_list(self._get_config_file()),
             'debug': True,
             'bcp': self.get_use_bcp(),
             'no_load_cache': False,

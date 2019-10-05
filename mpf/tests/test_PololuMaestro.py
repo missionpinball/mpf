@@ -5,7 +5,7 @@ import mpf.platforms.pololu_maestro
 
 class TestPololuMaestro(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'pololu_maestro.yaml'
 
     def getMachinePath(self):

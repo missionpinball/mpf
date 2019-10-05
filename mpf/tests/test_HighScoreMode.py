@@ -8,7 +8,7 @@ from mpf.tests.MpfTestCase import test_config_directory
 
 class TestHighScoreMode(MpfBcpTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'high_score.yaml'
 
     def getMachinePath(self):

@@ -6,7 +6,7 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class TestEventPlayer(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_event_player.yaml'
 
     def getMachinePath(self):

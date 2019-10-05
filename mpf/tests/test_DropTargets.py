@@ -5,7 +5,7 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class TestDropTargets(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_drop_targets.yaml'
 
     def getMachinePath(self):

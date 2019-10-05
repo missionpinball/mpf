@@ -3,7 +3,7 @@ from mpf.tests.MpfGameTestCase import MpfGameTestCase
 
 class TestPlayerVars(MpfGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'player_vars.yaml'
 
     def getMachinePath(self):

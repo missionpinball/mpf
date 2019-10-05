@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 class TestBallHold(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_ball_holds.yaml'
 
     def getMachinePath(self):
@@ -568,7 +568,7 @@ class TestBallHold(MpfTestCase):
 
 class TestBallHoldSmart(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_ball_holds.yaml'
 
     def getMachinePath(self):

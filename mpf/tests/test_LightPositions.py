@@ -5,7 +5,7 @@ from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 class TestLightPositions(MpfFakeGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'light.yaml'
 
     def getMachinePath(self):
@@ -23,8 +23,7 @@ class TestLightPositions(MpfFakeGameTestCase):
         self.assertEqual(led2.x, 0.6)
         self.assertEqual(led2.y, 0.7)
         self.assertEqual(led2.z, None)
-        
+
         self.assertEqual(led3.x, None)
         self.assertEqual(led3.y, None)
         self.assertEqual(led3.z, None)
-        

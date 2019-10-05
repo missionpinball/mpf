@@ -5,7 +5,7 @@ from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 class TestModes(MpfFakeGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_modes.yaml'
 
     def getMachinePath(self):
@@ -207,7 +207,7 @@ class TestModes(MpfFakeGameTestCase):
 
 class TestModesInGame(MpfFakeGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_modes_in_game.yaml'
 
     def getMachinePath(self):

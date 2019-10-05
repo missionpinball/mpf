@@ -6,7 +6,7 @@ from mpf.tests.loop import MockSocket
 
 
 class TestFadecandy(MpfTestCase):
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'fadecandy.yaml'
 
     def getMachinePath(self):

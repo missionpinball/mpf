@@ -6,7 +6,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
 
     max_wait_ms = 200
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_ball_device_jam_switch.yaml'
 
     def getMachinePath(self):

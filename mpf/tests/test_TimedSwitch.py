@@ -3,7 +3,7 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class TestTimedSwitch(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'timed_switches.yaml'
 
     def getMachinePath(self):

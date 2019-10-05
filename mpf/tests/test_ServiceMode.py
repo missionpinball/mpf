@@ -6,7 +6,7 @@ from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 class TestServiceMode(MpfFakeGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
     def getMachinePath(self):

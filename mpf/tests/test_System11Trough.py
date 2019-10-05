@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 class TestSystem11Trough(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_system_11_trough.yaml'
 
     def getMachinePath(self):
@@ -152,7 +152,7 @@ class TestSystem11Trough(MpfTestCase):
 
 class TestSystem11TroughStartup(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_system_11_trough_startup.yaml'
 
     def getMachinePath(self):

@@ -3,7 +3,7 @@ from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 class TestBallDevicePlayfieldLock(MpfFakeGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_playfield_lock.yaml'
 
     def getMachinePath(self):

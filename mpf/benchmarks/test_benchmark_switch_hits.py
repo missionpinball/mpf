@@ -7,7 +7,7 @@ from mpf.tests.MpfGameTestCase import MpfGameTestCase
 
 class BenchmarkSwitchHits(MpfGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
     def getMachinePath(self):

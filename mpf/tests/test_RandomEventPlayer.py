@@ -8,7 +8,7 @@ RANDOM_RUNS = 20
 
 class TestRandomEventPlayer(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_random_event_player.yaml'
 
     def getMachinePath(self):
@@ -21,7 +21,7 @@ class TestRandomEventPlayer(MpfTestCase):
 
 class TestRandomEventPlayerGame(MpfGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_random_event_player.yaml'
 
     def getMachinePath(self):

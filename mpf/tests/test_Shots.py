@@ -5,7 +5,7 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class TestShots(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_shots.yaml'
 
     def getMachinePath(self):

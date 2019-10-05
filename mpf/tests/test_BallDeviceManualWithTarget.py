@@ -11,7 +11,7 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self._requesting = 0
         self._queue = False
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_ball_device_manual_with_target.yaml'
 
     def getMachinePath(self):

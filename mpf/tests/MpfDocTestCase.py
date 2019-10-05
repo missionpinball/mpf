@@ -90,7 +90,7 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
 
         return machine_config, modes, shows, tests
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return "config.yaml"
 
     def get_platform(self):

@@ -5,7 +5,7 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class TestLightGroups(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'light_groups.yaml'
 
     def getMachinePath(self):

@@ -3,7 +3,7 @@ from mpf.tests.MpfGameTestCase import MpfGameTestCase
 
 class TestExtraBall(MpfGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
     def getMachinePath(self):

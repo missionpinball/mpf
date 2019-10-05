@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 
 class TestBallDevicesHoldCoil(MpfTestCase):
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_hold_coil.yaml'
 
     def getMachinePath(self):

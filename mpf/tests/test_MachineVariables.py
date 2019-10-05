@@ -7,7 +7,7 @@ from mpf._version import version, extended_version
 
 class TestMachineVariables(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
     def getMachinePath(self):

@@ -3,7 +3,7 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 
 class TestDeviceCollection(MpfTestCase):
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_device_collection.yaml'
 
     def getMachinePath(self):

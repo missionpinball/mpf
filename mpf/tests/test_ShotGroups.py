@@ -6,7 +6,7 @@ from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 class TestShotGroups(MpfFakeGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_shot_groups.yaml'
 
     def getMachinePath(self):

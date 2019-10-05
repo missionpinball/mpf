@@ -3,7 +3,7 @@ from mpf.tests.MpfGameTestCase import MpfGameTestCase
 
 
 class TestMultiballLock(MpfGameTestCase):
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'testDefault.yaml'
 
     def getMachinePath(self):
@@ -109,7 +109,7 @@ class TestMultiballLock(MpfGameTestCase):
 
 class TestMultiballLockCountingStrategies(MpfGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return self._testMethodName + '.yaml'
 
     def getMachinePath(self):

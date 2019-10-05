@@ -8,7 +8,7 @@ class TestMMA8451(MpfTestCase):
     def get_platform(self):
         return False
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
     def getMachinePath(self):

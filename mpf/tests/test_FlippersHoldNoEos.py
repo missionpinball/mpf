@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, call
 
 class TestFlippers(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'hold_no_eos.yaml'
 
     def getMachinePath(self):

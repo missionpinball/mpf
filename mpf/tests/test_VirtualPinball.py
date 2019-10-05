@@ -17,7 +17,7 @@ class TestVirtualPinball(MpfTestCase):
         self.machine_config_patches['bcp'] = dict()
         self.machine_config_patches['bcp']['connections'] = []
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
     def getMachinePath(self):

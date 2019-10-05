@@ -4,7 +4,7 @@ from mpf._version import log_url
 
 class TestModesConfigValidation(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return self.config
 
     def getMachinePath(self):

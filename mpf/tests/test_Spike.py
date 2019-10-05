@@ -123,7 +123,7 @@ class SpikePlatformTest(MpfTestCase):
         msg += bytes([checksum, 0])
         return msg
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
     def getMachinePath(self):

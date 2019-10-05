@@ -5,7 +5,7 @@ class TestBallDeviceEventConfirmation(
     mpf.tests.test_BallDeviceSwitchConfirmation
         .TestBallDeviceSwitchConfirmation):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_ball_device_event_confirmation.yaml'
 
     def getMachinePath(self):

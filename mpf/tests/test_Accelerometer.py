@@ -11,7 +11,7 @@ class TestAccelerometer(MpfTestCase):
         # this is the first test. give it some more time
         self.expected_duration = 2
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
     def getMachinePath(self):

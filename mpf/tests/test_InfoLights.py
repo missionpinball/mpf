@@ -8,7 +8,7 @@ class TestInfoLights(MpfTestCase):
         super().__init__(methodName)
         self.machine_config_patches['mpf']['plugins'] = ["mpf.plugins.info_lights.InfoLights"]
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
     def getMachinePath(self):

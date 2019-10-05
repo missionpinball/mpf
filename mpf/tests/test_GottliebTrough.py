@@ -7,7 +7,7 @@ class TestGottliebTrough(MpfTestCase):
 
     """Test Gottlieb style troughs with outhole and only one one or two switches."""
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_gottlieb_trough.yaml'
 
     def getMachinePath(self):
