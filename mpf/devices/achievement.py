@@ -49,6 +49,12 @@ class Achievement(ModeDevice):
             self.notify_virtual_change("state", None, value)
 
     @property
+    def can_be_selected_for_start(self):
+        """Return if this achievement can be selected and started."""
+        state = self.state
+        return state == 'enabled' or (state == 'stopped' and self.config['restart_after_stop_possible'])
+
+    @property
     def selected(self):
         """Return current selection state."""
         try:
