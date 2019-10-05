@@ -127,6 +127,12 @@ class Shot(EnableDisableMixin, ModeDevice):
         self.running_show = None
 
     @property
+    def can_rotate(self):
+        """Return if the shot can be rotated according to its profile."""
+        state = self.state_name
+        return state not in self.profile.config['state_names_to_not_rotate']
+
+    @property
     def state_name(self):
         """Return current state name."""
         if not self.player:
