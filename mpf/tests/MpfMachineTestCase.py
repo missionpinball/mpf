@@ -40,7 +40,7 @@ class BaseMpfMachineTestCase(MockConfigPlayers):
     def get_machine_path(self):
         return ""
 
-    def getAbsoluteMachinePath(self):
+    def get_absolute_machine_path(self):
         # do not use path relative to MPF folder
         return self.get_machine_path()
 

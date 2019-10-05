@@ -186,7 +186,7 @@ class MpfTestCase(unittest.TestCase):
         """
         return 'tests/machine_files/null/'
 
-    def getAbsoluteMachinePath(self):
+    def get_absolute_machine_path(self):
         """Return absolute machine path."""
         # check if there is a decorator
         config_directory = getattr(getattr(self, self._testMethodName), "config_directory", None)
@@ -199,6 +199,7 @@ class MpfTestCase(unittest.TestCase):
 
     @staticmethod
     def get_abs_path(path):
+        """Get absolute path relative to current directory."""
         return os.path.join(os.path.abspath(os.curdir), path)
 
     def post_event(self, event_name, run_time=0):
@@ -487,7 +488,7 @@ class MpfTestCase(unittest.TestCase):
         self.save_and_prepare_sys_path()
 
         # init machine
-        machine_path = self.getAbsoluteMachinePath()
+        machine_path = self.get_absolute_machine_path()
 
         self.loop = TimeTravelLoop()
         self.loop.set_exception_handler(self._exception_handler)
