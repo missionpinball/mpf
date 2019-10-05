@@ -251,6 +251,7 @@ class MpfTestCase(unittest.TestCase):
         return result
 
     def assertPlaceholderEvaluates(self, expected, condition):
+        """Assert that a placeholder evaluates to a certain value."""
         result = self.machine.placeholder_manager.build_raw_template(condition).evaluate([],
                                                                                          fail_on_missing_params=True)
         self.assertEqual(expected, result, "{} = {} != {}".format(condition, result, expected))
@@ -335,7 +336,7 @@ class MpfTestCase(unittest.TestCase):
             return self.get_config_file()
 
     def get_options(self):
-
+        """Return options for the machine controller."""
         mpfconfig = os.path.abspath(os.path.join(
             mpf.core.__path__[0], os.pardir, 'mpfconfig.yaml'))
 
@@ -423,6 +424,7 @@ class MpfTestCase(unittest.TestCase):
         return 0
 
     def save_and_prepare_sys_path(self):
+        """Save sys path and prepare it for the test."""
         # save path
         self._sys_path = copy.deepcopy(sys.path)
 
@@ -439,7 +441,7 @@ class MpfTestCase(unittest.TestCase):
             sys.path.remove("")
 
     def restore_sys_path(self):
-        # restore sys path
+        """Restore sys path after test."""
         sys.path = self._sys_path
 
     def _get_mock_data(self):
@@ -461,6 +463,7 @@ class MpfTestCase(unittest.TestCase):
         self._exception = context
 
     def setUp(self):
+        """Setup test."""
         self._get_event_loop = asyncio.get_event_loop
         asyncio.get_event_loop = None
         self._get_event_loop2 = asyncio.events.get_event_loop
@@ -570,35 +573,43 @@ class MpfTestCase(unittest.TestCase):
                                         event_name=event_name)
 
     def assertBallsOnPlayfield(self, balls, playfield="playfield"):
+        """Assert that a certain number of ball is on a playfield."""
         self.assertEqual(balls, self.machine.playfields[playfield].balls)
 
     def assertAvailableBallsOnPlayfield(self, balls, playfield="playfield"):
+        """Assert that a certain number of ball is available on a playfield."""
         self.assertEqual(balls, self.machine.playfields[playfield].available_balls)
 
     def assertMachineVarEqual(self, value, machine_var):
+        """Assert that a machine variable exists and has a certain value."""
         self.assertTrue(self.machine.variables.is_machine_var(machine_var), "Machine Var {} does not exist.".format(machine_var))
         self.assertEqual(value, self.machine.variables.get_machine_var(machine_var))
 
     def assertPlayerVarEqual(self, value, player_var):
+        """Assert that a player variable exists and has a certain value."""
         self.assertIsNotNone(self.machine.game, "There is no game.")
         self.assertEqual(value, self.machine.game.player[player_var], "Value of player var {} is {} but should be {}".
                          format(player_var, self.machine.game.player[player_var], value))
 
     def assertSwitchState(self, name, state):
+        """Assert that a switch exists and has a certain state."""
         self.assertIn(name, self.machine.switches, "Switch {} does not exist.".format(name))
         self.assertEqual(state, self.machine.switch_controller.is_active(name),
                          "Switch {} is in state {} != {}".format(name, self.machine.switch_controller.is_active(name),
                                                                  state))
 
     def assertLightChannel(self, light_name, brightness, channel="white"):
+        """Assert that a light channel has a certain brightness."""
         self.assertAlmostEqual(brightness / 255.0, self.machine.lights[light_name].hw_drivers[channel][0].
                                current_brightness)
 
     def assertNotLightChannel(self, light_name, brightness, channel="white"):
+        """Assert that a light channel does not have a certain brightness."""
         self.assertNotEqual(brightness, self.machine.lights[light_name].hw_drivers[channel][0].
                             current_brightness)
 
     def assertLightColor(self, light_name, color):
+        """Assert that a light exists and shows one color."""
         if isinstance(color, str) and color.lower() == 'on':
             color = self.machine.lights[light_name].config['default_on_color']
 
@@ -607,6 +618,7 @@ class MpfTestCase(unittest.TestCase):
                                                      self.machine.lights[light_name].get_color().name))
 
     def assertNotLightColor(self, light_name, color):
+        """Assert that a light exists and does not show a certain color."""
         if isinstance(color, str) and color.lower() == 'on':
             color = self.machine.lights[light_name].config['default_on_color']
 
@@ -614,6 +626,7 @@ class MpfTestCase(unittest.TestCase):
                             "{} == {}".format(RGBColor(color).name, self.machine.lights[light_name].get_color().name))
 
     def assertLightColors(self, light_name, color_list, secs=1, check_delta=.1):
+        """Assert that a light exists and shows all colors in a list over a period."""
         colors = list()
 
         # have to do it this weird way because `if 'on' in color_list:` doesn't
@@ -633,14 +646,17 @@ class MpfTestCase(unittest.TestCase):
             self.assertIn(RGBColor(color), colors)
 
     def assertLightOn(self, light_name):
+        """Assert that a light exists and is on."""
         self.assertEqual(255,
                          self.machine.lights[
                              light_name].hw_driver.current_brightness)
 
     def assertLightOff(self, light_name):
+        """Assert that a light exists and is off."""
         self.assertEqual(0, self.machine.lights[light_name].hw_driver.current_brightness)
 
     def assertLightFlashing(self, light_name, color=None, secs=1, check_delta=.1):
+        """Assert that a light exists and is flashing."""
         brightness_values = list()
         if not color:
             color = [255, 255, 255]
@@ -654,12 +670,14 @@ class MpfTestCase(unittest.TestCase):
         self.assertIn(color, brightness_values)
 
     def assertModeRunning(self, mode_name):
+        """Assert that a mode exists and is running."""
         if mode_name not in self.machine.modes:
             raise AssertionError("Mode {} not known.".format(mode_name))
         self.assertIn(self.machine.modes[mode_name], self.machine.mode_controller.active_modes,
                       "Mode {} not running.".format(mode_name))
 
     def assertModeNotRunning(self, mode_name):
+        """Assert that a mode exists and is not running."""
         if mode_name not in self.machine.modes:
             raise AssertionError("Mode {} not known.".format(mode_name))
         self.assertNotIn(self.machine.modes[mode_name], self.machine.mode_controller.active_modes,
@@ -834,6 +852,7 @@ class MpfTestCase(unittest.TestCase):
         self.machine_run()
 
     def tearDown(self):
+        """Tear down test."""
         if self._exception:
             try:
                 self.machine.shutdown()
