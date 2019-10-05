@@ -4,10 +4,10 @@ from unittest.mock import MagicMock
 
 class TestBallHold(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_ball_holds.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_holds/'
 
     def _missing_ball(self, **kwargs):
@@ -568,10 +568,10 @@ class TestBallHold(MpfTestCase):
 
 class TestBallHoldSmart(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_ball_holds.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_holds/'
 
     def get_platform(self):

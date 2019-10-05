@@ -5,10 +5,10 @@ from mpf.tests.MpfTestCase import MpfTestCase, test_config
 
 class TestDeviceLight(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'light.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/light/'
 
     def test_default_on_color(self):
@@ -424,10 +424,10 @@ class TestDeviceLight(MpfTestCase):
 
 class TestLightOnDriver(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'lights_on_drivers.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/light/'
 
     def get_platform(self):

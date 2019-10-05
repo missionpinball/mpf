@@ -4,10 +4,10 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 
 class TestAssets(MpfTestCase):
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/asset_manager'
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_asset_loading.yaml'
 
     def test_asset_loading(self):
@@ -378,7 +378,7 @@ class TestAssets(MpfTestCase):
         self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
         self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show1'])
         self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
-        
+
         # THREE valid shows
         self.machine.modes.mode1.stop()
         self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show3'])
@@ -391,4 +391,4 @@ class TestAssets(MpfTestCase):
         self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show1'])
         self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
         self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show3'])
-                        
+

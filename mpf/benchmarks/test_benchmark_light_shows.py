@@ -8,14 +8,14 @@ from mpf.tests.MpfGameTestCase import MpfGameTestCase
 
 class BenchmarkLightShows(MpfGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'benchmarks/machine_files/shows/'
 
-    def getOptions(self):
-        options = super().getOptions()
+    def get_options(self):
+        options = super().get_options()
         if self.unittest_verbosity() <= 1:
             options["production"] = True
         return options

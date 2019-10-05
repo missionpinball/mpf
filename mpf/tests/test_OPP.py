@@ -58,7 +58,7 @@ class OPPCommon(MpfTestCase):
         super().__init__(methodName)
         self.expected_duration = 2
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/opp/'
 
     def _crc_message(self, msg, term=True):
@@ -85,7 +85,7 @@ class OPPCommon(MpfTestCase):
 
 class TestOPPFirmware2(OPPCommon, MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config2.yaml'
 
     def setUp(self):
@@ -287,7 +287,7 @@ LEDs:
 
 class TestOPP(OPPCommon, MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
     def setUp(self):

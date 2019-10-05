@@ -7,10 +7,10 @@ from mpf.tests.MpfTestCase import MpfTestCase, MagicMock, patch
 
 class TestRpiDmd(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/rpi_dmd/'
 
     def get_platform(self):

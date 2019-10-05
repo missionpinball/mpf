@@ -5,10 +5,10 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class TestDeviceMatrixLight(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'matrix_lights.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/light/'
 
     def _synchronise_light_update(self):

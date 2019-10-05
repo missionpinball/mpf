@@ -5,10 +5,10 @@ from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 class TestLightPlayer(MpfFakeGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'light_player.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/light_player/'
 
     def test_light_player_in_show(self):

@@ -41,8 +41,8 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
     def get_enable_plugins(self):
         return True
 
-    def getOptions(self):
-        options = super().getOptions()
+    def get_options(self):
+        options = super().get_options()
         # no cache since we are in a tmp folder anyway
         options['no_load_cache'] = True,
         options['create_config_cache'] = False
@@ -90,13 +90,13 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
 
         return machine_config, modes, shows, tests
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return "config.yaml"
 
     def get_platform(self):
         return "smart_virtual"
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return self.config_dir
 
     def _delete_tmp_dir(self, config_dir):

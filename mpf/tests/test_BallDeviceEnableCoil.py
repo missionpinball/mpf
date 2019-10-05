@@ -3,10 +3,10 @@ from unittest.mock import MagicMock
 
 
 class TestBallDevicesEnableCoil(MpfTestCase):
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_enable_coil.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_device/'
 
     def test_enable_coil_eject(self):
@@ -29,10 +29,10 @@ class TestBallDevicesEnableCoil(MpfTestCase):
         self.assertEqual("idle", self.machine.ball_devices.test.state)
 
 class TestBallDevicesEnableCoilMultiple(MpfTestCase):
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_enable_coil_multiple.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_device/'
 
     def test_enable_coil_eject_times(self):
@@ -52,7 +52,7 @@ class TestBallDevicesEnableCoilMultiple(MpfTestCase):
         self.assertEqual("ball_left", self.machine.ball_devices.test.state)
         self.advance_time_and_run(10)
 
-        self.assertEqual("idle", self.machine.ball_devices.test.state)   
+        self.assertEqual("idle", self.machine.ball_devices.test.state)
 
         self.machine.playfield.add_ball()
         self.advance_time_and_run(.1)
@@ -61,7 +61,7 @@ class TestBallDevicesEnableCoilMultiple(MpfTestCase):
         self.assertEqual("enabled", self.machine.coils.eject_coil.hw_driver.state)
         self.advance_time_and_run(.2)
         self.assertEqual("disabled", self.machine.coils.eject_coil.hw_driver.state)
-     
+
         self.release_switch_and_run("s_ball1", 1)
         self.assertEqual("ball_left", self.machine.ball_devices.test.state)
         self.advance_time_and_run(10)

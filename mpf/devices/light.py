@@ -54,7 +54,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
 
     def __init__(self, machine, name):
         """Initialise light."""
-        self.hw_drivers = {}        # type: Dict[str, LightPlatformInterface]
+        self.hw_drivers = {}        # type: Dict[str, List[LightPlatformInterface]]
         self.hw_driver_functions = []
         self.platforms = set()      # type: Set[LightsPlatform]
         super().__init__(machine, name)
@@ -116,10 +116,10 @@ class Light(SystemWideDevice, DevicePositionMixin):
         return numbers
 
     @staticmethod
-    def _check_duplicate_light_numbers(machine, **kwargs):
+    def _check_duplicate_light_numbers(machine: MachineController, **kwargs):
         del kwargs
         check_set = set()
-        for light in machine.lights:
+        for light in machine.lights.values():
             for drivers in light.hw_drivers.values():
                 for driver in drivers:
                     key = (light.config['platform'], driver.number, type(driver))

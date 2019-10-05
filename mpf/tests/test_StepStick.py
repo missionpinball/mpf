@@ -5,10 +5,10 @@ from mpf.tests.MpfTestCase import MpfTestCase, MagicMock, patch
 
 class TestStepStick(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/step_stick/'
 
     def get_platform(self):

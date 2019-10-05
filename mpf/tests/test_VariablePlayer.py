@@ -3,10 +3,10 @@ from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 class TestVariablePlayer(MpfFakeGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/variable_player/'
 
     def test_variable_player(self):

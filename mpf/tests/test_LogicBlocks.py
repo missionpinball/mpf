@@ -4,10 +4,10 @@ from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 class TestLogicBlocks(MpfFakeGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/logic_blocks/'
 
     def test_mode_selection_with_counters(self):

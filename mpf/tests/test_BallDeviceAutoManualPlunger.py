@@ -4,10 +4,10 @@ from unittest.mock import MagicMock
 
 class TestBallDeviceAutoManualPlunger(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_ball_device_auto_manual_plunger.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_device/'
 
     def test_mechanical_eject_to_pf(self):

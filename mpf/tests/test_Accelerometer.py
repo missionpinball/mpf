@@ -11,10 +11,10 @@ class TestAccelerometer(MpfTestCase):
         # this is the first test. give it some more time
         self.expected_duration = 2
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/accelerometer/'
 
     def _event_level1(self, **kwargs):

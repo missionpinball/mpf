@@ -5,10 +5,10 @@ import mpf.platforms.pololu_maestro
 
 class TestPololuMaestro(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'pololu_maestro.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/pololu_maestro/'
 
     def get_platform(self):

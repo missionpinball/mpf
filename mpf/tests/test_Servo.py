@@ -4,10 +4,10 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class TestServo(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/servo/'
 
     def test_servo_go_to_position(self):

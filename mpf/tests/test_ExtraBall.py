@@ -3,10 +3,10 @@ from mpf.tests.MpfGameTestCase import MpfGameTestCase
 
 class TestExtraBall(MpfGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/extra_ball/'
 
     def get_platform(self):

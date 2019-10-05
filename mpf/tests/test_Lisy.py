@@ -59,10 +59,10 @@ class MockLisySocket(MockSocket, MockSerial):
 
 class TestLisy(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/lisy/'
 
     def _mock_loop(self):
@@ -424,10 +424,10 @@ class TestLisy(MpfTestCase):
 
 class TestAPC(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/apc/'
 
     def _mock_loop(self):

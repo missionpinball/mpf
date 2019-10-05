@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 class TestDiverter(MpfTestCase):
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/diverter/'
 
     def get_platform(self):
@@ -606,7 +606,7 @@ class TestDiverter(MpfTestCase):
 class TestDiverter2(MpfFakeGameTestCase):
 
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/diverter/'
 
     @test_config("diverter_with_activation_events.yaml")

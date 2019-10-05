@@ -4,10 +4,10 @@ from unittest.mock import MagicMock
 
 class TestTooLongExitCountDelay(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_too_long_exit_count_delay.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_device/'
 
     def _ball_drained(self, **kwargs):

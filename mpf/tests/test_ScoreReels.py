@@ -8,10 +8,10 @@ from mpf.tests.MpfGameTestCase import MpfGameTestCase
 
 class TestScoreReels(MpfGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/score_reels/'
 
     def _synchronise_to_reel(self):
@@ -368,13 +368,13 @@ class TestScoreReels(MpfGameTestCase):
 
 class TestScoreReelsVirtual(MpfFakeGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
     def get_platform(self):
         return "smart_virtual"
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/score_reels/'
 
     def testScoringVirtual(self):

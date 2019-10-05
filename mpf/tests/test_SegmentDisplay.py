@@ -4,10 +4,10 @@ from mpf.tests.MpfTestCase import test_config
 
 class TestSegmentDisplay(MpfFakeGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/segment_display/'
 
     @test_config("game.yaml")
