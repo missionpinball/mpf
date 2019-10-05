@@ -9,7 +9,7 @@ class TestConfig(MpfTestCase):
     def get_config_file(self):
         return 'test_config_interface.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/config_interface/'
 
     def _early_machine_init(self, machine):

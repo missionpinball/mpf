@@ -7,7 +7,7 @@ class TestBallHold(MpfTestCase):
     def get_config_file(self):
         return 'test_ball_holds.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_holds/'
 
     def _missing_ball(self, **kwargs):
@@ -571,7 +571,7 @@ class TestBallHoldSmart(MpfTestCase):
     def get_config_file(self):
         return 'test_ball_holds.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_holds/'
 
     def get_platform(self):

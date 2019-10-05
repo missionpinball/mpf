@@ -6,7 +6,7 @@ class TestBallDevicesHoldCoil(MpfTestCase):
     def get_config_file(self):
         return 'test_hold_coil.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_device/'
 
     def setUp(self):

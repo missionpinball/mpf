@@ -11,7 +11,7 @@ class TestMMA8451(MpfTestCase):
     def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/mma8451/'
 
     @asyncio.coroutine

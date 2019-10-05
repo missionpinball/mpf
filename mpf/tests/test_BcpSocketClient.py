@@ -201,7 +201,7 @@ class TestBcpSocketMultipleClients(MpfTestCase):
     def get_config_file(self):
         return 'multiple_connections_config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/bcp/'
 
     def testReceiveMessages(self):

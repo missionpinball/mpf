@@ -7,7 +7,7 @@ class TestSystem11Trough(MpfTestCase):
     def get_config_file(self):
         return 'test_system_11_trough.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_device/'
 
     def test_boot_with_ball_in_drain_empty_trough(self):
@@ -155,7 +155,7 @@ class TestSystem11TroughStartup(MpfTestCase):
     def get_config_file(self):
         return 'test_system_11_trough_startup.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_device/'
 
     def get_platform(self):

@@ -8,7 +8,7 @@ class TestScoreQueue(MpfFakeGameTestCase):
     def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/score_queue/'
 
     def test_score_queue(self):

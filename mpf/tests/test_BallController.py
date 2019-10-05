@@ -11,7 +11,7 @@ class TestBallController(MpfTestCase):
     def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_controller/'
 
     def get_platform(self):

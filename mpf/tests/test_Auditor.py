@@ -10,7 +10,7 @@ class TestAuditor(MpfTestCase):
     def get_platform(self):
         return 'smart_virtual'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/auditor/'
 
     def setUp(self):

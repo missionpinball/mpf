@@ -4,7 +4,7 @@ from mpf.tests.MpfTestCase import test_config
 
 class TestDmd(MpfBcpTestCase):
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/dmd/'
 
     @test_config("testDmd.yaml")

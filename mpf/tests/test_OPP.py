@@ -58,7 +58,7 @@ class OPPCommon(MpfTestCase):
         super().__init__(methodName)
         self.expected_duration = 2
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/opp/'
 
     def _crc_message(self, msg, term=True):

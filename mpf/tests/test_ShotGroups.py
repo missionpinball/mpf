@@ -9,7 +9,7 @@ class TestShotGroups(MpfFakeGameTestCase):
     def get_config_file(self):
         return 'test_shot_groups.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/shots/'
 
     def test_disabled_when_no_game(self):

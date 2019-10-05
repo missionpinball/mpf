@@ -11,7 +11,7 @@ class TestRandomEventPlayer(MpfTestCase):
     def get_config_file(self):
         return 'test_random_event_player.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/event_players/'
 
     def test_machine_tests(self):
@@ -24,7 +24,7 @@ class TestRandomEventPlayerGame(MpfGameTestCase):
     def get_config_file(self):
         return 'test_random_event_player.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/event_players/'
 
     def get_platform(self):

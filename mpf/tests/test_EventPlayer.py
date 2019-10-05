@@ -9,7 +9,7 @@ class TestEventPlayer(MpfTestCase):
     def get_config_file(self):
         return 'test_event_player.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/event_players/'
 
     def test_load_and_play(self):

@@ -164,7 +164,7 @@ class MpfTestCase(unittest.TestCase):
         """
         return 'null.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         """Return a string name of the path to the machine folder to use for
         the tests in this class.
 
@@ -178,7 +178,7 @@ class MpfTestCase(unittest.TestCase):
 
         .. code::
 
-            def getMachinePath(self):
+            def get_machine_path(self):
                 return 'tests/machine_files/my_test/'
 
         Note that this path is relative to the MPF package root
@@ -191,7 +191,7 @@ class MpfTestCase(unittest.TestCase):
         # check if there is a decorator
         config_directory = getattr(getattr(self, self._testMethodName), "config_directory", None)
         if not config_directory:
-            config_directory = self.getMachinePath()
+            config_directory = self.get_machine_path()
 
         # creates an absolute path based on machine_path
         return os.path.abspath(os.path.join(

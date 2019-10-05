@@ -6,7 +6,7 @@ class TestAchievement(MpfFakeGameTestCase):
     def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/achievement/'
 
     def test_enable_when_all_done(self):

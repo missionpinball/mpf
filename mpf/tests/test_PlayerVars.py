@@ -6,7 +6,7 @@ class TestPlayerVars(MpfGameTestCase):
     def get_config_file(self):
         return 'player_vars.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/player_vars/'
 
     def test_initial_values(self):

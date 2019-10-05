@@ -7,7 +7,7 @@ class TestShots(MpfTestCase):
     def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/sequence_shot/'
 
     def test_simple_sequence(self):

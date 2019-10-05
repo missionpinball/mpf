@@ -7,7 +7,7 @@ class TestQueueEventPlayer(MpfTestCase):
     def get_config_file(self):
         return 'test_queue_event_player.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/event_players/'
 
     def _queue1(self, queue, **kwargs):

@@ -8,7 +8,7 @@ class TestBallDeviceNoPlungerSwitch(MpfTestCase):
     def get_config_file(self):
         return 'test_ball_device_no_plunger_switch.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_device/'
 
     def put_ball_in_trough(self):

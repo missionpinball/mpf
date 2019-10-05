@@ -10,7 +10,7 @@ class BenchmarkSwitchHits(MpfGameTestCase):
     def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'benchmarks/machine_files/switch_hits/'
 
     def get_platform(self):

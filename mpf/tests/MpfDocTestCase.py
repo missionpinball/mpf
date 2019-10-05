@@ -96,7 +96,7 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
     def get_platform(self):
         return "smart_virtual"
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return self.config_dir
 
     def _delete_tmp_dir(self, config_dir):

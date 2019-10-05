@@ -6,7 +6,7 @@ class TestI2cServoController(MpfTestCase):
     def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/i2c_servo_controller/'
 
     def get_platform(self):

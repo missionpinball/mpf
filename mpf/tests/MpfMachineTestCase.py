@@ -37,12 +37,12 @@ class BaseMpfMachineTestCase(MockConfigPlayers):
     def get_config_file(self):
         return "config.yaml"
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return ""
 
     def getAbsoluteMachinePath(self):
         # do not use path relative to MPF folder
-        return self.getMachinePath()
+        return self.get_machine_path()
 
     def get_platform(self):
         return 'smart_virtual'

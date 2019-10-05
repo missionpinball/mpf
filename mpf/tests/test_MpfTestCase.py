@@ -7,7 +7,7 @@ class TestMpfTestCase(MpfTestCase):
     def get_config_file(self):
         return 'test_mpftestcase.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/mpftestcase/'
 
     def get_platform(self):

@@ -11,7 +11,7 @@ class TestHighScoreMode(MpfBcpTestCase):
     def get_config_file(self):
         return 'high_score.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/high_score/'
 
     def start_game(self, num_players=1):

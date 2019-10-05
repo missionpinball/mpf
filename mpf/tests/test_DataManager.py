@@ -13,7 +13,7 @@ class TestDataManager(MpfTestCase):
     def get_config_file(self):
         return "config.yaml"
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/data_manager/'
 
     def setUp(self):

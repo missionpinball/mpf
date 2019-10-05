@@ -9,7 +9,7 @@ class TestFadecandy(MpfTestCase):
     def get_config_file(self):
         return 'fadecandy.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/openpixel/'
 
     def get_platform(self):

@@ -5,7 +5,7 @@ class TestBallDeviceSmartVirtual(MpfTestCase):
     def get_config_file(self):
         return 'test_ball_device.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_device/'
 
     def get_platform(self):

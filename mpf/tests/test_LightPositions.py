@@ -8,7 +8,7 @@ class TestLightPositions(MpfFakeGameTestCase):
     def get_config_file(self):
         return 'light.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/light/'
 
     def test_light_positions(self):

@@ -9,7 +9,7 @@ class TestBallDeviceModernTroughPlungerSetup(MpfTestCase):
     def get_config_file(self):
         return 'test_modern_trough_plunger_setup.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_device/'
 
     def test_ball_in_plunger_during_eject(self):

@@ -6,7 +6,7 @@ class TestTimedSwitch(MpfTestCase):
     def get_config_file(self):
         return 'timed_switches.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/timed_switches/'
 
     def test_in_mode(self):

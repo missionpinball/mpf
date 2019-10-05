@@ -11,7 +11,7 @@ class TestFlippers(MpfTestCase):
     def get_config_file(self):
         return 'hold_no_eos.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/flippers/'
 
     def get_platform(self):

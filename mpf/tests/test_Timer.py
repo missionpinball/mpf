@@ -9,7 +9,7 @@ class TestTimer(MpfFakeGameTestCase):
     def get_config_file(self):
         return 'test_timer.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/timer/'
 
     def _timer_start(self, **kwargs):

@@ -4,7 +4,7 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 
 class TestAssets(MpfTestCase):
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/asset_manager'
 
     def get_config_file(self):

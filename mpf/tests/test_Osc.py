@@ -8,7 +8,7 @@ class TestOsc(MpfTestCase):
     def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/osc/'
 
     def get_platform(self):

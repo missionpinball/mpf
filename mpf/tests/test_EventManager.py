@@ -38,7 +38,7 @@ class TestEventManager(MpfFakeGameTestCase, MpfTestCase):
     def get_config_file(self):
         return 'test_event_manager.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/event_manager/'
 
     def event_handler1(self, *args, **kwargs):

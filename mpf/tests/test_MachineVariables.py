@@ -10,7 +10,7 @@ class TestMachineVariables(MpfTestCase):
     def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/machine_vars/'
 
     def _get_mock_data(self):

@@ -8,7 +8,7 @@ class TestModes(MpfFakeGameTestCase):
     def get_config_file(self):
         return 'test_modes.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/mode_tests/'
 
     def test_loading_modes(self):
@@ -210,7 +210,7 @@ class TestModesInGame(MpfFakeGameTestCase):
     def get_config_file(self):
         return 'test_modes_in_game.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/mode_tests/'
 
     def test_restart_on_next_ball(self):

@@ -6,7 +6,7 @@ class TestSmartVirtualPlatform(MpfTestCase):
     def get_config_file(self):
         return "test_virtual.yaml"
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/platform/'
 
     def test_load_config_and_allow_enable(self):

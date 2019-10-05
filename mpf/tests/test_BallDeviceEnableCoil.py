@@ -6,7 +6,7 @@ class TestBallDevicesEnableCoil(MpfTestCase):
     def get_config_file(self):
         return 'test_enable_coil.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_device/'
 
     def test_enable_coil_eject(self):
@@ -32,7 +32,7 @@ class TestBallDevicesEnableCoilMultiple(MpfTestCase):
     def get_config_file(self):
         return 'test_enable_coil_multiple.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_device/'
 
     def test_enable_coil_eject_times(self):
