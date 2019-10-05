@@ -1,0 +1,34 @@
+#config_version=5
+
+mode:
+    start_events: ball_started
+    priority: 100
+
+shot_profiles:
+    profile_state_names_to_not_rotate:
+        state_names_to_not_rotate: unlit
+        states:
+            - name: unlit
+            - name: red
+            - name: orange
+
+shots:
+  shot_1:
+    switch: switch_1
+    profile: profile_state_names_to_not_rotate
+  shot_2:
+    switch: switch_2
+    profile: profile_state_names_to_not_rotate
+  shot_3:
+    switch: switch_3
+    profile: profile_state_names_to_not_rotate
+  shot_4:
+    switch: switch_4
+    profile: profile_state_names_to_not_rotate
+
+shot_groups:
+  test_group:
+    shots: shot_1, shot_2, shot_3, shot_4
+    rotate_left_events: s_rotate_l_active
+    rotate_right_events: s_rotate_r_active
+    debug: True

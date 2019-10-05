@@ -126,24 +126,6 @@ shot_profiles:
         - name: orange
         - name: yellow
         - name: green
-    shot_profile_34:
-      show: rainbow
-      state_names_to_rotate: red, green
-      states:
-        - name: unlit
-        - name: red
-        - name: orange
-        - name: yellow
-        - name: green
-    shot_profile_37:
-      show: rainbow
-      state_names_to_not_rotate: unlit
-      states:
-        - name: unlit
-        - name: red
-        - name: orange
-        - name: yellow
-        - name: green
     shot_profile_40:
       show: rainbow
       rotation_pattern: r, r, l, l

@@ -1,7 +1,5 @@
-from unittest.mock import MagicMock
-
-from mpf.core.rgb_color import RGBColor
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
+from mpf.tests.MpfTestCase import test_config
 
 
 class TestShotGroups(MpfFakeGameTestCase):
@@ -54,62 +52,116 @@ class TestShotGroups(MpfFakeGameTestCase):
 
         self.stop_game()
 
+    @test_config("test_shot_group_rotate_with_exclude.yaml")
+    def test_rotate_state_names_to_not_rotate(self):
+        """Test state_names_to_not_rotate in profile."""
+        self.start_game()
+
+        # unlit cannot rotate. all other states can
+        self.assertEqual("unlit", self.machine.shots["shot_1"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_2"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_3"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_4"].state_name)
+
+        self.hit_and_release_switch("s_rotate_r")
+
+        # nothing should happen but it should also not crash
+        self.assertEqual("unlit", self.machine.shots["shot_1"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_2"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_3"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_4"].state_name)
+
+        self.hit_and_release_switch("switch_1")
+
+        # first shot is advanced
+        self.assertEqual("red", self.machine.shots["shot_1"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_2"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_3"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_4"].state_name)
+
+        self.hit_and_release_switch("s_rotate_r")
+
+        # nothing should happen but it should also not crash
+        self.assertEqual("red", self.machine.shots["shot_1"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_2"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_3"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_4"].state_name)
+
+        self.hit_and_release_switch("switch_2")
+        self.hit_and_release_switch("switch_3")
+        self.hit_and_release_switch("switch_3")
+
+        # some more shots to advance
+        self.assertEqual("red", self.machine.shots["shot_1"].state_name)
+        self.assertEqual("red", self.machine.shots["shot_2"].state_name)
+        self.assertEqual("orange", self.machine.shots["shot_3"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_4"].state_name)
+
+        self.hit_and_release_switch("s_rotate_r")
+
+        # skip the unlit shot
+        self.assertEqual("orange", self.machine.shots["shot_1"].state_name)
+        self.assertEqual("red", self.machine.shots["shot_2"].state_name)
+        self.assertEqual("red", self.machine.shots["shot_3"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_4"].state_name)
+
+
     def test_rotate(self):
         self.start_game()
 
-        self.assertEqual("unlit", self.machine.shots.shot_1.state_name)
-        self.assertEqual("unlit", self.machine.shots.shot_2.state_name)
-        self.assertEqual("unlit", self.machine.shots.shot_3.state_name)
-        self.assertEqual("unlit", self.machine.shots.shot_4.state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_1"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_2"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_3"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_4"].state_name)
 
         self.hit_and_release_switch("switch_1")
 
-        self.assertEqual("lit", self.machine.shots.shot_1.state_name)
-        self.assertEqual("unlit", self.machine.shots.shot_2.state_name)
-        self.assertEqual("unlit", self.machine.shots.shot_3.state_name)
-        self.assertEqual("unlit", self.machine.shots.shot_4.state_name)
+        self.assertEqual("lit", self.machine.shots["shot_1"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_2"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_3"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_4"].state_name)
 
         self.hit_and_release_switch("s_rotate_r")
 
-        self.assertEqual("unlit", self.machine.shots.shot_1.state_name)
-        self.assertEqual("lit", self.machine.shots.shot_2.state_name)
-        self.assertEqual("unlit", self.machine.shots.shot_3.state_name)
-        self.assertEqual("unlit", self.machine.shots.shot_4.state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_1"].state_name)
+        self.assertEqual("lit", self.machine.shots["shot_2"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_3"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_4"].state_name)
 
         self.hit_and_release_switch("switch_1")
 
-        self.assertEqual("lit", self.machine.shots.shot_1.state_name)
-        self.assertEqual("lit", self.machine.shots.shot_2.state_name)
-        self.assertEqual("unlit", self.machine.shots.shot_3.state_name)
-        self.assertEqual("unlit", self.machine.shots.shot_4.state_name)
+        self.assertEqual("lit", self.machine.shots["shot_1"].state_name)
+        self.assertEqual("lit", self.machine.shots["shot_2"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_3"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_4"].state_name)
 
         self.hit_and_release_switch("s_rotate_r")
 
-        self.assertEqual("unlit", self.machine.shots.shot_1.state_name)
-        self.assertEqual("lit", self.machine.shots.shot_2.state_name)
-        self.assertEqual("lit", self.machine.shots.shot_3.state_name)
-        self.assertEqual("unlit", self.machine.shots.shot_4.state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_1"].state_name)
+        self.assertEqual("lit", self.machine.shots["shot_2"].state_name)
+        self.assertEqual("lit", self.machine.shots["shot_3"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_4"].state_name)
 
         self.hit_and_release_switch("s_rotate_r")
 
-        self.assertEqual("unlit", self.machine.shots.shot_1.state_name)
-        self.assertEqual("unlit", self.machine.shots.shot_2.state_name)
-        self.assertEqual("lit", self.machine.shots.shot_3.state_name)
-        self.assertEqual("lit", self.machine.shots.shot_4.state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_1"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_2"].state_name)
+        self.assertEqual("lit", self.machine.shots["shot_3"].state_name)
+        self.assertEqual("lit", self.machine.shots["shot_4"].state_name)
 
         self.hit_and_release_switch("s_rotate_r")
 
-        self.assertEqual("lit", self.machine.shots.shot_1.state_name)
-        self.assertEqual("unlit", self.machine.shots.shot_2.state_name)
-        self.assertEqual("unlit", self.machine.shots.shot_3.state_name)
-        self.assertEqual("lit", self.machine.shots.shot_4.state_name)
+        self.assertEqual("lit", self.machine.shots["shot_1"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_2"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_3"].state_name)
+        self.assertEqual("lit", self.machine.shots["shot_4"].state_name)
 
         self.hit_and_release_switch("s_rotate_l")
 
-        self.assertEqual("unlit", self.machine.shots.shot_1.state_name)
-        self.assertEqual("unlit", self.machine.shots.shot_2.state_name)
-        self.assertEqual("lit", self.machine.shots.shot_3.state_name)
-        self.assertEqual("lit", self.machine.shots.shot_4.state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_1"].state_name)
+        self.assertEqual("unlit", self.machine.shots["shot_2"].state_name)
+        self.assertEqual("lit", self.machine.shots["shot_3"].state_name)
+        self.assertEqual("lit", self.machine.shots["shot_4"].state_name)
 
     def test_profile_from_shot(self):
         self.start_game()
@@ -136,9 +188,9 @@ class TestShotGroups(MpfFakeGameTestCase):
     def test_control_events(self):
         # tests control events at the shot_group level
 
-        shot32 = self.machine.shots.shot_32
-        shot33 = self.machine.shots.shot_33
-        group32 = self.machine.shot_groups.shot_group_32
+        shot32 = self.machine.shots["shot_32"]
+        shot33 = self.machine.shots["shot_33"]
+        group32 = self.machine.shot_groups["shot_group_32"]
 
         self.mock_event("shot_32_hit")
         self.mock_event("shot_33_hit")
@@ -249,10 +301,10 @@ class TestShotGroups(MpfFakeGameTestCase):
         self.assertEqual(shot33.state_name, 'unlit')
 
     def test_rotation_pattern(self):
-        shot40 = self.machine.shots.shot_40
-        shot41 = self.machine.shots.shot_41
-        shot42 = self.machine.shots.shot_42
-        group40 = self.machine.shot_groups.shot_group_40
+        shot40 = self.machine.shots["shot_40"]
+        shot41 = self.machine.shots["shot_41"]
+        shot42 = self.machine.shots["shot_42"]
+        group40 = self.machine.shot_groups["shot_group_40"]
 
         self.start_game()
 
@@ -316,7 +368,7 @@ class TestShotGroups(MpfFakeGameTestCase):
         self.assertLightChannel("l_special_left", 0)
         self.assertLightChannel("l_special_right", 0)
 
-        shot = self.machine.shots.lane_special_left
+        shot = self.machine.shots["lane_special_left"]
 
         self.assertEqual('unlit_toggle', shot.state_name)
 

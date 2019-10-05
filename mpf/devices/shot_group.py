@@ -226,8 +226,11 @@ class ShotGroup(ModeDevice):
         # shot_state_list is deque of tuples (state num, show step num)
         shot_state_list = deque()
 
+        shots_to_rotate = []
         for shot in self.config['shots']:
-            shot_state_list.append(shot.state)
+            if shot.can_rotate:
+                shots_to_rotate.append(shot)
+                shot_state_list.append(shot.state)
 
         # figure out which direction we're going to rotate
         if not direction:
@@ -243,7 +246,7 @@ class ShotGroup(ModeDevice):
             shot_state_list.rotate(-1)
 
         # step through all our shots and update their states
-        for i, shot in enumerate(self.config['shots']):
+        for i, shot in enumerate(shots_to_rotate):
             shot.jump(state=shot_state_list[i], force=True)
 
     @event_handler(8)
