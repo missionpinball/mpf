@@ -102,16 +102,9 @@ class AchievementGroup(ModeDevice):
             self._show.stop()
             self._show = None
 
-    def _get_available_achievements(self):
-
-        available = [x for x in self.config['achievements'] if
-                     x.state == 'enabled' or
-                     (x.state == 'stopped' and
-                     x.config['restart_after_stop_possible'])]
-
-        self.debug_log("Getting available achievements: %s", available)
-
-        return available
+    def _get_available_achievements_for_selection(self):
+        """Return achievements which can be selected and started."""
+        return [x for x in self.config['achievements'] if x.can_be_selected_for_start]
 
     def _get_current(self):
         self.debug_log("Getting current selected achievement")
@@ -160,7 +153,7 @@ class AchievementGroup(ModeDevice):
         if self._selected_member and self._selected_member.selected:
             self._selected_member.unselect()
 
-        achievements = self._get_available_achievements()
+        achievements = self._get_available_achievements_for_selection()
         if not achievements:
             # there is nothing to rotate
             return
@@ -220,7 +213,7 @@ class AchievementGroup(ModeDevice):
             self._selected_member.unselect()
 
         try:
-            ach = choice(self._get_available_achievements())
+            ach = choice(self._get_available_achievements_for_selection())
             # todo change this to use our Randomizer class
             self._selected_member = ach
             self.debug_log("Picked new random achievement: %s", ach)
@@ -315,7 +308,7 @@ class AchievementGroup(ModeDevice):
             self.debug_log("Group is disabled. Aborting...")
             return False
 
-        if not self._get_available_achievements():
+        if not self._get_available_achievements_for_selection():
             self._no_more_enabled()
             return True
         return False
