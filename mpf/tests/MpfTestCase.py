@@ -333,7 +333,7 @@ class MpfTestCase(unittest.TestCase):
         else:
             return self.get_config_file()
 
-    def getOptions(self):
+    def get_options(self):
 
         mpfconfig = os.path.abspath(os.path.join(
             mpf.core.__path__[0], os.pardir, 'mpfconfig.yaml'))
@@ -498,7 +498,7 @@ class MpfTestCase(unittest.TestCase):
             self.machine = TestMachineController(
                 os.path.abspath(os.path.join(
                     mpf.core.__path__[0], os.pardir)), machine_path,
-                self.getOptions(), self.machine_config_patches, self.machine_config_defaults,
+                self.get_options(), self.machine_config_patches, self.machine_config_defaults,
                 self.clock, self._get_mock_data(),
                 self.get_enable_plugins(), self._early_machine_init)
 
