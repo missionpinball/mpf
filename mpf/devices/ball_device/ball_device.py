@@ -1,4 +1,5 @@
 """Contains the base class for ball devices."""
+import asyncio
 from collections import deque
 
 from mpf.core.events import QueuedEvent, event_handler
@@ -125,7 +126,7 @@ class BallDevice(SystemWideDevice):
         """Create ball counters."""
         del kwargs
         queue.wait()
-        complete_future = Util.ensure_future(self._initialize_async(), loop=self.machine.clock.loop)
+        complete_future = asyncio.ensure_future(self._initialize_async(), loop=self.machine.clock.loop)
         complete_future.add_done_callback(lambda x: queue.clear())
 
     def stop_device(self):

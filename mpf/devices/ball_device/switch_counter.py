@@ -190,8 +190,8 @@ class SwitchCounter(PhysicalBallCounter):
             future.set_result(True)
             return future
 
-        done_future = Util.ensure_future(Util.first(waiters, self.machine.clock.loop),
-                                         loop=self.machine.clock.loop)
+        done_future = asyncio.ensure_future(Util.first(waiters, self.machine.clock.loop),
+                                            loop=self.machine.clock.loop)
         done_future.add_done_callback(self._ball_left)
         return done_future
 

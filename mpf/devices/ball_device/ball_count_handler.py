@@ -116,8 +116,8 @@ class BallCountHandler(BallDeviceStateHandler):
         self.debug_log("No ball found. Waiting for balls.")
 
         # wait until we have more than 0 balls
-        ball_changes = Util.ensure_future(self.counter.wait_for_ball_count_changes(0),
-                                          loop=self.machine.clock.loop)
+        ball_changes = asyncio.ensure_future(self.counter.wait_for_ball_count_changes(0),
+                                             loop=self.machine.clock.loop)
         new_balls = await ball_changes
 
         # update count
@@ -199,8 +199,8 @@ class BallCountHandler(BallDeviceStateHandler):
         changes = self.counter.register_change_stream()
         while True:
             # wait for ball changes
-            ball_changes = Util.ensure_future(changes.get(), loop=self.machine.clock.loop)
-            revalidate_future = Util.ensure_future(self._revalidate.wait(), loop=self.machine.clock.loop)
+            ball_changes = asyncio.ensure_future(changes.get(), loop=self.machine.clock.loop)
+            revalidate_future = asyncio.ensure_future(self._revalidate.wait(), loop=self.machine.clock.loop)
             await Util.first([ball_changes, revalidate_future, self._eject_started.wait()],
                              loop=self.machine.clock.loop)
             self._revalidate.clear()

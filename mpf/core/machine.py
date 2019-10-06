@@ -653,7 +653,7 @@ class MachineController(LogMixin):
         self.info_log("Initialise MPF.")
         timeout = 30 if self.options["production"] else None
         try:
-            init = Util.ensure_future(self.initialise(), loop=self.clock.loop)
+            init = asyncio.ensure_future(self.initialise(), loop=self.clock.loop)
             self.clock.loop.run_until_complete(Util.first([init, self.stop_future], cancel_others=False,
                                                           loop=self.clock.loop, timeout=timeout))
         except asyncio.TimeoutError:

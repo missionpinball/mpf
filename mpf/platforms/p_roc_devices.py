@@ -449,7 +449,7 @@ class PdLedStepper(StepperPlatformInterface):
         self._move_timer = asyncio.sleep(wait_time, loop=self.platform.machine.clock.loop)
         if self.debug:
             self.log.debug("Moving %s ticks. This will take %s", position, wait_time)
-        self._move_timer = Util.ensure_future(self._move_timer, self.platform.machine.clock.loop)
+        self._move_timer = asyncio.ensure_future(self._move_timer, loop=self.platform.machine.clock.loop)
         self._move_timer.add_done_callback(self._move_done)
 
     def _move_done(self, future):

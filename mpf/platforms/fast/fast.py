@@ -417,7 +417,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         # If we have WPC driver boards, look up the driver number
         if self.machine_type == 'wpc':
-            number = fast_defines.WPC_DRIVER_MAP.get(number.upper())
+            try:
+                number = fast_defines.WPC_DRIVER_MAP[number.upper()]
+            except KeyError:
+                self.raise_config_error("Could not find WPC driver {}".format(number), 1)
 
             if ('connection' in platform_settings and
                     platform_settings['connection'].lower() == 'network'):
@@ -460,7 +463,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         # every servo board supports exactly 6 servos
         return self.convert_number_from_config(board * 6 + servo)
 
-    async def configure_servo(self, number: str):
+    async def configure_servo(self, number: str) -> FastServo:
         """Configure a servo.
 
         Args:
@@ -539,8 +542,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                  "is available")
 
         if self.machine_type == 'wpc':  # translate switch num to FAST switch
-            number = fast_defines.WPC_SWITCH_MAP.get(
-                str(number).upper())
+            try:
+                number = fast_defines.WPC_SWITCH_MAP[str(number).upper()]
+            except KeyError:
+                self.raise_config_error("Could not find WPC switch {}".format(number), 2)
+
             if 'connection' not in platform_config:
                 platform_config['connection'] = 0  # local switch (default for WPC)
             else:
@@ -603,7 +609,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Parse light channels from number string."""
         if subtype == "gi":
             if self.machine_type == 'wpc':  # translate number to FAST GI number
-                number = fast_defines.WPC_GI_MAP.get(str(number).upper())
+                try:
+                    number = fast_defines.WPC_GI_MAP[str(number).upper()]
+                except KeyError:
+                    self.raise_config_error("Could not find WPC GI {}".format(number), 3)
             else:
                 number = self.convert_number_from_config(number)
 
@@ -614,7 +623,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             ]
         if subtype == "matrix":
             if self.machine_type == 'wpc':  # translate number to FAST light num
-                number = fast_defines.WPC_LIGHT_MAP.get(str(number).upper())
+                try:
+                    number = fast_defines.WPC_LIGHT_MAP[str(number).upper()]
+                except KeyError:
+                    self.raise_config_error("Could not find WPC light {}".format(number), 4)
             else:
                 number = self.convert_number_from_config(number)
 

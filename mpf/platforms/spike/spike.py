@@ -944,6 +944,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         await asyncio.sleep(.1, loop=self.machine.clock.loop)
         self._reader._buffer = bytearray()
 
+    # pylint: disable-msg=too-many-statements
+    # pylint: disable-msg=too-many-branches
     async def _initialize(self) -> None:
         await self._init_bridge()
 
@@ -961,12 +963,13 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         while True:
             # poll to iterate nodes
             await self.send_cmd_raw([0])
-            node = await self._read_raw(1)
-            if node is None:
+            node_str = await self._read_raw(1)
+            if node_str is None:
                 self.log.warning("Initial poll timeouted")
                 await asyncio.sleep(.5, loop=self.machine.clock.loop)
+                continue
 
-            node = ord(node)
+            node = node_str[0]
             if node == 0:
                 # all nodes initialised
                 break
@@ -1006,8 +1009,10 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                 continue
             self.log.debug("GetVersion on node %s", node)
             fw_version = await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetVersion, bytearray(), 12)
-            if fw_version:
-                self.log.debug("Node: %s Version: %s", node, "".join("0x%02x " % b for b in fw_version))
+            if not fw_version:
+                self.log.warning("Did not get version for node: %s. Ignoring node.", node)
+                continue
+            self.log.debug("Node: %s Version: %s", node, "".join("0x%02x " % b for b in fw_version))
             if fw_version[0] != node:
                 self.log.warning("Node: %s Version Response looks bogus (node ID does not match): %s",
                                  node, "".join("0x%02x " % b for b in fw_version))
@@ -1024,7 +1029,10 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             self.log.debug("GetChecksum on node %s", node)
             checksum = await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetChecksum,
                                                                  bytearray([0xff, 0x00]), 4)
-            self.log.debug("Got Checksum %s for node %s", "".join("0x%02x " % b for b in checksum), node)
+            if checksum:
+                self.log.debug("Got Checksum %s for node %s", "".join("0x%02x " % b for b in checksum), node)
+            else:
+                self.log.warning("Did not get checksum for node %s", node)
 
         for node in self._nodes:
             self.log.debug("Initial read inputs on node %s", node)

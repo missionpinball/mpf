@@ -676,11 +676,6 @@ class Util:
         return Util.first(futures, loop, timeout, False)
 
     @staticmethod
-    def ensure_future(coro_or_future, loop):
-        """Wrap ensure_future."""
-        return asyncio.ensure_future(coro_or_future, loop=loop)
-
-    @staticmethod
     async def first(futures: Iterable[asyncio.Future], loop, timeout=None, cancel_others=True):
         """Return first future and cancel others."""
         # wait for first

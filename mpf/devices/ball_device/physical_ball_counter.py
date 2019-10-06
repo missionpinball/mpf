@@ -6,8 +6,6 @@ import asyncio
 
 from typing import List
 
-from mpf.core.utility_functions import Util
-
 MYPY = False
 if MYPY:    # pragma: no cover
     from mpf.devices.ball_device.ball_device import BallDevice  # pylint: disable-msg=cyclic-import,unused-import
@@ -42,8 +40,7 @@ class EjectTracker:
         ball_changes = self._ball_count_handler.counter.register_change_stream()
         if not self._already_left:
             ball_left = await self._ball_count_handler.counter.wait_for_ball_to_leave()
-            self._ball_left = Util.ensure_future(ball_left,
-                                                 loop=self.machine.clock.loop)
+            self._ball_left = asyncio.ensure_future(ball_left, loop=self.machine.clock.loop)
 
         self._task = self.machine.clock.loop.create_task(self._run(ball_changes))
         self._task.add_done_callback(self._done)
@@ -237,7 +234,7 @@ class PhysicalBallCounter:
 
     def wait_for_count_stable(self):
         """Wait for stable count."""
-        return Util.ensure_future(self._count_stable.wait(), loop=self.machine.clock.loop)
+        return asyncio.ensure_future(self._count_stable.wait(), loop=self.machine.clock.loop)
 
     @property
     def is_ready_to_receive(self):

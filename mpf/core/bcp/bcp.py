@@ -74,15 +74,15 @@ class Bcp(MpfController):
 
             client = Util.string_to_class(settings['type'])(self.machine, name, self.machine.bcp)
             client.exit_on_close = settings['exit_on_close']
-            connect_future = Util.ensure_future(client.connect(settings), loop=self.machine.clock.loop)
+            connect_future = asyncio.ensure_future(client.connect(settings), loop=self.machine.clock.loop)
             connect_future.add_done_callback(partial(self.transport.register_transport, client))
             client_connect_futures.append(connect_future)
 
         # block init until all clients are connected
         if client_connect_futures:
             queue.wait()
-            future = Util.ensure_future(asyncio.wait(iter(client_connect_futures), loop=self.machine.clock.loop),
-                                        loop=self.machine.clock.loop)
+            future = asyncio.ensure_future(asyncio.wait(iter(client_connect_futures), loop=self.machine.clock.loop),
+                                           loop=self.machine.clock.loop)
             future.add_done_callback(lambda x: queue.clear())
             future.add_done_callback(self._bcp_clients_connected)
 
@@ -102,15 +102,15 @@ class Bcp(MpfController):
         for settings in self.machine.config['bcp']['servers'].values():
             settings = self.machine.config_validator.validate_config("bcp:servers", settings)
             server = BcpServer(self.machine, settings['ip'], settings['port'], settings['type'])
-            server_future = Util.ensure_future(server.start(), loop=self.machine.clock.loop)
+            server_future = asyncio.ensure_future(server.start(), loop=self.machine.clock.loop)
             server_future.add_done_callback(lambda x, s=server: self.servers.append(s))
             servers_start_futures.append(server_future)
 
         # block init until all servers were started
         if servers_start_futures:
             queue.wait()
-            future = Util.ensure_future(asyncio.wait(iter(servers_start_futures), loop=self.machine.clock.loop),
-                                        loop=self.machine.clock.loop)
+            future = asyncio.ensure_future(asyncio.wait(iter(servers_start_futures), loop=self.machine.clock.loop),
+                                           loop=self.machine.clock.loop)
             future.add_done_callback(lambda x: queue.clear())
 
     def _stop_servers(self, **kwargs):

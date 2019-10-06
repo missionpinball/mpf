@@ -200,6 +200,7 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
 
     def _set_text(self, text: str):
         """Set text to display."""
+        assert self.platform.api_version is not None
         if self.platform.api_version >= StrictVersion("0.9"):
             formatted_text = self._format_text(text)
             self.platform.send_byte(LisyDefines.DisplaysSetDisplay0To + self.number,
@@ -220,6 +221,7 @@ class LisySound(HardwareSoundPlatformInterface):
 
     def play_sound(self, number: int, track: int = 1):
         """Play sound with number."""
+        assert self.platform.api_version is not None
         if self.platform.api_version >= StrictVersion("0.9"):
             self.platform.send_byte(LisyDefines.SoundPlaySound, bytes([track, number]))
         else:
@@ -228,6 +230,7 @@ class LisySound(HardwareSoundPlatformInterface):
 
     def play_sound_file(self, file: str, platform_options: dict, track: int = 1):
         """Play sound file."""
+        assert self.platform.api_version is not None
         flags = 1 if platform_options.get("loop", False) else 0
         flags += 2 if platform_options.get("no_cache", False) else 0
         if self.platform.api_version >= StrictVersion("0.9"):
@@ -238,6 +241,7 @@ class LisySound(HardwareSoundPlatformInterface):
 
     def text_to_speech(self, text: str, platform_options: dict, track: int = 1):
         """Text to speech."""
+        assert self.platform.api_version is not None
         flags = 1 if platform_options.get("loop", False) else 0
         flags += 2 if platform_options.get("no_cache", False) else 0
         if self.platform.api_version >= StrictVersion("0.9"):
@@ -248,6 +252,7 @@ class LisySound(HardwareSoundPlatformInterface):
 
     def set_volume(self, volume: float, track: int = 1):
         """Set volume."""
+        assert self.platform.api_version is not None
         if self.platform.api_version >= StrictVersion("0.9"):
             self.platform.send_byte(LisyDefines.SoundSetVolume, bytes([track, int(volume * 100)]))
         else:
@@ -256,6 +261,7 @@ class LisySound(HardwareSoundPlatformInterface):
 
     def stop_all_sounds(self, track: int = 1):
         """Stop all sounds."""
+        assert self.platform.api_version is not None
         if self.platform.api_version >= StrictVersion("0.9"):
             self.platform.send_byte(LisyDefines.SoundStopAllSounds, bytes([track]))
         else:
@@ -294,7 +300,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
         self.config = self.machine.config_validator.validate_config("lisy", self.machine.config['lisy'])
         self._configure_device_logging_and_debug("lisy", self.config)
-        self.api_version = None
+        self.api_version = None             # type: Optional[StrictVersion]
         self._light_system = None
         self._send_length_of_command = self.config['send_length_after_command']
 
@@ -607,6 +613,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         """Configure light on LISY."""
         del platform_settings
         assert self._number_of_lamps is not None
+        assert self._number_of_modern_lights is not None
 
         if subtype is None or subtype == "matrix":
             if not self._coils_start_at_one:

@@ -63,8 +63,8 @@ class IncomingBall:
         self._timeout_future.cancel()
         # set up a timeout for ball missing at target
         timeout = self._source.config['ball_missing_timeouts'][self._target] / 1000
-        self._timeout_future = Util.ensure_future(asyncio.sleep(timeout, loop=self._source.machine.clock.loop),
-                                                  loop=self._source.machine.clock.loop)
+        self._timeout_future = asyncio.ensure_future(asyncio.sleep(timeout, loop=self._source.machine.clock.loop),
+                                                     loop=self._source.machine.clock.loop)
         # set confirmed for source
         self._confirm_future.set_result(True)
 

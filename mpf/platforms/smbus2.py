@@ -6,8 +6,6 @@ import logging
 
 from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
 
-from mpf.core.utility_functions import Util
-
 from mpf.core.platform import I2cPlatform
 
 EXTENSION_LOADED = True
@@ -70,7 +68,7 @@ class Smbus2I2cDevice(I2cPlatformInterface):
 
     def i2c_write8(self, register, value):
         """Write a byte to I2C."""
-        Util.ensure_future(self.smbus.write_byte_data(self.address, int(register), int(value)), loop=self.loop)
+        asyncio.ensure_future(self.smbus.write_byte_data(self.address, int(register), int(value)), loop=self.loop)
         # this does not return
 
     async def i2c_read_block(self, register, count):

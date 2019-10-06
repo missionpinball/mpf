@@ -1,7 +1,6 @@
 """Count balls using an entrance switch."""
 import asyncio
 
-from mpf.core.utility_functions import Util
 from mpf.devices.ball_device.physical_ball_counter import PhysicalBallCounter, BallEntranceActivity, \
     BallLostActivity
 
@@ -116,8 +115,8 @@ class EntranceSwitchCounter(PhysicalBallCounter):
         """Wait for a ball to leave."""
         await self.wait_for_count_stable()
         # wait 10ms
-        done_future = Util.ensure_future(asyncio.sleep(0.01, loop=self.machine.clock.loop),
-                                         loop=self.machine.clock.loop)
+        done_future = asyncio.ensure_future(asyncio.sleep(0.01, loop=self.machine.clock.loop),
+                                            loop=self.machine.clock.loop)
         done_future.add_done_callback(self._ball_left)
         return done_future
 
