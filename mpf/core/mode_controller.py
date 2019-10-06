@@ -81,18 +81,18 @@ class ModeController(MpfController):
 
     def create_mode_devices(self):
         """Create mode devices."""
-        for mode in self.machine.modes:
+        for mode in self.machine.modes.values():
             mode.create_mode_devices()
 
     async def load_mode_devices(self):
         """Load mode devices."""
-        for mode in self.machine.modes:
+        for mode in self.machine.modes.values():
             await mode.load_mode_devices()
 
     def initialise_modes(self, **kwargs):
         """Initialise modes."""
         del kwargs
-        for mode in self.machine.modes:
+        for mode in self.machine.modes.values():
             mode.initialise_mode()
 
     async def load_modes(self, **kwargs):
@@ -103,7 +103,7 @@ class ModeController(MpfController):
 
         for mode in set(self.machine.config['modes']):
 
-            if mode in self.machine.modes:
+            if mode in self.machine.modes.values():
                 raise AssertionError('Mode {} already exists. Cannot load again.'.format(mode))
 
             # load mode
@@ -340,7 +340,7 @@ class ModeController(MpfController):
 
     def _player_turn_start(self, player, **kwargs):
         del kwargs
-        for mode in self.machine.modes:
+        for mode in self.machine.modes.values():
             if not mode.is_game_mode:
                 continue
             mode.player = player
@@ -348,7 +348,7 @@ class ModeController(MpfController):
     def _player_turn_ended(self, player, **kwargs):
         del kwargs
         del player
-        for mode in self.machine.modes:
+        for mode in self.machine.modes.values():
             if not mode.is_game_mode:
                 continue
             mode.player = None

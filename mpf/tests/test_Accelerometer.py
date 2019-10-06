@@ -125,7 +125,7 @@ class TestAccelerometer(MpfTestCase):
         self._hit2 = True
 
     def test_hits(self):
-        accelerometer = self.machine.accelerometers.test_accelerometer
+        accelerometer = self.machine.accelerometers["test_accelerometer"]
 
         # perfectly leveled
         accelerometer.update_acceleration(0.0, 0.0, 1.0)

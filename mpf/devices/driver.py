@@ -47,7 +47,7 @@ class Driver(SystemWideDevice):
     def _check_duplicate_coil_numbers(machine, **kwargs):
         del kwargs
         check_set = set()
-        for coil in machine.coils:
+        for coil in machine.coils.values():
             if not hasattr(coil, "hw_driver"):
                 # skip dual wound and other special devices
                 continue

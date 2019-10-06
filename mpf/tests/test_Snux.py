@@ -38,7 +38,7 @@ class TestSnux(MpfFakeGameTestCase):
 
     def test_ac_switch_and_pulse(self):
         # test diag led flashing. otherwise snux is not running
-        c_diag_led_driver = self.machine.coils.c_diag_led_driver
+        c_diag_led_driver = self.machine.coils["c_diag_led_driver"]
         c_diag_led_driver.pulse = MagicMock()
         self.advance_time_and_run(1)
         c_diag_led_driver.pulse.assert_called_with(250)

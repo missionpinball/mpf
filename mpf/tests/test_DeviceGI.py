@@ -26,17 +26,17 @@ class TestDeviceGI(MpfTestCase):
         self.assertLightChannel("gi_02", 0)
 
         # Turn on GI (different brightness levels)
-        self.machine.lights.gi_01.color([128, 128, 128])
+        self.machine.lights["gi_01"].color([128, 128, 128])
         self.advance_time_and_run(.1)
         self.assertLightChannel("gi_01", 128)
-        self.machine.lights.gi_02.color([77, 77, 77])
+        self.machine.lights["gi_02"].color([77, 77, 77])
         self.advance_time_and_run(.1)
         self.assertLightChannel("gi_02", 77)
 
         # Turn off GI
-        self.machine.lights.gi_01.off()
+        self.machine.lights["gi_01"].off()
         self.advance_time_and_run(.1)
         self.assertLightChannel("gi_01", 0)
-        self.machine.lights.gi_02.off()
+        self.machine.lights["gi_02"].off()
         self.advance_time_and_run(.1)
         self.assertLightChannel("gi_02", 0)

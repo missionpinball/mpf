@@ -16,18 +16,18 @@ class TestSmartVirtualPlatform(MpfTestCase):
     def test_eject(self):
         # device1_s1 is active in this test initially
         self.advance_time_and_run(.6)
-        self.assertEqual(1, self.machine.ball_devices.device1.balls)
-        self.assertEqual(0, self.machine.ball_devices.device2.balls)
+        self.assertEqual(1, self.machine.ball_devices["device1"].balls)
+        self.assertEqual(0, self.machine.ball_devices["device2"].balls)
         self.assertEqual(False, self.machine.switch_controller.is_active('device2_s1'))
         self.assertEqual(False, self.machine.switch_controller.is_active('device2_s2'))
         self.assertEqual(True, self.machine.switch_controller.is_active('device1_s1'))
         self.assertEqual(False, self.machine.switch_controller.is_active('device1_s2'))
 
-        self.machine.ball_devices.device1.eject()
+        self.machine.ball_devices["device1"].eject()
         self.advance_time_and_run(1)
 
-        self.assertEqual(0, self.machine.ball_devices.device1.balls)
-        self.assertEqual(1, self.machine.ball_devices.device2.balls)
+        self.assertEqual(0, self.machine.ball_devices["device1"].balls)
+        self.assertEqual(1, self.machine.ball_devices["device2"].balls)
 
         self.assertEqual(True, self.machine.switch_controller.is_active('device2_s1'))
         self.assertEqual(False, self.machine.switch_controller.is_active('device2_s2'))
@@ -36,8 +36,8 @@ class TestSmartVirtualPlatform(MpfTestCase):
 
     @test_config("test_smart_virtual_initial.yaml")
     def test_eject_with_plunger(self):
-        trough = self.machine.ball_devices.trough2
-        plunger = self.machine.ball_devices.plunger2
+        trough = self.machine.ball_devices["trough2"]
+        plunger = self.machine.ball_devices["plunger2"]
 
         # add two balls to trough
         self.machine.default_platform.add_ball_to_device(trough)
@@ -88,65 +88,65 @@ class TestSmartVirtualPlatform(MpfTestCase):
         self.machine.events.add_handler('balldevice_device3_ball_enter',
                                         self._ball_swallower)
 
-        self.assertEqual(0, self.machine.ball_devices.device3.balls)
+        self.assertEqual(0, self.machine.ball_devices["device3"].balls)
         self.advance_time_and_run(1)
 
         self.hit_and_release_switch('device3_s')
         self.advance_time_and_run()
-        self.assertEqual(1, self.machine.ball_devices.device3.balls)
+        self.assertEqual(1, self.machine.ball_devices["device3"].balls)
 
         self.hit_and_release_switch('device3_s')
         self.advance_time_and_run()
-        self.assertEqual(2, self.machine.ball_devices.device3.balls)
+        self.assertEqual(2, self.machine.ball_devices["device3"].balls)
 
         self.hit_and_release_switch('device3_s')
         self.advance_time_and_run()
-        self.assertEqual(3, self.machine.ball_devices.device3.balls)
+        self.assertEqual(3, self.machine.ball_devices["device3"].balls)
 
-        self.machine.ball_devices.device3.eject()
+        self.machine.ball_devices["device3"].eject()
         self.advance_time_and_run()
-        self.assertEqual(2, self.machine.ball_devices.device3.balls)
+        self.assertEqual(2, self.machine.ball_devices["device3"].balls)
 
     def test_ball_device_with_entrance_switch_full_timeout(self):
         self.machine.events.add_handler('balldevice_device4_ball_enter',
                                         self._ball_swallower)
 
-        self.assertEqual(0, self.machine.ball_devices.device4.balls)
+        self.assertEqual(0, self.machine.ball_devices["device4"].balls)
         self.advance_time_and_run(1)
 
         self.hit_and_release_switch('device4_s')
         self.advance_time_and_run()
-        self.assertEqual(1, self.machine.ball_devices.device4.balls)
+        self.assertEqual(1, self.machine.ball_devices["device4"].balls)
 
         self.hit_and_release_switch('device4_s')
         self.advance_time_and_run()
-        self.assertEqual(2, self.machine.ball_devices.device4.balls)
+        self.assertEqual(2, self.machine.ball_devices["device4"].balls)
 
         self.hit_switch_and_run('device4_s', 1)
-        self.assertEqual(3, self.machine.ball_devices.device4.balls)
+        self.assertEqual(3, self.machine.ball_devices["device4"].balls)
 
-        self.machine.playfield.add_ball(1, self.machine.ball_devices.device4)
+        self.machine.playfield.add_ball(1, self.machine.ball_devices["device4"])
         self.advance_time_and_run(3)
         self.hit_switch_and_run('playfield', 1)
 
-        self.assertEqual(2, self.machine.ball_devices.device4.balls)
+        self.assertEqual(2, self.machine.ball_devices["device4"].balls)
         self.assertFalse(self.machine.switch_controller.is_active('device4_s'))
 
     def test_eject_with_no_ball(self):
         # tests that firing a coil of a device with no balls in it does not
         # put a ball in the target device.
-        self.assertEqual(0, self.machine.ball_devices.device1.balls)
-        self.assertEqual(0, self.machine.ball_devices.device2.balls)
+        self.assertEqual(0, self.machine.ball_devices["device1"].balls)
+        self.assertEqual(0, self.machine.ball_devices["device2"].balls)
         self.assertEqual(False, self.machine.switch_controller.is_active('device2_s1'))
         self.assertEqual(False, self.machine.switch_controller.is_active('device2_s2'))
         self.assertEqual(False, self.machine.switch_controller.is_active('device1_s1'))
         self.assertEqual(False, self.machine.switch_controller.is_active('device1_s2'))
 
-        self.machine.coils.plunger.pulse()
+        self.machine.coils["plunger"].pulse()
         self.advance_time_and_run(1)
 
-        self.assertEqual(0, self.machine.ball_devices.device1.balls)
-        self.assertEqual(0, self.machine.ball_devices.device2.balls)
+        self.assertEqual(0, self.machine.ball_devices["device1"].balls)
+        self.assertEqual(0, self.machine.ball_devices["device2"].balls)
         self.assertEqual(False, self.machine.switch_controller.is_active('device2_s1'))
         self.assertEqual(False, self.machine.switch_controller.is_active('device2_s2'))
         self.assertEqual(False, self.machine.switch_controller.is_active('device1_s1'))
@@ -155,7 +155,7 @@ class TestSmartVirtualPlatform(MpfTestCase):
     def test_start_active_switches(self):
         # tests that the virtual_platform_start_active_switches really do start
         # active.
-        self.assertEqual(3, self.machine.ball_devices.trough.balls)
+        self.assertEqual(3, self.machine.ball_devices["trough"].balls)
 
     def test_drop_targets(self):
         # complete target
@@ -197,28 +197,28 @@ class TestSmartVirtualPlatform(MpfTestCase):
     @test_config("test_coil_fired_plunger.yaml")
     def test_coil_fired_plunger(self):
         self.advance_time_and_run(2)
-        self.assertEqual(5, self.machine.ball_devices.trough.balls)
-        self.assertEqual(0, self.machine.ball_devices.shooter_lane.balls)
+        self.assertEqual(5, self.machine.ball_devices["trough"].balls)
+        self.assertEqual(0, self.machine.ball_devices["shooter_lane"].balls)
         self.assertEqual(0, self.machine.playfield.balls)
 
         self.hit_and_release_switch('s_start')
         self.assertModeRunning('game')
         self.advance_time_and_run(3)
 
-        self.assertEqual(4, self.machine.ball_devices.trough.balls)
-        self.assertEqual(1, self.machine.ball_devices.shooter_lane.balls)
+        self.assertEqual(4, self.machine.ball_devices["trough"].balls)
+        self.assertEqual(1, self.machine.ball_devices["shooter_lane"].balls)
         self.assertEqual(0, self.machine.playfield.balls)
 
         self.hit_and_release_switch('s_shooter_lane')
         self.advance_time_and_run()
 
-        self.assertEqual(4, self.machine.ball_devices.trough.balls)
-        self.assertEqual(0, self.machine.ball_devices.shooter_lane.balls)
+        self.assertEqual(4, self.machine.ball_devices["trough"].balls)
+        self.assertEqual(0, self.machine.ball_devices["shooter_lane"].balls)
         self.assertEqual(0, self.machine.playfield.balls)
 
         self.hit_and_release_switch('s_standup')
         self.advance_time_and_run()
 
-        self.assertEqual(4, self.machine.ball_devices.trough.balls)
-        self.assertEqual(0, self.machine.ball_devices.shooter_lane.balls)
+        self.assertEqual(4, self.machine.ball_devices["trough"].balls)
+        self.assertEqual(0, self.machine.ball_devices["shooter_lane"].balls)
         self.assertEqual(1, self.machine.playfield.balls)

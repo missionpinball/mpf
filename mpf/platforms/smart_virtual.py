@@ -273,7 +273,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
         self._initialise_score_reels()
 
     def _initialise_score_reels(self):
-        for device in self.machine.score_reels:
+        for device in self.machine.score_reels.values():
             if device.config['coil_inc']:
                 device.config['coil_inc'].hw_driver.action = ScoreReelAdvanceAction(
                     ["pulse"], self.machine,
@@ -298,7 +298,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
                 )
 
     def _initialise_drop_targets(self):
-        for device in self.machine.drop_targets:
+        for device in self.machine.drop_targets.values():
             if device.config['reset_coil']:
                 device.config['reset_coil'].hw_driver.action = SwitchDisableAction(
                     ["pulse"], self.machine, [device.config['switch']])
@@ -307,7 +307,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
                     ["pulse"], self.machine, [device.config['switch']])
 
     def _initialise_drop_target_banks(self):
-        for device in self.machine.drop_target_banks:
+        for device in self.machine.drop_target_banks.values():
             if device.config['reset_coil']:
                 device.config['reset_coil'].hw_driver.action = ResetDropTargetAction(
                     ["pulse"], self.machine, device)
@@ -317,7 +317,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
                     ["pulse"], self.machine, device)
 
     def _initialise_ball_devices(self):
-        for device in self.machine.ball_devices:
+        for device in self.machine.ball_devices.values():
             if device.is_playfield():
                 continue
 

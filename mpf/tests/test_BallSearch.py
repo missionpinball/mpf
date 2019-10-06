@@ -154,15 +154,15 @@ class TestBallSearch(MpfGameTestCase):
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
 
         # test servo reset during ball search
-        self.machine.servos.servo1.go_to_position(0.7)
+        self.machine.servos["servo1"].go_to_position(0.7)
         self.advance_time_and_run(21)
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
 
-        self.assertEqual(0.0, self.machine.servos.servo1.hw_servo.current_position)
+        self.assertEqual(0.0, self.machine.servos["servo1"].hw_servo.current_position)
         self.advance_time_and_run(5)
-        self.assertEqual(1.0, self.machine.servos.servo1.hw_servo.current_position)
+        self.assertEqual(1.0, self.machine.servos["servo1"].hw_servo.current_position)
         self.advance_time_and_run(5)
-        self.assertEqual(0.0, self.machine.servos.servo1.hw_servo.current_position)
+        self.assertEqual(0.0, self.machine.servos["servo1"].hw_servo.current_position)
 
         # test motor. should be running
         self.assertEqual("enabled", self.machine.digital_outputs["c_motor_run"].hw_driver.state)
@@ -186,7 +186,7 @@ class TestBallSearch(MpfGameTestCase):
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
 
         # servo should return to its position
-        self.assertEqual(0.7, self.machine.servos.servo1.hw_servo.current_position)
+        self.assertEqual(0.7, self.machine.servos["servo1"].hw_servo.current_position)
 
         # motor keeps running
         self.assertEqual("enabled", self.machine.digital_outputs["c_motor_run"].hw_driver.state)

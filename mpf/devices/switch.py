@@ -62,7 +62,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
     def _check_duplicate_switch_numbers(machine, **kwargs):
         del kwargs
         check_set = set()
-        for switch in machine.switches:
+        for switch in machine.switches.values():
             key = (switch.config['platform'], switch.hw_switch.number)
             if key in check_set:
                 raise AssertionError(

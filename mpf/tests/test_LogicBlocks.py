@@ -653,4 +653,4 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.post_event("counter5_count")
         self.post_event("counter5_count")
 
-        self.assertEqual(3, self.machine.counters.counter5.value)
+        self.assertEqual(3, self.machine.counters["counter5"].value)

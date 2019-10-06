@@ -99,7 +99,7 @@ class SwitchController(MpfController):
         platforms = set()
         switches = set()  # (switch_object, number)
 
-        for switch in self.machine.switches:
+        for switch in self.machine.switches.values():
             platforms.add(switch.platform)
             switches.add((switch, switch.hw_switch.number))
 
