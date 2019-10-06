@@ -471,7 +471,7 @@ class P3RocI2c(I2cPlatformInterface):
 
     async def i2c_read8(self, register):
         """Read an 8-bit value from the I2C bus of the P3-Roc."""
-        data = await (self.platform.run_proc_cmd("read_data", 7, int(self.address) << 9 | register))
+        data = await self.platform.run_proc_cmd("read_data", 7, int(self.address) << 9 | register)
         return data & 0xFF
 
     async def i2c_read_block(self, register, count):
