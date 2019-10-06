@@ -3,7 +3,7 @@ import abc
 import asyncio
 from collections import namedtuple
 
-from typing import Optional, Generator
+from typing import Optional
 
 from mpf.core.logging import LogMixin
 
@@ -279,7 +279,7 @@ class I2cPlatform(BasePlatform, metaclass=abc.ABCMeta):
         super().__init__(machine)
         self.features['has_i2c'] = True
 
-    async def configure_i2c(self, number: str) -> Generator[int, None, "I2cPlatformInterface"]:
+    async def configure_i2c(self, number: str) -> "I2cPlatformInterface":
         """Configure i2c device."""
         raise NotImplementedError
 

@@ -1,7 +1,7 @@
 """Contains the DeviceManager base class."""
 from collections import OrderedDict
 
-from typing import Callable, Tuple, Generator, List
+from typing import Callable, Tuple, List
 
 from mpf.core.utility_functions import Util
 from mpf.core.mpf_controller import MpfController
@@ -213,7 +213,7 @@ class DeviceManager(MpfController):
                 await collection[device_name].device_added_system_wide()
 
     # pylint: disable-msg=too-many-nested-blocks
-    def get_device_control_events(self, config) -> Generator[Tuple[str, Callable, int, "Device"], None, None]:
+    def get_device_control_events(self, config) -> Tuple[str, Callable, int, "Device"]:
         """Scan a config dictionary for control_events.
 
          Yields events, methods, delays, and devices for all the devices and

@@ -1,7 +1,7 @@
 """Contains the BallController class which manages and tracks all the balls in a pinball machine."""
 
 import asyncio
-from typing import Generator, Union, Iterable
+from typing import Union, Iterable
 
 from mpf.devices.ball_device.ball_device import BallDevice
 
@@ -91,7 +91,7 @@ class BallController(MpfController):
         """Inform ball controller about a capured ball (which might be new)."""
         self._captured_balls.put_nowait(source)
 
-    async def _add_new_balls_to_playfield(self) -> Generator[int, None, None]:
+    async def _add_new_balls_to_playfield(self) -> None:
         # initial count
         self.num_balls_known = await self._count_all_balls_in_devices()
 
@@ -123,7 +123,7 @@ class BallController(MpfController):
                         self.machine.events.post("playfield_jump", source=playfield_source, target=playfield_target)
                         break
 
-    async def _count_all_balls_in_devices(self) -> Generator[int, None, int]:
+    async def _count_all_balls_in_devices(self) -> int:
         """Count balls in all devices."""
         while True:
             # wait until all devices are stable

@@ -3,7 +3,7 @@
 import asyncio
 
 import random
-from typing import Optional, Generator, Union
+from typing import Optional, Union
 
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
 from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
@@ -944,7 +944,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         await asyncio.sleep(.1, loop=self.machine.clock.loop)
         self._reader._buffer = bytearray()
 
-    async def _initialize(self) -> Generator[int, None, None]:
+    async def _initialize(self) -> None:
         await self._init_bridge()
 
         self.log.debug("Resetting node bus and configuring traffic.")

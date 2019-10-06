@@ -4,7 +4,7 @@ The duty of this device is to maintain the current ball count of the device.
 """
 import asyncio
 
-from typing import Generator, List
+from typing import List
 
 from mpf.core.utility_functions import Util
 
@@ -229,7 +229,7 @@ class PhysicalBallCounter:
         """Return true if device is jammed and cannot count."""
         raise NotImplementedError()
 
-    async def count_balls(self) -> Generator[int, None, int]:
+    async def count_balls(self) -> int:
         """Return the current ball count."""
         # wait until count is stable
         await self._count_stable.wait()

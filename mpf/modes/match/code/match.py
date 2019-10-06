@@ -1,8 +1,6 @@
 """Contains the Match mode code."""
 import random
 
-from typing import Generator
-
 import math
 
 from mpf.core.settings_controller import SettingEntry
@@ -48,7 +46,7 @@ class Match(AsyncMode):
         non_winning_numbers = list(set(range(0, 100, step)) - set(match_numbers))
         return random.choice(non_winning_numbers)
 
-    async def _run(self) -> Generator[int, None, None]:
+    async def _run(self) -> None:
         """Run match mode."""
         # no player, no match
         if not self.machine.game.player_list:

@@ -5,7 +5,7 @@ from serial import SerialException
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from typing import Generator    # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class BaseSerialCommunicator:
@@ -23,7 +23,7 @@ class BaseSerialCommunicator:
             port:
             baud:
         """
-        self.machine = platform.machine
+        self.machine = platform.machine     # type: MachineController
         self.platform = platform
         self.log = self.platform.log
         self.debug = self.platform.config['debug']
@@ -32,7 +32,7 @@ class BaseSerialCommunicator:
         self.xonxoff = xonxoff
         self.reader = None      # type: asyncio.StreamReader
         self.writer = None      # type: asyncio.StreamWriter
-        self.read_task = None   # type: Generator[int, None, None]
+        self.read_task = None
 
     async def connect(self):
         """Connect to the hardware."""

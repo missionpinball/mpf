@@ -11,8 +11,6 @@ https://github.com/preble/pyprocgame
 """
 import logging
 
-from typing import Generator
-
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
 from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
@@ -492,7 +490,7 @@ class P3RocI2c(I2cPlatformInterface):
                 position += 2
         return result
 
-    def i2c_read16(self, register) -> Generator[int, None, int]:
+    async def i2c_read16(self, register) -> int:
         """Read an 16-bit value from the I2C bus of the P3-Roc."""
         return self.platform.run_proc_cmd("read_data", 7, int(self.address) << 9 | 1 << 8 | register)
 

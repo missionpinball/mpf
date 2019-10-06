@@ -1,5 +1,5 @@
 """Mode timers."""
-from typing import List, Generator
+from typing import List
 
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.delays import DelayManager
@@ -50,7 +50,7 @@ class Timer(ModeDevice):
         self.event_keys = list()            # type: List[EventHandlerKey]
         self.delay = None                   # type: DelayManager
 
-    async def device_added_to_mode(self, mode: Mode) -> Generator[int, None, None]:
+    async def device_added_to_mode(self, mode: Mode) -> None:
         """Device added in mode."""
         await super().device_added_to_mode(mode)
         self.tick_var = '{}_{}_tick'.format(mode.name, self.name)

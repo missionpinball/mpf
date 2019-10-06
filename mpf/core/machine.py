@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 import threading
-from typing import Any, Callable, Dict, List, Set, Generator
+from typing import Any, Callable, Dict, List, Set
 
 from pkg_resources import iter_entry_points
 
@@ -205,7 +205,7 @@ class MachineController(LogMixin):
         """
         self._crash_handlers.append(handler)
 
-    async def initialise_core_and_hardware(self) -> Generator[int, None, None]:
+    async def initialise_core_and_hardware(self) -> None:
         """Load core modules and hardware."""
         self._boot_holds = set()    # type: Set[str]
         self.is_init_done = asyncio.Event(loop=self.clock.loop)
@@ -222,7 +222,7 @@ class MachineController(LogMixin):
         # they're not set up yet when the hw platforms are constructed.
         await self._initialize_platforms()
 
-    async def initialise(self) -> Generator[int, None, None]:
+    async def initialise(self) -> None:
         """Initialise machine."""
         await self.initialise_core_and_hardware()
 
@@ -257,7 +257,7 @@ class MachineController(LogMixin):
         clock.loop.set_exception_handler(self._exception_handler)
         return clock
 
-    async def _run_init_phases(self) -> Generator[int, None, None]:
+    async def _run_init_phases(self) -> None:
         """Run init phases."""
         await self.events.post_queue_async("init_phase_1")
         '''event: init_phase_1
@@ -301,7 +301,7 @@ class MachineController(LogMixin):
 
         self.clear_boot_hold('init')
 
-    async def _initialize_platforms(self) -> Generator[int, None, None]:
+    async def _initialize_platforms(self) -> None:
         """Initialise all used hardware platforms."""
         init_done = []
         # collect all platform init futures
@@ -313,7 +313,7 @@ class MachineController(LogMixin):
         for result in results[0]:
             result.result()
 
-    async def _start_platforms(self) -> Generator[int, None, None]:
+    async def _start_platforms(self) -> None:
         """Start all used hardware platforms."""
         for hardware_platform in list(self.hardware_platforms.values()):
             await hardware_platform.start()
@@ -512,7 +512,7 @@ class MachineController(LogMixin):
 
                 self.custom_code.append(custom_code_obj)
 
-    async def reset(self) -> Generator[int, None, None]:
+    async def reset(self) -> None:
         """Reset the machine.
 
         This method is safe to call. It essentially sets up everything from
@@ -796,7 +796,7 @@ class MachineController(LogMixin):
         if not self._boot_holds:
             self.is_init_done.set()
 
-    async def init_done(self) -> Generator[int, None, None]:
+    async def init_done(self) -> None:
         """Finish init.
 
         Called when init is done and all boot holds are cleared.

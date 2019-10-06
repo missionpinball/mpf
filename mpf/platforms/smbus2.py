@@ -1,6 +1,6 @@
 """I2C platform which uses the smbus interface on linux via the smbus2 python extension."""
 import asyncio
-from typing import Dict, Tuple, Generator
+from typing import Tuple
 
 import logging
 
@@ -95,7 +95,7 @@ class Smbus2(I2cPlatform):
         if not SMBus2Asyncio:
             raise AssertionError("smbus2 python extension missing. Please run: pip3 install smbus2_asyncio")
 
-    async def configure_i2c(self, number: str) -> Generator[int, None, Smbus2I2cDevice]:
+    async def configure_i2c(self, number: str) -> Smbus2I2cDevice:
         """Configure device on smbus2."""
         device = Smbus2I2cDevice(number, self, self._i2c_busses)
         await device.open()

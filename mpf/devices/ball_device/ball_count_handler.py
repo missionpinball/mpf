@@ -1,8 +1,6 @@
 """Maintains the ball count for a ball device."""
 import asyncio
 
-from typing import Generator
-
 from mpf.devices.ball_device.physical_ball_counter import PhysicalBallCounter, EjectTracker
 from mpf.devices.ball_device.entrance_switch_counter import EntranceSwitchCounter
 from mpf.devices.ball_device.switch_counter import SwitchCounter
@@ -174,7 +172,7 @@ class BallCountHandler(BallDeviceStateHandler):
                            incoming_balls)
             return True
 
-    async def start_eject(self, already_left=False) -> Generator[int, None, EjectTracker]:
+    async def start_eject(self, already_left=False) -> EjectTracker:
         """Start eject."""
         await self.ball_device.incoming_balls_handler.start_eject()
         await self._is_counting.acquire()

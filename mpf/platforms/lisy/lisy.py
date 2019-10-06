@@ -2,7 +2,7 @@
 import asyncio
 from distutils.version import StrictVersion
 
-from typing import Generator, Dict, Optional, List
+from typing import Dict, Optional, List
 
 from mpf.core.segment_mappings import SEVEN_SEGMENTS, BCD_SEGMENTS, FOURTEEN_SEGMENTS, TextToSegmentMapper, \
     ASCII_SEGMENTS
@@ -717,7 +717,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         self.log.debug("Sending %s %s (%s)", cmd, string, "".join(" 0x%02x" % ord(b) for b in string))
         self._writer.write(bytes([cmd]) + string.encode() + bytes([0]))
 
-    async def _read_byte(self) -> Generator[int, None, int]:
+    async def _read_byte(self) -> int:
         """Read one byte."""
         assert self._reader is not None
 
@@ -744,7 +744,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             if char == separator and len(buffer) > min_chars:
                 return buffer
 
-    async def _read_string(self) -> Generator[int, None, bytes]:
+    async def _read_string(self) -> bytes:
         """Read zero terminated string."""
         self.log.debug("Reading zero terminated string")
         data = await self._readuntil(b'\x00')
