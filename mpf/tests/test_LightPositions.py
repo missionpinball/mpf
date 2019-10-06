@@ -12,9 +12,9 @@ class TestLightPositions(MpfFakeGameTestCase):
         return 'tests/machine_files/light/'
 
     def test_light_positions(self):
-        led1 = self.machine.lights.led1
-        led2 = self.machine.lights.led2
-        led3 = self.machine.lights.led3
+        led1 = self.machine.lights["led1"]
+        led2 = self.machine.lights["led2"]
+        led3 = self.machine.lights["led3"]
 
         self.assertEqual(led1.x, 0.4)
         self.assertEqual(led1.y, 0.5)

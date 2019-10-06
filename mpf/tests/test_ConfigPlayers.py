@@ -140,7 +140,7 @@ class TestConfigPlayers(MpfTestCase):
         # is not running
 
     def test_empty_config_player_section(self):
-        self.machine.modes.mode2.start()
+        self.machine.modes["mode2"].start()
         self.advance_time_and_run()
-        self.machine.modes.mode2.stop()
+        self.machine.modes["mode2"].stop()
         self.advance_time_and_run()

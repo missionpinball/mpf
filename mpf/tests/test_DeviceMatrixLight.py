@@ -24,8 +24,8 @@ class TestDeviceMatrixLight(MpfTestCase):
         self.assertIn('light_01', self.machine.lights)
         self.assertIn('light_02', self.machine.lights)
 
-        light1 = self.machine.lights.light_01
-        light2 = self.machine.lights.light_02
+        light1 = self.machine.lights["light_01"]
+        light2 = self.machine.lights["light_02"]
 
         self.advance_time_and_run(10)
 

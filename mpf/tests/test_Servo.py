@@ -12,7 +12,7 @@ class TestServo(MpfTestCase):
 
     def test_servo_go_to_position(self):
         # full range servo
-        servo = self.machine.servos.test_servo
+        servo = self.machine.servos["test_servo"]
         # go to position 1.0 (on of the ends)
         servo.go_to_position(1.0)
         # assert that platform got called
@@ -23,7 +23,7 @@ class TestServo(MpfTestCase):
         self.assertEqual(0.0, servo.hw_servo.current_position)
 
         # limited range servo (like most ones)
-        servo = self.machine.servos.limited_servo
+        servo = self.machine.servos["limited_servo"]
         # go to position 1.0 (on of the ends)
         servo.go_to_position(1.0)
         # assert that platform got called
@@ -38,7 +38,7 @@ class TestServo(MpfTestCase):
         self.assertEqual(0.5, servo.hw_servo.current_position)
 
     def test_events(self):
-        servo = self.machine.servos.test_servo
+        servo = self.machine.servos["test_servo"]
 
         # post reset event
         self.post_event("test_reset")

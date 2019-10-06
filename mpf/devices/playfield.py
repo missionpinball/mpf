@@ -51,7 +51,7 @@ class Playfield(SystemWideDevice):
         # Set up event handlers
 
         # Watch for balls added to the playfield
-        for device in self.machine.ball_devices:
+        for device in self.machine.ball_devices.values():
             if device.is_playfield():
                 continue
             for target in device.config['eject_targets']:
@@ -81,7 +81,7 @@ class Playfield(SystemWideDevice):
         self.machine.events.add_handler('sw_' + self.name + '_active',
                                         self._playfield_switch_hit)
 
-        for device in self.machine.playfield_transfers:
+        for device in self.machine.playfield_transfers.values():
             if device.config['eject_target'] == self:
                 self.machine.events.add_handler(
                     event='balldevice_' + device.name +

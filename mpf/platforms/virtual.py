@@ -120,7 +120,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
             self.initial_states_sent = True
 
         else:
-            switches = [x for x in self.machine.switches if x.platform == self]
+            switches = [x for x in self.machine.switches.values() if x.platform == self]
 
             for switch in switches:
                 self.hw_switches[switch.hw_switch.number] = switch.state ^ switch.invert

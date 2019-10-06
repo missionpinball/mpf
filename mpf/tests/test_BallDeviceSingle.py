@@ -25,7 +25,7 @@ class TestBallDeviceSingle(MpfGameTestCase):
         self.assertEqual(1, self.machine.playfield.balls)
         self.assertEqual(1, self.machine.playfield.available_balls)
 
-        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.trough)
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices["trough"])
         self.advance_time_and_run()
         self.assertEqual(0, self.machine.playfield.balls)
         self.assertEqual(1, self.machine.playfield.available_balls)

@@ -197,7 +197,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertLightColor('led1', 'off')
 
     def test_control_events_in_mode(self):
-        baseMode = self.machine.modes.base
+        baseMode = self.machine.modes["base"]
         ach = self.machine.achievements['achievement7']
         group = self.machine.achievement_groups['group1']
 
@@ -217,7 +217,7 @@ class TestAchievement(MpfFakeGameTestCase):
         a4 = self.machine.achievements['achievement4']
         a5 = self.machine.achievements['achievement5']
         a6 = self.machine.achievements['achievement6']
-        g2 = self.machine.achievement_groups.group2
+        g2 = self.machine.achievement_groups["group2"]
 
         self.start_game()
 
@@ -287,9 +287,8 @@ class TestAchievement(MpfFakeGameTestCase):
         a14 = self.machine.achievements['achievement14']
         a15 = self.machine.achievements['achievement15']
         a16 = self.machine.achievements['achievement16']
-        g4 = self.machine.achievement_groups.group4
+        g4 = self.machine.achievement_groups["group4"]
         g4.enable()
-
 
         self.start_game()
         # complete all achievements
@@ -616,14 +615,11 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual("completed", a6.state)
 
     def test_group_auto_select_and_group_auto_enable(self):
-        a7 = self.machine.achievements['achievement7']
-        a8 = self.machine.achievements['achievement8']
-        a9 = self.machine.achievements['achievement9']
         g1 = self.machine.achievement_groups['group1']
 
         self.start_game()
 
-        self.assertTrue(self.machine.achievement_groups.group1.enabled)
+        self.assertTrue(self.machine.achievement_groups["group1"].enabled)
         selected = g1._selected_member
         self.assertTrue(selected)
 
@@ -669,8 +665,8 @@ class TestAchievement(MpfFakeGameTestCase):
     def test_auto_enable_with_no_enable_events(self):
         self.start_game()
 
-        self.assertTrue(self.machine.achievement_groups.group1.enabled)
-        self.assertFalse(self.machine.achievement_groups.group2.enabled)
+        self.assertTrue(self.machine.achievement_groups["group1"].enabled)
+        self.assertFalse(self.machine.achievement_groups["group2"].enabled)
 
     def test_auto_select_with_no_enable_events(self):
         # a10 and 11 do not have enable events, so they should be enabled on
@@ -681,7 +677,6 @@ class TestAchievement(MpfFakeGameTestCase):
         a11 = self.machine.achievements['achievement11']
         a12 = self.machine.achievements['achievement12']
         a13 = self.machine.achievements['achievement13']
-        g3 = self.machine.achievement_groups['group3']
 
         self.start_game()
         self.advance_time_and_run(.1)
@@ -692,4 +687,3 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual(a13.state, 'disabled')
         if a10.selected == a11.selected:
             raise AssertionError("Neither a10 nor a11 is selected")
-

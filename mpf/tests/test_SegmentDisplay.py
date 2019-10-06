@@ -193,17 +193,17 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.assertEqual("1: 123", display1.hw_display.text)
         self.assertEqual("2: 1337", display2.hw_display.text)
 
-        self.machine.modes.mode1.start()
+        self.machine.modes["mode1"].start()
         self.advance_time_and_run(.1)
         self.assertEqual("MODE1", display1.hw_display.text)
         self.assertEqual("MODE1", display2.hw_display.text)
 
-        self.machine.modes.mode1.stop()
+        self.machine.modes["mode1"].stop()
         self.advance_time_and_run(7)
         self.assertEqual("1: 123", display1.hw_display.text)
         self.assertEqual("2: 1337", display2.hw_display.text)
 
-        self.machine.modes.mode1.start()
+        self.machine.modes["mode1"].start()
         self.advance_time_and_run(5)
         self.assertEqual("MODE1", display1.hw_display.text)
         self.assertEqual("MODE1", display2.hw_display.text)

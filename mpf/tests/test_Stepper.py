@@ -12,7 +12,7 @@ class TestStepper(MpfTestCase):
 
     def test_linearstepper(self):
         # full range servo
-        stepper = self.machine.steppers.linearAxis_stepper
+        stepper = self.machine.steppers["linearAxis_stepper"]
         # verify - now at zero both in stepper and in HW
         self.assertEqual(0.0, stepper._current_position)
 
@@ -52,7 +52,7 @@ class TestStepper(MpfTestCase):
 
     def test_rotary(self):
         return
-        stepper = self.machine.steppers.rotaryMotor_stepper
+        stepper = self.machine.steppers["rotaryMotor_stepper"]
 
         # spin clockwise
         stepper.move_vel_mode( 1000 )
@@ -87,7 +87,7 @@ class TestStepper(MpfTestCase):
             stepper.move_rel_pos( 42 )
 
     def test_stepper_events(self):
-        stepper = self.machine.steppers.linearAxis_stepper
+        stepper = self.machine.steppers["linearAxis_stepper"]
 
         # post reset event
         event_future = self.machine.events.wait_for_event("stepper_linearAxis_stepper_ready")
@@ -115,10 +115,10 @@ class TestStepper(MpfTestCase):
         self.assertEqual(500.0, stepper._current_position, 0)
 
     def test_ball_search(self):
-        stepper = self.machine.steppers.linearAxis_stepper
+        stepper = self.machine.steppers["linearAxis_stepper"]
 
-        self.machine.playfields.playfield.config['enable_ball_search'] = True
-        self.machine.playfields.playfield.balls += 1
+        self.machine.playfields["playfield"].config['enable_ball_search'] = True
+        self.machine.playfields["playfield"].balls += 1
 
         event_future = self.machine.events.wait_for_event("stepper_linearAxis_stepper_ready")
         self.post_event("test_10")

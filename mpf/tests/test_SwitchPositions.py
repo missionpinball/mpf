@@ -12,9 +12,9 @@ class TestSwitchPositions(MpfFakeGameTestCase):
         return 'tests/machine_files/switch_player/'
 
     def test_switch_positions(self):
-        switch1 = self.machine.switches.s_test1
-        switch2 = self.machine.switches.s_test2
-        switch3 = self.machine.switches.s_test3
+        switch1 = self.machine.switches["s_test1"]
+        switch2 = self.machine.switches["s_test2"]
+        switch3 = self.machine.switches["s_test3"]
 
         self.assertEqual(switch1.x, 0.4)
         self.assertEqual(switch1.y, 0.5)

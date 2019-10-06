@@ -16,8 +16,8 @@ class TestPlatform(MpfTestCase):
         # tests that a platform can be added by a device, even if it's not
         # specified in the hardware section
 
-        self.assertEqual(self.machine.switches.switch1.platform,
+        self.assertEqual(self.machine.switches["switch1"].platform,
                          self.machine.hardware_platforms['smart_virtual'])
 
-        self.assertEqual(self.machine.switches.switch2.platform,
+        self.assertEqual(self.machine.switches["switch2"].platform,
                          self.machine.hardware_platforms['virtual'])

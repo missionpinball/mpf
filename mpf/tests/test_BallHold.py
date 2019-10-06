@@ -32,25 +32,25 @@ class TestBallHold(MpfTestCase):
         self.post_event("start_mode1")
 
         # mode loaded. ball_hold2 should be enabled
-        self.assertTrue(self.machine.ball_holds.hold_test2.enabled)
+        self.assertTrue(self.machine.ball_holds["hold_test2"].enabled)
 
         # stop mode
         self.post_event("stop_mode1")
 
         # mode stopped. should ball_hold be disabled
-        self.assertFalse(self.machine.ball_holds.hold_test2.enabled)
+        self.assertFalse(self.machine.ball_holds["hold_test2"].enabled)
 
         # start mode (again)
         self.post_event("start_mode1")
 
         # mode loaded. ball_hold2 should be enabled
-        self.assertTrue(self.machine.ball_holds.hold_test2.enabled)
+        self.assertTrue(self.machine.ball_holds["hold_test2"].enabled)
 
         # stop mode
         self.post_event("stop_mode1")
 
         # mode stopped. should ball_hold be disabled
-        self.assertFalse(self.machine.ball_holds.hold_test2.enabled)
+        self.assertFalse(self.machine.ball_holds["hold_test2"].enabled)
 
     def test_hold_and_release_at_game_end(self):
         coil1 = self.machine.coils['eject_coil1']

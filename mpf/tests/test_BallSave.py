@@ -17,34 +17,34 @@ class TestBallSave(MpfGameTestCase):
         self.post_event("start_mode1")
 
         # mode loaded. mode_ball_save should be enabled
-        self.assertTrue(self.machine.ball_saves.mode_ball_save.enabled)
+        self.assertTrue(self.machine.ball_saves["mode_ball_save"].enabled)
 
         # stop mode
         self.post_event("stop_mode1")
 
         # mode stopped. mode_ball_save should be disabled
-        self.assertFalse(self.machine.ball_saves.mode_ball_save.enabled)
+        self.assertFalse(self.machine.ball_saves["mode_ball_save"].enabled)
 
     def test_early_ball_save_once(self):
         # prepare game
         self.fill_troughs()
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough"].balls)
 
         # start game
         self.start_game()
         self.post_event("enable1")
 
         # ball save should be enabled now
-        self.assertTrue(self.machine.ball_saves.default.enabled)
+        self.assertTrue(self.machine.ball_saves["default"].enabled)
 
         # takes roughly 4s to get ball confirmed
         self.advance_time_and_run(4)
         self.assertNotEqual(None, self.machine.game)
         self.assertBallsOnPlayfield(1)
         self.assertBallsInPlay(1)
-        self.assertTrue(self.machine.ball_saves.default.enabled)
+        self.assertTrue(self.machine.ball_saves["default"].enabled)
 
         # early ball save
         self.hit_and_release_switch("s_left_outlane")
@@ -53,7 +53,7 @@ class TestBallSave(MpfGameTestCase):
         self.advance_time_and_run(4)
         self.assertNotEqual(None, self.machine.game)
         self.assertBallsOnPlayfield(2)
-        self.assertFalse(self.machine.ball_saves.default.enabled)
+        self.assertFalse(self.machine.ball_saves["default"].enabled)
         self.assertBallsInPlay(1)
 
         # second ball drains
@@ -76,21 +76,21 @@ class TestBallSave(MpfGameTestCase):
         self.fill_troughs()
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough"].balls)
 
         # start game
         self.start_game()
         self.post_event("enable2")
 
         # ball save should be enabled now
-        self.assertTrue(self.machine.ball_saves.unlimited.enabled)
+        self.assertTrue(self.machine.ball_saves["unlimited"].enabled)
 
         # takes roughly 4s to get ball confirmed
         self.advance_time_and_run(4)
         self.assertNotEqual(None, self.machine.game)
         self.assertBallsOnPlayfield(1)
         self.assertBallsInPlay(1)
-        self.assertTrue(self.machine.ball_saves.unlimited.enabled)
+        self.assertTrue(self.machine.ball_saves["unlimited"].enabled)
 
         # early ball save
         self.hit_and_release_switch("s_left_outlane")
@@ -99,7 +99,7 @@ class TestBallSave(MpfGameTestCase):
         self.advance_time_and_run(4)
         self.assertNotEqual(None, self.machine.game)
         self.assertBallsOnPlayfield(2)
-        self.assertTrue(self.machine.ball_saves.unlimited.enabled)
+        self.assertTrue(self.machine.ball_saves["unlimited"].enabled)
         self.assertBallsInPlay(1)
 
         # second ball drains
@@ -126,22 +126,22 @@ class TestBallSave(MpfGameTestCase):
         self.fill_troughs()
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough"].balls)
 
-        self.assertFalse(self.machine.ball_saves.default.enabled)
+        self.assertFalse(self.machine.ball_saves["default"].enabled)
 
         # start game
         self.start_game()
         self.post_event("enable1")
 
         # ball save should be enabled now
-        self.assertTrue(self.machine.ball_saves.default.enabled)
+        self.assertTrue(self.machine.ball_saves["default"].enabled)
 
         # takes roughly 4s to get ball confirmed
         self.advance_time_and_run(4)
         self.assertNotEqual(None, self.machine.game)
         self.assertEqual(1, self.machine.playfield.balls)
-        self.assertTrue(self.machine.ball_saves.default.enabled)
+        self.assertTrue(self.machine.ball_saves["default"].enabled)
 
         # ball drains right away
         self.machine.switch_controller.process_switch('s_ball_switch1', 1)
@@ -153,7 +153,7 @@ class TestBallSave(MpfGameTestCase):
         self.assertEqual(0, self.machine.playfield.balls)
 
         # ball save disables because no ball to be saved remain
-        self.assertFalse(self.machine.ball_saves.default.enabled)
+        self.assertFalse(self.machine.ball_saves["default"].enabled)
 
         # game should eject another ball
         self.advance_time_and_run(4)
@@ -185,9 +185,9 @@ class TestBallSave(MpfGameTestCase):
         self.fill_troughs()
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough"].balls)
 
-        self.assertFalse(self.machine.ball_saves.default.enabled)
+        self.assertFalse(self.machine.ball_saves["default"].enabled)
         self.assertEqual(0, self._events["ball_save_default_timer_start"])
 
         # start game
@@ -195,7 +195,7 @@ class TestBallSave(MpfGameTestCase):
         self.post_event("enable1")
 
         # ball save should be enabled now
-        self.assertTrue(self.machine.ball_saves.default.enabled)
+        self.assertTrue(self.machine.ball_saves["default"].enabled)
 
         # takes roughly 4s to get ball confirmed
         self.advance_time_and_run(3)
@@ -205,22 +205,22 @@ class TestBallSave(MpfGameTestCase):
         self.assertEqual(1, self.machine.playfield.balls)
         self.assertFalse(self._hurry_up)
         self.assertFalse(self._grace_period)
-        self.assertTrue(self.machine.ball_saves.default.enabled)
+        self.assertTrue(self.machine.ball_saves["default"].enabled)
 
         self.advance_time_and_run(8)
         self.assertTrue(self._hurry_up)
         self.assertFalse(self._grace_period)
-        self.assertTrue(self.machine.ball_saves.default.enabled)
+        self.assertTrue(self.machine.ball_saves["default"].enabled)
 
         # should be active for another 2s + 2s grace period
-        self.assertTrue(self.machine.ball_saves.default.enabled)
+        self.assertTrue(self.machine.ball_saves["default"].enabled)
         self.advance_time_and_run(2)
         self.assertTrue(self._grace_period)
-        self.assertTrue(self.machine.ball_saves.default.enabled)
+        self.assertTrue(self.machine.ball_saves["default"].enabled)
 
         # after another 2s it should turn off
         self.advance_time_and_run(2)
-        self.assertFalse(self.machine.ball_saves.default.enabled)
+        self.assertFalse(self.machine.ball_saves["default"].enabled)
 
         # game should still run
         self.assertNotEqual(None, self.machine.game)
@@ -240,9 +240,9 @@ class TestBallSave(MpfGameTestCase):
         self.fill_troughs()
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough"].balls)
 
-        self.assertFalse(self.machine.ball_saves.unlimited.enabled)
+        self.assertFalse(self.machine.ball_saves["unlimited"].enabled)
         self.assertEqual(0, self._events["ball_save_unlimited_timer_start"])
 
         # start game
@@ -259,8 +259,8 @@ class TestBallSave(MpfGameTestCase):
         # ball save should be enabled now
         self.post_event("enable2")
         self.advance_time_and_run(1)
-        self.assertTrue(self.machine.ball_saves.unlimited.enabled)
-        self.assertTrue(self.machine.ball_saves.unlimited.unlimited_saves)
+        self.assertTrue(self.machine.ball_saves["unlimited"].enabled)
+        self.assertTrue(self.machine.ball_saves["unlimited"].unlimited_saves)
         self.assertEqual(1, self._events["ball_save_unlimited_timer_start"])
 
         # 20s loop
@@ -278,7 +278,7 @@ class TestBallSave(MpfGameTestCase):
 
         # after 30s + 2s + 2s it should turn off
         self.advance_time_and_run(15)
-        self.assertFalse(self.machine.ball_saves.unlimited.enabled)
+        self.assertFalse(self.machine.ball_saves["unlimited"].enabled)
 
         # game should still run
         self.assertNotEqual(None, self.machine.game)
@@ -296,7 +296,7 @@ class TestBallSave(MpfGameTestCase):
 
         # enable ball save
         self.post_event("enable1")
-        self.assertTrue(self.machine.ball_saves.default.enabled)
+        self.assertTrue(self.machine.ball_saves["default"].enabled)
 
         # ball drains
         self.machine.switch_controller.process_switch('s_ball_switch1', 1)
@@ -313,9 +313,9 @@ class TestBallSave(MpfGameTestCase):
         self.fill_troughs()
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough"].balls)
 
-        self.assertFalse(self.machine.ball_saves.default.enabled)
+        self.assertFalse(self.machine.ball_saves["default"].enabled)
 
         # start game
         self.start_game()
@@ -325,13 +325,13 @@ class TestBallSave(MpfGameTestCase):
         self.advance_time_and_run(4)
 
         # ball save should be enabled now
-        self.assertTrue(self.machine.ball_saves.default.enabled)
+        self.assertTrue(self.machine.ball_saves["default"].enabled)
 
         # takes roughly 4s to get ball confirmed
         self.advance_time_and_run(4)
         self.assertNotEqual(None, self.machine.game)
         self.assertEqual(2, self.machine.playfield.balls)
-        self.assertTrue(self.machine.ball_saves.default.enabled)
+        self.assertTrue(self.machine.ball_saves["default"].enabled)
 
         # double drain
         self.machine.switch_controller.process_switch('s_ball_switch1', 1)
@@ -344,7 +344,7 @@ class TestBallSave(MpfGameTestCase):
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
 
         # first one ball is saved (but will drain soon)
-        self.assertEqual(1, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(1, self.machine.ball_devices["bd_trough"].balls)
         self.advance_time_and_run(10)
 
     def test_eject_delay(self):

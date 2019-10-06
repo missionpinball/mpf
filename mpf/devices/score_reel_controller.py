@@ -98,7 +98,7 @@ class ScoreReelController:
         self.active_scorereelgroup.set_value(self.machine.game.player.score)
 
         # light up this group
-        for group in self.machine.score_reel_groups:
+        for group in self.machine.score_reel_groups.values():
             group.unlight()
 
         self.active_scorereelgroup.light()
@@ -149,7 +149,7 @@ class ScoreReelController:
         queue.wait()
 
         futures = []
-        for score_reel_group in self.machine.score_reel_groups:
+        for score_reel_group in self.machine.score_reel_groups.values():
             score_reel_group.set_value(0)
             futures.append(score_reel_group.wait_for_ready())
 

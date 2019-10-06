@@ -45,7 +45,7 @@ class TestGame(MpfGameTestCase):
         self.machine.switch_controller.process_switch('s_ball_switch2', 1)
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough"].balls)
 
         # start game (single player)
         self.start_game()
@@ -53,7 +53,7 @@ class TestGame(MpfGameTestCase):
         self.assertPlayerNumber(1)
         self.assertBallNumber(1)
 
-        self.assertEqual(3, self.machine.modes.game.balls_per_game)
+        self.assertEqual(3, self.machine.modes["game"].balls_per_game)
 
         # Assert game startup sequence
         self.assertEqual(13, self._events.call_count)
@@ -171,7 +171,7 @@ class TestGame(MpfGameTestCase):
         self.machine.switch_controller.process_switch('s_ball_switch2', 1)
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough"].balls)
 
         # start game (first player)
         self.start_game()
@@ -180,7 +180,7 @@ class TestGame(MpfGameTestCase):
         self.assertPlayerNumber(1)
         self.assertBallNumber(1)
 
-        self.assertEqual(3, self.machine.modes.game.balls_per_game)
+        self.assertEqual(3, self.machine.modes["game"].balls_per_game)
 
         # Assert game startup sequence
         self.assertEqual(13, self._events.call_count)
@@ -393,7 +393,7 @@ class TestGame(MpfGameTestCase):
         self.machine.switch_controller.process_switch('s_ball_switch2', 1)
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough"].balls)
 
         self.post_event("start_my_game")
         self.assertGameIsRunning()

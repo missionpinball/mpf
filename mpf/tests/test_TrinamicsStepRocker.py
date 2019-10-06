@@ -15,7 +15,7 @@ class TestTrinamicsStepRocker(MpfTestCase):
 
     def test_rotary(self):
         return
-        stepper = self.machine.steppers.velocityStepper
+        stepper = self.machine.steppers["velocityStepper"]
 
         # spin clockwise, 45 degrees per second
         stepper.move_vel_mode( 45 )
@@ -50,7 +50,7 @@ class TestTrinamicsStepRocker(MpfTestCase):
             stepper.move_rel_pos( 42 )
 
     def test_AbsPositionTest(self):
-        stepper = self.machine.steppers.positionStepper
+        stepper = self.machine.steppers["positionStepper"]
 
         # check home/reset
         self.assertEqual(0.0, stepper._current_position)

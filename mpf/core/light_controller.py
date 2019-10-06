@@ -100,7 +100,7 @@ class LightController(MpfController):
     def _monitor_update_lights(self):
         colors = {}
         while True:
-            for light in self.machine.lights:
+            for light in self.machine.lights.values():
                 color = light.get_color()
                 old = colors.get(light, None)
                 if old != color:

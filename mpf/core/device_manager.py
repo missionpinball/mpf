@@ -125,7 +125,7 @@ class DeviceManager(MpfController):
             collection_name, _ = device_cls.get_config_info()
             if not hasattr(self.machine, collection_name):
                 continue
-            for device in getattr(self.machine, collection_name):
+            for device in getattr(self.machine, collection_name).values():
                 if hasattr(device, "stop_device"):
                     device.stop_device()
 
@@ -299,7 +299,7 @@ class DeviceManager(MpfController):
         delay_mgr.add(ms=ms_delay, callback=callback)
 
     def _create_default_control_events(self, device_list):
-        for device in device_list:
+        for device in device_list.values():
 
             event_prefix = device.class_label + '_' + device.name + '_'
             event_prefix2 = device.collection + '_'
@@ -340,8 +340,11 @@ class DeviceCollection(dict):
         return super().__delitem__(key)
 
     def __getattr__(self, attr):
-        """Return device by key."""
-        # We use this to allow the programmer to access a hardware item like
+        """Return device by key.
+
+        This method is DEPRECATED and will be removed soon.
+        """
+        # We used this to allow the programmer to access a hardware item like
         # self.coils.coilname
 
         try:
@@ -350,7 +353,10 @@ class DeviceCollection(dict):
             raise KeyError('Error: No device exists with the name:', attr)
 
     def __iter__(self):
-        """Iterate collection."""
+        """Iterate collection.
+
+        This method is DEPRECATED and will be removed soon. Use .values() instead.
+        """
         for item in self.values():
             yield item
 
@@ -368,13 +374,6 @@ class DeviceCollection(dict):
         if items_in_tag_cache is not None:
             return items_in_tag_cache
 
-        items = [item for item in self if hasattr(item, "tags") and tag in item.tags]
+        items = [item for item in self.values() if hasattr(item, "tags") and tag in item.tags]
         self._tag_cache[tag] = items
         return items
-
-    def number(self, number):
-        """Return a device object based on its number."""
-        for name, obj in self.items():
-            if obj.config['number'] == number:
-                return self[name]
-        raise AssertionError("Object not found for number {}".format(number))

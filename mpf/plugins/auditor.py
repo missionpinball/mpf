@@ -74,13 +74,13 @@ class Auditor:
             self.current_audits['player'] = dict()
 
         # Make sure we have all the switches in our audit dict
-        for switch in self.machine.switches:
+        for switch in self.machine.switches.values():
             if (switch.name not in self.current_audits['switches'] and
                     'no_audit' not in switch.tags):
                 self.current_audits['switches'][switch.name] = 0
 
         # build the list of switches we should audit
-        self.switchnames_to_audit = {x.name for x in self.machine.switches
+        self.switchnames_to_audit = {x.name for x in self.machine.switches.values()
                                      if 'no_audit' not in x.tags}
 
         # Make sure we have all the player stuff in our audit dict

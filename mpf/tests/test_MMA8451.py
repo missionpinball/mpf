@@ -55,9 +55,9 @@ class TestMMA8451(MpfTestCase):
         with patch("mpf.platforms.virtual.VirtualI2cDevice.i2c_read8", new=self.i2c_read8):
             with patch("mpf.platforms.virtual.VirtualI2cDevice.i2c_read_block", new=self.i2c_read_block):
                 with patch("mpf.platforms.virtual.VirtualI2cDevice.i2c_write8", new=self.i2c_write8):
-                    self.assertEqual((0, 0, 0), self.machine.accelerometers.test_accelerometer.value)
+                    self.assertEqual((0, 0, 0), self.machine.accelerometers["test_accelerometer"].value)
 
                     self.read_value = bytearray([0, 0, 0, 0, 60, 10])
                     self.advance_time_and_run(.1)
 
-                    self.assertEqual((0, 0, 9.199), self.machine.accelerometers.test_accelerometer.value)
+                    self.assertEqual((0, 0, 9.199), self.machine.accelerometers["test_accelerometer"].value)
