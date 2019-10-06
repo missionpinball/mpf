@@ -283,7 +283,7 @@ class Game(AsyncMode):
         """Stop mode."""
         del kwargs
 
-        for mode in self.machine.modes:
+        for mode in self.machine.modes.values():
             if mode.active and mode.is_game_mode:
                 raise AssertionError("Mode {} is not supposed to run outside of game."
                                      .format(mode.name))

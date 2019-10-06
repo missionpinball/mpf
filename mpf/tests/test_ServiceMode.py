@@ -252,11 +252,11 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.assertEventCalledWith("service_coil_test_start", board_name='Virtual', coil_label='Second coil',
                                    coil_name='c_test2', coil_num='2')
 
-        self.machine.coils.c_test2.pulse = MagicMock()
+        self.machine.coils["c_test2"].pulse = MagicMock()
         # pulse it
         self.hit_and_release_switch("s_service_enter")
         self.advance_time_and_run()
-        self.machine.coils.c_test2.pulse.assert_called_with()
+        self.machine.coils["c_test2"].pulse.assert_called_with()
 
         self.hit_and_release_switch("s_service_up")
         self.advance_time_and_run()

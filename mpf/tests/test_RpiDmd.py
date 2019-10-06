@@ -29,7 +29,7 @@ class TestRpiDmd(MpfTestCase):
 
     def test_rpi_dmd(self):
         data = bytes([0x00] * 32 * 32 * 3)
-        self.machine.rgb_dmds.rpi_dmd.update(data)
+        self.machine.rgb_dmds["rpi_dmd"].update(data)
         self.advance_time_and_run(.1)
 
         image = Image.frombytes("RGB", (32, 32), b'\x11' * 32 * 32 * 3)

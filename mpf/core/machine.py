@@ -49,7 +49,7 @@ if MYPY:   # pragma: no cover
     from mpf.plugins.auditor import Auditor     # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.light import Light     # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.accelerometer import Accelerometer     # pylint: disable-msg=cyclic-import,unused-import
-    from mpf.devices.drop_target import DropTarget  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.drop_target import DropTarget, DropTargetBank  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.logic_blocks import Accrual, Sequence, Counter     # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.devices.servo import Servo     # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.segment_display import SegmentDisplay      # pylint: disable-msg=cyclic-import,unused-import
@@ -70,6 +70,12 @@ if MYPY:   # pragma: no cover
     from mpf.devices.ball_hold import BallHold      # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.ball_save import BallSave      # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.magnet import Magnet           # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.state_machine import StateMachine  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.extra_ball import ExtraBall    # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.extra_ball_group import ExtraBallGroup     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.achievement_group import AchievementGroup  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.achievement import Achievement     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.combo_switch import ComboSwitch    # pylint: disable-msg=cyclic-import,unused-import
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -169,6 +175,7 @@ class MachineController(LogMixin):
             self.sequences = None                       # type: Dict[str, Sequence]
             self.accruals = None                        # type: Dict[str, Accrual]
             self.drop_targets = None                    # type: Dict[str, DropTarget]
+            self.drop_target_banks = None               # type: Dict[str, DropTargetBank]
             self.servos = None                          # type: Dict[str, Servo]
             self.segment_displays = None                # type: Dict[str, SegmentDisplay]
             self.dmds = None                            # type: Dict[str, Dmd]
@@ -180,6 +187,12 @@ class MachineController(LogMixin):
             self.ball_holds = None                      # type: Dict[str, BallHold]
             self.ball_saves = None                      # type: Dict[str, BallSave]
             self.magnets = None                         # type: Dict[str, Magnet]
+            self.state_machines = None                  # type: Dict[str, StateMachine]
+            self.extra_balls = None                     # type: Dict[str, ExtraBall]
+            self.extra_ball_groups = None               # type: Dict[str, ExtraBallGroup]
+            self.achievements = None                    # type: Dict[str, Achievement]
+            self.achievement_groups = None              # type: Dict[str, AchievementGroup]
+            self.combo_switches = None                  # type: Dict[str, ComboSwitch]
 
         self._set_machine_path()
 

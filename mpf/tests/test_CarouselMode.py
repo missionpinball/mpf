@@ -33,7 +33,7 @@ class TestCarouselMode(MpfTestCase):
 
         # Start the mode without any conditions true
         self.post_event("start_mode3")
-        self.assertIn(self.machine.modes.conditional_carousel, self.machine.mode_controller.active_modes)
+        self.assertIn(self.machine.modes["conditional_carousel"], self.machine.mode_controller.active_modes)
         self.assertEqual(1, self._events["conditional_carousel_item1_highlighted"])
         self.assertEqual(0, self._events["conditional_carousel_item2_highlighted"])
         self.assertEqual(0, self._events["conditional_carousel_item3_highlighted"])
@@ -100,7 +100,7 @@ class TestCarouselMode(MpfTestCase):
         self.machine.variables.set_machine_var("player2_score", 0)
         self.post_event("start_mode3")
         self.assertEqual(1, self._events["conditional_carousel_items_empty"])
-        self.assertNotIn(self.machine.modes.conditional_carousel, self.machine.mode_controller.active_modes)
+        self.assertNotIn(self.machine.modes["conditional_carousel"], self.machine.mode_controller.active_modes)
 
     def testExtraBall(self):
         self.mock_event("carousel_item1_highlighted")
@@ -114,7 +114,7 @@ class TestCarouselMode(MpfTestCase):
         self._start_game()
         # start mode
         self.post_event("start_mode1")
-        self.assertIn(self.machine.modes.carousel, self.machine.mode_controller.active_modes)
+        self.assertIn(self.machine.modes["carousel"], self.machine.mode_controller.active_modes)
 
         self.assertEqual(1, self._events["carousel_item1_highlighted"])
         self.assertEqual(0, self._events["carousel_item2_highlighted"])
@@ -150,4 +150,4 @@ class TestCarouselMode(MpfTestCase):
         self.assertEqual(1, self._events["carousel_item2_selected"])
         self.assertEqual(0, self._events["carousel_item3_selected"])
 
-        self.assertNotIn(self.machine.modes.carousel, self.machine.mode_controller.active_modes)
+        self.assertNotIn(self.machine.modes["carousel"], self.machine.mode_controller.active_modes)

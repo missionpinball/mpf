@@ -304,12 +304,12 @@ class TestBcpInterface(MpfBcpTestCase):
         self.machine.switch_controller.process_switch('s_ball_switch2', 1)
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough"].balls)
 
         self.hit_and_release_switch("s_start")
         self.advance_time_and_run()
 
-        self.assertEqual(3, self.machine.modes.game.balls_per_game)
+        self.assertEqual(3, self.machine.modes["game"].balls_per_game)
         self.assertEqual(1, self.machine.game.num_players)
         self._bcp_external_client.reset_and_return_queue()
 

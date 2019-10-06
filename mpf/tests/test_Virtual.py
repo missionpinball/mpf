@@ -12,8 +12,8 @@ class TestSmartVirtualPlatform(MpfTestCase):
     def test_load_config_and_allow_enable(self):
         # test that we can load the config with coil and switch parameters from platforms
 
-        self.machine.coils.c_test_allow_enable.enable()
-        self.machine.coils.c_test_hold_power.enable()
+        self.machine.coils["c_test_allow_enable"].enable()
+        self.machine.coils["c_test_hold_power"].enable()
 
         with self.assertRaises(AssertionError):
-            self.machine.coils.c_test_no_allow_enable.enable()
+            self.machine.coils["c_test_no_allow_enable"].enable()

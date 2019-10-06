@@ -628,31 +628,31 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.assertBallsOnPlayfield(0, "playfield")
         self.assertAvailableBallsOnPlayfield(1, "playfield")
 
-        self.machine.ball_devices.test_target1.request_ball()
-        self.assertEqual(1, self.machine.ball_devices.test_target1.available_balls)
+        self.machine.ball_devices["test_target1"].request_ball()
+        self.assertEqual(1, self.machine.ball_devices["test_target1"].available_balls)
 
         self.advance_time_and_run()
-        self.assertEqual("pulsed_10", self.machine.coils.eject_coil1.hw_driver.state)
+        self.assertEqual("pulsed_10", self.machine.coils["eject_coil1"].hw_driver.state)
         self.release_switch_and_run("s_ball_switch2", 1)
         self.advance_time_and_run(8)
 
         self.hit_switch_and_run("s_ball_switch_launcher", 1)
         # launcher should eject
         self.advance_time_and_run(1)
-        self.assertEqual("pulsed_10", self.machine.coils.eject_coil2.hw_driver.state)
-        self.machine.coils.eject_coil2.hw_driver.state = None
+        self.assertEqual("pulsed_10", self.machine.coils["eject_coil2"].hw_driver.state)
+        self.machine.coils["eject_coil2"].hw_driver.state = None
 
         # it leaves the switch
         self.release_switch_and_run("s_ball_switch_launcher", 3)
 
         # switch goes active again
         self.hit_switch_and_run("s_ball_switch_launcher", 1)
-        self.assertEqual(None, self.machine.coils.eject_coil2.hw_driver.state)
-        self.assertEqual(1, self.machine.ball_devices.test_target1.available_balls)
+        self.assertEqual(None, self.machine.coils["eject_coil2"].hw_driver.state)
+        self.assertEqual(1, self.machine.ball_devices["test_target1"].available_balls)
 
         self.advance_time_and_run(9)
-        self.assertEqual("pulsed_10", self.machine.coils.eject_coil2.hw_driver.state)
-        self.assertEqual(1, self.machine.ball_devices.test_target1.available_balls)
+        self.assertEqual("pulsed_10", self.machine.coils["eject_coil2"].hw_driver.state)
+        self.assertEqual(1, self.machine.ball_devices["test_target1"].available_balls)
 
         self.release_switch_and_run("s_ball_switch_launcher", 1)
 

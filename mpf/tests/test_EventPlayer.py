@@ -120,7 +120,7 @@ class TestEventPlayer(MpfTestCase):
         self.mock_event("event_if_modeactive")
         self.mock_event("event_if_modestopping")
 
-        self.machine.modes.mode1.start()
+        self.machine.modes["mode1"].start()
         self.advance_time_and_run()
         self.assertEqual(0, self._events["event_always"])
         self.assertEqual(0, self._events["event_if_modeactive"])
@@ -135,7 +135,7 @@ class TestEventPlayer(MpfTestCase):
         self.mock_event("event_if_modeactive")
         self.mock_event("event_if_modestopping")
 
-        self.machine.modes.mode1.stop()
+        self.machine.modes["mode1"].stop()
         self.assertEqual(0, self._events["event_always"])
         self.assertEqual(0, self._events["event_if_modeactive"])
         self.assertEqual(0, self._events["event_if_modestopping"])
@@ -164,7 +164,7 @@ class TestEventPlayer(MpfTestCase):
         self.mock_event('mode1_active')
         self.mock_event('mode1_not_active')
 
-        self.assertFalse(self.machine.modes.mode1.active)
+        self.assertFalse(self.machine.modes["mode1"].active)
 
         self.post_event('test_conditional_mode')
 
@@ -174,11 +174,11 @@ class TestEventPlayer(MpfTestCase):
         self.mock_event('mode1_active')
         self.mock_event('mode1_not_active')
 
-        self.machine.modes.mode1.start()
+        self.machine.modes["mode1"].start()
         self.advance_time_and_run()
 
         self.post_event('test_conditional_mode')
-        self.assertTrue(self.machine.modes.mode1.active)
+        self.assertTrue(self.machine.modes["mode1"].active)
 
         self.assertEventCalled('mode1_active')
         self.assertEventNotCalled('mode1_not_active')
