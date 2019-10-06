@@ -14,16 +14,11 @@ matrix:
      sudo: required
      language: python
      python: "3.6"
-   - os: linux
+   - os: linux  # this is python 3.7
      env: LINUX=ubuntu:19.04
      sudo: required
      language: python
      python: "3.6"
-   - os: linux  # oldstable
-     env: LINUX=debian:jessie
-     sudo: required
-     language: python
-     python: "3.4"
    - os: linux  # stable
      env: LINUX=debian:stretch
      sudo: required
