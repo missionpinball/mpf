@@ -1,6 +1,5 @@
 """Support for i2c devices on a bus."""
 import abc
-import asyncio
 from typing import Any
 
 
@@ -25,8 +24,7 @@ class I2cPlatformInterface(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    @asyncio.coroutine
-    def i2c_read_block(self, register, count):
+    async def i2c_read_block(self, register, count):
         """Read an len bytes from an register via I2C.
 
         Args:
@@ -36,8 +34,7 @@ class I2cPlatformInterface(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    @asyncio.coroutine
-    def i2c_read8(self, register):
+    async def i2c_read8(self, register):
         """Read an 8-bit value from an register via I2C.
 
         Args:

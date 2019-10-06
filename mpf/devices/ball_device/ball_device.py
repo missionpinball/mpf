@@ -1,8 +1,6 @@
 """Contains the base class for ball devices."""
-
-from collections import deque
-
 import asyncio
+from collections import deque
 
 from mpf.core.events import QueuedEvent, event_handler
 from mpf.devices.ball_device.ball_count_handler import BallCountHandler
@@ -86,10 +84,9 @@ class BallDevice(SystemWideDevice):
         del kwargs
         self.ball_count_handler.counter.received_entrance_event()
 
-    @asyncio.coroutine
-    def _initialize(self):
+    async def _initialize(self):
         """Initialize right away."""
-        yield from super()._initialize()
+        await super()._initialize()
         self._configure_targets()
 
         self.ball_count_handler = BallCountHandler(self)
@@ -129,7 +126,7 @@ class BallDevice(SystemWideDevice):
         """Create ball counters."""
         del kwargs
         queue.wait()
-        complete_future = Util.ensure_future(self._initialize_async(), loop=self.machine.clock.loop)
+        complete_future = asyncio.ensure_future(self._initialize_async(), loop=self.machine.clock.loop)
         complete_future.add_done_callback(lambda x: queue.clear())
 
     def stop_device(self):
@@ -140,26 +137,23 @@ class BallDevice(SystemWideDevice):
             self.incoming_balls_handler.stop()
             self.outgoing_balls_handler.stop()
 
-    @asyncio.coroutine
-    def expected_ball_received(self):
+    async def expected_ball_received(self):
         """Handle an expected ball."""
         # post enter event
-        unclaimed_balls = yield from self._post_enter_event(unclaimed_balls=0, new_available_balls=0)
+        unclaimed_balls = await self._post_enter_event(unclaimed_balls=0, new_available_balls=0)
         # there might still be unclaimed balls (e.g. because of a ball_routing)
         self._balls_added_callback(0, unclaimed_balls)
 
-    @asyncio.coroutine
-    def unexpected_ball_received(self):
+    async def unexpected_ball_received(self):
         """Handle an unexpected ball."""
         # capture from playfield
-        yield from self._post_capture_from_playfield_event()
+        await self._post_capture_from_playfield_event()
         # post enter event
-        unclaimed_balls = yield from self._post_enter_event(unclaimed_balls=1, new_available_balls=1)
+        unclaimed_balls = await self._post_enter_event(unclaimed_balls=1, new_available_balls=1)
         # add available_balls and route unclaimed ball to the default target
         self._balls_added_callback(1, unclaimed_balls)
 
-    @asyncio.coroutine
-    def handle_mechanial_eject_during_idle(self):
+    async def handle_mechanial_eject_during_idle(self):
         """Handle mechanical eject."""
         # handle lost balls via outgoing balls handler (if mechanical eject)
         self.config['eject_targets'][0].available_balls += 1
@@ -170,17 +164,15 @@ class BallDevice(SystemWideDevice):
         eject.already_left = True
         self.outgoing_balls_handler.add_eject_to_queue(eject)
 
-    @asyncio.coroutine
-    def lost_idle_ball(self):
+    async def lost_idle_ball(self):
         """Lost an ball while the device was idle."""
         # handle lost balls
         self.warning_log("Ball disappeared while idle. This should not normally happen.")
         self.available_balls -= 1
         self.config['ball_missing_target'].add_missing_balls(1)
-        yield from self._balls_missing(1)
+        await self._balls_missing(1)
 
-    @asyncio.coroutine
-    def lost_ejected_ball(self, target):
+    async def lost_ejected_ball(self, target):
         """Handle an outgoing lost ball."""
         # follow path and check if we should request a new ball to the target or cancel the path
         if target.is_playfield():
@@ -199,10 +191,9 @@ class BallDevice(SystemWideDevice):
             self.warning_log("Failed to restore the path. If you can reproduce this please report in the forum!")
 
         self.config['ball_missing_target'].add_missing_balls(1)
-        yield from self._balls_missing(1)
+        await self._balls_missing(1)
 
-    @asyncio.coroutine
-    def lost_incoming_ball(self, source):
+    async def lost_incoming_ball(self, source):
         """Handle lost ball which was confirmed to have left source."""
         del source
         if self.cancel_path_if_target_is(self, self.config['ball_missing_target']):
@@ -217,7 +208,7 @@ class BallDevice(SystemWideDevice):
             self.warning_log("Failed to restore the path. If you can reproduce this please report in the forum!")
 
         self.config['ball_missing_target'].add_missing_balls(1)
-        yield from self._balls_missing(1)
+        await self._balls_missing(1)
 
     def cancel_path_if_target_is(self, start, target):
         """Check if the ball is going to a certain target and cancel the path in that case."""
@@ -227,18 +218,16 @@ class BallDevice(SystemWideDevice):
         """Try to remove available ball at the end of the path."""
         return self.outgoing_balls_handler.find_available_ball_in_path(start)
 
-    @asyncio.coroutine
-    def _initialize_async(self):
+    async def _initialize_async(self):
         """Count balls without handling them as new."""
-        yield from self.ball_count_handler.initialise()
-        yield from self.incoming_balls_handler.initialise()
-        yield from self.outgoing_balls_handler.initialise()
+        await self.ball_count_handler.initialise()
+        await self.incoming_balls_handler.initialise()
+        await self.outgoing_balls_handler.initialise()
 
         self.available_balls = self.ball_count_handler.handled_balls
 
-    @asyncio.coroutine
-    def _post_capture_from_playfield_event(self):
-        yield from self.machine.events.post_async('balldevice_captured_from_{}'.format(
+    async def _post_capture_from_playfield_event(self):
+        await self.machine.events.post_async('balldevice_captured_from_{}'.format(
             self.config['captures_from'].name),
             balls=1)
         '''event: balldevice_captured_from_(device)
@@ -251,10 +240,9 @@ class BallDevice(SystemWideDevice):
 
         '''
 
-    @asyncio.coroutine
-    def _post_enter_event(self, unclaimed_balls, new_available_balls):
+    async def _post_enter_event(self, unclaimed_balls, new_available_balls):
         self.debug_log("Processing new ball")
-        result = yield from self.machine.events.post_relay_async('balldevice_{}_ball_enter'.format(
+        result = await self.machine.events.post_relay_async('balldevice_{}_ball_enter'.format(
             self.name),
             new_balls=1,
             unclaimed_balls=unclaimed_balls,
@@ -526,20 +514,19 @@ class BallDevice(SystemWideDevice):
         event.
         '''
 
-    @asyncio.coroutine
-    def _balls_missing(self, balls):
+    async def _balls_missing(self, balls):
         # Called when ball_count finds that balls are missing from this device
         self.debug_log("%s ball(s) missing from device. Mechanical eject?"
                        " %s", abs(balls), self.config['mechanical_eject'])
 
-        yield from self.machine.events.post_async('balldevice_{}_ball_missing'.format(self.name), balls=abs(balls))
+        await self.machine.events.post_async('balldevice_{}_ball_missing'.format(self.name), balls=abs(balls))
         '''event: balldevice_(name)_ball_missing.
         desc: The device (name) is missing a ball. Note this event is
         posted in addition to the generic *balldevice_ball_missing* event.
         args:
             balls: The number of balls that are missing
         '''
-        yield from self.machine.events.post_async('balldevice_ball_missing', balls=abs(balls), name=self.name)
+        await self.machine.events.post_async('balldevice_ball_missing', balls=abs(balls), name=self.name)
         '''event: balldevice_ball_missing
         desc: A ball is missing from a device.
         args:

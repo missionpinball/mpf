@@ -25,8 +25,7 @@ class PulseCoilEjector(BallDeviceEjector):
             raise ConfigFileError("Pulse Coil Ejector does not support eject_coil_enable_time.", 2,
                                   self.ball_device.log.name + "-pulse_ejector")
 
-    @asyncio.coroutine
-    def eject_one_ball(self, is_jammed, eject_try):
+    async def eject_one_ball(self, is_jammed, eject_try):
         """Pulse eject coil."""
         max_wait_ms = self.ball_device.config['eject_coil_max_wait_ms']
         if (eject_try <= 2 and
@@ -47,8 +46,7 @@ class PulseCoilEjector(BallDeviceEjector):
         self.ball_device.debug_log("Firing eject coil. Current balls: %s.",
                                    self.ball_device.balls)
 
-    @asyncio.coroutine
-    def reorder_balls(self):
+    async def reorder_balls(self):
         """Reorder balls without ejecting."""
         if not self.ball_device.config['eject_coil_reorder_pulse']:
             self.ball_device.log.warning("Cannot reorder device because eject_coil_reorder_pulse is not configured")
@@ -61,7 +59,7 @@ class PulseCoilEjector(BallDeviceEjector):
 
         # wait for wait_ms + pulse_ms + 2s for sanity
         duration = wait_ms / 1000.0 + self.ball_device.config['eject_coil_reorder_pulse'] / 1000.0 + 2.0
-        yield from asyncio.sleep(duration, loop=self.ball_device.machine.clock.loop)
+        await asyncio.sleep(duration, loop=self.ball_device.machine.clock.loop)
 
     def ball_search(self, phase, iteration):
         """Run ball search."""

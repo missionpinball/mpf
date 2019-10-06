@@ -106,10 +106,9 @@ class RpiI2cDevice(I2cPlatformInterface):
         self.number = number
         self.handle = None
 
-    @asyncio.coroutine
-    def open(self):
+    async def open(self):
         """Open I2c port."""
-        self.handle = yield from self._get_i2c_handle(self.number)
+        self.handle = await self._get_i2c_handle(self.number)
 
     @staticmethod
     def _get_i2c_bus_address(address):
@@ -119,31 +118,26 @@ class RpiI2cDevice(I2cPlatformInterface):
         bus, address = address.split("-")
         return int(bus), int(address)
 
-    @asyncio.coroutine
-    def _get_i2c_handle(self, address):
+    async def _get_i2c_handle(self, address):
         """Get or open handle for i2c device via pigpio."""
         bus_address, device_address = self._get_i2c_bus_address(address)
-        handle = yield from self.pi.i2c_open(bus_address, device_address)
+        handle = await self.pi.i2c_open(bus_address, device_address)
         return handle
 
     def i2c_write8(self, register, value):
         """Write to i2c via pigpio."""
         self.platform.send_command(self._i2c_write8_async(register, value))
 
-    @asyncio.coroutine
-    def _i2c_write8_async(self, register, value):
-        yield from self.pi.i2c_write_byte_data(self.handle, register, value)
+    async def _i2c_write8_async(self, register, value):
+        await self.pi.i2c_write_byte_data(self.handle, register, value)
 
-    @asyncio.coroutine
-    def i2c_read8(self, register):
+    async def i2c_read8(self, register):
         """Read from i2c via pigpio."""
-        return (yield from self.pi.i2c_read_byte_data(self.handle, register))
+        return await self.pi.i2c_read_byte_data(self.handle, register)
 
-    @asyncio.coroutine
-    def i2c_read_block(self, register, count):
+    async def i2c_read_block(self, register, count):
         """Read block via I2C."""
-        data = yield from self.pi.i2c_read_i2c_block_data(self.handle, register, count)
-        return data
+        return await self.pi.i2c_read_i2c_block_data(self.handle, register, count)
 
 
 class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform, I2cPlatform):
@@ -169,14 +163,13 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
         self._cmd_task = None   # type: asyncio.Task
         self._configure_device_logging_and_debug("Raspberry Pi", self.config)
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Initialise platform."""
         # create pi object and connect
         self.pi = apigpio.Pi(self.machine.clock.loop)
-        yield from self.pi.connect((self.config['ip'], self.config['port']))
+        await self.pi.connect((self.config['ip'], self.config['port']))
 
-        self._switches = yield from self.pi.read_bank_1()
+        self._switches = await self.pi.read_bank_1()
 
         self._cmd_queue = asyncio.Queue(loop=self.machine.clock.loop)
         self._cmd_task = self.machine.clock.loop.create_task(self._run())
@@ -186,14 +179,13 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
         """Add a command to the command queue."""
         self._cmd_queue.put_nowait(cmd)
 
-    @asyncio.coroutine
-    def _run(self):
+    async def _run(self):
         """Handle the command queue."""
         while True:
             # get next command
-            cmd = yield from self._cmd_queue.get()
+            cmd = await self._cmd_queue.get()
             # run command
-            yield from cmd
+            await cmd
 
     def stop(self):
         """Stop platform."""
@@ -216,13 +208,11 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
         except asyncio.CancelledError:
             pass
 
-    @asyncio.coroutine
-    def configure_servo(self, number: str) -> ServoPlatformInterface:
+    async def configure_servo(self, number: str) -> ServoPlatformInterface:
         """Configure a servo."""
         return RpiServo(number, self)
 
-    @asyncio.coroutine
-    def get_hw_switch_states(self):
+    async def get_hw_switch_states(self):
         """Return current switch states."""
         hw_states = dict()
         curr_bit = 1
@@ -285,9 +275,8 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
 
         return RpiDriver(number, config, self)
 
-    @asyncio.coroutine
-    def configure_i2c(self, number: str):
+    async def configure_i2c(self, number: str):
         """Configure I2c device."""
         device = RpiI2cDevice(number, self.machine.clock.loop, self)
-        yield from device.open()
+        await device.open()
         return device

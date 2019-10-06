@@ -96,8 +96,7 @@ class LightController(MpfController):
         except asyncio.CancelledError:
             pass
 
-    @asyncio.coroutine
-    def _monitor_update_lights(self):
+    async def _monitor_update_lights(self):
         colors = {}
         while True:
             for light in self.machine.lights:
@@ -106,5 +105,5 @@ class LightController(MpfController):
                 if old != color:
                     self.machine.device_manager.notify_device_changes(light, "color", old, color)
                     colors[light] = color
-            yield from asyncio.sleep(1 / self.machine.config['mpf']['default_light_hw_update_hz'],
-                                     loop=self.machine.clock.loop)
+            await asyncio.sleep(1 / self.machine.config['mpf']['default_light_hw_update_hz'],
+                                loop=self.machine.clock.loop)

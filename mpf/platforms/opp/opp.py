@@ -92,15 +92,13 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             ord(OppRs232Intf.READ_MATRIX_INP): self.read_matrix_inp_resp_initial,
         }
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Initialise connections to OPP hardware."""
-        yield from self._connect_to_hardware()
+        await self._connect_to_hardware()
         self.opp_commands[ord(OppRs232Intf.READ_GEN2_INP_CMD)] = self.read_gen2_inp_resp
         self.opp_commands[ord(OppRs232Intf.READ_MATRIX_INP)] = self.read_matrix_inp_resp
 
-    @asyncio.coroutine
-    def start(self):
+    async def start(self):
         """Start polling and listening for commands."""
         # start polling
         for chain_serial in self.read_input_msg:
@@ -109,7 +107,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         # start listening for commands
         for connection in self.serial_connections:
-            yield from connection.start_read_loop()
+            await connection.start_read_loop()
 
         self._incand_task = self.machine.clock.schedule_interval(self.update_incand,
                                                                  1 / self.config['incand_update_hz'])
@@ -219,8 +217,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         return infos
 
-    @asyncio.coroutine
-    def _connect_to_hardware(self):
+    async def _connect_to_hardware(self):
         """Connect to each port from the config.
 
         This process will cause the OPPSerialCommunicator to figure out which chains they've connected to
@@ -228,7 +225,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """
         for port in self.config['ports']:
             comm = OPPSerialCommunicator(platform=self, port=port, baud=self.config['baud'])
-            yield from comm.connect()
+            await comm.connect()
             self.serial_connections.add(comm)
 
         for chain_serial, versions in self.gen2_addr_arr.items():
@@ -300,8 +297,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Return coil config section."""
         return "opp_coils"
 
-    @asyncio.coroutine
-    def get_hw_switch_states(self):
+    async def get_hw_switch_states(self):
         """Get initial hardware switch states.
 
         This changes switches from active low to active high
@@ -809,24 +805,23 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """
         future.result()
 
-    @asyncio.coroutine
-    def _poll_sender(self, chain_serial):
+    async def _poll_sender(self, chain_serial):
         """Poll switches."""
         while True:
             # wait for previous poll response
             timeout = 1 / self.config['poll_hz'] * 25
             try:
-                yield from asyncio.wait_for(self._poll_response_received[chain_serial].wait(), timeout,
-                                            loop=self.machine.clock.loop)
+                await asyncio.wait_for(self._poll_response_received[chain_serial].wait(), timeout,
+                                       loop=self.machine.clock.loop)
             except asyncio.TimeoutError:
                 self.log.warning("Poll took more than %sms for %s", timeout * 1000, chain_serial)
             else:
                 self._poll_response_received[chain_serial].clear()
             # send poll
             self.send_to_processor(chain_serial, self.read_input_msg[chain_serial])
-            yield from self.opp_connection[chain_serial].writer.drain()
+            await self.opp_connection[chain_serial].writer.drain()
             # the line above saturates the link and seems to overwhelm the hardware. limit it to 100Hz
-            yield from asyncio.sleep(1 / self.config['poll_hz'], loop=self.machine.clock.loop)
+            await asyncio.sleep(1 / self.config['poll_hz'], loop=self.machine.clock.loop)
 
     def _verify_coil_and_switch_fit(self, switch, coil):
         chain_serial, card, solenoid = coil.hw_driver.number.split('-')

@@ -1,5 +1,4 @@
 """Contains the base class for flippers."""
-import asyncio
 from typing import List
 from typing import Optional
 
@@ -42,9 +41,8 @@ class Flipper(SystemWideDevice):
         self._active_rules = []     # type: List[HardwareRule]
         self._sw_flipped = False
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         if self.config['include_in_ball_search']:
             self.config['playfield'].ball_search.register(
                 self.config['ball_search_order'], self._ball_search, self.name)

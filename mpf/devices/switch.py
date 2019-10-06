@@ -1,5 +1,4 @@
 """Contains the Switch parent class."""
-import asyncio
 from functools import partial
 
 from mpf.core.device_monitor import DeviceMonitor
@@ -115,9 +114,8 @@ class Switch(SystemWideDevice, DevicePositionMixin):
             if self.machine.events.does_event_exist(event):
                 self.machine.events.post(event)
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.platform = self.machine.get_platform_sections(
             'switches', self.config['platform'])
 

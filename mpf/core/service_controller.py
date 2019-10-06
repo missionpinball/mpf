@@ -7,7 +7,6 @@ import re
 from collections import namedtuple
 
 from typing import List
-import asyncio
 
 from mpf.core.mpf_controller import MpfController
 
@@ -63,8 +62,7 @@ class ServiceController(MpfController):
 
         # TODO: reset hardware interface
 
-    @asyncio.coroutine
-    def stop_service(self):
+    async def stop_service(self):
         """Stop service mode."""
         if not self.is_in_service():
             raise AssertionError("Not in service mode!")
@@ -72,7 +70,7 @@ class ServiceController(MpfController):
 
         # this event starts attract mode again
         self.machine.events.post("service_mode_exited")
-        yield from self.machine.reset()
+        await self.machine.reset()
 
     def get_switch_map(self):
         """Return a map of all switches in the machine."""

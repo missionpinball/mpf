@@ -521,7 +521,7 @@ class MpfTestCase(unittest.TestCase):
             raise e
 
     def _initialise_machine(self):
-        init = Util.ensure_future(self.machine.initialise(), loop=self.loop)
+        init = asyncio.ensure_future(self.machine.initialise(), loop=self.loop)
         self._wait_for_start(init, 20)
         self.machine.events.process_event_queue()
         self.advance_time_and_run(1)

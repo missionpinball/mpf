@@ -9,7 +9,7 @@ import re
 from typing import Any, Iterable
 from typing import Dict
 
-import collections
+from collections.abc import Hashable
 import ruamel.yaml as yaml  # pylint: disable-msg=useless-import-alias
 from ruamel.yaml.error import MarkedYAMLError
 from ruamel.yaml.reader import Reader
@@ -120,10 +120,10 @@ class MpfConstructor(Constructor):
             # keys can be list -> deep
             key = self.construct_object(key_node, deep=True)
             # lists are not hashable, but tuples are
-            if not isinstance(key, collections.Hashable):   # pragma: no cover
+            if not isinstance(key, Hashable):   # pragma: no cover
                 if isinstance(key, list):
                     key = tuple(key)
-            if not isinstance(key, collections.Hashable):   # pragma: no cover
+            if not isinstance(key, Hashable):   # pragma: no cover
                 raise ConstructorError(
                     "while constructing a mapping", node.start_mark,
                     "found unhashable key", key_node.start_mark)

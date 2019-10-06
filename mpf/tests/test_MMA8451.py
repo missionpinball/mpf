@@ -14,12 +14,10 @@ class TestMMA8451(MpfTestCase):
     def get_machine_path(self):
         return 'tests/machine_files/mma8451/'
 
-    @asyncio.coroutine
-    def i2c_read8(self, register):
+    async def i2c_read8(self, register):
         return self.i2c_layout[register]
 
-    @asyncio.coroutine
-    def i2c_read_block(self, register, count):
+    async def i2c_read_block(self, register, count):
         assert count == 6
         assert register == 0x01
         return self.read_value

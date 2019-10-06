@@ -45,17 +45,16 @@ class DigitalOutputStepStickStepper(StepperPlatformInterface):
         self._move_task = self.platform.machine.clock.loop.create_task(self._move_pos(position))
         self._move_task.add_done_callback(self._done)
 
-    @asyncio.coroutine
-    def _move_pos(self, steps):
+    async def _move_pos(self, steps):
         if steps > 0:
             self.direction_output.enable()
         else:
             self.direction_output.disable()
         for _ in range(int(abs(steps))):
             self.step_output.enable()
-            yield from asyncio.sleep(self.config['high_time'], loop=self.platform.machine.clock.loop)
+            await asyncio.sleep(self.config['high_time'], loop=self.platform.machine.clock.loop)
             self.step_output.disable()
-            yield from asyncio.sleep(self.config['low_time'], loop=self.platform.machine.clock.loop)
+            await asyncio.sleep(self.config['low_time'], loop=self.platform.machine.clock.loop)
 
         self._move_complete.set()
 
@@ -70,17 +69,16 @@ class DigitalOutputStepStickStepper(StepperPlatformInterface):
             self._move_task = self.platform.machine.clock.loop.create_task(self._move_rel(velocity))
             self._move_task.add_done_callback(self._done)
 
-    @asyncio.coroutine
-    def _move_rel(self, velocity):
+    async def _move_rel(self, velocity):
         if velocity > 0:
             self.direction_output.enable()
         else:
             self.direction_output.disable()
         while True:
             self.step_output.enable()
-            yield from asyncio.sleep(self.config['high_time'] * abs(velocity), loop=self.platform.machine.clock.loop)
+            await asyncio.sleep(self.config['high_time'] * abs(velocity), loop=self.platform.machine.clock.loop)
             self.step_output.disable()
-            yield from asyncio.sleep(self.config['low_time'] * abs(velocity), loop=self.platform.machine.clock.loop)
+            await asyncio.sleep(self.config['low_time'] * abs(velocity), loop=self.platform.machine.clock.loop)
         # this will never complete. you need to call stop
 
     def stop(self):
@@ -114,8 +112,7 @@ class StepStickDigitalOutputPlatform(StepperPlatform):
         """Return config section."""
         return "step_stick_stepper_settings"
 
-    @asyncio.coroutine
-    def configure_stepper(self, number: str, config: dict) -> "StepperPlatformInterface":
+    async def configure_stepper(self, number: str, config: dict) -> "StepperPlatformInterface":
         """Configure a stepper driven by StepStick on a digital output."""
         try:
             direction_output_str, step_output_str, enable_output_str = number.split(":")

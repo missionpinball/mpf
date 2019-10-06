@@ -1,6 +1,6 @@
 """MPF clock and main loop."""
 import asyncio
-from typing import Tuple, Generator
+from typing import Tuple
 from serial_asyncio import create_serial_connection
 from mpf.core.logging import LogMixin
 
@@ -63,9 +63,9 @@ class ClockBase(LogMixin):
 
         self.debug_log("Starting tickless clock")
         if not loop:
-            self.loop = self._create_event_loop()   # type: asyncio.BaseEventLoop
+            self.loop = self._create_event_loop()   # type: asyncio.AbstractEventLoop
         else:
-            self.loop = loop                        # type: asyncio.BaseEventLoop
+            self.loop = loop                        # type: asyncio.AbstractEventLoop
 
     # pylint: disable-msg=no-self-use
     def _create_event_loop(self):
@@ -115,9 +115,7 @@ class ClockBase(LogMixin):
             limit = asyncio.streams._DEFAULT_LIMIT
         return asyncio.open_connection(host=host, port=port, loop=self.loop, limit=limit, **kwds)
 
-    @asyncio.coroutine
-    def open_serial_connection(self, limit=None, **kwargs) ->\
-            Generator[int, None, Tuple[asyncio.StreamReader, asyncio.StreamWriter]]:
+    async def open_serial_connection(self, limit=None, **kwargs) -> Tuple[asyncio.StreamReader, asyncio.StreamWriter]:
         """Open a serial connection using asyncio.
 
         A wrapper for create_serial_connection() returning a (reader, writer) pair.
@@ -141,7 +139,7 @@ class ClockBase(LogMixin):
 
         reader = asyncio.StreamReader(limit=limit, loop=self.loop)
         protocol = asyncio.StreamReaderProtocol(reader, loop=self.loop)
-        transport, _ = yield from create_serial_connection(
+        transport, _ = await create_serial_connection(
             loop=self.loop,
             protocol_factory=lambda: protocol,
             **kwargs)

@@ -84,11 +84,10 @@ class ModeController(MpfController):
         for mode in self.machine.modes:
             mode.create_mode_devices()
 
-    @asyncio.coroutine
-    def load_mode_devices(self):
+    async def load_mode_devices(self):
         """Load mode devices."""
         for mode in self.machine.modes:
-            yield from mode.load_mode_devices()
+            await mode.load_mode_devices()
 
     def initialise_modes(self, **kwargs):
         """Initialise modes."""
@@ -96,8 +95,7 @@ class ModeController(MpfController):
         for mode in self.machine.modes:
             mode.initialise_mode()
 
-    @asyncio.coroutine
-    def load_modes(self, **kwargs):
+    async def load_modes(self, **kwargs):
         """Load the modes from the modes: section of the machine configuration file."""
         del kwargs
 
@@ -112,7 +110,7 @@ class ModeController(MpfController):
             self.machine.modes[mode] = self._load_mode(mode)
 
             # add a very very short yield to prevent hangs in platforms (e.g. watchdog timeouts during IO)
-            yield from asyncio.sleep(.0001, loop=self.machine.clock.loop)
+            await asyncio.sleep(.0001, loop=self.machine.clock.loop)
             self.log.debug("Loaded mode %s", mode)
 
     def _find_mode_path(self, mode_string):

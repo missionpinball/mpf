@@ -1,6 +1,4 @@
 """Contains the base class for autofire coil devices."""
-import asyncio
-
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
@@ -51,9 +49,8 @@ class AutofireCoil(SystemWideDevice):
         self._timeout_disable_time = None
         self._timeout_hits = []     # type: List[float]
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         if self.config['ball_search_order']:
             self.config['playfield'].ball_search.register(
                 self.config['ball_search_order'], self._ball_search, self.name)

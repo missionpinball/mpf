@@ -1,7 +1,3 @@
-import time
-
-import sys
-
 from mpf.tests.MpfTestCase import MpfTestCase, test_config
 from unittest.mock import MagicMock, call
 from mpf.platforms import p_roc_common, p_roc
@@ -161,10 +157,6 @@ class TestPRoc(MpfTestCase):
         return driver
 
     def setUp(self):
-        if sys.version_info[0] == 3 and sys.version_info[1] == 4:
-            # this fails on python 3.4 because of some asyncio bugs
-            self.skipTest("Test is unstable in Python 3.4")
-            return
         self._sync_count = 0
         self.expected_duration = 2
         p_roc_common.PINPROC_IMPORTED = True

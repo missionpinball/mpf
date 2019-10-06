@@ -44,26 +44,29 @@ class PololuTiccmdWrapper:
         self.loop.run_until_complete(self.stop_future)
         self.loop.close()
 
-    @asyncio.coroutine
     def stop_async(self):
         """Stop loop."""
         self.stop_future.set_result(True)
 
     def stop(self):
         """Stop loop and join thread."""
-        asyncio.run_coroutine_threadsafe(self.stop_async(), self.loop)
+        self.loop.call_soon_threadsafe(self.stop_async)
         self._stop_thread()
 
     def _stop_thread(self):
         self.thread.join()
 
-    def _ticcmd(self, *args):
+    def _ticcmd_future(self, *args):
         """Run ticcmd in another thread."""
         future = asyncio.wrap_future(
-            asyncio.run_coroutine_threadsafe(self._ticcmd_async(*args), self.loop),
+            asyncio.run_coroutine_threadsafe(self._ticcmd_remote(*args), self.loop),
             loop=self._machine.clock.loop)
         future.add_done_callback(self._done)
         return future
+
+    def _ticcmd(self, *args):
+        """Run ticcmd in another thread and forget about the response."""
+        self.loop.call_soon_threadsafe(self._run_subprocess_ticcmd, *args)
 
     @staticmethod
     def _done(future):
@@ -72,8 +75,11 @@ class PololuTiccmdWrapper:
         except asyncio.CancelledError:
             pass
 
-    @asyncio.coroutine
-    def _ticcmd_async(self, *args):
+    async def _ticcmd_remote(self, *args):
+        """Return a future with the result of ticcmd."""
+        return self._run_subprocess_ticcmd(*args)
+
+    def _run_subprocess_ticcmd(self, *args):
         """Run ticcmd.
 
         This will block the asyncio loop in the thread so only one command can run at a time.
@@ -89,10 +95,9 @@ class PololuTiccmdWrapper:
             self.log.debug("Exception: %s", str(e.output))
             raise TicError(e.output)
 
-    @asyncio.coroutine
-    def get_status(self):
+    async def get_status(self):
         """Return the current status of the TIC device."""
-        cmd_return = yield from self._ticcmd('-s', '--full')
+        cmd_return = await self._ticcmd_future('-s', '--full')
         status = ruamel.yaml.safe_load(cmd_return)
         return status
 

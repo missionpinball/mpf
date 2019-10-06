@@ -7,7 +7,7 @@ import asyncio
 from functools import partial
 from unittest.mock import MagicMock
 
-from typing import Dict, Any, Tuple, Optional, Generator, Callable, List
+from typing import Dict, Any, Tuple, Optional, Callable, List
 
 from mpf.core.mpf_controller import MpfController
 
@@ -564,8 +564,7 @@ class EventManager(MpfController):
                                this_event[2], this_event[3])
             self.debug_log("+========================================")
 
-    @asyncio.coroutine
-    def _run_handlers_sequential(self, event: str, callback, kwargs: dict) -> Generator[int, None, None]:
+    async def _run_handlers_sequential(self, event: str, callback, kwargs: dict) -> None:
         """Run all handlers for an event."""
         if self._debug:
             self.debug_log("^^^^ Processing queue event '%s'. Callback: %s,"
@@ -609,7 +608,7 @@ class EventManager(MpfController):
 
             if queue.waiter:
                 queue.event = asyncio.Event(loop=self.machine.clock.loop)
-                yield from queue.event.wait()
+                await queue.event.wait()
 
         if self._debug:
             self.debug_log("vvvv Finished queue event '%s'. Callback: %s. "

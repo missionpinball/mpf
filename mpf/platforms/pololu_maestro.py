@@ -1,6 +1,5 @@
 """Pololu Maestro servo controller platform."""
 import math
-import asyncio
 import logging
 import serial
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
@@ -31,10 +30,9 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
         """Return string representation."""
         return '<Platform.Pololu_Maestro>'
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Initialise platform."""
-        yield from super().initialize()
+        await super().initialize()
         self.serial = serial.Serial(self.config['port'])
 
     def stop(self):
@@ -43,8 +41,7 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
             self.serial.close()
             self.serial = None
 
-    @asyncio.coroutine
-    def configure_servo(self, number: str):
+    async def configure_servo(self, number: str):
         """Configure a servo device in platform.
 
         Args:

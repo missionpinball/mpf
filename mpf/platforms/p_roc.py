@@ -12,8 +12,6 @@ More info on the P-ROC hardware platform: http://pinballcontrollers.com/
 Original code source on which this module was based:
 https://github.com/preble/pyprocgame
 """
-import asyncio
-
 from mpf.core.platform import DmdPlatform, DriverConfig, SwitchConfig, SegmentDisplayPlatform
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
@@ -51,10 +49,9 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         self._use_extended_matrix = False
         self._use_first_eight_direct_inputs = False
 
-    @asyncio.coroutine
-    def connect(self):
+    async def connect(self):
         """Connect to the P-Roc."""
-        yield from super().connect()
+        await super().connect()
 
         self.aux_port = AuxPort(self)
         self.aux_port.reset()
@@ -152,8 +149,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
             proc_num = self.pinproc.decode(self.machine_type, str(number))
         return self._configure_switch(config, proc_num)
 
-    @asyncio.coroutine
-    def get_hw_switch_states(self):
+    async def get_hw_switch_states(self):
         """Read in and set the initial switch state.
 
         The P-ROC uses the following values for hw switch states:
@@ -162,7 +158,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         3 - closed (not debounced)
         4 - open (not debounced)
         """
-        states = yield from self.run_proc_cmd("switch_get_states")
+        states = await self.run_proc_cmd("switch_get_states")
 
         for switch, state in enumerate(states):
             if state in (1, 3):
@@ -177,8 +173,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         self.dmd = PROCDMD(self, self.machine)
         return self.dmd
 
-    @asyncio.coroutine
-    def configure_segment_display(self, number: str, platform_settings) -> "SegmentDisplayPlatformInterface":
+    async def configure_segment_display(self, number: str, platform_settings) -> "SegmentDisplayPlatformInterface":
         """Configure display."""
         del platform_settings
         number_int = int(number)

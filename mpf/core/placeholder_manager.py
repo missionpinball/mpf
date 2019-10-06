@@ -273,7 +273,7 @@ class TextTemplate:
             future = subscriptions[0]
         else:
             future = Util.any(subscriptions, loop=self.machine.clock.loop)
-        future = Util.ensure_future(future, loop=self.machine.clock.loop)
+        future = asyncio.ensure_future(future, loop=self.machine.clock.loop)
         return value, future
 
 
@@ -778,7 +778,7 @@ class BasePlaceholderManager(MpfController):
             future = subscriptions[0]
         else:
             future = Util.any(subscriptions, loop=self.machine.clock.loop)
-        future = Util.ensure_future(future, loop=self.machine.clock.loop)
+        future = asyncio.ensure_future(future, loop=self.machine.clock.loop)
         return value, future
 
     @lru_cache(typed=True)

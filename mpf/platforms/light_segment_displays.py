@@ -1,5 +1,4 @@
 """Segment displays on light drivers."""
-import asyncio
 import logging
 from mpf.core.segment_mappings import SEVEN_SEGMENTS
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
@@ -49,8 +48,7 @@ class LightSegmentDisplaysPlatform(SegmentDisplayPlatform):
         self.log = logging.getLogger('Light Segment Displays')
         self.log.debug("Configuring Light Segment Displays")
 
-    @asyncio.coroutine
-    def configure_segment_display(self, number: str, platform_settings) -> LightSegmentDisplay:
+    async def configure_segment_display(self, number: str, platform_settings) -> LightSegmentDisplay:
         """Configure light segment display."""
         settings = self.machine.config_validator.validate_config("light_segment_displays", platform_settings)
         return LightSegmentDisplay(number, lights=settings['lights'], segment_type=settings['type'])

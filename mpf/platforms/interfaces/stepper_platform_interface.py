@@ -1,6 +1,5 @@
 """Platform interface for smart steppers."""
 import abc
-import asyncio
 
 
 class StepperPlatformInterface(metaclass=abc.ABCMeta):
@@ -26,8 +25,7 @@ class StepperPlatformInterface(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    @asyncio.coroutine
-    def wait_for_move_completed(self):
+    async def wait_for_move_completed(self):
         """Return after the last move completed.
 
         This is also used to check if homing is completed.

@@ -676,23 +676,12 @@ class Util:
         return Util.first(futures, loop, timeout, False)
 
     @staticmethod
-    def ensure_future(coro_or_future, loop):
-        """Wrap ensure_future."""
-        if hasattr(asyncio, "ensure_future"):
-            return asyncio.ensure_future(coro_or_future, loop=loop)
-
-        # hack to support 3.4 and 3.7 at the same time
-        _wrap_awaitable = getattr(asyncio, 'async')
-        return _wrap_awaitable(coro_or_future, loop=loop)   # pylint: disable-msg=deprecated-method
-
-    @staticmethod
-    @asyncio.coroutine
-    def first(futures: Iterable[asyncio.Future], loop, timeout=None, cancel_others=True):
+    async def first(futures: Iterable[asyncio.Future], loop, timeout=None, cancel_others=True):
         """Return first future and cancel others."""
         # wait for first
         try:
-            done, pending = yield from asyncio.wait(iter(futures), loop=loop, timeout=timeout,
-                                                    return_when=asyncio.FIRST_COMPLETED)
+            done, pending = await asyncio.wait(iter(futures), loop=loop, timeout=timeout,
+                                               return_when=asyncio.FIRST_COMPLETED)
         except asyncio.CancelledError:
             Util.cancel_futures(futures)
             raise
@@ -708,11 +697,10 @@ class Util:
         return next(iter(done))
 
     @staticmethod
-    @asyncio.coroutine
-    def race(futures: Dict[asyncio.Future, str], loop):
+    async def race(futures: Dict[asyncio.Future, str], loop):
         """Return key of first future and cancel others."""
         # wait for first
-        first = yield from Util.first(futures.keys(), loop=loop)
+        first = await Util.first(futures.keys(), loop=loop)
         return futures[first]
 
     @staticmethod

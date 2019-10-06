@@ -128,6 +128,7 @@ class TestBcpSocketClient(MpfTestCase):
         # use normal client
         self.machine_config_patches['bcp'] = {}
         self.machine_config_patches['bcp']['servers'] = []
+        self.receive_mock = None
 
     def get_use_bcp(self):
         return True
@@ -140,16 +141,19 @@ class TestBcpSocketClient(MpfTestCase):
         self.client_socket = MockBcpQueueSocket(self.loop)
         self.clock.mock_socket("localhost", 5050, self.client_socket)
 
+    async def receive_func(self, *args, **kwargs):
+        self.receive_mock(*args, **kwargs)
+
     def testReceiveMessages(self):
         # test message with bytes
-        receiver = MagicMock()
-        self.machine.bcp.interface.register_command_callback("receive_bytes", receiver)
+        self.receive_mock = MagicMock()
+        self.machine.bcp.interface.register_command_callback("receive_bytes", self.receive_func)
         self.client_socket.recv_queue.append(b'receive_bytes?name=default&bytes=4096\n')
         data = b'0' * 4096
         self.client_socket.recv_queue.append(data)
         self.advance_time_and_run()
-        receiver.assert_called_once_with(name="default", client=self._bcp_client, rawbytes=data)
-        receiver.reset_mock()
+        self.receive_mock.assert_called_once_with(name="default", client=self._bcp_client, rawbytes=data)
+        self.receive_mock.reset_mock()
 
         # data and cmd in two packets
         self.client_socket.recv_queue.append(b'receive_bytes?name=defa')
@@ -158,16 +162,15 @@ class TestBcpSocketClient(MpfTestCase):
         self.client_socket.recv_queue.append(data[0:1000])
         self.client_socket.recv_queue.append(data[1000:])
         self.advance_time_and_run()
-        receiver.assert_called_once_with(name="default", client=self._bcp_client, rawbytes=data)
-        receiver.reset_mock()
+        self.receive_mock.assert_called_once_with(name="default", client=self._bcp_client, rawbytes=data)
+        self.receive_mock.reset_mock()
 
         # test message without bytes
-        receiver2 = MagicMock()
-        self.machine.bcp.interface.register_command_callback("receive_msg", receiver2)
-        self.client_socket.recv_queue.append(b'receive_msg?param1=1&param2=2\n')
+        self.receive_mock = MagicMock()
+        self.client_socket.recv_queue.append(b'receive_bytes?param1=1&param2=2\n')
         self.advance_time_and_run()
-        receiver2.assert_called_once_with(param1="1", param2="2", client=self._bcp_client)
-        receiver2.reset_mock()
+        self.receive_mock.assert_called_once_with(param1="1", param2="2", client=self._bcp_client)
+        self.receive_mock.reset_mock()
 
         # unknown method. should not crash
         self._bcp_client.send = MagicMock()
@@ -183,6 +186,7 @@ class TestBcpSocketMultipleClients(MpfTestCase):
         # use bcp mock
         self.machine_config_patches['bcp'] = {}
         self.machine_config_patches['bcp']['servers'] = []
+        self.receive_mock = None
 
     def get_use_bcp(self):
         return True
@@ -204,16 +208,19 @@ class TestBcpSocketMultipleClients(MpfTestCase):
     def get_machine_path(self):
         return 'tests/machine_files/bcp/'
 
+    async def receive_func(self, *args, **kwargs):
+        self.receive_mock(*args, **kwargs)
+
     def testReceiveMessages(self):
         # test message without bytes
-        receiver = MagicMock()
-        self.machine.bcp.interface.register_command_callback("receive_msg", receiver)
+        self.receive_mock = MagicMock()
+        self.machine.bcp.interface.register_command_callback("receive_msg", self.receive_func)
 
         self.client_socket_1.recv_queue.append(b'receive_msg?param1=1&param2=2\n')
         self.advance_time_and_run()
-        receiver.assert_called_once_with(param1="1", param2="2", client=self._bcp_client_1)
-        receiver.reset_mock()
+        self.receive_mock.assert_called_once_with(param1="1", param2="2", client=self._bcp_client_1)
+        self.receive_mock.reset_mock()
 
         self.client_socket_2.recv_queue.append(b'receive_msg?param1=1&param2=2\n')
         self.advance_time_and_run()
-        receiver.assert_called_once_with(param1="1", param2="2", client=self._bcp_client_2)
+        self.receive_mock.assert_called_once_with(param1="1", param2="2", client=self._bcp_client_2)

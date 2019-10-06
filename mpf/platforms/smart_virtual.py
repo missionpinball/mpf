@@ -1,6 +1,5 @@
 """Contains code for the smart_virtual platform."""
 import abc
-import asyncio
 import logging
 
 from typing import List
@@ -266,8 +265,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
         self.log = logging.getLogger("Smart Virtual Platform")
         self.log.debug("Configuring smart_virtual hardware interface.")
 
-    @asyncio.coroutine
-    def start(self):
+    async def start(self):
         """Initialise platform when all devices are ready."""
         self._initialise_ball_devices()
         self._initialise_drop_targets()

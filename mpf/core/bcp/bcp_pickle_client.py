@@ -16,16 +16,14 @@ class BcpPickleClient(BaseBcpClient):
         self._receiver = None
         self._sender = None
 
-    @asyncio.coroutine
-    def read_message(self):
+    async def read_message(self):
         """Read the next message."""
-        message_length = struct.unpack("!I", (yield from self._receiver.readexactly(4)))[0]
-        message_raw = yield from self._receiver.readexactly(message_length)
+        message_length = struct.unpack("!I", (await self._receiver.readexactly(4)))[0]
+        message_raw = await self._receiver.readexactly(message_length)
 
         return pickle.load(message_raw)
 
-    @asyncio.coroutine
-    def connect(self, config):
+    async def connect(self, config):
         """Actively connect to server."""
         config = self.machine.config_validator.validate_config(
             'bcp:connections', config, 'bcp:connections')
@@ -36,10 +34,10 @@ class BcpPickleClient(BaseBcpClient):
         while True:
             connector = self.machine.clock.open_connection(config['host'], config['port'])
             try:
-                self._receiver, self._sender = yield from connector
+                self._receiver, self._sender = await connector
             except (ConnectionRefusedError, OSError):
                 if config.get('required'):
-                    yield from asyncio.sleep(.1)
+                    await asyncio.sleep(.1)
                     continue
                 else:
                     self.info_log("No BCP connection made to '%s' %s:%s",

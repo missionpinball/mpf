@@ -1,9 +1,5 @@
 """Contains the Match mode code."""
-
-import asyncio
 import random
-
-from typing import Generator
 
 import math
 
@@ -50,8 +46,7 @@ class Match(AsyncMode):
         non_winning_numbers = list(set(range(0, 100, step)) - set(match_numbers))
         return random.choice(non_winning_numbers)
 
-    @asyncio.coroutine
-    def _run(self) -> Generator[int, None, None]:
+    async def _run(self) -> None:
         """Run match mode."""
         # no player, no match
         if not self.machine.game.player_list:
@@ -73,7 +68,7 @@ class Match(AsyncMode):
 
         if not winners:
             # no winner
-            yield from self.machine.events.post_queue_async("match_no_match", **event_args)
+            await self.machine.events.post_queue_async("match_no_match", **event_args)
             '''event: match_no_match
 
             desc: All players missed the match number.
@@ -87,7 +82,7 @@ class Match(AsyncMode):
             '''
         else:
             # we got a winner
-            yield from self.machine.events.post_queue_async("match_has_match", **event_args)
+            await self.machine.events.post_queue_async("match_has_match", **event_args)
             '''event: match_has_match
 
             desc: At least one player has a match.

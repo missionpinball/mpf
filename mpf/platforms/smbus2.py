@@ -1,12 +1,10 @@
 """I2C platform which uses the smbus interface on linux via the smbus2 python extension."""
 import asyncio
-from typing import Dict, Tuple, Generator
+from typing import Tuple
 
 import logging
 
 from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
-
-from mpf.core.utility_functions import Util
 
 from mpf.core.platform import I2cPlatform
 
@@ -33,18 +31,17 @@ class Smbus2I2cDevice(I2cPlatformInterface):
         bus, self.address = self._get_i2c_bus_address(number)
         self.smbus = self._get_i2c_bus(bus)
 
-    @asyncio.coroutine
-    def open(self):
+    async def open(self):
         """Open device (if not already open)."""
         while not self.smbus.smbus:
             try:
-                yield from self.smbus.open()
+                await self.smbus.open()
             except FileNotFoundError:
                 if not self.platform.machine.options["production"]:
                     raise
 
                 # if we are in production mode retry
-                yield from asyncio.sleep(.1, loop=self.platform.machine.clock.loop)
+                await asyncio.sleep(.1, loop=self.platform.machine.clock.loop)
                 self.platform.log.debug("Connection to %s failed. Will retry.", self.number)
             else:
                 break
@@ -65,20 +62,18 @@ class Smbus2I2cDevice(I2cPlatformInterface):
         self.busses[bus] = handle
         return handle
 
-    @asyncio.coroutine
-    def i2c_read8(self, register):
+    async def i2c_read8(self, register):
         """Read a byte from I2C."""
-        return (yield from self.smbus.read_byte_data(self.address, int(register)))
+        return await self.smbus.read_byte_data(self.address, int(register))
 
     def i2c_write8(self, register, value):
         """Write a byte to I2C."""
-        Util.ensure_future(self.smbus.write_byte_data(self.address, int(register), int(value)), loop=self.loop)
+        asyncio.ensure_future(self.smbus.write_byte_data(self.address, int(register), int(value)), loop=self.loop)
         # this does not return
 
-    @asyncio.coroutine
-    def i2c_read_block(self, register, count):
+    async def i2c_read_block(self, register, count):
         """Read a block from I2C."""
-        return (yield from self.smbus.read_i2c_block_data(self.address, int(register), int(count)))
+        return await self.smbus.read_i2c_block_data(self.address, int(register), int(count))
 
 
 class Smbus2(I2cPlatform):
@@ -93,15 +88,13 @@ class Smbus2(I2cPlatform):
         self._i2c_busses = {}
         self.log = logging.getLogger('Smbus2')
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Check if smbus2 extension has been imported."""
         if not SMBus2Asyncio:
             raise AssertionError("smbus2 python extension missing. Please run: pip3 install smbus2_asyncio")
 
-    @asyncio.coroutine
-    def configure_i2c(self, number: str) -> Generator[int, None, Smbus2I2cDevice]:
+    async def configure_i2c(self, number: str) -> Smbus2I2cDevice:
         """Configure device on smbus2."""
         device = Smbus2I2cDevice(number, self, self._i2c_busses)
-        yield from device.open()
+        await device.open()
         return device
