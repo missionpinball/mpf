@@ -185,41 +185,46 @@ class EventManager(MpfController):
 
         return EventHandlerKey(key, event)
 
+    def _get_handler_signature(self, handler):
+        """Perform black magic to calculate a signature for a handler."""
+        cls = handler.callback.__self__
+
+        # noinspection PyProtectedMember
+        # pylint: disable-msg=protected-access
+        if hasattr(self.machine, "device_manager") and cls == self.machine.device_manager and \
+                handler.callback == self.machine.device_manager._control_event_handler:
+            cls = (handler.kwargs["callback"].__self__, handler.kwargs["ms_delay"])
+
+        handler_signature = (cls, handler.priority, handler.condition)
+        return handler_signature
+
     def _verify_handlers(self, event, sorted_handlers):
         """Verify that no races can happen."""
-        if not sorted_handlers:
+        if not sorted_handlers or len(sorted_handlers) <= 1 or event.startswith("init_phase_"):
             return
-        priority = -1
-        devices = []
-        for handler in sorted_handlers:
-            # if priority is different we are fine
-            if priority != handler.priority:
-                priority = handler.priority
-                devices = []
 
-            # same priority order is random. check that is does not happen on one class
+        seen = set()
+        collisions = []
+        for handler in sorted_handlers:
             if not inspect.ismethod(handler.callback):
                 continue
-            cls = handler.callback.__self__
 
-            # noinspection PyProtectedMember
-            # pylint: disable-msg=protected-access
-            if hasattr(self.machine, "device_manager") and cls == self.machine.device_manager and \
-                    handler.callback == self.machine.device_manager._control_event_handler:
-                cls = (handler.kwargs["callback"].__self__, handler.kwargs["ms_delay"])
+            handler_signature = self._get_handler_signature(handler)
 
-            if cls in devices and not event.startswith("init_phase_"):
-                handlers = [h for h in sorted_handlers if h.priority == priority and
-                            inspect.ismethod(h.callback) and
-                            h.condition == handler.condition and
-                            h.callback.__self__ == handler.callback.__self__]
+            if handler_signature not in seen:
+                seen.add(handler_signature)
 
-                self.info_log(
-                    "Unordered handler for class {} on event {} with priority {}. Handlers: {}. The order of those "
-                    "handlers is not defined and they will be executed in random order. This might lead to race "
-                    "conditions and potential bugs.".format(cls, event, priority, handlers)
-                )
-            devices.append(cls)
+            else:
+                collisions.append(handler_signature)
+
+        for collision in collisions:
+            handlers = [x for x in sorted_handlers if inspect.ismethod(x.callback) and
+                        self._get_handler_signature(x) == collision]
+            self.info_log(
+                "Unordered handler for class {} on event {} with priority {}. Handlers: {}. The order of those "
+                "handlers is not defined and they will be executed in random order. This might lead to race "
+                "conditions and potential bugs.".format(collision[0], event, collision[1], handlers)
+            )
 
     def replace_handler(self, event: str, handler: Any, priority: int = 1,
                         **kwargs: dict) -> EventHandlerKey:
