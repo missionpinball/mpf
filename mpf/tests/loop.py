@@ -165,13 +165,11 @@ class MockServer:
         self.is_bound = asyncio.Future(loop=loop)
         self.client_connected_cb = None
 
-    @asyncio.coroutine
-    def bind(self, client_connected_cb):
+    async def bind(self, client_connected_cb):
         self.client_connected_cb = client_connected_cb
         self.is_bound.set_result(True)
 
-    @asyncio.coroutine
-    def add_client(self, socket):
+    async def add_client(self, socket):
         if not self.is_bound.done():
             raise AssertionError("Server not running")
 
@@ -180,13 +178,12 @@ class MockServer:
         protocol = asyncio.streams.StreamReaderProtocol(reader, loop=self.loop)
         transport = _SelectorSocketTransport(self.loop, socket, protocol)
         writer = asyncio.streams.StreamWriter(transport, protocol, reader, self.loop)
-        yield from self.client_connected_cb(reader, writer)
+        await self.client_connected_cb(reader, writer)
 
     def close(self):
         pass
 
-    @asyncio.coroutine
-    def wait_closed(self):
+    async def wait_closed(self):
         return True
 
 
@@ -263,7 +260,7 @@ class TimeTravelLoop(base_events.BaseEventLoop):
     """
 
     __slots__ = ["readers", "writers", "_time", "_clock_resolution", "_timers", "_selector", "_transports",
-                 "_wait_for_external_executor"]
+                 "_wait_for_external_executor", "_stopped"]
 
     def __init__(self):
         self.readers = {}
@@ -272,6 +269,7 @@ class TimeTravelLoop(base_events.BaseEventLoop):
         super().__init__()
 
         self._time = 0
+        self._stopped = False
         self._clock_resolution = 1e-9
         self._timers = NextTimers()
         self._selector = TestSelector()
@@ -309,6 +307,11 @@ class TimeTravelLoop(base_events.BaseEventLoop):
                                   (handle, writer))
             if reader is not None:
                 reader.cancel()
+
+    def stop(self):
+        """Stop loop."""
+        self._stopped = True
+        super().stop()
 
     def _remove_reader(self, fd):
         return self.remove_reader(fd)
@@ -397,7 +400,8 @@ class TimeTravelLoop(base_events.BaseEventLoop):
         if len(self._ready) == 0:
             if not self._timers.is_empty():
                 self._time = self._timers.pop_closest()
-            elif not self._closed and not self._selector.select(0) and not self._wait_for_external_executor:
+            elif not self._closed and not self._stopped and not self._selector.select(0) and \
+                    not self._wait_for_external_executor:
                 raise AssertionError("Ran into an infinite loop. No socket ready and nothing scheduled.")
             if self._wait_for_external_executor:
                 time.sleep(.0001)
@@ -461,8 +465,7 @@ class TestClock(ClockBase):
         socket.is_open = True
         return socket
 
-    @asyncio.coroutine
-    def start_server(self, client_connected_cb, host=None, port=None, **kwd):
+    async def start_server(self, client_connected_cb, host=None, port=None, **kwd):
         """Mock listening server."""
         key = host + ":" + str(port)
         if key not in self._mock_servers:
@@ -471,7 +474,7 @@ class TestClock(ClockBase):
         if server.is_bound.done():
             raise AssertionError("server already bound for key {}".format(key))
 
-        yield from server.bind(client_connected_cb)
+        await server.bind(client_connected_cb)
         return server
 
     @coroutine

@@ -1,6 +1,4 @@
 """Contains the Playfield device class which represents the actual playfield in a pinball machine."""
-import asyncio
-
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
 from mpf.core.system_wide_device import SystemWideDevice
@@ -42,9 +40,8 @@ class Playfield(SystemWideDevice):
 
         self._incoming_balls = []
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         if 'default' in self.config['tags']:
             self.machine.playfield = self
 
@@ -92,19 +89,16 @@ class Playfield(SystemWideDevice):
                     '_ejecting_ball',
                     handler=self._source_device_ejecting_ball)
 
-    @asyncio.coroutine
-    def expected_ball_received(self):
+    async def expected_ball_received(self):
         """Handle an expected ball."""
         # We do nothing in that case
 
-    @asyncio.coroutine
-    def unexpected_ball_received(self):
+    async def unexpected_ball_received(self):
         """Handle an unexpected ball."""
         # We do nothing in that case
 
     @staticmethod
-    @asyncio.coroutine
-    def wait_for_ready_to_receive(source):
+    async def wait_for_ready_to_receive(source):
         """Playfield is always ready to receive."""
         del source
         return True

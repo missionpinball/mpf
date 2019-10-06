@@ -28,15 +28,13 @@ class ScoreQueue(SystemWideDevice):
 
         self.machine.events.add_async_handler("player_turn_ending", self._block_player_end_if_scoring)
 
-    @asyncio.coroutine
-    def _block_player_end_if_scoring(self, **kwargs):
+    async def _block_player_end_if_scoring(self, **kwargs):
         """Block player ending until scoring is done."""
         del kwargs
-        yield from self._score_queue_empty.wait()
+        await self._score_queue_empty.wait()
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self._score_task = self.machine.clock.loop.create_task(self._handle_score_queue())
         self._score_task.add_done_callback(self._done)
 
@@ -66,10 +64,9 @@ class ScoreQueue(SystemWideDevice):
             self._score_task.cancel()
             self._score_task = None
 
-    @asyncio.coroutine
-    def _handle_score_queue(self):
+    async def _handle_score_queue(self):
         while True:
-            score = yield from self._score_queue.get()
+            score = await self._score_queue.get()
             self.debug_log("Scoring %s", score)
             while score > 0:
                 # get the position of the highest digit
@@ -84,7 +81,7 @@ class ScoreQueue(SystemWideDevice):
                 if len(self.config['chimes']) >= digit_pos and self.config['chimes'][-(digit_pos + 1)]:
                     self.config['chimes'][-(digit_pos + 1)].pulse()
                     self.debug_log("Played chime for pos %s. Waiting %ss", digit_pos, self.config['delay'])
-                    yield from asyncio.sleep(self.config['delay'], loop=self.machine.clock.loop)
+                    await asyncio.sleep(self.config['delay'], loop=self.machine.clock.loop)
 
             if self._score_queue.empty():
                 self._score_queue_empty.set()

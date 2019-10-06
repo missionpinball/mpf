@@ -1,5 +1,4 @@
 """Hardware sound system."""
-import asyncio
 from collections import defaultdict
 
 from mpf.core.system_wide_device import SystemWideDevice
@@ -23,10 +22,9 @@ class HardwareSoundSystem(SystemWideDevice):
         self.platform = None
         self._volume = defaultdict(lambda: 1.0)
 
-    @asyncio.coroutine
-    def _initialize(self):
+    async def _initialize(self):
         """Configure hardware."""
-        yield from super()._initialize()
+        await super()._initialize()
         self.platform = self.machine.get_platform_sections(
             'hardware_sound_system', self.config['platform'])
         self.hw_device = self.platform.configure_hardware_sound_system()

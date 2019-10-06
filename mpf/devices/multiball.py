@@ -1,6 +1,4 @@
 """Contains the MultiBall device class."""
-import asyncio
-
 from mpf.core.enable_disable_mixin import EnableDisableMixin
 
 from mpf.core.delays import DelayManager
@@ -46,9 +44,8 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
         if self.shoot_again:
             self.stop()
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.ball_locks = self.config['ball_locks']
         self.source_playfield = self.config['source_playfield']
         if isinstance(self.config['ball_count'], NativeTypeTemplate):

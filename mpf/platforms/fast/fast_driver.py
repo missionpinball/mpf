@@ -1,6 +1,6 @@
 """A driver/coil in the fast platform."""
 import logging
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Optional
 
 from mpf.core.platform import DriverConfig
 from mpf.core.utility_functions import Util
@@ -23,9 +23,9 @@ class FASTDriver(DriverPlatformInterface):
         """Initialise driver."""
         super().__init__(config, number)
         self.log = logging.getLogger('FASTDriver')
-        self.autofire = None                        # type: Tuple[str, Dict[str, float]]
+        self.autofire = None                        # type: Optional[Tuple[str, Dict[str, float]]]
         self._autofire_cleared = False
-        self.config_state = None                    # type: Tuple[float, float, float]
+        self.config_state = None                    # type: Optional[Tuple[float, float, float]]
         self.machine = platform.machine
         self.platform = platform
         self.driver_settings = dict()               # type: Dict[str, str]

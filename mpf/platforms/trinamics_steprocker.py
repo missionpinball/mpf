@@ -31,10 +31,9 @@ class TrinamicsStepRocker(StepperPlatform):
         """Return string representation."""
         return '<Platform.TrinamicsStepRocker>'
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Initialise trinamics steprocker platform."""
-        yield from super().initialize()
+        await super().initialize()
 
         # validate our config (has to be in intialize since config_processor
         # is not read in __init__)
@@ -47,8 +46,7 @@ class TrinamicsStepRocker(StepperPlatform):
             self.tmcl.stop()
             self.tmcl = None
 
-    @asyncio.coroutine
-    def configure_stepper(self, number: str, config: dict) -> "TrinamicsTMCLStepper":
+    async def configure_stepper(self, number: str, config: dict) -> "TrinamicsTMCLStepper":
         """Configure a smart stepper device in platform.
 
         Args:
@@ -128,11 +126,10 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
         """Stop stepper."""
         self.tmcl.mst(self._mn)
 
-    @asyncio.coroutine
-    def wait_for_move_completed(self):
+    async def wait_for_move_completed(self):
         """Wait until move completed."""
         while not self.is_move_complete():
-            yield from asyncio.sleep(1 / self.config['poll_ms'], loop=self.machine.clock.loop)
+            await asyncio.sleep(1 / self.config['poll_ms'], loop=self.machine.clock.loop)
 
     def is_move_complete(self) -> bool:
         """Return true if move is complete."""

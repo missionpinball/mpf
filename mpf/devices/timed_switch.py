@@ -1,6 +1,4 @@
 """Contains the Timed Switch device class."""
-import asyncio
-
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
@@ -36,9 +34,8 @@ class TimedSwitch(SystemWideDevice, ModeDevice):
 
         return config
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
 
         for tag in self.config['switch_tags']:
             for switch in self.machine.switches.items_tagged(tag):

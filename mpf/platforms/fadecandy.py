@@ -1,5 +1,4 @@
 """Contains code for an FadeCandy hardware for RGB LEDs."""
-import asyncio
 import logging
 import json
 import struct
@@ -34,10 +33,9 @@ class FadecandyHardwarePlatform(OpenpixelHardwarePlatform):
         """Return string representation."""
         return '<Platform.FadeCandy>'
 
-    @asyncio.coroutine
-    def _setup_opc_client(self):
+    async def _setup_opc_client(self):
         self.opc_client = FadeCandyOPClient(self.machine, self.machine.config['open_pixel_control'])
-        yield from self.opc_client.connect()
+        await self.opc_client.connect()
 
 
 class FadeCandyOPClient(OpenPixelClient):
@@ -84,10 +82,9 @@ class FadeCandyOPClient(OpenPixelClient):
         if not self.keyframe_interpolation:
             self.update_every_tick = False
 
-    @asyncio.coroutine
-    def connect(self):
+    async def connect(self):
         """Connect to the hardware."""
-        yield from super().connect()
+        await super().connect()
         self.set_global_color_correction()
         self.write_firmware_options()
 

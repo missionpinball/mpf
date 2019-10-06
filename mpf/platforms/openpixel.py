@@ -3,7 +3,6 @@
 The python code to build the OPC message packet came from here:
 https://github.com/zestyping/openpixelcontrol/blob/master/python_clients/opc.py
 """
-import asyncio
 import logging
 
 from typing import Callable
@@ -41,14 +40,13 @@ class OpenpixelHardwarePlatform(LightsPlatform):
         """Return str representation."""
         return '<Platform.OpenPixel>'
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Initialise openpixel platform."""
         self.machine.config_validator.validate_config("open_pixel_control", self.machine.config['open_pixel_control'])
         if self.machine.config['open_pixel_control']['debug']:
             self.debug = True
 
-        yield from self._setup_opc_client()
+        await self._setup_opc_client()
 
     def stop(self):
         """Stop platform."""
@@ -87,10 +85,9 @@ class OpenpixelHardwarePlatform(LightsPlatform):
         """Configure an LED."""
         return OpenPixelLED(number, self.opc_client, self.debug)
 
-    @asyncio.coroutine
-    def _setup_opc_client(self):
+    async def _setup_opc_client(self):
         self.opc_client = OpenPixelClient(self.machine, self.machine.config['open_pixel_control'])
-        yield from self.opc_client.connect()
+        await self.opc_client.connect()
 
 
 class OpenPixelLED(LightPlatformInterface):
@@ -145,12 +142,11 @@ class OpenPixelClient:
         self.msg = []
         self.openpixel_config = config
 
-    @asyncio.coroutine
-    def connect(self):
+    async def connect(self):
         """Connect to the hardware."""
         connector = self.machine.clock.open_connection(self.openpixel_config['host'], self.openpixel_config['port'])
         try:
-            _, self.socket_sender = yield from connector
+            _, self.socket_sender = await connector
         except OSError:
             raise AssertionError("Cannot connect to {} at {}:{}".format(self.log.name, self.openpixel_config['host'],
                                                                         self.openpixel_config['port']))

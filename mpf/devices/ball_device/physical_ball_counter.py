@@ -4,9 +4,7 @@ The duty of this device is to maintain the current ball count of the device.
 """
 import asyncio
 
-from typing import Generator, List
-
-from mpf.core.utility_functions import Util
+from typing import List
 
 MYPY = False
 if MYPY:    # pragma: no cover
@@ -36,24 +34,21 @@ class EjectTracker:
         self._num_unknown_balls = 0
         self._num_lost_balls = 0
 
-    @asyncio.coroutine
-    def will_eject(self):
+    async def will_eject(self):
         """Start process."""
-        yield from self._ball_count_handler.counter.wait_for_count_stable()
+        await self._ball_count_handler.counter.wait_for_count_stable()
         ball_changes = self._ball_count_handler.counter.register_change_stream()
         if not self._already_left:
-            ball_left = yield from self._ball_count_handler.counter.wait_for_ball_to_leave()
-            self._ball_left = Util.ensure_future(ball_left,
-                                                 loop=self.machine.clock.loop)
+            ball_left = await self._ball_count_handler.counter.wait_for_ball_to_leave()
+            self._ball_left = asyncio.ensure_future(ball_left, loop=self.machine.clock.loop)
 
         self._task = self.machine.clock.loop.create_task(self._run(ball_changes))
         self._task.add_done_callback(self._done)
 
-    @asyncio.coroutine
-    def _run(self, ball_changes):
+    async def _run(self, ball_changes):
         already_left = self._already_left
         while True:
-            change = yield from ball_changes.get()
+            change = await ball_changes.get()
             if isinstance(change, BallLostActivity) and not already_left and self._ball_left.done():
                 already_left = True
                 self._ball_count_handler.ball_device.debug_log("Got ball left during eject")
@@ -62,7 +57,7 @@ class EjectTracker:
             if isinstance(change, BallLostActivity):
                 self.track_lost_balls(1)
             elif isinstance(change, BallEntranceActivity):
-                yield from self.track_ball_entrance()
+                await self.track_ball_entrance()
             elif isinstance(change, UnknownBallActivity):
                 self.track_unknown_balls(1)
             elif isinstance(change, BallReturnActivity):
@@ -93,11 +88,10 @@ class EjectTracker:
         self._ball_count_handler.ball_device.debug_log("Got ball return during eject")
         self._ball_returned.set_result(True)
 
-    @asyncio.coroutine
-    def track_ball_entrance(self):
+    async def track_ball_entrance(self):
         """Track ball entrance."""
         self._ball_count_handler.ball_device.debug_log("Got ball entrance during eject")
-        yield from self._ball_count_handler.entrance_during_eject()
+        await self._ball_count_handler.entrance_during_eject()
 
     def track_unknown_balls(self, balls):
         """Track unknown ball."""
@@ -232,16 +226,15 @@ class PhysicalBallCounter:
         """Return true if device is jammed and cannot count."""
         raise NotImplementedError()
 
-    @asyncio.coroutine
-    def count_balls(self) -> Generator[int, None, int]:
+    async def count_balls(self) -> int:
         """Return the current ball count."""
         # wait until count is stable
-        yield from self._count_stable.wait()
+        await self._count_stable.wait()
         return self._last_count
 
     def wait_for_count_stable(self):
         """Wait for stable count."""
-        return Util.ensure_future(self._count_stable.wait(), loop=self.machine.clock.loop)
+        return asyncio.ensure_future(self._count_stable.wait(), loop=self.machine.clock.loop)
 
     @property
     def is_ready_to_receive(self):
@@ -277,17 +270,16 @@ class PhysicalBallCounter:
         self._ball_change_futures.append(future)
         return future
 
-    @asyncio.coroutine
     # pylint: disable-msg=inconsistent-return-statements
-    def wait_for_ball_count_changes(self, old_count: int):
+    async def wait_for_ball_count_changes(self, old_count: int):
         """Wait for ball count changes and return the new count.
 
         Args:
             old_count: Old ball count. Will return when the current count differs
         """
         while True:
-            current_count = yield from self.count_balls()
+            current_count = await self.count_balls()
             if current_count != old_count:
                 return current_count
 
-            yield from self.wait_for_ball_activity()
+            await self.wait_for_ball_activity()

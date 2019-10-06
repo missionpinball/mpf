@@ -9,11 +9,7 @@ More info on the P3-ROC hardware platform: http://pinballcontrollers.com/
 Original code source on which this module was based:
 https://github.com/preble/pyprocgame
 """
-
 import logging
-import asyncio
-
-from typing import Generator
 
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
@@ -68,10 +64,9 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         self.acceleration = [0] * 3
         self.accelerometer_device = None    # type: PROCAccelerometer
 
-    @asyncio.coroutine
-    def connect(self):
+    async def connect(self):
         """Connect to the P3-Roc."""
-        yield from super().connect()
+        await super().connect()
 
         self.pdbconfig = PDBConfig(self, self.machine.config, self.pinproc.DriverCount)
 
@@ -90,7 +85,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
                 raise AssertionError("Local inputs are supported only in FW 2.6+. Disable DIP 2 or update firmware.")
 
             for board in range(0, 4):
-                device_type = yield from self.run_proc_cmd("read_data", 2, (1 << 12) + (board << 6))
+                device_type = await self.run_proc_cmd("read_data", 2, (1 << 12) + (board << 6))
                 if device_type != 0:
                     raise AssertionError("Invalid P3-Roc configuration. Found SW-16 with ID {} which is invalid "
                                          "because burst switches/drivers which are configured as inputs/outputs use "
@@ -114,8 +109,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         """Return string representation."""
         return '<Platform.P3-ROC>'
 
-    @asyncio.coroutine
-    def configure_i2c(self, number: str):
+    async def configure_i2c(self, number: str):
         """Configure I2C device on P3-Roc."""
         return P3RocI2c(number, self)
 
@@ -365,8 +359,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
 
         return burst_switch
 
-    @asyncio.coroutine
-    def get_hw_switch_states(self):
+    async def get_hw_switch_states(self):
         """Read in and set the initial switch state.
 
         The P-ROC uses the following values for hw switch states:
@@ -375,7 +368,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         3 - closed (not debounced)
         4 - open (not debounced)
         """
-        states = yield from self.run_proc_cmd("switch_get_states")
+        states = await self.run_proc_cmd("switch_get_states")
         result = {}
 
         for switch, state in enumerate(states):
@@ -476,30 +469,28 @@ class P3RocI2c(I2cPlatformInterface):
         """Write an 8-bit value to the I2C bus of the P3-Roc."""
         self.platform.run_proc_cmd_no_wait("write_data", 7, int(self.address) << 9 | register, value)
 
-    @asyncio.coroutine
-    def i2c_read8(self, register):
+    async def i2c_read8(self, register):
         """Read an 8-bit value from the I2C bus of the P3-Roc."""
-        data = yield from (self.platform.run_proc_cmd("read_data", 7, int(self.address) << 9 | register))
+        data = await self.platform.run_proc_cmd("read_data", 7, int(self.address) << 9 | register)
         return data & 0xFF
 
-    @asyncio.coroutine
-    def i2c_read_block(self, register, count):
+    async def i2c_read_block(self, register, count):
         """Read block via I2C."""
         result = []
         position = 0
         while position < count:
             if count - position == 1:
-                data = yield from self.i2c_read8(register + position)
+                data = await self.i2c_read8(register + position)
                 result.append(data)
                 position += 1
             else:
-                data = yield from self.i2c_read16(register)
+                data = await self.i2c_read16(register)
                 result.append((data >> 8) & 0xFF)
                 result.append(data & 0xFF)
                 position += 2
         return result
 
-    def i2c_read16(self, register) -> Generator[int, None, int]:
+    async def i2c_read16(self, register) -> int:
         """Read an 16-bit value from the I2C bus of the P3-Roc."""
         return self.platform.run_proc_cmd("read_data", 7, int(self.address) << 9 | 1 << 8 | register)
 

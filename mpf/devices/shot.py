@@ -1,6 +1,4 @@
 """A shot in MPF."""
-import asyncio
-
 from mpf.core.device_monitor import DeviceMonitor
 
 from mpf.core.enable_disable_mixin import EnableDisableMixin
@@ -52,9 +50,8 @@ class Shot(EnableDisableMixin, ModeDevice):
         super().device_loaded_in_mode(mode, player)
         self._update_show()
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         for switch in self.config['switch']:
             if switch not in self.config['switches']:
                 self.config['switches'].append(switch)

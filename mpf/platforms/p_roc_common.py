@@ -92,7 +92,6 @@ class ProcProcess:
         loop.run_until_complete(self.stop_future)
         loop.close()
 
-    @asyncio.coroutine
     def stop(self):
         """Stop thread."""
         self.stop_future.set_result(True)
@@ -101,8 +100,7 @@ class ProcProcess:
     def _sync(num):
         return "sync", num
 
-    @asyncio.coroutine
-    def run_command(self, cmd, *args):
+    async def run_command(self, cmd, *args):
         """Run command in proc thread."""
         if cmd.startswith("_"):
             return getattr(self, cmd)(*args)
@@ -117,8 +115,7 @@ class ProcProcess:
         self.dmd.set_data(data)
         self.proc.dmd_draw(self.dmd)
 
-    @asyncio.coroutine
-    def read_events_and_watchdog(self, poll_sleep):
+    async def read_events_and_watchdog(self, poll_sleep):
         """Return all events and tickle watchdog."""
         while not self.stop_future.done():
             events = self.proc.get_events()
@@ -127,7 +124,7 @@ class ProcProcess:
             if events:
                 return list(events)
 
-            yield from asyncio.sleep(poll_sleep, loop=self.loop)
+            await asyncio.sleep(poll_sleep, loop=self.loop)
 
         return []
 
@@ -211,10 +208,9 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         """Run a command in the p-roc thread and return the result."""
         return self.machine.clock.loop.run_until_complete(self.run_proc_cmd(cmd, *args))
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Set machine vars."""
-        yield from self.connect()
+        await self.connect()
         self.machine.variables.set_machine_var("p_roc_version", self.version)
         '''machine_var: p_roc_version
 
@@ -243,8 +239,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         except asyncio.CancelledError:
             pass
 
-    @asyncio.coroutine
-    def start(self):
+    async def start(self):
         """Start listening for switches."""
         self.event_task = self.machine.clock.loop.create_task(self._poll_events())
         self.event_task.add_done_callback(self._done)
@@ -253,24 +248,22 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         """Process events from the P-Roc."""
         raise NotImplementedError()
 
-    @asyncio.coroutine
-    def _poll_events(self):
+    async def _poll_events(self):
         poll_sleep = 1 / self.machine.config['mpf']['default_platform_hz']
         while True:
-            events = yield from asyncio.wrap_future(
+            events = await asyncio.wrap_future(
                 asyncio.run_coroutine_threadsafe(self.proc_process.read_events_and_watchdog(poll_sleep),
                                                  self.proc_process_instance),
                 loop=self.machine.clock.loop)
             if events:
                 self.process_events(events)
 
-            yield from asyncio.sleep(poll_sleep, loop=self.machine.clock.loop)
+            await asyncio.sleep(poll_sleep, loop=self.machine.clock.loop)
 
     def stop(self):
         """Stop proc."""
         if self.proc_process and self.proc_process_instance:
-            asyncio.run_coroutine_threadsafe(self.proc_process.stop(),
-                                             self.proc_process_instance)
+            self.proc_process_instance.call_soon_threadsafe(self.proc_process.stop)
         if self.proc_thread:
             self.debug_log("Waiting for pinproc thread.")
             self.proc_thread.join()
@@ -292,8 +285,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
             self.proc_process_instance = self.machine.clock.loop
             self.proc_process.start_pinproc(loop=self.machine.clock.loop, machine_type=self.machine_type)
 
-    @asyncio.coroutine
-    def connect(self):
+    async def connect(self):
         """Connect to the P-ROC.
 
         Keep trying if it doesn't work the first time.
@@ -302,11 +294,11 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
         self._start_proc_process()
 
-        version_revision = yield from self.run_proc_cmd("read_data", 0x00, 0x01)
+        version_revision = await self.run_proc_cmd("read_data", 0x00, 0x01)
 
         self.revision = version_revision & 0xFFFF
         self.version = (version_revision & 0xFFFF0000) >> 16
-        dipswitches = yield from self.run_proc_cmd("read_data", 0x00, 0x03)
+        dipswitches = await self.run_proc_cmd("read_data", 0x00, 0x03)
         self.hardware_version = (dipswitches & 0xF00) >> 8
         self.dipswitches = ~dipswitches & 0x3F
 
@@ -709,8 +701,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
                                       {'notifyHost': True, 'reloadActive': False}, [], False)
         return switch
 
-    @asyncio.coroutine
-    def configure_servo(self, number: str) -> ServoPlatformInterface:
+    async def configure_servo(self, number: str) -> ServoPlatformInterface:
         """Configure a servo on a PD-LED board.
 
         Args:
@@ -725,8 +716,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
         return PdLedServo(board, number, self, self.config.get("debug", False))
 
-    @asyncio.coroutine
-    def configure_stepper(self, number: str, config: dict) -> PdLedStepper:
+    async def configure_stepper(self, number: str, config: dict) -> PdLedStepper:
         """Configure a stepper (axis) device in platform.
 
         Args:

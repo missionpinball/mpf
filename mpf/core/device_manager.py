@@ -1,8 +1,7 @@
 """Contains the DeviceManager base class."""
-import asyncio
 from collections import OrderedDict
 
-from typing import Callable, Tuple, Generator, List
+from typing import Callable, Tuple, List
 
 from mpf.core.utility_functions import Util
 from mpf.core.mpf_controller import MpfController
@@ -77,8 +76,7 @@ class DeviceManager(MpfController):
                 self.machine.config_validator.load_device_config_spec(
                     device_cls.config_section, device_cls.get_config_spec())
 
-    @asyncio.coroutine
-    def _load_device_modules(self, **kwargs):
+    async def _load_device_modules(self, **kwargs):
         del kwargs
         # step 1: create devices in machine collection
         self.debug_log("Creating devices...")
@@ -113,10 +111,10 @@ class DeviceManager(MpfController):
 
         # step 2: load config and validate devices
         self.load_devices_config(validate=True)
-        yield from self.machine.mode_controller.load_mode_devices()
+        await self.machine.mode_controller.load_mode_devices()
 
         # step 3: initialise devices (mode devices will be initialised when mode is started)
-        yield from self.initialize_devices()
+        await self.initialize_devices()
 
     def stop_devices(self):
         """Stop all devices in the machine."""
@@ -195,8 +193,7 @@ class DeviceManager(MpfController):
             for device_name in config:
                 collection[device_name].load_config(config[device_name])
 
-    @asyncio.coroutine
-    def initialize_devices(self):
+    async def initialize_devices(self):
         """Initialise devices."""
         for device_type in self.machine.config['mpf']['device_modules']:
 
@@ -213,10 +210,10 @@ class DeviceManager(MpfController):
 
             # add machine wide
             for device_name in config:
-                yield from collection[device_name].device_added_system_wide()
+                await collection[device_name].device_added_system_wide()
 
     # pylint: disable-msg=too-many-nested-blocks
-    def get_device_control_events(self, config) -> Generator[Tuple[str, Callable, int, "Device"], None, None]:
+    def get_device_control_events(self, config) -> Tuple[str, Callable, int, "Device"]:
         """Scan a config dictionary for control_events.
 
          Yields events, methods, delays, and devices for all the devices and

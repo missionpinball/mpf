@@ -3,7 +3,6 @@
 Contains support for the Raspi low-level RGB LED tile driver of hzeller
 (https://github.com/hzeller/rpi-rgb-led-matrix).
 """
-import asyncio
 import atexit
 from PIL import Image
 
@@ -36,8 +35,7 @@ class RpiDmdPlatform(RgbDmdPlatform):
         self.config = None
         atexit.register(self.stop)
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Initialise platform."""
         self.config = self.machine.config_validator.validate_config(
             config_spec='rpi_dmd',

@@ -56,20 +56,17 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         self.log = logging.getLogger("Virtual Platform")
         self.log.debug("Configuring virtual hardware interface.")
 
-    @asyncio.coroutine
-    def initialize(self) -> None:
+    async def initialize(self) -> None:
         """Initialise platform."""
 
     def stop(self):
         """Stop platform."""
 
-    @asyncio.coroutine
-    def configure_servo(self, number: str):
+    async def configure_servo(self, number: str):
         """Configure a servo device in platform."""
         return VirtualServo(number)
 
-    @asyncio.coroutine
-    def configure_stepper(self, number: str, config: dict):
+    async def configure_stepper(self, number: str, config: dict):
         """Configure a smart stepper / axis device in platform."""
         del config
         return VirtualStepper(number, self.machine)
@@ -99,8 +96,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
         return VirtualSwitch(config, number)
 
-    @asyncio.coroutine
-    def get_hw_switch_states(self):
+    async def get_hw_switch_states(self):
         """Return hw switch states."""
         if not self.initial_states_sent:
 
@@ -241,14 +237,12 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         del name
         return VirtualDmd()
 
-    @asyncio.coroutine
-    def configure_segment_display(self, number: str, platform_settings) -> SegmentDisplayPlatformInterface:
+    async def configure_segment_display(self, number: str, platform_settings) -> SegmentDisplayPlatformInterface:
         """Configure segment display."""
         del platform_settings
         return VirtualSegmentDisplay(number)
 
-    @asyncio.coroutine
-    def configure_i2c(self, number: str) -> "I2cPlatformInterface":
+    async def configure_i2c(self, number: str) -> "I2cPlatformInterface":
         """Configure virtual i2c device."""
         return VirtualI2cDevice(number, self._get_initial_i2c(number))
 
@@ -277,16 +271,14 @@ class VirtualI2cDevice(I2cPlatformInterface):
         """Write data."""
         self.data[int(register)] = value
 
-    @asyncio.coroutine
-    def i2c_read_block(self, register, count):
+    async def i2c_read_block(self, register, count):
         """Read data block."""
         result = []
         for i in range(int(register), int(register) + count):
             result.append(self.data[i])
         return result
 
-    @asyncio.coroutine
-    def i2c_read8(self, register):
+    async def i2c_read8(self, register):
         """Read data."""
         return self.data[int(register)]
 
@@ -464,10 +456,9 @@ class VirtualStepper(StepperPlatformInterface):
         """Home an axis, resetting 0 position."""
         self._current_position = 0
 
-    @asyncio.coroutine
-    def wait_for_move_completed(self):
+    async def wait_for_move_completed(self):
         """Wait until move completed."""
-        yield from asyncio.sleep(0.1, loop=self.machine.clock.loop)
+        await asyncio.sleep(0.1, loop=self.machine.clock.loop)
 
     def move_rel_pos(self, position):
         """Move axis to a relative position."""

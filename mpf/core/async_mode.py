@@ -1,7 +1,6 @@
 """Base class for asyncio modes."""
 import abc
 import asyncio
-from typing import Generator
 
 from mpf.core.mode import Mode
 
@@ -50,8 +49,7 @@ class AsyncMode(Mode, metaclass=abc.ABCMeta):
         self._task.cancel()
 
     @abc.abstractmethod
-    @asyncio.coroutine
-    def _run(self) -> Generator[int, None, None]:
+    async def _run(self) -> None:
         """Start main task which runs as long as the mode is active.
 
         Overwrite this function in your mode.

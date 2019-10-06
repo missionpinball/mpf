@@ -30,23 +30,22 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         super().__init__(platform, port, baud)
         self.platform = platform    # hint the right type
 
-    @asyncio.coroutine
-    def _identify_connection(self):
+    async def _identify_connection(self):
         """Identify which processor this serial connection is talking to."""
         # keep looping and wait for an ID response
         count = 0
         # read and discard all messages in buffer
         self.send(OppRs232Intf.EOM_CMD)
-        yield from asyncio.sleep(.01, loop=self.machine.clock.loop)
-        yield from self.read(1000)
+        await asyncio.sleep(.01, loop=self.machine.clock.loop)
+        await self.read(1000)
         while True:
             if (count % 10) == 0:
                 self.log.debug("Sending EOM command to port '%s'",
                                self.port)
             count += 1
             self.send(OppRs232Intf.EOM_CMD)
-            yield from asyncio.sleep(.01, loop=self.machine.clock.loop)
-            resp = yield from self.read(30)
+            await asyncio.sleep(.01, loop=self.machine.clock.loop)
+            resp = await self.read(30)
             if resp.startswith(OppRs232Intf.EOM_CMD):
                 break
             if count == 100:
@@ -65,14 +64,14 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         self.log.debug("Sending inventory command: %s", "".join(" 0x%02x" % b for b in cmd))
         self.send(cmd)
 
-        resp = yield from self.readuntil(b'\xff')
+        resp = await self.readuntil(b'\xff')
 
         # resp will contain the inventory response.
         self.platform.process_received_message(self.chain_serial, resp)
 
         # Now send get gen2 configuration message to find populated wing boards
         self.send_get_gen2_cfg_cmd()
-        resp = yield from self.readuntil(b'\xff', 6)
+        resp = await self.readuntil(b'\xff', 6)
 
         # resp will contain the gen2 cfg responses.  That will end up creating all the
         # correct objects.
@@ -80,7 +79,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
 
         # get the version of the firmware
         self.send_vers_cmd()
-        resp = yield from self.readuntil(b'\xff', 6)
+        resp = await self.readuntil(b'\xff', 6)
         self.platform.process_received_message(self.chain_serial, resp)
 
         # see if version of firmware is new enough
@@ -95,7 +94,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         self.send(self.platform.read_input_msg[self.chain_serial])
         cards = len([x for x in self.platform.opp_inputs if x.chain_serial == self.chain_serial])
         while True:
-            resp = yield from self.readuntil(b'\xff')
+            resp = await self.readuntil(b'\xff')
             cards -= self._parse_msg(resp)
             if cards <= 0:
                 break

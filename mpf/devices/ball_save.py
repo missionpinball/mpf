@@ -1,5 +1,4 @@
 """Device that implements a ball save."""
-import asyncio
 from typing import Optional
 
 from mpf.core.delays import DelayManager
@@ -41,9 +40,8 @@ class BallSave(SystemWideDevice, ModeDevice):
         self.state = 'disabled'
         self._scheduled_balls = 0
 
-    @asyncio.coroutine
-    def _initialize(self) -> None:
-        yield from super()._initialize()
+    async def _initialize(self) -> None:
+        await super()._initialize()
         self.unlimited_saves = self.config['balls_to_save'] == -1
         self.source_playfield = self.config['source_playfield']
 

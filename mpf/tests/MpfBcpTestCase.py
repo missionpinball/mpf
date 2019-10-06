@@ -23,13 +23,11 @@ class MockBcpClient(BaseBcpClient):
         self.receive_queue = asyncio.Queue(loop=self.machine.clock.loop)
         self.send_queue = asyncio.Queue(loop=self.machine.clock.loop)
 
-    @asyncio.coroutine
-    def connect(self, config):
+    async def connect(self, config):
         return
 
-    @asyncio.coroutine
-    def read_message(self):
-        obj = yield from self.receive_queue.get()
+    async def read_message(self):
+        obj = await self.receive_queue.get()
         return obj
 
     def accept_connection(self, receiver, sender):
@@ -62,8 +60,7 @@ class MockExternalBcpClient(BaseBcpClient):
         """Send to mock."""
         self.mock_bcp_client.receive_queue.put_nowait((bcp_command, kwargs))
 
-    @asyncio.coroutine
-    def connect(self, config):
+    async def connect(self, config):
         """Do not call."""
         raise AssertionError("Do not call")
 
@@ -75,11 +72,10 @@ class MockExternalBcpClient(BaseBcpClient):
         """Read from mock client."""
         return self.mock_bcp_client.send_queue.get()
 
-    @asyncio.coroutine
-    def wait_for_response(self, bcp_command):
+    async def wait_for_response(self, bcp_command):
         """Wait for a command and ignore all others."""
         while True:
-            cmd, args = yield from self.read_message()
+            cmd, args = await self.read_message()
             if cmd == "reset":
                 self.send("reset_complete", {})
                 continue

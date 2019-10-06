@@ -1,5 +1,4 @@
 """Contains the BallHold device class."""
-import asyncio
 from collections import deque
 
 from mpf.core.enable_disable_mixin import EnableDisableMixin
@@ -49,9 +48,8 @@ class BallHold(EnableDisableMixin, SystemWideDevice, ModeDevice):
                 config['disable_events'] = 'ball_will_end'
         return super().prepare_config(config, is_mode_config)
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.hold_devices = []
         for device in self.config['hold_devices']:
             self.hold_devices.append(device)

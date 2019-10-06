@@ -1,6 +1,4 @@
 """Contains the Mode base class."""
-import asyncio
-
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -423,8 +421,7 @@ class Mode(LogMixin):
                     self.machine.device_manager.create_devices(
                         collection.name, {device: settings})
 
-    @asyncio.coroutine
-    def load_mode_devices(self) -> None:
+    async def load_mode_devices(self) -> None:
         """Load config of mode devices."""
         for collection_name, device_class in iter(self.machine.device_manager.device_classes.items()):
 
@@ -457,7 +454,7 @@ class Mode(LogMixin):
             for device, settings in iter(self.config[device_class.config_section].items()):
                 collection = getattr(self.machine, collection_name)
                 device = collection[device]
-                yield from device.device_added_to_mode(mode=self)
+                await device.device_added_to_mode(mode=self)
 
     def _remove_mode_devices(self) -> None:
         for device in self.mode_devices:
