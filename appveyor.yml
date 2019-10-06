@@ -1,15 +1,16 @@
 environment:
 
   global:
-    MPF_VERSION: 0.50
+    MPF_VERSION: 0.53
 
   matrix:
-    - PYTHON: "C:\\Python34"
-    - PYTHON: "C:\\Python34-x64"
     - PYTHON: "C:\\Python35"
     - PYTHON: "C:\\Python35-x64"
     - PYTHON: "C:\\Python36"
     - PYTHON: "C:\\Python36-x64"
+    - PYTHON: "C:\\Python37"
+    - PYTHON: "C:\\Python37-x64"
+
 
   pypi_user:
     secure: /UlFCFSXuqY1JAsOwKZdFg==
