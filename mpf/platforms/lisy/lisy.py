@@ -334,7 +334,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
     # pylint: disable-msg=too-many-branches
     async def initialize(self):
         """Initialise platform."""
-        with await self._bus_lock:
+        async with self._bus_lock:
 
             await super().initialize()
 
@@ -514,7 +514,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
     async def _poll(self):
         sleep_time = 1.0 / self.config['poll_hz']
         while True:
-            with await self._bus_lock:
+            async with self._bus_lock:
                 self.send_byte(LisyDefines.SwitchesGetChangedSwitches)
                 status = await self._read_byte()
             if status == 127:
@@ -536,7 +536,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         """Periodically send watchdog."""
         while True:
             # send watchdog
-            with await self._bus_lock:
+            async with self._bus_lock:
                 self.send_byte(LisyDefines.GeneralWatchdog)
                 response = await self._read_byte()
                 if response != 0:
@@ -713,7 +713,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
     async def send_byte_and_read_response(self, cmd: int, byte: bytes = None, read_bytes=0):
         """Send byte and read response."""
-        with await self._bus_lock:
+        async with self._bus_lock:
             self.send_byte(cmd, byte)
             return await self._reader.readexactly(read_bytes)
 

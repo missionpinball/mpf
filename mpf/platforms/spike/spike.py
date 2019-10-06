@@ -664,8 +664,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
     async def _poll(self):
         while True:
-            with await self._bus_read:
-                with await self._bus_write:
+            async with self._bus_read:
+                async with self._bus_write:
                     await self._send_raw(bytearray([0]))
 
                 try:
@@ -796,8 +796,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         cmd_str.extend(data)
         cmd_str.append(self._checksum(cmd_str))
         cmd_str.append(response_len)
-        with await self._bus_read:
-            with await self._bus_write:
+        async with self._bus_read:
+            async with self._bus_write:
                 await self._send_raw(cmd_str)
             try:
                 response = await asyncio.wait_for(self._read_raw(response_len), 2,
@@ -842,14 +842,14 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         await self._send_cmd_without_response(cmd_str, wait_ms)
 
     async def _send_cmd_without_response(self, cmd_str, wait_ms):
-        with await self._bus_write:
+        async with self._bus_write:
             await self._send_raw(cmd_str)
             if wait_ms:
                 await self._send_raw(bytearray([1, wait_ms]))
 
     async def send_cmd_raw(self, data, wait_ms=0):
         """Send raw command."""
-        with await self._bus_write:
+        async with self._bus_write:
             await self._send_raw(data)
             if wait_ms:
                 await self._send_raw(bytearray([1, wait_ms]))
