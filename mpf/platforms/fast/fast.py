@@ -4,7 +4,6 @@ Contains the hardware interface and drivers for the FAST Pinball platform
 hardware, including the FAST Core and WPC controllers as well as FAST I/O
 boards.
 """
-import asyncio
 import os
 from copy import deepcopy
 from distutils.version import StrictVersion
@@ -152,10 +151,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Upgrade the firmware of the CPUs."""
         return self._update_net()
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Initialise platform."""
-        yield from self._connect_to_hardware()
+        await self._connect_to_hardware()
 
     def stop(self):
         """Stop platform and close connections."""
@@ -177,13 +175,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         self.serial_connections = set()
 
-    @asyncio.coroutine
-    def start(self):
+    async def start(self):
         """Start listening for commands and schedule watchdog."""
         self.machine.clock.schedule_interval(self._update_watchdog, self.config['watchdog'] / 2000)
 
         for connection in self.serial_connections:
-            yield from connection.start_read_loop()
+            await connection.start_read_loop()
 
     def __repr__(self):
         """Return str representation."""
@@ -227,8 +224,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         else:   # pragma: no cover
             self.log.warning("Received unknown serial command? %s from %s.", msg, remote_processor)
 
-    @asyncio.coroutine
-    def _connect_to_hardware(self):
+    async def _connect_to_hardware(self):
         """Connect to each port from the config.
 
         This process will cause the connection threads to figure out which processor they've connected to
@@ -237,7 +233,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         for port in self.config['ports']:
             comm = FastSerialCommunicator(platform=self, port=port,
                                           baud=self.config['baud'])
-            yield from comm.connect()
+            await comm.connect()
             self.serial_connections.add(comm)
 
     def register_processor_connection(self, name: str, communicator):
@@ -281,8 +277,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color) for led in dirty_leds])
             self.rgb_connection.send(msg)
 
-    @asyncio.coroutine
-    def get_hw_switch_states(self):
+    async def get_hw_switch_states(self):
         """Return hardware states."""
         return self.hw_switch_data
 
@@ -465,8 +460,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         # every servo board supports exactly 6 servos
         return self.convert_number_from_config(board * 6 + servo)
 
-    @asyncio.coroutine
-    def configure_servo(self, number: str):
+    async def configure_servo(self, number: str):
         """Configure a servo.
 
         Args:

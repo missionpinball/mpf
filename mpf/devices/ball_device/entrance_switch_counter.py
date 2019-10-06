@@ -112,10 +112,9 @@ class EntranceSwitchCounter(PhysicalBallCounter):
 
         return self._last_count
 
-    @asyncio.coroutine
-    def wait_for_ball_to_leave(self):
+    async def wait_for_ball_to_leave(self):
         """Wait for a ball to leave."""
-        yield from self.wait_for_count_stable()
+        await self.wait_for_count_stable()
         # wait 10ms
         done_future = Util.ensure_future(asyncio.sleep(0.01, loop=self.machine.clock.loop),
                                          loop=self.machine.clock.loop)

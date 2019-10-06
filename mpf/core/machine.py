@@ -205,8 +205,7 @@ class MachineController(LogMixin):
         """
         self._crash_handlers.append(handler)
 
-    @asyncio.coroutine
-    def initialise_core_and_hardware(self) -> Generator[int, None, None]:
+    async def initialise_core_and_hardware(self) -> Generator[int, None, None]:
         """Load core modules and hardware."""
         self._boot_holds = set()    # type: Set[str]
         self.is_init_done = asyncio.Event(loop=self.clock.loop)
@@ -221,26 +220,25 @@ class MachineController(LogMixin):
         # This is called so hw platforms have a chance to register for events,
         # and/or anything else they need to do with core modules since
         # they're not set up yet when the hw platforms are constructed.
-        yield from self._initialize_platforms()
+        await self._initialize_platforms()
 
-    @asyncio.coroutine
-    def initialise(self) -> Generator[int, None, None]:
+    async def initialise(self) -> Generator[int, None, None]:
         """Initialise machine."""
-        yield from self.initialise_core_and_hardware()
+        await self.initialise_core_and_hardware()
 
         self._initialize_credit_string()
 
         self._register_config_players()
         self._register_system_events()
         self._load_machine_vars()
-        yield from self._run_init_phases()
+        await self._run_init_phases()
         self._init_phases_complete()
 
-        yield from self._start_platforms()
+        await self._start_platforms()
 
         # wait until all boot holds were released
-        yield from self.is_init_done.wait()
-        yield from self.init_done()
+        await self.is_init_done.wait()
+        await self.init_done()
 
     def _exception_handler(self, loop, context):    # pragma: no cover
         """Handle asyncio loop exceptions."""
@@ -259,34 +257,33 @@ class MachineController(LogMixin):
         clock.loop.set_exception_handler(self._exception_handler)
         return clock
 
-    @asyncio.coroutine
-    def _run_init_phases(self) -> Generator[int, None, None]:
+    async def _run_init_phases(self) -> Generator[int, None, None]:
         """Run init phases."""
-        yield from self.events.post_queue_async("init_phase_1")
+        await self.events.post_queue_async("init_phase_1")
         '''event: init_phase_1
 
         desc: Posted during the initial boot up of MPF.
         '''
-        yield from self.events.post_queue_async("init_phase_2")
+        await self.events.post_queue_async("init_phase_2")
         '''event: init_phase_2
 
         desc: Posted during the initial boot up of MPF.
         '''
         self._load_plugins()
-        yield from self.events.post_queue_async("init_phase_3")
+        await self.events.post_queue_async("init_phase_3")
         '''event: init_phase_3
 
         desc: Posted during the initial boot up of MPF.
         '''
         self._load_custom_code()
 
-        yield from self.events.post_queue_async("init_phase_4")
+        await self.events.post_queue_async("init_phase_4")
         '''event: init_phase_4
 
         desc: Posted during the initial boot up of MPF.
         '''
 
-        yield from self.events.post_queue_async("init_phase_5")
+        await self.events.post_queue_async("init_phase_5")
         '''event: init_phase_5
 
         desc: Posted during the initial boot up of MPF.
@@ -304,8 +301,7 @@ class MachineController(LogMixin):
 
         self.clear_boot_hold('init')
 
-    @asyncio.coroutine
-    def _initialize_platforms(self) -> Generator[int, None, None]:
+    async def _initialize_platforms(self) -> Generator[int, None, None]:
         """Initialise all used hardware platforms."""
         init_done = []
         # collect all platform init futures
@@ -313,15 +309,14 @@ class MachineController(LogMixin):
             init_done.append(hardware_platform.initialize())
 
         # wait for all of them in parallel
-        results = yield from asyncio.wait(init_done, loop=self.clock.loop)
+        results = await asyncio.wait(init_done, loop=self.clock.loop)
         for result in results[0]:
             result.result()
 
-    @asyncio.coroutine
-    def _start_platforms(self) -> Generator[int, None, None]:
+    async def _start_platforms(self) -> Generator[int, None, None]:
         """Start all used hardware platforms."""
         for hardware_platform in list(self.hardware_platforms.values()):
-            yield from hardware_platform.start()
+            await hardware_platform.start()
             if not hardware_platform.features['tickless']:
                 self.clock.schedule_interval(hardware_platform.tick, 1 / self.config['mpf']['default_platform_hz'])
 
@@ -430,9 +425,9 @@ class MachineController(LogMixin):
         """
         python_version_info = sys.version_info
 
-        if not (python_version_info[0] == 3 and python_version_info[1] in (4, 5, 6, 7)):
+        if not (python_version_info[0] == 3 and python_version_info[1] in (5, 6, 7)):
             raise AssertionError("Incorrect Python version. MPF requires "
-                                 "Python 3.4, 3.5, 3.6 or 3.7. You have Python {}.{}.{}."
+                                 "Python 3.5, 3.6 or 3.7. You have Python {}.{}.{}."
                                  .format(python_version_info[0], python_version_info[1],
                                          python_version_info[2]))
 
@@ -517,8 +512,7 @@ class MachineController(LogMixin):
 
                 self.custom_code.append(custom_code_obj)
 
-    @asyncio.coroutine
-    def reset(self) -> Generator[int, None, None]:
+    async def reset(self) -> Generator[int, None, None]:
         """Reset the machine.
 
         This method is safe to call. It essentially sets up everything from
@@ -527,7 +521,7 @@ class MachineController(LogMixin):
         """
         self.debug_log('Resetting...')
 
-        yield from self.events.post_queue_async('machine_reset_phase_1')
+        await self.events.post_queue_async('machine_reset_phase_1')
         '''Event: machine_reset_phase_1
 
         Desc: The first phase of resetting the machine.
@@ -541,7 +535,7 @@ class MachineController(LogMixin):
 
         '''
 
-        yield from self.events.post_queue_async('machine_reset_phase_2')
+        await self.events.post_queue_async('machine_reset_phase_2')
         '''Event: machine_reset_phase_2
 
         Desc: The second phase of resetting the machine.
@@ -555,7 +549,7 @@ class MachineController(LogMixin):
 
         '''
 
-        yield from self.events.post_queue_async('machine_reset_phase_3')
+        await self.events.post_queue_async('machine_reset_phase_3')
         '''Event: machine_reset_phase_3
 
         Desc: The third phase of resetting the machine.
@@ -571,7 +565,7 @@ class MachineController(LogMixin):
 
         """Called when the machine reset process is complete."""
         self.debug_log('Reset Complete')
-        yield from self.events.post_async('reset_complete')
+        await self.events.post_async('reset_complete')
         '''event: reset_complete
 
         desc: The machine reset process is complete
@@ -695,13 +689,8 @@ class MachineController(LogMixin):
         if self.stop_future.done():
             return
 
-        if hasattr(asyncio, "run_coroutine_threadsafe"):
-            asyncio.run_coroutine_threadsafe(self._stop_loop(reason), self.clock.loop)
-        else:
-            # fallback for python 3.4 versions without run_coroutine_threadsafe
-            self.stop_future.set_result(reason)
+        self.clock.loop.call_soon_threadsafe(self._stop_loop, reason)
 
-    @asyncio.coroutine
     def _stop_loop(self, reason):
         self.stop_future.set_result(reason)
 
@@ -807,17 +796,16 @@ class MachineController(LogMixin):
         if not self._boot_holds:
             self.is_init_done.set()
 
-    @asyncio.coroutine
-    def init_done(self) -> Generator[int, None, None]:
+    async def init_done(self) -> Generator[int, None, None]:
         """Finish init.
 
         Called when init is done and all boot holds are cleared.
         """
-        yield from self.events.post_async("init_done")
+        await self.events.post_async("init_done")
         '''event: init_done
 
         desc: Posted when the initial (one-time / boot) init phase is done. In
         other words, once this is posted, MPF is booted and ready to go.
         '''
 
-        yield from self.reset()
+        await self.reset()

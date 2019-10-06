@@ -6,8 +6,6 @@ import threading
 from collections import deque, namedtuple
 from pathlib import PurePath
 
-import asyncio
-
 from typing import Iterable, Optional, Set, Callable, Tuple
 from typing import List
 
@@ -605,8 +603,7 @@ class AsyncioSyncAssetManager(BaseAssetManager):
 
         return False
 
-    @asyncio.coroutine
-    def wait_for_asset_load(self, asset):
+    async def wait_for_asset_load(self, asset):
         """Wait for an asset to load."""
         result = self._load_sync(asset)
         if result:

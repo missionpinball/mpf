@@ -1,5 +1,4 @@
 """Support for physical RGB DMDs."""
-import asyncio
 from functools import partial
 
 from mpf.core.machine import MachineController
@@ -33,9 +32,8 @@ class RgbDmd(SystemWideDevice):
         self.platform = None        # type: RgbDmdPlatform
         super().__init__(machine, name)
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.platform = self.machine.get_platform_sections("rgb_dmd", self.config['platform'])
         self.hw_device = self.platform.configure_rgb_dmd(self.name)
         self._update_brightness(None)
@@ -47,8 +45,7 @@ class RgbDmd(SystemWideDevice):
         brightness_changed_future.add_done_callback(self._update_brightness)
 
     @classmethod
-    @asyncio.coroutine
-    def _bcp_receive_dmd_frame(cls, machine, client, name, rawbytes, **kwargs):
+    async def _bcp_receive_dmd_frame(cls, machine, client, name, rawbytes, **kwargs):
         """Update dmd from BCP."""
         del client
         del kwargs

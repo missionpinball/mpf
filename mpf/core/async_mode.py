@@ -50,8 +50,7 @@ class AsyncMode(Mode, metaclass=abc.ABCMeta):
         self._task.cancel()
 
     @abc.abstractmethod
-    @asyncio.coroutine
-    def _run(self) -> Generator[int, None, None]:
+    async def _run(self) -> Generator[int, None, None]:
         """Start main task which runs as long as the mode is active.
 
         Overwrite this function in your mode.

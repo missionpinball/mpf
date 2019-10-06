@@ -156,12 +156,11 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
         self._type_of_display = None
         self._length_of_display = None
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Initialize segment display."""
         if self.platform.api_version >= StrictVersion("0.9"):
             # display info for display
-            display_info = yield from (self.platform.send_byte_and_read_response(
+            display_info = await (self.platform.send_byte_and_read_response(
                 LisyDefines.InfoGetDisplayDetails, bytearray([self.number]), 2))
             if 1 > display_info[0] > 6:
                 raise AssertionError("Invalid display type {} reported by hardware for display {}".format(
@@ -315,8 +314,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         termios.tcsetattr(serial_port, termios.TCSAFLUSH, attrs)
         serial_port.close()
 
-    @asyncio.coroutine
-    def _clear_read_buffer(self):
+    async def _clear_read_buffer(self):
         """Clear read buffer."""
         if hasattr(self._writer.transport, "_serial"):
             # pylint: disable-msg=protected-access
@@ -328,12 +326,11 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
     # pylint: disable-msg=too-many-statements
     # pylint: disable-msg=too-many-branches
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Initialise platform."""
-        with (yield from self._bus_lock):
+        with await self._bus_lock:
 
-            yield from super().initialize()
+            await super().initialize()
 
             if self.config['connection'] == "serial":
                 self.log.info("Connecting to %s at %sbps", self.config['port'], self.config['baud'])
@@ -345,7 +342,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 self.log.info("Connecting to %s:%s", self.config['network_host'], self.config['network_port'])
                 connector = self.machine.clock.open_connection(self.config['network_host'], self.config['network_port'])
 
-            self._reader, self._writer = yield from connector
+            self._reader, self._writer = await connector
 
             if self.config['connection'] == "serial":
                 if self.config['disable_dtr']:
@@ -355,17 +352,17 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 self._writer.transport._serial.open()
 
             # give the serial a few ms to read the first bytes
-            yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
+            await asyncio.sleep(.1, loop=self.machine.clock.loop)
 
             while True:
                 # reset platform
                 self.debug_log("Sending reset.")
-                yield from self._clear_read_buffer()
+                await self._clear_read_buffer()
                 # send command
                 self.send_byte(LisyDefines.GeneralReset)
                 try:
-                    return_code = yield from asyncio.wait_for(self._read_byte(), timeout=0.5,
-                                                              loop=self.machine.clock.loop)
+                    return_code = await asyncio.wait_for(self._read_byte(), timeout=0.5,
+                                                         loop=self.machine.clock.loop)
                 except asyncio.TimeoutError:
                     self.warning_log("Reset of LISY failed. Did not get a response in 500ms. Will retry.")
                     continue
@@ -379,7 +376,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
             # get type (system 1 vs system 80)
             self.send_byte(LisyDefines.InfoGetConnectedLisyHardware)
-            type_str = yield from self._read_string()
+            type_str = await self._read_string()
 
             if type_str in (b'LISY1', b'LISY35', b'APC'):
                 self._coils_start_at_one = True
@@ -389,9 +386,9 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 raise AssertionError("Invalid LISY hardware version {}".format(type_str))
 
             self.send_byte(LisyDefines.InfoLisyVersion)
-            lisy_version = yield from self._read_string()
+            lisy_version = await self._read_string()
             self.send_byte(LisyDefines.InfoGetApiVersion)
-            api_version = yield from self._read_string()
+            api_version = await self._read_string()
 
             self.debug_log("Connected to %s hardware. LISY version: %s. API version: %s.",
                            type_str, lisy_version, api_version)
@@ -416,24 +413,24 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
             # get number of lamps
             self.send_byte(LisyDefines.InfoGetNumberOfLamps)
-            self._number_of_lamps = yield from self._read_byte()
+            self._number_of_lamps = await self._read_byte()
 
             # get number of solenoids
             self.send_byte(LisyDefines.InfoGetNumberOfSolenoids)
-            self._number_of_solenoids = yield from self._read_byte()
+            self._number_of_solenoids = await self._read_byte()
 
             # get number of displays
             self.send_byte(LisyDefines.InfoGetNumberOfDisplays)
-            self._number_of_displays = yield from self._read_byte()
+            self._number_of_displays = await self._read_byte()
 
             # get number of switches
             self.send_byte(LisyDefines.InfoGetSwitchCount)
-            self._number_of_switches = yield from self._read_byte()
+            self._number_of_switches = await self._read_byte()
 
             if self.api_version >= StrictVersion("0.9"):
                 # get number of modern lights
                 self.send_byte(LisyDefines.GetModernLightsCount)
-                self._number_of_modern_lights = yield from self._read_byte()
+                self._number_of_modern_lights = await self._read_byte()
             else:
                 self._number_of_modern_lights = 0
 
@@ -454,7 +451,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             self.debug_log("Reading all switches.")
             for number in range(self._number_of_switches):
                 self.send_byte(LisyDefines.SwitchesGetStatusOfSwitch, bytes([number]))
-                state = yield from self._read_byte()
+                state = await self._read_byte()
                 if state == 2:
                     self.warning_log("Switch %s does not exist in platform.", number)
                 elif state > 2:
@@ -467,8 +464,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
             self.debug_log("Init of LISY done.")
 
-    @asyncio.coroutine
-    def _send_multiple_light_update(self, sequential_brightness_list):
+    async def _send_multiple_light_update(self, sequential_brightness_list):
         common_fade_ms = sequential_brightness_list[0][2]
         if common_fade_ms < 0:
             common_fade_ms = 0
@@ -481,8 +477,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
         self.send_byte(LisyDefines.FadeModernLights, data)
 
-    @asyncio.coroutine
-    def start(self):
+    async def start(self):
         """Start reading switch changes."""
         self._poll_task = self.machine.clock.loop.create_task(self._poll())
         self._poll_task.add_done_callback(self._done)
@@ -510,16 +505,15 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         except asyncio.CancelledError:
             pass
 
-    @asyncio.coroutine
-    def _poll(self):
+    async def _poll(self):
         sleep_time = 1.0 / self.config['poll_hz']
         while True:
-            with (yield from self._bus_lock):
+            with await self._bus_lock:
                 self.send_byte(LisyDefines.SwitchesGetChangedSwitches)
-                status = yield from self._read_byte()
+                status = await self._read_byte()
             if status == 127:
                 # no changes. sleep according to poll_hz
-                yield from asyncio.sleep(sleep_time, loop=self.machine.clock.loop)
+                await asyncio.sleep(sleep_time, loop=self.machine.clock.loop)
             else:
                 # bit 7 is state
                 switch_state = 1 if status & 0b10000000 else 0
@@ -532,18 +526,17 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 # store in dict as well
                 self._inputs[str(switch_num)] = bool(switch_state)
 
-    @asyncio.coroutine
-    def _watchdog(self):
+    async def _watchdog(self):
         """Periodically send watchdog."""
         while True:
             # send watchdog
-            with (yield from self._bus_lock):
+            with await self._bus_lock:
                 self.send_byte(LisyDefines.GeneralWatchdog)
-                response = yield from self._read_byte()
+                response = await self._read_byte()
                 if response != 0:
                     self.warning_log("Watchdog returned %s instead 0", response)
             # sleep 500ms
-            yield from asyncio.sleep(.5, loop=self.machine.clock.loop)
+            await asyncio.sleep(.5, loop=self.machine.clock.loop)
 
     # pylint: disable-msg=too-many-arguments
     def _configure_hardware_rule(self, coil: DriverSettings, switch1: SwitchSettings,
@@ -650,8 +643,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
         return LisySwitch(config=config, number=number)
 
-    @asyncio.coroutine
-    def get_hw_switch_states(self):
+    async def get_hw_switch_states(self):
         """Return current switch states."""
         return self._inputs
 
@@ -677,8 +669,8 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         driver.configure_recycle(recycle_time)
         return driver
 
-    @asyncio.coroutine
-    def configure_segment_display(self, number: str, platform_settings) -> SegmentDisplaySoftwareFlashPlatformInterface:
+    async def configure_segment_display(self, number: str, platform_settings) \
+            -> SegmentDisplaySoftwareFlashPlatformInterface:
         """Configure a segment display."""
         del platform_settings
         assert self._number_of_displays is not None
@@ -688,7 +680,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                                  format(number, self._number_of_displays))
 
         display = LisyDisplay(int(number), self)
-        yield from display.initialize()
+        await display.initialize()
         self._handle_software_flash(display)
         return display
 
@@ -712,12 +704,11 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         self.log.debug("Sending %s %s", cmd, "".join(" 0x%02x" % b for b in byte))
         self._writer.write(cmd_str)
 
-    @asyncio.coroutine
-    def send_byte_and_read_response(self, cmd: int, byte: bytes = None, read_bytes=0):
+    async def send_byte_and_read_response(self, cmd: int, byte: bytes = None, read_bytes=0):
         """Send byte and read response."""
-        with (yield from self._bus_lock):
+        with await self._bus_lock:
             self.send_byte(cmd, byte)
-            return (yield from self._reader.readexactly(read_bytes))
+            return await self._reader.readexactly(read_bytes)
 
     def send_string(self, cmd: int, string: str):
         """Send a command with null terminated string."""
@@ -726,19 +717,17 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         self.log.debug("Sending %s %s (%s)", cmd, string, "".join(" 0x%02x" % ord(b) for b in string))
         self._writer.write(bytes([cmd]) + string.encode() + bytes([0]))
 
-    @asyncio.coroutine
-    def _read_byte(self) -> Generator[int, None, int]:
+    async def _read_byte(self) -> Generator[int, None, int]:
         """Read one byte."""
         assert self._reader is not None
 
         self.log.debug("Reading one byte")
-        data = yield from self._reader.readexactly(1)
+        data = await self._reader.readexactly(1)
         self.log.debug("Received %s", ord(data))
         return ord(data)
 
-    @asyncio.coroutine
     # pylint: disable-msg=inconsistent-return-statements
-    def _readuntil(self, separator, min_chars: int = 0):
+    async def _readuntil(self, separator, min_chars: int = 0):
         """Read until separator.
 
         Args:
@@ -750,16 +739,15 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         # asyncio StreamReader only supports this from python 3.5.2 on
         buffer = b''
         while True:
-            char = yield from self._reader.readexactly(1)
+            char = await self._reader.readexactly(1)
             buffer += char
             if char == separator and len(buffer) > min_chars:
                 return buffer
 
-    @asyncio.coroutine
-    def _read_string(self) -> Generator[int, None, bytes]:
+    async def _read_string(self) -> Generator[int, None, bytes]:
         """Read zero terminated string."""
         self.log.debug("Reading zero terminated string")
-        data = yield from self._readuntil(b'\x00')
+        data = await self._readuntil(b'\x00')
         # remove terminator
         data = data[:-1]
         self.log.debug("Received %s", data)

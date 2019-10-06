@@ -109,19 +109,16 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self.log.debug("Configuring VPX hardware interface.")
         self.rules = {}
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Initialise platform."""
         self.machine.bcp.interface.register_command_callback("vpcom_bridge", self._dispatch)
         self.machine.events.add_async_handler("init_phase_5", self._wait_for_connect)
 
-    @asyncio.coroutine
-    def _wait_for_connect(self):
+    async def _wait_for_connect(self):
         """Wait until VPX connects."""
-        yield from self._started.wait()
+        await self._started.wait()
 
-    @asyncio.coroutine
-    def _dispatch(self, client, subcommand=None, **kwargs):
+    async def _dispatch(self, client, subcommand=None, **kwargs):
         """Dispatch a VPX COM call."""
         self.log.debug("Got command %s args: %s", subcommand, kwargs)
         if not subcommand:
@@ -304,8 +301,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         return False
 
-    @asyncio.coroutine
-    def get_hw_switch_states(self):
+    async def get_hw_switch_states(self):
         """Return initial switch state."""
         hw_switches = {}
         for switch in self._switches.values():

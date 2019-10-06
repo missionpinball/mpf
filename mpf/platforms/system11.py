@@ -2,8 +2,6 @@
 
 This is based on the Snux platform to generically support all kinds of System11 platforms.
 """
-import asyncio
-
 from typing import Any, Optional, Set, Tuple, Dict
 
 from mpf.core.machine import MachineController
@@ -77,8 +75,7 @@ class System11OverlayPlatform(DriverPlatform):
     def _null_log_handler(self, *args, **kwargs):
         pass
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Automatically called by the Platform class after all the core modules are loaded."""
         # load coil platform
         self.platform = self.machine.get_platform_sections(

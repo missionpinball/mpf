@@ -91,14 +91,13 @@ class BallController(MpfController):
         """Inform ball controller about a capured ball (which might be new)."""
         self._captured_balls.put_nowait(source)
 
-    @asyncio.coroutine
-    def _add_new_balls_to_playfield(self) -> Generator[int, None, None]:
+    async def _add_new_balls_to_playfield(self) -> Generator[int, None, None]:
         # initial count
-        self.num_balls_known = yield from self._count_all_balls_in_devices()
+        self.num_balls_known = await self._count_all_balls_in_devices()
 
         while True:
-            capture = yield from self._captured_balls.get()
-            balls = yield from self._count_all_balls_in_devices()
+            capture = await self._captured_balls.get()
+            balls = await self._count_all_balls_in_devices()
             if balls > self.num_balls_known:
                 self.num_balls_known += 1
                 capture.balls += 1
@@ -124,8 +123,7 @@ class BallController(MpfController):
                         self.machine.events.post("playfield_jump", source=playfield_source, target=playfield_target)
                         break
 
-    @asyncio.coroutine
-    def _count_all_balls_in_devices(self) -> Generator[int, None, int]:
+    async def _count_all_balls_in_devices(self) -> Generator[int, None, int]:
         """Count balls in all devices."""
         while True:
             # wait until all devices are stable
@@ -139,7 +137,7 @@ class BallController(MpfController):
             try:
                 return self._get_total_balls_in_devices()
             except ValueError:
-                yield from Util.first(futures, self.machine.clock.loop)
+                await Util.first(futures, self.machine.clock.loop)
                 continue
 
     def _count_balls(self) -> int:

@@ -1,5 +1,4 @@
 """Logic Blocks devices."""
-import asyncio
 from typing import Any, List
 
 from mpf.core.delays import DelayManager
@@ -51,9 +50,8 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         block is enabled and whether it's complete.
         '''
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         if self.config['start_enabled'] is not None:
             self._start_enabled = self.config['start_enabled']
         else:
@@ -86,11 +84,10 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         """Return the start value for this block."""
         raise NotImplementedError("implement")
 
-    @asyncio.coroutine
-    def device_added_system_wide(self):
+    async def device_added_system_wide(self):
         """Initialise internal state."""
         self._state = LogicBlockState(self.get_start_value())
-        yield from super().device_added_system_wide()
+        await super().device_added_system_wide()
         if not self.config['enable_events']:
             self.enable()
 
@@ -310,9 +307,8 @@ class Counter(LogicBlock):
         self.ignore_hits = False
         self.hit_value = -1
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.hit_value = self.config['count_interval']
 
         if self.config['direction'] == 'down' and self.hit_value > 0:
@@ -499,9 +495,8 @@ class Accrual(LogicBlock):
         super().__init__(machine, name)
         self.debug_log("Creating Accrual LogicBlock")
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.setup_event_handlers()
 
     def get_start_value(self) -> List[bool]:
@@ -561,10 +556,9 @@ class Sequence(LogicBlock):
         super().__init__(machine, name)
         self.debug_log("Creating Sequence LogicBlock")
 
-    @asyncio.coroutine
-    def _initialize(self):
+    async def _initialize(self):
         """Initialise sequence."""
-        yield from super()._initialize()
+        await super()._initialize()
         self.setup_event_handlers()
 
     def get_start_value(self) -> int:

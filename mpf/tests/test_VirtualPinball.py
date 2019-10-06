@@ -30,9 +30,8 @@ class TestVirtualPinball(MpfTestCase):
         self.mock_server = MockServer(self.clock.loop)
         self.clock.mock_server("127.0.0.1", 5051, self.mock_server)
 
-    @asyncio.coroutine
-    def _get_and_decode(self, client) -> Generator[int, None, Tuple[str, dict]]:
-        data = yield from client.send_queue.get()
+    async def _get_and_decode(self, client) -> Generator[int, None, Tuple[str, dict]]:
+        data = await client.send_queue.get()
         return decode_command_string(data[0:-1].decode())
 
     def _encode_and_send(self, client, cmd, **kwargs):

@@ -1,6 +1,4 @@
 """A generic state machine."""
-import asyncio
-
 from mpf.core.device_monitor import DeviceMonitor
 
 from mpf.core.mode import Mode
@@ -28,10 +26,9 @@ class StateMachine(SystemWideDevice, ModeDevice):
         self._handlers = []
         self._show = None
 
-    @asyncio.coroutine
-    def device_added_system_wide(self):
+    async def device_added_system_wide(self):
         """Initialise internal state."""
-        yield from super().device_added_system_wide()
+        await super().device_added_system_wide()
 
         if self.config['persist_state']:
             self.raise_config_error("Cannot set persist_state for system-wide state_machine", 1)

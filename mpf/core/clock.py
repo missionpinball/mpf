@@ -115,8 +115,7 @@ class ClockBase(LogMixin):
             limit = asyncio.streams._DEFAULT_LIMIT
         return asyncio.open_connection(host=host, port=port, loop=self.loop, limit=limit, **kwds)
 
-    @asyncio.coroutine
-    def open_serial_connection(self, limit=None, **kwargs) ->\
+    async def open_serial_connection(self, limit=None, **kwargs) ->\
             Generator[int, None, Tuple[asyncio.StreamReader, asyncio.StreamWriter]]:
         """Open a serial connection using asyncio.
 
@@ -141,7 +140,7 @@ class ClockBase(LogMixin):
 
         reader = asyncio.StreamReader(limit=limit, loop=self.loop)
         protocol = asyncio.StreamReaderProtocol(reader, loop=self.loop)
-        transport, _ = yield from create_serial_connection(
+        transport, _ = await create_serial_connection(
             loop=self.loop,
             protocol_factory=lambda: protocol,
             **kwargs)

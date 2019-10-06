@@ -136,8 +136,7 @@ class IncomingBallsHandler(BallDeviceStateHandler):
         """Wait until there are no incoming balls."""
         return self._has_no_incoming_balls.wait()
 
-    @asyncio.coroutine
-    def _run(self):
+    async def _run(self):
         """Handle timeouts."""
         while True:
             if not self._incoming_balls:
@@ -145,7 +144,7 @@ class IncomingBallsHandler(BallDeviceStateHandler):
                 self._has_no_incoming_balls.set()
 
             # sleep until we have incoming balls
-            yield from self._has_incoming_balls.wait()
+            await self._has_incoming_balls.wait()
 
             # the incoming balls may have been removed in the meantime
             if not self._incoming_balls:
@@ -153,9 +152,9 @@ class IncomingBallsHandler(BallDeviceStateHandler):
 
             # wait for timeouts on incoming balls
             futures = [incoming_ball.wait_for_timeout() for incoming_ball in self._incoming_balls]
-            yield from Util.first(futures, loop=self.machine.clock.loop)
+            await Util.first(futures, loop=self.machine.clock.loop)
 
-            yield from self._is_timeouting.acquire()
+            await self._is_timeouting.acquire()
 
             # handle timeouts
             timeouts = []
@@ -168,7 +167,7 @@ class IncomingBallsHandler(BallDeviceStateHandler):
                 self._incoming_balls.remove(incoming_ball)
 
             for incoming_ball in timeouts:
-                yield from self.ball_device.lost_incoming_ball(source=incoming_ball.source)
+                await self.ball_device.lost_incoming_ball(source=incoming_ball.source)
 
             self._is_timeouting.release()
 
@@ -202,8 +201,7 @@ class IncomingBallsHandler(BallDeviceStateHandler):
         if self.ball_device.config['mechanical_eject'] and incoming_ball.wait_for_can_skip().done():
             self.ball_device.outgoing_balls_handler.remove_incoming_ball_which_may_skip(incoming_ball)
 
-    @asyncio.coroutine
-    def ball_arrived(self):
+    async def ball_arrived(self):
         """Handle one ball which arrived in the device."""
         for incoming_ball in self._incoming_balls:
             if not incoming_ball.can_arrive:
@@ -215,10 +213,10 @@ class IncomingBallsHandler(BallDeviceStateHandler):
             # confirm eject
             incoming_ball.ball_arrived()
 
-            yield from self.ball_device.expected_ball_received()
+            await self.ball_device.expected_ball_received()
             break
         else:
             # handle unexpected ball
             self.debug_log("Received unexpected ball")
             # let the ball device handle this ball
-            yield from self.ball_device.unexpected_ball_received()
+            await self.ball_device.unexpected_ball_received()

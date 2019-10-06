@@ -55,9 +55,8 @@ class ScoreReel(SystemWideDevice):
         # stop device on shutdown
         self.machine.events.add_handler("shutdown", self.stop)
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.log.debug("Configuring score reel with: %s", self.config)
 
         # figure out how many values we have
@@ -133,25 +132,23 @@ class ScoreReel(SystemWideDevice):
             self._busy.set()
             self._ready.clear()
 
-    @asyncio.coroutine
-    def _run(self):
-        yield from self.machine.events.wait_for_event("init_phase_3")
+    async def _run(self):
+        await self.machine.events.wait_for_event("init_phase_3")
         self.check_hw_switches()
         while True:
             # wait for either a new value or a switch change
             switch_change_future = self.machine.switch_controller.wait_for_any_switch(
                 switch_names=[switch.name for switch in self.value_switches if switch is not None], state=2,
                 ms=self.config['hw_confirm_time'])
-            result = yield from Util.first([switch_change_future, self._busy.wait()], loop=self.machine.clock.loop)
+            result = await Util.first([switch_change_future, self._busy.wait()], loop=self.machine.clock.loop)
             if result == switch_change_future:
                 self.check_hw_switches()
                 continue
 
             # advance the reel until we reached our destination position
-            yield from self._advance_reel_if_position_does_not_match()
+            await self._advance_reel_if_position_does_not_match()
 
-    @asyncio.coroutine
-    def _advance_reel_if_position_does_not_match(self):
+    async def _advance_reel_if_position_does_not_match(self):
         """Advance reel if the destination value has not been reached."""
         # check if there is any need to do something
         if self._destination_value == self.assumed_value:
@@ -166,7 +163,7 @@ class ScoreReel(SystemWideDevice):
             wait_ms = self.config['coil_inc'].pulse(max_wait_ms=500)
             previous_value = self.assumed_value
 
-            yield from asyncio.sleep((wait_ms + self.config['repeat_pulse_time']) / 1000, loop=self.machine.clock.loop)
+            await asyncio.sleep((wait_ms + self.config['repeat_pulse_time']) / 1000, loop=self.machine.clock.loop)
             if self.assumed_value >= 0:
                 self.assumed_value += 1
                 self.assumed_value %= len(self.value_switches)

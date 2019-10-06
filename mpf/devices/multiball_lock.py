@@ -1,6 +1,4 @@
 """Contains the BallLock device class."""
-import asyncio
-
 from mpf.core.enable_disable_mixin import EnableDisableMixin
 
 from mpf.core.device_monitor import DeviceMonitor
@@ -36,10 +34,9 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
 
         super().__init__(machine, name)
 
-    @asyncio.coroutine
-    def _initialize(self):
+    async def _initialize(self):
         # load lock_devices
-        yield from super()._initialize()
+        await super()._initialize()
 
         self.lock_devices = []
         for device in self.config['lock_devices']:

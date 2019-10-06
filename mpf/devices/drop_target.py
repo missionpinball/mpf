@@ -1,5 +1,4 @@
 """Contains the base classes for drop targets and drop target banks."""
-import asyncio
 from typing import List
 from typing import Set
 
@@ -45,9 +44,8 @@ class DropTarget(SystemWideDevice):
 
         self._ignore_switch_hits = False
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.reset_coil = self.config['reset_coil']
         self.knockdown_coil = self.config['knockdown_coil']
         self.banks = set()
@@ -303,9 +301,8 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         """Return true if this device can exist outside of a game."""
         return True
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.drop_targets = self.config['drop_targets']
         self.reset_coil = self.config['reset_coil']
         self.reset_coils = self.config['reset_coils']
@@ -314,10 +311,9 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         """Add targets."""
         self._add_targets_to_bank()
 
-    @asyncio.coroutine
-    def device_added_system_wide(self):
+    async def device_added_system_wide(self):
         """Add targets."""
-        yield from super().device_added_system_wide()
+        await super().device_added_system_wide()
         self._add_targets_to_bank()
 
     def _add_targets_to_bank(self):

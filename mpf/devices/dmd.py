@@ -1,5 +1,4 @@
 """Support for physical DMDs."""
-import asyncio
 from functools import partial
 
 from mpf.core.machine import MachineController
@@ -33,15 +32,13 @@ class Dmd(SystemWideDevice):
         self.platform = None        # type: DmdPlatform
         super().__init__(machine, name)
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.platform = self.machine.get_platform_sections("dmd", self.config['platform'])
         self.hw_device = self.platform.configure_dmd()
 
     @classmethod
-    @asyncio.coroutine
-    def _bcp_receive_dmd_frame(cls, machine, client, name, rawbytes, **kwargs):
+    async def _bcp_receive_dmd_frame(cls, machine, client, name, rawbytes, **kwargs):
         """Update dmd from BCP."""
         del client
         del kwargs

@@ -135,11 +135,10 @@ class AsyncioBcpClientSocket():
         self._receive_buffer = b''
 
     # pylint: disable-msg=inconsistent-return-statements
-    @asyncio.coroutine
-    def read_message(self):
+    async def read_message(self):
         """Read the next message."""
         while True:
-            message = yield from self._receiver.readline()
+            message = await self._receiver.readline()
 
             # handle EOF
             if not message:
@@ -152,7 +151,7 @@ class AsyncioBcpClientSocket():
                 message, bytes_needed = message.split(b'&bytes=')
                 bytes_needed = int(bytes_needed)
 
-                rawbytes = yield from self._receiver.readexactly(bytes_needed)
+                rawbytes = await self._receiver.readexactly(bytes_needed)
 
                 message_obj = self._process_command(message, rawbytes)
 
@@ -172,11 +171,10 @@ class AsyncioBcpClientSocket():
         bcp_string = encode_command_string(bcp_command, **kwargs)
         self._sender.write((bcp_string + '\n').encode())
 
-    @asyncio.coroutine
-    def wait_for_response(self, bcp_command):
+    async def wait_for_response(self, bcp_command):
         """Wait for a command and ignore all others."""
         while True:
-            cmd, args = yield from self.read_message()
+            cmd, args = await self.read_message()
             if cmd == "reset":
                 self.send("reset_complete", {})
                 continue
@@ -232,8 +230,7 @@ class BCPClientSocket(BaseBcpClient):
         # return a future
         return self._setup_client_socket(config['host'], config['port'], config.get('required'))
 
-    @asyncio.coroutine
-    def _setup_client_socket(self, client_host, client_port, required=True):
+    async def _setup_client_socket(self, client_host, client_port, required=True):
         """Set up the client socket."""
         self.info_log("Connecting BCP to '%s' at %s:%s...",
                       self.name, client_host, client_port)
@@ -241,10 +238,10 @@ class BCPClientSocket(BaseBcpClient):
         while True:
             connector = self.machine.clock.open_connection(client_host, client_port)
             try:
-                self._receiver, self._sender = yield from connector
+                self._receiver, self._sender = await connector
             except (ConnectionRefusedError, OSError):
                 if required:
-                    yield from asyncio.sleep(.1)
+                    await asyncio.sleep(.1)
                     continue
                 else:
                     self.info_log("No BCP connection made to '%s' %s:%s",
@@ -297,11 +294,10 @@ class BCPClientSocket(BaseBcpClient):
         self._sender.write((bcp_string + '\n').encode())
 
     # pylint: disable-msg=inconsistent-return-statements
-    @asyncio.coroutine
-    def read_message(self):
+    async def read_message(self):
         """Read the next message."""
         while True:
-            message = yield from self._receiver.readline()
+            message = await self._receiver.readline()
 
             # handle EOF
             if not message:
@@ -314,7 +310,7 @@ class BCPClientSocket(BaseBcpClient):
                 message, bytes_needed = message.split(b'&bytes=')
                 bytes_needed = int(bytes_needed)
 
-                rawbytes = yield from self._receiver.readexactly(bytes_needed)
+                rawbytes = await self._receiver.readexactly(bytes_needed)
 
                 message_obj = self._process_command(message, rawbytes)
 

@@ -51,10 +51,9 @@ class SwitchCounter(PhysicalBallCounter):
         """Trigger a count."""
         self._trigger_recount.set()
 
-    @asyncio.coroutine
-    def _recount(self):
+    async def _recount(self):
         while True:
-            yield from self._trigger_recount.wait()
+            await self._trigger_recount.wait()
             self._trigger_recount.clear()
             try:
                 balls = self.count_balls_sync()
@@ -62,11 +61,10 @@ class SwitchCounter(PhysicalBallCounter):
             except ValueError:
                 continue
 
-    @asyncio.coroutine
-    def _run(self):
+    async def _run(self):
         self._trigger_recount.set()
         while True:
-            new_count = yield from self._recount()
+            new_count = await self._recount()
             self._count_stable.set()
 
             if self._last_count is None:
@@ -170,8 +168,7 @@ class SwitchCounter(PhysicalBallCounter):
         # future returns when ball_count != number of switches
         return self.wait_for_ball_count_changes(len(self.config['ball_switches']))
 
-    @asyncio.coroutine
-    def wait_for_ball_to_leave(self):
+    async def wait_for_ball_to_leave(self):
         """Wait for any active switch to become inactive."""
         while True:
             waiter = self.wait_for_count_stable()
@@ -180,7 +177,7 @@ class SwitchCounter(PhysicalBallCounter):
                 waiter.cancel()
                 break
             except ValueError:
-                yield from waiter
+                await waiter
 
         waiters = []
         for switch_name in active_switches:

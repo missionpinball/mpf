@@ -1,5 +1,4 @@
 """Contains the base class for diverter devices."""
-import asyncio
 from collections import deque
 
 from mpf.core.events import event_handler
@@ -35,9 +34,8 @@ class Diverter(SystemWideDevice):
         self.eject_state = False
         self.eject_attempt_queue = deque()
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         # register for feeder device eject events
         for feeder_device in self.config['feeder_devices']:
             self.machine.events.add_handler(

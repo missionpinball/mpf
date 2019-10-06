@@ -65,10 +65,9 @@ class LightPlatformDirectFade(LightPlatformInterface, metaclass=abc.ABCMeta):
                 self.task.cancel()
             self.task = self.loop.create_task(self._fade(color_and_fade_callback))
 
-    @asyncio.coroutine
-    def _fade(self, color_and_fade_callback):
+    async def _fade(self, color_and_fade_callback):
         while True:
-            yield from asyncio.sleep(self.get_fade_interval_ms() / 1000, loop=self.loop)
+            await asyncio.sleep(self.get_fade_interval_ms() / 1000, loop=self.loop)
             max_fade_ms = self.get_max_fade_ms()
             brightness, fade_ms, done = color_and_fade_callback(max_fade_ms)
             self.set_brightness_and_fade(brightness, max(fade_ms, 0))

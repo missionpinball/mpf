@@ -35,58 +35,45 @@ class MockApigpio():
             self.i2c_write = []
             self.i2c_read = []
 
-        @asyncio.coroutine
-        def connect(self, address):
+        async def connect(self, address):
             pass
 
-        @asyncio.coroutine
-        def read_bank_1(self):
+        async def read_bank_1(self):
             ## all switches read 1 which means they are open because of the pull-up
             return 0xFF
 
-        @asyncio.coroutine
-        def set_pull_up_down(self, gpio, pud):
+        async def set_pull_up_down(self, gpio, pud):
             self.pull_ups[gpio] = pud
 
-        @asyncio.coroutine
-        def set_mode(self, gpio, mode):
+        async def set_mode(self, gpio, mode):
             self.modes[gpio] = mode
 
-        @asyncio.coroutine
-        def add_callback(self, user_gpio, edge=0, func=None):
+        async def add_callback(self, user_gpio, edge=0, func=None):
             self.callbacks[user_gpio] = func
 
-        @asyncio.coroutine
-        def set_servo_pulsewidth(self, user_gpio, pulsewidth):
+        async def set_servo_pulsewidth(self, user_gpio, pulsewidth):
             self.servos[user_gpio] = pulsewidth
 
-        @asyncio.coroutine
-        def write(self, gpio, level):
+        async def write(self, gpio, level):
             self.outputs[gpio] = level
 
-        @asyncio.coroutine
-        def set_PWM_dutycycle(self, user_gpio, dutycycle):
+        async def set_PWM_dutycycle(self, user_gpio, dutycycle):
             self.outputs[user_gpio] = dutycycle / 255
 
-        @asyncio.coroutine
-        def stop(self):
+        async def stop(self):
             pass
 
-        @asyncio.coroutine
-        def i2c_open(self, bus, address):
+        async def i2c_open(self, bus, address):
             return bus, address
 
-        @asyncio.coroutine
-        def i2c_close(self, handle):
+        async def i2c_close(self, handle):
             return
 
-        @asyncio.coroutine
-        def i2c_write_byte_data(self, handle, register, data):
+        async def i2c_write_byte_data(self, handle, register, data):
             """Write byte to i2c register on handle."""
             self.i2c_write.append((handle, register, data))
 
-        @asyncio.coroutine
-        def i2c_read_byte_data(self, handle, register):
+        async def i2c_read_byte_data(self, handle, register):
             """Write byte to i2c register on handle."""
             return self.i2c_read.pop(0)
 

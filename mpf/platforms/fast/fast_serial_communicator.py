@@ -76,17 +76,15 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         self.write_task.cancel()
         super().stop()
 
-    @asyncio.coroutine
-    def _read_with_timeout(self, timeout):
-        msg_raw = yield from asyncio.wait([self.readuntil(b'\r')], timeout=timeout, loop=self.machine.clock.loop)
+    async def _read_with_timeout(self, timeout):
+        msg_raw = await asyncio.wait([self.readuntil(b'\r')], timeout=timeout, loop=self.machine.clock.loop)
         if not msg_raw[0]:
             msg_raw[1].pop().cancel()
             return ""
         element = msg_raw[0].pop()
-        return (yield from element).decode()
+        return (await element).decode()
 
-    @asyncio.coroutine
-    def _identify_connection(self):
+    async def _identify_connection(self):
         """Identify which processor this serial connection is talking to."""
         # keep looping and wait for an ID response
 
@@ -100,16 +98,16 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             self.platform.debug_log("Sending 'ID:' command to port '%s'",
                                     self.port)
             self.writer.write('ID:\r'.encode())
-            msg = yield from self._read_with_timeout(.5)
+            msg = await self._read_with_timeout(.5)
 
             # ignore XX replies here.
             while msg.startswith('XX:'):
-                msg = yield from self._read_with_timeout(.5)
+                msg = await self._read_with_timeout(.5)
 
             if msg.startswith('ID:'):
                 break
 
-            yield from asyncio.sleep(.5, loop=self.machine.clock.loop)
+            await asyncio.sleep(.5, loop=self.machine.clock.loop)
 
         # examples of ID responses
         # ID:DMD FP-CPU-002-1 00.87
@@ -173,44 +171,42 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                                  format(self.remote_processor, min_version, self.remote_firmware))
 
         if self.remote_processor == 'NET' and self.platform.machine_type == 'fast':
-            yield from self.query_fast_io_boards()
+            await self.query_fast_io_boards()
 
         self.platform.register_processor_connection(self.remote_processor, self)
 
         self.write_task = self.machine.clock.loop.create_task(self._socket_writer())
         self.write_task.add_done_callback(self._done)
 
-    @asyncio.coroutine
-    def reset_net_cpu(self):
+    async def reset_net_cpu(self):
         """Reset the NET CPU."""
         self.platform.debug_log('Resetting NET CPU.')
         self.writer.write('BR:\r'.encode())
         msg = ''
         while msg != 'BR:P\r' and not msg.endswith('!B:02\r'):
-            msg = (yield from self.readuntil(b'\r')).decode()
+            msg = (await self.readuntil(b'\r')).decode()
             self.platform.debug_log("Got: {}".format(msg))
 
-    @asyncio.coroutine
-    def query_fast_io_boards(self):
+    async def query_fast_io_boards(self):
         """Query the NET processor to see if any FAST IO boards are connected.
 
         If so, queries the IO boards to log them and make sure they're the  proper firmware version.
         """
         # reset CPU early
         try:
-            yield from asyncio.wait_for(self.reset_net_cpu(), 5, loop=self.machine.clock.loop)
+            await asyncio.wait_for(self.reset_net_cpu(), 5, loop=self.machine.clock.loop)
         except asyncio.TimeoutError:
             self.platform.warning_log("Reset of NET CPU failed. This might be a firmware bug in your version.")
         else:
             self.platform.debug_log("Reset successful")
 
-        yield from asyncio.sleep(.5, loop=self.machine.clock.loop)
+        await asyncio.sleep(.5, loop=self.machine.clock.loop)
 
         self.platform.debug_log('Reading all switches.')
         self.writer.write('SA:\r'.encode())
         msg = ''
         while not msg.startswith('SA:'):
-            msg = (yield from self.readuntil(b'\r')).decode()
+            msg = (await self.readuntil(b'\r')).decode()
             if not msg.startswith('SA:'):
                 self.platform.log.warning("Got unexpected message from FAST: {}".format(msg))
 
@@ -223,7 +219,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             self.writer.write('NN:{:02X}\r'.format(board_id).encode())
             msg = ''
             while not msg.startswith('NN:'):
-                msg = (yield from self.readuntil(b'\r')).decode()
+                msg = (await self.readuntil(b'\r')).decode()
                 if not msg.startswith('NN:'):
                     self.platform.debug_log("Got unexpected message from FAST: {}".format(msg))
 
@@ -289,12 +285,11 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             if debug and msg[0:2] != "WD":
                 self.platform.log.debug("Send: %s", msg)
 
-    @asyncio.coroutine
-    def _socket_writer(self):
+    async def _socket_writer(self):
         while True:
-            msg = yield from self.send_queue.get()
+            msg = await self.send_queue.get()
             try:
-                yield from asyncio.wait_for(self.send_ready.wait(), 1.0, loop=self.machine.clock.loop)
+                await asyncio.wait_for(self.send_ready.wait(), 1.0, loop=self.machine.clock.loop)
             except asyncio.TimeoutError:
                 self.log.warning("Port %s was blocked for more than 1s. Reseting send queue! If this happens "
                                  "frequently report a bug!", self.port)

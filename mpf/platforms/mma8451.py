@@ -30,26 +30,25 @@ class MMA8451Device(AccelerometerPlatformInterface):
         except asyncio.CancelledError:
             pass
 
-    @asyncio.coroutine
-    def _poll(self):
-        device = yield from self.i2c_platform.configure_i2c(self.number)
+    async def _poll(self):
+        device = await self.i2c_platform.configure_i2c(self.number)
         # check id
         self.platform.log.info("Checking ID of device at: %s", self.number)
-        device_id = yield from device.i2c_read8(0x0D)
+        device_id = await device.i2c_read8(0x0D)
         if device_id != 0x1A:
             raise AssertionError("Device ID does not match MMA8451. Detected: {}".format(device_id))
 
         # reset
         self.platform.log.info("Resetting device at: %s", self.number)
         device.i2c_write8(0x2B, 0x40)
-        yield from asyncio.sleep(.3, loop=self.platform.machine.clock.loop)
+        await asyncio.sleep(.3, loop=self.platform.machine.clock.loop)
         result = -1
         for _ in range(10):
-            result = yield from device.i2c_read8(0x2B)
+            result = await device.i2c_read8(0x2B)
             if result == 0:
                 break
             self.platform.log.warning("Failed to reset: %s at %s", result, self.number)
-            yield from asyncio.sleep(.5, loop=self.platform.machine.clock.loop)
+            await asyncio.sleep(.5, loop=self.platform.machine.clock.loop)
         else:
             raise AssertionError("Failed to reset MMA8451 accelerometer. Result: {}".format(result))
 
@@ -67,12 +66,12 @@ class MMA8451Device(AccelerometerPlatformInterface):
         device.i2c_write8(0x2A, 0x2D)
 
         # wait for activate
-        yield from asyncio.sleep(.3, loop=self.platform.machine.clock.loop)
+        await asyncio.sleep(.3, loop=self.platform.machine.clock.loop)
 
         self.platform.log.info("Init done for device at: %s", self.number)
 
         while True:
-            data = yield from device.i2c_read_block(0x01, 6)
+            data = await device.i2c_read_block(0x01, 6)
             x = ((data[0] << 8) | data[1]) >> 2
             y = ((data[2] << 8) | data[3]) >> 2
             z = ((data[4] << 8) | data[5]) >> 2
@@ -86,7 +85,7 @@ class MMA8451Device(AccelerometerPlatformInterface):
             y = round((float(y)) / range_divisor, 3)
             z = round((float(z)) / range_divisor, 3)
             self.callback.update_acceleration(x, y, z)
-            yield from asyncio.sleep(.1, loop=self.platform.machine.clock.loop)
+            await asyncio.sleep(.1, loop=self.platform.machine.clock.loop)
 
 
 class MMA8451Platform(AccelerometerPlatform):
@@ -102,8 +101,7 @@ class MMA8451Platform(AccelerometerPlatform):
         self.log.debug("Configuring MMA8451 based accelerometers.")
         self.accelerometers = {}
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Initialise MMA8451 platform."""
 
     def stop(self):

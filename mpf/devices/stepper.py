@@ -40,9 +40,8 @@ class Stepper(SystemWideDevice):
         self.delay = DelayManager(machine)
         super().__init__(machine, name)
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.platform = self.machine.get_platform_sections('stepper_controllers', self.config['platform'])
 
         # first target is the reset position but we might get an early target during startup via events
@@ -56,8 +55,8 @@ class Stepper(SystemWideDevice):
         if not self.platform.features['allow_empty_numbers'] and self.config['number'] is None:
             self.raise_config_error("Stepper must have a number.", 2)
 
-        self.hw_stepper = yield from self.platform.configure_stepper(self.config['number'],
-                                                                     self.config['platform_settings'])
+        self.hw_stepper = await self.platform.configure_stepper(self.config['number'],
+                                                                self.config['platform_settings'])
 
         if self.config['include_in_ball_search']:
             self.machine.events.add_handler("ball_search_started",
@@ -89,21 +88,20 @@ class Stepper(SystemWideDevice):
         self._configure_device_logging(config)
         return config
 
-    @asyncio.coroutine
-    def _run(self):
+    async def _run(self):
         # wait for switches to be initialised
-        yield from self.machine.events.wait_for_event("init_phase_3")
+        await self.machine.events.wait_for_event("init_phase_3")
 
         # first home the stepper
         self.debug_log("Homing stepper")
-        yield from self._home()
+        await self._home()
 
         # run the loop at least once
         self._is_moving.set()
 
         while True:
             # wait until we should be moving
-            yield from self._is_moving.wait()
+            await self._is_moving.wait()
             self._is_moving.clear()
             # store target position in local variable since it may change in the meantime
             target_position = self._target_position
@@ -114,7 +112,7 @@ class Stepper(SystemWideDevice):
                 # move stepper
                 self.hw_stepper.move_rel_pos(delta)
                 # wait for the move to complete
-                yield from self.hw_stepper.wait_for_move_completed()
+                await self.hw_stepper.wait_for_move_completed()
             else:
                 self.debug_log("Got move command. Stepper already at target. Not moving.")
             # set current position
@@ -132,14 +130,13 @@ class Stepper(SystemWideDevice):
         else:
             raise ValueError("_move_to_absolute_position: position argument beyond limits")
 
-    @asyncio.coroutine
-    def _home(self):
+    async def _home(self):
         """Home an axis, resetting 0 position."""
         self._is_homed = False
         self._is_moving.set()
         if self.config['homing_mode'] == "hardware":
             self.hw_stepper.home(self.config['homing_direction'])
-            yield from self.hw_stepper.wait_for_move_completed()
+            await self.hw_stepper.wait_for_move_completed()
         else:
             # move the stepper manually
             if self.config['homing_direction'] == "clockwise":
@@ -148,8 +145,8 @@ class Stepper(SystemWideDevice):
                 self.hw_stepper.move_vel_mode(-1)
 
             # wait until home switch becomes active
-            yield from self.machine.switch_controller.wait_for_switch(self.config['homing_switch'].name,
-                                                                      only_on_change=False)
+            await self.machine.switch_controller.wait_for_switch(self.config['homing_switch'].name,
+                                                                 only_on_change=False)
             self.hw_stepper.stop()
             self.hw_stepper.set_home_position()
 
