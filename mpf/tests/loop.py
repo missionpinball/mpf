@@ -260,7 +260,7 @@ class TimeTravelLoop(base_events.BaseEventLoop):
     """
 
     __slots__ = ["readers", "writers", "_time", "_clock_resolution", "_timers", "_selector", "_transports",
-                 "_wait_for_external_executor"]
+                 "_wait_for_external_executor", "_stopped"]
 
     def __init__(self):
         self.readers = {}
@@ -269,6 +269,7 @@ class TimeTravelLoop(base_events.BaseEventLoop):
         super().__init__()
 
         self._time = 0
+        self._stopped = False
         self._clock_resolution = 1e-9
         self._timers = NextTimers()
         self._selector = TestSelector()
@@ -306,6 +307,11 @@ class TimeTravelLoop(base_events.BaseEventLoop):
                                   (handle, writer))
             if reader is not None:
                 reader.cancel()
+
+    def stop(self):
+        """Stop loop."""
+        self._stopped = True
+        super().stop()
 
     def _remove_reader(self, fd):
         return self.remove_reader(fd)
@@ -394,7 +400,8 @@ class TimeTravelLoop(base_events.BaseEventLoop):
         if len(self._ready) == 0:
             if not self._timers.is_empty():
                 self._time = self._timers.pop_closest()
-            elif not self._closed and not self._selector.select(0) and not self._wait_for_external_executor:
+            elif not self._closed and not self._stopped and not self._selector.select(0) and \
+                    not self._wait_for_external_executor:
                 raise AssertionError("Ran into an infinite loop. No socket ready and nothing scheduled.")
             if self._wait_for_external_executor:
                 time.sleep(.0001)
