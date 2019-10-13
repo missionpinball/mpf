@@ -158,7 +158,11 @@ class Shot(EnableDisableMixin, ModeDevice):
         return self.player["shot_{}".format(self.name)]
 
     def _set_state(self, state):
+        old = self.player["shot_{}".format(self.name)]
+        old_name = self.state_name
         self.player["shot_{}".format(self.name)] = state
+        self.notify_virtual_change("state", old, state)
+        self.notify_virtual_change("state_name", old_name, self.state_name)
 
     def _get_profile_settings(self):
         state = self._get_state()
