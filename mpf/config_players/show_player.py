@@ -1,4 +1,6 @@
 """Show config player."""
+from mpf.core.placeholder_manager import ConditionalEvent
+
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 
 RESERVED_KEYS = ["show", "priority", "speed", "block_queue", "start_step", "loops", "sync_ms", "manual_advance",
@@ -59,7 +61,8 @@ class ShowPlayer(DeviceConfigPlayer):
         # parse conditionals
         devices = super()._expand_device(device)
         for index, device_entry in enumerate(devices):
-            devices[index] = self.machine.placeholder_manager.parse_conditional_template(device_entry)
+            if not isinstance(device_entry, ConditionalEvent):
+                devices[index] = self.machine.placeholder_manager.parse_conditional_template(device_entry)
         return devices
 
     def _expand_device_config(self, device_settings):
