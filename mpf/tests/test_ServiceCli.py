@@ -99,7 +99,7 @@ class TestServiceCli(MpfBcpTestCase):
 +-------------+---------------------------------------------+
 | flash       | ['led', 'leds', 'light', 'lights']          |
 | flash_color | ['color', 'led', 'leds', 'light', 'lights'] |
-| led_color   | ['color', 'led', 'leds']                    |
+| led_color   | ['color', 'led', 'leds', 'light', 'lights'] |
 | off         | ['led', 'leds', 'light', 'lights']          |
 | on          | ['led', 'leds', 'light', 'lights']          |
 +-------------+---------------------------------------------+
