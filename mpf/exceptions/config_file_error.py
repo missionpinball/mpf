@@ -6,6 +6,7 @@ class ConfigFileError(AssertionError):
 
     """Error in a config file found."""
 
+    # pylint: disable-msg=too-many-arguments
     def __init__(self, message, error_no, logger_name, context=None, url_name=None):
         """Initialise exception."""
         self._logger_name = logger_name
