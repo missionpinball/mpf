@@ -36,6 +36,7 @@ class StateMachine(SystemWideDevice, ModeDevice):
         self._start_state("start")
 
     def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None):
+        """Validate transitions."""
         result = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
         states = config.get("states", {})
         for transition in config.get("transitions", []):
