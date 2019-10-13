@@ -114,7 +114,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
 
         self.configure_logging(self.class_label + '.' + self.name,
                                config['console_log'],
-                               config['file_log'])
+                               config['file_log'], url_base=self.class_label)
 
         self.debug_log("Configuring device with settings: '%s'", config)
 

@@ -15,7 +15,7 @@ class LogMixin:
 
     unit_test = False
 
-    __slots__ = ["log", "_info_to_console", "_debug_to_console", "_info_to_file", "_debug_to_file"]
+    __slots__ = ["log", "_info_to_console", "_debug_to_console", "_info_to_file", "_debug_to_file", "_url_base"]
 
     def __init__(self) -> None:
         """Initialise Log Mixin."""
@@ -24,6 +24,7 @@ class LogMixin:
         self._debug_to_console = False
         self._info_to_file = False
         self._debug_to_file = False
+        self._url_base = None
 
         logging.addLevelName(21, "INFO")
         logging.addLevelName(11, "DEBUG")
@@ -39,7 +40,7 @@ class LogMixin:
         return self._debug_to_console or self._debug_to_file
 
     def configure_logging(self, logger: str, console_level: str = 'basic',
-                          file_level: str = 'basic'):
+                          file_level: str = 'basic', url_base=None):
         """Configure logging.
 
         Args:
@@ -49,6 +50,10 @@ class LogMixin:
             file_level: The level of logging for the console. Valid options
                 are "none", "basic", or "full".
         """
+        if url_base:
+            self._url_base = url_base
+        else:
+            self._url_base = logger
         self.log = logging.getLogger(logger)
         if hasattr(self, "machine") and self.machine and self.machine.options['production']:
             return
@@ -157,7 +162,7 @@ class LogMixin:
 
     def raise_config_error(self, msg, error_no, *, context=None):
         """Raise a ConfigFileError exception."""
-        raise ConfigFileError(msg, error_no, self.log.name, context)
+        raise ConfigFileError(msg, error_no, self.log.name, context, self._url_base)
 
     def ignorable_runtime_exception(self, msg: str) -> None:
         """Handle ignorable runtime exception.
