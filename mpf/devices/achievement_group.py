@@ -145,6 +145,7 @@ class AchievementGroup(ModeDevice):
             return
 
         if not self._selected_member and not self.config['auto_select']:
+            self.debug_log("Nothing selected and auto_select false. Abort.")
             return
 
         self._rotation_in_progress = True
@@ -156,6 +157,7 @@ class AchievementGroup(ModeDevice):
         achievements = self._get_available_achievements_for_selection()
         if not achievements:
             # there is nothing to rotate
+            self.debug_log("Nothing to rotate. Abort.")
             return
 
         try:
@@ -304,9 +306,6 @@ class AchievementGroup(ModeDevice):
 
     def _check_for_no_more_enabled(self):
         self.debug_log("Checking for no more enabled")
-        if not self._enabled:
-            self.debug_log("Group is disabled. Aborting...")
-            return False
 
         if not self._get_available_achievements_for_selection():
             self._no_more_enabled()
