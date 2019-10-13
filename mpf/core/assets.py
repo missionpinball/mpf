@@ -2,6 +2,8 @@
 import copy
 import os
 import random
+import time
+
 import threading
 from collections import deque, namedtuple
 from pathlib import PurePath
@@ -29,7 +31,7 @@ class BaseAssetManager(MpfController, LogMixin):
     config_name = 'asset_manager'
 
     __slots__ = ["_asset_classes", "num_assets_to_load", "num_assets_loaded", "num_bcp_assets_to_load",
-                 "num_bcp_assets_loaded", "_next_id", "_last_asset_event_time", "initial_assets_loaded"]
+                 "num_bcp_assets_loaded", "_next_id", "_last_asset_event_time", "initial_assets_loaded", "_start_time"]
 
     def __init__(self, machine: MachineController) -> None:
         """Initialise asset manager.
@@ -80,6 +82,8 @@ class BaseAssetManager(MpfController, LogMixin):
 
         # prevent excessive loading_assets events
         self._last_asset_event_time = None
+
+        self._start_time = time.time()
 
     def get_next_id(self) -> int:
         """Return the next free id."""
@@ -560,6 +564,8 @@ class BaseAssetManager(MpfController, LogMixin):
         '''
 
         if not remaining:
+            if self._start_time:
+                self.log.info("Asset loading took: %s", time.time() - self._start_time)
             self._last_asset_event_time = None
             self.machine.events.post('asset_loading_complete')
             '''event: asset_loading_complete
