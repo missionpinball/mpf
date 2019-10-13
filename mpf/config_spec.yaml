@@ -1058,7 +1058,7 @@ rpi_dmd:
     daemon:             single|bool|False
     drop_privileges:    single|bool|True
 score_queue_player:
-    __valid_in__: modes
+    __valid_in__: mode
     int: single|template_int|None
 score_queues:
     __valid_in__: machine
@@ -1621,7 +1621,7 @@ trinamics_steprocker:
     __valid_in__: machine
     port: single|str|
 variable_player:
-    __valid_in__: modes
+    __valid_in__: mode
     int: single|template_int|None
     float: single|template_float|None
     string: single|str|None
