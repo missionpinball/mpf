@@ -18,6 +18,17 @@ class TestAchievement(MpfFakeGameTestCase):
         self.post_event("start_mode1")
         self.advance_time_and_run()
         self.assertEventCalled("enable_all", times=1)
+        self.post_event("stop_mode1")
+
+        self.post_event("start_all")
+        self.post_event("complete_all")
+        self.assertEqual("completed", self.machine.achievements['mode1_a1'].state)
+        self.assertEqual("completed", self.machine.achievements['mode1_a2'].state)
+
+        self.assertEventCalled("enable_all", times=1)
+        self.post_event("start_mode1")
+        self.advance_time_and_run()
+        self.assertEventCalled("enable_all", times=2)
 
     def test_two_players_restart_with_keep(self):
         self.mock_event("achievement_achievement1_state_disabled")
