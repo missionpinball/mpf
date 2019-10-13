@@ -374,6 +374,8 @@ shows:
           lights:
             (led): (color)
             (leds): (color)
+            (light): (color)
+            (lights): (color)
     flash_color:
         - duration: 1
           lights:
