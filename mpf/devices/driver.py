@@ -1,5 +1,4 @@
 """Contains the Driver parent class."""
-import asyncio
 from typing import Optional
 
 from mpf.core.delays import DelayManager
@@ -7,7 +6,7 @@ from mpf.core.events import event_handler
 from mpf.core.machine import MachineController
 from mpf.core.platform import DriverPlatform, DriverConfig
 from mpf.core.system_wide_device import SystemWideDevice
-from mpf.exceptions.DriverLimitsError import DriverLimitsError
+from mpf.exceptions.driver_limits_error import DriverLimitsError
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 
@@ -48,11 +47,11 @@ class Driver(SystemWideDevice):
     def _check_duplicate_coil_numbers(machine, **kwargs):
         del kwargs
         check_set = set()
-        for coil in machine.coils:
+        for coil in machine.coils.values():
             if not hasattr(coil, "hw_driver"):
                 # skip dual wound and other special devices
                 continue
-            key = (coil.platform, coil.hw_driver.number)
+            key = (coil.config['platform'], coil.hw_driver.number)
             if key in check_set:
                 raise AssertionError("Duplicate coil number {} for coil {}".format(coil.hw_driver.number, coil))
 
@@ -73,9 +72,8 @@ class Driver(SystemWideDevice):
         self._configure_device_logging(config)
         return config
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.platform = self.machine.get_platform_sections('coils', self.config['platform'])
 
         config = DriverConfig(
@@ -235,8 +233,8 @@ class Driver(SystemWideDevice):
         if max_wait_ms is None:
             self.config['psu'].notify_about_instant_pulse(pulse_ms=pulse_ms)
             return 0
-        else:
-            return self.config['psu'].get_wait_time_for_pulse(pulse_ms=pulse_ms, max_wait_ms=max_wait_ms)
+
+        return self.config['psu'].get_wait_time_for_pulse(pulse_ms=pulse_ms, max_wait_ms=max_wait_ms)
 
     def _pulse_now(self, pulse_ms: int, pulse_power: float) -> None:
         """Pulse this driver now."""

@@ -1,8 +1,5 @@
 """Contains the High Score mode code."""
-
 import asyncio
-
-from typing import Generator
 
 from mpf.core.async_mode import AsyncMode
 from mpf.core.player import Player
@@ -81,7 +78,7 @@ class HighScore(AsyncMode):
                         enumerate(zip(entries,
                                       self.high_scores[category]))):
 
-                    self.machine.set_machine_var(
+                    self.machine.variables.set_machine_var(
                         name=category + str(position + 1) + '_label',
                         value=label)
 
@@ -95,7 +92,7 @@ class HighScore(AsyncMode):
 
                     '''
 
-                    self.machine.set_machine_var(
+                    self.machine.variables.set_machine_var(
                         name=category + str(position + 1) + '_name',
                         value=name)
 
@@ -106,7 +103,7 @@ class HighScore(AsyncMode):
 
                     '''
 
-                    self.machine.set_machine_var(
+                    self.machine.variables.set_machine_var(
                         name=category + str(position + 1) + '_value',
                         value=value)
 
@@ -121,8 +118,7 @@ class HighScore(AsyncMode):
                 self.high_scores[category] = list()
 
     # pylint: disable-msg=too-many-nested-blocks
-    @asyncio.coroutine
-    def _run(self) -> Generator[int, None, None]:
+    async def _run(self) -> None:
         """Run high score mode."""
         if not self.machine.game or not self.machine.game.player_list:
             self.log.warning("High Score started but there was no game. Will not start.")
@@ -160,8 +156,7 @@ class HighScore(AsyncMode):
                     # ask player for initials if we do not know them
                     if not player.initials:
                         try:
-                            player.initials = yield from self._ask_player_for_initials(player, award_names[i],
-                                                                                       value)
+                            player.initials = await self._ask_player_for_initials(player, award_names[i], value)
                         except asyncio.TimeoutError:
                             del new_list[i]
                             # no entry when the player missed the timeout
@@ -169,7 +164,7 @@ class HighScore(AsyncMode):
                     # add high score
                     new_list[i] = (player.initials, value)
                     # show award slide
-                    yield from self._show_award_slide(player.initials, award_names[i], value)
+                    await self._show_award_slide(player.initials, award_names[i], value)
 
                 # next entry
                 i += 1
@@ -181,9 +176,8 @@ class HighScore(AsyncMode):
         self._write_scores_to_disk()
         self._create_machine_vars()
 
-    @asyncio.coroutine
     # pylint: disable-msg=too-many-arguments
-    def _ask_player_for_initials(self, player: Player, award_label: str, value: int) -> Generator[int, None, str]:
+    async def _ask_player_for_initials(self, player: Player, award_label: str, value: int) -> str:
         """Show text widget to ask player for initials."""
         self.info_log("New high score. Player: %s, award_label: %s"
                       ", Value: %s", player, award_label, value)
@@ -193,7 +187,7 @@ class HighScore(AsyncMode):
                                  player_num=player.number,
                                  value=value)
 
-        event_result = yield from asyncio.wait_for(
+        event_result = await asyncio.wait_for(
             self.machine.events.wait_for_event("text_input_high_score_complete"),
             timeout=self.high_score_config['enter_initials_timeout'],
             loop=self.machine.clock.loop
@@ -201,8 +195,7 @@ class HighScore(AsyncMode):
 
         return event_result["text"] if "text" in event_result else ''
 
-    @asyncio.coroutine
-    def _show_award_slide(self, player_name: str, award: str, value: int) -> Generator[int, None, None]:
+    async def _show_award_slide(self, player_name: str, award: str, value: int) -> None:
         if not self.high_score_config['award_slide_display_time']:
             return
 
@@ -216,8 +209,8 @@ class HighScore(AsyncMode):
             player_name=player_name,
             award=award,
             value=value)
-        yield from asyncio.sleep(self.high_score_config['award_slide_display_time'] / 1000,
-                                 loop=self.machine.clock.loop)
+        await asyncio.sleep(self.high_score_config['award_slide_display_time'] / 1000,
+                            loop=self.machine.clock.loop)
 
     def _write_scores_to_disk(self) -> None:
         self.data_manager.save_all(data=self.high_scores)

@@ -1,0 +1,13 @@
+#show_version=5
+- shows:
+    attract:
+      show: show_ext2
+      show_tokens:
+        light_color: blue
+  duration: 3s
+- shows:
+    attract:
+      show: show_ext2
+      show_tokens:
+        light_color: red
+  duration: 3s

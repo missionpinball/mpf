@@ -3,10 +3,10 @@ from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 class TestBallDevicePlayfieldLock(MpfFakeGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_playfield_lock.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_device/'
 
     def get_platform(self):
@@ -19,7 +19,7 @@ class TestBallDevicePlayfieldLock(MpfFakeGameTestCase):
 
         # lock a ball
         self.hit_switch_and_run("s_ball_switch1", 10)
-        self.assertEqual(1, self.machine.ball_devices.test_device.available_balls)
+        self.assertEqual(1, self.machine.ball_devices["test_device"].available_balls)
 
         # new ball rolls in
         self.post_event("entrance_event")
@@ -27,7 +27,7 @@ class TestBallDevicePlayfieldLock(MpfFakeGameTestCase):
         # release ball
         self.post_event("release_test")
         self.advance_time_and_run(.1)
-        self.assertEqual(0, self.machine.ball_devices.test_device.available_balls)
+        self.assertEqual(0, self.machine.ball_devices["test_device"].available_balls)
 
         # capture a new ball concurrently
         self.hit_switch_and_run("s_ball_switch2", 20)
@@ -37,12 +37,12 @@ class TestBallDevicePlayfieldLock(MpfFakeGameTestCase):
         self.mock_event("balldevice_test_device_ball_eject_success")
 
         # locked another ball
-        self.assertEqual(1, self.machine.ball_devices.test_device.available_balls)
+        self.assertEqual(1, self.machine.ball_devices["test_device"].available_balls)
 
         # release another ball
         self.post_event("release_test")
         self.advance_time_and_run(.1)
-        self.assertEqual(0, self.machine.ball_devices.test_device.available_balls)
+        self.assertEqual(0, self.machine.ball_devices["test_device"].available_balls)
 
         # no entrance but a new ball
         self.hit_switch_and_run("s_ball_switch2", 20)

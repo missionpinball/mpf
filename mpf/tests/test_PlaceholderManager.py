@@ -23,48 +23,48 @@ class TestPlaceholderManager(unittest.TestCase):
 
         # test no conditions or numbers
         d = p.parse_conditional_template("test_string")
-        self.assertEqual(d["name"], "test_string")
-        self.assertIsNone(d["condition"])
-        self.assertIsNone(d["number"])
+        self.assertEqual(d.name, "test_string")
+        self.assertIsNone(d.condition)
+        self.assertIsNone(d.number)
         # test number with pipe
         d = p.parse_conditional_template("test_string|12")
-        self.assertEqual(d["name"], "test_string")
-        self.assertIsNone(d["condition"])
-        self.assertEqual(d["number"], "12")
+        self.assertEqual(d.name, "test_string")
+        self.assertIsNone(d.condition)
+        self.assertEqual(d.number, "12")
         # test number with colon
         d = p.parse_conditional_template("test_string:21")
-        self.assertEqual(d["name"], "test_string")
-        self.assertIsNone(d["condition"])
-        self.assertEqual(d["number"], "21")
+        self.assertEqual(d.name, "test_string")
+        self.assertIsNone(d.condition)
+        self.assertEqual(d.number, "21")
         # test conditional event
         d = p.parse_conditional_template("test_string{somecondition<1}")
-        self.assertEqual(d["name"], "test_string")
-        self.assertIsInstance(d["condition"], BoolTemplate)
-        self.assertIsNone(d["number"])
+        self.assertEqual(d.name, "test_string")
+        self.assertIsInstance(d.condition, BoolTemplate)
+        self.assertIsNone(d.number)
         # test conditional event with pipe
         d = p.parse_conditional_template("test_string{somecondition<1}|32")
-        self.assertEqual(d["name"], "test_string")
-        self.assertIsInstance(d["condition"], BoolTemplate)
-        self.assertEqual(d["number"], "32")
+        self.assertEqual(d.name, "test_string")
+        self.assertIsInstance(d.condition, BoolTemplate)
+        self.assertEqual(d.number, "32")
         # test conditional event with colon
         d = p.parse_conditional_template("test_string{somecondition<1}:34")
-        self.assertEqual(d["name"], "test_string")
-        self.assertIsInstance(d["condition"], BoolTemplate)
-        self.assertEqual(d["number"], "34")
+        self.assertEqual(d.name, "test_string")
+        self.assertIsInstance(d.condition, BoolTemplate)
+        self.assertEqual(d.number, "34")
         # test default number
         d = p.parse_conditional_template("test_string", default_number=2)
-        self.assertEqual(d["name"], "test_string")
-        self.assertEqual(d["number"], 2)
+        self.assertEqual(d.name, "test_string")
+        self.assertEqual(d.number, 2)
         # test number typing
         d = p.parse_conditional_template("test_string|45", default_number=1.0)
-        self.assertEqual(d["number"], 45)
-        self.assertIsInstance(d["number"], float)
+        self.assertEqual(d.number, 45)
+        self.assertIsInstance(d.number, float)
         # test number without typing
         d = p.parse_conditional_template("test_string:500ms")
-        self.assertEqual(d["number"], "500ms")
+        self.assertEqual(d.number, "500ms")
         # test fallback on unparseable number
         d = p.parse_conditional_template("test_string|foobar", default_number=8)
-        self.assertEqual(d["number"], 8)
+        self.assertEqual(d.number, 8)
 
 class TestPlaceholderManagerWithMachine(MpfFakeGameTestCase):
 
@@ -77,11 +77,11 @@ class TestPlaceholderManagerWithMachine(MpfFakeGameTestCase):
         self.assertFalse(subscription.done())
         self.assertEqual(0, value)
 
-        self.machine.set_machine_var("c", 3)
+        self.machine.variables.set_machine_var("c", 3)
         self.advance_time_and_run()
         self.assertFalse(subscription.done())
 
-        self.machine.set_machine_var("a", 3)
+        self.machine.variables.set_machine_var("a", 3)
         self.advance_time_and_run()
         self.assertTrue(subscription.done())
 

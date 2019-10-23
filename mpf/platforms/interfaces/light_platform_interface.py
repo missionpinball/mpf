@@ -65,10 +65,9 @@ class LightPlatformDirectFade(LightPlatformInterface, metaclass=abc.ABCMeta):
                 self.task.cancel()
             self.task = self.loop.create_task(self._fade(color_and_fade_callback))
 
-    @asyncio.coroutine
-    def _fade(self, color_and_fade_callback):
+    async def _fade(self, color_and_fade_callback):
         while True:
-            yield from asyncio.sleep(self.get_fade_interval_ms() / 1000, loop=self.loop)
+            await asyncio.sleep(self.get_fade_interval_ms() / 1000, loop=self.loop)
             max_fade_ms = self.get_max_fade_ms()
             brightness, fade_ms, done = color_and_fade_callback(max_fade_ms)
             self.set_brightness_and_fade(brightness, max(fade_ms, 0))
@@ -76,15 +75,14 @@ class LightPlatformDirectFade(LightPlatformInterface, metaclass=abc.ABCMeta):
                 return
 
     @abc.abstractmethod
-    def set_brightness_and_fade(self, brightness: float, fade_ms: int):
+    def set_brightness_and_fade(self, brightness: float, fade_ms: int) -> None:
         """Set the light to the specified brightness.
 
         Args:
             brightness: float of the brightness
             fade_ms: ms to fade the light
 
-        Returns:
-            None
+        Does not return anything.
         """
         raise NotImplementedError
 
@@ -119,13 +117,12 @@ class LightPlatformSoftwareFade(LightPlatformDirectFade, metaclass=abc.ABCMeta):
         self.set_brightness(brightness)
 
     @abc.abstractmethod
-    def set_brightness(self, brightness: float):
+    def set_brightness(self, brightness: float) -> None:
         """Set the light to the specified brightness.
 
         Args:
             brightness: float of the brightness
 
-        Returns:
-            None
+        Does not return anything.
         """
         raise NotImplementedError

@@ -2,10 +2,6 @@
 import importlib
 import asyncio
 import os
-import tempfile
-import hashlib
-import errno
-import pickle
 from collections import namedtuple
 
 from typing import Callable
@@ -17,7 +13,6 @@ from typing import Optional
 from mpf.core.events import QueuedEvent
 from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
-from mpf.core.config_processor import ConfigProcessor
 from mpf.core.utility_functions import Util
 from mpf.core.mpf_controller import MpfController
 
@@ -86,23 +81,21 @@ class ModeController(MpfController):
 
     def create_mode_devices(self):
         """Create mode devices."""
-        for mode in self.machine.modes:
+        for mode in self.machine.modes.values():
             mode.create_mode_devices()
 
-    @asyncio.coroutine
-    def load_mode_devices(self):
+    async def load_mode_devices(self):
         """Load mode devices."""
-        for mode in self.machine.modes:
-            yield from mode.load_mode_devices()
+        for mode in self.machine.modes.values():
+            await mode.load_mode_devices()
 
     def initialise_modes(self, **kwargs):
         """Initialise modes."""
         del kwargs
-        for mode in self.machine.modes:
+        for mode in self.machine.modes.values():
             mode.initialise_mode()
 
-    @asyncio.coroutine
-    def load_modes(self, **kwargs):
+    async def load_modes(self, **kwargs):
         """Load the modes from the modes: section of the machine configuration file."""
         del kwargs
 
@@ -110,14 +103,14 @@ class ModeController(MpfController):
 
         for mode in set(self.machine.config['modes']):
 
-            if mode in self.machine.modes:
+            if mode in self.machine.modes.values():
                 raise AssertionError('Mode {} already exists. Cannot load again.'.format(mode))
 
             # load mode
             self.machine.modes[mode] = self._load_mode(mode)
 
             # add a very very short yield to prevent hangs in platforms (e.g. watchdog timeouts during IO)
-            yield from asyncio.sleep(.0001, loop=self.machine.clock.loop)
+            await asyncio.sleep(.0001, loop=self.machine.clock.loop)
             self.log.debug("Loaded mode %s", mode)
 
     def _find_mode_path(self, mode_string):
@@ -125,14 +118,14 @@ class ModeController(MpfController):
             return os.path.join(self.machine.machine_path,
                                 self.machine.config['mpf']['paths']['modes'],
                                 self._machine_mode_folders[mode_string])
-        elif mode_string in self._mpf_mode_folders:
+        if mode_string in self._mpf_mode_folders:
             return os.path.join(self.machine.mpf_path,
                                 self.machine.config['mpf']['paths']['modes'],
                                 self._mpf_mode_folders[mode_string])
-        else:
-            raise ValueError("No folder found for mode '{}'. Is your mode "
-                             "folder in your machine's 'modes' folder?"
-                             .format(mode_string))
+
+        raise ValueError("No folder found for mode '{}'. Is your mode "
+                         "folder in your machine's 'modes' folder?"
+                         .format(mode_string))
 
     def _get_mpf_mode_config(self, mode_string):
         try:
@@ -156,7 +149,7 @@ class ModeController(MpfController):
                 self.machine.config['mpf']['paths']['modes'],
                 self._machine_mode_folders[mode_string],
                 'config',
-                self._machine_mode_folders[mode_string] + '.yaml')
+                os.path.basename(self._machine_mode_folders[mode_string]) + '.yaml')
             if not os.path.isfile(mode_config_file):
                 return False
         except KeyError:
@@ -310,9 +303,28 @@ class ModeController(MpfController):
                 folder)
 
             if os.path.isdir(this_mode_folder) and not folder.startswith('_'):
-                final_mode_folders[folder] = folder
+                if 'config' not in os.listdir(this_mode_folder):
+                    sub_folders = self._get_sub_folders(base_folder, this_mode_folder)
+                    final_mode_folders.update(sub_folders)
+                else:
+                    final_mode_folders[folder] = folder
 
         return final_mode_folders
+
+    def _get_sub_folders(self, root_folder, base_folder):
+        final_sub_folders = dict()
+
+        for folder in os.listdir(base_folder):
+            this_mode_folder = os.path.join(base_folder, folder)
+
+            if os.path.isdir(this_mode_folder) and not folder.startswith('_'):
+                if 'config' not in os.listdir(this_mode_folder):
+                    final_sub_folders.update(self._get_sub_folders(root_folder, this_mode_folder))
+                else:
+                    final_sub_folders[folder] = os.path.relpath(this_mode_folder, os.path.join(
+                        root_folder, self.machine.config['mpf']['paths']['modes']))
+
+        return final_sub_folders
 
     @classmethod
     def _player_added(cls, player, num, **kwargs):
@@ -328,7 +340,7 @@ class ModeController(MpfController):
 
     def _player_turn_start(self, player, **kwargs):
         del kwargs
-        for mode in self.machine.modes:
+        for mode in self.machine.modes.values():
             if not mode.is_game_mode:
                 continue
             mode.player = player
@@ -336,7 +348,7 @@ class ModeController(MpfController):
     def _player_turn_ended(self, player, **kwargs):
         del kwargs
         del player
-        for mode in self.machine.modes:
+        for mode in self.machine.modes.values():
             if not mode.is_game_mode:
                 continue
             mode.player = None
@@ -502,14 +514,11 @@ class ModeController(MpfController):
 
         self.debug_log('+-------------------------------------+')
 
-    def is_active(self, mode_name):
-        """Return true if the mode is active.
+    def is_active(self, mode_name) -> bool:
+        """Return true if the mode is active, False if it is not.
 
         Args:
             mode_name: String name of the mode to check.
-
-        Returns:
-            True if the mode is active, False if it is not.
         """
         return mode_name in [x.name for x in self.active_modes
                              if x.active is True]

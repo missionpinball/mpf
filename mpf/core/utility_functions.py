@@ -22,26 +22,26 @@ class Util:
         # keep simple types
         if value is None:
             return None
-        elif isinstance(value, (int, str, float)):
+        if isinstance(value, (int, str, float)):
             return value
 
         # for list repeat per entry
-        elif isinstance(value, list):
+        if isinstance(value, list):
             return [Util.convert_to_simply_type(x) for x in value]
 
-        elif isinstance(value, dict):
+        if isinstance(value, dict):
             new_dict = dict()
             for key, this_value in value.items():
                 new_dict[Util.convert_to_simply_type(key)] = Util.convert_to_simply_type(this_value)
 
             return new_dict
 
-        elif isinstance(value, tuple):
+        if isinstance(value, tuple):
             # pylint: disable-msg=protected-access
             return tuple(Util.convert_to_simply_type(x) for x in value)
 
         # pylint: disable-msg=protected-access
-        elif value.__class__.__name__ == "RGBColor":
+        if value.__class__.__name__ == "RGBColor":
             return value.rgb
 
         # otherwise just cast to string
@@ -52,27 +52,25 @@ class Util:
         """Convert value to type."""
         if type_name == "int":
             return int(value)
-        elif type_name == "float":
+        if type_name == "float":
             return float(value)
-        elif type_name == "str":
+        if type_name == "str":
             return str(value)
-        else:
-            raise AssertionError("Unknown type {}".format(type_name))
+
+        raise AssertionError("Unknown type {}".format(type_name))
 
     @staticmethod
-    def keys_to_lower(source_dict):
+    def keys_to_lower(source_dict) -> dict:
         """Convert the keys of a dictionary to lowercase.
 
         Args:
             source_dict: The dictionary you want to convert.
 
-        Returns:
-            A dictionary with lowercase keys.
-
+        Returns a dictionary with lowercase keys.
         """
         if not source_dict:
             return dict()
-        elif isinstance(source_dict, dict):
+        if isinstance(source_dict, dict):
             for k in list(source_dict.keys()):
                 if isinstance(source_dict[k], ordereddict):
                     # Dont know why but code will break with this specific dict
@@ -82,24 +80,22 @@ class Util:
                     source_dict[k] = Util.keys_to_lower(source_dict[k])
 
             return dict((str(k).lower(), v) for k, v in source_dict.items())
-        elif isinstance(source_dict, list):
+        if isinstance(source_dict, list):
             for num, item in enumerate(source_dict):
                 source_dict[num] = Util.keys_to_lower(item)
             return source_dict
-        else:
-            raise AssertionError("Source dict has invalid format.")
+
+        raise AssertionError("Source dict has invalid format.")
 
     @staticmethod
-    def string_to_list(string: Union[str, List[str], None]) -> List[str]:
+    def string_to_list(string: Union[str, List[str], None]) -> List[Any]:
         """Convert a comma-separated and/or space-separated string into a Python list.
 
         Args:
             string: The string you'd like to convert.
 
-        Returns:
-            A python list object containing whatever was between commas and/or
-            spaces in the string.
-
+        Returns a python list object containing whatever was between commas and/or
+        spaces in the string.
         """
         if isinstance(string, str):
             if "{" in string:
@@ -114,23 +110,23 @@ class Util:
                     new_list[index] = None
             return new_list
 
-        elif isinstance(string, list):
+        if isinstance(string, list):
             return string  # If it's already a list, do nothing
 
-        elif string is None:
+        if string is None:
             return []  # If it's None, make it into an empty list
 
-        elif isinstance(string, (int, float)):
+        if isinstance(string, (int, float)):
             return [string]
 
-        elif str(type(string)) == "<class 'ruamel.yaml.comments.CommentedSeq'>":
+        if str(type(string)) == "<class 'ruamel.yaml.comments.CommentedSeq'>":
             # If it's a ruamel CommentedSeq, just pretend its a list
             # I did it as a str comparison so I didn't have to
             # import the actual ruamel.yaml classes
             return string
-        else:
-            # if we're passed anything else raise an error
-            raise AssertionError("Incorrect type in list for element {}".format(string))
+
+        # if we're passed anything else raise an error
+        raise AssertionError("Incorrect type in list for element {}".format(string))
 
     @staticmethod
     def string_to_lowercase_list(string: str) -> List[str]:
@@ -141,10 +137,8 @@ class Util:
         Args:
             string: The string you'd like to convert.
 
-        Returns:
-            A python list object containing whatever was between commas and/or
-            spaces in the string, with each item converted to lowercase.
-
+        Returns a python list object containing whatever was between commas and/or
+        spaces in the string, with each item converted to lowercase.
         """
         new_list = Util.string_to_list(string)
 
@@ -173,7 +167,7 @@ class Util:
             yield l[i:i + n]
 
     @staticmethod
-    def dict_merge(a, b, combine_lists=True):
+    def dict_merge(a, b, combine_lists=True) -> dict:
         """Recursively merge dictionaries.
 
         Used to merge dictionaries of dictionaries, like when we're merging
@@ -215,9 +209,7 @@ class Util:
                 Controls whether lists should be combined (extended) or
                 overwritten. Default is `True` which combines them.
 
-        Returns:
-            The merged dictionaries.
-
+        Returns the merged dictionaries.
         """
         # log.info("Dict Merge incoming A %s", a)
         # log.info("Dict Merge incoming B %s", b)
@@ -248,11 +240,11 @@ class Util:
         return result
 
     @staticmethod
-    def hex_string_to_list(input_string, output_length=3):
+    def hex_string_to_list(input_string, output_length=3) -> List[int]:
         """Take a string input of hex numbers and return a list of integers.
 
         This always groups the hex string in twos, so an input of ffff00 will
-        be returned as [255, 255, 0]
+        be returned as [255, 255, 0].
 
         Args:
             input_string: A string of incoming hex colors, like ffff00.
@@ -261,12 +253,9 @@ class Util:
                 extra characters if the input_string is too long, and it will
                 pad the left with zeros if the input string is too short.
 
-        Returns:
-            List of integers, like [255, 255, 0]
+        Returns list of integers, like [255, 255, 0].
 
-        Raises:
-            ValueError if the input string contains non-hex chars
-
+        Raises ValueError if the input string contains non-hex chars.
         """
         output = []
         input_string = str(input_string).zfill(output_length * 2)
@@ -285,9 +274,7 @@ class Util:
             maxvalue: Integer of the max value you'd like to return. Default is
                 255. (This is the real value of why this method exists.)
 
-        Returns:
-            Integer representation of the hex string.
-
+        Returns integer representation of the hex string.
         """
         return_int = int(str(inputstring), 16)
 
@@ -297,13 +284,13 @@ class Util:
         return return_int
 
     @staticmethod
-    def event_config_to_dict(config):
+    def event_config_to_dict(config) -> dict:
         """Convert event config to a dict."""
         return_dict = dict()
 
         if isinstance(config, dict):
             return config
-        elif isinstance(config, str):
+        if isinstance(config, str):
             if config == "None":
                 return {}
             config = Util.string_to_list(config)
@@ -323,8 +310,7 @@ class Util:
         if 0 <= source_int <= 255:
             return format(source_int, 'x').upper().zfill(2)
 
-        else:
-            raise ValueError("invalid source int: %s" % source_int)
+        raise ValueError("invalid source int: %s" % source_int)
 
     @staticmethod
     def pwm8_to_hex_string(source_int: int) -> str:
@@ -343,9 +329,9 @@ class Util:
 
         if 0 <= source_int <= 8:
             return lookup_table[source_int]
-        else:
-            raise ValueError("%s is invalid pwm hex value. (Expected value "
-                             "0-8)" % source_int)
+
+        raise ValueError("%s is invalid pwm hex value. (Expected value "
+                         "0-8)" % source_int)
 
     @staticmethod
     def pwm32_to_hex_string(source_int: int) -> str:
@@ -390,9 +376,9 @@ class Util:
 
         if 0 <= source_int <= 32:
             return lookup_table[source_int]
-        else:
-            raise ValueError("%s is invalid pwm hex value. (Expected value "
-                             "0-32)" % source_int)
+
+        raise ValueError("%s is invalid pwm hex value. (Expected value "
+                         "0-32)" % source_int)
 
     @staticmethod
     def pwm32_to_int(source_int: int) -> int:
@@ -437,9 +423,9 @@ class Util:
 
         if 0 <= source_int <= 32:
             return lookup_table[source_int]
-        else:
-            raise ValueError("%s is invalid pwm int value. (Expected value "
-                             "0-32)" % source_int)
+
+        raise ValueError("%s is invalid pwm int value. (Expected value "
+                         "0-32)" % source_int)
 
     @staticmethod
     def pwm8_to_int(source_int: int) -> int:
@@ -458,8 +444,8 @@ class Util:
 
         if 0 <= source_int <= 8:
             return lookup_table[source_int]
-        else:
-            raise ValueError("Invalid pwm value. (Expected value 0-8)")
+
+        raise ValueError("Invalid pwm value. (Expected value 0-8)")
 
     @staticmethod
     def power_to_on_off(power: float, max_period: int = 20) -> Tuple[int, int]:
@@ -487,11 +473,9 @@ class Util:
             num_chars: Total number of characters that will be returned. Default
                 is two.
 
-        Returns:
-            String, uppercase, zero padded to the num_chars.
+        Returns string, uppercase, zero padded to the num_chars.
 
         Example usage: Send "c" as source_hex, returns "0C".
-
         """
         if len(str(source_hex)) > num_chars:
             raise ValueError("Hex string is too long.")
@@ -524,9 +508,8 @@ class Util:
 
         If time is 'None' or a string of 'None', this method returns 0.
 
-        Returns:
-            Integer. The examples listed above return 200, 2000 and 0,
-            respectively
+        Returns an integer. The examples listed above return 200, 2000 and 0,
+        respectively.
         """
         if time_string is None:
             return 0
@@ -540,30 +523,29 @@ class Util:
             time_string = ''.join(i for i in time_string if not i.isalpha())
             return int(time_string)
 
-        elif 'D' in time_string:
+        if 'D' in time_string:
             time_string = ''.join(i for i in time_string if not i.isalpha())
             return int(float(time_string) * 86400 * 1000)
 
-        elif 'H' in time_string:
+        if 'H' in time_string:
             time_string = ''.join(i for i in time_string if not i.isalpha())
             return int(float(time_string) * 3600 * 1000)
 
-        elif 'M' in time_string:
+        if 'M' in time_string:
             time_string = ''.join(i for i in time_string if not i.isalpha())
             return int(float(time_string) * 60 * 1000)
 
-        elif time_string.endswith('S') or time_string.endswith('SEC'):
+        if time_string.endswith('S') or time_string.endswith('SEC'):
             time_string = ''.join(i for i in time_string if not i.isalpha())
             return int(float(time_string) * 1000)
-        else:
-            return int(time_string)
+
+        return int(time_string)
 
     @staticmethod
     def string_to_secs(time_string: str) -> float:
         """Decode a string of real-world time into an float of seconds.
 
         See 'string_to_ms' for a description of the time string.
-
         """
         time_string = str(time_string)
 
@@ -579,12 +561,10 @@ class Util:
         Args:
             class_string(str): The input string
 
-        Returns:
-            A reference to the python class object
+        Returns a reference to the python class object.
 
         This function came from here:
         http://stackoverflow.com/questions/452969/does-python-have-an-equivalent-to-java-class-forname
-
         """
         # todo I think there's a better way to do this in Python 3
         parts = class_string.split('.')
@@ -602,13 +582,10 @@ class Util:
             dic: Nested dict of dicts to get the value from.
             key_path: iterable of key paths
 
-        Returns:
-            value
+        Returns the value from the dict.
 
         This code came from here:
         http://stackoverflow.com/questions/14692690/access-python-nested-dictionary-items-via-a-list-of-keys
-
-
         """
         try:
             res = reduce(lambda d, k: d[k], key_path, dic)
@@ -625,7 +602,6 @@ class Util:
             dic: Nested dict of dicts to set the value in.
             key_path: Iterable of the path to the key of the value to set.
             value: Value to set.
-
         """
         Util.get_from_dict(dic, key_path[:-1])[key_path[-1]] = value
 
@@ -636,8 +612,7 @@ class Util:
         Args:
             num: The number to check
 
-        Returns: True or False
-
+        Returns True or False.
         """
         try:
             num = int(num)
@@ -653,8 +628,7 @@ class Util:
         Args:
             db: The decibel value (float) to convert to a gain
 
-        Returns:
-            Float
+        Returns float.
         """
         try:
             db = float(db)
@@ -673,8 +647,7 @@ class Util:
         Args:
             gain_string: The string to convert to a gain value
 
-        Returns:
-            Float containing a gain value (0.0 to 1.0)
+        Returns float containing a gain value (0.0 to 1.0).
         """
         gain_string = str(gain_string).lower()
 
@@ -703,23 +676,12 @@ class Util:
         return Util.first(futures, loop, timeout, False)
 
     @staticmethod
-    def ensure_future(coro_or_future, loop):
-        """Wrap ensure_future."""
-        if hasattr(asyncio, "ensure_future"):
-            return asyncio.ensure_future(coro_or_future, loop=loop)
-        else:
-            # hack to support 3.4 and 3.7 at the same time
-            _wrap_awaitable = getattr(asyncio, 'async')
-            return _wrap_awaitable(coro_or_future, loop=loop)   # pylint: disable-msg=deprecated-method
-
-    @staticmethod
-    @asyncio.coroutine
-    def first(futures: Iterable[asyncio.Future], loop, timeout=None, cancel_others=True):
+    async def first(futures: Iterable[asyncio.Future], loop, timeout=None, cancel_others=True):
         """Return first future and cancel others."""
         # wait for first
         try:
-            done, pending = yield from asyncio.wait(iter(futures), loop=loop, timeout=timeout,
-                                                    return_when=asyncio.FIRST_COMPLETED)
+            done, pending = await asyncio.wait(iter(futures), loop=loop, timeout=timeout,
+                                               return_when=asyncio.FIRST_COMPLETED)
         except asyncio.CancelledError:
             Util.cancel_futures(futures)
             raise
@@ -735,11 +697,10 @@ class Util:
         return next(iter(done))
 
     @staticmethod
-    @asyncio.coroutine
-    def race(futures: Dict[asyncio.Future, str], loop):
+    async def race(futures: Dict[asyncio.Future, str], loop):
         """Return key of first future and cancel others."""
         # wait for first
-        first = yield from Util.first(futures.keys(), loop=loop)
+        first = await Util.first(futures.keys(), loop=loop)
         return futures[first]
 
     @staticmethod

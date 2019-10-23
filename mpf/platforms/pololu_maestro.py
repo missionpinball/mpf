@@ -1,6 +1,5 @@
 """Pololu Maestro servo controller platform."""
 import math
-import asyncio
 import logging
 import serial
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
@@ -14,6 +13,8 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
 
     Works with Micro Maestro 6, and Mini Maestro 12, 18, and 24.
     """
+
+    __slots__ = ["config", "platform", "serial"]
 
     def __init__(self, machine):
         """Initialise Pololu Servo Controller platform."""
@@ -29,10 +30,9 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
         """Return string representation."""
         return '<Platform.Pololu_Maestro>'
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Initialise platform."""
-        yield from super().initialize()
+        await super().initialize()
         self.serial = serial.Serial(self.config['port'])
 
     def stop(self):
@@ -41,27 +41,35 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
             self.serial.close()
             self.serial = None
 
-    @asyncio.coroutine
-    def configure_servo(self, number: str):
+    async def configure_servo(self, number: str):
         """Configure a servo device in platform.
 
         Args:
             config (dict): Configuration of device
         """
-        return PololuServo(int(number), self.config, self.serial)
+        try:
+            controller_str, number_str = number.split("-")
+        except ValueError:
+            number_str = number
+            controller_str = "12"
+
+        return PololuServo(int(controller_str), int(number_str), self.config, self.serial)
 
 
 class PololuServo(ServoPlatformInterface):
 
     """A servo on the pololu servo controller."""
 
-    def __init__(self, number, config, serial_port):
+    __slots__ = ["log", "number", "controller_number", "config", "serial", "cmd_header"]
+
+    def __init__(self, controller_number, number, config, serial_port):
         """Initialise Pololu servo."""
         self.log = logging.getLogger('PololuServo')
         self.number = number
+        self.controller_number = controller_number
         self.config = config
         self.serial = serial_port
-        self.cmd_header = bytes([0xaa, 0xc])
+        self.cmd_header = bytes([0xaa, self.controller_number])
 
     def go_to_position(self, position):
         """Set channel to a specified target value.

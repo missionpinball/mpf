@@ -1,6 +1,4 @@
 """Contains the base class for autofire coil devices."""
-import asyncio
-
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
@@ -10,8 +8,8 @@ from mpf.core.system_wide_device import SystemWideDevice
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.machine import MachineController
-    from typing import List
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
+    from typing import List     # pylint: disable-msg=cyclic-import,unused-import
 
 
 @DeviceMonitor(_enabled="enabled")
@@ -51,9 +49,8 @@ class AutofireCoil(SystemWideDevice):
         self._timeout_disable_time = None
         self._timeout_hits = []     # type: List[float]
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         if self.config['ball_search_order']:
             self.config['playfield'].ball_search.register(
                 self.config['ball_search_order'], self._ball_search, self.name)
@@ -104,8 +101,8 @@ class AutofireCoil(SystemWideDevice):
 
         self.debug_log("Enabling")
 
-        recycle = True if self.config['coil_overwrite'].get('recycle', None) in (True, None) else False
-        debounce = False if self.config['switch_overwrite'].get('debounce', None) in (None, "quick") else True
+        recycle = self.config['coil_overwrite'].get('recycle', None) in (True, None)
+        debounce = self.config['switch_overwrite'].get('debounce', None) not in (None, "quick")
 
         self._rule = self.machine.platform_controller.set_pulse_on_hit_rule(
             SwitchRuleSettings(switch=self.config['switch'], debounce=debounce,

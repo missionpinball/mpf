@@ -5,18 +5,18 @@ from unittest.mock import MagicMock
 
 class TestBallDeviceNoPlungerSwitch(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_ball_device_no_plunger_switch.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_device/'
 
     def put_ball_in_trough(self):
         self.machine.switch_controller.process_switch('s_trough_1', 1)
         self.advance_time_and_run(1)
-        self.assertEqual(self.machine.ball_devices.trough.balls, 1)
+        self.assertEqual(self.machine.ball_devices["trough"].balls, 1)
 
-        self.trough_coil = self.machine.coils.trough_eject
+        self.trough_coil = self.machine.coils["trough_eject"]
         self.trough_coil.pulse = MagicMock()
 
     def test_add_ball_to_pf(self):
@@ -32,8 +32,8 @@ class TestBallDeviceNoPlungerSwitch(MpfTestCase):
 
         self.advance_time_and_run(11)
 
-        self.assertEqual(self.machine.ball_devices.trough.balls, 0)
-        self.assertEqual(self.machine.ball_devices.playfield.balls, 1)
+        self.assertEqual(self.machine.ball_devices["trough"].balls, 0)
+        self.assertEqual(self.machine.ball_devices["playfield"].balls, 1)
 
         # hit some playfield switches
         self.advance_time_and_run(1)
@@ -49,5 +49,5 @@ class TestBallDeviceNoPlungerSwitch(MpfTestCase):
         self.machine.switch_controller.process_switch('s_trough_1', 1)
         self.advance_time_and_run(1)
 
-        self.assertEqual(self.machine.ball_devices.trough.balls, 1)
-        self.assertEqual(self.machine.ball_devices.playfield.balls, 0)
+        self.assertEqual(self.machine.ball_devices["trough"].balls, 1)
+        self.assertEqual(self.machine.ball_devices["playfield"].balls, 0)

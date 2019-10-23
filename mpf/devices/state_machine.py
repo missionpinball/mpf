@@ -1,6 +1,4 @@
 """A generic state machine."""
-import asyncio
-
 from mpf.core.device_monitor import DeviceMonitor
 
 from mpf.core.mode import Mode
@@ -28,30 +26,45 @@ class StateMachine(SystemWideDevice, ModeDevice):
         self._handlers = []
         self._show = None
 
-    @asyncio.coroutine
-    def device_added_system_wide(self):
+    async def device_added_system_wide(self):
         """Initialise internal state."""
-        yield from super().device_added_system_wide()
+        await super().device_added_system_wide()
 
         if self.config['persist_state']:
             self.raise_config_error("Cannot set persist_state for system-wide state_machine", 1)
 
         self._start_state("start")
 
+    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None):
+        """Validate transitions."""
+        result = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
+        states = config.get("states", {})
+        for transition in config.get("transitions", []):
+            for state in transition["source"]:
+                if state not in states:
+                    self.raise_config_error("Source {} of transition {} not found in states.".format(
+                        transition["source"], transition), 2)
+            if transition["target"] not in states:
+                self.raise_config_error("Target {} of transition {} not found in states.".format(
+                    transition["target"], transition), 3)
+        return result
+
     @property
     def state(self):
         """Return the current state."""
         if self.config['persist_state']:
             return self.player["state_machine_{}".format(self.name)]
-        else:
-            return self._state
+
+        return self._state
 
     @state.setter
     def state(self, value):
         """Set the current state."""
         old = self.state
         if self.config['persist_state']:
+            old = self.player["state_machine_{}".format(self.name)]
             self.player["state_machine_{}".format(self.name)] = value
+            self.notify_virtual_change(self, old, value)
         else:
             self._state = value
 

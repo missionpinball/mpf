@@ -2,7 +2,7 @@
 import asyncio
 import logging
 
-from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.platforms.pololu.pololu_ticcmd_wrapper import PololuTiccmdWrapper
 from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
 from mpf.core.platform import StepperPlatform
@@ -31,8 +31,7 @@ class PololuTICHardwarePlatform(StepperPlatform):
             stepper.shutdown()
         self._steppers = []
 
-    @asyncio.coroutine
-    def configure_stepper(self, number: str, config: dict) -> "PololuTICStepper":
+    async def configure_stepper(self, number: str, config: dict) -> "PololuTICStepper":
         """Configure a smart stepper device in platform.
 
         Args:
@@ -40,7 +39,7 @@ class PololuTICHardwarePlatform(StepperPlatform):
         """
         stepper = PololuTICStepper(number, config, self.machine)
         self._steppers.append(stepper)
-        yield from stepper.initialize()
+        await stepper.initialize()
         return stepper
 
     @classmethod
@@ -73,11 +72,10 @@ class PololuTICStepper(StepperPlatformInterface):
         if self.config['max_speed'] > 500000000:
             raise ConfigFileError("max_speed must be less than or equal to 500,000,000", 3, self.log.name)
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Configure the stepper."""
         self.log.debug("Looking for TIC Device with serial number %s.", self.serial_number)
-        status = yield from self.tic.get_status()
+        status = await self.tic.get_status()
 
         if "Low VIN" in status['Errors currently stopping the motor']:
             self.log.debug("WARNING: Reporting Low VIN")
@@ -163,16 +161,14 @@ class PololuTICStepper(StepperPlatformInterface):
         self.tic.halt_and_hold()
         self.tic.stop()
 
-    @asyncio.coroutine
-    def wait_for_move_completed(self):
+    async def wait_for_move_completed(self):
         """Wait until move completed."""
-        while not (yield from self.is_move_complete()):
-            yield from asyncio.sleep(1 / self.config['poll_ms'], loop=self.machine.clock.loop)
+        while not await self.is_move_complete():
+            await asyncio.sleep(1 / self.config['poll_ms'], loop=self.machine.clock.loop)
 
-    @asyncio.coroutine
-    def is_move_complete(self) -> bool:
+    async def is_move_complete(self) -> bool:
         """Return true if move is complete."""
-        status = yield from self.tic.get_status()
+        status = await self.tic.get_status()
         current_position = status['Current position']
         self.log.debug("Target Position: %s Current Position: %s", self._position, current_position)
         return bool(self._position == current_position)

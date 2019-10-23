@@ -1,10 +1,7 @@
 """Physical segment displays."""
-import asyncio
 from collections import namedtuple
 from operator import attrgetter
 from typing import List
-
-from mpf.exceptions.ConfigFileError import ConfigFileError
 
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.placeholder_manager import TextTemplate
@@ -12,7 +9,7 @@ from mpf.core.system_wide_device import SystemWideDevice
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
+    from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface     # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 TextStack = namedtuple("TextStack", ["text", "priority", "key"])
 
@@ -36,9 +33,8 @@ class SegmentDisplay(SystemWideDevice):
         self.text = ""                      # type: str
         self.flashing = False               # type: bool
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         """Initialise display."""
         # load platform
         self.platform = self.machine.get_platform_sections('segment_displays', self.config['platform'])
@@ -48,8 +44,8 @@ class SegmentDisplay(SystemWideDevice):
 
         # configure hardware
         try:
-            self.hw_display = yield from self.platform.configure_segment_display(self.config['number'],
-                                                                                 self.config['platform_settings'])
+            self.hw_display = await self.platform.configure_segment_display(self.config['number'],
+                                                                            self.config['platform_settings'])
         except AssertionError as e:
             raise AssertionError("Error in platform while configuring segment display {}. "
                                  "See error above.".format(self.name)) from e

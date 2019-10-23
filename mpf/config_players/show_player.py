@@ -1,5 +1,12 @@
 """Show config player."""
+from mpf.core.placeholder_manager import ConditionalEvent
+
 from mpf.config_players.device_config_player import DeviceConfigPlayer
+
+RESERVED_KEYS = ["show", "priority", "speed", "block_queue", "start_step", "loops", "sync_ms", "manual_advance",
+                 "key", "show_tokens", "events_when_played", "events_when_stopped", "events_when_looped",
+                 "events_when_paused", "events_when_resumed", "events_when_advanced",
+                 "events_when_stepped_back", "events_when_updated", "events_when_completed"]
 
 
 class ShowPlayer(DeviceConfigPlayer):
@@ -10,7 +17,20 @@ class ShowPlayer(DeviceConfigPlayer):
     show_section = 'shows'
     allow_placeholders_in_keys = True
 
-    __slots__ = []
+    __slots__ = ["_actions"]
+
+    def __init__(self, machine):
+        """Initialise show player."""
+        super().__init__(machine)
+        self._actions = {
+            'play': self._play,
+            'stop': self._stop,
+            'pause': self._pause,
+            'resume': self._resume,
+            'advance': self._advance,
+            'step_back': self._step_back,
+            'update': self._update
+        }
 
     # pylint: disable-msg=too-many-arguments
     def play(self, settings, context, calling_context, priority=0, **kwargs):
@@ -22,8 +42,7 @@ class ShowPlayer(DeviceConfigPlayer):
             start_time = self.machine.clock.get_time()
         for show, show_settings in settings.items():
             # Look for a conditional event in the show name
-            show_dict = self.machine.placeholder_manager.parse_conditional_template(show)
-            if show_dict['condition'] and not show_dict['condition'].evaluate(kwargs):
+            if show.condition and not show.condition.evaluate(kwargs):
                 continue
 
             show_settings = dict(show_settings)
@@ -36,7 +55,23 @@ class ShowPlayer(DeviceConfigPlayer):
                 show_settings['priority'] = priority
             # todo need to add this key back to the config player
 
-            self._update_show(show_dict["name"], show_settings, context, queue, start_time, kwargs)
+            self._update_show(show.name, show_settings, context, queue, start_time, kwargs)
+
+    def _expand_device(self, device):
+        # parse conditionals
+        devices = super()._expand_device(device)
+        for index, device_entry in enumerate(devices):
+            if not isinstance(device_entry, ConditionalEvent):
+                devices[index] = self.machine.placeholder_manager.parse_conditional_template(device_entry)
+        return devices
+
+    def _expand_device_config(self, device_settings):
+        """Validate show_tokens."""
+        for key in RESERVED_KEYS:
+            if key in device_settings["show_tokens"]:
+                self.raise_config_error("Key {} is not allowed in show_tokens of your show_player because it is also "
+                                        "an option in show_player. Did you indent that option too far?".format(key), 1)
+        return device_settings
 
     def handle_subscription_change(self, value, settings, priority, context):
         """Handle subscriptions."""
@@ -49,12 +84,12 @@ class ShowPlayer(DeviceConfigPlayer):
             if 'key' in show_settings and show_settings['key']:
                 key = show_settings['key']
             else:
-                key = show
+                key = show.name
 
             if value:
-                self._play(key, instance_dict, show, show_settings, False, None, {})
+                self._play(key, instance_dict, show.name, show_settings, False, None, {})
             else:
-                self._stop(key, instance_dict, show, show_settings, False, None, {})
+                self._stop(key, instance_dict, show.name, show_settings, False, None, {})
 
     # pylint: disable-msg=too-many-arguments
     def _play(self, key, instance_dict, show, show_settings, queue, start_time, placeholder_args):
@@ -66,7 +101,8 @@ class ShowPlayer(DeviceConfigPlayer):
             stop_callback = queue.clear
 
         start_step = show_settings['start_step'].evaluate(placeholder_args)
-        show_tokens = {k: v.evaluate(placeholder_args) for k, v in show_settings['show_tokens'].items()}
+        show_tokens = {k: v.evaluate(placeholder_args.get("show_tokens", {}))
+                       for k, v in show_settings['show_tokens'].items()}
 
         show_config = self.machine.show_controller.create_show_config(
             show, show_settings['priority'], show_settings['speed'], show_settings['loops'], show_settings['sync_ms'],
@@ -151,19 +187,9 @@ class ShowPlayer(DeviceConfigPlayer):
         else:
             key = show
 
-        actions = {
-            'play': self._play,
-            'stop': self._stop,
-            'pause': self._pause,
-            'resume': self._resume,
-            'advance': self._advance,
-            'step_back': self._step_back,
-            'update': self._update
-        }
-
-        action = actions.get(show_settings['action'], None)
-
-        if not callable(action):
+        try:
+            action = self._actions[show_settings['action']]
+        except KeyError:
             raise AssertionError("Invalid action {} in show_player {}".format(
                 show_settings['action'], key))
 

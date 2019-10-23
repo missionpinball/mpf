@@ -1,5 +1,4 @@
 """A digital output on either a light or driver platform."""
-import asyncio
 from functools import partial
 from typing import Union, Tuple
 
@@ -12,10 +11,10 @@ from mpf.core.system_wide_device import SystemWideDevice
 from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
 
 MYPY = False
-if MYPY:    # noqa
-    from mpf.core.platform import DriverPlatform, LightsPlatform
-    from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
-    from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+if MYPY:    # pragma: no cover
+    from mpf.core.platform import DriverPlatform, LightsPlatform    # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface  # pylint: disable-msg=cyclic-import,unused-import; # noqa
+    from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 
 class DigitalOutput(SystemWideDevice):
@@ -36,10 +35,9 @@ class DigitalOutput(SystemWideDevice):
         super().__init__(machine, name)
         self.delay = DelayManager(self.machine)
 
-    @asyncio.coroutine
-    def _initialize(self):
+    async def _initialize(self):
         """Initialise the hardware driver for this digital output."""
-        yield from super()._initialize()
+        await super()._initialize()
         if self.config['type'] == "driver":
             self._initialize_driver()
         elif self.config['type'] == "light":
@@ -88,8 +86,8 @@ class DigitalOutput(SystemWideDevice):
         del max_fade_ms
         if state:
             return 1.0, -1, True
-        else:
-            return 0.0, -1, True
+
+        return 0.0, -1, True
 
     @event_handler(3)
     def event_pulse(self, pulse_ms, **kwargs):

@@ -1,15 +1,15 @@
 from mpf.core.utility_functions import Util
-from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf._version import log_url
 
 
 class TestConfig(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_config_interface.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/config_interface/'
 
     def _early_machine_init(self, machine):

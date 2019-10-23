@@ -3,10 +3,10 @@ from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 class TestVariablePlayer(MpfFakeGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/variable_player/'
 
     def test_variable_player(self):
@@ -105,7 +105,7 @@ class TestVariablePlayer(MpfFakeGameTestCase):
         # mode2 should auto start
         self.assertFalse(self.machine.mode_controller.is_active('mode1'))
         self.assertTrue(self.machine.mode_controller.is_active('mode2'))
-        self.assertTrue(self.machine.modes.mode2.active)
+        self.assertTrue(self.machine.modes["mode2"].active)
 
         # same score as during last ball
         self.assertEqual(1200, self.machine.game.player.score)
@@ -153,8 +153,8 @@ class TestVariablePlayer(MpfFakeGameTestCase):
         self.advance_time_and_run()
 
     def test_blocking(self):
-        self.machine.set_machine_var("player1_score", 42)
-        self.machine.set_machine_var("player2_score", 23)
+        self.machine.variables.set_machine_var("player1_score", 42)
+        self.machine.variables.set_machine_var("player2_score", 23)
 
         # start game
         self.start_game()
@@ -189,9 +189,9 @@ class TestVariablePlayer(MpfFakeGameTestCase):
         self.stop_game()
 
         self.assertMachineVarEqual(1200, "player1_score")
-        self.assertFalse(self.machine.is_machine_var("player2_score"))
-        self.assertFalse(self.machine.is_machine_var("player3_score"))
-        self.assertFalse(self.machine.is_machine_var("player4_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player2_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player3_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player4_score"))
 
     def test_blocking_multiple_with_logic_block(self):
         # this test was adapted from a real game
@@ -235,8 +235,8 @@ class TestVariablePlayer(MpfFakeGameTestCase):
         # start non game mode outside of game
         self.post_event("start_non_game_mode")
 
-        self.machine.set_machine_var("test", "321")
-        self.machine.set_machine_var("test2", 3)
+        self.machine.variables.set_machine_var("test", "321")
+        self.machine.variables.set_machine_var("test2", 3)
 
         self.post_event("test_event")
 

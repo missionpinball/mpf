@@ -21,7 +21,6 @@ class PlatformBatchLight(LightPlatformInterface, abc.ABC):
     @abc.abstractmethod
     def get_max_fade_ms(self):
         """Return max fade ms."""
-        pass
 
     def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
         """Mark dirty and remember callback."""
@@ -72,8 +71,7 @@ class PlatformBatchLightSystem:
         except asyncio.CancelledError:
             pass
 
-    @asyncio.coroutine
-    def _send_updates(self):
+    async def _send_updates(self):
         while True:
             while self.dirty_schedule and self.dirty_schedule[0][0] <= self.clock.get_time():
                 self.dirty_lights.add(self.dirty_schedule[0][1])
@@ -89,19 +87,18 @@ class PlatformBatchLightSystem:
                     sequential_lights.append(light)
                 else:
                     # sequence ended
-                    yield from self._send_update_batch(sequential_lights)
+                    await self._send_update_batch(sequential_lights)
                     # this light is a new sequence
                     sequential_lights = [light]
 
             if sequential_lights:
-                yield from self._send_update_batch(sequential_lights)
+                await self._send_update_batch(sequential_lights)
 
             self.dirty_lights.clear()
 
-            yield from asyncio.sleep(.001, loop=self.clock.loop)
+            await asyncio.sleep(.001, loop=self.clock.loop)
 
-    @asyncio.coroutine
-    def _send_update_batch(self, sequential_lights):
+    async def _send_update_batch(self, sequential_lights):
         sequential_brightness_list = []
         common_fade_ms = None
         current_time = self.clock.get_time()
@@ -115,14 +112,14 @@ class PlatformBatchLightSystem:
             if common_fade_ms == fade_ms and len(sequential_brightness_list) < self.max_batch_size:
                 sequential_brightness_list.append((light, brightness, common_fade_ms))
             else:
-                yield from self.update_callback(sequential_brightness_list)
+                await self.update_callback(sequential_brightness_list)
                 # start new list
                 current_time = self.clock.get_time()
                 common_fade_ms = fade_ms
                 sequential_brightness_list = [(light, brightness, common_fade_ms)]
 
         if sequential_brightness_list:
-            yield from self.update_callback(sequential_brightness_list)
+            await self.update_callback(sequential_brightness_list)
 
     def mark_dirty(self, light: "PlatformBatchLight"):
         """Mark as dirty."""

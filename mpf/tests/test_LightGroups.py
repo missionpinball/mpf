@@ -5,10 +5,10 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class TestLightGroups(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'light_groups.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/light/'
 
     def test_color(self):

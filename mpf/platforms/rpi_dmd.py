@@ -3,7 +3,6 @@
 Contains support for the Raspi low-level RGB LED tile driver of hzeller
 (https://github.com/hzeller/rpi-rgb-led-matrix).
 """
-import asyncio
 import atexit
 from PIL import Image
 
@@ -36,8 +35,7 @@ class RpiDmdPlatform(RgbDmdPlatform):
         self.config = None
         atexit.register(self.stop)
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Initialise platform."""
         self.config = self.machine.config_validator.validate_config(
             config_spec='rpi_dmd',
@@ -70,14 +68,14 @@ class RpiRgbDmdDevice(DmdPlatformInterface):
         xs = config["cols"]
         ys = config["rows"]
         self.img = Image.frombytes("RGB", (xs, ys), b'\x11' * xs * ys * 3)
-        self.rgbOpts = RGBMatrixOptions()
+        self.rgb_opts = RGBMatrixOptions()
         # Rudeboy way of setting the RGBMatrixOptions
         for k, v in config.items():
             try:
-                setattr(self.rgbOpts, k, v)
+                setattr(self.rgb_opts, k, v)
             except Exception:   # pylint: disable-msg=broad-except
                 raise AssertionError("RpiRgbDmdDevice: couldn't set", k, v)
-        self.matrix = RGBMatrix(options=self.rgbOpts)
+        self.matrix = RGBMatrix(options=self.rgb_opts)
         self.matrix.SetImage(self.img)
 
     def update(self, data):

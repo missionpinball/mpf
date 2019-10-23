@@ -4,10 +4,10 @@ from mpf.tests.MpfTestCase import MpfTestCase, MagicMock
 
 class TestBonusMode(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/bonus/'
 
     def _start_game(self):
@@ -78,7 +78,7 @@ class TestBonusMode(MpfTestCase):
         self.assertEqual(5, self.machine.game.player.bonus_multiplier)
 
         # make some changes for the next test
-        self.machine.modes.bonus.config['mode_settings']['keep_multiplier'] = False
+        self.machine.modes["bonus"].config['mode_settings']['keep_multiplier'] = False
 
         # drain a ball
         self.machine.game.balls_in_play = 0
@@ -99,7 +99,7 @@ class TestBonusMode(MpfTestCase):
         self.assertEqual(1, self.machine.game.player.bonus_multiplier)
 
         # make some changes for the next test
-        self.machine.modes.bonus.bonus_entries[0]['skip_if_zero'] = True
+        self.machine.modes["bonus"].bonus_entries[0]['skip_if_zero'] = True
         self._last_event_kwargs = dict()
 
         # drain a ball

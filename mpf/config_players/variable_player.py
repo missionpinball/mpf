@@ -93,12 +93,12 @@ class VariablePlayer(ConfigPlayer):
                 # default to current player
                 self.machine.game.player[var] = value
         elif entry['action'] == "add_machine":
-            old_value = self.machine.get_machine_var(var)
+            old_value = self.machine.variables.get_machine_var(var)
             if old_value is None:
                 old_value = 0
-            self.machine.set_machine_var(var, old_value + value)
+            self.machine.variables.set_machine_var(var, old_value + value)
         elif entry['action'] == "set_machine":
-            self.machine.set_machine_var(var, value)
+            self.machine.variables.set_machine_var(var, value)
         else:
             self.raise_config_error("Invalid value: {}".format(entry), 8, context=context)
 
@@ -116,13 +116,13 @@ class VariablePlayer(ConfigPlayer):
             self.raise_config_error("Settings of variable_player should "
                                     "be a dict. But are: {}".format(settings), 5, context=name)
         for var, s in settings.items():
-            var_dict = self.machine.placeholder_manager.parse_conditional_template(var)
+            var_conditional_event = self.machine.placeholder_manager.parse_conditional_template(var)
             value_dict = self._parse_config(s, name)
-            value_dict["condition"] = var_dict["condition"]
-            config[var_dict["name"]] = value_dict
-            if not bool(re.match('^[0-9a-zA-Z_-]+$', var_dict["name"])):
+            value_dict["condition"] = var_conditional_event.condition
+            config[var_conditional_event.name] = value_dict
+            if not bool(re.match('^[0-9a-zA-Z_-]+$', var_conditional_event.name)):
                 self.raise_config_error("Variable may only contain letters, numbers, dashes and underscores. "
-                                        "Name: {}".format(var_dict["name"]), 4, context=name)
+                                        "Name: {}".format(var_conditional_event.name), 4, context=name)
         return config
 
     def get_express_config(self, value: Any) -> dict:

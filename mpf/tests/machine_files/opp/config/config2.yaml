@@ -24,6 +24,10 @@ switches:
         number: 0-8
     s_matrix_test:
         number: 3-48
+    s_matrix_test2:
+        number: 3-32
+    s_matrix_test3:
+        number: 3-95
 
 coils:
     c_test:

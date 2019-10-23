@@ -1,6 +1,4 @@
 """Contains the Playfield device class which represents the actual playfield in a pinball machine."""
-import asyncio
-
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
 from mpf.core.system_wide_device import SystemWideDevice
@@ -42,16 +40,15 @@ class Playfield(SystemWideDevice):
 
         self._incoming_balls = []
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         if 'default' in self.config['tags']:
             self.machine.playfield = self
 
         # Set up event handlers
 
         # Watch for balls added to the playfield
-        for device in self.machine.ball_devices:
+        for device in self.machine.ball_devices.values():
             if device.is_playfield():
                 continue
             for target in device.config['eject_targets']:
@@ -81,7 +78,7 @@ class Playfield(SystemWideDevice):
         self.machine.events.add_handler('sw_' + self.name + '_active',
                                         self._playfield_switch_hit)
 
-        for device in self.machine.playfield_transfers:
+        for device in self.machine.playfield_transfers.values():
             if device.config['eject_target'] == self:
                 self.machine.events.add_handler(
                     event='balldevice_' + device.name +
@@ -92,21 +89,16 @@ class Playfield(SystemWideDevice):
                     '_ejecting_ball',
                     handler=self._source_device_ejecting_ball)
 
-    @asyncio.coroutine
-    def expected_ball_received(self):
+    async def expected_ball_received(self):
         """Handle an expected ball."""
         # We do nothing in that case
-        pass
 
-    @asyncio.coroutine
-    def unexpected_ball_received(self):
+    async def unexpected_ball_received(self):
         """Handle an unexpected ball."""
         # We do nothing in that case
-        pass
 
     @staticmethod
-    @asyncio.coroutine
-    def wait_for_ready_to_receive(source):
+    async def wait_for_ready_to_receive(source):
         """Playfield is always ready to receive."""
         del source
         return True
@@ -175,7 +167,7 @@ class Playfield(SystemWideDevice):
         return 999
 
     def add_ball(self, balls=1, source_device=None,
-                 player_controlled=False):
+                 player_controlled=False) -> bool:
         """Add live ball(s) to the playfield.
 
         Args:
@@ -185,9 +177,8 @@ class Playfield(SystemWideDevice):
             player_controlled: Boolean which specifies whether this event is
                 player controlled. (See not below for details)
 
-        Returns:
-            True if it's able to process the add_ball() request, False if it
-            cannot.
+        Returns True if it's able to process the add_ball() request, False if it
+        cannot.
 
         The source_device arg is included to give you an options for specifying
         the source of the ball(s) to be added. This argument is optional, so if
@@ -230,11 +221,10 @@ class Playfield(SystemWideDevice):
         If there is no player_controlled_eject_tag, MPF assumes it's a manual
         plunger and will wait for the ball to disappear from the device based
         on the device's ball count decreasing.
-
         """
         if balls == 0:
             return False
-        elif balls < 0:
+        if balls < 0:
             raise AssertionError("Received request to add negative balls, which "
                                  "doesn't  make sense. Not adding any balls...")
 

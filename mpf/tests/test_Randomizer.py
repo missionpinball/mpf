@@ -5,10 +5,10 @@ from mpf.core.randomizer import Randomizer
 
 class TestRandomizer(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'randomizer.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/randomizer/'
 
     def test_one_element_with_force_different(self):

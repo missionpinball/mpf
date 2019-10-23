@@ -3,10 +3,10 @@ from mpf.tests.MpfGameTestCase import MpfGameTestCase
 
 class TestBallDeviceEventEjector(MpfGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_ball_device_event_ejector.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_device/'
 
     def testEject(self):

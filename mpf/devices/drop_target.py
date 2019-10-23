@@ -1,5 +1,4 @@
 """Contains the base classes for drop targets and drop target banks."""
-import asyncio
 from typing import List
 from typing import Set
 
@@ -15,7 +14,7 @@ from mpf.core.system_wide_device import SystemWideDevice
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.devices.driver import Driver
+    from mpf.devices.driver import Driver   # pylint: disable-msg=cyclic-import,unused-import
 
 
 @DeviceMonitor("complete")
@@ -45,9 +44,8 @@ class DropTarget(SystemWideDevice):
 
         self._ignore_switch_hits = False
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.reset_coil = self.config['reset_coil']
         self.knockdown_coil = self.config['knockdown_coil']
         self.banks = set()
@@ -84,26 +82,24 @@ class DropTarget(SystemWideDevice):
             self.reset_coil.pulse()
             return True
         # if down. knock down again
-        elif self.complete and self.knockdown_coil:
+        if self.complete and self.knockdown_coil:
             self.knockdown_coil.pulse()
             return True
         return False
 
     def _ball_search_phase2(self):
         if self.reset_coil and self.knockdown_coil:
+            self._in_ball_search = True
             if self.complete:
-                self._in_ball_search = True
                 self.reset_coil.pulse()
                 self.delay.add(100, self._ball_search_knockdown)
-                return True
             else:
-                self._in_ball_search = True
                 self.knockdown_coil.pulse()
                 self.delay.add(100, self._ball_search_reset)
-                return True
-        else:
-            # fall back to phase1
-            return self._ball_search_phase1()
+            return True
+
+        # fall back to phase1
+        return self._ball_search_phase1()
 
     def _ball_search_phase3(self):
         if self.complete:
@@ -113,17 +109,19 @@ class DropTarget(SystemWideDevice):
                     self._in_ball_search = True
                     self.delay.add(100, self._ball_search_knockdown)
                 return True
-            else:
-                return self._ball_search_phase1()
-        else:
-            if self.knockdown_coil:
-                self.knockdown_coil.pulse()
-                if self.reset_coil:
-                    self._in_ball_search = True
-                    self.delay.add(100, self._ball_search_reset)
-                return True
-            else:
-                return self._ball_search_phase1()
+
+            # fall back to phase1
+            return self._ball_search_phase1()
+
+        if self.knockdown_coil:
+            self.knockdown_coil.pulse()
+            if self.reset_coil:
+                self._in_ball_search = True
+                self.delay.add(100, self._ball_search_reset)
+            return True
+
+        # fall back to phase1
+        return self._ball_search_phase1()
 
     def _ball_search_iteration_finish(self):
         self._in_ball_search = False
@@ -142,12 +140,12 @@ class DropTarget(SystemWideDevice):
             # phase 1: do not change state.
             # if up. reset again
             return self._ball_search_phase1()
-        elif phase == 2:
+        if phase == 2:
             # phase 2: if we can reset and knockdown the target we will do that
             return self._ball_search_phase2()
-        else:
-            # phase3: reset no matter what
-            return self._ball_search_phase3()
+
+        # phase3: reset no matter what
+        return self._ball_search_phase3()
 
     def _register_switch_handlers(self, **kwargs):
         del kwargs
@@ -303,9 +301,8 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         """Return true if this device can exist outside of a game."""
         return True
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.drop_targets = self.config['drop_targets']
         self.reset_coil = self.config['reset_coil']
         self.reset_coils = self.config['reset_coils']
@@ -314,10 +311,9 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         """Add targets."""
         self._add_targets_to_bank()
 
-    @asyncio.coroutine
-    def device_added_system_wide(self):
+    async def device_added_system_wide(self):
         """Add targets."""
-        yield from super().device_added_system_wide()
+        await super().device_added_system_wide()
         self._add_targets_to_bank()
 
     def _add_targets_to_bank(self):
@@ -350,8 +346,8 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         if self.down == 0:
             self.info_log('All targets are already up. Will not reset bank.')
             return
-        else:
-            self.info_log('%s targets are down. Will reset those.', self.down)
+
+        self.info_log('%s targets are down. Will reset those.', self.down)
 
         # figure out all the coils we need to pulse
         coils = set()       # type: Set[Driver]

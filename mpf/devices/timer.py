@@ -1,6 +1,5 @@
 """Mode timers."""
-import asyncio
-from typing import List, Generator
+from typing import List
 
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.delays import DelayManager
@@ -10,9 +9,9 @@ from mpf.core.mode import Mode
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.machine import MachineController
-    from mpf.core.clock import PeriodicTask
-    from mpf.core.events import EventHandlerKey
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.clock import PeriodicTask     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.events import EventHandlerKey     # pylint: disable-msg=cyclic-import,unused-import
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -51,15 +50,13 @@ class Timer(ModeDevice):
         self.event_keys = list()            # type: List[EventHandlerKey]
         self.delay = None                   # type: DelayManager
 
-    @asyncio.coroutine
-    def device_added_to_mode(self, mode: Mode) -> Generator[int, None, None]:
+    async def device_added_to_mode(self, mode: Mode) -> None:
         """Device added in mode."""
-        yield from super().device_added_to_mode(mode)
+        await super().device_added_to_mode(mode)
         self.tick_var = '{}_{}_tick'.format(mode.name, self.name)
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.ticks_remaining = 0
         self.max_value = self.config['max_value']
         self.direction = self.config['direction'].lower()

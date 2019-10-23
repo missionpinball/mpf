@@ -4,10 +4,10 @@ from mpf.tests.MpfTestCase import test_config
 
 class TestSegmentDisplay(MpfFakeGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/segment_display/'
 
     @test_config("game.yaml")
@@ -166,7 +166,7 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.assertEqual("1: 0", display1.hw_display.text)
         self.assertEqual("2: 0", display2.hw_display.text)
 
-        self.machine.set_machine_var("test", 42)
+        self.machine.variables.set_machine_var("test", 42)
         self.advance_time_and_run()
 
         self.assertEqual("1: 0", display1.hw_display.text)
@@ -179,7 +179,7 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.assertEqual("2: 42", display2.hw_display.text)
 
         self.machine.game.player.score += 23
-        self.machine.set_machine_var("test", 1337)
+        self.machine.variables.set_machine_var("test", 1337)
         self.advance_time_and_run()
         self.assertEqual("1: 123", display1.hw_display.text)
         self.assertEqual("2: 1337", display2.hw_display.text)
@@ -193,17 +193,17 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.assertEqual("1: 123", display1.hw_display.text)
         self.assertEqual("2: 1337", display2.hw_display.text)
 
-        self.machine.modes.mode1.start()
+        self.machine.modes["mode1"].start()
         self.advance_time_and_run(.1)
         self.assertEqual("MODE1", display1.hw_display.text)
         self.assertEqual("MODE1", display2.hw_display.text)
 
-        self.machine.modes.mode1.stop()
+        self.machine.modes["mode1"].stop()
         self.advance_time_and_run(7)
         self.assertEqual("1: 123", display1.hw_display.text)
         self.assertEqual("2: 1337", display2.hw_display.text)
 
-        self.machine.modes.mode1.start()
+        self.machine.modes["mode1"].start()
         self.advance_time_and_run(5)
         self.assertEqual("MODE1", display1.hw_display.text)
         self.assertEqual("MODE1", display2.hw_display.text)

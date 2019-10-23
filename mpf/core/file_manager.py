@@ -5,8 +5,8 @@ import os
 from mpf.file_interfaces.yaml_interface import YamlInterface
 
 MYPY = False
-if MYPY:    # noqa
-    from typing import Dict
+if MYPY:    # pragma: no cover
+    from typing import Dict     # pylint: disable-msg=cyclic-import,unused-import
 
 
 class FileManager:
@@ -52,8 +52,7 @@ class FileManager:
 
             raise FileNotFoundError("File not found: {}".format(filename))
 
-        else:
-            return filename
+        return filename
 
     @staticmethod
     def get_file_interface(filename):
@@ -81,8 +80,8 @@ class FileManager:
         except FileNotFoundError:
             if halt_on_error:
                 raise IOError("Could not find file {}".format(filename))
-            else:
-                return dict()
+
+            return dict()
 
         if not file and halt_on_error:
             raise IOError(

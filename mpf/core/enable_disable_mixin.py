@@ -1,6 +1,7 @@
 """Implements enable and disable events for devices."""
 import abc
-import asyncio
+
+from mpf.core.system_wide_device import SystemWideDevice
 
 from mpf.core.device_monitor import DeviceMonitor
 
@@ -11,7 +12,7 @@ from mpf.core.machine import MachineController
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.mode import Mode
+    from mpf.core.mode import Mode  # pylint: disable-msg=cyclic-import,unused-import
 
 
 @DeviceMonitor("enabled")
@@ -33,14 +34,18 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
         This can be caused by a mode restore, initial enable at boot or by an
         enable_event.
         """
-        pass
 
     def _disable(self):
         """Disable the device.
 
         This can be caused by a mode stop or by an disable_event.
         """
-        pass
+
+    @event_handler(10)
+    def event_enable(self, **kwargs):
+        """Handle enable control event."""
+        del kwargs
+        self.enable()
 
     def enable(self) -> None:
         """Enable device."""
@@ -52,7 +57,6 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
 
     def add_control_events_in_mode(self, mode) -> None:
         """Remove enable here."""
-        pass
 
     @event_handler(0)
     def event_disable(self, **kwargs):
@@ -93,8 +97,8 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
             if not self.player:
                 return False
             return self.player["{}_{}_enabled".format(self.class_label, self.name)]
-        else:
-            return self._enabled
+
+        return self._enabled
 
     @enabled.setter
     def enabled(self, value):
@@ -128,8 +132,53 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
         self.player = None
         self._enabled = None
 
-    @asyncio.coroutine
-    def device_added_system_wide(self) -> None:
-        """Check enable on boot."""
-        yield from super().device_added_system_wide()
-        self._load_enable_based_on_config_default()
+
+@DeviceMonitor("enabled")
+class EnableDisableMixinSystemWideDevice(SystemWideDevice, metaclass=abc.ABCMeta):
+
+    """Implements enable and disable_events."""
+
+    __slots__ = ["enabled"]
+
+    def __init__(self, machine: MachineController, name: str) -> None:
+        """Remember the enable state."""
+        self.enabled = False    # type: bool
+        super().__init__(machine, name)
+
+    def _enable(self):
+        """Enable the device.
+
+        Overwrite this method.
+        """
+
+    def _disable(self):
+        """Disable the device.
+
+        Overwrite this method.
+        """
+
+    @event_handler(10)
+    def event_enable(self, **kwargs):
+        """Handle enable control event."""
+        del kwargs
+        self.enable()
+
+    def enable(self) -> None:
+        """Enable device."""
+        if self.enabled is True:
+            return
+        self.enabled = True
+        self._enable()
+
+    @event_handler(0)
+    def event_disable(self, **kwargs):
+        """Handle disable control event."""
+        del kwargs
+        self.disable()
+
+    def disable(self):
+        """Disable device."""
+        if self.enabled is False:
+            return
+        self.enabled = False
+        self._disable()

@@ -9,16 +9,16 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class TestKickback(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/kickback/'
 
     def test_kickback_with_ball_save(self):
         self.machine.default_platform.set_pulse_on_hit_rule = MagicMock()
         self.mock_event("kickback_kickback_test_fired")
-        self.assertFalse(self.machine.ball_saves.kickback_save.enabled)
+        self.assertFalse(self.machine.ball_saves["kickback_save"].enabled)
 
         # kickback is not enabled. nothing should happen
         self.hit_and_release_switch("s_kickback")
@@ -31,8 +31,8 @@ class TestKickback(MpfTestCase):
 
         # should write a hw rule
         self.machine.default_platform.set_pulse_on_hit_rule.assert_called_once_with(
-            SwitchSettings(hw_switch=self.machine.switches.s_kickback.hw_switch, invert=False, debounce=False),
-            DriverSettings(hw_driver=self.machine.coils.kickback_coil.hw_driver,
+            SwitchSettings(hw_switch=self.machine.switches["s_kickback"].hw_switch, invert=False, debounce=False),
+            DriverSettings(hw_driver=self.machine.coils["kickback_coil"].hw_driver,
                            pulse_settings=PulseSettings(power=1.0, duration=100), hold_settings=None, recycle=True)
         )
 
@@ -42,11 +42,11 @@ class TestKickback(MpfTestCase):
         self.assertEventCalled("kickback_kickback_test_fired")
 
         # ball save should be enabled just in case
-        self.assertTrue(self.machine.ball_saves.kickback_save.enabled)
+        self.assertTrue(self.machine.ball_saves["kickback_save"].enabled)
 
         # but disable after 6s
         self.advance_time_and_run(6.1)
-        self.assertFalse(self.machine.ball_saves.kickback_save.enabled)
+        self.assertFalse(self.machine.ball_saves["kickback_save"].enabled)
 
         # it only works once though
         self.mock_event("kickback_kickback_test_fired")

@@ -1,7 +1,4 @@
 """Contains the Mode base class."""
-import asyncio
-import copy
-
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -10,17 +7,16 @@ from typing import Set
 from typing import Tuple
 
 from mpf.core.delays import DelayManager
-from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
 from mpf.core.switch_controller import SwitchHandler
+from mpf.core.events import EventHandlerKey
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.events import QueuedEvent
-    from mpf.core.mode_device import ModeDevice
-    from mpf.core.events import EventHandlerKey
-    from mpf.core.player import Player
-    from mpf.core.machine import MachineController
+    from mpf.core.events import QueuedEvent     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.mode_device import ModeDevice     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.player import Player  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -425,8 +421,7 @@ class Mode(LogMixin):
                     self.machine.device_manager.create_devices(
                         collection.name, {device: settings})
 
-    @asyncio.coroutine
-    def load_mode_devices(self) -> None:
+    async def load_mode_devices(self) -> None:
         """Load config of mode devices."""
         for collection_name, device_class in iter(self.machine.device_manager.device_classes.items()):
 
@@ -459,7 +454,7 @@ class Mode(LogMixin):
             for device, settings in iter(self.config[device_class.config_section].items()):
                 collection = getattr(self.machine, collection_name)
                 device = collection[device]
-                yield from device.device_added_to_mode(mode=self)
+                await device.device_added_to_mode(mode=self)
 
     def _remove_mode_devices(self) -> None:
         for device in self.mode_devices:
@@ -482,17 +477,23 @@ class Mode(LogMixin):
             except ValueError:
                 priority = 0
 
+            try:
+                final_priority = int(priority) + 2
+            except ValueError:
+                self.raise_config_error("Invalid priority {} in device {} for {}".format(priority, device, event), 2)
+                return
+
             if not delay:
                 self.add_mode_event_handler(
                     event=event,
                     handler=method,
-                    priority=int(priority) + 2,
+                    priority=final_priority,
                     blocking_facility=device.class_label)
             else:
                 self.add_mode_event_handler(
                     event=event,
                     handler=self._control_event_handler,
-                    priority=int(priority) + 2,
+                    priority=final_priority,
                     callback=method,
                     ms_delay=delay,
                     blocking_facility=device.class_label)
@@ -514,7 +515,7 @@ class Mode(LogMixin):
 
         self.delay.add(ms=ms_delay, callback=callback, mode=self)
 
-    def add_mode_event_handler(self, event: str, handler: Callable, priority: int = 0, **kwargs):
+    def add_mode_event_handler(self, event: str, handler: Callable, priority: int = 0, **kwargs) -> EventHandlerKey:
         """Register an event handler which is automatically removed when this mode stops.
 
         This method is similar to the Event Manager's add_handler() method,
@@ -537,11 +538,10 @@ class Mode(LogMixin):
                 passed as part of the event post. If there's a conflict, the
                 event-level ones will win.
 
-        Returns:
-            A GUID reference to the handler which you can use to later remove
-            the handler via ``remove_handler_by_key``. Though you don't need to
-            remove the handler since the whole point of this method is they're
-            automatically removed when the mode stops.
+        Returns a EventHandlerKey to the handler which you can use to later remove
+        the handler via ``remove_handler_by_key``. Though you don't need to
+        remove the handler since the whole point of this method is they're
+        automatically removed when the mode stops.
 
         Note that if you do add a handler via this method and then remove it
         manually, that's ok too.
@@ -581,16 +581,12 @@ class Mode(LogMixin):
 
     def mode_init(self) -> None:
         """User-overrideable method which will be called when this mode initializes as part of the MPF boot process."""
-        pass
 
     def mode_will_start(self, **kwargs) -> None:
         """User-overrideable method which will be called whenever this mode starts (i.e. before it becomes active)."""
-        pass
 
     def mode_start(self, **kwargs) -> None:
         """User-overrideable method which will be called whenever this mode starts (i.e. whenever it becomes active)."""
-        pass
 
     def mode_stop(self, **kwargs) -> None:
         """User-overrideable method which will be called whenever this mode stops."""
-        pass

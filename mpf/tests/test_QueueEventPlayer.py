@@ -4,10 +4,10 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class TestQueueEventPlayer(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_queue_event_player.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/event_players/'
 
     def _queue1(self, queue, **kwargs):
@@ -100,7 +100,7 @@ class TestQueueEventPlayer(MpfTestCase):
         self._done = False
         self.mock_event("relay3_start")
 
-        self.machine.modes.mode1.start()
+        self.machine.modes["mode1"].start()
 
         # post queue event
         self.machine.events.post_queue("relay3", callback=self._cb)
@@ -116,12 +116,12 @@ class TestQueueEventPlayer(MpfTestCase):
         self.assertTrue(self._done)
 
         # stop and start mode again
-        self.machine.modes.mode1.stop()
+        self.machine.modes["mode1"].stop()
         self.advance_time_and_run()
 
         self._done = False
         self.mock_event("relay3_start")
-        self.machine.modes.mode1.start()
+        self.machine.modes["mode1"].start()
 
         # post queue event
         self.machine.events.post_queue("relay3", callback=self._cb)
@@ -143,7 +143,7 @@ class TestQueueEventPlayer(MpfTestCase):
         self.assertFalse(self._done)
 
         # stop mode
-        self.machine.modes.mode1.stop()
+        self.machine.modes["mode1"].stop()
         self.advance_time_and_run()
 
         # should trigger cb without waiting for event

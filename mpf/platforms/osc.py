@@ -1,5 +1,4 @@
 """A platform to control lights via OSC."""
-import asyncio
 try:
     from pythonosc.udp_client import SimpleUDPClient
 except ImportError:
@@ -40,8 +39,7 @@ class OscPlatform(LightsPlatform):
         if not SimpleUDPClient:
             raise AssertionError("python-osc is not installed. Please run 'pip3 install python-osc'.")
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Initialise platform."""
         self.config = self.machine.config['osc']
         self.machine.config_validator.validate_config("osc", self.config)
@@ -56,7 +54,7 @@ class OscPlatform(LightsPlatform):
             }
         ]
 
-    def configure_light(self, number: str, subtype: str, platform_settings: dict) -> "LightPlatformInterface":
+    def configure_light(self, number: str, subtype: str, platform_settings: dict) -> LightPlatformInterface:
         """Configure an OSC light."""
         return OscLight(number, self.machine.clock.loop,
                         int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000), self.client)

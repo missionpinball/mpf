@@ -5,10 +5,10 @@ from unittest.mock import MagicMock
 
 class TestCoilPlayer(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'coil_player.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/coil_player/'
 
     def get_platform(self):

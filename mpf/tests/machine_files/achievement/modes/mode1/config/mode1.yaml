@@ -1,0 +1,12 @@
+#config_version=5
+mode:
+    start_events: start_mode1
+    stop_events: stop_mode1
+    priority: 100
+
+achievement_groups:
+    mode1_ag1:
+        achievements: mode1_a1, mode1_a2
+        events_when_no_more_enabled: enable_all
+        auto_select: yes
+        debug: True

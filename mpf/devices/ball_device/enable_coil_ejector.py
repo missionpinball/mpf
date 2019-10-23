@@ -1,6 +1,4 @@
 """Enable/disable ejector."""
-import asyncio
-
 from mpf.devices.ball_device.pulse_coil_ejector import PulseCoilEjector
 
 from mpf.core.delays import DelayManager
@@ -21,8 +19,7 @@ class EnableCoilEjector(PulseCoilEjector):
         # overwrite validation from pulse_coil_ejector
         pass
 
-    @asyncio.coroutine
-    def eject_one_ball(self, is_jammed, eject_try):
+    async def eject_one_ball(self, is_jammed, eject_try):
         """Enable eject coil."""
         del is_jammed
         del eject_try

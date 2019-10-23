@@ -7,8 +7,8 @@ from mpf.devices.shot import Shot
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.machine import MachineController
-    from typing import Any, Set
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
+    from typing import Any, Set     # pylint: disable-msg=cyclic-import,unused-import
 
 
 class Auditor:
@@ -74,13 +74,13 @@ class Auditor:
             self.current_audits['player'] = dict()
 
         # Make sure we have all the switches in our audit dict
-        for switch in self.machine.switches:
+        for switch in self.machine.switches.values():
             if (switch.name not in self.current_audits['switches'] and
                     'no_audit' not in switch.tags):
                 self.current_audits['switches'][switch.name] = 0
 
         # build the list of switches we should audit
-        self.switchnames_to_audit = {x.name for x in self.machine.switches
+        self.switchnames_to_audit = {x.name for x in self.machine.switches.values()
                                      if 'no_audit' not in x.tags}
 
         # Make sure we have all the player stuff in our audit dict
@@ -109,7 +109,7 @@ class Auditor:
             if not isinstance(audits, dict):
                 continue
             for name, value in audits.items():
-                self.machine.set_machine_var("audits_{}_{}".format(category, name), value)
+                self.machine.variables.set_machine_var("audits_{}_{}".format(category, name), value)
 
     def audit(self, audit_class, event, **kwargs):
         """Log an auditable event.
@@ -130,7 +130,8 @@ class Auditor:
             self.current_audits[audit_class][event] = 0
 
         self.current_audits[audit_class][event] += 1
-        self.machine.set_machine_var("audits_{}_{}".format(audit_class, event), self.current_audits[audit_class][event])
+        self.machine.variables.set_machine_var("audits_{}_{}".format(audit_class, event),
+                                               self.current_audits[audit_class][event])
         self._save_audits()
 
     def audit_switch(self, change: MonitoredSwitchChange):
@@ -237,6 +238,3 @@ class Auditor:
 
         # remove switch and event handlers
         self.machine.events.remove_handler(self.audit_event)
-
-
-plugin_class = Auditor

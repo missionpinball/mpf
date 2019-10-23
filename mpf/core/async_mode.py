@@ -1,13 +1,12 @@
 """Base class for asyncio modes."""
 import abc
 import asyncio
-from typing import Generator
 
 from mpf.core.mode import Mode
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.machine import MachineController
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class AsyncMode(Mode, metaclass=abc.ABCMeta):
@@ -50,12 +49,10 @@ class AsyncMode(Mode, metaclass=abc.ABCMeta):
         self._task.cancel()
 
     @abc.abstractmethod
-    @asyncio.coroutine
-    def _run(self) -> Generator[int, None, None]:
+    async def _run(self) -> None:
         """Start main task which runs as long as the mode is active.
 
         Overwrite this function in your mode.
 
         Its automatically canceled when the mode stops. You can catch CancelError to handle mode stop.
         """
-        pass

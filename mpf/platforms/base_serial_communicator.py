@@ -5,7 +5,7 @@ from serial import SerialException
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from typing import Generator
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class BaseSerialCommunicator:
@@ -23,7 +23,7 @@ class BaseSerialCommunicator:
             port:
             baud:
         """
-        self.machine = platform.machine
+        self.machine = platform.machine     # type: MachineController
         self.platform = platform
         self.log = self.platform.log
         self.debug = self.platform.config['debug']
@@ -32,28 +32,26 @@ class BaseSerialCommunicator:
         self.xonxoff = xonxoff
         self.reader = None      # type: asyncio.StreamReader
         self.writer = None      # type: asyncio.StreamWriter
-        self.read_task = None   # type: Generator[int, None, None]
+        self.read_task = None
 
-    @asyncio.coroutine
-    def connect(self):
+    async def connect(self):
         """Connect to the hardware."""
-        yield from self._connect_to_hardware(self.port, self.baud, self.xonxoff)
+        await self._connect_to_hardware(self.port, self.baud, self.xonxoff)
 
-    @asyncio.coroutine
-    def _connect_to_hardware(self, port, baud, xonxoff=False):
+    async def _connect_to_hardware(self, port, baud, xonxoff=False):
         self.log.info("Connecting to %s at %sbps", port, baud)
         while True:
             try:
                 connector = self.machine.clock.open_serial_connection(
                     url=port, baudrate=baud, limit=0, xonxoff=xonxoff)
-                self.reader, self.writer = yield from connector
+                self.reader, self.writer = await connector
             except SerialException:
                 if not self.machine.options["production"]:
                     raise
-                else:
-                    # if we are in production mode retry
-                    yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
-                    self.log.debug("Connection to %s failed. Will retry.", port)
+
+                # if we are in production mode retry
+                await asyncio.sleep(.1, loop=self.machine.clock.loop)
+                self.log.debug("Connection to %s failed. Will retry.", port)
             else:
                 # we got a connection
                 break
@@ -67,10 +65,9 @@ class BaseSerialCommunicator:
         # pylint: disable-msg=protected-access
         self.reader._buffer = bytearray()
 
-        yield from self._identify_connection()
+        await self._identify_connection()
 
-    @asyncio.coroutine
-    def start_read_loop(self):
+    async def start_read_loop(self):
         """Start the read loop."""
         self.read_task = self.machine.clock.loop.create_task(self._socket_reader())
         self.read_task.add_done_callback(self._done)
@@ -83,9 +80,8 @@ class BaseSerialCommunicator:
         """
         future.result()
 
-    @asyncio.coroutine
     # pylint: disable-msg=inconsistent-return-statements
-    def readuntil(self, separator, min_chars: int = 0):
+    async def readuntil(self, separator, min_chars: int = 0):
         """Read until separator.
 
         Args:
@@ -95,13 +91,37 @@ class BaseSerialCommunicator:
         # asyncio StreamReader only supports this from python 3.5.2 on
         buffer = b''
         while True:
-            char = yield from self.reader.readexactly(1)
+            char = await self.reader.readexactly(1)
             buffer += char
             if char == separator and len(buffer) > min_chars:
+                if self.debug:
+                    self.log.debug("%s received: %s (%s)", self, buffer, "".join(" 0x%02x" % b for b in buffer))
                 return buffer
 
-    @asyncio.coroutine
-    def _identify_connection(self):
+    async def read(self, n=-1):
+        """Read up to `n` bytes from the stream and log the result if debug is true.
+
+        See :func:`StreamReader.read` for details about read and the `n` parameter.
+        """
+        try:
+            resp = await self.reader.read(n)
+        except asyncio.CancelledError:  # pylint: disable-msg=try-except-raise
+            raise
+        except Exception as e:  # pylint: disable-msg=broad-except
+            self.log.warning("Serial error: {}".format(e))
+            return None
+
+        # we either got empty response (-> socket closed) or and error
+        if not resp:
+            self.log.warning("Serial closed.")
+            self.machine.stop("Serial {} closed.".format(self.port))
+            return None
+
+        if self.debug:
+            self.log.debug("%s received: %s (%s)", self, resp, "".join(" 0x%02x" % b for b in resp))
+        return resp
+
+    async def _identify_connection(self):
         """Initialise and identify connection."""
         raise NotImplementedError("Implement!")
 
@@ -139,23 +159,9 @@ class BaseSerialCommunicator:
         """Return str representation."""
         return self.port
 
-    @asyncio.coroutine
-    def _socket_reader(self):
+    async def _socket_reader(self):
         while True:
-            try:
-                resp = yield from self.reader.read(100)
-            except asyncio.CancelledError:  # pylint: disable-msg=try-except-raise
-                raise
-            except Exception as e:  # pylint: disable-msg=broad-except
-                self.log.warning("Serial error: {}".format(e))
-                resp = None
-
-            # we either got empty response (-> socket closed) or and error
-            if not resp:
-                self.log.warning("Serial closed.")
-                self.machine.stop("Serial {} closed.".format(self.port))
+            resp = await self.read(128)
+            if resp is None:
                 return
-
-            if self.debug:
-                self.log.debug("%s received: %s (%s)", self, resp, "".join(" 0x%02x" % b for b in resp))
             self._parse_msg(resp)

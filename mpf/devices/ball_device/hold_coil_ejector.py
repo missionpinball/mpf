@@ -1,6 +1,4 @@
 """Hold coil ejector."""
-import asyncio
-
 from mpf.devices.ball_device.ball_device_ejector import BallDeviceEjector
 
 
@@ -26,8 +24,7 @@ class HoldCoilEjector(BallDeviceEjector):
                 ms=0,
                 callback=self.hold)
 
-    @asyncio.coroutine
-    def eject_one_ball(self, is_jammed, eject_try):
+    async def eject_one_ball(self, is_jammed, eject_try):
         """Eject one ball by disabling hold coil."""
         # TODO: wait for some time to allow balls to settle for
         #       both entrance and after a release
@@ -42,11 +39,9 @@ class HoldCoilEjector(BallDeviceEjector):
                                    callback=self._hold_release_done)
         # TODO: support ejecting a single ball by checking the ball_counter
 
-    @asyncio.coroutine
-    def reorder_balls(self):
+    async def reorder_balls(self):
         """Do nothing."""
         # TODO: disable coil for a short period
-        pass
 
     def _disable_hold_coil(self):
         self.ball_device.config['hold_coil'].disable()

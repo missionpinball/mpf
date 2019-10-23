@@ -1,26 +1,25 @@
 """Contains the parent class for all platforms."""
 import abc
 import asyncio
-import logging
 from collections import namedtuple
 
-from typing import Optional, Generator
+from typing import Optional
 
 from mpf.core.logging import LogMixin
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.devices.switch import Switch
-    from mpf.devices.stepper import Stepper
-    from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
-    from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
-    from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
-    from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
-    from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
-    from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
-    from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
-    from mpf.platforms.interfaces.accelerometer_platform_interface import AccelerometerPlatformInterface
-    from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
+    from mpf.devices.switch import Switch   # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.stepper import Stepper     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface  # pylint: disable-msg=cyclic-import,unused-import; # noqa
+    from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface  # pylint: disable-msg=cyclic-import,unused-import; # noqa
+    from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
+    from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
+    from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface     # pylint: disable-msg=cyclic-import,unused-import; # noqa
+    from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface   # pylint: disable-msg=cyclic-import,unused-import; # noqa
+    from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
+    from mpf.platforms.interfaces.accelerometer_platform_interface import AccelerometerPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
+    from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 
 class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
@@ -80,20 +79,15 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
     # pylint: disable-msg=no-self-use
     def update_firmware(self) -> str:
         """Perform a firmware update."""
-        pass
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Initialise the platform.
 
         This is called after all platforms have been created and core modules have been loaded.
         """
-        pass
 
-    @asyncio.coroutine
-    def start(self):
+    async def start(self):
         """Start receiving switch changes from this platform."""
-        pass
 
     def tick(self):
         """Run task.
@@ -105,7 +99,6 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         light updates, etc.
 
         """
-        pass
 
     def stop(self):
         """Stop the platform.
@@ -119,7 +112,6 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         crashes.
 
         """
-        pass
 
 
 class DmdPlatform(BasePlatform, metaclass=abc.ABCMeta):
@@ -195,8 +187,7 @@ class SegmentDisplayPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['segment_display'] = True
 
     @abc.abstractmethod
-    @asyncio.coroutine
-    def configure_segment_display(self, number: str, platform_settings) -> "SegmentDisplayPlatformInterface":
+    async def configure_segment_display(self, number: str, platform_settings) -> "SegmentDisplayPlatformInterface":
         """Subclass this method in a platform module to configure a segment display.
 
         This method should return a reference to the segment display platform interface
@@ -218,23 +209,21 @@ class SegmentDisplaySoftwareFlashPlatform(SegmentDisplayPlatform, metaclass=abc.
         self._displays = set()
         self._display_flash_task = None
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Start flash task."""
-        yield from super().initialize()
+        await super().initialize()
         self._display_flash_task = self.machine.clock.loop.create_task(self._display_flash())
         self._display_flash_task.add_done_callback(self._display_flash_task_done)
 
-    @asyncio.coroutine
-    def _display_flash(self):
+    async def _display_flash(self):
         wait_time = 1 / (self.config['display_flash_frequency'] * 2)
         while True:
             # set on
-            yield from asyncio.sleep(wait_time, loop=self.machine.clock.loop)
+            await asyncio.sleep(wait_time, loop=self.machine.clock.loop)
             for display in self._displays:
                 display.set_software_flash(True)
             # set off
-            yield from asyncio.sleep(wait_time, loop=self.machine.clock.loop)
+            await asyncio.sleep(wait_time, loop=self.machine.clock.loop)
             for display in self._displays:
                 display.set_software_flash(False)
 
@@ -290,8 +279,7 @@ class I2cPlatform(BasePlatform, metaclass=abc.ABCMeta):
         super().__init__(machine)
         self.features['has_i2c'] = True
 
-    @asyncio.coroutine
-    def configure_i2c(self, number: str) -> Generator[int, None, "I2cPlatformInterface"]:
+    async def configure_i2c(self, number: str) -> "I2cPlatformInterface":
         """Configure i2c device."""
         raise NotImplementedError
 
@@ -308,7 +296,7 @@ class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_servos'] = True
 
     @abc.abstractmethod
-    def configure_servo(self, number: str) -> "ServoPlatformInterface":
+    async def configure_servo(self, number: str) -> "ServoPlatformInterface":
         """Configure a servo device in platform.
 
         Args:
@@ -352,8 +340,7 @@ class StepperPlatform(BasePlatform, metaclass=abc.ABCMeta):
         return config
 
     @abc.abstractmethod
-    @asyncio.coroutine
-    def configure_stepper(self, number: str, config: dict) -> "StepperPlatformInterface":
+    async def configure_stepper(self, number: str, config: dict) -> "StepperPlatformInterface":
         """Configure a smart stepper (axis) device in platform.
 
         Args:
@@ -386,7 +373,6 @@ class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
         Called after channels of a light were updated. Can be used if multiple channels need to be flushed at once.
         """
-        pass
 
     @abc.abstractmethod
     def configure_light(self, number: str, subtype: str, platform_settings: dict) -> "LightPlatformInterface":
@@ -449,8 +435,7 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         return config
 
     @abc.abstractmethod
-    @asyncio.coroutine
-    def get_hw_switch_states(self):
+    async def get_hw_switch_states(self):
         """Get all hardware switch states.
 
         Subclass this method in a platform module to return the hardware

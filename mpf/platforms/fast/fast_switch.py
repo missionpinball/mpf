@@ -7,7 +7,7 @@ from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInt
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.platforms.fast.fast import FastHardwarePlatform
+    from mpf.platforms.fast.fast import FastHardwarePlatform    # pylint: disable-msg=cyclic-import,unused-import
 
 
 class FASTSwitch(SwitchPlatformInterface):
@@ -31,16 +31,16 @@ class FASTSwitch(SwitchPlatformInterface):
         """Return the board of this switch."""
         if self.platform.machine_type == 'wpc':
             return "FAST WPC"
-        else:
-            switch_index = 0
-            number = Util.hex_string_to_int(self.number)
-            for board_obj in self.platform.io_boards.values():
-                if switch_index <= number < switch_index + board_obj.switch_count:
-                    return "FAST Board {}".format(str(board_obj.node_id))
-                switch_index += board_obj.switch_count
 
-            # fall back if not found
-            return "FAST Unknown Board"
+        switch_index = 0
+        number = Util.hex_string_to_int(self.number)
+        for board_obj in self.platform.io_boards.values():
+            if switch_index <= number < switch_index + board_obj.switch_count:
+                return "FAST Board {}".format(str(board_obj.node_id))
+            switch_index += board_obj.switch_count
+
+        # fall back if not found
+        return "FAST Unknown Board"
 
     def configure_debounce(self, debounce):
         """Configure debounce settings."""

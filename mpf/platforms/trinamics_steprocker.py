@@ -25,36 +25,34 @@ class TrinamicsStepRocker(StepperPlatform):
         self.config = self.machine.config['trinamics_steprocker']
         self.platform = None
         self.features['tickless'] = True
-        self.TMCL = None
+        self.tmcl = None
 
     def __repr__(self):
         """Return string representation."""
         return '<Platform.TrinamicsStepRocker>'
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Initialise trinamics steprocker platform."""
-        yield from super().initialize()
+        await super().initialize()
 
         # validate our config (has to be in intialize since config_processor
         # is not read in __init__)
         self.config = self.machine.config_validator.validate_config("trinamics_steprocker", self.config)
-        self.TMCL = TMCLDevice(self.config['port'], False)
+        self.tmcl = TMCLDevice(self.config['port'], False)
 
     def stop(self):
         """Close serial."""
-        if self.TMCL:
-            self.TMCL.stop()
-            self.TMCL = None
+        if self.tmcl:
+            self.tmcl.stop()
+            self.tmcl = None
 
-    @asyncio.coroutine
-    def configure_stepper(self, number: str, config: dict) -> "TrinamicsTMCLStepper":
+    async def configure_stepper(self, number: str, config: dict) -> "TrinamicsTMCLStepper":
         """Configure a smart stepper device in platform.
 
         Args:
             config (dict): Configuration of device
         """
-        return TrinamicsTMCLStepper(number, config, self.TMCL, self.machine)
+        return TrinamicsTMCLStepper(number, config, self.tmcl, self.machine)
 
     @classmethod
     def get_stepper_config_section(cls):
@@ -71,11 +69,11 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
         """Initialise stepper."""
         self._pulse_div = 5     # tbd add to config
         self._ramp_div = 9      # tbd add to config
-        self._clockFreq = 16000000.0
+        self._clock_freq = 16000000.0
         self.config = config
         self.log = logging.getLogger('TMCL Stepper')
         self._mn = int(number)
-        self.TMCL = tmcl_device
+        self.tmcl = tmcl_device
         self._move_current = int(2.55 * self.config['move_current'])    # percent to 0...255(100%)
         self._hold_current = int(2.55 * self.config['hold_current'])    # percent to 0...255(100%)
         self._microstep_per_fullstep = self.config['microstep_per_fullstep']
@@ -89,31 +87,31 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
                                        self._move_current, self._hold_current,
                                        self._get_micro_step_mode(self._microstep_per_fullstep), False)
         # apply pulse and ramp divisors as well
-        self.TMCL.sap(self._mn, 154, self._pulse_div)
-        self.TMCL.sap(self._mn, 153, self._ramp_div)
-        self._homingActive = False
+        self.tmcl.sap(self._mn, 154, self._pulse_div)
+        self.tmcl.sap(self._mn, 153, self._ramp_div)
+        self._homing_active = False
 
     # Public Stepper Platform Interface
     def home(self, direction):
         """Home an axis, resetting 0 position."""
-        self.TMCL.rfs(self._mn, 'STOP')  # in case in progress
+        self.tmcl.rfs(self._mn, 'STOP')  # in case in progress
         self._set_home_parameters(direction)
-        self.TMCL.rfs(self._mn, 'START')
-        self._homingActive = True
+        self.tmcl.rfs(self._mn, 'START')
+        self._homing_active = True
 
     def set_home_position(self):
         """Tell the stepper that we are at the home position."""
-        self.TMCL.sap(self._mn, 1, 0)
+        self.tmcl.sap(self._mn, 1, 0)
 
     def move_abs_pos(self, position):
         """Move axis to a certain absolute position."""
         microstep_pos = self._uu_to_microsteps(position)
-        self.TMCL.mvp(self._mn, "ABS", microstep_pos)
+        self.tmcl.mvp(self._mn, "ABS", microstep_pos)
 
     def move_rel_pos(self, position):
         """Move axis to a relative position."""
         microstep_rel = self._uu_to_microsteps(position)
-        self.TMCL.mvp(self._mn, "REL", microstep_rel)
+        self.tmcl.mvp(self._mn, "REL", microstep_rel)
 
     def move_vel_mode(self, velocity):
         """Move at a specific velocity and direction (pos = clockwise, neg = counterclockwise)."""
@@ -121,31 +119,30 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
 
     def current_position(self):
         """Return current position."""
-        microsteps = self.TMCL.gap(self._mn, 1)
+        microsteps = self.tmcl.gap(self._mn, 1)
         return self._microsteps_to_uu(microsteps)
 
     def stop(self) -> None:
         """Stop stepper."""
-        self.TMCL.mst(self._mn)
+        self.tmcl.mst(self._mn)
 
-    @asyncio.coroutine
-    def wait_for_move_completed(self):
+    async def wait_for_move_completed(self):
         """Wait until move completed."""
         while not self.is_move_complete():
-            yield from asyncio.sleep(1 / self.config['poll_ms'], loop=self.machine.clock.loop)
+            await asyncio.sleep(1 / self.config['poll_ms'], loop=self.machine.clock.loop)
 
     def is_move_complete(self) -> bool:
         """Return true if move is complete."""
-        if self._homingActive:
-            ret = self.TMCL.rfs(self._mn, 'STATUS')
+        if self._homing_active:
+            ret = self.tmcl.rfs(self._mn, 'STATUS')
             if ret != 0:  # This is reversed from manual but is how it works
                 return False
 
-            self._homingActive = False
+            self._homing_active = False
             return True
 
         # check normal move status
-        ret = self.TMCL.gap(self._mn, 8)
+        ret = self.tmcl.gap(self._mn, 8)
         if ret == 1:
             return True
 
@@ -173,7 +170,7 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
         return microsteps / (self._fullstep_per_userunit * self._microstep_per_fullstep)
 
     def _to_velocity_cmd(self, microsteps_per_sec) -> int:
-        ret = (microsteps_per_sec * 2 ** self._pulse_div * 2048.0 * 32.0) / self._clockFreq
+        ret = (microsteps_per_sec * 2 ** self._pulse_div * 2048.0 * 32.0) / self._clock_freq
         if abs(ret) > 2047:
             raise ValueError("Scaled Velocity too high, lower pulse_div")
         if ret < 1:
@@ -181,7 +178,7 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
         return int(ret)
 
     def _to_acceleration_cmd(self, microsteps_per_ss) -> int:
-        ret = (2 ** (self._pulse_div + self._ramp_div + 29) * microsteps_per_ss) / self._clockFreq ** 2
+        ret = (2 ** (self._pulse_div + self._ramp_div + 29) * microsteps_per_ss) / self._clock_freq ** 2
         if ret > 2047:
             raise ValueError("Acceleration too high, lower ramps_div")
         if ret < 1:
@@ -200,7 +197,7 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
         ret = {}
         for key, value in TMCL.GLOBAL_PARAMETER.iteritems():
             bank, par, name, _, _ = key + value
-            ret[name] = self.TMCL.ggp(bank, par)
+            ret[name] = self.tmcl.ggp(bank, par)
         return ret
 
     def _get_parameters(self):
@@ -210,27 +207,27 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
             for key, value in TMCL.AXIS_PARAMETER.iteritems():
                 par, name, _, _ = (key,) + value
                 if par not in TMCL.SINGLE_AXIS_PARAMETERS:
-                    retmotor[mn][name] = self.TMCL.gap(mn, par)
+                    retmotor[mn][name] = self.tmcl.gap(mn, par)
                 elif mn == 0:
-                    retsingle[name] = self.TMCL.gap(mn, par)
+                    retsingle[name] = self.tmcl.gap(mn, par)
         return retmotor, retsingle
 
     # pylint: disable-msg=too-many-arguments
     def _set_important_parameters(self, maxspeed=2000, maxaccel=2000,
                                   maxcurrent=72, standbycurrent=32,
                                   microstep_resolution=1, store=False):
-        self.TMCL.sap(self._mn, 140, int(microstep_resolution))
-        self.TMCL.sap(self._mn, 4, int(maxspeed))
-        self.TMCL.sap(self._mn, 5, int(maxaccel))
-        self.TMCL.sap(self._mn, 6, int(maxcurrent))
-        self.TMCL.sap(self._mn, 7, int(standbycurrent))
+        self.tmcl.sap(self._mn, 140, int(microstep_resolution))
+        self.tmcl.sap(self._mn, 4, int(maxspeed))
+        self.tmcl.sap(self._mn, 5, int(maxaccel))
+        self.tmcl.sap(self._mn, 6, int(maxcurrent))
+        self.tmcl.sap(self._mn, 7, int(standbycurrent))
         if not bool(store):
             return
-        self.TMCL.stap(self._mn, 140)
-        self.TMCL.stap(self._mn, 4)
-        self.TMCL.stap(self._mn, 5)
-        self.TMCL.stap(self._mn, 6)
-        self.TMCL.stap(self._mn, 7)
+        self.tmcl.stap(self._mn, 140)
+        self.tmcl.stap(self._mn, 4)
+        self.tmcl.stap(self._mn, 5)
+        self.tmcl.stap(self._mn, 6)
+        self.tmcl.stap(self._mn, 7)
 
     def _set_home_parameters(self, direction):
         # self.TMCL.sap(self._mn, 9,  ) #ref. switch status
@@ -240,19 +237,19 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
         # self.TMCL.sap(self._mn, 13, ) #left limit switch disable
         # self.TMCL.sap(self._mn, 141, ) #ref. switch tolerance
         # self.TMCL.sap(self._mn, 149, ) #soft stop flag
-        self.TMCL.sap(self._mn, 194, self._homing_speed)    # referencing search speed
+        self.tmcl.sap(self._mn, 194, self._homing_speed)    # referencing search speed
         if direction == 'clockwise':
-            self.TMCL.sap(self._mn, 193, 8)     # ref. search mode
+            self.tmcl.sap(self._mn, 193, 8)     # ref. search mode
         elif direction == 'counterclockwise':
-            self.TMCL.sap(self._mn, 193, 7)
+            self.tmcl.sap(self._mn, 193, 7)
         # self.TMCL.sap(self._mn, 195, ) #referencing switch speed
         # self.TMCL.sap(self._mn, 196, ) # distance end switches
 
     def _rotate(self, velocity):
         if velocity == 0:
-            self.TMCL.mst(self._mn)     # motor stop
+            self.tmcl.mst(self._mn)     # motor stop
         if velocity > 0:
-            self.TMCL.ror(self._mn, self._uu_to_velocity_cmd(velocity))
+            self.tmcl.ror(self._mn, self._uu_to_velocity_cmd(velocity))
         else:
-            self.TMCL.rol(self._mn, self._uu_to_velocity_cmd(abs(velocity)))
+            self.tmcl.rol(self._mn, self._uu_to_velocity_cmd(abs(velocity)))
         return velocity

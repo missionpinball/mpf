@@ -58,10 +58,10 @@ class MockMypinballsSocket(MockSerial):
 
 class MyPinballsPlatformTest(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/mypinballs/'
 
     def _mock_loop(self):
@@ -99,7 +99,7 @@ class MyPinballsPlatformTest(MpfTestCase):
         self.serialMock.expected_commands = {
             b'1:1:1234\n': False,
         }
-        self.machine.segment_displays.display1.add_text("1234", key="score")
+        self.machine.segment_displays["display1"].add_text("1234", key="score")
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -107,7 +107,7 @@ class MyPinballsPlatformTest(MpfTestCase):
         self.serialMock.expected_commands = {
             b'1:1:1337\n': False,
         }
-        self.machine.segment_displays.display1.add_text("1337", key="score")
+        self.machine.segment_displays["display1"].add_text("1337", key="score")
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -115,7 +115,7 @@ class MyPinballsPlatformTest(MpfTestCase):
         self.serialMock.expected_commands = {
             b'1:1:42?23\n': False,
         }
-        self.machine.segment_displays.display1.add_text("42 23", key="score")
+        self.machine.segment_displays["display1"].add_text("42 23", key="score")
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -123,27 +123,27 @@ class MyPinballsPlatformTest(MpfTestCase):
         self.serialMock.expected_commands = {
             b'3:1\n': False,
         }
-        self.machine.segment_displays.display1.remove_text_by_key("score")
+        self.machine.segment_displays["display1"].remove_text_by_key("score")
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands = {
             b'1:2:424242\n': False,
         }
-        self.machine.segment_displays.display2.add_text("424242")
+        self.machine.segment_displays["display2"].add_text("424242")
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands = {
             b'2:2:424242\n': False,
         }
-        self.machine.segment_displays.display2.set_flashing(True)
+        self.machine.segment_displays["display2"].set_flashing(True)
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands = {
             b'1:2:424242\n': False,
         }
-        self.machine.segment_displays.display2.set_flashing(False)
+        self.machine.segment_displays["display2"].set_flashing(False)
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)

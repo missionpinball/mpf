@@ -1,6 +1,4 @@
 """Contains the MultiBall device class."""
-import asyncio
-
 from mpf.core.enable_disable_mixin import EnableDisableMixin
 
 from mpf.core.delays import DelayManager
@@ -46,18 +44,21 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
         if self.shoot_again:
             self.stop()
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.ball_locks = self.config['ball_locks']
         self.source_playfield = self.config['source_playfield']
+        if isinstance(self.config['ball_count'], NativeTypeTemplate):
+            ball_count = self.config['ball_count'].evaluate([])
+        else:
+            ball_count = None
 
-        if self.config['ball_count_type'] == "total" and isinstance(self.config['ball_count'], NativeTypeTemplate) and \
-                self.config['ball_count'].evaluate([]) <= 1:
+        if self.config['ball_count_type'] == "total" and ball_count is not None and \
+                ball_count <= 1:
             self.raise_config_error("ball_count should be at least 2 for a multiball to have an effect when "
                                     "ball_count_type is set to total.", 1)
-        elif self.config['ball_count_type'] == "add" and isinstance(self.config['ball_count'], NativeTypeTemplate) and \
-                self.config['ball_count'].evaluate([]) <= 0:
+        elif self.config['ball_count_type'] == "add" and ball_count is not None and \
+                ball_count <= 0:
             self.raise_config_error("ball_count should be at least 1 for a multiball to have an effect when "
                                     "ball_count_type is set to add.", 2)
 
@@ -123,7 +124,8 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
         if self.balls_added_live - balls_added > 0:
             self.source_playfield.add_ball(balls=self.balls_added_live - balls_added)
 
-        if not self.config['shoot_again']:
+        shoot_again_ms = self.config['shoot_again'].evaluate([])
+        if not shoot_again_ms:
             # No shoot again. Just stop multiball right away
             self.stop()
         else:
@@ -132,9 +134,9 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
                                             self._ball_drain_shoot_again,
                                             priority=1000)
             # Register stop handler
-            if self.config['shoot_again'] > 0:
+            if shoot_again_ms > 0:
                 self.delay.add(name='disable_shoot_again',
-                               ms=self.config['shoot_again'],
+                               ms=shoot_again_ms,
                                callback=self.stop)
 
         self.machine.events.post("multiball_" + self.name + "_started",

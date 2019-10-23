@@ -33,6 +33,7 @@ achievements:
     restart_after_stop_possible: single|bool|True
     restart_on_next_ball_when_started: single|bool|False
     enable_on_next_ball_when_enabled: single|bool|True
+    start_enabled: single|bool|None
 
     enable_events: event_handler|str:ms|None
     start_events: event_handler|str:ms|None
@@ -41,6 +42,7 @@ achievements:
     stop_events: event_handler|str:ms|None
     reset_events: event_handler|str:ms|None
     select_events: event_handler|str:ms|None
+    unselect_events: event_handler|str:ms|None
 
     events_when_enabled: list|str|None
     events_when_started: list|str|None
@@ -579,6 +581,7 @@ hardware_sound_systems:
 hardware_sound_player:
     __valid_in__: machine, mode, show
     action: single|enum(play,play_file,text_to_speech,set_volume,increase_volume,decrease_volume,stop)|play
+    track: single|int|1
     value: single|str|None
     platform_options: single|dict|None
     sound_system: single|machine(hardware_sound_systems)|default
@@ -669,18 +672,19 @@ light_player:
     priority: single|int_or_token|0
 lisy:
     __valid_in__: machine
-    port: single|str|None
     baud: single|int|None
-    poll_hz: single|int|100
-    disable_dtr: single|bool|True
-    console_log: single|enum(none,basic,full)|none
     debug: single|bool|False
     display_flash_frequency: single|float|1.0
-    file_log: single|enum(none,basic,full)|basic
+    disable_dtr: single|bool|True
     connection: single|enum(network,serial)|network
-    network_port: single|int|None
-    network_host: single|str|None
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
     max_led_batch_size: single|int|3
+    network_host: single|str|None
+    network_port: single|int|None
+    poll_hz: single|int|100
+    port: single|str|None
+    send_length_after_command: single|bool|False
 logic_blocks_common:
     enable_events: event_handler|str:ms|None
     disable_events: event_handler|str:ms|None
@@ -760,8 +764,8 @@ magnets:
     fling_drop_time: single|ms|250ms
     fling_regrab_time: single|ms|50ms
     playfield: single|machine(playfields)|playfield
-    enable_events: event_handler|str:ms|None
-    disable_events: event_handler|str:ms|None
+    enable_events: event_handler|str:ms|ball_started
+    disable_events: event_handler|str:ms|ball_will_end, service_mode_entered
     reset_events: event_handler|str:ms|machine_reset_phase_3, ball_starting
     grab_ball_events: event_handler|str:ms|None
     release_ball_events: event_handler|str:ms|None
@@ -802,7 +806,7 @@ multiballs:
     ball_count_type: single|enum(add,total)|total
     replace_balls_in_play: single|bool|false
     source_playfield: single|machine(ball_devices)|playfield
-    shoot_again: single|ms|10s
+    shoot_again: single|template_ms|10s
     ball_locks: list|machine(ball_devices)|None
     enable_events: event_handler|str:ms|None
     disable_events: event_handler|str:ms|None
@@ -1054,7 +1058,7 @@ rpi_dmd:
     daemon:             single|bool|False
     drop_privileges:    single|bool|True
 score_queue_player:
-    __valid_in__: modes
+    __valid_in__: mode
     int: single|template_int|None
 score_queues:
     __valid_in__: machine
@@ -1145,7 +1149,7 @@ shots:
     restart_events: event_handler|str:ms|None
     advance_events: event_handler|str:ms|None
     hit_events: event_handler|str:ms|None
-    show_tokens: dict|str:str|None
+    show_tokens: dict|str:template_str|None
 shot_groups:
     __valid_in__: mode
     shots: list|machine(shots)|None
@@ -1163,7 +1167,6 @@ shot_profiles:
     loop: single|bool|False
     show: single|str|None
     advance_on_hit: single|bool|True
-    state_names_to_rotate: list|str|None
     state_names_to_not_rotate: list|str|None
     rotation_pattern: list|str|R
     show_when_disabled: single|bool|False
@@ -1177,7 +1180,7 @@ shot_profiles:
         loops: single|int|-1
         sync_ms: single|int|None
         manual_advance: single|bool|None
-        show_tokens: dict|str:str|None
+        show_tokens: dict|str:template_str|None
 state:
     __valid_in__: machine, mode
     enable_events: event_handler|str:ms|None
@@ -1340,20 +1343,20 @@ sound_player:
     action: single|enum(play,stop,stop_looping,load,unload)|play
     track: single|str|None
     volume: single|gain|None
-    pan: single|float_or_token|0
+    pan: single|float_or_token|None
     loops: single|int_or_token|None
     priority: single|int_or_token|None
     start_at: single|secs|None
     fade_in: single|secs|None
     fade_out: single|secs|None
     about_to_finish_time: single|secs|-1
-    max_queue_time: single|secs|None
-    events_when_played: list|str|None
-    events_when_stopped: list|str|None
-    events_when_looping: list|str|None
-    events_when_about_to_finish: list|str|None
-    mode_end_action: single|enum(stop,stop_looping,use_sound_setting,None)|None
-    key: single|str|None
+    max_queue_time: single|secs|-1
+    events_when_played: list|str|use_sound_setting
+    events_when_stopped: list|str|use_sound_setting
+    events_when_looping: list|str|use_sound_setting
+    events_when_about_to_finish: list|str|use_sound_setting
+    mode_end_action: single|enum(stop,stop_looping,use_sound_setting)|use_sound_setting
+    key: single|str|use_sound_setting
 sound_pools:
     __valid_in__: machine, mode                      # todo add to validator
 sound_system:
@@ -1389,6 +1392,7 @@ sounds:
     file: single|str|None
     track: single|str|None
     volume: single|gain|0.5
+    pan: single|float|0
     streaming: single|bool|False
     loops: single|int|0
     priority: single|int|0
@@ -1516,6 +1520,10 @@ system11:
     file_log: single|enum(none,basic,full)|basic
 text_strings:
     __valid_in__: machine, mode                 # todo add to validator
+text_ui:
+    __valid_in__: machine
+    player_vars: list|str|None
+    machine_vars: list|str|None
 tic_stepper_settings:
     max_speed: single|int|2000000
     starting_speed: single|int|0
@@ -1613,7 +1621,7 @@ trinamics_steprocker:
     __valid_in__: machine
     port: single|str|
 variable_player:
-    __valid_in__: modes
+    __valid_in__: mode
     int: single|template_int|None
     float: single|template_float|None
     string: single|str|None

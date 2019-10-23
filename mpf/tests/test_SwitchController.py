@@ -7,10 +7,10 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class TestSwitchController(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/switch_controller/'
 
     def _callback(self, state, ms, switch_name):
@@ -63,7 +63,7 @@ class TestSwitchController(MpfTestCase):
         self.assertTrue(future.done())
 
     def test_verify_switches(self):
-        self.assertTrue(self.machine.switch_controller.verify_switches())
+        self.assertTrue(self.machine.clock.loop.run_until_complete(self.machine.switch_controller.verify_switches()))
 
     def test_is_active_timing(self):
         self.isActive = None

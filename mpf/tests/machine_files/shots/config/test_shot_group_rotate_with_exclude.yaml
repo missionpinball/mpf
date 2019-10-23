@@ -1,0 +1,18 @@
+#config_version=5
+
+modes:
+  - rotate_with_exclude
+
+switches:
+  s_rotate_l:
+    number:
+  s_rotate_r:
+    number:
+  switch_1:
+    number:
+  switch_2:
+    number:
+  switch_3:
+    number:
+  switch_4:
+    number:

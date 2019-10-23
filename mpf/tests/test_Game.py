@@ -6,10 +6,10 @@ from unittest.mock import MagicMock
 
 class TestGame(MpfGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/game/'
 
     def get_platform(self):
@@ -45,7 +45,7 @@ class TestGame(MpfGameTestCase):
         self.machine.switch_controller.process_switch('s_ball_switch2', 1)
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough"].balls)
 
         # start game (single player)
         self.start_game()
@@ -53,7 +53,7 @@ class TestGame(MpfGameTestCase):
         self.assertPlayerNumber(1)
         self.assertBallNumber(1)
 
-        self.assertEqual(3, self.machine.modes.game.balls_per_game)
+        self.assertEqual(3, self.machine.modes["game"].balls_per_game)
 
         # Assert game startup sequence
         self.assertEqual(13, self._events.call_count)
@@ -171,7 +171,7 @@ class TestGame(MpfGameTestCase):
         self.machine.switch_controller.process_switch('s_ball_switch2', 1)
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough"].balls)
 
         # start game (first player)
         self.start_game()
@@ -180,7 +180,7 @@ class TestGame(MpfGameTestCase):
         self.assertPlayerNumber(1)
         self.assertBallNumber(1)
 
-        self.assertEqual(3, self.machine.modes.game.balls_per_game)
+        self.assertEqual(3, self.machine.modes["game"].balls_per_game)
 
         # Assert game startup sequence
         self.assertEqual(13, self._events.call_count)
@@ -393,7 +393,7 @@ class TestGame(MpfGameTestCase):
         self.machine.switch_controller.process_switch('s_ball_switch2', 1)
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough"].balls)
 
         self.post_event("start_my_game")
         self.assertGameIsRunning()
@@ -416,10 +416,10 @@ class TestGameLogic(MpfFakeGameTestCase):
 
     def testLastGameScore(self):
         # no previous scores
-        self.assertFalse(self.machine.is_machine_var("player1_score"))
-        self.assertFalse(self.machine.is_machine_var("player2_score"))
-        self.assertFalse(self.machine.is_machine_var("player3_score"))
-        self.assertFalse(self.machine.is_machine_var("player4_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player1_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player2_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player3_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player4_score"))
 
         # four players
         self.start_game()
@@ -439,10 +439,10 @@ class TestGameLogic(MpfFakeGameTestCase):
         self.assertPlayerNumber(4)
 
         # still old scores should not be set
-        self.assertFalse(self.machine.is_machine_var("player1_score"))
-        self.assertFalse(self.machine.is_machine_var("player2_score"))
-        self.assertFalse(self.machine.is_machine_var("player3_score"))
-        self.assertFalse(self.machine.is_machine_var("player4_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player1_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player2_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player3_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player4_score"))
 
         self.stop_game()
 
@@ -469,8 +469,8 @@ class TestGameLogic(MpfFakeGameTestCase):
 
         self.assertMachineVarEqual(100, "player1_score")
         self.assertMachineVarEqual(200, "player2_score")
-        self.assertFalse(self.machine.is_machine_var("player3_score"))
-        self.assertFalse(self.machine.is_machine_var("player4_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player3_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player4_score"))
 
         # start one player game
         self.start_game()
@@ -480,12 +480,12 @@ class TestGameLogic(MpfFakeGameTestCase):
         # still the old scores
         self.assertMachineVarEqual(100, "player1_score")
         self.assertMachineVarEqual(200, "player2_score")
-        self.assertFalse(self.machine.is_machine_var("player3_score"))
-        self.assertFalse(self.machine.is_machine_var("player4_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player3_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player4_score"))
         self.drain_all_balls()
         self.assertGameIsNotRunning()
 
         self.assertMachineVarEqual(1337, "player1_score")
-        self.assertFalse(self.machine.is_machine_var("player2_score"))
-        self.assertFalse(self.machine.is_machine_var("player3_score"))
-        self.assertFalse(self.machine.is_machine_var("player4_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player2_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player3_score"))
+        self.assertFalse(self.machine.variables.is_machine_var("player4_score"))

@@ -2,7 +2,7 @@
 import asyncio
 import logging
 
-from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 
 from mpf.core.platform import ServoPlatform
@@ -26,34 +26,31 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
         """Return string representation."""
         return '<Platform.I2C_Servo_Controller_Platform>'
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Initialise platform."""
-        yield from super().initialize()
+        await super().initialize()
         # load i2c platform
         self.platform = self.machine.get_platform_sections(
             "i2c", self.config['platform'])
 
-    @asyncio.coroutine
-    def _initialize_controller(self, address):
+    async def _initialize_controller(self, address):
         # check if controller is already initialized
         if address in self.i2c_devices:
             return self.i2c_devices[address]
 
-        i2c_device = yield from self.platform.configure_i2c(address)
+        i2c_device = await self.platform.configure_i2c(address)
         self.i2c_devices[address] = i2c_device
 
         # initialise PCA9685/PCA9635
         i2c_device.i2c_write8(0x00, 0x11)  # set sleep
         i2c_device.i2c_write8(0x01, 0x04)  # configure output
         i2c_device.i2c_write8(0xFE, 130)   # set approx 50Hz
-        yield from asyncio.sleep(.01, loop=self.machine.clock.loop)     # needed according to datasheet to sync PLL
+        await asyncio.sleep(.01, loop=self.machine.clock.loop)     # needed according to datasheet to sync PLL
         i2c_device.i2c_write8(0x00, 0x01)  # no more sleep
-        yield from asyncio.sleep(.01, loop=self.machine.clock.loop)     # needed to end sleep according to datasheet
+        await asyncio.sleep(.01, loop=self.machine.clock.loop)     # needed to end sleep according to datasheet
         return i2c_device
 
-    @asyncio.coroutine
-    def configure_servo(self, number: str):
+    async def configure_servo(self, number: str):
         """Configure servo."""
         try:
             i2c_address, servo_number = number.rsplit("-", 1)
@@ -66,7 +63,7 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
             raise ConfigFileError("Invalid servo number {} in {}.".format(servo_number, number),
                                   2, self.log.name)
 
-        i2c_device = yield from self._initialize_controller(i2c_address)
+        i2c_device = await self._initialize_controller(i2c_address)
 
         # check bounds
         if number_int < 0 or number_int > 15:
@@ -77,7 +74,6 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
 
     def stop(self):
         """Stop platform."""
-        pass
 
 
 class I2cServo(ServoPlatformInterface):
@@ -114,12 +110,8 @@ class I2cServo(ServoPlatformInterface):
         self.i2c_device.i2c_write8(0x08 + self.number * 4, value & 0xFF)
         self.i2c_device.i2c_write8(0x09 + self.number * 4, value >> 8)
 
-    @classmethod
-    def set_speed_limit(cls, speed_limit):
-        """Todo emulate speed parameter."""
-        pass
+    def set_speed_limit(self, speed_limit):
+        """Not implemented."""
 
-    @classmethod
-    def set_acceleration_limit(cls, acceleration_limit):
-        """Todo emulate acceleration parameter."""
-        pass
+    def set_acceleration_limit(self, acceleration_limit):
+        """Not implemented."""

@@ -1,5 +1,4 @@
 """Logic Blocks devices."""
-import asyncio
 from typing import Any, List
 
 from mpf.core.delays import DelayManager
@@ -51,9 +50,8 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         block is enabled and whether it's complete.
         '''
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         if self.config['start_enabled'] is not None:
             self._start_enabled = self.config['start_enabled']
         else:
@@ -61,7 +59,6 @@ class LogicBlock(SystemWideDevice, ModeDevice):
 
     def add_control_events_in_mode(self, mode: Mode) -> None:
         """Do not auto enable this device in modes."""
-        pass
 
     def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Validate logic block config."""
@@ -87,11 +84,10 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         """Return the start value for this block."""
         raise NotImplementedError("implement")
 
-    @asyncio.coroutine
-    def device_added_system_wide(self):
+    async def device_added_system_wide(self):
         """Initialise internal state."""
         self._state = LogicBlockState(self.get_start_value())
-        yield from super().device_added_system_wide()
+        await super().device_added_system_wide()
         if not self.config['enable_events']:
             self.enable()
 
@@ -130,8 +126,8 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         """Return value or None if that is currently not possible."""
         if self._state:
             return self._state.value
-        else:
-            return None
+
+        return None
 
     @property
     def enabled(self):
@@ -311,9 +307,8 @@ class Counter(LogicBlock):
         self.ignore_hits = False
         self.hit_value = -1
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.hit_value = self.config['count_interval']
 
         if self.config['direction'] == 'down' and self.hit_value > 0:
@@ -326,7 +321,6 @@ class Counter(LogicBlock):
 
     def add_control_events_in_mode(self, mode: Mode) -> None:
         """Do not auto enable this device in modes."""
-        pass
 
     def _setup_control_events(self, event_list):
         self.debug_log("Setting up control events")
@@ -355,9 +349,9 @@ class Counter(LogicBlock):
         if count_complete_value is not None:
             if self.config['direction'] == 'up':
                 return self._state.value >= count_complete_value
-
-            elif self.config['direction'] == 'down':
+            if self.config['direction'] == 'down':
                 return self._state.value <= count_complete_value
+
         return False
 
     def event_add(self, value, **kwargs):
@@ -501,9 +495,8 @@ class Accrual(LogicBlock):
         super().__init__(machine, name)
         self.debug_log("Creating Accrual LogicBlock")
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.setup_event_handlers()
 
     def get_start_value(self) -> List[bool]:
@@ -563,10 +556,9 @@ class Sequence(LogicBlock):
         super().__init__(machine, name)
         self.debug_log("Creating Sequence LogicBlock")
 
-    @asyncio.coroutine
-    def _initialize(self):
+    async def _initialize(self):
         """Initialise sequence."""
-        yield from super()._initialize()
+        await super()._initialize()
         self.setup_event_handlers()
 
     def get_start_value(self) -> int:

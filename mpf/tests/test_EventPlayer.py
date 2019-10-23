@@ -6,10 +6,10 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class TestEventPlayer(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_event_player.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/event_players/'
 
     def test_load_and_play(self):
@@ -120,7 +120,7 @@ class TestEventPlayer(MpfTestCase):
         self.mock_event("event_if_modeactive")
         self.mock_event("event_if_modestopping")
 
-        self.machine.modes.mode1.start()
+        self.machine.modes["mode1"].start()
         self.advance_time_and_run()
         self.assertEqual(0, self._events["event_always"])
         self.assertEqual(0, self._events["event_if_modeactive"])
@@ -135,7 +135,7 @@ class TestEventPlayer(MpfTestCase):
         self.mock_event("event_if_modeactive")
         self.mock_event("event_if_modestopping")
 
-        self.machine.modes.mode1.stop()
+        self.machine.modes["mode1"].stop()
         self.assertEqual(0, self._events["event_always"])
         self.assertEqual(0, self._events["event_if_modeactive"])
         self.assertEqual(0, self._events["event_if_modestopping"])
@@ -164,7 +164,7 @@ class TestEventPlayer(MpfTestCase):
         self.mock_event('mode1_active')
         self.mock_event('mode1_not_active')
 
-        self.assertFalse(self.machine.modes.mode1.active)
+        self.assertFalse(self.machine.modes["mode1"].active)
 
         self.post_event('test_conditional_mode')
 
@@ -174,11 +174,11 @@ class TestEventPlayer(MpfTestCase):
         self.mock_event('mode1_active')
         self.mock_event('mode1_not_active')
 
-        self.machine.modes.mode1.start()
+        self.machine.modes["mode1"].start()
         self.advance_time_and_run()
 
         self.post_event('test_conditional_mode')
-        self.assertTrue(self.machine.modes.mode1.active)
+        self.assertTrue(self.machine.modes["mode1"].active)
 
         self.assertEventCalled('mode1_active')
         self.assertEventNotCalled('mode1_not_active')
@@ -192,7 +192,7 @@ class TestEventPlayer(MpfTestCase):
         self.mock_event('my_event_None_123')
         self.assertEventNotCalled("my_event_hello_world_123")
 
-        self.machine.set_machine_var("test", "hello_world")
+        self.machine.variables.set_machine_var("test", "hello_world")
         self.post_event("play_placeholder_event")
         self.assertEventNotCalled("my_event_None_123")
         self.assertEventCalled("my_event_hello_world_123")
@@ -204,11 +204,11 @@ class TestEventPlayer(MpfTestCase):
         self.mock_event('loaded_event_string')
         self.mock_event('loaded_event_notype')
 
-        self.machine.set_machine_var("testint", 1234)
-        self.machine.set_machine_var("testfloat", 12.34)
-        self.machine.set_machine_var("testbool", True)
-        self.machine.set_machine_var("teststring", "foobar")
-        self.machine.set_machine_var("testnotype", "barfoo")
+        self.machine.variables.set_machine_var("testint", 1234)
+        self.machine.variables.set_machine_var("testfloat", 12.34)
+        self.machine.variables.set_machine_var("testbool", True)
+        self.machine.variables.set_machine_var("teststring", "foobar")
+        self.machine.variables.set_machine_var("testnotype", "barfoo")
 
         self.post_event("play_placeholder_args")
         self.assertEqual({"foo": 1234, "priority": 0}, self._last_event_kwargs['loaded_event_int'])

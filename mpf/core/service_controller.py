@@ -3,12 +3,10 @@
 Controller provides all service information and can perform service tasks. Displaying the information is performed by
 the service mode or other components.
 """
-import logging
 import re
 from collections import namedtuple
 
 from typing import List
-import asyncio
 
 from mpf.core.mpf_controller import MpfController
 
@@ -32,12 +30,12 @@ class ServiceController(MpfController):
         self.configure_logging("service")
 
     @staticmethod
-    def _natural_key_sort(string_):
+    def _natural_key_sort(string_to_sort):
         """Sort by natural keys like humans do.
 
         See http://www.codinghorror.com/blog/archives/001018.html.
         """
-        return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', string_)]
+        return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', string_to_sort)]
 
     def is_in_service(self) -> bool:
         """Return true if in service mode."""
@@ -57,15 +55,14 @@ class ServiceController(MpfController):
             mode.stop()
 
         # explicitly stop game last
-        if self.machine.modes.game.active:
-            self.machine.modes.game.stop()
+        if self.machine.modes["game"].active:
+            self.machine.modes["game"].stop()
 
         self.machine.events.post("service_mode_entered")
 
         # TODO: reset hardware interface
 
-    @asyncio.coroutine
-    def stop_service(self):
+    async def stop_service(self):
         """Stop service mode."""
         if not self.is_in_service():
             raise AssertionError("Not in service mode!")
@@ -73,7 +70,7 @@ class ServiceController(MpfController):
 
         # this event starts attract mode again
         self.machine.events.post("service_mode_exited")
-        yield from self.machine.reset()
+        await self.machine.reset()
 
     def get_switch_map(self):
         """Return a map of all switches in the machine."""

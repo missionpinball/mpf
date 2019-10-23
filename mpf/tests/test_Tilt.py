@@ -3,10 +3,10 @@ from mpf.tests.MpfTestCase import MpfTestCase, test_config
 
 class TestTilt(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/tilt/'
 
     def get_platform(self):
@@ -112,13 +112,13 @@ class TestTilt(MpfTestCase):
 
         self.assertEqual(None, self.machine.game)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough"].balls)
         self.machine.switch_controller.process_switch('s_start', 1)
         self.machine.switch_controller.process_switch('s_start', 0)
         self.advance_time_and_run(10)
 
         # flipper actived
-        self.assertTrue(self.machine.flippers.f_test._enabled)
+        self.assertTrue(self.machine.flippers["f_test"]._enabled)
 
         self.assertTrue(self.machine.mode_controller.is_active('tilt'))
         self.assertNotEqual(None, self.machine.game)
@@ -136,7 +136,7 @@ class TestTilt(MpfTestCase):
         self.assertEqual(True, self.machine.game.tilted)
 
         # flipper deactived
-        self.assertFalse(self.machine.flippers.f_test._enabled)
+        self.assertFalse(self.machine.flippers["f_test"]._enabled)
 
         # scoring should no longer work
         self.assertPlayerVarEqual(100, "score")
@@ -159,7 +159,7 @@ class TestTilt(MpfTestCase):
 
         self.assertEqual(None, self.machine.game)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough"].balls)
         self.machine.switch_controller.process_switch('s_start', 1)
         self.machine.switch_controller.process_switch('s_start', 0)
         self.advance_time_and_run(10)
@@ -195,7 +195,7 @@ class TestTilt(MpfTestCase):
 
         self.assertEqual(None, self.machine.game)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough"].balls)
         self.machine.switch_controller.process_switch('s_start', 1)
         self.machine.switch_controller.process_switch('s_start', 0)
         self.advance_time_and_run(1)
@@ -227,7 +227,7 @@ class TestTilt(MpfTestCase):
 
         self.assertEqual(None, self.machine.game)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough"].balls)
         self.machine.switch_controller.process_switch('s_start', 1)
         self.machine.switch_controller.process_switch('s_start', 0)
         self.advance_time_and_run(10)
@@ -282,13 +282,13 @@ class TestTilt(MpfTestCase):
 
         self.assertEqual(None, self.machine.game)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough"].balls)
         self.machine.switch_controller.process_switch('s_start', 1)
         self.machine.switch_controller.process_switch('s_start', 0)
         self.advance_time_and_run(10)
 
         # flipper actived
-        self.assertTrue(self.machine.flippers.f_test._enabled)
+        self.assertTrue(self.machine.flippers["f_test"]._enabled)
 
         self.assertTrue(self.machine.mode_controller.is_active('tilt'))
         self.assertNotEqual(None, self.machine.game)
@@ -300,7 +300,7 @@ class TestTilt(MpfTestCase):
         self.assertNotEqual(None, self.machine.game)
 
         # flipper deactived
-        self.assertFalse(self.machine.flippers.f_test._enabled)
+        self.assertFalse(self.machine.flippers["f_test"]._enabled)
 
         self.machine.switch_controller.process_switch('s_ball_switch1', 1)
         self.advance_time_and_run(1)

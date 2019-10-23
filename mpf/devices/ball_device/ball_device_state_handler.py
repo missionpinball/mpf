@@ -39,8 +39,7 @@ class BallDeviceStateHandler:
         """Warning log."""
         self.ball_device.warning_log(*args, **kwargs)
 
-    @asyncio.coroutine
-    def initialise(self):
+    async def initialise(self):
         """Initialise handler."""
         self._task = self.machine.clock.loop.create_task(self._run())
         self._task.add_done_callback(self._done)
@@ -52,6 +51,5 @@ class BallDeviceStateHandler:
         except asyncio.CancelledError:
             pass
 
-    @asyncio.coroutine
-    def _run(self):
+    async def _run(self):
         raise NotImplementedError()

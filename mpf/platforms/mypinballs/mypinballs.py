@@ -53,13 +53,12 @@ class MyPinballsHardwarePlatform(SegmentDisplayPlatform):
         self.config = self.machine.config_validator.validate_config("mypinballs", self.machine.config['mypinballs'])
         self._configure_device_logging_and_debug("MyPinballs", self.config)
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Initialise hardware."""
         # connect to serial
         connector = self.machine.clock.open_serial_connection(
             url=self.config['port'], baudrate=self.config['baud'])
-        self._reader, self._writer = yield from connector
+        self._reader, self._writer = await connector
 
         # send a newline to end any previous command in the queue
         # this caused problems. disable it for now
@@ -76,8 +75,7 @@ class MyPinballsHardwarePlatform(SegmentDisplayPlatform):
             self.log.debug("Sending cmd: %s", cmd)
         self._writer.write(cmd)
 
-    @asyncio.coroutine
-    def configure_segment_display(self, number: str, platform_settings) -> "SegmentDisplayPlatformInterface":
+    async def configure_segment_display(self, number: str, platform_settings) -> "SegmentDisplayPlatformInterface":
         """Configure display."""
         del platform_settings
         number_int = int(number)

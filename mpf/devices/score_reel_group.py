@@ -56,9 +56,8 @@ class ScoreReelGroup(SystemWideDevice):
 
         self._tick_task = None
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.reels = self.config['reels']
         self.reels.reverse()  # We want our smallest digit in the 0th element
 
@@ -146,10 +145,8 @@ class ScoreReelGroup(SystemWideDevice):
         Args:
             value: The interger value you'd like to convert.
 
-        Returns:
-            A list containing the values for each corresponding score reel,
-            with the lowest reel digit position in list position 0.
-
+        Returns a list containing the values for each corresponding score reel,
+        with the lowest reel digit position in list position 0.
         """
         output_list = []
 

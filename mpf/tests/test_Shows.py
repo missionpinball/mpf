@@ -9,10 +9,10 @@ from mpf.tests.MpfTestCase import MpfTestCase, test_config
 
 class TestShows(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_shows.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/shows/'
 
     def get_platform(self):
@@ -220,7 +220,7 @@ class TestShows(MpfTestCase):
         self.assertLightChannel("gi_01", 255)
 
         self.assertNotIn("show_from_mode", self.machine.show_player.instances['mode1']['show_player'])
-        self.machine.set_machine_var("test", 42)
+        self.machine.variables.set_machine_var("test", 42)
         self.advance_time_and_run(.01)
         self.assertTrue(self.machine.show_player.instances['mode1']['show_player']['show_from_mode'])
 
@@ -865,8 +865,8 @@ class TestShows(MpfTestCase):
 
     def test_placeholder_in_token(self):
         self.assertNotLightColor("led_02", "blue")
-        self.machine.set_machine_var("test_color", "blue")
-        self.machine.set_machine_var("test_num", "02")
+        self.machine.variables.set_machine_var("test_color", "blue")
+        self.machine.variables.set_machine_var("test_num", "02")
         self.post_event("play_show_with_placeholder_in_token")
         self.advance_time_and_run()
         self.assertLightColor("led_02", "blue")
@@ -879,3 +879,21 @@ class TestShows(MpfTestCase):
         self.assertNotLightColor("led_01", "red")
         self.advance_time_and_run(.06)
         self.assertLightColor("led_01", "red")
+
+    def test_conditional_shows(self):
+        self.assertLightColor("led_01", "black")
+        self.post_event_with_params("play_show_with_condition_in_event", green=False)
+        self.advance_time_and_run()
+        self.assertLightColor("led_01", "purple")
+        self.post_event_with_params("play_show_with_condition_in_event", green=True)
+        self.advance_time_and_run()
+        self.assertLightColor("led_01", "green")
+
+    def test_conditional_show_names(self):
+        self.assertLightColor("led_01", "black")
+        self.post_event_with_params("play_show_with_condition_in_show", blue=False)
+        self.advance_time_and_run()
+        self.assertLightColor("led_01", "red")
+        self.post_event_with_params("play_show_with_condition_in_show", blue=True)
+        self.advance_time_and_run()
+        self.assertLightColor("led_01", "blue")

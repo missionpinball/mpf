@@ -19,8 +19,35 @@ shots:
     show_tokens:
       leds: light_2
     profile: rainbow_start_step
+  mode2_shot_show_tokens:
+    hit_events: mode2_shot_show_tokens_advance
+    enable_events: mode2_shot_show_tokens_enable
+    reset_events: mode2_shot_show_tokens_reset
+    disable_events: mode2_shot_show_tokens_disable
+    show_tokens:
+      leds: (machine.leds)
+    profile: show_tokens_profile
+
+shows:
+  show_with_tokens:
+    - lights:
+        (leds): (color)
 
 shot_profiles:
+  show_tokens_profile:
+    states:
+      - name: one
+        show: show_with_tokens
+        show_tokens:
+          color: (machine.color1)
+      - name: two
+        show: show_with_tokens
+        show_tokens:
+          color: (machine.color2)
+      - name: three
+        show: show_with_tokens
+        show_tokens:
+          color: (machine.color3)
   mode2_shot_21:
     states:
       - name: mode2_one

@@ -7,7 +7,7 @@ from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
 
 MYPY = False
 if MYPY:    # pragma: no cover
-    from mpf.platforms.opp.opp import OppHardwarePlatform
+    from mpf.platforms.opp.opp import OppHardwarePlatform   # pylint: disable-msg=cyclic-import,unused-import
 
 # Minimum firmware versions needed for this module
 MIN_FW = 0x00000100
@@ -18,34 +18,34 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
 
     """Manages a Serial connection to the first processor in a OPP serial chain."""
 
-    __slots__ = ["partMsg", "chain_serial", "_lost_synch"]
+    __slots__ = ["part_msg", "chain_serial", "_lost_synch"]
 
     # pylint: disable=too-many-arguments
     def __init__(self, platform: "OppHardwarePlatform", port, baud) -> None:
         """Initialise Serial Connection to OPP Hardware."""
-        self.partMsg = b""
+        self.part_msg = b""
         self.chain_serial = None    # type: str
         self._lost_synch = False
 
         super().__init__(platform, port, baud)
+        self.platform = platform    # hint the right type
 
-    @asyncio.coroutine
-    def _identify_connection(self):
+    async def _identify_connection(self):
         """Identify which processor this serial connection is talking to."""
         # keep looping and wait for an ID response
         count = 0
         # read and discard all messages in buffer
-        self.writer.write(OppRs232Intf.EOM_CMD)
-        yield from asyncio.sleep(.01, loop=self.machine.clock.loop)
-        yield from self.reader.read(1000)
+        self.send(OppRs232Intf.EOM_CMD)
+        await asyncio.sleep(.01, loop=self.machine.clock.loop)
+        await self.read(1000)
         while True:
             if (count % 10) == 0:
                 self.log.debug("Sending EOM command to port '%s'",
                                self.port)
             count += 1
-            self.writer.write(OppRs232Intf.EOM_CMD)
-            yield from asyncio.sleep(.01, loop=self.machine.clock.loop)
-            resp = yield from self.reader.read(30)
+            self.send(OppRs232Intf.EOM_CMD)
+            await asyncio.sleep(.01, loop=self.machine.clock.loop)
+            resp = await self.read(30)
             if resp.startswith(OppRs232Intf.EOM_CMD):
                 break
             if count == 100:
@@ -62,16 +62,16 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         cmd = bytes(msg)
 
         self.log.debug("Sending inventory command: %s", "".join(" 0x%02x" % b for b in cmd))
-        self.writer.write(cmd)
+        self.send(cmd)
 
-        resp = yield from self.readuntil(b'\xff')
+        resp = await self.readuntil(b'\xff')
 
         # resp will contain the inventory response.
         self.platform.process_received_message(self.chain_serial, resp)
 
         # Now send get gen2 configuration message to find populated wing boards
         self.send_get_gen2_cfg_cmd()
-        resp = yield from self.readuntil(b'\xff', 6)
+        resp = await self.readuntil(b'\xff', 6)
 
         # resp will contain the gen2 cfg responses.  That will end up creating all the
         # correct objects.
@@ -79,31 +79,34 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
 
         # get the version of the firmware
         self.send_vers_cmd()
-        resp = yield from self.readuntil(b'\xff', 6)
+        resp = await self.readuntil(b'\xff', 6)
         self.platform.process_received_message(self.chain_serial, resp)
 
         # see if version of firmware is new enough
-        if self.platform.minVersion < MIN_FW:
+        if self.platform.min_version < MIN_FW:
             raise AssertionError("Firmware version mismatch. MPF requires"
                                  " the OPP Gen2 processor to be firmware {}, but yours is {}".
                                  format(self._create_vers_str(MIN_FW),
-                                        self._create_vers_str(self.platform.minVersion)))
+                                        self._create_vers_str(self.platform.min_version)))
 
         # get initial value for inputs
-        self.writer.write(self.platform.read_input_msg[self.chain_serial])
+        self.log.debug("Getting initial inputs states for %s", self.chain_serial)
+        self.send(self.platform.read_input_msg[self.chain_serial])
         cards = len([x for x in self.platform.opp_inputs if x.chain_serial == self.chain_serial])
         while True:
-            resp = yield from self.readuntil(b'\xff')
+            resp = await self.readuntil(b'\xff')
             cards -= self._parse_msg(resp)
             if cards <= 0:
                 break
+            self.log.debug("Waiting for another %s cards", cards)
 
+        self.log.info("Init of OPP board %s done", self.chain_serial)
         self.platform.register_processor_connection(self.chain_serial, self)
 
     def send_get_gen2_cfg_cmd(self):
         """Send get gen2 configuration message to find populated wing boards."""
         whole_msg = bytearray()
-        for card_addr in self.platform.gen2AddrArr[self.chain_serial]:
+        for card_addr in self.platform.gen2_addr_arr[self.chain_serial]:
             msg = bytearray()
             msg.append(card_addr)
             msg.extend(OppRs232Intf.GET_GEN2_CFG)
@@ -117,12 +120,12 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         whole_msg.extend(OppRs232Intf.EOM_CMD)
         cmd = bytes(whole_msg)
         self.log.debug("Sending get Gen2 Cfg command: %s", "".join(" 0x%02x" % b for b in cmd))
-        self.writer.write(cmd)
+        self.send(cmd)
 
     def send_vers_cmd(self):
         """Send get firmware version message."""
         whole_msg = bytearray()
-        for card_addr in self.platform.gen2AddrArr[self.chain_serial]:
+        for card_addr in self.platform.gen2_addr_arr[self.chain_serial]:
             msg = bytearray()
             msg.append(card_addr)
             msg.extend(OppRs232Intf.GET_VERS_CMD)
@@ -136,7 +139,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         whole_msg.extend(OppRs232Intf.EOM_CMD)
         cmd = bytes(whole_msg)
         self.log.debug("Sending get version command: %s", "".join(" 0x%02x" % b for b in cmd))
-        self.writer.write(cmd)
+        self.send(cmd)
 
     @classmethod
     def _create_vers_str(cls, version_int):     # pragma: no cover
@@ -149,48 +152,53 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         self._lost_synch = True
 
     def _parse_msg(self, msg):
-        self.partMsg += msg
-        strlen = len(self.partMsg)
+        self.part_msg += msg
+        strlen = len(self.part_msg)
         message_found = 0
         # Split into individual responses
-        while strlen >= 7:
+        while strlen > 2:
             if self._lost_synch:
                 while strlen > 0:
                     # wait for next gen2 card message
-                    if (self.partMsg[0] & 0xe0) == 0x20:
+                    if (self.part_msg[0] & 0xe0) == 0x20:
                         self._lost_synch = False
                         break
-                    self.partMsg = self.partMsg[1:]
+                    self.part_msg = self.part_msg[1:]
                     strlen -= 1
-                # continue because we could have less then 7 bytes in the buffer
-                continue
-
             # Check if this is a gen2 card address
-            if (self.partMsg[0] & 0xe0) == 0x20:
+            elif (self.part_msg[0] & 0xe0) == 0x20:
                 # Check if read input
-                if self.partMsg[1] == ord(OppRs232Intf.READ_GEN2_INP_CMD):
-                    self.platform.process_received_message(self.chain_serial, self.partMsg[:7])
-                    message_found += 1
-                    self.partMsg = self.partMsg[7:]
-                    strlen -= 7
+                if self.part_msg[1] == ord(OppRs232Intf.READ_GEN2_INP_CMD):
+                    if strlen >= 7:
+                        self.platform.process_received_message(self.chain_serial, self.part_msg[:7])
+                        message_found += 1
+                        self.part_msg = self.part_msg[7:]
+                        strlen -= 7
+                    else:
+                        # message not complete yet
+                        break
                 # Check if read matrix input
-                elif self.partMsg[1] == ord(OppRs232Intf.READ_MATRIX_INP):
-                    self.platform.process_received_message(self.chain_serial, self.partMsg[:11])
-                    message_found += 1
-                    self.partMsg = self.partMsg[11:]
-                    strlen -= 11
+                elif self.part_msg[1] == ord(OppRs232Intf.READ_MATRIX_INP):
+                    if strlen >= 11:
+                        self.platform.process_received_message(self.chain_serial, self.part_msg[:11])
+                        message_found += 1
+                        self.part_msg = self.part_msg[11:]
+                        strlen -= 11
+                    else:
+                        # message not complete yet
+                        break
                 else:
                     # Lost synch
-                    self.partMsg = self.partMsg[2:]
+                    self.part_msg = self.part_msg[2:]
                     strlen -= 2
                     self._lost_synch = True
 
-            elif self.partMsg[0] == ord(OppRs232Intf.EOM_CMD):
-                self.partMsg = self.partMsg[1:]
+            elif self.part_msg[0] == ord(OppRs232Intf.EOM_CMD):
+                self.part_msg = self.part_msg[1:]
                 strlen -= 1
             else:
                 # Lost synch
-                self.partMsg = self.partMsg[1:]
+                self.part_msg = self.part_msg[1:]
                 strlen -= 1
                 self._lost_synch = True
 

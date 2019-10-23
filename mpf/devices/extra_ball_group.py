@@ -85,11 +85,10 @@ class ExtraBallGroup(SystemWideDevice):
 
         self.player = None
 
-    def is_ok_to_light(self):
+    def is_ok_to_light(self) -> bool:
         """Check if it's possible to light an extra ball.
 
-        Returns:
-            True of False
+        Returns True or False.
 
         This method checks to see if the group is enabled and whether the
         max_lit setting has been exceeded.

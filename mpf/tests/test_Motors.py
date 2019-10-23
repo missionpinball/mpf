@@ -5,10 +5,10 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class TestMotors(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/motor/'
 
     def testMotorizedDropTargetBank(self):

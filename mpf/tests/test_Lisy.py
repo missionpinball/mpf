@@ -1,7 +1,5 @@
 import time
 
-import sys
-
 from mpf.platforms.lisy import lisy
 
 from mpf.tests.MpfTestCase import MpfTestCase, test_config, MagicMock
@@ -59,10 +57,10 @@ class MockLisySocket(MockSocket, MockSerial):
 
 class TestLisy(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/lisy/'
 
     def _mock_loop(self):
@@ -81,10 +79,6 @@ class TestLisy(MpfTestCase):
             self.advance_time_and_run(.01)
 
     def setUp(self):
-        if sys.version_info[0] == 3 and sys.version_info[1] == 4:
-            # this fails on python 3.4 because of some asyncio bugs
-            self.skipTest("Test is unstable in Python 3.4")
-            return
         self.expected_duration = 1.5
         self.serialMock = MockLisySocket()
 
@@ -424,10 +418,10 @@ class TestLisy(MpfTestCase):
 
 class TestAPC(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/apc/'
 
     def _mock_loop(self):
@@ -446,10 +440,6 @@ class TestAPC(MpfTestCase):
             self.advance_time_and_run(.01)
 
     def setUp(self):
-        if sys.version_info[0] == 3 and sys.version_info[1] == 4:
-            # this fails on python 3.4 because of some asyncio bugs
-            self.skipTest("Test is unstable in Python 3.4")
-            return
         self.expected_duration = 1.5
         self.serialMock = MockLisySocket()
 
@@ -466,18 +456,24 @@ class TestAPC(MpfTestCase):
             b'\x03': b'\x28',           # get number of lamps -> 40
             b'\x04': b'\x09',           # get number of solenoids -> 9
             b'\x06': b'\x05',           # get number of displays -> 5
-            b'\x07\x00': b'\x10\x02',   # get type of display 0
-            b'\x07\x01': b'\x05\x03',   # get type of display 1
-            b'\x07\x02': b'\x07\x04',   # get type of display 2
-            b'\x07\x03': b'\x03\x05',   # get type of display 3
-            b'\x07\x04': b'\x10\x06',   # get type of display 4
+            b'\x07\x00': b'\x02\x10',   # get type of display 0
+            b'\x07\x01': b'\x03\x05',   # get type of display 1
+            b'\x07\x02': b'\x04\x07',   # get type of display 2
+            b'\x07\x03': b'\x05\x03',   # get type of display 3
+            b'\x07\x04': b'\x06\x10',   # get type of display 4
             b'\x09': b'\x58',           # get number of switches -> 88
             b'\x13': b'\x00',           # get number of modern lights -> 0
-            b'\x1e\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00': None,  # clear display
-            b'\x1f\x00\x00\x00\x00\x00': None,                                              # clear display
-            b'\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00': None,          # clear display
-            b'\x21\x20\x20\x20': None,                                                      # clear display
-            b'\x22\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20': None,  # clear display
+            b'\x1e\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00': None,  # clear display
+            b'\x1f\x05\x00\x00\x00\x00\x00': None,                                              # clear display
+            b'\x20\x0e\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00': None,          # clear display
+            b'\x21\x03\x20\x20\x20': None,                                                      # clear display
+            b'\x22\x10\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20': None,  # clear display
+            b'\x19\x00\x0a': None,
+            b'\x19\x01\x0a': None,
+            b'\x19\x67\xff': None,
+            b'\x19\x05\x1e': None,
+            b'\x19\x06\x0a': None,
+            b'\x19\x07\x0a': None,
         }
 
         for number in range(88):
@@ -503,6 +499,86 @@ class TestAPC(MpfTestCase):
         }
         self._wait_for_processing()
 
+        # test sound
+        self.serialMock.expected_commands = {
+            b'\x32\x01\x02': None
+        }
+        self.post_event("test2")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # test sound on track 2
+        self.serialMock.expected_commands = {
+            b'\x32\x02\x05': None
+        }
+        self.post_event("test4")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # test sound file
+        self.serialMock.expected_commands = {
+            b'\x34\x01\x00some_file\x00': None
+        }
+        self.post_event("play_file")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # test sound file looping
+        self.serialMock.expected_commands = {
+            b'\x34\x01\x01some_file\x00': None
+        }
+        self.post_event("play_file_loop")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # text to speech
+        self.serialMock.expected_commands = {
+            b'\x35\x01\x02Hello MPF\x00': None
+        }
+        self.post_event("play_text")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # set volume to 50 (32 hex)
+        self.serialMock.expected_commands = {
+            b'\x36\x01\x32': None
+        }
+        self.post_event("volume_05")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # increase volume by 0.1 -> 60 -> hex 3C
+        self.serialMock.expected_commands = {
+            b'\x36\x01\x3C': None
+        }
+        self.post_event("increase_volume")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # decrease volume by 0.01 -> 59 -> hex 3B
+        self.serialMock.expected_commands = {
+            b'\x36\x01\x3B': None
+        }
+        self.post_event("decrease_volume")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # test another sound
+        self.serialMock.expected_commands = {
+            b'\x32\x01\x03': None
+        }
+        self.post_event("test3")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # stop sound
+        self.serialMock.expected_commands = {
+            b'\x33\01': None
+        }
+        self.post_event("test_stop")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
     def test_rules(self):
         """Test HW Rules."""
         self.serialMock.expected_commands = {
@@ -525,6 +601,7 @@ class TestAPC(MpfTestCase):
 
         self.serialMock.expected_commands = {
             b'\x3c\x07\x03\x00\x00\x0a\xff\x00\x01\x00\x00': None,      # add rule for slingshot
+            b'\x19\x07\x14': None
         }
         self.machine.autofires["ac_slingshot"].enable()
         self.advance_time_and_run(.2)
@@ -541,8 +618,18 @@ class TestAPC(MpfTestCase):
 
         # set info display to TEST
         self.serialMock.expected_commands = {
-            b'\x1e\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x03\x03\x07': None
+            b'\x1e\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x03\x03\x07': None
         }
         self.machine.segment_displays["info_display"].add_text("1337")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # test recycle
+        # pulse coil
+        self.serialMock.expected_commands = {
+            b'\x18\x00\x0a': None,      # set pulse_ms to 10ms
+            b'\x17\x00': None
+        }
+        self.machine.coils["c_test"].pulse()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)

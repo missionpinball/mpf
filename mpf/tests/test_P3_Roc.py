@@ -1,5 +1,3 @@
-import sys
-
 from mpf.core.platform_controller import SwitchRuleSettings, DriverRuleSettings, PulseRuleSettings
 
 from mpf.core.rgb_color import RGBColor
@@ -38,10 +36,10 @@ class MockPinProcModule(MagicMock):
 
 
 class TestP3Roc(MpfTestCase):
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/p3_roc/'
 
     def get_platform(self):
@@ -96,14 +94,21 @@ class TestP3Roc(MpfTestCase):
         driver["futureEnable"] = False
         return driver
 
+    def _driver_pulsed_patter(self, driver, millisecondsOn, millisecondsOff, milliseconds_overall_patter_time, now):
+        driver["state"] = True
+        driver["timeslots"] = 0
+        driver["waitForFirstTimeSlot"] = not now
+        driver["outputDriveTime"] = milliseconds_overall_patter_time
+        driver["patterOnTime"] = millisecondsOn
+        driver["patterOffTime"] = millisecondsOff
+        driver["patterEnable"] = True
+        driver["futureEnable"] = False
+        return driver
+
     def setUp(self):
-        if sys.version_info[0] == 3 and sys.version_info[1] == 4:
-            # this fails on python 3.4 because of some asyncio bugs
-            self.skipTest("Test is unstable in Python 3.4")
-            return
         self._sync_count = 0
         self.expected_duration = 2
-        p_roc_common.pinproc_imported = True
+        p_roc_common.PINPROC_IMPORTED = True
         p_roc_common.pinproc = MockPinProcModule()
         self.pinproc = MagicMock(return_value=True)
         p_roc_common.pinproc.PinPROC = MagicMock(return_value=self.pinproc)
@@ -116,6 +121,8 @@ class TestP3Roc(MpfTestCase):
         p_roc_common.pinproc.driver_state_disable = self._driver_state_disable
 
         p_roc_common.pinproc.driver_state_patter = self._driver_state_patter
+
+        p_roc_common.pinproc.driver_pulsed_patter = self._driver_pulsed_patter
 
         self.pinproc.switch_get_states = MagicMock(return_value=[0, 1] + [0] * 100)
         self.pinproc.read_data = self.read_data
@@ -136,7 +143,7 @@ class TestP3Roc(MpfTestCase):
             0x00: {         # manager
                 0x00: 0,            # chip id
                 0x01: 0x00020006,   # version
-                0x03: 0x00FF,       # dip switches
+                0x03: 0x01FF,       # dip switches
             },
             0x02: {         # switch controller
                 0x1000: 0xA3,       # SW-16 Address 0 Reg 0
@@ -175,20 +182,23 @@ class TestP3Roc(MpfTestCase):
         self._test_steppers()
 
         # test hardware scan
-        info_str = """Firmware Version: 2 Firmware Revision: 6 Hardware Board ID: 0
+        info_str = """Firmware Version: 2 Firmware Revision: 6 Hardware Board ID: 1
 SW-16 boards found:
  - Board: 0 Switches: 16 Device Type: A3 Board ID: 0
  - Board: 1 Switches: 16 Device Type: A3 Board ID: 13
  - Board: 2 Switches: 16 Device Type: A4 Board ID: 0
 """
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
+        self.assertEqual(2, self.machine.variables["p_roc_version"])
+        self.assertEqual(6, self.machine.variables["p_roc_revision"])
+        self.assertEqual(1, self.machine.variables["p_roc_hardware_version"])
 
     def _test_pulse(self):
-        self.assertEqual("PD-16 Board 1 Bank 1", self.machine.coils.c_test.hw_driver.get_board_name())
+        self.assertEqual("PD-16 Board 1 Bank 1", self.machine.coils["c_test"].hw_driver.get_board_name())
         # pulse coil A1-B1-2
-        self.machine.coils.c_test.pulse()
+        self.machine.coils["c_test"].pulse()
         self.wait_for_platform()
-        number = self.machine.coils.c_test.hw_driver.number
+        number = self.machine.coils["c_test"].hw_driver.number
         self.pinproc.driver_pulse.assert_called_with(
             number, 23)
         assert not self.pinproc.driver_schedule.called
@@ -196,16 +206,16 @@ SW-16 boards found:
     def _test_enable_exception(self):
         # enable coil which does not have allow_enable
         with self.assertRaises(AssertionError):
-            self.machine.coils.c_test.enable()
+            self.machine.coils["c_test"].enable()
 
     def _test_allow_enable_disable(self):
-        self.machine.coils.c_test_allow_enable.enable()
+        self.machine.coils["c_test_allow_enable"].enable()
         self.wait_for_platform()
-        number = self.machine.coils.c_test_allow_enable.hw_driver.number
+        number = self.machine.coils["c_test_allow_enable"].hw_driver.number
         self.pinproc.driver_schedule.assert_called_with(
             number, 0xffffffff, 0, True)
 
-        self.machine.coils.c_test_allow_enable.disable()
+        self.machine.coils["c_test_allow_enable"].disable()
         self.wait_for_platform()
         self.pinproc.driver_disable.assert_called_with(number)
 
@@ -213,7 +223,7 @@ SW-16 boards found:
         coil_number = self.machine.coils["c_slingshot_test"].hw_driver.number
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
         self.wait_for_platform()
-        self.machine.autofires.ac_slingshot_test.enable()
+        self.machine.autofires["ac_slingshot_test"].enable()
         self.wait_for_platform()
         self.pinproc.switch_update_rule.assert_has_calls([
             call(40, 'open_nondebounced', {'notifyHost': False, 'reloadActive': True}, [], False),
@@ -228,7 +238,7 @@ SW-16 boards found:
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
 
         # test disable
-        self.machine.autofires.ac_slingshot_test.disable()
+        self.machine.autofires["ac_slingshot_test"].disable()
         self.wait_for_platform()
 
         self.pinproc.switch_update_rule.assert_has_calls([
@@ -240,7 +250,7 @@ SW-16 boards found:
 
         self.pinproc.driver_disable.assert_called_with(coil_number)
 
-        # sling with pulse power (currently not implemented)
+        # sling with pulse power
         coil_number = self.machine.coils["c_sling_pulse_power"].hw_driver.number
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
         self.wait_for_platform()
@@ -249,9 +259,9 @@ SW-16 boards found:
         self.pinproc.switch_update_rule.assert_has_calls([
             call(66, 'open_nondebounced', {'notifyHost': False, 'reloadActive': True}, [], False),
             call(66, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': True},
-                 [{'futureEnable': False, 'patterOffTime': 0, 'polarity': True, 'waitForFirstTimeSlot': False,
-                   'timeslots': 0, 'patterOnTime': 0, 'outputDriveTime': 12, 'patterEnable': False, 'state': 1,
-                   'driverNum': coil_number}], False),
+                 [{'driverNum': coil_number, 'outputDriveTime': 12, 'polarity': True, 'state': True,
+                   'waitForFirstTimeSlot': False, 'timeslots': 0, 'patterOnTime': 1, 'patterOffTime': 1,
+                   'patterEnable': True, 'futureEnable': False}], False),
             call(66, 'open_debounced', {'notifyHost': True, 'reloadActive': True}, [], False),
             call(66, 'closed_debounced', {'notifyHost': True, 'reloadActive': True}, [], False),
         ], any_order=True)
@@ -261,7 +271,7 @@ SW-16 boards found:
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
         self.wait_for_platform()
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
-        self.machine.autofires.ac_switch_nc_test.enable()
+        self.machine.autofires["ac_switch_nc_test"].enable()
         self.wait_for_platform()
         self.pinproc.switch_update_rule.assert_has_calls([
             call(41, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': True}, [], False),
@@ -274,7 +284,7 @@ SW-16 boards found:
         ], any_order=True)
 
         # test disable
-        self.machine.autofires.ac_switch_nc_test.disable()
+        self.machine.autofires["ac_switch_nc_test"].disable()
         self.wait_for_platform()
         self.pinproc.driver_disable.assert_called_with(coil_number)
 
@@ -283,8 +293,8 @@ SW-16 boards found:
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
         self.wait_for_platform()
         rule = self.machine.platform_controller.set_pulse_on_hit_and_release_rule(
-            SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
-            DriverRuleSettings(driver=self.machine.coils.c_test, recycle=False),
+            SwitchRuleSettings(switch=self.machine.switches["s_test"], debounce=True, invert=False),
+            DriverRuleSettings(driver=self.machine.coils["c_test"], recycle=False),
             PulseRuleSettings(duration=23, power=1.0))
         self.wait_for_platform()
 
@@ -313,7 +323,6 @@ SW-16 boards found:
             call(23, 'open_debounced', {'reloadActive': False, 'notifyHost': True}, []),
             call(23, 'closed_debounced', {'reloadActive': False, 'notifyHost': True}, []),
         ], any_order=True)
-
 
     def _test_hw_rule_hold_pwm(self):
         return  # currently not cupported
@@ -377,8 +386,8 @@ SW-16 boards found:
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
         self.wait_for_platform()
         rule = self.machine.platform_controller.set_pulse_on_hit_and_enable_and_release_rule(
-            SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
-            DriverRuleSettings(driver=self.machine.coils.c_test_allow_enable, recycle=False),
+            SwitchRuleSettings(switch=self.machine.switches["s_test"], debounce=True, invert=False),
+            DriverRuleSettings(driver=self.machine.coils["c_test_allow_enable"], recycle=False),
             PulseRuleSettings(duration=23, power=1.0))
 
         self.wait_for_platform()
@@ -414,8 +423,8 @@ SW-16 boards found:
         # enable coil which does not have allow_enable
         with self.assertRaises(AssertionError):
             self.machine.platform_controller.set_pulse_on_hit_and_enable_and_release_rule(
-                SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
-                DriverRuleSettings(driver=self.machine.coils.c_test, recycle=False),
+                SwitchRuleSettings(switch=self.machine.switches["s_test"], debounce=True, invert=False),
+                DriverRuleSettings(driver=self.machine.coils["c_test"], recycle=False),
                 PulseRuleSettings(duration=23, power=1.0))
 
     def _test_hw_rule_multiple_pulse(self):
@@ -424,8 +433,8 @@ SW-16 boards found:
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
         self.wait_for_platform()
         self.machine.platform_controller.set_pulse_on_hit_rule(
-            SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
-            DriverRuleSettings(driver=self.machine.coils.c_test, recycle=False),
+            SwitchRuleSettings(switch=self.machine.switches["s_test"], debounce=True, invert=False),
+            DriverRuleSettings(driver=self.machine.coils["c_test"], recycle=False),
             PulseRuleSettings(duration=23, power=1.0))
 
         self.wait_for_platform()
@@ -444,8 +453,8 @@ SW-16 boards found:
 
         # test setting the same rule again
         self.machine.platform_controller.set_pulse_on_hit_rule(
-            SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
-            DriverRuleSettings(driver=self.machine.coils.c_test, recycle=False),
+            SwitchRuleSettings(switch=self.machine.switches["s_test"], debounce=True, invert=False),
+            DriverRuleSettings(driver=self.machine.coils["c_test"], recycle=False),
             PulseRuleSettings(duration=23, power=1.0))
         self.wait_for_platform()
 
@@ -461,8 +470,8 @@ SW-16 boards found:
         ], any_order=True)
 
         self.machine.platform_controller.set_pulse_on_hit_rule(
-            SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
-            DriverRuleSettings(driver=self.machine.coils.c_coil_pwm_test, recycle=False),
+            SwitchRuleSettings(switch=self.machine.switches["s_test"], debounce=True, invert=False),
+            DriverRuleSettings(driver=self.machine.coils["c_coil_pwm_test"], recycle=False),
             PulseRuleSettings(duration=23, power=1.0))
 
         self.wait_for_platform()
@@ -491,7 +500,7 @@ SW-16 boards found:
             call(7, 0x8000, 0x01)
         ])
         self.pinproc.write_data = MagicMock(return_value=True)
-        self.machine.servos.servo1.go_to_position(0)
+        self.machine.servos["servo1"].go_to_position(0)
         self.wait_for_platform()
 
         self.pinproc.write_data.assert_has_calls([
@@ -501,7 +510,7 @@ SW-16 boards found:
             call(7, 0x8015, 0)
         ])
         self.pinproc.write_data = MagicMock(return_value=True)
-        self.machine.servos.servo1.go_to_position(1)
+        self.machine.servos["servo1"].go_to_position(1)
         self.wait_for_platform()
 
         self.pinproc.write_data.assert_has_calls([
@@ -564,7 +573,7 @@ SW-16 boards found:
             call(6, 0x0000, 0x1E0F)
         ])
 
-        self.machine.accelerometers.p3_roc_accelerometer.update_acceleration = MagicMock(return_value=True)
+        self.machine.accelerometers["p3_roc_accelerometer"].update_acceleration = MagicMock(return_value=True)
 
         # process accelerometer event
         self.pinproc.get_events = MagicMock(return_value=[
@@ -577,7 +586,7 @@ SW-16 boards found:
         self.advance_time_and_run(.1)
 
         # check correct decoding of 2 complement
-        self.machine.accelerometers.p3_roc_accelerometer.update_acceleration.assert_called_with(1.0, 0.0, -2.0)
+        self.machine.accelerometers["p3_roc_accelerometer"].update_acceleration.assert_called_with(1.0, 0.0, -2.0)
 
         self.pinproc.get_events = MagicMock(return_value=[])
 
@@ -586,7 +595,7 @@ SW-16 boards found:
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
         self.wait_for_platform()
         # enable
-        self.machine.flippers.f_test_single.enable()
+        self.machine.flippers["f_test_single"].enable()
 
         self.wait_for_platform()
 
@@ -607,7 +616,7 @@ SW-16 boards found:
 
         # disable
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
-        self.machine.flippers.f_test_single.disable()
+        self.machine.flippers["f_test_single"].disable()
         self.wait_for_platform()
         self.pinproc.switch_update_rule.assert_has_calls([
             call(1, 'open_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
@@ -623,7 +632,7 @@ SW-16 boards found:
         # we pulse the main coil (20)
         # hold coil (21) is pulsed + enabled
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
-        self.machine.flippers.f_test_hold.enable()
+        self.machine.flippers["f_test_hold"].enable()
         self.wait_for_platform()
 
         self.pinproc.switch_update_rule.assert_has_calls([
@@ -648,7 +657,7 @@ SW-16 boards found:
         ], any_order=True)
 
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
-        self.machine.flippers.f_test_hold.disable()
+        self.machine.flippers["f_test_hold"].disable()
         self.wait_for_platform()
         self.pinproc.switch_update_rule.assert_has_calls([
             call(1, 'open_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
@@ -661,7 +670,7 @@ SW-16 boards found:
         coil_number = self.machine.coils["c_flipper_main"].hw_driver.number
         coil_number2 = self.machine.coils["c_flipper_hold"].hw_driver.number
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
-        self.machine.flippers.f_test_hold_eos.enable()
+        self.machine.flippers["f_test_hold_eos"].enable()
         self.wait_for_platform()
         self.pinproc.switch_update_rule.assert_has_calls([
             call(2, 'open_nondebounced', {'reloadActive': False, 'notifyHost': False}, [], False),
@@ -691,7 +700,7 @@ SW-16 boards found:
 
         # disable
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
-        self.machine.flippers.f_test_hold_eos.disable()
+        self.machine.flippers["f_test_hold_eos"].disable()
         self.wait_for_platform()
         self.pinproc.switch_update_rule.assert_has_calls([
             call(1, 'open_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
@@ -713,7 +722,7 @@ SW-16 boards found:
         # test enable of matrix light
         assert not self.pinproc.driver_patter.called
         assert not self.pinproc.driver_schedule.called
-        self.machine.lights.test_pdb_light.on()
+        self.machine.lights["test_pdb_light"].on()
         self.advance_time_and_run(.02)
         self.wait_for_platform()
         self.pinproc.driver_schedule.assert_called_with(
@@ -721,7 +730,7 @@ SW-16 boards found:
         )
 
         self.pinproc.driver_patter = MagicMock(return_value=True)
-        self.machine.lights.test_pdb_light.on(brightness=128)
+        self.machine.lights["test_pdb_light"].on(brightness=128)
         self.advance_time_and_run(.02)
         self.wait_for_platform()
         self.pinproc.driver_patter.assert_called_with(
@@ -730,15 +739,15 @@ SW-16 boards found:
 
         # test disable of matrix light
         assert not self.pinproc.driver_disable.called
-        self.machine.lights.test_pdb_light.off()
+        self.machine.lights["test_pdb_light"].off()
         self.advance_time_and_run(.02)
         self.wait_for_platform()
         self.pinproc.driver_disable.assert_called_with(32)
 
     def _test_pdb_gi_light(self):
         # test gi on
-        device = self.machine.lights.test_gi
-        num = self.machine.coils.test_gi.hw_driver.number
+        device = self.machine.lights["test_gi"]
+        num = self.machine.coils["test_gi"].hw_driver.number
         self.pinproc.driver_patter = MagicMock(return_value=True)
         self.pinproc.driver_schedule = MagicMock(return_value=True)
         device.color("white")

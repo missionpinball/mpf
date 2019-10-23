@@ -1,12 +1,11 @@
 """Contains the TextUI class."""
-import asyncio
 from collections import defaultdict
 
 from datetime import datetime
 from psutil import cpu_percent, virtual_memory, Process
 
 from asciimatics.scene import Scene
-from asciimatics.widgets import Frame, Layout, THEMES, Label, Divider, PopUpDialog, wcswidth
+from asciimatics.widgets import Frame, Layout, THEMES, Label, Divider, PopUpDialog
 from asciimatics.screen import Screen
 
 import mpf._version
@@ -15,9 +14,9 @@ from mpf.core.mpf_controller import MpfController
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.machine import MachineController
-    from typing import List, Tuple
-    from mpf.devices.ball_device.ball_device import BallDevice
+    from mpf.core.machine import MachineController                  # pylint: disable-msg=cyclic-import,unused-import
+    from typing import List, Tuple                                  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.ball_device.ball_device import BallDevice      # pylint: disable-msg=cyclic-import,unused-import
 
 
 class MpfLayout(Layout):
@@ -41,8 +40,8 @@ class MpfLayout(Layout):
         """Limit height."""
         if self.max_height:
             return min(super().fix(start_x, start_y, max_width, max_height), self.max_height)
-        else:
-            return super().fix(start_x, start_y, max_width, max_height)
+
+        return super().fix(start_x, start_y, max_width, max_height)
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -53,7 +52,7 @@ class TextUi(MpfController):
     config_name = "text_ui"
 
     __slots__ = ["start_time", "machine", "_tick_task", "screen", "mpf_process", "ball_devices", "switches",
-                 "_pending_bcp_connection", "_asset_percent", "_player_widgets", "_machine_widgets",
+                 "config", "_pending_bcp_connection", "_asset_percent", "_player_widgets", "_machine_widgets",
                  "_bcp_status", "frame", "layout", "scene", "footer_memory", "switch_widgets", "mode_widgets",
                  "ball_device_widgets", "footer_cpu", "footer_mc_cpu", "footer_uptime", "delay", "_layout_change"]
 
@@ -61,6 +60,7 @@ class TextUi(MpfController):
         """Initialize TextUi."""
         super().__init__(machine)
         self.delay = DelayManager(machine)
+        self.config = machine.config.get('text_ui', {})
 
         self.screen = None
 
@@ -135,7 +135,7 @@ class TextUi(MpfController):
 
         self.machine.switch_controller.add_monitor(self._update_switches)
         self.machine.register_monitor("machine_vars", self._update_machine_vars)
-        self.machine.machine_var_monitor = True
+        self.machine.variables.machine_var_monitor = True
         self.machine.bcp.interface.register_command_callback(
             "status_report", self._bcp_status_report)
 
@@ -147,8 +147,7 @@ class TextUi(MpfController):
         self._update_switch_layout()
         self._schedule_draw_screen()
 
-    @asyncio.coroutine
-    def _bcp_status_report(self, client, cpu, rss, vms):
+    async def _bcp_status_report(self, client, cpu, rss, vms):
         del client
         self._bcp_status = cpu, rss, vms
 
@@ -305,12 +304,13 @@ class TextUi(MpfController):
             return
 
         player_vars = player.vars.copy()
-        player_vars.pop('score')
-        player_vars.pop('number')
-        player_vars.pop('ball')
+        player_vars.pop('score', None)
+        player_vars.pop('number', None)
+        player_vars.pop('ball', None)
 
-        for name, value in player_vars.items():
-            self._player_widgets.append(Label('{}: {}'.format(name, value)))
+        names = self.config.get('player_vars', player_vars.keys())
+        for name in names:
+            self._player_widgets.append(Label("{}: {}".format(name, player_vars[name])))
 
         self._layout_change = True
         self._schedule_draw_screen()
@@ -326,9 +326,11 @@ class TextUi(MpfController):
         self._machine_widgets = []
         self._machine_widgets.append(Label("MACHINE VARIABLES"))
         self._machine_widgets.append(Divider())
-        machine_vars = self.machine.machine_vars
-        for name, value in machine_vars.items():
-            self._machine_widgets.append(Label("{}: {}".format(name, value['value'])))
+        machine_vars = self.machine.variables.machine_vars
+        # If config defines explict vars to show, only show those. Otherwise, all
+        names = self.config.get('machine_vars', machine_vars.keys())
+        for name in names:
+            self._machine_widgets.append(Label("{}: {}".format(name, machine_vars[name]['value'])))
         self._layout_change = True
         self._schedule_draw_screen()
 

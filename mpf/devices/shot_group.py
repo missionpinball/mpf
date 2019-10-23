@@ -8,8 +8,6 @@ from mpf.core.events import event_handler
 from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
-from mpf.core.system_wide_device import SystemWideDevice
-from mpf.core.utility_functions import Util
 
 
 @DeviceMonitor("common_state", "rotation_enabled")
@@ -39,7 +37,6 @@ class ShotGroup(ModeDevice):
 
     def add_control_events_in_mode(self, mode) -> None:
         """Remove enable here."""
-        pass
 
     def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Add device in mode."""
@@ -229,8 +226,11 @@ class ShotGroup(ModeDevice):
         # shot_state_list is deque of tuples (state num, show step num)
         shot_state_list = deque()
 
+        shots_to_rotate = []
         for shot in self.config['shots']:
-            shot_state_list.append(shot.state)
+            if shot.can_rotate:
+                shots_to_rotate.append(shot)
+                shot_state_list.append(shot.state)
 
         # figure out which direction we're going to rotate
         if not direction:
@@ -246,7 +246,7 @@ class ShotGroup(ModeDevice):
             shot_state_list.rotate(-1)
 
         # step through all our shots and update their states
-        for i, shot in enumerate(self.config['shots']):
+        for i, shot in enumerate(shots_to_rotate):
             shot.jump(state=shot_state_list[i], force=True)
 
     @event_handler(8)

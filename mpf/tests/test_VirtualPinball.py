@@ -1,5 +1,5 @@
 import asyncio
-from typing import Tuple, Generator
+from typing import Tuple
 
 from mpf.core.bcp.bcp_socket_client import decode_command_string, encode_command_string
 
@@ -17,10 +17,10 @@ class TestVirtualPinball(MpfTestCase):
         self.machine_config_patches['bcp'] = dict()
         self.machine_config_patches['bcp']['connections'] = []
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/virtual_pinball/'
 
     def get_use_bcp(self):
@@ -30,9 +30,9 @@ class TestVirtualPinball(MpfTestCase):
         self.mock_server = MockServer(self.clock.loop)
         self.clock.mock_server("127.0.0.1", 5051, self.mock_server)
 
-    @asyncio.coroutine
-    def _get_and_decode(self, client) -> Generator[int, None, Tuple[str, dict]]:
-        data = yield from client.send_queue.get()
+    @staticmethod
+    async def _get_and_decode(client) -> Tuple[str, dict]:
+        data = await client.send_queue.get()
         return decode_command_string(data[0:-1].decode())
 
     def _encode_and_send(self, client, cmd, **kwargs):
@@ -54,7 +54,7 @@ class TestVirtualPinball(MpfTestCase):
         self.advance_time_and_run()
         client.send_queue = asyncio.Queue(loop=self.loop)
 
-        self.machine.lights.test_light1.on()
+        self.machine.lights["test_light1"].on()
 
         cmd, args = self.loop.run_until_complete(self._get_and_decode(client))
         self.assertEqual("device", cmd)
@@ -62,7 +62,7 @@ class TestVirtualPinball(MpfTestCase):
         self.assertEqual("light", args['type'])
         self.assertEqual({'color': [255, 255, 255]}, args['state'])
 
-        self.machine.coils.c_test.pulse()
+        self.machine.coils["c_test"].pulse()
         self.advance_time_and_run()
 
         cmd, args = self.loop.run_until_complete(self._get_and_decode(client))
@@ -73,7 +73,7 @@ class TestVirtualPinball(MpfTestCase):
         self.assertEqual(23, args['pulse_ms'])
         self.assertEqual(1.0, args['pulse_power'])
 
-        self.machine.coils.c_test_allow_enable.enable()
+        self.machine.coils["c_test_allow_enable"].enable()
         cmd, args = self.loop.run_until_complete(self._get_and_decode(client))
         self.assertEqual("driver_event", cmd)
         self.assertEqual("enable", args['action'])
@@ -83,14 +83,14 @@ class TestVirtualPinball(MpfTestCase):
         self.assertEqual(1.0, args['pulse_power'])
         self.assertEqual(1.0, args['hold_power'])
 
-        self.machine.coils.c_test_allow_enable.disable()
+        self.machine.coils["c_test_allow_enable"].disable()
         cmd, args = self.loop.run_until_complete(self._get_and_decode(client))
         self.assertEqual("driver_event", cmd)
         self.assertEqual("disable", args['action'])
         self.assertEqual("c_test_allow_enable", args['name'])
         self.assertEqual("0-1", args['number'])
 
-        self.machine.flippers.f_test_single.enable()
+        self.machine.flippers["f_test_single"].enable()
         cmd, args = self.loop.run_until_complete(self._get_and_decode(client))
         self.assertEqual("device", cmd)
         self.assertEqual("f_test_single", args['name'])
@@ -111,7 +111,7 @@ class TestVirtualPinball(MpfTestCase):
                           'coil_recycle': False,
                           'enable_switch_debounce': False}, args)
 
-        self.machine.flippers.f_test_single.disable()
+        self.machine.flippers["f_test_single"].disable()
         cmd, args = self.loop.run_until_complete(self._get_and_decode(client))
         self.assertEqual("driver_event", cmd)
         self.assertEqual({'coil_number': '0-3',

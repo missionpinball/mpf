@@ -1,5 +1,4 @@
 """Contains the Light class."""
-import asyncio
 from functools import partial
 
 from typing import Set, Dict, List, Tuple, Any
@@ -16,7 +15,7 @@ from mpf.devices.device_mixins import DevicePositionMixin
 
 MYPY = False
 if MYPY:
-    from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+    from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 
 class LightStackEntry:
@@ -40,7 +39,7 @@ class LightStackEntry:
         return self.priority > other.priority or (self.priority == other.priority and self.key > other.key)
 
 
-@DeviceMonitor(_color="color")
+@DeviceMonitor(_color="color", _do_not_overwrite_setter=True)
 class Light(SystemWideDevice, DevicePositionMixin):
 
     """A light in a pinball machine."""
@@ -50,11 +49,11 @@ class Light(SystemWideDevice, DevicePositionMixin):
     class_label = 'light'
 
     __slots__ = ["hw_drivers", "platforms", "delay", "default_fade_ms", "_color_correction_profile", "stack",
-                 "hw_driver_functions"]
+                 "hw_driver_functions", "_off_color"]
 
     def __init__(self, machine, name):
         """Initialise light."""
-        self.hw_drivers = {}        # type: Dict[str, LightPlatformInterface]
+        self.hw_drivers = {}        # type: Dict[str, List[LightPlatformInterface]]
         self.hw_driver_functions = []
         self.platforms = set()      # type: Set[LightsPlatform]
         super().__init__(machine, name)
@@ -62,6 +61,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         self.delay = DelayManager(self.machine)
 
         self.default_fade_ms = None
+        self._off_color = RGBColor("off")
 
         self._color_correction_profile = None
 
@@ -115,13 +115,13 @@ class Light(SystemWideDevice, DevicePositionMixin):
         return numbers
 
     @staticmethod
-    def _check_duplicate_light_numbers(machine, **kwargs):
+    def _check_duplicate_light_numbers(machine: MachineController, **kwargs):
         del kwargs
         check_set = set()
-        for light in machine.lights:
+        for light in machine.lights.values():
             for drivers in light.hw_drivers.values():
                 for driver in drivers:
-                    key = (light.platform, driver.number, type(driver))
+                    key = (light.config['platform'], driver.number, type(driver))
                     if key in check_set:
                         raise AssertionError(
                             "Duplicate light number {} {} for light {}".format(
@@ -229,9 +229,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
             raise AssertionError("Failed to configure light {} in platform. See error above".
                                  format(self.name)) from e
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self._load_hw_drivers()
 
         self.config['default_on_color'] = RGBColor(self.config['default_on_color'])
@@ -276,7 +275,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """
         self._color_correction_profile = profile
 
-    def color(self, color, fade_ms=None, priority=0, key=None):
+    # pylint: disable-msg=too-many-arguments
+    def color(self, color, fade_ms=None, priority=0, key=None, start_time=None):
         """Add or update a color entry in this light's stack.
 
         Calling this methods is how you tell this light what color you want it to be.
@@ -311,7 +311,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
         if fade_ms is None:
             fade_ms = self.default_fade_ms
 
-        start_time = self.machine.clock.get_time()
+        if not start_time:
+            start_time = self.machine.clock.get_time()
 
         color_changes = not self.stack or self.stack[0].priority <= priority or self.stack[0].dest_color is None
 
@@ -344,7 +345,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
             fade_ms: duration of fade
         """
         del kwargs
-        self.color(color=RGBColor(), fade_ms=fade_ms, priority=priority,
+        self.color(color=self._off_color, fade_ms=fade_ms, priority=priority,
                    key=key)
 
     # pylint: disable-msg=too-many-arguments
@@ -356,14 +357,14 @@ class Light(SystemWideDevice, DevicePositionMixin):
         elif not isinstance(key, str):
             raise AssertionError("Key should be string")
 
-        if priority < self._get_priority_from_key(key):
+        if self.stack and priority < self._get_priority_from_key(key):
             if self._debug:
                 self.debug_log("Incoming priority %s is lower than an existing "
                                "stack item with the same key %s. Not adding to "
                                "stack.", priority, key)
             return
 
-        if self._debug and self.stack and priority == self.stack[0].priority and key != self.stack[0].key:
+        if self.stack and self._debug and priority == self.stack[0].priority and key != self.stack[0].key:
             self.debug_log("Light stack contains two entries with the same priority %s but different keys: %s",
                            priority, self.stack)
 
@@ -374,7 +375,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
             dest_time = 0
             color_below = None
 
-        self._remove_from_stack_by_key(key)
+        if self.stack:
+            self._remove_from_stack_by_key(key)
 
         self.stack.append(LightStackEntry(priority,
                                           key,
@@ -487,7 +489,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
         # tune the common case
         if not self.stack:
             return
-        self.debug_log("Removing key '%s' from stack", key)
+        if self._debug:
+            self.debug_log("Removing key '%s' from stack", key)
         if len(self.stack) == 1:
             if self.stack[0].key == key:
                 self.stack = []
@@ -505,7 +508,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """Remove all entries from the stack and resets this light to 'off'."""
         self.stack = []
 
-        self.debug_log("Clearing Stack")
+        if self._debug:
+            self.debug_log("Clearing Stack")
 
         self._schedule_update()
 
@@ -525,14 +529,13 @@ class Light(SystemWideDevice, DevicePositionMixin):
         Args:
             color: The RGBColor() instance you want to have gamma applied.
 
-        Returns:
-            An updated RGBColor() instance with gamma corrected.
+        Returns an updated RGBColor() instance with gamma corrected.
         """
-        factor = self.machine.get_machine_var("brightness")
-        if not factor:
+        factor = self.machine.light_controller.brightness_factor
+        if factor == 1.0:
             return color
-        else:
-            return RGBColor([int(x * factor) for x in color])
+
+        return RGBColor([int(x * factor) for x in color])
 
     def color_correct(self, color):
         """Apply the current color correction profile to the color passed.
@@ -540,24 +543,22 @@ class Light(SystemWideDevice, DevicePositionMixin):
         Args:
             color: The RGBColor() instance you want to get color corrected.
 
-        Returns:
-            An updated RGBColor() instance with the current color correction
-            profile applied.
+        Returns an updated RGBColor() instance with the current color
+        correction profile applied.
 
         Note that if there is no current color correction profile applied, the
         returned color will be the same as the color that was passed.
         """
         if self._color_correction_profile is None:
             return color
-        else:
 
-            if self._debug:
-                self.debug_log("Applying color correction: %s (applied "
-                               "'%s' color correction profile)",
-                               self._color_correction_profile.apply(color),
-                               self._color_correction_profile.name)
+        if self._debug:
+            self.debug_log("Applying color correction: %s (applied "
+                           "'%s' color correction profile)",
+                           self._color_correction_profile.apply(color),
+                           self._color_correction_profile.name)
 
-            return self._color_correction_profile.apply(color)
+        return self._color_correction_profile.apply(color)
 
     # pylint: disable-msg=too-many-return-statements
     def _get_color_and_fade(self, stack, max_fade_ms: int, *, current_time=None) -> Tuple[RGBColor, int, bool]:
@@ -565,7 +566,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
             color_settings = stack[0]
         except IndexError:
             # no stack
-            return RGBColor('off'), -1, True
+            return self._off_color, -1, True
 
         dest_color = color_settings.dest_color
 
@@ -630,7 +631,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """
         if not self.stack:
             # no stack -> we are black
-            return RGBColor("off")
+            return self._off_color
 
         if self.stack[0].key == key and self.stack[0].priority == priority:
             # fast path for resetting the top element

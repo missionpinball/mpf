@@ -5,10 +5,10 @@ from mpf.tests.MpfTestCase import MpfTestCase, test_config
 
 class TestDeviceLight(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'light.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/light/'
 
     def test_default_on_color(self):
@@ -412,7 +412,7 @@ class TestDeviceLight(MpfTestCase):
         self.assertEqual(100 / 255.0, led.hw_drivers["green"][0].current_brightness)
         self.assertEqual(100 / 255.0, led.hw_drivers["blue"][0].current_brightness)
 
-        self.machine.set_machine_var("brightness", 0.8)
+        self.machine.variables.set_machine_var("brightness", 0.8)
         led.color(RGBColor((100, 100, 100)))
         self.advance_time_and_run(1)
 
@@ -424,10 +424,10 @@ class TestDeviceLight(MpfTestCase):
 
 class TestLightOnDriver(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'lights_on_drivers.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/light/'
 
     def get_platform(self):

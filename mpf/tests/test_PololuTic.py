@@ -1,5 +1,4 @@
 import asyncio
-import sys
 
 from mpf.platforms.pololu import pololu_tic
 from mpf.tests.MpfTestCase import MpfTestCase
@@ -8,16 +7,15 @@ import ruamel.yaml
 
 class TestPololuTic(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/pololu_tic/'
 
     def get_platform(self):
         return False
 
-    @asyncio.coroutine
     def _ticcmd_async(self, *args):
         if args == ("-s", "--full"):
             return ruamel.yaml.dump({
@@ -35,10 +33,6 @@ class TestPololuTic(MpfTestCase):
         return return_value
 
     def setUp(self):
-        if sys.version_info[0] == 3 and sys.version_info[1] == 4:
-            # this fails on python 3.4 because of missing asyncio features
-            self.skipTest("Test is unstable in Python 3.4")
-            return
         self._position = 0
         self.expected_commands = {
             ('--energize',): "",
@@ -60,7 +54,7 @@ class TestPololuTic(MpfTestCase):
 
         pololu_tic.PololuTiccmdWrapper._start_thread = _create_fake_thread
         pololu_tic.PololuTiccmdWrapper._stop_thread = _stop_thread
-        pololu_tic.PololuTiccmdWrapper._ticcmd_async = self._ticcmd_async
+        pololu_tic.PololuTiccmdWrapper._run_subprocess_ticcmd = self._ticcmd_async
 
         super().setUp()
         self.assertFalse(self.expected_commands)

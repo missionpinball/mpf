@@ -9,12 +9,13 @@ class DeviceMonitor:
 
     """Monitor variables of a device."""
 
-    __slots__ = ["_attributes_to_monitor", "_aliased_attributes_to_monitor"]
+    __slots__ = ["_attributes_to_monitor", "_aliased_attributes_to_monitor", "_do_not_overwrite_setter"]
 
-    def __init__(self, *attributes_to_monitor, **aliased_attributes_to_monitor):
+    def __init__(self, *attributes_to_monitor, _do_not_overwrite_setter=False, **aliased_attributes_to_monitor):
         """Initialise decorator and remember attributes to monitor."""
         self._attributes_to_monitor = attributes_to_monitor
         self._aliased_attributes_to_monitor = aliased_attributes_to_monitor
+        self._do_not_overwrite_setter = _do_not_overwrite_setter
 
     def __call__(self, cls):    # noqa
         """Decorate class."""
@@ -91,7 +92,8 @@ class DeviceMonitor:
             raise ValueError("Attribute {} does not exist.".format(item))
 
         cls.__init__ = __init__
-        cls.__setattr__ = __setattr__
+        if not self._do_not_overwrite_setter:
+            cls.__setattr__ = __setattr__
         cls.get_monitorable_state = get_monitorable_state
         cls.get_placeholder_value = get_placeholder_value
         cls.subscribe_attribute = subscribe_attribute

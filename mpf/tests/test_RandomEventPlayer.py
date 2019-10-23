@@ -8,10 +8,10 @@ RANDOM_RUNS = 20
 
 class TestRandomEventPlayer(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_random_event_player.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/event_players/'
 
     def test_machine_tests(self):
@@ -21,10 +21,10 @@ class TestRandomEventPlayer(MpfTestCase):
 
 class TestRandomEventPlayerGame(MpfGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_random_event_player.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/event_players/'
 
     def get_platform(self):
@@ -36,7 +36,7 @@ class TestRandomEventPlayerGame(MpfGameTestCase):
         self.advance_time_and_run(4)
         self.machine.events.post("start_mode2")
         self.advance_time_and_run(4)
-        self.assertTrue(self.machine.modes.mode2.active)
+        self.assertTrue(self.machine.modes["mode2"].active)
         self.assertTrue(self.machine.mode_controller.is_active('mode2'))
 
         tester = TestRandomEventPlayerBase(self, "player")

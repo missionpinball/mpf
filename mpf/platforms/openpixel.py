@@ -3,7 +3,6 @@
 The python code to build the OPC message packet came from here:
 https://github.com/zestyping/openpixelcontrol/blob/master/python_clients/opc.py
 """
-import asyncio
 import logging
 
 from typing import Callable
@@ -14,7 +13,7 @@ from mpf.platforms.interfaces.light_platform_interface import LightPlatformInter
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.machine import MachineController
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class OpenpixelHardwarePlatform(LightsPlatform):
@@ -41,14 +40,13 @@ class OpenpixelHardwarePlatform(LightsPlatform):
         """Return str representation."""
         return '<Platform.OpenPixel>'
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Initialise openpixel platform."""
         self.machine.config_validator.validate_config("open_pixel_control", self.machine.config['open_pixel_control'])
         if self.machine.config['open_pixel_control']['debug']:
             self.debug = True
 
-        yield from self._setup_opc_client()
+        await self._setup_opc_client()
 
     def stop(self):
         """Stop platform."""
@@ -87,10 +85,9 @@ class OpenpixelHardwarePlatform(LightsPlatform):
         """Configure an LED."""
         return OpenPixelLED(number, self.opc_client, self.debug)
 
-    @asyncio.coroutine
-    def _setup_opc_client(self):
+    async def _setup_opc_client(self):
         self.opc_client = OpenPixelClient(self.machine, self.machine.config['open_pixel_control'])
-        yield from self.opc_client.connect()
+        await self.opc_client.connect()
 
 
 class OpenPixelLED(LightPlatformInterface):
@@ -145,12 +142,11 @@ class OpenPixelClient:
         self.msg = []
         self.openpixel_config = config
 
-    @asyncio.coroutine
-    def connect(self):
+    async def connect(self):
         """Connect to the hardware."""
         connector = self.machine.clock.open_connection(self.openpixel_config['host'], self.openpixel_config['port'])
         try:
-            _, self.socket_sender = yield from connector
+            _, self.socket_sender = await connector
         except OSError:
             raise AssertionError("Cannot connect to {} at {}:{}".format(self.log.name, self.openpixel_config['host'],
                                                                         self.openpixel_config['port']))
@@ -181,16 +177,17 @@ class OpenPixelClient:
 
         """
         if len(self.channels) < channel + 1:
-
             channels_to_add = channel + 1 - len(self.channels)
 
             self.channels += [list() for _ in range(channels_to_add)]
             self.dirty_leds += [dict() for _ in range(channels_to_add)]
             self.msg += [None for _ in range(channels_to_add)]
 
-        if len(self.channels[channel]) < led + 1:
-
-            leds_to_add = led + 1 - len(self.channels[channel])
+        new_total = led + 1
+        if new_total % 3 != 0:
+            new_total += 3 - (new_total % 3)
+        leds_to_add = new_total - len(self.channels[channel])
+        if leds_to_add > 0:
             self.channels[channel] += [0 for _ in range(leds_to_add)]
 
     def set_pixel_color(self, channel, pixel, callback: Callable[[int], Tuple[float, int]]):
@@ -239,9 +236,8 @@ class OpenPixelClient:
                 pixel on the channel, the second item is the second one, etc.
             channel: Which OPC channel the pixel data will be written to.
 
-        Returns:
-            True on success. False if it was unable to connect to the OPC
-            server.
+        Returns True on success. False if it was unable to connect to the OPC
+        server.
 
         Note that you must send color data for all the pixels in a channel (or
         all the pixels up until the point you want. e.g. if you have 30 LEDs on

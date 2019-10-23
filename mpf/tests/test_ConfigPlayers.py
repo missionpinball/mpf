@@ -37,10 +37,10 @@ class BananaPlayer(DeviceConfigPlayer):
 
 class TestConfigPlayers(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_config_players.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/config_players/'
 
     def setUp(self):
@@ -140,7 +140,7 @@ class TestConfigPlayers(MpfTestCase):
         # is not running
 
     def test_empty_config_player_section(self):
-        self.machine.modes.mode2.start()
+        self.machine.modes["mode2"].start()
         self.advance_time_and_run()
-        self.machine.modes.mode2.stop()
+        self.machine.modes["mode2"].stop()
         self.advance_time_and_run()

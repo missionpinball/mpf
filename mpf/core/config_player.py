@@ -6,13 +6,13 @@ from typing import List
 from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.core.logging import LogMixin
-from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.exceptions.config_file_error import ConfigFileError
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.placeholder_manager import BoolTemplate
-    from typing import Dict
-    import asyncio
+    from mpf.core.placeholder_manager import BoolTemplate   # pylint: disable-msg=cyclic-import,unused-import
+    from typing import Dict     # pylint: disable-msg=cyclic-import,unused-import
+    import asyncio  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
@@ -23,7 +23,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
     show_section = None                 # type: str
     machine_collection_name = None      # type: str
 
-    __slots__ = ["device_collection", "machine", "mode_event_keys", "instances", "_show_keys"]
+    __slots__ = ["device_collection", "machine", "mode_event_keys", "instances"]
 
     def __init__(self, machine):
         """Initialise config player."""
@@ -44,7 +44,6 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         self.instances = dict()
         self.instances['_global'] = dict()
         self.instances['_global'][self.config_file_section] = dict()
-        self._show_keys = {}
 
     def _add_handlers(self):
         self.machine.events.add_handler('init_phase_1', self._initialize_in_mode, priority=20)
@@ -114,7 +113,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
     def _parse_config(self, config, name):
         if config is None:
             raise AssertionError("Empty config player {}".format(name))
-        elif isinstance(config, (str, int, float)):
+        if isinstance(config, (str, int, float)):
             # express config, convert to full
             config = self.get_express_config(config)
         elif isinstance(config, list):
@@ -142,10 +141,11 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         return context + "." + self.config_file_section
 
     def _get_instance_dict(self, context):
-        if context not in self.instances or self.config_file_section not in self.instances[context]:
+        try:
+            return self.instances[context][self.config_file_section]
+        except KeyError:
             self.warning_log("Config player {} is missing context {}".format(self.config_file_section, context))
             return {}
-        return self.instances[context][self.config_file_section]
 
     def _reset_instance_dict(self, context):
         if context not in self.instances:
@@ -168,7 +168,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         raise AssertionError("Player {} does not support lists.".format(self.config_file_section))
 
     @abc.abstractmethod
-    def get_express_config(self, value):
+    def get_express_config(self, value) -> dict:
         """Parse short config version.
 
         Implements "express" settings for this config_player which is what
@@ -188,10 +188,8 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         Args:
             value: The single line string value from a config file.
 
-        Returns:
-            A dictionary (which will then be passed through the config
-            validator)
-
+        Returns a dictionary (which will then be passed through the config
+        validator).
         """
         raise NotImplementedError(self.config_file_section)
 
@@ -215,7 +213,6 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
 
     def clear_context(self, context):
         """Clear the context."""
-        pass
 
     @staticmethod
     def _parse_event_priority(event, priority):
@@ -343,26 +340,22 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
     # pylint: disable-msg=too-many-arguments
     def show_play_callback(self, settings, priority, calling_context, show_tokens, context, start_time):
         """Handle show callback."""
-        # called from a show step
-        if context not in self.instances:
-            self.instances[context] = dict()
+        try:
+            instance_dict = self.instances[context][self.config_file_section]
+            del instance_dict
+        except KeyError:
+            # called from a show step
+            if context not in self.instances:
+                self.instances[context] = dict()
 
-        if self.config_file_section not in self.instances[context]:
-            self.instances[context][self.config_file_section] = dict()
-
-        # register bcp events
-        config = {'bcp_connection': settings['bcp_connection']} if 'bcp_connection' in settings else {}
-        event_keys = self.register_player_events(config, None, priority)
-        self._show_keys[context + self.config_file_section] = event_keys
+            if self.config_file_section not in self.instances[context]:
+                self.instances[context][self.config_file_section] = dict()
 
         self.play(settings=settings, priority=priority, calling_context=calling_context,
                   show_tokens=show_tokens, context=context, start_time=start_time)
 
     def show_stop_callback(self, context):
         """Handle show stop."""
-        self.unload_player_events(self._show_keys[context + self.config_file_section])
-        del self._show_keys[context + self.config_file_section]
-
         self.clear_context(context)
 
     @abc.abstractmethod

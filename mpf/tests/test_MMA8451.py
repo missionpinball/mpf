@@ -8,18 +8,16 @@ class TestMMA8451(MpfTestCase):
     def get_platform(self):
         return False
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/mma8451/'
 
-    @asyncio.coroutine
-    def i2c_read8(self, register):
+    async def i2c_read8(self, register):
         return self.i2c_layout[register]
 
-    @asyncio.coroutine
-    def i2c_read_block(self, register, count):
+    async def i2c_read_block(self, register, count):
         assert count == 6
         assert register == 0x01
         return self.read_value
@@ -55,9 +53,9 @@ class TestMMA8451(MpfTestCase):
         with patch("mpf.platforms.virtual.VirtualI2cDevice.i2c_read8", new=self.i2c_read8):
             with patch("mpf.platforms.virtual.VirtualI2cDevice.i2c_read_block", new=self.i2c_read_block):
                 with patch("mpf.platforms.virtual.VirtualI2cDevice.i2c_write8", new=self.i2c_write8):
-                    self.assertEqual((0, 0, 0), self.machine.accelerometers.test_accelerometer.value)
+                    self.assertEqual((0, 0, 0), self.machine.accelerometers["test_accelerometer"].value)
 
                     self.read_value = bytearray([0, 0, 0, 0, 60, 10])
                     self.advance_time_and_run(.1)
 
-                    self.assertEqual((0, 0, 9.199), self.machine.accelerometers.test_accelerometer.value)
+                    self.assertEqual((0, 0, 9.199), self.machine.accelerometers["test_accelerometer"].value)

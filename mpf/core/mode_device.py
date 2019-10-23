@@ -1,8 +1,5 @@
 """Contains a class to implement mode devices."""
 import abc
-import asyncio
-
-from typing import Generator
 
 from mpf.core.device import Device
 from mpf.core.events import event_handler
@@ -22,15 +19,14 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
         super().__init__(machine, name)
         self.mode = None    # type: Mode
 
-    @asyncio.coroutine
-    def device_added_to_mode(self, mode: Mode) -> Generator[int, None, None]:
+    async def device_added_to_mode(self, mode: Mode) -> None:
         """Add device to a running mode.
 
         Args:
             mode: Mode which loaded the device
         """
         del mode
-        yield from self._initialize()
+        await self._initialize()
 
     def device_loaded_in_mode(self, mode: Mode, player: Player) -> None:
         """Load device in running mode.
@@ -63,7 +59,6 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
 
     def enable(self) -> None:
         """Enable handler."""
-        pass
 
     def add_control_events_in_mode(self, mode: Mode) -> None:
         """Add control events in mode if this device has any mode control events.
@@ -77,7 +72,6 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
 
     def remove_control_events_in_mode(self) -> None:
         """Remove control events."""
-        pass
 
     def device_removed_from_mode(self, mode: Mode) -> None:
         """Remove device because mode is unloading.

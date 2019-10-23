@@ -1,5 +1,4 @@
 """A shot in MPF."""
-import asyncio
 import uuid
 from collections import namedtuple
 from typing import List, Dict, Set
@@ -40,10 +39,9 @@ class SequenceShot(SystemWideDevice, ModeDevice):
         """Return true if this device can exist outside of a game."""
         return True
 
-    @asyncio.coroutine
-    def device_added_system_wide(self):
+    async def device_added_system_wide(self):
         """Register switch handlers on load."""
-        yield from super().device_added_system_wide()
+        await super().device_added_system_wide()
         self._register_handlers()
 
     def device_loaded_in_mode(self, mode: Mode, player: Player):
@@ -58,9 +56,8 @@ class SequenceShot(SystemWideDevice, ModeDevice):
         self.reset_all_sequences()
         self.delay.clear()
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         if self.config['switch_sequence'] and self.config['event_sequence']:
             raise AssertionError("Sequence shot {} only supports switch_sequence or event_sequence".format(self.name))
 

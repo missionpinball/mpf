@@ -25,3 +25,5 @@ servos:
     reset_position: 1.0
     reset_events: reset_servo2
     number: 2
+  servo1_controller_13:
+    number: 13-1

@@ -4,10 +4,10 @@ from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, Ho
 
 
 class TestSnux(MpfFakeGameTestCase):
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/snux/'
 
     def get_platform(self):
@@ -38,7 +38,7 @@ class TestSnux(MpfFakeGameTestCase):
 
     def test_ac_switch_and_pulse(self):
         # test diag led flashing. otherwise snux is not running
-        c_diag_led_driver = self.machine.coils.c_diag_led_driver
+        c_diag_led_driver = self.machine.coils["c_diag_led_driver"]
         c_diag_led_driver.pulse = MagicMock()
         self.advance_time_and_run(1)
         c_diag_led_driver.pulse.assert_called_with(250)

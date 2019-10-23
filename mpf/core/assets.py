@@ -2,11 +2,11 @@
 import copy
 import os
 import random
+import time
+
 import threading
 from collections import deque, namedtuple
 from pathlib import PurePath
-
-import asyncio
 
 from typing import Iterable, Optional, Set, Callable, Tuple
 from typing import List
@@ -31,7 +31,7 @@ class BaseAssetManager(MpfController, LogMixin):
     config_name = 'asset_manager'
 
     __slots__ = ["_asset_classes", "num_assets_to_load", "num_assets_loaded", "num_bcp_assets_to_load",
-                 "num_bcp_assets_loaded", "_next_id", "_last_asset_event_time", "initial_assets_loaded"]
+                 "num_bcp_assets_loaded", "_next_id", "_last_asset_event_time", "initial_assets_loaded", "_start_time"]
 
     def __init__(self, machine: MachineController) -> None:
         """Initialise asset manager.
@@ -82,6 +82,8 @@ class BaseAssetManager(MpfController, LogMixin):
 
         # prevent excessive loading_assets events
         self._last_asset_event_time = None
+
+        self._start_time = time.time()
 
     def get_next_id(self) -> int:
         """Return the next free id."""
@@ -232,8 +234,8 @@ class BaseAssetManager(MpfController, LogMixin):
             mode: Optional reference to the mode object which is used when
                   assets are being created from mode folders.
 
-        Returns:
-            An updated config dictionary. (See the "How it works" section below for details.)
+        Returns an updated config dictionary. (See the "How it works" section
+        below for details.)
 
         Note that this method merely creates the asset object so they can be
         referenced in MPF. It does not actually load the asset files into
@@ -562,6 +564,8 @@ class BaseAssetManager(MpfController, LogMixin):
         '''
 
         if not remaining:
+            if self._start_time:
+                self.log.info("Asset loading took: %s", time.time() - self._start_time)
             self._last_asset_event_time = None
             self.machine.events.post('asset_loading_complete')
             '''event: asset_loading_complete
@@ -602,11 +606,10 @@ class AsyncioSyncAssetManager(BaseAssetManager):
         if not asset.loaded:
             asset.do_load()
             return True
-        else:
-            return False
 
-    @asyncio.coroutine
-    def wait_for_asset_load(self, asset):
+        return False
+
+    async def wait_for_asset_load(self, asset):
         """Wait for an asset to load."""
         result = self._load_sync(asset)
         if result:
@@ -661,18 +664,18 @@ class AssetPool:
             config['type'] = 'sequence'
 
         for asset in Util.string_to_list(self.config[self.member_cls.config_section]):
-            asset_dict = self.machine.placeholder_manager.parse_conditional_template(asset, default_number=1)
+            asset_condition = self.machine.placeholder_manager.parse_conditional_template(asset, default_number=1)
 
             # For efficiency, track whether any assets have conditions
-            if asset_dict['condition']:
+            if asset_condition.condition:
                 self._has_conditions = True
 
             try:
                 self.assets.append((
-                    getattr(self.machine, self.member_cls.attribute)[asset_dict['name']],
-                    asset_dict['number'], asset_dict['condition']))
+                    getattr(self.machine, self.member_cls.attribute)[asset_condition.name],
+                    asset_condition.number, asset_condition.condition))
             except KeyError:    # pragma: no cover
-                raise ValueError("No asset named {}".format(asset_dict['name']))
+                raise ValueError("No asset named {}".format(asset_condition.name))
 
         self._configure_return_asset()
 
@@ -685,14 +688,14 @@ class AssetPool:
         """Pop one asset from the pool."""
         if self.config['type'] == 'random':
             return self._get_random_asset()
-        elif self.config['type'] == 'sequence':
+        if self.config['type'] == 'sequence':
             return self._get_sequence_asset()
-        elif self.config['type'] == 'random_force_next':
+        if self.config['type'] == 'random_force_next':
             return self._get_random_force_next_asset()
-        elif self.config['type'] == 'random_force_all':
+        if self.config['type'] == 'random_force_all':
             return self._get_random_force_all_asset()
-        else:
-            raise AssertionError("Invalid type {}".format(self.config['type']))
+
+        raise AssertionError("Invalid type {}".format(self.config['type']))
 
     @property
     def loaded(self):
@@ -837,8 +840,8 @@ class AssetPool:
         for asset in assets:
             if index_value >= value:
                 return asset
-            else:
-                index_value += asset[1]
+
+            index_value += asset[1]
 
         return assets[-1]
 

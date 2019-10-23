@@ -1,13 +1,14 @@
 """Contains the DeviceManager base class."""
-import asyncio
 from collections import OrderedDict
+
+from typing import Callable, Tuple, List
 
 from mpf.core.utility_functions import Util
 from mpf.core.mpf_controller import MpfController
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.device import Device
+    from mpf.core.device import Device  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class DeviceManager(MpfController):
@@ -75,8 +76,7 @@ class DeviceManager(MpfController):
                 self.machine.config_validator.load_device_config_spec(
                     device_cls.config_section, device_cls.get_config_spec())
 
-    @asyncio.coroutine
-    def _load_device_modules(self, **kwargs):
+    async def _load_device_modules(self, **kwargs):
         del kwargs
         # step 1: create devices in machine collection
         self.debug_log("Creating devices...")
@@ -111,10 +111,10 @@ class DeviceManager(MpfController):
 
         # step 2: load config and validate devices
         self.load_devices_config(validate=True)
-        yield from self.machine.mode_controller.load_mode_devices()
+        await self.machine.mode_controller.load_mode_devices()
 
         # step 3: initialise devices (mode devices will be initialised when mode is started)
-        yield from self.initialize_devices()
+        await self.initialize_devices()
 
     def stop_devices(self):
         """Stop all devices in the machine."""
@@ -123,7 +123,7 @@ class DeviceManager(MpfController):
             collection_name, _ = device_cls.get_config_info()
             if not hasattr(self.machine, collection_name):
                 continue
-            for device in getattr(self.machine, collection_name):
+            for device in getattr(self.machine, collection_name).values():
                 if hasattr(device, "stop_device"):
                     device.stop_device()
 
@@ -193,8 +193,7 @@ class DeviceManager(MpfController):
             for device_name in config:
                 collection[device_name].load_config(config[device_name])
 
-    @asyncio.coroutine
-    def initialize_devices(self):
+    async def initialize_devices(self):
         """Initialise devices."""
         for device_type in self.machine.config['mpf']['device_modules']:
 
@@ -211,10 +210,10 @@ class DeviceManager(MpfController):
 
             # add machine wide
             for device_name in config:
-                yield from collection[device_name].device_added_system_wide()
+                await collection[device_name].device_added_system_wide()
 
     # pylint: disable-msg=too-many-nested-blocks
-    def get_device_control_events(self, config):
+    def get_device_control_events(self, config) -> Tuple[str, Callable, int, "Device"]:
         """Scan a config dictionary for control_events.
 
          Yields events, methods, delays, and devices for all the devices and
@@ -224,12 +223,12 @@ class DeviceManager(MpfController):
             config: An MPF config dictionary (either machine-wide or mode-
                 specific).
 
-        Returns:
-            A generator of 4-item tuples:
-                * The event name
-                * The callback method of the device
-                * The delay in ms
-                * The device object
+        Returns a generator of 4-item tuples
+        ------------------------------------
+            * The event name
+            * The callback method of the device
+            * The delay in ms
+            * The device object
         """
         for collection in self.collections:
             if self.collections[collection].config_section in config:
@@ -270,11 +269,17 @@ class DeviceManager(MpfController):
             except ValueError:
                 priority = 0
 
+            try:
+                final_priority = int(priority)
+            except ValueError:
+                self.raise_config_error("Invalid priority {} in event {} for {}".format(priority, event, method), 4)
+                return
+
             if delay:
                 self.machine.events.add_handler(
                     event=event,
                     handler=self._control_event_handler,
-                    priority=int(priority),
+                    priority=final_priority,
                     callback=method,
                     ms_delay=delay,
                     delay_mgr=self.machine.delay)
@@ -282,7 +287,7 @@ class DeviceManager(MpfController):
                 self.machine.events.add_handler(
                     event=event,
                     handler=method,
-                    priority=int(priority))
+                    priority=final_priority)
 
     def _control_event_handler(self, callback, ms_delay, delay_mgr=None, **kwargs):
         del kwargs
@@ -291,7 +296,7 @@ class DeviceManager(MpfController):
         delay_mgr.add(ms=ms_delay, callback=callback)
 
     def _create_default_control_events(self, device_list):
-        for device in device_list:
+        for device in device_list.values():
 
             event_prefix = device.class_label + '_' + device.name + '_'
             event_prefix2 = device.collection + '_'
@@ -332,8 +337,11 @@ class DeviceCollection(dict):
         return super().__delitem__(key)
 
     def __getattr__(self, attr):
-        """Return device by key."""
-        # We use this to allow the programmer to access a hardware item like
+        """Return device by key.
+
+        This method is DEPRECATED and will be removed soon.
+        """
+        # We used this to allow the programmer to access a hardware item like
         # self.coils.coilname
 
         try:
@@ -342,32 +350,27 @@ class DeviceCollection(dict):
             raise KeyError('Error: No device exists with the name:', attr)
 
     def __iter__(self):
-        """Iterate collection."""
+        """Iterate collection.
+
+        This method is DEPRECATED and will be removed soon. Use .values() instead.
+        """
         for item in self.values():
             yield item
 
-    def items_tagged(self, tag):
+    def items_tagged(self, tag) -> List["Device"]:
         """Return of list of device objects which have a certain tag.
 
         Args:
             tag: A string of the tag name which specifies what devices are
                 returned.
 
-        Returns:
-            A list of device objects. If no devices are found with that tag, it
-            will return an empty list.
+        Returns a list of device objects. If no devices are found with that tag, it
+        will return an empty list.
         """
         items_in_tag_cache = self._tag_cache.get(tag, None)
         if items_in_tag_cache is not None:
             return items_in_tag_cache
-        else:
-            items = [item for item in self if hasattr(item, "tags") and tag in item.tags]
-            self._tag_cache[tag] = items
-            return items
 
-    def number(self, number):
-        """Return a device object based on its number."""
-        for name, obj in self.items():
-            if obj.config['number'] == number:
-                return self[name]
-        raise AssertionError("Object not found for number {}".format(number))
+        items = [item for item in self.values() if hasattr(item, "tags") and tag in item.tags]
+        self._tag_cache[tag] = items
+        return items

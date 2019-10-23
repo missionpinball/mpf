@@ -12,10 +12,6 @@ More info on the P-ROC hardware platform: http://pinballcontrollers.com/
 Original code source on which this module was based:
 https://github.com/preble/pyprocgame
 """
-
-import logging
-import asyncio
-
 from mpf.core.platform import DmdPlatform, DriverConfig, SwitchConfig, SegmentDisplayPlatform
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
@@ -23,15 +19,16 @@ from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.p_roc_devices import PROCDriver
 
+MYPY = False
+if MYPY:   # pragma: no cover
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
+
 
 class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform):
 
     """Platform class for the P-ROC hardware controller.
 
     Args:
-        machine: The MachineController instance.
-
-    Attributes:
         machine: The MachineController instance.
     """
 
@@ -52,10 +49,9 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         self._use_extended_matrix = False
         self._use_first_eight_direct_inputs = False
 
-    @asyncio.coroutine
-    def connect(self):
+    async def connect(self):
         """Connect to the P-Roc."""
-        yield from super().connect()
+        await super().connect()
 
         self.aux_port = AuxPort(self)
         self.aux_port.reset()
@@ -95,9 +91,8 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         Args:
             config: Dictionary of settings for the driver.
 
-        Returns:
-            A reference to the PROCDriver object which is the actual object you
-            can use to pulse(), patter(), enable(), etc.
+        Returns a reference to the PROCDriver object which is the actual object
+        you can use to pulse(), patter(), enable(), etc.
 
         """
         # todo need to add Aux Bus support
@@ -112,10 +107,12 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
             proc_num = self.pdbconfig.get_proc_coil_number(str(number))
             if proc_num == -1:
                 raise AssertionError("Driver {} cannot be controlled by the P-ROC. ".format(str(number)))
+            polarity = True
         else:
             proc_num = self.pinproc.decode(self.machine_type, str(number))
+            polarity = self.machine_type in (self.pinproc.MachineTypeSternWhitestar, self.pinproc.MachineTypeSternSAM)
 
-        return PROCDriver(proc_num, config, self, number)
+        return PROCDriver(proc_num, config, self, number, polarity)
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure a P-ROC switch.
@@ -152,8 +149,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
             proc_num = self.pinproc.decode(self.machine_type, str(number))
         return self._configure_switch(config, proc_num)
 
-    @asyncio.coroutine
-    def get_hw_switch_states(self):
+    async def get_hw_switch_states(self):
         """Read in and set the initial switch state.
 
         The P-ROC uses the following values for hw switch states:
@@ -162,7 +158,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         3 - closed (not debounced)
         4 - open (not debounced)
         """
-        states = yield from self.run_proc_cmd("switch_get_states")
+        states = await self.run_proc_cmd("switch_get_states")
 
         for switch, state in enumerate(states):
             if state in (1, 3):
@@ -177,8 +173,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         self.dmd = PROCDMD(self, self.machine)
         return self.dmd
 
-    @asyncio.coroutine
-    def configure_segment_display(self, number: str, platform_settings) -> "SegmentDisplayPlatformInterface":
+    async def configure_segment_display(self, number: str, platform_settings) -> "SegmentDisplayPlatformInterface":
         """Configure display."""
         del platform_settings
         number_int = int(number)
@@ -219,20 +214,16 @@ class PROCDMD(DmdPlatformInterface):
     """Parent class for a physical DMD attached to a P-ROC.
 
     Args:
-        proc: Reference to the MachineController's proc attribute.
+        platform: Reference to the MachineController's proc attribute.
         machine: Reference to the MachineController
-
-    Attributes:
-        dmd: Reference to the P-ROC's DMD buffer.
-
     """
 
     __slots__ = ["machine", "platform"]
 
     def __init__(self, platform, machine):
         """Set up DMD."""
-        self.platform = platform
-        self.machine = machine
+        self.platform = platform        # type: PROCBasePlatform
+        self.machine = machine          # type: MachineController
 
         # dmd_timing defaults should be 250, 400, 180, 800
         if self.machine.config['p_roc']['dmd_timing_cycles']:

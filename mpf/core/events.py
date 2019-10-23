@@ -7,15 +7,15 @@ import asyncio
 from functools import partial
 from unittest.mock import MagicMock
 
-from typing import Dict, Any, Tuple, Optional, Generator, Callable, List
+from typing import Dict, Any, Tuple, Optional, Callable, List
 
 from mpf.core.mpf_controller import MpfController
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.machine import MachineController
-    from mpf.core.placeholder_manager import BaseTemplate
-    from typing import Deque
+    from mpf.core.machine import MachineController      # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.placeholder_manager import BaseTemplate   # pylint: disable-msg=cyclic-import,unused-import
+    from typing import Deque    # pylint: disable-msg=cyclic-import,unused-import
 
 EventHandlerKey = namedtuple("EventHandlerKey", ["key", "event"])
 RegisteredHandler = namedtuple("RegisteredHandler", ["callback", "priority", "kwargs", "key", "condition",
@@ -66,21 +66,15 @@ class EventManager(MpfController):
         Args:
             event_string: String to parse
 
-        Returns:
-            2-item tuple:
-                First item is the event name
-
-                Second item is the condition (A BoolTemplate instance) if it
-                exists, or None if it doesn't.
-
+        Returns 2-item tuple- First item is the event name. Second item is the
+        condition (A BoolTemplate instance) if it exists, or None if it doesn't.
         """
         if event_string.find("{") > 0 and event_string[-1:] == "}":
             return (event_string[0:event_string.find("{")],
                     self.machine.placeholder_manager.build_bool_template(
                         event_string[event_string.find("{") + 1:-1]))
 
-        else:
-            return event_string, None
+        return event_string, None
 
     def add_async_handler(self, event: str, handler: Any, priority: int = 1, blocking_facility: Any = None,
                           **kwargs) -> EventHandlerKey:
@@ -124,9 +118,8 @@ class EventManager(MpfController):
                 could be passed as part of the event post. If there's a
                 conflict, the event-level ones will win.
 
-        Returns:
-            A GUID reference to the handler which you can use to later remove
-            the handler via ``remove_handler_by_key``.
+        Returns EventHandlerKey to the handler which you can use to later remove
+        the handler via ``remove_handler_by_key``.
 
         For example:
 
@@ -178,7 +171,9 @@ class EventManager(MpfController):
                                "kwargs: %s",
                                (str(handler).split(' '))[2], event, priority, kwargs)
             except IndexError:
-                pass
+                self.debug_log("Registered %s as a handler for '%s', priority: %s, "
+                               "kwargs: %s",
+                               str(handler), event, priority, kwargs)
 
         # Sort the handlers for this event based on priority. We do it now
         # so the list is pre-sorted so we don't have to do that with each
@@ -190,41 +185,46 @@ class EventManager(MpfController):
 
         return EventHandlerKey(key, event)
 
+    def _get_handler_signature(self, handler):
+        """Perform black magic to calculate a signature for a handler."""
+        cls = handler.callback.__self__
+
+        # noinspection PyProtectedMember
+        # pylint: disable-msg=protected-access
+        if hasattr(self.machine, "device_manager") and cls == self.machine.device_manager and \
+                handler.callback == self.machine.device_manager._control_event_handler:
+            cls = (handler.kwargs["callback"].__self__, handler.kwargs["ms_delay"])
+
+        handler_signature = (cls, handler.priority, handler.condition)
+        return handler_signature
+
     def _verify_handlers(self, event, sorted_handlers):
         """Verify that no races can happen."""
-        if not sorted_handlers:
+        if not sorted_handlers or len(sorted_handlers) <= 1 or event.startswith("init_phase_"):
             return
-        priority = -1
-        devices = []
-        for handler in sorted_handlers:
-            # if priority is different we are fine
-            if priority != handler.priority:
-                priority = handler.priority
-                devices = []
 
-            # same priority order is random. check that is does not happen on one class
+        seen = set()
+        collisions = []
+        for handler in sorted_handlers:
             if not inspect.ismethod(handler.callback):
                 continue
-            cls = handler.callback.__self__
 
-            # noinspection PyProtectedMember
-            # pylint: disable-msg=protected-access
-            if hasattr(self.machine, "device_manager") and cls == self.machine.device_manager and \
-                    handler.callback == self.machine.device_manager._control_event_handler:
-                cls = (handler.kwargs["callback"].__self__, handler.kwargs["ms_delay"])
+            handler_signature = self._get_handler_signature(handler)
 
-            if cls in devices and not event.startswith("init_phase_"):
-                handlers = [h for h in sorted_handlers if h.priority == priority and
-                            inspect.ismethod(h.callback) and
-                            h.condition == handler.condition and
-                            h.callback.__self__ == handler.callback.__self__]
+            if handler_signature not in seen:
+                seen.add(handler_signature)
 
-                self.info_log(
-                    "Unordered handler for class {} on event {} with priority {}. Handlers: {}. The order of those "
-                    "handlers is not defined and they will be executed in random order. This might lead to race "
-                    "conditions and potential bugs.".format(cls, event, priority, handlers)
-                )
-            devices.append(cls)
+            else:
+                collisions.append(handler_signature)
+
+        for collision in collisions:
+            handlers = [x for x in sorted_handlers if inspect.ismethod(x.callback) and
+                        self._get_handler_signature(x) == collision]
+            self.info_log(
+                "Unordered handler for class {} on event {} with priority {}. Handlers: {}. The order of those "
+                "handlers is not defined and they will be executed in random order. This might lead to race "
+                "conditions and potential bugs.".format(collision[0], event, collision[1], handlers)
+            )
 
     def replace_handler(self, event: str, handler: Any, priority: int = 1,
                         **kwargs: dict) -> EventHandlerKey:
@@ -383,8 +383,7 @@ class EventManager(MpfController):
         Args:
             event_name : The string name of the event you want to check.
 
-        Returns:
-            True or False
+        Returns True or False.
         """
         return event_name in self.registered_handlers
 
@@ -484,6 +483,7 @@ class EventManager(MpfController):
         numeric values will be processed first.)
 
         Args:
+        ----
             event: A string name of the event you're posting. Note that you can
                 post whatever event you want. You don't have to set up anything
                 ahead of time, and if no handlers are registered for the event
@@ -496,13 +496,14 @@ class EventManager(MpfController):
                 expecting them. You can add ``**kwargs`` to your handler
                 methods if certain ones don't need them.)
 
-        Examples:
-            Post the queue event called *pizza_time*, and then call
-            ``self.pizza_done`` when done:
+        Example:
+        -------
+        Post the queue event called *pizza_time*, and then call
+        ``self.pizza_done`` when done:
 
-            .. code::
+        .. code::
 
-                 self.machine.events.post_queue('pizza_time', self.pizza_done)
+             self.machine.events.post_queue('pizza_time', self.pizza_done)
 
         """
         self._post(event, 'queue', callback, **kwargs)
@@ -568,8 +569,7 @@ class EventManager(MpfController):
                                this_event[2], this_event[3])
             self.debug_log("+========================================")
 
-    @asyncio.coroutine
-    def _run_handlers_sequential(self, event: str, callback, kwargs: dict) -> Generator[int, None, None]:
+    async def _run_handlers_sequential(self, event: str, callback, kwargs: dict) -> None:
         """Run all handlers for an event."""
         if self._debug:
             self.debug_log("^^^^ Processing queue event '%s'. Callback: %s,"
@@ -613,7 +613,7 @@ class EventManager(MpfController):
 
             if queue.waiter:
                 queue.event = asyncio.Event(loop=self.machine.clock.loop)
-                yield from queue.event.wait()
+                await queue.event.wait()
 
         if self._debug:
             self.debug_log("vvvv Finished queue event '%s'. Callback: %s. "
@@ -635,9 +635,14 @@ class EventManager(MpfController):
                     kwargs['_min_priority'][handler.blocking_facility] > handler.priority)):
                 continue
 
-            # merge the post's kwargs with the registered handler's kwargs
-            # in case of conflict, handler kwargs will win
-            merged_kwargs = dict(list(kwargs.items()) + list(handler.kwargs.items()))
+            if handler.kwargs and kwargs:
+                # merge the post's kwargs with the registered handler's kwargs
+                # in case of conflict, handler kwargs will win
+                merged_kwargs = dict(list(kwargs.items()) + list(handler.kwargs.items()))
+            elif handler.kwargs:
+                merged_kwargs = handler.kwargs
+            else:
+                merged_kwargs = kwargs
 
             # if condition exists and is not true skip
             if handler.condition is not None and not handler.condition.evaluate(merged_kwargs):

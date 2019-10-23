@@ -6,10 +6,10 @@ from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 class TestTimer(MpfFakeGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_timer.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/timer/'
 
     def _timer_start(self, **kwargs):
@@ -27,10 +27,10 @@ class TestTimer(MpfFakeGameTestCase):
     def test_start_with_game(self):
         self.start_game()
         self.advance_time_and_run()
-        self.assertIn(self.machine.modes.mode_with_timers2,
+        self.assertIn(self.machine.modes["mode_with_timers2"],
                       self.machine.mode_controller.active_modes)
 
-        self.assertIn(self.machine.modes.game,
+        self.assertIn(self.machine.modes["game"],
                       self.machine.mode_controller.active_modes)
 
     def test_timer_down_outside_of_game(self):
@@ -39,7 +39,7 @@ class TestTimer(MpfFakeGameTestCase):
         self.machine.events.add_handler("timer_timer_down_complete", self._timer_complete)
         self.machine.events.add_handler("timer_timer_down_stopped", self._timer_complete)
 
-        self.assertFalse(self.machine.modes.mode_with_timers.active)
+        self.assertFalse(self.machine.modes["mode_with_timers"].active)
 
         self.tick = 0
         self.started = False
@@ -53,18 +53,18 @@ class TestTimer(MpfFakeGameTestCase):
         # mode should not start automatically
         self.machine.events.post('start_mode_with_timers')
         self.advance_time_and_run(10)
-        self.assertTrue(self.machine.modes.mode_with_timers.active)
+        self.assertTrue(self.machine.modes["mode_with_timers"].active)
         self.assertFalse(self.started)
         self.assertEqual(0, self.tick)
 
         self.machine.events.post('stop_mode_with_timers')
         self.advance_time_and_run(10)
-        self.assertFalse(self.machine.modes.mode_with_timers.active)
+        self.assertFalse(self.machine.modes["mode_with_timers"].active)
 
         # start mode
         self.machine.events.post('start_mode_with_timers')
         self.advance_time_and_run(10)
-        self.assertTrue(self.machine.modes.mode_with_timers.active)
+        self.assertTrue(self.machine.modes["mode_with_timers"].active)
         self.assertFalse(self.started)
         self.assertEqual(0, self.tick)
 
@@ -222,7 +222,7 @@ class TestTimer(MpfFakeGameTestCase):
         # start mode
         self.machine.events.post('start_mode_with_timers')
         self.advance_time_and_run(10)
-        self.assertTrue(self.machine.modes.mode_with_timers.active)
+        self.assertTrue(self.machine.modes["mode_with_timers"].active)
 
         timer = self.machine.timers['timer_up']
         self.assertFalse(timer.running)
@@ -314,7 +314,7 @@ class TestTimer(MpfFakeGameTestCase):
         # add a fake player
         self.start_game()
 
-        self.assertFalse(self.machine.modes.mode_with_timers.active)
+        self.assertFalse(self.machine.modes["mode_with_timers"].active)
 
         self.tick = 0
         self.started = False
@@ -322,7 +322,7 @@ class TestTimer(MpfFakeGameTestCase):
         # start mode
         self.machine.events.post('start_mode_with_timers')
         self.advance_time_and_run(10)
-        self.assertTrue(self.machine.modes.mode_with_timers.active)
+        self.assertTrue(self.machine.modes["mode_with_timers"].active)
         self.assertFalse(self.started)
         self.assertEqual(0, self.tick)
 
@@ -341,7 +341,7 @@ class TestTimer(MpfFakeGameTestCase):
         # stop mode. timer should stop
         self.machine.events.post('stop_mode_with_timers')
         self.advance_time_and_run(10)
-        self.assertFalse(self.machine.modes.mode_with_timers.active)
+        self.assertFalse(self.machine.modes["mode_with_timers"].active)
         self.assertFalse(self.started)
 
         # and stay off

@@ -4,10 +4,10 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 
 class TestAssets(MpfTestCase):
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/asset_manager'
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_asset_loading.yaml'
 
     def test_asset_loading(self):
@@ -325,7 +325,7 @@ class TestAssets(MpfTestCase):
 
         # TWO valid shows
         # Request the show 10,000 times and ensure that two shows are fairly split
-        self.machine.modes.mode1.start()
+        self.machine.modes["mode1"].start()
         self.advance_time_and_run()
         res = list()
         for x in range(10000):
@@ -339,7 +339,7 @@ class TestAssets(MpfTestCase):
 
         # THREE valid shows
         # Request the show 10,000 times and ensure that all three shows are fairly split
-        self.machine.modes.mode1.stop()
+        self.machine.modes["mode1"].stop()
         res = list()
         for x in range(10000):
             res.append(self.machine.shows['group7'].show)
@@ -368,7 +368,7 @@ class TestAssets(MpfTestCase):
         self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
 
         # TWO valid shows
-        self.machine.modes.mode1.start()
+        self.machine.modes["mode1"].start()
         self.advance_time_and_run()
         self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show1'])
         self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
@@ -378,9 +378,9 @@ class TestAssets(MpfTestCase):
         self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
         self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show1'])
         self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
-        
+
         # THREE valid shows
-        self.machine.modes.mode1.stop()
+        self.machine.modes["mode1"].stop()
         self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show3'])
         self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show1'])
         self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
@@ -391,4 +391,4 @@ class TestAssets(MpfTestCase):
         self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show1'])
         self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
         self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show3'])
-                        
+

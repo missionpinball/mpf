@@ -105,9 +105,11 @@ achievements:
 
   achievement9: {}
 
-  achievement10: {}
+  achievement10:
+    debug: True
 
-  achievement11: {}
+  achievement11:
+    debug: True
 
   achievement12:
     enable_events: enable_achievements
@@ -122,6 +124,18 @@ achievements:
   achievement16: {}
 
   achievement17: {}
+
+  mode1_a1:
+    enable_events: enable_all
+    start_events: start_all
+    stop_events: stop_all
+    complete_events: complete_all
+
+  mode1_a2:
+    enable_events: enable_all
+    start_events: start_all
+    stop_events: stop_all
+    complete_events: complete_all
 
 achievement_groups:
     group1:
@@ -155,6 +169,7 @@ achievement_groups:
           achievement12
           achievement13
         auto_select: yes
+        debug: True
 
     group4:
         debug: True

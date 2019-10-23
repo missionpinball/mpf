@@ -104,7 +104,7 @@ class BcdSegments(Segment):
         return bytes([(self.x3 << 3) | (self.x2) << 2 | (self.x1) << 1 | self.x0])
 
 
-bcd_segments = {
+BCD_SEGMENTS = {
     None: BcdSegments(dp=0, x3=0, x2=0, x1=0, x0=0, char="not mappable char"),
     33: BcdSegments(dp=1, x3=0, x2=0, x1=0, x0=1, char="!"),    # 1 with dot
 
@@ -139,7 +139,10 @@ bcd_segments = {
 
 class SevenSegments(Segment):
 
-    """Mapping for seven segments."""
+    """Mapping for seven segments.
+
+    See segment order here: https://github.com/dmadison/LED-Segment-ASCII/blob/master/README.md.
+    """
 
     __slots__ = ["g", "f", "e", "d", "c", "b", "a"]
 
@@ -165,8 +168,13 @@ class SevenSegments(Segment):
         return bytes([(self.dp << 7) | (self.g << 6) | (self.f << 5) | (self.e << 4) | (self.d << 3) | (self.c << 2) |
                       (self.b << 1) | self.a])
 
+    def get_dpgfeabcd_encoding(self) -> bytes:
+        """Return segment in dp gfeabcd order."""
+        return bytes([(self.dp << 7) | (self.g << 6) | (self.f << 5) | (self.e << 4) | (self.a << 3) | (self.b << 2) |
+                      (self.c << 1) | self.d])
 
-seven_segments = {
+
+SEVEN_SEGMENTS = {
     None: SevenSegments(dp=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="not mappable char"),
     32: SevenSegments(dp=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="(space)"),
     33: SevenSegments(dp=1, g=0, f=0, e=0, d=0, c=1, b=1, a=0, char="!"),
@@ -270,7 +278,10 @@ seven_segments = {
 # pylint: disable-msg=too-many-instance-attributes
 class FourteenSegments(Segment):
 
-    """Mapping for fourteen segments."""
+    """Mapping for fourteen segments.
+
+    See segment order here: https://github.com/dmadison/LED-Segment-ASCII/blob/master/README.md.
+    """
 
     __slots__ = ["l", "m", "n", "k", "j", "h", "g2", "g1", "f", "e", "d", "c", "b", "a"]
 
@@ -301,8 +312,16 @@ class FourteenSegments(Segment):
             (self.dp << 7) | (self.l << 6) | (self.m << 5) | (self.n << 4) | (self.g2 << 3) | (self.k << 2) |
             (self.j << 1) | self.h])
 
+    def get_apc_encoding(self) -> bytes:
+        """Return segment in d, c, b, a, e, f, g, comma + j, h, m, k, p, r, dp, n order."""
+        return bytes([
+            (self.dp << 7) | (self.g1 << 6) | (self.f << 5) | (self.e << 4) | (self.a << 3) | (self.b << 2) |
+            (self.c << 1) | self.d,
+            (self.l << 7) | (self.dp << 6) | (self.n << 5) | (self.m << 4) | (self.k << 3) | (self.g2 << 2) |
+            (self.h << 1) | self.j])
 
-fourteen_segments = {
+
+FOURTEEN_SEGMENTS = {
     None: FourteenSegments(dp=0, l=0, m=0, n=0, k=0, j=0, h=0, g2=0, g1=0, f=0, e=0, d=0, c=0, b=0, a=0,    # noqa: E741
                            char="not mappable char"),
     32: FourteenSegments(dp=0, l=0, m=0, n=0, k=0, j=0, h=0, g2=0, g1=0, f=0, e=0, d=0, c=0, b=0, a=0, char="(space)"), # noqa: E741
@@ -407,7 +426,10 @@ fourteen_segments = {
 # pylint: disable-msg=too-many-instance-attributes
 class SixteenSegments(Segment):
 
-    """Mapping for sixteen segments."""
+    """Mapping for sixteen segments.
+
+    See segment order here: https://github.com/dmadison/LED-Segment-ASCII/blob/master/README.md.
+    """
 
     __slots__ = ["u", "t", "s", "r", "p", "m", "n", "k", "h", "g", "f", "e", "d", "c", "b", "a"]
 
@@ -434,7 +456,7 @@ class SixteenSegments(Segment):
         self.u = u
 
 
-sixteen_segments = {
+SIXTEEN_SEGMENTS = {
     None: SixteenSegments(dp=0, u=0, t=0, s=0, r=0, p=0, n=0, m=0, k=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0,
                           char="not mappable char"),
     32: SixteenSegments(dp=0, u=0, t=0, s=0, r=0, p=0, n=0, m=0, k=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0,
@@ -587,8 +609,8 @@ class AsciiSegment(Segment):
         return bytes([self.ascii_value + (128 if self.dp else 0)])
 
 
-ascii_segments = {
+ASCII_SEGMENTS = {
     None: AsciiSegment(dp=0, ascii_value=ord(" "), char=" ")
 }
 for i in range(128):
-    ascii_segments[i] = AsciiSegment(dp=0, ascii_value=i, char=chr(i))
+    ASCII_SEGMENTS[i] = AsciiSegment(dp=0, ascii_value=i, char=chr(i))

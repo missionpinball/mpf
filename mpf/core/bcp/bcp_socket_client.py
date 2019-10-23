@@ -4,6 +4,8 @@ from urllib.parse import urlsplit, parse_qs, quote, unquote, urlunparse
 
 import asyncio
 
+from typing import Tuple
+
 from mpf._version import __version__, __bcp_version__
 from mpf.core.bcp.bcp_client import BaseBcpClient
 
@@ -18,18 +20,19 @@ class MpfJSONEncoder(json.JSONEncoder):
         return str(o)
 
 
-def decode_command_string(bcp_string):
+def decode_command_string(bcp_string) -> Tuple[str, dict]:
     """Decode a BCP command string into separate command and parameter parts.
 
     Args:
+    ----
         bcp_string: The incoming UTF-8, URL encoded BCP command string.
 
-    Returns:
-        A tuple of the command string and a dictionary of kwarg pairs.
+    Returns a tuple of the command string and a dictionary of kwarg pairs.
 
     Example:
-        Input: trigger?name=hello&foo=Foo%20Bar
-        Output: ('trigger', {'name': 'hello', 'foo': 'Foo Bar'})
+    -------
+    Input: trigger?name=hello&foo=Foo%20Bar
+    Output: ('trigger', {'name': 'hello', 'foo': 'Foo Bar'})
 
     Note that BCP commands and parameter names are not case-sensitive and will
     be converted to lowercase. Parameter values are case sensitive, and case
@@ -68,20 +71,21 @@ def decode_command_string(bcp_string):
             dict((k, v[0]) for k, v in kwargs.items()))
 
 
-def encode_command_string(bcp_command, **kwargs):
+def encode_command_string(bcp_command, **kwargs) -> str:
     """Encode a BCP command and kwargs into a valid BCP command string.
 
     Args:
+    ----
         bcp_command: String of the BCP command name.
         **kwargs: Optional pair(s) of kwargs which will be appended to the
             command.
 
-    Returns:
-        A string.
+    Returns a string.
 
     Example:
-        Input: encode_command_string('trigger', {'name': 'hello', 'foo': 'Bar'})
-        Output: trigger?name=hello&foo=Bar
+    -------
+    Input: encode_command_string('trigger', {'name': 'hello', 'foo': 'Bar'})
+    Output: trigger?name=hello&foo=Bar
 
     Note that BCP commands and parameter names are not case-sensitive and will
     be converted to lowercase. Parameter values are case sensitive, and case
@@ -131,11 +135,10 @@ class AsyncioBcpClientSocket():
         self._receive_buffer = b''
 
     # pylint: disable-msg=inconsistent-return-statements
-    @asyncio.coroutine
-    def read_message(self):
+    async def read_message(self):
         """Read the next message."""
         while True:
-            message = yield from self._receiver.readline()
+            message = await self._receiver.readline()
 
             # handle EOF
             if not message:
@@ -148,7 +151,7 @@ class AsyncioBcpClientSocket():
                 message, bytes_needed = message.split(b'&bytes=')
                 bytes_needed = int(bytes_needed)
 
-                rawbytes = yield from self._receiver.readexactly(bytes_needed)
+                rawbytes = await self._receiver.readexactly(bytes_needed)
 
                 message_obj = self._process_command(message, rawbytes)
 
@@ -168,11 +171,10 @@ class AsyncioBcpClientSocket():
         bcp_string = encode_command_string(bcp_command, **kwargs)
         self._sender.write((bcp_string + '\n').encode())
 
-    @asyncio.coroutine
-    def wait_for_response(self, bcp_command):
+    async def wait_for_response(self, bcp_command):
         """Wait for a command and ignore all others."""
         while True:
-            cmd, args = yield from self.read_message()
+            cmd, args = await self.read_message()
             if cmd == "reset":
                 self.send("reset_complete", {})
                 continue
@@ -200,11 +202,12 @@ class BCPClientSocket(BaseBcpClient):
         bcp: The bcp object.
     """
 
+    config_name = 'bcp_client'
+
+    __slots__ = ["_sender", "_receiver", "_send_goodbye", "_receive_buffer", "_bcp_client_socket_commands", "__dict__"]
+
     def __init__(self, machine, name, bcp):
         """Initialise BCP client socket."""
-        self.module_name = 'BCPClientSocket.{}'.format(name)
-        self.config_name = 'bcp_client'
-
         super().__init__(machine, name, bcp)
 
         self._sender = None
@@ -217,7 +220,7 @@ class BCPClientSocket(BaseBcpClient):
 
     def __repr__(self):
         """Return str representation."""
-        return self.module_name
+        return 'BCPClientSocket.{}'.format(self.name)
 
     def connect(self, config):
         """Actively connect to server."""
@@ -227,8 +230,7 @@ class BCPClientSocket(BaseBcpClient):
         # return a future
         return self._setup_client_socket(config['host'], config['port'], config.get('required'))
 
-    @asyncio.coroutine
-    def _setup_client_socket(self, client_host, client_port, required=True):
+    async def _setup_client_socket(self, client_host, client_port, required=True):
         """Set up the client socket."""
         self.info_log("Connecting BCP to '%s' at %s:%s...",
                       self.name, client_host, client_port)
@@ -236,10 +238,10 @@ class BCPClientSocket(BaseBcpClient):
         while True:
             connector = self.machine.clock.open_connection(client_host, client_port)
             try:
-                self._receiver, self._sender = yield from connector
+                self._receiver, self._sender = await connector
             except (ConnectionRefusedError, OSError):
                 if required:
-                    yield from asyncio.sleep(.1)
+                    await asyncio.sleep(.1)
                     continue
                 else:
                     self.info_log("No BCP connection made to '%s' %s:%s",
@@ -292,11 +294,10 @@ class BCPClientSocket(BaseBcpClient):
         self._sender.write((bcp_string + '\n').encode())
 
     # pylint: disable-msg=inconsistent-return-statements
-    @asyncio.coroutine
-    def read_message(self):
+    async def read_message(self):
         """Read the next message."""
         while True:
-            message = yield from self._receiver.readline()
+            message = await self._receiver.readline()
 
             # handle EOF
             if not message:
@@ -309,7 +310,7 @@ class BCPClientSocket(BaseBcpClient):
                 message, bytes_needed = message.split(b'&bytes=')
                 bytes_needed = int(bytes_needed)
 
-                rawbytes = yield from self._receiver.readexactly(bytes_needed)
+                rawbytes = await self._receiver.readexactly(bytes_needed)
 
                 message_obj = self._process_command(message, rawbytes)
 
@@ -330,8 +331,8 @@ class BCPClientSocket(BaseBcpClient):
         if cmd in self._bcp_client_socket_commands:
             self._bcp_client_socket_commands[cmd](**kwargs)
             return None
-        else:
-            return cmd, kwargs
+
+        return cmd, kwargs
 
     def _receive_hello(self, **kwargs):
         """Process incoming BCP 'hello' command."""

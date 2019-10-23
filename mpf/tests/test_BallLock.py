@@ -4,10 +4,10 @@ from unittest.mock import MagicMock
 
 class TestBallLock(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_ball_lock.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_lock/'
 
     def _missing_ball(self, **kwargs):
@@ -32,25 +32,25 @@ class TestBallLock(MpfTestCase):
         self.post_event("start_mode1")
 
         # mode loaded. ball_lock2 should be enabled
-        self.assertTrue(self.machine.ball_locks.lock_test2.enabled)
+        self.assertTrue(self.machine.ball_locks["lock_test2"].enabled)
 
         # stop mode
         self.post_event("stop_mode1")
 
         # mode stopped. should ball_lock be disabled
-        self.assertFalse(self.machine.ball_locks.lock_test2.enabled)
+        self.assertFalse(self.machine.ball_locks["lock_test2"].enabled)
 
         # start mode (again)
         self.post_event("start_mode1")
 
         # mode loaded. ball_lock2 should be enabled
-        self.assertTrue(self.machine.ball_locks.lock_test2.enabled)
+        self.assertTrue(self.machine.ball_locks["lock_test2"].enabled)
 
         # stop mode
         self.post_event("stop_mode1")
 
         # mode stopped. should ball_lock be disabled
-        self.assertFalse(self.machine.ball_locks.lock_test2.enabled)
+        self.assertFalse(self.machine.ball_locks["lock_test2"].enabled)
 
     def test_lock_and_release_at_game_end(self):
         coil1 = self.machine.coils['eject_coil1']
@@ -517,10 +517,10 @@ class TestBallLock(MpfTestCase):
 
 class TestBallLockSmart(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_ball_lock.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_lock/'
 
     def get_platform(self):
@@ -544,12 +544,12 @@ class TestBallLockSmart(MpfTestCase):
         self.assertEqual(1, self.machine.playfield.balls)
 
         # lock one ball
-        self.machine.ball_locks.lock_test.enable()
+        self.machine.ball_locks["lock_test"].enable()
         self.hit_switch_and_run("s_ball_switch_lock1", 1)
 
         # wait for a new ball
         self.advance_time_and_run(10)
-        self.assertEqual(1, self.machine.ball_locks.lock_test.balls_locked)
+        self.assertEqual(1, self.machine.ball_locks["lock_test"].balls_locked)
         self.assertEqual(1, self.machine.playfield.balls)
 
         # drain ball on pf

@@ -3,122 +3,122 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class TestHead2Head(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/head2head/'
 
     def get_platform(self):
         return 'smart_virtual'
 
     def _prepare_troughs(self):
-        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_front)
-        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_front)
-        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_front)
-        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_back)
-        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_back)
-        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_back)
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices["bd_trough_front"])
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices["bd_trough_front"])
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices["bd_trough_front"])
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices["bd_trough_back"])
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices["bd_trough_back"])
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices["bd_trough_back"])
 
         self.advance_time_and_run()
 
-        self.assertEqual(3, self.machine.ball_devices.bd_trough_front.balls)
-        self.assertEqual(3, self.machine.ball_devices.bd_trough_back.balls)
-        self.assertEqual(0, self.machine.playfields.playfield_front.balls)
-        self.assertEqual(0, self.machine.playfields.playfield_back.balls)
+        self.assertEqual(3, self.machine.ball_devices["bd_trough_front"].balls)
+        self.assertEqual(3, self.machine.ball_devices["bd_trough_back"].balls)
+        self.assertEqual(0, self.machine.playfields["playfield_front"].balls)
+        self.assertEqual(0, self.machine.playfields["playfield_back"].balls)
 
     def test_loop(self):
         self._prepare_troughs()
-        self.machine.ball_devices.bd_trough_front.eject(target=self.machine.ball_devices.bd_trough_back)
-        self.machine.ball_devices.bd_trough_back.eject(target=self.machine.ball_devices.bd_trough_front)
-        self.machine.ball_devices.bd_trough_front.eject(target=self.machine.ball_devices.bd_trough_back)
-        self.machine.ball_devices.bd_trough_back.eject(target=self.machine.ball_devices.bd_trough_front)
+        self.machine.ball_devices["bd_trough_front"].eject(target=self.machine.ball_devices["bd_trough_back"])
+        self.machine.ball_devices["bd_trough_back"].eject(target=self.machine.ball_devices["bd_trough_front"])
+        self.machine.ball_devices["bd_trough_front"].eject(target=self.machine.ball_devices["bd_trough_back"])
+        self.machine.ball_devices["bd_trough_back"].eject(target=self.machine.ball_devices["bd_trough_front"])
 
         self.advance_time_and_run(100)
 
-        self.assertEqual("idle", self.machine.ball_devices.bd_trough_front._state)
-        self.assertEqual("idle", self.machine.ball_devices.bd_trough_back._state)
-        self.assertEqual("idle", self.machine.ball_devices.bd_launcher_front._state)
-        self.assertEqual("idle", self.machine.ball_devices.bd_launcher_back._state)
-        self.assertEqual("idle", self.machine.ball_devices.bd_feeder_front._state)
-        self.assertEqual("idle", self.machine.ball_devices.bd_feeder_back._state)
-        self.assertEqual("idle", self.machine.ball_devices.bd_middle_front._state)
-        self.assertEqual("idle", self.machine.ball_devices.bd_middle_back._state)
+        self.assertEqual("idle", self.machine.ball_devices["bd_trough_front"]._state)
+        self.assertEqual("idle", self.machine.ball_devices["bd_trough_back"]._state)
+        self.assertEqual("idle", self.machine.ball_devices["bd_launcher_front"]._state)
+        self.assertEqual("idle", self.machine.ball_devices["bd_launcher_back"]._state)
+        self.assertEqual("idle", self.machine.ball_devices["bd_feeder_front"]._state)
+        self.assertEqual("idle", self.machine.ball_devices["bd_feeder_back"]._state)
+        self.assertEqual("idle", self.machine.ball_devices["bd_middle_front"]._state)
+        self.assertEqual("idle", self.machine.ball_devices["bd_middle_back"]._state)
 
-        self.assertEqual(3, self.machine.ball_devices.bd_trough_front.balls)
-        self.assertEqual(3, self.machine.ball_devices.bd_trough_back.balls)
-        self.assertEqual(0, self.machine.playfields.playfield_front.balls)
-        self.assertEqual(0, self.machine.playfields.playfield_back.balls)
+        self.assertEqual(3, self.machine.ball_devices["bd_trough_front"].balls)
+        self.assertEqual(3, self.machine.ball_devices["bd_trough_back"].balls)
+        self.assertEqual(0, self.machine.playfields["playfield_front"].balls)
+        self.assertEqual(0, self.machine.playfields["playfield_back"].balls)
 
     def testEject(self):
         self._prepare_troughs()
-        self.machine.playfields.playfield_front.add_ball()
-        self.machine.playfields.playfield_back.add_ball()
+        self.machine.playfields["playfield_front"].add_ball()
+        self.machine.playfields["playfield_back"].add_ball()
 
-        self.assertEqual(2, self.machine.ball_devices.bd_trough_front.available_balls)
-        self.assertEqual(2, self.machine.ball_devices.bd_trough_back.available_balls)
-        self.assertEqual(1, self.machine.playfields.playfield_front.available_balls)
-        self.assertEqual(1, self.machine.playfields.playfield_back.available_balls)
-        self.assertEqual(3, self.machine.ball_devices.bd_trough_front.balls)
-        self.assertEqual(3, self.machine.ball_devices.bd_trough_back.balls)
-        self.assertEqual(0, self.machine.playfields.playfield_front.balls)
-        self.assertEqual(0, self.machine.playfields.playfield_back.balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough_front"].available_balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough_back"].available_balls)
+        self.assertEqual(1, self.machine.playfields["playfield_front"].available_balls)
+        self.assertEqual(1, self.machine.playfields["playfield_back"].available_balls)
+        self.assertEqual(3, self.machine.ball_devices["bd_trough_front"].balls)
+        self.assertEqual(3, self.machine.ball_devices["bd_trough_back"].balls)
+        self.assertEqual(0, self.machine.playfields["playfield_front"].balls)
+        self.assertEqual(0, self.machine.playfields["playfield_back"].balls)
 
         self.advance_time_and_run(10)
 
-        self.assertEqual(2, self.machine.ball_devices.bd_trough_front.balls)
-        self.assertEqual(2, self.machine.ball_devices.bd_trough_back.balls)
-        self.assertEqual(1, self.machine.playfields.playfield_front.balls)
-        self.assertEqual(1, self.machine.playfields.playfield_back.balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough_front"].balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough_back"].balls)
+        self.assertEqual(1, self.machine.playfields["playfield_front"].balls)
+        self.assertEqual(1, self.machine.playfields["playfield_back"].balls)
 
-        self.assertEqual("idle", self.machine.ball_devices.bd_trough_front._state)
-        self.assertEqual("idle", self.machine.ball_devices.bd_trough_back._state)
-        self.assertEqual("idle", self.machine.ball_devices.bd_launcher_front._state)
-        self.assertEqual("idle", self.machine.ball_devices.bd_launcher_back._state)
-        self.assertEqual("idle", self.machine.ball_devices.bd_feeder_front._state)
-        self.assertEqual("idle", self.machine.ball_devices.bd_feeder_back._state)
-        self.assertEqual("idle", self.machine.ball_devices.bd_middle_front._state)
-        self.assertEqual("idle", self.machine.ball_devices.bd_middle_back._state)
+        self.assertEqual("idle", self.machine.ball_devices["bd_trough_front"]._state)
+        self.assertEqual("idle", self.machine.ball_devices["bd_trough_back"]._state)
+        self.assertEqual("idle", self.machine.ball_devices["bd_launcher_front"]._state)
+        self.assertEqual("idle", self.machine.ball_devices["bd_launcher_back"]._state)
+        self.assertEqual("idle", self.machine.ball_devices["bd_feeder_front"]._state)
+        self.assertEqual("idle", self.machine.ball_devices["bd_feeder_back"]._state)
+        self.assertEqual("idle", self.machine.ball_devices["bd_middle_front"]._state)
+        self.assertEqual("idle", self.machine.ball_devices["bd_middle_back"]._state)
 
     def testUnexpectedBallWithTransfer(self):
         # devices captures from one pf and ejects to another
         # tests target_on_unexpected_ball
         self.set_num_balls_known(4)
-        self.machine.playfields.playfield_front.balls = 2
-        self.machine.playfields.playfield_front.available_balls = 2
-        self.machine.playfields.playfield_back.balls = 2
-        self.machine.playfields.playfield_back.available_balls = 2
+        self.machine.playfields["playfield_front"].balls = 2
+        self.machine.playfields["playfield_front"].available_balls = 2
+        self.machine.playfields["playfield_back"].balls = 2
+        self.machine.playfields["playfield_back"].available_balls = 2
 
         self.hit_switch_and_run("s_middle_back1", 15)
 
-        self.assertEqual(1, self.machine.playfields.playfield_front.balls)
-        self.assertEqual(1, self.machine.playfields.playfield_front.available_balls)
-        self.assertEqual(3, self.machine.playfields.playfield_back.balls)
-        self.assertEqual(3, self.machine.playfields.playfield_back.available_balls)
+        self.assertEqual(1, self.machine.playfields["playfield_front"].balls)
+        self.assertEqual(1, self.machine.playfields["playfield_front"].available_balls)
+        self.assertEqual(3, self.machine.playfields["playfield_back"].balls)
+        self.assertEqual(3, self.machine.playfields["playfield_back"].available_balls)
 
     def testUnexpectedBallWithRouting(self):
         # device captures and ejects to same pf but ball has to routed through trough
         self.set_num_balls_known(4)
-        self.machine.playfields.playfield_front.balls = 2
-        self.machine.playfields.playfield_front.available_balls = 2
-        self.machine.playfields.playfield_back.balls = 2
-        self.machine.playfields.playfield_back.available_balls = 2
+        self.machine.playfields["playfield_front"].balls = 2
+        self.machine.playfields["playfield_front"].available_balls = 2
+        self.machine.playfields["playfield_back"].balls = 2
+        self.machine.playfields["playfield_back"].available_balls = 2
 
         self.hit_switch_and_run("s_launcher_lane_front", 1)
 
         # ball captured
-        self.assertEqual(1, self.machine.playfields.playfield_front.balls)
-        self.assertEqual(2, self.machine.playfields.playfield_back.balls)
+        self.assertEqual(1, self.machine.playfields["playfield_front"].balls)
+        self.assertEqual(2, self.machine.playfields["playfield_back"].balls)
 
         self.advance_time_and_run(20)
-        self.assertEqual(2, self.machine.playfields.playfield_front.balls)
-        self.assertEqual(2, self.machine.playfields.playfield_back.balls)
+        self.assertEqual(2, self.machine.playfields["playfield_front"].balls)
+        self.assertEqual(2, self.machine.playfields["playfield_back"].balls)
 
     def testPhantomballsAndGameStart(self):
         self.mock_event("playfield_jump")
         self._prepare_troughs()
-        self.machine.playfields.playfield_front.add_ball()
-        self.machine.playfields.playfield_back.add_ball()
+        self.machine.playfields["playfield_front"].add_ball()
+        self.machine.playfields["playfield_back"].add_ball()
         self.advance_time_and_run(10)
 
         # test pass from pf1 to pf2 but switch triggers twice
@@ -150,7 +150,7 @@ class TestHead2Head(MpfTestCase):
         self.assertEqual(2, pf2.available_balls)
 
         # ball drains in front
-        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_front)
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices["bd_trough_front"])
         self.advance_time_and_run()
 
         self.assertEqual(0, pf1.balls)
@@ -166,7 +166,7 @@ class TestHead2Head(MpfTestCase):
         self.assertFalse(self.machine.ball_controller.request_to_start_game())
 
         # second ball also drains
-        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_back)
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices["bd_trough_back"])
         self.advance_time_and_run()
 
         self.assertEqual(0, pf1.balls)
@@ -181,7 +181,7 @@ class TestHead2Head(MpfTestCase):
     def testPlayfieldJump(self):
         self.mock_event("playfield_jump")
         self._prepare_troughs()
-        self.machine.playfields.playfield_front.add_ball()
+        self.machine.playfields["playfield_front"].add_ball()
         self.advance_time_and_run(10)
 
         # only front has a ball

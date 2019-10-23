@@ -1,16 +1,15 @@
 """Contains the Device base class."""
 import abc
-import asyncio
 
-from typing import List, Any, Generator
+from typing import List, Any
 
 from mpf.core.machine import MachineController
 from mpf.core.logging import LogMixin
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.mode import Mode
-    from mpf.platforms.smart_virtual import SmartVirtualHardwarePlatform
+    from mpf.core.mode import Mode      # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.platforms.smart_virtual import SmartVirtualHardwarePlatform    # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 
 class Device(LogMixin, metaclass=abc.ABCMeta):
@@ -56,8 +55,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         """Compare two devices."""
         return self.name < other.name
 
-    @asyncio.coroutine
-    def device_added_to_mode(self, mode: "Mode") -> Generator[int, None, None]:
+    async def device_added_to_mode(self, mode: "Mode") -> None:
         """Add a device to a running mode.
 
         Args:
@@ -116,7 +114,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
 
         self.configure_logging(self.class_label + '.' + self.name,
                                config['console_log'],
-                               config['file_log'])
+                               config['file_log'], url_base=self.class_label)
 
         self.debug_log("Configuring device with settings: '%s'", config)
 
@@ -146,7 +144,5 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
 
         return cls.collection, cls.config_section
 
-    @asyncio.coroutine
-    def _initialize(self):
+    async def _initialize(self):
         """Initialise device."""
-        pass

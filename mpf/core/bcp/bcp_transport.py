@@ -7,7 +7,7 @@ from mpf.core.bcp.bcp_client import BaseBcpClient
 
 MYPY = False  # noqa
 if MYPY:
-    from mpf.core.machine import MachineController
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class BcpTransportManager:
@@ -62,16 +62,15 @@ class BcpTransportManager:
         except asyncio.CancelledError:
             pass
 
-    @asyncio.coroutine
-    def _receive_loop(self, transport: BaseBcpClient):
+    async def _receive_loop(self, transport: BaseBcpClient):
         while True:
             try:
-                cmd, kwargs = yield from transport.read_message()
+                cmd, kwargs = await transport.read_message()
             except IOError:
                 self.unregister_transport(transport)
                 return
 
-            yield from self._machine.bcp.interface.process_bcp_message(cmd, kwargs, transport)
+            await self._machine.bcp.interface.process_bcp_message(cmd, kwargs, transport)
 
     def unregister_transport(self, transport: BaseBcpClient):
         """Unregister client."""

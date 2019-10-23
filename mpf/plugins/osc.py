@@ -1,12 +1,11 @@
 """MPF plugin to control the machine via OSC."""
-import asyncio
 import logging
 
 from mpf.core.switch_controller import MonitoredSwitchChange
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.machine import MachineController
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 # pythonosc is not a requirement for MPF so we fail with a nice error when loading
 try:
@@ -52,9 +51,8 @@ class Osc:
 
         self.client = SimpleUDPClient(self.config['client_ip'], self.config['client_port'])
 
-    @asyncio.coroutine
-    def _start(self):
-        yield from self.server.create_serve_endpoint()
+    async def _start(self):
+        await self.server.create_serve_endpoint()
         self.machine.switch_controller.add_monitor(self._notify_switch_changes)
 
     def __repr__(self):
@@ -68,6 +66,3 @@ class Osc:
     def _notify_switch_changes(self, change: MonitoredSwitchChange):
         """Send switch change to OSC client."""
         self.client.send_message("/sw/{}".format(change.name), change.state)
-
-
-plugin_class = Osc

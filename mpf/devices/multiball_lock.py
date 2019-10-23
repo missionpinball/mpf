@@ -1,6 +1,4 @@
 """Contains the BallLock device class."""
-import asyncio
-
 from mpf.core.enable_disable_mixin import EnableDisableMixin
 
 from mpf.core.device_monitor import DeviceMonitor
@@ -9,7 +7,7 @@ from mpf.core.mode_device import ModeDevice
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.devices.ball_device.ball_device import BallDevice
+    from mpf.devices.ball_device.ball_device import BallDevice  # pylint: disable-msg=cyclic-import,unused-import
 
 
 @DeviceMonitor("locked_balls")
@@ -36,10 +34,9 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
 
         super().__init__(machine, name)
 
-    @asyncio.coroutine
-    def _initialize(self):
+    async def _initialize(self):
         # load lock_devices
-        yield from super()._initialize()
+        await super()._initialize()
 
         self.lock_devices = []
         for device in self.config['lock_devices']:
@@ -128,12 +125,12 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
 
         if self.config['locked_ball_counting_strategy'] == "virtual_only":
             return self.machine.game.player['{}_locked_balls'.format(self.name)]
-        elif self.config['locked_ball_counting_strategy'] == "min_virtual_physical":
+        if self.config['locked_ball_counting_strategy'] == "min_virtual_physical":
             return min(self.machine.game.player['{}_locked_balls'.format(self.name)], self._physically_locked_balls)
-        elif self.config['locked_ball_counting_strategy'] == "physical_only":
+        if self.config['locked_ball_counting_strategy'] == "physical_only":
             return self._physically_locked_balls
-        else:
-            return self._locked_balls
+
+        return self._locked_balls
 
     @locked_balls.setter
     def locked_balls(self, value):

@@ -1,6 +1,4 @@
 """Implements a servo in MPF."""
-import asyncio
-
 from mpf.core.delays import DelayManager
 
 from mpf.core.device_monitor import DeviceMonitor
@@ -32,9 +30,8 @@ class Servo(SystemWideDevice):
         self.delay = DelayManager(machine)
         super().__init__(machine, name)
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.platform = self.machine.get_platform_sections('servo_controllers', self.config['platform'])
 
         for position in self.config['positions']:
@@ -45,7 +42,7 @@ class Servo(SystemWideDevice):
         if not self.platform.features['allow_empty_numbers'] and self.config['number'] is None:
             self.raise_config_error("Servo must have a number.", 1)
 
-        self.hw_servo = yield from self.platform.configure_servo(self.config['number'])
+        self.hw_servo = await self.platform.configure_servo(self.config['number'])
         self._position = self.config['reset_position']
         self.speed_limit = self.config['speed_limit']
         self.acceleration_limit = self.config['acceleration_limit']

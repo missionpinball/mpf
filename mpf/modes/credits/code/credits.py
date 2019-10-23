@@ -134,10 +134,10 @@ class Credits(Mode):
             actual_credit_units = self.credit_units_per_game * credits_in_tier
             bonus = actual_credit_units - credit_units
 
-            self.machine.set_machine_var("price_per_game_raw_{}".format(index), price)
-            self.machine.set_machine_var("price_per_game_string_{}".format(index),
-                                         self.credits_config['price_tier_template'].format(
-                                             price=price, credits=credits_in_tier))
+            self.machine.variables.set_machine_var("price_per_game_raw_{}".format(index), price)
+            self.machine.variables.set_machine_var("price_per_game_string_{}".format(index),
+                                                   self.credits_config['price_tier_template'].format(
+                                                       price=price, credits=credits_in_tier))
 
             self.debug_log("Pricing Tier Bonus. Price: %s, Credits: %s. "
                            "Credit units for this tier: %s, Credit units this "
@@ -155,9 +155,10 @@ class Credits(Mode):
         credit_units = self._get_credit_units()
 
         if self.credits_config['persist_credits_while_off_time']:
-            self.machine.configure_machine_var(name='credit_units', persist=True,
-                                               expire_secs=self.credits_config['persist_credits_while_off_time'])
-        self.machine.set_machine_var(name='credit_units', value=credit_units)
+            self.machine.variables.configure_machine_var(name='credit_units', persist=True,
+                                                         expire_secs=self.credits_config[
+                                                             'persist_credits_while_off_time'])
+        self.machine.variables.set_machine_var(name='credit_units', value=credit_units)
 
         '''machine_var: credit_units
 
@@ -168,12 +169,12 @@ class Credits(Mode):
         *credits_value* machine variables for more useful formats.
         '''
 
-        self.machine.set_machine_var('credits_string', ' ')
+        self.machine.variables.set_machine_var('credits_string', ' ')
         # doc string is in machine.py for credits_string
 
         self.machine.settings.set_setting_value('free_play', False)
 
-        self.machine.set_machine_var('credits_value', '0')
+        self.machine.variables.set_machine_var('credits_value', '0')
         '''machine_var: credits_value
 
         desc: The human readable string form which shows the number value of
@@ -184,20 +185,20 @@ class Credits(Mode):
         "credits_string" machine variable.
         '''
 
-        self.machine.set_machine_var('credits_whole_num', 0)
+        self.machine.variables.set_machine_var('credits_whole_num', 0)
         '''machine_var: credits_whole_num
 
         desc: The whole number portion of the total credits on the machine.
         For example, if the machine has 3 1/2 credits, this value is "3".
         '''
 
-        self.machine.set_machine_var('credits_numerator', 0)
+        self.machine.variables.set_machine_var('credits_numerator', 0)
         '''machine_var: credits_numerator
 
         desc: The numerator portion of the total credits on the machine.
         For example, if the machine has 4 1/2 credits, this value is "1".
         '''
-        self.machine.set_machine_var('credits_denominator', 0)
+        self.machine.variables.set_machine_var('credits_denominator', 0)
         '''machine_var: credits_whole_num
 
         desc: The denominator portion of the total credits on the machine.
@@ -247,8 +248,8 @@ class Credits(Mode):
         self.machine.settings.set_setting_value('free_play', True)
 
         for index in range(len(self.credits_config['pricing_tiers'])):
-            self.machine.remove_machine_var("price_per_game_raw_{}".format(index))
-            self.machine.remove_machine_var("price_per_game_string_{}".format(index))
+            self.machine.variables.remove_machine_var("price_per_game_raw_{}".format(index))
+            self.machine.variables.remove_machine_var("price_per_game_string_{}".format(index))
 
         self._remove_event_handlers()
 
@@ -274,7 +275,7 @@ class Credits(Mode):
             self.enable_free_play()
 
     def _get_credit_units(self):
-        credit_units = self.machine.get_machine_var('credit_units')
+        credit_units = self.machine.variables.get_machine_var('credit_units')
         if not credit_units:
             credit_units = 0
         return credit_units
@@ -286,15 +287,14 @@ class Credits(Mode):
             self.info_log("Received request to add player. Request Approved. Sufficient credits available.")
             return True
 
-        else:
-            self.info_log("Received request to add player. Request Denied. Not enough credits available.")
-            self.machine.events.post("not_enough_credits")
-            '''event: not_enough_credits
-            desc: A player has pushed the start button, but the game is not set
-            to free play and there are not enough credits to start a game or
-            add a player.
-            '''
-            return False
+        self.info_log("Received request to add player. Request Denied. Not enough credits available.")
+        self.machine.events.post("not_enough_credits")
+        '''event: not_enough_credits
+        desc: A player has pushed the start button, but the game is not set
+        to free play and there are not enough credits to start a game or
+        add a player.
+        '''
+        return False
 
     def _request_to_start_game(self, **kwargs):
         del kwargs
@@ -303,11 +303,10 @@ class Credits(Mode):
             self.info_log("Received request to start game. Request Approved. Sufficient credits available.")
             return True
 
-        else:
-            self.info_log("Received request to start game. Request Denied. Not enough credits available.")
-            self.machine.events.post("not_enough_credits")
-            # event docstring covered in _player_add_request() method
-            return False
+        self.info_log("Received request to start game. Request Denied. Not enough credits available.")
+        self.machine.events.post("not_enough_credits")
+        # event docstring covered in _player_add_request() method
+        return False
 
     def _player_added(self, **kwargs):
         del kwargs
@@ -319,7 +318,7 @@ class Credits(Mode):
                              "to 0.")
             new_credit_units = 0
 
-        self.machine.set_machine_var('credit_units', new_credit_units)
+        self.machine.variables.set_machine_var('credit_units', new_credit_units)
         self._update_credit_strings()
 
     def _enable_credit_handlers(self):
@@ -402,11 +401,11 @@ class Credits(Mode):
             '''event: max_credits_reached
             desc: Credits have just been added to the machine, but the
             configured maximum number of credits has been reached.'''
-            self.machine.set_machine_var('credit_units', max_credit_units)
+            self.machine.variables.set_machine_var('credit_units', max_credit_units)
 
         if max_credit_units <= 0 or max_credit_units > previous_credit_units:
             self.info_log("Credit units added")
-            self.machine.set_machine_var('credit_units', total_credit_units)
+            self.machine.variables.set_machine_var('credit_units', total_credit_units)
             self._update_credit_strings()
             self.machine.events.post('credits_added')
             '''event: credits_added
@@ -436,7 +435,7 @@ class Credits(Mode):
 
     def _set_free_play_string(self):
         display_string = self.credits_config['free_play_string']
-        self.machine.set_machine_var('credits_string', display_string)
+        self.machine.variables.set_machine_var('credits_string', display_string)
 
     def _update_credit_strings(self):
         if self.machine.settings.get_setting_value('free_play'):
@@ -465,11 +464,11 @@ class Credits(Mode):
             display_fraction = str(whole_num)
 
         display_string = '{} {}'.format(self.credits_config['credits_string'], display_fraction)
-        self.machine.set_machine_var('credits_string', display_string)
-        self.machine.set_machine_var('credits_value', display_fraction)
-        self.machine.set_machine_var('credits_whole_num', whole_num)
-        self.machine.set_machine_var('credits_numerator', numerator)
-        self.machine.set_machine_var('credits_denominator', denominator)
+        self.machine.variables.set_machine_var('credits_string', display_string)
+        self.machine.variables.set_machine_var('credits_value', display_fraction)
+        self.machine.variables.set_machine_var('credits_whole_num', whole_num)
+        self.machine.variables.set_machine_var('credits_numerator', numerator)
+        self.machine.variables.set_machine_var('credits_denominator', denominator)
 
     def _audit(self, value, audit_class):
         if audit_class not in self.earnings:
@@ -515,12 +514,12 @@ class Credits(Mode):
         credit_units = self._get_credit_units()
         credit_units -= credit_units % self.credit_units_per_game
 
-        self.machine.set_machine_var('credit_units', credit_units)
+        self.machine.variables.set_machine_var('credit_units', credit_units)
         self._update_credit_strings()
 
     def clear_all_credits(self, **kwargs):
         """Clear all credits."""
         del kwargs
         self.info_log("Clearing all credits.")
-        self.machine.set_machine_var('credit_units', 0)
+        self.machine.variables.set_machine_var('credit_units', 0)
         self._update_credit_strings()

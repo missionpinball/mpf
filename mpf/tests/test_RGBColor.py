@@ -32,8 +32,7 @@ class TestRGBColor(unittest.TestCase):
 
     def test_off_color(self):
         # Tests the 'Off' color (nicely readable in LED show files)
-        color = RGBColor()
-        color.name = 'Off'
+        color = RGBColor('Off')
         self.assertEqual((0, 0, 0), color.rgb)
         self.assertIn(color.name, ['black', 'off'])
 
@@ -57,8 +56,7 @@ class TestRGBColor(unittest.TestCase):
         self.assertEqual((240, 248, 255), RGBColor((240, 248, 255)).rgb)
 
     def test_properties(self):
-        color1 = RGBColor()
-        color1.name = 'DarkSlateBlue'
+        color1 = RGBColor('DarkSlateBlue')
         self.assertEqual((72, 61, 139), color1.rgb)
         self.assertEqual(72, color1.red)
         self.assertEqual(61, color1.green)
@@ -66,8 +64,7 @@ class TestRGBColor(unittest.TestCase):
         self.assertEqual('darkslateblue', color1.name)
         self.assertEqual('483d8b', color1.hex)
 
-        color2 = RGBColor()
-        color2.rgb = (130, 130, 130)
+        color2 = RGBColor((130, 130, 130))
 
         color_sum = color1 + color2
         self.assertEqual((202, 191, 255), color_sum.rgb)

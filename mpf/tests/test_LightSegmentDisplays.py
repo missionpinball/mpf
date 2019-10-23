@@ -3,10 +3,10 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class TestLightSegmentDisplays(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/light_segment_displays/'
 
     def get_platform(self):

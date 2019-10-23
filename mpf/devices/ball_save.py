@@ -1,5 +1,4 @@
 """Device that implements a ball save."""
-import asyncio
 from typing import Optional
 
 from mpf.core.delays import DelayManager
@@ -11,8 +10,8 @@ from mpf.core.system_wide_device import SystemWideDevice
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.machine import MachineController
-    from mpf.devices.playfield import Playfield
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.playfield import Playfield     # pylint: disable-msg=cyclic-import,unused-import
 
 
 @DeviceMonitor("saves_remaining", "enabled", "timer_started", "state")
@@ -41,9 +40,8 @@ class BallSave(SystemWideDevice, ModeDevice):
         self.state = 'disabled'
         self._scheduled_balls = 0
 
-    @asyncio.coroutine
-    def _initialize(self) -> None:
-        yield from super()._initialize()
+    async def _initialize(self) -> None:
+        await super()._initialize()
         self.unlimited_saves = self.config['balls_to_save'] == -1
         self.source_playfield = self.config['source_playfield']
 
@@ -284,8 +282,8 @@ class BallSave(SystemWideDevice, ModeDevice):
             self.debug_log("Early saved ball drained.")
             self.machine.events.remove_handler(self._early_ball_save_drain_handler)
             return {'balls': balls}
-        else:
-            return {}
+
+        return {}
 
     def _schedule_balls(self, balls_to_save: int) -> None:
         if self.config['eject_delay']:

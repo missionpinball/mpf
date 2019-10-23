@@ -4,10 +4,10 @@ from unittest.mock import MagicMock
 
 class TestComboSwitches(MpfTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'combo_switches.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/combo_switches/'
 
     def test_tag_combo(self):
@@ -19,18 +19,18 @@ class TestComboSwitches(MpfTestCase):
         self.assertEventNotCalled('tag_combo_both')
         self.assertEventNotCalled('tag_combo_inactive')
         self.assertEventNotCalled('tag_combo_one')
-        self.assertEqual(self.machine.combo_switches.tag_combo.state, 'inactive')
+        self.assertEqual(self.machine.combo_switches["tag_combo"].state, 'inactive')
 
         self.hit_switch_and_run('switch7', 1)
         self.assertEventCalled('tag_combo_both')
         self.assertEventNotCalled('tag_combo_inactive')
         self.assertEventNotCalled('tag_combo_one')
-        self.assertEqual(self.machine.combo_switches.tag_combo.state, 'both')
+        self.assertEqual(self.machine.combo_switches["tag_combo"].state, 'both')
 
         self.release_switch_and_run('switch7', 1)
         self.assertEventNotCalled('tag_combo_inactive')
         self.assertEventCalled('tag_combo_one')
-        self.assertEqual(self.machine.combo_switches.tag_combo.state, 'one')
+        self.assertEqual(self.machine.combo_switches["tag_combo"].state, 'one')
 
         self.mock_event('tag_combo_both')
         self.mock_event('tag_combo_inactive')
@@ -539,7 +539,7 @@ class TestComboSwitches(MpfTestCase):
 
         self.advance_time_and_run(5)
 
-        self.machine.modes.mode1.start()
+        self.machine.modes["mode1"].start()
         self.advance_time_and_run()
 
         self.hit_switch_and_run('switch1', .1)
@@ -551,7 +551,7 @@ class TestComboSwitches(MpfTestCase):
         self.assertEventCalled('mode1_combo_inactive')
         self.assertEventCalled('mode1_combo_one')
 
-        self.machine.modes.mode1.stop()
+        self.machine.modes["mode1"].stop()
         self.advance_time_and_run()
         self.mock_event('mode1_combo_both')
         self.mock_event('mode1_combo_inactive')

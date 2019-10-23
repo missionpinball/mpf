@@ -1,8 +1,7 @@
 """Count balls using an entrance switch."""
 import asyncio
 
-from mpf.core.utility_functions import Util
-from mpf.devices.ball_device.physical_ball_counter import PhysicalBallCounter, EjectTracker, BallEntranceActivity, \
+from mpf.devices.ball_device.physical_ball_counter import PhysicalBallCounter, BallEntranceActivity, \
     BallLostActivity
 
 
@@ -63,7 +62,7 @@ class EntranceSwitchCounter(PhysicalBallCounter):
             self.debug_log("Entrance switch hit within ignore window, taking no action")
             return
         # If a recycle time is configured, set a timeout to prevent future entrance activity
-        elif self.recycle_secs:
+        if self.recycle_secs:
             self.recycle_clear_time = self.machine.clock.get_time() + self.recycle_secs
             self.machine.clock.loop.call_at(self.recycle_clear_time, self._recycle_passed)
 
@@ -112,13 +111,12 @@ class EntranceSwitchCounter(PhysicalBallCounter):
 
         return self._last_count
 
-    @asyncio.coroutine
-    def wait_for_ball_to_leave(self):
+    async def wait_for_ball_to_leave(self):
         """Wait for a ball to leave."""
-        yield from self.wait_for_count_stable()
+        await self.wait_for_count_stable()
         # wait 10ms
-        done_future = Util.ensure_future(asyncio.sleep(0.01, loop=self.machine.clock.loop),
-                                         loop=self.machine.clock.loop)
+        done_future = asyncio.ensure_future(asyncio.sleep(0.01, loop=self.machine.clock.loop),
+                                            loop=self.machine.clock.loop)
         done_future.add_done_callback(self._ball_left)
         return done_future
 

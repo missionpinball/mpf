@@ -1,6 +1,4 @@
 """Device that implements an extra ball."""
-import asyncio
-
 from mpf.core.events import event_handler
 from mpf.core.machine import MachineController
 from mpf.core.device_monitor import DeviceMonitor
@@ -38,9 +36,8 @@ class ExtraBall(ModeDevice):
         """
         return self.is_ok_to_award()
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.group = self.config['group']
 
     @event_handler(2)
@@ -99,15 +96,14 @@ class ExtraBall(ModeDevice):
         else:  # EB cannot be awarded
             self._award_disabled()
 
-    def is_ok_to_light(self):
+    def is_ok_to_light(self) -> bool:
         """Check whether this extra ball can be lit.
 
         This method takes into consideration whether this extra ball is
         enabled, and, if this extra ball is a member of a group, whether the
         group is enabled and will allow an additional extra ball to lit.
 
-        Returns:
-            True or False
+        Returns True or False.
         """
         if self.is_ok_to_award():
             if self.group:
@@ -118,7 +114,7 @@ class ExtraBall(ModeDevice):
 
         return False
 
-    def is_ok_to_award(self):
+    def is_ok_to_award(self) -> bool:
         """Check whether this extra ball can be awarded.
 
         This method takes into consideration whether this extra ball is
@@ -126,8 +122,7 @@ class ExtraBall(ModeDevice):
         extra ball is a member of a group, whether the group is enabled and
         will allow an additional extra ball to be awarded.
 
-        Returns:
-            True or False
+        Returns True or False.
         """
         if not self.config['enabled'] or not self.player:
             return False
@@ -135,13 +130,12 @@ class ExtraBall(ModeDevice):
         if self.group and not self.group.enabled:
             return False
 
-        elif self.config['max_per_game'] and (
+        if self.config['max_per_game'] and (
                 self.config['max_per_game'] <=
                 self.player['extra_ball_{}_num_awarded'.format(self.name)]):
             return False
 
-        else:
-            return True
+        return True
 
     def _award_disabled(self):
         self.machine.events.post('extra_ball_award_disabled')

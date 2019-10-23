@@ -1,10 +1,12 @@
+from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
+
 from mpf.tests.MpfTestCase import MpfTestCase, test_config
 from unittest.mock import MagicMock
 
 
 class TestDiverter(MpfTestCase):
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/diverter/'
 
     def get_platform(self):
@@ -599,3 +601,27 @@ class TestDiverter(MpfTestCase):
         assert not self.machine.coils["c_power"].pulse.called
 
         self.hit_switch_and_run("s_ball_switch1", 1)
+
+
+class TestDiverter2(MpfFakeGameTestCase):
+
+
+    def get_machine_path(self):
+        return 'tests/machine_files/diverter/'
+
+    @test_config("diverter_with_activation_events.yaml")
+    def testActivationEvents(self):
+        """Make sure diverter does not activate on enable when activation_events are present."""
+        self.mock_event("diverter_test_diverter_enabling")
+        self.mock_event("diverter_test_diverter_activating")
+
+        # start game
+        self.start_game()
+        # diverter should enable but not activate
+        self.assertEventCalled("diverter_test_diverter_enabling")
+        self.assertEventNotCalled("diverter_test_diverter_activating")
+
+        # activate diverter
+        self.post_event("activate_test_diverter")
+        # it should activate
+        self.assertEventCalled("diverter_test_diverter_activating")

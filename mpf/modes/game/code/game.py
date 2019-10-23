@@ -45,8 +45,7 @@ class Game(AsyncMode):
 
         self.machine.events.add_handler('mode_{}_stopping'.format(self.name), self._stop_game_modes)
 
-    @asyncio.coroutine
-    def _run(self):
+    async def _run(self):
         """Run the basic game loop."""
         # Init the game (game start process)
         # Initialize member variables
@@ -78,45 +77,43 @@ class Game(AsyncMode):
 
         self.max_players = self.machine.config['game']['max_players'].evaluate({})
 
-        yield from self._start_game()
+        await self._start_game()
 
         # Game loop
         while not self.ending:
-            yield from self._start_player_turn()
+            await self._start_player_turn()
             # run the ball
-            yield from self._run_ball()
+            await self._run_ball()
 
             # run any extra balls
             while self.player.extra_balls and not self.slam_tilted:
-                yield from self._award_extra_ball()
+                await self._award_extra_ball()
 
-            yield from self._end_player_turn()
+            await self._end_player_turn()
 
             if self.slam_tilted or self.player.ball >= self.balls_per_game and self.player.number == self.num_players:
                 self.ending = True
             else:
-                yield from self._rotate_players()
+                await self._rotate_players()
 
-        yield from self._end_game()
+        await self._end_game()
 
-    @asyncio.coroutine
-    def _run_ball(self, is_extra_ball=False):
+    async def _run_ball(self, is_extra_ball=False):
         self._end_ball_event.clear()
-        yield from self._start_ball(is_extra_ball)
+        await self._start_ball(is_extra_ball)
         # Wait for end ball event to be set
-        yield from self._end_ball_event.wait()
-        yield from self._end_ball()
+        await self._end_ball_event.wait()
+        await self._end_ball()
 
-    @asyncio.coroutine
-    def _start_game(self):
+    async def _start_game(self):
         """Start a new game."""
         self.debug_log("Game start")
-        yield from self.machine.events.post_async('game_will_start')
+        await self.machine.events.post_async('game_will_start')
         '''event: game_will_start
         desc: The game is about to start. This event is posted just before
         :doc:`game_starting`.'''
 
-        yield from self.machine.events.post_queue_async('game_starting', game=self)
+        await self.machine.events.post_queue_async('game_starting', game=self)
         '''event: game_starting
         desc: A game is in the process of starting. This is a queue event, and
         the game won't actually start until the queue is cleared.
@@ -135,9 +132,9 @@ class Game(AsyncMode):
 
         # Wait for player to be added before game can start
         # TODO: Add timeout to wait
-        yield from self._at_least_one_player_event.wait()
+        await self._at_least_one_player_event.wait()
 
-        yield from self.machine.events.post_async('game_started')
+        await self.machine.events.post_async('game_started')
         '''event: game_started
         desc: A new game has started.'''
 
@@ -157,8 +154,7 @@ class Game(AsyncMode):
         """Set an event flag that will end the current ball."""
         self._end_ball_event.set()
 
-    @asyncio.coroutine
-    def _end_ball(self):
+    async def _end_ball(self):
         """Start the ball ending process.
 
         This method posts the queue event *ball_ending*, giving other modules
@@ -182,19 +178,19 @@ class Game(AsyncMode):
 
         self.debug_log("Entering Game._end_ball()")
 
-        yield from self.machine.events.post_async('ball_will_end')
+        await self.machine.events.post_async('ball_will_end')
         '''event: ball_will_end
         desc: The ball is about to end. This event is posted just before
         :doc:`ball_ending`.'''
 
-        yield from self.machine.events.post_queue_async('ball_ending')
+        await self.machine.events.post_queue_async('ball_ending')
         '''event: ball_ending
         desc: The ball is ending. This is a queue event and the ball won't
         actually end until the queue is cleared.
 
         This event is posted just after :doc:`ball_will_end`'''
 
-        yield from self.machine.events.post_async('ball_ended')
+        await self.machine.events.post_async('ball_ended')
         '''event: ball_ended
         desc: The ball has ended.
 
@@ -287,14 +283,13 @@ class Game(AsyncMode):
         """Stop mode."""
         del kwargs
 
-        for mode in self.machine.modes:
+        for mode in self.machine.modes.values():
             if mode.active and mode.is_game_mode:
                 raise AssertionError("Mode {} is not supposed to run outside of game."
                                      .format(mode.name))
         self.machine.game = None
 
-    @asyncio.coroutine
-    def _start_ball(self, is_extra_ball=False):
+    async def _start_ball(self, is_extra_ball=False):
         """Perform ball start procedure.
 
         Note this method is called for each ball that starts, even if it's
@@ -321,7 +316,7 @@ class Game(AsyncMode):
         self.debug_log("***************************************************")
         self.debug_log("***************************************************")
 
-        yield from self.machine.events.post_async('ball_will_start', **event_args)
+        await self.machine.events.post_async('ball_will_start', **event_args)
         '''event: ball_will_start
         desc: The ball is about to start. This event is posted just before
         :doc:`ball_starting`.
@@ -331,7 +326,7 @@ class Game(AsyncMode):
         is_extra_ball: True if this ball is an extra ball (default False)
         player: The player number'''
 
-        yield from self.machine.events.post_queue_async('ball_starting', **event_args)
+        await self.machine.events.post_queue_async('ball_starting', **event_args)
         '''event: ball_starting
         desc: A ball is starting. This is a queue event, so the ball won't
         actually start until the queue is cleared.
@@ -348,7 +343,7 @@ class Game(AsyncMode):
 
         self.debug_log("ball_started for Ball %s", self.player.ball)
 
-        yield from self.machine.events.post_async('ball_started', **event_args)
+        await self.machine.events.post_async('ball_started', **event_args)
         '''event: ball_started
         desc: A new ball has started.
         args:
@@ -358,14 +353,14 @@ class Game(AsyncMode):
         player: The player number'''
 
         if self.num_players == 1:
-            yield from self.machine.events.post_async('single_player_ball_started')
+            await self.machine.events.post_async('single_player_ball_started')
             '''event: single_player_ball_started
             desc: A new ball has started, and this is a single player game.'''
         else:
-            yield from self.machine.events.post_async('multi_player_ball_started')
+            await self.machine.events.post_async('multi_player_ball_started')
             '''event: multi_player_ball_started
             desc: A new ball has started, and this is a multiplayer game.'''
-            yield from self.machine.events.post_async(
+            await self.machine.events.post_async(
                 'player_{}_ball_started'.format(self.player.number))
             '''event player_(number)_ball_started
             desc: A new ball has started, and this is a multiplayer game.
@@ -385,9 +380,7 @@ class Game(AsyncMode):
         Args:
             balls: The number of balls that just drained.
 
-        Returns:
-            A dictionary:
-                {balls: *number of balls drained*}
+        Returns a dictionary: {balls: *number of balls drained*}.
         """
         del kwargs
         self.debug_log("Entering Game.ball_drained()")
@@ -398,16 +391,15 @@ class Game(AsyncMode):
 
         return {'balls': balls}
 
-    @asyncio.coroutine
-    def _end_game(self):
+    async def _end_game(self):
         self.debug_log("Entering Game._end_game()")
 
-        yield from self.machine.events.post_async('game_will_end')
+        await self.machine.events.post_async('game_will_end')
         '''event: game_will_end
         desc: The game is about to end. This event is posted just before
         :doc:`game_ending`.'''
 
-        yield from self.machine.events.post_queue_async('game_ending')
+        await self.machine.events.post_queue_async('game_ending')
         '''event: game_ending
         desc: The game is in the process of ending. This is a queue event, and
         the game won't actually end until the queue is cleared.'''
@@ -415,8 +407,8 @@ class Game(AsyncMode):
         # set playerX_score variables
         if self.player_list:
             for player in self.player_list:
-                self.machine.configure_machine_var(name='player{}_score'.format(player.number), persist=True)
-                self.machine.set_machine_var(
+                self.machine.variables.configure_machine_var(name='player{}_score'.format(player.number), persist=True)
+                self.machine.variables.set_machine_var(
                     name='player{}_score'.format(player.number),
                     value=player.score)
                 '''machine_var: player(x)_score
@@ -437,9 +429,9 @@ class Game(AsyncMode):
 
             # remove all other vars
             for i in range(len(self.player_list) + 1, self.max_players + 1):
-                self.machine.remove_machine_var('player{}_score'.format(i))
+                self.machine.variables.remove_machine_var('player{}_score'.format(i))
 
-        yield from self.machine.events.post_async('game_ended')
+        await self.machine.events.post_async('game_ended')
         '''event: game_ended
         desc: The game has ended.'''
 
@@ -484,15 +476,14 @@ class Game(AsyncMode):
 
         self.machine.events.post('game_ended')
 
-    @asyncio.coroutine
-    def _award_extra_ball(self):
+    async def _award_extra_ball(self):
         """Award an extra ball to the player.
 
         Player gained an extra ball during play. Same player should shoot again.
         """
         self.debug_log("Awarded extra ball to Player %s. Shoot Again", self.player.index + 1)
         self.player.extra_balls -= 1
-        yield from self._run_ball(is_extra_ball=True)
+        await self._run_ball(is_extra_ball=True)
 
     def request_player_add(self, **kwargs):
         """Request to add a player to an active game.
@@ -627,8 +618,7 @@ class Game(AsyncMode):
         del num
         player.enable_events(True, True)
 
-    @asyncio.coroutine
-    def _start_player_turn(self):
+    async def _start_player_turn(self):
         """Start the players turn.
 
         Note this method is only called when a different player's turn is up.
@@ -638,11 +628,11 @@ class Game(AsyncMode):
         # If we get a request to start a turn but we haven't done a rotate to
         # set the first player, do that now.
         if not self.player:
-            yield from self._rotate_players()
+            await self._rotate_players()
 
-        yield from self.machine.events.post_async('player_turn_will_start',
-                                                  player=self.player,
-                                                  number=self.player.number)
+        await self.machine.events.post_async('player_turn_will_start',
+                                             player=self.player,
+                                             number=self.player.number)
         '''event: player_turn_will_start
         desc: A new player's turn will start. This event is only posted before the
         start of a new player's turn. If that player gets an extra ball and
@@ -653,9 +643,9 @@ class Game(AsyncMode):
         number: The player number
         '''
 
-        yield from self.machine.events.post_queue_async('player_turn_starting',
-                                                        player=self.player,
-                                                        number=self.player.number)
+        await self.machine.events.post_queue_async('player_turn_starting',
+                                                   player=self.player,
+                                                   number=self.player.number)
         '''event: player_turn_starting
         desc: The player's turn is in the process of starting. This is a queue
         event, and the player's turn won't actually start until the queue is cleared.
@@ -672,9 +662,9 @@ class Game(AsyncMode):
         this number won't change when they start the extra ball.
         '''
 
-        yield from self.machine.events.post_async('player_turn_started',
-                                                  player=self.player,
-                                                  number=self.player.number)
+        await self.machine.events.post_async('player_turn_started',
+                                             player=self.player,
+                                             number=self.player.number)
         '''event: player_turn_started
         desc: A new player's turn started. This event is only posted after the
         start of a new player's turn. If that player gets an extra ball and
@@ -685,15 +675,14 @@ class Game(AsyncMode):
         number: The player number
         '''
 
-    @asyncio.coroutine
-    def _end_player_turn(self):
+    async def _end_player_turn(self):
         """End the current player's turn."""
         if not self.player:
             return
 
-        yield from self.machine.events.post_async('player_turn_will_end',
-                                                  player=self.player,
-                                                  number=self.player.number)
+        await self.machine.events.post_async('player_turn_will_end',
+                                             player=self.player,
+                                             number=self.player.number)
         '''event: player_turn_will_end
         desc: The player's turn is about to end. This event is only posted when this
         player's turn is totally over. If the player gets an extra ball and
@@ -705,9 +694,9 @@ class Game(AsyncMode):
         number: The player number
         '''
 
-        yield from self.machine.events.post_queue_async('player_turn_ending',
-                                                        player=self.player,
-                                                        number=self.player.number)
+        await self.machine.events.post_queue_async('player_turn_ending',
+                                                   player=self.player,
+                                                   number=self.player.number)
         '''event: player_turn_ending
         desc: The current player's turn is ending. This is a queue event, and
         the player's turn won't actually end until the queue is cleared.
@@ -717,9 +706,9 @@ class Game(AsyncMode):
         number: The player number
         '''
 
-        yield from self.machine.events.post_async('player_turn_ended',
-                                                  player=self.player,
-                                                  number=self.player.number)
+        await self.machine.events.post_async('player_turn_ended',
+                                             player=self.player,
+                                             number=self.player.number)
         '''event: player_turn_ended
         desc: The current player's turn has ended. This event is only posted when
         this player's turn is totally over. If the player gets an extra ball and
@@ -731,8 +720,7 @@ class Game(AsyncMode):
         number: The player number
         '''
 
-    @asyncio.coroutine
-    def _rotate_players(self):
+    async def _rotate_players(self):
         """Rotate the game to the next player.
 
         This method is called after a player's turn is over, so it's even used

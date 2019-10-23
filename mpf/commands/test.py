@@ -6,7 +6,7 @@ import sys
 from mpf.commands import MpfCommandLineParser
 from mpf.tests.MpfDocTestCase import MpfDocTestCase
 
-subcommand = True
+SUBCOMMAND = True
 
 
 class Command(MpfCommandLineParser):

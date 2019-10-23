@@ -8,10 +8,10 @@ from mpf.tests.MpfGameTestCase import MpfGameTestCase
 
 class TestScoreReels(MpfGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/score_reels/'
 
     def _synchronise_to_reel(self):
@@ -24,11 +24,11 @@ class TestScoreReels(MpfGameTestCase):
         super().start_game()
 
     def testOvershooting(self):
-        player1_10k = self.machine.coils.player1_10k.hw_driver
-        player1_1k = self.machine.coils.player1_1k.hw_driver
-        player1_100 = self.machine.coils.player1_100.hw_driver
-        player1_10 = self.machine.coils.player1_10.hw_driver
-        chime1 = self.machine.coils.chime1.hw_driver
+        player1_10k = self.machine.coils["player1_10k"].hw_driver
+        player1_1k = self.machine.coils["player1_1k"].hw_driver
+        player1_100 = self.machine.coils["player1_100"].hw_driver
+        player1_10 = self.machine.coils["player1_10"].hw_driver
+        chime1 = self.machine.coils["chime1"].hw_driver
         player1_10k.pulse = MagicMock(return_value=10)
         player1_1k.pulse = MagicMock(return_value=10)
         player1_100.pulse = MagicMock(return_value=10)
@@ -87,11 +87,11 @@ class TestScoreReels(MpfGameTestCase):
         self.assertEqual(1, player1_10.pulse.call_count)
 
     def testScoring(self):
-        player1_10k = self.machine.coils.player1_10k.hw_driver
-        player1_1k = self.machine.coils.player1_1k.hw_driver
-        player1_100 = self.machine.coils.player1_100.hw_driver
-        player1_10 = self.machine.coils.player1_10.hw_driver
-        chime1 = self.machine.coils.chime1.hw_driver
+        player1_10k = self.machine.coils["player1_10k"].hw_driver
+        player1_1k = self.machine.coils["player1_1k"].hw_driver
+        player1_100 = self.machine.coils["player1_100"].hw_driver
+        player1_10 = self.machine.coils["player1_10"].hw_driver
+        chime1 = self.machine.coils["chime1"].hw_driver
         player1_10k.pulse = MagicMock(return_value=10)
         player1_1k.pulse = MagicMock(return_value=10)
         player1_100.pulse = MagicMock(return_value=10)
@@ -208,10 +208,10 @@ class TestScoreReels(MpfGameTestCase):
         self.assertEqual(1, chime1.pulse.call_count)
 
     def testAdvanceingFailure(self):
-        player1_10k = self.machine.coils.player1_10k.hw_driver
-        player1_1k = self.machine.coils.player1_1k.hw_driver
-        player1_100 = self.machine.coils.player1_100.hw_driver
-        player1_10 = self.machine.coils.player1_10.hw_driver
+        player1_10k = self.machine.coils["player1_10k"].hw_driver
+        player1_1k = self.machine.coils["player1_1k"].hw_driver
+        player1_100 = self.machine.coils["player1_100"].hw_driver
+        player1_10 = self.machine.coils["player1_10"].hw_driver
         player1_10k.pulse = MagicMock(return_value=10)
         player1_1k.pulse = MagicMock(return_value=10)
         player1_100.pulse = MagicMock(return_value=10)
@@ -252,11 +252,11 @@ class TestScoreReels(MpfGameTestCase):
         self.assertEqual(1, player1_10.pulse.call_count)
 
     def testThreePlayers(self):
-        player1_10k = self.machine.coils.player1_10k.hw_driver
-        player1_1k = self.machine.coils.player1_1k.hw_driver
-        player1_100 = self.machine.coils.player1_100.hw_driver
-        player1_10 = self.machine.coils.player1_10.hw_driver
-        player2_10 = self.machine.coils.player2_10.hw_driver
+        player1_10k = self.machine.coils["player1_10k"].hw_driver
+        player1_1k = self.machine.coils["player1_1k"].hw_driver
+        player1_100 = self.machine.coils["player1_100"].hw_driver
+        player1_10 = self.machine.coils["player1_10"].hw_driver
+        player2_10 = self.machine.coils["player2_10"].hw_driver
         player1_10k.pulse = MagicMock(return_value=10)
         player1_1k.pulse = MagicMock(return_value=10)
         player1_100.pulse = MagicMock(return_value=10)
@@ -368,13 +368,13 @@ class TestScoreReels(MpfGameTestCase):
 
 class TestScoreReelsVirtual(MpfFakeGameTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
     def get_platform(self):
         return "smart_virtual"
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/score_reels/'
 
     def testScoringVirtual(self):

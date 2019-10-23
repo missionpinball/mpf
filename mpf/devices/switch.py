@@ -1,5 +1,4 @@
 """Contains the Switch parent class."""
-import asyncio
 from functools import partial
 
 from mpf.core.device_monitor import DeviceMonitor
@@ -11,8 +10,8 @@ from mpf.devices.device_mixins import DevicePositionMixin
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
-    from mpf.core.platform import SwitchPlatform
+    from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface  # pylint: disable-msg=cyclic-import,unused-import; # noqa
+    from mpf.core.platform import SwitchPlatform    # pylint: disable-msg=cyclic-import,unused-import
 
 
 @DeviceMonitor("state", "recycle_jitter_count")
@@ -63,8 +62,8 @@ class Switch(SystemWideDevice, DevicePositionMixin):
     def _check_duplicate_switch_numbers(machine, **kwargs):
         del kwargs
         check_set = set()
-        for switch in machine.switches:
-            key = (switch.platform, switch.hw_switch.number)
+        for switch in machine.switches.values():
+            key = (switch.config['platform'], switch.hw_switch.number)
             if key in check_set:
                 raise AssertionError(
                     "Duplicate switch number {} for switch {}".format(
@@ -115,9 +114,8 @@ class Switch(SystemWideDevice, DevicePositionMixin):
             if self.machine.events.does_event_exist(event):
                 self.machine.events.post(event)
 
-    @asyncio.coroutine
-    def _initialize(self):
-        yield from super()._initialize()
+    async def _initialize(self):
+        await super()._initialize()
         self.platform = self.machine.get_platform_sections(
             'switches', self.config['platform'])
 

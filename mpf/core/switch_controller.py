@@ -3,8 +3,6 @@
 Contains the SwitchController class which is responsible for reading switch
 states and posting events to the framework.
 """
-
-import logging
 from collections import defaultdict, namedtuple
 import asyncio
 from functools import partial
@@ -78,10 +76,9 @@ class SwitchController(MpfController):
         """
         self.registered_switches[switch] = [list(), list()]
 
-    @asyncio.coroutine
-    def _initialize_switches(self, **kwargs):
+    async def _initialize_switches(self, **kwargs):
         del kwargs
-        yield from self.update_switches_from_hw()
+        await self.update_switches_from_hw()
 
         for switch in self.machine.switches.values():
             # Populate self.switches
@@ -92,8 +89,7 @@ class SwitchController(MpfController):
 
         self.log_active_switches()
 
-    @asyncio.coroutine
-    def update_switches_from_hw(self):
+    async def update_switches_from_hw(self):
         """Update the states of all the switches be re-reading the states from the hardware platform.
 
         This method works silently and does not post any events if any switches
@@ -103,12 +99,12 @@ class SwitchController(MpfController):
         platforms = set()
         switches = set()  # (switch_object, number)
 
-        for switch in self.machine.switches:
+        for switch in self.machine.switches.values():
             platforms.add(switch.platform)
             switches.add((switch, switch.hw_switch.number))
 
         for platform in platforms:
-            switch_states = yield from platform.get_hw_switch_states()
+            switch_states = await platform.get_hw_switch_states()
 
             for switch, number in switches:
                 # if two platforms have the same number choose the right switch
@@ -120,7 +116,7 @@ class SwitchController(MpfController):
                     raise AssertionError("Missing switch {} in update from hw.  Update from HW: {}, switches: {}".
                                          format(number, switch_states, switches))
 
-    def verify_switches(self) -> bool:
+    async def verify_switches(self) -> bool:
         """Verify that switches states match the hardware.
 
         Loops through all the switches and queries their hardware states via
@@ -136,7 +132,7 @@ class SwitchController(MpfController):
         for switch in self.machine.switches.values():
             current_states[switch] = switch.state
 
-        self.update_switches_from_hw()
+        await self.update_switches_from_hw()
 
         ok = True
 
@@ -212,14 +208,13 @@ class SwitchController(MpfController):
                              state=0,
                              ms=ms)
 
-    def ms_since_change(self, switch_name):
+    def ms_since_change(self, switch_name) -> int:
         """Return the number of ms that have elapsed since this switch last changed state.
 
         Args:
             switch_name: String name of the switch to check.
 
-        Returns:
-            Integer of milliseconds.
+        Returns integer of milliseconds.
         """
         return round((self.machine.clock.get_time() - self.machine.switches[switch_name].last_change) * 1000.0, 0)
 

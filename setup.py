@@ -1,23 +1,21 @@
 """Mission Pinball Framework (mpf) setup.py."""
-
 import re
-
 from setuptools import setup
 
 #  http://stackoverflow.com/questions/458550/standard-way-to-embed-version-into-python-package
 VERSIONFILE = "mpf/_version.py"
-verstrline = open(VERSIONFILE, "rt").read()
+VERSION_STRING_LONG = open(VERSIONFILE, "rt").read()
 VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
-mo = re.search(VSRE, verstrline, re.M)
-if mo:
-    verstr = mo.group(1)
+_MO = re.search(VSRE, VERSION_STRING_LONG, re.M)
+if _MO:
+    VERSION_STRING = _MO.group(1)
 else:
     raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
 
 setup(
 
     name='mpf',
-    version=verstr,
+    version=VERSION_STRING,
     description='Mission Pinball Framework',
     long_description='''Let's build a pinball machine!
 
@@ -47,9 +45,9 @@ community.''',
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Natural Language :: English',
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',
@@ -79,9 +77,7 @@ community.''',
                       'asciimatics>=1.11.0',
                       'terminaltables',
                       'psutil',
-                      # asciimatic depends on pypiwin32 but newer version will not install
-                      'pypiwin32>=223;platform_system=="Windows" and python_version>"3.4"',
-                      'pypiwin32<=219;platform_system=="Windows" and python_version=="3.4"'],
+                      'pypiwin32>=223;platform_system=="Windows"'],
 
     tests_require=[],
     test_suite="mpf.tests",

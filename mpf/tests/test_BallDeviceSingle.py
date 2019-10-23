@@ -6,10 +6,10 @@ class TestBallDeviceSingle(MpfGameTestCase):
     def get_platform(self):
         return "smart_virtual"
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'test_single_device.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/ball_device/'
 
     def testEjectAndDrain(self):
@@ -25,7 +25,7 @@ class TestBallDeviceSingle(MpfGameTestCase):
         self.assertEqual(1, self.machine.playfield.balls)
         self.assertEqual(1, self.machine.playfield.available_balls)
 
-        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.trough)
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices["trough"])
         self.advance_time_and_run()
         self.assertEqual(0, self.machine.playfield.balls)
         self.assertEqual(1, self.machine.playfield.available_balls)

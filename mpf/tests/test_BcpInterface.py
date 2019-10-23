@@ -16,10 +16,10 @@ class CallHandler:
 
 class TestBcpInterface(MpfBcpTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/bcp/'
 
     def test_receive_register_trigger(self):
@@ -265,7 +265,7 @@ class TestBcpInterface(MpfBcpTestCase):
         self._bcp_external_client.reset_and_return_queue()
 
         # Create a new machine variable
-        self.machine.set_machine_var("test_var", "testing")
+        self.machine.variables.set_machine_var("test_var", "testing")
         queue = self._bcp_external_client.reset_and_return_queue()
 
         self.assertIn(
@@ -275,7 +275,7 @@ class TestBcpInterface(MpfBcpTestCase):
                                   "prev_value": None}),
             queue)
 
-        self.machine.set_machine_var("test_var", "2nd")
+        self.machine.variables.set_machine_var("test_var", "2nd")
         queue = self._bcp_external_client.reset_and_return_queue()
         self.assertIn(
             ("machine_variable", {"value": "2nd",
@@ -288,7 +288,7 @@ class TestBcpInterface(MpfBcpTestCase):
         self._bcp_external_client.send('monitor_stop', {'category': 'machine_vars'})
         self.advance_time_and_run()
         self._bcp_external_client.reset_and_return_queue()
-        self.machine.set_machine_var("test_var", "3rd")
+        self.machine.variables.set_machine_var("test_var", "3rd")
 
         # The BCP queue should be empty
         queue = self._bcp_external_client.reset_and_return_queue()
@@ -304,12 +304,12 @@ class TestBcpInterface(MpfBcpTestCase):
         self.machine.switch_controller.process_switch('s_ball_switch2', 1)
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(2, self.machine.ball_devices["bd_trough"].balls)
 
         self.hit_and_release_switch("s_start")
         self.advance_time_and_run()
 
-        self.assertEqual(3, self.machine.modes.game.balls_per_game)
+        self.assertEqual(3, self.machine.modes["game"].balls_per_game)
         self.assertEqual(1, self.machine.game.num_players)
         self._bcp_external_client.reset_and_return_queue()
 
@@ -339,7 +339,7 @@ class TestBcpInterface(MpfBcpTestCase):
         self._bcp_external_client.send('monitor_stop', {'category': 'player_vars'})
         self.advance_time_and_run()
         self._bcp_external_client.reset_and_return_queue()
-        self.machine.set_machine_var("test_var", "3rd")
+        self.machine.variables.set_machine_var("test_var", "3rd")
 
         # The BCP queue should be empty
         queue = self._bcp_external_client.reset_and_return_queue()

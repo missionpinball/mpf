@@ -15,18 +15,13 @@ pep257:
    disable:
     - D211  # in conflict with D203
     - D213  # in conflict with D212
-    - D406  # Section name should end with a newline
-    - D407  # Missing dashed underline after section
-    - D413  # Missing blank line after last section
+    - D407  # Missing dashed underline after section - need to fix a lot of docstrings first
+    - D413  # Missing blank line after last section - need to fix a lot of docstrings first
 
 pylint:
   disable:
     - pointless-string-statement  # pointless statement, which is how our event docstrings are seen
-    - invalid-name  # we got ms and dt as defaults for a lot of functions
     - too-few-public-methods
-    - cyclic-import     # remove when type checking is supported https://github.com/PyCQA/pylint/issues/647
-    - unused-import     # remove when type checking is supported https://github.com/PyCQA/pylint/issues/647
-    - no-else-return
 
   options:
     max-attributes: 12
@@ -34,6 +29,10 @@ pylint:
     max-branches: 30
     max-statements: 60
     max-public-methods: 40
+    variable-rgx: "^[a-z_][a-z0-9]*((_[a-z0-9]+)*)?$"   # pep8 style but not more
+    argument-rgx: "^[a-z_][a-z0-9]*((_[a-z0-9]+)*)?$"   # pep8 style but not more
+    attr-rgx: "^[a-z_][a-z0-9_]*$"                      # pep8 style but not more
+    method-rgx: "^[a-z_][a-z0-9_]*$"                    # pep8 style but not more
 
 ignore-paths:
   - mpf/tests/

@@ -1,5 +1,5 @@
 """Contains code for the smart_virtual platform."""
-import asyncio
+import abc
 import logging
 
 from typing import List
@@ -13,12 +13,12 @@ from mpf.platforms.virtual import (VirtualHardwarePlatform as VirtualPlatform, V
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from typing import Dict
-    from mpf.devices.ball_device.ball_device import BallDevice
-    from mpf.core.machine import MachineController
+    from typing import Dict     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.ball_device.ball_device import BallDevice  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
-class BaseSmartVirtualCoilAction:
+class BaseSmartVirtualCoilAction(metaclass=abc.ABCMeta):
 
     """A action for a coil."""
 
@@ -59,9 +59,9 @@ class BaseSmartVirtualCoilAction:
 
         return False
 
+    @abc.abstractmethod
     def _perform_action(self):
         """Implement your action here."""
-        pass
 
 
 class ResetDropTargetAction(BaseSmartVirtualCoilAction):
@@ -265,8 +265,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
         self.log = logging.getLogger("Smart Virtual Platform")
         self.log.debug("Configuring smart_virtual hardware interface.")
 
-    @asyncio.coroutine
-    def start(self):
+    async def start(self):
         """Initialise platform when all devices are ready."""
         self._initialise_ball_devices()
         self._initialise_drop_targets()
@@ -274,7 +273,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
         self._initialise_score_reels()
 
     def _initialise_score_reels(self):
-        for device in self.machine.score_reels:
+        for device in self.machine.score_reels.values():
             if device.config['coil_inc']:
                 device.config['coil_inc'].hw_driver.action = ScoreReelAdvanceAction(
                     ["pulse"], self.machine,
@@ -299,7 +298,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
                 )
 
     def _initialise_drop_targets(self):
-        for device in self.machine.drop_targets:
+        for device in self.machine.drop_targets.values():
             if device.config['reset_coil']:
                 device.config['reset_coil'].hw_driver.action = SwitchDisableAction(
                     ["pulse"], self.machine, [device.config['switch']])
@@ -308,7 +307,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
                     ["pulse"], self.machine, [device.config['switch']])
 
     def _initialise_drop_target_banks(self):
-        for device in self.machine.drop_target_banks:
+        for device in self.machine.drop_target_banks.values():
             if device.config['reset_coil']:
                 device.config['reset_coil'].hw_driver.action = ResetDropTargetAction(
                     ["pulse"], self.machine, device)
@@ -318,7 +317,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
                     ["pulse"], self.machine, device)
 
     def _initialise_ball_devices(self):
-        for device in self.machine.ball_devices:
+        for device in self.machine.ball_devices.values():
             if device.is_playfield():
                 continue
 

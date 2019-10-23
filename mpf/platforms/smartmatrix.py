@@ -2,14 +2,13 @@
 
 import logging
 
-import asyncio
 import threading
 from typing import Dict
 import serial
 
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 
-from mpf.exceptions.ConfigFileError import ConfigFileError
+from mpf.exceptions.config_file_error import ConfigFileError
 
 from mpf.core.platform import RgbDmdPlatform
 
@@ -39,11 +38,10 @@ class SmartMatrixHardwarePlatform(RgbDmdPlatform):
                 source=config)
             self.devices[name] = SmartMatrixDevice(config, machine)
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Initialise platform."""
         for device in self.devices.values():
-            yield from device.connect()
+            await device.connect()
 
     def stop(self):
         """Stop platform."""
@@ -115,8 +113,7 @@ class SmartMatrixDevice(DmdPlatformInterface):
         # close port before exit
         self.port.close()
 
-    @asyncio.coroutine
-    def connect(self):
+    async def connect(self):
         """Connect to SmartMatrix device."""
         self.log.info("Connecting to SmartMatrix RGB DMD on %s baud %s", self.config['port'], self.config['baud'])
         self.port = serial.Serial(self.config['port'], self.config['baud'])
@@ -133,7 +130,6 @@ class SmartMatrixDevice(DmdPlatformInterface):
 
     def stop(self):
         """Stop platform."""
-        pass
 
     def update(self, data):
         """Update DMD data."""

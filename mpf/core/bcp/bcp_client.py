@@ -1,14 +1,14 @@
 """Base class for all bcp clients."""
 import abc
 
-import asyncio
-
 from mpf.core.mpf_controller import MpfController
 
 
 class BaseBcpClient(MpfController, metaclass=abc.ABCMeta):
 
     """Base class for bcp clients."""
+
+    __slots__ = ["name", "bcp", "exit_on_close"]
 
     def __init__(self, machine, name, bcp):
         """Initialise client."""
@@ -17,13 +17,11 @@ class BaseBcpClient(MpfController, metaclass=abc.ABCMeta):
         self.bcp = bcp
         self.exit_on_close = False
 
-    @asyncio.coroutine
-    def connect(self, config):
+    async def connect(self, config):
         """Actively connect client."""
         raise NotImplementedError("implement")
 
-    @asyncio.coroutine
-    def read_message(self):
+    async def read_message(self):
         """Read one message from client."""
         raise NotImplementedError("implement")
 

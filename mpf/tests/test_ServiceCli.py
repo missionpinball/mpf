@@ -7,10 +7,10 @@ from unittest.mock import create_autospec
 
 class TestServiceCli(MpfBcpTestCase):
 
-    def getConfigFile(self):
+    def get_config_file(self):
         return 'config.yaml'
 
-    def getMachinePath(self):
+    def get_machine_path(self):
         return 'tests/machine_files/service_mode/'
 
     def setUp(self):
@@ -99,7 +99,7 @@ class TestServiceCli(MpfBcpTestCase):
 +-------------+---------------------------------------------+
 | flash       | ['led', 'leds', 'light', 'lights']          |
 | flash_color | ['color', 'led', 'leds', 'light', 'lights'] |
-| led_color   | ['color', 'led', 'leds']                    |
+| led_color   | ['color', 'led', 'leds', 'light', 'lights'] |
 | off         | ['led', 'leds', 'light', 'lights']          |
 | on          | ['led', 'leds', 'light', 'lights']          |
 +-------------+---------------------------------------------+
@@ -117,22 +117,22 @@ class TestServiceCli(MpfBcpTestCase):
         cli.onecmd("show_play led_color led:l_light5 color:red")
         self.assertLightColor("l_light5", "red")
 
-        self.assertEqual("disabled", self.machine.coils.c_test.hw_driver.state)
+        self.assertEqual("disabled", self.machine.coils["c_test"].hw_driver.state)
 
         cli.onecmd("coil_pulse c_test")
         self.assertEqual("Success\n", self._last_write())
-        self.assertEqual("pulsed_10", self.machine.coils.c_test.hw_driver.state)
+        self.assertEqual("pulsed_10", self.machine.coils["c_test"].hw_driver.state)
 
         cli.onecmd("coil_enable c_test")
         self.assertEqual("Error: Cannot enable driver with hold_power 0.0\n", self._last_write())
 
         cli.onecmd("coil_enable c_test6")
         self.assertEqual("Success\n", self._last_write())
-        self.assertEqual("enabled", self.machine.coils.c_test6.hw_driver.state)
+        self.assertEqual("enabled", self.machine.coils["c_test6"].hw_driver.state)
 
         cli.onecmd("coil_disable c_test6")
         self.assertEqual("Success\n", self._last_write())
-        self.assertEqual("disabled", self.machine.coils.c_test6.hw_driver.state)
+        self.assertEqual("disabled", self.machine.coils["c_test6"].hw_driver.state)
 
         self.assertLightColor("l_light1", "white")
         self.assertLightColor("l_light5", "red")

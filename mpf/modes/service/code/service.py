@@ -1,5 +1,4 @@
 """Service mode for MPF."""
-import asyncio
 from collections import namedtuple
 
 from typing import List
@@ -31,9 +30,8 @@ up_events: list|str|sw_service_up_active
 down_events: list|str|sw_service_down_active
 '''
 
-    @asyncio.coroutine
-    def _service_mode_exit(self):
-        yield from self.machine.service.stop_service()
+    async def _service_mode_exit(self):
+        await self.machine.service.stop_service()
 
     def _get_key(self):
         return Util.race({
@@ -43,15 +41,14 @@ down_events: list|str|sw_service_down_active
             self.machine.events.wait_for_any_event(self.config['mode_settings']['down_events']): "DOWN",
         }, self.machine.clock.loop)
 
-    @asyncio.coroutine
-    def _run(self):
+    async def _run(self):
         while True:
             # wait for key
-            key = yield from self._get_key()
+            key = await self._get_key()
 
             if key == "ENTER":
                 # start main menu
-                yield from self._start_main_menu()
+                await self._start_main_menu()
             elif key == "UP":
                 # post event for mc to increase volume
                 self.machine.events.post("master_volume_increase")
@@ -67,13 +64,12 @@ down_events: list|str|sw_service_down_active
                 desc: Decrease the master volume of the audio system.
                 '''
 
-    @asyncio.coroutine
-    def _start_main_menu(self):
+    async def _start_main_menu(self):
         self.machine.service.start_service()
         self.machine.events.post("service_main_menu")
-        yield from self._service_mode_main_menu()
+        await self._service_mode_main_menu()
 
-        yield from self._service_mode_exit()
+        await self._service_mode_exit()
 
     def _update_main_menu(self, items: List[ServiceMenuEntry], position: int):
         self.machine.events.post("service_menu_deselected")
@@ -90,18 +86,17 @@ down_events: list|str|sw_service_down_active
             ServiceMenuEntry("settings", self._settings_menu)
         ]
 
-    @asyncio.coroutine
-    def _service_mode_main_menu(self):
+    async def _service_mode_main_menu(self):
         items = self._load_menu_entries()
         position = 0
         self._update_main_menu(items, position)
 
         while True:
-            key = yield from self._get_key()
+            key = await self._get_key()
             if key == 'ESC':
                 self.machine.events.post("service_menu_hide")
                 return
-            elif key == 'UP':
+            if key == 'UP':
                 position += 1
                 if position >= len(items):
                     position = 0
@@ -113,7 +108,7 @@ down_events: list|str|sw_service_down_active
                 self._update_main_menu(items, position)
             elif key == 'ENTER':
                 # call submenu
-                yield from items[position].callback()
+                await items[position].callback()
                 self._update_main_menu(items, position)
 
     def _switch_monitor(self, change: MonitoredSwitchChange):
@@ -129,12 +124,11 @@ down_events: list|str|sw_service_down_active
                                  switch_label=change.label,
                                  switch_state=state_string)
 
-    @asyncio.coroutine
-    def _switch_test_menu(self):
+    async def _switch_test_menu(self):
         self.machine.switch_controller.add_monitor(self._switch_monitor)
         self.machine.events.post("service_switch_test_start",
                                  switch_name="", switch_state="", switch_num="", switch_label="")
-        yield from self.machine.events.wait_for_any_event(self.config['mode_settings']['esc_events'])
+        await self.machine.events.wait_for_any_event(self.config['mode_settings']['esc_events'])
         self.machine.events.post("service_switch_test_stop")
         self.machine.switch_controller.remove_monitor(self._switch_monitor)
 
@@ -146,8 +140,7 @@ down_events: list|str|sw_service_down_active
                                  coil_label=coil.config['label'],
                                  coil_num=coil.hw_driver.number)
 
-    @asyncio.coroutine
-    def _coil_test_menu(self):
+    async def _coil_test_menu(self):
         position = 0
         items = self.machine.service.get_coil_map()
 
@@ -158,7 +151,7 @@ down_events: list|str|sw_service_down_active
         self._update_coil_slide(items, position)
 
         while True:
-            key = yield from self._get_key()
+            key = await self._get_key()
             if key == 'ESC':
                 break
             elif key == 'UP':
@@ -186,8 +179,7 @@ down_events: list|str|sw_service_down_active
                                  light_num=light.config['number'],
                                  test_color=color)
 
-    @asyncio.coroutine
-    def _light_test_menu(self):
+    async def _light_test_menu(self):
         position = 0
         color_position = 0
         colors = ["white", "red", "green", "blue", "yellow"]
@@ -203,7 +195,7 @@ down_events: list|str|sw_service_down_active
             self._update_light_slide(items, position, colors[color_position])
             items[position].light.color(colors[color_position], key="service", priority=1000000)
 
-            key = yield from self._get_key()
+            key = await self._get_key()
             items[position].light.remove_from_stack_by_key("service")
             if key == 'ESC':
                 break
@@ -231,8 +223,7 @@ down_events: list|str|sw_service_down_active
                                  settings_label=setting.label,
                                  value_label=label)
 
-    @asyncio.coroutine
-    def _settings_menu(self):
+    async def _settings_menu(self):
         position = 0
         items = self.machine.settings.get_settings()
 
@@ -243,7 +234,7 @@ down_events: list|str|sw_service_down_active
         self._update_settings_slide(items, position)
 
         while True:
-            key = yield from self._get_key()
+            key = await self._get_key()
             if key == 'ESC':
                 break
             elif key == 'UP':
@@ -258,12 +249,11 @@ down_events: list|str|sw_service_down_active
                 self._update_settings_slide(items, position)
             elif key == 'ENTER':
                 # change setting
-                yield from self._settings_change(items, position)
+                await self._settings_change(items, position)
 
         self.machine.events.post("service_settings_stop")
 
-    @asyncio.coroutine
-    def _settings_change(self, items, position):
+    async def _settings_change(self, items, position):
         self._update_settings_slide(items, position)
 
         values = list(items[position].values.keys())
@@ -271,7 +261,7 @@ down_events: list|str|sw_service_down_active
         self._update_settings_slide(items, position, is_change=True)
 
         while True:
-            key = yield from self._get_key()
+            key = await self._get_key()
             if key == 'ESC':
                 self._update_settings_slide(items, position)
                 break

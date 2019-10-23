@@ -4,8 +4,6 @@ import logging
 import asyncio
 from functools import partial
 
-from mpf.core.utility_functions import Util
-
 
 class ScoreReelController:
 
@@ -98,7 +96,7 @@ class ScoreReelController:
         self.active_scorereelgroup.set_value(self.machine.game.player.score)
 
         # light up this group
-        for group in self.machine.score_reel_groups:
+        for group in self.machine.score_reel_groups.values():
             group.unlight()
 
         self.active_scorereelgroup.light()
@@ -149,12 +147,12 @@ class ScoreReelController:
         queue.wait()
 
         futures = []
-        for score_reel_group in self.machine.score_reel_groups:
+        for score_reel_group in self.machine.score_reel_groups.values():
             score_reel_group.set_value(0)
             futures.append(score_reel_group.wait_for_ready())
 
         future = asyncio.wait(iter(futures), loop=self.machine.clock.loop)
-        future = Util.ensure_future(future, loop=self.machine.clock.loop)
+        future = asyncio.ensure_future(future, loop=self.machine.clock.loop)
         future.add_done_callback(partial(self._reels_ready, queue=queue))
 
     @staticmethod
@@ -170,5 +168,5 @@ class ScoreReelController:
 
         queue.wait()
 
-        future = Util.ensure_future(self.active_scorereelgroup.wait_for_ready(), loop=self.machine.clock.loop)
+        future = asyncio.ensure_future(self.active_scorereelgroup.wait_for_ready(), loop=self.machine.clock.loop)
         future.add_done_callback(partial(self._reels_ready, queue=queue))

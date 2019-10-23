@@ -14,6 +14,9 @@ class LightController(MpfController):
 
     """Handles light updates and light monitoring."""
 
+    __slots__ = ["light_color_correction_profiles", "_initialised", "_monitor_update_task", "brightness_factor",
+                 "_brightness_template"]
+
     config_name = "light_controller"
 
     def __init__(self, machine: MachineController) -> None:
@@ -25,11 +28,19 @@ class LightController(MpfController):
 
         # will only get initialised if there are lights
         self._initialised = False
+        self._brightness_template = self.machine.placeholder_manager.build_float_template("machine.brightness", 1.0)
+        self._update_brightness()
 
         self._monitor_update_task = None                    # type: asyncio.Task
 
         if 'named_colors' in self.machine.config:
             self._load_named_colors()
+
+    def _update_brightness(self, *args):
+        """Update brightness factor."""
+        del args
+        self.brightness_factor, future = self._brightness_template.evaluate_and_subscribe([])
+        future.add_done_callback(self._update_brightness)
 
     def _load_named_colors(self):
         """Load named colors from config."""
@@ -85,15 +96,14 @@ class LightController(MpfController):
         except asyncio.CancelledError:
             pass
 
-    @asyncio.coroutine
-    def _monitor_update_lights(self):
+    async def _monitor_update_lights(self):
         colors = {}
         while True:
-            for light in self.machine.lights:
+            for light in self.machine.lights.values():
                 color = light.get_color()
                 old = colors.get(light, None)
                 if old != color:
                     self.machine.device_manager.notify_device_changes(light, "color", old, color)
                     colors[light] = color
-            yield from asyncio.sleep(1 / self.machine.config['mpf']['default_light_hw_update_hz'],
-                                     loop=self.machine.clock.loop)
+            await asyncio.sleep(1 / self.machine.config['mpf']['default_light_hw_update_hz'],
+                                loop=self.machine.clock.loop)

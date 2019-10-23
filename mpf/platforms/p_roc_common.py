@@ -23,8 +23,8 @@ from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, Sw
 # pylint: disable-msg=ungrouped-imports
 try:    # pragma: no cover
     import pinproc
-    pinproc_imported = True
-    import_error = None
+    PINPROC_IMPORTED = True
+    IMPORT_ERROR = None
 except ImportError:     # pragma: no cover
     try:
         if sys.platform == 'darwin':
@@ -53,13 +53,13 @@ except ImportError:     # pragma: no cover
         else:
             raise ImportError
 
-        pinproc_imported = True
-        import_error = None
+        PINPROC_IMPORTED = True
+        IMPORT_ERROR = None
 
     except ImportError as e:
-        pinproc_imported = False
+        PINPROC_IMPORTED = False
         pinproc = None
-        import_error = e
+        IMPORT_ERROR = e
 
 
 class ProcProcess:
@@ -92,7 +92,6 @@ class ProcProcess:
         loop.run_until_complete(self.stop_future)
         loop.close()
 
-    @asyncio.coroutine
     def stop(self):
         """Stop thread."""
         self.stop_future.set_result(True)
@@ -101,13 +100,12 @@ class ProcProcess:
     def _sync(num):
         return "sync", num
 
-    @asyncio.coroutine
-    def run_command(self, cmd, *args):
+    async def run_command(self, cmd, *args):
         """Run command in proc thread."""
         if cmd.startswith("_"):
             return getattr(self, cmd)(*args)
-        else:
-            return getattr(self.proc, cmd)(*args)
+
+        return getattr(self.proc, cmd)(*args)
 
     def _dmd_send(self, data):
         if not self.dmd:
@@ -117,8 +115,7 @@ class ProcProcess:
         self.dmd.set_data(data)
         self.proc.dmd_draw(self.dmd)
 
-    @asyncio.coroutine
-    def read_events_and_watchdog(self, poll_sleep):
+    async def read_events_and_watchdog(self, poll_sleep):
         """Return all events and tickle watchdog."""
         while not self.stop_future.done():
             events = self.proc.get_events()
@@ -127,7 +124,7 @@ class ProcProcess:
             if events:
                 return list(events)
 
-            yield from asyncio.sleep(poll_sleep, loop=self.loop)
+            await asyncio.sleep(poll_sleep, loop=self.loop)
 
         return []
 
@@ -154,10 +151,6 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
     Args:
         machine: The MachineController instance.
-
-    Attributes:
-        proc: The pinproc.PinPROC device.
-        machine_type: Constant of the pinproc.MachineType
     """
 
     __slots__ = ["pdbconfig", "pinproc", "proc", "log", "hw_switch_rules", "version", "revision", "hardware_version",
@@ -168,11 +161,11 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         """Make sure pinproc was loaded."""
         super().__init__(machine)
 
-        if not pinproc_imported:
+        if not PINPROC_IMPORTED:
             raise AssertionError('Could not import "pinproc". Most likely you do not '
                                  'have libpinproc and/or pypinproc installed. You can '
                                  'run MPF in software-only "virtual" mode by using '
-                                 'the -x command like option for now instead.') from import_error
+                                 'the -x command like option for now instead.') from IMPORT_ERROR
 
         self.pdbconfig = None
         self.pinproc = pinproc
@@ -199,6 +192,8 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
     def run_proc_cmd(self, cmd, *args):
         """Run a command in the p-roc thread and return a future."""
+        if self.debug:
+            self.debug_log("Calling P-Roc cmd: %s (%s)", cmd, args)
         future = asyncio.wrap_future(
             asyncio.run_coroutine_threadsafe(self.proc_process.run_command(cmd, *args), self.proc_process_instance),
             loop=self.machine.clock.loop)
@@ -213,21 +208,27 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         """Run a command in the p-roc thread and return the result."""
         return self.machine.clock.loop.run_until_complete(self.run_proc_cmd(cmd, *args))
 
-    @asyncio.coroutine
-    def initialize(self):
+    async def initialize(self):
         """Set machine vars."""
-        yield from self.connect()
-        self.machine.set_machine_var("p_roc_version", self.version)
+        await self.connect()
+        self.machine.variables.set_machine_var("p_roc_version", self.version)
         '''machine_var: p_roc_version
 
-        desc: Holds the version number of the P-ROC or P3-ROC controller that's
+        desc: Holds the firmware version number of the P-ROC or P3-ROC controller that's
         attached to MPF.
         '''
 
-        self.machine.set_machine_var("p_roc_revision", self.revision)
+        self.machine.variables.set_machine_var("p_roc_revision", self.revision)
         '''machine_var: p_roc_revision
 
-        desc: Holds the revision number of the P-ROC or P3-ROC controller
+        desc: Holds the firmware revision number of the P-ROC or P3-ROC controller
+        that's attached to MPF.
+        '''
+
+        self.machine.variables.set_machine_var("p_roc_hardware_version", self.hardware_version)
+        '''machine_var: p_roc_hardware_version
+
+        desc: Holds the hardware version number of the P-ROC or P3-ROC controller
         that's attached to MPF.
         '''
 
@@ -238,8 +239,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         except asyncio.CancelledError:
             pass
 
-    @asyncio.coroutine
-    def start(self):
+    async def start(self):
         """Start listening for switches."""
         self.event_task = self.machine.clock.loop.create_task(self._poll_events())
         self.event_task.add_done_callback(self._done)
@@ -248,24 +248,22 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         """Process events from the P-Roc."""
         raise NotImplementedError()
 
-    @asyncio.coroutine
-    def _poll_events(self):
+    async def _poll_events(self):
         poll_sleep = 1 / self.machine.config['mpf']['default_platform_hz']
         while True:
-            events = yield from asyncio.wrap_future(
+            events = await asyncio.wrap_future(
                 asyncio.run_coroutine_threadsafe(self.proc_process.read_events_and_watchdog(poll_sleep),
                                                  self.proc_process_instance),
                 loop=self.machine.clock.loop)
             if events:
                 self.process_events(events)
 
-            yield from asyncio.sleep(poll_sleep, loop=self.machine.clock.loop)
+            await asyncio.sleep(poll_sleep, loop=self.machine.clock.loop)
 
     def stop(self):
         """Stop proc."""
         if self.proc_process and self.proc_process_instance:
-            asyncio.run_coroutine_threadsafe(self.proc_process.stop(),
-                                             self.proc_process_instance)
+            self.proc_process_instance.call_soon_threadsafe(self.proc_process.stop)
         if self.proc_thread:
             self.debug_log("Waiting for pinproc thread.")
             self.proc_thread.join()
@@ -287,8 +285,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
             self.proc_process_instance = self.machine.clock.loop
             self.proc_process.start_pinproc(loop=self.machine.clock.loop, machine_type=self.machine_type)
 
-    @asyncio.coroutine
-    def connect(self):
+    async def connect(self):
         """Connect to the P-ROC.
 
         Keep trying if it doesn't work the first time.
@@ -297,11 +294,11 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
         self._start_proc_process()
 
-        version_revision = yield from self.run_proc_cmd("read_data", 0x00, 0x01)
+        version_revision = await self.run_proc_cmd("read_data", 0x00, 0x01)
 
         self.revision = version_revision & 0xFFFF
         self.version = (version_revision & 0xFFFF0000) >> 16
-        dipswitches = yield from self.run_proc_cmd("read_data", 0x00, 0x03)
+        dipswitches = await self.run_proc_cmd("read_data", 0x00, 0x03)
         self.hardware_version = (dipswitches & 0xF00) >> 8
         self.dipswitches = ~dipswitches & 0x3F
 
@@ -481,12 +478,12 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
     def _get_event_type(cls, sw_activity, debounced):
         if sw_activity == 0 and debounced:
             return "open_debounced"
-        elif sw_activity == 0 and not debounced:
+        if sw_activity == 0 and not debounced:
             return "open_nondebounced"
-        elif sw_activity == 1 and debounced:
+        if sw_activity == 1 and debounced:
             return "closed_debounced"
-        else:  # if sw_activity == 1 and not debounced:
-            return "closed_nondebounced"
+        # if sw_activity == 1 and not debounced:
+        return "closed_nondebounced"
 
     def _add_hw_rule(self, switch: SwitchSettings, coil: DriverSettings, rule, invert=False):
         rule_type = self._get_event_type(switch.invert == invert, switch.debounce)
@@ -501,15 +498,27 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         )
 
     def _add_pulse_rule_to_switch(self, switch, coil):
-        # TODO: properly implement pulse_power. previously implemented pwm_on_ms/pwm_off_ms were incorrect here
-        # This method is called in the p-roc thread. we can call hw_driver.state()
-        self._add_hw_rule(switch, coil,
-                          self.pinproc.driver_state_pulse(coil.hw_driver.state(), coil.pulse_settings.duration))
+        """Add a rule to pulse a coil on switch hit for a certain duration and optional with PWM."""
+        if coil.pulse_settings.power < 1.0:
+            pwm_on, pwm_off = coil.hw_driver.get_pwm_on_off_ms(coil.pulse_settings)
+            self._add_hw_rule(switch, coil,
+                              self.pinproc.driver_pulsed_patter(coil.hw_driver.state(), pwm_on, pwm_off,
+                                                                coil.pulse_settings.duration, True))
+        else:
+            self._add_hw_rule(switch, coil,
+                              self.pinproc.driver_state_pulse(coil.hw_driver.state(), coil.pulse_settings.duration))
 
     def _add_pulse_and_hold_rule_to_switch(self, switch: SwitchSettings, coil: DriverSettings):
+        """Add a rule to pulse a coil on switch hit for a certain duration and enable the coil with optional PWM.
+
+        The initial pulse will always be at full power and this method will error out if it is set differently.
+        """
+        if coil.pulse_settings.power < 1.0:
+            self.raise_config_error("Any rules with hold need to have pulse_power set to 1.0. This is a limitation "
+                                    "with the P/P3-Roc.", 6)
+
         if coil.hold_settings.power < 1.0:
             pwm_on, pwm_off = coil.hw_driver.get_pwm_on_off_ms(coil.hold_settings)
-            # This method is called in the p-roc thread. we can call hw_driver.state()
             self._add_hw_rule(switch, coil,
                               self.pinproc.driver_state_patter(
                                   coil.hw_driver.state(), pwm_on, pwm_off, coil.pulse_settings.duration, True))
@@ -518,12 +527,10 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
             self._add_hw_rule(switch, coil, self.pinproc.driver_state_pulse(coil.hw_driver.state(), 0))
 
     def _add_release_disable_rule_to_switch(self, switch: SwitchSettings, coil: DriverSettings):
-        # This method is called in the p-roc thread. we can call hw_driver.state()
         self._add_hw_rule(switch, coil,
                           self.pinproc.driver_state_disable(coil.hw_driver.state()), invert=True)
 
     def _add_disable_rule_to_switch(self, switch: SwitchSettings, coil: DriverSettings):
-        # This method is called in the p-roc thread. we can call hw_driver.state()
         self._add_hw_rule(switch, coil,
                           self.pinproc.driver_state_disable(coil.hw_driver.state()))
 
@@ -619,7 +626,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
                     "number": number
                 }
             ]
-        elif subtype == "led":
+        if subtype == "led":
             # split the number (which comes in as a string like w-x-y-z) into parts
             number_parts = str(number).split('-')
 
@@ -637,8 +644,8 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
                     "number": number_parts[0] + "-" + number_parts[3]
                 },
             ]
-        else:
-            raise AssertionError("Unknown subtype {}".format(subtype))
+
+        raise AssertionError("Unknown subtype {}".format(subtype))
 
     def configure_light(self, number, subtype, platform_settings) -> LightPlatformInterface:
         """Configure a light channel."""
@@ -655,26 +662,21 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
                 proc_num = self.pinproc.decode(self.machine_type, str(number))
 
             return PROCMatrixLight(proc_num, self.machine, self)
-        elif subtype == "led":
+        if subtype == "led":
             board, index = number.split("-")
             polarity = platform_settings and platform_settings.get("polarity", False)
             return PDBLED(int(board), int(index), polarity, self.config.get("debug", False), self)
-        else:
-            raise AssertionError("unknown subtype {}".format(subtype))
 
-    def _configure_switch(self, config: SwitchConfig, proc_num):
+        raise AssertionError("unknown subtype {}".format(subtype))
+
+    def _configure_switch(self, config: SwitchConfig, proc_num) -> PROCSwitch:
         """Configure a P3-ROC switch.
 
         Args:
             config: Dictionary of settings for the switch.
             proc_num: decoded switch number
 
-        Returns:
-            switch : A reference to the switch object that was just created.
-            proc_num : Integer of the actual hardware switch number the P3-ROC
-                uses to refer to this switch. Typically your machine
-                configuration files would specify a switch number like `SD12` or
-                `7/5`. This `proc_num` is an int between 0 and 255.
+        Returns a reference to the switch object that was just created.
         """
         if proc_num == -1:
             raise AssertionError("Switch {} cannot be controlled by the "
@@ -699,8 +701,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
                                       {'notifyHost': True, 'reloadActive': False}, [], False)
         return switch
 
-    @asyncio.coroutine
-    def configure_servo(self, number: str) -> "ServoPlatformInterface":
+    async def configure_servo(self, number: str) -> ServoPlatformInterface:
         """Configure a servo on a PD-LED board.
 
         Args:
@@ -715,8 +716,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
         return PdLedServo(board, number, self, self.config.get("debug", False))
 
-    @asyncio.coroutine
-    def configure_stepper(self, number: str, config: dict) -> PdLedStepper:
+    async def configure_stepper(self, number: str, config: dict) -> PdLedStepper:
         """Configure a stepper (axis) device in platform.
 
         Args:
@@ -810,26 +810,26 @@ class PDBConfig:
                 raise AssertionError("Lamp matrix banks can't be mapped to index "
                                      "{} because that's outside of the banks the "
                                      "P-ROC/P3-ROC can control.".format(lamp_dict['sink_bank']))
-            else:
-                self.log.debug("Driver group %02d (lamp sink): slow_time=%d "
-                               "enable_index=%d row_activate_index=%d "
-                               "row_enable_index=%d matrix=%s", group_ctr,
-                               self.lamp_matrix_strobe_time,
-                               lamp_dict['sink_bank'],
-                               lamp_dict['source_output'],
-                               lamp_dict['source_index'], True)
-                self.indexes[group_ctr] = lamp_list_for_index[i]
-                self.platform.run_proc_cmd_no_wait("driver_update_group_config",
-                                                   group_ctr,
-                                                   self.lamp_matrix_strobe_time,
-                                                   lamp_dict['sink_bank'],
-                                                   lamp_dict['source_output'],
-                                                   lamp_dict['source_index'],
-                                                   True,
-                                                   True,
-                                                   True,
-                                                   True)
-                group_ctr += 1
+
+            self.log.debug("Driver group %02d (lamp sink): slow_time=%d "
+                           "enable_index=%d row_activate_index=%d "
+                           "row_enable_index=%d matrix=%s", group_ctr,
+                           self.lamp_matrix_strobe_time,
+                           lamp_dict['sink_bank'],
+                           lamp_dict['source_output'],
+                           lamp_dict['source_index'], True)
+            self.indexes[group_ctr] = lamp_list_for_index[i]
+            self.platform.run_proc_cmd_no_wait("driver_update_group_config",
+                                               group_ctr,
+                                               self.lamp_matrix_strobe_time,
+                                               lamp_dict['sink_bank'],
+                                               lamp_dict['source_output'],
+                                               lamp_dict['source_index'],
+                                               True,
+                                               True,
+                                               True,
+                                               True)
+            group_ctr += 1
 
         for coil_bank in coil_bank_list:
             # If the bank is 16 or higher, the P-ROC/P3-ROC can't control it directly.
@@ -911,7 +911,7 @@ class PDBConfig:
             output = int(params[2][0:])
             return board, bank, output
 
-        elif '/' in addr:  # x/y/z form
+        if '/' in addr:  # x/y/z form
             params = addr.rsplit('/')
             if len(params) != 3:
                 raise ValueError('pdb address must have 3 components')
@@ -920,8 +920,7 @@ class PDBConfig:
             output = int(params[2])
             return board, bank, output
 
-        else:
-            raise ValueError('PDB address delimiter (- or /) not found.')
+        raise ValueError('PDB address delimiter (- or /) not found.')
 
     def _load_lamp_lists_from_config(self, config):
         lamp_source_bank_list = []
@@ -998,7 +997,7 @@ class PDBConfig:
 
             self.platform.run_proc_cmd_no_wait("driver_update_state", state)
 
-    def _configure_lamp_banks(self, lamp_source_bank_list, enable=True):
+    def _configure_lamp_banks(self, lamp_source_bank_list, enable):
         self.platform.run_proc_cmd_no_wait("driver_update_global_config",
                                            enable,
                                            True,  # Polarity
@@ -1043,7 +1042,7 @@ class PDBConfig:
         lamp = PDBLight(self, number_str)
         if lamp.lamp_type == 'unknown':
             return -1
-        elif lamp.lamp_type == 'dedicated':
+        if lamp.lamp_type == 'dedicated':
             return lamp.dedicated_output()
 
         lamp_dict_for_index = {'source_board': lamp.source_board(),
