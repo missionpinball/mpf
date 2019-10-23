@@ -67,7 +67,7 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
             self.lock_devices[0].eject()
             queue.wait()
             self.machine.events.add_handler("ball_drain", self._wait_for_drain, queue=queue)
-
+            self.compensate_lock()
     def _wait_for_drain(self, queue, balls, **kwargs):
         del kwargs
         if balls <= 0:
@@ -305,3 +305,26 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
     def _request_new_balls(self, balls):
         """Request new ball to playfield."""
         self.source_playfield.add_ball(balls=balls)
+    
+    def compensate_lock(self):
+        # evilmopey solution for issue 1278
+        if self.config['locked_ball_counting_strategy'] == "no_virtual":
+            self._locked_balls = 0
+            # remove balls that were in lock
+            balance = (self._locked_balls - (-1 * self._physically_locked_balls))  # -1 to make the number positive
+            for i in range(1, balance):
+                self.lock_devices[0].eject()
+        if self.config['locked_ball_counting_strategy'] == "physical_only":
+            self._locked_balls = self.locked_balls(self)
+        if self.config['locked_ball_counting_strategy'] == "virtual_only" or "min_virtual_physical":
+            self._locked_balls = self.locked_balls(self)
+        if self._locked_balls > self._physically_locked_balls:
+             # This means we need to add more balls to the physical lock
+            balance = self._locked_balls - self._physically_locked_balls
+            self._request_new_balls(balance)
+        else:
+            # This means we need to remove balls from the physical lock
+            balance = self._physically_locked_balls - self._locked_balls
+            for i in range(1, balance):
+                self.lock_devices[0].eject()
+  
