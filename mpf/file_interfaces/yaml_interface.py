@@ -197,7 +197,7 @@ class YamlInterface(FileInterface):
                 config = self.process(f)
         except MarkedYAMLError as e:
             mark = e.problem_mark
-            msg = "YAML error found in file {}. Line {}," \
+            msg = "YAML error found in file {}. Line {}, " \
                   "Position {}: {}".format(filename, mark.line + 1, mark.column + 1, e)
 
             if halt_on_error:
