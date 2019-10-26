@@ -102,7 +102,6 @@ autofire_coils:
     timeout_max_hits: single|int|0
     timeout_disable_time: single|ms|0
 coil_overwrites:
-    __valid_in__: machine
     recycle: single|bool|None
     pulse_ms: single|ms|None
     pulse_power: single|float(0,1)|None
