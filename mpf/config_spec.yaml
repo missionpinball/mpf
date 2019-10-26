@@ -1558,7 +1558,7 @@ timers:
     debug: single|bool|False
     start_value: single|template_int|0
     end_value: single|template_int|None
-    direction: single|str|up
+    direction: single|enum(up,down)|up
     max_value: single|int|None
     tick_interval: single|template_secs|1s
     start_running: single|bool|False
