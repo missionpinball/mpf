@@ -736,7 +736,7 @@ class ConfigValidator:
         except AttributeError:
             pass
 
-        if '(' in validator and ')' in validator[-1:] == ')':
+        if '(' in validator and validator[-1:] == ')':
             validator_parts = validator.split('(', maxsplit=1)
             validator = validator_parts[0]
             param = validator_parts[1][:-1]
