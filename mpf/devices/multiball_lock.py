@@ -4,6 +4,7 @@ from mpf.core.enable_disable_mixin import EnableDisableMixin
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
 from mpf.core.mode_device import ModeDevice
+from mpf.devices.ball_device.ball_device import BallDevice
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -308,23 +309,9 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
     
     def compensate_lock(self):
         # evilmopey solution for issue 1278
-        if self.config['locked_ball_counting_strategy'] == "no_virtual":
-            self._locked_balls = 0
-            # remove balls that were in lock
-            balance = (self._locked_balls - (-1 * self._physically_locked_balls))  # -1 to make the number positive
-            for i in range(1, balance):
-                self.lock_devices[0].eject()
-        if self.config['locked_ball_counting_strategy'] == "physical_only":
-            self._locked_balls = self.locked_balls(self)
         if self.config['locked_ball_counting_strategy'] == "virtual_only" or "min_virtual_physical":
-            self._locked_balls = self.locked_balls(self)
-        if self._locked_balls > self._physically_locked_balls:
-             # This means we need to add more balls to the physical lock
-            balance = self._locked_balls - self._physically_locked_balls
-            self._request_new_balls(balance)
-        else:
-            # This means we need to remove balls from the physical lock
-            balance = self._physically_locked_balls - self._locked_balls
-            for i in range(1, balance):
-                self.lock_devices[0].eject()
-  
+            if self._locked_balls > self._physically_locked_balls:
+                # This means we need to add more balls to the physical lock
+                ball_deficit = self._locked_balls - self._physically_locked_balls
+                BallDevice.request_ball(self.lock_devices[0], ball_deficit)
+      
