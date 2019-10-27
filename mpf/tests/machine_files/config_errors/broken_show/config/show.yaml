@@ -1,0 +1,4 @@
+#config_version=5
+
+show_player:
+  play_broken_show: broken_show

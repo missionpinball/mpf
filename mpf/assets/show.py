@@ -204,6 +204,12 @@ class Show(Asset):
                 actions[key] = self.machine.show_controller.show_players[key].validate_config_entry(value, self.name)
 
             elif key not in ('duration', 'time'):   # pragma: no cover
+                for player in self.machine.show_controller.show_players.values():
+                    if key == player.config_file_section or key == player.machine_collection_name or \
+                            key + "s" == player.show_section:
+                        self._show_validation_error('Invalid section "{}:" found in show {}. '
+                                                    'Did you mean "{}:" instead?'.format(key, self.name,
+                                                                                         player.show_section))
                 self._show_validation_error('Invalid section "{}:" found in show {}'.format(key, self.name))
 
     def _do_unload(self):
