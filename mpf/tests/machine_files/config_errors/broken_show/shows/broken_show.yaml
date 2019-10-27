@@ -1,0 +1,3 @@
+#show_version=5
+- light_player:
+    l_light1: red
