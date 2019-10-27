@@ -59,7 +59,7 @@ class Timer(ModeDevice):
         await super()._initialize()
         self.ticks_remaining = 0
         self.max_value = self.config['max_value']
-        self.direction = self.config['direction'].lower()
+        self.direction = self.config['direction']
         self.tick_secs = None
         self.timer = None
         self.event_keys = list()
