@@ -1,3 +1,5 @@
+import os
+
 from mpf.tests.MpfTestCase import MpfTestCase, test_config, test_config_directory
 
 
@@ -16,7 +18,9 @@ class TestConfigErrors(MpfTestCase):
             super().setUp()
             self.post_event("play_broken_show")
 
-        self.assertEqual('Show {}/shows/broken_show.yaml: Invalid section "light_player:" found in show broken_show. '
-                         'Did you mean "lights:" instead?'.format(self.get_absolute_machine_path()),
-                         str(e.exception))
+        self.assertEqual(str(e.exception),
+                         'Show {}: Invalid section "light_player:" found in show broken_show. '
+                         'Did you mean "lights:" instead?'.format(os.path.join(self.get_absolute_machine_path(),
+                                                                               "shows", "broken_show.yaml"))
+                         )
         self.loop.close()
