@@ -7,6 +7,8 @@ import shlex
 
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 from mpf.tests.MpfMachineTestCase import MockConfigPlayers
+from mpfmc.tests.MpfIntegrationTestCase import MpfIntegrationTestCase
+from mpfmc.tests.MpfSlideTestCase import MpfSlideTestCase
 
 
 class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
@@ -183,7 +185,8 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
         self.assertPlayerCount(int(count))
 
     def command_assert_machine_variable(self, value, name):
-        if name in self.machine.variables.machine_vars and isinstance(self.machine.variables.machine_vars[name]["value"], (int, float)):
+        if name in self.machine.variables.machine_vars and isinstance(
+                self.machine.variables.machine_vars[name]["value"], (int, float)):
             value = float(value)
         self.assertMachineVarEqual(value, name)
 
@@ -223,3 +226,27 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
     def command_assert_float_condition(self, expected, condition):
         expected_float = float(expected)
         self.assertPlaceholderEvaluates(expected_float, condition)
+
+
+class MpfIntegrationDocTestCase(MpfDocTestCase, MpfIntegrationTestCase, MpfSlideTestCase):
+
+    def command_assert_slide_active(self, name):
+        self.assertSlideActive(name)
+
+    def command_assert_slide_not_active(self, name):
+        self.assertSlideNotActive(name)
+
+    def command_assert_text_in_slide(self, text, slide_name):
+        self.assertTextInSlide(text, slide_name)
+
+    def command_assert_text_not_in_slide(self, text, slide_name):
+        self.assertTextNotInSlide(text, slide_name)
+
+    def command_assert_slide_on_top(self, slide_name):
+        self.assertSlideOnTop(slide_name)
+
+    def command_assert_text_on_top_slide(self, slide_name):
+        self.assertTextOnTopSlide(slide_name)
+
+    def command_assert_text_not_on_top_slide(self, slide_name):
+        self.assertTextNotOnTopSlide(slide_name)

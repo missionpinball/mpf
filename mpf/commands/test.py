@@ -4,7 +4,7 @@ import unittest
 import sys
 
 from mpf.commands import MpfCommandLineParser
-from mpf.tests.MpfDocTestCase import MpfDocTestCase
+from mpf.tests.MpfDocTestCase import MpfDocTestCase, MpfIntegrationDocTestCase
 
 SUBCOMMAND = True
 
@@ -22,6 +22,9 @@ class Command(MpfCommandLineParser):
 
         parser.add_argument("-v", help="verbose",
                             default=False, action="store_true", dest="verbose")
+        parser.add_argument("-m", help="Start MC on non sphinx test (auto-detected in sphinx)",
+                            default=False, action="store_true", dest="start_mc")
+
         args = parser.parse_args(self.argv[1:])
 
         with open(test_file) as f:
@@ -49,7 +52,10 @@ class Command(MpfCommandLineParser):
         else:
             print("Parsing single test")
 
-            test = MpfDocTestCase(config_string=test_string)
+            if args.start_mc:
+                test = MpfIntegrationDocTestCase(config_string=test_string)
+            else:
+                test = MpfDocTestCase(config_string=test_string)
             suite.addTest(test)
 
         result = unittest.TextTestRunner(verbosity=1 if not args.verbose else 99).run(suite)
