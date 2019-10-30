@@ -17,11 +17,11 @@ class MpfIntegrationDocTestCase(MpfDocTestCase, MpfIntegrationTestCase, MpfSlide
     def command_assert_text_not_in_slide(self, text, slide_name):
         self.assertTextNotInSlide(text, slide_name)
 
-    def command_assert_slide_on_top(self, slide_name):
-        self.assertSlideOnTop(slide_name)
+    def command_assert_slide_on_top(self, slide_name, target="default"):
+        self.assertSlideOnTop(slide_name, target)
 
-    def command_assert_text_on_top_slide(self, slide_name):
-        self.assertTextOnTopSlide(slide_name)
+    def command_assert_text_on_top_slide(self, text, target="default"):
+        self.assertTextOnTopSlide(text, target)
 
-    def command_assert_text_not_on_top_slide(self, slide_name):
-        self.assertTextNotOnTopSlide(slide_name)
+    def command_assert_text_not_on_top_slide(self, text, target="default"):
+        self.assertTextNotOnTopSlide(text, target)
