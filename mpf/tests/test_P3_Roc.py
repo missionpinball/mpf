@@ -116,13 +116,11 @@ class TestP3Roc(MpfTestCase):
         p_roc_common.pinproc.decode = None  # should not be called and therefore fail
         p_roc_common.pinproc.driver_state_pulse = self._driver_state_pulse
 
-        p_roc_common.pinproc.driver_state_pulsed_patter = None
+        p_roc_common.pinproc.driver_state_pulsed_patter = self._driver_pulsed_patter
 
         p_roc_common.pinproc.driver_state_disable = self._driver_state_disable
 
         p_roc_common.pinproc.driver_state_patter = self._driver_state_patter
-
-        p_roc_common.pinproc.driver_pulsed_patter = self._driver_pulsed_patter
 
         self.pinproc.switch_get_states = MagicMock(return_value=[0, 1] + [0] * 100)
         self.pinproc.read_data = self.read_data

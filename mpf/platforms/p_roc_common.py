@@ -502,8 +502,8 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         if coil.pulse_settings.power < 1.0:
             pwm_on, pwm_off = coil.hw_driver.get_pwm_on_off_ms(coil.pulse_settings)
             self._add_hw_rule(switch, coil,
-                              self.pinproc.driver_pulsed_patter(coil.hw_driver.state(), pwm_on, pwm_off,
-                                                                coil.pulse_settings.duration, True))
+                              self.pinproc.driver_state_pulsed_patter(coil.hw_driver.state(), pwm_on, pwm_off,
+                                                                      coil.pulse_settings.duration, True))
         else:
             self._add_hw_rule(switch, coil,
                               self.pinproc.driver_state_pulse(coil.hw_driver.state(), coil.pulse_settings.duration))
