@@ -10,6 +10,7 @@ mode:
 # http://docs.missionpinball.org/en/latest/game_logic/high_scores/index.html
 
 high_score:
+  enter_initials_timeout: 60
   award_slide_display_time: 4s
   categories: !!omap
   - score:
@@ -38,22 +39,17 @@ slides:
   high_score_enter_initials:
   - type: text
     text: PLAYER (player_num)
-    style: dmd_med
-    anchor_y: bottom
-    x: center-27
-    y: bottom+21
+    style: medium
+    y: center + 40%
   - type: text
     text: (award)
-    style: dmd_small
-    anchor_y: bottom
-    x: center-27
-    y: bottom+12
+    style: small
+    y: center + 20%
   - type: text_input
     key: high_score
-    style: dmd_med
-    anchor_y: bottom
+    style: medium
+    y: center - 40%
     max_chars: 3
-    y: 1
     animations:
       show_slide:
       - property: opacity
@@ -68,34 +64,24 @@ slides:
 
   - type: text
     text: ""
+    y: center - 20%
     key: high_score
-    anchor_x: left
-    x: left+90
-    style: dmd_big
+    style: big
 
   high_score_award_display:
   - type: text
     text: (player_name)
     color: ffffff
-    style: dmd_big
-    anchor_y: middle
-    anchor_x: middle
-    x: middle
-    y: middle
+    style: big
+    y: center + 33%
   - type: text
     text: (award)
     color: ffffff
-    style: dmd_med
-    anchor_y: top
-    anchor_x: middle
-    y: top-1
-    x: middle
+    style: medium
+    y: center
   - type: text
     text: (value)
     color: ffffff
     number_grouping: true
-    style: dmd_med
-    anchor_y: bottom
-    anchor_x: middle
-    y: bottom+1
-    x: middle
+    style: medium
+    y: center - 33%
