@@ -117,7 +117,7 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
             try:
                 method(*parts)
             except AssertionError as e:
-                raise AssertionError("Error in line {}".format(line_no), e)
+                raise AssertionError("Error in assertion {} of your tests.".format(line_no)) from e
 
     def command_start_game(self, num_balls_known=3):
         self.start_game(num_balls_known=int(num_balls_known))

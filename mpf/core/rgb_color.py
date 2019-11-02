@@ -247,7 +247,7 @@ class RGBColor:
 
     def __repr__(self):
         """Return general representation."""
-        return "<RGBColor {}>".format(self._color)
+        return "<RGBColor {} ({})>".format(self._color, self.name)
 
     @property
     def red(self):
