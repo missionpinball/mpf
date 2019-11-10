@@ -241,8 +241,9 @@ class DeviceManager(MpfController):
                         # get events from this device's config
                         if settings[control_event]:
                             if not isinstance(settings[control_event], dict):
-                                raise AssertionError("Type of {}:{} should be dict|str:ms| in config_spec".format(
-                                    collection, control_event))
+                                raise AssertionError(
+                                    "Type of {}:{} should be event_handler|str:ms| in config_spec".format(
+                                        collection, control_event))
                             for event, delay in settings[control_event].items():
                                 # try the new style first
                                 try:

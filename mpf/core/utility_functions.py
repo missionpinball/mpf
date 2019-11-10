@@ -520,24 +520,25 @@ class Util:
         time_string = str(time_string).upper()
 
         if time_string.endswith('MS') or time_string.endswith('MSEC'):
-            time_string = ''.join(i for i in time_string if not i.isalpha())
-            return int(time_string)
+            return int(time_string[:-2])
 
-        if 'D' in time_string:
-            time_string = ''.join(i for i in time_string if not i.isalpha())
-            return int(float(time_string) * 86400 * 1000)
+        if time_string.endswith('MSEC'):
+            return int(time_string[:-4])
 
-        if 'H' in time_string:
-            time_string = ''.join(i for i in time_string if not i.isalpha())
-            return int(float(time_string) * 3600 * 1000)
+        if time_string.endswith('D'):
+            return int(float(time_string[:-1]) * 86400 * 1000)
 
-        if 'M' in time_string:
-            time_string = ''.join(i for i in time_string if not i.isalpha())
-            return int(float(time_string) * 60 * 1000)
+        if time_string.endswith('H'):
+            return int(float(time_string[:-1]) * 3600 * 1000)
 
-        if time_string.endswith('S') or time_string.endswith('SEC'):
-            time_string = ''.join(i for i in time_string if not i.isalpha())
-            return int(float(time_string) * 1000)
+        if time_string.endswith('M'):
+            return int(float(time_string[:-1]) * 60 * 1000)
+
+        if time_string.endswith('S'):
+            return int(float(time_string[:-1]) * 1000)
+
+        if time_string.endswith('SEC'):
+            return int(float(time_string[:-3]) * 1000)
 
         return int(time_string)
 
