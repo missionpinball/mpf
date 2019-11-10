@@ -63,6 +63,7 @@ achievements:
     sync_ms: single|int|None
 
 animations:
+    __valid_in__: machine, mode                 # todo add to validator
     __allow_others__:
 assets:
     __valid_in__: machine, mode
