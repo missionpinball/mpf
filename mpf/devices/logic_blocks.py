@@ -71,7 +71,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
             config['events_when_hit'] = ['logicblock_' + self.name + '_hit']
 
         self.machine.config_validator.validate_config(
-            self.config_section, config, self.name, ["device", "logic_blocks_common"])
+            self.config_section, config, self.name, ("device", "logic_blocks_common"))
 
         self._configure_device_logging(config)
         return config
