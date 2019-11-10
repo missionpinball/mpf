@@ -628,18 +628,21 @@ class ConfigValidator:
 
         return value
 
-    @classmethod
-    def _validate_type_bool(cls, item, validation_failure_info, param=None):
+    def _validate_type_bool(self, item, validation_failure_info, param=None):
         assert not param
-        del validation_failure_info
         if item is None:
             return None
-        if isinstance(item, str):
-            return item.lower() not in ['false', 'f', 'no', 'disable', 'off']
-        if not item:
-            return False
-
-        return True
+        if isinstance(item, bool):
+            return item
+        elif isinstance(item, str):
+            if item.lower() in ['false', 'f', 'no', 'disable', 'off']:
+                return False
+            elif item.lower() in ['true', 't', 'yes', 'enable', 'on']:
+                return True
+            else:
+                self.validation_error(item, validation_failure_info, "Cannot convert value to boolean.", 13)
+        else:
+            self.validation_error(item, validation_failure_info, "Cannot convert value to boolean.", 13)
 
     def _validate_type_ms(self, item, validation_failure_info, param=None):
         assert not param
