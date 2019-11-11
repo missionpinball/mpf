@@ -1569,6 +1569,7 @@ spike:
     spike_version: single|enum(1,2)|1
     max_led_batch_size: single|int|6
     response_time: single|int|837
+    verify_checksums_on_readback: single|bool|True
 steppers:
     __valid_in__: machine
     __type__: device

@@ -784,7 +784,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             checksum += i
         return (256 - (checksum % 256)) % 256
 
-    async def send_cmd_and_wait_for_response(self, node, cmd, data, response_len) -> Optional[bytearray]:
+    async def send_cmd_and_wait_for_response(self, node, cmd, data, response_len,
+                                             verify_checksum=True) -> Optional[bytearray]:
         """Send cmd and wait for response."""
         assert response_len > 0
         if node > 15:
@@ -808,7 +809,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
             if response[-1] != 0:
                 self.log.info("Bridge Status: %s != 0", response[-1])
-            if self._checksum(response[0:-1]) != 0:   # pragma: no cover
+            if self.config['verify_checksums_on_readback'] and self._checksum(response[0:-1]) != 0:   # pragma: no cover
                 self.log.warning("Checksum mismatch for response: %s", "".join("%02x " % b for b in response))
                 # we resync by flushing the input
                 self._writer.transport.serial.reset_input_buffer()
