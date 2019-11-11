@@ -1952,10 +1952,10 @@ window:
     icon: single|str|None
     title: single|str|Mission Pinball Framework
     source_display: single|str|window
-    borderless: single|bool_int|0
-    resizable: single|bool_int|1
-    fullscreen: single|bool_int|0
-    show_cursor: single|bool_int|1
+    borderless: single|bool_int|false
+    resizable: single|bool_int|true
+    fullscreen: single|bool_int|false
+    show_cursor: single|bool_int|true
     exit_on_escape: single|bool|true
     height: single|int|600
     maxfps: single|int|60
