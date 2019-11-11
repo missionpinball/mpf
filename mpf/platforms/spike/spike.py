@@ -784,8 +784,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             checksum += i
         return (256 - (checksum % 256)) % 256
 
-    async def send_cmd_and_wait_for_response(self, node, cmd, data, response_len,
-                                             verify_checksum=True) -> Optional[bytearray]:
+    async def send_cmd_and_wait_for_response(self, node, cmd, data, response_len) -> Optional[bytearray]:
         """Send cmd and wait for response."""
         assert response_len > 0
         if node > 15:
