@@ -367,7 +367,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
     """Stern Spike Platform."""
 
     __slots__ = ["_writer", "_reader", "_inputs", "config", "_poll_task", "_sender_task", "_send_key_task", "dmd",
-                 "_nodes", "_bus_read", "_bus_write", "_cmd_queue", "ticks_per_sec", "_light_system"]
+                 "_nodes", "_bus_read", "_bus_write", "_cmd_queue", "ticks_per_sec", "_light_system",
+                 "node_firmware_version"]
 
     def __init__(self, machine):
         """Initialise spike hardware platform."""
@@ -389,6 +390,9 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
         self.ticks_per_sec = {
             0: 1
+        }
+        self.node_firmware_version = {
+            0: 0x000000
         }
 
         self.config = self.machine.config_validator.validate_config("spike", self.machine.config['spike'])
@@ -867,7 +871,12 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         self._cmd_queue.put_nowait((data, wait_ms))
 
     def _read_inputs(self, node):
-        return self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetInputState, bytearray(), 10)
+        if self.node_firmware_version[node] > 0x3100:
+            # in node firmware 0.49.0 and newer the response uses 12 bytes (10 payload)
+            return self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetInputState, bytearray(), 12)
+        else:
+            # older firmware used 10 bytes responses (8 payload)
+            return self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetInputState, bytearray(), 10)
 
     @staticmethod
     def _input_to_int(state):
@@ -1012,13 +1021,16 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             if not fw_version:
                 self.log.warning("Did not get version for node: %s. Ignoring node.", node)
                 continue
-            self.log.debug("Node: %s Version: %s", node, "".join("0x%02x " % b for b in fw_version))
+            self.log.debug("Node: %s Firmware: %s.%s.%s", node, fw_version[1], fw_version[2], fw_version[3])
             if fw_version[0] != node:
                 self.log.warning("Node: %s Version Response looks bogus (node ID does not match): %s",
                                  node, "".join("0x%02x " % b for b in fw_version))
 
             # we need this to calculate the right times for this node
             self.ticks_per_sec[node] = (fw_version[9] << 8) + fw_version[8]
+
+            # remember firmware version of node
+            self.node_firmware_version[node] = fw_version[1] << 16 | fw_version[2] << 8 | fw_version[3]
 
             # Set response time (redundant but send multiple times)
             # wait time based on the baud rate of the bus: (460800 * 0x98852841 * 200) >> 0x30 = 0x345
