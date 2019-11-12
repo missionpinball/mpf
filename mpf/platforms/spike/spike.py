@@ -426,6 +426,11 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                     hold_settings: Optional[HoldSettings], param1, param2, param3):
         """Write a hardware rule to Stern Spike.
 
+        [14] is used in CoilReflex. Might be debounce? (NODEBUS_CoilConfig param_3[1] (ushort))
+            Slings = 0xf5
+            Pops = 0x14
+            Flippers = 0
+
         We do not yet understand param1, param2 and param3:
         param1 == 2 -> second switch (eos switch)
         param2 == 1 -> ??
@@ -434,31 +439,70 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         """
         pulse_value = int(pulse_settings.duration * self.ticks_per_sec[node] / 1000)
 
-        self.send_cmd_async(node, SpikeNodebus.CoilSetReflex, bytearray(
-            [coil_index,                                                # coil [3]
-             int(pulse_settings.power * 255),                           # pulse power [4]
-             pulse_value & 0xFF,                                        # pulse time lower [5]
-             (pulse_value & 0xFF00) >> 8,                               # pulse time upper [6]
-             int(hold_settings.power * 255) if hold_settings else 0,    # hold power [7]
-             0x00,                                                      # some time lower (probably hold) [8]
-             0x00,                                                      # some time upper (probably hold) [9]
-             0x00,                                                      # some time lower (unknown) [10]
-             0x00,                                                      # some time upper (unknown) [11]
-             0,                                                         # a unknown time lower (1) [12]
-             0,                                                         # a unknown time upper (1) [13]
-             0,                                                         # a unknown time lower (2) [14]
-             0,                                                         # a unknown time upper (2) [15]
-             0,                                                         # a unknown time lower (3) [16]
-             0,                                                         # a unknown time upper (3) [17]
-             0,                                                         # a unknown time lower (4) [18]
-             0,                                                         # a unknown time upper (4) [19]
-             0x40 ^ enable_switch_index,                                # enable switch [20]
-             0x40 ^ disable_switch_index if disable_switch_index is not None else 0,    # disable switch [21]
-             0,                                                         # another switch? [22]
-             param1,                                                    # param5 [23]
-             param2,                                                    # some time (param6) [24]
-             param3                                                     # param7 [25]
-             ]))
+        if self.node_firmware_version[node] >= 0x3100:
+            # length: 0x24
+            self.send_cmd_async(node, SpikeNodebus.CoilSetReflex, bytearray(
+                [coil_index,                                                # coil [3]
+                 int(pulse_settings.power * 255),                           # pulse power [4]
+                 pulse_value & 0xFF,                                        # pulse time lower [5]
+                 (pulse_value & 0xFF00) >> 8,                               # pulse time upper [6]
+                 int(hold_settings.power * 255) if hold_settings else 0,    # hold power [7]
+                 0x00,                                                      # some time lower (probably hold) [8]
+                 0x00,                                                      # some time upper (probably hold) [9]
+                 0x00,                                                      # some time lower (unknown) [10]
+                 0x00,                                                      # some time upper (unknown) [11]
+                 0,                                                         # a unknown time lower (1) [12]
+                 0,                                                         # a unknown time upper (1) [13]
+                 0,                                                         # a unknown time lower (2) [14]
+                 0,                                                         # a unknown time upper (2) [15]
+                 0,                                                         # a unknown time lower (3) [16]
+                 0,                                                         # a unknown time upper (3) [17]
+                 0,                                                         # a unknown time lower (4) [18]
+                 0,                                                         # a unknown time upper (4) [19]
+                 0,                                                         # a unknown time lower (5) [20]
+                 0,                                                         # a unknown time upper (5) [21]
+                 0x40 ^ enable_switch_index,                                # enable switch [22]
+                 0x40 ^ disable_switch_index if disable_switch_index is not None else 0,    # disable switch [23]
+                 0,                                                         # another switch? [24]
+                 0,                                                         # another switch? [25]
+                 0,                                                         # another switch? [26]
+                 0,                                                         # another switch? [27]
+                 0,                                                         # another switch? [28]
+                 0,                                                         # another switch? [29]
+                 param1,                                                    # param5 [30]
+                 0,                                                         # param5 [31]
+                 0,                                                         # param5 [32]
+                 0,                                                         # param5 [33]
+                 param2,                                                    # some time (param6) [34]
+                 param3                                                     # param7 [35]
+                 ]))
+        else:
+            # length: 0x19
+            self.send_cmd_async(node, SpikeNodebus.CoilSetReflex, bytearray(
+                [coil_index,                                                # coil [3]
+                 int(pulse_settings.power * 255),                           # pulse power [4]
+                 pulse_value & 0xFF,                                        # pulse time lower [5]
+                 (pulse_value & 0xFF00) >> 8,                               # pulse time upper [6]
+                 int(hold_settings.power * 255) if hold_settings else 0,    # hold power [7]
+                 0x00,                                                      # some time lower (probably hold) [8]
+                 0x00,                                                      # some time upper (probably hold) [9]
+                 0x00,                                                      # some time lower (unknown) [10]
+                 0x00,                                                      # some time upper (unknown) [11]
+                 0,                                                         # a unknown time lower (1) [12]
+                 0,                                                         # a unknown time upper (1) [13]
+                 0,                                                         # a unknown time lower (2) [14]
+                 0,                                                         # a unknown time upper (2) [15]
+                 0,                                                         # a unknown time lower (3) [16]
+                 0,                                                         # a unknown time upper (3) [17]
+                 0,                                                         # a unknown time lower (4) [18]
+                 0,                                                         # a unknown time upper (4) [19]
+                 0x40 ^ enable_switch_index,                                # enable switch [20]
+                 0x40 ^ disable_switch_index if disable_switch_index is not None else 0,    # disable switch [21]
+                 0,                                                         # another switch? [22]
+                 param1,                                                    # param5 [23]
+                 param2,                                                    # some time (param6) [24]
+                 param3                                                     # param7 [25]
+                 ]))
 
     @staticmethod
     def _check_coil_switch_combination(switch, coil):
@@ -871,7 +915,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         self._cmd_queue.put_nowait((data, wait_ms))
 
     def _read_inputs(self, node):
-        if self.node_firmware_version[node] > 0x3100:
+        if self.node_firmware_version[node] >= 0x3100:
             # in node firmware 0.49.0 and newer the response uses 12 bytes (10 payload)
             return self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetInputState, bytearray(), 12)
 
