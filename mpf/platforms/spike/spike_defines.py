@@ -34,6 +34,8 @@ class SpikeNodebus:
     CoilSetOCIgnoreMap = 0x44   # Spike 1
     CoilSetOCBehavior = 0x44    # Spike 2; Same as CoilSetOCIgnoreMap
     CoilShiftData = 0x45        # Spike 2; Uses SendData (F4)
+    CoilSetMask = 0x46          # used during oc detection. two bytes of mask
+    CoilSetOCTime = 0x48        # used during oc detection. two bytes of time
     OCGetFault = 0x4a           # Spike 2
     SetAC = 0x50                # unused; len: 4
     MotorConfigure = 0x51       # unused; len: 12; 10 bytes of motor config
@@ -48,13 +50,13 @@ class SpikeNodebus:
     SetLEDMask = 0x72           # Spike 2
     SetSyncTime = 0x73          # Spike 2
     SetLed = 0x80               # can set one or multiple LEDs
-    SetTraffic = 0xF0
     SetRGBMulti = 0xC0          # Spike 2; name unknown; part of NODEBUS_SetLEDMultiple when LED > 0x40
     SetRGB = 0xC1               # Spike 2
     RGBSuspend = 0xC3           # Spike 2
     RGBResume = 0xC4            # Spike 2
     SetRGBPalette = 0xCF        # Spike 2
     SetRGBSweep = 0xC2          # Spike 2
+    SetTraffic = 0xF0
     Reset = 0xF1
     LCDSet = 0xF2               # unused
     SendKey = 0xF3              # does something with CRC32

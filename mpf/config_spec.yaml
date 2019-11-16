@@ -1570,6 +1570,7 @@ spike:
     max_led_batch_size: single|int|6
     response_time: single|int|837
     verify_checksums_on_readback: single|bool|True
+    periodically_query_nodes: single|bool|False
 steppers:
     __valid_in__: machine
     __type__: device
