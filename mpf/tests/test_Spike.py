@@ -152,8 +152,8 @@ class SpikePlatformTest(MpfTestCase):
 
         self.serialMock.expected_commands = {
             self._checksummed_cmd(b'\x80\x02\xf1'): b'',
-            b'\x03\x00': b'\x01\x00\x03',   # GetBridgeVersion
-            b'\x05\x00': b'\x18',           # GetBridgeState
+            b'\x03\x00\x03': b'\x01\x00\x03',   # GetBridgeVersion
+            b'\x05\x00\x01': b'\x18',           # GetBridgeState
             self._checksummed_cmd(b'\x81\x03\xf0\x10'): b'',
             self._checksummed_cmd(b'\x81\x03\xf0\x20'): b'',
             self._checksummed_cmd(b'\x88\x03\xf0\x10'): b'',

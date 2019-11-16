@@ -628,10 +628,10 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         if self.node_firmware_version[int(node)] >= 0x3100:
             if config.debounce:
                 self.log.debug("Set debounce 30 (about 20ms) for switch %s", number)
-                self.send_cmd_async(node, SpikeNodebus.ConfigInput, bytearray([int(index), 30, 30]))
+                self.send_cmd_async(int(node), SpikeNodebus.ConfigInput, bytearray([int(index), 30, 30]))
             else:
                 self.log.debug("Set debounce 2 (1-2ms) for switch %s", number)
-                self.send_cmd_async(node, SpikeNodebus.ConfigInput, bytearray([int(index), 2, 2]))
+                self.send_cmd_async(int(node), SpikeNodebus.ConfigInput, bytearray([int(index), 2, 2]))
 
         return SpikeSwitch(config, number, self)
 
@@ -1104,12 +1104,12 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         await self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([34]))  # block traffic (false)
 
         # get bridge version
-        await self.send_cmd_raw([SpikeNodebus.GetBridgeVersion, 0], 0)
+        await self.send_cmd_raw([SpikeNodebus.GetBridgeVersion, 0, 3], 0)
         bridge_version = await self._read_raw(3)
         self.log.debug("Bridge version: %s", "".join("0x%02x " % b for b in bridge_version))
 
         # get bridge state
-        await self.send_cmd_raw([SpikeNodebus.GetBridgeState, 0], 0)
+        await self.send_cmd_raw([SpikeNodebus.GetBridgeState, 0, 1], 0)
         bridge_state = await self._read_raw(1)
         self.log.debug("Bridge state: %s", "".join("0x%02x " % b for b in bridge_state))
 
@@ -1190,9 +1190,14 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                 await self.send_cmd_sync(node, SpikeNodebus.CoilSetMask, bytearray([0xff, 0x01]))
                 # 100ms oc time
                 await self.send_cmd_sync(node, SpikeNodebus.CoilSetOCTime,
-                                         bytearray([int(100 * self.ticks_per_sec[node]), 0]))
+                                         bytearray([int(100 * 1000 / self.ticks_per_sec[node]), 0]))
                 # set whatever spike sets
                 await self.send_cmd_sync(node, SpikeNodebus.CoilSetOCBehavior, bytearray([0x01]))
+
+                # configure coil priorities
+                await self.send_cmd_and_wait_for_response(
+                    node, SpikeNodebus.CoilSetPriority,
+                    bytearray([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08]), 3)
 
             await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetCoilCurrent, bytearray([0]), 12)
 
