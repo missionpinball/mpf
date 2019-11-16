@@ -1190,7 +1190,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                 await self.send_cmd_sync(node, SpikeNodebus.CoilSetMask, bytearray([0, 0]))
                 # 100ms oc time
                 await self.send_cmd_sync(node, SpikeNodebus.CoilSetOCTime,
-                                         bytearray([int(100 * 1000 / self.ticks_per_sec[node]), 0]))
+                                         bytearray([int(100 * self.ticks_per_sec[node] / 1000), 0]))
                 # set whatever spike sets
                 await self.send_cmd_sync(node, SpikeNodebus.CoilSetOCBehavior, bytearray([0x01]))
 
