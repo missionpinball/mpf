@@ -1183,18 +1183,21 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                 self.log.warning("Did not get status for node %s", node)
 
             if self.node_firmware_version[node] >= 0x3100:
-                self.log.debug("SetNumLEDsInputs on node %s", node)
-                # set 96 leds and 60 inputs for now. we can probably speed things up using this command
-                await self.send_cmd_sync(node, SpikeNodebus.SetNumLEDsInputs, bytearray([60, 0, 40, 0]))
+                self.log.debug("SetLEDMask, CoilSetMask, CoilSetOCTime, CoilSetOCBehavior, SetNumLEDsInputs and "
+                               "CoilSetPriority on node %s", node)
                 # enable all leds
                 await self.send_cmd_sync(node, SpikeNodebus.SetLEDMask, bytearray([0] * 12))
                 # enable all coils
                 await self.send_cmd_sync(node, SpikeNodebus.CoilSetMask, bytearray([0, 0]))
                 # 100ms oc time
+                oc_time = int(self.config['oc_time'] * self.ticks_per_sec[node] / 1000)
                 await self.send_cmd_sync(node, SpikeNodebus.CoilSetOCTime,
-                                         bytearray([int(100 * self.ticks_per_sec[node] / 1000), 0]))
+                                         bytearray([oc_time & 0xff, (oc_time >> 8) & 0xff]))
                 # set whatever spike sets
                 await self.send_cmd_sync(node, SpikeNodebus.CoilSetOCBehavior, bytearray([0x01]))
+
+                # set 96 leds and 60 inputs for now. we can probably speed things up using this command
+                await self.send_cmd_sync(node, SpikeNodebus.SetNumLEDsInputs, bytearray([60, 0, 40, 0]))
 
                 # configure coil priorities
                 await self.send_cmd_and_wait_for_response(
