@@ -13,7 +13,6 @@ class SpikeNodebus:
     GetBridgeState = 0x05
     SetResponseTime = 0x06
     SetBackboxLight = 0x09      # Spike 2
-    SetInputMask = 0x09         # unused
     SetBackboxPWMFreqDiv = 0x0b     # Spike 2
     GetInputState = 0x11
     GetInputMask = 0x12         # unused

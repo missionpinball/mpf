@@ -934,15 +934,17 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         cmd_str.append(0)
         return cmd_str
 
+    def _get_wait_ms_for_cmd(self, cmd):
+        if (cmd & 0xF0) == 0x80:
+            # special case for LED updates
+            return self.config['wait_times'][0x80] if 0x80 in self.config['wait_times'] else 0
+        else:
+            return self.config['wait_times'][cmd] if cmd in self.config['wait_times'] else 0
+
     async def send_cmd_sync(self, node, cmd, data):
         """Send cmd which does not require a response."""
         cmd_str = self._create_cmd_str(node, cmd, data)
-        if (cmd & 0xF0) == 0x80:
-            # special case for LED updates
-            wait_ms = self.config['wait_times'][0x80] if 0x80 in self.config['wait_times'] else 0
-        else:
-            wait_ms = self.config['wait_times'][cmd] if cmd in self.config['wait_times'] else 0
-
+        wait_ms = self._get_wait_ms_for_cmd(cmd)
         await self._send_cmd_without_response(cmd_str, wait_ms)
 
     async def _send_cmd_without_response(self, cmd_str, wait_ms):
@@ -961,7 +963,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
     def send_cmd_async(self, node, cmd, data):
         """Send cmd which does not require a response."""
         cmd_str = self._create_cmd_str(node, cmd, data)
-        wait_ms = self.config['wait_times'][cmd] if cmd in self.config['wait_times'] else 0
+        wait_ms = self._get_wait_ms_for_cmd(cmd)
         # queue command
         self._cmd_queue.put_nowait((cmd_str, wait_ms))
 
