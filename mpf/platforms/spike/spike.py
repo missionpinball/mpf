@@ -175,6 +175,7 @@ class SpikeDriver(DriverPlatformInterface):
         self._enable_task = None
 
     def trigger(self, power1, duration1, power2, duration2):
+        """Pulse the driver."""
         msg = bytearray([
             self.index,
             power1,
@@ -595,7 +596,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         del platform_settings
 
         try:
-            node, index = number.split("-")
+            node, _ = number.split("-")
         except IndexError:
             return self.raise_config_error("Coil number has to have the syntax node-index but is: {}".format(number),
                                            4)
@@ -953,8 +954,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         if (cmd & 0xF0) == 0x80:
             # special case for LED updates
             return self.config['wait_times'][0x80] if 0x80 in self.config['wait_times'] else 0
-        else:
-            return self.config['wait_times'][cmd] if cmd in self.config['wait_times'] else 0
+
+        return self.config['wait_times'][cmd] if cmd in self.config['wait_times'] else 0
 
     async def send_cmd_sync(self, node, cmd, data):
         """Send cmd which does not require a response."""
