@@ -174,7 +174,7 @@ class SpikeDriver(DriverPlatformInterface):
         self.index = int(self.index)
         self._enable_task = None
 
-    def _trigger(self, power1, duration1, power2, duration2):
+    def trigger(self, power1, duration1, power2, duration2):
         msg = bytearray([
             self.index,
             power1,
@@ -204,7 +204,7 @@ class SpikeDriver(DriverPlatformInterface):
         power2 = int(hold_settings.power * 255)
         duration2 = 0x1FF
 
-        self._trigger(power1, duration1, power2, duration2)
+        self.trigger(power1, duration1, power2, duration2)
 
         self._enable_task = self.platform.machine.clock.loop.create_task(self._enable(power2))
         self._enable_task.add_done_callback(self._done)
@@ -212,7 +212,7 @@ class SpikeDriver(DriverPlatformInterface):
     async def _enable(self, power):
         while True:
             await asyncio.sleep(.25, loop=self.platform.machine.clock.loop)
-            self._trigger(power, 0x1FF, power, 0x1FF)
+            self.trigger(power, 0x1FF, power, 0x1FF)
 
     @staticmethod
     def _done(future):
@@ -229,7 +229,7 @@ class SpikeDriver(DriverPlatformInterface):
         if duration2 > 0x1FF:
             raise AssertionError("Pulse ms too long.")
 
-        self._trigger(power1, duration1, power2, duration2)
+        self.trigger(power1, duration1, power2, duration2)
 
     def disable(self):
         """Disable coil."""
@@ -239,7 +239,7 @@ class SpikeDriver(DriverPlatformInterface):
             self._enable_task = None
 
         # disable coil
-        self._trigger(0, 0, 0, 0)
+        self.trigger(0, 0, 0, 0)
 
     def get_board_name(self):
         """Return name for service mode."""
@@ -593,7 +593,23 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Configure a driver on Stern Spike."""
         del platform_settings
-        return SpikeDriver(config, number, self)
+
+        try:
+            node, index = number.split("-")
+        except IndexError:
+            return self.raise_config_error("Coil number has to have the syntax node-index but is: {}".format(number),
+                                           4)
+
+        if int(node) not in self._nodes:
+            self.raise_config_error("Node {} not known for coil {}".format(node, number), 5)
+
+        driver = SpikeDriver(config, number, self)
+
+        if self.node_firmware_version[int(node)] >= 0x3100:
+            self.log.debug("OC detect pulse for coil %s", number)
+            driver.trigger(255, 1, 0, 0)
+
+        return driver
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Return a single light."""
@@ -751,13 +767,12 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                 if node == 0:
                     continue
 
-                self.log.debug("GetStatus, GetCoilCurrent and Traffic on node %s", node)
+                self.log.debug("GetStatus and GetCoilCurrent on node %s", node)
                 await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetStatus, bytearray(), 10)
                 await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetCoilCurrent, bytearray([0]), 12)
-                await self.send_cmd_sync(node, SpikeNodebus.SetTraffic, bytearray([17]))
 
-                # wait one second
-                await asyncio.sleep(.1, loop=self.machine.clock.loop)
+                # wait before querying the next board
+                await asyncio.sleep(.5, loop=self.machine.clock.loop)
 
     async def _poll(self):
         while True:
