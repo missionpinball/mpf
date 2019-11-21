@@ -225,9 +225,15 @@ fast:
 
 spike:
     wait_times:
-      65: 12
-      240: 100
-      241: 100
+      20: 100   # setnumledsinputs (init only)
+      65: 25    # rules (runtime)
+      68: 100   # set ove current (init only)
+      70: 100   # set coil mask (init only)
+      72: 100   # set overcurrent time (init only)
+      112: 10   # configure input (init only)
+      114: 100  # set led mask (init only)
+      240: 100  # settraffic (init only)
+      241: 100  # reset bus (init only)
 
 fadecandy:
     gamma: 2.5

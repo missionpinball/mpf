@@ -1,6 +1,8 @@
 """Config specs and validator."""
 import logging
 import os
+from functools import lru_cache
+
 import re
 import tempfile
 from collections import OrderedDict
@@ -190,6 +192,7 @@ class ConfigValidator:
         """Unload specs."""
         self.config_spec = None
 
+    @lru_cache(1024)
     def build_spec(self, config_spec, base_spec):
         """Build config spec out of two or more specs."""
         if not self.config_spec:
@@ -199,8 +202,8 @@ class ConfigValidator:
         spec_list = [config_spec]
 
         if base_spec:
-            if isinstance(base_spec, list):
-                spec_list.extend(base_spec)
+            if isinstance(base_spec, tuple):
+                spec_list.extend(list(base_spec))
             else:
                 spec_list.append(base_spec)
 
@@ -209,10 +212,11 @@ class ConfigValidator:
             this_base_spec = self.config_spec
             spec_element = spec_element.split(':')
             for spec in spec_element:
-                # need to deepcopy so the orig base spec doesn't get polluted
-                # with this widget's spec
-                this_base_spec = deepcopy(this_base_spec[spec])
+                this_base_spec = this_base_spec[spec]
 
+            # need to deepcopy so the orig base spec doesn't get polluted
+            # with this widget's spec
+            this_base_spec = deepcopy(this_base_spec)
             this_base_spec.update(this_spec)
             this_spec = this_base_spec
 
@@ -357,14 +361,21 @@ class ConfigValidator:
                 self.validation_error(item, validation_failure_info, "Item is not an ordered dict. "
                                                                      "Did you forget to add !!omap to your entry?",
                                       7)
-        else:
+        elif item_type == "dict":
             item_dict = dict()
-
+            if item == "None" or item is None:
+                item = {}
+            if not isinstance(item, dict):
+                self.validation_error(item, validation_failure_info, "Item is not a dict.", 12)
+        elif item_type == "event_handler":
             # item could be str, list, or list of dicts
+            item_dict = dict()
             try:
                 item = Util.event_config_to_dict(item)
             except TypeError:
                 self.validation_error(item, validation_failure_info, "Could not convert item to dict", 8)
+        else:
+            raise AssertionError("Invalid type {}".format(item_type))
 
         for k, v in item.items():
             item_dict[self.validate_item(k, validators[0], validation_failure_info)] = (
@@ -417,7 +428,7 @@ class ConfigValidator:
             return {}
         try:
             attribute, base_spec_str = param.split(",", 1)
-            base_spec = base_spec_str.split(",")
+            base_spec = tuple(base_spec_str.split(","))
         except ValueError:
             base_spec = None
             attribute = param
@@ -617,34 +628,37 @@ class ConfigValidator:
 
         return value
 
-    @classmethod
-    def _validate_type_bool(cls, item, validation_failure_info, param=None):
+    def _validate_type_bool(self, item, validation_failure_info, param=None):
         assert not param
-        del validation_failure_info
         if item is None:
             return None
+        if isinstance(item, bool):
+            return item
         if isinstance(item, str):
-            return item.lower() not in ['false', 'f', 'no', 'disable', 'off']
-        if not item:
-            return False
+            if item.lower() in ['false', 'f', 'no', 'disable', 'off']:
+                return False
+            if item.lower() in ['true', 't', 'yes', 'enable', 'on']:
+                return True
 
-        return True
+        return self.validation_error(item, validation_failure_info, "Cannot convert value to boolean.", 13)
 
-    @classmethod
-    def _validate_type_ms(cls, item, validation_failure_info, param=None):
-        del validation_failure_info
+    def _validate_type_ms(self, item, validation_failure_info, param=None):
         assert not param
         if item is not None:
-            return Util.string_to_ms(item)
+            try:
+                return Util.string_to_ms(item)
+            except ValueError:
+                self.validation_error(item, validation_failure_info, "Cannot convert value to ms.", 11)
 
         return None
 
-    @classmethod
-    def _validate_type_secs(cls, item, validation_failure_info, param=None):
+    def _validate_type_secs(self, item, validation_failure_info, param=None):
         assert not param
-        del validation_failure_info
         if item is not None:
-            return Util.string_to_secs(item)
+            try:
+                return Util.string_to_secs(item)
+            except ValueError:
+                self.validation_error(item, validation_failure_info, "Cannot convert value to secs.", 11)
 
         return None
 

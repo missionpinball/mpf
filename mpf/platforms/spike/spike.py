@@ -174,7 +174,8 @@ class SpikeDriver(DriverPlatformInterface):
         self.index = int(self.index)
         self._enable_task = None
 
-    def _trigger(self, power1, duration1, power2, duration2):
+    def trigger(self, power1, duration1, power2, duration2):
+        """Pulse the driver."""
         msg = bytearray([
             self.index,
             power1,
@@ -204,7 +205,7 @@ class SpikeDriver(DriverPlatformInterface):
         power2 = int(hold_settings.power * 255)
         duration2 = 0x1FF
 
-        self._trigger(power1, duration1, power2, duration2)
+        self.trigger(power1, duration1, power2, duration2)
 
         self._enable_task = self.platform.machine.clock.loop.create_task(self._enable(power2))
         self._enable_task.add_done_callback(self._done)
@@ -212,7 +213,7 @@ class SpikeDriver(DriverPlatformInterface):
     async def _enable(self, power):
         while True:
             await asyncio.sleep(.25, loop=self.platform.machine.clock.loop)
-            self._trigger(power, 0x1FF, power, 0x1FF)
+            self.trigger(power, 0x1FF, power, 0x1FF)
 
     @staticmethod
     def _done(future):
@@ -229,7 +230,7 @@ class SpikeDriver(DriverPlatformInterface):
         if duration2 > 0x1FF:
             raise AssertionError("Pulse ms too long.")
 
-        self._trigger(power1, duration1, power2, duration2)
+        self.trigger(power1, duration1, power2, duration2)
 
     def disable(self):
         """Disable coil."""
@@ -239,7 +240,7 @@ class SpikeDriver(DriverPlatformInterface):
             self._enable_task = None
 
         # disable coil
-        self._trigger(0, 0, 0, 0)
+        self.trigger(0, 0, 0, 0)
 
     def get_board_name(self):
         """Return name for service mode."""
@@ -309,6 +310,8 @@ class SpikeStepper(StepperPlatformInterface):
             5 - unknown
             6 - unknown
             7 - unknown
+
+        Typical response: 17 00 18 00 01 d0 00
         '''
         result = await self.platform.send_cmd_and_wait_for_response(
             self.node, SpikeNodebus.StepperInfo + self.stepper_id, [], 7)
@@ -367,7 +370,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
     """Stern Spike Platform."""
 
     __slots__ = ["_writer", "_reader", "_inputs", "config", "_poll_task", "_sender_task", "_send_key_task", "dmd",
-                 "_nodes", "_bus_read", "_bus_write", "_cmd_queue", "ticks_per_sec", "_light_system"]
+                 "_nodes", "_bus_read", "_bus_write", "_cmd_queue", "ticks_per_sec", "_light_system",
+                 "node_firmware_version", "_query_nodes_task"]
 
     def __init__(self, machine):
         """Initialise spike hardware platform."""
@@ -378,6 +382,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         self._poll_task = None
         self._sender_task = None
         self._send_key_task = None
+        self._query_nodes_task = None
         self.dmd = None
 
         self._nodes = None
@@ -389,6 +394,9 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
         self.ticks_per_sec = {
             0: 1
+        }
+        self.node_firmware_version = {
+            0: 0x000000
         }
 
         self.config = self.machine.config_validator.validate_config("spike", self.machine.config['spike'])
@@ -419,8 +427,13 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
     # pylint: disable-msg=too-many-arguments
     def _write_rule(self, node, enable_switch_index, disable_switch_index, coil_index, pulse_settings: PulseSettings,
-                    hold_settings: Optional[HoldSettings], param1, param2, param3):
+                    hold_settings: Optional[HoldSettings], param1, param2, param3, hold_param1=0):
         """Write a hardware rule to Stern Spike.
+
+        [14] is used in CoilReflex. Might be debounce? (NODEBUS_CoilConfig param_3[1] (ushort))
+            Slings = 0xf5
+            Pops = 0x14
+            Flippers = 0
 
         We do not yet understand param1, param2 and param3:
         param1 == 2 -> second switch (eos switch)
@@ -430,31 +443,71 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         """
         pulse_value = int(pulse_settings.duration * self.ticks_per_sec[node] / 1000)
 
-        self.send_cmd_async(node, SpikeNodebus.CoilSetReflex, bytearray(
-            [coil_index,                                                # coil [3]
-             int(pulse_settings.power * 255),                           # pulse power [4]
-             pulse_value & 0xFF,                                        # pulse time lower [5]
-             (pulse_value & 0xFF00) >> 8,                               # pulse time upper [6]
-             int(hold_settings.power * 255) if hold_settings else 0,    # hold power [7]
-             0x00,                                                      # some time lower (probably hold) [8]
-             0x00,                                                      # some time upper (probably hold) [9]
-             0x00,                                                      # some time lower (unknown) [10]
-             0x00,                                                      # some time upper (unknown) [11]
-             0,                                                         # a unknown time lower (1) [12]
-             0,                                                         # a unknown time upper (1) [13]
-             0,                                                         # a unknown time lower (2) [14]
-             0,                                                         # a unknown time upper (2) [15]
-             0,                                                         # a unknown time lower (3) [16]
-             0,                                                         # a unknown time upper (3) [17]
-             0,                                                         # a unknown time lower (4) [18]
-             0,                                                         # a unknown time upper (4) [19]
-             0x40 ^ enable_switch_index,                                # enable switch [20]
-             0x40 ^ disable_switch_index if disable_switch_index is not None else 0,    # disable switch [21]
-             0,                                                         # another switch? [22]
-             param1,                                                    # param5 [23]
-             param2,                                                    # some time (param6) [24]
-             param3                                                     # param7 [25]
-             ]))
+        if self.node_firmware_version[node] >= 0x3100:
+            # length: 0x24
+            self.send_cmd_async(node, SpikeNodebus.CoilSetReflex, bytearray(
+                [coil_index,                                                # coil [3]
+                 int(pulse_settings.power * 255),                           # pulse power [4]
+                 pulse_value & 0xFF,                                        # pulse time lower [5]
+                 (pulse_value & 0xFF00) >> 8,                               # pulse time upper [6]
+                 int(hold_settings.power * 255) if hold_settings else 0,    # hold power [7]
+                 hold_param1,                                               # some time lower (probably hold) [8]
+                 0x00,                                                      # some time upper (probably hold) [9]
+                 0x00,                                                      # some time lower (unknown) [10]
+                 0x00,                                                      # some time upper (unknown) [11]
+                 0,                                                         # a unknown time lower (1) [12]
+                 0,                                                         # a unknown time upper (1) [13]
+                 0,                                                         # a unknown time lower (2) [14]
+                 0,                                                         # a unknown time upper (2) [15]
+                 0,                                                         # a unknown time lower (3) [16]
+                 0,                                                         # a unknown time upper (3) [17]
+                 0,                                                         # a unknown time lower (4) [18]
+                 0,                                                         # a unknown time upper (4) [19]
+                 0,                                                         # a unknown time lower (5) [20]
+                 0,                                                         # a unknown time upper (5) [21]
+                 0x40 ^ enable_switch_index,                                # enable switch [22]
+                 0,                                                         # another switch? [23]
+                 0,                                                         # another switch? [24]
+                 0x40 ^ disable_switch_index if disable_switch_index is not None else 0,  # disable switch [25]
+                 0,                                                         # another switch? [26]
+                 0,                                                         # another switch? [27]
+                 0,                                                         # another switch? [28]
+                 0,                                                         # another switch? [29]
+                 0,                                                         # param5 [30]
+                 0,                                                         # param5 [31]
+                 0,                                                         # param5 [32]
+                 0,                                                         # param5 [33]
+                 param1,                                                    # some time (param6) [34]
+                 param2,                                                    # param7 [35]
+                 param3                                                     # param8 [36]
+                 ]))
+        else:
+            # length: 0x19
+            self.send_cmd_async(node, SpikeNodebus.CoilSetReflex, bytearray(
+                [coil_index,                                                # coil [3]
+                 int(pulse_settings.power * 255),                           # pulse power [4]
+                 pulse_value & 0xFF,                                        # pulse time lower [5]
+                 (pulse_value & 0xFF00) >> 8,                               # pulse time upper [6]
+                 int(hold_settings.power * 255) if hold_settings else 0,    # hold power [7]
+                 0x00,                                                      # some time lower (probably hold) [8]
+                 0x00,                                                      # some time upper (probably hold) [9]
+                 0x00,                                                      # some time lower (unknown) [10]
+                 0x00,                                                      # some time upper (unknown) [11]
+                 0,                                                         # a unknown time lower (1) [12]
+                 0,                                                         # a unknown time upper (1) [13]
+                 0,                                                         # a unknown time lower (2) [14]
+                 0,                                                         # a unknown time upper (2) [15]
+                 0,                                                         # a unknown time lower (3) [16]
+                 0,                                                         # a unknown time upper (3) [17]
+                 0,                                                         # a unknown time lower (4) [18]
+                 0,                                                         # a unknown time upper (4) [19]
+                 0x40 ^ enable_switch_index,                                # enable switch [20]
+                 0x40 ^ disable_switch_index if disable_switch_index is not None else 0,    # disable switch [21]
+                 0,                                                         # another switch? [22]
+                 param1,                                                    # param5 [23]
+                 param2,                                                    # some time (param6) [24]
+                 param3                                                     # param7 [25]
+                 ]))
 
     @staticmethod
     def _check_coil_switch_combination(switch, coil):
@@ -502,9 +555,17 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         """
         self._check_coil_switch_combination(enable_switch, coil)
         self._check_coil_switch_combination(disable_switch, coil)
+
+        if self.node_firmware_version[coil.hw_driver.node] >= 0x3100:
+            flag1 = 5
+            hold_param1 = 0x28
+        else:
+            flag1 = 2
+            hold_param1 = 0
         self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index ^ (enable_switch.invert * 0x40),
                          disable_switch.hw_switch.index ^ (disable_switch.invert * 0x40),
-                         coil.hw_driver.index, coil.pulse_settings, coil.hold_settings, 2, 6, 0)
+                         coil.hw_driver.index, coil.pulse_settings, coil.hold_settings, flag1, 6, 0,
+                         hold_param1=hold_param1)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and release rule to driver.
@@ -533,6 +594,16 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Configure a driver on Stern Spike."""
         del platform_settings
+
+        try:
+            node, _ = number.split("-")
+        except IndexError:
+            return self.raise_config_error("Coil number has to have the syntax node-index but is: {}".format(number),
+                                           4)
+
+        if int(node) not in self._nodes:
+            self.raise_config_error("Node {} not known for coil {}".format(node, number), 5)
+
         return SpikeDriver(config, number, self)
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
@@ -555,6 +626,24 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure switch on Stern Spike."""
         del platform_config
+
+        try:
+            node, index = number.split("-")
+        except IndexError:
+            return self.raise_config_error("Switch number has to have the syntax node-index but is: {}".format(number),
+                                           2)
+
+        if int(node) not in self._nodes:
+            self.raise_config_error("Node {} not known for switch {}".format(node, number), 3)
+
+        if self.node_firmware_version[int(node)] >= 0x3100:
+            if config.debounce:
+                self.log.debug("Set debounce 30 (about 20ms) for switch %s", number)
+                self.send_cmd_async(int(node), SpikeNodebus.ConfigInput, bytearray([int(index), 30, 30]))
+            else:
+                self.log.debug("Set debounce 2 (1-2ms) for switch %s", number)
+                self.send_cmd_async(int(node), SpikeNodebus.ConfigInput, bytearray([int(index), 2, 2]))
+
         return SpikeSwitch(config, number, self)
 
     async def get_hw_switch_states(self):
@@ -589,6 +678,10 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         if self.config['use_send_key']:
             self._send_key_task = self.machine.clock.loop.create_task(self._send_key())
             self._send_key_task.add_done_callback(self._done)
+
+        if self.config['periodically_query_nodes']:
+            self._query_nodes_task = self.machine.clock.loop.create_task(self._query_status_and_coil_current())
+            self._query_nodes_task.add_done_callback(self._done)
 
         self._light_system = PlatformBatchLightSystem(self.machine.clock, self._light_key,
                                                       self._are_lights_sequential, self._send_multiple_light_update,
@@ -661,6 +754,20 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
                 # wait one second
                 await asyncio.sleep(1, loop=self.machine.clock.loop)
+
+    async def _query_status_and_coil_current(self):
+        while True:
+            for node in self._nodes:
+                # do not query virtual node
+                if node == 0:
+                    continue
+
+                self.log.debug("GetStatus and GetCoilCurrent on node %s", node)
+                await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetStatus, bytearray(), 10)
+                await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetCoilCurrent, bytearray([0]), 12)
+
+                # wait before querying the next board
+                await asyncio.sleep(.5, loop=self.machine.clock.loop)
 
     async def _poll(self):
         while True:
@@ -737,6 +844,13 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             except asyncio.CancelledError:
                 pass
 
+        if self._query_nodes_task:
+            self._query_nodes_task.cancel()
+            try:
+                self.machine.clock.loop.run_until_complete(self._query_nodes_task)
+            except asyncio.CancelledError:
+                pass
+
         if self._writer:
             # shutdown the bridge
             self._writer.write(b'\xf5')
@@ -808,7 +922,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
             if response[-1] != 0:
                 self.log.info("Bridge Status: %s != 0", response[-1])
-            if self._checksum(response[0:-1]) != 0:   # pragma: no cover
+            if self.config['verify_checksums_on_readback'] and self._checksum(response[0:-1]) != 0:   # pragma: no cover
                 self.log.warning("Checksum mismatch for response: %s", "".join("%02x " % b for b in response))
                 # we resync by flushing the input
                 self._writer.transport.serial.reset_input_buffer()
@@ -830,15 +944,17 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         cmd_str.append(0)
         return cmd_str
 
+    def _get_wait_ms_for_cmd(self, cmd):
+        if (cmd & 0xF0) == 0x80:
+            # special case for LED updates
+            return self.config['wait_times'][0x80] if 0x80 in self.config['wait_times'] else 0
+
+        return self.config['wait_times'][cmd] if cmd in self.config['wait_times'] else 0
+
     async def send_cmd_sync(self, node, cmd, data):
         """Send cmd which does not require a response."""
         cmd_str = self._create_cmd_str(node, cmd, data)
-        if (cmd & 0xF0) == 0x80:
-            # special case for LED updates
-            wait_ms = self.config['wait_times'][0x80] if 0x80 in self.config['wait_times'] else 0
-        else:
-            wait_ms = self.config['wait_times'][cmd] if cmd in self.config['wait_times'] else 0
-
+        wait_ms = self._get_wait_ms_for_cmd(cmd)
         await self._send_cmd_without_response(cmd_str, wait_ms)
 
     async def _send_cmd_without_response(self, cmd_str, wait_ms):
@@ -857,7 +973,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
     def send_cmd_async(self, node, cmd, data):
         """Send cmd which does not require a response."""
         cmd_str = self._create_cmd_str(node, cmd, data)
-        wait_ms = self.config['wait_times'][cmd] if cmd in self.config['wait_times'] else 0
+        wait_ms = self._get_wait_ms_for_cmd(cmd)
         # queue command
         self._cmd_queue.put_nowait((cmd_str, wait_ms))
 
@@ -867,6 +983,11 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         self._cmd_queue.put_nowait((data, wait_ms))
 
     def _read_inputs(self, node):
+        if self.node_firmware_version[node] >= 0x3100:
+            # in node firmware 0.49.0 and newer the response uses 12 bytes (10 payload)
+            return self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetInputState, bytearray(), 12)
+
+        # older firmware used 10 bytes responses (8 payload)
         return self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetInputState, bytearray(), 10)
 
     @staticmethod
@@ -946,7 +1067,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
     # pylint: disable-msg=too-many-statements
     # pylint: disable-msg=too-many-branches
-    async def _initialize(self) -> None:
+    async def _initialize(self) -> None:    # noqa
         await self._init_bridge()
 
         self.log.debug("Resetting node bus and configuring traffic.")
@@ -1012,13 +1133,32 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             if not fw_version:
                 self.log.warning("Did not get version for node: %s. Ignoring node.", node)
                 continue
-            self.log.debug("Node: %s Version: %s", node, "".join("0x%02x " % b for b in fw_version))
+            self.log.info("Node: %s Firmware: %s.%s.%s", node, fw_version[1], fw_version[2], fw_version[3])
             if fw_version[0] != node:
                 self.log.warning("Node: %s Version Response looks bogus (node ID does not match): %s",
                                  node, "".join("0x%02x " % b for b in fw_version))
 
             # we need this to calculate the right times for this node
             self.ticks_per_sec[node] = (fw_version[9] << 8) + fw_version[8]
+
+            # remember firmware version of node
+            self.node_firmware_version[node] = fw_version[1] << 16 | fw_version[2] << 8 | fw_version[3]
+
+            self.log.debug("GetFullID on node %s", node)
+            full_board_id_0 = await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetFullBoardId,
+                                                                        bytearray([0]), 18)
+            if not full_board_id_0:
+                self.log.warning("Did not get full_board_id 0 for node: %s.", node)
+
+            full_board_id_1 = await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetFullBoardId,
+                                                                        bytearray([1]), 18)
+            if not full_board_id_1:
+                self.log.warning("Did not get full_board_id 1 for node: %s.", node)
+
+            if full_board_id_0 and full_board_id_1:
+                self.log.info("Node %s: Full Board ID: %s %s",
+                              node, "".join("0x%02x " % b for b in full_board_id_0),
+                              "".join("0x%02x " % b for b in full_board_id_1))
 
             # Set response time (redundant but send multiple times)
             # wait time based on the baud rate of the bus: (460800 * 0x98852841 * 200) >> 0x30 = 0x345
@@ -1029,8 +1169,11 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             self.log.debug("GetChecksum on node %s", node)
             checksum = await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetChecksum,
                                                                  bytearray([0xff, 0x00]), 4)
-            if checksum:
-                self.log.debug("Got Checksum %s for node %s", "".join("0x%02x " % b for b in checksum), node)
+            if checksum and checksum[0] == 0 and checksum[1] == 0 and checksum[2] == 0 and checksum[3] == 0:
+                self.log.info("Checksum good for node %s", node)
+            elif checksum:
+                self.log.warning("Checksum %s for node %s is != 0000. This might indicate a broken firmware.",
+                                 "".join("0x%02x " % b for b in checksum), node)
             else:
                 self.log.warning("Did not get checksum for node %s", node)
 
@@ -1043,10 +1186,85 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             if node == 0:
                 continue
             self.log.debug("GetStatus and GetCoilCurrent on node %s", node)
-            await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetStatus, bytearray(), 10)
+            node_status = await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetStatus, bytearray(), 10)
+            if node_status:
+                self.log.debug("Node: %s Status: %s", node, "".join("0x%02x " % b for b in node_status))
+            else:
+                self.log.warning("Did not get status for node %s", node)
+
+            if self.node_firmware_version[node] >= 0x3100:
+                self.log.debug("SetLEDMask, CoilSetMask, CoilSetOCTime, CoilSetOCBehavior, SetNumLEDsInputs and "
+                               "CoilSetPriority on node %s", node)
+
+                node_status = await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetStatus, bytearray(), 10)
+                if node_status:
+                    self.log.debug("Node: %s Status: %s", node, "".join("0x%02x " % b for b in node_status))
+                else:
+                    self.log.warning("Did not get status for node %s", node)
+
+                # set 96 leds and 60 inputs for now. we can probably speed things up using this command
+                await self.send_cmd_sync(node, SpikeNodebus.SetNumLEDsInputs, bytearray([60, 0, 40, 0]))
+
+                # mask out all coils
+                await self.send_cmd_sync(node, SpikeNodebus.CoilSetMask, bytearray([0xff, 0x01]))
+
+                # mask out all leds
+                await self.send_cmd_sync(node, SpikeNodebus.SetLEDMask, bytearray([0xff] * 12))
+
+                # 5ms oc detect
+                oc_time = int(5 * self.ticks_per_sec[node] / 1000)
+                await self.send_cmd_sync(node, SpikeNodebus.CoilSetOCTime,
+                                         bytearray([oc_time & 0xff, (oc_time >> 8) & 0xff]))
+
+                for coil in range(0, 8):
+                    await self.send_cmd_sync(node, SpikeNodebus.CoilSetMask, bytearray([0xff - (1 << coil), 0x01]))
+                    # pulse coils
+                    self.send_cmd_async(node, SpikeNodebus.CoilFireRelease,
+                                        bytearray([coil, 0xff, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]))
+                    node_status = await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetStatus, bytearray(),
+                                                                            10)
+                    if node_status:
+                        self.log.debug("Node: %s Status: %s", node, "".join("0x%02x " % b for b in node_status))
+                    else:
+                        self.log.warning("Did not get status for node %s", node)
+
+                # enable all coils
+                await self.send_cmd_sync(node, SpikeNodebus.CoilSetMask, bytearray([0, 0]))
+
+                # enable all leds
+                await self.send_cmd_sync(node, SpikeNodebus.SetLEDMask, bytearray([0] * 12))
+
+                # 100ms oc time
+                oc_time = int(self.config['oc_time'] * self.ticks_per_sec[node] / 1000)
+                await self.send_cmd_sync(node, SpikeNodebus.CoilSetOCTime,
+                                         bytearray([oc_time & 0xff, (oc_time >> 8) & 0xff]))
+                # set whatever spike sets
+                await self.send_cmd_sync(node, SpikeNodebus.CoilSetOCBehavior, bytearray([0x01]))
+
+                # set 64 led and 64 inputs (RGB LEDs are not supported yet anyway)
+                await self.send_cmd_sync(node, SpikeNodebus.SetNumLEDsInputs, bytearray([40, 0, 40, 0]))
+
             await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetCoilCurrent, bytearray([0]), 12)
 
+        if self.node_firmware_version[node] >= 0x3100:
+            for node in self._nodes:
+                if node == 0:
+                    continue
+
+                # configure coil priorities
+                priority_response = await self.send_cmd_and_wait_for_response(
+                    node, SpikeNodebus.CoilSetPriority,
+                    bytearray([0x08, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08]), 3)
+
+                if not priority_response:
+                    priority_response = await self.send_cmd_and_wait_for_response(
+                        node, SpikeNodebus.CoilSetPriority,
+                        bytearray([0x04, 0x00, 0x01, 0x02, 0x03, 0x04]), 3)
+
+                    if not priority_response:
+                        self.log.warning("Failed to set coil priority on node %s", node)
+
         self.log.debug("Configuring traffic.")
-        await self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([17]))  # set traffic
+        await self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([0x11]))  # set traffic
 
         self.log.info("SPIKE init done.")
