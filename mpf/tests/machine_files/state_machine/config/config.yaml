@@ -28,3 +28,14 @@ state_machines:
       - source: step1, step2
         target: start
         events: state_machine_reset
+  second_state:
+    starting_state: foo
+    states:
+      bar:
+        label: Bar
+      foo:
+        label: Foo
+    transitions:
+      - source: foo
+        target: bar
+        events: state_machine_outoforder

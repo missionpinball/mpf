@@ -51,3 +51,8 @@ class TestStateMachine(MpfFakeGameTestCase):
 
         self.post_event("state_machine_reset")
         self.assertEqual("start", self.machine.state_machines["my_state"].state)
+
+    def test_starting_state(self):
+        self.assertEqual("foo", self.machine.state_machines["second_state"].state)
+        self.post_event("state_machine_outoforder")
+        self.assertEqual("bar", self.machine.state_machines["second_state"].state)

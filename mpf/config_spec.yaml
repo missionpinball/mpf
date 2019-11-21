@@ -1301,6 +1301,7 @@ state_machines:
     states: dict|str:subconfig(state_machine_states)|
     transitions: list|subconfig(state_machine_transitions)|
     persist_state: single|bool|False
+    starting_state: single|str|start
 state_machine_transitions:
     source: list|str|
     target: single|str|
