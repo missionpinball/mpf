@@ -33,7 +33,7 @@ class StateMachine(SystemWideDevice, ModeDevice):
         if self.config['persist_state']:
             self.raise_config_error("Cannot set persist_state for system-wide state_machine", 1)
 
-        self._start_state("start")
+        self._start_state(self.config['starting_state'])
 
     def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None):
         """Validate transitions."""
@@ -76,7 +76,7 @@ class StateMachine(SystemWideDevice, ModeDevice):
         super().device_loaded_in_mode(mode, player)
         self.player = player
         if not self.state:
-            self._start_state("start")
+            self._start_state(self.config['starting_state'])
         else:
             self._add_handlers_for_current_state()
             self._run_show_for_current_state()
