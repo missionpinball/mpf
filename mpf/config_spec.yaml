@@ -1572,6 +1572,11 @@ spike:
     verify_checksums_on_readback: single|bool|True
     periodically_query_nodes: single|bool|False
     oc_time: single|ms|100
+    default_debounce_open: single|ms|4
+    default_debounce_close: single|ms|4
+spike_switch_overwrites:
+    debounce_open: single|ms|None
+    debounce_close: single|ms|None
 steppers:
     __valid_in__: machine
     __type__: device

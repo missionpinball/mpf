@@ -20,15 +20,62 @@ class SpikeSwitch(SwitchPlatformInterface):
 
     """A switch on a Stern Spike node board."""
 
-    __slots__ = ["node", "index", "platform"]
+    __slots__ = ["node", "index", "platform", "platform_config", "_last_debounce"]
 
-    def __init__(self, config, number, platform):
+    def __init__(self, config, number, platform, platform_config):
         """Initialise switch."""
         super().__init__(config, number)
         self.node, self.index = self.number.split("-")
         self.node = int(self.node)
         self.index = int(self.index)
         self.platform = platform
+        self.platform_config = platform_config
+        self._last_debounce = None
+
+    def configure_debounce_and_recycle(self, enable_debounce, invert_switch, enable_recycle):
+        """Configure debounce time."""
+        if self.platform.node_firmware_version[self.node] < 0x3100:
+            return
+
+        # the logic here is a bit tricky because we use debounce to implement recycle as well
+        # if recycle is enabled we will always debounce the switch closing (or opening if inverted)
+        # this kind of emulates recycling
+
+        if enable_debounce and (not invert_switch or not enable_recycle):
+            if self.platform_config["debounce_open"]:
+                debounce_open_ms = self.platform_config["debounce_open"]
+            else:
+                debounce_open_ms = self.platform.config["default_debounce_open"]
+        else:
+            debounce_open_ms = 2
+
+        if enable_debounce and (invert_switch or not enable_recycle):
+            if self.platform_config["debounce_close"]:
+                debounce_close_ms = self.platform_config["debounce_close"]
+            else:
+                debounce_close_ms = self.platform.config["default_debounce_close"]
+        else:
+            debounce_close_ms = 2
+
+        new_debounce = (debounce_open_ms, debounce_close_ms)
+        if new_debounce == self._last_debounce:
+            return
+
+        self._last_debounce = new_debounce
+
+        debounce_open_value = int(debounce_open_ms * self.platform.ticks_per_sec[self.node] / 1000)
+        debounce_closed_value = int(debounce_close_ms * self.platform.ticks_per_sec[self.node] / 1000)
+        if debounce_open_value > 0xfe:
+            debounce_open_value = 0xfe
+        if debounce_closed_value > 0xfe:
+            debounce_closed_value = 0xfe
+
+        self.platform.log.debug("Set debounce open: %s close: %s (about %sms and %sms) for switch %s",
+                                debounce_open_value, debounce_closed_value, debounce_open_value,
+                                debounce_closed_value, self.number)
+        self.platform.send_cmd_async(self.node, SpikeNodebus.ConfigInput, bytearray([self.index,
+                                                                                     debounce_open_value,
+                                                                                     debounce_closed_value]))
 
     def get_board_name(self):
         """Return name for service mode."""
@@ -402,6 +449,11 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         self.config = self.machine.config_validator.validate_config("spike", self.machine.config['spike'])
         self._configure_device_logging_and_debug("Spike", self.config)
 
+    @classmethod
+    def get_switch_config_section(cls):
+        """Return switch config section."""
+        return "spike_switch_overwrites"
+
     async def _send_multiple_light_update(self, sequential_brightness_list):
         common_fade_ms = sequential_brightness_list[0][2]
         if common_fade_ms < 0:
@@ -524,6 +576,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         0x00 0x40 0x00 0x00 0x00 0x00 0x00 Len: 25
         """
         self._check_coil_switch_combination(enable_switch, coil)
+        enable_switch.hw_switch.configure_debounce_and_recycle(enable_switch.debounce, enable_switch.invert,
+                                                               coil.recycle)
         self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index ^ (enable_switch.invert * 0x40),
                          None, coil.hw_driver.index,
                          coil.pulse_settings, None, 0, 0, 0)
@@ -541,6 +595,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         0x00 0x4a 0x40 0x00 0x00 0x06 0x05  Len: 25
         """
         self._check_coil_switch_combination(enable_switch, coil)
+        enable_switch.hw_switch.configure_debounce_and_recycle(enable_switch.debounce, enable_switch.invert,
+                                                               coil.recycle)
         self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index ^ (enable_switch.invert * 0x40),
                          None, coil.hw_driver.index,
                          coil.pulse_settings, coil.hold_settings, 0, 6, 5)
@@ -562,6 +618,10 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         else:
             flag1 = 2
             hold_param1 = 0
+        enable_switch.hw_switch.configure_debounce_and_recycle(enable_switch.debounce, enable_switch.invert,
+                                                               coil.recycle)
+        disable_switch.hw_switch.configure_debounce_and_recycle(disable_switch.debounce, disable_switch.invert,
+                                                                coil.recycle)
         self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index ^ (enable_switch.invert * 0x40),
                          disable_switch.hw_switch.index ^ (disable_switch.invert * 0x40),
                          coil.hw_driver.index, coil.pulse_settings, coil.hold_settings, flag1, 6, 0,
@@ -578,6 +638,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
         """
         self._check_coil_switch_combination(enable_switch, coil)
+        enable_switch.hw_switch.configure_debounce_and_recycle(enable_switch.debounce, enable_switch.invert,
+                                                               coil.recycle)
         self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index ^ (enable_switch.invert * 0x40),
                          None, coil.hw_driver.index,
                          coil.pulse_settings, None, 0, 1, 0)
@@ -585,11 +647,15 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
     def clear_hw_rule(self, switch, coil):
         """Disable hardware rule for this coil."""
         del switch
-        self.send_cmd_async(coil.hw_driver.node, SpikeNodebus.CoilSetReflex, bytearray(
-            [coil.hw_driver.index, 0, 0, 0, 0, 0x00, 0x00, 0x00, 0x00,
-             0, 0, 0, 0, 0, 0, 0, 0,
-             0, 0, 0,
-             0, 0, 0]))
+        if self.node_firmware_version[coil.hw_driver.node] >= 0x3100:
+            self.send_cmd_async(coil.hw_driver.node, SpikeNodebus.CoilSetReflex, bytearray(
+                [coil.hw_driver.index] + [0x00] * 33))
+        else:
+            self.send_cmd_async(coil.hw_driver.node, SpikeNodebus.CoilSetReflex, bytearray(
+                [coil.hw_driver.index, 0, 0, 0, 0, 0x00, 0x00, 0x00, 0x00,
+                 0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0,
+                 0, 0, 0]))
 
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Configure a driver on Stern Spike."""
@@ -625,10 +691,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure switch on Stern Spike."""
-        del platform_config
-
         try:
-            node, index = number.split("-")
+            node, _ = number.split("-")
         except IndexError:
             return self.raise_config_error("Switch number has to have the syntax node-index but is: {}".format(number),
                                            2)
@@ -636,15 +700,9 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         if int(node) not in self._nodes:
             self.raise_config_error("Node {} not known for switch {}".format(node, number), 3)
 
-        if self.node_firmware_version[int(node)] >= 0x3100:
-            if config.debounce:
-                self.log.debug("Set debounce 30 (about 20ms) for switch %s", number)
-                self.send_cmd_async(int(node), SpikeNodebus.ConfigInput, bytearray([int(index), 30, 30]))
-            else:
-                self.log.debug("Set debounce 2 (1-2ms) for switch %s", number)
-                self.send_cmd_async(int(node), SpikeNodebus.ConfigInput, bytearray([int(index), 2, 2]))
-
-        return SpikeSwitch(config, number, self)
+        switch = SpikeSwitch(config, number, self, platform_config)
+        switch.configure_debounce_and_recycle(config.debounce, config.invert, False)
+        return switch
 
     async def get_hw_switch_states(self):
         """Return current switch states."""
@@ -1219,8 +1277,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                 for coil in range(0, 8):
                     await self.send_cmd_sync(node, SpikeNodebus.CoilSetMask, bytearray([0xff - (1 << coil), 0x01]))
                     # pulse coils
-                    self.send_cmd_async(node, SpikeNodebus.CoilFireRelease,
-                                        bytearray([coil, 0xff, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]))
+                    await self.send_cmd_sync(node, SpikeNodebus.CoilFireRelease,
+                                             bytearray([coil, 0xff, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]))
                     node_status = await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetStatus, bytearray(),
                                                                             10)
                     if node_status:
