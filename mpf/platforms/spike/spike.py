@@ -636,14 +636,6 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         if int(node) not in self._nodes:
             self.raise_config_error("Node {} not known for switch {}".format(node, number), 3)
 
-        if self.node_firmware_version[int(node)] >= 0x3100:
-            if config.debounce:
-                self.log.debug("Set debounce 30 (about 20ms) for switch %s", number)
-                self.send_cmd_async(int(node), SpikeNodebus.ConfigInput, bytearray([int(index), 30, 30]))
-            else:
-                self.log.debug("Set debounce 2 (1-2ms) for switch %s", number)
-                self.send_cmd_async(int(node), SpikeNodebus.ConfigInput, bytearray([int(index), 2, 2]))
-
         return SpikeSwitch(config, number, self)
 
     async def get_hw_switch_states(self):
