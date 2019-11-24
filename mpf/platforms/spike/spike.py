@@ -1251,8 +1251,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                 self.log.warning("Did not get status for node %s", node)
 
             if self.node_firmware_version[node] >= 0x3100:
-                self.log.debug("SetLEDMask, CoilSetMask, CoilSetOCTime, CoilSetOCBehavior, SetNumLEDsInputs and "
-                               "CoilSetPriority on node %s", node)
+                self.log.debug("SetLEDMask, CoilSetMask, CoilSetOCTime, CoilSetOCBehavior, and SetNumLEDsInputs "
+                               "on node %s", node)
 
                 node_status = await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetStatus, bytearray(), 10)
                 if node_status:
@@ -1302,19 +1302,13 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetCoilCurrent, bytearray([0]), 12)
 
         if self.node_firmware_version[node] >= 0x3100:
-            for node in self._nodes:
-                if node == 0:
-                    continue
-
-                # configure coil priorities
-                priority_response = await self.send_cmd_and_wait_for_response(
-                    node, SpikeNodebus.CoilSetPriority,
-                    bytearray([0x08, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08]), 3)
-
-                if not priority_response:
+            for node, config in self.config['node_config'].items():
+                if config['coil_priorities']:
+                    # configure coil priorities
                     priority_response = await self.send_cmd_and_wait_for_response(
                         node, SpikeNodebus.CoilSetPriority,
-                        bytearray([0x04, 0x00, 0x01, 0x02, 0x03, 0x04]), 3)
+                        bytearray([len(config['coil_priorities'])] + config['coil_priorities'] +
+                                  [len(config['coil_priorities'])]), 3)
 
                     if not priority_response:
                         self.log.warning("Failed to set coil priority on node %s", node)
