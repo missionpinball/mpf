@@ -686,19 +686,41 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         if number == "0-0":
             return SpikeBacklight(number, self, self.machine.clock.loop, 3)
 
+        try:
+            node, index = number.split("-")
+        except IndexError:
+            return self.raise_config_error("Light number has to have the syntax node-index but is: {}".format(number),
+                                           7)
+
+        if int(node) in self.config['node_config'] and \
+                self.config['node_config'][int(node)]['num_leds'] is not None and \
+                int(index) > self.config['node_config'][int(node)]['num_leds']:
+            return self.raise_config_error("Light {} is larger than the maximum configured led {} for "
+                                           "node {}".format(number,
+                                                            self.config['node_config'][int(node)]['num_leds'],
+                                                            node), 8)
+
         # TODO: validate that light number is not used in a stepper and a light
         return SpikeLight(number, self, self._light_system)
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure switch on Stern Spike."""
         try:
-            node, _ = number.split("-")
+            node, index = number.split("-")
         except IndexError:
             return self.raise_config_error("Switch number has to have the syntax node-index but is: {}".format(number),
                                            2)
 
         if int(node) not in self._nodes:
             self.raise_config_error("Node {} not known for switch {}".format(node, number), 3)
+
+        if int(node) in self.config['node_config'] and \
+                self.config['node_config'][int(node)]['num_inputs'] is not None and \
+                int(index) > self.config['node_config'][int(node)]['num_inputs']:
+            return self.raise_config_error("Switch {} is larger than the maximum configured input {} for "
+                                           "node {}".format(number,
+                                                            self.config['node_config'][int(node)]['num_inputs'],
+                                                            node), 6)
 
         switch = SpikeSwitch(config, number, self, platform_config)
         switch.configure_debounce_and_recycle(config.debounce, config.invert, False)
@@ -1260,8 +1282,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                 else:
                     self.log.warning("Did not get status for node %s", node)
 
-                # set 96 leds and 60 inputs for now. we can probably speed things up using this command
-                await self.send_cmd_sync(node, SpikeNodebus.SetNumLEDsInputs, bytearray([60, 0, 40, 0]))
+                # set 96 leds and 60 inputs during OC detection
+                await self.send_cmd_sync(node, SpikeNodebus.SetNumLEDsInputs, bytearray([0x60, 0, 0x40, 0]))
 
                 # mask out all coils
                 await self.send_cmd_sync(node, SpikeNodebus.CoilSetMask, bytearray([0xff, 0x01]))
@@ -1299,8 +1321,12 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                 # set whatever spike sets
                 await self.send_cmd_sync(node, SpikeNodebus.CoilSetOCBehavior, bytearray([0x01]))
 
-                # set 64 led and 64 inputs (RGB LEDs are not supported yet anyway)
-                await self.send_cmd_sync(node, SpikeNodebus.SetNumLEDsInputs, bytearray([40, 0, 40, 0]))
+                # set number of LEDs and inputs based on node config
+                if node in self.config['node_config'] and self.config['node_config'][node]["num_leds"] is not None and \
+                        self.config['node_config'][node]["num_inputs"] is not None:
+                    await self.send_cmd_sync(node, SpikeNodebus.SetNumLEDsInputs,
+                                             bytearray([self.config['node_config'][node]["num_leds"], 0,
+                                                        self.config['node_config'][node]["num_inputs"], 0]))
 
             await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetCoilCurrent, bytearray([0]), 12)
 
