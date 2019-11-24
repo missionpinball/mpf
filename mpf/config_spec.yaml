@@ -1581,6 +1581,8 @@ spike_switch_overwrites:
     debounce_close: single|ms|None
 spike_node:
     coil_priorities: list|int|None
+    num_leds: single|int|None
+    num_inputs: single|int|None
 steppers:
     __valid_in__: machine
     __type__: device
