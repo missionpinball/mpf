@@ -1575,9 +1575,12 @@ spike:
     oc_time: single|ms|100
     default_debounce_open: single|ms|4
     default_debounce_close: single|ms|4
+    node_config: dict|int:subconfig(spike_node)|None
 spike_switch_overwrites:
     debounce_open: single|ms|None
     debounce_close: single|ms|None
+spike_node:
+    coil_priorities: list|int|None
 steppers:
     __valid_in__: machine
     __type__: device

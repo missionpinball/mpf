@@ -1304,6 +1304,18 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
             await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetCoilCurrent, bytearray([0]), 12)
 
+        if self.node_firmware_version[node] >= 0x3100:
+            for node, config in self.config['node_config'].items():
+                if config['coil_priorities']:
+                    # configure coil priorities
+                    priority_response = await self.send_cmd_and_wait_for_response(
+                        node, SpikeNodebus.CoilSetPriority,
+                        bytearray([len(config['coil_priorities'])] + config['coil_priorities'] +
+                                  [len(config['coil_priorities'])]), 3)
+
+                    if not priority_response:
+                        self.log.warning("Failed to set coil priority on node %s", node)
+
         self.log.debug("Configuring traffic.")
         await self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([0x11]))  # set traffic
 
