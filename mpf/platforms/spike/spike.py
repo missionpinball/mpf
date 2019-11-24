@@ -1261,7 +1261,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                     self.log.warning("Did not get status for node %s", node)
 
                 # set 96 leds and 60 inputs for now. we can probably speed things up using this command
-                await self.send_cmd_sync(node, SpikeNodebus.SetNumLEDsInputs, bytearray([60, 0, 40, 0]))
+                await self.send_cmd_sync(node, SpikeNodebus.SetNumLEDsInputs, bytearray([0x60, 0, 0x3c, 0]))
 
                 # mask out all coils
                 await self.send_cmd_sync(node, SpikeNodebus.CoilSetMask, bytearray([0xff, 0x01]))
@@ -1298,9 +1298,6 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                                          bytearray([oc_time & 0xff, (oc_time >> 8) & 0xff]))
                 # set whatever spike sets
                 await self.send_cmd_sync(node, SpikeNodebus.CoilSetOCBehavior, bytearray([0x01]))
-
-                # set 64 led and 64 inputs (RGB LEDs are not supported yet anyway)
-                await self.send_cmd_sync(node, SpikeNodebus.SetNumLEDsInputs, bytearray([40, 0, 40, 0]))
 
             await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetCoilCurrent, bytearray([0]), 12)
 
