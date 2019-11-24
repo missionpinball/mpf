@@ -645,6 +645,10 @@ class SpikePlatformFirmware0_49Test(MpfTestCase):
             self._checksummed_cmd(b'\x88\x05\x70\x0d\x05\x05'): b'',  # set debounce
             self._checksummed_cmd(b'\x88\x05\x70\x0f\x05\x05'): b'',  # set debounce
             self._checksummed_cmd(b'\x8a\x05\x70\x01\x05\x05'): b'',  # set debounce
+            self._checksummed_cmd(b'\x88\x0c\x43\x08\x00\x05\x06\x07\x01\x04\x03\x02\x08', 3):
+                self._checksummed_response(b'\x00'),  # set coil priorities
+            self._checksummed_cmd(b'\x8b\x0c\x43\x08\x00\x01\x03\x05\x06\x07\x02\x04\x08', 3):
+                self._checksummed_response(b'\x00'),  # set coil priorities
         }
         for node in [b'\x81', b'\x88', b'\x89', b'\x8a', b'\x8b']:
             additional_commands = {
@@ -673,8 +677,6 @@ class SpikePlatformFirmware0_49Test(MpfTestCase):
                 self._checksummed_cmd(node + b'\x04\x48\x80\x00'): b'',                        # SetOCTime
                 self._checksummed_cmd(node + b'\x03\x44\x01'): b'',                            # SetOCTime
                 self._checksummed_cmd(node + b'\x06\x14\x28\x00\x28\x00'): b'',                # SetNumLEDsInputs,
-                self._checksummed_cmd(node + b'\x0c\x43\x08\x00\x01\x02\x03\x04\x05\x06\x07\x08', 3):
-                    self._checksummed_response(b'\x00'),    # set coil priorities
             }
             self.serialMock.expected_commands.update(additional_commands)
 
