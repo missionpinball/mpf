@@ -23,8 +23,8 @@ class BallSave(SystemWideDevice, ModeDevice):
     collection = 'ball_saves'
     class_label = 'ball_save'
 
-    __slots__ = ["active_time", "unlimited_saves", "source_playfield", "delay", "enabled", "timer_started", "saves_remaining",
-                 "early_saved", "state", "_scheduled_balls"]
+    __slots__ = ["active_time", "unlimited_saves", "source_playfield", "delay", "enabled", "timer_started",
+                 "saves_remaining", "early_saved", "state", "_scheduled_balls"]
 
     def __init__(self, machine: "MachineController", name: str) -> None:
         """Initialise ball save."""
