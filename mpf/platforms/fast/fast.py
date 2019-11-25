@@ -7,8 +7,8 @@ boards.
 import os
 from copy import deepcopy
 from distutils.version import StrictVersion
-import serial.tools.list_ports
 from typing import Dict, Set
+import serial.tools.list_ports
 
 from mpf.platforms.fast.fast_io_board import FastIoBoard
 from mpf.platforms.fast.fast_servo import FastServo
@@ -234,23 +234,23 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if self.config['ports'][0] == "autodetect":
             devices = [port.device for port in serial.tools.list_ports.comports()]
             # Look for four devices with sequential tails of 0-3 or A-D
-            SEQS = (("Q", "1", "2", "3"), ("Q", "B", "C", "D"))
+            seqs = (("0", "1", "2", "3"), ("A", "B", "C", "D"))
             for d in devices:
-                for seq in SEQS:
+                for seq in seqs:
                     if d[-1] == seq[0]:
                         root = d[:-1]
                         if "{}{}".format(root, seq[1]) in devices and \
                            "{}{}".format(root, seq[2]) in devices and \
                            "{}{}".format(root, seq[3]) in devices:
-                           ports = ("{}{}".format(root, seq[1]), "{}{}".format(root, seq[2]))
-                           self.debug_log("Autodetect found ports! {}".format(ports))
-                           break
+                            ports = ("{}{}".format(root, seq[1]), "{}{}".format(root, seq[2]))
+                            self.debug_log("Autodetect found ports! {}".format(ports))
+                            break
                 # If ports were found, skip the rest of the devices
                 if ports:
                     break
             if not ports:
                 raise RuntimeError("Unable to auto-detect FAST hardware from available devices: {}".format(
-                            ", ".join(devices)))
+                                   ", ".join(devices)))
         else:
             ports = self.config['ports']
 
