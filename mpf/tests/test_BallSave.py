@@ -495,8 +495,8 @@ class TestBallSave(MpfGameTestCase):
         self.advance_time_and_run(10)
         self.assertBallNumber(1)
 
-        # Set a player value that's very short, like 3s
-        self.machine.game.player["save_time"] = 3000
+        # Set a player value that's very short, like 2s
+        self.machine.game.player["save_time"] = 2
         self.post_event('enable6')
         self.advance_time_and_run()
         # Make sure the save is active
@@ -507,7 +507,7 @@ class TestBallSave(MpfGameTestCase):
         self.assertFalse(self.machine.ball_saves["dynamic_active_time"].enabled)
 
         # Set a player value that's longer and run the same tests
-        self.machine.game.player["save_time"] = 6000
+        self.machine.game.player["save_time"] = 10
         self.post_event('enable6')
         self.advance_time_and_run()
         # Make sure the save is active

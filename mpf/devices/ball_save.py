@@ -76,7 +76,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         self.enabled = True
         self.state = 'enabled'
         self.active_time = self.config['active_time'].evaluate([])
-        self.debug_log("Enabling. Auto launch: {}, Balls to save: {}, Active time: {} ms".format(
+        self.debug_log("Enabling. Auto launch: {}, Balls to save: {}, Active time: {}s".format(
                        self.config['auto_launch'],
                        self.config['balls_to_save'],
                        self.active_time))
@@ -143,17 +143,17 @@ class BallSave(SystemWideDevice, ModeDevice):
 
         if self.active_time > 0:
             self.debug_log('Starting ball save timer: %ss',
-                           self.active_time / 1000.0)
-
+                           self.active_time)
+            active_time_ms = self.active_time * 1000
             self.delay.add(name='disable',
-                           ms=(self.active_time +
+                           ms=(active_time_ms +
                                self.config['grace_period']),
                            callback=self.disable)
             self.delay.add(name='grace_period',
-                           ms=self.active_time,
+                           ms=active_time_ms,
                            callback=self._grace_period)
             self.delay.add(name='hurry_up',
-                           ms=(self.active_time -
+                           ms=(active_time_ms -
                                self.config['hurry_up_time']),
                            callback=self._hurry_up)
 
