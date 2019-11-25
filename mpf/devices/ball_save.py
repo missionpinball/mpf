@@ -23,7 +23,7 @@ class BallSave(SystemWideDevice, ModeDevice):
     collection = 'ball_saves'
     class_label = 'ball_save'
 
-    __slots__ = ["unlimited_saves", "source_playfield", "delay", "enabled", "timer_started", "saves_remaining",
+    __slots__ = ["active_time", "unlimited_saves", "source_playfield", "delay", "enabled", "timer_started", "saves_remaining",
                  "early_saved", "state", "_scheduled_balls"]
 
     def __init__(self, machine: "MachineController", name: str) -> None:
@@ -39,6 +39,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         self.early_saved = 0
         self.state = 'disabled'
         self._scheduled_balls = 0
+        self.active_time = 0
 
     async def _initialize(self) -> None:
         await super()._initialize()
@@ -74,16 +75,18 @@ class BallSave(SystemWideDevice, ModeDevice):
         self.early_saved = 0
         self.enabled = True
         self.state = 'enabled'
-        self.debug_log("Enabling. Auto launch: %s, Balls to save: %s",
+        self.active_time = self.config['active_time'].evaluate([])
+        self.debug_log("Enabling. Auto launch: {}, Balls to save: {}, Active time: {}".format(
                        self.config['auto_launch'],
-                       self.config['balls_to_save'])
+                       self.config['balls_to_save'],
+                       self.active_time))
 
         # Enable shoot again
         self.machine.events.add_handler('ball_drain',
                                         self._ball_drain_while_active,
                                         priority=1000)
 
-        if (self.config['active_time'] > 0 and
+        if (self.active_time > 0 and
                 not self.config['timer_start_events']):
             self.timer_start()
 
@@ -138,19 +141,19 @@ class BallSave(SystemWideDevice, ModeDevice):
         desc: The ball save called (name) has just start its countdown timer.
         '''
 
-        if self.config['active_time'] > 0:
+        if self.active_time > 0:
             self.debug_log('Starting ball save timer: %ss',
-                           self.config['active_time'] / 1000.0)
+                           self.active_time / 1000.0)
 
             self.delay.add(name='disable',
-                           ms=(self.config['active_time'] +
+                           ms=(self.active_time +
                                self.config['grace_period']),
                            callback=self.disable)
             self.delay.add(name='grace_period',
-                           ms=self.config['active_time'],
+                           ms=self.active_time,
                            callback=self._grace_period)
             self.delay.add(name='hurry_up',
-                           ms=(self.config['active_time'] -
+                           ms=(self.active_time -
                                self.config['hurry_up_time']),
                            callback=self._hurry_up)
 
