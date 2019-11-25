@@ -76,7 +76,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         self.enabled = True
         self.state = 'enabled'
         self.active_time = self.config['active_time'].evaluate([])
-        self.debug_log("Enabling. Auto launch: {}, Balls to save: {}, Active time: {}".format(
+        self.debug_log("Enabling. Auto launch: {}, Balls to save: {}, Active time: {} ms".format(
                        self.config['auto_launch'],
                        self.config['balls_to_save'],
                        self.active_time))

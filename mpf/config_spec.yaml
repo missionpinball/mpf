@@ -199,7 +199,7 @@ ball_saves:
     __valid_in__: machine, mode
     __type__: device
     source_playfield: single|machine(ball_devices)|playfield
-    active_time: single|template_secs|0
+    active_time: single|template_ms|0
     eject_delay: single|ms|0
     only_last_ball: single|bool|False
     hurry_up_time: single|ms|0

@@ -484,3 +484,35 @@ class TestBallSave(MpfGameTestCase):
         self.drain_all_balls()
         self.advance_time_and_run()
         self.assertGameIsNotRunning()
+
+    def test_dynamic_active_time(self):
+        # prepare game
+        self.fill_troughs()
+        self.advance_time_and_run()
+
+        # start game
+        self.start_game()
+        self.advance_time_and_run(10)
+        self.assertBallNumber(1)
+
+        # Set a player value that's very short, like 3s
+        self.machine.game.player["save_time"] = 3000
+        self.post_event('enable6')
+        self.advance_time_and_run()
+        # Make sure the save is active
+        self.assertTrue(self.machine.ball_saves["dynamic_active_time"].enabled)
+        # Run out the short time
+        self.advance_time_and_run(4)
+        # The ball save should be finished now
+        self.assertFalse(self.machine.ball_saves["dynamic_active_time"].enabled)
+
+        # Set a player value that's longer and run the same tests
+        self.machine.game.player["save_time"] = 6000
+        self.post_event('enable6')
+        self.advance_time_and_run()
+        # Make sure the save is active
+        self.assertTrue(self.machine.ball_saves["dynamic_active_time"].enabled)
+        # Run out the short time
+        self.advance_time_and_run(4)
+        # The ball save should still be active
+        self.assertTrue(self.machine.ball_saves["dynamic_active_time"].enabled)
