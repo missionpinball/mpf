@@ -77,3 +77,6 @@ ball_saves:
     unlimited_delay:
         enable_events: enable5
         delayed_eject_events: eject5
+    dynamic_active_time:
+        active_time: current_player.save_time
+        enable_events: enable6
