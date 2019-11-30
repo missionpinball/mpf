@@ -322,6 +322,10 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
     async def _clear_read_buffer(self):
         """Clear read buffer."""
+        # pylint: disable-msg=protected-access
+        if self.debug and self._reader._buffer:
+            # pylint: disable-msg=protected-access
+            self.log.debug("Flushed: %s%s", self._reader._buffer, "".join(" 0x%02x" % b for b in self._reader._buffer))
         if hasattr(self._writer.transport, "_serial"):
             # pylint: disable-msg=protected-access
             self._writer.transport._serial.reset_input_buffer()
@@ -353,8 +357,8 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             if self.config['connection'] == "serial":
                 if self.config['disable_dtr']:
                     # pylint: disable-msg=protected-access
-                    self._writer.transport._serial.dtr = False
-                    # pylint: disable-msg=protected-access
+                    self._writer.transport._serial.dtr = None
+                # pylint: disable-msg=protected-access
                 self._writer.transport._serial.open()
 
             # give the serial a few ms to read the first bytes
@@ -384,12 +388,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             self.send_byte(LisyDefines.InfoGetConnectedLisyHardware)
             type_str = await self._read_string()
 
-            if type_str in (b'LISY1', b'LISY35', b'APC'):
-                self._coils_start_at_one = True
-            elif type_str == b'LISY80':
-                self._coils_start_at_one = False
-            else:
-                raise AssertionError("Invalid LISY hardware version {}".format(type_str))
+            self._coils_start_at_one = bool(type_str == b'LISY80')
 
             self.send_byte(LisyDefines.InfoLisyVersion)
             lisy_version = await self._read_string()
@@ -703,12 +702,12 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             byte = bytes()
 
         if self._send_length_of_command:
-            length = len(byte) + 2  # include command and length byte
+            length = len(byte)  # include command and length byte
             byte = bytes([length]) + byte
 
         cmd_str = bytes([cmd])
         cmd_str += byte
-        self.log.debug("Sending %s %s", cmd, "".join(" 0x%02x" % b for b in byte))
+        self.log.debug("Sending 0x%02x%s (Cmd: %s)", cmd, "".join(" 0x%02x" % b for b in byte), cmd)
         self._writer.write(cmd_str)
 
     async def send_byte_and_read_response(self, cmd: int, byte: bytes = None, read_bytes=0):
@@ -721,7 +720,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         """Send a command with null terminated string."""
         assert self._writer is not None
 
-        self.log.debug("Sending %s %s (%s)", cmd, string, "".join(" 0x%02x" % ord(b) for b in string))
+        self.log.debug("Sending %s (0x%02x) %s (%s)", cmd, cmd, string, "".join(" 0x%02x" % ord(b) for b in string))
         self._writer.write(bytes([cmd]) + string.encode() + bytes([0]))
 
     async def _read_byte(self) -> int:
