@@ -484,22 +484,56 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.start_game()
         # and enable
         self.post_event("accrual4_enable")
+        self.assertPlaceholderEvaluates(True, "device.accruals.accrual4.enabled")
+        self.assertPlaceholderEvaluates(False, "device.accruals.accrual4.completed")
 
         # should work once
         self.post_event("accrual4_step1")
         self.post_event("accrual4_step2")
         self.assertEqual(1, self._events["logicblock_accrual4_complete"])
+        self.assertPlaceholderEvaluates(True, "device.accruals.accrual4.enabled")
+        self.assertPlaceholderEvaluates(True, "device.accruals.accrual4.completed")
 
         # enabled but still completed
         self.post_event("accrual4_step1")
         self.post_event("accrual4_step2")
         self.assertEqual(1, self._events["logicblock_accrual4_complete"])
+        self.assertPlaceholderEvaluates(True, "device.accruals.accrual4.enabled")
+        self.assertPlaceholderEvaluates(True, "device.accruals.accrual4.completed")
 
         # should work after reset
         self.post_event("accrual4_reset")
+        self.assertPlaceholderEvaluates(True, "device.accruals.accrual4.enabled")
+        self.assertPlaceholderEvaluates(False, "device.accruals.accrual4.completed")
         self.post_event("accrual4_step1")
         self.post_event("accrual4_step2")
         self.assertEqual(2, self._events["logicblock_accrual4_complete"])
+        self.assertPlaceholderEvaluates(True, "device.accruals.accrual4.enabled")
+        self.assertPlaceholderEvaluates(True, "device.accruals.accrual4.completed")
+
+    def test_reset_and_no_disable_on_complete(self):
+        self.mock_event("logicblock_accrual10_complete")
+
+        # start game
+        self.start_game()
+        # and enable
+        self.post_event("accrual10_enable")
+        self.assertPlaceholderEvaluates(True, "device.accruals.accrual10.enabled")
+        self.assertPlaceholderEvaluates(False, "device.accruals.accrual10.completed")
+
+        # should work once
+        self.post_event("accrual10_step1")
+        self.post_event("accrual10_step2")
+        self.assertEqual(1, self._events["logicblock_accrual10_complete"])
+
+        # and instantly reset and work again
+        self.assertPlaceholderEvaluates(True, "device.accruals.accrual10.enabled")
+        self.assertPlaceholderEvaluates(False, "device.accruals.accrual10.completed")
+        self.post_event("accrual10_step1")
+        self.post_event("accrual10_step2")
+        self.assertEqual(2, self._events["logicblock_accrual10_complete"])
+        self.assertPlaceholderEvaluates(True, "device.accruals.accrual10.enabled")
+        self.assertPlaceholderEvaluates(False, "device.accruals.accrual10.completed")
 
     def test_player_change(self):
         self.mock_event("logicblock_accrual5_complete")
