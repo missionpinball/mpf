@@ -43,6 +43,12 @@ class TestAchievement(MpfFakeGameTestCase):
 
         self.start_two_player_game()
         self.assertModeRunning('base')
+        self.advance_time_and_run(10)
+
+        _, sub1 = self.machine.placeholder_manager.build_raw_template(
+            "device.achievements.achievement1.state").evaluate_and_subscribe([])
+        _, sub2 = self.machine.placeholder_manager.build_raw_template(
+            "device.achievements.achievement2.state").evaluate_and_subscribe([])
 
         # start disabled
         self.assertEqual("achievement1_disabled", achievement._show.name)
@@ -57,6 +63,10 @@ class TestAchievement(MpfFakeGameTestCase):
         # should not start
         self.post_event("achievement1_start")
         self.assertEqual("disabled", achievement.state)
+        self.assertPlaceholderEvaluates("disabled", "device.achievements.achievement1.state")
+        self.assertPlaceholderEvaluates("disabled", "device.achievements.achievement2.state")
+        self.assertFalse(sub1.done())
+        self.assertFalse(sub2.done())
 
         # enable
         self.post_event("achievement1_enable")
@@ -65,8 +75,11 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual(1, self._events['achievement_achievement1_state_enabled'])
         self.assertEqual(0, self._events['achievement_achievement1_state_started'])
         self.assertEqual(0, self._events['achievement_achievement1_state_completed'])
+        self.assertPlaceholderEvaluates("enabled", "device.achievements.achievement1.state")
         self.assertEqual("achievement1_enabled", achievement._show.name)
         self.assertFalse(self._last_event_kwargs['achievement_achievement1_state_enabled']['restore'])
+        self.assertTrue(sub1.done())
+        self.assertFalse(sub2.done())
 
         self.post_event("achievement1_start")
         self.assertEqual("started", achievement.state)
@@ -74,8 +87,12 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual(1, self._events['achievement_achievement1_state_enabled'])
         self.assertEqual(1, self._events['achievement_achievement1_state_started'])
         self.assertEqual(0, self._events['achievement_achievement1_state_completed'])
+        self.assertPlaceholderEvaluates("started", "device.achievements.achievement1.state")
         self.assertEqual("achievement1_started", achievement._show.name)
         self.assertFalse(self._last_event_kwargs['achievement_achievement1_state_started']['restore'])
+
+        _, sub1 = self.machine.placeholder_manager.build_raw_template(
+            "device.achievements.achievement1.state").evaluate_and_subscribe([])
 
         self.drain_all_balls()
 
@@ -83,11 +100,16 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertBallNumber(1)
         self.assertEqual("achievement1_disabled", achievement._show.name)
         self.assertEqual("disabled", achievement.state)
+        self.assertPlaceholderEvaluates("disabled", "device.achievements.achievement1.state")
         self.assertFalse(self._last_event_kwargs['achievement_achievement1_state_disabled']['restore'])
+        self.assertTrue(sub1.done())
 
         self.post_event("achievement1_enable")
         self.assertEqual("achievement1_enabled", achievement._show.name)
         self.assertEqual("enabled", achievement.state)
+
+        _, sub1 = self.machine.placeholder_manager.build_raw_template(
+            "device.achievements.achievement1.state").evaluate_and_subscribe([])
 
         self.drain_all_balls()
         self.assertPlayerNumber(1)
@@ -95,6 +117,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual("achievement1_started", achievement._show.name)
         self.assertEqual("started", achievement.state)
         self.assertTrue(self._last_event_kwargs['achievement_achievement1_state_started']['restore'])
+        self.assertTrue(sub1.done())
 
         self.post_event("achievement1_complete")
         self.assertEqual("achievement1_completed", achievement._show.name)
@@ -353,17 +376,30 @@ class TestAchievement(MpfFakeGameTestCase):
         self.machine_run()
         self.assertEventCalled("achievement_achievement17_state_enabled")
 
+        _, sub = self.machine.placeholder_manager.build_raw_template(
+            "device.achievements.achievement17.selected").evaluate_and_subscribe([])
+        _, sub2 = self.machine.placeholder_manager.build_raw_template(
+            "device.achievements.achievement16.selected").evaluate_and_subscribe([])
+
         # but only once
         self.mock_event("achievement_achievement17_state_enabled")
         a17.enable()
         self.machine_run()
         self.assertEventNotCalled("achievement_achievement17_state_enabled")
+        self.assertPlaceholderEvaluates("enabled", "device.achievements.achievement17.state")
+        self.assertPlaceholderEvaluates(False, "device.achievements.achievement17.selected")
+        self.assertFalse(sub.done())
+        self.assertFalse(sub2.done())
 
         # test select
         self.mock_event("achievement_achievement17_state_selected")
         a17.select()
         self.machine_run()
         self.assertEventCalled("achievement_achievement17_state_selected")
+        self.assertPlaceholderEvaluates("enabled", "device.achievements.achievement17.state")
+        self.assertPlaceholderEvaluates(True, "device.achievements.achievement17.selected")
+        self.assertTrue(sub.done())
+        self.assertFalse(sub2.done())
 
         # but only once
         self.mock_event("achievement_achievement17_state_selected")
@@ -581,11 +617,20 @@ class TestAchievement(MpfFakeGameTestCase):
 
         self.start_game()
 
+        _, sub = self.machine.placeholder_manager.build_raw_template(
+            "device.achievement_groups.group2.enabled").evaluate_and_subscribe([])
+
+        self.assertPlaceholderEvaluates(False, "device.achievement_groups.group2.enabled")
+
         # test via methods
         a4.enable()
         a5.enable()
         a6.enable()
         g2.enable()
+        self.machine_run()
+
+        self.assertPlaceholderEvaluates(True, "device.achievement_groups.group2.enabled")
+        self.assertTrue(sub.done())
 
         self.assertEqual("enabled", a4.state)
         self.assertEqual("enabled", a5.state)
@@ -644,6 +689,9 @@ class TestAchievement(MpfFakeGameTestCase):
         self.advance_time_and_run(.1)
         self.assertTrue(g1.enabled)
 
+        _, sub = self.machine.placeholder_manager.build_raw_template(
+            "device.achievement_groups.group1.selected_member").evaluate_and_subscribe([])
+
         selected.start()
         self.advance_time_and_run(.1)
         self.assertFalse(g1.enabled)
@@ -654,6 +702,8 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertTrue(g1.enabled)
         selected2 = g1._selected_member
         self.assertIsNot(selected, selected2)
+
+        self.assertTrue(sub.done())
 
         selected2.start()
         self.advance_time_and_run(.1)

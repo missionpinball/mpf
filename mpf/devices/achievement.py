@@ -41,12 +41,9 @@ class Achievement(ModeDevice):
     def state(self, value):
         """Set current state."""
         try:
-            old = self._player.achievements[self.name][0]
             self._player.achievements[self.name][0] = value
-            self.notify_virtual_change("state", old, value)
         except (AttributeError, KeyError):
             self._player.achievements[self.name] = [value, False]
-            self.notify_virtual_change("state", None, value)
 
     @property
     def can_be_selected_for_start(self):
@@ -66,12 +63,9 @@ class Achievement(ModeDevice):
     def selected(self, value):
         """Set current selected."""
         try:
-            old = self._player.achievements[self.name][1]
             self._player.achievements[self.name][1] = value
-            self.notify_virtual_change("selected", old, value)
         except (AttributeError, KeyError):
             self._player.achievements[self.name] = [None, value]
-            self.notify_virtual_change("state", False, value)
 
     def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Validate and parse config."""
@@ -295,6 +289,9 @@ class Achievement(ModeDevice):
         else:
             self._restore_state()
 
+        # state might have changed
+        self.notify_virtual_change("selected", None, self.state)
+
     def _restore_state(self):
         if self.state == "started" and not (
                 self.config['restart_on_next_ball_when_started']):
@@ -302,6 +299,9 @@ class Achievement(ModeDevice):
         elif self.state == "enabled" and not (
                 self.config['enable_on_next_ball_when_enabled']):
             self.state = "disabled"
+        else:
+            # state might still have changed because of player change
+            self.notify_virtual_change("state", None, self.state)
 
         self._run_state(restore=True)
 
