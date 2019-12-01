@@ -41,12 +41,9 @@ class Achievement(ModeDevice):
     def state(self, value):
         """Set current state."""
         try:
-            old = self._player.achievements[self.name][0]
             self._player.achievements[self.name][0] = value
-            self.notify_virtual_change("state", old, value)
         except (AttributeError, KeyError):
             self._player.achievements[self.name] = [value, False]
-            self.notify_virtual_change("state", None, value)
 
     @property
     def can_be_selected_for_start(self):
@@ -66,12 +63,9 @@ class Achievement(ModeDevice):
     def selected(self, value):
         """Set current selected."""
         try:
-            old = self._player.achievements[self.name][1]
             self._player.achievements[self.name][1] = value
-            self.notify_virtual_change("selected", old, value)
         except (AttributeError, KeyError):
             self._player.achievements[self.name] = [None, value]
-            self.notify_virtual_change("state", False, value)
 
     def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Validate and parse config."""
