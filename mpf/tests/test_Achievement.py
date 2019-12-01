@@ -91,6 +91,9 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual("achievement1_started", achievement._show.name)
         self.assertFalse(self._last_event_kwargs['achievement_achievement1_state_started']['restore'])
 
+        _, sub1 = self.machine.placeholder_manager.build_raw_template(
+            "device.achievements.achievement1.state").evaluate_and_subscribe([])
+
         self.drain_all_balls()
 
         self.assertPlayerNumber(2)
@@ -99,10 +102,14 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual("disabled", achievement.state)
         self.assertPlaceholderEvaluates("disabled", "device.achievements.achievement1.state")
         self.assertFalse(self._last_event_kwargs['achievement_achievement1_state_disabled']['restore'])
+        self.assertTrue(sub1.done())
 
         self.post_event("achievement1_enable")
         self.assertEqual("achievement1_enabled", achievement._show.name)
         self.assertEqual("enabled", achievement.state)
+
+        _, sub1 = self.machine.placeholder_manager.build_raw_template(
+            "device.achievements.achievement1.state").evaluate_and_subscribe([])
 
         self.drain_all_balls()
         self.assertPlayerNumber(1)
@@ -110,6 +117,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual("achievement1_started", achievement._show.name)
         self.assertEqual("started", achievement.state)
         self.assertTrue(self._last_event_kwargs['achievement_achievement1_state_started']['restore'])
+        self.assertTrue(sub1.done())
 
         self.post_event("achievement1_complete")
         self.assertEqual("achievement1_completed", achievement._show.name)
