@@ -209,7 +209,10 @@ class TextUi(MpfController):
     def _update_switches(self, change, *args, **kwargs):
         del args
         del kwargs
-        sw, switch_widget = self.switches[change.name]
+        try:
+            sw, switch_widget = self.switches[change.name]
+        except KeyError:
+            return
         if sw.state:
             switch_widget.custom_colour = "active_switch"
         else:
