@@ -1,7 +1,7 @@
 #config_version=5
 mode:
   code: mpf.modes.high_score.code.high_score.HighScore
-  priority: 500
+  priority: 1500
   start_events: game_ending, start_high_score
   game_mode: False
   use_wait_queue: true
