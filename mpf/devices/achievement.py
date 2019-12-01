@@ -289,6 +289,9 @@ class Achievement(ModeDevice):
         else:
             self._restore_state()
 
+        # state might have changed
+        self.notify_virtual_change("selected", None, self.state)
+
     def _restore_state(self):
         if self.state == "started" and not (
                 self.config['restart_on_next_ball_when_started']):
@@ -296,6 +299,9 @@ class Achievement(ModeDevice):
         elif self.state == "enabled" and not (
                 self.config['enable_on_next_ball_when_enabled']):
             self.state = "disabled"
+        else:
+            # state might still have changed because of player change
+            self.notify_virtual_change("state", None, self.state)
 
         self._run_state(restore=True)
 
