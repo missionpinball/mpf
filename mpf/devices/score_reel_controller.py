@@ -81,7 +81,7 @@ class ScoreReelController:
         reset themselves automatically between players.
         """
         del kwargs
-        # unlight every
+        # unlight active score reel group
         if self.active_scorereelgroup:
             self.active_scorereelgroup.unlight()
 
