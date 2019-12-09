@@ -417,3 +417,31 @@ class TestScoreReelsVirtual(MpfFakeGameTestCase):
         self.assertSwitchState("score_1p_100_0", 0)
         self.assertSwitchState("score_1p_10_9", 0)
         self.assertSwitchState("score_1p_100_9", 1)
+
+    def test_inactive_player_scoring(self):
+        self.start_two_player_game()
+        self.assertGameIsRunning()
+        self.assertPlayerNumber(1)
+
+        self.advance_time_and_run()
+        self.assertEqual([None, 0, 0, 0, 0], self.machine.score_reel_groups["player1"].desired_value_list)
+        self.assertEqual([None, 0], self.machine.score_reel_groups["player2"].desired_value_list)
+
+        # increasing score for player two should only affect score of that player
+        self.machine.game.player_list[1].score = 3333
+        self.advance_time_and_run()
+        self.assertEqual([None, 0, 0, 0, 0], self.machine.score_reel_groups["player1"].desired_value_list)
+        self.assertEqual([None, 3], self.machine.score_reel_groups["player2"].desired_value_list)
+
+        self.machine.game.player_list[0].score = 2222
+        self.advance_time_and_run()
+        self.assertEqual([None, 2, 2, 2, 0], self.machine.score_reel_groups["player1"].desired_value_list)
+        self.assertEqual([None, 3], self.machine.score_reel_groups["player2"].desired_value_list)
+
+        self.drain_all_balls()
+        self.assertPlayerNumber(2)
+
+        self.machine.game.player_list[0].score = 4444
+        self.advance_time_and_run()
+        self.assertEqual([None, 4, 4, 4, 0], self.machine.score_reel_groups["player1"].desired_value_list)
+        self.assertEqual([None, 3], self.machine.score_reel_groups["player2"].desired_value_list)
