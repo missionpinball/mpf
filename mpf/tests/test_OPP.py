@@ -1,4 +1,6 @@
 import copy
+
+from mpf.platforms.opp.opp import OppHardwarePlatform
 from unittest.mock import MagicMock
 
 import time
@@ -57,6 +59,7 @@ class OPPCommon(MpfTestCase):
     def __init__(self, methodName):
         super().__init__(methodName)
         self.expected_duration = 2
+        self.serialMock = None
 
     def get_machine_path(self):
         return 'tests/machine_files/opp/'
@@ -136,8 +139,10 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         }
         super().setUp()
 
+        assert isinstance(self.machine.default_platform, OppHardwarePlatform)
+
         self._wait_for_processing()
-        self.assertEqual(0x00020000, self.machine.default_platform.min_version)
+        self.assertEqual(0x00020000, self.machine.default_platform.min_version["com1"])
 
         self.assertFalse(self.serialMock.expected_commands)
         self.maxDiff = 100000

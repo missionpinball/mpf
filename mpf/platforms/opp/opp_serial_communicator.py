@@ -83,11 +83,11 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         self.platform.process_received_message(self.chain_serial, resp)
 
         # see if version of firmware is new enough
-        if self.platform.min_version < MIN_FW:
+        if self.platform.min_version[self.chain_serial] < MIN_FW:
             raise AssertionError("Firmware version mismatch. MPF requires"
                                  " the OPP Gen2 processor to be firmware {}, but yours is {}".
                                  format(self._create_vers_str(MIN_FW),
-                                        self._create_vers_str(self.platform.min_version)))
+                                        self._create_vers_str(self.platform.min_version[self.chain_serial])))
 
         # get initial value for inputs
         self.log.debug("Getting initial inputs states for %s", self.chain_serial)
