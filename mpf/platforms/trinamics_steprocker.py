@@ -50,6 +50,7 @@ class TrinamicsStepRocker(StepperPlatform):
         """Configure a smart stepper device in platform.
 
         Args:
+            number: Number of the stepper.
             config (dict): Configuration of device
         """
         return TrinamicsTMCLStepper(number, config, self.tmcl, self.machine)

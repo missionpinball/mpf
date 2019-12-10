@@ -358,8 +358,8 @@ class Counter(LogicBlock):
         """Add to the value of this counter.
 
         Args:
-            kwargs: Used for the "value" member which contains how much to add
-            to the counter.
+            value: Value to add to the counter.
+            kwargs: Additional arguments.
         """
         evaluated_value = value.evaluate_or_none(kwargs)
         if evaluated_value is None:
@@ -375,8 +375,8 @@ class Counter(LogicBlock):
         """Subtract from the value of this counter.
 
         Args:
-            kwargs: Used for the "value" member which contains how much to
-            subtract from the counter.
+            value: Value to subtract from the counter.
+            kwargs: Additional arguments.
         """
         evaluated_value = value.evaluate_or_none(kwargs)
         if evaluated_value is None:
@@ -392,8 +392,8 @@ class Counter(LogicBlock):
         """Set the internal value of the counter.
 
         Args:
-            kwargs: Used for the "value" member which contains what to set
-            the counter value to.
+            value: Value to add to jump to.
+            kwargs: Additional arguments.
         """
         evaluated_value = value.evaluate_or_none(kwargs)
         if evaluated_value is None:

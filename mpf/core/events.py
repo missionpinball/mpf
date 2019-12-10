@@ -112,6 +112,7 @@ class EventManager(MpfController):
                 priority of 2. (Or 3 or 10 or 100000.) The numbers don't matter.
                 They're called from highest to lowest. (i.e. priority 100 is
                 called before priority 1.)
+            blocking_facility: Facility which can block this event.
             **kwargs: Any any additional keyword/argument pairs entered here
                 will be attached to the handler and called whenever that
                 handler is called. Note these are in addition to kwargs that
@@ -294,8 +295,7 @@ class EventManager(MpfController):
 
         Args:
             event: The name of the event you want to remove the handler from.
-            handler:
-                The handler method you want to remove.
+            handler: The handler method you want to remove.
 
         Note that keyword arguments for the handler are not taken into
         consideration. In other words, this method only removes the registered

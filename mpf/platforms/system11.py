@@ -146,6 +146,8 @@ class System11OverlayPlatform(DriverPlatform):
 
         Args:
             config: Driver config dict
+            number: Number of the driver.
+            platform_settings: Platform specific config.
         """
         orig_number = number
 
@@ -224,6 +226,7 @@ class System11OverlayPlatform(DriverPlatform):
             driver: A reference to the original platform class Driver instance.
             pulse_settings: Settings for the pulse or None
             hold_settings:Settings for hold or None
+            side: Whatever the driver is on A or C side.
 
         This action will be serviced immediately if it can, or ASAP otherwise.
         """

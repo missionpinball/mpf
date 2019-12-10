@@ -94,7 +94,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
                 switch.name, self._delay_switch_hit, 1)
 
     def _sequence_advance(self, event_name, **kwargs):
-        # Since we can track multiple simulatenous sequences (e.g. two balls
+        # Since we can track multiple simultaneous sequences (e.g. two balls
         # going into an orbit in a row), we first have to see whether this
         # switch is starting a new sequence or continuing an existing one
         del kwargs
@@ -109,7 +109,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
             if len(self._sequence_events) > 1:
                 # start a new sequence
                 self._start_new_sequence()
-            else:
+            elif not self.active_delays:
                 # if it only has one step it will finish right away
                 self._completed()
         else:
@@ -192,6 +192,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
 
     def _delay_switch_hit(self, name, ms, **kwargs):
         del kwargs
+        self.debug_log("Delaying sequence by %sms", ms)
         self.delay.reset(name=name + '_delay_timer',
                          ms=ms,
                          callback=self._release_delay,

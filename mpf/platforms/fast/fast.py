@@ -205,6 +205,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         Args:
             msg: messaged which was received
+            remote_processor: Processor which sent the message.
         """
         if msg == "!SRE":
             # ignore system interrupt
@@ -310,6 +311,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         Args:
             msg: switch number
+            remote_processor: Processor which sent the message.
         """
         assert remote_processor == "NET"
         self.machine.switch_controller.process_switch_by_num(state=0,
@@ -321,6 +323,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         Args:
             msg: switch number
+            remote_processor: Processor which sent the message.
         """
         assert remote_processor == "NET"
         self.machine.switch_controller.process_switch_by_num(state=1,
@@ -332,6 +335,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         Args:
             msg: switch number
+            remote_processor: Processor which sent the message.
         """
         assert remote_processor == "NET"
         self.machine.switch_controller.process_switch_by_num(state=0,
@@ -343,6 +347,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         Args:
             msg: switch number
+            remote_processor: Processor which sent the message.
         """
         assert remote_processor == "NET"
         self.machine.switch_controller.process_switch_by_num(state=1,
@@ -354,6 +359,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         Args:
             msg: switch states as bytearray
+            remote_processor: Processor which sent the message.
         """
         assert remote_processor == "NET"
         self.debug_log("Received SA: %s", msg)
@@ -425,6 +431,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         Args:
             config: Driver config.
+            number: Number of this driver.
+            platform_settings: Platform specific settings.
 
         Returns: Driver object
         """
@@ -553,7 +561,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         can be mixed and matched in the same machine.
 
         Args:
+            number: Number of this switch.
             config: Switch config.
+            platform_config: Platform specific settings.
 
         Returns: Switch object.
         """

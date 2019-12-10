@@ -45,7 +45,7 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
         """Configure a servo device in platform.
 
         Args:
-            config (dict): Configuration of device
+            number: Number of the servo.
         """
         try:
             controller_str, number_str = number.split("-")

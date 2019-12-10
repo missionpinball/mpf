@@ -720,7 +720,8 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         """Configure a stepper (axis) device in platform.
 
         Args:
-            number: Number of the smart servo
+            number: Number of the stepper.
+            config: Config for this stepper.
         """
         try:
             board, number = number.split("-")

@@ -188,6 +188,8 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
 
         Args:
             config: Dictionary of settings for the driver.
+            number: Number of this driver.
+            platform_settings: Platform specific settings
 
         Returns a reference to the PROCDriver object which is the actual object you
         can use to pulse(), patter(), enable(), etc.
@@ -231,8 +233,9 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         """Configure a P3-ROC switch.
 
         Args:
-            config: Dictionary of settings for the switch. In the case
-                of the P3-ROC, it uses the following:
+            number: Number of this switch
+            config: Dictionary of settings for the switch.
+            platform_config: Platform specific settings.
 
         Returns: A configured switch object.
         """

@@ -59,7 +59,7 @@ class DeviceManager(MpfController):
 
         Args:
             device: The device that changed.
-            notify:
+            notify: Attribute name which changed.
             old: The old value.
             value: The new value.
 
