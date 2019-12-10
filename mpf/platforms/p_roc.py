@@ -90,6 +90,8 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
 
         Args:
             config: Dictionary of settings for the driver.
+            number: Number of this driver
+            platform_settings: Platform specific setting for this driver.
 
         Returns a reference to the PROCDriver object which is the actual object
         you can use to pulse(), patter(), enable(), etc.
@@ -120,6 +122,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         Args:
             number: String number of the switch to configure.
             config: SwitchConfig settings.
+            platform_config: Platform specific settings.
 
         Returns: A configured switch object.
 

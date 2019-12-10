@@ -131,6 +131,7 @@ class Mode(LogMixin):
             mode_priority: Integer value of what you want this mode to run at. If you
                 don't specify one, it will use the "Mode: priority" setting from
                 this mode's configuration file.
+            callback: Callback to call when this mode has been started.
             **kwargs: Catch-all since this mode might start from events with
                 who-knows-what keyword arguments.
 

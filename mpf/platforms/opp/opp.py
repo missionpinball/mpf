@@ -692,6 +692,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         Args:
             config: Config dict.
+            number: Number of this driver.
+            platform_settings: Platform specific settings.
         """
         if not self.opp_connection:
             self.raise_config_error("A request was made to configure an OPP solenoid, "
@@ -721,7 +723,9 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Configure a switch.
 
         Args:
+            number: Number of this switch.
             config: Config dict.
+            platform_config: Platform specific settings.
         """
         del platform_config
         del config

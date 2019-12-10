@@ -107,8 +107,10 @@ class ScoreReelController:
         automatically.
 
         Args:
-            score: Integer value of the new score. This parameter is ignored,
+            value: Integer value of the new score. This parameter is ignored,
                 and included only because the score change event passes it.
+            change: Change compared to the previous score-
+            player_num: Player number of the player who's score changed.
         """
         del kwargs
         del change

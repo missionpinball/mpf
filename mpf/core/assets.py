@@ -338,6 +338,7 @@ class BaseAssetManager(MpfController, LogMixin):
                 is not needed for all assets, as any asset file found not in
                 the config dictionary will be set up with the folder it was
                 found in's asset_defaults settings.)
+            mode_name: Name of the mode this asset is used loaded by.
             path: A full core path to the root folder that will be searched
                 for assets. This should *not* include the asset-specific path
                 string. If None, machine's root folder will be searched.
@@ -485,6 +486,7 @@ class BaseAssetManager(MpfController, LogMixin):
 
         Args:
             key_name: String of the load: key name.
+            priority: Priority of this asset.
         """
         del priority
         assets = set()
