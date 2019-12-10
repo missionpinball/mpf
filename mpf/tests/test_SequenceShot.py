@@ -218,3 +218,17 @@ class TestShots(MpfTestCase):
         self.assertEventNotCalled("sequence_mode_event_hit")
         self.assertEventNotCalled("sequence_mode_switch_hit")
 
+    def test_single_switch_sequence(self):
+        self.mock_event("sequence4_hit")
+        self.hit_and_release_switch("seq4_delay")
+        self.machine_run()
+        self.hit_and_release_switch("seq4_1")
+        self.machine_run()
+        self.assertEventNotCalled("sequence4_hit")
+
+        # works after delay
+        self.advance_time_and_run(1.5)
+        self.hit_and_release_switch("seq4_1")
+        self.machine_run()
+        self.assertEventCalled("sequence4_hit")
+
