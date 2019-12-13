@@ -155,10 +155,6 @@ class MpfLoader(Reader, Scanner, Parser, Composer, MpfConstructor, MpfResolver):
         MpfResolver.__init__(self, loadumper=self)
 
 
-for ch in list(u'yYnNoO'):
-    del Resolver.yaml_implicit_resolvers[ch]
-
-
 class YamlInterface(FileInterface):
 
     """File interface for yaml files."""
