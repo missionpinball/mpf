@@ -110,10 +110,31 @@ bool_1: yes
 bool_2: no
 bool_3: true
 bool_4: false
+bool_5: True
+bool_6: False
 int_1: 123
 yaml.scalarfloat.ScalarFloat_1: 1.0
 
         """
+
+        values = {
+            "str_1": "+1",
+            "str_2": "032",
+            "str_3": "on",
+            "str_4": "off",
+            "str_5": "123e45",
+            "str_6": "hi",
+            "str_7": "2:10",
+            "str_8": "2:10.1",
+            "bool_1": True,
+            "bool_2": False,
+            "bool_3": True,
+            "bool_4": False,
+            "bool_5": True,
+            "bool_6": False,
+            "int_1": 123,
+            "yaml.scalarfloat.ScalarFloat_1": 1.0,
+        }
 
         parsed_config = YamlRoundtrip.process(config)
 
@@ -121,3 +142,4 @@ yaml.scalarfloat.ScalarFloat_1: 1.0
             if not type(v) is eval(k.split('_')[0]):
                 raise AssertionError('YAML value "{}" is {}, not {}'.format(v,
                     type(v), eval(k.split('_')[0])))
+            self.assertEqual(values[k], v)
