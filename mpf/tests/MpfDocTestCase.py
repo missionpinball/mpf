@@ -122,8 +122,14 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
     def command_start_game(self, num_balls_known=3):
         self.start_game(num_balls_known=int(num_balls_known))
 
+    def command_add_player(self):
+        self.add_player()
+
     def command_stop_game(self, stop_time=1):
         self.stop_game(float(stop_time))
+
+    def command_start_two_player_game(self):
+        self.start_two_player_game()
 
     def command_drain_all_balls(self):
         self.drain_all_balls()
