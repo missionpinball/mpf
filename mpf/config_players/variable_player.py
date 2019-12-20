@@ -81,14 +81,22 @@ class VariablePlayer(ConfigPlayer):
         if entry['action'] == "add":
             if entry['player']:
                 # specific player
-                self.machine.game.player_list[entry['player'] - 1][var] += value
+                try:
+                    self.machine.game.player_list[entry['player'] - 1][var] += value
+                except IndexError:
+                    self.warning_log("Failed to set player var %s for player %s. There are only %s players.",
+                                     var, entry['player'] - 1, self.machine.game.num_players)
             else:
                 # default to current player
                 self.machine.game.player[var] += value
         elif entry['action'] == "set":
             if entry['player']:
                 # specific player
-                self.machine.game.player_list[entry['player'] - 1][var] = value
+                try:
+                    self.machine.game.player_list[entry['player'] - 1][var] = value
+                except IndexError:
+                    self.warning_log("Failed to set player var %s for player %s. There are only %s players.",
+                                     var, entry['player'] - 1, self.machine.game.num_players)
             else:
                 # default to current player
                 self.machine.game.player[var] = value
