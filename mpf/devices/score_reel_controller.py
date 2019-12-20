@@ -172,7 +172,7 @@ class ScoreReelController:
         if self.active_scorereelgroup:
             self.active_scorereelgroup.unlight()
         self.active_scorereelgroup = None
-        self.player_to_scorereel_map = []
+        self.player_to_scorereel_map = {}
 
     def _ball_ending(self, queue=None, **kwargs):
         del kwargs
