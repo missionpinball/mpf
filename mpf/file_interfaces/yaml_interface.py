@@ -13,7 +13,7 @@ from collections.abc import Hashable
 import ruamel.yaml as yaml  # pylint: disable-msg=useless-import-alias
 from ruamel.yaml.error import MarkedYAMLError
 from ruamel.yaml.reader import Reader
-from ruamel.yaml.resolver import BaseResolver, Resolver
+from ruamel.yaml.resolver import BaseResolver
 from ruamel.yaml.scanner import Scanner
 from ruamel.yaml.parser import Parser
 from ruamel.yaml.composer import Composer
