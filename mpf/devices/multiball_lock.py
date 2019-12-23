@@ -144,7 +144,7 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
                 self.config['locked_ball_counting_strategy']))
 
     def _register_handlers(self):
-        priority = (self.mode and self.mode.priority or 0) +
+        priority = (self.mode and self.mode.priority or 0) + \
             self.config['priority']
         # register on ball_enter of lock_devices
         for device in self.lock_devices:
