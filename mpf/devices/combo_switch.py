@@ -186,7 +186,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
 
                 return
 
-            self._switch_state('both')
+            self._switch_state('both', triggering_switch=1)
         elif self.config['max_offset_time'] >= 0:
             self.delay.add_if_doesnt_exist(self.config['max_offset_time'] * 1000, self._post_only_one_active_event,
                                            "switch_1_only", number=1)
@@ -208,7 +208,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
                                self.config['max_offset_time'])
                 return
 
-            self._switch_state('both')
+            self._switch_state('both', triggering_switch=2)
         elif self.config['max_offset_time'] >= 0:
             self.delay.add_if_doesnt_exist(self.config['max_offset_time'] * 1000, self._post_only_one_active_event,
                                            "switch_2_only", number=2)
@@ -222,20 +222,20 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
                        'releases')
         self._switches_1_active = None
         if self._switches_2_active and self._state == 'both':
-            self._switch_state('one')
+            self._switch_state('one', triggering_switch=1)
         elif self._state == 'one':
-            self._switch_state('inactive')
+            self._switch_state('inactive', triggering_switch=1)
 
     def _release_switches_2(self):
         self.debug_log('Switches_2 has passed the release time and is now '
                        'releases')
         self._switches_2_active = None
         if self._switches_1_active and self._state == 'both':
-            self._switch_state('one')
+            self._switch_state('one', triggering_switch=2)
         elif self._state == 'one':
-            self._switch_state('inactive')
+            self._switch_state('inactive', triggering_switch=2)
 
-    def _switch_state(self, state):
+    def _switch_state(self, state, triggering_switch):
         """Post events for current step."""
         if state not in self.states:
             raise ValueError("Received invalid state: {}".format(state))
@@ -247,7 +247,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
         self.debug_log("New State: %s", state)
 
         for event in self.config['events_when_{}'.format(state)]:
-            self.machine.events.post(event)
+            self.machine.events.post(event, triggering_switch=triggering_switch)
             '''event: (combo_switch)_(state)
             desc: Combo switch (name) changed to state (state).
 
