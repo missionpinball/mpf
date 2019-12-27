@@ -473,7 +473,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         return light.node * 100 + light.index
 
     @staticmethod
-    def _are_lights_sequential(a, b):
+    def _are_lights_sequential(a: SpikeLight, b: SpikeLight):
         """Return True if lights are sequential."""
         return a.node == b.node and a.index + 1 == b.index
 
