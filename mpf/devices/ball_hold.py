@@ -210,7 +210,7 @@ class BallHold(EnableDisableMixin, SystemWideDevice, ModeDevice):
         return balls_released
 
     def _register_handlers(self):
-        priority = (self.mode and self.mode.priority or 0) + \
+        priority = (self.mode.priority if self.mode else 0) + \
             self.config['priority']
         # register on ball_enter of hold_devices
         for device in self.hold_devices:
