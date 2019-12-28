@@ -108,6 +108,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
         self.delay.clear()
 
     def _switch_1_went_active(self, switch_name, **kwargs):
+        del kwargs
         self.debug_log('A switch from switches_1 just went active')
         self.delay.remove('switch_1_inactive')
 
@@ -122,6 +123,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
                                            'switch_1_active')
 
     def _switch_2_went_active(self, switch_name, **kwargs):
+        del kwargs
         self.debug_log('A switch from switches_2 just went active')
         self.delay.remove('switch_2_inactive')
 
@@ -136,6 +138,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
                                            'switch_2_active')
 
     def _switch_1_went_inactive(self, switch_name, **kwargs):
+        del kwargs
         self.debug_log('A switch from switches_1 just went inactive')
         for switch in self.config['switches_1']:
             if switch.state:
@@ -152,6 +155,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
                                            'switch_1_inactive')
 
     def _switch_2_went_inactive(self, switch_name, **kwargs):
+        del kwargs
         self.debug_log('A switch from switches_2 just went inactive')
         for switch in self.config['switches_2']:
             if switch.state:
