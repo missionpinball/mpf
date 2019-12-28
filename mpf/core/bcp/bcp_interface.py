@@ -553,8 +553,9 @@ class BcpInterface(MpfController):
         """Process BCP message.
 
         Args:
-            cmd:
-            kwargs:
+            cmd: The command for this message.
+            kwargs: Arguments for the command.
+            client: Client which send this message.
         """
         if self._debug_to_console or self._debug_to_file:
             if 'rawbytes' in kwargs:
@@ -629,10 +630,12 @@ class BcpInterface(MpfController):
         """Process an incoming switch state change request from a remote BCP host.
 
         Args:
+            client: Client which sent the switch state.
             name: String name of the switch to set.
             state: Integer representing the state this switch will be set to.
                 1 = active, 0 = inactive, -1 means this switch will be flipped
                 from whatever its current state is to the opposite state.
+            kwargs: Additional arguments (unused)
         """
         del kwargs
         del client

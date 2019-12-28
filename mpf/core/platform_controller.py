@@ -228,11 +228,11 @@ class PlatformController(MpfController):
         Pulse and then enable driver. Cancel pulse and enable when switch is released or a disable switch is hit.
 
         Args:
-            enable_switch:
-            disable_switch:
-            driver:
-            pulse_setting:
-            hold_settings:
+            enable_switch: Switch to enable coil.
+            disable_switch: Switch to disable coil.
+            driver: Driver to enable.
+            pulse_setting: Pulse setttings.
+            hold_settings: Hold settings.
         """
         platform = self._check_and_get_platform(enable_switch.switch, driver.driver)
         self._check_and_get_platform(disable_switch.switch, driver.driver)

@@ -20,8 +20,9 @@ class BaseSerialCommunicator:
 
         Args:
             platform(mpf.core.platform.BasePlatform): the platform
-            port:
-            baud:
+            port: Port to open.
+            baud: Baudrate to use
+            xonxoff (bool): Use xonxoff as flow control
         """
         self.machine = platform.machine     # type: MachineController
         self.platform = platform

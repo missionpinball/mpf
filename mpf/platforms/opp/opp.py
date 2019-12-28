@@ -5,6 +5,7 @@ platform hardware, including the solenoid, input, incandescent, and neopixel
 boards.
 """
 import asyncio
+from collections import defaultdict
 
 from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
 
@@ -62,7 +63,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self.num_gen2_brd = 0
         self.gen2_addr_arr = {}             # type: Dict[str, Dict[int, int]]
         self.bad_crc = 0
-        self.min_version = 0xffffffff
+        self.min_version = defaultdict(lambda: 0xffffffff)
         self._poll_task = {}                # type: Dict[str, asyncio.Task]
         self._incand_task = None            # type: asyncio.Task
 
@@ -230,16 +231,16 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         for chain_serial, versions in self.gen2_addr_arr.items():
             for chain_id, version in versions.items():
-                if self.min_version != version:
+                if self.min_version[chain_serial] != version:
                     self.raise_config_error("Version mismatch. Board {}-{} has version {:d}.{:d}.{:d}.{:d} which is not"
-                                            " the minimal version"
+                                            " the minimal version "
                                             "{:d}.{:d}.{:d}.{:d}".format(chain_serial, chain_id, (version >> 24) & 0xFF,
                                                                          (version >> 16) & 0xFF, (version >> 8) & 0xFF,
                                                                          version & 0xFF,
-                                                                         (self.min_version >> 24) & 0xFF,
-                                                                         (self.min_version >> 16) & 0xFF,
-                                                                         (self.min_version >> 8) & 0xFF,
-                                                                         self.min_version & 0xFF), 1)
+                                                                         (self.min_version[chain_serial] >> 24) & 0xFF,
+                                                                         (self.min_version[chain_serial] >> 16) & 0xFF,
+                                                                         (self.min_version[chain_serial] >> 8) & 0xFF,
+                                                                         self.min_version[chain_serial] & 0xFF), 1)
 
     def register_processor_connection(self, serial_number, communicator):
         """Register the processors to the platform.
@@ -492,8 +493,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             else:
                 self.gen2_addr_arr[chain_serial][msg[curr_index]] = version
 
-            if version < self.min_version:
-                self.min_version = version
+            if version < self.min_version[chain_serial]:
+                self.min_version[chain_serial] = version
             if version == BAD_FW_VERSION:
                 raise AssertionError("Original firmware sent only to Brian before adding "
                                      "real version numbers. The firmware must be updated before "
@@ -692,6 +693,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         Args:
             config: Config dict.
+            number: Number of this driver.
+            platform_settings: Platform specific settings.
         """
         if not self.opp_connection:
             self.raise_config_error("A request was made to configure an OPP solenoid, "
@@ -721,7 +724,9 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Configure a switch.
 
         Args:
+            number: Number of this switch.
             config: Config dict.
+            platform_config: Platform specific settings.
         """
         del platform_config
         del config
@@ -826,7 +831,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
     def _verify_coil_and_switch_fit(self, switch, coil):
         chain_serial, card, solenoid = coil.hw_driver.number.split('-')
         sw_chain_serial, sw_card, sw_num = switch.hw_switch.number.split('-')
-        if self.min_version >= 0x00020000:
+        if self.min_version[chain_serial] >= 0x00020000:
             if chain_serial != sw_chain_serial or card != sw_card:
                 self.raise_config_error('Invalid switch being configured for driver. Driver = {} '
                                         'Switch = {}. Driver and switch have to be on the same '
@@ -893,7 +898,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     def _remove_switch_coil_mapping(self, switch_num, driver: "OPPSolenoid"):
         """Remove mapping between switch and coil."""
-        if self.min_version < 0x00020000:
+        if self.min_version[driver.sol_card.chain_serial] < 0x00020000:
             return
 
         _, _, coil_num = driver.number.split('-')
@@ -911,7 +916,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     def _add_switch_coil_mapping(self, switch_num, driver: "OPPSolenoid"):
         """Add mapping between switch and coil."""
-        if self.min_version < 0x00020000:
+        if self.min_version[driver.sol_card.chain_serial] < 0x00020000:
             return
         _, _, coil_num = driver.number.split('-')
         msg = bytearray()

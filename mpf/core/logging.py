@@ -49,6 +49,7 @@ class LogMixin:
                 are "none", "basic", or "full".
             file_level: The level of logging for the console. Valid options
                 are "none", "basic", or "full".
+            url_base: Base URL for docs links in exceptions.
         """
         if url_base:
             self._url_base = url_base

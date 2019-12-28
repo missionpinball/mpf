@@ -32,7 +32,7 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         """Create features and set default variables.
 
         Args:
-            machine(mpf.core.machine.MachineController:
+            machine(mpf.core.machine.MachineController: The machine.
         """
         self.machine = machine
         self.features = {}
@@ -345,6 +345,7 @@ class StepperPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
         Args:
             number: Number of the smart servo
+            config: Config for this stepper.
         """
         raise NotImplementedError
 
@@ -406,7 +407,9 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         object which will be called to access the hardware.
 
         Args:
+            number: Switch number.
             config : Config of switch.
+            platform_config: Platform specific settings.
 
         """
         raise NotImplementedError

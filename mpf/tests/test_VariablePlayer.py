@@ -144,6 +144,10 @@ class TestVariablePlayer(MpfFakeGameTestCase):
         self.post_event("score_float3")
         self.assertPlayerVarEqual(2394, "score")
 
+        # should not crash
+        self.post_event("set_player7")
+        self.post_event("add_player7")
+
         # stop game and mode
         self.machine.service.start_service()
         self.advance_time_and_run()

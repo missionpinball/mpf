@@ -297,6 +297,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
                 used to identify these settings for later removal. If any
                 settings in the stack already have this key, those settings
                 will be replaced with these new settings.
+            start_time: Time this occured to synchronize lights.
         """
         if self._debug:
             self.debug_log("Received color() command. color: %s, fade_ms: %s "
@@ -325,6 +326,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """Turn light on.
 
         Args:
+            brightness: Brightness factor for "on".
             key: key for removal later on
             priority: priority on stack
             fade_ms: duration of fade
@@ -403,6 +405,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         Args:
             key: The key of the settings to remove (based on the 'key'
                 parameter that was originally passed to the color() method.)
+            fade_ms: Time to fade out the light.
 
         This method triggers a light update, so if the highest priority settings
         were removed, the light will be updated with whatever's below it. If no

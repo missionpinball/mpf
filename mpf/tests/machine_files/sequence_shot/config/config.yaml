@@ -14,6 +14,10 @@ switches:
     number:
   seq2_delay:
     number:
+  seq4_1:
+    number:
+  seq4_delay:
+    number:
 
 sequence_shots:
     sequence1:
@@ -44,3 +48,9 @@ sequence_shots:
             - event_1
             - event_3
             - event_1
+    sequence4:
+        debug: True
+        switch_sequence:
+            - seq4_1
+        delay_switch_list:
+            seq4_delay: 1s

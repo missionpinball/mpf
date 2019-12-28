@@ -63,6 +63,7 @@ class Driver(SystemWideDevice):
         Args:
             config: Config of device
             is_mode_config: Whether this device is loaded in a mode or system-wide
+            debug_prefix: Prefix to use when logging.
 
         Returns: Validated config
         """
@@ -266,6 +267,7 @@ class Driver(SystemWideDevice):
                 enabled for. If no value is provided, the driver will be
                 enabled for the value specified in the config dictionary.
             pulse_power: The pulse power. A float between 0.0 and 1.0.
+            max_wait_ms: Maximum time this pulse may be delayed for PSU optimization.
         """
         pulse_ms = self.get_and_verify_pulse_ms(pulse_ms)
         pulse_power = self.get_and_verify_pulse_power(pulse_power)

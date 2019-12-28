@@ -35,6 +35,7 @@ class PololuTICHardwarePlatform(StepperPlatform):
         """Configure a smart stepper device in platform.
 
         Args:
+            number: Number of this stepper.
             config (dict): Configuration of device
         """
         stepper = PololuTICStepper(number, config, self.machine)

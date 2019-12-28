@@ -180,6 +180,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         """Check if the ball is going to a certain target and cancel the path in that case.
 
         Args:
+            start: Start ball device.
             target: Target to check
 
         Returns: True if found and deleted.

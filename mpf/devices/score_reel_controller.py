@@ -38,14 +38,16 @@ class ScoreReelController:
         self.active_scorereelgroup = None
         """Pointer to the active ScoreReelGroup for the current player.
         """
-        self.player_to_scorereel_map = []
-        """This is a list of ScoreReelGroup objects which corresponds to player
-        indexes. The first element [0] in this list is the first player (which
-        is player index [0], the next one is the next player, etc.
+        self.player_to_scorereel_map = {}
+        """This is a dict of ScoreReelGroup objects which corresponds to player
+        number. The first element [1] in this dict is the first player (which
+        is player number [1], the next one is the next player, etc.
         """
 
-        # register for events
-
+        self.active_reel_player_map = {}
+        """This dict maps reels to players. Every reel can only have one active player but multiple players can
+        share a reel.
+        """
         # switch the active score reel group and reset it (if needed)
         self.machine.events.add_handler('player_turn_started',
                                         self._rotate_player)
@@ -55,6 +57,9 @@ class ScoreReelController:
 
         # receives notifications of game starts to reset the reels
         self.machine.events.add_handler('game_starting', self._game_starting)
+
+        # receives notifications of game ends to reset the reels
+        self.machine.events.add_handler('game_ending', self._game_ending)
 
         # Need to hook this in case reels aren't done when ball ends
         self.machine.events.add_handler('ball_ending', self._ball_ending, 900)
@@ -76,15 +81,13 @@ class ScoreReelController:
         reset themselves automatically between players.
         """
         del kwargs
+        # unlight active score reel group
+        if self.active_scorereelgroup:
+            self.active_scorereelgroup.unlight()
 
-        # if our player to reel map is less than the number of players, we need
-        # to create a new mapping
-        if (len(self.player_to_scorereel_map) <
-                len(self.machine.game.player_list)):
-            self._map_new_score_reel_group()
+        self.active_scorereelgroup = self.player_to_scorereel_map[self.machine.game.player.number]
 
-        self.active_scorereelgroup = self.player_to_scorereel_map[
-            self.machine.game.player.index]
+        self.active_reel_player_map[self.active_scorereelgroup] = self.machine.game.player.number
 
         self.log.debug("Mapping Player %s to ScoreReelGroup '%s'",
                        self.machine.game.player.number,
@@ -95,43 +98,29 @@ class ScoreReelController:
                        self.machine.game.player.score)
         self.active_scorereelgroup.set_value(self.machine.game.player.score)
 
-        # light up this group
-        for group in self.machine.score_reel_groups.values():
-            group.unlight()
-
         self.active_scorereelgroup.light()
 
-    def _map_new_score_reel_group(self):
-        """Create a mapping of a player to a score reel group."""
-        # do we have a reel group tagged for this player?
-        for reel_group in self.machine.score_reel_groups.items_tagged(
-                "player" + str(self.machine.game.player.number)):
-            self.player_to_scorereel_map.append(reel_group)
-            self.log.debug("Found a mapping to add: %s", reel_group.name)
-            return
-
-        # if we didn't find one, then we'll just use the first player's group
-        # for all the additional ones.
-
-        # todo maybe we should get fancy with looping through? Meh... we'll
-        # cross that bridge when we get to it.
-
-        self.player_to_scorereel_map.append(self.player_to_scorereel_map[0])
-
-    def _score_change(self, value, change, **kwargs):
+    def _score_change(self, value, change, player_num, **kwargs):
         """Handle score changes and add the score increase to the current active ScoreReelGroup.
 
         This method is the handler for the score change event, so it's called
         automatically.
 
         Args:
-            score: Integer value of the new score. This parameter is ignored,
+            value: Integer value of the new score. This parameter is ignored,
                 and included only because the score change event passes it.
+            change: Change compared to the previous score-
+            player_num: Player number of the player who's score changed.
         """
         del kwargs
         del change
-        if self.active_scorereelgroup:
-            self.active_scorereelgroup.set_value(value=value)
+        # get score reel group for player
+        score_reel_group = self.player_to_scorereel_map[player_num]
+
+        # check if it is currently dedicated to that player
+        if score_reel_group and self.active_reel_player_map[score_reel_group] == player_num:
+            # set value
+            score_reel_group.set_value(value=value)
 
     def _game_starting(self, queue, **kwargs):
         """Reset the score reels when a new game starts.
@@ -145,6 +134,22 @@ class ScoreReelController:
         del kwargs
         # tell the game_starting event queue that we have stuff to do
         queue.wait()
+
+        # calculate a player <-> reel mapping
+        for player_num in range(1, self.machine.game.max_players + 1):
+            reel = self.machine.score_reel_groups.items_tagged("player{}".format(player_num))
+            if reel:
+                self.player_to_scorereel_map[player_num] = reel[0]
+                if reel[0] not in self.active_reel_player_map:
+                    self.active_reel_player_map[reel[0]] = player_num
+            else:
+                self.log.warning('Did not find a score reel for player %s. Did you tag a reel with "player%s"? '
+                                 'Will reuse player1',
+                                 player_num, player_num)
+                reel1 = self.machine.score_reel_groups.items_tagged("player1")
+                self.player_to_scorereel_map[player_num] = reel1[0]
+                if not reel1:
+                    raise AssertionError('Need a score reel group tagged "player1"')
 
         futures = []
         for score_reel_group in self.machine.score_reel_groups.values():
@@ -161,11 +166,18 @@ class ScoreReelController:
         del future
         queue.clear()
 
+    def _game_ending(self, **kwargs):
+        """Reset controller."""
+        del kwargs
+        if self.active_scorereelgroup:
+            self.active_scorereelgroup.unlight()
+        self.active_scorereelgroup = None
+        self.player_to_scorereel_map = {}
+
     def _ball_ending(self, queue=None, **kwargs):
         del kwargs
         # We need to hook the ball_ending event in case the ball ends while the
         # score reel is still catching up.
-
         queue.wait()
 
         future = asyncio.ensure_future(self.active_scorereelgroup.wait_for_ready(), loop=self.machine.clock.loop)

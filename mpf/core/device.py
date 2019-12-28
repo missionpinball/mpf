@@ -95,6 +95,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         Args:
             config: Config of device
             is_mode_config: Whether this device is loaded in a mode or system-wide
+            debug_prefix: Prefix to use when logging.
 
         Returns: Validated config
         """

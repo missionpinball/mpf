@@ -417,3 +417,66 @@ class TestScoreReelsVirtual(MpfFakeGameTestCase):
         self.assertSwitchState("score_1p_100_0", 0)
         self.assertSwitchState("score_1p_10_9", 0)
         self.assertSwitchState("score_1p_100_9", 1)
+
+    def test_inactive_player_scoring(self):
+        self.start_two_player_game()
+        self.assertGameIsRunning()
+        self.assertPlayerNumber(1)
+
+        self.advance_time_and_run()
+        self.assertEqual([None, 0, 0, 0, 0], self.machine.score_reel_groups["player1"].desired_value_list)
+        self.assertEqual([None, 0], self.machine.score_reel_groups["player2"].desired_value_list)
+
+        # increasing score for player two should only affect score of that player
+        self.machine.game.player_list[1].score = 3333
+        self.advance_time_and_run()
+        self.assertEqual([None, 0, 0, 0, 0], self.machine.score_reel_groups["player1"].desired_value_list)
+        self.assertEqual([None, 3], self.machine.score_reel_groups["player2"].desired_value_list)
+
+        self.machine.game.player_list[0].score = 2222
+        self.advance_time_and_run()
+        self.assertEqual([None, 2, 2, 2, 0], self.machine.score_reel_groups["player1"].desired_value_list)
+        self.assertEqual([None, 3], self.machine.score_reel_groups["player2"].desired_value_list)
+
+        self.drain_all_balls()
+        self.assertPlayerNumber(2)
+        self.assertBallNumber(1)
+
+        self.machine.game.player_list[0].score = 4444
+        self.advance_time_and_run()
+        self.assertEqual([None, 4, 4, 4, 0], self.machine.score_reel_groups["player1"].desired_value_list)
+        self.assertEqual([None, 3], self.machine.score_reel_groups["player2"].desired_value_list)
+
+        self.drain_all_balls()
+        self.assertPlayerNumber(1)
+        self.assertBallNumber(2)
+
+        self.drain_all_balls()
+        self.assertPlayerNumber(2)
+        self.assertBallNumber(2)
+
+        self.drain_all_balls()
+        self.assertPlayerNumber(1)
+        self.assertBallNumber(3)
+
+        self.drain_all_balls()
+        self.assertPlayerNumber(2)
+        self.assertBallNumber(3)
+
+        self.drain_all_balls()
+        self.assertGameIsNotRunning()
+
+        # start game. we cannot use start_two_player_game because score reels block the start for some seconds
+        self.hit_and_release_switch("s_start")
+        self.advance_time_and_run()
+        self.assertGameIsRunning()
+        self.assertEqual(0, self.machine.game.num_players)
+        self.advance_time_and_run()
+        self.assertEqual(1, self.machine.game.num_players)
+        self.hit_and_release_switch("s_start")
+        self.advance_time_and_run(1)
+        self.assertEqual(2, self.machine.game.num_players)
+        self.assertPlayerNumber(1)
+
+        self.assertEqual([None, 0, 0, 0, 0], self.machine.score_reel_groups["player1"].desired_value_list)
+        self.assertEqual([None, 0], self.machine.score_reel_groups["player2"].desired_value_list)

@@ -367,6 +367,17 @@ class Show(Asset):
                 doesn't move to the next step until it's told to.) Default is
                 False.
             show_tokens: Replacement tokens for the show
+            events_when_played: Events to post when show is started
+            events_when_stopped: Events to post when show is stopped
+            events_when_looped: Events to post when show looped
+            events_when_paused: Events to post when show is paused
+            events_when_resumed: Events to post when show is resumed after it has been
+            events_when_advanced: Events to post when show is advanced
+            events_when_stepped_back: Events to post when show is stepped back
+            events_when_updated: Events to post when show is updated
+            events_when_completed: Events to post when show completed
+            start_time: Time when this show was started. This used to synchronize shows
+            start_callback: Callback when the show is first started
 
         Return the RunningShow() instance if this show plays now, or False if
         the show is not loaded. (In this case the show will be loaded and will

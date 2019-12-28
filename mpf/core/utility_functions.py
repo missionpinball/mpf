@@ -205,9 +205,8 @@ class Util:
         Args:
             a (dict): The first dictionary
             b (dict): The second dictionary
-            combine_lists (bool):
-                Controls whether lists should be combined (extended) or
-                overwritten. Default is `True` which combines them.
+            combine_lists (bool): Controls whether lists should be combined (extended) or overwritten.
+                Default is `True` which combines them.
 
         Returns the merged dictionaries.
         """

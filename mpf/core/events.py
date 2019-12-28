@@ -1,10 +1,10 @@
 """Classes for the EventManager and QueuedEvents."""
 import inspect
-from collections import deque, namedtuple
+from collections import deque, namedtuple, defaultdict
 import uuid
 
 import asyncio
-from functools import partial
+from functools import partial, lru_cache
 from unittest.mock import MagicMock
 
 from typing import Dict, Any, Tuple, Optional, Callable, List
@@ -35,7 +35,7 @@ class EventManager(MpfController):
         """Initialize EventManager."""
         super().__init__(machine)
 
-        self.registered_handlers = {}       # type: Dict[str, List[RegisteredHandler]]
+        self.registered_handlers = defaultdict(list)    # type: Dict[str, List[RegisteredHandler]]
         self.event_queue = deque([])        # type: Deque[PostedEvent]
         self.callback_queue = deque([])     # type: Deque[Tuple[Any, dict]]
         self.monitor_events = False
@@ -60,6 +60,7 @@ class EventManager(MpfController):
 
         self.log.info("--- DEBUG DUMP EVENTS END ---")
 
+    @lru_cache()
     def get_event_and_condition_from_string(self, event_string: str) -> Tuple[str, Optional["BaseTemplate"]]:
         """Parse an event string to divide the event name from a possible placeholder / conditional in braces.
 
@@ -69,10 +70,18 @@ class EventManager(MpfController):
         Returns 2-item tuple- First item is the event name. Second item is the
         condition (A BoolTemplate instance) if it exists, or None if it doesn't.
         """
-        if event_string.find("{") > 0 and event_string[-1:] == "}":
-            return (event_string[0:event_string.find("{")],
-                    self.machine.placeholder_manager.build_bool_template(
-                        event_string[event_string.find("{") + 1:-1]))
+        if event_string[-1:] == "}":
+            first_bracket_pos = event_string.find("{")
+            if " " in event_string[0:first_bracket_pos]:
+                raise ValueError('Cannot handle events with spaces in the event name, '
+                                 'please remedy "{}"'.format(event_string))
+            if first_bracket_pos > 0:
+                return event_string[0:first_bracket_pos], \
+                    self.machine.placeholder_manager.build_bool_template(event_string[first_bracket_pos + 1:-1])
+        else:
+            if " " in event_string:
+                raise ValueError('Cannot handle events with spaces in the event name, '
+                                 'please remedy "{}"'.format(event_string))
 
         return event_string, None
 
@@ -112,6 +121,7 @@ class EventManager(MpfController):
                 priority of 2. (Or 3 or 10 or 100000.) The numbers don't matter.
                 They're called from highest to lowest. (i.e. priority 100 is
                 called before priority 1.)
+            blocking_facility: Facility which can block this event.
             **kwargs: Any any additional keyword/argument pairs entered here
                 will be attached to the handler and called whenever that
                 handler is called. Note these are in addition to kwargs that
@@ -136,10 +146,6 @@ class EventManager(MpfController):
                              'accidentally add parenthesis to the end of the '
                              'handler you passed?'.format(handler, event))
 
-        if " " in event.split("{")[0]:
-            raise ValueError('Cannot handle events with spaces in the event name, '
-                             'please remedy "{}"'.format(event))
-
         sig = inspect.signature(handler)
         if 'kwargs' not in sig.parameters:
             raise AssertionError("Handler {} for event '{}' is missing **kwargs. Actual signature: {}".format(
@@ -150,10 +156,6 @@ class EventManager(MpfController):
                 handler, event, sig))
 
         event, condition = self.get_event_and_condition_from_string(event)
-
-        # Add an entry for this event if it's not there already
-        if event not in self.registered_handlers:
-            self.registered_handlers[event] = []
 
         key = uuid.uuid4()
 
@@ -178,7 +180,8 @@ class EventManager(MpfController):
         # Sort the handlers for this event based on priority. We do it now
         # so the list is pre-sorted so we don't have to do that with each
         # event post.
-        self.registered_handlers[event].sort(key=lambda x: x.priority, reverse=True)
+        if len(self.registered_handlers[event]) > 1:
+            self.registered_handlers[event].sort(key=lambda x: x.priority, reverse=True)
 
         if self._info:
             self._verify_handlers(event, self.registered_handlers[event])
@@ -294,8 +297,7 @@ class EventManager(MpfController):
 
         Args:
             event: The name of the event you want to remove the handler from.
-            handler:
-                The handler method you want to remove.
+            handler: The handler method you want to remove.
 
         Note that keyword arguments for the handler are not taken into
         consideration. In other words, this method only removes the registered
