@@ -585,6 +585,12 @@ class SwitchController(MpfController):
         self.remove_switch_handler_obj(switch_handler.switch_name, switch_handler.callback, switch_handler.state,
                                        switch_handler.ms)
 
+    def remove_switch_handler_by_keys(self, switch_handlers: List[SwitchHandler]):
+        """Remove switch handlers by list of keys returned from add_switch_handler."""
+        for switch_handler in switch_handlers:
+            self.remove_switch_handler_obj(switch_handler.switch_name, switch_handler.callback, switch_handler.state,
+                                           switch_handler.ms)
+
     def remove_switch_handler(self, switch_name, callback, state=1, ms=0):
         """Remove a registered switch handler.
 
