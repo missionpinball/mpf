@@ -1,4 +1,6 @@
 """Contains the Combo Switch device class."""
+from functools import partial
+
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.mode import Mode
@@ -119,7 +121,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
             self._activate_switches_1(switch_name)
         else:
             self.delay.add_if_doesnt_exist(self.config['hold_time'],
-                                           self._activate_switches_1,
+                                           partial(self._activate_switches_1, switch_name),
                                            'switch_1_active')
 
     def _switch_2_went_active(self, switch_name, **kwargs):
@@ -134,7 +136,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
             self._activate_switches_2(switch_name)
         else:
             self.delay.add_if_doesnt_exist(self.config['hold_time'],
-                                           self._activate_switches_2,
+                                           partial(self._activate_switches_2, switch_name),
                                            'switch_2_active')
 
     def _switch_1_went_inactive(self, switch_name, **kwargs):
@@ -151,7 +153,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
             self._release_switches_1(switch_name)
         else:
             self.delay.add_if_doesnt_exist(self.config['release_time'],
-                                           self._release_switches_1,
+                                           partial(self._release_switches_1, switch_name),
                                            'switch_1_inactive')
 
     def _switch_2_went_inactive(self, switch_name, **kwargs):
@@ -168,7 +170,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
             self._release_switches_2(switch_name)
         else:
             self.delay.add_if_doesnt_exist(self.config['release_time'],
-                                           self._release_switches_2,
+                                           partial(self._release_switches_2, switch_name),
                                            'switch_2_inactive')
 
     def _activate_switches_1(self, switch_name):
