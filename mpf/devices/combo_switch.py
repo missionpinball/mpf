@@ -18,7 +18,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
     collection = 'combo_switches'
     class_label = 'combo_switch'
 
-    __slots__ = ["states", "_state", "_switches_1_active", "_switches_2_active", "delay"]
+    __slots__ = ["states", "_state", "_switches_1_active", "_switches_2_active", "delay", "_switch_handlers"]
 
     def __init__(self, machine, name):
         """Initialize Combo Switch."""
@@ -29,6 +29,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
         self._switches_2_active = False
 
         self.delay = DelayManager(self.machine)
+        self._switch_handlers = []
 
     def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Validate and parse config."""
@@ -90,21 +91,16 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
 
     def _register_switch_handlers(self):
         for switch in self.config['switches_1']:
-            switch.add_handler(self._switch_1_went_active, state=1, return_info=True)
-            switch.add_handler(self._switch_1_went_inactive, state=0, return_info=True)
+            self._switch_handlers.append(switch.add_handler(self._switch_1_went_active, state=1, return_info=True))
+            self._switch_handlers.append(switch.add_handler(self._switch_1_went_inactive, state=0, return_info=True))
 
         for switch in self.config['switches_2']:
-            switch.add_handler(self._switch_2_went_active, state=1, return_info=True)
-            switch.add_handler(self._switch_2_went_inactive, state=0, return_info=True)
+            self._switch_handlers.append(switch.add_handler(self._switch_2_went_active, state=1, return_info=True))
+            self._switch_handlers.append(switch.add_handler(self._switch_2_went_inactive, state=0, return_info=True))
 
     def _remove_switch_handlers(self):
-        for switch in self.config['switches_1']:
-            switch.remove_handler(self._switch_1_went_active, state=1, return_info=True)
-            switch.remove_handler(self._switch_1_went_inactive, state=0, return_info=True)
-
-        for switch in self.config['switches_2']:
-            switch.remove_handler(self._switch_2_went_active, state=1, return_info=True)
-            switch.remove_handler(self._switch_2_went_inactive, state=0, return_info=True)
+        self.machine.switch_controller.remove_switch_handler_by_keys(self._switch_handlers)
+        self._switch_handlers = []
 
     def _kill_delays(self):
         self.delay.clear()
