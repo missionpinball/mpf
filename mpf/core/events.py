@@ -141,19 +141,20 @@ class EventManager(MpfController):
         for handler in handler_list:
         ``events.remove_handler(my_handler)``
         """
-        if not callable(handler):
-            raise ValueError('Cannot add handler "{}" for event "{}". Did you '
-                             'accidentally add parenthesis to the end of the '
-                             'handler you passed?'.format(handler, event))
+        if not self.machine.options['production']:
+            if not callable(handler):
+                raise ValueError('Cannot add handler "{}" for event "{}". Did you '
+                                 'accidentally add parenthesis to the end of the '
+                                 'handler you passed?'.format(handler, event))
 
-        sig = inspect.signature(handler)
-        if 'kwargs' not in sig.parameters:
-            raise AssertionError("Handler {} for event '{}' is missing **kwargs. Actual signature: {}".format(
-                handler, event, sig))
+            sig = inspect.signature(handler)
+            if 'kwargs' not in sig.parameters:
+                raise AssertionError("Handler {} for event '{}' is missing **kwargs. Actual signature: {}".format(
+                    handler, event, sig))
 
-        if sig.parameters['kwargs'].kind != inspect.Parameter.VAR_KEYWORD:
-            raise AssertionError("Handler {} for event '{}' param kwargs is missing '**'. Actual signature: {}".format(
-                handler, event, sig))
+            if sig.parameters['kwargs'].kind != inspect.Parameter.VAR_KEYWORD:
+                raise AssertionError("Handler {} for event '{}' param kwargs is missing '**'. "
+                                     "Actual signature: {}".format(handler, event, sig))
 
         event, condition = self.get_event_and_condition_from_string(event)
 
@@ -726,29 +727,35 @@ class EventManager(MpfController):
 
     def process_event_queue(self) -> None:
         """Check if there are any other events that need to be processed, and then process them."""
+        inner_queue = deque()
         while self.event_queue or self.callback_queue:
             # first process all events. if they post more events we will
             # process them in the same loop.
-            while self.event_queue:
-                # remember the previous queue since events might be posted in this handler
-                previous_queue = self.event_queue
+            if self.event_queue:
+                next_queue = self.event_queue
                 self.event_queue = deque()
-                event = previous_queue.popleft()
-                if event.type == "queue":
-                    self._process_queue_event(event=event[0],
-                                              callback=event[2],
-                                              **event[3])
-                else:
-                    self._process_event(event=event[0],
-                                        ev_type=event[1],
-                                        callback=event[2],
-                                        **event[3])
+                while next_queue:
+                    # remember the previous queue since events might be posted in this handler
 
-                # make sure the handler created during this handler are called first
-                if self.event_queue:
-                    self.event_queue.extend(previous_queue)
-                else:
-                    self.event_queue = previous_queue
+                    event = next_queue.popleft()
+                    if not next_queue and inner_queue:
+                        next_queue = inner_queue.popleft()
+
+                    if event.type == "queue":
+                        self._process_queue_event(event=event[0],
+                                                  callback=event[2],
+                                                  **event[3])
+                    else:
+                        self._process_event(event=event[0],
+                                            ev_type=event[1],
+                                            callback=event[2],
+                                            **event[3])
+
+                    # make sure the handler created during this handler are called first
+                    if self.event_queue:
+                        inner_queue.appendleft(next_queue)
+                        next_queue = self.event_queue
+                        self.event_queue = deque()
 
             # when all events are processed run the _last_ callback. afterwards
             # continue with the loop and run all events. this makes sure all
