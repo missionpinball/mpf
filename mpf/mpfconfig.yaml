@@ -124,6 +124,7 @@ mpf:
         rpi_dmd: mpf.platforms.rpi_dmd.RpiDmdPlatform
         spi_bit_bang: mpf.platforms.spi_bit_bang.SpiBitBangPlatform
         light_segment_displays: mpf.platforms.light_segment_displays.LightSegmentDisplaysPlatform
+        pin2dmd: mpf.platforms.pin2dmd.Pin2DmdHardwarePlatform
 
     paths:
         scriptlets: scriptlets
