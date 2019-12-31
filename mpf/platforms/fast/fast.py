@@ -863,10 +863,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             remote_processor == self.rgb_connection.remote_processor
         if msg in ('00', '02'):
             action = "Ignoring RGB crash and continuing play." if ignore_rgb else "MPF will exit now."
-            self.error_log("The FAST {} processor rebooted. Unfortunately, that means that it lost all it's state "
-                           "(such as hardware rules or switch configs). This is likely cause by an unstable power "
-                           "supply but it might as well be a firmware bug. {}"
-                           .format(remote_processor, action))
+            self.error_log("The FAST %s processor rebooted. Unfortunately, that means that it lost all its state "
+                           "(such as hardware rules or switch configs). This is likely caused by an unstable "
+                           "power supply but it might also be a firmware bug. %s", remote_processor, action)
             if ignore_rgb:
                 self.machine.events.post("fast_rgb_rebooted", msg=msg)
                 return
