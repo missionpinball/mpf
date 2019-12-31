@@ -56,7 +56,7 @@ class Pin2DmdDevice(DmdPlatformInterface):
 
     """A PIN2DMD device."""
 
-    __slots__ = ["writer", "current_frame", "new_frame_event", "machine", "log", "device"]
+    __slots__ = ["writer", "current_frame", "new_frame_event", "machine", "log", "device", "brightness"]
 
     def __init__(self, machine):
         """Initialise smart matrix device."""
@@ -65,7 +65,18 @@ class Pin2DmdDevice(DmdPlatformInterface):
         self.new_frame_event = None
         self.machine = machine
         self.device = None
+        self.brightness = 255
         self.log = logging.getLogger('Pin2DmdDevice')
+
+    def _send_brightness(self, brightness):
+        data = [0x00] * 2052
+        data[0] = 0x81
+        data[1] = 0xc3
+        data[2] = 0xe7
+        data[3] = 0xff
+        data[4] = 0x08
+        data[17] = brightness
+        self.device.write(0x01, data)
 
     def _send_frame(self, buffer):
         gamma_table = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -131,12 +142,18 @@ class Pin2DmdDevice(DmdPlatformInterface):
 
         Wait for new_frame_event and send the last frame. If no event happened for 1s refresh the last frame.
         """
+        current_brightness = None
         while not self.machine.thread_stopper.is_set():
             # wait for new frame or timeout
             self.new_frame_event.wait(1)
 
             # clear event
             self.new_frame_event.clear()
+
+            # set brightness if it changed
+            if self.brightness != current_brightness:
+                current_brightness = self.brightness
+                self._send_brightness(current_brightness)
 
             # do not crash on missing frame
             if self.current_frame is None:
@@ -159,7 +176,7 @@ class Pin2DmdDevice(DmdPlatformInterface):
         """Set brightness."""
         if brightness < 0.0 or brightness > 1.0:
             raise AssertionError("Brightness has to be between 0 and 1.")
-        raise AssertionError("Not implemented yet.")
+        self.brightness = int(brightness * 255)
 
     def stop(self):
         """Stop platform."""
