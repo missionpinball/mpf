@@ -146,7 +146,7 @@ class Pin2DmdDevice(DmdPlatformInterface):
             self._send_frame(self.current_frame)
 
     async def connect(self):
-        """Connect to SmartMatrix device."""
+        """Connect to Pin2Dmd device."""
         self.log.info("Connecting to Pin2Dmd RGB DMD")
         self.device = usb.core.find(idVendor=0x0314, idProduct=0xE457)
         if self.device is None:
