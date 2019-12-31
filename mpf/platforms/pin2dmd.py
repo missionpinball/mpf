@@ -5,7 +5,13 @@ import threading
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.core.platform import RgbDmdPlatform
 
-import usb.core
+# pylint: disable-msg=ungrouped-imports
+try:
+    import usb.core
+except ImportError as e:
+    IMPORT_FAILED = e
+else:
+    IMPORT_FAILED = None
 
 
 class Pin2DmdHardwarePlatform(RgbDmdPlatform):
@@ -21,6 +27,10 @@ class Pin2DmdHardwarePlatform(RgbDmdPlatform):
         self.log = logging.getLogger('PIN2DMD')
         self.log.debug("Configuring PIN2DMD hardware interface.")
         self.device = Pin2DmdDevice(machine)
+
+        if IMPORT_FAILED:
+            raise AssertionError('Failed to load pyusb. Did you install pyusb? '
+                                 'Try: "pip3 install pyusb".') from IMPORT_FAILED
 
     async def initialize(self):
         """Initialise platform."""
@@ -85,8 +95,8 @@ class Pin2DmdDevice(DmdPlatformInterface):
         for i in range(0, 6144, 3):
             # use these mappings for RGB panels
             pixel_r = buffer[i]
-            pixel_g = buffer[i+1]
-            pixel_b = buffer[i+2]
+            pixel_g = buffer[i + 1]
+            pixel_b = buffer[i + 2]
             # lower half of display
             pixel_rl = buffer[6144 + i]
             pixel_gl = buffer[6144 + i + 1]
@@ -103,9 +113,9 @@ class Pin2DmdDevice(DmdPlatformInterface):
 
             target_idx = (i / 3) + 4
 
-            for j in range(0, 6, 1):
+            for _ in range(0, 6, 1):
                 output_buffer[target_idx] = ((pixel_gl & 1) << 5) | ((pixel_bl & 1) << 4) | ((pixel_rl & 1) << 3) |\
-                                           ((pixel_g & 1) << 2) | ((pixel_b & 1) << 1) | ((pixel_r & 1) << 0)
+                                            ((pixel_g & 1) << 2) | ((pixel_b & 1) << 1) | ((pixel_r & 1) << 0)
                 pixel_r >>= 1
                 pixel_g >>= 1
                 pixel_b >>= 1
