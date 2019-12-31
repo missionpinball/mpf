@@ -1,5 +1,6 @@
 """Classes which manage BCP transports."""
 import asyncio
+from collections import defaultdict
 
 from typing import Union
 
@@ -21,18 +22,15 @@ class BcpTransportManager:
         self._machine = machine     # type: MachineController
         self._transports = []
         self._readers = {}
-        self._handlers = {}
+        self._handlers = defaultdict(set)
         self._machine.events.add_handler("shutdown", self.shutdown)
 
     def add_handler_to_transport(self, handler, transport: BaseBcpClient):
         """Register client as handler."""
-        if handler not in self._handlers:
-            self._handlers[handler] = []
-
         if transport is None:
             raise AssertionError("Cannot register None transport.")
 
-        self._handlers[handler].append(transport)
+        self._handlers[handler].add(transport)
 
     def remove_transport_from_handle(self, handler, transport: BaseBcpClient):
         """Remove client from a certain handler."""
