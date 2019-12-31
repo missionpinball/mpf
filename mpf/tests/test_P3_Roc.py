@@ -782,6 +782,7 @@ SW-16 boards found:
 
         # test led on
         device.on()
+        self.advance_time_and_run(.1)
         self.wait_for_platform()
         self.pinproc.write_data.assert_has_calls([
             # first LED
@@ -797,6 +798,7 @@ SW-16 boards found:
 
         # test led off
         device.off()
+        self.advance_time_and_run(.1)
         self.wait_for_platform()
         self.pinproc.write_data.assert_has_calls([
             # first LED
@@ -812,6 +814,7 @@ SW-16 boards found:
 
         # test led color
         device.color(RGBColor((2, 23, 42)))
+        self.advance_time_and_run(.1)
         self.wait_for_platform()
 
         self.pinproc.write_data.assert_has_calls([
@@ -844,6 +847,7 @@ SW-16 boards found:
 
         # test led color with fade
         device.color(RGBColor((13, 37, 238)), fade_ms=42)
+        self.advance_time_and_run(.1)
         self.wait_for_platform()
         self.pinproc.write_data.assert_has_calls([
             # fade ms
@@ -859,11 +863,40 @@ SW-16 boards found:
             call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (2 << 8) | 238),  # set color (238)
             ], False)
 
+        self.advance_time_and_run(.5)
+        self.pinproc.write_data = MagicMock(return_value=True)
+
+        # test led color with fade
+        device.color(RGBColor((255, 37, 238)), fade_ms=20)
+        self.machine.lights["test_led3"].color(RGBColor((253, 0, 0)), fade_ms=20)
+        self.advance_time_and_run(.1)
+        self.wait_for_platform()
+        self.pinproc.write_data.assert_has_calls([
+            # fade ms
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (3 << 8) | 4),   # set fade lower (42/4 = 10)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (4 << 8) | 0),    # set fade higher (0)
+            # first LED addr
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | 7),               # low byte of address (7)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (6 << 8)),        # high byte of address (0)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (2 << 8) | 255),   # set color (13)
+            # second LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (2 << 8) | 37),   # set color (37)
+            # third LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (2 << 8) | 238),  # set color (238)
+            # forth LED (test_led3)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (2 << 8) | 253),  # set color (253)
+            # fifth LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (2 << 8) | 0),  # set color (0)
+            # sixth LED
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (2 << 8) | 0),  # set color (0)
+            ], False)
+
     def _test_leds_inverted(self):
         device = self.machine.lights["test_led_inverted"]
         self.pinproc.write_data = MagicMock(return_value=True)
         # test led on
         device.on()
+        self.advance_time_and_run(.1)
         self.wait_for_platform()
         self.pinproc.write_data.assert_has_calls([
             # first LED
@@ -879,6 +912,7 @@ SW-16 boards found:
 
         # test led off
         device.color("off")
+        self.advance_time_and_run(.1)
         self.wait_for_platform()
         self.pinproc.write_data.assert_has_calls([
             # first LED
@@ -894,6 +928,7 @@ SW-16 boards found:
 
         # test led color
         device.color(RGBColor((2, 23, 42)))
+        self.advance_time_and_run(.1)
         self.wait_for_platform()
         self.pinproc.write_data.assert_has_calls([
             # first LED

@@ -11,6 +11,7 @@ from threading import Thread
 import time
 from typing import Any, List, Union
 
+from mpf.core.platform_batch_light_system import PlatformBatchLightSystem
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 
 from mpf.platforms.p_roc_devices import PROCSwitch, PROCMatrixLight, PDBLED, PDBLight, PDBCoil, PDBSwitch, PdLedServo, \
@@ -155,7 +156,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
     __slots__ = ["pdbconfig", "pinproc", "proc", "log", "hw_switch_rules", "version", "revision", "hardware_version",
                  "dipswitches", "machine_type", "event_task", "pdled_state",
-                 "proc_thread", "proc_process", "proc_process_instance", "_commands_running", "config"]
+                 "proc_thread", "proc_process", "proc_process_instance", "_commands_running", "config", "_light_system"]
 
     def __init__(self, machine):
         """Make sure pinproc was loaded."""
@@ -182,6 +183,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         self._commands_running = 0
         self.config = {}
         self.pdled_state = defaultdict(PdLedStatus)
+        self._light_system = None
 
         self.machine_type = pinproc.normalize_machine_type(
             self.machine.config['hardware']['driverboards'])
@@ -232,6 +234,25 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         that's attached to MPF.
         '''
 
+        self._light_system = PlatformBatchLightSystem(self.machine.clock, self._light_key,
+                                                      self._are_lights_sequential, self._send_multiple_light_update,
+                                                      self.machine.machine_config['mpf']['default_light_hw_update_hz'],
+                                                      65535)
+
+    async def _send_multiple_light_update(self, sequential_brightness_list):
+        for light, brightness, fade_ms in sequential_brightness_list:
+            light.set_fade_to_hw(brightness, fade_ms)
+
+    @staticmethod
+    def _light_key(light: PDBLED):
+        """Sort lights by this key."""
+        return light.board * 1000 + light.address
+
+    @staticmethod
+    def _are_lights_sequential(a: PDBLED, b: PDBLED):
+        """Return True if lights are sequential."""
+        return a.board == b.board and a.address + 1 == b.address
+
     @staticmethod
     def _done(future):
         try:
@@ -243,6 +264,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         """Start listening for switches."""
         self.event_task = self.machine.clock.loop.create_task(self._poll_events())
         self.event_task.add_done_callback(self._done)
+        self._light_system.start()
 
     def process_events(self, events):
         """Process events from the P-Roc."""
@@ -262,6 +284,8 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
     def stop(self):
         """Stop proc."""
+        if self._light_system:
+            self._light_system.stop()
         if self.proc_process and self.proc_process_instance:
             self.proc_process_instance.call_soon_threadsafe(self.proc_process.stop)
         if self.proc_thread:
@@ -665,7 +689,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         if subtype == "led":
             board, index = number.split("-")
             polarity = platform_settings and platform_settings.get("polarity", False)
-            return PDBLED(int(board), int(index), polarity, self.config.get("debug", False), self)
+            return PDBLED(int(board), int(index), polarity, self.config.get("debug", False), self, self._light_system)
 
         raise AssertionError("unknown subtype {}".format(subtype))
 

@@ -10,13 +10,14 @@ class PlatformBatchLight(LightPlatformInterface, abc.ABC):
 
     """Light which can be batched."""
 
-    __slots__ = ["light_system", "_callback"]
+    __slots__ = ["light_system", "_callback", "_last_brightness"]
 
     def __init__(self, number, light_system: "PlatformBatchLightSystem"):
         """Initialise light."""
         super().__init__(number)
         self.light_system = light_system
         self._callback = None
+        self._last_brightness = None
 
     @abc.abstractmethod
     def get_max_fade_ms(self):
@@ -26,11 +27,18 @@ class PlatformBatchLight(LightPlatformInterface, abc.ABC):
         """Mark dirty and remember callback."""
         self.light_system.mark_dirty(self)
         self._callback = color_and_fade_callback
+        self._last_brightness = None
 
     def get_fade_and_brightness(self, current_time):
         """Return fade + brightness and mark as clean if this is it."""
+        if self._last_brightness:
+            return self._last_brightness, 0, True
         max_fade_ms = self.get_max_fade_ms()
-        return self._callback(max_fade_ms, current_time=current_time)
+        brightness, fade_ms, done = self._callback(max_fade_ms, current_time=current_time)
+        if done:
+            self._last_brightness = brightness
+
+        return brightness, fade_ms, done
 
 
 class PlatformBatchLightSystem:

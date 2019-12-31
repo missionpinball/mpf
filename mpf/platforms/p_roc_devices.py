@@ -1,13 +1,13 @@
 """P-Roc hardware platform devices."""
 import asyncio
 import logging
-from typing import Callable, Tuple
 
+from mpf.core.platform_batch_light_system import PlatformBatchLight
 from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
 
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 
-from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade, LightPlatformInterface
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.core.utility_functions import Util
@@ -333,20 +333,20 @@ class PDBLight:
         return True
 
 
-class PDBLED(LightPlatformInterface):
+class PDBLED(PlatformBatchLight):
 
     """Represents an RGB LED connected to a PD-LED board."""
 
     __slots__ = ["board", "address", "debug", "log", "polarity", "platform"]
 
     # pylint: disable-msg=too-many-arguments
-    def __init__(self, board, address, polarity, debug, driver_platform):
+    def __init__(self, board, address, polarity, debug, driver_platform, light_system):
         """Initialise PDB LED."""
         self.board = board
         self.address = address
         self.debug = debug
         self.platform = driver_platform     # type: PROCBasePlatform
-        super().__init__("{}-{}".format(self.board, self.address))
+        super().__init__("{}-{}".format(self.board, self.address), light_system)
         self.log = logging.getLogger('PDBLED')
         self.polarity = polarity
 
@@ -359,15 +359,19 @@ class PDBLED(LightPlatformInterface):
 
         return value
 
-    def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int, bool]]):
+    def get_max_fade_ms(self):
+        """Return max fade ms."""
+        return 4294967296
+
+    def set_fade_to_hw(self, brightness, fade_ms):
         """Set or fade this LED to the color passed.
 
         Can fade for up to 100 days so do not bother about too long fades.
 
         Args:
-            color_and_fade_callback: brightness of this channel via callback
+            brightness: brightness of this channel
+            fade_ms: fade time for this led
         """
-        brightness, fade_ms, _ = color_and_fade_callback(int(pow(2, 31) * 4))
         normalized_brightness = self._normalise_color(int(brightness * 255))
         if self.debug:
             self.log.debug("Setting color %s with fade_ms %s to %s-%s",
