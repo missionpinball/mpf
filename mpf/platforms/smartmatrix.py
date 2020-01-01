@@ -58,14 +58,6 @@ class SmartMatrixHardwarePlatform(RgbDmdPlatform):
         """Configure rgb dmd."""
         return self.devices[name]
 
-    @staticmethod
-    def _done(future):
-        """Evaluate result of task.
-
-        Will raise exceptions from within task.
-        """
-        future.result()
-
 
 class SmartMatrixDevice(DmdPlatformInterface):
 
