@@ -162,6 +162,16 @@ class TestPluginConfigPlayer(MpfBcpTestCase):
         self._bcp_client.send.assert_called_with('trigger', {'priority': 0, 'settings': {'tests': {}},
                                                              'name': 'tests_play', 'calling_context': 'event1',
                                                              'context': '_global'})
+
+        self.assertEqual(1, len(self.machine.bcp.transport._handlers["tests_play"]))
+        self._bcp_client.send.reset_mock()
+        self.machine.events.post('event1')
+        self.advance_time_and_run()
+        self._bcp_client.send.assert_called_with('trigger', {'priority': 0, 'settings': {'tests': {}},
+                                                             'name': 'tests_play', 'calling_context': 'event1',
+                                                             'context': '_global'})
+
+        self.assertEqual(1, len(self.machine.bcp.transport._handlers["tests_play"]))
         self._bcp_client.send.reset_mock()
 
         # event2 is in the test_player and test2_player. Check that it's only
@@ -252,6 +262,8 @@ class TestPluginConfigPlayer(MpfBcpTestCase):
         self.advance_time_and_run()
 
         self.assertTrue(t1_player.play.called)
+        self.assertEqual(1, len(self.machine.bcp.transport._handlers["tests_play"]))
+        self.assertEqual(1, len(self.machine.bcp.transport._handlers["tests_clear"]))
 
         self.assertIn('tests_play', self.machine.bcp.transport._handlers)
         self.assertIn('tests_clear', self.machine.bcp.transport._handlers)
