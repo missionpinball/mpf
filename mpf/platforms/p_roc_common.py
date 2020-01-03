@@ -311,7 +311,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
             # Assign the loop to another thread
             self.proc_thread = Thread(target=self.proc_process.start_proc_process,
                                       args=(self.machine_type, self.proc_process_instance,
-                                            self.config['trace_bus'] and self.config['debug'] and self._debug,
+                                            self.config['trace_bus'] and self.config['debug'],
                                             self.log))
             self.proc_thread.start()
 
@@ -319,7 +319,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
             # use existing loop
             self.proc_process_instance = self.machine.clock.loop
             self.proc_process.start_pinproc(loop=self.machine.clock.loop, machine_type=self.machine_type,
-                                            trace=self.config['trace_bus'] and self.config['debug'] and self._debug,
+                                            trace=self.config['trace_bus'] and self.config['debug'],
                                             log=self.log)
 
     async def connect(self):
