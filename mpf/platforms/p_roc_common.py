@@ -73,11 +73,15 @@ class ProcProcess:
         self.dmd = None
         self.loop = None
         self.stop_future = None
+        self.trace = None
+        self.log = None
 
-    def start_pinproc(self, machine_type, loop):
+    def start_pinproc(self, machine_type, loop, trace, log):
         """Initialise libpinproc."""
         self.loop = loop
         self.stop_future = asyncio.Future(loop=self.loop)
+        self.trace = trace
+        self.log = log
         while not self.proc:
             try:
                 self.proc = pinproc.PinPROC(machine_type)
@@ -86,9 +90,9 @@ class ProcProcess:
                 print("Retrying...")
                 time.sleep(1)
 
-    def start_proc_process(self, machine_type, loop):
+    def start_proc_process(self, machine_type, loop, trace, log):
         """Run the pinproc communication."""
-        self.start_pinproc(machine_type, loop)
+        self.start_pinproc(machine_type, loop, trace, log)
 
         loop.run_until_complete(self.stop_future)
         loop.close()
@@ -105,6 +109,11 @@ class ProcProcess:
         """Run command in proc thread."""
         if cmd.startswith("_"):
             return getattr(self, cmd)(*args)
+
+        if self.trace:
+            result = getattr(self.proc, cmd)(*args)
+            self.log.debug("pinproc.PinPROC.%s%s -> %s", cmd, args, result)
+            return result
 
         return getattr(self.proc, cmd)(*args)
 
@@ -301,13 +310,17 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
             self.proc_process_instance = asyncio.new_event_loop()
             # Assign the loop to another thread
             self.proc_thread = Thread(target=self.proc_process.start_proc_process,
-                                      args=(self.machine_type, self.proc_process_instance))
+                                      args=(self.machine_type, self.proc_process_instance,
+                                            self.config['trace_bus'] and self.config['debug'] and self._debug,
+                                            self.log))
             self.proc_thread.start()
 
         else:
             # use existing loop
             self.proc_process_instance = self.machine.clock.loop
-            self.proc_process.start_pinproc(loop=self.machine.clock.loop, machine_type=self.machine_type)
+            self.proc_process.start_pinproc(loop=self.machine.clock.loop, machine_type=self.machine_type,
+                                            trace=self.config['trace_bus'] and self.config['debug'] and self._debug,
+                                            log=self.log)
 
     async def connect(self):
         """Connect to the P-ROC.

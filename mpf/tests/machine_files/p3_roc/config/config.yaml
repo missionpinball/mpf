@@ -7,6 +7,7 @@ hardware:
 
 p_roc:
     use_separate_thread: False
+    trace_bus: True
     debug: true
     pd_led_boards:
       4:

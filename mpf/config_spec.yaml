@@ -963,6 +963,7 @@ p_roc:
     file_log: single|enum(none,basic,full)|basic
     pd_led_boards: dict|int:subconfig(pd_led_boards)|none
     use_separate_thread: single|bool|True
+    trace_bus: single|bool|False
 p3_roc:
     lamp_matrix_strobe_time: single|ms|100ms
     watchdog_time: single|ms|1s
@@ -977,6 +978,7 @@ p3_roc:
     burst_ms_between_scans: single|int(1,64)|1
     pd_led_boards: dict|int:subconfig(pd_led_boards)|none
     use_separate_thread: single|bool|True
+    trace_bus: single|bool|False
 pd_led_boards:
     use_ws281x_0: single|bool|false
     use_ws281x_1: single|bool|false

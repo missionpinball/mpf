@@ -8,6 +8,7 @@ p_roc:
   use_separate_thread: False
   dmd_timing_cycles: 1, 2, 3, 4
   debug: true
+  trace_bus: True
 
 switches:
     s_test_000:
