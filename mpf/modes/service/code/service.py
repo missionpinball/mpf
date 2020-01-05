@@ -1,4 +1,6 @@
 """Service mode for MPF."""
+import subprocess
+import os
 from collections import namedtuple
 
 from typing import List
@@ -28,6 +30,8 @@ enter_events: list|str|sw_service_enter_active
 esc_events: list|str|sw_service_esc_active
 up_events: list|str|sw_service_up_active
 down_events: list|str|sw_service_down_active
+software_update: single|bool|False
+software_update_script: single|str|None
 '''
 
     async def _service_mode_exit(self):
@@ -79,12 +83,41 @@ down_events: list|str|sw_service_down_active
     def _load_menu_entries(self):
         """Return the menu items wich label and callback."""
         # If you want to add menu entries overload the mode and this method.
-        return [
+        entries = [
             ServiceMenuEntry("switch", self._switch_test_menu),
             ServiceMenuEntry("coil", self._coil_test_menu),
             ServiceMenuEntry("light", self._light_test_menu),
-            ServiceMenuEntry("settings", self._settings_menu)
+            ServiceMenuEntry("settings", self._settings_menu),
         ]
+
+        if self.config['mode_settings']['software_update'] and \
+                os.path.isfile(self.config['mode_settings']['software_update_script']):
+            entries.append(ServiceMenuEntry("update", self._software_update))
+
+        return entries
+
+    async def _software_update(self):
+        run_update = False
+        self._update_software_update_slide(run_update)
+
+        while True:
+            key = await self._get_key()
+            if key == 'ESC':
+                break
+            if key in ('UP', 'DOWN'):
+                run_update = not run_update
+                self._update_software_update_slide(run_update)
+            elif key == 'ENTER':
+                # perform update
+                if run_update:
+                    self.machine.events.post("service_software_update_start")
+                    subprocess.Popen([self.config['mode_settings']['software_update_script']])
+                    self.machine.stop("Software Update")
+
+        self.machine.events.post("service_software_update_stop")
+
+    def _update_software_update_slide(self, run_update):
+        self.machine.events.post("service_software_update_choice", run_update="Yes" if run_update else "No")
 
     async def _service_mode_main_menu(self):
         items = self._load_menu_entries()

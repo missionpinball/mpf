@@ -81,6 +81,15 @@ slide_player:
     service_light_test:
       action: remove
 
+  # software update
+  service_software_update_choice:
+    software_update:
+      action: play
+      priority: 2
+  service_software_update_stop:
+    software_update:
+      action: remove
+
   # settings:
   service_settings_start:
     service_settings:
@@ -127,6 +136,9 @@ widget_player:
     service_menu_item_settings:
       action: remove
       slide: service_menu
+    service_menu_item_update:
+      action: remove
+      slide: service_menu
   service_menu_selected_switch:
     service_menu_item_switch:
       action: add
@@ -141,6 +153,10 @@ widget_player:
       slide: service_menu
   service_menu_selected_settings:
     service_menu_item_settings:
+      action: add
+      slide: service_menu
+  service_menu_selected_update:
+    service_menu_item_update:
       action: add
       slide: service_menu
 
@@ -224,6 +240,22 @@ slides:
     text: "(light_num)/(test_color)"
     style: small
     y: bottom + 20%
+  # software update
+  software_update:
+  - type: text
+    text: "Perform software update?"
+    style: small
+    x: center
+    y: bottom + 80%
+  - type: text
+    text: "(run_update)"
+    style: small
+    y: bottom + 60%
+  - type: text
+    text: "DO NOT TURN OFF POWER DURING UPDATE"
+    style: small
+    y: bottom + 40%
+    opacity: 0.5
   # settings
   service_settings:
   - type: text
@@ -304,4 +336,8 @@ widgets:
   service_menu_item_settings:
     type: text
     text: Settings
+    style: medium
+  service_menu_item_update:
+    type: text
+    text: Software Update
     style: medium
