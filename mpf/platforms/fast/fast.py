@@ -36,7 +36,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     """Platform class for the FAST hardware controller."""
 
     __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "serial_connections", "fast_leds",
-                 "flag_led_tick_registered", "config", "machine_type", "hw_switch_data", "io_boards", "fast_commands"]
+                 "flag_led_tick_registered", "config", "machine_type", "hw_switch_data", "io_boards", "fast_commands",
+                 "_watchdog_task", "_led_task"]
 
     def __init__(self, machine):
         """Initialise fast hardware platform.
@@ -63,6 +64,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.dmd_connection = None
         self.net_connection = None
         self.rgb_connection = None
+        self._watchdog_task = None
+        self._led_task = None
         self.serial_connections = set()         # type: Set[FastSerialCommunicator]
         self.fast_leds = {}
         self.flag_led_tick_registered = False
@@ -157,6 +160,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     def stop(self):
         """Stop platform and close connections."""
+        if self._led_task:
+            self._led_task.cancel()
+            self._led_task = None
+        if self._watchdog_task:
+            self._watchdog_task.cancel()
+            self._watchdog_task = None
         if self.net_connection:
             # set watchdog to expire in 1ms
             self.net_connection.writer.write(b'WD:1\r')
@@ -177,7 +186,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     async def start(self):
         """Start listening for commands and schedule watchdog."""
-        self.machine.clock.schedule_interval(self._update_watchdog, self.config['watchdog'] / 2000)
+        self._watchdog_task = self.machine.clock.schedule_interval(self._update_watchdog,
+                                                                   self.config['watchdog'] / 2000)
 
         for connection in self.serial_connections:
             await connection.start_read_loop()
@@ -625,8 +635,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if not subtype or subtype == "led":
             if not self.flag_led_tick_registered:
                 # Update leds every frame
-                self.machine.clock.schedule_interval(self.update_leds,
-                                                     1 / self.machine.config['mpf']['default_light_hw_update_hz'])
+                self._led_task = self.machine.clock.schedule_interval(
+                    self.update_leds, 1 / self.machine.config['mpf']['default_light_hw_update_hz'])
                 self.flag_led_tick_registered = True
 
             number_str, channel = number.split("-")
