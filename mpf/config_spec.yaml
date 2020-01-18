@@ -979,6 +979,10 @@ p3_roc:
     pd_led_boards: dict|int:subconfig(pd_led_boards)|none
     use_separate_thread: single|bool|True
     trace_bus: single|bool|False
+pin2dmd:
+    __valid_in__: machine
+    __type__: config
+    debug: single|bool|False
 pd_led_boards:
     use_ws281x_0: single|bool|false
     use_ws281x_1: single|bool|false

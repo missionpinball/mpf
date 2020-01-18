@@ -24,8 +24,8 @@ class SmartMatrixHardwarePlatform(RgbDmdPlatform):
         super().__init__(machine)
         self.features['tickless'] = True
 
-        self.log = logging.getLogger('SmartMatrix')
-        self.log.debug("Configuring SmartMatrix RGB DMD hardware interface.")
+        self.configure_logging('SmartMatrix')
+        self.log.info("Configuring SmartMatrix RGB DMD hardware interface.")
 
         self.devices = dict()       # type: Dict[str, SmartMatrixDevice]
 

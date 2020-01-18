@@ -1,4 +1,5 @@
 """Contains code for PIN2DMD."""
+import asyncio
 import logging
 
 import threading
@@ -36,15 +37,16 @@ class Pin2DmdHardwarePlatform(RgbDmdPlatform):
 
     """PIN2DMD RGB DMD hardware."""
 
-    __slots__ = ["device"]
+    __slots__ = ["device", "config"]
 
     def __init__(self, machine):
         """Initialise PIN2DMD."""
         super().__init__(machine)
         self.features['tickless'] = True
-        self.log = logging.getLogger('PIN2DMD')
+        self.config = self.machine.config_validator.validate_config("pin2dmd", self.machine.config['pin2dmd'])
+        self._configure_device_logging_and_debug('PIN2DMD', self.config)
         self.log.debug("Configuring PIN2DMD hardware interface.")
-        self.device = Pin2DmdDevice(machine)
+        self.device = Pin2DmdDevice(machine, self.debug)
 
         if IMPORT_FAILED:
             raise AssertionError('Failed to load pyusb. Did you install pyusb? '
@@ -74,9 +76,10 @@ class Pin2DmdDevice(DmdPlatformInterface):
 
     """A PIN2DMD device."""
 
-    __slots__ = ["writer", "current_frame", "new_frame_event", "machine", "log", "device", "brightness"]
+    __slots__ = ["writer", "current_frame", "new_frame_event", "machine", "log", "device", "brightness",
+                 "debug"]
 
-    def __init__(self, machine):
+    def __init__(self, machine, debug):
         """Initialise smart matrix device."""
         self.writer = None
         self.current_frame = None
@@ -85,6 +88,7 @@ class Pin2DmdDevice(DmdPlatformInterface):
         self.device = None
         self.brightness = 255
         self.log = logging.getLogger('Pin2DmdDevice')
+        self.debug = debug
 
     def _send_brightness(self, brightness):
         data = [0x00] * 2052
@@ -94,6 +98,10 @@ class Pin2DmdDevice(DmdPlatformInterface):
         data[3] = 0xff
         data[4] = 0x08
         data[17] = brightness
+
+        if self.debug:
+            self.log.debug("Writing 0x01, %s", "".join(" 0x%02x" % b for b in data))
+
         self.device.write(0x01, data)
 
     def _send_frame(self, buffer):
@@ -104,15 +112,16 @@ class Pin2DmdDevice(DmdPlatformInterface):
         output_buffer[2] = 0xE9
         output_buffer[3] = 18
 
-        for i in range(0, 6144, 3):
+        for i in range(0, 2048):
             # use these mappings for RGB panels
-            pixel_r = buffer[i]
-            pixel_g = buffer[i + 1]
-            pixel_b = buffer[i + 2]
+            idx = i * 3
+            pixel_r = buffer[idx]
+            pixel_g = buffer[idx + 1]
+            pixel_b = buffer[idx + 2]
             # lower half of display
-            pixel_rl = buffer[6144 + i]
-            pixel_gl = buffer[6144 + i + 1]
-            pixel_bl = buffer[6144 + i + 2]
+            pixel_rl = buffer[6144 + idx]
+            pixel_gl = buffer[6144 + idx + 1]
+            pixel_bl = buffer[6144 + idx + 2]
 
             # color correction
             pixel_r = GAMMA_TABLE[pixel_r]
@@ -123,9 +132,9 @@ class Pin2DmdDevice(DmdPlatformInterface):
             pixel_gl = GAMMA_TABLE[pixel_gl]
             pixel_bl = GAMMA_TABLE[pixel_bl]
 
-            target_idx = (i / 3) + 4
+            target_idx = i + 4
 
-            for _ in range(0, 6, 1):
+            for _ in range(0, 6):
                 output_buffer[target_idx] = ((pixel_gl & 1) << 5) | ((pixel_bl & 1) << 4) | ((pixel_rl & 1) << 3) |\
                                             ((pixel_g & 1) << 2) | ((pixel_b & 1) << 1) | ((pixel_r & 1) << 0)
                 pixel_r >>= 1
@@ -135,6 +144,9 @@ class Pin2DmdDevice(DmdPlatformInterface):
                 pixel_gl >>= 1
                 pixel_bl >>= 1
                 target_idx += 2048
+
+        if self.debug:
+            self.log.debug("Writing 0x01, %s, 1000", "".join(" 0x%02x" % b for b in output_buffer))
 
         self.device.write(0x01, output_buffer, 1000)
 
@@ -163,15 +175,25 @@ class Pin2DmdDevice(DmdPlatformInterface):
             # send frame
             self._send_frame(self.current_frame)
 
+    @staticmethod
+    def _done(future):
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            pass
+
     async def connect(self):
         """Connect to Pin2Dmd device."""
-        self.log.info("Connecting to Pin2Dmd RGB DMD")
+        self.log.info("Connecting to Pin2DMD RGB DMD")
         self.device = usb.core.find(idVendor=0x0314, idProduct=0xE457)
         if self.device is None:
             raise AssertionError('Pin2Dmd USB device not found')
 
         self.new_frame_event = threading.Event()
         self.writer = self.machine.clock.loop.run_in_executor(None, self._feed_hardware)
+        self.writer.add_done_callback(self._done)
+
+        self.log.info("Connected to Pin2DMD")
 
     def set_brightness(self, brightness: float):
         """Set brightness."""
