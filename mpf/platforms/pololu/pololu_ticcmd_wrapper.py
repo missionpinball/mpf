@@ -2,8 +2,11 @@
 import subprocess
 import logging
 import asyncio
+
 from threading import Thread
 import ruamel.yaml
+
+from mpf.core.utility_functions import Util
 
 
 class TicError(Exception):
@@ -61,19 +64,12 @@ class PololuTiccmdWrapper:
         future = asyncio.wrap_future(
             asyncio.run_coroutine_threadsafe(self._ticcmd_remote(*args), self.loop),
             loop=self._machine.clock.loop)
-        future.add_done_callback(self._done)
+        future.add_done_callback(Util.raise_exceptions)
         return future
 
     def _ticcmd(self, *args):
         """Run ticcmd in another thread and forget about the response."""
         self.loop.call_soon_threadsafe(self._run_subprocess_ticcmd, *args)
-
-    @staticmethod
-    def _done(future):
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
 
     async def _ticcmd_remote(self, *args):
         """Return a future with the result of ticcmd."""

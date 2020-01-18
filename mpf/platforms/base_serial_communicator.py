@@ -1,7 +1,9 @@
 """Base class for serial communicator."""
 import asyncio
-
 from serial import SerialException
+
+from mpf.core.utility_functions import Util
+
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -71,15 +73,7 @@ class BaseSerialCommunicator:
     async def start_read_loop(self):
         """Start the read loop."""
         self.read_task = self.machine.clock.loop.create_task(self._socket_reader())
-        self.read_task.add_done_callback(self._done)
-
-    @staticmethod
-    def _done(future):
-        """Evaluate result of task.
-
-        Will raise exceptions from within task.
-        """
-        future.result()
+        self.read_task.add_done_callback(Util.raise_exceptions)
 
     # pylint: disable-msg=inconsistent-return-statements
     async def readuntil(self, separator, min_chars: int = 0):

@@ -69,20 +69,13 @@ class ScoreReel(SystemWideDevice):
             self.value_switches.append(self.config.get('switch_' + str(value)))
 
         self._runner = self.machine.clock.loop.create_task(self._run())
-        self._runner.add_done_callback(self._done)
+        self._runner.add_done_callback(Util.raise_exceptions)
 
     def stop(self, **kwargs):
         """Stop device."""
         del kwargs
         if self._runner:
             self._runner.cancel()
-
-    @staticmethod
-    def _done(future):
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
 
     def check_hw_switches(self):
         """Check all the value switches for this score reel.

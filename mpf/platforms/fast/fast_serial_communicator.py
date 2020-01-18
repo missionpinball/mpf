@@ -2,6 +2,8 @@
 import asyncio
 from distutils.version import StrictVersion
 
+from mpf.core.utility_functions import Util
+
 from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
 
 # Minimum firmware versions needed for this module
@@ -176,7 +178,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         self.platform.register_processor_connection(self.remote_processor, self)
 
         self.write_task = self.machine.clock.loop.create_task(self._socket_writer())
-        self.write_task.add_done_callback(self._done)
+        self.write_task.add_done_callback(Util.raise_exceptions)
 
     async def reset_net_cpu(self):
         """Reset the NET CPU."""

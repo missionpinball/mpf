@@ -61,20 +61,13 @@ class BallController(MpfController):
             return
 
         self._add_new_balls_task = self.machine.clock.loop.create_task(self._add_new_balls_to_playfield())
-        self._add_new_balls_task.add_done_callback(self._done)
+        self._add_new_balls_task.add_done_callback(Util.raise_exceptions)
 
     def _stop(self, **kwargs) -> None:
         del kwargs
         if self._add_new_balls_task:
             self._add_new_balls_task.cancel()
             self._add_new_balls_task = None
-
-    @staticmethod
-    def _done(future: asyncio.Future) -> None:
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
 
     def _get_total_balls_in_devices(self) -> int:
         """Return the total ball count over all devices in the machine."""

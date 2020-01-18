@@ -1,8 +1,9 @@
 """Contains code for PIN2DMD."""
-import asyncio
 import logging
 
 import threading
+from mpf.core.utility_functions import Util
+
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.core.platform import RgbDmdPlatform
 
@@ -175,13 +176,6 @@ class Pin2DmdDevice(DmdPlatformInterface):
             # send frame
             self._send_frame(self.current_frame)
 
-    @staticmethod
-    def _done(future):
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
-
     async def connect(self):
         """Connect to Pin2Dmd device."""
         self.log.info("Connecting to Pin2DMD RGB DMD")
@@ -191,7 +185,7 @@ class Pin2DmdDevice(DmdPlatformInterface):
 
         self.new_frame_event = threading.Event()
         self.writer = self.machine.clock.loop.run_in_executor(None, self._feed_hardware)
-        self.writer.add_done_callback(self._done)
+        self.writer.add_done_callback(Util.raise_exceptions)
 
         self.log.info("Connected to Pin2DMD")
 

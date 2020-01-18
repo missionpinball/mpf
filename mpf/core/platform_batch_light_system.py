@@ -1,9 +1,11 @@
 """A light system for platforms which batches all updates."""
 import abc
 import asyncio
+
 from typing import Callable, Tuple, Set
 from sortedcontainers import SortedSet, SortedList
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+from mpf.core.utility_functions import Util
 
 
 class PlatformBatchLight(LightPlatformInterface, abc.ABC):
@@ -64,20 +66,13 @@ class PlatformBatchLightSystem:
     def start(self):
         """Start light system."""
         self.update_task = self.clock.loop.create_task(self._send_updates())
-        self.update_task.add_done_callback(self._done)
+        self.update_task.add_done_callback(Util.raise_exceptions)
 
     def stop(self):
         """Stop light system."""
         if self.update_task:
             self.update_task.cancel()
             self.update_task = None
-
-    @staticmethod
-    def _done(future):
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
 
     async def _send_updates(self):
         while True:

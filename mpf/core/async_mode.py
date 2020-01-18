@@ -27,9 +27,9 @@ class AsyncMode(Mode, metaclass=abc.ABCMeta):
         super()._started()
 
         self._task = self.machine.clock.loop.create_task(self._run())
-        self._task.add_done_callback(self._done)
+        self._task.add_done_callback(self._mode_ended)
 
-    def _done(self, future: asyncio.Future) -> None:
+    def _mode_ended(self, future: asyncio.Future) -> None:
         """Evaluate result of task.
 
         Will raise exceptions from within task.

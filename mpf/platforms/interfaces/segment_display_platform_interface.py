@@ -1,6 +1,5 @@
 """Support for physical segment displays."""
 import abc
-import asyncio
 from typing import Any
 
 
@@ -36,13 +35,6 @@ class SegmentDisplaySoftwareFlashPlatformInterface(SegmentDisplayPlatformInterfa
         self._flash_on = True
         self._flashing = False
         self._text = ""
-
-    @staticmethod
-    def _display_flash_task_done(future):
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
 
     def set_software_flash(self, state):
         """Set software flashing state."""

@@ -707,3 +707,15 @@ class Util:
     def get_named_list_from_objects(switches) -> List[str]:
         """Return a list of names from a list of switch objects."""
         return [switch.name for switch in switches]
+
+    @staticmethod
+    def raise_exceptions(future: asyncio.Future) -> None:
+        """Re-raise any error except CancelledError on this exception.
+
+        Use this with add_done_callback on any future which is not awaited
+        directly to prevent swallowed exceptions.
+        """
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            pass

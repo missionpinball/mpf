@@ -1,10 +1,12 @@
 """Platform to control the hardware of a Raspberry Pi."""
 import asyncio
+
 from typing import Optional
 
 from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
 
 from mpf.core.delays import DelayManager
+from mpf.core.utility_functions import Util
 
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
@@ -173,7 +175,7 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
 
         self._cmd_queue = asyncio.Queue(loop=self.machine.clock.loop)
         self._cmd_task = self.machine.clock.loop.create_task(self._run())
-        self._cmd_task.add_done_callback(self._done)
+        self._cmd_task.add_done_callback(Util.raise_exceptions)
 
     def send_command(self, cmd):
         """Add a command to the command queue."""
@@ -196,17 +198,6 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
         if self.pi:
             self.machine.clock.loop.run_until_complete(self.pi.stop())
             self.pi = None
-
-    @staticmethod
-    def _done(future):  # pragma: no cover
-        """Evaluate result of task.
-
-        Will raise exceptions from within task.
-        """
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
 
     async def configure_servo(self, number: str) -> ServoPlatformInterface:
         """Configure a servo."""

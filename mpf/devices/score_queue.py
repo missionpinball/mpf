@@ -1,6 +1,7 @@
 """Score queues for SS games."""
 import asyncio
 import math
+from mpf.core.utility_functions import Util
 
 from mpf.core.system_wide_device import SystemWideDevice
 
@@ -36,18 +37,7 @@ class ScoreQueue(SystemWideDevice):
     async def _initialize(self):
         await super()._initialize()
         self._score_task = self.machine.clock.loop.create_task(self._handle_score_queue())
-        self._score_task.add_done_callback(self._done)
-
-    @staticmethod
-    def _done(future):
-        """Evaluate result of task.
-
-        Will raise exceptions from within task.
-        """
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
+        self._score_task.add_done_callback(Util.raise_exceptions)
 
     def score(self, value, **kwargs):
         """Score a value via the queue."""

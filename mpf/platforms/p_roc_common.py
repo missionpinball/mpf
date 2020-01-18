@@ -3,6 +3,7 @@
 import abc
 import asyncio
 import logging
+
 import platform
 import sys
 from collections import defaultdict
@@ -11,6 +12,7 @@ from threading import Thread
 import time
 from typing import Any, List, Union
 
+from mpf.core.utility_functions import Util
 from mpf.core.platform_batch_light_system import PlatformBatchLightSystem
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 
@@ -208,7 +210,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         future = asyncio.wrap_future(
             asyncio.run_coroutine_threadsafe(self.proc_process.run_command(cmd, *args), self.proc_process_instance),
             loop=self.machine.clock.loop)
-        future.add_done_callback(self._done)
+        future.add_done_callback(Util.raise_exceptions)
         return future
 
     def run_proc_cmd_no_wait(self, cmd, *args):
@@ -262,17 +264,10 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         """Return True if lights are sequential."""
         return a.board == b.board and a.address + 1 == b.address
 
-    @staticmethod
-    def _done(future):
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
-
     async def start(self):
         """Start listening for switches."""
         self.event_task = self.machine.clock.loop.create_task(self._poll_events())
-        self.event_task.add_done_callback(self._done)
+        self.event_task.add_done_callback(Util.raise_exceptions)
         self._light_system.start()
 
     def process_events(self, events):

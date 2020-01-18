@@ -2,6 +2,8 @@
 import asyncio
 import logging
 
+from mpf.core.utility_functions import Util
+
 from mpf.platforms.interfaces.accelerometer_platform_interface import AccelerometerPlatformInterface
 
 from mpf.core.platform import AccelerometerPlatform, I2cPlatform
@@ -21,14 +23,7 @@ class MMA8451Device(AccelerometerPlatformInterface):
         self.number = number
 
         self.task = self.platform.machine.clock.loop.create_task(self._poll())
-        self.task.add_done_callback(self._done)
-
-    @staticmethod
-    def _done(future: asyncio.Future):
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
+        self.task.add_done_callback(Util.raise_exceptions)
 
     async def _poll(self):
         device = await self.i2c_platform.configure_i2c(self.number)
