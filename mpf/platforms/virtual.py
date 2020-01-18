@@ -1,7 +1,6 @@
 """Contains code for a virtual hardware platform."""
 import asyncio
 import logging
-from typing import Callable, Tuple
 
 from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
 from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface

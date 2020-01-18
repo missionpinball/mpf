@@ -5,9 +5,6 @@ https://github.com/zestyping/openpixelcontrol/blob/master/python_clients/opc.py
 """
 import logging
 
-from typing import Callable
-from typing import Tuple
-
 from mpf.core.platform import LightsPlatform
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
