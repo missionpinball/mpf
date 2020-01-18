@@ -1,6 +1,5 @@
 """A digital output on either a light or driver platform."""
-from functools import partial
-from typing import Union, Tuple
+from typing import Union
 
 from mpf.core.delays import DelayManager
 from mpf.core.events import event_handler
@@ -80,15 +79,6 @@ class DigitalOutput(SystemWideDevice):
         except AssertionError as e:
             raise AssertionError("Failed to configure driver {} in platform. See error above".format(self.name)) from e
 
-    @staticmethod
-    def _get_state(max_fade_ms: int, state: bool) -> Tuple[float, int, bool]:
-        """Return the current state without any fade."""
-        del max_fade_ms
-        if state:
-            return 1.0, -1, True
-
-        return 0.0, -1, True
-
     @event_handler(3)
     def event_pulse(self, pulse_ms, **kwargs):
         """Handle pulse control event."""
@@ -100,7 +90,7 @@ class DigitalOutput(SystemWideDevice):
         if self.type == "driver":
             self.hw_driver.pulse(PulseSettings(power=1.0, duration=pulse_ms))
         elif self.type == "light":
-            self.hw_driver.set_fade(partial(self._get_state, state=True))
+            self.hw_driver.set_fade(1.0, -1, 1.0, -1)
             self.platform.light_sync()
             self.delay.reset(name='timed_disable',
                              ms=pulse_ms,
@@ -120,7 +110,7 @@ class DigitalOutput(SystemWideDevice):
             self.hw_driver.enable(PulseSettings(power=1.0, duration=0),
                                   HoldSettings(power=1.0))
         elif self.type == "light":
-            self.hw_driver.set_fade(partial(self._get_state, state=True))
+            self.hw_driver.set_fade(1.0, -1, 1.0, -1)
             self.platform.light_sync()
             self.delay.remove(name='timed_disable')
         else:
@@ -137,7 +127,7 @@ class DigitalOutput(SystemWideDevice):
         if self.type == "driver":
             self.hw_driver.disable()
         elif self.type == "light":
-            self.hw_driver.set_fade(partial(self._get_state, state=False))
+            self.hw_driver.set_fade(0.0, -1, 0.0, -1)
             self.platform.light_sync()
             self.delay.remove(name='timed_disable')
         else:

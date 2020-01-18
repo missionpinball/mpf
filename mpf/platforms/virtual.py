@@ -150,7 +150,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         """Configure light channel."""
         if not subtype:
             subtype = "led"
-        return VirtualLight("{}-{}".format(subtype, number), platform_settings)
+        return VirtualLight("{}-{}".format(subtype, number), platform_settings, self.machine)
 
     # pylint: disable-msg=no-self-use
     def configure_hardware_sound_system(self) -> "HardwareSoundPlatformInterface":
@@ -381,29 +381,30 @@ class VirtualLight(LightPlatformInterface):
 
     """Virtual Light."""
 
-    __slots__ = ["settings", "color_and_fade_callback"]
+    __slots__ = ["settings", "_current_fade", "machine"]
 
-    def __init__(self, number, settings) -> None:
+    def __init__(self, number, settings, machine) -> None:
         """Initialise LED."""
         super().__init__(number)
         self.settings = settings
-        self.color_and_fade_callback = None
+        self.machine = machine
+        self._current_fade = (0, -1, 0, -1)
 
     @property
     def current_brightness(self) -> float:
         """Return current brightness."""
-        return self.get_current_brightness_for_fade()
+        current_time = self.machine.clock.get_time()
+        start_brightness, start_time, target_brightness, target_time = self._current_fade
+        if target_time > current_time:
+            ratio = ((current_time - start_time) /
+                     (target_time - start_time))
+            return start_brightness + (target_brightness - start_brightness) * ratio
 
-    def get_current_brightness_for_fade(self, max_fade=0) -> float:
-        """Return brightness for a max_fade long fade."""
-        if self.color_and_fade_callback:
-            return self.color_and_fade_callback(max_fade)[0]
+        return target_brightness
 
-        return 0
-
-    def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
+    def set_fade(self, start_brightness, start_time, target_brightness, target_time):
         """Store CB function."""
-        self.color_and_fade_callback = color_and_fade_callback
+        self._current_fade = (start_brightness, start_time, target_brightness, target_time)
 
     def get_board_name(self):
         """Return the name of the board of this light."""
