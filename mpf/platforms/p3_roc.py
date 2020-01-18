@@ -43,7 +43,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         self.debug_log("Configuring P3-ROC hardware.")
 
         # validate config for p3_roc
-        self.config = self.machine.config_validator.validate_config("p3_roc", self.machine.config['p_roc'])
+        self.config = self.machine.config_validator.validate_config("p3_roc", self.machine.config.get('p_roc', {}))
 
         self.debug = self.config["debug"]
 

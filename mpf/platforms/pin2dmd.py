@@ -43,7 +43,7 @@ class Pin2DmdHardwarePlatform(RgbDmdPlatform):
         """Initialise PIN2DMD."""
         super().__init__(machine)
         self.features['tickless'] = True
-        self.config = self.machine.config_validator.validate_config("pin2dmd", self.machine.config['pin2dmd'])
+        self.config = self.machine.config_validator.validate_config("pin2dmd", self.machine.config.get('pin2dmd', {}))
         self._configure_device_logging_and_debug('PIN2DMD', self.config)
         self.log.debug("Configuring PIN2DMD hardware interface.")
         self.device = Pin2DmdDevice(machine, self.debug)

@@ -39,7 +39,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         """Initialise P-ROC."""
         super().__init__(machine)
         # validate config for p_roc
-        self.config = self.machine.config_validator.validate_config("p_roc", self.machine.config['p_roc'])
+        self.config = self.machine.config_validator.validate_config("p_roc", self.machine.config.get('p_roc', {}))
         self._configure_device_logging_and_debug('P-Roc', self.config)
 
         self.dmd = None
