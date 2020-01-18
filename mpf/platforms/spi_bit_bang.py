@@ -2,6 +2,8 @@
 import asyncio
 import logging
 
+from mpf.core.utility_functions import Util
+
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.core.platform import SwitchPlatform, SwitchConfig
 
@@ -61,14 +63,7 @@ class SpiBitBangPlatform(SwitchPlatform):
                                                                     self.machine.config.get('spi_bit_bang', {}))
 
         self._read_task = self.machine.clock.loop.create_task(self._run())
-        self._read_task.add_done_callback(self._done)
-
-    @staticmethod
-    def _done(future):
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
+        self._read_task.add_done_callback(Util.raise_exceptions)
 
     async def read_spi(self, bits):
         """Read from SPI."""

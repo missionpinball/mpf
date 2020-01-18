@@ -1,5 +1,6 @@
 """StepStick or similar stepper driver connected to a digital output."""
 import asyncio
+
 from typing import Optional
 
 import logging
@@ -8,6 +9,7 @@ from mpf.devices.digital_output import DigitalOutput
 
 from mpf.core.platform import StepperPlatform
 from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
+from mpf.core.utility_functions import Util
 
 
 class DigitalOutputStepStickStepper(StepperPlatformInterface):
@@ -30,20 +32,13 @@ class DigitalOutputStepStickStepper(StepperPlatformInterface):
         if self.enable_output:
             self.enable_output.enable()
 
-    @staticmethod
-    def _done(future):
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
-
     def move_rel_pos(self, position):
         """Move a number of steps in one direction."""
         if self._move_task and not self._move_task.done():
             raise AssertionError("Last move has not been completed. Calls stop first.")
         self._move_complete.clear()
         self._move_task = self.platform.machine.clock.loop.create_task(self._move_pos(position))
-        self._move_task.add_done_callback(self._done)
+        self._move_task.add_done_callback(Util.raise_exceptions)
 
     async def _move_pos(self, steps):
         if steps > 0:
@@ -67,7 +62,7 @@ class DigitalOutputStepStickStepper(StepperPlatformInterface):
                 self._move_task.cancel()
             self._move_complete.clear()
             self._move_task = self.platform.machine.clock.loop.create_task(self._move_rel(velocity))
-            self._move_task.add_done_callback(self._done)
+            self._move_task.add_done_callback(Util.raise_exceptions)
 
     async def _move_rel(self, velocity):
         if velocity > 0:

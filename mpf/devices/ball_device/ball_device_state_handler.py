@@ -1,6 +1,8 @@
 """Base class for ball device handlers."""
 import asyncio
 
+from mpf.core.utility_functions import Util
+
 
 class BallDeviceStateHandler:
 
@@ -42,14 +44,7 @@ class BallDeviceStateHandler:
     async def initialise(self):
         """Initialise handler."""
         self._task = self.machine.clock.loop.create_task(self._run())
-        self._task.add_done_callback(self._done)
-
-    @staticmethod
-    def _done(future):
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
+        self._task.add_done_callback(Util.raise_exceptions)
 
     async def _run(self):
         raise NotImplementedError()

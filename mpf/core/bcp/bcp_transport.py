@@ -1,10 +1,10 @@
 """Classes which manage BCP transports."""
-import asyncio
 from collections import defaultdict
 
 from typing import Union
 
 from mpf.core.bcp.bcp_client import BaseBcpClient
+from mpf.core.utility_functions import Util
 
 MYPY = False  # noqa
 if MYPY:
@@ -47,18 +47,7 @@ class BcpTransportManager:
         del kwargs
         self._transports.append(transport)
         self._readers[transport] = self._machine.clock.loop.create_task(self._receive_loop(transport))
-        self._readers[transport].add_done_callback(self._done)
-
-    @staticmethod
-    def _done(future):
-        """Evaluate result of task.
-
-        Will raise exceptions from within task.
-        """
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
+        self._readers[transport].add_done_callback(Util.raise_exceptions)
 
     async def _receive_loop(self, transport: BaseBcpClient):
         while True:

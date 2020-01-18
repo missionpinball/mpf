@@ -5,6 +5,7 @@ The duty of this device is to maintain the current ball count of the device.
 import asyncio
 
 from typing import List
+from mpf.core.utility_functions import Util
 
 MYPY = False
 if MYPY:    # pragma: no cover
@@ -43,7 +44,7 @@ class EjectTracker:
             self._ball_left = asyncio.ensure_future(ball_left, loop=self.machine.clock.loop)
 
         self._task = self.machine.clock.loop.create_task(self._run(ball_changes))
-        self._task.add_done_callback(self._done)
+        self._task.add_done_callback(Util.raise_exceptions)
 
     async def _run(self, ball_changes):
         already_left = self._already_left
@@ -71,13 +72,6 @@ class EjectTracker:
             self._task.cancel()
         if not self._ball_left.done():
             self._ball_left.cancel()
-
-    @staticmethod
-    def _done(future):
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
 
     def is_jammed(self):
         """Return true if currently jammed."""

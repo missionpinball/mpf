@@ -1,5 +1,6 @@
 """Handles all light updates."""
 import asyncio
+
 from typing import Dict
 
 from mpf.core.machine import MachineController
@@ -8,6 +9,7 @@ from mpf.core.settings_controller import SettingEntry
 from mpf.core.rgb_color import RGBColorCorrectionProfile, RGBColor
 
 from mpf.core.mpf_controller import MpfController
+from mpf.core.utility_functions import Util
 
 
 class LightController(MpfController):
@@ -87,14 +89,7 @@ class LightController(MpfController):
         """Update the color of lights for the monitor."""
         if not self._monitor_update_task:
             self._monitor_update_task = self.machine.clock.loop.create_task(self._monitor_update_lights())
-            self._monitor_update_task.add_done_callback(self._done)
-
-    @staticmethod
-    def _done(future: asyncio.Future):
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
+            self._monitor_update_task.add_done_callback(Util.raise_exceptions)
 
     async def _monitor_update_lights(self):
         colors = {}

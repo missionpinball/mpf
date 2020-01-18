@@ -15,6 +15,8 @@ from mpf.platforms.spike.spike_defines import SpikeNodebus
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
     DriverConfig, SwitchConfig, DmdPlatform, StepperPlatform
 
+from mpf.core.utility_functions import Util
+
 
 class SpikeSwitch(SwitchPlatformInterface):
 
@@ -147,14 +149,7 @@ class SpikeDMD(DmdPlatformInterface):
         self.data = None
         self.new_frame_event = asyncio.Event(loop=platform.machine.clock.loop)
         self.dmd_task = platform.machine.clock.loop.create_task(self._dmd_send())
-        self.dmd_task.add_done_callback(self._done)
-
-    @staticmethod
-    def _done(future):
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
+        self.dmd_task.add_done_callback(Util.raise_exceptions)
 
     def update(self, data: bytes):
         """Remember the last frame data."""
@@ -255,19 +250,12 @@ class SpikeDriver(DriverPlatformInterface):
         self.trigger(power1, duration1, power2, duration2)
 
         self._enable_task = self.platform.machine.clock.loop.create_task(self._enable(power2))
-        self._enable_task.add_done_callback(self._done)
+        self._enable_task.add_done_callback(Util.raise_exceptions)
 
     async def _enable(self, power):
         while True:
             await asyncio.sleep(.25, loop=self.platform.machine.clock.loop)
             self.trigger(power, 0x1FF, power, 0x1FF)
-
-    @staticmethod
-    def _done(future):
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
 
     def pulse(self, pulse_settings: PulseSettings):
         """Pulse coil for a certain time."""
@@ -750,18 +738,18 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         await self._connect_to_hardware(port, baud, flow_control=flow_control)
 
         self._poll_task = self.machine.clock.loop.create_task(self._poll())
-        self._poll_task.add_done_callback(self._done)
+        self._poll_task.add_done_callback(Util.raise_exceptions)
 
         self._sender_task = self.machine.clock.loop.create_task(self._sender())
-        self._sender_task.add_done_callback(self._done)
+        self._sender_task.add_done_callback(Util.raise_exceptions)
 
         if self.config['use_send_key']:
             self._send_key_task = self.machine.clock.loop.create_task(self._send_key())
-            self._send_key_task.add_done_callback(self._done)
+            self._send_key_task.add_done_callback(Util.raise_exceptions)
 
         if self.config['periodically_query_nodes']:
             self._query_nodes_task = self.machine.clock.loop.create_task(self._query_status_and_coil_current())
-            self._query_nodes_task.add_done_callback(self._done)
+            self._query_nodes_task.add_done_callback(Util.raise_exceptions)
 
         self._light_system = PlatformBatchLightSystem(self.machine.clock, self._light_key,
                                                       self._are_lights_sequential, self._send_multiple_light_update,
@@ -937,17 +925,6 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             # send ctrl+c to stop the mpf-spike-bridge
             self._writer.write(b'\x03reset\n')
             self._writer.close()
-
-    @staticmethod
-    def _done(future):  # pragma: no cover
-        """Evaluate result of task.
-
-        Will raise exceptions from within task.
-        """
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
 
     async def _send_raw(self, data):
         if self.debug:

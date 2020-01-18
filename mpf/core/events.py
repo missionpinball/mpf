@@ -690,10 +690,10 @@ class EventManager(MpfController):
             self.callback_queue.append((callback, kwargs))
         else:
             task = self.machine.clock.loop.create_task(self._run_handlers_sequential(event, callback, kwargs))
-            task.add_done_callback(self._done)
+            task.add_done_callback(self._queue_task_done)
             self._queue_tasks.append(task)
 
-    def _done(self, future):
+    def _queue_task_done(self, future):
         """Remove queue task from list and evaluate result."""
         future.result()
         self._queue_tasks.remove(future)

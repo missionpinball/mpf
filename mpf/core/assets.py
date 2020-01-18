@@ -623,15 +623,7 @@ class AsyncioSyncAssetManager(BaseAssetManager):
         """Load an asset."""
         self.num_assets_to_load += 1
         task = self.machine.clock.loop.create_task(self.wait_for_asset_load(asset))
-        task.add_done_callback(self._done)
-
-    @staticmethod
-    def _done(future):
-        """Evaluate result of task.
-
-        Will raise exceptions from within task.
-        """
-        future.result()
+        task.add_done_callback(Util.raise_exceptions)
 
 
 # pylint: disable=too-many-instance-attributes

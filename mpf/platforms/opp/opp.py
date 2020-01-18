@@ -7,6 +7,8 @@ boards.
 import asyncio
 from collections import defaultdict
 
+from mpf.core.utility_functions import Util
+
 from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
 
 from mpf.platforms.opp.opp_coil import OPPSolenoidCard
@@ -104,7 +106,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         # start polling
         for chain_serial in self.read_input_msg:
             self._poll_task[chain_serial] = self.machine.clock.loop.create_task(self._poll_sender(chain_serial))
-            self._poll_task[chain_serial].add_done_callback(self._done)
+            self._poll_task[chain_serial].add_done_callback(Util.raise_exceptions)
 
         # start listening for commands
         for connection in self.serial_connections:
@@ -801,14 +803,6 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         for light in self.neo_dict.values():
             if light.dirty:
                 light.update_color()
-
-    @staticmethod
-    def _done(future):  # pragma: no cover
-        """Evaluate result of task.
-
-        Will raise exceptions from within task.
-        """
-        future.result()
 
     async def _poll_sender(self, chain_serial):
         """Poll switches."""

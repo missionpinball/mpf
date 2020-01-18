@@ -1,5 +1,6 @@
 """Implements a servo in MPF."""
 import asyncio
+
 from typing import Optional
 
 from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
@@ -9,6 +10,7 @@ from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
 from mpf.core.system_wide_device import SystemWideDevice
+from mpf.core.utility_functions import Util
 
 
 @DeviceMonitor(_current_position="position", _target_position="target_position", _is_homed="is_homed")
@@ -69,14 +71,7 @@ class Stepper(SystemWideDevice):
                                     " use homing_mode hardware.", 1)
 
         self._move_task = self.machine.clock.loop.create_task(self._run())
-        self._move_task.add_done_callback(self._done)
-
-    @staticmethod
-    def _done(future):
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
+        self._move_task.add_done_callback(Util.raise_exceptions)
 
     def validate_and_parse_config(self, config, is_mode_config, debug_prefix: str = None):
         """Validate stepper config."""

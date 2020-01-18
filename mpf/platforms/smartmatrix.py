@@ -11,6 +11,7 @@ from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.exceptions.config_file_error import ConfigFileError
 
 from mpf.core.platform import RgbDmdPlatform
+from mpf.core.utility_functions import Util
 
 
 class SmartMatrixHardwarePlatform(RgbDmdPlatform):
@@ -112,6 +113,7 @@ class SmartMatrixDevice(DmdPlatformInterface):
         self.new_frame_event = threading.Event()
         self.control_data_queue = []
         self.writer = self.machine.clock.loop.run_in_executor(None, self._feed_hardware)
+        self.writer.add_done_callback(Util.raise_exceptions)
 
     def set_brightness(self, brightness: float):
         """Set brightness."""

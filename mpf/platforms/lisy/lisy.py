@@ -14,6 +14,7 @@ from mpf.platforms.interfaces.segment_display_platform_interface import SegmentD
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
 from mpf.core.logging import LogMixin
+from mpf.core.utility_functions import Util
 
 from mpf.platforms.lisy.defines import LisyDefines
 
@@ -465,7 +466,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 self._inputs[str(number)] = state == 1
 
             self._watchdog_task = self.machine.clock.loop.create_task(self._watchdog())
-            self._watchdog_task.add_done_callback(self._done)
+            self._watchdog_task.add_done_callback(Util.raise_exceptions)
 
             self.debug_log("Init of LISY done.")
 
@@ -485,7 +486,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
     async def start(self):
         """Start reading switch changes."""
         self._poll_task = self.machine.clock.loop.create_task(self._poll())
-        self._poll_task.add_done_callback(self._done)
+        self._poll_task.add_done_callback(Util.raise_exceptions)
 
     def stop(self):
         """Stop platform."""
@@ -502,13 +503,6 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             self._writer.close()
             self._reader = None
             self._writer = None
-
-    @staticmethod
-    def _done(future):
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
 
     async def _poll(self):
         sleep_time = 1.0 / self.config['poll_hz']

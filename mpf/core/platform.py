@@ -6,6 +6,7 @@ from collections import namedtuple
 from typing import Optional
 
 from mpf.core.logging import LogMixin
+from mpf.core.utility_functions import Util
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -213,7 +214,7 @@ class SegmentDisplaySoftwareFlashPlatform(SegmentDisplayPlatform, metaclass=abc.
         """Start flash task."""
         await super().initialize()
         self._display_flash_task = self.machine.clock.loop.create_task(self._display_flash())
-        self._display_flash_task.add_done_callback(self._display_flash_task_done)
+        self._display_flash_task.add_done_callback(Util.raise_exceptions)
 
     async def _display_flash(self):
         wait_time = 1 / (self.config['display_flash_frequency'] * 2)
@@ -226,13 +227,6 @@ class SegmentDisplaySoftwareFlashPlatform(SegmentDisplayPlatform, metaclass=abc.
             await asyncio.sleep(wait_time, loop=self.machine.clock.loop)
             for display in self._displays:
                 display.set_software_flash(False)
-
-    @staticmethod
-    def _display_flash_task_done(future):
-        try:
-            future.result()
-        except asyncio.CancelledError:
-            pass
 
     def stop(self):
         """Cancel flash task."""
