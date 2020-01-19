@@ -117,7 +117,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
 
     async def _skipping_ball(self, target: "BallDevice", add_ball_to_target: bool):
         incoming_skipping_ball = self._incoming_ball_which_may_skip_obj[0]
-        self.debug_log("Expecting incoming ball which may skip the device.")
+        self.info_log("Expecting incoming ball which may skip the device.")
         eject_request = OutgoingBall(target)
         await self._post_ejecting_event(eject_request, 1)
         incoming_ball_at_target = self._add_incoming_ball_to_target(eject_request.target)
@@ -143,7 +143,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
 
         # if we got an confirm
         if event == confirm_future:
-            self.debug_log("Got confirm for skipping ball.")
+            self.info_log("Got confirm for skipping ball.")
             await self._handle_eject_success(eject_request)
             incoming_skipping_ball.ball_arrived()
             if add_ball_to_target:
@@ -153,7 +153,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         target.remove_incoming_ball(incoming_ball_at_target)
         await self._failed_eject(eject_request, 1, True)
 
-        self.debug_log("No longer expecting incoming ball which may skip the device.")
+        self.info_log("No longer expecting incoming ball which may skip the device.")
         return False
 
     def find_available_ball_in_path(self, start: "BallDevice") -> bool:
@@ -359,7 +359,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         ball_eject_process = await self.ball_device.ball_count_handler.start_eject()
         try:
             await ball_eject_process.will_eject()
-            self.debug_log("Wait for ball to leave device")
+            self.info_log("Wait for ball to leave device")
             # eject the ball
 
             ball_left = ball_eject_process.wait_for_ball_left()
@@ -402,7 +402,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 await ball_left
 
             self.ball_device.set_eject_state("ball_left")
-            self.debug_log("Ball left")
+            self.info_log("Ball left")
             incoming_ball_at_target = self._add_incoming_ball_to_target(eject_request.target)
             result = await self._handle_confirm(eject_request, ball_eject_process, incoming_ball_at_target,
                                                 eject_try)
@@ -427,14 +427,14 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                               incoming_ball_at_target: IncomingBall, eject_try: int) -> bool:
         # TODO: check double eject (two balls left). can only happen when not jammed
         timeout = eject_request.eject_timeout
-        self.debug_log("Wait for confirm with timeout %s", timeout)
+        self.info_log("Wait for confirm with timeout %s", timeout)
         confirm_future = incoming_ball_at_target.wait_for_confirm()
         try:
             await Util.first([confirm_future], timeout=timeout,
                              loop=self.machine.clock.loop, cancel_others=False)
         except asyncio.TimeoutError:
             self.ball_device.set_eject_state("failed_confirm")
-            self.debug_log("Got timeout (%ss) before confirm from %s", timeout, eject_request.target)
+            self.info_log("Got timeout (%ss) before confirm from %s", timeout, eject_request.target)
             return await self._handle_late_confirm_or_missing(eject_request, ball_eject_process,
                                                               incoming_ball_at_target, eject_try)
         else:
@@ -443,7 +443,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             if confirm_future.cancelled():
                 raise AssertionError("Eject failed but should not")
             # eject successful
-            self.debug_log("Got eject confirm")
+            self.info_log("Got eject confirm")
             await self._handle_eject_success(eject_request)
             return True
 
@@ -454,7 +454,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
 
         if not ball_return_future.done() and not unknown_balls_future.done():
             # if target is playfield mark eject as confirmed
-            self.debug_log("Confirming eject because target is playfield and ball did not return.")
+            self.info_log("Confirming eject because target is playfield and ball did not return.")
             incoming_ball_at_target.ball_arrived()
             await self._handle_eject_success(eject_request)
             return True
@@ -482,7 +482,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         if not eject_request.target.is_playfield():
             await eject_request.target.ball_count_handler.wait_for_count_is_valid()
             if eject_success_future.done():
-                self.debug_log("Got eject confirm (after recounting)")
+                self.info_log("Got eject confirm (after recounting)")
                 await self._handle_eject_success(eject_request)
                 return True
         else:
@@ -508,20 +508,20 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             return True
         if event == ball_return_future:
             # ball returned. eject failed
-            self.debug_log("Ball returned. Eject failed.")
+            self.info_log("Ball returned. Eject failed.")
             eject_request.already_left = False
             incoming_ball_at_target.did_not_arrive()
             return False
         if event == unknown_balls_future:
             # TODO: this may be an option
-            self.debug_log("Got unknown balls. Assuming a ball returned.")
+            self.info_log("Got unknown balls. Assuming a ball returned.")
             incoming_ball_at_target.did_not_arrive()
             return False
         # throw an error if we got here
         raise AssertionError("Invalid state")
 
     async def _handle_eject_success(self, eject_request: OutgoingBall):
-        self.debug_log("Eject successful")
+        self.info_log("Eject successful")
 
         await self.machine.events.post_async('balldevice_' + self.ball_device.name + '_ball_eject_success',
                                              balls=1,

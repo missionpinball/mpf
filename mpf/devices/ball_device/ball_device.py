@@ -68,7 +68,7 @@ class BallDevice(SystemWideDevice):
 
     def set_eject_state(self, state):
         """Set the current device state."""
-        self.debug_log("State: %s", state)
+        self.info_log("State: %s", state)
         self._state = state
 
     @property
@@ -486,7 +486,7 @@ class BallDevice(SystemWideDevice):
                 if not path:
                     raise AssertionError("Could not find path to playfield {}".format(target.name))
 
-                self.debug_log("Ejecting %s unexpected balls using path %s", unclaimed_balls, path)
+                self.info_log("Ejecting %s unexpected balls using path %s", unclaimed_balls, path)
 
                 for dummy_iterator in range(unclaimed_balls):
                     self.setup_eject_chain(path, not self.config['auto_fire_on_unexpected_ball'])
@@ -516,8 +516,8 @@ class BallDevice(SystemWideDevice):
 
     async def _balls_missing(self, balls):
         # Called when ball_count finds that balls are missing from this device
-        self.debug_log("%s ball(s) missing from device. Mechanical eject?"
-                       " %s", abs(balls), self.config['mechanical_eject'])
+        self.info_log("%s ball(s) missing from device. Mechanical eject?"
+                      " %s", abs(balls), self.config['mechanical_eject'])
 
         await self.machine.events.post_async('balldevice_{}_ball_missing'.format(self.name), balls=abs(balls))
         '''event: balldevice_(name)_ball_missing.
@@ -607,10 +607,10 @@ class BallDevice(SystemWideDevice):
 
     def setup_player_controlled_eject(self, target=None):
         """Set up a player controlled eject."""
-        self.debug_log("Setting up player-controlled eject. Balls: %s, "
-                       "Target: %s, player_controlled_eject_event: %s",
-                       1, target,
-                       self.config['player_controlled_eject_event'])
+        self.info_log("Setting up player-controlled eject. Balls: %s, "
+                      "Target: %s, player_controlled_eject_event: %s",
+                      1, target,
+                      self.config['player_controlled_eject_event'])
 
         if self.config['mechanical_eject'] or (
                 self.config['player_controlled_eject_event'] and self.ejector):
@@ -713,8 +713,8 @@ class BallDevice(SystemWideDevice):
         if not target:
             target = self._target_on_unexpected_ball
 
-        self.debug_log('Adding %s ball(s) to the eject_queue with target %s.',
-                       balls, target)
+        self.info_log('Adding %s ball(s) to the eject_queue with target %s.',
+                      balls, target)
 
         balls_found = 0
         # add request to queue

@@ -208,7 +208,7 @@ class IncomingBallsHandler(BallDeviceStateHandler):
                 continue
 
             # handle incoming ball
-            self.debug_log("Received ball from %s", incoming_ball.source)
+            self.info_log("Received ball from %s", incoming_ball.source)
 
             # confirm eject
             incoming_ball.ball_arrived()
@@ -217,6 +217,6 @@ class IncomingBallsHandler(BallDeviceStateHandler):
             break
         else:
             # handle unexpected ball
-            self.debug_log("Received unexpected ball")
+            self.info_log("Received unexpected ball")
             # let the ball device handle this ball
             await self.ball_device.unexpected_ball_received()
