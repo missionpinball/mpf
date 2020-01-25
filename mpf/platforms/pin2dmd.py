@@ -47,7 +47,7 @@ class Pin2DmdHardwarePlatform(RgbDmdPlatform):
         self.config = self.machine.config_validator.validate_config("pin2dmd", self.machine.config.get('pin2dmd', {}))
         self._configure_device_logging_and_debug('PIN2DMD', self.config)
         self.log.debug("Configuring PIN2DMD hardware interface.")
-        self.device = Pin2DmdDevice(machine, self.debug)
+        self.device = Pin2DmdDevice(machine, self.debug, self.config['resolution'], self.config['panel'])
 
         if IMPORT_FAILED:
             raise AssertionError('Failed to load pyusb. Did you install pyusb? '
@@ -78,9 +78,9 @@ class Pin2DmdDevice(DmdPlatformInterface):
     """A PIN2DMD device."""
 
     __slots__ = ["writer", "current_frame", "new_frame_event", "machine", "log", "device", "brightness",
-                 "debug"]
+                 "debug", "resolution", "panel"]
 
-    def __init__(self, machine, debug):
+    def __init__(self, machine, debug, resolution, panel):
         """Initialise smart matrix device."""
         self.writer = None
         self.current_frame = None
@@ -90,6 +90,8 @@ class Pin2DmdDevice(DmdPlatformInterface):
         self.brightness = 255
         self.log = logging.getLogger('Pin2DmdDevice')
         self.debug = debug
+        self.resolution = resolution
+        self.panel = panel
 
     def _send_brightness(self, brightness):
         data = [0x00] * 2052
@@ -106,23 +108,39 @@ class Pin2DmdDevice(DmdPlatformInterface):
         self.device.write(0x01, data)
 
     def _send_frame(self, buffer):
-        output_buffer = [0] * 12292
+        if self.resolution == "128x32":
+            elements = 2048
+        else:
+            elements = 6144
+
+        output_buffer = [0] * (elements * 6 + 4)
 
         output_buffer[0] = 0x81
         output_buffer[1] = 0xC3
         output_buffer[2] = 0xE9
         output_buffer[3] = 18
 
-        for i in range(0, 2048):
-            # use these mappings for RGB panels
+        for i in range(0, elements):
             idx = i * 3
-            pixel_r = buffer[idx]
-            pixel_g = buffer[idx + 1]
-            pixel_b = buffer[idx + 2]
-            # lower half of display
-            pixel_rl = buffer[6144 + idx]
-            pixel_gl = buffer[6144 + idx + 1]
-            pixel_bl = buffer[6144 + idx + 2]
+
+            if self.panel == "rgb":
+                # use these mappings for RGB panels
+                pixel_r = buffer[idx]
+                pixel_g = buffer[idx + 1]
+                pixel_b = buffer[idx + 2]
+                # lower half of display
+                pixel_rl = buffer[elements * 3 + idx]
+                pixel_gl = buffer[elements * 3 + idx + 1]
+                pixel_bl = buffer[elements * 3 + idx + 2]
+            else:
+                # use these mappings for RBG panels
+                pixel_r = buffer[idx]
+                pixel_g = buffer[idx + 2]
+                pixel_b = buffer[idx + 1]
+                # lower half of display
+                pixel_rl = buffer[elements * 3 + idx]
+                pixel_gl = buffer[elements * 3 + idx + 2]
+                pixel_bl = buffer[elements * 3 + idx + 1]
 
             # color correction
             pixel_r = GAMMA_TABLE[pixel_r]
@@ -144,7 +162,7 @@ class Pin2DmdDevice(DmdPlatformInterface):
                 pixel_rl >>= 1
                 pixel_gl >>= 1
                 pixel_bl >>= 1
-                target_idx += 2048
+                target_idx += elements
 
         if self.debug:
             self.log.debug("Writing 0x01, %s, 1000", "".join(" 0x%02x" % b for b in output_buffer))
