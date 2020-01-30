@@ -38,6 +38,7 @@ class ShowPlayer(DeviceConfigPlayer):
         # make sure all shows play in sync
         queue = kwargs.get("queue", None)
         start_time = kwargs.get("start_time", None)
+        show_tokens = kwargs.get("show_tokens", kwargs)
         if not start_time:
             start_time = self.machine.clock.get_time()
         for show, show_settings in settings.items():
@@ -55,7 +56,7 @@ class ShowPlayer(DeviceConfigPlayer):
                 show_settings['priority'] = priority
             # todo need to add this key back to the config player
 
-            self._update_show(show.name, show_settings, context, queue, start_time, kwargs)
+            self._update_show(show.name, show_settings, context, queue, start_time, show_tokens)
 
     def _expand_device(self, device):
         # parse conditionals
@@ -101,8 +102,7 @@ class ShowPlayer(DeviceConfigPlayer):
             stop_callback = queue.clear
 
         start_step = show_settings['start_step'].evaluate(placeholder_args)
-        show_tokens = {k: v.evaluate(placeholder_args.get("show_tokens", {}))
-                       for k, v in show_settings['show_tokens'].items()}
+        show_tokens = {k: v.evaluate(placeholder_args) for k, v in show_settings['show_tokens'].items()}
 
         show_config = self.machine.show_controller.create_show_config(
             show, show_settings['priority'], show_settings['speed'], show_settings['loops'], show_settings['sync_ms'],
