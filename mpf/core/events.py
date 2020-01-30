@@ -142,6 +142,8 @@ class EventManager(MpfController):
         ``events.remove_handler(my_handler)``
         """
         if not self.machine.options['production']:
+            if event is None:
+                raise AssertionError("Cannot pass event None.")
             if not callable(handler):
                 raise ValueError('Cannot add handler "{}" for event "{}". Did you '
                                  'accidentally add parenthesis to the end of the '

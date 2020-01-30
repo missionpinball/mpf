@@ -389,6 +389,11 @@ class BallDevice(SystemWideDevice):
             self.raise_config_error("When using confirm_eject_type switch you " +
                                     "to specify a confirm_eject_switch", 7)
 
+        if (self.config['confirm_eject_type'] == "event" and
+                not self.config['confirm_eject_event']):
+            self.raise_config_error("When using confirm_eject_type event you " +
+                                    "to specify a confirm_eject_event", 14)
+
         if "ball_add_live" in self.tags:
             self.raise_config_error("Using \"tag: ball_add_live\" is deprecated. Please use default_source_device "
                                     "in your playfield section instead.", 10)
