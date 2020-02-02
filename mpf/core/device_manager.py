@@ -331,6 +331,9 @@ class DeviceCollection(dict):
         self.config_section = config_section
         self._tag_cache = dict()
 
+    def __hash__(self):
+        return hash((self.name, self.machine))
+
     def __delitem__(self, key):
         """Delete item for key."""
         # clear the tag cache
