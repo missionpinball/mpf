@@ -276,3 +276,8 @@ show_player:
       action: play
       show_tokens:
         color: blue
+  play_show_with_placeholder_in_token_and_event_args:
+    test_show_key_token:
+      show_tokens:
+        num: (test_num)
+        color: (test_color)
