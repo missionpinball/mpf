@@ -332,6 +332,7 @@ class DeviceCollection(dict):
         self._tag_cache = dict()
 
     def __hash__(self):
+        """Hash collection."""
         return hash((self.name, self.machine))
 
     def __delitem__(self, key):
