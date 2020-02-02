@@ -28,6 +28,17 @@ from mpf.file_interfaces.yaml_interface import YamlInterface
 YamlInterface.cache = True
 
 
+class MpfUnitTestFormatter(logging.Formatter):
+
+    def __init__(self, clock, fmt=None, datefmt=None, style='%'):
+        self.clock = clock
+        super().__init__(fmt=fmt, datefmt=datefmt, style=style)
+
+    def formatTime(self, record, datefmt=None):
+        #org = super().formatTime(record, datefmt)
+        return "{:.3f}".format(self.clock.get_time())
+
+
 def test_config(config_file):
 
     """Decorator to overwrite config file for one test."""
@@ -480,14 +491,6 @@ class MpfTestCase(unittest.TestCase):
         # print(threading.active_count())
 
         self.test_start_time = time.time()
-        if self.unittest_verbosity() > 1:
-            logging.basicConfig(level=logging.DEBUG,
-                                format='%(asctime)s : %(levelname)s : %('
-                                       'name)s : %(message)s')
-        else:
-            # no logging by default
-            logging.basicConfig(level=99)
-
         self.save_and_prepare_sys_path()
 
         # init machine
@@ -497,6 +500,18 @@ class MpfTestCase(unittest.TestCase):
         self.loop.set_exception_handler(self._exception_handler)
         self.clock = TestClock(self.loop)
         self._mock_loop()
+
+        if self.unittest_verbosity() > 1:
+            console_log = logging.StreamHandler()
+            console_log.setLevel(logging.DEBUG)
+            console_log.setFormatter(MpfUnitTestFormatter(self.clock,
+                                                          fmt='%(asctime)s : %(levelname)s : %('
+                                                              'name)s : %(message)s'))
+            logging.basicConfig(level=logging.DEBUG,
+                                handlers=[console_log])
+        else:
+            # no logging by default
+            logging.basicConfig(level=99)
 
         try:
             self.machine = TestMachineController(
