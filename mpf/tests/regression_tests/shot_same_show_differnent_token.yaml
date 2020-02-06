@@ -10,14 +10,14 @@ switches:
 shot_profiles:
   my_profile:
     states:
-    - name: lit_red
-      show: led_color
-      show_tokens:
-         color: red
-    - name: lit_blue
-      show: led_color
-      show_tokens:
-         color: blue
+      - name: lit_red
+        show: led_color
+        show_tokens:
+          color: red
+      - name: lit_blue
+        show: led_color
+        show_tokens:
+          color: blue
 
 shots:
   my_shot:

@@ -5,12 +5,13 @@ http://stackoverflow.com/questions/32965846/cant-parse-yaml-correctly/
 """
 import copy
 import re
-
 from typing import Any, Iterable
 from typing import Dict
 
 from collections.abc import Hashable
-import ruamel.yaml as yaml  # pylint: disable-msg=useless-import-alias
+
+from ruamel import yaml
+from ruamel.yaml import MappingNode
 from ruamel.yaml.error import MarkedYAMLError
 from ruamel.yaml.reader import Reader
 from ruamel.yaml.resolver import BaseResolver
@@ -32,75 +33,81 @@ class MpfResolver(BaseResolver):
         return (1, 2)
 
 
-MpfResolver.add_implicit_resolver(
-    # Process any item beginning with a plus sign (+) as a string
-    u'tag:yaml.org,2002:str',
-    re.compile(
-        u'''^(\\+([0-9a-zA-Z .]+))$''',
-        re.X),
-    list(u'+'))
+RESOLVERS = [
+    (
+        # Process any item beginning with a plus sign (+) as a string
+        u'tag:yaml.org,2002:str',
+        re.compile(
+            u'''^(\\+([0-9a-zA-Z .]+))$''',
+            re.X),
+        list(u'+')),
 
-MpfResolver.add_implicit_resolver(
-    # Process any 3+ digit number with a leading zero as a string
-    u'tag:yaml.org,2002:str',
-    re.compile(
-        u'''^(?:(0[0-9]{2,}))$''',
-        re.X),
-    list(u'0'))
+    (
+        # Process any 3+ digit number with a leading zero as a string
+        u'tag:yaml.org,2002:str',
+        re.compile(
+            u'''^(?:(0[0-9]{2,}))$''',
+            re.X),
+        list(u'0')),
 
-MpfResolver.add_implicit_resolver(
-    u'tag:yaml.org,2002:bool',
-    re.compile(
-        u'''^(?:true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO)$''',
-        re.X), list(u'tTfFyYnN'))
+    (
+        u'tag:yaml.org,2002:bool',
+        re.compile(
+            u'''^(?:true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO)$''',
+            re.X), list(u'tTfFyYnN')),
 
-MpfResolver.add_implicit_resolver(
-    u'tag:yaml.org,2002:float',
-    re.compile(u'''^(?:
+    (
+        u'tag:yaml.org,2002:float',
+        re.compile(u'''^(?:
      [-+]?(?:[0-9][0-9_]*)\\.[0-9_]*
     |\\.[0-9_]+)$''', re.X),
-    list(u'-+0123456789.'))
+        list(u'-+0123456789.')),
 
-MpfResolver.add_implicit_resolver(
-    u'tag:yaml.org,2002:int',
-    re.compile(u'''^(?:[-+]?0b[0-1_]+
+    (
+        u'tag:yaml.org,2002:int',
+        re.compile(u'''^(?:[-+]?0b[0-1_]+
     |[-+]?[0-9]+
     |[-+]?0o?[0-7_]+
     |[-+]?0x[0-9a-fA-F_]+)$''', re.X),
-    list(u'-+0123456789'))
+        list(u'-+0123456789')),
 
-MpfResolver.add_implicit_resolver(
-    u'tag:yaml.org,2002:merge',
-    re.compile(u'^(?:<<)$'),
-    [u'<'])
+    (
+        u'tag:yaml.org,2002:merge',
+        re.compile(u'^(?:<<)$'),
+        [u'<']),
 
-MpfResolver.add_implicit_resolver(
-    u'tag:yaml.org,2002:null',
-    re.compile(u'''^(?: ~
+    (
+        u'tag:yaml.org,2002:null',
+        re.compile(u'''^(?: ~
     |null|Null|NULL
     | )$''', re.X),
-    [u'~', u'n', u'N', u''])
+        [u'~', u'n', u'N', u'']),
 
-MpfResolver.add_implicit_resolver(
-    u'tag:yaml.org,2002:timestamp',
-    re.compile(u'''^(?:[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]
+    (
+        u'tag:yaml.org,2002:timestamp',
+        re.compile(u'''^(?:[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]
     |[0-9][0-9][0-9][0-9] -[0-9][0-9]? -[0-9][0-9]?
     (?:[Tt]|[ \\t]+)[0-9][0-9]?
     :[0-9][0-9] :[0-9][0-9] (?:\\.[0-9]*)?
     (?:[ \\t]*(?:Z|[-+][0-9][0-9]?(?::[0-9][0-9])?))?)$''', re.X),
-    list(u'0123456789'))
+        list(u'0123456789')),
 
-MpfResolver.add_implicit_resolver(
-    u'tag:yaml.org,2002:value',
-    re.compile(u'^(?:=)$'),
-    [u'='])
+    (
+        u'tag:yaml.org,2002:value',
+        re.compile(u'^(?:=)$'),
+        [u'=']),
 
-# The following resolver is only for documentation purposes. It cannot work
-# because plain scalars cannot start with '!', '&', or '*'.
-MpfResolver.add_implicit_resolver(
-    u'tag:yaml.org,2002:yaml',
-    re.compile(u'^(?:!|&|\\*)$'),
-    list(u'!&*'))
+    # The following resolver is only for documentation purposes. It cannot work
+    # because plain scalars cannot start with '!', '&', or '*'.
+    (
+        u'tag:yaml.org,2002:yaml',
+        re.compile(u'^(?:!|&|\\*)$'),
+        list(u'!&*'))
+]
+
+
+for resolver in RESOLVERS:
+    MpfResolver.add_implicit_resolver(*resolver)
 
 
 class MpfConstructor(Constructor):
@@ -112,7 +119,7 @@ class MpfConstructor(Constructor):
 
         From: http://stackoverflow.com/questions/34358974/how-to-prevent-re-definition-of-keys-in-yaml
         """
-        if not isinstance(node, yaml.MappingNode):  # pragma: no cover
+        if not isinstance(node, MappingNode):  # pragma: no cover
             raise ConstructorError(problem="expected a mapping node, but found %s" % node.id,
                                    problem_mark=node.start_mark)
         mapping = {}
