@@ -74,18 +74,13 @@ class ShowPlayer(DeviceConfigPlayer):
                                         "an option in show_player. Did you indent that option too far?".format(key), 1)
         return device_settings
 
-    def handle_subscription_change(self, value, settings, priority, context):
+    def handle_subscription_change(self, value, settings, priority, context, key):
         """Handle subscriptions."""
         instance_dict = self._get_instance_dict(context)
         for show, show_settings in settings.items():
             show_settings = dict(show_settings)
             if show_settings['action'] != 'play':
                 raise AssertionError("Can only use action play with subscriptions.")
-
-            if 'key' in show_settings and show_settings['key']:
-                key = show_settings['key']
-            else:
-                key = show.name
 
             if value:
                 self._play(key, instance_dict, show.name, show_settings, False, None, {})

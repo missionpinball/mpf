@@ -255,10 +255,11 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         subscription_list[template] = subscription
         subscription.add_done_callback(
             partial(self._update_subscription, template, subscription_list, settings, priority, context))
-        self.handle_subscription_change(value, settings, priority, context)
+        self.handle_subscription_change(value, settings, priority, context, str(template))
 
     # pylint: disable-msg=no-self-use
-    def handle_subscription_change(self, value, settings, priority, context):
+    # pylint: disable-msg=too-many-arguments
+    def handle_subscription_change(self, value, settings, priority, context, key):
         """Handle the change of a subscription."""
         del value
         del settings
