@@ -5,6 +5,10 @@ import tempfile
 import shutil
 import shlex
 
+from mpf.file_interfaces.yaml_roundtrip import YamlRoundtrip
+
+from mpf.file_interfaces.yaml_interface import YamlInterface
+
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 from mpf.tests.MpfMachineTestCase import MockConfigPlayers
 
@@ -13,23 +17,29 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
 
     def __init__(self, config_string, methodName='test_config_parsing'):
         super().__init__(methodName)
-        machine_config, mode_configs, show_configs, self.tests = self.prepare_config(config_string)
+        self._config_string = config_string
+
+    def setUp(self):
+        machine_config, mode_configs, show_configs, self.tests = self.prepare_config(self._config_string)
         self.config_dir = tempfile.mkdtemp()
 
         # create machine config
         os.mkdir(os.path.join(self.config_dir, "config"))
-        with open(os.path.join(self.config_dir, "config", "config.yaml"), "w") as f:
+        self.verify_yaml(machine_config, "config.yaml")
+        with open(os.path.join(self.config_dir, "config/", "config.yaml"), "w") as f:
             f.write(machine_config)
 
         # create shows
         os.mkdir(os.path.join(self.config_dir, "shows"))
         for show_name, show_config in show_configs.items():
+            self.verify_yaml(show_config, "shows/" + show_name + ".yaml", show_file=True)
             with open(os.path.join(self.config_dir, "shows", show_name + ".yaml"), "w") as f:
                 f.write(show_config)
 
         # create modes
         os.mkdir(os.path.join(self.config_dir, "modes"))
         for mode_name, mode_config in mode_configs.items():
+            self.verify_yaml(mode_config, "modes/" + mode_name + "/config/" + mode_name + ".yaml")
             os.mkdir(os.path.join(self.config_dir, "modes", mode_name))
             os.mkdir(os.path.join(self.config_dir, "modes", mode_name, "config"))
             with open(os.path.join(self.config_dir, "modes", mode_name, "config", mode_name + ".yaml"), "w") as f:
@@ -37,6 +47,34 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
 
         # cleanup at the end
         self.addCleanup(self._delete_tmp_dir, self.config_dir)
+
+        super().setUp()
+
+    @staticmethod
+    def unidiff_output(expected, actual):
+        """
+        Helper function. Returns a string containing the unified diff of two multiline strings.
+        """
+
+        import difflib
+        expected = expected.splitlines(1)
+        actual = actual.splitlines(1)
+
+        diff = difflib.unified_diff(expected, actual)
+
+        return ''.join(diff)
+
+    def verify_yaml(self, yaml_string, config_name, show_file=False):
+        formatted_yaml = YamlRoundtrip.reformat_yaml(yaml_string, show_file=show_file)
+        if formatted_yaml == "null\n...\n":
+            # special case: empty config
+            return
+        if yaml_string.strip() != formatted_yaml.strip():
+            #self.maxDiff = None
+            #self.assertEqual(yaml_string, formatted_yaml)
+            diff = self.unidiff_output(yaml_string.strip() + "\n", formatted_yaml.strip() + "\n")
+            self.fail("Config {} unformatted. Diff:\n{}".format(
+              config_name, diff))
 
     def get_enable_plugins(self):
         return True
@@ -48,16 +86,18 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
         options['create_config_cache'] = False
         return options
 
-    def prepare_config(self, config_string):
+    @staticmethod
+    def prepare_config(config_string, fixup_config=True):
         # inline invisible comments from documentation
-        config_string = re.sub(r'^#! ([^\n]+)', '\\1', config_string, flags=re.MULTILINE)
+        if fixup_config:
+            config_string = re.sub(r'^#! ([^\n]+)', '\\1', config_string, flags=re.MULTILINE)
 
         # first find sections
         configs = re.split(r'^##! (config: \w+|test|show: \w+|mode: \w+)\n', config_string, flags=re.MULTILINE)
         machine_config = configs.pop(0)
 
         # add config_version if missing
-        if not machine_config.startswith("#config_version=5"):
+        if fixup_config and not machine_config.startswith("#config_version=5"):
             machine_config = "#config_version=5\n" + machine_config
 
         modes = {}
@@ -72,21 +112,21 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
             elif section_type.startswith("mode:") or section_type.startswith("config:"):
                 # normal mode
                 _, mode_name = section_type.split(": ", 2)
-                if not section_config.startswith("#config_version=5"):
+                if fixup_config and not section_config.startswith("#config_version=5"):
                     section_config = "#config_version=5\n" + section_config
                 modes[mode_name] = section_config
             elif section_type.startswith("show:"):
                 # show
                 _, show_name = section_type.split(": ", 2)
-                if not section_config.startswith("#show_version=5"):
+                if fixup_config and not section_config.startswith("#show_version=5"):
                     section_config = "#show_version=5\n" + section_config
                 shows[show_name] = section_config
 
         # load all modes
-        if modes and "modes:" not in machine_config:
+        if fixup_config and modes and "modes:" not in machine_config:
             machine_config += "\nmodes:\n"
             for mode in modes.keys():
-                machine_config += " - " + mode + "\n"
+                machine_config += "  - " + mode + "\n"
 
         return machine_config, modes, shows, tests
 
