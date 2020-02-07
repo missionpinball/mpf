@@ -68,8 +68,10 @@ class LightPlayer(DeviceConfigPlayer):
         except KeyError:
             pass
 
-    def handle_subscription_change(self, value, settings, priority, context):
+    # pylint: disable-msg=too-many-arguments
+    def handle_subscription_change(self, value, settings, priority, context, key):
         """Handle subscriptions."""
+        del key
         if value:
             self.play(settings, context, "", priority)
         else:
