@@ -1,3 +1,5 @@
+import os
+
 import argparse
 import re
 import unittest
@@ -31,6 +33,7 @@ class Command(MpfCommandLineParser):
         with open(test_file) as f:
             test_string = f.read()
 
+        base_dir = os.path.dirname(os.path.abspath(test_file))
         suite = unittest.TestSuite()
 
         if ".. code-block:: mpf-config" in test_string or ".. code-block:: mpf-mc-config" in test_string:
@@ -52,17 +55,17 @@ class Command(MpfCommandLineParser):
                         indent_len = len(indent.group(0))
                     test_case += line[indent_len:] + "\n"
                 if block.group("type") == "mpf-config":
-                    test = MpfDocTestCase(config_string=test_case)
+                    test = MpfDocTestCase(config_string=test_case, base_dir=base_dir)
                 else:
-                    test = MpfIntegrationDocTestCase(config_string=test_case)
+                    test = MpfIntegrationDocTestCase(config_string=test_case, base_dir=base_dir)
                 suite.addTest(test)
         else:
             print("Parsing single test")
 
             if args.start_mc:
-                test = MpfIntegrationDocTestCase(config_string=test_string)
+                test = MpfIntegrationDocTestCase(config_string=test_string, base_dir=base_dir)
             else:
-                test = MpfDocTestCase(config_string=test_string)
+                test = MpfDocTestCase(config_string=test_string, base_dir=base_dir)
             suite.addTest(test)
 
         result = unittest.TextTestRunner(verbosity=1 if not args.verbose else 99).run(suite)

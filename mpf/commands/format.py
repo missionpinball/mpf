@@ -79,10 +79,12 @@ class Command(MpfCommandLineParser):
                 indented_result += "\n"
         return indented_result
 
+    # pylint: disable-msg=too-many-locals
     def _reformat_test_case(self, test_case):
         test_case = test_case.replace("\t", "  ")
         test_case = re.sub(r" +\n", "\n", test_case)
-        machine_config, mode_configs, show_configs, tests = MpfDocTestCase.prepare_config(test_case, fixup_config=False)
+        machine_config, mode_configs, show_configs, assets, tests = MpfDocTestCase.prepare_config(
+            test_case, fixup_config=False)
         formatted_yaml = ""
         if machine_config:
             new_config = self._reformat(machine_config, show_file=False)
@@ -97,6 +99,11 @@ class Command(MpfCommandLineParser):
             for show_name, show_config in show_configs.items():
                 formatted_yaml += "##! show: " + show_name + "\n"
                 formatted_yaml += self._reformat(show_config, show_file=True)
+
+        if assets:
+            for asset_path, asset_source in assets.items():
+                formatted_yaml += "##! asset: {}={}\n".format(asset_path, asset_source)
+
         if tests:
             formatted_yaml += "##! test\n"
             for test in tests:

@@ -15,12 +15,13 @@ from mpf.tests.MpfMachineTestCase import MockConfigPlayers
 
 class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
 
-    def __init__(self, config_string, methodName='test_config_parsing'):
+    def __init__(self, config_string, base_dir = None, methodName='test_config_parsing'):
         super().__init__(methodName)
         self._config_string = config_string
+        self._base_dir = base_dir
 
     def setUp(self):
-        machine_config, mode_configs, show_configs, self.tests = self.prepare_config(self._config_string)
+        machine_config, mode_configs, show_configs, assets, self.tests = self.prepare_config(self._config_string)
         self.config_dir = tempfile.mkdtemp()
 
         # create machine config
@@ -44,6 +45,19 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
             os.mkdir(os.path.join(self.config_dir, "modes", mode_name, "config"))
             with open(os.path.join(self.config_dir, "modes", mode_name, "config", mode_name + ".yaml"), "w") as f:
                 f.write(mode_config)
+
+        # link assets
+        for asset_path, asset_source in assets.items():
+            if not self._base_dir:
+                raise AssertionError("You need to set base_dir to use assets.")
+            path_elements = asset_path.split("/")
+            source_elements = asset_source.split("/")
+            full_source_path = os.path.join(self._base_dir, *source_elements)
+            os.mkdir(os.path.join(self.config_dir, *path_elements[:-1]))
+            self.get_absolute_machine_path()
+            if not os.path.isfile(full_source_path):
+                raise AssertionError('Could not find asset "{}" on disk'.format(full_source_path))
+            os.symlink(full_source_path, os.path.join(self.config_dir, *path_elements))
 
         # cleanup at the end
         self.addCleanup(self._delete_tmp_dir, self.config_dir)
@@ -93,7 +107,7 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
             config_string = re.sub(r'^#! ([^\n]+)', '\\1', config_string, flags=re.MULTILINE)
 
         # first find sections
-        configs = re.split(r'^##! (config: \w+|test|show: \w+|mode: \w+)\n', config_string, flags=re.MULTILINE)
+        configs = re.split(r'^##! (config: \w+|test|show: \w+|mode: \w+|asset: [^\n]+)\n', config_string, flags=re.MULTILINE)
         machine_config = configs.pop(0)
 
         # add config_version if missing
@@ -103,6 +117,7 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
         modes = {}
         shows = {}
         tests = []
+        assets = {}
         while configs:
             section_type = configs.pop(0)
             section_config = configs.pop(0)
@@ -121,6 +136,13 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
                 if fixup_config and not section_config.startswith("#show_version=5"):
                     section_config = "#show_version=5\n" + section_config
                 shows[show_name] = section_config
+            elif section_type.startswith("asset:"):
+                # asset
+                _, asset_desc = section_type.split(": ", 2)
+                asset_path, asset_source = asset_desc.split("=", 2)
+                assets[asset_path] = asset_source
+            else:
+                raise AssertionError("Invalid section: {}".format(section_type))
 
         # load all modes
         if fixup_config and modes and "modes:" not in machine_config:
@@ -128,7 +150,7 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
             for mode in modes.keys():
                 machine_config += "  - " + mode + "\n"
 
-        return machine_config, modes, shows, tests
+        return machine_config, modes, shows, assets, tests
 
     def get_config_file(self):
         return "config.yaml"
