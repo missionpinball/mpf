@@ -1,0 +1,28 @@
+lights:
+  l_light1:
+    number:
+light_player:
+  "{machine.test_var == 1}":
+    l_light1: blue
+  "{machine.test_var == 2}":
+    l_light1: red
+
+
+##! mode: attract
+variable_player:
+  set_test_var:
+    test_var:
+      action: set_machine
+      int: (value)
+
+##! test
+#! post set_test_var value=0
+#! advance_time_and_run .1
+#! assert_light_color l_light1 black
+#! post set_test_var value=1
+#! advance_time_and_run 1
+#! assert_light_color l_light1 blue
+#! post set_test_var value=2
+#! advance_time_and_run 1
+#! assert_light_color l_light1 red
+

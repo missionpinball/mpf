@@ -38,6 +38,13 @@ class LightStackEntry:
         """Compare two stack entries."""
         return self.priority > other.priority or (self.priority == other.priority and self.key > other.key)
 
+    def __repr__(self):
+        """Return a nice debug string."""
+        return "<{klass} @{id:x} {attrs}>".format(
+            klass=self.__class__.__name__,
+            id=id(self) & 0xFFFFFF,
+            attrs=" ".join("{}={!r}".format(k, getattr(self, k)) for k in self.__slots__))
+
 
 @DeviceMonitor(_color="color", _do_not_overwrite_setter=True)
 class Light(SystemWideDevice, DevicePositionMixin):
