@@ -151,7 +151,7 @@ class TestFadecandy(MpfTestCase):
         self.advance_time_and_run(.5)
         self._messages = []
         self.advance_time_and_run(.1)
-        message = self._build_message(0, {99: (113, 113, 255)})
+        message = self._build_message(0, {99: (96, 96, 255)})
         self.assertIn(message, self._messages)
         self.advance_time_and_run(.5)
         self._messages = []

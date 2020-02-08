@@ -642,8 +642,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             number_str, channel = number.split("-")
             if number_str not in self.fast_leds:
                 self.fast_leds[number_str] = FASTDirectLED(
-                    number_str, int(self.config['hardware_led_fade_time']))
+                    number_str, int(self.config['hardware_led_fade_time']), self.machine)
             fast_led_channel = FASTDirectLEDChannel(self.fast_leds[number_str], channel)
+            self.fast_leds[number_str].add_channel(int(channel), fast_led_channel)
 
             return fast_led_channel
 

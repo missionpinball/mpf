@@ -39,11 +39,9 @@ class LightStackEntry:
         return self.priority > other.priority or (self.priority == other.priority and self.key > other.key)
 
     def __repr__(self):
-        """Return a nice debug string."""
-        return "<{klass} @{id:x} {attrs}>".format(
-            klass=self.__class__.__name__,
-            id=id(self) & 0xFFFFFF,
-            attrs=" ".join("{}={!r}".format(k, getattr(self, k)) for k in self.__slots__))
+        """Return string representation."""
+        return "<LightStackEntry {}: {} ({}) -> {} ({}) Prio: {}>".format(
+            self.key, self.start_color, self.start_time, self.dest_color, self.dest_time, self.priority)
 
 
 @DeviceMonitor(_color="color", _do_not_overwrite_setter=True)
@@ -508,8 +506,27 @@ class Light(SystemWideDevice, DevicePositionMixin):
             self.stack = [x for x in self.stack if x.key != key]
 
     def _schedule_update(self):
-        for hw_driver, function in self.hw_driver_functions:
-            hw_driver.set_fade(function)
+        start_color, start_time, target_color, target_time = self._get_color_and_target_time(self.stack)
+        if start_color != target_color:
+            start_color = self.color_correct(self.gamma_correct(start_color))
+            target_color = self.color_correct(self.gamma_correct(target_color))
+        else:
+            start_color = self.color_correct(self.gamma_correct(start_color))
+            target_color = start_color
+
+        # TODO: add some logic to check if the target color + time changed at all
+
+        for color, drivers in self.hw_drivers.items():
+            if color in ["red", "blue", "green"]:
+                start_brightness = getattr(start_color, color) / 255.0
+                target_brightness = getattr(target_color, color) / 255.0
+            elif color == "white":
+                start_brightness = min(start_color.red, start_color.green, start_color.blue) / 255.0
+                target_brightness = min(target_color.red, target_color.green, target_color.blue) / 255.0
+            else:
+                raise ColorException("Invalid color {}".format(color))
+            for driver in drivers:
+                driver.set_fade(start_brightness, start_time, target_brightness, target_time)
 
         for platform in self.platforms:
             platform.light_sync()
@@ -569,6 +586,42 @@ class Light(SystemWideDevice, DevicePositionMixin):
                            self._color_correction_profile.name)
 
         return self._color_correction_profile.apply(color)
+
+    def _get_color_and_target_time(self, stack) -> Tuple[RGBColor, int, RGBColor, int]:
+        try:
+            color_settings = stack[0]
+        except IndexError:
+            # no stack
+            return self._off_color, -1, self._off_color, -1
+
+        dest_color = color_settings.dest_color
+        dest_time = color_settings.dest_time
+
+        # no fade
+        if not dest_time:
+            # if we are transparent just return the lower layer
+            if dest_color is None:
+                return self._get_color_and_target_time(stack[1:])
+            return dest_color, -1, dest_color, -1
+
+        # fade out
+        if dest_color is None:
+            _, _, lower_dest_color, lower_dest_time = self._get_color_and_target_time(stack[1:])
+            start_time = color_settings.start_time
+            if lower_dest_time < 0:
+                # no fade going on below current layer
+                dest_color = lower_dest_color
+            elif start_time < lower_dest_time < dest_time:
+                # fade below is shorter than fade out. removing the fade will trigger a new fade in this case
+                ratio = (lower_dest_time - dest_time) / (dest_time - start_time)
+                dest_color = RGBColor.blend(color_settings.start_color, dest_color, ratio)
+                dest_time = lower_dest_time
+            else:
+                # upper fade is longer. use color target below. this might be slightly inaccurate
+                dest_color = lower_dest_color
+
+        # return destination color and time
+        return color_settings.start_color, color_settings.start_time, dest_color, dest_time
 
     # pylint: disable-msg=too-many-return-statements
     def _get_color_and_fade(self, stack, max_fade_ms: int, *, current_time=None) -> Tuple[RGBColor, int, bool]:

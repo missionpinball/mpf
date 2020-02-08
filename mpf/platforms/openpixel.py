@@ -5,9 +5,6 @@ https://github.com/zestyping/openpixelcontrol/blob/master/python_clients/opc.py
 """
 import logging
 
-from typing import Callable
-from typing import Tuple
-
 from mpf.core.platform import LightsPlatform
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
@@ -108,9 +105,10 @@ class OpenPixelLED(LightPlatformInterface):
         self.channel_number = int(channel_number)
         self.opc_client.add_pixel(self.opc_channel, self.channel_number)
 
-    def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
+    def set_fade(self, start_brightness, start_time, target_brightness, target_time):
         """Set brightness using callback."""
-        self.opc_client.set_pixel_color(self.opc_channel, self.channel_number, color_and_fade_callback)
+        self.opc_client.set_pixel_color(self.opc_channel, self.channel_number, start_brightness, start_time,
+                                        target_brightness, target_time)
 
     def get_board_name(self):
         """Return name for service mode."""
@@ -190,15 +188,19 @@ class OpenPixelClient:
         if leds_to_add > 0:
             self.channels[channel] += [0 for _ in range(leds_to_add)]
 
-    def set_pixel_color(self, channel, pixel, callback: Callable[[int], Tuple[float, int]]):
+    # pylint: disable-msg=too-many-arguments
+    def set_pixel_color(self, channel, pixel, start_brightness, start_time, target_brightness, target_time):
         """Set an individual pixel color.
 
         Args:
             channel: Int of the OPC channel for this pixel.
             pixel: Int of the number for this pixel on that channel.
-            callback: callback to get brightness
+            start_brightness: Brightness at start of fade.
+            start_time: Timestamp when the fade started.
+            target_brightness: Brightness at end of fade.
+            target_time: Timestamp when the fade should finish.
         """
-        self.dirty_leds[channel][pixel] = callback
+        self.dirty_leds[channel][pixel] = (start_brightness, start_time, target_brightness, target_time)
 
     def tick(self):
         """Update pixels.
@@ -218,13 +220,21 @@ class OpenPixelClient:
         # invalidate cached message
         self.msg[channel] = None
 
-        for pixel, callback in dict(self.dirty_leds[channel]).items():
-            brightness, _, done = callback(self.max_fade_ms)
+        current_time = self.machine.clock.get_time()
+        max_fade_ms = self.max_fade_ms
+        for pixel, (start_brightness, start_time, target_brightness, target_time) \
+                in dict(self.dirty_leds[channel]).items():
+            fade_ms = int((target_time - current_time) * 1000.0)
+            if fade_ms > max_fade_ms > 0:
+                ratio = ((current_time + (max_fade_ms / 1000.0) - start_time) /
+                         (target_time - start_time))
+                brightness = start_brightness + (target_brightness - start_brightness) * ratio
+            else:
+                # fade is done
+                brightness = target_brightness
+                del self.dirty_leds[channel][pixel]
             value = min(255, max(0, int(brightness * 255)))
             self.channels[channel][pixel] = value
-            # fade is done
-            if done:
-                del self.dirty_leds[channel][pixel]
 
     def _update_pixels(self, channel):
         """Send the list of pixel colors to the OPC server.
