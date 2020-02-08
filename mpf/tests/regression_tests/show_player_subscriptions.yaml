@@ -1,14 +1,14 @@
 lights:
-    l_chest_matrix_green_1:
-        number:
-    l_chest_matrix_green_2:
-        number:
-    l_chest_matrix_green_3:
-        number:
-    l_chest_matrix_green_4:
-        number:
-    l_chest_matrix_green_5:
-        number:
+  l_chest_matrix_green_1:
+    number:
+  l_chest_matrix_green_2:
+    number:
+  l_chest_matrix_green_3:
+    number:
+  l_chest_matrix_green_4:
+    number:
+  l_chest_matrix_green_5:
+    number:
 
 shows:
   upgrade_multiplier_progress_flash_x:
@@ -40,10 +40,10 @@ show_player:
         lamp_name: l_chest_matrix_green_5
 
 variable_player:
-    set_progress:
-        upgrade_multiplier_progress:
-            action: set
-            int: (value)
+  set_progress:
+    upgrade_multiplier_progress:
+      action: set
+      int: (value)
 
 ##! test
 #! start_game
@@ -69,4 +69,3 @@ variable_player:
 #! assert_light_color l_chest_matrix_green_3 green
 #! assert_light_color l_chest_matrix_green_2 black
 #! assert_light_color l_chest_matrix_green_1 black
-
