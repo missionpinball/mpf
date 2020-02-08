@@ -2,8 +2,9 @@
 import abc
 import asyncio
 from asyncio import AbstractEventLoop
+from typing import Any
 
-from typing import Callable, Tuple, Any
+from mpf.core.utility_functions import Util
 
 
 class LightPlatformInterface(metaclass=abc.ABCMeta):
@@ -17,12 +18,14 @@ class LightPlatformInterface(metaclass=abc.ABCMeta):
         self.number = number
 
     @abc.abstractmethod
-    def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int, bool]]):
+    def set_fade(self, start_brightness, start_time, target_brightness, target_time):
         """Perform a fade to a brightness.
 
-        Pass a callback which has the max_fade_time as parameter and returns the desired fade time and the brightness.
-        This is a callback because the platform may send the brightness later on and we do not want to introduce latency
-        between setting and sending the color.
+        Args:
+            start_brightness: Brightness at start of fade.
+            start_time: Timestamp when the fade started.
+            target_brightness: Brightness at end of fade.
+            target_time: Timestamp when the fade should finish.
         """
         raise NotImplementedError
 
@@ -53,26 +56,42 @@ class LightPlatformDirectFade(LightPlatformInterface, metaclass=abc.ABCMeta):
         """Return max fade time."""
         return self.get_max_fade_ms()
 
-    def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int, bool]]):
+    def set_fade(self, start_brightness, start_time, target_brightness, target_time):
         """Perform a fade with either a asyncio task or with a single command."""
         max_fade_ms = self.get_max_fade_ms()
+        current_time = self.loop.time()
+        if target_time > 0:
+            fade_ms = (target_time - current_time) / 1000.0
+        else:
+            fade_ms = -1
 
-        brightness, fade_ms, done = color_and_fade_callback(max_fade_ms)
-        self.set_brightness_and_fade(brightness, max(fade_ms, 0))
-        if not done:
+        if fade_ms > max_fade_ms:
             # we have to continue the fade later
             if self.task:
                 self.task.cancel()
-            self.task = self.loop.create_task(self._fade(color_and_fade_callback))
+            self.task = self.loop.create_task(self._fade(start_brightness, start_time, target_brightness, target_time))
+            self.task.add_done_callback(Util.raise_exceptions)
+        else:
+            self.set_brightness_and_fade(target_brightness, max(fade_ms, 0))
 
-    async def _fade(self, color_and_fade_callback):
+    async def _fade(self, start_brightness, start_time, target_brightness, target_time):
+        max_fade_ms = self.get_max_fade_ms()
+        interval = self.get_fade_interval_ms() / 1000
         while True:
-            await asyncio.sleep(self.get_fade_interval_ms() / 1000, loop=self.loop)
-            max_fade_ms = self.get_max_fade_ms()
-            brightness, fade_ms, done = color_and_fade_callback(max_fade_ms)
+            current_time = self.loop.time()
+            target_fade_ms = int((target_time - current_time) * 1000.0)
+            if target_fade_ms > max_fade_ms >= 0:
+                fade_ms = max_fade_ms
+                ratio = ((current_time + (max_fade_ms / 1000.0) - start_time) /
+                         (target_time - start_time))
+                brightness = start_brightness + (target_brightness - start_brightness) * ratio
+            else:
+                fade_ms = target_fade_ms
+                brightness = target_brightness
             self.set_brightness_and_fade(brightness, max(fade_ms, 0))
-            if done:
+            if target_fade_ms <= max_fade_ms:
                 return
+            await asyncio.sleep(interval, loop=self.loop)
 
     @abc.abstractmethod
     def set_brightness_and_fade(self, brightness: float, fade_ms: int) -> None:

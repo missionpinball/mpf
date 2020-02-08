@@ -12,23 +12,23 @@ class PlatformBatchLight(LightPlatformInterface, abc.ABC):
 
     """Light which can be batched."""
 
-    __slots__ = ["light_system", "_callback", "_last_brightness"]
+    __slots__ = ["light_system", "_current_fade", "_last_brightness"]
 
     def __init__(self, number, light_system: "PlatformBatchLightSystem"):
         """Initialise light."""
         super().__init__(number)
         self.light_system = light_system
-        self._callback = None
+        self._current_fade = (0, -1, 0, -1)
         self._last_brightness = None
 
     @abc.abstractmethod
     def get_max_fade_ms(self):
         """Return max fade ms."""
 
-    def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
-        """Mark dirty and remember callback."""
+    def set_fade(self, start_brightness, start_time, target_brightness, target_time):
+        """Mark dirty and remember fade."""
         self.light_system.mark_dirty(self)
-        self._callback = color_and_fade_callback
+        self._current_fade = (start_brightness, start_time, target_brightness, target_time)
         self._last_brightness = None
 
     def get_fade_and_brightness(self, current_time):
@@ -36,9 +36,20 @@ class PlatformBatchLight(LightPlatformInterface, abc.ABC):
         if self._last_brightness:
             return self._last_brightness, 0, True
         max_fade_ms = self.get_max_fade_ms()
-        brightness, fade_ms, done = self._callback(max_fade_ms, current_time=current_time)
-        if done:
+        start_brightness, start_time, target_brightness, target_time = self._current_fade
+        fade_ms = int((target_time - current_time) * 1000.0)
+        if fade_ms > max_fade_ms > 0:
+            fade_ms = max_fade_ms
+            ratio = ((current_time + (fade_ms / 1000.0) - start_time) /
+                     (target_time - start_time))
+            brightness = start_brightness + (target_brightness - start_brightness) * ratio
+            done = False
+        else:
+            if fade_ms < 0:
+                fade_ms = 0
+            brightness = target_brightness
             self._last_brightness = brightness
+            done = True
 
         return brightness, fade_ms, done
 
