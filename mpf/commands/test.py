@@ -6,7 +6,7 @@ import unittest
 import sys
 
 from mpf.commands import MpfCommandLineParser
-from mpf.tests.MpfDocTestCase import MpfDocTestCase
+from mpf.tests.MpfDocTestCase import MpfDocTestCase, MpfDocTestCaseNoFakeGame
 from mpf.tests.MpfIntegrationDocTestCase import MpfIntegrationDocTestCase
 
 SUBCOMMAND = True
@@ -35,6 +35,7 @@ class Command(MpfCommandLineParser):
 
         base_dir = os.path.dirname(os.path.abspath(test_file))
         suite = unittest.TestSuite()
+        simulation = "##! no_simulation" not in test_string
 
         if ".. code-block:: mpf-config" in test_string or ".. code-block:: mpf-mc-config" in test_string:
             print("Parsing documentation page")
@@ -55,17 +56,20 @@ class Command(MpfCommandLineParser):
                         indent_len = len(indent.group(0))
                     test_case += line[indent_len:] + "\n"
                 if block.group("type") == "mpf-config":
-                    test = MpfDocTestCase(config_string=test_case, base_dir=base_dir)
+                    test = MpfDocTestCase(config_string=test_case, base_dir=base_dir, simulation=simulation)
                 else:
-                    test = MpfIntegrationDocTestCase(config_string=test_case, base_dir=base_dir)
+                    test = MpfIntegrationDocTestCase(config_string=test_case, base_dir=base_dir, simulation=simulation)
                 suite.addTest(test)
         else:
             print("Parsing single test")
 
             if args.start_mc:
-                test = MpfIntegrationDocTestCase(config_string=test_string, base_dir=base_dir)
+                test = MpfIntegrationDocTestCase(config_string=test_string, base_dir=base_dir, simulation=simulation)
             else:
-                test = MpfDocTestCase(config_string=test_string, base_dir=base_dir)
+                if "##! no_fake_game" in test_string:
+                    test = MpfDocTestCaseNoFakeGame(config_string=test_string, base_dir=base_dir, simulation=simulation)
+                else:
+                    test = MpfDocTestCase(config_string=test_string, base_dir=base_dir, simulation=simulation)
             suite.addTest(test)
 
         result = unittest.TextTestRunner(verbosity=1 if not args.verbose else 99).run(suite)

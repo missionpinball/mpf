@@ -589,7 +589,9 @@ class MpfTestCase(unittest.TestCase):
 
     def assertBallsOnPlayfield(self, balls, playfield="playfield"):
         """Assert that a certain number of ball is on a playfield."""
-        self.assertEqual(balls, self.machine.playfields[playfield].balls)
+        self.assertEqual(balls, self.machine.playfields[playfield].balls,
+                         "Playfield {} contains {} balls but should be {}".format(
+                             playfield, self.machine.playfields[playfield].balls, balls))
 
     def assertAvailableBallsOnPlayfield(self, balls, playfield="playfield"):
         """Assert that a certain number of ball is available on a playfield."""

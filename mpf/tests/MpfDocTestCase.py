@@ -5,6 +5,8 @@ import tempfile
 import shutil
 import shlex
 
+from mpf.tests.MpfGameTestCase import MpfGameTestCase
+
 from mpf.file_interfaces.yaml_roundtrip import YamlRoundtrip
 
 from mpf.file_interfaces.yaml_interface import YamlInterface
@@ -13,12 +15,12 @@ from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 from mpf.tests.MpfMachineTestCase import MockConfigPlayers
 
 
-class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
-
-    def __init__(self, config_string, base_dir = None, methodName='test_config_parsing'):
+class MpfDocTestCaseBase(MockConfigPlayers, MpfGameTestCase):
+    def __init__(self, config_string, base_dir = None, simulation=True, methodName='test_config_parsing'):
         super().__init__(methodName)
         self._config_string = config_string
         self._base_dir = base_dir
+        self._simulation = simulation
 
     def setUp(self):
         machine_config, mode_configs, show_configs, assets, self.tests = self.prepare_config(self._config_string)
@@ -156,7 +158,10 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
         return "config.yaml"
 
     def get_platform(self):
-        return "smart_virtual"
+        if self._simulation:
+            return "smart_virtual"
+        else:
+            return "virtual"
 
     def get_machine_path(self):
         return self.config_dir
@@ -179,7 +184,7 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
             try:
                 method(*parts)
             except AssertionError as e:
-                raise AssertionError("Error in assertion {} of your tests.".format(line_no)) from e
+                raise AssertionError("Error in assertion {} (Num: {}) of your tests.".format(command, line_no)) from e
 
     def command_start_game(self, num_balls_known=3):
         self.start_game(num_balls_known=int(num_balls_known))
@@ -292,3 +297,13 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
     def command_assert_float_condition(self, expected, condition):
         expected_float = float(expected)
         self.assertPlaceholderEvaluates(expected_float, condition)
+
+
+class MpfDocTestCaseNoFakeGame(MpfDocTestCaseBase):
+
+    pass
+
+
+class MpfDocTestCase(MpfDocTestCaseBase, MpfFakeGameTestCase):
+
+    pass

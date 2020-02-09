@@ -7,7 +7,7 @@ import re
 from mpf.file_interfaces.yaml_roundtrip import YamlRoundtrip
 
 from mpf.commands import MpfCommandLineParser
-from mpf.tests.MpfDocTestCase import MpfDocTestCase
+from mpf.tests.MpfDocTestCase import MpfDocTestCaseBase
 
 SUBCOMMAND = True
 
@@ -44,7 +44,7 @@ class Command(MpfCommandLineParser):
 
         if new_config != test_string:
             print("Config is not linted.")
-            print(MpfDocTestCase.unidiff_output(test_string, new_config))
+            print(MpfDocTestCaseBase.unidiff_output(test_string, new_config))
             if args.do_it:
                 print("Writing back changes")
                 with open(test_file, "w") as f:
@@ -83,7 +83,7 @@ class Command(MpfCommandLineParser):
     def _reformat_test_case(self, test_case):
         test_case = test_case.replace("\t", "  ")
         test_case = re.sub(r" +\n", "\n", test_case)
-        machine_config, mode_configs, show_configs, assets, tests = MpfDocTestCase.prepare_config(
+        machine_config, mode_configs, show_configs, assets, tests = MpfDocTestCaseBase.prepare_config(
             test_case, fixup_config=False)
         formatted_yaml = ""
         if machine_config:
