@@ -538,6 +538,7 @@ fadecandy:
 fast:
     __valid_in__: machine
     __type__: config
+    driverboards: single|enum(fast,wpc,None)|None
     ports: list|str|
     baud: single|int|921600
     watchdog: single|ms|1000
@@ -609,7 +610,7 @@ hardware:
     lights: list|str|default
     dmd: list|str|default
     rgb_dmd: list|str|default
-    driverboards: single|str|
+    driverboards: single|str|None
     servo_controllers: list|str|default
     accelerometers: list|str|default
     i2c: list|str|default
@@ -934,6 +935,7 @@ osc_plugin:
 opp:
     __valid_in__: machine
     __type__: config
+    driverboards: single|enum(gen2)|gen2
     ports: list|str|
     baud: single|int|115200
     debug: single|bool|False
@@ -953,6 +955,7 @@ open_pixel_control:
 p_roc:
     __valid_in__: machine
     __type__: config
+    driverboards: single|enum(wpc,wpcAlphanumeric,wpc95,sternSAM,sternWhitestar,pdb,custom,None)|None
     lamp_matrix_strobe_time: single|ms|100ms
     watchdog_time: single|ms|1s
     use_watchdog: single|bool|True
@@ -965,6 +968,7 @@ p_roc:
     use_separate_thread: single|bool|True
     trace_bus: single|bool|False
 p3_roc:
+    driverboards: single|enum(pdb,custom,None)|None
     lamp_matrix_strobe_time: single|ms|100ms
     watchdog_time: single|ms|1s
     use_watchdog: single|bool|True

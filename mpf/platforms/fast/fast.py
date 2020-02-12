@@ -50,8 +50,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.config = self.machine.config_validator.validate_config("fast", self.machine.config['fast'])
         self._configure_device_logging_and_debug("FAST", self.config)
 
-        self.machine_type = (
-            self.machine.config['hardware']['driverboards'].lower())
+        if self.config["driverboards"]:
+            self.machine_type = self.config["driverboards"]
+        else:
+            self.machine_type = self.machine.config['hardware']['driverboards'].lower()
 
         if self.machine_type == 'wpc':
             self.debug_log("Configuring the FAST Controller for WPC driver "

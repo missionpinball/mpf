@@ -2,8 +2,10 @@
 
 hardware:
     coils: snux
-    driverboards: wpc
     platform: p_roc
+
+p_roc:
+    driverboards: wpc
 
 system11:
     ac_relay_delay_ms: 75

@@ -1,10 +1,10 @@
 #config_version=5
 
 hardware:
-    driverboards: pdb
     platform: p_roc
 
 p_roc:
+  driverboards: pdb
   use_separate_thread: False
   dmd_timing_cycles: 1, 2, 3, 4
   debug: true

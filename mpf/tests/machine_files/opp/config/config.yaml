@@ -2,7 +2,6 @@
 
 hardware:
     platform: opp
-    driverboards: gen2
 
 opp:
     ports: com1

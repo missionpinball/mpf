@@ -1,8 +1,10 @@
 #config_version=5
 
 hardware:
-    driverboards: wpc
     platform: p_roc
+
+p_roc:
+    driverboards: wpc
 
 switches:
     s_test_fliptronics:

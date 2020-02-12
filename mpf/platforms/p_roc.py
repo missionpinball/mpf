@@ -42,6 +42,11 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         self.config = self.machine.config_validator.validate_config("p_roc", self.machine.config.get('p_roc', {}))
         self._configure_device_logging_and_debug('P-Roc', self.config)
 
+        if self.config['driverboards']:
+            self.machine_type = self.pinproc.normalize_machine_type(self.config['driverboards'])
+        else:
+            self.machine_type = self.pinproc.normalize_machine_type(self.machine.config['hardware']['driverboards'])
+
         self.dmd = None
         self.alpha_display = None
         self.aux_port = None

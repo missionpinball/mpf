@@ -426,7 +426,6 @@ hardware:
   switches: default
   lights: default
   dmd: default
-  driverboards: virtual
   accelerometers: default
   servo_controllers: default
   i2c: default

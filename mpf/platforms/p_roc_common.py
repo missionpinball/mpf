@@ -196,9 +196,6 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         self.pdled_state = defaultdict(PdLedStatus)
         self._light_system = None
 
-        self.machine_type = pinproc.normalize_machine_type(
-            self.machine.config['hardware']['driverboards'])
-
     def _decrement_running_commands(self, future):
         del future
         self._commands_running -= 1

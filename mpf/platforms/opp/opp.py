@@ -75,8 +75,10 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self._configure_device_logging_and_debug("OPP", self.config)
         self._poll_response_received = {}   # type: Dict[str, asyncio.Event]
 
-        self.machine_type = (
-            self.machine.config['hardware']['driverboards'].lower())
+        if self.config['driverboards']:
+            self.machine_type = self.config['driverboards']
+        else:
+            self.machine_type = self.machine.config['hardware']['driverboards'].lower()
 
         if self.machine_type == 'gen1':
             raise AssertionError("Original OPP boards not currently supported.")

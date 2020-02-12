@@ -2,9 +2,9 @@
 
 hardware:
     platform: fast
-    driverboards: fast
 
 fast:
+    driverboards: fast
     ports: com4, com5, com6
     debug: true
     firmware_updates:

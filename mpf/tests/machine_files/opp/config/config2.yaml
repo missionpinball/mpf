@@ -2,7 +2,6 @@
 
 hardware:
     platform: opp
-    driverboards: gen2
 
 opp:
     ports: com1
@@ -77,7 +76,7 @@ autofire_coils:
     ac_matrix_slingshot_test:
         coil: c_matrix_test
         switch: s_matrix_test
-        
+
 flippers:
     f_test_single:
         debug: true
