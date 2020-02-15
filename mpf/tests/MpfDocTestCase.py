@@ -279,6 +279,9 @@ class MpfDocTestCaseBase(MockConfigPlayers, MpfGameTestCase):
     def command_assert_balls_on_playfield(self, balls):
         self.assertBallsOnPlayfield(int(balls))
 
+    def command_assert_available_balls_on_playfield(self, balls):
+        self.assertAvailableBallsOnPlayfield(int(balls))
+
     def command_assert_balls_in_play(self, balls):
         self.assertBallsInPlay(int(balls))
 
