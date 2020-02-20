@@ -15,12 +15,13 @@ class LightPlayer(DeviceConfigPlayer):
 
     __slots__ = []
 
+    # pylint: disable-msg=too-many-locals
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Set light color based on config."""
+        key = kwargs.get("key", "")
         instance_dict = self._get_instance_dict(context)
-        full_context = self._get_full_context(context)
+        full_context = self._get_full_context(context + key)
         start_time = kwargs.get("start_time", None)
-        del kwargs
 
         for light, s in settings.items():
             final_priority = s["priority"]
@@ -39,9 +40,9 @@ class LightPlayer(DeviceConfigPlayer):
             else:
                 self._light_color(light, instance_dict, full_context, s['color'], s["fade"], final_priority, start_time)
 
-    def _remove(self, settings, context):
+    def _remove(self, settings, context, key=""):
         instance_dict = self._get_instance_dict(context)
-        full_context = self._get_full_context(context)
+        full_context = self._get_full_context(context + key)
 
         for light, s in settings.items():
             if isinstance(light, str):
@@ -64,18 +65,17 @@ class LightPlayer(DeviceConfigPlayer):
     def _light_remove(light, instance_dict, full_context, fade_ms):
         light.remove_from_stack_by_key(full_context, fade_ms)
         try:
-            del instance_dict[light.name]
+            del instance_dict[(full_context, light)]
         except KeyError:
             pass
 
     # pylint: disable-msg=too-many-arguments
     def handle_subscription_change(self, value, settings, priority, context, key):
         """Handle subscriptions."""
-        del key
         if value:
-            self.play(settings, context, "", priority)
+            self.play(settings, context, "", priority, key=key)
         else:
-            self._remove(settings, context)
+            self._remove(settings, context, key=key)
 
     # pylint: disable-msg=too-many-arguments
     def _light_named_color(self, light_name, instance_dict,
@@ -105,12 +105,11 @@ class LightPlayer(DeviceConfigPlayer):
 
             color = RGBColor(color)
         light.color(color, key=full_context, fade_ms=fade_ms, priority=priority, start_time=start_time)
-        instance_dict[light.name] = light
+        instance_dict[(full_context, light)] = light
 
     def clear_context(self, context):
         """Remove all colors which were set in context."""
-        full_context = self._get_full_context(context)
-        for light in self._get_instance_dict(context).values():
+        for (full_context, _), light in self._get_instance_dict(context).items():
             light.remove_from_stack_by_key(full_context)
 
         self._reset_instance_dict(context)

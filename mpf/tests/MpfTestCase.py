@@ -617,25 +617,30 @@ class MpfTestCase(unittest.TestCase):
 
     def assertLightChannel(self, light_name, brightness, channel="white"):
         """Assert that a light channel has a certain brightness."""
+        self.assertIn(light_name, self.machine.lights, "Light {} does not exist".format(light_name))
         self.assertAlmostEqual(brightness / 255.0, self.machine.lights[light_name].hw_drivers[channel][0].
                                current_brightness)
 
     def assertNotLightChannel(self, light_name, brightness, channel="white"):
         """Assert that a light channel does not have a certain brightness."""
+        self.assertIn(light_name, self.machine.lights, "Light {} does not exist".format(light_name))
         self.assertNotEqual(brightness, self.machine.lights[light_name].hw_drivers[channel][0].
                             current_brightness)
 
     def assertLightColor(self, light_name, color):
         """Assert that a light exists and shows one color."""
+        self.assertIn(light_name, self.machine.lights, "Light {} does not exist".format(light_name))
         if isinstance(color, str) and color.lower() == 'on':
             color = self.machine.lights[light_name].config['default_on_color']
 
         self.assertEqual(RGBColor(color), self.machine.lights[light_name].get_color(),
-                         "Light {}: {} != {}".format(light_name, RGBColor(color).name,
-                                                     self.machine.lights[light_name].get_color().name))
+                         "Light {}: {} != {}. Stack: {}".format(
+                             light_name, RGBColor(color).name, self.machine.lights[light_name].get_color().name,
+                             self.machine.lights[light_name].stack))
 
     def assertNotLightColor(self, light_name, color):
         """Assert that a light exists and does not show a certain color."""
+        self.assertIn(light_name, self.machine.lights, "Light {} does not exist".format(light_name))
         if isinstance(color, str) and color.lower() == 'on':
             color = self.machine.lights[light_name].config['default_on_color']
 
@@ -644,6 +649,7 @@ class MpfTestCase(unittest.TestCase):
 
     def assertLightColors(self, light_name, color_list, secs=1, check_delta=.1):
         """Assert that a light exists and shows all colors in a list over a period."""
+        self.assertIn(light_name, self.machine.lights, "Light {} does not exist".format(light_name))
         colors = list()
 
         # have to do it this weird way because `if 'on' in color_list:` doesn't
@@ -664,16 +670,19 @@ class MpfTestCase(unittest.TestCase):
 
     def assertLightOn(self, light_name):
         """Assert that a light exists and is on."""
+        self.assertIn(light_name, self.machine.lights, "Light {} does not exist".format(light_name))
         self.assertEqual(255,
                          self.machine.lights[
                              light_name].hw_driver.current_brightness)
 
     def assertLightOff(self, light_name):
         """Assert that a light exists and is off."""
+        self.assertIn(light_name, self.machine.lights, "Light {} does not exist".format(light_name))
         self.assertEqual(0, self.machine.lights[light_name].hw_driver.current_brightness)
 
     def assertLightFlashing(self, light_name, color=None, secs=1, check_delta=.1):
         """Assert that a light exists and is flashing."""
+        self.assertIn(light_name, self.machine.lights, "Light {} does not exist".format(light_name))
         brightness_values = list()
         if not color:
             color = [255, 255, 255]
