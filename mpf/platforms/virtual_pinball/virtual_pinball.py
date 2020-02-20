@@ -43,13 +43,14 @@ class VirtualPinballLight(LightPlatformInterface):
     def current_brightness(self) -> float:
         """Return current brightness."""
         if self.color_and_fade_callback:
-            return self.color_and_fade_callback(0)[0]
+            return self.color_and_fade_callback[2]
 
         return 0
 
-    def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
-        """Store CB function."""
-        self.color_and_fade_callback = color_and_fade_callback
+    def set_fade(self, start_brightness, start_time, target_brightness, target_time):
+	     """Set brightness via callback."""
+	     self.color_and_fade_callback = (start_brightness, start_time, target_brightness, target_time)
+	     self._last_brightness = None
 
     def get_board_name(self):
         """Return the name of the board of this light."""
