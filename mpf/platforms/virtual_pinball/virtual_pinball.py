@@ -32,25 +32,30 @@ class VirtualPinballLight(LightPlatformInterface):
 
     """A light in VPX."""
 
-    def __init__(self, number, subtype, hw_number):
+    def __init__(self, number, subtype, hw_number, machine):
         """Initialise LED."""
         super().__init__(number)
-        self.color_and_fade_callback = None
+        self._current_fade = (0, -1, 0, -1)
         self.subtype = subtype
         self.hw_number = hw_number
+        self.machine = machine
 
     @property
     def current_brightness(self) -> float:
         """Return current brightness."""
-        if self.color_and_fade_callback:
-            return self.color_and_fade_callback[2]
+        current_time = self.machine.clock.get_time()
+        start_brightness, start_time, target_brightness, target_time = self._current_fade
+        if target_time > current_time:
+            ratio = ((current_time - start_time) /
+                     (target_time - start_time))
+            return start_brightness + (target_brightness - start_brightness) * ratio
 
-        return 0
+        return target_brightness
 
     def set_fade(self, start_brightness, start_time, target_brightness, target_time):
-	     """Set brightness via callback."""
-	     self.color_and_fade_callback = (start_brightness, start_time, target_brightness, target_time)
-	     self._last_brightness = None
+        """Set fade."""
+        self._current_fade = (start_brightness, start_time, target_brightness, target_time)
+        self._last_brightness = None
 
     def get_board_name(self):
         """Return the name of the board of this light."""
@@ -317,7 +322,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             subtype = "matrix"
         number = str(number)
         key = number + "-" + subtype
-        light = VirtualPinballLight(key, subtype, number)
+        light = VirtualPinballLight(key, subtype, number, self.machine)
         self._lights[key] = light
         self._last_lights[key] = False
         return light
