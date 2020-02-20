@@ -59,6 +59,7 @@ class Command(MpfCommandLineParser):
                     test = MpfDocTestCase(config_string=test_case, base_dir=base_dir, simulation=simulation)
                 else:
                     test = MpfIntegrationDocTestCase(config_string=test_case, base_dir=base_dir, simulation=simulation)
+                test._testMethodDoc = "Block {} (starting at 0)".format(num)
                 suite.addTest(test)
         else:
             print("Parsing single test")
