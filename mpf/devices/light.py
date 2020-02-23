@@ -54,12 +54,11 @@ class Light(SystemWideDevice, DevicePositionMixin):
     class_label = 'light'
 
     __slots__ = ["hw_drivers", "platforms", "delay", "default_fade_ms", "_color_correction_profile", "stack",
-                 "hw_driver_functions", "_off_color"]
+                 "_off_color"]
 
     def __init__(self, machine, name):
         """Initialise light."""
         self.hw_drivers = {}        # type: Dict[str, List[LightPlatformInterface]]
-        self.hw_driver_functions = []
         self.platforms = set()      # type: Set[LightsPlatform]
         super().__init__(machine, name)
         self.machine.light_controller.initialise_light_subsystem()
@@ -215,10 +214,6 @@ class Light(SystemWideDevice, DevicePositionMixin):
                 channel = self.machine.config_validator.validate_config("light_channels", channel)
                 driver = self._load_hw_driver(channel)
                 self.hw_drivers[color].append(driver)
-                self.hw_driver_functions.append((driver, partial(self._get_brightness_and_fade, color=color)))
-
-        # sort drivers by number because it will make updates more efficient in some platforms
-        self.hw_driver_functions.sort(key=lambda x: x[0].number)
 
     def _load_hw_driver(self, channel):
         """Load one channel."""
