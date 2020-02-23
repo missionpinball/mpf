@@ -115,7 +115,7 @@ class TestVPX(MpfTestCase):
         self.advance_time_and_run(.001)
         self._encode_and_send("get_hardwarerules")
         result = self.read_vpx_response_from_bcp()
-        self.assertEqual(result, [['3', '1', True], ['0', '0', False]])
+        self.assertListEqual(result, [['3', '1', True], ['0', '0', False]])
 
         self.machine.flippers["f_test"].disable()
         self.advance_time_and_run(.001)
