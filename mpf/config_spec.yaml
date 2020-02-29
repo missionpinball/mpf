@@ -24,9 +24,9 @@ achievement_groups:
     enable_while_no_achievement_started: single|bool|True
     rotate_right_events: event_handler|str:ms|None
     rotate_left_events: event_handler|str:ms|None
-    events_when_all_completed: list|str|None
-    events_when_no_more_enabled: list|str|None
-    events_when_enabled: list|str|None
+    events_when_all_completed: event_list|str|None
+    events_when_no_more_enabled: event_list|str|None
+    events_when_enabled: event_list|str|None
     show_tokens: dict|str:str|None
     show_when_enabled: single|str|None
 achievements:
@@ -47,12 +47,12 @@ achievements:
     select_events: event_handler|str:ms|None
     unselect_events: event_handler|str:ms|None
 
-    events_when_enabled: list|str|None
-    events_when_started: list|str|None
-    events_when_completed: list|str|None
-    events_when_stopped: list|str|None
-    events_when_disabled: list|str|None
-    events_when_selected: list|str|None
+    events_when_enabled: event_list|str|None
+    events_when_started: event_list|str|None
+    events_when_completed: event_list|str|None
+    events_when_stopped: event_list|str|None
+    events_when_disabled: event_list|str|None
+    events_when_selected: event_list|str|None
 
     show_when_enabled: single|str|None
     show_when_started: single|str|None
@@ -83,15 +83,15 @@ assets:
     videos:
         width: single|num|None
         height: single|num|None
-        events_when_played: list|str|None
-        events_when_stopped: list|str|None
+        events_when_played: event_list|str|None
+        events_when_stopped: event_list|str|None
 auditor:
     __valid_in__: machine
     __type__: config
     save_events: event_handler|str:ms|ball_ended
-    audit: list|str|None
-    events: list|str|None
-    player: list|str|None
+    audit: event_list|str|None
+    events: event_list|str|None
+    player: event_list|str|None
     num_player_top_records: single|int|1
 autofire_coils:
     __valid_in__: machine
@@ -160,9 +160,9 @@ ball_devices_ejector_common:
     class: single|str|mpf.devices.ball_device.pulse_coil_ejector.PulseCoilEjector
 ball_devices_ejector_event:
     class: ignore
-    events_when_eject_try: list|str|None
-    events_when_reoder_balls: list|str|None
-    events_when_ball_search: list|str|None
+    events_when_eject_try: event_list|str|None
+    events_when_reoder_balls: event_list|str|None
+    events_when_ball_search: event_list|str|None
 ball_holds:
     __valid_in__: machine, mode
     __type__: device
@@ -306,18 +306,18 @@ color_correction_profile:
 combo_switches:
     __valid_in__: machine, mode
     __type__: device
-    tag_1: list|str|None
-    tag_2: list|str|None
+    tag_1: event_list|str|None
+    tag_2: event_list|str|None
     switches_1: set|machine(switches)|None
     switches_2: set|machine(switches)|None
     max_offset_time: single|secs|-1
     hold_time: single|ms|0
     release_time: single|ms|0
-    events_when_both: list|str|None
-    events_when_inactive: list|str|None
-    events_when_one: list|str|None
-    events_when_switches_1: list|str|None
-    events_when_switches_2: list|str|None
+    events_when_both: event_list|str|None
+    events_when_inactive: event_list|str|None
+    events_when_one: event_list|str|None
+    events_when_switches_1: event_list|str|None
+    events_when_switches_2: event_list|str|None
 config:
     __valid_in__: machine, mode
     __type__: list
@@ -351,7 +351,7 @@ credits_pricing_tiers:
     credits: single|template_int|1
 device:     # base for all devices
     label: single|str|%
-    tags: list|str|None
+    tags: event_list|str|None
     debug: single|bool|False
     console_log: single|enum(none,basic,full)|basic
     file_log: single|enum(none,basic,full)|basic
@@ -368,7 +368,7 @@ display_light_player:
     __valid_in__: machine, mode, show
     __type__: config_player
     action: single|enum(play,stop)|play
-    lights: list|str|None
+    lights: event_list|str|None
     bcp_connection: single|str|local_display
     min_x: single|int|0
     max_x: single|int|None
@@ -539,7 +539,7 @@ fast:
     __valid_in__: machine
     __type__: config
     driverboards: single|enum(fast,wpc,None)|None
-    ports: list|str|
+    ports: event_list|str|
     baud: single|int|921600
     watchdog: single|ms|1000
     default_quick_debounce_open: single|ms|
@@ -603,19 +603,19 @@ game:
 hardware:
     __valid_in__: machine
     __type__: config
-    platform: list|str|virtual
-    coils: list|str|default
-    segment_displays: list|str|default
-    switches: list|str|default
-    lights: list|str|default
-    dmd: list|str|default
-    rgb_dmd: list|str|default
+    platform: event_list|str|virtual
+    coils: event_list|str|default
+    segment_displays: event_list|str|default
+    switches: event_list|str|default
+    lights: event_list|str|default
+    dmd: event_list|str|default
+    rgb_dmd: event_list|str|default
     driverboards: single|str|None
-    servo_controllers: list|str|default
-    accelerometers: list|str|default
-    i2c: list|str|default
-    stepper_controllers: list|str|default
-    hardware_sound_system: list|str|default
+    servo_controllers: event_list|str|default
+    accelerometers: event_list|str|default
+    i2c: event_list|str|default
+    stepper_controllers: event_list|str|default
+    hardware_sound_system: event_list|str|default
 hardware_sound_systems:
     __valid_in__: machine
     __type__: device
@@ -635,7 +635,7 @@ high_score:
     categories: omap|str:list|
     defaults: dict|str:list|None
     enter_initials_timeout: single|secs|20s
-    reverse_sort: list|str|None
+    reverse_sort: event_list|str|None
 info_lights:
     __valid_in__: machine                            # todo add to validator
     __type__: config
@@ -758,13 +758,13 @@ logic_blocks_common:
     disable_on_complete: single|bool|True
     persist_state: single|bool|False
     start_enabled: single|bool|None
-    events_when_complete: list|str|None
-    events_when_hit: list|str|None
+    events_when_complete: event_list|str|None
+    events_when_hit: event_list|str|None
 accruals:
     __valid_in__: machine, mode
     __type__: device
     __parent__: logic_blocks_common
-    events: list|str|
+    events: event_list|str|
 counters:
     __valid_in__: machine, mode
     __type__: device
@@ -784,7 +784,7 @@ sequences:
     __valid_in__: machine, mode
     __type__: device
     __parent__: logic_blocks_common
-    events: list|str|
+    events: event_list|str|
 logging:
     __valid_in__: machine
     __type__: config
@@ -814,8 +814,8 @@ mode:
     priority: single|int|100
     start_events: event_handler|str:ms|None
     stop_events: event_handler|str:ms|None
-    events_when_stopped: list|str|None
-    events_when_started: list|str|None
+    events_when_stopped: event_list|str|None
+    events_when_started: event_list|str|None
     start_priority: single|int|0
     stop_priority: single|int|0
     game_mode: single|bool|True
@@ -936,7 +936,7 @@ opp:
     __valid_in__: machine
     __type__: config
     driverboards: single|enum(gen2)|gen2
-    ports: list|str|
+    ports: event_list|str|
     baud: single|int|115200
     debug: single|bool|False
     chains: dict|str:str|None
@@ -1079,11 +1079,11 @@ playlist_player_actions:
         shuffle: single|bool|None
         repeat: single|bool|None
         scope: single|enum(machine,player,use_playlist_setting)|use_playlist_setting
-        events_when_played: list|str|use_playlist_setting
-        events_when_stopped: list|str|use_playlist_setting
-        events_when_looping: list|str|use_playlist_setting
-        events_when_sound_changed: list|str|use_playlist_setting
-        events_when_sound_stopped: list|str|use_playlist_setting
+        events_when_played: event_list|str|use_playlist_setting
+        events_when_stopped: event_list|str|use_playlist_setting
+        events_when_looping: event_list|str|use_playlist_setting
+        events_when_sound_changed: event_list|str|use_playlist_setting
+        events_when_sound_stopped: event_list|str|use_playlist_setting
     stop:
         action: ignore
         fade_out: single|secs|0
@@ -1101,12 +1101,12 @@ playlists:
     shuffle: single|bool|False
     repeat: single|bool|False
     scope: single|enum(machine,player)|machine
-    sounds: list|str|
-    events_when_played: list|str|None
-    events_when_stopped: list|str|None
-    events_when_looping: list|str|None
-    events_when_sound_changed: list|str|None
-    events_when_sound_stopped: list|str|None
+    sounds: event_list|str|
+    events_when_played: event_list|str|None
+    events_when_stopped: event_list|str|None
+    events_when_looping: event_list|str|None
+    events_when_sound_changed: event_list|str|None
+    events_when_sound_stopped: event_list|str|None
 plugins:
     __valid_in__: machine                      # todo add to validator
     __type__: list
@@ -1297,8 +1297,8 @@ shot_profiles:
     loop: single|bool|False
     show: single|str|None
     advance_on_hit: single|bool|True
-    state_names_to_not_rotate: list|str|None
-    rotation_pattern: list|str|R
+    state_names_to_not_rotate: event_list|str|None
+    rotation_pattern: event_list|str|R
     show_when_disabled: single|bool|False
     block: single|bool|False
     states: list|subconfig(shot_profile_states)|
@@ -1320,15 +1320,15 @@ state_machines:
     persist_state: single|bool|False
     starting_state: single|str|start
 state_machine_transitions:
-    source: list|str|
+    source: event_list|str|
     target: single|str|
-    events: list|str|
-    events_when_transitioning: list|str|None
+    events: event_list|str|
+    events_when_transitioning: event_list|str|None
 state_machine_states:
     label: single|str|None
     show_when_active: single|subconfig(show_config)|None
-    events_when_started: list|str|None
-    events_when_stopped: list|str|None
+    events_when_started: event_list|str|None
+    events_when_stopped: event_list|str|None
 show_config:
     show: single|str|
     show_tokens: dict|str:str|None
@@ -1352,15 +1352,15 @@ show_player:
     manual_advance: single|bool|False
     key: single|str|None
     show_tokens: dict|str:template_str|None
-    events_when_played: list|str|None
-    events_when_stopped: list|str|None
-    events_when_looped: list|str|None
-    events_when_paused: list|str|None
-    events_when_resumed: list|str|None
-    events_when_advanced: list|str|None
-    events_when_stepped_back: list|str|None
-    events_when_updated: list|str|None
-    events_when_completed: list|str|None
+    events_when_played: event_list|str|None
+    events_when_stopped: event_list|str|None
+    events_when_looped: event_list|str|None
+    events_when_paused: event_list|str|None
+    events_when_resumed: event_list|str|None
+    events_when_advanced: event_list|str|None
+    events_when_stepped_back: event_list|str|None
+    events_when_updated: event_list|str|None
+    events_when_completed: event_list|str|None
 show_pools:
     __valid_in__: machine, mode                      # todo add to validator
     __type__: config_dict
@@ -1431,9 +1431,9 @@ sound_loop_player_actions:
         timing: single|enum(now,loop_end,next_beat_interval,next_time_interval)|loop_end
         interval: single|float|1
         synchronize: single|bool|False
-        events_when_played: list|str|use_sound_loop_setting
-        events_when_stopped: list|str|use_sound_loop_setting
-        events_when_looping: list|str|use_sound_loop_setting
+        events_when_played: event_list|str|use_sound_loop_setting
+        events_when_stopped: event_list|str|use_sound_loop_setting
+        events_when_looping: event_list|str|use_sound_loop_setting
         mode_end_action: single|enum(stop,stop_looping,use_sound_loop_setting)|use_sound_loop_setting
     stop:
         action: ignore
@@ -1467,9 +1467,9 @@ sound_loop_sets:
         sound: single|str|
         volume: single|gain|None
         initial_state: single|enum(play,stop)|play
-    events_when_played: list|str|None
-    events_when_stopped: list|str|None
-    events_when_looping: list|str|None
+    events_when_played: event_list|str|None
+    events_when_stopped: event_list|str|None
+    events_when_looping: event_list|str|None
     fade_in: single|secs|0
     fade_out: single|secs|0
     mode_end_action: single|enum(stop,stop_looping)|stop
@@ -1487,10 +1487,10 @@ sound_player:
     fade_out: single|secs|None
     about_to_finish_time: single|secs|-1
     max_queue_time: single|secs|-1
-    events_when_played: list|str|use_sound_setting
-    events_when_stopped: list|str|use_sound_setting
-    events_when_looping: list|str|use_sound_setting
-    events_when_about_to_finish: list|str|use_sound_setting
+    events_when_played: event_list|str|use_sound_setting
+    events_when_stopped: event_list|str|use_sound_setting
+    events_when_looping: event_list|str|use_sound_setting
+    events_when_about_to_finish: event_list|str|use_sound_setting
     mode_end_action: single|enum(stop,stop_looping,use_sound_setting)|use_sound_setting
     key: single|str|use_sound_setting
 sound_pools:
@@ -1509,12 +1509,12 @@ sound_system:
         common:
             type: single|enum(standard,sound_loop,playlist)|standard
             volume: single|gain|0.5
-            events_when_played: list|str|None
-            events6_when_stopped: list|str|None
-            events_when_paused: list|str|None
-            events_when_resumed: list|str|None
+            events_when_played: event_list|str|None
+            events6_when_stopped: event_list|str|None
+            events_when_paused: event_list|str|None
+            events_when_resumed: event_list|str|None
             ducking:
-                target: list|str|
+                target: event_list|str|
                 delay: single|secs|0
                 attack: single|secs|10ms
                 attenuation: single|gain|1.0
@@ -1543,15 +1543,15 @@ sounds:
     max_queue_time: single|secs|None
     simultaneous_limit: single|int|None
     stealing_method: single|enum(skip,oldest,newest)|oldest
-    events_when_played: list|str|None
-    events_when_stopped: list|str|None
-    events_when_looping: list|str|None
-    events_when_about_to_finish: list|str|None
+    events_when_played: event_list|str|None
+    events_when_stopped: event_list|str|None
+    events_when_looping: event_list|str|None
+    events_when_about_to_finish: event_list|str|None
     mode_end_action: single|enum(stop,stop_looping)|stop_looping
     key: single|str|None
     markers: ignore                                 # todo add subconfig
     ducking:
-        target: list|str|
+        target: event_list|str|
         delay: single|secs|0
         attack: single|secs|10ms
         attenuation: single|gain|1.0
@@ -1644,7 +1644,7 @@ sequence_shots:
     __valid_in__: machine, mode
     __type__: device
     switch_sequence: list|machine(switches)|None
-    event_sequence: list|str|None
+    event_sequence: event_list|str|None
     cancel_switches: list|machine(switches)|None
     cancel_events: event_handler|str:ms|None
     delay_switch_list: dict|machine(switches):ms|None
@@ -1658,8 +1658,8 @@ switches:
     type: single|enum(NC,NO)|NO
     debounce: single|enum(auto,quick,normal)|auto
     ignore_window_ms: single|ms|0
-    events_when_activated: list|str|None
-    events_when_deactivated: list|str|None
+    events_when_activated: event_list|str|None
+    events_when_deactivated: event_list|str|None
     platform: single|str|None
     platform_settings: single|dict|None
     x: single|float|None
@@ -1684,8 +1684,8 @@ text_strings:
 text_ui:
     __valid_in__: machine
     __type__: config
-    player_vars: list|str|None
-    machine_vars: list|str|None
+    player_vars: event_list|str|None
+    machine_vars: event_list|str|None
 tic_stepper_settings:
     max_speed: single|int|2000000
     starting_speed: single|int|0
@@ -1712,11 +1712,11 @@ timed_switches:
     __valid_in__: machine, mode
     __type__: device
     switches: list|machine(switches)|None
-    switch_tags: list|str|None
+    switch_tags: event_list|str|None
     time: single|ms|
     state: single|enum(active,inactive)|active
-    events_when_active: list|str|None
-    events_when_released: list|str|None
+    events_when_active: event_list|str|None
+    events_when_released: event_list|str|None
 timers:
     __valid_in__: mode
     __type__: device
@@ -1832,7 +1832,7 @@ widgets:
         animations: ignore
         reset_animations_events: event_handler|str:ms|None
         color: single|kivycolor|ffffffff
-        style: list|str|None
+        style: event_list|str|None
         adjust_top: single|int_or_token|0
         adjust_bottom: single|int_or_token|0
         adjust_left: single|int_or_token|0
@@ -1840,11 +1840,11 @@ widgets:
         expire: single|secs_or_token|None
         key: single|str|None
         widget: single|str|None
-        events_when_added: list|str|None
-        events_when_removed: list|str|None
+        events_when_added: event_list|str|None
+        events_when_removed: event_list|str|None
     animations:
-        property: list|str|
-        value: list|str|
+        property: event_list|str|
+        value: event_list|str|
         relative: single|bool_or_token|False
         duration: single|secs_or_token|1
         timing: single|enum(after_previous,with_previous)|after_previous

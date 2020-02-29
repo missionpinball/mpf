@@ -68,7 +68,7 @@ class FadeCandyOPClient(OpenPixelClient):
                                                                     self.machine.config['fadecandy'])
 
         self.gamma = self.config['gamma']
-        self.whitepoint = Util.string_to_list(self.config['whitepoint'])
+        self.whitepoint = Util.string_to_event_list(self.config['whitepoint'])
 
         self.whitepoint[0] = float(self.whitepoint[0])
         self.whitepoint[1] = float(self.whitepoint[1])

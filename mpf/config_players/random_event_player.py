@@ -74,7 +74,7 @@ class RandomEventPlayer(ConfigPlayer):
 
     def get_express_config(self, value):
         """Parse express config."""
-        return {"events": self.get_list_config(Util.string_to_list(value))}
+        return {"events": self.get_list_config(Util.string_to_event_list(value))}
 
     def get_list_config(self, value):
         """Parse list."""

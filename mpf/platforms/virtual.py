@@ -102,7 +102,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
             if 'virtual_platform_start_active_switches' in self.machine.config:
 
                 initial_active_switches = []
-                for switch in Util.string_to_list(self.machine.config['virtual_platform_start_active_switches']):
+                for switch in Util.string_to_event_list(self.machine.config['virtual_platform_start_active_switches']):
                     if switch not in self.machine.switches:
                         raise ConfigFileError("Switch {} used in virtual_platform_start_active_switches was not found "
                                               "in switches section.".format(switch), 1, self.log.name)

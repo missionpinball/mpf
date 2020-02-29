@@ -24,7 +24,7 @@ class FlasherPlayer(DeviceConfigPlayer):
 
         for flasher, s in settings.items():
             if isinstance(flasher, str):
-                flasher_names = Util.string_to_list(flasher)
+                flasher_names = Util.string_to_event_list(flasher)
                 for flasher_name in flasher_names:
                     self._flash(self.machine.lights[flasher_name],
                                 duration_ms=s['ms'],

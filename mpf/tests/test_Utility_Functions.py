@@ -35,40 +35,30 @@ class TestUtil(unittest.TestCase):
         self.assertIn('key4', my_list[1])
 
     def test_string_to_list(self):
-        my_string = '0 1 2 3 4 5'
-        result = Util.string_to_list(my_string)
-        self.assertEqual(type(result), list)
-        self.assertEqual(result[5], '5')
-
         my_string = '0, 1, 2, 3, 4, 5'
-        result = Util.string_to_list(my_string)
+        result = Util.string_to_event_list(my_string)
         self.assertEqual(type(result), list)
         self.assertEqual(result[5], '5')
 
         my_string = ['0', '1', '2', '3', '4', '5']
-        result = Util.string_to_list(my_string)
+        result = Util.string_to_event_list(my_string)
         self.assertEqual(type(result), list)
         self.assertEqual(result[5], '5')
 
         my_string = None
-        result = Util.string_to_list(my_string)
+        result = Util.string_to_event_list(my_string)
         self.assertEqual(type(result), list)
         self.assertFalse(result)
 
-        my_string = '0 1 2{not split here} 3 4 5'
-        result = Util.string_to_list(my_string)
+        my_string = '0, 1, 2{not, split here}, 3, 4, 5'
+        result = Util.string_to_event_list(my_string)
         self.assertEqual(type(result), list)
         self.assertEqual(result[1], '1')
-        self.assertEqual(result[2], '2{not split here}')
+        self.assertEqual(result[2], '2{not, split here}')
         self.assertEqual(result[3], '3')
 
     def test_list_of_lists(self):
-        my_string = '0 1 2 3 4 5'
-        result = Util.string_to_list(my_string)
-        self.assertEqual(type(result), list)
-        self.assertEqual(result[5], '5')
-
-        my_list = ['1 2 3 4 5', 'a b c d e']
+        my_list = ['1, 2, 3, 4, 5', 'a, b, c, d, e']
         result = Util.list_of_lists(my_list)
         self.assertEqual(type(result), list)
         self.assertEqual(result[0][0], '1')

@@ -235,7 +235,7 @@ class PROCDMD(DmdPlatformInterface):
 
         # dmd_timing defaults should be 250, 400, 180, 800
         if self.machine.config['p_roc']['dmd_timing_cycles']:
-            dmd_timing = Util.string_to_list(
+            dmd_timing = Util.string_to_event_list(
                 self.machine.config['p_roc']['dmd_timing_cycles'])
 
             self.platform.run_proc_cmd_no_wait("dmd_update_config", dmd_timing)

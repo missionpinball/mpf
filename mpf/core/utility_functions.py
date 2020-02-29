@@ -89,26 +89,65 @@ class Util:
 
     @staticmethod
     def string_to_list(string: Union[str, List[str], None]) -> List[Any]:
-        """Convert a comma-separated and/or space-separated string into a Python list.
+        """Convert a comma-separated string into a Python list if not already a list.
 
         Args:
             string: The string you'd like to convert.
 
-        Returns a python list object containing whatever was between commas and/or
-        spaces in the string.
+        Returns a python list object containing whatever was between commas in the string.
         """
         if isinstance(string, str):
+            # empty string is an empty list
+            if string == '':
+                return []
+
+            # Convert commas to spaces, then split the string into a list
+            # Look for string values of "None" and convert them to Nonetypes.
+            return [x.strip() if x != "none" else None for x in string.split(",")]
+
+        if isinstance(string, list):
+            return string  # If it's already a list, do nothing
+
+        if string is None:
+            return []  # If it's None, make it into an empty list
+
+        if isinstance(string, (int, float)):
+            return [string]
+
+        if str(type(string)) == "<class 'ruamel.yaml.comments.CommentedSeq'>":
+            # If it's a ruamel CommentedSeq, just pretend its a list
+            # I did it as a str comparison so I didn't have to
+            # import the actual ruamel.yaml classes
+            return string
+
+        # if we're passed anything else raise an error
+        raise AssertionError("Incorrect type in list for element {}".format(string))
+
+    @staticmethod
+    def string_to_event_list(string: Union[str, List[str], None]) -> List[Any]:
+        """Convert a comma-separated and/or space-separated event string into a Python list if not already a list.
+
+        This version honors placeholders/templates for events.
+
+        Args:
+            string: The string you'd like to convert.
+
+        Returns a python list object containing whatever was between commas in the string.
+        """
+        if isinstance(string, str):
+            # empty string is an empty list
+            if string == '':
+                return []
+
             if "{" in string:
                 # Split the string on spaces/commas EXCEPT regions within braces
                 new_list = re.findall(r'([\w|-]+?\{.*?\}|[\w|-]+)', string)
             else:
-                # Convert commas to spaces, then split the string into a list
-                new_list = string.replace(",", " ").split()
-            # Look for string values of "None" and convert them to Nonetypes.
-            for index, value in enumerate(new_list):
-                if isinstance(value, str) and len(value) == 4 and value.lower() == 'none':
-                    new_list[index] = None
-            return new_list
+                # Split at commas
+                new_list = string.split(',')
+
+            # strip and replace "none" with None
+            return [x.strip() if x != "none" else None for x in new_list]
 
         if isinstance(string, list):
             return string  # If it's already a list, do nothing
@@ -134,11 +173,11 @@ class Util:
         final_list = list()
 
         if isinstance(incoming_string, str):
-            final_list = [Util.string_to_list(incoming_string)]
+            final_list = [Util.string_to_event_list(incoming_string)]
 
         else:
             for item in incoming_string:
-                final_list.append(Util.string_to_list(item))
+                final_list.append(Util.string_to_event_list(item))
 
         return final_list
 
@@ -274,7 +313,7 @@ class Util:
         if isinstance(config, str):
             if config == "None":
                 return {}
-            config = Util.string_to_list(config)
+            config = Util.string_to_event_list(config)
 
         # 'if' instead of 'elif' to pick up just-converted str
         if isinstance(config, list):

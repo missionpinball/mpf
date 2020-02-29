@@ -30,7 +30,7 @@ class LightPlayer(DeviceConfigPlayer):
             except KeyError:
                 final_priority = priority
             if isinstance(light, str):
-                light_names = Util.string_to_list(light)
+                light_names = Util.string_to_event_list(light)
                 for light_name in light_names:
                     # skip non-replaced placeholders
                     if not light_name or light_name[0:1] == "(" and light_name[-1:] == ")":
@@ -46,7 +46,7 @@ class LightPlayer(DeviceConfigPlayer):
 
         for light, s in settings.items():
             if isinstance(light, str):
-                light_names = Util.string_to_list(light)
+                light_names = Util.string_to_event_list(light)
                 for light_name in light_names:
                     self._light_remove_named(light_name, instance_dict, full_context, s['fade'])
             else:

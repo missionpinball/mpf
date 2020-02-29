@@ -471,7 +471,7 @@ class TestShows(MpfTestCase):
         self.advance_time_and_run()
 
         show = self.machine.shows['lights_basic'].play(
-            show_tokens=dict(lights='light_01 light_02'))
+            show_tokens=dict(lights='light_01, light_02'))
         self.advance_time_and_run(.5)
 
         self.assertLightChannel("light_01", 255)

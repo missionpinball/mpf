@@ -506,7 +506,7 @@ class Accrual(LogicBlock):
     def setup_event_handlers(self):
         """Add event handlers."""
         for step, events in enumerate(self.config['events']):
-            for event in Util.string_to_list(events):
+            for event in Util.string_to_event_list(events):
                 self.machine.events.add_handler(event, self.hit, step=step)
 
     def hit(self, step: int, **kwargs):
@@ -568,7 +568,7 @@ class Sequence(LogicBlock):
     def setup_event_handlers(self):
         """Add the handlers for the current step."""
         for step, events in enumerate(self.config['events']):
-            for event in Util.string_to_list(events):
+            for event in Util.string_to_event_list(events):
                 # increase priority with steps to prevent advancing multiple steps at once
                 self.machine.events.add_handler(event, self.hit, step=step, priority=step)
 

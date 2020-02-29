@@ -355,7 +355,7 @@ class MpfTestCase(unittest.TestCase):
             'force_platform': self.get_platform(),
             'production': False,
             'mpfconfigfile': mpfconfig,
-            'configfile': Util.string_to_list(self._get_config_file()),
+            'configfile': Util.string_to_event_list(self._get_config_file()),
             'debug': True,
             'bcp': self.get_use_bcp(),
             'no_load_cache': False,

@@ -181,7 +181,7 @@ class ConfigProcessor:
             if 'config' in config:
                 path = os.path.split(filename)[0]
 
-                for file in Util.string_to_list(config['config']):
+                for file in Util.string_to_event_list(config['config']):
                     full_file = os.path.join(path, file)
                     subfiles.append(full_file)
                     subconfig, subsubfiles = self._load_config_file_and_return_loaded_files(full_file, config_type)

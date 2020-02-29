@@ -61,7 +61,7 @@ class AflRunner(object):
         return {
             'force_platform': self.get_platform(),
             'mpfconfigfile': mpfconfig,
-            'configfile': Util.string_to_list(self.get_config_file()),
+            'configfile': Util.string_to_event_list(self.get_config_file()),
             'debug': True,
             'bcp': False,
             'no_load_cache': False,

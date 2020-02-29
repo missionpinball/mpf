@@ -88,7 +88,7 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
         if not isinstance(device, str):
             return [device]
 
-        device_or_tag_names = Util.string_to_list(device)
+        device_or_tag_names = Util.string_to_event_list(device)
         if not self.device_collection:
             return device_or_tag_names
 
