@@ -129,24 +129,6 @@ class Util:
         raise AssertionError("Incorrect type in list for element {}".format(string))
 
     @staticmethod
-    def string_to_lowercase_list(string: str) -> List[str]:
-        """Convert a comma-separated and/or space-separated string into a Python list.
-
-         Each item in the list has been converted to lowercase.
-
-        Args:
-            string: The string you'd like to convert.
-
-        Returns a python list object containing whatever was between commas and/or
-        spaces in the string, with each item converted to lowercase.
-        """
-        new_list = Util.string_to_list(string)
-
-        new_list = [x.lower() for x in new_list]
-
-        return new_list
-
-    @staticmethod
     def list_of_lists(incoming_string):
         """Convert an incoming string or list into a list of lists."""
         final_list = list()
