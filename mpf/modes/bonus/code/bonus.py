@@ -162,7 +162,8 @@ class Bonus(Mode):
             self.delay.add(name='bonus', ms=self.display_delay,
                            callback=self._end_bonus)
 
-    def _end_bonus(self):
+    def _end_bonus(self, **kwargs):
+        del kwargs
         self.debug_log("Bonus done")
         if not self.settings['keep_multiplier']:
             self.player.bonus_multiplier = 1

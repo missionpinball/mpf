@@ -1,0 +1,20 @@
+#config_version=5
+
+modes:
+    - bonus
+    - mode1
+
+machine:
+    min_balls: 0
+
+game:
+  balls_per_game: 10  # we have a lot of bonus tests to run :)
+
+switches:
+    s_start:
+        number:
+        tags: start
+
+player_vars:
+    bonus_multiplier:
+        initial_value: 1

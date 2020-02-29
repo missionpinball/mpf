@@ -1,5 +1,5 @@
 """Test the bonus mode."""
-from mpf.tests.MpfTestCase import MpfTestCase, MagicMock
+from mpf.tests.MpfTestCase import MpfTestCase, MagicMock, test_config_directory
 
 
 class TestBonusMode(MpfTestCase):
@@ -220,6 +220,52 @@ class TestBonusMode(MpfTestCase):
         self.machine.game.balls_in_play = 0
         self.advance_time_and_run(30)
         self.assertEqual(1337, self.machine.game.player.score)
+
+        # check resets
+        self.assertEqual(0, self.machine.game.player.ramps)
+        self.assertEqual(2, self.machine.game.player.modes)
+        self.assertEqual(5, self.machine.game.player.bonus_multiplier)
+
+    @test_config_directory("tests/machine_files/bonus_additional_events/")
+    def testBonusStopEvent(self):
+        self.mock_event("bonus_ramps")
+        self.mock_event("bonus_modes")
+        self.mock_event("bonus_subtotal")
+        self.mock_event("bonus_multiplier")
+        self.mock_event("bonus_total")
+        # start game
+        self._start_game()
+
+        self.post_event("start_mode1")
+        self.advance_time_and_run()
+
+        # player gets some score
+        self.post_event("hit_target")
+
+        # score 3 ramp shots
+        self.post_event("score_ramps")
+        self.post_event("score_ramps")
+        self.post_event("score_ramps")
+
+        # score 2 modes
+        self.post_event("score_modes")
+        self.post_event("score_modes")
+
+        # increase multiplier to 5 (by hitting it 4 times)
+        self.post_event("add_multiplier")
+        self.post_event("add_multiplier")
+        self.post_event("add_multiplier")
+        self.post_event("add_multiplier")
+        self.advance_time_and_run()
+
+        # drain a ball
+        self.machine.game.balls_in_play = 0
+        self.advance_time_and_run(30)
+        self.assertEqual(66337, self.machine.game.player.score)
+        self.assertModeRunning("bonus")
+        self.post_event("stop_bonus")
+        self.advance_time_and_run(.1)
+        self.assertModeNotRunning("bonus")
 
         # check resets
         self.assertEqual(0, self.machine.game.player.ramps)
