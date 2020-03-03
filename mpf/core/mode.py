@@ -38,6 +38,7 @@ class Mode(LogMixin):
             config: config dict for mode
             name: name of mode
             path: path of mode
+            asset_paths: all paths to consider for assets in this mode
         """
         super().__init__()
         self.machine = machine                  # type: MachineController
