@@ -299,7 +299,6 @@ class BaseAssetManager(MpfController, LogMixin):
             if ac.disk_asset_section not in config:
                 config[ac.disk_asset_section] = dict()
 
-            config[ac.disk_asset_section] = dict()
             for path in paths:
                 # Populate the config section for this asset class with all the
                 # assets found on disk
