@@ -18,7 +18,7 @@ class OPPIncandCard:
         self.log = logging.getLogger('OPPIncand')
         self.addr = addr
         self.chain_serial = chain_serial
-        self.old_state = 0
+        self.old_state = None
         self.new_state = 0
         self.mask = mask
         self.card_num = str(addr - ord(OppRs232Intf.CARD_ID_GEN2_CARD))

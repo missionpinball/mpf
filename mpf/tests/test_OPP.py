@@ -129,6 +129,8 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
             self._crc_message(b'\x20\x14\x03\x00\x0a\x06'): False,  # configure coil 3
             self._crc_message(b'\x21\x14\x0c\x00\x0a\x01'): False,  # configure coil 1-12
             self._crc_message(b'\x23\x14\x00\x02\x2a\x00'): False,  # configure coil 3-0
+            self._crc_message(b'\x20\x13\x07\x00\x00\x00\x00', False): False,  # turn off all incands
+            self._crc_message(b'\x22\x13\x07\x00\x00\x00\x00', False): False,  # turn off all incands
         }
         self.serialMock.permanent_commands = {
             b'\xff': b'\xff',
@@ -318,6 +320,7 @@ class TestOPP(OPPCommon, MpfTestCase):
             self._crc_message(b'\x20\x14\x02\x00\x0a\x0f'): False,  # configure coil 2
             self._crc_message(b'\x20\x14\x03\x00\x0a\x06'): False,  # configure coil 3
             self._crc_message(b'\x21\x14\x0c\x00\x0a\x01'): False,  # configure coil 1-12
+            self._crc_message(b'\x20\x13\x07\x00\x00\x00\x00', False): False,  # turn off all incands
         }
         self.serialMock.permanent_commands = {
             b'\xff': b'\xff',

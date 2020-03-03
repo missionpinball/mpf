@@ -276,7 +276,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         for incand in self.opp_incands:
             whole_msg = bytearray()
             # Check if any changes have been made
-            if (incand.old_state ^ incand.new_state) != 0:
+            if incand.old_state is None or (incand.old_state ^ incand.new_state) != 0:
                 # Update card
                 incand.old_state = incand.new_state
                 msg = bytearray()
