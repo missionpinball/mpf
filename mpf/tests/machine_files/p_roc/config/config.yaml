@@ -62,24 +62,6 @@ lights:
     platform: drivers
     number: test_gi
 
-shows:
-  test:
-    - duration: 1
-      lights:
-        test_pdb_light: ff
-    - duration: 1
-      lights:
-        test_pdb_light: C0
-    - duration: 1
-      lights:
-        test_pdb_light: 0
-    - duration: -1
-      lights:
-        test_pdb_light: ff
-
-show_player:
-  play_test_show: test
-
 segment_displays:
   display1:
     number: 0

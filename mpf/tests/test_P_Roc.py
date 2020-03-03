@@ -249,7 +249,7 @@ class TestPRoc(MpfTestCase):
     def _test_alpha_display(self):
         self.pinproc.aux_send_commands = MagicMock(return_value=True)
         self.machine.segment_displays["display1"].add_text("1234", key="score")
-        self.advance_time_and_run(.1)
+        self.machine_run()
         self.wait_for_platform()
         self.pinproc.aux_send_commands.assert_has_calls([
             call(0, ['disable', 'output_custom_0_0_8_False_0', 'output_custom_0_0_9_False_0',
@@ -322,7 +322,7 @@ class TestPRoc(MpfTestCase):
 
         self.pinproc.aux_send_commands = MagicMock(return_value=True)
         self.machine.segment_displays["display1"].remove_text_by_key("score")
-        self.advance_time_and_run(.1)
+        self.machine_run()
         self.wait_for_platform()
         self.pinproc.aux_send_commands.assert_has_calls([
             call(0, [
@@ -540,7 +540,7 @@ class TestPRoc(MpfTestCase):
         # test disable of matrix light
         assert not self.pinproc.driver_disable.called
         self.machine.lights["test_pdb_light"].off()
-        self.advance_time_and_run(.1)
+        self.machine_run()
         self.wait_for_platform()
         self.pinproc.driver_disable.assert_called_with(32)
 
@@ -548,34 +548,12 @@ class TestPRoc(MpfTestCase):
         self.pinproc.driver_schedule = MagicMock(return_value=True)
         self.pinproc.driver_disable = MagicMock(return_value=True)
 
-        self.post_event("play_test_show")
+        self.machine.lights["test_pdb_light"].on()
         self.wait_for_platform()
         self.pinproc.driver_schedule.assert_called_with(
             32, 4294967295, 0, True
         )
-
-        self.advance_time_and_run(1)
-        self.wait_for_platform()
-        self.pinproc.driver_patter.assert_called_with(
-            32, 3, 1, 0, True
-        )
-
-        self.advance_time_and_run(1)
-        self.wait_for_platform()
-        self.pinproc.driver_disable.assert_called_with(32)
-        self.pinproc.driver_disable = MagicMock(return_value=True)
-
-        self.advance_time_and_run(1)
-        self.wait_for_platform()
-        self.pinproc.driver_schedule.assert_called_with(
-            32, 4294967295, 0, True
-        )
-        self.advance_time_and_run(10)
-        self.wait_for_platform()
-        self.pinproc.driver_schedule.assert_called_with(
-            32, 4294967295, 0, True
-        )
-        assert not self.pinproc.driver_disable.called
+        self.pinproc.driver_schedule = MagicMock(return_value=True)
 
     def _test_pdb_gi_light(self):
         # test gi on
@@ -584,7 +562,7 @@ class TestPRoc(MpfTestCase):
         self.pinproc.driver_patter = MagicMock(return_value=True)
         self.pinproc.driver_schedule = MagicMock(return_value=True)
         device.color("white")
-        self.advance_time_and_run(.1)
+        self.machine_run()
         self.wait_for_platform()
         self.pinproc.driver_schedule.assert_has_calls([
             call(num, 4294967295, 0, True)])
@@ -592,7 +570,7 @@ class TestPRoc(MpfTestCase):
         self.pinproc.driver_schedule = MagicMock(return_value=True)
 
         device.color([128, 128, 128])
-        self.advance_time_and_run(.1)
+        self.machine_run()
         self.wait_for_platform()
         self.pinproc.driver_patter.assert_has_calls([
             call(num, 1, 1, 0, True)])
@@ -600,7 +578,7 @@ class TestPRoc(MpfTestCase):
         self.pinproc.driver_schedule = MagicMock(return_value=True)
 
         device.color([245, 245, 245])
-        self.advance_time_and_run(.1)
+        self.machine_run()
         self.wait_for_platform()
         self.pinproc.driver_patter.assert_has_calls([
             call(num, 19, 1, 0, True)])
@@ -610,7 +588,7 @@ class TestPRoc(MpfTestCase):
         # test gi off
         self.pinproc.driver_disable = MagicMock(return_value=True)
         device.color("off")
-        self.advance_time_and_run(.1)
+        self.machine_run()
         self.wait_for_platform()
         self.pinproc.driver_disable.assert_has_calls([
             call(num)])
