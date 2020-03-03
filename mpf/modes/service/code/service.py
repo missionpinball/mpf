@@ -16,7 +16,12 @@ class Service(AsyncMode):
 
     """The service mode."""
 
-    __slots__ = []
+    __slots__ = ["_update_script"]
+
+    def __init__(self, *args, **kwargs):
+        """Initialize service mode."""
+        super().__init__(*args, **kwargs)
+        self._update_script = None
 
     @staticmethod
     def get_config_spec():
@@ -90,9 +95,19 @@ software_update_script: single|str|None
             ServiceMenuEntry("settings", self._settings_menu),
         ]
 
-        if self.config['mode_settings']['software_update'] and \
-                os.path.isfile(self.config['mode_settings']['software_update_script']):
-            entries.append(ServiceMenuEntry("update", self._software_update))
+        print(self.config['mode_settings'])
+        if self.config['mode_settings']['software_update']:
+            update_file_path = self.config['mode_settings']['software_update_script']
+            if not update_file_path:
+                raise AssertionError("Please configure software_update_script to enable software_update in "
+                                     "service mode.")
+
+            if not os.path.isabs(update_file_path):
+                update_file_path = os.path.join(self.machine.machine_path, update_file_path)
+
+            if os.path.isfile(update_file_path):
+                self._update_script = update_file_path
+                entries.append(ServiceMenuEntry("update", self._software_update))
 
         return entries
 
@@ -111,7 +126,7 @@ software_update_script: single|str|None
                 # perform update
                 if run_update:
                     self.machine.events.post("service_software_update_start")
-                    subprocess.Popen([self.config['mode_settings']['software_update_script']])
+                    subprocess.Popen([self._update_script])
                     self.machine.stop("Software Update")
 
         self.machine.events.post("service_software_update_stop")

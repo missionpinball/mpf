@@ -12,13 +12,13 @@ class Bonus(Mode):
 
     __slots__ = ["bonus_score", "settings", "display_delay", "bonus_entries", "bonus_iterator"]
 
-    def __init__(self, machine, config, name, path):
+    def __init__(self, *args, **kwargs):
         """Initialize bonus mode."""
-        super().__init__(machine, config, name, path)
+        super().__init__(*args, **kwargs)
         self.bonus_score = None
 
         self.settings = self.machine.config_validator.validate_config(
-            'bonus_mode_settings', config.get("mode_settings"))
+            'bonus_mode_settings', self.config.get("mode_settings"))
 
         self.display_delay = self.settings["display_delay_ms"]
         self.bonus_entries = self.settings["bonus_entries"]

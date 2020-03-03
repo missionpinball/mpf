@@ -18,7 +18,7 @@ class Tilt(Mode):
     __slots__ = ["_balls_to_collect", "_last_warning", "ball_ending_tilted_queue", "tilt_event_handlers",
                  "last_tilt_warning_switch", "tilt_config", "_settle_time", "_warnings_to_tilt", "_multiple_hit_window"]
 
-    def __init__(self, machine: MachineController, config: dict, name: str, path) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         """Create mode."""
         self._balls_to_collect = None   # type: int
         self._last_warning = None       # type: int
@@ -29,7 +29,7 @@ class Tilt(Mode):
         self._settle_time = None
         self._warnings_to_tilt = None
         self._multiple_hit_window = None
-        super().__init__(machine, config, name, path)
+        super().__init__(*args, **kwargs)
 
     def mode_init(self):
         """Initialise mode."""

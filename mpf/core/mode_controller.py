@@ -114,18 +114,30 @@ class ModeController(MpfController):
             self.log.debug("Loaded mode %s", mode)
 
     def _find_mode_path(self, mode_string):
+        asset_paths = []
+        mode_path = None
+
+        if mode_string in self._mpf_mode_folders:
+            path = os.path.join(self.machine.mpf_path,
+                                "modes",
+                                self._mpf_mode_folders[mode_string])
+            asset_paths.append(path)
+            mode_path = path
+
         if mode_string in self._machine_mode_folders:
-            return os.path.join(self.machine.machine_path,
+            path = os.path.join(self.machine.machine_path,
                                 self.machine.config['mpf']['paths']['modes'],
                                 self._machine_mode_folders[mode_string])
-        if mode_string in self._mpf_mode_folders:
-            return os.path.join(self.machine.mpf_path,
-                                self.machine.config['mpf']['paths']['modes'],
-                                self._mpf_mode_folders[mode_string])
 
-        raise ValueError("No folder found for mode '{}'. Is your mode "
-                         "folder in your machine's 'modes' folder?"
-                         .format(mode_string))
+            asset_paths.append(path)
+            mode_path = path
+
+        if not mode_path:
+            raise ValueError("No folder found for mode '{}'. Is your mode "
+                             "folder in your machine's 'modes' folder?"
+                             .format(mode_string))
+
+        return mode_path, asset_paths
 
     def _get_mpf_mode_config(self, mode_string):
         try:
@@ -254,7 +266,7 @@ class ModeController(MpfController):
         # Find the folder for this mode. First check the machine list, and if
         # it's not there, see if there's a built-in mpf mode
 
-        mode_path = self._find_mode_path(mode_string)
+        mode_path, asset_paths = self._find_mode_path(mode_string)
 
         config = self._load_mode_config(mode_string)
 
@@ -274,7 +286,7 @@ class ModeController(MpfController):
         config['mode_settings'] = self.machine.config_validator.validate_config(
             "_mode_settings:{}".format(mode_string), config.get('mode_settings', None))
 
-        return mode_class(self.machine, config, mode_string, mode_path)
+        return mode_class(self.machine, config, mode_string, mode_path, asset_paths)
 
     def _build_mode_folder_dicts(self):
         self._mpf_mode_folders = (

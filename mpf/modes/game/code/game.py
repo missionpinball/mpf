@@ -25,9 +25,9 @@ class Game(AsyncMode):
                  "_stopping_modes", "_stopping_queue", "_end_ball_event", "_at_least_one_player_event",
                  "balls_per_game", "max_players"]
 
-    def __init__(self, machine, config, name, path):
+    def __init__(self, *args, **kwargs):
         """Initialise game."""
-        super().__init__(machine, config, name, path)
+        super().__init__(*args, **kwargs)
         self._balls_in_play = 0
         self.player_list = list()
         self.machine.game = None

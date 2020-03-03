@@ -11,7 +11,7 @@ class Carousel(Mode):
     __slots__ = ["_all_items", "_items", "_select_item_events", "_next_item_events",
                  "_previous_item_events", "_highlighted_item_index", "_done"]
 
-    def __init__(self, machine, config, name, path):
+    def __init__(self, *args, **kwargs):
         """Initialise carousel mode."""
         self._all_items = None
         self._items = None
@@ -20,7 +20,7 @@ class Carousel(Mode):
         self._previous_item_events = None
         self._highlighted_item_index = None
         self._done = None
-        super().__init__(machine, config, name, path)
+        super().__init__(*args, **kwargs)
 
     def mode_init(self):
         """Initialise mode and read all settings from config."""

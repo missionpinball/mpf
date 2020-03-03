@@ -15,13 +15,13 @@ class HighScore(AsyncMode):
 
     __slots__ = ["data_manager", "high_scores", "high_score_config", "pending_award"]
 
-    def __init__(self, machine, config, name, path):
+    def __init__(self, *args, **kwargs):
         """Initialise high score mode."""
         self.data_manager = None
         self.high_scores = None
         self.high_score_config = None
         self.pending_award = None
-        super().__init__(machine, config, name, path)
+        super().__init__(*args, **kwargs)
 
     def mode_init(self):
         """Initialise high score mode."""

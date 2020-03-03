@@ -290,22 +290,24 @@ class BaseAssetManager(MpfController, LogMixin):
 
         try:
             mode_name = mode.name
-            path = mode.path
+            paths = mode.asset_paths
         except AttributeError:
             mode_name = None
-            path = self.machine.machine_path
+            paths = [self.machine.machine_path]
 
         for ac in self._asset_classes:
             if ac.disk_asset_section not in config:
                 config[ac.disk_asset_section] = dict()
 
-            # Populate the config section for this asset class with all the
-            # assets found on disk
-            config[ac.disk_asset_section] = self._create_asset_config_entries(
-                asset_class=ac,
-                config=config[ac.disk_asset_section],
-                mode_name=mode_name,
-                path=path)
+            config[ac.disk_asset_section] = dict()
+            for path in paths:
+                # Populate the config section for this asset class with all the
+                # assets found on disk
+                config[ac.disk_asset_section].update(self._create_asset_config_entries(
+                    asset_class=ac,
+                    config=config[ac.disk_asset_section],
+                    mode_name=mode_name,
+                    path=path))
 
             # create the actual instance of the Asset object and add it
             # to the self.machine asset attribute dict for that asset class

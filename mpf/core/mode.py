@@ -27,9 +27,10 @@ class Mode(LogMixin):
     __slots__ = ["machine", "config", "name", "path", "priority", "_active", "_starting", "_mode_start_wait_queue",
                  "stop_methods", "start_callback", "stop_callbacks", "event_handlers", "switch_handlers",
                  "mode_stop_kwargs", "mode_devices", "start_event_kwargs", "stopping", "delay", "player",
-                 "auto_stop_on_ball_end", "restart_on_next_ball"]
+                 "auto_stop_on_ball_end", "restart_on_next_ball", "asset_paths"]
 
-    def __init__(self, machine: "MachineController", config, name: str, path) -> None:
+    # pylint: disable-msg=too-many-arguments
+    def __init__(self, machine: "MachineController", config, name: str, path, asset_paths) -> None:
         """Initialise mode.
 
         Args:
@@ -43,6 +44,7 @@ class Mode(LogMixin):
         self.config = config                    # type: ignore
         self.name = name
         self.path = path
+        self.asset_paths = asset_paths
         self.priority = 0
         self._active = False
         self._starting = False

@@ -15,7 +15,7 @@ class Credits(Mode):
     __slots__ = ["data_manager", "earnings", "credit_units_per_game", "credit_unit", "pricing_tiers",
                  "credit_units_for_pricing_tiers", "reset_pricing_tier_count_this_game", "credits_config"]
 
-    def __init__(self, machine, config, name, path):
+    def __init__(self, *args, **kwargs):
         """Initialise credits mode."""
         self.data_manager = None
         self.earnings = None
@@ -26,7 +26,7 @@ class Credits(Mode):
         self.credit_units_for_pricing_tiers = None
         self.reset_pricing_tier_count_this_game = None
         self.credits_config = None
-        super().__init__(machine, config, name, path)
+        super().__init__(*args, **kwargs)
 
     def mode_init(self):
         """Initialise mode."""
