@@ -95,7 +95,6 @@ software_update_script: single|str|None
             ServiceMenuEntry("settings", self._settings_menu),
         ]
 
-        print(self.config['mode_settings'])
         if self.config['mode_settings']['software_update']:
             update_file_path = self.config['mode_settings']['software_update_script']
             if not update_file_path:
