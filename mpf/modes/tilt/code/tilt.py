@@ -3,7 +3,6 @@ from typing import Set, Any
 
 from mpf.core.events import EventHandlerKey
 from mpf.core.events import QueuedEvent
-from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 
 
