@@ -170,7 +170,7 @@ class YamlMultifileConfigLoader(ConfigLoader):
                 if show_name in show_configs:
                     raise AssertionError("Duplicate show {}".format(show_name))
                 show_config = self.config_processor.load_config_files_with_cache(
-                    [os.path.join(folder, relative_path, show_file_name)], "show", config_spec=config_spec)
+                    [os.path.join(folder, str(relative_path), show_file_name)], "show", config_spec=config_spec)
                 show_configs[show_name] = show_config
         return show_configs
 
