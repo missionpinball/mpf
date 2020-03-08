@@ -161,11 +161,11 @@ class Switch(SystemWideDevice, DevicePositionMixin):
                 self.machine.config['mpf']['switch_tag_event'].replace(
                     '%', tag) + "_inactive", 0)
 
-        for event in Util.string_to_list(
+        for event in Util.string_to_event_list(
                 self.config['events_when_activated']):
             self._create_activation_event(event, 1)
 
-        for event in Util.string_to_list(
+        for event in Util.string_to_event_list(
                 self.config['events_when_deactivated']):
             self._create_activation_event(event, 0)
 

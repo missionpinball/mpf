@@ -381,7 +381,7 @@ class RstBuilder(object):
 
         self.doc_sections['platforms'] = self.mpfconfig['mpf']['platforms']
 
-        for plugin in Util.string_to_list(self.mpfconfig['mpf']['plugins']):
+        for plugin in Util.string_to_event_list(self.mpfconfig['mpf']['plugins']):
             name = plugin.split('.')[-2]
             self.doc_sections['machine'][name] = plugin
 

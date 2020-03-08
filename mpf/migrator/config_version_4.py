@@ -1005,8 +1005,8 @@ class V4Migrator(VersionMigrator):
             play_events = settings.pop('start_events', None)
             stop_events = settings.pop('stop_events', None)
 
-            play_events = Util.string_to_list(play_events)
-            stop_events = Util.string_to_list(stop_events)
+            play_events = Util.string_to_event_list(play_events)
+            stop_events = Util.string_to_event_list(stop_events)
 
             for event in play_events:
                 self._add_to_sound_player(temp_sound_player, event, this_sound,

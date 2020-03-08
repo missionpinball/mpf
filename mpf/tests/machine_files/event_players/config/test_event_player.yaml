@@ -15,9 +15,7 @@ event_player:
         - event2
         - event3
     play_multiple_string:
-        event1
-        event2
-        event3
+        event1, event2, event3
     play_multiple_args2:
         event1:
           a: b

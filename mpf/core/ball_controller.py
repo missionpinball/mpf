@@ -230,7 +230,7 @@ class BallController(MpfController):
                        " with '%s'", target)
 
         if isinstance(target, str):
-            target = Util.string_to_list(target)
+            target = Util.string_to_event_list(target)
 
         count = 0
         devices = set()
@@ -270,7 +270,7 @@ class BallController(MpfController):
                 ['home', 'trough'].
 
         """
-        tag_list = Util.string_to_list(target)
+        tag_list = Util.string_to_event_list(target)
 
         self.debug_log("Collecting all balls to devices with tags '%s'",
                        tag_list)

@@ -493,7 +493,7 @@ class MachineController(LogMixin):
         # TODO: This should be cleaned up. Create a Plugins base class and
         # classmethods to determine if the plugins should be used.
 
-        for plugin in Util.string_to_list(
+        for plugin in Util.string_to_event_list(
                 self.config['mpf']['plugins']):
 
             self.debug_log("Loading '%s' plugin", plugin)
@@ -505,7 +505,7 @@ class MachineController(LogMixin):
         """Load custom code."""
         if 'scriptlets' in self.config:
             self.debug_log("Loading scriptlets (deprecated).")
-            for scriptlet in Util.string_to_list(self.config['scriptlets']):
+            for scriptlet in Util.string_to_event_list(self.config['scriptlets']):
                 self.debug_log("Loading '%s' scriptlet (deprecated)", scriptlet)
                 scriptlet_obj = Util.string_to_class(self.config['mpf']['paths']['scriptlets'] + "." + scriptlet)(
                     machine=self,
@@ -515,7 +515,7 @@ class MachineController(LogMixin):
         if 'custom_code' in self.config:
             self.debug_log("Loading custom code.")
 
-            for custom_code in Util.string_to_list(self.config['custom_code']):
+            for custom_code in Util.string_to_event_list(self.config['custom_code']):
 
                 self.debug_log("Loading '%s' custom code", custom_code)
 

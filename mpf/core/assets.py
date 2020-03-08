@@ -658,7 +658,7 @@ class AssetPool:
         if 'type' not in config:
             config['type'] = 'sequence'
 
-        for asset in Util.string_to_list(self.config[self.member_cls.config_section]):
+        for asset in Util.string_to_event_list(self.config[self.member_cls.config_section]):
             asset_condition = self.machine.placeholder_manager.parse_conditional_template(asset, default_number=1)
 
             # For efficiency, track whether any assets have conditions

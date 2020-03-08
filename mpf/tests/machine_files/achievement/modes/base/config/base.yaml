@@ -164,10 +164,10 @@ achievement_groups:
 
     group3:
         achievements:
-          achievement10
-          achievement11
-          achievement12
-          achievement13
+          - achievement10
+          - achievement11
+          - achievement12
+          - achievement13
         auto_select: yes
         debug: True
 

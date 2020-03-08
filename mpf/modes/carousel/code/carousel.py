@@ -27,13 +27,13 @@ class Carousel(Mode):
         super().mode_init()
         mode_settings = self.config.get("mode_settings", [])
         self._all_items = []
-        for item in Util.string_to_list(mode_settings.get("selectable_items", "")):
+        for item in Util.string_to_event_list(mode_settings.get("selectable_items", "")):
             placeholder = self.machine.placeholder_manager.parse_conditional_template(item)
             # Only add a placeholder if there's a condition, otherwise just the string
             self._all_items.append(placeholder if placeholder.condition else item)
-        self._select_item_events = Util.string_to_list(mode_settings.get("select_item_events", ""))
-        self._next_item_events = Util.string_to_list(mode_settings.get("next_item_events", ""))
-        self._previous_item_events = Util.string_to_list(mode_settings.get("previous_item_events", ""))
+        self._select_item_events = Util.string_to_event_list(mode_settings.get("select_item_events", ""))
+        self._next_item_events = Util.string_to_event_list(mode_settings.get("next_item_events", ""))
+        self._previous_item_events = Util.string_to_event_list(mode_settings.get("previous_item_events", ""))
         self._highlighted_item_index = 0
 
         if not self._all_items:

@@ -4,7 +4,7 @@ machine:
   balls_installed: 5
   min_balls: 1
 
-virtual_platform_start_active_switches: s_trough_1 s_trough_2 s_trough_3 s_trough_4 s_trough_5
+virtual_platform_start_active_switches: s_trough_1, s_trough_2, s_trough_3, s_trough_4, s_trough_5
 
 switches:
   s_start:
