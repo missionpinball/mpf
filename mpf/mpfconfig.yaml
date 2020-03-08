@@ -13,7 +13,6 @@ mpf:
         - device_manager: mpf.core.device_manager.DeviceManager
         - switch_controller: mpf.core.switch_controller.SwitchController
         - ball_controller: mpf.core.ball_controller.BallController
-        - asset_manager: mpf.core.assets.AsyncioSyncAssetManager
         - show_controller: mpf.core.show_controller.ShowController
         - bcp: mpf.core.bcp.bcp.Bcp
         - service: mpf.core.service_controller.ServiceController

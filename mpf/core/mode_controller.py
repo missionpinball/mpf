@@ -168,31 +168,6 @@ class ModeController(MpfController):
             return False
         return mode_config_file
 
-    def _load_mode_config(self, mode_string):
-        config_files = []
-        # Is there an MPF default config for this mode? If so, load it first
-        mpf_mode_config = self._get_mpf_mode_config(mode_string)
-        if mpf_mode_config:
-            config_files.append(mpf_mode_config)
-
-        # Now figure out if there's a machine-specific config for this mode,
-        # and if so, merge it into the config
-        mode_config_file = self._get_mode_config_file(mode_string)
-        if mode_config_file:
-            config_files.append(mode_config_file)
-
-        if not config_files:
-            raise AssertionError("Did not find any config for mode {}.".format(mode_string))
-
-        config = self.machine.config_processor.load_config_files_with_cache(
-            config_files, "mode", load_from_cache=not self.machine.options['no_load_cache'],
-            store_to_cache=self.machine.options['create_config_cache'])
-
-        if "mode" not in config:
-            config["mode"] = dict()
-
-        return config
-
     def _load_mode_config_spec(self, mode_string, mode_class):
         self.machine.config_validator.load_mode_config_spec(mode_string, mode_class.get_config_spec())
 
@@ -259,8 +234,6 @@ class ModeController(MpfController):
             mode_string: String name of the mode you're loading. This is the name of
                 the mode's folder in your game's machine_files/modes folder.
         """
-        mode_string = mode_string
-
         self.debug_log('Processing mode: %s', mode_string)
 
         # Find the folder for this mode. First check the machine list, and if
@@ -268,7 +241,7 @@ class ModeController(MpfController):
 
         mode_path, asset_paths = self._find_mode_path(mode_string)
 
-        config = self._load_mode_config(mode_string)
+        config = self.machine.mpf_config.get_mode_config(mode_string)
 
         config['mode'] = self.machine.config_validator.validate_config("mode", config['mode'])
 

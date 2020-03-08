@@ -1,0 +1,12 @@
+#config_version=5
+modes:
+  - mode1
+  - mode2
+
+show_player:
+  event4: show1
+
+
+shows:
+  test_show:
+    - duration: 1

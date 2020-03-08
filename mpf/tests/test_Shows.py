@@ -106,16 +106,6 @@ class TestShows(MpfTestCase):
 
         # GI should start out disabled
         self.assertLightChannel("gi_01", 0)
-
-        # Make sure all required shows are loaded
-        start_time = time.time()
-        while (not (self.machine.shows['test_show1'].loaded and
-                    self.machine.shows['test_show2'].loaded and
-                    self.machine.shows['test_show3'].loaded) and
-                time.time() < start_time + 10):
-            self.advance_time_and_run()
-
-        self.assertTrue(self.machine.shows['test_show1'].loaded)
         self.assertEqual(self.machine.shows['test_show1'].total_steps, 5)
 
         # Start mode1 mode (should automatically start the test_show1 show)
@@ -257,7 +247,6 @@ class TestShows(MpfTestCase):
         self.machine.events.add_handler('play_sound', self.event_handler_2)
 
         # Advance the clock enough to ensure the shows have time to load
-        self.assertTrue(self.machine.shows['test_show2'].loaded)
         self.assertEqual(self.machine.shows['test_show2'].total_steps, 3)
 
         # Make sure our event callbacks have not been fired yet
@@ -308,7 +297,6 @@ class TestShows(MpfTestCase):
         self.machine.coils['coil_01'].hw_driver.pulse = MagicMock()
         self.machine.coils['flasher_01'].hw_driver.enable = MagicMock()
 
-        self.assertTrue(self.machine.shows['test_show3'].loaded)
         self.assertEqual(self.machine.shows['test_show3'].total_steps, 3)
 
         # Make sure our device callbacks have not been fired yet
@@ -706,30 +694,11 @@ class TestShows(MpfTestCase):
 
     def test_nested_shows(self):
         self.mock_event("test")
-        self.assertFalse(self.machine.shows['mychildshow'].loaded)
         show = self.machine.shows['myparentshow'].play(loops=0)
-
-        self.advance_time_and_run(5)
-        while not self.machine.shows['mychildshow'].loaded:
-            self.advance_time_and_run(1)
 
         self.advance_time_and_run(1)
         self.assertEqual(1, self._events['test'])
-        self.assertTrue(self.machine.shows['mychildshow'].loaded)
         show.stop()
-
-    def test_nested_shows_stop_before_load(self):
-        self.mock_event("test")
-        self.assertFalse(self.machine.shows['mychildshow'].loaded)
-        show = self.machine.shows['myparentshow'].play(loops=0)
-        show.stop()
-        self.assertEqual(0, self._events['test'])
-
-        self.advance_time_and_run(5)
-        while not self.machine.shows['mychildshow'].loaded:
-            self.advance_time_and_run(1)
-        self.assertEqual(0, self._events['test'])
-        self.assertTrue(self.machine.shows['mychildshow'].loaded)
 
     def test_manual_advance(self):
         self.assertLightColor("led_01", [0, 0, 0])

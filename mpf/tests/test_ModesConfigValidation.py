@@ -13,22 +13,18 @@ class TestModesConfigValidation(MpfTestCase):
     def setUp(self):
         self.save_and_prepare_sys_path()
 
-    def _early_machine_init(self, machine):
-        self.add_to_config_validator(machine, 'unrelated_section',
-                                     dict(__valid_in__ = 'mode'))
-
     def tearDown(self):
         self.restore_sys_path()
 
     def test_loading_invalid_modes(self):
         self.config = 'test_loading_invalid_modes.yaml'
-        with self.assertRaises(ValueError) as context:
+        with self.assertRaises(AssertionError) as context:
             super(TestModesConfigValidation, self).setUp()
 
         self.loop.close()
 
-        self.assertEqual("No folder found for mode 'invalid'. Is your "
-                         "mode folder in your machine's 'modes' folder?",
+        self.assertEqual("No config found for mode 'invalid'. MPF expects the config at "
+                         "'modes/invalid/config/invalid.yaml' inside your machine folder.",
                          str(context.exception))
 
     def test_empty_modes_section(self):
@@ -64,5 +60,6 @@ class TestModesConfigValidation(MpfTestCase):
 
         self.loop.close()
 
-        self.assertEqual('Did not find any config for mode mode_without_config.',
+        self.assertEqual("No config found for mode 'mode_without_config'. MPF expects the config at "
+                         "'modes/mode_without_config/config/mode_without_config.yaml' inside your machine folder.",
                          str(context.exception))

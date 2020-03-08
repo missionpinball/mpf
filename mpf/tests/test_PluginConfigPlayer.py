@@ -136,13 +136,10 @@ class TestPluginConfigPlayer(MpfBcpTestCase):
     def get_machine_path(self):
         return 'tests/machine_files/plugin_config_player/'
 
-    def _early_machine_init(self, machine):
-        self.add_to_config_validator(machine, 'test_player',
-                                     dict(__valid_in__='machine, mode'))
-        self.add_to_config_validator(machine, 'test2_player',
-                                     dict(__valid_in__='machine, mode'))
-
     def setUp(self):
+        self.machine_spec_patches['test_player'] = dict(__valid_in__='machine, mode')
+        self.machine_spec_patches['test2_player'] = dict(__valid_in__='machine, mode')
+
         super().setUp()
         self._bcp_client.send = MagicMock()
 

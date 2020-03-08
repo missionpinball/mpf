@@ -157,7 +157,7 @@ class BaseAssetManager(MpfController, LogMixin):
                         extensions=extensions,
                         priority=priority,
                         pool_config_section=pool_config_section,
-                        defaults=self._get_asset_class_defaults(disk_asset_section, self.machine.machine_config))
+                        defaults=self._get_asset_class_defaults(disk_asset_section, self.machine.config))
 
         self._asset_classes.append(ac)
         self._asset_classes.sort(key=lambda x: x.priority, reverse=True)

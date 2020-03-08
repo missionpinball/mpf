@@ -9,10 +9,12 @@ import sys
 from datetime import datetime
 import logging
 from logging.handlers import QueueHandler, SysLogHandler
+
 from queue import Queue
 
 from mpf.core.machine import MachineController
 from mpf.core.utility_functions import Util
+from mpf.core.config_loader import YamlMultifileConfigLoader
 from mpf.commands.logging_formatters import JSONFormatter
 
 
@@ -52,15 +54,6 @@ class Command:
                                  "config.yaml. Multiple files can be used "
                                  "via a comma-"
                                  "separated list (no spaces between)")
-
-        parser.add_argument("-C",
-                            action="store", dest="mpfconfigfile",
-                            default=os.path.join(mpf_path,
-                                                 "mpfconfig.yaml"),
-                            metavar='config_file',
-                            help="The MPF framework default config file. "
-                                 "Default is "
-                                 "mpf/mpfconfig.yaml")
 
         parser.add_argument("-f",
                             action="store_true", dest="force_assets_load",
@@ -223,7 +216,12 @@ class Command:
 
         signal.signal(signal.SIGINT, self.sigint_handler)
         try:
-            self.machine = MachineController(mpf_path, machine_path, vars(self.args))
+            config_loader = YamlMultifileConfigLoader(machine_path, mpf_path, self.args.configfile,
+                                                      not self.args.no_load_cache, self.args.create_config_cache)
+
+            config = config_loader.load_mpf_config()
+
+            self.machine = MachineController(vars(self.args), config)
             self.machine.add_crash_handler(self.restore_logger)
             self.machine.run()
             logging.info("MPF run loop ended.")

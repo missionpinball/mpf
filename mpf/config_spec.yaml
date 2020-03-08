@@ -1364,6 +1364,8 @@ show_player:
 show_pools:
     __valid_in__: machine, mode                      # todo add to validator
     __type__: config_dict
+    shows: list|machine(shows)|
+    type: single|enum(random,sequence,random_force_next,random_force_all)|sequence
 show_step:
     time: single|str|
     __allow_others__:

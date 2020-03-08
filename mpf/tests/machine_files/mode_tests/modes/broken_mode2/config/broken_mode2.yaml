@@ -1,4 +1,4 @@
 #config_version=5
 
-unrelated_section:
-  invalid_key: crap
+event_player:
+  test: test2
