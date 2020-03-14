@@ -64,6 +64,11 @@ autofire_coils:
         coil: c_test_allow_enable
         switch: s_test_no_debounce
 
+    ac_delayed_kickback:
+        coil: c_test
+        switch: s_test
+        coil_pulse_delay: 20
+
 flippers:
     f_test_single:
         debug: true

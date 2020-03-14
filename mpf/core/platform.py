@@ -518,6 +518,7 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
+    # pylint: disable-msg=no-self-use
     def set_delayed_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings, delay_ms: int):
         """Set pulse on hit and release rule to driver.
 
