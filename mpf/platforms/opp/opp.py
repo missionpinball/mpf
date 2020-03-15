@@ -470,27 +470,27 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             msg: Message to parse.
         """
         # Multiple get version responses can be received at once
-        self.log.debug("Received Version Response:%s", "".join(" 0x%02x" % b for b in msg))
+        self.log.debug("Received Version Response (Chain: %s): %s", chain_serial, "".join(" 0x%02x" % b for b in msg))
         curr_index = 0
         while True:
             # check that message is long enough, must include crc8
             if len(msg) < curr_index + 7:
-                self.log.warning("Msg is too short: %s.", "".join(" 0x%02x" % b for b in msg))
+                self.log.warning("Msg is too short (Chain: %s): %s.", chain_serial, "".join(" 0x%02x" % b for b in msg))
                 self.opp_connection[chain_serial].lost_synch()
                 break
             # Verify the CRC8 is correct
             crc8 = OppRs232Intf.calc_crc8_part_msg(msg, curr_index, 6)
             if msg[curr_index + 6] != ord(crc8):
                 self.bad_crc += 1
-                self.log.warning("Msg contains bad CRC:%s.", "".join(" 0x%02x" % b for b in msg))
+                self.log.warning("Msg contains bad CRC (Chain: %s):%s.", chain_serial,
+                                 "".join(" 0x%02x" % b for b in msg))
                 break
             version = (msg[curr_index + 2] << 24) | \
                 (msg[curr_index + 3] << 16) | \
                 (msg[curr_index + 4] << 8) | \
                 msg[curr_index + 5]
-            self.log.debug("Firmware version: %d.%d.%d.%d", msg[curr_index + 2],
-                           msg[curr_index + 3], msg[curr_index + 4],
-                           msg[curr_index + 5])
+            self.log.debug("Firmware version of board 0x%02x (Chain: %s): %d.%d.%d.%d", msg[curr_index], chain_serial,
+                           msg[curr_index + 2], msg[curr_index + 3], msg[curr_index + 4], msg[curr_index + 5])
             if msg[curr_index] not in self.gen2_addr_arr[chain_serial]:
                 self.log.warning("Got firmware response for %s but not in inventory at %s", msg[curr_index],
                                  chain_serial)
@@ -508,7 +508,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             elif (len(msg) > curr_index + 8) and (msg[curr_index + 8] == ord(OppRs232Intf.GET_VERS_CMD)):
                 curr_index += 7
             else:
-                self.log.warning("Malformed GET_VERS_CMD response:%s.", "".join(" 0x%02x" % b for b in msg))
+                self.log.warning("Malformed GET_VERS_CMD response (Chain %s): %s.", chain_serial,
+                                 "".join(" 0x%02x" % b for b in msg))
                 self.opp_connection[chain_serial].lost_synch()
                 break
 
