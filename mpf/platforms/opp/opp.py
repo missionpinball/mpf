@@ -848,6 +848,22 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """
         self._write_hw_rule(enable_switch, coil, use_hold=False, can_cancel=False)
 
+    def set_delayed_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings, delay_ms: int):
+        """Set pulse on hit and release rule to driver.
+
+        When a switch is hit and a certain delay passed it pulses a driver.
+        When the switch is released the pulse continues.
+        Typically used for kickbacks.
+        """
+        if delay_ms <= 0:
+            raise AssertionError("set_delayed_pulse_on_hit_rule should be used with a positive delay "
+                                 "not {}".format(delay_ms))
+        if delay_ms > 255:
+            raise AssertionError("set_delayed_pulse_on_hit_rule is limited to max 255ms "
+                                 "(was {})".format(delay_ms))
+
+        self._write_hw_rule(enable_switch, coil, use_hold=False, can_cancel=False, delay_ms=int(delay_ms))
+
     def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and release rule to driver.
 
@@ -874,7 +890,9 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """
         raise AssertionError("Not implemented in OPP currently")
 
-    def _write_hw_rule(self, switch_obj: SwitchSettings, driver_obj: DriverSettings, use_hold, can_cancel=False):
+    # pylint: disable-msg=too-many-arguments
+    def _write_hw_rule(self, switch_obj: SwitchSettings, driver_obj: DriverSettings, use_hold, can_cancel=False,
+                       delay_ms=None):
         if switch_obj.invert:
             raise AssertionError("Cannot handle inverted switches")
 
@@ -887,7 +905,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         driver_obj.hw_driver.switches.append(switch_obj.hw_switch.number)
         driver_obj.hw_driver.set_switch_rule(driver_obj.pulse_settings, driver_obj.hold_settings, driver_obj.recycle,
-                                             can_cancel)
+                                             can_cancel, delay_ms)
         _, _, switch_num = switch_obj.hw_switch.number.split("-")
         switch_num = int(switch_num)
         self._add_switch_coil_mapping(switch_num, driver_obj.hw_driver)

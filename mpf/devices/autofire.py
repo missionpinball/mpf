@@ -104,13 +104,23 @@ class AutofireCoil(SystemWideDevice):
         recycle = self.config['coil_overwrite'].get('recycle', None) in (True, None)
         debounce = self.config['switch_overwrite'].get('debounce', None) not in (None, "quick")
 
-        self._rule = self.machine.platform_controller.set_pulse_on_hit_rule(
-            SwitchRuleSettings(switch=self.config['switch'], debounce=debounce,
-                               invert=self.config['reverse_switch']),
-            DriverRuleSettings(driver=self.config['coil'], recycle=recycle),
-            PulseRuleSettings(duration=self.config['coil_overwrite'].get('pulse_ms', None),
-                              power=self.config['coil_overwrite'].get('pulse_power', None))
-        )
+        if not self.config['coil_pulse_delay']:
+            self._rule = self.machine.platform_controller.set_pulse_on_hit_rule(
+                SwitchRuleSettings(switch=self.config['switch'], debounce=debounce,
+                                   invert=self.config['reverse_switch']),
+                DriverRuleSettings(driver=self.config['coil'], recycle=recycle),
+                PulseRuleSettings(duration=self.config['coil_overwrite'].get('pulse_ms', None),
+                                  power=self.config['coil_overwrite'].get('pulse_power', None))
+            )
+        else:
+            self._rule = self.machine.platform_controller.set_delayed_pulse_on_hit_rule(
+                SwitchRuleSettings(switch=self.config['switch'], debounce=debounce,
+                                   invert=self.config['reverse_switch']),
+                DriverRuleSettings(driver=self.config['coil'], recycle=recycle),
+                self.config['coil_pulse_delay'],
+                PulseRuleSettings(duration=self.config['coil_overwrite'].get('pulse_ms', None),
+                                  power=self.config['coil_overwrite'].get('pulse_power', None))
+            )
 
     @event_handler(10)
     def event_disable(self, **kwargs):

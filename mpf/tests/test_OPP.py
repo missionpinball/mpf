@@ -493,6 +493,16 @@ LEDs:
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x00\x0b\x17\x14')] = False
+        self.machine.autofires["ac_delayed_kickback"].enable()
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x00\x02\x17\x20')] = False
+        self.machine.autofires["ac_delayed_kickback"].disable()
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
     def _test_flippers(self):
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x21\x0a\x06')] = False
         self.machine.flippers["f_test_single"].enable()

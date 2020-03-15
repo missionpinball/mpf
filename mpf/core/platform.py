@@ -510,6 +510,25 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         return config
 
     @abc.abstractmethod
+    def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
+        """Set pulse on hit rule on driver.
+
+        Pulses a driver when a switch is hit. When the switch is released the pulse continues. Typically used for
+        autofire coils such as pop bumpers.
+        """
+        raise NotImplementedError
+
+    # pylint: disable-msg=no-self-use
+    def set_delayed_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings, delay_ms: int):
+        """Set pulse on hit and release rule to driver.
+
+        When a switch is hit and a certain delay passed it pulses a driver.
+        When the switch is released the pulse continues.
+        Typically used for kickbacks.
+        """
+        raise AssertionError("This platform does not support delayed pulse hardware rules.")
+
+    @abc.abstractmethod
     def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and release rule to driver.
 
@@ -535,14 +554,5 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
         the pulse is canceled and the driver gets disabled. When the second disable_switch is hit the pulse is canceled
         and the driver gets disabled. Typically used on the main coil for dual coil flippers with eos switch.
-        """
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
-        """Set pulse on hit rule on driver.
-
-        Pulses a driver when a switch is hit. When the switch is released the pulse continues. Typically used for
-        autofire coils such as pop bumpers.
         """
         raise NotImplementedError

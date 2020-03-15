@@ -108,6 +108,7 @@ autofire_coils:
     timeout_watch_time: single|ms|0
     timeout_max_hits: single|int|0
     timeout_disable_time: single|ms|0
+    coil_pulse_delay: single|ms|0
 coil_overwrites:
     recycle: single|bool|None
     pulse_ms: single|ms|None
@@ -672,6 +673,7 @@ kickbacks:
     timeout_watch_time: single|ms|0
     timeout_max_hits: single|int|0
     timeout_disable_time: single|ms|0
+    coil_pulse_delay: single|ms|0
 kivy_config:
     __valid_in__: machine                           # todo add to validator
     __type__: config
