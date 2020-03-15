@@ -540,7 +540,7 @@ class MpfTestCase(unittest.TestCase):
         init = asyncio.ensure_future(self.machine.initialise(), loop=self.loop)
         self._wait_for_start(init, 20)
         self.machine.events.process_event_queue()
-        self.advance_time_and_run(1)
+        self.advance_time_and_run(.001)
 
     def _wait_for_start(self, init, timeout):
         start = time.time()
