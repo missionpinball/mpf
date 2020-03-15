@@ -111,7 +111,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
 
     def _post_events(self, state):
         for event in self._events_to_post[state]:
-            if self.machine.events.does_event_exist(event):
+            if self._debug or self.machine.events.does_event_exist(event):
                 self.machine.events.post(event)
 
     async def _initialize(self):
