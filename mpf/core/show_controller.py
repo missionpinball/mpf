@@ -84,7 +84,7 @@ class ShowController(MpfController):
 
     # pylint: disable-msg=too-many-arguments
     def replace_or_advance_show(self, old_instance, config: ShowConfig, start_step, start_time=None,
-                                stop_callback=None):
+                                start_running=True, stop_callback=None):
         """Replace or advance show.
 
         Compare a given show (may be empty) to a show config and ensure that the new config becomes effective.
@@ -128,6 +128,7 @@ class ShowController(MpfController):
             show_config=config,
             start_time=start_time,
             start_step=start_step if start_step else 1,
+            start_running=start_running,
             stop_callback=stop_callback,
             start_callback=start_callback
         )

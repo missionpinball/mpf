@@ -105,8 +105,8 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
                 if not self.__class__.allow_placeholders_in_keys or "(" not in device_name:
                     # no placeholders
                     return self.raise_config_error(
-                        "Could not find a {} device with name or tag {}.".format(
-                            self.device_collection.name, device_name),
+                        "Could not find a {} device with name or tag {}, from list {}".format(
+                            self.device_collection.name, device_name, device_or_tag_names),
                         1)
 
                 # placeholders may be evaluated later

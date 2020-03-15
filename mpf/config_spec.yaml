@@ -1349,6 +1349,7 @@ show_player:
     speed: single|float_or_token|1
     block_queue: single|bool|False
     start_step: single|template_int|1
+    start_running: single|template_bool|True
     loops: single|int_or_token|-1
     sync_ms: single|int_or_token|None
     manual_advance: single|bool|False

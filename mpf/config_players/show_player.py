@@ -95,8 +95,8 @@ class ShowPlayer(DeviceConfigPlayer):
                 raise AssertionError("block_queue can only be used with a queue event.")
             queue.wait()
             stop_callback = queue.clear
-
         start_step = show_settings['start_step'].evaluate(placeholder_args)
+        start_running = show_settings['start_running'].evaluate(placeholder_args)
         show_tokens = {k: v.evaluate(placeholder_args) for k, v in show_settings['show_tokens'].items()}
 
         show_config = self.machine.show_controller.create_show_config(
@@ -110,7 +110,7 @@ class ShowPlayer(DeviceConfigPlayer):
         previous_show = instance_dict.get(key, None)
 
         instance_dict[key] = self.machine.show_controller.replace_or_advance_show(previous_show, show_config,
-                                                                                  start_step, start_time, stop_callback)
+                                                                                  start_step, start_time, start_running, stop_callback)
 
     @staticmethod
     def _stop(key, instance_dict, show, show_settings, queue, start_time, placeholder_args):
