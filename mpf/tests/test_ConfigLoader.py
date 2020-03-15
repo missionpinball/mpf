@@ -13,11 +13,10 @@ class TestConfigLoader(TestCase):
 
         machine_path = os.path.abspath(os.path.join(mpf.core.__path__[0], os.pardir,
                                                     "tests/machine_files/config_loader/"))
-        mpf_path = os.path.abspath(os.path.join(mpf.core.__path__[0], os.pardir))
 
         config_file = ["config.yaml"]
 
-        config_loader = YamlMultifileConfigLoader(machine_path, mpf_path, config_file, False, False)
+        config_loader = YamlMultifileConfigLoader(machine_path, config_file, False, False)
         config = config_loader.load_mpf_config()
 
         self.assertTrue(config.get_config_spec())

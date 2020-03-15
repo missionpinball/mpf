@@ -246,7 +246,7 @@ class Util:
                 if k in result:
                     del result[k]
             elif k in result and isinstance(result[k], dict):
-                result[k] = Util.dict_merge(result[k], v)
+                result[k] = Util.dict_merge(result[k], v, combine_lists)
             elif k in result and isinstance(result[k], list):
                 if isinstance(v, dict) and v[0] == dict(_overwrite=True):
                     result[k] = v[1:]

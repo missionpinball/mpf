@@ -22,7 +22,7 @@ class Command(MpfCommandLineParser):
         machine_path, remaining_args = self.parse_args()
         self.machine_path = machine_path
         self.args = remaining_args
-        config_loader = YamlMultifileConfigLoader(machine_path, self.mpf_path, self.args.configfile,
+        config_loader = YamlMultifileConfigLoader(machine_path, self.args.configfile,
                                                   not self.args.no_load_cache, self.args.create_config_cache)
 
         config = config_loader.load_mpf_config()

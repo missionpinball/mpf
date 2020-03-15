@@ -568,19 +568,6 @@ class Mode(LogMixin):
 
     def initialise_mode(self) -> None:
         """Initialise this mode."""
-        # Call registered remote loader methods
-        for item in self.machine.mode_controller.loader_methods:
-            if (item.config_section and
-                    item.config_section in self.config and
-                    self.config[item.config_section]):
-                item.method(config=self.config[item.config_section],
-                            mode_path=self.path,
-                            mode=self,
-                            root_config_dict=self.config,
-                            **item.kwargs)
-            elif not item.config_section:
-                item.method(config=self.config, mode_path=self.path,
-                            **item.kwargs)
         self.mode_init()
 
     def mode_init(self) -> None:

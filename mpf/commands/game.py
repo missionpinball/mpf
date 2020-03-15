@@ -25,6 +25,7 @@ class Command:
     # pylint: disable-msg=too-many-locals,too-many-statements
     def __init__(self, mpf_path, machine_path, args):
         """Run mpf game."""
+        del mpf_path
         self.machine = None
         self._sigint_count = 0
 
@@ -216,7 +217,7 @@ class Command:
 
         signal.signal(signal.SIGINT, self.sigint_handler)
         try:
-            config_loader = YamlMultifileConfigLoader(machine_path, mpf_path, self.args.configfile,
+            config_loader = YamlMultifileConfigLoader(machine_path, self.args.configfile,
                                                       not self.args.no_load_cache, self.args.create_config_cache)
 
             config = config_loader.load_mpf_config()

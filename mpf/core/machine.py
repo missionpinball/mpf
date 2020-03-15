@@ -470,11 +470,7 @@ class MachineController(LogMixin):
         """Load plugins."""
         self.debug_log("Loading plugins...")
 
-        # TODO: This should be cleaned up. Create a Plugins base class and
-        # classmethods to determine if the plugins should be used.
-
-        for plugin in Util.string_to_event_list(
-                self.config['mpf']['plugins']):
+        for plugin in self.config['mpf']['plugins']:
 
             self.debug_log("Loading '%s' plugin", plugin)
 

@@ -92,6 +92,21 @@ class ModeController(MpfController):
     def initialise_modes(self, **kwargs):
         """Initialise modes."""
         del kwargs
+        # initialise modes after loading all of them to prevent races
+        for item in self.loader_methods:
+            for mode in self.machine.modes.values():
+                if (item.config_section and
+                        item.config_section in mode.config and
+                        mode.config[item.config_section]):
+                    item.method(config=mode.config[item.config_section],
+                                mode_path=mode.path,
+                                mode=mode,
+                                root_config_dict=mode.config,
+                                **item.kwargs)
+                elif not item.config_section:
+                    item.method(config=mode.config, mode_path=mode.path,
+                                **item.kwargs)
+
         for mode in self.machine.modes.values():
             mode.initialise_mode()
 
@@ -414,6 +429,7 @@ class ModeController(MpfController):
         self.loader_methods.append(RemoteMethod(method=load_method,
                                                 config_section=config_section_name, kwargs=kwargs,
                                                 priority=priority))
+        self.loader_methods.sort(key=lambda x: x.priority, reverse=True)
 
     def register_start_method(self, start_method, config_section_name=None,
                               priority=0, **kwargs):

@@ -29,27 +29,29 @@ from mpf.core.utility_functions import Util
 from mpf.file_interfaces.yaml_interface import YamlInterface
 
 YamlInterface.cache = True
-
+UNITTEST_CONFIG_CACHE = {}
 
 class UnitTestConfigLoader(YamlMultifileConfigLoader):
 
-    def __init__(self, machine_path, mpf_path, configfile,
-                 config_defaults, config_patches, spec_patches):
-        super().__init__(machine_path, mpf_path, configfile, True, True)
+    def __init__(self, machine_path, configfile, config_defaults, config_patches, spec_patches):
+        super().__init__(machine_path, configfile, True, True)
         self.config_defaults = config_defaults
         self.config_patches = config_patches
         self.spec_patches = spec_patches
 
     def _load_config_spec(self):
         config_spec = super()._load_config_spec()
-        config_spec = Util.dict_merge(config_spec, self.spec_patches)
+        if self.spec_patches:
+            config_spec = Util.dict_merge(config_spec, self.spec_patches)
         return config_spec
 
     def _load_mpf_machine_config(self, config_spec):
         config = super()._load_mpf_machine_config(config_spec)
 
-        config = Util.dict_merge(self.config_defaults, config)
-        config = Util.dict_merge(config, self.config_patches)
+        if self.config_defaults:
+            config = Util.dict_merge(self.config_defaults, config)
+        if self.config_patches:
+            config = Util.dict_merge(config, self.config_patches, False)
         return config
 
 
@@ -96,7 +98,6 @@ class TestMachineController(MachineController):
     * Disabled the config file caching to always load the config from disk.
 
     """
-    local_mpf_config_cache = {}     # type: Any
 
     def __init__(self, options, config, config_patches, config_defaults, clock, mock_data,
                  enable_plugins=False):
@@ -534,8 +535,7 @@ class MpfTestCase(unittest.TestCase):
             logging.basicConfig(level=99)
 
         # load config
-        config_loader = UnitTestConfigLoader(machine_path, os.path.abspath(os.path.join(
-            mpf.core.__path__[0], os.pardir)), [self._get_config_file()], self.machine_config_defaults,
+        config_loader = UnitTestConfigLoader(machine_path, [self._get_config_file()], self.machine_config_defaults,
                                              self.machine_config_patches, self.machine_spec_patches)
 
         config = config_loader.load_mpf_config()
