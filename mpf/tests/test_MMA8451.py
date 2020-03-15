@@ -46,6 +46,7 @@ class TestMMA8451(MpfTestCase):
             with patch("mpf.platforms.virtual.VirtualI2cDevice.i2c_read_block", new=self.i2c_read_block):
                 with patch("mpf.platforms.virtual.VirtualI2cDevice.i2c_write8", new=self.i2c_write8):
                     super().setUp()
+                    self.advance_time_and_run(1)
 
         self.assertFalse(self.i2c_expect)
 

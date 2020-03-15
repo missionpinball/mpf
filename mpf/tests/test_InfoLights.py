@@ -34,7 +34,7 @@ class TestInfoLights(MpfTestCase):
 
     def test_info_lights(self):
         # machine starts at gameover
-        self.advance_time_and_run(.1)
+        self.advance_time_and_run(1)
         self.assertLightColor("gameOver", [0, 0, 0])
         self.advance_time_and_run(1)
         self.assertLightColor("gameOver", [255, 255, 255])

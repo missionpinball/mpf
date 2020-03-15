@@ -12,7 +12,7 @@ MYPY = False
 if MYPY:    # pragma: no cover
     from mpf.platforms.opp.opp import OppHardwarePlatform
 
-SwitchRule = namedtuple("SwitchRule", ["pulse_settings", "hold_settings", "recycle", "can_cancel"])
+SwitchRule = namedtuple("SwitchRule", ["pulse_settings", "hold_settings", "recycle", "can_cancel", "delay_ms"])
 
 
 class OPPSolenoid(DriverPlatformInterface):
@@ -110,10 +110,11 @@ class OPPSolenoid(DriverPlatformInterface):
             HoldSettings(power=self.config.default_hold_power),
             True)
 
+    # pylint: disable-msg=too-many-arguments
     def set_switch_rule(self, pulse_settings: PulseSettings, hold_settings: Optional[HoldSettings], recycle: bool,
-                        can_cancel: bool):
+                        can_cancel: bool, delay_ms: int):
         """Set and apply a switch rule."""
-        new_rule = SwitchRule(pulse_settings, hold_settings, recycle, can_cancel)
+        new_rule = SwitchRule(pulse_settings, hold_settings, recycle, can_cancel, delay_ms)
         if self.switch_rule and self.switch_rule != new_rule:
             raise AssertionError("Cannot set two rule with different driver settings in opp. Old: {} New: {}".format(
                 self.switch_rule, new_rule))
@@ -151,6 +152,8 @@ class OPPSolenoid(DriverPlatformInterface):
                     hold = 0
                 else:
                     hold = 15
+            if self.switch_rule and self.switch_rule.delay_ms:
+                raise AssertionError("Cannot use hold and delayed pulses in OPP.")
 
         minimum_off = self.get_minimum_off_time(recycle)
         _, _, solenoid = self.number.split('-')
@@ -170,6 +173,9 @@ class OPPSolenoid(DriverPlatformInterface):
             if self.switch_rule.can_cancel:
                 cmd += ord(OppRs232Intf.CFG_SOL_CAN_CANCEL)
 
+            if self.switch_rule.delay_ms:
+                cmd += ord(OppRs232Intf.CFG_SOL_DLY_KICK)
+
         pulse_len = pulse_settings.duration
 
         msg = bytearray()
@@ -178,7 +184,10 @@ class OPPSolenoid(DriverPlatformInterface):
         msg.append(int(solenoid))
         msg.append(cmd)
         msg.append(pulse_len)
-        msg.append(hold + (minimum_off << 4))
+        if self.switch_rule and self.switch_rule.delay_ms:
+            msg.append(self.switch_rule.delay_ms)
+        else:
+            msg.append(hold + (minimum_off << 4))
         msg.extend(OppRs232Intf.calc_crc8_whole_msg(msg))
         msg.extend(OppRs232Intf.EOM_CMD)
         final_cmd = bytes(msg)

@@ -100,6 +100,84 @@ class PlatformController(MpfController):
             hold_settings=None,
             recycle=driver.recycle)
 
+    def set_pulse_on_hit_rule(self, enable_switch: SwitchRuleSettings,
+                              driver: DriverRuleSettings,
+                              pulse_setting: PulseRuleSettings = None) -> HardwareRule:
+        """Add pulse on hit rule to driver.
+
+        Always do the full pulse. Even when the switch is released.
+
+        Args:
+            enable_switch: Switch which triggers the rule.
+            driver: .. class:: DriverRuleSettings
+            pulse_setting: .. class:: PulseRuleSettings
+        """
+        platform = self._check_and_get_platform(enable_switch.switch, driver.driver)
+
+        enable_settings = self._get_configured_switch(enable_switch)
+        driver_settings = self._get_configured_driver_no_hold(driver, pulse_setting)
+
+        platform.set_pulse_on_hit_rule(enable_settings, driver_settings)
+
+        switch_key = self._setup_switch_callback_for_psu(enable_switch.switch, driver.driver, enable_settings,
+                                                         driver_settings)
+
+        self.machine.bcp.interface.send_driver_event(
+            action="pulse_on_hit",
+            enable_switch_number=enable_switch.switch.hw_switch.number,
+            enable_switch_name=enable_switch.switch.name,
+            enable_switch_invert=enable_settings.invert,
+            enable_switch_debounce=enable_settings.debounce,
+            coil_number=driver.driver.hw_driver.number,
+            coil_name=driver.driver.name,
+            coil_pulse_power=driver_settings.pulse_settings.power,
+            coil_pulse_ms=driver_settings.pulse_settings.duration,
+            coil_hold_power=0,
+            coil_recycle=driver_settings.recycle)
+
+        return HardwareRule(platform=platform, switch_settings=[enable_settings], driver_settings=driver_settings,
+                            switch_key=switch_key)
+
+    def set_delayed_pulse_on_hit_rule(self, enable_switch: SwitchRuleSettings,
+                                      driver: DriverRuleSettings,
+                                      delay_ms, pulse_setting: PulseRuleSettings = None) -> HardwareRule:
+        """Add delayed pulse on hit rule to driver.
+
+        Always do the full pulse. Even when the switch is released. Pulse is delayed accurately by the hardware.
+
+        Args:
+            enable_switch: Switch which triggers the rule.
+            driver: .. class:: DriverRuleSettings
+            delay_ms: Delay before the pulse in ms
+            pulse_setting: .. class:: PulseRuleSettings
+        """
+        platform = self._check_and_get_platform(enable_switch.switch, driver.driver)
+
+        enable_settings = self._get_configured_switch(enable_switch)
+        driver_settings = self._get_configured_driver_no_hold(driver, pulse_setting)
+
+        platform.set_delayed_pulse_on_hit_rule(enable_settings, driver_settings, delay_ms)
+
+        switch_key = self._setup_switch_callback_for_psu(enable_switch.switch, driver.driver, enable_settings,
+                                                         driver_settings)
+
+        self.machine.bcp.interface.send_driver_event(
+            action="delayed_pulse_on_hit",
+            enable_switch_number=enable_switch.switch.hw_switch.number,
+            enable_switch_name=enable_switch.switch.name,
+            enable_switch_invert=enable_settings.invert,
+            enable_switch_debounce=enable_settings.debounce,
+            coil_number=driver.driver.hw_driver.number,
+            coil_name=driver.driver.name,
+            coil_pulse_power=driver_settings.pulse_settings.power,
+            coil_pulse_ms=driver_settings.pulse_settings.duration,
+            coil_hold_power=0,
+            coil_recycle=driver_settings.recycle,
+            delay_ms=delay_ms)
+
+        return HardwareRule(platform=platform, switch_settings=[enable_settings], driver_settings=driver_settings,
+                            switch_key=switch_key)
+
     def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchRuleSettings,
                                           driver: DriverRuleSettings,
                                           pulse_setting: PulseRuleSettings = None) -> HardwareRule:
@@ -173,44 +251,6 @@ class PlatformController(MpfController):
             coil_pulse_power=driver_settings.pulse_settings.power,
             coil_pulse_ms=driver_settings.pulse_settings.duration,
             coil_hold_power=driver_settings.hold_settings,
-            coil_recycle=driver_settings.recycle)
-
-        return HardwareRule(platform=platform, switch_settings=[enable_settings], driver_settings=driver_settings,
-                            switch_key=switch_key)
-
-    def set_pulse_on_hit_rule(self, enable_switch: SwitchRuleSettings,
-                              driver: DriverRuleSettings,
-                              pulse_setting: PulseRuleSettings = None) -> HardwareRule:
-        """Add pulse on hit rule to driver.
-
-        Always do the full pulse. Even when the switch is released.
-
-        Args:
-            enable_switch: Switch which triggers the rule.
-            driver: .. class:: DriverRuleSettings
-            pulse_setting: .. class:: PulseRuleSettings
-        """
-        platform = self._check_and_get_platform(enable_switch.switch, driver.driver)
-
-        enable_settings = self._get_configured_switch(enable_switch)
-        driver_settings = self._get_configured_driver_no_hold(driver, pulse_setting)
-
-        platform.set_pulse_on_hit_rule(enable_settings, driver_settings)
-
-        switch_key = self._setup_switch_callback_for_psu(enable_switch.switch, driver.driver, enable_settings,
-                                                         driver_settings)
-
-        self.machine.bcp.interface.send_driver_event(
-            action="pulse_on_hit",
-            enable_switch_number=enable_switch.switch.hw_switch.number,
-            enable_switch_name=enable_switch.switch.name,
-            enable_switch_invert=enable_settings.invert,
-            enable_switch_debounce=enable_settings.debounce,
-            coil_number=driver.driver.hw_driver.number,
-            coil_name=driver.driver.name,
-            coil_pulse_power=driver_settings.pulse_settings.power,
-            coil_pulse_ms=driver_settings.pulse_settings.duration,
-            coil_hold_power=0,
             coil_recycle=driver_settings.recycle)
 
         return HardwareRule(platform=platform, switch_settings=[enable_settings], driver_settings=driver_settings,

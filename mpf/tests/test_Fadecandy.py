@@ -151,8 +151,12 @@ class TestFadecandy(MpfTestCase):
         self.advance_time_and_run(.5)
         self._messages = []
         self.advance_time_and_run(.1)
-        message = self._build_message(0, {99: (96, 96, 255)})
-        self.assertIn(message, self._messages)
+        found = False
+        for message in self._messages:
+            if message[0] == 0 and len(message) >= 304:
+                if 90 < message[301] < 100 and 90 < message[302] < 100 and message[303] == 255:
+                    found = True
+        self.assertTrue(found)
         self.advance_time_and_run(.5)
         self._messages = []
         self.advance_time_and_run(.1)

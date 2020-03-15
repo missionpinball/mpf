@@ -55,13 +55,8 @@ class UnitTestConfigLoader(YamlMultifileConfigLoader):
 
 class MpfUnitTestFormatter(logging.Formatter):
 
-    def __init__(self, clock, fmt=None, datefmt=None, style='%'):
-        self.clock = clock
-        super().__init__(fmt=fmt, datefmt=datefmt, style=style)
-
     def formatTime(self, record, datefmt=None):
-        #org = super().formatTime(record, datefmt)
-        return "{:.3f}".format(self.clock.get_time())
+        return "{:.3f}".format(record.created_clock)
 
 
 def test_config(config_file):
@@ -521,10 +516,16 @@ class MpfTestCase(unittest.TestCase):
         self._mock_loop()
 
         if self.unittest_verbosity() > 1:
+            class LogRecordClock(logging.LogRecord):
+                def __init__(self_inner, *args, **kwargs):
+                    self_inner.created_clock = self.clock.get_time()
+                    super().__init__(*args, **kwargs)
+
+            logging.setLogRecordFactory(LogRecordClock)
+
             console_log = logging.StreamHandler()
             console_log.setLevel(logging.DEBUG)
-            console_log.setFormatter(MpfUnitTestFormatter(self.clock,
-                                                          fmt='%(asctime)s : %(levelname)s : %('
+            console_log.setFormatter(MpfUnitTestFormatter(fmt='%(asctime)s : %(levelname)s : %('
                                                               'name)s : %(message)s'))
             logging.basicConfig(level=logging.DEBUG,
                                 handlers=[console_log])
@@ -564,7 +565,7 @@ class MpfTestCase(unittest.TestCase):
         init = asyncio.ensure_future(self.machine.initialise(), loop=self.loop)
         self._wait_for_start(init, 20)
         self.machine.events.process_event_queue()
-        self.advance_time_and_run(1)
+        self.advance_time_and_run(.001)
 
     def _wait_for_start(self, init, timeout):
         start = time.time()

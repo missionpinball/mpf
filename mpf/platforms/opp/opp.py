@@ -470,27 +470,27 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             msg: Message to parse.
         """
         # Multiple get version responses can be received at once
-        self.log.debug("Received Version Response:%s", "".join(" 0x%02x" % b for b in msg))
+        self.log.debug("Received Version Response (Chain: %s): %s", chain_serial, "".join(" 0x%02x" % b for b in msg))
         curr_index = 0
         while True:
             # check that message is long enough, must include crc8
             if len(msg) < curr_index + 7:
-                self.log.warning("Msg is too short: %s.", "".join(" 0x%02x" % b for b in msg))
+                self.log.warning("Msg is too short (Chain: %s): %s.", chain_serial, "".join(" 0x%02x" % b for b in msg))
                 self.opp_connection[chain_serial].lost_synch()
                 break
             # Verify the CRC8 is correct
             crc8 = OppRs232Intf.calc_crc8_part_msg(msg, curr_index, 6)
             if msg[curr_index + 6] != ord(crc8):
                 self.bad_crc += 1
-                self.log.warning("Msg contains bad CRC:%s.", "".join(" 0x%02x" % b for b in msg))
+                self.log.warning("Msg contains bad CRC (Chain: %s):%s.", chain_serial,
+                                 "".join(" 0x%02x" % b for b in msg))
                 break
             version = (msg[curr_index + 2] << 24) | \
                 (msg[curr_index + 3] << 16) | \
                 (msg[curr_index + 4] << 8) | \
                 msg[curr_index + 5]
-            self.log.debug("Firmware version: %d.%d.%d.%d", msg[curr_index + 2],
-                           msg[curr_index + 3], msg[curr_index + 4],
-                           msg[curr_index + 5])
+            self.log.debug("Firmware version of board 0x%02x (Chain: %s): %d.%d.%d.%d", msg[curr_index], chain_serial,
+                           msg[curr_index + 2], msg[curr_index + 3], msg[curr_index + 4], msg[curr_index + 5])
             if msg[curr_index] not in self.gen2_addr_arr[chain_serial]:
                 self.log.warning("Got firmware response for %s but not in inventory at %s", msg[curr_index],
                                  chain_serial)
@@ -508,7 +508,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             elif (len(msg) > curr_index + 8) and (msg[curr_index + 8] == ord(OppRs232Intf.GET_VERS_CMD)):
                 curr_index += 7
             else:
-                self.log.warning("Malformed GET_VERS_CMD response:%s.", "".join(" 0x%02x" % b for b in msg))
+                self.log.warning("Malformed GET_VERS_CMD response (Chain %s): %s.", chain_serial,
+                                 "".join(" 0x%02x" % b for b in msg))
                 self.opp_connection[chain_serial].lost_synch()
                 break
 
@@ -848,6 +849,22 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """
         self._write_hw_rule(enable_switch, coil, use_hold=False, can_cancel=False)
 
+    def set_delayed_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings, delay_ms: int):
+        """Set pulse on hit and release rule to driver.
+
+        When a switch is hit and a certain delay passed it pulses a driver.
+        When the switch is released the pulse continues.
+        Typically used for kickbacks.
+        """
+        if delay_ms <= 0:
+            raise AssertionError("set_delayed_pulse_on_hit_rule should be used with a positive delay "
+                                 "not {}".format(delay_ms))
+        if delay_ms > 255:
+            raise AssertionError("set_delayed_pulse_on_hit_rule is limited to max 255ms "
+                                 "(was {})".format(delay_ms))
+
+        self._write_hw_rule(enable_switch, coil, use_hold=False, can_cancel=False, delay_ms=int(delay_ms))
+
     def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and release rule to driver.
 
@@ -874,7 +891,9 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """
         raise AssertionError("Not implemented in OPP currently")
 
-    def _write_hw_rule(self, switch_obj: SwitchSettings, driver_obj: DriverSettings, use_hold, can_cancel=False):
+    # pylint: disable-msg=too-many-arguments
+    def _write_hw_rule(self, switch_obj: SwitchSettings, driver_obj: DriverSettings, use_hold, can_cancel=False,
+                       delay_ms=None):
         if switch_obj.invert:
             raise AssertionError("Cannot handle inverted switches")
 
@@ -887,7 +906,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         driver_obj.hw_driver.switches.append(switch_obj.hw_switch.number)
         driver_obj.hw_driver.set_switch_rule(driver_obj.pulse_settings, driver_obj.hold_settings, driver_obj.recycle,
-                                             can_cancel)
+                                             can_cancel, delay_ms)
         _, _, switch_num = switch_obj.hw_switch.number.split("-")
         switch_num = int(switch_num)
         self._add_switch_coil_mapping(switch_num, driver_obj.hw_driver)

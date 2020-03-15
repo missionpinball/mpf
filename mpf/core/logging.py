@@ -15,7 +15,8 @@ class LogMixin:
 
     unit_test = False
 
-    __slots__ = ["log", "_info_to_console", "_debug_to_console", "_info_to_file", "_debug_to_file", "_url_base"]
+    __slots__ = ["log", "_info_to_console", "_debug_to_console", "_debug", "_info_to_file", "_debug_to_file",
+                 "_info", "_url_base"]
 
     def __init__(self) -> None:
         """Initialise Log Mixin."""
@@ -23,21 +24,15 @@ class LogMixin:
         self._info_to_console = False
         self._debug_to_console = False
         self._info_to_file = False
+        self._info = False
         self._debug_to_file = False
+        self._debug = False
         self._url_base = None
 
         logging.addLevelName(21, "INFO")
         logging.addLevelName(11, "DEBUG")
         logging.addLevelName(22, "INFO")
         logging.addLevelName(12, "DEBUG")
-
-    @property
-    def _info(self):
-        return self._info_to_console or self._info_to_file
-
-    @property
-    def _debug(self):
-        return self._debug_to_console or self._debug_to_file
 
     def configure_logging(self, logger: str, console_level: str = 'basic',
                           file_level: str = 'basic', url_base=None):
@@ -62,22 +57,27 @@ class LogMixin:
         try:
             if console_level.lower() == 'basic':
                 self._info_to_console = True
+                self._info = True
             elif console_level.lower() == 'full':
                 self._debug_to_console = True
+                self._debug = True
         except AttributeError:
             pass
 
         try:
             if file_level.lower() == 'basic':
                 self._info_to_file = True
+                self._info = True
             elif file_level.lower() == 'full':
                 self._debug_to_file = True
+                self._debug = True
         except AttributeError:
             pass
 
         # in unit tests always log info. debug will depend on the actual settings.
         if self.unit_test:
             self._info_to_console = True
+            self._info = True
 
     def debug_log(self, msg: str, *args, context=None, error_no=None, **kwargs) -> None:
         """Log a message at the debug level.
