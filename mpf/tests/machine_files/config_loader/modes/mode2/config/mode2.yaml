@@ -1,0 +1,4 @@
+#config_version=5
+mode:
+  priority: 200
+  game_mode: False

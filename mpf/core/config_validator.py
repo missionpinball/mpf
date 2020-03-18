@@ -1,6 +1,5 @@
 """Config specs and validator."""
 import logging
-import os
 from functools import lru_cache
 
 import re
@@ -8,14 +7,11 @@ import tempfile
 from collections import OrderedDict
 from copy import deepcopy
 
-import pickle   # nosec
-
 from typing import Any
 from typing import Dict
 
 from pkg_resources import iter_entry_points
 
-import mpf
 from mpf.core.rgb_color import NAMED_RGB_COLORS, RGBColor
 from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.file_interfaces.yaml_interface import YamlInterface
@@ -48,13 +44,11 @@ class ConfigValidator:
 
     __slots__ = ["machine", "config_spec", "log", "_load_cache", "_store_cache", "validator_list"]
 
-    def __init__(self, machine, load_cache, store_cache):
+    def __init__(self, machine, config_spec):
         """Initialise validator."""
         self.machine = machine      # type: MachineController
-        self.config_spec = None     # type: Any
         self.log = logging.getLogger('ConfigValidator')
-        self._load_cache = load_cache
-        self._store_cache = store_cache
+        self.config_spec = config_spec
 
         self.validator_list = {
             "str": self._validate_type_str,
@@ -117,42 +111,6 @@ class ConfigValidator:
         """Return cache dir."""
         return tempfile.gettempdir()
 
-    def load_config_spec(self):
-        """Load config spec."""
-        if ConfigValidator.class_cache:
-            self.config_spec = ConfigValidator.class_cache
-            return
-
-        cache_file = os.path.join(self.get_cache_dir(), "config_spec.mpf_cache")
-        config_spec_file = os.path.abspath(os.path.join(mpf.core.__path__[0], os.pardir, "config_spec.yaml"))
-        stats_config_spec_file = os.stat(config_spec_file)
-        if self._load_cache and os.path.isfile(cache_file) and \
-                os.path.getmtime(cache_file) == stats_config_spec_file.st_mtime:
-            try:
-                with open(cache_file, 'rb') as f:
-                    self.config_spec = pickle.load(f)   # nosec
-                    ConfigValidator.class_cache = deepcopy(self.config_spec)
-                    return
-            except Exception:   # noqa
-                pass
-
-        with open(config_spec_file, 'rb') as f:
-            config_str = f.read()
-
-        config = YamlInterface.process(config_str)
-        config = self._process_config_spec(config, "root")
-
-        self.config_spec = config
-        self.load_external_platform_config_specs()
-
-        if self._store_cache:
-            with open(cache_file, 'wb') as f:
-                pickle.dump(config, f, protocol=4)
-                os.utime(cache_file, ns=(stats_config_spec_file.st_atime_ns, stats_config_spec_file.st_mtime_ns))
-                self.log.info('Config spec file cache created: %s', cache_file)
-
-        ConfigValidator.class_cache = deepcopy(self.config_spec)
-
     def load_external_platform_config_specs(self):
         """Load config spec for external platforms."""
         for platform_entry in iter_entry_points(group='mpf.platforms'):
@@ -183,9 +141,6 @@ class ConfigValidator:
 
     def get_config_spec(self):
         """Return config spec."""
-        if not self.config_spec:
-            self.load_config_spec()
-
         return self.config_spec
 
     def unload_config_spec(self):
@@ -195,9 +150,6 @@ class ConfigValidator:
     @lru_cache(1024)
     def build_spec(self, config_spec, base_spec):
         """Build config spec out of two or more specs."""
-        if not self.config_spec:
-            self.load_config_spec()
-
         # build up the actual config spec we're going to use
         spec_list = [config_spec]
 
@@ -412,7 +364,7 @@ class ConfigValidator:
 
                         path_string = ':'.join(path_list)
 
-                        if self.machine.machine_config['mpf']['allow_invalid_config_sections']:
+                        if self.machine.config['mpf']['allow_invalid_config_sections']:
 
                             self.log.warning('Unrecognized config setting. "%s" is '
                                              'not a valid setting name.',

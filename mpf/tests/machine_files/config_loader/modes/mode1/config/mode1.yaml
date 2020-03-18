@@ -1,0 +1,8 @@
+#config_version=5
+
+mode:
+  priority: 100
+  game_mode: False
+
+show_player:
+  event6: mode1_show

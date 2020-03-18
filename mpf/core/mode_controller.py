@@ -92,6 +92,21 @@ class ModeController(MpfController):
     def initialise_modes(self, **kwargs):
         """Initialise modes."""
         del kwargs
+        # initialise modes after loading all of them to prevent races
+        for item in self.loader_methods:
+            for mode in self.machine.modes.values():
+                if (item.config_section and
+                        item.config_section in mode.config and
+                        mode.config[item.config_section]):
+                    item.method(config=mode.config[item.config_section],
+                                mode_path=mode.path,
+                                mode=mode,
+                                root_config_dict=mode.config,
+                                **item.kwargs)
+                elif not item.config_section:
+                    item.method(config=mode.config, mode_path=mode.path,
+                                **item.kwargs)
+
         for mode in self.machine.modes.values():
             mode.initialise_mode()
 
@@ -168,31 +183,6 @@ class ModeController(MpfController):
             return False
         return mode_config_file
 
-    def _load_mode_config(self, mode_string):
-        config_files = []
-        # Is there an MPF default config for this mode? If so, load it first
-        mpf_mode_config = self._get_mpf_mode_config(mode_string)
-        if mpf_mode_config:
-            config_files.append(mpf_mode_config)
-
-        # Now figure out if there's a machine-specific config for this mode,
-        # and if so, merge it into the config
-        mode_config_file = self._get_mode_config_file(mode_string)
-        if mode_config_file:
-            config_files.append(mode_config_file)
-
-        if not config_files:
-            raise AssertionError("Did not find any config for mode {}.".format(mode_string))
-
-        config = self.machine.config_processor.load_config_files_with_cache(
-            config_files, "mode", load_from_cache=not self.machine.options['no_load_cache'],
-            store_to_cache=self.machine.options['create_config_cache'])
-
-        if "mode" not in config:
-            config["mode"] = dict()
-
-        return config
-
     def _load_mode_config_spec(self, mode_string, mode_class):
         self.machine.config_validator.load_mode_config_spec(mode_string, mode_class.get_config_spec())
 
@@ -259,8 +249,6 @@ class ModeController(MpfController):
             mode_string: String name of the mode you're loading. This is the name of
                 the mode's folder in your game's machine_files/modes folder.
         """
-        mode_string = mode_string
-
         self.debug_log('Processing mode: %s', mode_string)
 
         # Find the folder for this mode. First check the machine list, and if
@@ -268,7 +256,7 @@ class ModeController(MpfController):
 
         mode_path, asset_paths = self._find_mode_path(mode_string)
 
-        config = self._load_mode_config(mode_string)
+        config = self.machine.mpf_config.get_mode_config(mode_string)
 
         config['mode'] = self.machine.config_validator.validate_config("mode", config['mode'])
 
@@ -441,6 +429,7 @@ class ModeController(MpfController):
         self.loader_methods.append(RemoteMethod(method=load_method,
                                                 config_section=config_section_name, kwargs=kwargs,
                                                 priority=priority))
+        self.loader_methods.sort(key=lambda x: x.priority, reverse=True)
 
     def register_start_method(self, start_method, config_section_name=None,
                               priority=0, **kwargs):

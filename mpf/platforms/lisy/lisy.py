@@ -444,7 +444,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 self._light_system = PlatformBatchLightSystem(self.machine.clock, lambda x: x.number,
                                                               lambda x, y: x.number + 1 == y.number,
                                                               self._send_multiple_light_update,
-                                                              self.machine.machine_config['mpf'][
+                                                              self.machine.config['mpf'][
                                                                   'default_light_hw_update_hz'],
                                                               self.config['max_led_batch_size'])
                 self._light_system.start()

@@ -244,7 +244,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
         self._light_system = PlatformBatchLightSystem(self.machine.clock, self._light_key,
                                                       self._are_lights_sequential, self._send_multiple_light_update,
-                                                      self.machine.machine_config['mpf']['default_light_hw_update_hz'],
+                                                      self.machine.config['mpf']['default_light_hw_update_hz'],
                                                       65535)
 
     async def _send_multiple_light_update(self, sequential_brightness_list):

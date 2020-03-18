@@ -1,6 +1,8 @@
 """Perform hardware operations."""
 import os
 
+from mpf.core.config_loader import YamlMultifileConfigLoader
+
 from mpf.commands import MpfCommandLineParser
 
 from mpf.core.machine import MachineController
@@ -20,8 +22,12 @@ class Command(MpfCommandLineParser):
         machine_path, remaining_args = self.parse_args()
         self.machine_path = machine_path
         self.args = remaining_args
-        self.mpf = MachineController(self.mpf_path, self.machine_path,
-                                     {"bcp": False,
+        config_loader = YamlMultifileConfigLoader(machine_path, self.args.configfile,
+                                                  not self.args.no_load_cache, self.args.create_config_cache)
+
+        config = config_loader.load_mpf_config()
+
+        self.mpf = MachineController({"bcp": False,
                                       "no_load_cache": False,
                                       "mpfconfigfile": os.path.join(self.mpf_path, "mpfconfig.yaml"),
                                       "configfile": ["config"],
@@ -29,7 +35,7 @@ class Command(MpfCommandLineParser):
                                       "create_config_cache": False,
                                       "force_platform": False,
                                       "text_ui": False
-                                      })
+                                      }, config)
         self.mpf.clock.loop.run_until_complete(self.mpf.initialise_core_and_hardware())
         if self.mpf.thread_stopper.is_set():
             raise AssertionError("Initialisation failed!")

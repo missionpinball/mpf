@@ -19,9 +19,6 @@ class TestModes(MpfFakeGameTestCase):
         self.assertIn('mode2', self.machine.modes)
         self.assertIn('mode3', self.machine.modes)
         self.assertIn('mode4', self.machine.modes)
-        self.assertIn('mode5', self.machine.modes)
-        self.assertIn('mode6', self.machine.modes)
-        self.assertIn('mode7', self.machine.modes)
         self.assertNotIn('mode8', self.machine.modes)
 
     def test_mode_start_stop(self):
