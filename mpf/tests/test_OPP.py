@@ -449,24 +449,28 @@ LEDs:
         self.assertFalse(self.serialMock.expected_commands)
 
     def _test_leds(self):
-        # add ff/ff/ff as color 0
-        self.serialMock.expected_commands[self._crc_message(b'\x21\x11\x00\xff\xff\xff', False)] = False
-        # set led 0 to color 0
-        self.serialMock.expected_commands[self._crc_message(b'\x21\x16\x00\x80', False)] = False
+        # set leds 0, 1, 2 to brightness 255
+        self.serialMock.expected_commands[self._crc_message(b'\x21\x40\x00\x00\x00\x03\x00\x00\xff\xff\xff', False)] = False
 
         self.machine.lights["test_led1"].on()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
-        # add 00/00/00 as color 1
-        self.serialMock.expected_commands[self._crc_message(b'\x21\x11\x01\x00\x00\x00', False)] = False
-        # set led 0 to color 1
-        self.serialMock.expected_commands[self._crc_message(b'\x21\x16\x00\x81', False)] = False
-        # set led 1 to color 10
-        self.serialMock.expected_commands[self._crc_message(b'\x21\x16\x01\x80', False)] = False
+        # set leds 0, 1, 2 to brightness 0
+        # set leds 3, 4, 5 to brightness 255
+        self.serialMock.expected_commands[self._crc_message(b'\x21\x40\x00\x00\x00\x06\x00\x00\x00\x00\x00\xff\xff\xff', False)] = False
 
         self.machine.lights["test_led1"].off()
         self.machine.lights["test_led2"].on()
+
+        self._wait_for_processing()
+
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # fade leds 3, 4, 5 to brightness 245, 222, 179
+        self.serialMock.expected_commands[self._crc_message(b'\x21\x40\x00\x03\x00\x03\x07\xd6\xf5\xde\xb3', False)] = False
+
+        self.machine.lights["test_led2"].color("wheat", fade_ms=2000)
 
         self._wait_for_processing()
 

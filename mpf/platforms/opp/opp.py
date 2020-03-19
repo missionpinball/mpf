@@ -1,3 +1,4 @@
+# pylint: disable-msg=too-many-lines
 """OPP Hardware interface.
 
 Contains the hardware interface and drivers for the Open Pinball Project
@@ -6,14 +7,16 @@ boards.
 """
 import asyncio
 from collections import defaultdict
+from typing import Dict, List, Set, Union, Tuple  # pylint: disable-msg=cyclic-import,unused-import
 
+from mpf.core.platform_batch_light_system import PlatformBatchLightSystem
 from mpf.core.utility_functions import Util
 
 from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
 
 from mpf.platforms.opp.opp_coil import OPPSolenoidCard
 from mpf.platforms.opp.opp_incand import OPPIncandCard
-from mpf.platforms.opp.opp_neopixel import OPPNeopixelCard
+from mpf.platforms.opp.opp_neopixel import OPPNeopixelCard, OPPLightChannel
 from mpf.platforms.opp.opp_serial_communicator import OPPSerialCommunicator, BAD_FW_VERSION
 from mpf.platforms.opp.opp_switch import OPPInputCard
 from mpf.platforms.opp.opp_switch import OPPMatrixCard
@@ -23,7 +26,6 @@ from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, Sw
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from typing import Dict, List, Set, Union   # pylint: disable-msg=cyclic-import,unused-import
     from mpf.platforms.opp.opp_coil import OPPSolenoid  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.platforms.opp.opp_incand import OPPIncand  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.platforms.opp.opp_neopixel import OPPNeopixel  # pylint: disable-msg=cyclic-import,unused-import
@@ -43,7 +45,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
     __slots__ = ["opp_connection", "serial_connections", "opp_incands", "incand_dict", "opp_solenoid", "sol_dict",
                  "opp_inputs", "inp_dict", "inp_addr_dict", "matrix_inp_addr_dict", "read_input_msg", "opp_neopixels",
                  "neo_card_dict", "neo_dict", "num_gen2_brd", "gen2_addr_arr", "bad_crc", "min_version", "_poll_task",
-                 "config", "_poll_response_received", "machine_type", "opp_commands", "_incand_task"]
+                 "config", "_poll_response_received", "machine_type", "opp_commands", "_incand_task", "_light_system"]
 
     def __init__(self, machine) -> None:
         """Initialise OPP platform."""
@@ -68,6 +70,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self.min_version = defaultdict(lambda: 0xffffffff)
         self._poll_task = {}                # type: Dict[str, asyncio.Task]
         self._incand_task = None            # type: asyncio.Task
+        self._light_system = None
 
         self.features['tickless'] = True
 
@@ -102,6 +105,45 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         await self._connect_to_hardware()
         self.opp_commands[ord(OppRs232Intf.READ_GEN2_INP_CMD)] = self.read_gen2_inp_resp
         self.opp_commands[ord(OppRs232Intf.READ_MATRIX_INP)] = self.read_matrix_inp_resp
+
+        self._light_system = PlatformBatchLightSystem(self.machine.clock, self._light_key,
+                                                      self._are_lights_sequential, self._send_multiple_light_update,
+                                                      self.machine.config['mpf']['default_light_hw_update_hz'],
+                                                      128)
+        self._light_system.start()
+
+    @staticmethod
+    def _light_key(light: OPPLightChannel):
+        """Sort lights by this key."""
+        return light.number
+
+    @staticmethod
+    def _are_lights_sequential(a: OPPLightChannel, b: OPPLightChannel):
+        """Return True if lights are sequential."""
+        return a.chain_serial == b.chain_serial and a.addr == b.addr and a.pixel_num + 1 == b.pixel_num
+
+    async def _send_multiple_light_update(self, sequential_brightness_list: List[Tuple[OPPLightChannel, float, int]]):
+        first_light, _, common_fade_ms = sequential_brightness_list[0]
+        number_leds = len(sequential_brightness_list)
+
+        msg = bytearray()
+        msg.append(int(ord(OppRs232Intf.CARD_ID_GEN2_CARD) + first_light.addr))
+        msg.append(OppRs232Intf.SERIAL_LED_CMD_FADE)
+        msg.append(int(first_light.pixel_num / 255))
+        msg.append(int(first_light.pixel_num % 255))
+        msg.append(int(number_leds / 255))
+        msg.append(int(number_leds % 255))
+        msg.append(int(common_fade_ms / 255))
+        msg.append(int(common_fade_ms % 255))
+
+        for _, brightness, _ in sequential_brightness_list:
+            msg.append(int(brightness * 255))
+
+        msg.extend(OppRs232Intf.calc_crc8_whole_msg(msg))
+        cmd = bytes(msg)
+
+        self.log.debug("Set color: %s", "".join(" 0x%02x" % b for b in cmd))
+        self.send_to_processor(first_light.chain_serial, cmd)
 
     async def start(self):
         """Start polling and listening for commands."""
@@ -757,15 +799,17 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                 }
             ]
         if not subtype or subtype == "led":
+            full_index = self._get_dict_index(number)
+            chain_serial, card, index = full_index.split('-')
             return [
                 {
-                    "number": self._get_dict_index(number) + "-0"
+                    "number": "{}-{}-{}".format(chain_serial, card, int(index) * 3)
                 },
                 {
-                    "number": self._get_dict_index(number) + "-1"
+                    "number": "{}-{}-{}".format(chain_serial, card, int(index) * 3 + 1)
                 },
                 {
-                    "number": self._get_dict_index(number) + "-2"
+                    "number": "{}-{}-{}".format(chain_serial, card, int(index) * 3 + 2)
                 },
             ]
 
@@ -778,15 +822,13 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             self.raise_config_error("A request was made to configure an OPP light, "
                                     "but no OPP connection is available", 9)
         if not subtype or subtype == "led":
-            chain_serial, card, pixel_num, index_str = number.split('-')
+            chain_serial, card, pixel_num = number.split('-')
             index = chain_serial + '-' + card
             if index not in self.neo_card_dict:
                 self.raise_config_error("A request was made to configure an OPP neopixel "
                                         "with card number {} which doesn't exist".format(card), 10)
 
-            neo = self.neo_card_dict[index]
-            channel = neo.add_channel(int(pixel_num), self.neo_dict, index_str)
-            return channel
+            return OPPLightChannel(chain_serial, int(card), int(pixel_num), self._light_system)
         if subtype == "matrix":
             if number not in self.incand_dict:
                 self.raise_config_error("A request was made to configure a OPP matrix "
@@ -797,15 +839,6 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         self.raise_config_error("Unknown subtype {}".format(subtype), 12)
         return None
-
-    def light_sync(self):
-        """Update lights.
-
-        Currently we only update neo pixels. Incands are updated separately in a task to provide better batching.
-        """
-        for light in self.neo_dict.values():
-            if light.dirty:
-                light.update_color()
 
     async def _poll_sender(self, chain_serial):
         """Poll switches."""
