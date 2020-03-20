@@ -129,12 +129,12 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         msg = bytearray()
         msg.append(int(ord(OppRs232Intf.CARD_ID_GEN2_CARD) + first_light.addr))
         msg.append(OppRs232Intf.SERIAL_LED_CMD_FADE)
-        msg.append(int(first_light.pixel_num / 255))
-        msg.append(int(first_light.pixel_num % 255))
-        msg.append(int(number_leds / 255))
-        msg.append(int(number_leds % 255))
-        msg.append(int(common_fade_ms / 255))
-        msg.append(int(common_fade_ms % 255))
+        msg.append(int(first_light.pixel_num / 256))
+        msg.append(int(first_light.pixel_num % 256))
+        msg.append(int(number_leds / 256))
+        msg.append(int(number_leds % 256))
+        msg.append(int(common_fade_ms / 256))
+        msg.append(int(common_fade_ms % 256))
 
         for _, brightness, _ in sequential_brightness_list:
             msg.append(int(brightness * 255))
