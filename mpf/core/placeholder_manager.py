@@ -787,7 +787,7 @@ class BasePlaceholderManager(MpfController):
         # The following regex will make a dict for event name, condition, and number
         # e.g. some_event_name_string{variable.condition==True}|num
         #      ^ string at start     ^ condition in braces     ^ pipe- or colon-delimited value
-        match = re.search(r"^(?P<name>[^{}:\|]*)(\{(?P<condition>.+)\})?([|:](?P<number>.+))?$", template)
+        match = re.search(r"^(?P<name>[^{}:| ]+)({(?P<condition>.+)})?([|:](?P<number>.+))?$", template)
         if not match:
             raise AssertionError("Invalid template string {}".format(template))
 

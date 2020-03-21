@@ -1,5 +1,6 @@
 """Classes for the EventManager and QueuedEvents."""
 import inspect
+import re
 from collections import deque, namedtuple, defaultdict
 import uuid
 
@@ -61,7 +62,7 @@ class EventManager(MpfController):
         self.log.info("--- DEBUG DUMP EVENTS END ---")
 
     @lru_cache()
-    def get_event_and_condition_from_string(self, event_string: str) -> Tuple[str, Optional["BaseTemplate"]]:
+    def get_event_and_condition_from_string(self, event_string: str) -> Tuple[str, Optional["BaseTemplate"], int]:
         """Parse an event string to divide the event name from a possible placeholder / conditional in braces.
 
         Args:
@@ -70,6 +71,8 @@ class EventManager(MpfController):
         Returns 2-item tuple- First item is the event name. Second item is the
         condition (A BoolTemplate instance) if it exists, or None if it doesn't.
         """
+        placeholder = None
+        additional_priority = 0
         if event_string[-1:] == "}":
             first_bracket_pos = event_string.find("{")
             if first_bracket_pos < 0:
@@ -78,9 +81,8 @@ class EventManager(MpfController):
             elif " " in event_string[0:first_bracket_pos]:
                 raise ValueError('Cannot handle events with spaces in the event name, '
                                  'please remedy "{}"'.format(event_string))
-            if first_bracket_pos > 0:
-                return event_string[0:first_bracket_pos], \
-                    self.machine.placeholder_manager.build_bool_template(event_string[first_bracket_pos + 1:-1])
+            placeholder = self.machine.placeholder_manager.build_bool_template(event_string[first_bracket_pos + 1:-1])
+            event_string = event_string[0:first_bracket_pos]
         else:
             if " " in event_string:
                 raise ValueError('Cannot handle events with spaces in the event name, '
@@ -89,7 +91,12 @@ class EventManager(MpfController):
                 raise ValueError('Failed to parse condition in event name, '
                                  'please remedy "{}"'.format(event_string))
 
-        return event_string, None
+        priority_start = event_string.find(".")
+        if priority_start > 0:
+            additional_priority = int(event_string[priority_start + 1:])
+            event_string = event_string[:priority_start]
+
+        return event_string, placeholder, additional_priority
 
     def add_async_handler(self, event: str, handler: Any, priority: int = 1, blocking_facility: Any = None,
                           **kwargs) -> EventHandlerKey:
@@ -164,7 +171,8 @@ class EventManager(MpfController):
                 raise AssertionError("Handler {} for event '{}' param kwargs is missing '**'. "
                                      "Actual signature: {}".format(handler, event, sig))
 
-        event, condition = self.get_event_and_condition_from_string(event)
+        event, condition, additional_priority = self.get_event_and_condition_from_string(event)
+        priority += additional_priority
 
         key = uuid.uuid4()
 

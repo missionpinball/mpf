@@ -215,21 +215,6 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         """Clear the context."""
 
     @staticmethod
-    def _parse_event_priority(event, priority):
-        # todo should we move this to EventManager so we can use the dot
-        # priority shift notation for all event handlers?
-
-        if event.find(".") > 0 and (event.find("{") < 0 or event.find(".") < event.find("{")):
-            new_event = event[:event.find(".")]
-            if event.find("{") > 0:
-                priority += int(event[event.find(".") + 1:event.find("{")])
-                new_event += event[event.find("{"):]
-            else:
-                priority += int(event[event.find(".") + 1:])
-            event = new_event
-        return event, priority
-
-    @staticmethod
     def is_entry_valid_outside_mode(settings) -> bool:
         """Return true if this entry may run without a game and player."""
         del settings
@@ -284,8 +269,6 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
                     condition = event[1:-1]
                     self._create_subscription(condition, subscription_list, settings, priority, mode)
                 else:
-                    event, actual_priority = self._parse_event_priority(event, priority)
-
                     if mode and event in mode.config['mode']['start_events']:
                         self.machine.log.error(
                             "{0} mode's {1}: section contains a \"{2}:\" event "
@@ -306,7 +289,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
                             event=event,
                             handler=self.config_play_callback,
                             calling_context=event,
-                            priority=actual_priority,
+                            priority=priority,
                             mode=mode,
                             settings=settings))
 
