@@ -1,3 +1,4 @@
+from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 from unittest.mock import MagicMock
 
 from mpf.tests.MpfTestCase import MpfTestCase
@@ -262,3 +263,34 @@ class TestDropTargets(MpfTestCase):
 
         # up should have been called by now
         self.assertEventCalled('drop_target_bank_right_bank_up')
+
+
+class TestDropTargetsInGame(MpfFakeGameTestCase):
+
+    def get_config_file(self):
+        return 'test_multiple_drop_resets_on_startup.yaml'
+
+    def get_machine_path(self):
+        return 'tests/machine_files/drop_targets/'
+
+    def test_multiple_reset_events(self):
+        """Check that the drop target tries to reset three times on startup."""
+        # we check that the bank reports down four times (once initially and then after each reset)
+        self.mock_event("drop_target_bank_multiple_resets_on_game_start_down")
+
+        # drop is down
+        self.hit_switch_and_run("switch1", 1)
+        self.assertEventCalled("drop_target_bank_multiple_resets_on_game_start_down", times=1)
+
+        # start game to trigger the reset
+        self.start_game()
+        # drop should have tried a reset
+        self.assertEventCalled("drop_target_bank_multiple_resets_on_game_start_down", times=2)
+
+        # it should reset again
+        self.advance_time_and_run(1)
+        self.assertEventCalled("drop_target_bank_multiple_resets_on_game_start_down", times=3)
+
+        # it should reset again
+        self.advance_time_and_run(1)
+        self.assertEventCalled("drop_target_bank_multiple_resets_on_game_start_down", times=4)
