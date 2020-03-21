@@ -2,7 +2,7 @@
 import abc
 import asyncio
 
-from typing import Callable, Tuple, Set
+from typing import Callable, Tuple, Set, List
 from sortedcontainers import SortedSet, SortedList
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.core.utility_functions import Util
@@ -113,7 +113,7 @@ class PlatformBatchLightSystem:
             await asyncio.sleep(.001, loop=self.clock.loop)
 
     async def _send_update_batch(self, sequential_lights):
-        sequential_brightness_list = []
+        sequential_brightness_list = []     # type: List[Tuple[LightPlatformInterface, float, int]]
         common_fade_ms = None
         current_time = self.clock.get_time()
         for light in sequential_lights:
