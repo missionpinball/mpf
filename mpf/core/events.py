@@ -72,7 +72,10 @@ class EventManager(MpfController):
         """
         if event_string[-1:] == "}":
             first_bracket_pos = event_string.find("{")
-            if " " in event_string[0:first_bracket_pos]:
+            if first_bracket_pos < 0:
+                raise ValueError('Failed to parse condition in event name, '
+                                 'please remedy "{}"'.format(event_string))
+            elif " " in event_string[0:first_bracket_pos]:
                 raise ValueError('Cannot handle events with spaces in the event name, '
                                  'please remedy "{}"'.format(event_string))
             if first_bracket_pos > 0:
@@ -81,6 +84,9 @@ class EventManager(MpfController):
         else:
             if " " in event_string:
                 raise ValueError('Cannot handle events with spaces in the event name, '
+                                 'please remedy "{}"'.format(event_string))
+            elif "{" in event_string:
+                raise ValueError('Failed to parse condition in event name, '
                                  'please remedy "{}"'.format(event_string))
 
         return event_string, None

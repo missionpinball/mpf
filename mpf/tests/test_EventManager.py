@@ -899,3 +899,16 @@ class TestEventManager(MpfFakeGameTestCase, MpfTestCase):
 
         self.assertEventNotCalled("out3")
         self.assertEventCalled("out4")
+
+    def test_broken_handlers(self):
+        # unbalanced placeholder
+        with self.assertRaises(ValueError):
+            self.machine.events.add_handler("event_name{machine.variables.test", self._handler)
+
+        # unbalanced the other side
+        with self.assertRaises(ValueError):
+            self.machine.events.add_handler("event_namemachine.variables.test}", self._handler)
+
+        # invalid space
+        with self.assertRaises(ValueError):
+            self.machine.events.add_handler("event_name {machine.variables.test}", self._handler)
