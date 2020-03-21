@@ -217,16 +217,18 @@ bcp:
     __valid_in__: machine
     __type__: config
     debug: single|bool|False
-    connections:
-        host: single|str|None
-        port: single|int|5050
-        type: single|str|
-        required: single|bool|True
-        exit_on_close: single|bool|True
-    servers:
-        ip: single|str|None
-        port: single|int|5050
-        type: single|str|
+    connections: list|subconfig(bcp_connection)|None
+    servers: list|subconfig(bcp_server)|None
+bcp_connection:
+    host: single|str|None
+    port: single|int|5050
+    type: single|str|
+    required: single|bool|True
+    exit_on_close: single|bool|True
+bcp_server:
+    ip: single|str|None
+    port: single|int|5050
+    type: single|str|
 bitmap_fonts:
     __valid_in__: machine, mode
     __type__: config_dict

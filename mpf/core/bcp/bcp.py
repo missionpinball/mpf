@@ -59,8 +59,6 @@ class Bcp(MpfController):
 
         client_connect_futures = []
         for name, settings in self.machine.config['bcp']['connections'].items():
-            settings = self.machine.config_validator.validate_config("bcp:connections", settings)
-
             self.machine.events.post('bcp_connection_attempt',
                                      name=name,
                                      host=settings['host'],
@@ -100,7 +98,6 @@ class Bcp(MpfController):
 
         servers_start_futures = []
         for settings in self.machine.config['bcp']['servers'].values():
-            settings = self.machine.config_validator.validate_config("bcp:servers", settings)
             server = BcpServer(self.machine, settings['ip'], settings['port'], settings['type'])
             server_future = asyncio.ensure_future(server.start(), loop=self.machine.clock.loop)
             server_future.add_done_callback(lambda x, s=server: self.servers.append(s))

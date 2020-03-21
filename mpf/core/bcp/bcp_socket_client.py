@@ -224,9 +224,6 @@ class BCPClientSocket(BaseBcpClient):
 
     def connect(self, config):
         """Actively connect to server."""
-        config = self.machine.config_validator.validate_config(
-            'bcp:connections', config, 'bcp:connections')
-
         # return a future
         return self._setup_client_socket(config['host'], config['port'], config.get('required'))
 
