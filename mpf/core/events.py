@@ -1,6 +1,5 @@
 """Classes for the EventManager and QueuedEvents."""
 import inspect
-import re
 from collections import deque, namedtuple, defaultdict
 import uuid
 
@@ -78,7 +77,7 @@ class EventManager(MpfController):
             if first_bracket_pos < 0:
                 raise ValueError('Failed to parse condition in event name, '
                                  'please remedy "{}"'.format(event_string))
-            elif " " in event_string[0:first_bracket_pos]:
+            if " " in event_string[0:first_bracket_pos]:
                 raise ValueError('Cannot handle events with spaces in the event name, '
                                  'please remedy "{}"'.format(event_string))
             placeholder = self.machine.placeholder_manager.build_bool_template(event_string[first_bracket_pos + 1:-1])
@@ -87,7 +86,7 @@ class EventManager(MpfController):
             if " " in event_string:
                 raise ValueError('Cannot handle events with spaces in the event name, '
                                  'please remedy "{}"'.format(event_string))
-            elif "{" in event_string:
+            if "{" in event_string:
                 raise ValueError('Failed to parse condition in event name, '
                                  'please remedy "{}"'.format(event_string))
 
