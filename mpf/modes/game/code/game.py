@@ -509,6 +509,10 @@ class Game(AsyncMode):
         # then we'll raise the event to ask other modules if it's ok to add a
         # player
 
+        if self.ending:
+            self.debug_log("Game is ending. Cannot add player.")
+            return False
+
         if len(self.player_list) >= self.max_players:
             self.debug_log("Game is at max players. Cannot add another.")
             return False
