@@ -157,6 +157,7 @@ class YamlMultifileConfigLoader(ConfigLoader):
         """Load and return a MC config."""
         config_spec = self._load_config_spec()
         machine_config = self._load_mc_machine_config(config_spec)
+        config_spec = self._load_additional_config_spec(config_spec, machine_config)
         mode_config = self._load_modes(machine_config['mpf-mc']['paths']['modes'], config_spec, machine_config)
         return MpfMcConfig(config_spec, machine_config, mode_config, self.machine_path)
 
