@@ -10,8 +10,6 @@ from copy import deepcopy
 from typing import Any
 from typing import Dict
 
-from pkg_resources import iter_entry_points
-
 from mpf.core.rgb_color import NAMED_RGB_COLORS, RGBColor
 from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.file_interfaces.yaml_interface import YamlInterface
