@@ -157,8 +157,8 @@ class YamlMultifileConfigLoader(ConfigLoader):
         """Load and return a MC config."""
         config_spec = self._load_config_spec()
         machine_config = self._load_mc_machine_config(config_spec)
-        config_spec = self._load_additional_config_spec(config_spec, machine_config)
-        mode_config = self._load_modes(machine_config['mpf-mc']['paths']['modes'], config_spec, machine_config)
+        mode_config = self._load_modes(machine_config['mpf-mc']['paths']['modes'], config_spec, machine_config,
+                                       ignore_unknown_sections=True)
         return MpfMcConfig(config_spec, machine_config, mode_config, self.machine_path)
 
     def _load_config_spec(self):
@@ -193,7 +193,7 @@ class YamlMultifileConfigLoader(ConfigLoader):
         sys.path.remove(self.machine_path)
         return config_spec
 
-    def _load_modes(self, mode_path, config_spec, machine_config):
+    def _load_modes(self, mode_path, config_spec, machine_config, ignore_unknown_sections=False):
         mode_config = {}
         for mode in machine_config.get("modes", {}):
             mpf_config_path = os.path.join(self.mpf_path, "modes", mode, 'config', mode + '.yaml')
@@ -212,7 +212,8 @@ class YamlMultifileConfigLoader(ConfigLoader):
                                      "folder.".format(mode_name=mode))
 
             config = self.config_processor.load_config_files_with_cache(mode_config_files, "mode",
-                                                                        config_spec=config_spec)
+                                                                        config_spec=config_spec,
+                                                                        ignore_unknown_sections=ignore_unknown_sections)
 
             if "mode" not in config:
                 config["mode"] = dict()
