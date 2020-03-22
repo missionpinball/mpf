@@ -28,10 +28,6 @@ class DeviceManager(MpfController):
         self.collections = OrderedDict()
         self.device_classes = OrderedDict()  # collection_name: device_class
 
-        # this has to happen before mode load (which is priority 10)
-        self.machine.events.add_handler('init_phase_1',
-                                        self._load_device_config_spec, priority=20)
-
         # this has to happen after mode load
         self.machine.events.add_async_handler('init_phase_1',
                                               self._load_device_modules, priority=5)
@@ -65,16 +61,6 @@ class DeviceManager(MpfController):
 
         """
         self.machine.bcp.interface.notify_device_changes(device, notify, old, value)
-
-    def _load_device_config_spec(self, **kwargs):
-        del kwargs
-        for device_type in self.machine.config['mpf']['device_modules']:
-            device_cls = Util.string_to_class(device_type)      # type: Device
-
-            if device_cls.get_config_spec():
-                # add specific config spec if device has any
-                self.machine.config_validator.load_device_config_spec(
-                    device_cls.config_section, device_cls.get_config_spec())
 
     async def _load_device_modules(self, **kwargs):
         del kwargs

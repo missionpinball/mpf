@@ -40,9 +40,7 @@ class ConfigValidator:
 
     """Validates config against config specs."""
 
-    class_cache = None
-
-    __slots__ = ["machine", "config_spec", "log", "_load_cache", "_store_cache", "validator_list"]
+    __slots__ = ["machine", "config_spec", "log", "validator_list"]
 
     def __init__(self, machine, config_spec):
         """Initialise validator."""
@@ -94,10 +92,6 @@ class ConfigValidator:
             return func(item, validation_failure_info, param)
         return _validate_type_or_token_real
 
-    def load_device_config_spec(self, config_section, config_spec):
-        """Load config specs for a device."""
-        self.config_spec[config_section] = self._process_config_spec(YamlInterface.process(config_spec), config_section)
-
     def load_mode_config_spec(self, mode_string, config_spec):
         """Load config specs for a mode."""
         if '_mode_settings' not in self.config_spec:
@@ -110,15 +104,6 @@ class ConfigValidator:
     def get_cache_dir():
         """Return cache dir."""
         return tempfile.gettempdir()
-
-    def load_external_platform_config_specs(self):
-        """Load config spec for external platforms."""
-        for platform_entry in iter_entry_points(group='mpf.platforms'):
-            config_spec = platform_entry.load().get_config_spec()
-
-            if config_spec:
-                # add specific config spec if platform has any
-                self.load_device_config_spec(config_spec[0], config_spec[1])
 
     def _process_config_spec(self, spec, path):
         if not isinstance(spec, dict):
