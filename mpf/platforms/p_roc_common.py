@@ -212,7 +212,9 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
     def run_proc_cmd_no_wait(self, cmd, *args):
         """Run a command in the p-roc thread."""
-        self.run_proc_cmd(cmd, *args)
+        if self.debug:
+            self.debug_log("Calling P-Roc cmd (no wait): %s (%s)", cmd, args)
+        asyncio.run_coroutine_threadsafe(self.proc_process.run_command(cmd, *args), self.proc_process_instance)
 
     def run_proc_cmd_sync(self, cmd, *args):
         """Run a command in the p-roc thread and return the result."""
