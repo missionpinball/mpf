@@ -341,7 +341,7 @@ credits_pricing_tiers:
     credits: single|template_int|1
 device:     # base for all devices
     label: single|str|%
-    tags: event_list|str|None
+    tags: list|str|None
     debug: single|bool|False
     console_log: single|enum(none,basic,full)|basic
     file_log: single|enum(none,basic,full)|basic
@@ -351,7 +351,6 @@ displays:
     width: single|int|800
     height: single|int|600
     default: single|bool|False
-    fps: single|int|0
     round_anchor_x: single|str|center
     round_anchor_y: single|str|middle
 display_light_player:
