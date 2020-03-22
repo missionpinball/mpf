@@ -143,10 +143,6 @@ class ConfigValidator:
         """Return config spec."""
         return self.config_spec
 
-    def unload_config_spec(self):
-        """Unload specs."""
-        self.config_spec = None
-
     @lru_cache(1024)
     def build_spec(self, config_spec, base_spec):
         """Build config spec out of two or more specs."""
@@ -181,10 +177,6 @@ class ConfigValidator:
         # config_spec, str i.e. "device:shot"
         # source is dict
         # section_name is str used for logging failures
-
-        if not self.config_spec:
-            self.load_config_spec()
-
         if source is None:
             source = dict()
 
