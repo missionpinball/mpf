@@ -608,6 +608,7 @@ class MpfTestCase(unittest.TestCase):
 
         """
         self._events[event_name] = 0
+        self._last_event_kwargs.pop(event_name, None)
         self.machine.events.remove_handler_by_event(event=event_name, handler=self._mock_event_handler)
         self.machine.events.add_handler(event=event_name,
                                         handler=self._mock_event_handler,
