@@ -78,7 +78,7 @@ class TestBonusMode(MpfTestCase):
         self.assertEqual(5, self.machine.game.player.bonus_multiplier)
 
         # make some changes for the next test
-        self.machine.modes["bonus"].config['mode_settings']['keep_multiplier'] = False
+        self.machine.modes["bonus"].config['mode_settings']['keep_multiplier'] = self.machine.placeholder_manager.build_bool_template("False")
 
         # drain a ball
         self.machine.game.balls_in_play = 0
@@ -271,3 +271,51 @@ class TestBonusMode(MpfTestCase):
         self.assertEqual(0, self.machine.game.player.ramps)
         self.assertEqual(2, self.machine.game.player.modes)
         self.assertEqual(5, self.machine.game.player.bonus_multiplier)
+
+    def testBonusDynamicKeepMultiplier(self):
+        # start game
+        self._start_game()
+
+        # should keep our multiplier after first ball
+        self.machine.modes["bonus"].config['mode_settings']['keep_multiplier'] = self.machine.placeholder_manager.build_bool_template("current_player.ball == 1")
+
+        self.post_event("start_mode1")
+        self.advance_time_and_run()
+        self.assertTrue(self.machine.mode_controller.is_active('mode1'))
+
+        # increase multiplier to 5 (by hitting it 4 times)
+        self.post_event("add_multiplier")
+        self.post_event("add_multiplier")
+        self.post_event("add_multiplier")
+        self.post_event("add_multiplier")
+        self.advance_time_and_run()
+
+        # drain a ball
+        self.machine.game.balls_in_play = 0
+        self.advance_time_and_run(1)
+
+        # check that bonus mode is loaded
+        self.assertModeRunning('bonus')
+        self.advance_time_and_run(29)
+
+        # check resets
+        self.assertEqual(5, self.machine.game.player.bonus_multiplier)
+
+        # drain a ball
+        self.machine.game.balls_in_play = 0
+        self.advance_time_and_run(1)
+
+        # check that bonus mode is loaded
+        self.assertModeRunning('bonus')
+        self.advance_time_and_run(29)
+
+        # add multipliers
+        self.post_event("add_multiplier")
+        self.post_event("add_multiplier")
+        self.post_event("add_multiplier")
+        self.post_event("add_multiplier")
+        self.advance_time_and_run()
+
+        # check resets
+        self.assertEqual(1, self.machine.game.player.bonus_multiplier)
+
