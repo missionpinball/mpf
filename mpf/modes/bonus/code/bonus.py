@@ -1,6 +1,6 @@
 """Bonus mode for MPF."""
 from mpf.core.mode import Mode
-from mpf.core.placeholder_manager import NativeTypeTemplate, BoolTemplate
+
 
 class Bonus(Mode):
 
