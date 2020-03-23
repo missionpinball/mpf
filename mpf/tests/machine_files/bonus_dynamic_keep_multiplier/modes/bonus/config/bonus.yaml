@@ -1,0 +1,14 @@
+#config_version=5
+
+mode_settings:
+  keep_multiplier: current_player.ball == 1
+  bonus_entries:
+      - event: bonus_ramps
+        score: 1000
+        player_score_entry: ramps
+        reset_player_score_entry: True
+        skip_if_zero: false
+      - event: bonus_modes
+        score: 5000
+        player_score_entry: modes
+        reset_player_score_entry: False
