@@ -624,7 +624,7 @@ high_score:
     categories: omap|str:list|
     defaults: dict|str:list|None
     enter_initials_timeout: single|secs|20s
-    reverse_sort: event_list|str|None
+    reverse_sort: list|str|None
 info_lights:
     __valid_in__: machine                            # todo add to validator
     __type__: config
