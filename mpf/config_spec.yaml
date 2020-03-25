@@ -592,19 +592,19 @@ game:
 hardware:
     __valid_in__: machine
     __type__: config
-    platform: event_list|str|virtual
-    coils: event_list|str|default
-    segment_displays: event_list|str|default
-    switches: event_list|str|default
-    lights: event_list|str|default
-    dmd: event_list|str|default
-    rgb_dmd: event_list|str|default
-    driverboards: single|str|None
-    servo_controllers: event_list|str|default
-    accelerometers: event_list|str|default
-    i2c: event_list|str|default
-    stepper_controllers: event_list|str|default
-    hardware_sound_system: event_list|str|default
+    platform: list|str|virtual
+    coils: list|str|default
+    segment_displays: list|str|default
+    switches: list|str|default
+    lights: list|str|default
+    dmd: list|str|default
+    rgb_dmd: list|str|default
+    driverboards: list|str|None
+    servo_controllers: list|str|default
+    accelerometers: list|str|default
+    i2c: list|str|default
+    stepper_controllers: list|str|default
+    hardware_sound_system: list|str|default
 hardware_sound_systems:
     __valid_in__: machine
     __type__: device
