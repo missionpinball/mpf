@@ -1712,7 +1712,6 @@ timed_switches:
 timers:
     __valid_in__: mode
     __type__: device
-    debug: single|bool|False
     start_value: single|template_int|0
     end_value: single|template_int|None
     direction: single|enum(up,down)|up
@@ -1722,8 +1721,6 @@ timers:
     control_events: list|subconfig(timer_control_events)|None
     restart_on_complete: single|bool|False
     bcp: single|bool|False
-    console_log: single|enum(none,basic,full)|none
-    file_log: single|enum(none,basic,full)|basic
 timer_control_events:  # subconfig for mode timers
     action: single|enum(add,subtract,jump,start,stop,reset,restart,pause,set_tick_interval,change_tick_interval,reset_tick_interval)|
     event: single|str|
