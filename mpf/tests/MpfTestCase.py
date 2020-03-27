@@ -58,7 +58,7 @@ class UnitTestConfigLoader(YamlMultifileConfigLoader):
 class MpfUnitTestFormatter(logging.Formatter):
 
     def formatTime(self, record, datefmt=None):
-        return "{:.3f}".format(record.created_clock)
+        return "{} : {:.3f}".format(super().formatTime(record, datefmt), record.created_clock)
 
 
 def test_config(config_file):
