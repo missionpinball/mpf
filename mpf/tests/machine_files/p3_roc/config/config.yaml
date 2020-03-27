@@ -83,6 +83,9 @@ autofire_coils:
 servos:
     servo1:
         number: 3
+    servo_pd_led_0:
+      platform: p3_roc
+      number: 2-0
 
 accelerometers:
     p3_roc_accelerometer:
