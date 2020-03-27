@@ -6,7 +6,6 @@ import logging
 
 import platform
 import sys
-from collections import defaultdict
 from threading import Thread
 
 import time
@@ -107,7 +106,7 @@ class ProcProcess:
     def _sync(num):
         return "sync", num
 
-    def _batch_lights(self, data):
+    def _write_data_batch(self, data):
         for cmd in data:
             self.proc.write_data(*cmd)
         self.proc.flush()
@@ -149,18 +148,6 @@ class ProcProcess:
         return []
 
 
-class PdLedStatus:
-
-    """Internal state of an PD-LED board."""
-
-    __slots__ = ["addr", "fade_time"]
-
-    def __init__(self):
-        """Initialise board to unknown state."""
-        self.addr = None
-        self.fade_time = None
-
-
 # pylint does not understand that this class is abstract
 # pylint: disable-msg=abstract-method
 # pylint: disable-msg=too-many-instance-attributes
@@ -174,7 +161,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
     """
 
     __slots__ = ["pdbconfig", "pinproc", "proc", "log", "hw_switch_rules", "version", "revision", "hardware_version",
-                 "dipswitches", "machine_type", "event_task", "pdled_state",
+                 "dipswitches", "machine_type", "event_task",
                  "proc_thread", "proc_process", "proc_process_instance", "_commands_running", "config", "_light_system"]
 
     def __init__(self, machine):
@@ -201,7 +188,6 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         self.proc_process_instance = None
         self._commands_running = 0
         self.config = {}
-        self.pdled_state = defaultdict(PdLedStatus)
         self._light_system = None
 
     def _decrement_running_commands(self, future):
@@ -261,11 +247,10 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         """Update a list of light at once."""
         first_light, _, common_fade_ms = sequential_brightness_list[0]
         board = first_light.board
+        command_buffer = []
         if common_fade_ms > 0:
             # set the fade time
-            self._write_fade_time(board, int(common_fade_ms / 4))
-
-        command_buffer = []
+            self._write_fade_time_buffered(board, int(common_fade_ms / 4), command_buffer)
 
         # set address of first board
         self._write_addr_buffered(board, first_light.address, command_buffer)
@@ -288,7 +273,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
             else:
                 self._write_color_buffered(board, value, command_buffer)
 
-        self.run_proc_cmd_no_wait("_batch_lights", command_buffer)
+        self.run_proc_cmd_no_wait("_write_data_batch", command_buffer)
 
     @staticmethod
     def _light_key(light: PDBLED):
@@ -436,38 +421,10 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         This command will internally increment the index on the PD-LED board.
         Therefore, it will be much more efficient if you set colors for addresses sequentially.
         """
-        self._write_addr(board_addr, addr)
-        self._write_color(board_addr, color)
-
-    def write_pdled_color_fade(self, board_addr, addr, color, fade_time):
-        """Fade a LED to a color.
-
-        This command will internally increment the index on the PD-LED board.
-        It will only set the fade time if it changes.
-        Therefore, it will be much more efficient if you set colors for addresses sequentially.
-        """
-        self._write_fade_time(board_addr, fade_time)
-        self._write_addr(board_addr, addr)
-        self._write_fade_color(board_addr, color)
-
-    def _write_fade_time(self, board_addr, fade_time):
-        """Set the fade time for a board."""
-        if self.pdled_state[board_addr].fade_time == fade_time:
-            # fade time is already set
-            return
-
-        proc_output_module = 3
-        proc_pdb_bus_addr = 0xC00
-        base_reg_addr = 0x01000000 | (board_addr & 0x3F) << 16
-        data = base_reg_addr | (3 << 8) | (fade_time & 0xFF)
-        self.run_proc_cmd_no_wait("write_data", proc_output_module, proc_pdb_bus_addr, data)
-        data = base_reg_addr | (4 << 8) | ((fade_time >> 8) & 0xFF)
-        self.run_proc_cmd_no_wait("write_data", proc_output_module, proc_pdb_bus_addr, data)
-
-        # remember fade time
-        self.pdled_state[board_addr].fade_time = fade_time
-        # invalidate addr
-        self.pdled_state[board_addr].addr = None
+        command_buffer = []
+        self._write_addr_buffered(board_addr, addr, command_buffer)
+        self._write_color_buffered(board_addr, color, command_buffer)
+        self.run_proc_cmd_no_wait("_write_data_batch", command_buffer)
 
     def _write_addr(self, board_addr, addr):
         """Write an address to pdled."""
@@ -483,6 +440,28 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         data = base_reg_addr | (6 << 8) | ((addr >> 8) & 0xFF)
         self.run_proc_cmd_no_wait("write_data", proc_output_module, proc_pdb_bus_addr, data)
 
+    def _write_reg_data(self, board_addr, data):
+        """Write data to pdled."""
+        base_reg_addr = 0x01000000 | (board_addr & 0x3F) << 16
+        proc_output_module = 3
+        proc_pdb_bus_addr = 0xC00
+
+        # Write 0 into reg addr 7, which is the data word, which is actually the address when
+        # writing a config write.  The config register is mapped to 0.
+        word = base_reg_addr | (7 << 8) | data
+        self.run_proc_cmd_no_wait("write_data", proc_output_module, proc_pdb_bus_addr, word)
+
+    @staticmethod
+    def _write_fade_time_buffered(board_addr, fade_time, buffer):
+        """Set the fade time for a board."""
+        proc_output_module = 3
+        proc_pdb_bus_addr = 0xC00
+        base_reg_addr = 0x01000000 | (board_addr & 0x3F) << 16
+        data = base_reg_addr | (3 << 8) | (fade_time & 0xFF)
+        buffer.append((proc_output_module, proc_pdb_bus_addr, data))
+        data = base_reg_addr | (4 << 8) | ((fade_time >> 8) & 0xFF)
+        buffer.append((proc_output_module, proc_pdb_bus_addr, data))
+
     @staticmethod
     def _write_addr_buffered(board_addr, addr, buffer):
         """Write an address to pdled."""
@@ -497,19 +476,6 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         # Write the high address bits into reg addr 6
         data = base_reg_addr | (6 << 8) | ((addr >> 8) & 0xFF)
         buffer.append((proc_output_module, proc_pdb_bus_addr, data))
-
-    def _write_reg_data(self, board_addr, data):
-        """Write data to pdled."""
-        base_reg_addr = 0x01000000 | (board_addr & 0x3F) << 16
-        proc_output_module = 3
-        proc_pdb_bus_addr = 0xC00
-
-        # Write 0 into reg addr 7, which is the data word, which is actually the address when
-        # writing a config write.  The config register is mapped to 0.
-        word = base_reg_addr | (7 << 8) | data
-        self.run_proc_cmd_no_wait("write_data", proc_output_module, proc_pdb_bus_addr, word)
-        # invalidate addr
-        self.pdled_state[board_addr].addr = None
 
     @staticmethod
     def _write_color_buffered(board_addr, color, buffer):

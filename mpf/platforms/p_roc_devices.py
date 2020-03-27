@@ -363,27 +363,6 @@ class PDBLED(PlatformBatchLight):
         """Return max fade ms."""
         return 4294967296
 
-    def set_fade_to_hw(self, brightness, fade_ms):
-        """Set or fade this LED to the color passed.
-
-        Can fade for up to 100 days so do not bother about too long fades.
-
-        Args:
-            brightness: brightness of this channel
-            fade_ms: fade time for this led
-        """
-        normalized_brightness = self._normalise_color(int(brightness * 255))
-        if self.debug:
-            self.log.debug("Setting color %s with fade_ms %s to %s-%s",
-                           normalized_brightness, fade_ms, self.board, self.address)
-
-        if fade_ms <= 0:
-            # just set color
-            self.platform.write_pdled_color(self.board, self.address, normalized_brightness)
-        else:
-            # fade to color
-            self.platform.write_pdled_color_fade(self.board, self.address, normalized_brightness, int(fade_ms / 4))
-
     def get_board_name(self):
         """Return board of the light."""
         return "PD-LED Board {}".format(self.board)
