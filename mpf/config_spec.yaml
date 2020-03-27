@@ -1310,7 +1310,7 @@ state_machines:
     persist_state: single|bool|False
     starting_state: single|str|start
 state_machine_transitions:
-    source: event_list|str|
+    source: list|str|
     target: single|str|
     events: event_list|str|
     events_when_transitioning: event_list|str|None
