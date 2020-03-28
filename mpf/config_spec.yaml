@@ -599,7 +599,7 @@ hardware:
     lights: list|str|default
     dmd: list|str|default
     rgb_dmd: list|str|default
-    driverboards: list|str|None
+    driverboards: single|str|None
     servo_controllers: list|str|default
     accelerometers: list|str|default
     i2c: list|str|default

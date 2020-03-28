@@ -3,9 +3,9 @@
 hardware:
     platform: p3_roc
     servo_controllers: i2c_servo_controller
+    driverboards: pdb
 
 p_roc:
-    driverboards: pdb
     use_separate_thread: False
     trace_bus: True
     debug: true

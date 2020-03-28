@@ -155,6 +155,8 @@ class TestP3Roc(MpfTestCase):
 
         super().setUp()
 
+        p_roc_common.pinproc.normalize_machine_type.assert_called_once_with("pdb")
+
     def test_platform(self):
         self._test_accelerometer()
         self._test_pulse()
