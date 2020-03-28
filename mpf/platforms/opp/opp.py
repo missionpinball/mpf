@@ -418,6 +418,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                 has_matrix = True
             elif msg[2 + wing_index] == ord(OppRs232Intf.WING_NEO):
                 has_neo = True
+                inp_mask |= (0x7f << (8 * wing_index))
             elif msg[2 + wing_index] == ord(OppRs232Intf.WING_HI_SIDE_INCAND):
                 incand_mask |= (0xff << (8 * wing_index))
             wing_index += 1
