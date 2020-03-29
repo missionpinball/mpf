@@ -265,10 +265,30 @@ class YamlMultifileConfigLoader(ConfigLoader):
 
 class ProductionConfigLoader(ConfigLoader):
 
-    """Loads a single pickled production config."""
+    """Loads a single pickled production config each for MPF and MPF-MC."""
 
-    __slots__ = []
+    __slots__ = ["machine_path"]
+
+    def __init__(self, machine_path):
+        """Initialize production config loader."""
+        self.machine_path = machine_path
+
+    @staticmethod
+    def get_mpf_bundle_path(machine_path):
+        """Return the path for the MPF bundle."""
+        return os.path.join(machine_path, "mpf_config.bundle")
+
+    @staticmethod
+    def get_mpf_mc_bundle_path(machine_path):
+        """Return the path for the MPF bundle."""
+        return os.path.join(machine_path, "mpf_mc_config.bundle")
 
     def load_mpf_config(self) -> MpfConfig:
         """Load and return a MPF config."""
-        return pickle.load("mpf_config_bundle.bin")
+        with open(self.get_mpf_bundle_path(self.machine_path), "rb") as f:
+            return pickle.load(f)
+
+    def load_mc_config(self) -> MpfMcConfig:
+        """Load and return a MC config."""
+        with open(self.get_mpf_mc_bundle_path(self.machine_path), "rb") as f:
+            return pickle.load(f)

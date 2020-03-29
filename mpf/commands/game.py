@@ -14,7 +14,7 @@ from queue import Queue
 
 from mpf.core.machine import MachineController
 from mpf.core.utility_functions import Util
-from mpf.core.config_loader import YamlMultifileConfigLoader
+from mpf.core.config_loader import YamlMultifileConfigLoader, ProductionConfigLoader
 from mpf.commands.logging_formatters import JSONFormatter
 
 
@@ -216,12 +216,16 @@ class Command:
             logger.addHandler(syslog_logger)
 
         signal.signal(signal.SIGINT, self.sigint_handler)
-        try:
+
+        if not self.args.production:
             config_loader = YamlMultifileConfigLoader(machine_path, self.args.configfile,
                                                       not self.args.no_load_cache, self.args.create_config_cache)
+        else:
+            config_loader = ProductionConfigLoader(machine_path)
 
-            config = config_loader.load_mpf_config()
+        config = config_loader.load_mpf_config()
 
+        try:
             self.machine = MachineController(vars(self.args), config)
             self.machine.add_crash_handler(self.restore_logger)
             self.machine.run()
