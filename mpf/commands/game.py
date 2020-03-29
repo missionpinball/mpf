@@ -204,6 +204,7 @@ class Command:
         logger.addHandler(console_queue_handler)
         logger.addHandler(file_queue_handler)
         logger.setLevel(self.args.loglevel)
+        logger.info("Loading config.")
 
         if self.args.syslog_address:
             try:
