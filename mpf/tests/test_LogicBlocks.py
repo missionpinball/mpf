@@ -32,6 +32,7 @@ class TestLogicBlocks(MpfFakeGameTestCase):
     @test_config_directory("tests/machine_files/counters/")
     def test_subscription_on_counter_values(self):
         self.start_game()
+        self.start_mode("mode1")
         self.assertLightColor("l_chest_matrix_green_2", "black")
         self.assertLightColor("l_chest_matrix_green_3", "black")
         self.assertLightColor("l_chest_matrix_green_4", "black")
@@ -60,6 +61,15 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.assertLightColor("l_chest_matrix_green_3", "green")
         self.assertLightColor("l_chest_matrix_green_4", "green")
         self.assertLightColor("l_chest_matrix_green_5", "green")
+
+        self.drain_all_balls()
+        self.advance_time_and_run()
+        self.start_mode("mode1")
+
+        self.assertLightColor("l_chest_matrix_green_2", "black")
+        self.assertLightColor("l_chest_matrix_green_3", "black")
+        self.assertLightColor("l_chest_matrix_green_4", "black")
+        self.assertLightColor("l_chest_matrix_green_5", "black")
 
     def test_counter_with_lights(self):
         self.start_game()
