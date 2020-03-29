@@ -1,5 +1,4 @@
 """Command to build artifacts for non-dev operations."""
-import os
 import pickle
 
 import argparse
@@ -8,8 +7,6 @@ from mpf.core.utility_functions import Util
 from mpf.core.config_loader import YamlMultifileConfigLoader, ProductionConfigLoader
 
 from mpf.commands import MpfCommandLineParser
-
-from mpf.core.machine import MachineController
 
 SUBCOMMAND = True
 
