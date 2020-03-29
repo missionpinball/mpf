@@ -3,7 +3,6 @@ import logging
 from functools import lru_cache
 
 import re
-import tempfile
 from collections import OrderedDict
 from copy import deepcopy
 
@@ -97,11 +96,6 @@ class ConfigValidator:
         if mode_string not in self.config_spec['_mode_settings']:
             config = YamlInterface.process(config_spec)
             self.config_spec['_mode_settings'][mode_string] = self._process_config_spec(config, mode_string)
-
-    @staticmethod
-    def get_cache_dir():
-        """Return cache dir."""
-        return tempfile.gettempdir()
 
     def _process_config_spec(self, spec, path):
         if not isinstance(spec, dict):
