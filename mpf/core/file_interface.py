@@ -12,6 +12,8 @@ class FileInterface:
 
     """Interface for config files."""
 
+    __slots__ = ["log"]
+
     file_types = list()     # type: List[str]
 
     def __init__(self):
