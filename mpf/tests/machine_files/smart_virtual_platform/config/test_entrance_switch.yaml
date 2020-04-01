@@ -1,0 +1,27 @@
+#config_version=5
+
+switches:
+  s_trough_1:
+    number:
+  s_trough_2:
+    number:
+  s_trough_3:
+    number:
+  s_entrance:
+    number:
+
+coils:
+  c_trough_eject:
+    number:
+
+ball_devices:
+  trough:
+    tags: trough, home, drain
+    entrance_switch: s_entrance
+    ball_capacity: 3
+    eject_coil: c_trough_eject
+
+playfields:
+    playfield:
+        default_source_device: trough
+        tags: default
