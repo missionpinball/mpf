@@ -7,6 +7,7 @@ from typing import List, Dict, Any, Optional
 from mpf.core.assets import AssetPool
 from mpf.core.config_validator import RuntimeToken
 from mpf.core.utility_functions import Util
+from mpf.exceptions.config_file_error import ConfigFileError
 
 __api__ = ['Show', 'RunningShow', 'ShowPool']
 
@@ -103,29 +104,27 @@ class Show:
 
                 if total_step_time < 0:     # pragma: no cover
                     self._show_validation_error("Absolute timing in step {} not possible because "
-                                                "there was a duration of -1 before".format(step_num))
+                                                "there was a duration of -1 before".format(step_num), 5)
                 return Util.string_to_secs(next_step_time) - total_step_time
 
             return 1
 
         if step_num < total_steps_num - 1 and 'time' in data[step_num + 1]:     # pragma: no cover
             self._show_validation_error("Found invalid 'time' entry in step after {} which contains a duration. "
-                                        "Remove either of them!".format(step_num))
+                                        "Remove either of them!".format(step_num), 2)
         return Util.string_to_secs(step['duration'])
 
     def _do_load_show(self, data: Optional[Dict]):
         # do not use machine or the logger here because it will block
         self.show_steps = list()
 
-        # Pylint complains about the change from dict to list. This is intended and fine.
-        if isinstance(data, dict):
-            data = list(data)
-        elif not isinstance(data, list):    # pragma: no cover
-            raise ValueError("Show {} does not appear to be a valid show "
-                             "config".format(self.name))
+        if not isinstance(data, list):    # pragma: no cover
+            self._show_validation_error("Show {} does not appear to be a valid show "
+                                        "config. It should be a list of steps. Did you forget the hyphen at the start "
+                                        "of your step?".format(self.name), 1)
 
         if not data:    # pragma: no cover
-            self._show_validation_error("Cannot load empty show")
+            self._show_validation_error("Cannot load empty show", 6)
 
         total_step_time = 0
 
@@ -155,7 +154,7 @@ class Show:
             if duration is False:
                 break
             elif duration == 0:     # pragma: no cover
-                self._show_validation_error("Step {} has 0 duration".format(step_num))
+                self._show_validation_error("Step {} has 0 duration".format(step_num), 7)
 
             # Calculate the time since previous step
             actions['duration'] = duration
@@ -174,12 +173,12 @@ class Show:
         # so we can know when we're at the end of a show
         self.total_steps = len(self.show_steps)
         if self.total_steps == 0:   # pragma: no cover
-            self._show_validation_error("Show is empty")
+            self._show_validation_error("Show is empty", 2)
 
         self._get_tokens()
 
-    def _show_validation_error(self, msg):  # pragma: no cover
-        raise AssertionError("Show {}: {}".format(self.name, msg))
+    def _show_validation_error(self, msg, error_code):  # pragma: no cover
+        raise ConfigFileError("Show {}: {}".format(self.name, msg), error_code, "show", self.name)
 
     def _process_step_actions(self, step, actions):
         if not isinstance(step, dict):
@@ -199,8 +198,8 @@ class Show:
                             key + "s" == player.show_section:
                         self._show_validation_error('Invalid section "{}:" found in show {}. '
                                                     'Did you mean "{}:" instead?'.format(key, self.name,
-                                                                                         player.show_section))
-                self._show_validation_error('Invalid section "{}:" found in show {}'.format(key, self.name))
+                                                                                         player.show_section), 3)
+                self._show_validation_error('Invalid section "{}:" found in show {}'.format(key, self.name), 4)
 
     def _get_tokens(self):
         self._walk_show(self.show_steps)
