@@ -382,24 +382,32 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                     self.warning_log("Reset of LISY failed. Got %s instead of 0. Will retry.", return_code)
                     continue
 
+                # get type (system 1 vs system 80)
+                self.send_byte(LisyDefines.InfoGetConnectedLisyHardware)
+                type_str = await self._read_string()
+
+                self._coils_start_at_one = bool(type_str == b'LISY80')
+
+                self.send_byte(LisyDefines.InfoLisyVersion)
+                lisy_version = await self._read_string()
+                self.send_byte(LisyDefines.InfoGetApiVersion)
+                api_version = await self._read_string()
+
+                self.debug_log("Connected to %s hardware. LISY version: %s. API version: %s.",
+                               type_str, lisy_version, api_version)
+
+                if not lisy_version:
+                    self.error_log("Failed to read lisy_version from LISY. Got %s", lisy_version)
+                    continue
+
+                if api_version:
+                    self.api_version = StrictVersion(api_version.decode())
+                else:
+                    self.error_log("Failed to read api_version from LISY. Got %s", api_version)
+                    continue
+
                 # if we made it here reset succeeded
                 break
-
-            # get type (system 1 vs system 80)
-            self.send_byte(LisyDefines.InfoGetConnectedLisyHardware)
-            type_str = await self._read_string()
-
-            self._coils_start_at_one = bool(type_str == b'LISY80')
-
-            self.send_byte(LisyDefines.InfoLisyVersion)
-            lisy_version = await self._read_string()
-            self.send_byte(LisyDefines.InfoGetApiVersion)
-            api_version = await self._read_string()
-
-            self.debug_log("Connected to %s hardware. LISY version: %s. API version: %s.",
-                           type_str, lisy_version, api_version)
-
-            self.api_version = StrictVersion(api_version.decode())
 
             self.machine.variables.set_machine_var("lisy_hardware", type_str)
             '''machine_var: lisy_hardware
