@@ -230,9 +230,14 @@ class ConfigValidator:
 
         if item == 'item not in config!@#':
             if default == 'default required!@#':
+                if isinstance(validation_failure_info[0], tuple):
+                    section = "{}: {}".format(validation_failure_info[0][0], validation_failure_info[0][1])
+                else:
+                    section = validation_failure_info[0]
+
                 self.validation_error("None", validation_failure_info,
-                                      'Required setting {} missing from config file.'.format(
-                                          validation_failure_info[1]), 9)
+                                      'Required setting "{}:" is missing from section "{}:" in your config.'.format(
+                                          validation_failure_info[1], section), 9)
             else:
                 item = default
 
