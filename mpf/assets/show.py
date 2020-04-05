@@ -69,7 +69,7 @@ class Show:
     __slots__ = ["_autoplay_settings", "tokens", "token_values", "token_keys", "name", "total_steps", "show_steps",
                  "_step_cache", "machine"]
 
-    def __init__(self, machine, name, data):
+    def __init__(self, machine, name):
         """Initialise show."""
         self.machine = machine
         self._autoplay_settings = dict()
@@ -81,8 +81,6 @@ class Show:
         self.total_steps = None
         self.show_steps = None      # type: List[Dict[str, Any]]
         self._step_cache = {}
-
-        self._do_load_show(data=data)
 
     def __lt__(self, other):
         """Compare two instances."""
@@ -114,8 +112,8 @@ class Show:
                                         "Remove either of them!".format(step_num), 2)
         return Util.string_to_secs(step['duration'])
 
-    def _do_load_show(self, data: Optional[Dict]):
-        # do not use machine or the logger here because it will block
+    def load(self, data: Optional[Dict]):
+        """Load show configuration."""
         self.show_steps = list()
 
         if not isinstance(data, list):    # pragma: no cover

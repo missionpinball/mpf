@@ -28,7 +28,7 @@ achievement_groups:
     events_when_no_more_enabled: event_list|str|None
     events_when_enabled: event_list|str|None
     show_tokens: dict|str:str|None
-    show_when_enabled: single|str|None
+    show_when_enabled: single|machine(shows)|None
 achievements:
     __valid_in__: mode
     __type__: device
@@ -54,12 +54,12 @@ achievements:
     events_when_disabled: event_list|str|None
     events_when_selected: event_list|str|None
 
-    show_when_enabled: single|str|None
-    show_when_started: single|str|None
-    show_when_completed: single|str|None
-    show_when_stopped: single|str|None
-    show_when_disabled: single|str|None
-    show_when_selected: single|str|None
+    show_when_enabled: single|machine(shows)|None
+    show_when_started: single|machine(shows)|None
+    show_when_completed: single|machine(shows)|None
+    show_when_stopped: single|machine(shows)|None
+    show_when_disabled: single|machine(shows)|None
+    show_when_selected: single|machine(shows)|None
     sync_ms: single|int|None
 
 animations:

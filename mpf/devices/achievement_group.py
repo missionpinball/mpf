@@ -70,7 +70,7 @@ class AchievementGroup(ModeDevice):
         show = self.config['show_when_enabled']
 
         if show:
-            self._show = self.machine.shows[show].play(
+            self._show = show.play(
                 priority=self.mode.priority,
                 loops=-1,
                 show_tokens=self.config['show_tokens'])

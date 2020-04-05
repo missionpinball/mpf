@@ -256,18 +256,11 @@ class Achievement(ModeDevice):
             show = self.config['show_when_' + self.state]
 
         if show:
-            if show not in self.machine.shows:
-                # don't want a "try:" here since it would swallow any errors
-                # in show.play()
-                raise KeyError("[achievements: {}: {}: {}] is not a valid show"
-                               .format(self.name, 'show_when_' + self.state,
-                                       show))
-
             self.debug_log('Playing show: %s. Priority: %s. Loops: -1. '
-                           'Show tokens: %s', show, self._mode.priority,
+                           'Show tokens: %s', show.name, self._mode.priority,
                            self.config['show_tokens'])
 
-            self._show = self.machine.shows[show].play(
+            self._show = show.play(
                 priority=self._mode.priority,
                 loops=-1, sync_ms=self.config['sync_ms'],
                 show_tokens=self.config['show_tokens'])

@@ -310,7 +310,7 @@ class TestShows(MpfTestCase):
         self.assertTrue(self.machine.modes["mode3"].active)
         self.assertIn(self.machine.modes["mode3"],
                       self.machine.mode_controller.active_modes)
-        self.machine.show_player.instances['mode3']['show_player']['test_show3']
+        self.assertTrue(self.machine.show_player.instances['mode3']['show_player']['test_show3'])
         self.machine_run()
 
         # Make sure flasher device callback has been called (in first step
