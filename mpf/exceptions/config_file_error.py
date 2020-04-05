@@ -20,7 +20,7 @@ class ConfigFileError(AssertionError):
 
     def __str__(self):
         """Return nice string."""
-        error_slug = "CFE-{}-{}".format(self._url_name, self._error_no)
+        error_slug = "CFE-{}-{}".format(self._url_name.replace(" ", "_"), self._error_no)
         error_url = log_url.format(error_slug)
         if self._context:
             return "Config File Error in {}: {} Context: {} Error Code: {} ({})".format(

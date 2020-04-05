@@ -6,7 +6,6 @@ from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareS
 from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
 
-from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
@@ -100,12 +99,16 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         if not self.initial_states_sent:
 
             if 'virtual_platform_start_active_switches' in self.machine.config:
-
                 initial_active_switches = []
-                for switch in Util.string_to_event_list(self.machine.config['virtual_platform_start_active_switches']):
+                for switch in Util.string_to_list(self.machine.config['virtual_platform_start_active_switches']):
                     if switch not in self.machine.switches:
-                        raise ConfigFileError("Switch {} used in virtual_platform_start_active_switches was not found "
-                                              "in switches section.".format(switch), 1, self.log.name)
+                        if " " in switch:
+                            self.raise_config_error("MPF no longer supports lists separated by space in "
+                                                    "virtual_platform_start_active_switches. Please separate "
+                                                    "switches by comma: {}.".format(switch), 1)
+                        else:
+                            self.raise_config_error("Switch {} used in virtual_platform_start_active_switches was not "
+                                                    "found in switches section.".format(switch), 1)
                     initial_active_switches.append(self.machine.switches[switch].hw_switch.number)
 
                 for k in self.hw_switches:
