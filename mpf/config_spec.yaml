@@ -1782,12 +1782,16 @@ variable_player:
 video_pools:
     __valid_in__: machine, mode                      # todo add to validator
     __type__: config_dict
-videos:
+videos:         # not really used
     __valid_in__: machine, mode
     __type__: config_dict
+    load: single|str|preload
     file: single|str|None
-    load: single|str|None
-    auto_play: single|bool|True
+    priority: single|int|0
+    width: single|num|None
+    height: single|num|None
+    events_when_played: event_list|str|None
+    events_when_stopped: event_list|str|None
 virtual_platform_start_active_switches:
     __valid_in__: machine                           # todo add to validator
     __type__: list
