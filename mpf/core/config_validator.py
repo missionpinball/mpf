@@ -409,7 +409,7 @@ class ConfigValidator:
             return section[item]
 
         return self.validation_error(item, validation_failure_info,
-                                     "Device {} of type {} not defined".format(item, param),
+                                     'Device "{}" not found in "{}:" section in your config.'.format(item, param),
                                      6)
 
     @classmethod
