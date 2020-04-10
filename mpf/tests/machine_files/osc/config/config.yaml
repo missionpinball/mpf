@@ -4,8 +4,8 @@ hardware:
     platform: osc
 
 osc:
-  ip: 127.0.0.1
-  port: 8000
+  remote_ip: 127.0.0.1
+  remote_port: 8000
 
   events_to_send:
     - my_test_event

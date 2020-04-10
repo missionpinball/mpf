@@ -64,12 +64,12 @@ class OscPlatform(LightsPlatform, SwitchPlatform):
         """Initialise platform."""
         self.config = self.machine.config['osc']
         self.machine.config_validator.validate_config("osc", self.config)
-        self.client = SimpleUDPClient(self.config['ip'], self.config['port'])
+        self.client = SimpleUDPClient(self.config['remote_ip'], self.config['remote_port'])
 
         dispatcher = Dispatcher()
         dispatcher.map("/sw/*", self._handle_switch)
         dispatcher.map("/event/*", self._handle_event)
-        server = AsyncIOOSCUDPServer((self.config['server_ip'], self.config['server_port']), dispatcher,
+        server = AsyncIOOSCUDPServer((self.config['listen_ip'], self.config['listen_port']), dispatcher,
                                      self.machine.clock.loop)
         self.server, _ = await server.create_serve_endpoint()
 
