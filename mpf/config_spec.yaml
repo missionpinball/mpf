@@ -914,14 +914,8 @@ osc:
     __type__: config
     ip: single|str|127.0.0.1
     port: single|int|8000
-osc_plugin:
-    __valid_in__: machine
-    __type__: config
     server_ip: single|str|127.0.0.1
     server_port: single|int|9000
-    client_ip: single|str|127.0.0.1
-    client_port: single|int|8000
-    enabled: single|bool|False
 opp:
     __valid_in__: machine
     __type__: config

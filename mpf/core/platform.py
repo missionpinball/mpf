@@ -3,7 +3,7 @@ import abc
 import asyncio
 from collections import namedtuple
 
-from typing import Optional
+from typing import Optional, Dict
 
 from mpf.core.logging import LogMixin
 from mpf.core.utility_functions import Util
@@ -432,7 +432,7 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         return config
 
     @abc.abstractmethod
-    async def get_hw_switch_states(self):
+    async def get_hw_switch_states(self) -> Dict[str, bool]:
         """Get all hardware switch states.
 
         Subclass this method in a platform module to return the hardware

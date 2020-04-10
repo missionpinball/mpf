@@ -17,3 +17,11 @@ lights:
         - number: /thing/light/green/17
   test_light2:
     number: /thing/light/green/14
+
+
+switches:
+  switch_1:
+    number: 1
+    type: NO
+  switch_abc:
+    number: abc
