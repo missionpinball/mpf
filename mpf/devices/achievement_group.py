@@ -66,6 +66,8 @@ class AchievementGroup(ModeDevice):
         self.debug_log("Enabling group")
 
         self._stop_show()
+        if self._selected_member and self._selected_member.selected:
+            self._selected_member = None
 
         show = self.config['show_when_enabled']
 
@@ -94,7 +96,6 @@ class AchievementGroup(ModeDevice):
         self.debug_log("Disabling group")
         self._stop_show()
         self._enabled = False
-        self._selected_member = None
 
     def _stop_show(self):
         if self._show:
@@ -351,6 +352,7 @@ class AchievementGroup(ModeDevice):
 
         self.disable()
         self._loaded = False
+        self._selected_member = None
 
         if self._show:
             self._show.stop()
