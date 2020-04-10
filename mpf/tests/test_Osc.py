@@ -93,9 +93,10 @@ class TestOsc(MpfTestCase):
         self.client_instance.send_message = MagicMock()
         self.post_event_with_params("my_test_event", a=100, b=True)
         self.advance_time_and_run(.1)
-        self.client_instance.send_message.assert_has_calls([
-            call('/event/my_test_event', ['a', 100, 'b', True])
-        ], any_order=True)
+        self.assertTrue(
+            call('/event/my_test_event', ['a', 100, 'b', True]) in self.client_instance.send_message.call_args_list or
+            call('/event/my_test_event', ['b', True, 'a', 100]) in self.client_instance.send_message.call_args_list
+        )
 
         self.client_instance.send_message = MagicMock()
         self.post_event("my_other_test_event")
