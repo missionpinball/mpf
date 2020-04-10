@@ -916,6 +916,7 @@ osc:
     port: single|int|8000
     server_ip: single|str|127.0.0.1
     server_port: single|int|9000
+    events_to_send: list|str|None
 opp:
     __valid_in__: machine
     __type__: config

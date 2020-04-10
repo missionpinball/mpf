@@ -31,7 +31,7 @@ class OscLight(LightPlatformSoftwareFade):
 
     def set_brightness(self, brightness: float):
         """Set brightness of OSC light."""
-        self.client.send_message(self.number, brightness)
+        self.client.send_message("/light/" + self.number, brightness)
 
 
 class OscSwitch(SwitchPlatformInterface):
@@ -68,21 +68,31 @@ class OscPlatform(LightsPlatform, SwitchPlatform):
 
         dispatcher = Dispatcher()
         dispatcher.map("/sw/*", self._handle_switch)
+        dispatcher.map("/event/*", self._handle_event)
         server = AsyncIOOSCUDPServer((self.config['server_ip'], self.config['server_port']), dispatcher,
                                      self.machine.clock.loop)
         self.server, _ = await server.create_serve_endpoint()
+
+        for event in self.config['events_to_send']:
+            self.machine.events.add_handler(event, self._send_event, _event_name=event)
 
     def stop(self):
         """Stop server."""
         self.server.close()
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
-        """Parse light number to a single channel."""
+        """Parse light number to three RGB channels."""
         del subtype
         return [
             {
-                "number": number
-            }
+                "number": number + "/red"
+            },
+            {
+                "number": number + "/green"
+            },
+            {
+                "number": number + "/blue"
+            },
         ]
 
     def configure_light(self, number: str, subtype: str, platform_settings: dict) -> LightPlatformInterface:
@@ -104,7 +114,7 @@ class OscPlatform(LightsPlatform, SwitchPlatform):
         return result
 
     def _handle_switch(self, address, *args):
-        """Handle Switch change from OSC."""
+        """Handle switch change from OSC."""
         try:
             _, _, switch_name = address.split("/")
         except ValueError:
@@ -124,3 +134,30 @@ class OscPlatform(LightsPlatform, SwitchPlatform):
             return
 
         self.machine.switch_controller.process_switch_by_num(switch_name, bool(args[0]), self, logical=True)
+
+    def _send_event(self, _event_name, **kwargs):
+        """Send event to OSC client."""
+        params = []
+        for key, value in kwargs.items():
+            params.append(key)
+            params.append(value)
+        self.client.send_message("/event/{}".format(_event_name), params)
+
+    def _handle_event(self, address, *args):
+        """Handle event from OSC."""
+        try:
+            _, _, event_name = address.split("/")
+        except ValueError:
+            self.error_log("Got OSC event for invalid address: %s", address)
+            return
+
+        if len(args) % 2 != 0:
+            self.error_log("Got OSC event with an uneven number of arguments: %s. Arguments need to be pairs "
+                           "key1, value1, key2, value2 and so on.", args)
+            return
+
+        kwargs = {}
+        for i in range(0, len(args), 2):
+            kwargs[args[i]] = args[i + 1]
+
+        self.machine.events.post(event_name, **kwargs)

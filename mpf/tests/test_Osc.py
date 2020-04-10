@@ -39,29 +39,38 @@ class TestOsc(MpfTestCase):
         super().setUp()
 
     def test_osc_platform(self):
+        # test lights
         self.client_instance.send_message = MagicMock()
         self.machine.lights["test_light1"].color("red")
         self.advance_time_and_run(.1)
         self.client_instance.send_message.assert_has_calls([
-            call('/thing/light/blue/17', 0.0),
-            call('/thing/light/green/17', 0.0),
-            call('/thing/light/red/17', 1.0)], any_order=True)
+            call('/light/light1/blue', 0.0),
+            call('/light/light1/green', 0.0),
+            call('/light/light1/red', 1.0)], any_order=True)
 
         self.client_instance.send_message = MagicMock()
         self.machine.lights["test_light1"].color("blue")
         self.advance_time_and_run(.1)
         self.client_instance.send_message.assert_has_calls([
-            call('/thing/light/blue/17', 1.0),
-            call('/thing/light/green/17', 0.0),
-            call('/thing/light/red/17', 0.0)], any_order=True)
+            call('/light/light1/blue', 1.0),
+            call('/light/light1/green', 0.0),
+            call('/light/light1/red', 0.0)], any_order=True)
 
         self.client_instance.send_message = MagicMock()
         self.machine.lights["test_light1"].color("white")
         self.advance_time_and_run(.1)
         self.client_instance.send_message.assert_has_calls([
-            call('/thing/light/blue/17', 1.0),
-            call('/thing/light/green/17', 1.0),
-            call('/thing/light/red/17', 1.0)], any_order=True)
+            call('/light/light1/blue', 1.0),
+            call('/light/light1/green', 1.0),
+            call('/light/light1/red', 1.0)], any_order=True)
+
+        self.client_instance.send_message = MagicMock()
+        self.machine.lights["test_light2"].color("white")
+        self.advance_time_and_run(.1)
+        self.client_instance.send_message.assert_has_calls([
+            call('/light/light2/blue', 1.0),
+            call('/light/light2/green', 1.0),
+            call('/light/light2/red', 1.0)], any_order=True)
 
         # send switch hits
         self.assertSwitchState("switch_abc", False)
@@ -79,3 +88,24 @@ class TestOsc(MpfTestCase):
         self.machine.default_platform._handle_switch("/sw/1", False)
         self.advance_time_and_run(.1)
         self.assertSwitchState("switch_1", False)
+
+        # test outgoing events
+        self.client_instance.send_message = MagicMock()
+        self.post_event_with_params("my_test_event", a=100, b=True)
+        self.advance_time_and_run(.1)
+        self.client_instance.send_message.assert_has_calls([
+            call('/event/my_test_event', ['a', 100, 'b', True])
+        ], any_order=True)
+
+        self.client_instance.send_message = MagicMock()
+        self.post_event("my_other_test_event")
+        self.advance_time_and_run(.1)
+        self.client_instance.send_message.assert_has_calls([
+            call('/event/my_other_test_event', [])
+        ], any_order=True)
+
+        # test incoming events
+        self.mock_event("test_event")
+        self.machine.default_platform._handle_event("/event/test_event", "a", 200, "b", "asd")
+        self.advance_time_and_run(.1)
+        self.assertEventCalledWith("test_event", a=200, b="asd")

@@ -4,19 +4,24 @@ hardware:
     platform: osc
 
 osc:
-  ip: 3.4.5.6
+  ip: 127.0.0.1
+  port: 8000
+
+  events_to_send:
+    - my_test_event
+    - my_other_test_event
 
 lights:
   test_light1:
     channels:
       red:
-        - number: /thing/light/red/17
+        - number: light1/red
       blue:
-        - number: /thing/light/blue/17
+        - number: light1/blue
       green:
-        - number: /thing/light/green/17
+        - number: light1/green
   test_light2:
-    number: /thing/light/green/14
+    number: light2
 
 
 switches:
