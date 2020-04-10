@@ -19,6 +19,7 @@ lights:
 modes:
   - base
   - mode1
+  - auto_select_with_allow_selection_change_while_disabled
 
 shows:
   achievement1_enabled:

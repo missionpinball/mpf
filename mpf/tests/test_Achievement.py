@@ -748,3 +748,46 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual(a13.state, 'disabled')
         if a10.selected == a11.selected:
             raise AssertionError("Neither a10 nor a11 is selected")
+
+    def _assert_selected(self, expected):
+        self.assertEqual(
+            expected,
+            self.machine.achievements["spinTasticAward"].selected +
+            self.machine.achievements["tagTeamAward"].selected +
+            self.machine.achievements["doubleChanceAward"].selected +
+            self.machine.achievements["extraBallAward"].selected +
+            self.machine.achievements["prodigiousPopsAward"].selected,
+            "Expected exactly {} achievement(s) to be selected. Found: {} {} {} {} {}".format(
+                expected,
+                self.machine.achievements["spinTasticAward"].selected,
+                self.machine.achievements["tagTeamAward"].selected,
+                self.machine.achievements["doubleChanceAward"].selected,
+                self.machine.achievements["extraBallAward"].selected,
+                self.machine.achievements["prodigiousPopsAward"].selected
+            )
+        )
+
+    def test_auto_select_with_allow_selection_change_while_disabled(self):
+        self.start_game()
+        self.start_mode("auto_select_with_allow_selection_change_while_disabled")
+        self._assert_selected(0)
+
+        self.post_event("enable_group")
+        self._assert_selected(1)
+        self.post_event("start_event")
+        self._assert_selected(1)
+        self.post_event("disable_bonus")
+        self._assert_selected(1)
+        self.post_event("sw_pops")
+        self._assert_selected(1)
+        self.post_event("mode_spinTasticAward_stopped")
+        self._assert_selected(1)
+        self.post_event("mode_tagTeamAward_stopped")
+        self._assert_selected(1)
+        self.post_event("mode_doubleChanceAward_stopped")
+        self._assert_selected(1)
+        self.post_event("extraBallAwardIntro_complete")
+        self._assert_selected(1)
+        self.post_event("mode_prodigiousPopsAward_stopped")
+        self.advance_time_and_run(.1)
+        self._assert_selected(1)

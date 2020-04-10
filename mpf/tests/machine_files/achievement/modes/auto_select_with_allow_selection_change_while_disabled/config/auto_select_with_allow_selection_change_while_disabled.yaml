@@ -1,0 +1,49 @@
+#config_version=5
+mode:
+    start_events: start_mode2
+    stop_events: stop_mode2
+    priority: 100
+
+achievements:
+  spinTasticAward:
+    complete_events: mode_spinTasticAward_stopped
+    reset_events: reset_bonusAwards
+    debug: True
+
+  tagTeamAward:
+    complete_events: mode_tagTeamAward_stopped
+    reset_events: reset_bonusAwards
+    debug: True
+
+  doubleChanceAward:
+    complete_events: mode_doubleChanceAward_stopped
+    reset_events: reset_bonusAwards
+    debug: True
+
+  extraBallAward:
+    complete_events: extraBallAwardIntro_complete
+    reset_events: reset_bonusAwards
+    debug: True
+
+  prodigiousPopsAward:
+    complete_events: mode_prodigiousPopsAward_stopped
+    reset_events: reset_bonusAwards
+    debug: True
+
+achievement_groups:
+  bonus_awards:
+    achievements:
+      - doubleChanceAward
+      - extraBallAward
+      - prodigiousPopsAward
+      - tagTeamAward
+      - spinTasticAward
+    auto_select: true
+    enable_while_no_achievement_started: false
+    rotate_right_events: sw_pops, s_spotTarget_active
+    allow_selection_change_while_disabled: true
+    disable_while_achievement_started: false
+    start_selected_events: start_event
+    disable_events: disable_bonus
+    enable_events: enable_group
+    debug: True
