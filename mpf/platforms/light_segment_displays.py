@@ -1,6 +1,6 @@
 """Segment displays on light drivers."""
 import logging
-from mpf.core.segment_mappings import SEVEN_SEGMENTS
+from mpf.core.segment_mappings import SEVEN_SEGMENTS, BCD_SEGMENTS, FOURTEEN_SEGMENTS, SIXTEEN_SEGMENTS
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
 from mpf.core.platform import SegmentDisplayPlatform
 
@@ -9,13 +9,23 @@ class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
 
     """Segment display which drives lights."""
 
-    __slots__ = ["_lights", "_segment_type", "_key"]
+    __slots__ = ["_lights", "_key", "_segment_map"]
 
     def __init__(self, number, lights, segment_type):
         """Initialise segment display."""
         super().__init__(number)
         self._lights = lights
-        self._segment_type = segment_type
+        if segment_type == "7segment":
+            self._segment_map = SEVEN_SEGMENTS
+        elif segment_type == "bcd":
+            self._segment_map = BCD_SEGMENTS
+        elif segment_type == "14segment":
+            self._segment_map = FOURTEEN_SEGMENTS
+        elif segment_type == "16segment":
+            self._segment_map = SIXTEEN_SEGMENTS
+        else:
+            raise AssertionError("Invalid segment type {}".format(segment_type))
+
         self._key = "segment_display_{}".format(number)
 
     def _set_text(self, text: str) -> None:
@@ -25,10 +35,10 @@ class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
         # iterate lights and chars
         for char, lights_for_char in zip(text, self._lights):
             try:
-                char_map = SEVEN_SEGMENTS[ord(char)]
+                char_map = self._segment_map[ord(char)]
             except KeyError:
                 # if there is no
-                char_map = SEVEN_SEGMENTS[None]
+                char_map = self._segment_map[None]
             for name, light in lights_for_char.items():
                 if getattr(char_map, name):
                     light.on(key=self._key)

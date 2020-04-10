@@ -32,6 +32,22 @@ lights:
     number:
   segment2_g:
     number:
+  segment3_x0:
+    number:
+  segment3_x1:
+    number:
+  segment3_x2:
+    number:
+  segment3_x3:
+    number:
+  segment4_x0:
+    number:
+  segment4_x1:
+    number:
+  segment4_x2:
+    number:
+  segment4_x3:
+    number:
 
 segment_displays:
   display1:
@@ -53,3 +69,16 @@ segment_displays:
           f: segment2_f
           g: segment2_g
       type: 7segment
+  display2:
+    number: 2
+    platform_settings:
+      lights:
+        - x0: segment3_x0
+          x1: segment3_x1
+          x2: segment3_x2
+          x3: segment3_x3
+        - x0: segment4_x0
+          x1: segment4_x1
+          x2: segment4_x2
+          x3: segment4_x3
+      type: bcd

@@ -674,7 +674,7 @@ light_settings:
     default_fade_ms: single|int|0
 light_segment_displays:
     lights: list|dict(str:machine(lights))|
-    type: single|enum(7segment)|
+    type: single|enum(7segment,bcd,14segment,16segment)|
 light_stripes:
     __valid_in__: machine
     __type__: device
