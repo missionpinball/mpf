@@ -50,11 +50,23 @@ class Shot(EnableDisableMixin, ModeDevice):
         super().device_loaded_in_mode(mode, player)
         self._update_show()
 
-    async def _initialize(self):
-        await super()._initialize()
-        for switch in self.config['switch']:
-            if switch not in self.config['switches']:
-                self.config['switches'].append(switch)
+    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None):
+        config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
+        for switch in config['switch']:
+            if switch not in config['switches']:
+                config['switches'].append(switch)
+
+        for switch in config['switches'] + list(config['delay_switch'].keys()):
+            if '{}_active'.format(config['playfield'].name) in switch.tags:
+                self.raise_config_error(
+                    "Shot '{}' uses switch '{}' which has a "
+                    "'{}_active' tag. This is handled internally by the device. Remove the "
+                    "redundant '{}_active' tag from that switch.".format(
+                        self.name, switch.name, config['playfield'].name,
+                        config['playfield'].name), 1)
+
+
+        return config
 
     def _register_switch_handlers(self):
         self._handlers = []
@@ -376,6 +388,7 @@ class Shot(EnableDisableMixin, ModeDevice):
     @event_handler(4)
     def _delay_switch_hit(self, switch_name, **kwargs):
         del kwargs
+        self.config['playfield'].mark_playfield_active_from_device_action()
         if not self.enabled:
             return
 
