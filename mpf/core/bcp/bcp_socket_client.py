@@ -39,7 +39,7 @@ def decode_command_string(bcp_string) -> Tuple[str, dict]:
     will be preserved.
 
     """
-    bcp_command = urlsplit(bcp_string)
+    bcp_command = urlsplit(bcp_string, allow_fragments=False)
 
     if bcp_command.query[0:5] == "json=":
         kwargs = json.loads(bcp_command.query[5:])
