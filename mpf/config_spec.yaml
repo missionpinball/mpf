@@ -1492,27 +1492,18 @@ sound_system:
     frequency: single|int|44100
     channels: single|int|1
     master_volume: single|gain|0.5
-    tracks:
-        common:
-            type: single|enum(standard,sound_loop,playlist)|standard
-            volume: single|gain|0.5
-            events_when_played: event_list|str|None
-            events6_when_stopped: event_list|str|None
-            events_when_paused: event_list|str|None
-            events_when_resumed: event_list|str|None
-            ducking:
-                target: event_list|str|
-                delay: single|secs|0
-                attack: single|secs|10ms
-                attenuation: single|gain|1.0
-                release_point: single|secs|0
-                release: single|secs|10ms
-        standard:
-            simultaneous_sounds: single|int|8
-        sound_loop:
-            max_layers: single|int|8
-        playlist:
-            crossfade_time: single|secs|0
+    tracks: dict|str:subconfig(sound_system_tracks)|
+sound_system_tracks:
+    type: single|enum(standard,sound_loop,playlist)|standard
+    volume: single|gain|0.5
+    events_when_played: event_list|str|None
+    events_when_stopped: event_list|str|None
+    events_when_paused: event_list|str|None
+    events_when_resumed: event_list|str|None
+    ducking: single|subconfig(sound_ducking)|None
+    simultaneous_sounds: single|int|8       # only standard
+    max_layers: single|int|8                # only sound_loop
+    crossfade_time: single|secs|0           # only playlist
 sounds:
     __valid_in__: machine, mode
     __type__: config_dict
@@ -1536,14 +1527,18 @@ sounds:
     events_when_about_to_finish: event_list|str|None
     mode_end_action: single|enum(stop,stop_looping)|stop_looping
     key: single|str|None
-    markers: ignore                                 # todo add subconfig
-    ducking:
-        target: event_list|str|
-        delay: single|secs|0
-        attack: single|secs|10ms
-        attenuation: single|gain|1.0
-        release_point: single|secs|0
-        release: single|secs|10ms
+    markers: list|subconfig(sound_marker)|None
+    ducking: single|subconfig(sound_ducking)|None
+sound_ducking:
+    target: event_list|str|
+    delay: single|secs|0
+    attack: single|secs|10ms
+    attenuation: single|gain|1.0
+    release_point: single|secs|0
+    release: single|secs|10ms
+sound_marker:
+    time: single|secs|
+    events: event_list|str|
 spi_bit_bang:
     __valid_in__: machine
     __type__: config
