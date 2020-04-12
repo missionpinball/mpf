@@ -154,7 +154,8 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
         super().__init__(machine)
 
         if not apigpio:
-            raise AssertionError("To use the Raspberry Pi platform you need to install the apigpio extension.")
+            raise AssertionError("To use the Raspberry Pi platform you need to install the apigpio extension. "
+                                 "Run: pip3 install apigpio-mpf.")
 
         self.pi = None          # type: apigpio.Pi
         # load config
