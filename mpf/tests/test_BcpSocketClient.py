@@ -108,6 +108,20 @@ class TestBcpSocketClientEncoding(unittest.TestCase):
         self.assertEqual(decoded_dict['dict2'][1],
                          dict(key3='value5', key4='value6'))
 
+    def test_json_encoding_decoding_with_hashtags(self):
+        # see: https://github.com/missionpinball/mpf/issues/1495
+        command = 'play'
+        kwargs = dict()
+        kwargs['dict1'] = dict(key1='value1 #', key2='value2 #')
+
+        encoded_string = encode_command_string(command, **kwargs)
+        decoded_command, decoded_dict = decode_command_string(encoded_string)
+
+        self.assertEqual('play', decoded_command)
+        self.assertIn('dict1', decoded_dict)
+        self.assertEqual(decoded_dict['dict1']['key1'], 'value1 #')
+        self.assertEqual(decoded_dict['dict1']['key2'], 'value2 #')
+
 
 class MockBcpQueueSocket(MockQueueSocket):
 
