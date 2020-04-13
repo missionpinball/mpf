@@ -47,6 +47,8 @@ class ConfigValidator:
 
         self.validator_list = {
             "str": self._validate_type_str,
+            "event_posted": self._validate_type_str,
+            "event_handler": self._validate_type_str,
             "lstr": self._validate_type_lstr,
             "float": self._validate_type_float,
             "float_or_token": self._validate_type_or_token(self._validate_type_float),
@@ -246,17 +248,10 @@ class ConfigValidator:
                                       validation_failure_info)
 
         if item_type == 'list':
-            item_list = Util.string_to_list(item)
-
-            new_list = list()
-
-            for i in item_list:
-                new_list.append(self.validate_item(i, validation, validation_failure_info))
-
-            return new_list
-
-        if item_type == 'event_list':
-            item_list = Util.string_to_event_list(item)
+            if validation in ("event_posted", "event_handler"):
+                item_list = Util.string_to_list(item)
+            else:
+                item_list = Util.string_to_event_list(item)
 
             new_list = list()
 
@@ -266,7 +261,7 @@ class ConfigValidator:
             return new_list
 
         if item_type == 'set':
-            item_set = set(Util.string_to_event_list(item))
+            item_set = set(Util.string_to_list(item))
 
             new_set = set()
 
@@ -275,8 +270,8 @@ class ConfigValidator:
 
             return new_set
         if item_type == "event_handler":
-            if validation != "str:ms":
-                raise AssertionError("event_handler should use str:ms in config_spec: {}".format(spec))
+            if validation != "event_handler:ms":
+                raise AssertionError("event_handler should use event_handler:ms in config_spec: {}".format(spec))
             return self._validate_dict_or_omap(item_type, validation, validation_failure_info, item)
         if item_type in ('dict', 'omap'):
             return self._validate_dict_or_omap(item_type, validation, validation_failure_info, item)
