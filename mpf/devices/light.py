@@ -181,6 +181,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         if not self.config['channels']:
             # get channels from number + platform
             platform = self.machine.get_platform_sections('lights', self.config['platform'])
+            platform.assert_has_feature("lights")
             try:
                 channel_list = platform.parse_light_number_to_channels(self.config['number'], self.config['subtype'])
             except AssertionError as e:

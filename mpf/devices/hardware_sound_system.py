@@ -27,6 +27,7 @@ class HardwareSoundSystem(SystemWideDevice):
         await super()._initialize()
         self.platform = self.machine.get_platform_sections(
             'hardware_sound_system', self.config['platform'])
+        self.platform.assert_has_feature("hardware_sound_systems")
         self.hw_device = self.platform.configure_hardware_sound_system()
 
     def play(self, sound_number: int, track: int = 1):

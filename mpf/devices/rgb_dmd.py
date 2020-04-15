@@ -35,6 +35,7 @@ class RgbDmd(SystemWideDevice):
     async def _initialize(self):
         await super()._initialize()
         self.platform = self.machine.get_platform_sections("rgb_dmd", self.config['platform'])
+        self.platform.assert_has_feature("rgb_dmds")
         self.hw_device = self.platform.configure_rgb_dmd(self.name)
         self._update_brightness(None)
 

@@ -45,6 +45,7 @@ class Stepper(SystemWideDevice):
     async def _initialize(self):
         await super()._initialize()
         self.platform = self.machine.get_platform_sections('stepper_controllers', self.config['platform'])
+        self.platform.assert_has_feature("steppers")
 
         # first target is the reset position but we might get an early target during startup via events
         self._target_position = self.config['reset_position']

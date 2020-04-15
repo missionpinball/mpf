@@ -111,4 +111,5 @@ class MMA8451Platform(AccelerometerPlatform):
         """Configure MMA8451 accelerometer."""
         config = self.machine.config_validator.validate_config("mma8451_accelerometer", config)
         i2c_platform = self.machine.get_platform_sections("i2c", config['i2c_platform'])
+        i2c_platform.assert_has_feature("i2c")
         return MMA8451Device(number, callback, i2c_platform, self)

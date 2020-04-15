@@ -76,6 +76,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
         platform = self.machine.get_platform_sections(
             'switches', getattr(config, "platform", None))
+        platform.assert_has_feature("switches")
         config['platform_settings'] = platform.validate_switch_section(
             self, config.get('platform_settings', None))
         self._configure_device_logging(config)
