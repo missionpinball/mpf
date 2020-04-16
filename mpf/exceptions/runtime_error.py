@@ -1,15 +1,15 @@
-"""Config file error in a MPF config file."""
+"""Runtime error in MPF or MPF-MC."""
 from mpf.exceptions.base_error import BaseError
 
 
-class ConfigFileError(BaseError):
+class MpfRuntimeError(BaseError):
 
-    """Error in a config file found."""
+    """Runtime error."""
 
     def get_short_name(self):
         """Return short name."""
-        return "CFE"
+        return "RE"
 
     def get_long_name(self):
         """Return long name."""
-        return "Config File Error"
+        return "Runtime Error"
