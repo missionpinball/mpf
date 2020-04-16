@@ -651,7 +651,7 @@ class ConfigValidator:
 
         # Validates colors by name, hex, or list, into a 3-item list, RGB,
         # with individual values from 0-255
-        color_string = str(item).lower()
+        color_string = str(item)
 
         if color_string in NAMED_RGB_COLORS:
             return NAMED_RGB_COLORS[color_string]
