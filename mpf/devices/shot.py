@@ -51,6 +51,7 @@ class Shot(EnableDisableMixin, ModeDevice):
         self._update_show()
 
     def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None):
+        """Validate and parse shot config."""
         config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
         for switch in config['switch']:
             if switch not in config['switches']:
@@ -64,7 +65,6 @@ class Shot(EnableDisableMixin, ModeDevice):
                     "redundant '{}_active' tag from that switch.".format(
                         self.name, switch.name, config['playfield'].name,
                         config['playfield'].name), 1)
-
 
         return config
 

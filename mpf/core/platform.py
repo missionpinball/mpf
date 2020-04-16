@@ -59,9 +59,10 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
     def assert_has_feature(self, feature_name):
         """Assert that this platform has a certain feature or raise an exception otherwise."""
         if not self.features.get("has_{}".format(feature_name), False):
-            self.raise_config_error("Platform {} does not support to configure {}. Please make sure the platform "
-                                    "you configured for {} actually supports that type "
-                                    "of devices.".format(self.__class__, feature_name, feature_name), 99)
+            self.raise_config_error("Platform {} does not support to configure {feature_name}. "
+                                    "Please make sure the platform "
+                                    "you configured for {feature_name} actually supports that type "
+                                    "of devices.".format(self.__class__, feature_name=feature_name), 99)
 
     def _configure_device_logging_and_debug(self, logger_name, config):
         """Configure logging for platform."""
