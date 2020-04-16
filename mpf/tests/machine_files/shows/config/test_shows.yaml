@@ -89,7 +89,7 @@ shows:
   show_assoc_tokens:
     - time: 0
       lights:
-        (line1num): (line1Color)
+        (line1num): (line1color)
   show_with_time_and_duration:
     - time: +1s
     - time: 5s
