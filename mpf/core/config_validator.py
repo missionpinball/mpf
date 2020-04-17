@@ -630,7 +630,7 @@ class ConfigValidator:
                      re.split('([0-9a-f]{2})', color_string) if x != '']
 
         else:
-            color = Util.string_to_event_list(color_string)
+            color = Util.string_to_list(color_string)
 
         for i, x in enumerate(color):
             try:
@@ -658,7 +658,7 @@ class ConfigValidator:
         if Util.is_hex_string(color_string):
             return RGBColor.hex_to_rgb(color_string)
 
-        color = Util.string_to_event_list(color_string)
+        color = Util.string_to_list(color_string)
         return int(color[0]), int(color[1]), int(color[2])
 
     def _validate_type_bool_int(self, item, validation_failure_info):
