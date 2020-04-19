@@ -34,7 +34,7 @@ class Command(MpfCommandLineParser):
         self.creation_loop()
 
     def creation_loop(self):
-        """Sets up the main creation loop."""
+        """Set up the main creation loop."""
         selection = button_dialog(
             title='Selection',
             text='What would you like to create?',
@@ -77,7 +77,7 @@ class Command(MpfCommandLineParser):
             message_dialog(
                 title='Mode',
                 text=HTML(
-                    ''''<style fg="green">Success:</style> Created mode {}.
+                    '''<style fg="green">Success:</style> Created mode {}.
                     \nDon\'t forget to add it to your mode list.'''.format(
                         mode_name)),
                 style=self.example_style
@@ -135,8 +135,8 @@ class Command(MpfCommandLineParser):
             style=self.example_style).run()
 
         # create shows folder
-        show_path = os.path.join(self.machine_path, "shows", show_name)
-        shows_dir = os.path.join(self.machine_path, "shows")
+        show_path = os.path.normpath(os.path.join(self.machine_path, "shows", show_name))
+        shows_dir = os.path.normpath(os.path.join(self.machine_path, "shows"))
 
         if not os.path.exists(show_path):
             if self.in_machine_folder():
@@ -160,11 +160,11 @@ class Command(MpfCommandLineParser):
             self._create_machine_config()
 
     def in_machine_folder(self):
-        """Checks if current directory is a machine folder."""
+        """Check if current directory is a machine folder."""
         return os.path.exists(os.path.join(self.current_path, "config"))
 
     def show_not_in_machine_folder_dialog(self):
-        """Shows error message if current directory is not a machine folder."""
+        """Show error message if current directory is not a machine folder."""
         message_dialog(
             title='Wrong directory',
             text=HTML(
@@ -175,22 +175,22 @@ class Command(MpfCommandLineParser):
 
     @staticmethod
     def create_machine_config_structure(config_name, machine_path):
-        """Creates the basic hierarchy of a new machine folder including test and config files."""
-        os.makedirs(machine_path)
-        os.makedirs(os.path.join(machine_path, "config"))
-        with open(os.path.join(machine_path, "config", "config.yaml"), "w") as f:
+        """Create the basic hierarchy of a new machine folder including test and config files."""
+        os.makedirs(os.path.normpath(machine_path))
+        os.makedirs(os.path.normpath(os.path.join(machine_path, "config")))
+        with open(os.path.normpath(os.path.join(machine_path, "config", "config.yaml")), "w") as f:
             f.write("#config_version=5")
 
         # create test folder
-        os.makedirs(os.path.join(machine_path, "tests"))
+        os.makedirs(os.path.normpath(os.path.join(machine_path, "tests")))
 
         test_file_name = "test_{}.yaml".format(config_name)
-        with open(os.path.join(machine_path, "tests", test_file_name), "w"):
+        with open(os.path.normpath(os.path.join(machine_path, "tests", test_file_name)), "w"):
             pass
 
     @staticmethod
     def create_show_structure(show_name, shows_dir, machine_path):
-        """Creates the basic hierarchy of a new show folder."""
+        """Create the basic hierarchy of a new show folder."""
         if not os.path.exists(shows_dir):
             os.makedirs(shows_dir)
         # create shows file
@@ -201,10 +201,10 @@ class Command(MpfCommandLineParser):
 
     @staticmethod
     def create_mode_structure(mode_name, mode_path, machine_path):
-        """Creates the basic hierarchy of a new mode folder."""
+        """Create the basic hierarchy of a new mode folder."""
         os.makedirs(mode_path)
         # create config folder
-        os.makedirs(os.path.join(machine_path, "modes", mode_name, "config"))
+        os.makedirs(os.path.normpath(os.path.join(machine_path, "modes", mode_name, "config")))
         # create config file
         file_content = """#config_version=5
 
@@ -212,12 +212,14 @@ class Command(MpfCommandLineParser):
                 start_events: ball_started
                 priority: 100
             """
+        config_file_name = "{}.yaml".format(mode_name)
+        config_path = os.path.normpath(os.path.join(machine_path, "modes", mode_name, "config", config_file_name))
         Command.write_config_file(
-            os.path.join(machine_path, "modes", mode_name, "config", "{}.yaml".format(mode_name)), file_content)
+            config_path, file_content)
 
     @staticmethod
     def write_config_file(path, config_file_content):
-        """Creates config files for machine folders or modes."""
+        """Create config files for machine folders or modes."""
         # create config file
         with open(path, "w") as f:
             f.write(config_file_content)
