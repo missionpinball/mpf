@@ -77,6 +77,7 @@ community.''',
                       'asciimatics==1.11.0',
                       'terminaltables==3.1.0',
                       'psutil==5.7.0',
+                      'prompt_toolkit',
                       'pypiwin32==223;platform_system=="Windows"'],
 
     tests_require=[],
