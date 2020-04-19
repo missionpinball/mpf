@@ -427,6 +427,11 @@ effects:
         type: single|str|
     anti_aliasing:
         none: ignore
+    glow:
+        blur_size: single|float|5
+        intensity: single|float|.5
+        glow_speed: single|float|1.0
+        glow_amplitude: single|float|.1
     color_channel_mix:
         order: list|int|1, 2, 0
     color_dmd:
