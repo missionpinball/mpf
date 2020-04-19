@@ -193,10 +193,9 @@ class Command(MpfCommandLineParser):
         """Create the basic hierarchy of a new show folder."""
         if not os.path.exists(shows_dir):
             os.makedirs(shows_dir)
-        # create shows file
         file_content = "#show_version=5"
         show_file_name = "{}.yaml".format(show_name)
-        config_path = os.path.join(machine_path, "shows", show_file_name)
+        config_path = os.path.normpath(os.path.join(machine_path, "shows", show_file_name))
         Command.write_config_file(config_path, file_content)
 
     @staticmethod
