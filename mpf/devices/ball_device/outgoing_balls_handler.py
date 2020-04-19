@@ -307,7 +307,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         args:
 
         balls: The number of balls that are to be ejected.
-        taget: The target ball device that will receive these balls.
+        target: The target ball device that will receive these balls.
         source: The source device that will be ejecting the balls.
         mechanical_eject: Boolean as to whether this is a mechanical eject.
         num_attempts: How many eject attempts have been tried so far.
@@ -346,7 +346,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         args:
 
         balls: The number of balls that are to be ejected.
-        taget: The target ball device that will receive these balls.
+        target: The target ball device that will receive these balls.
         source: The source device that will be ejecting the balls.
         mechanical_eject: Boolean as to whether this is a mechanical eject.
         num_attempts: How many eject attempts have been tried so far.
