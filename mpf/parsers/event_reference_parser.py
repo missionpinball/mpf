@@ -8,7 +8,7 @@ from collections import namedtuple
 from typing import List
 
 EventReference = namedtuple("EventReference", ["event_name", "file_name", "config_section", "class_label",
-                                               "desc", "args"])
+                                               "desc", "args", "config_attribute"])
 
 
 class EventReferenceParser:
@@ -44,10 +44,15 @@ class EventReferenceParser:
                     event_dict = self._parse_string(y)
                     if not event_dict:
                         continue
-                    event_list.append(EventReference(event_name=event_dict["event"], file_name=file_name,
-                                                     config_section=config_section, class_label=class_label,
-                                                     desc=event_dict["desc"],
-                                                     args=self._parse_args(event_dict["args"])))
+
+                    event_list.append(EventReference(
+                        event_name=event_dict["event"], file_name=file_name,
+                        config_section=config_section if not event_dict["config_section"] else
+                        event_dict["config_section"],
+                        class_label=class_label if not event_dict["class_label"] else event_dict["class_label"],
+                        desc=event_dict["desc"],
+                        args=self._parse_args(event_dict["args"]),
+                        config_attribute=event_dict["config_attribute"]))
 
         return event_list
 
@@ -64,7 +69,8 @@ class EventReferenceParser:
             pass
 
         final_dict = self._string_to_args_dict(string, ['event', 'desc',
-                                                        'args'])
+                                                        'args', 'config_attribute',
+                                                        'config_section', 'class_label'])
 
         if not final_dict['desc']:
             # not an events docstring
