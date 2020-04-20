@@ -311,8 +311,8 @@ class Shot(EnableDisableMixin, ModeDevice):
 
         self.machine.events.post('{}_hit'.format(self.name),
                                  profile=self.profile_name, state=state, advancing=advancing)
-        '''event: (shot)_hit
-        desc: The shot called (shot) was just hit.
+        '''event: (name)_hit
+        desc: The shot called (name) was just hit.
 
         Note that there are four events posted when a shot is hit, each
         with variants of the shot name, profile, and current state,
@@ -324,8 +324,8 @@ class Shot(EnableDisableMixin, ModeDevice):
 
         self.machine.events.post('{}_{}_hit'.format(self.name, self.profile_name),
                                  profile=self.profile_name, state=state, advancing=advancing)
-        '''event: (shot)_(profile)_hit
-        desc: The shot called (shot) was just hit with the profile (profile)
+        '''event: (name)_(profile)_hit
+        desc: The shot called (name) was just hit with the profile (profile)
         active.
 
         Note that there are four events posted when a shot is hit, each
@@ -343,8 +343,8 @@ class Shot(EnableDisableMixin, ModeDevice):
 
         self.machine.events.post('{}_{}_{}_hit'.format(self.name, self.profile_name, state),
                                  profile=self.profile_name, state=state, advancing=advancing)
-        '''event: (shot)_(profile)_(state)_hit
-        desc: The shot called (shot) was just hit with the profile (profile)
+        '''event: (name)_(profile)_(state)_hit
+        desc: The shot called (name) was just hit with the profile (profile)
         active in the state (state).
 
         Note that there are four events posted when a shot is hit, each
@@ -362,8 +362,8 @@ class Shot(EnableDisableMixin, ModeDevice):
 
         self.machine.events.post('{}_{}_hit'.format(self.name, state),
                                  profile=self.profile_name, state=state, advancing=advancing)
-        '''event: (shot)_(state)_hit
-        desc: The shot called (shot) was just hit while in the profile (state).
+        '''event: (name)_(state)_hit
+        desc: The shot called (name) was just hit while in the profile (state).
 
         Note that there are four events posted when a shot is hit, each
         with variants of the shot name, profile, and current state,

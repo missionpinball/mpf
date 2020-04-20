@@ -171,8 +171,8 @@ class SequenceShot(SystemWideDevice, ModeDevice):
     def _completed(self):
         """Post sequence complete event."""
         self.machine.events.post("{}_hit".format(self.name))
-        '''event: (sequence_shot)__hit
-        desc: The sequence_shot called (sequence_shot) was just completed.
+        '''event: (name)_hit
+        desc: The sequence_shot called (name) was just completed.
         '''
 
     @event_handler(0)

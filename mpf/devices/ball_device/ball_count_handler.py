@@ -59,6 +59,8 @@ class BallCountHandler(BallDeviceStateHandler):
 
         self.machine.events.post("balldevice_{}_ball_count_changed".format(self.ball_device.name), balls=count)
         '''event: balldevice_(name)_ball_count_changed
+        config_section: ball_devices
+        class_label: ball_device
 
         desc: The ball count for device (name) just changed.
 

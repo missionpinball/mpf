@@ -282,6 +282,8 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 await self._failed_eject(eject_request, eject_try, False)
                 self.machine.events.post("balldevice_{}_broken".format(self.ball_device.name))
                 '''event: balldevice_(name)_broken
+                config_section: ball_devices
+                class_label: ball_device
 
                 desc: The ball device called "name" is broken and will no longer operate.
                 '''
@@ -299,6 +301,8 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             mechanical_eject=eject_request.mechanical,
             num_attempts=eject_try)
         '''event: balldevice_(name)_ball_eject_attempt
+        config_section: ball_devices
+        class_label: ball_device
 
         desc: The ball device called "name" is attempting to eject a ball (or
         balls). This is a queue event. The eject will not actually be attempted
@@ -321,6 +325,9 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             retry=retry,
             num_attempts=eject_try)
         '''event: balldevice_(name)_ball_eject_failed
+        config_section: ball_devices
+        class_label: ball_device
+
         desc: A ball (or balls) has failed to eject from the device (name).
         args:
             target: The target device that was supposed to receive the ejected
@@ -340,6 +347,8 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             mechanical_eject=eject_request.mechanical,
             num_attempts=eject_try)
         '''event: balldevice_(name)_ejecting_ball
+        config_section: ball_devices
+        class_label: ball_device
 
         desc: The ball device called "name" is ejecting a ball right now.
 
@@ -527,6 +536,9 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                                              balls=1,
                                              target=eject_request.target)
         '''event: balldevice_(name)_ball_eject_success
+        config_section: ball_devices
+        class_label: ball_device
+
         desc: One or more balls has successfully ejected from the device
             (name).
         args:

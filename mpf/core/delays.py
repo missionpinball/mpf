@@ -2,7 +2,7 @@
 
 import uuid
 from functools import partial
-from typing import Any, Callable, Dict, Tuple
+from typing import Any, Callable, Dict, Tuple, Union
 from mpf.core.mpf_controller import MpfController
 
 MYPY = False
@@ -118,7 +118,7 @@ class DelayManager(MpfController):
         """
         return delay in self.delays
 
-    def reset(self, ms: int, callback: Callable[..., None], name: str,
+    def reset(self, ms: int, callback: Callable[..., None], name: Union[str, uuid.UUID],
               **kwargs) -> str:
         """Reset a delay.
 

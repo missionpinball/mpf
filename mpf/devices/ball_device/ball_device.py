@@ -230,10 +230,10 @@ class BallDevice(SystemWideDevice):
         await self.machine.events.post_async('balldevice_captured_from_{}'.format(
             self.config['captures_from'].name),
             balls=1)
-        '''event: balldevice_captured_from_(device)
+        '''event: balldevice_captured_from_(captures_from)
 
         desc: A ball device has just captured a ball from the device called
-        (device)
+        (captures_from)
 
         args:
         balls: The number of balls that were captured.

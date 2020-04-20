@@ -412,7 +412,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             self.machine.variables.set_machine_var("lisy_hardware", type_str)
             '''machine_var: lisy_hardware
 
-            desc: Connected LISY hardware. Either LISY1 or LISY80.
+            desc: Connected LISY hardware (I.e. LISY1, LISY80 or APC).
             '''
             self.machine.variables.set_machine_var("lisy_version", lisy_version)
             '''machine_var: lisy_version
