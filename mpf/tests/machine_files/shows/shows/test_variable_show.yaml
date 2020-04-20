@@ -1,0 +1,11 @@
+#show_version=5
+- time: 0
+  variables:
+    foo:
+      action: set_machine
+      int: 0
+- time: 1
+  variables:
+    foo:
+      action: add_machine
+      int: 1

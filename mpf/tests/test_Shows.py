@@ -873,3 +873,14 @@ class TestShows(MpfTestCase):
         self.post_event_with_params("play_show_with_condition_in_show", blue=True)
         self.advance_time_and_run()
         self.assertLightColor("led_01", "blue")
+
+    # Regression test for bug in standalone variable shows
+    def test_variable_show(self):
+        variable_show = self.machine.shows['test_variable_show'].play()
+        self.advance_time_and_run(.1)
+        # check that machine variable was set
+        self.assertEqual(self.machine.variables.get_machine_var('foo'), 0)
+        # advance to next show step
+        self.advance_time_and_run()
+        # check that machine variable was incremented
+        self.assertEqual(self.machine.variables.get_machine_var('foo'), 1)
