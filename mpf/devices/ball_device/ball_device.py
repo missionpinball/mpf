@@ -525,7 +525,7 @@ class BallDevice(SystemWideDevice):
                       " %s", abs(balls), self.config['mechanical_eject'])
 
         await self.machine.events.post_async('balldevice_{}_ball_missing'.format(self.name), balls=abs(balls))
-        '''event: balldevice_(name)_ball_missing.
+        '''event: balldevice_(name)_ball_missing
         desc: The device (name) is missing a ball. Note this event is
         posted in addition to the generic *balldevice_ball_missing* event.
         args:

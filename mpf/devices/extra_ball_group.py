@@ -194,7 +194,7 @@ class ExtraBallGroup(SystemWideDevice):
             extra ball from their previous turn. Therefore this event is a
             good event to use for your award slides and shows when a player
             lights the extra ball, because you don't want to use
-            :doc:`extra_ball_group_name_lit` because that is also posted when
+            :doc:`extra_ball_group_extra_ball_group_lit` because that is also posted when
             the player's turn starts and you don't want the award show to play
             again when they're starting their turn.
             '''
@@ -218,7 +218,7 @@ class ExtraBallGroup(SystemWideDevice):
         Note that this event is posted if an extra ball is lit during play
         and also when a player's turn starts if they have a lit extra ball.
 
-        See also the :doc:`extra_ball_name_lit` for a similar event that
+        See also the :doc:`extra_ball_extra_ball_lit` for a similar event that
         is only posted when an extra ball is lit during play, and not
         if the player starts their turn with the extra ball lit.
         '''
