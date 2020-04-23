@@ -384,7 +384,10 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         for switch, state in enumerate(states):
             # Note: The P3-ROC will return a state of "3" for switches from non-
             # connected SW-16 boards, so that's why we only check for "1" below
-            result[switch] = bool(state)
+            if state == 1:
+                result[switch] = True
+            else:
+                result[switch] = False
 
         # assume 0 for all bursts initially
         for switch in self._burst_switches:
