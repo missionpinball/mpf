@@ -39,8 +39,8 @@ class MockApigpio():
             pass
 
         async def read_bank_1(self):
-            ## all switches read 1 which means they are open because of the pull-up
-            return 0xFF
+            ## only switch 1 is active
+            return 0x02
 
         async def set_pull_up_down(self, gpio, pud):
             self.pull_ups[gpio] = pud
@@ -114,6 +114,12 @@ class TestRpi(MpfTestCase):
                          self.pi.pull_ups)
 
         # test switches
+        self.assertSwitchState("s_test", True)
+        self.assertSwitchState("s_test2", False)
+
+        self.pi.callbacks[1](gpio=1, level=0, tick=123)
+        self.machine_run()
+
         self.assertSwitchState("s_test", False)
         self.assertSwitchState("s_test2", False)
 
