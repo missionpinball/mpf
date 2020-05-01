@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import tempfile
@@ -21,6 +22,7 @@ class MpfDocTestCaseBase(MockConfigPlayers, MpfGameTestCase):
         self._config_string = config_string
         self._base_dir = base_dir
         self._simulation = simulation
+        self.log = logging.getLogger("TEST")
 
     def setUp(self):
         machine_config, mode_configs, show_configs, assets, self.tests = self.prepare_config(self._config_string)
@@ -183,6 +185,7 @@ class MpfDocTestCaseBase(MockConfigPlayers, MpfGameTestCase):
             method = getattr(self, "command_" + command)
             if not method:
                 raise AssertionError("Unknown command {} in line {}".format(command, line_no))
+            self.log.info("%s", line)
             try:
                 method(*parts)
             except AssertionError as e:
