@@ -140,7 +140,11 @@ class OscPlatform(LightsPlatform, SwitchPlatform):
         params = []
         for key, value in kwargs.items():
             params.append(key)
-            params.append(value)
+            # OSC supports int, float and string only
+            if isinstance(value, (int, str, float)):
+                params.append(value)
+            else:
+                params.append(str(value))
         self.client.send_message("/event/{}".format(_event_name), params)
 
     def _handle_event(self, address, *args):
