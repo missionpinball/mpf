@@ -594,6 +594,8 @@ game:
     add_player_event: single|event_handler|None
     allow_start_with_loose_balls: single|bool|false
     allow_start_with_ball_in_drain: single|bool|false
+    end_game_event: single|event_handler|end_game
+    end_ball_event: single|event_handler|end_ball
 hardware:
     __valid_in__: machine
     __type__: config
