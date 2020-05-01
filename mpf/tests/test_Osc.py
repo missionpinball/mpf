@@ -1,7 +1,8 @@
-from mpf.tests.MpfTestCase import MpfTestCase, MagicMock, patch, call
+from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
+from mpf.tests.MpfTestCase import MagicMock, patch, call
 
 
-class TestOsc(MpfTestCase):
+class TestOsc(MpfFakeGameTestCase):
 
     def get_config_file(self):
         return 'config.yaml'
@@ -110,3 +111,11 @@ class TestOsc(MpfTestCase):
         self.machine.default_platform._handle_event("/event/test_event", "a", 200, "b", "asd")
         self.advance_time_and_run(.1)
         self.assertEventCalledWith("test_event", a=200, b="asd")
+
+        self.start_game()
+        self.advance_time_and_run()
+
+        self.assertTrue(
+            call('/event/player_turn_started', ['number', 1, 'player', '<Player 1>']) in self.client_instance.send_message.call_args_list or
+            call('/event/player_turn_started', ['player', '<Player 1>', 'number', 1]) in self.client_instance.send_message.call_args_list
+        )

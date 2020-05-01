@@ -10,6 +10,7 @@ osc:
   events_to_send:
     - my_test_event
     - my_other_test_event
+    - player_turn_started
 
 lights:
   test_light1:
