@@ -40,7 +40,7 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEventCalled("multiball_lock_lock_default_locked_ball")
         self.assertEqual({'total_balls_locked': 2},
                          self._last_event_kwargs["multiball_lock_lock_default_locked_ball"])
-        self.assertEventCalled("multiball_lock_lock_default_full")
+        self.assertEventCalledWith("multiball_lock_lock_default_full", balls=2)
 
     def test_filling_three(self):
         self.fill_troughs()
@@ -80,7 +80,7 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEventCalled("multiball_lock_lock_triple_locked_ball")
         self.assertEqual({'total_balls_locked': 3},
                          self._last_event_kwargs["multiball_lock_lock_triple_locked_ball"])
-        self.assertEventCalled("multiball_lock_lock_triple_full")
+        self.assertEventCalledWith("multiball_lock_lock_triple_full", balls=3)
 
     def test_placeholder_events(self):
         self.fill_troughs()
@@ -412,7 +412,7 @@ class TestMultiballLockCountingStrategies(MpfGameTestCase):
         self.assertEqual(1, self.machine.playfield.balls)
         self.assertEqual(2, lock.locked_balls)
         self.assertEventCalledWith("multiball_lock_lock_physical_only_locked_ball", total_balls_locked=2)
-        self.assertEventCalled("multiball_lock_lock_physical_only_full")
+        self.assertEventCalledWith("multiball_lock_lock_physical_only_full", balls=2)
 
         # player change
         self.drain_one_ball()
