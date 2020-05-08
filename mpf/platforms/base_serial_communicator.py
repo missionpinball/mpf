@@ -137,7 +137,7 @@ class BaseSerialCommunicator:
             msg: Byes of the message you want to send.
         """
         if self.debug:
-            self.log.debug("Sending: %s (%s)", msg, "".join(" 0x%02x" % b for b in msg))
+            self.log.debug("%s sending: %s (%s)", self, msg, "".join(" 0x%02x" % b for b in msg))
         self.writer.write(msg)
 
     def _parse_msg(self, msg):

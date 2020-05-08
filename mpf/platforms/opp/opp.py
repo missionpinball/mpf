@@ -232,7 +232,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             return "No connection to any CPU board."
 
         infos = "Connected CPUs:\n"
-        for connection in self.serial_connections:
+        for connection in sorted(self.serial_connections, key=lambda x: x.chain_serial):
             infos += " - Port: {} at {} baud\n".format(connection.port, connection.baud)
             for board_id, board_firmware in self.gen2_addr_arr[connection.chain_serial].items():
                 if board_firmware is None:
@@ -277,6 +277,9 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         for chain_serial, versions in self.gen2_addr_arr.items():
             for chain_id, version in versions.items():
+                if not version:
+                    self.raise_config_error("Could not read version for board {}-{}.".format(chain_serial, chain_id),
+                                            16)
                 if self.min_version[chain_serial] != version:
                     self.raise_config_error("Version mismatch. Board {}-{} has version {:d}.{:d}.{:d}.{:d} which is not"
                                             " the minimal version "
@@ -843,6 +846,10 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     async def _poll_sender(self, chain_serial):
         """Poll switches."""
+        if len(self.read_input_msg[chain_serial]) <= 1:
+            # there is no point in polling without switches
+            return
+
         while True:
             # wait for previous poll response
             timeout = 1 / self.config['poll_hz'] * 25
