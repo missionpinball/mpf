@@ -2,6 +2,7 @@
 import unittest
 from unittest.mock import MagicMock
 
+from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 from mpf.core.placeholder_manager import PlaceholderManager, BoolTemplate, TextTemplate
@@ -16,6 +17,11 @@ class TestPlaceholderManager(unittest.TestCase):
         # test mod operator
         template = p.build_int_template("a % 7", None)
         self.assertEqual(3, template.evaluate({"a": 10}))
+
+        # test "true" and "false"
+        template = p.build_int_template("a == true", None)
+        with self.assertRaises(ConfigFileError):
+            self.assertFalse(False, template.evaluate({"a": True}))
 
     def test_conditionals(self):
         mock_machine = MagicMock()

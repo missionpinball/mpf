@@ -692,6 +692,11 @@ class BasePlaceholderManager(MpfController):
             raise TypeError(type(node))
 
     def _eval_name(self, node, variables, subscribe):
+        if node.id in ("true", "false"):
+            self.raise_config_error("Placeholder use Python syntax. Use True "
+                                    "and False instead of true and false.", 1,
+                                    context=node.id)
+
         var = self.get_global_parameters(node.id)
         if var:
             if subscribe:
