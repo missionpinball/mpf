@@ -86,10 +86,19 @@ class ProcProcess:
         while not self.proc:
             try:
                 self.proc = pinproc.PinPROC(machine_type)
-                self.proc.reset(1)
-            except IOError:     # pragma: no cover
-                print("Retrying...")
+            except IOError as e:     # pragma: no cover
+                self.log.warning("Failed to instantiate pinproc.PinPROC(%s): %s", machine_type, e)
+                self.log.info("Will retry creating PinPROC in 1s.")
                 time.sleep(1)
+                continue
+
+            try:
+                self.proc.reset(1)
+            except IOError as e:  # pragma: no cover
+                self.log.warning("Failed to reset P/P3-Roc: %s", e)
+                self.log.info("Will retry creating PinPROC and resetting it in 1s.")
+                time.sleep(1)
+                continue
 
     def start_proc_process(self, machine_type, loop, trace, log):
         """Run the pinproc communication."""
