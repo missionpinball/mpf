@@ -1755,6 +1755,7 @@ transitions:
         mode: single|enum(push,pop)|push
     wipe:
         type: single|str|
+        duration: single|secs|1
     fade_back:
         type: single|str|
         duration: single|secs|2
