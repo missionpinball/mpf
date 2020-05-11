@@ -333,7 +333,7 @@ class ConfigValidator:
 
                         path_string = ':'.join(path_list)
 
-                        if self.machine.config['mpf']['allow_invalid_config_sections']:
+                        if "mpf" in self.machine.config and self.machine.config['mpf']['allow_invalid_config_sections']:
 
                             self.log.warning('Unrecognized config setting. "%s" is '
                                              'not a valid setting name.',
