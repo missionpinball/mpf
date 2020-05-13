@@ -233,7 +233,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         infos = "Connected CPUs:\n"
         for connection in sorted(self.serial_connections, key=lambda x: x.chain_serial):
-            infos += " - Port: {} at {} baud\n".format(connection.port, connection.baud)
+            infos += " - Port: {} at {} baud. Chain Serial: {}\n".format(connection.port, connection.baud,
+                                                                         connection.chain_serial)
             for board_id, board_firmware in self.gen2_addr_arr[connection.chain_serial].items():
                 if board_firmware is None:
                     infos += " -> Board: 0x{:02x} Firmware: broken\n".format(board_id)
@@ -242,25 +243,25 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         infos += "\nIncand cards:\n"
         for incand in self.opp_incands:
-            infos += " - CPU: {} Board: 0x{:02x} Card: {} Numbers: {}\n".format(incand.chain_serial, incand.addr,
-                                                                                incand.card_num,
-                                                                                self._get_numbers(incand.mask))
+            infos += " - Chain: {} Board: 0x{:02x} Card: {} Numbers: {}\n".format(incand.chain_serial, incand.addr,
+                                                                                  incand.card_num,
+                                                                                  self._get_numbers(incand.mask))
 
         infos += "\nInput cards:\n"
         for inputs in self.opp_inputs:
-            infos += " - CPU: {} Board: 0x{:02x} Card: {} Numbers: {}\n".format(inputs.chain_serial, inputs.addr,
-                                                                                inputs.card_num,
-                                                                                self._get_numbers(inputs.mask))
+            infos += " - Chain: {} Board: 0x{:02x} Card: {} Numbers: {}\n".format(inputs.chain_serial, inputs.addr,
+                                                                                  inputs.card_num,
+                                                                                  self._get_numbers(inputs.mask))
 
         infos += "\nSolenoid cards:\n"
         for outputs in self.opp_solenoid:
-            infos += " - CPU: {} Board: 0x{:02x} Card: {} Numbers: {}\n".format(outputs.chain_serial, outputs.addr,
-                                                                                outputs.card_num,
-                                                                                self._get_numbers(outputs.mask))
+            infos += " - Chain: {} Board: 0x{:02x} Card: {} Numbers: {}\n".format(outputs.chain_serial, outputs.addr,
+                                                                                  outputs.card_num,
+                                                                                  self._get_numbers(outputs.mask))
 
         infos += "\nLEDs:\n"
         for leds in self.opp_neopixels:
-            infos += " - CPU: {} Board: 0x{:02x} Card: {}\n".format(leds.chain_serial, leds.addr, leds.card_num)
+            infos += " - Chain: {} Board: 0x{:02x} Card: {}\n".format(leds.chain_serial, leds.addr, leds.card_num)
 
         return infos
 
@@ -270,8 +271,15 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         This process will cause the OPPSerialCommunicator to figure out which chains they've connected to
         and to register themselves.
         """
+        port_chain_serial_map = {v: k for k, v in self.config['chains'].items()}
         for port in self.config['ports']:
-            comm = OPPSerialCommunicator(platform=self, port=port, baud=self.config['baud'])
+            # overwrite serial if defined for port
+            overwrite_chain_serial = port_chain_serial_map.get(port, None)
+            if overwrite_chain_serial is None and len(self.config['ports']) == 1:
+                overwrite_chain_serial = port
+
+            comm = OPPSerialCommunicator(platform=self, port=port, baud=self.config['baud'],
+                                         overwrite_serial=overwrite_chain_serial)
             await comm.connect()
             self.serial_connections.add(comm)
 
@@ -721,23 +729,21 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         try:
             chain_str, card_str, number_str = input_str.split("-")
         except ValueError:
-            chain_str = '0'
+            if len(self.serial_connections) > 1:
+                self.raise_config_error("You need to specify a chain as chain-card-number in: {}".format(input_str), 17)
+            else:
+                chain_str = list(self.serial_connections)[0].chain_serial
             try:
                 card_str, number_str = input_str.split("-")
             except ValueError:
                 card_str = '0'
                 number_str = input_str
 
-        if chain_str not in self.config['chains']:
-            if len(self.config['ports']) > 1:
-                self.raise_config_error("Chain {} is unconfigured".format(chain_str), 3)
-            else:
-                # when there is only one port, use only available chain
-                chain_serial = list(self.serial_connections)[0].chain_serial
-        else:
-            chain_serial = self.config['chains'][chain_str]
+        if chain_str not in self.opp_connection:
+            self.raise_config_error("Chain {} does not exist. Existing chains: {}".format(
+                chain_str, list(self.opp_connection.keys())), 3)
 
-        return chain_serial + "-" + card_str + "-" + number_str
+        return chain_str + "-" + card_str + "-" + number_str
 
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Configure a driver.

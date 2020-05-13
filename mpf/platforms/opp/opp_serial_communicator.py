@@ -21,14 +21,35 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
     __slots__ = ["part_msg", "chain_serial", "_lost_synch"]
 
     # pylint: disable=too-many-arguments
-    def __init__(self, platform: "OppHardwarePlatform", port, baud) -> None:
+    def __init__(self, platform: "OppHardwarePlatform", port, baud, overwrite_serial) -> None:
         """Initialise Serial Connection to OPP Hardware."""
         self.part_msg = b""
-        self.chain_serial = None    # type: str
+        self.chain_serial = overwrite_serial    # type: str
         self._lost_synch = False
 
         super().__init__(platform, port, baud)
         self.platform = platform    # hint the right type
+
+    async def _read_id(self):
+        msg = bytearray([0x20, 0x00, 0x00, 0x00, 0x00, 0x00])
+        msg.extend(OppRs232Intf.calc_crc8_whole_msg(msg))
+        msg.extend(OppRs232Intf.EOM_CMD)
+        self.send(bytes(msg))
+
+        resp = await self.read(8)
+        if resp[7] != ord(OppRs232Intf.EOM_CMD):
+            raise AssertionError("Failed to read ID from {}. Missing EOM.".format(self.port))
+
+        if ord(OppRs232Intf.calc_crc8_whole_msg(resp[0:6])) != resp[6]:
+            raise AssertionError("Failed to read ID from {}. Wrong CRC.".format(self.port))
+
+        if resp[0] != 0x20:
+            raise AssertionError("Failed to read ID from {}. Wrong Board ID.".format(self.port))
+
+        if resp[1] != 0:
+            raise AssertionError("Failed to read ID from {}. Wrong CMD.".format(self.port))
+
+        return (resp[2] << 24) + (resp[3] << 16) + (resp[4] << 8) + resp[5]
 
     async def _identify_connection(self):
         """Identify which processor this serial connection is talking to."""
@@ -52,8 +73,15 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
                 raise AssertionError('No response from OPP hardware: {}'.format(self.port))
 
         self.log.debug("Got ID response: %s", "".join(" 0x%02x" % b for b in resp))
-        # TODO: implement real ID here
-        self.chain_serial = self.port
+        if self.chain_serial is None:
+            # get ID from hardware if it is not overwritten
+            self.chain_serial = str(await self._read_id())
+
+        if self.chain_serial in self.platform.opp_connection:
+            raise AssertionError("Duplicate chain serial {} on ports: {} and {}. Each OPP board has to have a "
+                                 "unique ID. You can overwrite this using the chains "
+                                 "setting.".format(self.chain_serial, self.port,
+                                                   self.platform.opp_connection[self.chain_serial]))
 
         # Send inventory command to figure out number of cards
         msg = bytearray()

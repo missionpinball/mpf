@@ -142,6 +142,7 @@ class TestOPPStm32(MpfTestCase):
             self._crc_message(b'\x20\x0d\x00\x00\x00\x00'): self._crc_message(board1_config), # get config
             self._crc_message(b'\x20\x02\x00\x00\x00\x00'): self._crc_message(board1_version),   # get version
             self._crc_message(b'\x20\x13\x07\x00\x00\x00\x00', False): False,  # turn off all incands
+            self._crc_message(b'\x20\x00\x00\x00\x00\x00'): self._crc_message(b'\x20\x00\x01\x23\x45\x67')
         }
         self.serialMocks["com1"].permanent_commands = {
             b'\xff': b'\xff',
@@ -153,6 +154,7 @@ class TestOPPStm32(MpfTestCase):
             self._crc_message(b'\x20\x0d\x00\x00\x00\x00'): self._crc_message(board2_config), # get config
             self._crc_message(b'\x20\x02\x00\x00\x00\x00'): self._crc_message(board2_version),   # get version
             self._crc_message(b'\x20\x13\x07\x00\x00\x00\x00', False): False,  # turn off all incands
+            self._crc_message(b'\x20\x00\x00\x00\x00\x00'): self._crc_message(b'\x20\x00\x00\x00\x00\x02')
         }
         self.serialMocks["com2"].permanent_commands = {
             b'\xff': b'\xff',
@@ -163,7 +165,8 @@ class TestOPPStm32(MpfTestCase):
         assert isinstance(self.machine.default_platform, OppHardwarePlatform)
 
         self._wait_for_processing()
-        self.assertEqual(0x00020002, self.machine.default_platform.min_version["com1"])
+        self.assertEqual(0x00020002, self.machine.default_platform.min_version["19088743"])
+        self.assertEqual(0x00020002, self.machine.default_platform.min_version["2"])
 
         self.assertFalse(self.serialMocks["com1"].expected_commands)
         self.assertFalse(self.serialMocks["com2"].expected_commands)
@@ -171,20 +174,20 @@ class TestOPPStm32(MpfTestCase):
 
         # test hardware scan
         info_str = """Connected CPUs:
- - Port: com1 at 115200 baud
+ - Port: com1 at 115200 baud. Chain Serial: 19088743
  -> Board: 0x20 Firmware: 0x20002
- - Port: com2 at 115200 baud
+ - Port: com2 at 115200 baud. Chain Serial: 2
  -> Board: 0x20 Firmware: 0x20002
 
 Incand cards:
- - CPU: com1 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
- - CPU: com2 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+ - Chain: 19088743 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+ - Chain: 2 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
 
 Input cards:
- - CPU: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15]
+ - Chain: 19088743 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15]
 
 Solenoid cards:
- - CPU: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3]
+ - Chain: 19088743 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3]
 
 LEDs:
 """
@@ -265,29 +268,29 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
 
         # test hardware scan
         info_str = """Connected CPUs:
- - Port: com1 at 115200 baud
+ - Port: com1 at 115200 baud. Chain Serial: com1
  -> Board: 0x20 Firmware: 0x20000
  -> Board: 0x21 Firmware: 0x20000
  -> Board: 0x22 Firmware: 0x20000
  -> Board: 0x23 Firmware: 0x20000
 
 Incand cards:
- - CPU: com1 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
- - CPU: com1 Board: 0x22 Card: 2 Numbers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+ - Chain: com1 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+ - Chain: com1 Board: 0x22 Card: 2 Numbers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
 
 Input cards:
- - CPU: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15]
- - CPU: com1 Board: 0x21 Card: 1 Numbers: [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
- - CPU: com1 Board: 0x23 Card: 3 Numbers: [0, 1, 2, 3, 8, 9, 10, 11]
- - CPU: com1 Board: 0x23 Card: 3 Numbers: [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95]
+ - Chain: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15]
+ - Chain: com1 Board: 0x21 Card: 1 Numbers: [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
+ - Chain: com1 Board: 0x23 Card: 3 Numbers: [0, 1, 2, 3, 8, 9, 10, 11]
+ - Chain: com1 Board: 0x23 Card: 3 Numbers: [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95]
 
 Solenoid cards:
- - CPU: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3]
- - CPU: com1 Board: 0x21 Card: 1 Numbers: [12, 13, 14, 15]
- - CPU: com1 Board: 0x23 Card: 3 Numbers: [0, 1, 2, 3, 4, 5, 6, 7]
+ - Chain: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3]
+ - Chain: com1 Board: 0x21 Card: 1 Numbers: [12, 13, 14, 15]
+ - Chain: com1 Board: 0x23 Card: 3 Numbers: [0, 1, 2, 3, 4, 5, 6, 7]
 
 LEDs:
- - CPU: com1 Board: 0x21 Card: 1
+ - Chain: com1 Board: 0x21 Card: 1
 """
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
@@ -458,23 +461,23 @@ class TestOPP(OPPCommon, MpfTestCase):
         # test hardware scan
         self.maxDiff = 100000
         info_str = """Connected CPUs:
- - Port: com1 at 115200 baud
+ - Port: com1 at 115200 baud. Chain Serial: com1
  -> Board: 0x20 Firmware: 0x10100
  -> Board: 0x21 Firmware: 0x10100
 
 Incand cards:
- - CPU: com1 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+ - Chain: com1 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
 
 Input cards:
- - CPU: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15]
- - CPU: com1 Board: 0x21 Card: 1 Numbers: [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
+ - Chain: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15]
+ - Chain: com1 Board: 0x21 Card: 1 Numbers: [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
 
 Solenoid cards:
- - CPU: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3]
- - CPU: com1 Board: 0x21 Card: 1 Numbers: [12, 13, 14, 15]
+ - Chain: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3]
+ - Chain: com1 Board: 0x21 Card: 1 Numbers: [12, 13, 14, 15]
 
 LEDs:
- - CPU: com1 Board: 0x21 Card: 1
+ - Chain: com1 Board: 0x21 Card: 1
 """
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 

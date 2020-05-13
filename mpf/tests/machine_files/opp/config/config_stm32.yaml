@@ -7,15 +7,12 @@ opp:
     ports: com1, com2
     baud: 115200
     debug: True
-    chains:
-      1: com1
-      2: com2
 
 switches:
     s_test:
-        number: 1-0-0
+        number: 19088743-0-0
     s_test_no_debounce:
-        number: 1-0-1
+        number: 19088743-0-1
         debounce: quick
 
 lights:
