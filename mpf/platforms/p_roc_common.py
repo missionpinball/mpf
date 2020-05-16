@@ -4,6 +4,8 @@ import abc
 import asyncio
 import logging
 
+from mpf.exceptions.runtime_error import MpfRuntimeError
+
 import platform
 import sys
 from threading import Thread
@@ -368,6 +370,10 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
                       "Hardware Board ID: %s",
                       self.version, self.revision, self.hardware_version)
 
+        if self.version < 2 or (self.version == 2 and self.revision < 14):
+            self.log.warning("Consider upgrading the firmware of your P/P3-Roc to at least 2.14. "
+                             "Your version contains known bugs.")
+
         # for unknown reasons we have to postpone this a bit after init
         self.machine.delay.add(100, self._configure_pd_led)
 
@@ -549,6 +555,13 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         """Add a rule to pulse a coil on switch hit for a certain duration and optional with PWM."""
         if coil.pulse_settings.power < 1.0:
             pwm_on, pwm_off = coil.hw_driver.get_pwm_on_off_ms(coil.pulse_settings)
+            if self.version < 2 or (self.version == 2 and self.revision < 14):
+                raise MpfRuntimeError("Your P/P3-Roc firmware contains a known bug with pulsed_patter hardware rules. "
+                                      "Please upgrade the firmware to at least 2.14. "
+                                      "As a workaround you might remove pulse_power from "
+                                      "coil: {}.".format(coil.hw_driver.number),
+                                      1, self.log.name)
+
             self._add_hw_rule(switch, coil,
                               self.pinproc.driver_state_pulsed_patter(coil.hw_driver.state(), pwm_on, pwm_off,
                                                                       coil.pulse_settings.duration, True))
