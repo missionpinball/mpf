@@ -1,7 +1,6 @@
 #config_version=5
 
 mode_settings:
-  keep_multiplier: False
   bonus_entries:
       - event: bonus_ramps
         score: 1000

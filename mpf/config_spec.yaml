@@ -231,7 +231,7 @@ bonus_mode_settings:
     hurry_up_delay_ms: single|ms|500
     hurry_up_event: single|event_handler|flipper_cancel
     end_bonus_event: single|event_handler|None
-    keep_multiplier: single|template_bool|false
+    keep_multiplier: single|template_bool|False
     bonus_entries: list|subconfig(bonus_entries)|
 bonus_entries:
     event: single|event_posted|
