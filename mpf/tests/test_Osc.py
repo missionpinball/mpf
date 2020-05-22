@@ -114,7 +114,6 @@ class TestOsc(MpfFakeGameTestCase):
         self.start_game()
         self.advance_time_and_run()
 
-        self.assertTrue(
-            call('/event/player_turn_started', ['number', 1, 'player', '<Player 1>']) in self.client_instance.send_message.call_args_list or
-            call('/event/player_turn_started', ['player', '<Player 1>', 'number', 1]) in self.client_instance.send_message.call_args_list
-        )
+        self.client_instance.send_message.assert_has_calls([
+            call('/event/player_turn_started', ['number', 1, 'player', '<Player 1>'])
+        ], any_order=True)
