@@ -477,7 +477,7 @@ class RunningShow:
 
     # pylint: disable-msg=too-many-arguments
     # pylint: disable-msg=too-many-locals
-    def __init__(self, machine, show, start_time, start_step, start_running, callback, start_callback, show_config):
+    def __init__(self, machine, show, start_step, start_running, callback, start_time, start_callback, show_config):
         """Initialise an instance of a show."""
         self.machine = machine
         self.show = show
