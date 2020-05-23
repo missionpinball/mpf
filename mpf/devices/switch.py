@@ -76,6 +76,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
         platform = self.machine.get_platform_sections(
             'switches', getattr(config, "platform", None))
+        platform.assert_has_feature("switches")
         config['platform_settings'] = platform.validate_switch_section(
             self, config.get('platform_settings', None))
         self._configure_device_logging(config)
@@ -146,20 +147,45 @@ class Switch(SystemWideDevice, DevicePositionMixin):
             self._create_activation_event(
                 self.machine.config['mpf']['switch_event_active'].replace(
                     '%', self.name), 1)
+            '''event: (name)_active
+            desc: Posted when this switch becomes active.
+            Note that this will only be posted if there is an event handler for it or if debug is set to True on this
+            switch for performance reasons.
+            '''
             self._create_activation_event(
                 self.machine.config['mpf']['switch_event_inactive'].replace(
                     '%', self.name), 0)
+            '''event: (name)_inactive
+            desc: Posted when this switch becomes inactive.
+            Note that this will only be posted if there is an event handler for it or if debug is set to True on this
+            switch for performance reasons.
+            '''
 
         for tag in self.tags:
             self._create_activation_event(
                 self.machine.config['mpf']['switch_tag_event'].replace(
                     '%', tag), 1)
+            '''event: sw_(tag)
+            desc: Posted when a switch with this tag becomes active.
+            Note that this will only be posted if there is an event handler for it or if debug is set to True on this
+            switch for performance reasons.
+            '''
             self._create_activation_event(
                 self.machine.config['mpf']['switch_tag_event'].replace(
                     '%', tag) + "_active", 1)
+            '''event: sw_(tag)_active
+            desc: Posted when a switch with this tag becomes active.
+            Note that this will only be posted if there is an event handler for it or if debug is set to True on this
+            switch for performance reasons.
+            '''
             self._create_activation_event(
                 self.machine.config['mpf']['switch_tag_event'].replace(
                     '%', tag) + "_inactive", 0)
+            '''event: sw_(tag)_inactive
+            desc: Posted when a switch with this tag becomes inactive.
+            Note that this will only be posted if there is an event handler for it or if debug is set to True on this
+            switch for performance reasons.
+            '''
 
         for event in Util.string_to_event_list(
                 self.config['events_when_activated']):

@@ -35,27 +35,6 @@ coils:
 modes:
   - mode1
 
-assets:
-    file_shows:
-        default:
-            load: preload
-        preload:
-            load: preload
-            test_key: test_value
-        on_demand:
-            load: on_demand
-        mode_start:
-            load: mode_start
-
-file_shows:
-  show_12_new_name:
-    file: show12.yaml
-    test_key: test_value_override12
-  show_13_new_name:
-    file: show13.yaml
-  show3:
-    test_key: test_value_override3
-
 show_pools:
   group1:
     load: preload

@@ -80,8 +80,8 @@ class ShotGroup(ModeDevice):
             "Shot group is complete with state: %s", state)
 
         self.machine.events.post('{}_complete'.format(self.name), state=state)
-        '''event: (shot_group)_complete
-        desc: All the member shots in the shot group called (shot_group)
+        '''event: (name)_complete
+        desc: All the member shots in the shot group called (name)
         are in the same state.
 
         args:
@@ -89,8 +89,8 @@ class ShotGroup(ModeDevice):
         '''
 
         self.machine.events.post('{}_{}_complete'.format(self.name, state))
-        '''event: (shot_group)_(state)_complete
-        desc: All the member shots in the shot group called (shot_group)
+        '''event: (name)_(state)_complete
+        desc: All the member shots in the shot group called (name)
         are in the same state named (state).
         '''
 
@@ -152,13 +152,13 @@ class ShotGroup(ModeDevice):
             self._check_for_complete()
 
         self.machine.events.post(self.name + '_hit')
-        '''event: (shot_group)_hit
-        desc: A member shots in the shot group called (shot_group)
+        '''event: (name)_hit
+        desc: A member shots in the shot group called (name)
         has been hit.
         '''
         self.machine.events.post("{}_{}_hit".format(self.name, kwargs['state']))
-        '''event: (shot_group)_(state)_hit
-        desc: A member shot with state (state) in the shot group (shot_group)
+        '''event: (name)_(state)_hit
+        desc: A member shot with state (state) in the shot group (name)
         has been hit.
         '''
 

@@ -1,4 +1,4 @@
-import os
+from mpf._version import log_url
 
 from mpf.tests.MpfTestCase import MpfTestCase, test_config, test_config_directory
 
@@ -19,8 +19,7 @@ class TestConfigErrors(MpfTestCase):
             self.post_event("play_broken_show")
 
         self.assertEqual(str(e.exception),
-                         'Show {}: Invalid section "light_player:" found in show broken_show. '
-                         'Did you mean "lights:" instead?'.format(os.path.join(self.get_absolute_machine_path(),
-                                                                               "shows", "broken_show.yaml"))
-                         )
+                         'Config File Error in show: Show broken_show: Invalid section "light_player:" '
+                         'found in show broken_show. Did you mean "lights:" instead? Context: broken_show '
+                         'Error Code: CFE-show-3 ({})'.format(log_url.format("CFE-show-3")))
         self.loop.close()

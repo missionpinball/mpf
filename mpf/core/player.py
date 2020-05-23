@@ -170,7 +170,9 @@ class Player:
                                  prev_value=prev_value,
                                  change=change,
                                  player_num=player_num)
-        '''event: player_(var_name)
+        '''event: player_(name)
+        config_section: player_vars
+        class_label: player_var
 
         desc: Posted when simpler types of player variables are added or
         change value.

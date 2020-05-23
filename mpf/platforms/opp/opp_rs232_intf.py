@@ -73,6 +73,7 @@ class OppRs232Intf:
 
     NUM_COLOR_TBL = 32
     NEO_CMD_ON = 0x80
+    SERIAL_LED_CMD_FADE = 0x40
 
     INCAND_ROT_LEFT = b'\x00'
     INCAND_ROT_RIGHT = b'\x01'

@@ -1,0 +1,69 @@
+#config_version=5
+
+hardware:
+    platform: opp
+
+opp:
+    ports: com1, com2
+    baud: 115200
+    debug: True
+
+switches:
+    s_test:
+        number: 19088743-0-0
+    s_test_no_debounce:
+        number: 19088743-0-1
+        debounce: quick
+
+lights:
+  l0-0:
+    number: 2-0-0
+    subtype: matrix
+  l0-1:
+    number: 2-0-1
+    subtype: matrix
+  l0-2:
+    number: 2-0-2
+    subtype: matrix
+  l0-3:
+    number: 2-0-3
+    subtype: matrix
+  l0-4:
+    number: 2-0-4
+    subtype: matrix
+  l0-5:
+    number: 2-0-5
+    subtype: matrix
+  l0-6:
+    number: 2-0-6
+    subtype: matrix
+  l0-7:
+    number: 2-0-7
+    subtype: matrix
+  l1-0:
+    number: 2-0-8
+    subtype: matrix
+  l1-1:
+    number: 2-0-9
+    subtype: matrix
+  l1-2:
+    number: 2-0-10
+    subtype: matrix
+  l1-3:
+    number: 2-0-11
+    subtype: matrix
+  l1-4:
+    number: 2-0-12
+    subtype: matrix
+  l1-5:
+    number: 2-0-13
+    subtype: matrix
+  l1-6:
+    number: 2-0-14
+    subtype: matrix
+  l1-7:
+    number: 2-0-15
+    subtype: matrix
+  l3-7:
+    number: 2-0-31
+    subtype: matrix

@@ -1,16 +1,13 @@
 """Contains show related classes."""
-import tempfile
-import hashlib
-import os
-
 import re
 from collections import namedtuple
 
 from typing import List, Dict, Any, Optional
 
-from mpf.core.assets import Asset, AssetPool
+from mpf.core.assets import AssetPool
 from mpf.core.config_validator import RuntimeToken
 from mpf.core.utility_functions import Util
+from mpf.exceptions.config_file_error import ConfigFileError
 
 __api__ = ['Show', 'RunningShow', 'ShowPool']
 
@@ -30,15 +27,33 @@ class ShowPool(AssetPool):
         """Return str representation."""
         return '<ShowPool: {}>'.format(self.name)
 
-    @property
-    def show(self):
-        """Return the next show."""
-        # TODO: getters should not modify state #348
-        return self.asset
+    # pylint: disable-msg=too-many-arguments
+    def play_with_config(self, show_config: ShowConfig, start_time=None, start_callback=None, stop_callback=None,
+                         start_step=None) -> "RunningShow":
+        """Play asset from pool with config."""
+        return self.asset.play_with_config(show_config, start_time, start_callback, stop_callback, start_step)
+
+    # pylint: disable-msg=too-many-arguments
+    # pylint: disable-msg=too-many-locals
+    def play(self, priority=0, speed=1.0, start_step=1, callback=None,
+             loops=-1, sync_ms=None, manual_advance=False, show_tokens=None,
+             events_when_played=None, events_when_stopped=None,
+             events_when_looped=None, events_when_paused=None,
+             events_when_resumed=None, events_when_advanced=None,
+             events_when_stepped_back=None, events_when_updated=None,
+             events_when_completed=None, start_time=None, start_callback=None) -> "RunningShow":
+        """Play asset from pool."""
+        return self.asset.play(priority, speed, start_step, callback,
+                               loops, sync_ms, manual_advance, show_tokens,
+                               events_when_played, events_when_stopped,
+                               events_when_looped, events_when_paused,
+                               events_when_resumed, events_when_advanced,
+                               events_when_stepped_back, events_when_updated,
+                               events_when_completed, start_time, start_callback)
 
 
 # pylint: disable-msg=too-many-instance-attributes
-class Show(Asset):
+class Show:
 
     """A show which can be instantiated."""
 
@@ -52,17 +67,12 @@ class Show(Asset):
     asset_group_class = ShowPool
 
     __slots__ = ["_autoplay_settings", "tokens", "token_values", "token_keys", "name", "total_steps", "show_steps",
-                 "loaded", "mode", "_step_cache"]
+                 "_step_cache", "machine"]
 
-    # pylint: disable-msg=too-many-arguments
-    def __init__(self, machine, name, file=None, config=None, data=None):
+    def __init__(self, machine, name):
         """Initialise show."""
-        super().__init__(machine, name, file, config)
-
+        self.machine = machine
         self._autoplay_settings = dict()
-
-        self._initialize_asset()
-
         self.tokens = set()
         self.token_values = dict()
         self.token_keys = dict()
@@ -72,22 +82,9 @@ class Show(Asset):
         self.show_steps = None      # type: List[Dict[str, Any]]
         self._step_cache = {}
 
-        if data:
-            self._do_load_show(data=data)
-            self.loaded = True
-
     def __lt__(self, other):
         """Compare two instances."""
         return id(self) < id(other)
-
-    def _initialize_asset(self):
-        self.loaded = False
-        self.show_steps = list()
-        self.mode = None
-
-    def do_load(self):
-        """Load a show from disk."""
-        self._do_load_show(None)
 
     def _get_duration(self, data, step_num, total_step_time):
         total_steps_num = len(data)
@@ -105,32 +102,27 @@ class Show(Asset):
 
                 if total_step_time < 0:     # pragma: no cover
                     self._show_validation_error("Absolute timing in step {} not possible because "
-                                                "there was a duration of -1 before".format(step_num))
+                                                "there was a duration of -1 before".format(step_num), 5)
                 return Util.string_to_secs(next_step_time) - total_step_time
 
             return 1
 
         if step_num < total_steps_num - 1 and 'time' in data[step_num + 1]:     # pragma: no cover
             self._show_validation_error("Found invalid 'time' entry in step after {} which contains a duration. "
-                                        "Remove either of them!".format(step_num))
+                                        "Remove either of them!".format(step_num), 2)
         return Util.string_to_secs(step['duration'])
 
-    def _do_load_show(self, data: Optional[Dict]):
-        # do not use machine or the logger here because it will block
+    def load(self, data: Optional[Dict]):
+        """Load show configuration."""
         self.show_steps = list()
 
-        if not data and self.file:
-            data = self.load_show_from_disk()
-
-        # Pylint complains about the change from dict to list. This is intended and fine.
-        if isinstance(data, dict):
-            data = list(data)
-        elif not isinstance(data, list):    # pragma: no cover
-            raise ValueError("Show {} does not appear to be a valid show "
-                             "config".format(self.file))
+        if not isinstance(data, list):    # pragma: no cover
+            self._show_validation_error("Show {} does not appear to be a valid show "
+                                        "config. It should be a list of steps. Did you forget the hyphen at the start "
+                                        "of your step?".format(self.name), 1)
 
         if not data:    # pragma: no cover
-            self._show_validation_error("Cannot load empty show")
+            self._show_validation_error("Cannot load empty show", 6)
 
         total_step_time = 0
 
@@ -160,7 +152,7 @@ class Show(Asset):
             if duration is False:
                 break
             elif duration == 0:     # pragma: no cover
-                self._show_validation_error("Step {} has 0 duration".format(step_num))
+                self._show_validation_error("Step {} has 0 duration".format(step_num), 7)
 
             # Calculate the time since previous step
             actions['duration'] = duration
@@ -179,17 +171,12 @@ class Show(Asset):
         # so we can know when we're at the end of a show
         self.total_steps = len(self.show_steps)
         if self.total_steps == 0:   # pragma: no cover
-            self._show_validation_error("Show is empty")
+            self._show_validation_error("Show is empty", 2)
 
         self._get_tokens()
 
-    def _show_validation_error(self, msg):  # pragma: no cover
-        if self.file:
-            identifier = self.file
-        else:
-            identifier = self.name
-
-        raise AssertionError("Show {}: {}".format(identifier, msg))
+    def _show_validation_error(self, msg, error_code):  # pragma: no cover
+        raise ConfigFileError("Show {}: {}".format(self.name, msg), error_code, "show", self.name)
 
     def _process_step_actions(self, step, actions):
         if not isinstance(step, dict):
@@ -209,11 +196,8 @@ class Show(Asset):
                             key + "s" == player.show_section:
                         self._show_validation_error('Invalid section "{}:" found in show {}. '
                                                     'Did you mean "{}:" instead?'.format(key, self.name,
-                                                                                         player.show_section))
-                self._show_validation_error('Invalid section "{}:" found in show {}'.format(key, self.name))
-
-    def _do_unload(self):
-        self.show_steps = None
+                                                                                         player.show_section), 3)
+                self._show_validation_error('Invalid section "{}:" found in show {}'.format(key, self.name), 4)
 
     def _get_tokens(self):
         self._walk_show(self.show_steps)
@@ -288,6 +272,7 @@ class Show(Asset):
                 self.token_values[token] = list()
             self.token_values[token].append(path)
 
+    # pylint: disable-msg=too-many-arguments
     def play_with_config(self, show_config: ShowConfig, start_time=None, start_running=True, start_callback=None, stop_callback=None,
                          start_step=None) -> "RunningShow":
         """Play this show with config."""
@@ -301,9 +286,6 @@ class Show(Asset):
                                    callback=stop_callback,
                                    start_callback=start_callback,
                                    show_config=show_config)
-
-        if not self.loaded:
-            self.load(callback=running_show.show_loaded, priority=show_config.priority)
 
         return running_show
 
@@ -409,19 +391,6 @@ class Show(Asset):
 
         return self.play_with_config(show_config, start_time, start_callback, callback, start_step)
 
-    @staticmethod
-    def _get_mpfcache_file_name(file_name):
-        cache_dir = tempfile.gettempdir()
-        path_hash = str(hashlib.md5(bytes(file_name, 'UTF-8')).hexdigest())     # nosec
-        result = os.path.join(cache_dir, path_hash)
-        return result + ".mpf_cache"
-
-    def load_show_from_disk(self):
-        """Load show from disk."""
-        return self.machine.config_processor.load_config_files_with_cache(
-            [self.file], "show", load_from_cache=not self.machine.options['no_load_cache'],
-            store_to_cache=self.machine.options['create_config_cache'])
-
     def get_show_steps_with_token(self, show_tokens):
         """Get show steps and replace additional tokens."""
         if show_tokens and self.tokens:
@@ -504,7 +473,7 @@ class RunningShow:
 
     __slots__ = ["machine", "show", "show_steps", "show_config", "callback", "start_step", "start_running", "start_callback",
                  "_delay_handler", "next_step_index", "current_step_index", "next_step_time", "name", "loops",
-                 "id", "_players", "debug", "_stopped", "_show_loaded", "_total_steps", "context"]
+                 "id", "_players", "debug", "_stopped", "_total_steps", "context"]
 
     # pylint: disable-msg=too-many-arguments
     # pylint: disable-msg=too-many-locals
@@ -512,7 +481,6 @@ class RunningShow:
         """Initialise an instance of a show."""
         self.machine = machine
         self.show = show
-        self.show_steps = None
         self.show_config = show_config
         self.callback = callback
         self.start_step = start_step
@@ -532,18 +500,6 @@ class RunningShow:
         self.debug = False
         self._stopped = False
         self._total_steps = None
-        self._show_loaded = False
-
-        if show.loaded:
-            self.show_loaded()
-
-    def show_loaded(self, show=None):
-        """Handle that a deferred show was loaded.
-
-        Start playing the show as if it started earlier.
-        """
-        del show
-        self._show_loaded = True
         self.show_steps = self.show.get_show_steps_with_token(self.show_config.show_tokens)
         self._start_play()
 
@@ -624,8 +580,6 @@ class RunningShow:
 
     def resume(self):
         """Resume paused show."""
-        if not self._show_loaded:
-            return
         self.next_step_time = self.machine.clock.get_time()
         self._run_next_step(post_events=self.show_config.events_when_resumed)
 
@@ -653,8 +607,7 @@ class RunningShow:
                                      'not a valid step number.'.format(self, show_step))
             self.next_step_index = show_step - 1
 
-        if self._show_loaded:
-            self._run_next_step(post_events=self.show_config.events_when_advanced)
+        self._run_next_step(post_events=self.show_config.events_when_advanced)
 
     def step_back(self, steps=1):
         """Manually step back this show to a previous step."""
@@ -662,8 +615,7 @@ class RunningShow:
 
         self.next_step_index -= steps + 1
 
-        if self._show_loaded:
-            self._run_next_step(post_events=self.show_config.events_when_stepped_back)
+        self._run_next_step(post_events=self.show_config.events_when_stepped_back)
 
     def _start_now(self) -> None:
         """Start playing the show."""

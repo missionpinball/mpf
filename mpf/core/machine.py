@@ -2,7 +2,6 @@
 """Contains the MachineController base class."""
 import asyncio
 import logging
-import os
 import sys
 import threading
 from typing import Any, Callable, Dict, List, Set
@@ -11,7 +10,6 @@ from pkg_resources import iter_entry_points
 
 from mpf._version import __version__
 from mpf.core.clock import ClockBase
-from mpf.core.config_processor import ConfigProcessor
 from mpf.core.config_validator import ConfigValidator
 from mpf.core.data_manager import DataManager
 from mpf.core.delays import DelayManager
@@ -19,6 +17,7 @@ from mpf.core.device_manager import DeviceCollection
 from mpf.core.logging import LogMixin
 from mpf.core.machine_vars import MachineVariables
 from mpf.core.utility_functions import Util
+from mpf.core.config_loader import MpfConfig
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -87,22 +86,22 @@ class MachineController(LogMixin):
     main part that's in charge and makes things happen.
 
     Args:
+        config(MpfConfig): The machine configuration
         options(dict): A dictionary of options built from the command line options
             used to launch mpf.py.
-        machine_path: The root path of this machine_files folder
     """
 
-    __slots__ = ["log", "options", "config_processor", "mpf_path", "machine_path", "_exception", "_boot_holds",
+    __slots__ = ["log", "options", "mpf_path", "machine_path", "_exception", "_boot_holds",
                  "is_init_done", "_done", "monitors", "plugins", "custom_code", "modes", "game",
                  "variables", "thread_stopper", "config", "config_validator",
-                 "machine_config", "delay", "hardware_platforms", "default_platform", "clock",
+                 "delay", "hardware_platforms", "default_platform", "clock",
                  "stop_future", "events", "switch_controller", "mode_controller", "settings", "asset_manager",
                  "bcp", "ball_controller", "show_controller", "placeholder_manager", "device_manager", "auditor",
                  "tui", "service", "switches", "shows", "coils", "ball_devices", "lights", "playfield", "playfields",
-                 "autofires", "_crash_handlers", "__dict__"]
+                 "autofires", "_crash_handlers", "__dict__", "mpf_config"]
 
     # pylint: disable-msg=too-many-statements
-    def __init__(self, mpf_path: str, machine_path: str, options: dict) -> None:
+    def __init__(self, options: dict, config: MpfConfig) -> None:
         """Initialize machine controller."""
         super().__init__()
         self.log = logging.getLogger("Machine")     # type: Logger
@@ -111,14 +110,12 @@ class MachineController(LogMixin):
 
         self.log.info("Command line arguments: %s", options)
         self.options = options
-        self.config_validator = ConfigValidator(self, not options["no_load_cache"], options["create_config_cache"])
-        self.config_processor = ConfigProcessor(self.config_validator)
 
-        self.log.info("MPF path: %s", mpf_path)
-        self.mpf_path = mpf_path
+        self.mpf_path = config.get_mpf_path()
+        self.log.info("MPF path: %s", self.mpf_path)
 
-        self.log.info("Machine path: %s", machine_path)
-        self.machine_path = machine_path
+        self.machine_path = config.get_machine_path()
+        self.log.info("Machine path: %s", self.machine_path)
 
         self.verify_system_info()
         self._exception = None      # type: Any
@@ -134,7 +131,9 @@ class MachineController(LogMixin):
         self.variables = MachineVariables(self)                     # type: MachineVariables
         self.thread_stopper = threading.Event()
 
-        self.config = None      # type: Any
+        self.config = config.get_machine_config()       # type: Any
+        self.mpf_config = config                        # type: MpfConfig
+        self.config_validator = ConfigValidator(self, self.mpf_config.get_config_spec())
 
         # add some type hints
         if MYPY:   # pragma: no cover
@@ -196,8 +195,6 @@ class MachineController(LogMixin):
 
         self._set_machine_path()
 
-        self._load_config()
-        self.machine_config = self.config       # type: Any
         self.configure_logging(
             'Machine',
             self.config['logging']['console']['machine_controller'],
@@ -305,7 +302,6 @@ class MachineController(LogMixin):
     def _init_phases_complete(self, **kwargs) -> None:
         """Cleanup after init and remove boot holds."""
         del kwargs
-        # self.config_validator.unload_config_spec()
         self.events.remove_all_handlers_for_event("init_phase_1")
         self.events.remove_all_handlers_for_event("init_phase_2")
         self.events.remove_all_handlers_for_event("init_phase_3")
@@ -414,22 +410,6 @@ class MachineController(LogMixin):
         """Add the machine folder to sys.path so we can import modules from it."""
         sys.path.insert(0, self.machine_path)
 
-    def _load_config(self) -> None:     # pragma: no cover
-        config_files = [self.options['mpfconfigfile']]
-
-        for num, config_file in enumerate(self.options['configfile']):
-
-            if not (config_file.startswith('/') or
-                    config_file.startswith('\\')):
-
-                config_files.append(os.path.join(self.machine_path, "config", config_file))
-
-            self.log.info("Machine config file #%s: %s", num + 1, config_file)
-
-        self.config = self.config_processor.load_config_files_with_cache(
-            config_files, "machine", load_from_cache=not self.options['no_load_cache'],
-            store_to_cache=self.options['create_config_cache'])
-
     def verify_system_info(self):
         """Dump information about the Python installation to the log.
 
@@ -490,11 +470,7 @@ class MachineController(LogMixin):
         """Load plugins."""
         self.debug_log("Loading plugins...")
 
-        # TODO: This should be cleaned up. Create a Plugins base class and
-        # classmethods to determine if the plugins should be used.
-
-        for plugin in Util.string_to_event_list(
-                self.config['mpf']['plugins']):
+        for plugin in self.config['mpf']['plugins']:
 
             self.debug_log("Loading '%s' plugin", plugin)
 

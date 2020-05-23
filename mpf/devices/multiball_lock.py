@@ -274,7 +274,7 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
             self._physically_remaining_space <= balls_to_lock_physically) or \
                 self.remaining_virtual_space_in_lock == 0:
             self._events[device].append({'event': 'multiball_lock_' + self.name + '_full',
-                                         'balls': self.locked_balls})
+                                         'balls': new_locked_balls})
         '''event: multiball_lock_(name)_full
         desc: The multiball lock device (name) is now full.
         args:

@@ -1,5 +1,5 @@
 """Contains the ShowController base class."""
-from mpf.assets.show import Show, ShowConfig
+from mpf.assets.show import Show, ShowConfig, ShowPool
 from mpf.core.mpf_controller import MpfController
 
 
@@ -27,32 +27,39 @@ class ShowController(MpfController):
         self.show_players = {}
         self._next_show_id = 0
 
-        # Registers Show with the asset manager
-        Show.initialize(self.machine)
-
-        self.machine.events.add_handler('init_phase_3', self._initialize)
-
-        self.machine.mode_controller.register_load_method(
-            self._process_config_shows_section, 'shows')
+        self.machine.events.add_handler('init_phase_1', self._initialize, priority=10)
+        self.machine.events.add_handler('init_phase_3', self._load_shows)
+        self.machine.shows = dict()
 
     def _initialize(self, **kwargs):
         del kwargs
-        if 'shows' in self.machine.config:
-            self._process_config_shows_section(self.machine.config['shows'])
+        show_names = self.machine.mpf_config.get_shows()
+        for show_name in show_names:
+            self.register_show(show_name)
+
+        self._create_show_pool(config=self.machine.config)
+
+        # Create the mode assets
+        for mode in self.machine.modes.values():
+            self._create_show_pool(config=mode.config)
+
+    def _load_shows(self, **kwargs):
+        del kwargs
+        show_names = self.machine.mpf_config.get_shows()
+        for show_name in show_names:
+            show_config = self.machine.mpf_config.get_show_config(show_name)
+            self.machine.shows[show_name].load(show_config)
+
+    def _create_show_pool(self, config):
+        for show_pool_name, show_pool_config in config.get("show_pools", {}).items():
+            self.machine.shows[show_pool_name] = ShowPool(self.machine, show_pool_name, show_pool_config, Show)
 
     def get_next_show_id(self):
         """Return the next show id."""
         self._next_show_id += 1
         return self._next_show_id
 
-    def _process_config_shows_section(self, config, **kwargs):
-        # processes the shows: section of a mode or machine config
-        del kwargs
-
-        for show, settings in config.items():
-            self.register_show(show, settings)
-
-    def register_show(self, name, settings):
+    def register_show(self, name):
         """Register a named show."""
         if name in self.machine.shows:
             raise ValueError("Show named '{}' was just registered, but "
@@ -61,9 +68,7 @@ class ShowController(MpfController):
 
         self.debug_log("Registering show: {}".format(name))
         self.machine.shows[name] = Show(self.machine,
-                                        name=name,
-                                        data=settings,
-                                        file=None)
+                                        name=name)
 
     # pylint: disable-msg=too-many-arguments
     # pylint: disable-msg=too-many-locals

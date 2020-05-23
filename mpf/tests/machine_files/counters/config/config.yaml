@@ -1,0 +1,14 @@
+#config_version=5
+
+lights:
+  l_chest_matrix_green_2:
+    number:
+  l_chest_matrix_green_3:
+    number:
+  l_chest_matrix_green_4:
+    number:
+  l_chest_matrix_green_5:
+    number:
+
+modes:
+  - mode1

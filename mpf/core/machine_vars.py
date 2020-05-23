@@ -191,6 +191,8 @@ class MachineVariables(LogMixin):
                                      prev_value=prev_value,
                                      change=change)
             '''event: machine_var_(name)
+            config_section: machine_vars
+            class_label: machine_var
 
             desc: Posted when a machine variable is added or changes value.
             (Machine variables are like player variables, except they're

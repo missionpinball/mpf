@@ -154,7 +154,8 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
         super().__init__(machine)
 
         if not apigpio:
-            raise AssertionError("To use the Raspberry Pi platform you need to install the apigpio extension.")
+            raise AssertionError("To use the Raspberry Pi platform you need to install the apigpio extension. "
+                                 "Run: pip3 install apigpio-mpf.")
 
         self.pi = None          # type: apigpio.Pi
         # load config
@@ -208,7 +209,7 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
         hw_states = dict()
         curr_bit = 1
         for index in range(32):
-            hw_states[str(index)] = (curr_bit & self._switches) == 0
+            hw_states[str(index)] = bool(curr_bit & self._switches)
             curr_bit <<= 1
         return hw_states
 

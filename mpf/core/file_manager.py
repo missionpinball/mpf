@@ -2,6 +2,8 @@
 
 import logging
 import os
+
+from mpf.file_interfaces.pickle_interface import PickleInterface
 from mpf.file_interfaces.yaml_interface import YamlInterface
 
 MYPY = False
@@ -13,6 +15,8 @@ class FileManager:
 
     """Manages file interfaces."""
 
+    __slots__ = []
+
     log = logging.getLogger('FileManager')
     file_interfaces = dict()    # type: Dict[str, YamlInterface]
     initialized = False
@@ -21,6 +25,7 @@ class FileManager:
     def init(cls):
         """Initialise file interfaces."""
         cls.file_interfaces[".yaml"] = YamlInterface()
+        cls.file_interfaces[".bin"] = PickleInterface()
 
         FileManager.initialized = True
 

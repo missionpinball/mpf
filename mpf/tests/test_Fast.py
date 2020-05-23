@@ -192,6 +192,7 @@ class TestFast(MpfTestCase):
         }
 
         super().setUp()
+        self.advance_time_and_run()
         self.assertFalse(self.net_cpu.expected_commands)
         self.assertFalse(self.rgb_cpu.expected_commands)
         self.assertFalse(self.dmd_cpu.expected_commands)

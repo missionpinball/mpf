@@ -230,10 +230,10 @@ class BallDevice(SystemWideDevice):
         await self.machine.events.post_async('balldevice_captured_from_{}'.format(
             self.config['captures_from'].name),
             balls=1)
-        '''event: balldevice_captured_from_(device)
+        '''event: balldevice_captured_from_(captures_from)
 
         desc: A ball device has just captured a ball from the device called
-        (device)
+        (captures_from)
 
         args:
         balls: The number of balls that were captured.
@@ -525,7 +525,7 @@ class BallDevice(SystemWideDevice):
                       " %s", abs(balls), self.config['mechanical_eject'])
 
         await self.machine.events.post_async('balldevice_{}_ball_missing'.format(self.name), balls=abs(balls))
-        '''event: balldevice_(name)_ball_missing.
+        '''event: balldevice_(name)_ball_missing
         desc: The device (name) is missing a ball. Note this event is
         posted in addition to the generic *balldevice_ball_missing* event.
         args:

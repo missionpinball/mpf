@@ -1,4 +1,5 @@
 import copy
+import logging
 
 from mpf.platforms.opp.opp import OppHardwarePlatform
 from unittest.mock import MagicMock
@@ -86,6 +87,122 @@ class OPPCommon(MpfTestCase):
             self.advance_time_and_run(.01)
 
 
+class TestOPPStm32(MpfTestCase):
+
+    def __init__(self, methodName):
+        super().__init__(methodName)
+        self.expected_duration = 2
+        self.serialMocks = {}
+
+    def get_machine_path(self):
+        return 'tests/machine_files/opp/'
+
+    def _crc_message(self, msg, term=True):
+        crc_msg = msg + OppRs232Intf.calc_crc8_part_msg(msg, 0, len(msg))
+        if term:
+            crc_msg += b'\xff'
+        return crc_msg
+
+    def _mock_loop(self):
+        self.clock.mock_serial("com1", self.serialMocks["com1"])
+        self.clock.mock_serial("com2", self.serialMocks["com2"])
+
+    def tearDown(self):
+        for port, mock in self.serialMocks.items():
+            self.assertFalse(mock.crashed, "Mock {} crashed".format(port))
+        super().tearDown()
+
+    def get_platform(self):
+        return False
+
+    def _wait_for_processing(self):
+        start = time.time()
+        while sum([len(mock.expected_commands) for mock in self.serialMocks.values()]) and \
+                not sum([mock.crashed for mock in self.serialMocks.values()]) and time.time() < start + 10:
+            self.advance_time_and_run(.01)
+
+    def get_config_file(self):
+        return 'config_stm32.yaml'
+
+    def setUp(self):
+        self.expected_duration = 1.5
+        opp.serial_imported = True
+        opp.serial = MagicMock()
+        self.serialMocks["com1"] = MockOppSocket()
+        self.serialMocks["com2"] = MockOppSocket()
+        board1_config = b'\x20\x0d\x01\x02\x03\x03'      # wing1: solenoids, wing2: inputs, wing3: lamps, wing4: lamps
+        board2_config = b'\x20\x0d\x03\x03\x03\x03'      # wing1: lamps, wing2: lamps, wing3: lamps, wing4: lamps
+        board1_version = b'\x20\x02\x00\x02\x00\x02'     # 0.2.0.2
+        board2_version = b'\x20\x02\x00\x02\x00\x02'     # 0.2.0.2
+        inputs1_message = b"\x20\x08\x00\xff\x00\x0c"    # inputs 0+1 off, 2+3 on, 8 on
+        inputs2_message = b"\x20\x08\x00\x00\x00\x00"
+
+        self.serialMocks["com1"].expected_commands = {
+            b'\xf0\xff': b'\xf0\x20\xff',     # boards 20 installed
+            self._crc_message(b'\x20\x0d\x00\x00\x00\x00'): self._crc_message(board1_config), # get config
+            self._crc_message(b'\x20\x02\x00\x00\x00\x00'): self._crc_message(board1_version),   # get version
+            self._crc_message(b'\x20\x13\x07\x00\x00\x00\x00', False): False,  # turn off all incands
+            self._crc_message(b'\x20\x00\x00\x00\x00\x00'): self._crc_message(b'\x20\x00\x01\x23\x45\x67')
+        }
+        self.serialMocks["com1"].permanent_commands = {
+            b'\xff': b'\xff',
+            self._crc_message(b'\x20\x08\x00\x00\x00\x00'): self._crc_message(inputs1_message),  # read inputs
+        }
+
+        self.serialMocks["com2"].expected_commands = {
+            b'\xf0\xff': b'\xf0\x20\xff',     # boards 20 installed
+            self._crc_message(b'\x20\x0d\x00\x00\x00\x00'): self._crc_message(board2_config), # get config
+            self._crc_message(b'\x20\x02\x00\x00\x00\x00'): self._crc_message(board2_version),   # get version
+            self._crc_message(b'\x20\x13\x07\x00\x00\x00\x00', False): False,  # turn off all incands
+            self._crc_message(b'\x20\x00\x00\x00\x00\x00'): self._crc_message(b'\x20\x00\x00\x00\x00\x02')
+        }
+        self.serialMocks["com2"].permanent_commands = {
+            b'\xff': b'\xff',
+            self._crc_message(b'\x20\x08\x00\x00\x00\x00'): self._crc_message(inputs2_message),  # read inputs
+        }
+        super().setUp()
+
+        assert isinstance(self.machine.default_platform, OppHardwarePlatform)
+
+        self._wait_for_processing()
+        self.assertEqual(0x00020002, self.machine.default_platform.min_version["19088743"])
+        self.assertEqual(0x00020002, self.machine.default_platform.min_version["2"])
+
+        self.assertFalse(self.serialMocks["com1"].expected_commands)
+        self.assertFalse(self.serialMocks["com2"].expected_commands)
+        self.maxDiff = 100000
+
+        # test hardware scan
+        info_str = """Connected CPUs:
+ - Port: com1 at 115200 baud. Chain Serial: 19088743
+ -> Board: 0x20 Firmware: 0x20002
+ - Port: com2 at 115200 baud. Chain Serial: 2
+ -> Board: 0x20 Firmware: 0x20002
+
+Incand cards:
+ - Chain: 19088743 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+ - Chain: 2 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+
+Input cards:
+ - Chain: 19088743 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15]
+
+Solenoid cards:
+ - Chain: 19088743 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3]
+
+LEDs:
+"""
+        self.assertEqual(info_str, self.machine.default_platform.get_info_string())
+
+    def testOpp(self):
+        # assert that the watchdog does not trigger on incand only boards
+        with self.assertLogs('OPP', level='WARNING') as cm:
+            self.advance_time_and_run(1)
+            self.assertFalse(cm.output)
+            # log something to prevent the test from breaking
+            logging.getLogger("OPP").warning("DEBUG")
+
+
+
 class TestOPPFirmware2(OPPCommon, MpfTestCase):
 
     def get_config_file(self):
@@ -151,29 +268,29 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
 
         # test hardware scan
         info_str = """Connected CPUs:
- - Port: com1 at 115200 baud
+ - Port: com1 at 115200 baud. Chain Serial: com1
  -> Board: 0x20 Firmware: 0x20000
  -> Board: 0x21 Firmware: 0x20000
  -> Board: 0x22 Firmware: 0x20000
  -> Board: 0x23 Firmware: 0x20000
 
 Incand cards:
- - CPU: com1 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
- - CPU: com1 Board: 0x22 Card: 2 Numbers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+ - Chain: com1 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+ - Chain: com1 Board: 0x22 Card: 2 Numbers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
 
 Input cards:
- - CPU: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15]
- - CPU: com1 Board: 0x21 Card: 1 Numbers: [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
- - CPU: com1 Board: 0x23 Card: 3 Numbers: [0, 1, 2, 3, 8, 9, 10, 11]
- - CPU: com1 Board: 0x23 Card: 3 Numbers: [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95]
+ - Chain: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15]
+ - Chain: com1 Board: 0x21 Card: 1 Numbers: [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
+ - Chain: com1 Board: 0x23 Card: 3 Numbers: [0, 1, 2, 3, 8, 9, 10, 11]
+ - Chain: com1 Board: 0x23 Card: 3 Numbers: [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95]
 
 Solenoid cards:
- - CPU: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3]
- - CPU: com1 Board: 0x21 Card: 1 Numbers: [12, 13, 14, 15]
- - CPU: com1 Board: 0x23 Card: 3 Numbers: [0, 1, 2, 3, 4, 5, 6, 7]
+ - Chain: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3]
+ - Chain: com1 Board: 0x21 Card: 1 Numbers: [12, 13, 14, 15]
+ - Chain: com1 Board: 0x23 Card: 3 Numbers: [0, 1, 2, 3, 4, 5, 6, 7]
 
 LEDs:
- - CPU: com1 Board: 0x21 Card: 1
+ - Chain: com1 Board: 0x21 Card: 1
 """
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
@@ -342,24 +459,25 @@ class TestOPP(OPPCommon, MpfTestCase):
         self._test_flippers()
 
         # test hardware scan
+        self.maxDiff = 100000
         info_str = """Connected CPUs:
- - Port: com1 at 115200 baud
+ - Port: com1 at 115200 baud. Chain Serial: com1
  -> Board: 0x20 Firmware: 0x10100
  -> Board: 0x21 Firmware: 0x10100
 
 Incand cards:
- - CPU: com1 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+ - Chain: com1 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
 
 Input cards:
- - CPU: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15]
- - CPU: com1 Board: 0x21 Card: 1 Numbers: [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
+ - Chain: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15]
+ - Chain: com1 Board: 0x21 Card: 1 Numbers: [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
 
 Solenoid cards:
- - CPU: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3]
- - CPU: com1 Board: 0x21 Card: 1 Numbers: [12, 13, 14, 15]
+ - Chain: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3]
+ - Chain: com1 Board: 0x21 Card: 1 Numbers: [12, 13, 14, 15]
 
 LEDs:
- - CPU: com1 Board: 0x21 Card: 1
+ - Chain: com1 Board: 0x21 Card: 1
 """
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
@@ -449,24 +567,28 @@ LEDs:
         self.assertFalse(self.serialMock.expected_commands)
 
     def _test_leds(self):
-        # add ff/ff/ff as color 0
-        self.serialMock.expected_commands[self._crc_message(b'\x21\x11\x00\xff\xff\xff', False)] = False
-        # set led 0 to color 0
-        self.serialMock.expected_commands[self._crc_message(b'\x21\x16\x00\x80', False)] = False
+        # set leds 0, 1, 2 to brightness 255
+        self.serialMock.expected_commands[self._crc_message(b'\x21\x40\x00\x00\x00\x03\x00\x00\xff\xff\xff', False)] = False
 
         self.machine.lights["test_led1"].on()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
-        # add 00/00/00 as color 1
-        self.serialMock.expected_commands[self._crc_message(b'\x21\x11\x01\x00\x00\x00', False)] = False
-        # set led 0 to color 1
-        self.serialMock.expected_commands[self._crc_message(b'\x21\x16\x00\x81', False)] = False
-        # set led 1 to color 10
-        self.serialMock.expected_commands[self._crc_message(b'\x21\x16\x01\x80', False)] = False
+        # set leds 0, 1, 2 to brightness 0
+        # set leds 3, 4, 5 to brightness 255
+        self.serialMock.expected_commands[self._crc_message(b'\x21\x40\x00\x00\x00\x06\x00\x00\x00\x00\x00\xff\xff\xff', False)] = False
 
         self.machine.lights["test_led1"].off()
         self.machine.lights["test_led2"].on()
+
+        self._wait_for_processing()
+
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # fade leds 3, 4, 5 to brightness 245, 222, 179
+        self.serialMock.expected_commands[self._crc_message(b'\x21\x40\x00\x03\x00\x03\x07\xcf\xf5\xde\xb3', False)] = False
+
+        self.machine.lights["test_led2"].color("wheat", fade_ms=2000)
 
         self._wait_for_processing()
 

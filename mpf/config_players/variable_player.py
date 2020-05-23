@@ -47,7 +47,8 @@ class VariablePlayer(ConfigPlayer):
             if s['condition'] and not s['condition'].evaluate(kwargs):
                 continue
 
-            block_item = var + ":" + calling_context
+            block_item = var + ":" + str(calling_context)
+
             if self._is_blocked(block_item, context, priority):
                 continue
             if s['block']:

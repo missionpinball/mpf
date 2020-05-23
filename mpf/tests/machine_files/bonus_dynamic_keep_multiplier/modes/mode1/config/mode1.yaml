@@ -1,0 +1,15 @@
+#config_version=5
+mode:
+    start_events: start_mode1
+    stop_events: stop_mode1
+    priority: 200
+
+variable_player:
+    hit_target:
+        score: 1337
+    score_ramps:
+        ramps: 1
+    score_modes:
+        modes: 1
+    add_multiplier:
+        bonus_multiplier: 1

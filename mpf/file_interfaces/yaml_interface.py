@@ -170,6 +170,8 @@ class YamlInterface(FileInterface):
     cache = False
     file_cache = dict()     # type: Dict[str, Any]
 
+    __slots__ = []
+
     def load(self, filename, expected_version_str=None, halt_on_error=True) -> dict:
         """Load a YAML file from disk.
 

@@ -32,6 +32,7 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
         # load i2c platform
         self.platform = self.machine.get_platform_sections(
             "i2c", self.config['platform'])
+        self.platform.assert_has_feature("i2c")
 
     async def _initialize_controller(self, address):
         # check if controller is already initialized

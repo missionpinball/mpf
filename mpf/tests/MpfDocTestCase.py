@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import tempfile
@@ -21,10 +22,13 @@ class MpfDocTestCaseBase(MockConfigPlayers, MpfGameTestCase):
         self._config_string = config_string
         self._base_dir = base_dir
         self._simulation = simulation
+        self.log = logging.getLogger("TEST")
 
     def setUp(self):
         machine_config, mode_configs, show_configs, assets, self.tests = self.prepare_config(self._config_string)
         self.config_dir = tempfile.mkdtemp()
+        # cleanup at the end
+        self.addCleanup(self._delete_tmp_dir, self.config_dir)
 
         # create machine config
         os.mkdir(os.path.join(self.config_dir, "config"))
@@ -55,14 +59,14 @@ class MpfDocTestCaseBase(MockConfigPlayers, MpfGameTestCase):
             path_elements = asset_path.split("/")
             source_elements = asset_source.split("/")
             full_source_path = os.path.join(self._base_dir, *source_elements)
-            os.mkdir(os.path.join(self.config_dir, *path_elements[:-1]))
+            try:
+                os.mkdir(os.path.join(self.config_dir, *path_elements[:-1]))
+            except FileExistsError:
+                pass
             self.get_absolute_machine_path()
             if not os.path.isfile(full_source_path):
                 raise AssertionError('Could not find asset "{}" on disk'.format(full_source_path))
             os.symlink(full_source_path, os.path.join(self.config_dir, *path_elements))
-
-        # cleanup at the end
-        self.addCleanup(self._delete_tmp_dir, self.config_dir)
 
         super().setUp()
 
@@ -181,6 +185,7 @@ class MpfDocTestCaseBase(MockConfigPlayers, MpfGameTestCase):
             method = getattr(self, "command_" + command)
             if not method:
                 raise AssertionError("Unknown command {} in line {}".format(command, line_no))
+            self.log.info("%s", line)
             try:
                 method(*parts)
             except AssertionError as e:

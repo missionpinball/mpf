@@ -1,21 +1,14 @@
 """Config specs and validator."""
 import logging
-import os
 from functools import lru_cache
 
 import re
-import tempfile
 from collections import OrderedDict
 from copy import deepcopy
-
-import pickle   # nosec
 
 from typing import Any
 from typing import Dict
 
-from pkg_resources import iter_entry_points
-
-import mpf
 from mpf.core.rgb_color import NAMED_RGB_COLORS, RGBColor
 from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.file_interfaces.yaml_interface import YamlInterface
@@ -44,20 +37,18 @@ class ConfigValidator:
 
     """Validates config against config specs."""
 
-    class_cache = None
+    __slots__ = ["machine", "config_spec", "log", "validator_list"]
 
-    __slots__ = ["machine", "config_spec", "log", "_load_cache", "_store_cache", "validator_list"]
-
-    def __init__(self, machine, load_cache, store_cache):
+    def __init__(self, machine, config_spec):
         """Initialise validator."""
         self.machine = machine      # type: MachineController
-        self.config_spec = None     # type: Any
         self.log = logging.getLogger('ConfigValidator')
-        self._load_cache = load_cache
-        self._store_cache = store_cache
+        self.config_spec = config_spec
 
         self.validator_list = {
             "str": self._validate_type_str,
+            "event_posted": self._validate_type_str,
+            "event_handler": self._validate_type_str,
             "lstr": self._validate_type_lstr,
             "float": self._validate_type_float,
             "float_or_token": self._validate_type_or_token(self._validate_type_float),
@@ -100,10 +91,6 @@ class ConfigValidator:
             return func(item, validation_failure_info, param)
         return _validate_type_or_token_real
 
-    def load_device_config_spec(self, config_section, config_spec):
-        """Load config specs for a device."""
-        self.config_spec[config_section] = self._process_config_spec(YamlInterface.process(config_spec), config_section)
-
     def load_mode_config_spec(self, mode_string, config_spec):
         """Load config specs for a mode."""
         if '_mode_settings' not in self.config_spec:
@@ -111,56 +98,6 @@ class ConfigValidator:
         if mode_string not in self.config_spec['_mode_settings']:
             config = YamlInterface.process(config_spec)
             self.config_spec['_mode_settings'][mode_string] = self._process_config_spec(config, mode_string)
-
-    @staticmethod
-    def get_cache_dir():
-        """Return cache dir."""
-        return tempfile.gettempdir()
-
-    def load_config_spec(self):
-        """Load config spec."""
-        if ConfigValidator.class_cache:
-            self.config_spec = ConfigValidator.class_cache
-            return
-
-        cache_file = os.path.join(self.get_cache_dir(), "config_spec.mpf_cache")
-        config_spec_file = os.path.abspath(os.path.join(mpf.core.__path__[0], os.pardir, "config_spec.yaml"))
-        stats_config_spec_file = os.stat(config_spec_file)
-        if self._load_cache and os.path.isfile(cache_file) and \
-                os.path.getmtime(cache_file) == stats_config_spec_file.st_mtime:
-            try:
-                with open(cache_file, 'rb') as f:
-                    self.config_spec = pickle.load(f)   # nosec
-                    ConfigValidator.class_cache = deepcopy(self.config_spec)
-                    return
-            except Exception:   # noqa
-                pass
-
-        with open(config_spec_file, 'rb') as f:
-            config_str = f.read()
-
-        config = YamlInterface.process(config_str)
-        config = self._process_config_spec(config, "root")
-
-        self.config_spec = config
-        self.load_external_platform_config_specs()
-
-        if self._store_cache:
-            with open(cache_file, 'wb') as f:
-                pickle.dump(config, f, protocol=4)
-                os.utime(cache_file, ns=(stats_config_spec_file.st_atime_ns, stats_config_spec_file.st_mtime_ns))
-                self.log.info('Config spec file cache created: %s', cache_file)
-
-        ConfigValidator.class_cache = deepcopy(self.config_spec)
-
-    def load_external_platform_config_specs(self):
-        """Load config spec for external platforms."""
-        for platform_entry in iter_entry_points(group='mpf.platforms'):
-            config_spec = platform_entry.load().get_config_spec()
-
-            if config_spec:
-                # add specific config spec if platform has any
-                self.load_device_config_spec(config_spec[0], config_spec[1])
 
     def _process_config_spec(self, spec, path):
         if not isinstance(spec, dict):
@@ -183,21 +120,11 @@ class ConfigValidator:
 
     def get_config_spec(self):
         """Return config spec."""
-        if not self.config_spec:
-            self.load_config_spec()
-
         return self.config_spec
-
-    def unload_config_spec(self):
-        """Unload specs."""
-        self.config_spec = None
 
     @lru_cache(1024)
     def build_spec(self, config_spec, base_spec):
         """Build config spec out of two or more specs."""
-        if not self.config_spec:
-            self.load_config_spec()
-
         # build up the actual config spec we're going to use
         spec_list = [config_spec]
 
@@ -229,10 +156,6 @@ class ConfigValidator:
         # config_spec, str i.e. "device:shot"
         # source is dict
         # section_name is str used for logging failures
-
-        if not self.config_spec:
-            self.load_config_spec()
-
         if source is None:
             source = dict()
 
@@ -309,9 +232,14 @@ class ConfigValidator:
 
         if item == 'item not in config!@#':
             if default == 'default required!@#':
+                if isinstance(validation_failure_info[0], tuple):
+                    section = "{}: {}".format(validation_failure_info[0][0], validation_failure_info[0][1])
+                else:
+                    section = validation_failure_info[0]
+
                 self.validation_error("None", validation_failure_info,
-                                      'Required setting {} missing from config file.'.format(
-                                          validation_failure_info[1]), 9)
+                                      'Required setting "{}:" is missing from section "{}:" in your config.'.format(
+                                          validation_failure_info[1], section), 9)
             else:
                 item = default
 
@@ -320,17 +248,10 @@ class ConfigValidator:
                                       validation_failure_info)
 
         if item_type == 'list':
-            item_list = Util.string_to_list(item)
-
-            new_list = list()
-
-            for i in item_list:
-                new_list.append(self.validate_item(i, validation, validation_failure_info))
-
-            return new_list
-
-        if item_type == 'event_list':
-            item_list = Util.string_to_event_list(item)
+            if validation in ("event_posted", "event_handler"):
+                item_list = Util.string_to_list(item)
+            else:
+                item_list = Util.string_to_event_list(item)
 
             new_list = list()
 
@@ -340,7 +261,7 @@ class ConfigValidator:
             return new_list
 
         if item_type == 'set':
-            item_set = set(Util.string_to_event_list(item))
+            item_set = set(Util.string_to_list(item))
 
             new_set = set()
 
@@ -349,8 +270,8 @@ class ConfigValidator:
 
             return new_set
         if item_type == "event_handler":
-            if validation != "str:ms":
-                raise AssertionError("event_handler should use str:ms in config_spec: {}".format(spec))
+            if validation != "event_handler:ms":
+                raise AssertionError("event_handler should use event_handler:ms in config_spec: {}".format(spec))
             return self._validate_dict_or_omap(item_type, validation, validation_failure_info, item)
         if item_type in ('dict', 'omap'):
             return self._validate_dict_or_omap(item_type, validation, validation_failure_info, item)
@@ -412,7 +333,7 @@ class ConfigValidator:
 
                         path_string = ':'.join(path_list)
 
-                        if self.machine.machine_config['mpf']['allow_invalid_config_sections']:
+                        if "mpf" in self.machine.config and self.machine.config['mpf']['allow_invalid_config_sections']:
 
                             self.log.warning('Unrecognized config setting. "%s" is '
                                              'not a valid setting name.',
@@ -483,7 +404,7 @@ class ConfigValidator:
             return section[item]
 
         return self.validation_error(item, validation_failure_info,
-                                     "Device {} of type {} not defined".format(item, param),
+                                     'Device "{}" not found in "{}:" section in your config.'.format(item, param),
                                      6)
 
     @classmethod
@@ -709,7 +630,7 @@ class ConfigValidator:
                      re.split('([0-9a-f]{2})', color_string) if x != '']
 
         else:
-            color = Util.string_to_event_list(color_string)
+            color = Util.string_to_list(color_string)
 
         for i, x in enumerate(color):
             try:
@@ -730,14 +651,14 @@ class ConfigValidator:
 
         # Validates colors by name, hex, or list, into a 3-item list, RGB,
         # with individual values from 0-255
-        color_string = str(item).lower()
+        color_string = str(item)
 
         if color_string in NAMED_RGB_COLORS:
             return NAMED_RGB_COLORS[color_string]
         if Util.is_hex_string(color_string):
             return RGBColor.hex_to_rgb(color_string)
 
-        color = Util.string_to_event_list(color_string)
+        color = Util.string_to_list(color_string)
         return int(color[0]), int(color[1]), int(color[2])
 
     def _validate_type_bool_int(self, item, validation_failure_info):

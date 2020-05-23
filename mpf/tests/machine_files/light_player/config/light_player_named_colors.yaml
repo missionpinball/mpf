@@ -1,0 +1,24 @@
+#config_version=5
+lights:
+  l_gi_1:
+    number:
+  l_gi_2:
+    number:
+
+
+named_colors:
+   tt_yellow: [255, 220, 0]
+
+show_player:
+   skill_started:
+      giSwipeDown:
+         show_tokens:
+            frontColor: black
+            backColor: tt_yellow
+
+shows:
+  giSwipeDown:
+    - time: 0
+      lights:
+        l_gi_1: (frontColor)
+        l_gi_2: (backColor)

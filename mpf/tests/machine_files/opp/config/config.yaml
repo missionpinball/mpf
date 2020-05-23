@@ -21,6 +21,8 @@ switches:
         number: 0-3
     s_test_card2:
         number: 0-8
+    s_test_neo:
+        number: 1-0
 
 coils:
     c_test:

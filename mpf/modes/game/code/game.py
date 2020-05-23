@@ -77,6 +77,9 @@ class Game(AsyncMode):
 
         self.max_players = self.machine.config['game']['max_players'].evaluate({})
 
+        self.add_mode_event_handler(self.machine.config['game']['end_ball_event'], self.event_end_ball)
+        self.add_mode_event_handler(self.machine.config['game']['end_game_event'], self.event_end_game)
+
         await self._start_game()
 
         # Game loop
@@ -148,6 +151,16 @@ class Game(AsyncMode):
         # TODO: Remove this function as it has been deprecated and replaced
         self.warning_log("game.ball_ending() function has been deprecated. "
                          "Please use game.end_ball() instead.")
+        self.end_ball()
+
+    def event_end_game(self, **kwargs):
+        """Event handler to end the current game."""
+        del kwargs
+        self.end_game()
+
+    def event_end_ball(self, **kwargs):
+        """Event handler to end the current ball."""
+        del kwargs
         self.end_ball()
 
     def end_ball(self):
@@ -508,6 +521,10 @@ class Game(AsyncMode):
         # There area few things we have to check first. If this all passes,
         # then we'll raise the event to ask other modules if it's ok to add a
         # player
+
+        if self.ending:
+            self.debug_log("Game is ending. Cannot add player.")
+            return False
 
         if len(self.player_list) >= self.max_players:
             self.debug_log("Game is at max players. Cannot add another.")

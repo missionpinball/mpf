@@ -1,5 +1,6 @@
 """Test logic blocks."""
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
+from mpf.tests.MpfTestCase import test_config_directory
 
 
 class TestLogicBlocks(MpfFakeGameTestCase):
@@ -27,6 +28,48 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.advance_time_and_run()
         self.assertEventCalled("qualify_start_mode1")
         self.assertEventNotCalled("qualify_start_mode2")
+
+    @test_config_directory("tests/machine_files/counters/")
+    def test_subscription_on_counter_values(self):
+        self.start_game()
+        self.start_mode("mode1")
+        self.assertLightColor("l_chest_matrix_green_2", "black")
+        self.assertLightColor("l_chest_matrix_green_3", "black")
+        self.assertLightColor("l_chest_matrix_green_4", "black")
+        self.assertLightColor("l_chest_matrix_green_5", "black")
+        self.post_event("count_up")
+        self.advance_time_and_run(.1)
+        self.assertLightColor("l_chest_matrix_green_2", "black")
+        self.assertLightColor("l_chest_matrix_green_3", "black")
+        self.assertLightColor("l_chest_matrix_green_4", "black")
+        self.assertLightColor("l_chest_matrix_green_5", "green")
+        self.post_event("count_up")
+        self.advance_time_and_run(.1)
+        self.assertLightColor("l_chest_matrix_green_2", "black")
+        self.assertLightColor("l_chest_matrix_green_3", "black")
+        self.assertLightColor("l_chest_matrix_green_4", "green")
+        self.assertLightColor("l_chest_matrix_green_5", "green")
+        self.post_event("count_up")
+        self.advance_time_and_run(.1)
+        self.assertLightColor("l_chest_matrix_green_2", "black")
+        self.assertLightColor("l_chest_matrix_green_3", "green")
+        self.assertLightColor("l_chest_matrix_green_4", "green")
+        self.assertLightColor("l_chest_matrix_green_5", "green")
+        self.post_event("count_up")
+        self.advance_time_and_run(.1)
+        self.assertLightColor("l_chest_matrix_green_2", "green")
+        self.assertLightColor("l_chest_matrix_green_3", "green")
+        self.assertLightColor("l_chest_matrix_green_4", "green")
+        self.assertLightColor("l_chest_matrix_green_5", "green")
+
+        self.drain_all_balls()
+        self.advance_time_and_run()
+        self.start_mode("mode1")
+
+        self.assertLightColor("l_chest_matrix_green_2", "black")
+        self.assertLightColor("l_chest_matrix_green_3", "black")
+        self.assertLightColor("l_chest_matrix_green_4", "black")
+        self.assertLightColor("l_chest_matrix_green_5", "black")
 
     def test_counter_with_lights(self):
         self.start_game()

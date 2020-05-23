@@ -11,6 +11,8 @@ https://github.com/preble/pyprocgame
 """
 import logging
 
+from typing import Dict
+
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
 from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
@@ -367,7 +369,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
 
         return burst_switch
 
-    async def get_hw_switch_states(self):
+    async def get_hw_switch_states(self) -> Dict[str, bool]:
         """Read in and set the initial switch state.
 
         The P-ROC uses the following values for hw switch states:
@@ -383,13 +385,13 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
             # Note: The P3-ROC will return a state of "3" for switches from non-
             # connected SW-16 boards, so that's why we only check for "1" below
             if state == 1:
-                result[switch] = 1
+                result[switch] = True
             else:
-                result[switch] = 0
+                result[switch] = False
 
         # assume 0 for all bursts initially
         for switch in self._burst_switches:
-            result[switch.number] = 0
+            result[switch.number] = False
 
         return result
 

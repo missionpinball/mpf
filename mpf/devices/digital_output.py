@@ -47,6 +47,7 @@ class DigitalOutput(SystemWideDevice):
     def _initialize_light(self):
         """Configure a light as digital output."""
         self.platform = self.machine.get_platform_sections('lights', self.config['platform'])
+        self.platform.assert_has_feature("lights")
         self.type = "light"
 
         if not self.platform.features['allow_empty_numbers'] and self.config['number'] is None:
@@ -60,6 +61,7 @@ class DigitalOutput(SystemWideDevice):
     def _initialize_driver(self):
         """Configure a driver as digital output."""
         self.platform = self.machine.get_platform_sections('coils', self.config['platform'])
+        self.platform.assert_has_feature("drivers")
         self.type = "driver"
 
         config = DriverConfig(

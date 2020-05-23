@@ -12,6 +12,8 @@ More info on the P-ROC hardware platform: http://pinballcontrollers.com/
 Original code source on which this module was based:
 https://github.com/preble/pyprocgame
 """
+from typing import Dict
+
 from mpf.core.platform import DmdPlatform, DriverConfig, SwitchConfig, SegmentDisplayPlatform
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
@@ -157,7 +159,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
             proc_num = self.pinproc.decode(self.machine_type, str(number))
         return self._configure_switch(config, proc_num)
 
-    async def get_hw_switch_states(self):
+    async def get_hw_switch_states(self) -> Dict[str, bool]:
         """Read in and set the initial switch state.
 
         The P-ROC uses the following values for hw switch states:
@@ -170,9 +172,9 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
 
         for switch, state in enumerate(states):
             if state in (1, 3):
-                states[switch] = 1
+                states[switch] = True
             else:
-                states[switch] = 0
+                states[switch] = False
 
         return states
 

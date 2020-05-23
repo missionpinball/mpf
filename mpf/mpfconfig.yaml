@@ -13,7 +13,6 @@ mpf:
         - device_manager: mpf.core.device_manager.DeviceManager
         - switch_controller: mpf.core.switch_controller.SwitchController
         - ball_controller: mpf.core.ball_controller.BallController
-        - asset_manager: mpf.core.assets.AsyncioSyncAssetManager
         - show_controller: mpf.core.show_controller.ShowController
         - bcp: mpf.core.bcp.bcp.Bcp
         - service: mpf.core.service_controller.ServiceController
@@ -58,7 +57,6 @@ mpf:
         - mpf.devices.score_reel.ScoreReel
         - mpf.devices.score_reel_group.ScoreReelGroup
         - mpf.devices.playfield_transfer.PlayfieldTransfer
-        - mpf.devices.ball_lock.BallLock
         - mpf.devices.multiball.Multiball
         - mpf.devices.motor.Motor
         - mpf.devices.ball_save.BallSave
@@ -90,10 +88,9 @@ mpf:
         - mpf.devices.ball_routing.BallRouting
 
     plugins:
-        mpf.plugins.auditor.Auditor
-        mpf.plugins.info_lights.InfoLights
-        mpf.plugins.switch_player.SwitchPlayer
-        mpf.plugins.osc.Osc
+        - mpf.plugins.auditor.Auditor
+        - mpf.plugins.info_lights.InfoLights
+        - mpf.plugins.switch_player.SwitchPlayer
 
     platforms:
         fadecandy: mpf.platforms.fadecandy.FadecandyHardwarePlatform

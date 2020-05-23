@@ -3,7 +3,7 @@ import abc
 import asyncio
 from collections import namedtuple
 
-from typing import Optional
+from typing import Optional, Dict
 
 from mpf.core.logging import LogMixin
 from mpf.core.utility_functions import Util
@@ -42,8 +42,8 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
 
         # Set default platform features. Each platform interface can change
         # these to notify the framework of the specific features it supports.
-        self.features['has_dmd'] = False
-        self.features['has_rgb_dmd'] = False
+        self.features['has_dmds'] = False
+        self.features['has_rgb_dmds'] = False
         self.features['has_accelerometers'] = False
         self.features['has_i2c'] = False
         self.features['has_servos'] = False
@@ -51,10 +51,18 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         self.features['has_switches'] = False
         self.features['has_drivers'] = False
         self.features['tickless'] = False
-        self.features['segment_display'] = False
-        self.features['hardware_sounds'] = False
+        self.features['has_segment_displays'] = False
+        self.features['has_hardware_sound_systems'] = False
         self.features['has_steppers'] = False
         self.features['allow_empty_numbers'] = False
+
+    def assert_has_feature(self, feature_name):
+        """Assert that this platform has a certain feature or raise an exception otherwise."""
+        if not self.features.get("has_{}".format(feature_name), False):
+            self.raise_config_error("Platform {} does not support to configure {feature_name}. "
+                                    "Please make sure the platform "
+                                    "you configured for {feature_name} actually supports that type "
+                                    "of devices.".format(self.__class__, feature_name=feature_name), 99)
 
     def _configure_device_logging_and_debug(self, logger_name, config):
         """Configure logging for platform."""
@@ -124,7 +132,7 @@ class DmdPlatform(BasePlatform, metaclass=abc.ABCMeta):
     def __init__(self, machine):
         """Add dmd feature."""
         super().__init__(machine)
-        self.features['has_dmd'] = True
+        self.features['has_dmds'] = True
 
     @abc.abstractmethod
     def configure_dmd(self):
@@ -146,7 +154,7 @@ class HardwareSoundPlatform(BasePlatform, metaclass=abc.ABCMeta):
     def __init__(self, machine):
         """Add hardware sound feature."""
         super().__init__(machine)
-        self.features['hardware_sounds'] = True
+        self.features['has_hardware_sound_systems'] = True
 
     @abc.abstractmethod
     def configure_hardware_sound_system(self) -> "HardwareSoundPlatformInterface":
@@ -163,7 +171,7 @@ class RgbDmdPlatform(BasePlatform, metaclass=abc.ABCMeta):
     def __init__(self, machine):
         """Add rgb dmd feature."""
         super().__init__(machine)
-        self.features['has_rgb_dmd'] = True
+        self.features['has_rgb_dmds'] = True
 
     @abc.abstractmethod
     def configure_rgb_dmd(self, name: str):
@@ -185,7 +193,7 @@ class SegmentDisplayPlatform(BasePlatform, metaclass=abc.ABCMeta):
     def __init__(self, machine):
         """Add segment display feature."""
         super().__init__(machine)
-        self.features['segment_display'] = True
+        self.features['has_segment_displays'] = True
 
     @abc.abstractmethod
     async def configure_segment_display(self, number: str, platform_settings) -> "SegmentDisplayPlatformInterface":
@@ -432,7 +440,7 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         return config
 
     @abc.abstractmethod
-    async def get_hw_switch_states(self):
+    async def get_hw_switch_states(self) -> Dict[str, bool]:
         """Get all hardware switch states.
 
         Subclass this method in a platform module to return the hardware

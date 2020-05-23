@@ -57,8 +57,9 @@ class DeviceMonitor:
             if old != value:
                 self_inner.machine.device_manager.notify_device_changes(self_inner, attribute_name, old, value)
                 for future in cls.attribute_futures[self_inner][attribute_name]:
-                    future.set_result(True)
-                    cls.attribute_futures[self_inner][attribute_name] = []
+                    if not future.done():
+                        future.set_result(True)
+                cls.attribute_futures[self_inner][attribute_name] = []
 
         def get_monitorable_state(self_inner):
             """Return monitorable state of device."""

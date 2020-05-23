@@ -1,0 +1,23 @@
+#config_version=5
+
+switches:
+  switch1:
+    number:
+
+coils:
+  coil1:
+    number:
+
+drop_targets:
+   m1:
+     debug: True
+     switch: switch1
+
+drop_target_banks:
+   multiple_resets_on_game_start:
+     drop_targets: m1
+     reset_coils: coil1
+     reset_events:
+       game_started.0: 0
+       game_started.1: 1s
+       game_started.2: 2s

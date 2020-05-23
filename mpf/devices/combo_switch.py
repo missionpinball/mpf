@@ -35,11 +35,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
         """Validate and parse config."""
         config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
 
-        for state in self.states:
-            if not config['events_when_{}'.format(state)]:
-                config['events_when_{}'.format(state)] = [
-                    "{}_{}".format(self.name, state)]
-        for state in ["switches_1", "switches_2"]:
+        for state in self.states + ["switches_1", "switches_2"]:
             if not config['events_when_{}'.format(state)]:
                 config['events_when_{}'.format(state)] = [
                     "{}_{}".format(self.name, state)]
@@ -250,51 +246,49 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
 
         for event in self.config['events_when_{}'.format(state)]:
             self.machine.events.post(event, triggering_group=group, triggering_switch=switch)
-            '''event: (combo_switch)_(state)
-            desc: Combo switch (name) changed to state (state).
+            '''event: (name)_one
+            config_attribute: events_when_one
 
-            Note that these events can be overridden in a combo switch's
-            config.
+            desc: Combo switch (name) changed to state one.
 
-            Valid states are: *inactive*, *both*, or *one*.
+            Either switch 1 or switch 2 has been released for at
+            least the ``release_time:`` but the other switch is still active.
+            '''
 
-            ..rubric:: both
+            '''event: (name)_both
+            config_attribute: events_when_both
+
+            desc: Combo switch (name) changed to state both.
 
             A switch from group 1 and group 2 are both active at the
             same time, having been pressed within the ``max_offset_time:`` and
             being active for at least the ``hold_time:``.
-
-            ..rubric:: one
-
-            Either switch 1 or switch 2 has been released for at
-            least the ``release_time:`` but the other switch is still active.
-
-            ..rubric:: switches_1
-
-            Only switches_1 is active. max_offset_time has passed and this hit
-            cannot become both later on. Only emmited when ``max_offset_time:``
-            is defined.
-
-            ..rubric:: switches_2
-
-            Only switches_2 is active. max_offset_time has passed and this hit
-            cannot become both later on. Only emmited when ``max_offset_time:``
-            is defined.
-
-            ..rubric:: inactive
-
-            Both switches are inactive.
-
             '''
 
-            '''event: flipper_cancel
+            '''event: (name)_inactive
+            config_attribute: events_when_inactive
 
-            desc: Posted when both flipper buttons are hit at the same time,
-            useful as a "cancel" event for shows, the bonus mode, etc.
+            desc: Combo switch (name) changed to state inactive.
 
-            Note that in order for this event to work, you have to add
-            ``left_flipper`` as a tag to the switch for your left flipper,
-            and ``right_flipper`` to your right flipper.
+            Both switches are inactive.
+            '''
 
-            See :doc:`/config/combo_switches` for details.
+            '''event: (name)_switches_1
+            config_attribute: events_when_switches_1
+
+            desc: Combo switch (name) changed to state switches_1.
+
+            Only switches_1 is active. max_offset_time has passed and this hit
+            cannot become both later on. Only emited when ``max_offset_time:``
+            is defined.
+            '''
+
+            '''event: (name)_switches_2
+            config_attribute: events_when_switches_2
+
+            desc: Combo switch (name) changed to state switches_2.
+
+            Only switches_2 is active. max_offset_time has passed and this hit
+            cannot become both later on. Only emited when ``max_offset_time:``
+            is defined.
             '''

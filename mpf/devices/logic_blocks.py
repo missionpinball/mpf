@@ -18,11 +18,11 @@ class LogicBlockState:
 
     __slots__ = ["enabled", "completed", "value"]
 
-    def __init__(self, start_value):
+    def __init__(self):
         """Initialise state."""
         self.enabled = False
         self.completed = False
-        self.value = start_value
+        self.value = None
 
 
 @DeviceMonitor("value", "enabled", "completed")
@@ -86,7 +86,8 @@ class LogicBlock(SystemWideDevice, ModeDevice):
 
     async def device_added_system_wide(self):
         """Initialise internal state."""
-        self._state = LogicBlockState(self.get_start_value())
+        self._state = LogicBlockState()
+        self.value = self.get_start_value()
         await super().device_added_system_wide()
         if not self.config['enable_events']:
             self.enable()
@@ -101,15 +102,19 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         super().device_loaded_in_mode(mode, player)
         if self.config['persist_state']:
             if not player.is_player_var(self.player_state_variable):
-                player[self.player_state_variable] = LogicBlockState(self.get_start_value())
+                player[self.player_state_variable] = LogicBlockState()
                 # enable device ONLY when we create a new entry in the player
                 if self._start_enabled:
                     mode.add_mode_event_handler("mode_{}_starting".format(mode.name),
                                                 self.event_enable, priority=mode.priority + 1)
 
-            self._state = player[self.player_state_variable]
+                self._state = player[self.player_state_variable]
+                self.value = self.get_start_value()
+            else:
+                self._state = player[self.player_state_variable]
         else:
-            self._state = LogicBlockState(self.get_start_value())
+            self._state = LogicBlockState()
+            self.value = self.get_start_value()
             if self._start_enabled:
                 mode.add_mode_event_handler("mode_{}_starting".format(mode.name),
                                             self.event_enable, priority=mode.priority + 1)
@@ -128,6 +133,11 @@ class LogicBlock(SystemWideDevice, ModeDevice):
             return self._state.value
 
         return None
+
+    @value.setter
+    def value(self, value):
+        """Set the value."""
+        self._state.value = value
 
     @property
     def enabled(self):
@@ -222,7 +232,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         Can also be manually called.
         """
         self.completed = False
-        self._state.value = self.get_start_value()
+        self.value = self.get_start_value()
         self.debug_log("Resetting")
         self.post_update_event()
 
@@ -348,9 +358,9 @@ class Counter(LogicBlock):
 
         if count_complete_value is not None:
             if self.config['direction'] == 'up':
-                return self._state.value >= count_complete_value
+                return self.value >= count_complete_value
             if self.config['direction'] == 'down':
-                return self._state.value <= count_complete_value
+                return self.value <= count_complete_value
 
         return False
 
@@ -366,7 +376,7 @@ class Counter(LogicBlock):
             self.log.warning("Placeholder %s for counter add did not evaluate with args %s", value, kwargs)
             return
         # Add to the counter the specified value
-        self._state.value += evaluated_value
+        self.value += evaluated_value
         # Check if count is complete given the updated value
         if self.check_complete():
             self.complete()
@@ -383,7 +393,7 @@ class Counter(LogicBlock):
             self.log.warning("Placeholder %s for counter substract did not evaluate with args %s", value, kwargs)
             return
         # Subtract from the counter the specified value
-        self._state.value -= evaluated_value
+        self.value -= evaluated_value
         # Check if count is complete given the updated value
         if self.check_complete():
             self.complete()
@@ -400,7 +410,7 @@ class Counter(LogicBlock):
             self.log.warning("Placeholder %s for counter jump did not evaluate with args %s", value, kwargs)
             return
         # Set the internal value of the counter to the specified value
-        self._state.value = evaluated_value
+        self.value = evaluated_value
         # Check if count is complete given the updated value
         if self.check_complete():
             self.complete()
@@ -441,14 +451,14 @@ class Counter(LogicBlock):
             is not None else None
 
         if not self.ignore_hits:
-            self._state.value += self.hit_value
-            self.debug_log("Processing Count change. Total: %s", self._state.value)
+            self.value += self.hit_value
+            self.debug_log("Processing Count change. Total: %s", self.value)
 
             args = {
-                "count": self._state.value
+                "count": self.value
             }
             if count_complete_value is not None:
-                args['remaining'] = count_complete_value - self._state.value
+                args['remaining'] = count_complete_value - self.value
 
             self._post_hit_events(**args)
 
@@ -524,12 +534,12 @@ class Accrual(LogicBlock):
             return
 
         self.debug_log("Processing hit for step: %s", step)
-        if not self._state.value[step]:
-            self._state.value[step] = True
-            self.debug_log("Status: %s", self._state.value)
+        if not self.value[step]:
+            self.value[step] = True
+            self.debug_log("Status: %s", self.value)
             self._post_hit_events(step=step)
 
-        if self._state.value.count(True) == len(self._state.value):
+        if self.value.count(True) == len(self.value):
             self.complete()
 
 
@@ -583,14 +593,14 @@ class Sequence(LogicBlock):
         if not self.enabled:
             return
 
-        if step is not None and step != self._state.value:
+        if step is not None and step != self.value:
             # got this for another state
             return
 
         self.debug_log("Processing Hit")
 
-        self._state.value += 1
-        self._post_hit_events(step=self._state.value)
+        self.value += 1
+        self._post_hit_events(step=self.value)
 
-        if self._state.value >= len(self.config['events']):
+        if self.value >= len(self.config['events']):
             self.complete()

@@ -35,6 +35,7 @@ class Dmd(SystemWideDevice):
     async def _initialize(self):
         await super()._initialize()
         self.platform = self.machine.get_platform_sections("dmd", self.config['platform'])
+        self.platform.assert_has_feature("dmds")
         self.hw_device = self.platform.configure_dmd()
 
     @classmethod

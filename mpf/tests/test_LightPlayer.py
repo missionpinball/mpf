@@ -1,6 +1,7 @@
 """Test led player."""
 from mpf.core.rgb_color import RGBColor
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
+from mpf.tests.MpfTestCase import test_config
 
 
 class TestLightPlayer(MpfFakeGameTestCase):
@@ -10,6 +11,12 @@ class TestLightPlayer(MpfFakeGameTestCase):
 
     def get_machine_path(self):
         return 'tests/machine_files/light_player/'
+
+    @test_config("light_player_named_colors.yaml")
+    def test_named_colors(self):
+        self.post_event("skill_started")
+        self.advance_time_and_run()
+        self.assertLightColor("l_gi_2", [255, 220, 0])
 
     def test_light_player_in_show(self):
         self.post_event("play_show1")

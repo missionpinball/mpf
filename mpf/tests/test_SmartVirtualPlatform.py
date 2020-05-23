@@ -12,6 +12,13 @@ class TestSmartVirtualPlatform(MpfTestCase):
     def get_platform(self):
         return 'smart_virtual'
 
+    @test_config("test_entrance_switch.yaml")
+    def test_entrance_switch(self):
+        self.assertEqual(0, self.machine.ball_devices["trough"].balls)
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices["trough"])
+        self.advance_time_and_run(1)
+        self.assertEqual(1, self.machine.ball_devices["trough"].balls)
+
     @test_config("test_smart_virtual_initial.yaml")
     def test_eject(self):
         # device1_s1 is active in this test initially

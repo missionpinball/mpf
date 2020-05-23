@@ -692,6 +692,11 @@ class BasePlaceholderManager(MpfController):
             raise TypeError(type(node))
 
     def _eval_name(self, node, variables, subscribe):
+        if node.id in ("true", "false"):
+            self.raise_config_error("Placeholder use Python syntax. Use True "
+                                    "and False instead of true and false.", 1,
+                                    context=node.id)
+
         var = self.get_global_parameters(node.id)
         if var:
             if subscribe:
@@ -787,7 +792,7 @@ class BasePlaceholderManager(MpfController):
         # The following regex will make a dict for event name, condition, and number
         # e.g. some_event_name_string{variable.condition==True}|num
         #      ^ string at start     ^ condition in braces     ^ pipe- or colon-delimited value
-        match = re.search(r"^(?P<name>[^{}:\|]*)(\{(?P<condition>.+)\})?([|:](?P<number>.+))?$", template)
+        match = re.search(r"^(?P<name>[^{}:| ]+)({(?P<condition>.+)})?([|:](?P<number>.+))?$", template)
         if not match:
             raise AssertionError("Invalid template string {}".format(template))
 

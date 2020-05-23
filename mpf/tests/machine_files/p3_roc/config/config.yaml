@@ -3,9 +3,9 @@
 hardware:
     platform: p3_roc
     servo_controllers: i2c_servo_controller
+    driverboards: pdb
 
 p_roc:
-    driverboards: pdb
     use_separate_thread: False
     trace_bus: True
     debug: true
@@ -83,6 +83,9 @@ autofire_coils:
 servos:
     servo1:
         number: 3
+    servo_pd_led_0:
+      platform: p3_roc
+      number: 2-0
 
 accelerometers:
     p3_roc_accelerometer:

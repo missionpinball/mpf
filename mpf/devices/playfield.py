@@ -139,9 +139,9 @@ class Playfield(SystemWideDevice):
         if ball_change:
             self.machine.events.post(self.name + '_ball_count_change',
                                      balls=balls, change=ball_change)
-        '''event: (playfield)_ball_count_change
+        '''event: (name)_ball_count_change
 
-        desc: The playfield with the name "playfield" has changed the number
+        desc: The playfield with the name (name) has changed the number
         of balls that are live.
 
         args:
@@ -263,8 +263,8 @@ class Playfield(SystemWideDevice):
     def _mark_playfield_active(self):
         self.ball_arrived()
         self.machine.events.post_boolean(self.name + "_active")
-        '''event: (playfield)_active
-        desc: The playfield called "playfield" is now active, meaning there's
+        '''event: (name)_active
+        desc: The playfield called (name) is now active, meaning there's
         at least one loose ball on it.
         '''
 
@@ -285,8 +285,8 @@ class Playfield(SystemWideDevice):
             if not self.num_balls_requested:
                 self.debug_log("Playfield was activated with no balls expected.")
                 self.machine.events.post('unexpected_ball_on_' + self.name)
-                '''event: unexpected_ball_on_(playfield)
-                desc: The playfield named "playfield" just had a switch hit,
+                '''event: unexpected_ball_on_(name)
+                desc: The playfield named (name) just had a switch hit,
                 meaning a ball is on it, but that ball was not expected.
                 '''
 
@@ -298,8 +298,8 @@ class Playfield(SystemWideDevice):
         self.machine.events.post('sw_' + self.name + "_active",
                                  callback=self._ball_removed_handler2,
                                  balls=balls)
-        '''event: sw_(playfield)_active
-        desc: The playfield called (playfield) was active, though a ball
+        '''event: sw_(name)_active
+        desc: The playfield called (name) was active, though a ball
         was just removed from it.
 
         args:

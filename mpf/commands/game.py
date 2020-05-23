@@ -9,10 +9,12 @@ import sys
 from datetime import datetime
 import logging
 from logging.handlers import QueueHandler, SysLogHandler
+
 from queue import Queue
 
 from mpf.core.machine import MachineController
 from mpf.core.utility_functions import Util
+from mpf.core.config_loader import YamlMultifileConfigLoader, ProductionConfigLoader
 from mpf.commands.logging_formatters import JSONFormatter
 
 
@@ -23,6 +25,7 @@ class Command:
     # pylint: disable-msg=too-many-locals,too-many-statements
     def __init__(self, mpf_path, machine_path, args):
         """Run mpf game."""
+        del mpf_path
         self.machine = None
         self._sigint_count = 0
 
@@ -52,15 +55,6 @@ class Command:
                                  "config.yaml. Multiple files can be used "
                                  "via a comma-"
                                  "separated list (no spaces between)")
-
-        parser.add_argument("-C",
-                            action="store", dest="mpfconfigfile",
-                            default=os.path.join(mpf_path,
-                                                 "mpfconfig.yaml"),
-                            metavar='config_file',
-                            help="The MPF framework default config file. "
-                                 "Default is "
-                                 "mpf/mpfconfig.yaml")
 
         parser.add_argument("-f",
                             action="store_true", dest="force_assets_load",
@@ -210,6 +204,7 @@ class Command:
         logger.addHandler(console_queue_handler)
         logger.addHandler(file_queue_handler)
         logger.setLevel(self.args.loglevel)
+        logger.info("Loading config.")
 
         if self.args.syslog_address:
             try:
@@ -222,8 +217,17 @@ class Command:
             logger.addHandler(syslog_logger)
 
         signal.signal(signal.SIGINT, self.sigint_handler)
+
+        if not self.args.production:
+            config_loader = YamlMultifileConfigLoader(machine_path, self.args.configfile,
+                                                      not self.args.no_load_cache, self.args.create_config_cache)
+        else:
+            config_loader = ProductionConfigLoader(machine_path)
+
+        config = config_loader.load_mpf_config()
+
         try:
-            self.machine = MachineController(mpf_path, machine_path, vars(self.args))
+            self.machine = MachineController(vars(self.args), config)
             self.machine.add_crash_handler(self.restore_logger)
             self.machine.run()
             logging.info("MPF run loop ended.")

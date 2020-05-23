@@ -50,11 +50,23 @@ class Shot(EnableDisableMixin, ModeDevice):
         super().device_loaded_in_mode(mode, player)
         self._update_show()
 
-    async def _initialize(self):
-        await super()._initialize()
-        for switch in self.config['switch']:
-            if switch not in self.config['switches']:
-                self.config['switches'].append(switch)
+    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None):
+        """Validate and parse shot config."""
+        config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
+        for switch in config['switch']:
+            if switch not in config['switches']:
+                config['switches'].append(switch)
+
+        for switch in config['switches'] + list(config['delay_switch'].keys()):
+            if '{}_active'.format(config['playfield'].name) in switch.tags:
+                self.raise_config_error(
+                    "Shot '{}' uses switch '{}' which has a "
+                    "'{}_active' tag. This is handled internally by the device. Remove the "
+                    "redundant '{}_active' tag from that switch.".format(
+                        self.name, switch.name, config['playfield'].name,
+                        config['playfield'].name), 1)
+
+        return config
 
     def _register_switch_handlers(self):
         self._handlers = []
@@ -299,8 +311,8 @@ class Shot(EnableDisableMixin, ModeDevice):
 
         self.machine.events.post('{}_hit'.format(self.name),
                                  profile=self.profile_name, state=state, advancing=advancing)
-        '''event: (shot)_hit
-        desc: The shot called (shot) was just hit.
+        '''event: (name)_hit
+        desc: The shot called (name) was just hit.
 
         Note that there are four events posted when a shot is hit, each
         with variants of the shot name, profile, and current state,
@@ -312,8 +324,8 @@ class Shot(EnableDisableMixin, ModeDevice):
 
         self.machine.events.post('{}_{}_hit'.format(self.name, self.profile_name),
                                  profile=self.profile_name, state=state, advancing=advancing)
-        '''event: (shot)_(profile)_hit
-        desc: The shot called (shot) was just hit with the profile (profile)
+        '''event: (name)_(profile)_hit
+        desc: The shot called (name) was just hit with the profile (profile)
         active.
 
         Note that there are four events posted when a shot is hit, each
@@ -331,8 +343,8 @@ class Shot(EnableDisableMixin, ModeDevice):
 
         self.machine.events.post('{}_{}_{}_hit'.format(self.name, self.profile_name, state),
                                  profile=self.profile_name, state=state, advancing=advancing)
-        '''event: (shot)_(profile)_(state)_hit
-        desc: The shot called (shot) was just hit with the profile (profile)
+        '''event: (name)_(profile)_(state)_hit
+        desc: The shot called (name) was just hit with the profile (profile)
         active in the state (state).
 
         Note that there are four events posted when a shot is hit, each
@@ -350,8 +362,8 @@ class Shot(EnableDisableMixin, ModeDevice):
 
         self.machine.events.post('{}_{}_hit'.format(self.name, state),
                                  profile=self.profile_name, state=state, advancing=advancing)
-        '''event: (shot)_(state)_hit
-        desc: The shot called (shot) was just hit while in the profile (state).
+        '''event: (name)_(state)_hit
+        desc: The shot called (name) was just hit while in the profile (state).
 
         Note that there are four events posted when a shot is hit, each
         with variants of the shot name, profile, and current state,
@@ -376,6 +388,7 @@ class Shot(EnableDisableMixin, ModeDevice):
     @event_handler(4)
     def _delay_switch_hit(self, switch_name, **kwargs):
         del kwargs
+        self.config['playfield'].mark_playfield_active_from_device_action()
         if not self.enabled:
             return
 

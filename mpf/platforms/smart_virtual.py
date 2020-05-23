@@ -381,7 +381,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
                         device.config['entrance_switch'].name, 1, True)
                     return
 
-            self.log.debug('Hitting switch %s due to ball being added to %s'.
+            self.log.debug('Hitting switch %s due to ball being added to %s',
                            device.config['entrance_switch'].name, device.name)
             self.machine.switch_controller.process_switch(
                 device.config['entrance_switch'].name, 1, True)

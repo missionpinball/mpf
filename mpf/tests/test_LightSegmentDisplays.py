@@ -90,3 +90,27 @@ class TestLightSegmentDisplays(MpfTestCase):
         self.assertLightColor("segment2_e", "off")
         self.assertLightColor("segment2_f", "off")
         self.assertLightColor("segment2_g", "off")
+
+        display2 = self.machine.segment_displays["display2"]
+
+        self.assertLightColor("segment3_x0", "off")
+        self.assertLightColor("segment3_x1", "off")
+        self.assertLightColor("segment3_x2", "off")
+        self.assertLightColor("segment3_x3", "off")
+        self.assertLightColor("segment4_x0", "off")
+        self.assertLightColor("segment4_x1", "off")
+        self.assertLightColor("segment4_x2", "off")
+        self.assertLightColor("segment4_x3", "off")
+
+        # this should translate 87 to bcd 0001 1110
+        display2.add_text("87")
+        self.advance_time_and_run()
+
+        self.assertLightColor("segment3_x0", "off")
+        self.assertLightColor("segment3_x1", "off")
+        self.assertLightColor("segment3_x2", "off")
+        self.assertLightColor("segment3_x3", "on")
+        self.assertLightColor("segment4_x0", "on")
+        self.assertLightColor("segment4_x1", "on")
+        self.assertLightColor("segment4_x2", "on")
+        self.assertLightColor("segment4_x3", "off")

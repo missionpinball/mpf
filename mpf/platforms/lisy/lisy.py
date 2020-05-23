@@ -280,7 +280,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
     __slots__ = ["config", "_writer", "_reader", "_poll_task", "_watchdog_task", "_number_of_lamps",
                  "_number_of_solenoids", "_number_of_displays", "_inputs", "_coils_start_at_one",
                  "_bus_lock", "api_version", "_number_of_switches", "_number_of_modern_lights",
-                 "_light_system", "_send_length_of_command"]  # type: List[str]
+                 "_light_system", "_send_length_of_command", "_lisy_version", "_hardware_name"]  # type: List[str]
 
     def __init__(self, machine) -> None:
         """Initialise platform."""
@@ -298,6 +298,8 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         self._inputs = dict()               # type: Dict[str, bool]
         self._coils_start_at_one = None     # type: Optional[str]
         self.features['max_pulse'] = 255
+        self._lisy_version = None
+        self._hardware_name = None
 
         self.config = self.machine.config_validator.validate_config("lisy", self.machine.config['lisy'])
         self._configure_device_logging_and_debug("lisy", self.config)
@@ -382,31 +384,43 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                     self.warning_log("Reset of LISY failed. Got %s instead of 0. Will retry.", return_code)
                     continue
 
+                # get type (system 1 vs system 80)
+                self.send_byte(LisyDefines.InfoGetConnectedLisyHardware)
+                hardware_name = await self._read_string()
+
+                self._coils_start_at_one = bool(hardware_name == b'LISY80')
+
+                self.send_byte(LisyDefines.InfoLisyVersion)
+                lisy_version = await self._read_string()
+                self.send_byte(LisyDefines.InfoGetApiVersion)
+                api_version = await self._read_string()
+
+                self.debug_log("Connected to %s hardware. LISY version: %s. API version: %s.",
+                               hardware_name, lisy_version, api_version)
+
+                if not lisy_version:
+                    self.error_log("Failed to read lisy_version from LISY. Got %s", lisy_version)
+                    continue
+                else:
+                    self._lisy_version = lisy_version.decode()
+
+                if api_version:
+                    self.api_version = StrictVersion(api_version.decode())
+                else:
+                    self.error_log("Failed to read api_version from LISY. Got %s", api_version)
+                    continue
+
                 # if we made it here reset succeeded
                 break
 
-            # get type (system 1 vs system 80)
-            self.send_byte(LisyDefines.InfoGetConnectedLisyHardware)
-            type_str = await self._read_string()
+            self._hardware_name = hardware_name.decode()
 
-            self._coils_start_at_one = bool(type_str == b'LISY80')
-
-            self.send_byte(LisyDefines.InfoLisyVersion)
-            lisy_version = await self._read_string()
-            self.send_byte(LisyDefines.InfoGetApiVersion)
-            api_version = await self._read_string()
-
-            self.debug_log("Connected to %s hardware. LISY version: %s. API version: %s.",
-                           type_str, lisy_version, api_version)
-
-            self.api_version = StrictVersion(api_version.decode())
-
-            self.machine.variables.set_machine_var("lisy_hardware", type_str)
+            self.machine.variables.set_machine_var("lisy_hardware", self._hardware_name)
             '''machine_var: lisy_hardware
 
-            desc: Connected LISY hardware. Either LISY1 or LISY80.
+            desc: Connected LISY hardware (I.e. LISY1, LISY80 or APC).
             '''
-            self.machine.variables.set_machine_var("lisy_version", lisy_version)
+            self.machine.variables.set_machine_var("lisy_version", self._lisy_version)
             '''machine_var: lisy_version
 
             desc: LISY version.
@@ -444,7 +458,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 self._light_system = PlatformBatchLightSystem(self.machine.clock, lambda x: x.number,
                                                               lambda x, y: x.number + 1 == y.number,
                                                               self._send_multiple_light_update,
-                                                              self.machine.machine_config['mpf'][
+                                                              self.machine.config['mpf'][
                                                                   'default_light_hw_update_hz'],
                                                               self.config['max_led_batch_size'])
                 self._light_system.start()
@@ -752,3 +766,20 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         data = data[:-1]
         self.log.debug("Received %s", data)
         return data
+
+    def get_info_string(self):
+        """Dump infos about LISY platform."""
+        infos = ""
+        if self.config['connection'] == "serial":
+            infos += "LISY connected via serial on {} at {}bps\n".format(self.config['port'], self.config['baud'])
+        else:
+            infos += "LISY connected via network at {}:{}\n".format(self.config['network_host'],
+                                                                    self.config['network_port'])
+        infos += "Hardware: {} Lisy Version: {} API Version: {}\n".format(self._hardware_name, self._lisy_version,
+                                                                          self.api_version)
+        infos += "Input count: {} Input map: {}\n".format(self._number_of_switches, list(self._inputs.keys()))
+        infos += "Coil count: {}\n".format(self._number_of_solenoids)
+        infos += "Modern lights count: {}\n".format(self._number_of_modern_lights)
+        infos += "Traditional lights count: {}\n".format(self._number_of_lamps)
+        infos += "Display count: {}\n".format(self._number_of_displays)
+        return infos

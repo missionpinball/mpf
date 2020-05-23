@@ -7,6 +7,9 @@ import sys
 import time
 import unittest
 
+from mpf.core.config_loader import YamlMultifileConfigLoader
+
+from mpf.core.config_processor import ConfigProcessor
 from unittest.mock import *
 
 import asyncio
@@ -26,12 +29,36 @@ from mpf.core.utility_functions import Util
 from mpf.file_interfaces.yaml_interface import YamlInterface
 
 YamlInterface.cache = True
+UNITTEST_CONFIG_CACHE = {}
+
+class UnitTestConfigLoader(YamlMultifileConfigLoader):
+
+    def __init__(self, machine_path, configfile, config_defaults, config_patches, spec_patches):
+        super().__init__(machine_path, configfile, True, True)
+        self.config_defaults = config_defaults
+        self.config_patches = config_patches
+        self.spec_patches = spec_patches
+
+    def _load_config_spec(self):
+        config_spec = super()._load_config_spec()
+        if self.spec_patches:
+            config_spec = Util.dict_merge(config_spec, self.spec_patches)
+        return config_spec
+
+    def _load_mpf_machine_config(self, config_spec):
+        config = super()._load_mpf_machine_config(config_spec)
+
+        if self.config_defaults:
+            config = Util.dict_merge(self.config_defaults, config)
+        if self.config_patches:
+            config = Util.dict_merge(config, self.config_patches, False)
+        return config
 
 
 class MpfUnitTestFormatter(logging.Formatter):
 
     def formatTime(self, record, datefmt=None):
-        return "{:.3f}".format(record.created_clock)
+        return "{} : {:.3f}".format(super().formatTime(record, datefmt), record.created_clock)
 
 
 def test_config(config_file):
@@ -71,17 +98,15 @@ class TestMachineController(MachineController):
     * Disabled the config file caching to always load the config from disk.
 
     """
-    local_mpf_config_cache = {}     # type: Any
 
-    def __init__(self, mpf_path, machine_path, options, config_patches, config_defaults, clock, mock_data,
-                 enable_plugins=False, early_init=None):
+    def __init__(self, options, config, config_patches, config_defaults, clock, mock_data,
+                 enable_plugins=False):
         self.test_config_patches = config_patches
         self.test_config_defaults = config_defaults
         self._enable_plugins = enable_plugins
         self._test_clock = clock
         self._mock_data = mock_data
-        self._early_init = early_init
-        super().__init__(mpf_path, machine_path, options)
+        super().__init__(options, config)
 
     def create_data_manager(self, config_name):
         """Create TestDataManager."""
@@ -97,13 +122,6 @@ class TestMachineController(MachineController):
     def _register_plugin_config_players(self):
         if self._enable_plugins:
             super()._register_plugin_config_players()
-
-    def _load_config(self):
-        if self._early_init:
-            self._early_init(self)
-        super()._load_config()
-        self.config = Util.dict_merge(self.test_config_defaults, self.config)
-        self.config = Util.dict_merge(self.config, self.test_config_patches)
 
 
 class MpfTestCase(unittest.TestCase):
@@ -129,6 +147,8 @@ class MpfTestCase(unittest.TestCase):
         self.machine_config_defaults['playfields']['playfield'] = dict()
         self.machine_config_defaults['playfields']['playfield']['tags'] = "default"
         self.machine_config_defaults['playfields']['playfield']['default_source_device'] = None
+
+        self.machine_spec_patches = {}
 
         self._last_event_kwargs = {}
         self._events = {}
@@ -514,13 +534,18 @@ class MpfTestCase(unittest.TestCase):
             # no logging by default
             logging.basicConfig(level=99)
 
+        # load config
+        config_loader = UnitTestConfigLoader(machine_path, [self._get_config_file()], self.machine_config_defaults,
+                                             self.machine_config_patches, self.machine_spec_patches)
+
+        config = config_loader.load_mpf_config()
+
         try:
             self.machine = TestMachineController(
-                os.path.abspath(os.path.join(
-                    mpf.core.__path__[0], os.pardir)), machine_path,
-                self.get_options(), self.machine_config_patches, self.machine_config_defaults,
-                self.clock, self._get_mock_data(),
-                self.get_enable_plugins(), self._early_machine_init)
+                self.get_options(), config, self.machine_config_patches, self.machine_config_defaults,
+                self.clock, self._get_mock_data(), self.get_enable_plugins())
+
+            self._early_machine_init(self.machine)
 
             self._initialise_machine()
 
@@ -583,6 +608,7 @@ class MpfTestCase(unittest.TestCase):
 
         """
         self._events[event_name] = 0
+        self._last_event_kwargs.pop(event_name, None)
         self.machine.events.remove_handler_by_event(event=event_name, handler=self._mock_event_handler)
         self.machine.events.add_handler(event=event_name,
                                         handler=self._mock_event_handler,

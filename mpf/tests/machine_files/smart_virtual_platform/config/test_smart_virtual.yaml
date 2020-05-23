@@ -124,8 +124,6 @@ ball_devices:
         tags: home # has to be home or attract will collect the balls
     device2:
         ball_switches: device2_s1 #, device2_s2
-#        eject_coil: device2
-#        eject_targets: device2
         confirm_eject_type: target
         mechanical_eject: true
     device3:

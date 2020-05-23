@@ -33,6 +33,7 @@ class Servo(SystemWideDevice):
     async def _initialize(self):
         await super()._initialize()
         self.platform = self.machine.get_platform_sections('servo_controllers', self.config['platform'])
+        self.platform.assert_has_feature("servos")
 
         for position in self.config['positions']:
             self.machine.events.add_handler(self.config['positions'][position],

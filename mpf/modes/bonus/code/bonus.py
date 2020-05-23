@@ -165,6 +165,8 @@ class Bonus(Mode):
     def _end_bonus(self, **kwargs):
         del kwargs
         self.debug_log("Bonus done")
-        if not self.settings['keep_multiplier']:
+        keep_multiplier = self.settings['keep_multiplier']
+
+        if not keep_multiplier.evaluate({}):
             self.player.bonus_multiplier = 1
         self.stop()

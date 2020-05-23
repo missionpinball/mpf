@@ -1,0 +1,18 @@
+#config_version=5
+counters:
+  my_counter:
+    starting_count: 0
+    count_complete_value: 5
+    count_events: count_up
+
+light_player:
+  "{device.counters.my_counter.value > 0}":
+    l_chest_matrix_green_5: green
+  "{device.counters.my_counter.value > 1}":
+    l_chest_matrix_green_4: green
+  "{device.counters.my_counter.value > 2}":
+    l_chest_matrix_green_3: green
+  "{device.counters.my_counter.value > 3}":
+    l_chest_matrix_green_2: green
+  "{current_player.progress_value > 0}":
+    l_chest_matrix_green_5: green
