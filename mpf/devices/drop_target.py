@@ -35,7 +35,7 @@ class DropTarget(SystemWideDevice):
         """Initialise drop target."""
         self.reset_coil = None              # type: Driver
         self.knockdown_coil = None          # type: Driver
-        self.banks = None                   # type: Set[DropTargetBank]
+        self.banks = set()                  # type: Set[DropTargetBank]
         super().__init__(machine, name)
 
         self._in_ball_search = False
@@ -48,7 +48,6 @@ class DropTarget(SystemWideDevice):
         await super()._initialize()
         self.reset_coil = self.config['reset_coil']
         self.knockdown_coil = self.config['knockdown_coil']
-        self.banks = set()
 
         # can't read the switch until the switch controller is set up
         self.machine.events.add_handler('init_phase_4',
