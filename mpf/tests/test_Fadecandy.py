@@ -83,6 +83,14 @@ class TestFadecandy(MpfTestCase):
         self._messages = []
 
     def test_led_color(self):
+        self.assertEqual("0-63", self.machine.lights["test_led_serial"].hw_drivers["red"][0].number)
+        self.assertEqual("0-64", self.machine.lights["test_led_serial"].hw_drivers["green"][0].number)
+        self.assertEqual("0-65", self.machine.lights["test_led_serial"].hw_drivers["blue"][0].number)
+        self.assertEqual("0-66", self.machine.lights["test_led_serial2"].hw_drivers["red"][0].number)
+        self.assertEqual("0-67", self.machine.lights["test_led_serial2"].hw_drivers["green"][0].number)
+        self.assertEqual("0-68", self.machine.lights["test_led_serial2"].hw_drivers["blue"][0].number)
+        self.assertEqual("0-69", self.machine.lights["test_led_serial2"].hw_drivers["white"][0].number)
+
         # test led on channel 0. position 99
         self.machine.lights["test_led"].on()
         self.advance_time_and_run(.02)

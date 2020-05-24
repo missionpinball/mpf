@@ -2,7 +2,7 @@
 import abc
 import asyncio
 
-from typing import Callable, Tuple, Set, List
+from typing import Tuple, Set, List
 from sortedcontainers import SortedSet, SortedList
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.core.utility_functions import Util
@@ -58,16 +58,14 @@ class PlatformBatchLightSystem:
 
     """Batch light system for platforms."""
 
-    __slots__ = ["dirty_lights", "dirty_schedule", "clock", "is_sequential_function", "update_task", "update_callback",
-                 "sort_function", "update_hz", "max_batch_size"]
+    __slots__ = ["dirty_lights", "dirty_schedule", "clock", "update_task", "update_callback",
+                 "update_hz", "max_batch_size"]
 
     # pylint: disable-msg=too-many-arguments
-    def __init__(self, clock, sort_function, is_sequential_function, update_callback, update_hz, max_batch_size):
+    def __init__(self, clock, update_callback, update_hz, max_batch_size):
         """Initialise light system."""
-        self.dirty_lights = SortedSet(key=sort_function)    # type: Set[PlatformBatchLight]
-        self.dirty_schedule = SortedList(key=lambda x: x[0] + sort_function(x[1]))
-        self.is_sequential_function = is_sequential_function
-        self.sort_function = sort_function
+        self.dirty_lights = SortedSet()    # type: Set[PlatformBatchLight]
+        self.dirty_schedule = SortedList()
         self.update_task = None
         self.clock = clock
         self.update_callback = update_callback
@@ -96,7 +94,7 @@ class PlatformBatchLightSystem:
                 if not sequential_lights:
                     # first light
                     sequential_lights = [light]
-                elif self.is_sequential_function(sequential_lights[-1], light):
+                elif light.is_successor_of(sequential_lights[-1]):
                     # lights are sequential
                     sequential_lights.append(light)
                 else:
@@ -138,5 +136,4 @@ class PlatformBatchLightSystem:
     def mark_dirty(self, light: "PlatformBatchLight"):
         """Mark as dirty."""
         self.dirty_lights.add(light)
-        self.dirty_schedule = SortedList([x for x in self.dirty_schedule if x[1] != light],
-                                         key=lambda x: x[0] + self.sort_function(x[1]))
+        self.dirty_schedule = SortedList([x for x in self.dirty_schedule if x[1] != light])

@@ -11,11 +11,12 @@ class FASTDirectLED:
 
     """FAST RGB LED."""
 
-    __slots__ = ["number", "dirty", "hardware_fade_ms", "log", "channels", "machine"]
+    __slots__ = ["number", "number_int", "dirty", "hardware_fade_ms", "log", "channels", "machine"]
 
     def __init__(self, number: str, hardware_fade_ms: int, machine) -> None:
         """Initialise FAST LED."""
         self.number = number
+        self.number_int = int(number)
         self.dirty = True
         self.machine = machine
         self.hardware_fade_ms = hardware_fade_ms
@@ -93,3 +94,18 @@ class FASTDirectLEDChannel(LightPlatformInterface):
     def get_board_name(self):
         """Return the board of this light."""
         return "FAST LED CPU"
+
+    def is_successor_of(self, other):
+        """Return true if the other light has the previous number."""
+        return self.led.number_int * 3 + self.channel == other.led.number_int * 3 + other.channel + 1
+
+    def get_successor_number(self):
+        """Return next number."""
+        if self.channel == 2:
+            return "{}-0".format(self.led.number_int + 1)
+
+        return "{}-{}".format(self.led.number, self.channel + 1)
+
+    def __lt__(self, other):
+        """Order lights by their order on the hardware."""
+        return self.led.number_int < other.led.number_int or self.channel < other.channel

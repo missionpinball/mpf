@@ -125,5 +125,5 @@ lights:
     number: 2-23
     type: grb
   test_led2:
-    number: 2-25
+    previous: test_led
     type: grb

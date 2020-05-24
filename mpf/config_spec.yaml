@@ -708,6 +708,8 @@ lights:
     __valid_in__: machine
     __type__: device
     number: single|str|None
+    previous: single|machine(lights)|None
+    start_channel: single|str|None
     type: single|str|None
     subtype: single|str|None
     platform: single|str|None

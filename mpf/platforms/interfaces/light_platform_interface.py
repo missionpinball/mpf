@@ -2,11 +2,14 @@
 import abc
 import asyncio
 from asyncio import AbstractEventLoop
+from functools import total_ordering
+
 from typing import Any
 
 from mpf.core.utility_functions import Util
 
 
+@total_ordering
 class LightPlatformInterface(metaclass=abc.ABCMeta):
 
     """Interface for a light in hardware platforms."""
@@ -32,6 +35,21 @@ class LightPlatformInterface(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get_board_name(self):
         """Return the name of the board of this light."""
+        raise NotImplementedError
+
+    def is_successor_of(self, other):
+        """Return true if this light is the direct successor of the other light passed as parameter."""
+        raise NotImplementedError
+
+    def get_successor_number(self):
+        """Return the next light number after this light if possible.
+
+        This is used for serial LED chains. Raise an error if this is not possible.
+        """
+        raise NotImplementedError
+
+    def __lt__(self, other):
+        """Order lights by their position on the hardware."""
         raise NotImplementedError
 
 

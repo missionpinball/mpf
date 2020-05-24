@@ -412,6 +412,21 @@ class VirtualLight(LightPlatformInterface):
         """Return the name of the board of this light."""
         return "Virtual"
 
+    def is_successor_of(self, other):
+        """Return true if the other light has the same number string plus the suffix '+1'."""
+        return self.number == other.number + "+1"
+
+    def get_successor_number(self):
+        """Return the number with the suffix '+1'.
+
+        As there is not real number format for virtual is this is all we can do here.
+        """
+        return self.number + "+1"
+
+    def __lt__(self, other):
+        """Order lights by string."""
+        return self.number < other.number
+
 
 class VirtualServo(ServoPlatformInterface):
 

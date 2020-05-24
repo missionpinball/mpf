@@ -16,7 +16,6 @@ class FASTMatrixLight(LightPlatformSoftwareFade):
         """Initialise light."""
         super().__init__(number, machine.clock.loop, fade_interval_ms)
         self.log = logging.getLogger('FASTMatrixLight')
-        self.number = number
         self.send = sender
         self.platform = platform
 
@@ -38,3 +37,15 @@ class FASTMatrixLight(LightPlatformSoftwareFade):
 
         # fall back if not found
         return "FAST Unknown Board"
+
+    def is_successor_of(self, other):
+        """Return true if the other light has the previous number."""
+        raise AssertionError("Not possible in FASTMatrix.")
+
+    def get_successor_number(self):
+        """Return next number."""
+        raise AssertionError("Not possible in FASTMatrix.")
+
+    def __lt__(self, other):
+        """Order lights by string."""
+        return self.number < other.number

@@ -37,12 +37,14 @@ class OPPIncand(LightPlatformSoftwareFade):
 
     """A driver of an incandescent wing card."""
 
-    __slots__ = ["incand_card"]
+    __slots__ = ["incand_card", "index"]
 
     def __init__(self, incand_card, number, hardware_fade_ms, loop):
         """Initialise Incandescent wing card driver."""
         super().__init__(number, loop, hardware_fade_ms)
         self.incand_card = incand_card  # type: OPPIncandCard
+        _, _, incand = self.number.split("-")
+        self.index = int(incand)
 
     def set_brightness(self, brightness: float):
         """Enable (turns on) this driver.
@@ -50,8 +52,7 @@ class OPPIncand(LightPlatformSoftwareFade):
         Args:
             brightness: brightness 0 (off) to 255 (on) for this incandescent light. OPP only supports on (>0) or off.
         """
-        _, _, incand = self.number.split("-")
-        curr_bit = (1 << int(incand))
+        curr_bit = (1 << self.index)
         if brightness == 0:
             self.incand_card.new_state &= ~curr_bit
         else:
@@ -60,3 +61,16 @@ class OPPIncand(LightPlatformSoftwareFade):
     def get_board_name(self):
         """Return OPP chain and addr."""
         return "OPP {} Board {}".format(str(self.incand_card.chain_serial), "0x%02x" % self.incand_card.addr)
+
+    def is_successor_of(self, other):
+        """Return true if the other light has the previous index and is on the same card."""
+        return self.incand_card == other.incand_card and self.index == self.index + 1
+
+    def get_successor_number(self):
+        """Return next index on node."""
+        return "{}-{}-{}".format(self.incand_card.chain_serial, self.incand_card.addr, self.index + 1)
+
+    def __lt__(self, other):
+        """Order lights by their order on the hardware."""
+        return (self.incand_card.chain_serial < other.incand_card.chain_serial or
+                self.incand_card.addr < other.incand_card.addr or self.index < self.index)

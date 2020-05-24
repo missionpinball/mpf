@@ -1,4 +1,6 @@
 """Contains the Light class."""
+import asyncio
+
 from functools import partial
 
 from typing import Set, Dict, List, Tuple, Any
@@ -54,7 +56,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
     class_label = 'light'
 
     __slots__ = ["hw_drivers", "platforms", "delay", "default_fade_ms", "_color_correction_profile", "stack",
-                 "_off_color"]
+                 "_off_color", "_drivers_loaded"]
 
     def __init__(self, machine, name):
         """Initialise light."""
@@ -63,6 +65,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         super().__init__(machine, name)
         self.machine.light_controller.initialise_light_subsystem()
         self.delay = DelayManager(self.machine)
+        self._drivers_loaded = asyncio.Future(loop=self.machine.clock.loop)
 
         self.default_fade_ms = None
         self._off_color = RGBColor("off")
@@ -176,8 +179,55 @@ class Light(SystemWideDevice, DevicePositionMixin):
 
         return channels
 
+    def wait_for_loaded(self):
+        """Return future."""
+        return asyncio.shield(self._drivers_loaded, loop=self.machine.clock.loop)
+
+    def get_successor_number(self):
+        """Get the number of the next light channel.
+
+        We first have to find the last channel and then get the next number based on that.
+        """
+        all_drivers = []
+        for drivers in self.hw_drivers.values():
+            all_drivers.extend(drivers)
+        sorted_channels = sorted(all_drivers)
+        return sorted_channels[-1].get_successor_number()
+
+    def _load_hw_driver_sequentially(self, next_channel):
+        if self.config['number'] or self.config['channels']:
+            self.raise_config_error("Cannot use start_channel/previous and number or channels.", 3)
+        if not self.config['type']:
+            self.raise_config_error("Cannot use previous or start_channel without type. "
+                                    "Add a type setting to your light.", 2)
+
+        for color_name in self.config['type']:
+            # red channel
+            if color_name == 'r':
+                full_color_name = "red"
+            # green channel
+            elif color_name == 'g':
+                full_color_name = "green"
+            # blue channel
+            elif color_name == 'b':
+                full_color_name = "blue"
+            # simple white channel
+            elif color_name == 'w':
+                full_color_name = "white"
+            else:
+                raise AssertionError("Invalid element {} in type {} of light {}".format(
+                    color_name, self.config['type'], self.name))
+
+            if full_color_name not in self.hw_drivers:
+                self.hw_drivers[full_color_name] = []
+            channel = {'subtype': self.config['subtype'], 'platform': self.config['platform'],
+                       'platform_settings': self.config['platform_settings'], 'number': next_channel}
+            channel = self.machine.config_validator.validate_config("light_channels", channel)
+            driver = self._load_hw_driver(channel)
+            next_channel = driver.get_successor_number()
+            self.hw_drivers[full_color_name].append(driver)
+
     def _load_hw_drivers(self):
-        """Load hw drivers."""
         if not self.config['channels']:
             # get channels from number + platform
             platform = self.machine.get_platform_sections('lights', self.config['platform'])
@@ -232,7 +282,15 @@ class Light(SystemWideDevice, DevicePositionMixin):
 
     async def _initialize(self):
         await super()._initialize()
-        self._load_hw_drivers()
+        if self.config['previous']:
+            await self.config['previous'].wait_for_loaded()
+            start_channel = self.config['previous'].get_successor_number()
+            self._load_hw_driver_sequentially(start_channel)
+        elif self.config['start_channel']:
+            self._load_hw_driver_sequentially(self.config['start_channel'])
+        else:
+            self._load_hw_drivers()
+        self._drivers_loaded.set_result(True)
 
         self.config['default_on_color'] = RGBColor(self.config['default_on_color'])
 

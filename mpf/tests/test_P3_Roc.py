@@ -499,7 +499,7 @@ SW-16 boards found:
             call(7, 0x8001, 0x04),
             call(7, 0x80FE, 130),
             call(7, 0x8000, 0x01)
-        ])
+        ], any_order=True)
         self.pinproc.write_data = MagicMock(return_value=True)
         self.machine.servos["servo1"].go_to_position(0)
         self.wait_for_platform()

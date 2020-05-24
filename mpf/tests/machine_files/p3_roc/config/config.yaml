@@ -131,13 +131,8 @@ lights:
       blue:
         number: 2-9
   test_led3:
-    channels:
-      red:
-        number: 2-10
-      green:
-        number: 2-11
-      blue:
-        number: 2-12
+    previous: test_led2
+    type: rgb
   test_led_inverted:
     number: 2-4-5-6
     platform_settings:

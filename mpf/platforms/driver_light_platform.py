@@ -25,6 +25,18 @@ class DriverLight(LightPlatformSoftwareFade):
         """Return board name of underlaying driver."""
         return self.driver.hw_driver.get_board_name()
 
+    def is_successor_of(self, other):
+        """Not possible."""
+        raise AssertionError("Not possible in DriverLights.")
+
+    def get_successor_number(self):
+        """Not possible."""
+        raise AssertionError("Not possible in DriverLights.")
+
+    def __lt__(self, other):
+        """Order lights by string."""
+        return self.number < other.number
+
 
 class DriverLightPlatform(LightsPlatform):
 

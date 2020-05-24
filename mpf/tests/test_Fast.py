@@ -840,12 +840,12 @@ Update done.
         device = self.machine.lights["test_led"]
         device2 = self.machine.lights["test_led2"]
         self.assertEqual("000000", self.rgb_cpu.leds['97'])
-        self.assertEqual("000000", self.rgb_cpu.leds['99'])
+        self.assertEqual("000000", self.rgb_cpu.leds['98'])
         # test led on
         device.on()
         self.advance_time_and_run(1)
         self.assertEqual("ffffff", self.rgb_cpu.leds['97'])
-        self.assertEqual("000000", self.rgb_cpu.leds['99'])
+        self.assertEqual("000000", self.rgb_cpu.leds['98'])
 
         device2.color("001122")
 
@@ -853,7 +853,7 @@ Update done.
         device.off()
         self.advance_time_and_run(1)
         self.assertEqual("000000", self.rgb_cpu.leds['97'])
-        self.assertEqual("001122", self.rgb_cpu.leds['99'])
+        self.assertEqual("001122", self.rgb_cpu.leds['98'])
 
         # test led color
         device.color(RGBColor((2, 23, 42)))

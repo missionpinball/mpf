@@ -123,6 +123,18 @@ class LisySimpleLamp(LightPlatformSoftwareFade):
         """Return board name."""
         return "LISY"
 
+    def is_successor_of(self, other):
+        """Return true if the other light has the previous number."""
+        return self.number == other.number + 1
+
+    def get_successor_number(self):
+        """Return next number."""
+        return self.number + 1
+
+    def __lt__(self, other):
+        """Order lights by their order on the hardware."""
+        return self.number < other.number
+
 
 class LisyModernLight(PlatformBatchLight):
 
@@ -142,6 +154,18 @@ class LisyModernLight(PlatformBatchLight):
     def get_board_name(self):
         """Return board name."""
         return "LISY"
+
+    def is_successor_of(self, other):
+        """Return true if the other light has the previous number."""
+        return self.number == other.number + 1
+
+    def get_successor_number(self):
+        """Return next number."""
+        return self.number + 1
+
+    def __lt__(self, other):
+        """Order lights by their order on the hardware."""
+        return self.number < other.number
 
 
 class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
@@ -455,8 +479,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 self._number_of_modern_lights = 0
 
             if self._number_of_modern_lights > 0:
-                self._light_system = PlatformBatchLightSystem(self.machine.clock, lambda x: x.number,
-                                                              lambda x, y: x.number + 1 == y.number,
+                self._light_system = PlatformBatchLightSystem(self.machine.clock,
                                                               self._send_multiple_light_update,
                                                               self.machine.config['mpf'][
                                                                   'default_light_hw_update_hz'],

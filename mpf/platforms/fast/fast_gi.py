@@ -32,3 +32,15 @@ class FASTGIString(LightPlatformSoftwareFade):
     def get_board_name(self):
         """Return the board of this light."""
         return "FAST WPC"
+
+    def is_successor_of(self, other):
+        """Return true if the other light has the previous number."""
+        raise AssertionError("Not possible in FASTGI.")
+
+    def get_successor_number(self):
+        """Return next number."""
+        raise AssertionError("Not possible in FASTGI.")
+
+    def __lt__(self, other):
+        """Order lights by string."""
+        return self.number < other.number

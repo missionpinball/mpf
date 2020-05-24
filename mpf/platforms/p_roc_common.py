@@ -4,8 +4,6 @@ import abc
 import asyncio
 import logging
 
-from mpf.exceptions.runtime_error import MpfRuntimeError
-
 import platform
 import sys
 from threading import Thread
@@ -23,6 +21,9 @@ from mpf.platforms.p_roc_devices import PROCSwitch, PROCMatrixLight, PDBLED, PDB
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
     SwitchConfig, ServoPlatform, StepperPlatform
+
+from mpf.exceptions.runtime_error import MpfRuntimeError
+
 
 # pylint: disable-msg=ungrouped-imports
 try:    # pragma: no cover
@@ -249,8 +250,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         that's attached to MPF.
         '''
 
-        self._light_system = PlatformBatchLightSystem(self.machine.clock, self._light_key,
-                                                      self._are_lights_sequential, self._send_multiple_light_update,
+        self._light_system = PlatformBatchLightSystem(self.machine.clock, self._send_multiple_light_update,
                                                       self.machine.config['mpf']['default_light_hw_update_hz'],
                                                       65535)
 
@@ -285,16 +285,6 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
                 self._write_color_buffered(board, value, command_buffer)
 
         self.run_proc_cmd_no_wait("_write_data_batch", command_buffer)
-
-    @staticmethod
-    def _light_key(light: PDBLED):
-        """Sort lights by this key."""
-        return light.board * 1000 + light.address
-
-    @staticmethod
-    def _are_lights_sequential(a: PDBLED, b: PDBLED):
-        """Return True if lights are sequential."""
-        return a.board == b.board and a.address + 1 == b.address
 
     async def start(self):
         """Start listening for switches."""
