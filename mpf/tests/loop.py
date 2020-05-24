@@ -55,6 +55,8 @@ class NextTimers:
 
         return when
 
+    def __repr__(self):
+        return str(self._timers_set)
 
 class _TestTransport:
 
