@@ -8,6 +8,9 @@ switches:
     s_test_nc:
         number: 1A
         type: 'NC'
+    s_test_debounce_on:
+        number: 9
+        debounce: normal
 
 coils:
     c_test:
@@ -18,7 +21,9 @@ coils:
         default_pulse_ms: 23
     c_test_disabled:
         number: 6
-
+    c_test_recycle_off:
+        number: 7
+        default_recycle: False
 
 autofire_coils:
     ac_test:
@@ -42,3 +47,23 @@ autofire_coils:
         switch: s_test_disabled
         enable_events: enable_autofire
         disable_events: disable_autofire
+
+    ac_test_defaults:
+        coil: c_test_recycle_off
+        switch: s_test_debounce_on
+
+    ac_test_overwrites:
+        coil: c_test
+        switch: s_test
+        switch_overwrite:
+            debounce: normal
+        coil_overwrite:
+            recycle: False
+
+    ac_test_overwrites2:
+        coil: c_test_recycle_off
+        switch: s_test_debounce_on
+        switch_overwrite:
+            debounce: quick
+        coil_overwrite:
+            recycle: True

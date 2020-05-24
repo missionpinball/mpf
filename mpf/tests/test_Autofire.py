@@ -32,6 +32,59 @@ class TestAutofire(MpfTestCase):
             DriverSettings(hw_driver=self.machine.coils["c_test"].hw_driver,
                            pulse_settings=PulseSettings(power=1.0, duration=23), hold_settings=None, recycle=True))
 
+    def test_hw_rule_overwrites(self):
+        self.machine.default_platform.set_pulse_on_hit_rule = MagicMock()
+        self.machine.autofires["ac_test_overwrites"].enable()
+
+        self.machine.default_platform.set_pulse_on_hit_rule.assert_called_once_with(
+            SwitchSettings(hw_switch=self.machine.switches["s_test"].hw_switch, invert=False, debounce=True),
+            DriverSettings(hw_driver=self.machine.coils["c_test"].hw_driver,
+                           pulse_settings=PulseSettings(power=1.0, duration=23), hold_settings=None, recycle=False)
+        )
+
+        self.machine.default_platform.clear_hw_rule = MagicMock()
+        self.machine.autofires["ac_test_overwrites"].disable()
+
+        self.machine.default_platform.clear_hw_rule.assert_called_once_with(
+            SwitchSettings(hw_switch=self.machine.switches["s_test"].hw_switch, invert=False, debounce=True),
+            DriverSettings(hw_driver=self.machine.coils["c_test"].hw_driver,
+                           pulse_settings=PulseSettings(power=1.0, duration=23), hold_settings=None, recycle=False))
+
+        self.machine.default_platform.set_pulse_on_hit_rule = MagicMock()
+        self.machine.autofires["ac_test_overwrites2"].enable()
+
+        self.machine.default_platform.set_pulse_on_hit_rule.assert_called_once_with(
+            SwitchSettings(hw_switch=self.machine.switches["s_test_debounce_on"].hw_switch, invert=False, debounce=False),
+            DriverSettings(hw_driver=self.machine.coils["c_test_recycle_off"].hw_driver,
+                           pulse_settings=PulseSettings(power=1.0, duration=10), hold_settings=None, recycle=True)
+        )
+
+        self.machine.default_platform.clear_hw_rule = MagicMock()
+        self.machine.autofires["ac_test_overwrites2"].disable()
+
+        self.machine.default_platform.clear_hw_rule.assert_called_once_with(
+            SwitchSettings(hw_switch=self.machine.switches["s_test_debounce_on"].hw_switch, invert=False, debounce=False),
+            DriverSettings(hw_driver=self.machine.coils["c_test_recycle_off"].hw_driver,
+                           pulse_settings=PulseSettings(power=1.0, duration=10), hold_settings=None, recycle=True))
+
+    def test_hw_rule_coil_and_switch_defaults(self):
+        self.machine.default_platform.set_pulse_on_hit_rule = MagicMock()
+        self.machine.autofires["ac_test_defaults"].enable()
+
+        self.machine.default_platform.set_pulse_on_hit_rule.assert_called_once_with(
+            SwitchSettings(hw_switch=self.machine.switches["s_test_debounce_on"].hw_switch, invert=False, debounce=True),
+            DriverSettings(hw_driver=self.machine.coils["c_test_recycle_off"].hw_driver,
+                           pulse_settings=PulseSettings(power=1.0, duration=10), hold_settings=None, recycle=False)
+        )
+
+        self.machine.default_platform.clear_hw_rule = MagicMock()
+        self.machine.autofires["ac_test_defaults"].disable()
+
+        self.machine.default_platform.clear_hw_rule.assert_called_once_with(
+            SwitchSettings(hw_switch=self.machine.switches["s_test_debounce_on"].hw_switch, invert=False, debounce=True),
+            DriverSettings(hw_driver=self.machine.coils["c_test_recycle_off"].hw_driver,
+                           pulse_settings=PulseSettings(power=1.0, duration=10), hold_settings=None, recycle=False))
+
     def test_hw_rule_pulse_inverted_switch(self):
         self.machine.default_platform.set_pulse_on_hit_rule = MagicMock()
         self.machine.autofires["ac_test_inverted"].enable()

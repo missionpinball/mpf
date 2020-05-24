@@ -244,7 +244,7 @@ coils:
     __type__: device
     allow_enable: single|bool|false
     number: single|str|
-    default_recycle: single|bool|false
+    default_recycle: single|bool|None
     default_pulse_ms: single|ms|None
     default_pulse_power: single|float(0,1)|None
     default_hold_power: single|float(0,1)|None
