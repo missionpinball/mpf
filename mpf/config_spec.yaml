@@ -280,6 +280,7 @@ opp_coils:
 fast_coils:
     connection: single|enum(network,local,auto)|auto
     recycle_ms: single|ms|None
+    hold_pwm_patter: single|str|None
 coil_player:
     __valid_in__: machine, mode, show
     __type__: config_player

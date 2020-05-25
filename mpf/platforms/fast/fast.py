@@ -840,7 +840,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             enable_switch.hw_switch.number[0],
             Util.int_to_hex_string(coil.pulse_settings.duration),
             driver.get_pwm_for_cmd(coil.pulse_settings.power),
-            driver.get_pwm_for_cmd(coil.hold_settings.power),
+            driver.get_hold_pwm_for_cmd(coil.hold_settings.power),
             driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
         enable_switch.hw_switch.configure_debounce(enable_switch.debounce)

@@ -57,6 +57,13 @@ class FASTDriver(DriverPlatformInterface):
         # fall back if not found
         return "FAST Unknown Board"
 
+    def get_hold_pwm_for_cmd(self, power):
+        """Return a hex string for a float power setting for hold."""
+        if self.platform_settings['hold_pwm_patter']:
+            return self.platform_settings['hold_pwm_patter']
+
+        return self.get_pwm_for_cmd(power)
+
     @classmethod
     def get_pwm_for_cmd(cls, power: float):
         """Return a hex string for a float power setting."""
@@ -155,7 +162,7 @@ class FASTDriver(DriverPlatformInterface):
                 self.number,
                 Util.int_to_hex_string(pulse_settings.duration),
                 self.get_pwm_for_cmd(pulse_settings.power),
-                self.get_pwm_for_cmd(hold_settings.power),
+                self.get_hold_pwm_for_cmd(hold_settings.power),
                 self.get_recycle_ms_for_cmd(self.config.default_recycle, pulse_settings.duration)
             )
             self.config_state = (pulse_settings.duration, pulse_settings.duration, hold_settings.power)

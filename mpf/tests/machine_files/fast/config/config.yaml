@@ -49,6 +49,11 @@ coils:
         number: 17
         default_pulse_power: 0.53
         default_hold_power: 0.40
+    c_hold_ssm:
+        number: 19
+        default_hold_power: 0.25    # approximately
+        platform_settings:
+            hold_pwm_patter: "84224244"
     c_long_pulse:
         number: 18
         default_pulse_ms: 2000

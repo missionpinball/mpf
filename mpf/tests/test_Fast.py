@@ -185,6 +185,7 @@ class TestFast(MpfTestCase):
             "DN:07,00,00,00": "DN:P",
             "DN:11,00,00,00": "DN:P",
             "DN:12,00,00,00": "DN:P",
+            "DN:13,00,00,00": "DN:P",
             "DN:20,00,00,00": "DN:P",
             "DN:21,00,00,00": "DN:P",
             "XO:03,7F": "XO:P",
@@ -220,6 +221,7 @@ class TestFast(MpfTestCase):
         self._test_long_pulse()
         self._test_enable_exception()
         self._test_allow_enable()
+        self._test_pwm_ssm()
         self._test_coil_configure()
 
         # test hardware scan
@@ -306,6 +308,14 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
             "DN:06,C1,00,18,17,FF,FF,00": "DN:P"
         }
         self.machine.coils["c_test_allow_enable"].enable()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.net_cpu.expected_commands)
+
+    def _test_pwm_ssm(self):
+        self.net_cpu.expected_commands = {
+            "DN:13,C1,00,18,0A,FF,84224244,00": "DN:P"
+        }
+        self.machine.coils["c_hold_ssm"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
