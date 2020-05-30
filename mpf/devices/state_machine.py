@@ -93,6 +93,7 @@ class StateMachine(SystemWideDevice, ModeDevice):
             self._show = None
 
     def _stop_current_state(self):
+        self.log.debug("Stopping state %s", self.state)
         self._remove_handlers()
         state_config = self.config['states'][self.state]
         if state_config['events_when_stopped']:
@@ -100,12 +101,14 @@ class StateMachine(SystemWideDevice, ModeDevice):
                 self.machine.events.post(event_name)
 
         if self._show:
+            self.log.debug("Stopping show %s", self._show)
             self._show.stop()
             self._show = None
 
         self.state = None
 
     def _start_state(self, state):
+        self.log.debug("Starting state %s", state)
         if state not in self.config['states']:
             raise AssertionError("Invalid state {}".format(state))
 
@@ -122,6 +125,7 @@ class StateMachine(SystemWideDevice, ModeDevice):
         assert not self._show
         state_config = self.config['states'][self.state]
         if state_config['show_when_active']:
+            self.log.debug("Starting show %s", state_config['show_when_active'])
             self._show = self.machine.show_controller.play_show_with_config(state_config['show_when_active'],
                                                                             self.mode)
 
@@ -134,6 +138,7 @@ class StateMachine(SystemWideDevice, ModeDevice):
 
     def _transition(self, transition_config, **kwargs):
         del kwargs
+        self.log.info("Transitioning from %s to %s", self.state, transition_config["target"])
         self._stop_current_state()
         if transition_config['events_when_transitioning']:
             for event_name in transition_config['events_when_transitioning']:
