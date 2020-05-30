@@ -3,7 +3,7 @@ import logging
 from functools import lru_cache
 
 import re
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from copy import deepcopy
 
 from typing import Any
@@ -31,6 +31,9 @@ class RuntimeToken:
     def __repr__(self):
         """Return string representation."""
         return "<RuntimeToken ({})>".format(self.token)
+
+
+ValidationPath = namedtuple("ValidationPath", ["parent", "item"])
 
 
 class ConfigValidator:
@@ -152,31 +155,42 @@ class ConfigValidator:
     # pylint: disable-msg=too-many-arguments,too-many-branches
     def validate_config(self, config_spec, source, section_name=None,
                         base_spec=None, add_missing_keys=True, prefix=None) -> Dict[str, Any]:
+        """Validate a config dict against spec.
+
+        Args:
+            config_spec (str): Path of the config specification
+            source: Dict to validate against config spec
+            section_name: Name of the section for debugging and error messages
+            base_spec: Base specifications to inherit for this config
+            add_missing_keys: If we should add missing keys while validating
+            prefix: Prefix for debugging and error messages
+        """
+        if source is None:
+            source = dict()
+
+        validation_failure_info = ValidationPath(parent=None,
+                                                 item=prefix + ":" + config_spec if prefix else config_spec)
+        validation_failure_info = ValidationPath(parent=validation_failure_info,
+                                                 item=section_name if section_name else config_spec)
+        return self._validate_config(config_spec, source, base_spec=base_spec, add_missing_keys=add_missing_keys,
+                                     validation_failure_info=validation_failure_info)
+
+    # pylint: disable-msg=too-many-arguments,too-many-branches
+    def _validate_config(self, config_spec, source, base_spec=None, add_missing_keys=True,
+                         validation_failure_info=None) -> Dict[str, Any]:
         """Validate a config dict against spec."""
         # config_spec, str i.e. "device:shot"
         # source is dict
         # section_name is str used for logging failures
-        if source is None:
-            source = dict()
-
-        if not section_name:
-            section_name = config_spec  # str
-
-        if prefix:
-            validation_failure_info = (prefix + ":" + config_spec, section_name)
-        else:
-            validation_failure_info = (config_spec, section_name)
-
         this_spec = self.build_spec(config_spec, base_spec)
 
         if '__allow_others__' not in this_spec:
-            self.check_for_invalid_sections(this_spec, source,
-                                            validation_failure_info)
+            self.check_for_invalid_sections(this_spec, source, validation_failure_info)
 
         processed_config = source
 
-        if not isinstance(source, (list, dict)):
-            self.validation_error("", validation_failure_info, "Source should be list or dict but is {}".format(
+        if not isinstance(source, dict):
+            self.validation_error(source, validation_failure_info, "Config attribute should be dict but is {}".format(
                 source.__class__
             ))
 
@@ -192,16 +206,16 @@ class ConfigValidator:
                     final_list = list()
                     if k in source:
                         for i in source[k]:  # individual step
-                            final_list.append(self.validate_config(
+                            final_list.append(self._validate_config(
                                 config_spec + ':' + k, source=i,
-                                section_name=k))
+                                validation_failure_info=ValidationPath(validation_failure_info, k)))
 
                     processed_config[k] = final_list
 
                 else:
                     processed_config[k] = self.validate_config_item(
                         this_spec[k], item=source[k],
-                        validation_failure_info=(validation_failure_info, k))
+                        validation_failure_info=ValidationPath(validation_failure_info, k))
 
             elif add_missing_keys:  # create the default entry
 
@@ -211,8 +225,7 @@ class ConfigValidator:
                 else:
                     processed_config[k] = self.validate_config_item(
                         this_spec[k],
-                        validation_failure_info=(
-                            validation_failure_info, k))
+                        validation_failure_info=ValidationPath(validation_failure_info, k))
 
         return processed_config
 
@@ -222,8 +235,7 @@ class ConfigValidator:
         try:
             item_type, validation, default = spec
         except (ValueError, AttributeError):
-            raise ValueError('Error in validator spec: {}:{}'.format(
-                validation_failure_info, spec))
+            raise ValueError('Error in validator spec: {}:{}'.format(validation_failure_info, spec))
 
         if default.lower() == 'none':
             default = None
@@ -232,20 +244,15 @@ class ConfigValidator:
 
         if item == 'item not in config!@#':
             if default == 'default required!@#':
-                if isinstance(validation_failure_info[0], tuple):
-                    section = "{}: {}".format(validation_failure_info[0][0], validation_failure_info[0][1])
-                else:
-                    section = validation_failure_info[0]
-
+                section = self._build_error_path(validation_failure_info.parent)
                 self.validation_error("None", validation_failure_info,
                                       'Required setting "{}:" is missing from section "{}:" in your config.'.format(
-                                          validation_failure_info[1], section), 9)
+                                          validation_failure_info.item, section), 9)
             else:
                 item = default
 
         if item_type == 'single':
-            return self.validate_item(item, validation,
-                                      validation_failure_info)
+            return self.validate_item(item, validation, validation_failure_info)
 
         if item_type == 'list':
             if validation in ("event_posted", "event_handler"):
@@ -276,9 +283,8 @@ class ConfigValidator:
         if item_type in ('dict', 'omap'):
             return self._validate_dict_or_omap(item_type, validation, validation_failure_info, item)
 
-        raise ConfigFileError("Invalid Type '{}' in config spec {}:{}".format(item_type,
-                              validation_failure_info[0][0],
-                              validation_failure_info[1]), 1, self.log.name)
+        raise ConfigFileError("Invalid Type '{}' in config spec {}".format(item_type,
+                              self._build_error_path(validation_failure_info)), 1, self.log.name)
 
     def _validate_dict_or_omap(self, item_type, validation, validation_failure_info, item):
         if ':' not in validation:
@@ -310,18 +316,18 @@ class ConfigValidator:
 
         for k, v in item.items():
             item_dict[self.validate_item(k, validators[0], validation_failure_info)] = (
-                self.validate_item(v, validators[1], (validation_failure_info, k)))
+                self.validate_item(v, validators[1], ValidationPath(validation_failure_info, k)))
         return item_dict
 
-    def check_for_invalid_sections(self, spec, config,
-                                   validation_failure_info):
+    def check_for_invalid_sections(self, spec, config, validation_failure_info):
         """Check if all attributes are defined in spec."""
+        # TODO: refactor this method
         try:
             for k in config:
                 if not isinstance(k, dict):
                     if k not in spec and k[0] != '_':
 
-                        path_list = validation_failure_info[0].split(':')
+                        path_list = validation_failure_info.parent.item.split(':')
 
                         if len(path_list) > 1 and path_list[-1] == validation_failure_info[1]:
                             path_list.append('[list_item]')
@@ -352,7 +358,7 @@ class ConfigValidator:
             raise ConfigFileError(
                 'Error in config. Your "{}:" section contains a value that is '
                 'not a parent with sub-settings: {}'.format(
-                    validation_failure_info[0], config), 3, self.log.name)
+                    validation_failure_info.parent.item, config), 3, self.log.name)
 
     def _validate_type_subconfig(self, item, param, validation_failure_info):
         if item is None:
@@ -364,7 +370,8 @@ class ConfigValidator:
             base_spec = None
             attribute = param
 
-        return self.validate_config(attribute, item, section_name=str(validation_failure_info), base_spec=base_spec)
+        return self._validate_config(attribute, item, validation_failure_info=validation_failure_info,
+                                     base_spec=base_spec)
 
     def _validate_type_enum(self, item, param, validation_failure_info):
         enum_values = param.lower().split(",")
@@ -410,7 +417,7 @@ class ConfigValidator:
     @classmethod
     def _validate_type_list(cls, item, validation_failure_info):
         del validation_failure_info
-        return Util.string_to_event_list(item)
+        return Util.string_to_list(item)
 
     def _validate_type_int_from_hex(self, item, validation_failure_info):
         try:
@@ -689,16 +696,16 @@ class ConfigValidator:
         if validator in self.validator_list:
             return self.validator_list[validator](item, validation_failure_info=validation_failure_info)
 
-        raise ConfigFileError("Invalid Validator '{}' in config spec {}:{}".format(
-                              validator,
-                              validation_failure_info[0][0],
-                              validation_failure_info[1]), 4, self.log.name)
+        raise ConfigFileError("Invalid Validator '{}' in config spec {}".format(
+                              validator, self._build_error_path(validation_failure_info)), 4, self.log.name)
 
     def _build_error_path(self, validation_failure_info):
-        if isinstance(validation_failure_info[0], tuple):
-            return "{}:{}".format(self._build_error_path(validation_failure_info[0]), validation_failure_info[1])
+        if validation_failure_info is None:
+            return ""
+        if validation_failure_info.parent:
+            return "{}:{}".format(self._build_error_path(validation_failure_info.parent), validation_failure_info.item)
 
-        return "{}:{}".format(validation_failure_info[0], validation_failure_info[1])
+        return validation_failure_info.item
 
     def validation_error(self, item, validation_failure_info, msg="", code=None):
         """Raise a validation error with all relevant infos."""
