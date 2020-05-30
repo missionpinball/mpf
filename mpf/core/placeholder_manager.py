@@ -246,16 +246,12 @@ class TextTemplate:
 
     """Text placeholder."""
 
-    var_finder = re.compile("(?<=\\()[a-zA-Z_0-9|]+(?=\\))")
-    string_finder = re.compile("(?<=\\$)[a-zA-Z_0-9]+")
-
-    __slots__ = ["machine", "text", "vars", "_change_callback"]
+    __slots__ = ["machine", "text", "_change_callback"]
 
     def __init__(self, machine: "MachineController", text: str) -> None:
         """Initialise placeholder."""
         self.machine = machine
         self.text = text
-        self.vars = self.var_finder.findall(text)
         self._change_callback = None
 
     def evaluate(self, parameters) -> str:
@@ -596,7 +592,7 @@ class BasePlaceholderManager(MpfController):
         try:
             return ast.parse(template_str, mode='eval').body
         except SyntaxError:
-            raise AssertionError("Failed to parse template {}".format(template_str))
+            raise AssertionError('Failed to parse template "{}"'.format(template_str))
 
     @staticmethod
     def _eval_num(node, variables, subscribe):
@@ -751,6 +747,10 @@ class BasePlaceholderManager(MpfController):
     def build_string_template(self, template_str, default_value=""):
         """Build a string template from a string."""
         return StringTemplate(self._parse_template(template_str), template_str, self, default_value)
+
+    def build_text_template(self, template_str):
+        """Build a full featured text template."""
+        return TextTemplate(self.machine, template_str)
 
     def build_quoted_string_template(self, template_str, default_value=""):
         """Build a string template from a string if enclosed in brackets."""
