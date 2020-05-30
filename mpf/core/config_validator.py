@@ -453,7 +453,11 @@ class ConfigValidator:
         if item is None:
             return None
 
-        return self.machine.placeholder_manager.build_quoted_string_template(str(item))
+        item = str(item)
+        if "{" in item:
+            return self.machine.placeholder_manager.build_text_template(item)
+
+        return self.machine.placeholder_manager.build_quoted_string_template(item)
 
     def _validate_type_template_float(self, item, validation_failure_info):
         if item is None:
