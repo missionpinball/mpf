@@ -246,3 +246,8 @@ class TestVariablePlayer(MpfFakeGameTestCase):
 
         self.assertMachineVarEqual("123", "test")
         self.assertMachineVarEqual(10, "test2")
+
+        # test subscription
+        self.machine.variables.set_machine_var("test5", "123")
+        self.advance_time_and_run(.1)
+        self.assertMachineVarEqual("123-suffix", "test6")

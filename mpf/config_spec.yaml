@@ -1776,7 +1776,7 @@ variable_player:
     __type__: config_player
     int: single|template_int|None
     float: single|template_float|None
-    string: single|str|None
+    string: single|template_str|None
     block: single|bool|false
     action: single|enum(add,set,add_machine,set_machine)|add
     player: single|int|None
