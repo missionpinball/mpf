@@ -7,6 +7,7 @@ from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.utility_functions import Util
 from mpf.core.platform import SwitchConfig
 from mpf.devices.device_mixins import DevicePositionMixin
+from mpf.exceptions.config_file_error import ConfigFileError
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -58,6 +59,15 @@ class Switch(SystemWideDevice, DevicePositionMixin):
                                    cls._check_duplicate_switch_numbers,
                                    machine=machine)
 
+    def get_ms_since_last_change(self, current_time=None) -> int:
+        """Get ms since last change.
+
+        Will use the current time from clock if you do not pass it.
+        """
+        if current_time is None:
+            current_time = self.machine.clock.get_time()
+        return round((current_time - self.last_change) * 1000.0, 0)
+
     @staticmethod
     def _check_duplicate_switch_numbers(machine, **kwargs):
         del kwargs
@@ -89,8 +99,9 @@ class Switch(SystemWideDevice, DevicePositionMixin):
             self.machine.switch_controller.add_switch_handler(
                 switch_name=self.name,
                 state=state,
-                callback=partial(self.machine.events.post, event=event),
-                ms=ms
+                callback=self.machine.events.post,
+                ms=ms,
+                callback_kwargs={"event": event}
             )
         else:
             self._events_to_post[state].append(event_str)
@@ -105,7 +116,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         # if recycle is ongoing do nothing
         if not self.recycle_clear_time:
             # calculate clear time
-            self.recycle_clear_time = self.machine.clock.get_time() + self.recycle_secs
+            self.recycle_clear_time = self.last_change + self.recycle_secs
             self.machine.clock.loop.call_at(self.recycle_clear_time, partial(self._recycle_passed, state))
             # post event
             self._post_events(state)
@@ -134,7 +145,8 @@ class Switch(SystemWideDevice, DevicePositionMixin):
             self.hw_switch = self.platform.configure_switch(
                 self.config['number'], config, self.config['platform_settings'])
         except AssertionError as e:
-            raise AssertionError("Failed to configure switch {} in platform. See error above".format(self.name)) from e
+            raise ConfigFileError("Failed to configure switch {} in platform. See error above".format(self.name), 2,
+                                  self.log.name) from e
 
         if self.recycle_secs:
             self.add_handler(state=1, callback=self._post_events_with_recycle, callback_kwargs={"state": 1})
