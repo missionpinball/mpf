@@ -800,7 +800,8 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                                                                     self.config['network_port'])
         infos += "Hardware: {} Lisy Version: {} API Version: {}\n".format(self._hardware_name, self._lisy_version,
                                                                           self.api_version)
-        infos += "Input count: {} Input map: {}\n".format(self._number_of_switches, list(self._inputs.keys()))
+        infos += "Input count: {} Input map: {}\n".format(self._number_of_switches, sorted(list(self._inputs.keys()),
+                                                                                           key=int))
         infos += "Coil count: {}\n".format(self._number_of_solenoids)
         infos += "Modern lights count: {}\n".format(self._number_of_modern_lights)
         infos += "Traditional lights count: {}\n".format(self._number_of_lamps)
