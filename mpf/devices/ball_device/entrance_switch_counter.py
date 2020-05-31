@@ -19,14 +19,14 @@ class EntranceSwitchCounter(PhysicalBallCounter):
         self.recycle_clear_time = None
 
         # Configure switch handlers for entrance switch activity
-        self.machine.switch_controller.add_switch_handler(
-            switch_name=self.config['entrance_switch'].name, state=1,
+        self.machine.switch_controller.add_switch_handler_obj(
+            switch=self.config['entrance_switch'], state=1,
             ms=0,
             callback=self._entrance_switch_handler)
 
         if self.config['entrance_switch_full_timeout'] and self.config['ball_capacity']:
-            self.machine.switch_controller.add_switch_handler(
-                switch_name=self.config['entrance_switch'].name, state=1,
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch=self.config['entrance_switch'], state=1,
                 ms=self.config['entrance_switch_full_timeout'],
                 callback=self._entrance_switch_full_handler)
 

@@ -70,20 +70,20 @@ class Tilt(Mode):
     def _register_switch_handlers(self):
         for switch in self.machine.switches.items_tagged(
                 self.tilt_config['tilt_warning_switch_tag']):
-            self.machine.switch_controller.add_switch_handler(
-                switch_name=switch.name,
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch=switch,
                 callback=self._tilt_warning_switch_handler)
 
         for switch in self.machine.switches.items_tagged(
                 self.tilt_config['tilt_switch_tag']):
-            self.machine.switch_controller.add_switch_handler(
-                switch_name=switch.name,
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch=switch,
                 callback=self.tilt)
 
         for switch in self.machine.switches.items_tagged(
                 self.tilt_config['slam_tilt_switch_tag']):
-            self.machine.switch_controller.add_switch_handler(
-                switch_name=switch.name,
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch=switch,
                 callback=self.slam_tilt)
 
     def _remove_switch_handlers(self):

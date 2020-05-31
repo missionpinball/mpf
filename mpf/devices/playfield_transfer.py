@@ -34,8 +34,8 @@ class PlayfieldTransfer(SystemWideDevice):
 
     def _configure_switch(self, **kwargs):
         del kwargs
-        self.machine.switch_controller.add_switch_handler(
-            switch_name=self.config['ball_switch'].name,
+        self.machine.switch_controller.add_switch_handler_obj(
+            switch=self.config['ball_switch'],
             callback=self.transfer,
             state=1, ms=0)
 

@@ -19,8 +19,8 @@ class HoldCoilEjector(BallDeviceEjector):
 
         # handle hold_coil activation when a ball hits a switch
         for switch in self.ball_device.config['hold_switches']:
-            self.ball_device.machine.switch_controller.add_switch_handler(
-                switch_name=switch.name, state=1,
+            self.ball_device.machine.switch_controller.add_switch_handler_obj(
+                switch=switch, state=1,
                 ms=0,
                 callback=self.hold)
 

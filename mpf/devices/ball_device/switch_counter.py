@@ -23,19 +23,19 @@ class SwitchCounter(PhysicalBallCounter):
         self._trigger_recount = asyncio.Event(loop=self.machine.clock.loop)
         # Register switch handlers with delays for entrance & exit counts
         for switch in self.config['ball_switches']:
-            self.machine.switch_controller.add_switch_handler(
-                switch_name=switch.name, state=1,
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch=switch, state=1,
                 ms=self.config['entrance_count_delay'],
                 callback=self.trigger_recount)
-            self.machine.switch_controller.add_switch_handler(
-                switch_name=switch.name, state=1,
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch=switch, state=1,
                 callback=self.invalidate_count)
-            self.machine.switch_controller.add_switch_handler(
-                switch_name=switch.name, state=0,
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch=switch, state=0,
                 ms=self.config['exit_count_delay'],
                 callback=self.trigger_recount)
-            self.machine.switch_controller.add_switch_handler(
-                switch_name=switch.name, state=0,
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch=switch, state=0,
                 callback=self.invalidate_count)
 
         self._task = self.machine.clock.loop.create_task(self._run())

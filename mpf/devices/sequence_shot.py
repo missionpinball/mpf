@@ -71,12 +71,12 @@ class SequenceShot(SystemWideDevice, ModeDevice):
             self.machine.events.add_handler(event, self._sequence_advance, event_name=event)
 
         for switch in self.config['cancel_switches']:
-            self.machine.switch_controller.add_switch_handler(
-                switch.name, self.event_cancel, 1)
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch, self.event_cancel, 1)
 
         for switch, ms in list(self.config['delay_switch_list'].items()):
-            self.machine.switch_controller.add_switch_handler(
-                switch.name, self._delay_switch_hit, 1, callback_kwargs={"name": switch.name, "ms": ms})
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch, self._delay_switch_hit, 1, callback_kwargs={"name": switch.name, "ms": ms})
 
         for event, ms in list(self.config['delay_event_list'].items()):
             self.machine.events.add_handler(event, self._delay_switch_hit, name=event, ms=ms)

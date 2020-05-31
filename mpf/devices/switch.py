@@ -96,8 +96,8 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         if "|" in event_str:
             event, ev_time = event_str.split("|")
             ms = Util.string_to_ms(ev_time)
-            self.machine.switch_controller.add_switch_handler(
-                switch_name=self.name,
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch=self,
                 state=state,
                 callback=self.machine.events.post,
                 ms=ms,
@@ -234,10 +234,10 @@ class Switch(SystemWideDevice, DevicePositionMixin):
             callback_kwargs: Additional kwargs that will be passed with the
                 callback.
         """
-        return self.machine.switch_controller.add_switch_handler(
-            self.name, callback, state, ms, return_info, callback_kwargs)
+        return self.machine.switch_controller.add_switch_handler_obj(
+            self, callback, state, ms, return_info, callback_kwargs)
 
     def remove_handler(self, callback, state=1, ms=0):
         """Remove switch handler for this switch."""
-        return self.machine.switch_controller.remove_switch_handler(
-            self.name, callback, state, ms)
+        return self.machine.switch_controller.remove_switch_handler_obj(
+            self, callback, state, ms)

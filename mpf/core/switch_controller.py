@@ -188,9 +188,15 @@ class SwitchController(MpfController):
             number of ms. If ms is not specified, returns True if the switch
             is in the state regardless of how long it's been in that state.
         """
-        return self.is_state(switch=switch,
-                             state=1,
-                             ms=ms)
+        if not self._initialised:
+            raise AssertionError("Cannot read switch state before init_phase_3")
+        if not ms:
+            ms = 0.0
+
+        if ms:
+            return switch.state == 1 and ms <= switch.get_ms_since_last_change()
+
+        return switch.state == 1
 
     def is_inactive(self, switch, ms=None):
         """Query whether a switch is inactive.
@@ -206,9 +212,15 @@ class SwitchController(MpfController):
             number of ms. If ms is not specified, returns True if the switch
             is in the state regardless of how long it's been in that state.
         """
-        return self.is_state(switch=switch,
-                             state=0,
-                             ms=ms)
+        if not self._initialised:
+            raise AssertionError("Cannot read switch state before init_phase_3")
+        if not ms:
+            ms = 0.0
+
+        if ms:
+            return switch.state == 0 and ms <= switch.get_ms_since_last_change()
+
+        return switch.state == 0
 
     # pylint: disable-msg=too-many-arguments
     def process_switch_by_num(self, num, state, platform, logical=False, timestamp=None):

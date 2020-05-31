@@ -152,11 +152,11 @@ class DropTarget(SystemWideDevice):
         # this is in addition to the parent since drop targets track
         # self.complete in separately
 
-        self.machine.switch_controller.add_switch_handler(
-            self.config['switch'].name,
+        self.machine.switch_controller.add_switch_handler_obj(
+            self.config['switch'],
             self._update_state_from_switch, 0)
-        self.machine.switch_controller.add_switch_handler(
-            self.config['switch'].name,
+        self.machine.switch_controller.add_switch_handler_obj(
+            self.config['switch'],
             self._update_state_from_switch, 1)
 
     @event_handler(6)

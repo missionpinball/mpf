@@ -34,16 +34,16 @@ class Motor(SystemWideDevice):
         if self.config['motor_left_output'] and self.config['motor_right_output']:
             self.type = "two_directions"
             # add handlers to stop the motor when it reaches the end to prevent damage
-            self.machine.switch_controller.add_switch_handler(
-                next(iter(self.config['position_switches'].values())).name, self._end_reached)  # noqa
-            self.machine.switch_controller.add_switch_handler(
-                next(reversed(list(self.config['position_switches'].values()))).name, self._end_reached)    # noqa
+            self.machine.switch_controller.add_switch_handler_obj(
+                next(iter(self.config['position_switches'].values())), self._end_reached)  # noqa
+            self.machine.switch_controller.add_switch_handler_obj(
+                next(reversed(list(self.config['position_switches'].values()))), self._end_reached)    # noqa
         else:
             self.type = "one_direction"
 
         for position, switch in self.config['position_switches'].items():
-            self.machine.switch_controller.add_switch_handler(switch.name, self._update_position,
-                                                              callback_kwargs={"position": position})
+            self.machine.switch_controller.add_switch_handler_obj(switch, self._update_position,
+                                                                  callback_kwargs={"position": position})
 
         # add handlers
         for event, position in self.config['go_to_position'].items():
