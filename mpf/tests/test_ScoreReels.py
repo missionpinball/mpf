@@ -3,10 +3,8 @@ from unittest.mock import MagicMock
 
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
-from mpf.tests.MpfGameTestCase import MpfGameTestCase
 
-
-class TestScoreReels(MpfGameTestCase):
+class TestScoreReels(MpfFakeGameTestCase):
 
     def get_config_file(self):
         return 'config.yaml'
@@ -16,12 +14,6 @@ class TestScoreReels(MpfGameTestCase):
 
     def _synchronise_to_reel(self):
         pass
-
-    def start_game(self):
-        # shots only work in games so we have to do this a lot
-        self.machine.playfield.add_ball = MagicMock()
-        self.machine.ball_controller.num_balls_known = 3
-        super().start_game()
 
     def testOvershooting(self):
         player1_10k = self.machine.coils["player1_10k"].hw_driver
