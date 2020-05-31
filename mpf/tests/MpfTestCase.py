@@ -642,9 +642,9 @@ class MpfTestCase(unittest.TestCase):
     def assertSwitchState(self, name, state):
         """Assert that a switch exists and has a certain state."""
         self.assertIn(name, self.machine.switches, "Switch {} does not exist.".format(name))
-        self.assertEqual(state, self.machine.switch_controller.is_active(name),
-                         "Switch {} is in state {} != {}".format(name, self.machine.switch_controller.is_active(name),
-                                                                 state))
+        self.assertEqual(state, self.machine.switch_controller.is_active(self.machine.switches[name]),
+                         "Switch {} is in state {} != {}".format(
+                             name, self.machine.switch_controller.is_active(self.machine.switches[name]), state))
 
     def assertLightChannel(self, light_name, brightness, channel="white"):
         """Assert that a light channel has a certain brightness."""

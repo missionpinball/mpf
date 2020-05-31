@@ -33,7 +33,7 @@ class EntranceSwitchCounter(PhysicalBallCounter):
         # Handle initial ball count with entrance_switch. If there is a ball on the entrance_switch at boot
         # assume that we are at max capacity.
         if (self.config['ball_capacity'] and self.config['entrance_switch_full_timeout'] and
-                self.machine.switch_controller.is_active(self.config['entrance_switch'].name,
+                self.machine.switch_controller.is_active(self.config['entrance_switch'],
                                                          ms=self.config['entrance_switch_full_timeout'])):
             self._last_count = self.config['ball_capacity']
         else:
@@ -101,11 +101,11 @@ class EntranceSwitchCounter(PhysicalBallCounter):
             pass
         elif self.config['ball_capacity'] and self.config['entrance_switch_full_timeout'] and \
             self.config['ball_capacity'] == self._last_count + 1 and \
-            self.machine.switch_controller.is_active(self.config['entrance_switch'].name,
+            self.machine.switch_controller.is_active(self.config['entrance_switch'],
                                                      ms=self.config['entrance_switch_full_timeout']):
             # can count when entrance switch is active for at least entrance_switch_full_timeout
             pass
-        elif self.machine.switch_controller.is_active(self.config['entrance_switch'].name):
+        elif self.machine.switch_controller.is_active(self.config['entrance_switch']):
             # cannot count when the entrance_switch is still active
             raise ValueError
 
@@ -129,7 +129,7 @@ class EntranceSwitchCounter(PhysicalBallCounter):
     @property
     def is_ready_to_receive(self):
         """Return true if entrance switch is inactive."""
-        return self.machine.switch_controller.is_inactive(switch_name=self.config['entrance_switch'].name)
+        return self.machine.switch_controller.is_inactive(switch=self.config['entrance_switch'])
 
     def wait_for_ready_to_receive(self):
         """Wait until the entrance switch is inactive."""

@@ -189,7 +189,7 @@ class DropTarget(SystemWideDevice):
 
     def knockdown(self):
         """Pulse the knockdown coil to knock down this drop target."""
-        if self.knockdown_coil and not self.machine.switch_controller.is_active(self.config['switch'].name):
+        if self.knockdown_coil and not self.machine.switch_controller.is_active(self.config['switch']):
             self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
             self.knockdown_coil.pulse(max_wait_ms=self.config['knockdown_coil_max_wait_ms'])
 
@@ -197,7 +197,7 @@ class DropTarget(SystemWideDevice):
         del kwargs
 
         is_complete = self.machine.switch_controller.is_active(
-            self.config['switch'].name)
+            self.config['switch'])
 
         if (self._in_ball_search or self._ignore_switch_hits or
                 is_complete == self.complete):
@@ -268,7 +268,7 @@ class DropTarget(SystemWideDevice):
         handler should reset the target profile on its own when the drop target
         physically moves back to the up position.
         """
-        if self.reset_coil and self.machine.switch_controller.is_active(self.config['switch'].name):
+        if self.reset_coil and self.machine.switch_controller.is_active(self.config['switch']):
             self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
             self.reset_coil.pulse(max_wait_ms=self.config['reset_coil_max_wait_ms'])
 

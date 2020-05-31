@@ -104,7 +104,7 @@ class ScoreReel(SystemWideDevice):
                        self.config['hw_confirm_time'])
         for i in range(len(self.value_switches)):
             if self.value_switches[i]:  # not all values have a switch
-                if self.machine.switch_controller.is_active(self.value_switches[i].name,
+                if self.machine.switch_controller.is_active(self.value_switches[i],
                                                             ms=self.config['hw_confirm_time']):
                     if self.assumed_value != i:
                         self.log.info("Setting value to %s because that switch is active.", i)
@@ -118,7 +118,7 @@ class ScoreReel(SystemWideDevice):
 
         # check if there is a switch for the current assumed_value
         if (self.assumed_value >= 0 and self.value_switches[self.assumed_value] and
-                not self.machine.switch_controller.is_active(self.value_switches[self.assumed_value].name,
+                not self.machine.switch_controller.is_active(self.value_switches[self.assumed_value],
                                                              ms=self.config['hw_confirm_time'])):
             self.log.warning("Resetting value because the switch for %s is not active.", self.assumed_value)
             self.assumed_value = -999

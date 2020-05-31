@@ -145,14 +145,14 @@ class SwitchController(MpfController):
 
         return ok
 
-    def is_state(self, switch_name, state, ms=0.0):
+    def is_state(self, switch: Switch, state, ms=0.0):
         """Check if switch is in state.
 
         Query whether a switch is in a given state and (optionally)
         whether it has been in that state for the specified number of ms.
 
         Args:
-            switch_name: String name of the switch to check.
+            switch: Switch object to check.
             state: Bool of the state to check. True is active and False is
                 inactive.
             ms: Milliseconds that the switch has been in that state. If this
@@ -169,17 +169,16 @@ class SwitchController(MpfController):
         if not ms:
             ms = 0.0
 
-        switch = self.machine.switches[switch_name]
         if ms:
             return switch.state == state and ms <= switch.get_ms_since_last_change()
 
         return switch.state == state
 
-    def is_active(self, switch_name, ms=None):
+    def is_active(self, switch, ms=None):
         """Query whether a switch is active.
 
         Args:
-            switch_name: String name of the switch to check.
+            switch: Switch object to check.
             ms: Milliseconds that the switch has been active. If this
                 is non-zero, then this method will only return True if the
                 switch has been in that state for at least the number of ms
@@ -189,15 +188,15 @@ class SwitchController(MpfController):
             number of ms. If ms is not specified, returns True if the switch
             is in the state regardless of how long it's been in that state.
         """
-        return self.is_state(switch_name=switch_name,
+        return self.is_state(switch=switch,
                              state=1,
                              ms=ms)
 
-    def is_inactive(self, switch_name, ms=None):
+    def is_inactive(self, switch, ms=None):
         """Query whether a switch is inactive.
 
         Args:
-            switch_name: String name of the switch to check.
+            switch: Switch object to check.
             ms: Milliseconds that the switch has been inactive. If this
                 is non-zero, then this method will only return True if the
                 switch has been in that state for at least the number of ms
@@ -207,7 +206,7 @@ class SwitchController(MpfController):
             number of ms. If ms is not specified, returns True if the switch
             is in the state regardless of how long it's been in that state.
         """
-        return self.is_state(switch_name=switch_name,
+        return self.is_state(switch=switch,
                              state=0,
                              ms=ms)
 
@@ -390,7 +389,7 @@ class SwitchController(MpfController):
 
         if not only_on_change:
             for switch in switches:
-                if self.is_state(switch.name, state, ms):
+                if self.is_state(switch, state, ms):
                     future.set_result({"switch_name": switch.name, "state": state, "ms": ms})
                     return future
 
@@ -398,14 +397,14 @@ class SwitchController(MpfController):
         future.add_done_callback(partial(self._future_done, handlers))      # type: ignore
         for switch in switches:
             if state == 2:
-                handler_state = 0 if self.is_active(switch.name) else 1
+                handler_state = 0 if self.is_active(switch) else 1
             else:
                 handler_state = state
-            handlers.append(self.add_switch_handler(switch.name, state=handler_state, ms=ms,
-                                                    callback=partial(self._wait_handler,
-                                                                     ms=ms,
-                                                                     _future=future,
-                                                                     switch_name=switch.name)))
+            handlers.append(self.add_switch_handler_obj(switch, state=handler_state, ms=ms,
+                                                        callback=partial(self._wait_handler,
+                                                                         ms=ms,
+                                                                         _future=future,
+                                                                         switch_name=switch.name)))
         return future
 
     def _future_done(self, handlers: List[SwitchHandler], future: asyncio.Future):

@@ -128,11 +128,11 @@ class SwitchCounter(PhysicalBallCounter):
         for switch in self.config['ball_switches']:
             valid = False
             if self.machine.switch_controller.is_active(
-                    switch.name, ms=self.config['entrance_count_delay']):
+                    switch, ms=self.config['entrance_count_delay']):
                 switches.append(switch)
                 valid = True
             elif self.machine.switch_controller.is_inactive(
-                    switch.name, ms=self.config['exit_count_delay']):
+                    switch, ms=self.config['exit_count_delay']):
                 valid = True
 
             if not valid:
@@ -153,7 +153,7 @@ class SwitchCounter(PhysicalBallCounter):
     def is_jammed(self):
         """Return true if the jam switch is currently active."""
         return self.config['jam_switch'] and self.machine.switch_controller.is_active(
-            self.config['jam_switch'].name, ms=self.config['entrance_count_delay'])
+            self.config['jam_switch'], ms=self.config['entrance_count_delay'])
 
     def is_count_unreliable(self):
         """Return true if only the jam switch is active and the count is unknown."""

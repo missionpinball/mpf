@@ -323,7 +323,8 @@ LEDs:
                 self._crc_message(inputs3a_message, False) + self._crc_message(inputs3b_message),  # read inputs
         }
 
-        while self.machine.switch_controller.is_active("s_test_nc"):
+        switch = self.machine.switches["s_test_nc"]
+        while self.machine.switch_controller.is_active(switch):
             self.advance_time_and_run(0.1)
 
         self.assertSwitchState("s_test", 1)
@@ -499,7 +500,8 @@ LEDs:
                 self._crc_message(inputs1_message, False) + self._crc_message(inputs2_message)
         }
 
-        while self.machine.switch_controller.is_active("s_test_nc"):
+        switch = self.machine.switches["s_test_nc"]
+        while self.machine.switch_controller.is_active(switch):
             self.advance_time_and_run(0.1)
 
         self.assertSwitchState("s_test", 1)

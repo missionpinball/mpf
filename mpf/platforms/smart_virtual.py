@@ -150,7 +150,7 @@ class ScoreReelAdvanceAction(BaseSmartVirtualCoilAction):
 
             state = self.position == position
 
-            if not self.machine.switch_controller.is_state(switch.name, state):
+            if not self.machine.switch_controller.is_state(switch, state):
                 self.machine.switch_controller.process_switch(switch.name, state, logical=True)
 
 
@@ -211,7 +211,7 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
             return
 
         for switch in self.ball_switches:
-            if self.machine.switch_controller.is_active(switch.name):
+            if self.machine.switch_controller.is_active(switch):
                 self.machine.switch_controller.process_switch(switch.name, 0,
                                                               logical=True)
                 self.log.debug("Deactivating: %s", switch.name)
@@ -220,7 +220,7 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
         if self.result == "success":
             if (self.device.config['entrance_switch_full_timeout'] and
                     self.device.machine.switch_controller.is_active(
-                    self.device.config['entrance_switch'].name)):
+                    self.device.config['entrance_switch'])):
 
                 self.machine.switch_controller.process_switch(
                     self.device.config['entrance_switch'].name, 0, logical=True)
@@ -368,7 +368,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
                 if device.balls == device.config['ball_capacity'] - 1:
 
                     if LogMixin.unit_test and self.machine.switch_controller.is_active(
-                            device.config['entrance_switch'].name):
+                            device.config['entrance_switch']):
                         raise AssertionError(
                             "KABOOM! We just added a ball to {} which already "
                             "had an active entrance switch".format(
@@ -391,7 +391,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
         if device.config['ball_switches']:
             found_switch = False
             for switch in device.config['ball_switches']:
-                if self.machine.switch_controller.is_inactive(switch.name):
+                if self.machine.switch_controller.is_inactive(switch):
                     self.log.debug('Enabling switch %s due to ball being added to %s', switch.name, device.name)
                     self.machine.switch_controller.process_switch(
                         switch.name, 1, logical=True)

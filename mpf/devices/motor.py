@@ -85,7 +85,7 @@ class Motor(SystemWideDevice):
     def _move_to_position(self, position):
         switch = self.config['position_switches'][position]
         # check if we are already in this position
-        if self.machine.switch_controller.is_active(switch.name):
+        if self.machine.switch_controller.is_active(switch):
             # already in position
             self._reached_position(position)
         else:

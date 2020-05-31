@@ -17,7 +17,7 @@ class TestSwitchController(MpfTestCase):
         assert(switch_name == "s_test")
         assert(ms == 300)
         assert(state == 1)
-        self.isActive = self.machine.switch_controller.is_active("s_test", ms=300)
+        self.isActive = self.machine.switch_controller.is_active(self.machine.switches["s_test"], ms=300)
 
     def test_monitor(self):
         # add monitor
@@ -81,7 +81,7 @@ class TestSwitchController(MpfTestCase):
     def test_initial_state(self):
         # tests that when MPF starts, the initial states of switches that
         # started in that state are read correctly.
-        self.assertFalse(self.machine.switch_controller.is_active('s_test', 1000))
+        self.assertFalse(self.machine.switch_controller.is_active(self.machine.switches['s_test'], 1000))
 
     def _callback_invalid(self):
          raise AssertionError("Should not be called")

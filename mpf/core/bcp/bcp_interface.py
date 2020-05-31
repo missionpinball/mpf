@@ -641,13 +641,15 @@ class BcpInterface(MpfController):
         del client
         state = int(state)
 
-        if name not in self.machine.switches:
+        try:
+            switch = self.machine.switches[name]
+        except KeyError:
             self.warning_log("Received BCP switch message with invalid switch"
                              "name: '%s'", name)
             return
 
         if state == -1:
-            if self.machine.switch_controller.is_active(name):
+            if self.machine.switch_controller.is_active(switch):
                 state = 0
             else:
                 state = 1
