@@ -161,7 +161,7 @@ class TestDropTargets(MpfTestCase):
         target = self.machine.drop_targets["left6"]
         self.machine.coils["coil2"].pulse = MagicMock()
         self.machine.coils["coil3"].pulse = MagicMock()
-        self.assertFalse(self.machine.switch_controller.is_active("switch6"))
+        self.assertSwitchState("switch6", 0)
 
         # target up. it should not reset
         target.reset()

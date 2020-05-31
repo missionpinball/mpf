@@ -500,12 +500,12 @@ Update done.
             self.machine.default_platform.configure_switch('72', SwitchConfig(debounce='auto', invert=0), {})
 
     def _test_switch_changes(self):
-        self.assertFalse(self.machine.switch_controller.is_active("s_flipper"))
-        self.assertTrue(self.machine.switch_controller.is_active("s_flipper_eos"))
+        self.assertSwitchState("s_flipper", 0)
+        self.assertSwitchState("s_flipper_eos", 1)
 
         self.switch_hit = False
         self.advance_time_and_run(1)
-        self.assertFalse(self.machine.switch_controller.is_active("s_test"))
+        self.assertSwitchState("s_test", 0)
         self.assertFalse(self.switch_hit)
 
         self.machine.events.add_handler("s_test_active", self._switch_hit_cb)
@@ -513,38 +513,38 @@ Update done.
         self.advance_time_and_run(1)
 
         self.assertTrue(self.switch_hit)
-        self.assertTrue(self.machine.switch_controller.is_active("s_test"))
+        self.assertSwitchState("s_test", 1)
         self.switch_hit = False
 
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
-        self.assertTrue(self.machine.switch_controller.is_active("s_test"))
+        self.assertSwitchState("s_test", 1)
 
         self.machine.default_platform.process_received_message("/N:07", "NET")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
-        self.assertFalse(self.machine.switch_controller.is_active("s_test"))
+        self.assertSwitchState("s_test", 0)
 
     def _test_switch_changes_nc(self):
         self.switch_hit = False
         self.advance_time_and_run(1)
-        self.assertTrue(self.machine.switch_controller.is_active("s_test_nc"))
+        self.assertSwitchState("s_test_nc", 1)
         self.assertFalse(self.switch_hit)
 
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
-        self.assertTrue(self.machine.switch_controller.is_active("s_test_nc"))
+        self.assertSwitchState("s_test_nc", 1)
 
         self.machine.default_platform.process_received_message("-N:1A", "NET")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
-        self.assertFalse(self.machine.switch_controller.is_active("s_test_nc"))
+        self.assertSwitchState("s_test_nc", 0)
 
         self.machine.events.add_handler("s_test_nc_active", self._switch_hit_cb)
         self.machine.default_platform.process_received_message("/N:1A", "NET")
         self.advance_time_and_run(1)
 
-        self.assertTrue(self.machine.switch_controller.is_active("s_test_nc"))
+        self.assertSwitchState("s_test_nc", 1)
         self.assertTrue(self.switch_hit)
         self.switch_hit = False
 

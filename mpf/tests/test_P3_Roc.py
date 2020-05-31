@@ -542,19 +542,19 @@ SW-16 boards found:
             ], False)
 
     def _test_initial_switches(self):
-        self.assertFalse(self.machine.switch_controller.is_active("s_test"))
-        self.assertFalse(self.machine.switch_controller.is_active("s_test_000"))
-        self.assertTrue(self.machine.switch_controller.is_active("s_flipper"))
+        self.assertSwitchState("s_test", 0)
+        self.assertSwitchState("s_test_000", 0)
+        self.assertSwitchState("s_flipper", 1)
 
     def _test_switches(self):
-        self.assertFalse(self.machine.switch_controller.is_active("s_test"))
+        self.assertSwitchState("s_test", 0)
         # closed debounced -> switch active
         self.pinproc.get_events = MagicMock(return_value=[
             {'type': 1, 'value': 23}])
         self.wait_for_platform()
         self.advance_time_and_run(.1)
         self.wait_for_platform()
-        self.assertTrue(self.machine.switch_controller.is_active("s_test"))
+        self.assertSwitchState("s_test", 1)
 
         # open debounces -> inactive
         self.pinproc.get_events = MagicMock(return_value=[
@@ -562,16 +562,16 @@ SW-16 boards found:
         self.wait_for_platform()
         self.advance_time_and_run(.1)
         self.wait_for_platform()
-        self.assertFalse(self.machine.switch_controller.is_active("s_test"))
+        self.assertSwitchState("s_test", 0)
 
-        self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
+        self.assertSwitchState("s_test_no_debounce", 0)
         # closed non debounced -> should be active
         self.pinproc.get_events = MagicMock(return_value=[
             {'type': 3, 'value': 24}])
         self.wait_for_platform()
         self.advance_time_and_run(.1)
         self.wait_for_platform()
-        self.assertTrue(self.machine.switch_controller.is_active("s_test_no_debounce"))
+        self.assertSwitchState("s_test_no_debounce", 1)
 
         # open non debounced -> should be inactive
         self.pinproc.get_events = MagicMock(return_value=[
@@ -579,7 +579,7 @@ SW-16 boards found:
         self.wait_for_platform()
         self.advance_time_and_run(.1)
         self.wait_for_platform()
-        self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
+        self.assertSwitchState("s_test_no_debounce", 0)
 
         self.pinproc.get_events = MagicMock(return_value=[])
 
@@ -974,8 +974,8 @@ SW-16 boards found:
         self.wait_for_platform()
         self.advance_time_and_run(.01)
         self.wait_for_platform()
-        self.assertTrue(self.machine.switch_controller.is_active("s_stepper1_home"))
-        self.assertTrue(self.machine.switch_controller.is_active("s_stepper2_home"))
+        self.assertSwitchState("s_stepper1_home", 1)
+        self.assertSwitchState("s_stepper2_home", 1)
         self.pinproc.get_events = MagicMock(return_value=[])
 
         # test stepper 1

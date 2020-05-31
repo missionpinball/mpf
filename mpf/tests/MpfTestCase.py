@@ -9,12 +9,10 @@ import unittest
 
 from mpf.core.config_loader import YamlMultifileConfigLoader
 
-from mpf.core.config_processor import ConfigProcessor
 from unittest.mock import *
 
 import asyncio
 from asyncio import events
-from typing import Any
 
 from mpf.core.logging import LogMixin
 from mpf.core.rgb_color import RGBColor
@@ -31,7 +29,10 @@ from mpf.file_interfaces.yaml_interface import YamlInterface
 YamlInterface.cache = True
 UNITTEST_CONFIG_CACHE = {}
 
+
 class UnitTestConfigLoader(YamlMultifileConfigLoader):
+
+    """Config Loader for Unit Tests."""
 
     def __init__(self, machine_path, configfile, config_defaults, config_patches, spec_patches):
         super().__init__(machine_path, configfile, True, True)
@@ -57,7 +58,10 @@ class UnitTestConfigLoader(YamlMultifileConfigLoader):
 
 class MpfUnitTestFormatter(logging.Formatter):
 
+    """Log Test and Real Time."""
+
     def formatTime(self, record, datefmt=None):
+        """Return Real Time and Test Time."""
         return "{} : {:.3f}".format(super().formatTime(record, datefmt), record.created_clock)
 
 
@@ -750,7 +754,8 @@ class MpfTestCase(unittest.TestCase):
             raise AssertionError("Event {} not mocked.".format(event_name))
 
         if self._events[event_name] != 0:
-            raise AssertionError("Event {} was called {} times.".format(event_name, self._events[event_name]))
+            raise AssertionError("Event {} was called {} times but was not expected to "
+                                 "be called.".format(event_name, self._events[event_name]))
 
     def assertEventCalled(self, event_name, times=None):
         """Assert that event was called.
@@ -787,10 +792,10 @@ class MpfTestCase(unittest.TestCase):
             raise AssertionError("Event {} not mocked.".format(event_name))
 
         if self._events[event_name] == 0 and times != 0:
-            raise AssertionError("Event {} was not called.".format(event_name))
+            raise AssertionError("Event {} was not called but we expected {} calls.".format(event_name, times))
 
         if times is not None and self._events[event_name] != times:
-            raise AssertionError("Event {} was called {} instead of {}.".format(
+            raise AssertionError("Event {} was called {} times instead of {} times expected.".format(
                 event_name, self._events[event_name], times))
 
     def assertEventCalledWith(self, event_name, **kwargs):
