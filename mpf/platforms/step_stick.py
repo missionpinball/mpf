@@ -31,6 +31,7 @@ class DigitalOutputStepStickStepper(StepperPlatformInterface):
 
     def start_stepper(self, **kwargs):
         """Enable output on init_phase_5 after all hardware has been initialized."""
+        del kwargs
         if self.enable_output:
             self.enable_output.enable()
 
