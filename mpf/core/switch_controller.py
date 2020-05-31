@@ -232,9 +232,6 @@ class SwitchController(MpfController):
                 num, state, platform))
         switch = self._switch_lookup.get((num, platform), None)
 
-        if timestamp is None:
-            timestamp = self.machine.clock.get_time()
-
         if switch:
             self.process_switch_obj(switch, state, logical, timestamp)
         else:
@@ -286,7 +283,7 @@ class SwitchController(MpfController):
 
         self.process_switch_obj(obj, state, logical, timestamp)
 
-    def process_switch_obj(self, obj: Switch, state, logical, timestamp):
+    def process_switch_obj(self, obj: Switch, state, logical, timestamp=None):
         """Process a new switch state change for a switch by name.
 
         Args:
@@ -318,6 +315,9 @@ class SwitchController(MpfController):
             state = 1
         else:
             state = 0
+
+        if timestamp is None:
+            timestamp = self.machine.clock.get_time()
 
         # flip the logical & physical states for NC switches
         hw_state = state

@@ -80,7 +80,7 @@ class ResetDropTargetAction(BaseSmartVirtualCoilAction):
         # single reset coil we assume that coil will reset all the drop targets
         # anytime it's called.
         for target in self.drop_target_bank.config['drop_targets']:
-            self.machine.switch_controller.process_switch(target.config['switch'].name, 0, logical=True)
+            self.machine.switch_controller.process_switch_obj(target.config['switch'], 0, logical=True)
 
     def _perform_action(self):
         self.delay.add(ms=50, callback=self._hit_switches)
@@ -98,7 +98,7 @@ class SwitchDisableAction(BaseSmartVirtualCoilAction):
     def _hit_switches(self):
         for switch in self.switches:
             self.log.debug("Disabling switch %s due to coil pulse", switch)
-            self.machine.switch_controller.process_switch(switch.name, 0, logical=True)
+            self.machine.switch_controller.process_switch_obj(switch, 0, logical=True)
 
     def _perform_action(self):
         self.delay.add(ms=50, callback=self._hit_switches)
@@ -111,7 +111,7 @@ class SwitchEnableAction(SwitchDisableAction):
     def _hit_switches(self):
         for switch in self.switches:
             self.log.debug("Enabling switch %s due to coil pulse", switch.name)
-            self.machine.switch_controller.process_switch(switch.name, 1, logical=True)
+            self.machine.switch_controller.process_switch_obj(switch, 1, logical=True)
 
 
 class ScoreReelAdvanceAction(BaseSmartVirtualCoilAction):
@@ -151,7 +151,7 @@ class ScoreReelAdvanceAction(BaseSmartVirtualCoilAction):
             state = self.position == position
 
             if not self.machine.switch_controller.is_state(switch, state):
-                self.machine.switch_controller.process_switch(switch.name, state, logical=True)
+                self.machine.switch_controller.process_switch_obj(switch, state, logical=True)
 
 
 class AddBallToTargetAction(BaseSmartVirtualCoilAction):
@@ -172,12 +172,12 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
     def confirm_eject_via_switch(self, switch):
         """Simulate eject via switch."""
         self.log.debug('Confirming eject via switch: %s', switch.name)
-        self.machine.switch_controller.process_switch(switch.name, 1, logical=True)
+        self.machine.switch_controller.process_switch_obj(switch, 1, logical=True)
         self.delay.add(ms=10, callback=self._release_confirm_switch, switch=switch)
 
     def _release_confirm_switch(self, switch):
         self.log.debug('Releasing eject confirmation switch: %s', switch.name)
-        self.machine.switch_controller.process_switch(switch.name, 0, logical=True)
+        self.machine.switch_controller.process_switch_obj(switch, 0, logical=True)
 
     def set_target(self, source, target, mechanical_eject, **kwargs):
         """Set target for action."""
@@ -212,8 +212,7 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
 
         for switch in self.ball_switches:
             if self.machine.switch_controller.is_active(switch):
-                self.machine.switch_controller.process_switch(switch.name, 0,
-                                                              logical=True)
+                self.machine.switch_controller.process_switch_obj(switch, 0, logical=True)
                 self.log.debug("Deactivating: %s", switch.name)
                 break
 
@@ -222,8 +221,8 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
                     self.device.machine.switch_controller.is_active(
                     self.device.config['entrance_switch'])):
 
-                self.machine.switch_controller.process_switch(
-                    self.device.config['entrance_switch'].name, 0, logical=True)
+                self.machine.switch_controller.process_switch_obj(
+                    self.device.config['entrance_switch'], 0, logical=True)
                 self.log.debug("Deactivating: %s", self.device.config['entrance_switch'].name)
 
             if self.confirm_eject_switch:
@@ -377,24 +376,24 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
                     self.log.debug('Enabling switch %s due to ball being added to %s',
                                    device.config['entrance_switch'].name, device.name)
 
-                    self.machine.switch_controller.process_switch(
-                        device.config['entrance_switch'].name, 1, True)
+                    self.machine.switch_controller.process_switch_obj(
+                        device.config['entrance_switch'], 1, True)
                     return
 
             self.log.debug('Hitting switch %s due to ball being added to %s',
                            device.config['entrance_switch'].name, device.name)
-            self.machine.switch_controller.process_switch(
-                device.config['entrance_switch'].name, 1, True)
-            self.machine.switch_controller.process_switch(
-                device.config['entrance_switch'].name, 0, True)
+            self.machine.switch_controller.process_switch_obj(
+                device.config['entrance_switch'], 1, True)
+            self.machine.switch_controller.process_switch_obj(
+                device.config['entrance_switch'], 0, True)
 
         if device.config['ball_switches']:
             found_switch = False
             for switch in device.config['ball_switches']:
                 if self.machine.switch_controller.is_inactive(switch):
                     self.log.debug('Enabling switch %s due to ball being added to %s', switch.name, device.name)
-                    self.machine.switch_controller.process_switch(
-                        switch.name, 1, logical=True)
+                    self.machine.switch_controller.process_switch_obj(
+                        switch, 1, logical=True)
                     found_switch = True
                     break
 

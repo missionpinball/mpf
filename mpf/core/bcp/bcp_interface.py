@@ -654,9 +654,7 @@ class BcpInterface(MpfController):
             else:
                 state = 1
 
-        self.machine.switch_controller.process_switch(name=name,
-                                                      state=state,
-                                                      logical=True)
+        self.machine.switch_controller.process_switch_obj(obj=switch, state=state, logical=True)
 
     async def _evaluate_placeholder(self, client, placeholder, parameters=None, **kwargs):
         """Evaluate and return placeholder."""
