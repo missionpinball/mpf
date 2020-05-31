@@ -358,11 +358,11 @@ class SwitchController(MpfController):
             monitor(MonitoredSwitchChange(name=obj.name, label=obj.label, platform=obj.platform,
                                           num=obj.hw_switch.number, state=state))
 
-    def wait_for_switch(self, switch_name: str, state: int = 1, only_on_change=True, ms=0):
+    def wait_for_switch(self, switch: Switch, state: int = 1, only_on_change=True, ms=0):
         """Wait for a switch to change into a state.
 
         Args:
-            switch_name: String name of the switch to wait for.
+            switch: String to wait for.
             state: The state to wait for. 0 = inactive, 1 = active, 2 = opposite to current.
             only_on_change: Bool which controls whether this wait will be
                 triggered now if the switch is already in the state, or
@@ -371,13 +371,13 @@ class SwitchController(MpfController):
                 the wait.
 
         """
-        return self.wait_for_any_switch([switch_name], state, only_on_change, ms)
+        return self.wait_for_any_switch([switch], state, only_on_change, ms)
 
-    def wait_for_any_switch(self, switch_names: List[str], state: int = 1, only_on_change=True, ms=0):
+    def wait_for_any_switch(self, switches: List[Switch], state: int = 1, only_on_change=True, ms=0):
         """Wait for the first switch in the list to change into state.
 
         Args:
-            switch_names: Iterable of strings of switch names. Whichever switch changes first will trigger this wait.
+            switches: Iterable of switches. Whichever switch changes first will trigger this wait.
             state: The state to wait for. 0 = inactive, 1 = active, 2 = opposite to current.
             only_on_change: Bool which controls whether this wait will be
                 triggered now if the switch is already in the state, or
@@ -389,23 +389,23 @@ class SwitchController(MpfController):
         future = asyncio.Future(loop=self.machine.clock.loop)   # type: asyncio.Future
 
         if not only_on_change:
-            for switch_name in switch_names:
-                if self.is_state(switch_name, state, ms):
-                    future.set_result({"switch_name": switch_name, "state": state, "ms": ms})
+            for switch in switches:
+                if self.is_state(switch.name, state, ms):
+                    future.set_result({"switch_name": switch.name, "state": state, "ms": ms})
                     return future
 
         handlers = []   # type: List[SwitchHandler]
         future.add_done_callback(partial(self._future_done, handlers))      # type: ignore
-        for switch_name in switch_names:
+        for switch in switches:
             if state == 2:
-                handler_state = 0 if self.is_active(switch_name) else 1
+                handler_state = 0 if self.is_active(switch.name) else 1
             else:
                 handler_state = state
-            handlers.append(self.add_switch_handler(switch_name, state=handler_state, ms=ms,
+            handlers.append(self.add_switch_handler(switch.name, state=handler_state, ms=ms,
                                                     callback=partial(self._wait_handler,
                                                                      ms=ms,
                                                                      _future=future,
-                                                                     switch_name=switch_name)))
+                                                                     switch_name=switch.name)))
         return future
 
     def _future_done(self, handlers: List[SwitchHandler], future: asyncio.Future):

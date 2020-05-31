@@ -134,5 +134,5 @@ class EntranceSwitchCounter(PhysicalBallCounter):
     def wait_for_ready_to_receive(self):
         """Wait until the entrance switch is inactive."""
         return self.machine.switch_controller.wait_for_switch(
-            switch_name=self.config['entrance_switch'].name,
+            switch=self.config['entrance_switch'],
             state=0, only_on_change=False)

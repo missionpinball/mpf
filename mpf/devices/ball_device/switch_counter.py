@@ -129,7 +129,7 @@ class SwitchCounter(PhysicalBallCounter):
             valid = False
             if self.machine.switch_controller.is_active(
                     switch.name, ms=self.config['entrance_count_delay']):
-                switches.append(switch.name)
+                switches.append(switch)
                 valid = True
             elif self.machine.switch_controller.is_inactive(
                     switch.name, ms=self.config['exit_count_delay']):
@@ -163,7 +163,7 @@ class SwitchCounter(PhysicalBallCounter):
     def is_ready_to_receive(self):
         """Return true if count is stable and we got at least one slot."""
         try:
-            count = self._count_switches_sync()
+            count = len(self._count_switches_sync())
         except ValueError:
             # count not stable
             return False
@@ -186,9 +186,9 @@ class SwitchCounter(PhysicalBallCounter):
                 await waiter
 
         waiters = []
-        for switch_name in active_switches:
+        for switch in active_switches:
             waiters.append(self.machine.switch_controller.wait_for_switch(
-                switch_name=switch_name, state=0))
+                switch=switch, state=0))
 
         if not waiters:
             self.ball_device.log.warning("No switch is active. Cannot wait on empty list.")

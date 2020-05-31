@@ -52,9 +52,9 @@ class TestSwitchController(MpfTestCase):
 
     def test_wait_futures(self):
         self.hit_switch_and_run("s_test", 1)
-        future = self.machine.switch_controller.wait_for_switch("s_test")
-        future2 = self.machine.switch_controller.wait_for_switch("s_test", only_on_change=False)
-        future3 = self.machine.switch_controller.wait_for_switch("s_test")
+        future = self.machine.switch_controller.wait_for_switch(self.machine.switches["s_test"])
+        future2 = self.machine.switch_controller.wait_for_switch(self.machine.switches["s_test"], only_on_change=False)
+        future3 = self.machine.switch_controller.wait_for_switch(self.machine.switches["s_test"])
         future3.cancel()
         self.assertTrue(future2.done())
         self.release_switch_and_run("s_test", 1)

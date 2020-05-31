@@ -131,7 +131,7 @@ class ScoreReel(SystemWideDevice):
         while True:
             # wait for either a new value or a switch change
             switch_change_future = self.machine.switch_controller.wait_for_any_switch(
-                switch_names=[switch.name for switch in self.value_switches if switch is not None], state=2,
+                switches=[switch for switch in self.value_switches if switch is not None], state=2,
                 ms=self.config['hw_confirm_time'])
             result = await Util.first([switch_change_future, self._busy.wait()], loop=self.machine.clock.loop)
             if result == switch_change_future:
