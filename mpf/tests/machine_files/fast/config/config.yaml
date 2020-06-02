@@ -132,3 +132,6 @@ lights:
   test_led2:
     previous: test_led
     type: grb
+  l_o_circle:
+    number: 0-10
+    type: grb

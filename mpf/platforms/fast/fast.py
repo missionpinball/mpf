@@ -687,18 +687,18 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             # FAST hardware number
             if '-' in str(number):
                 num = str(number).split('-')
-                number = Util.int_to_hex_string((int(num[0]) * 64) + int(num[1]))
+                number = (int(num[0]) * 64) + int(num[1])
             else:
-                number = self.convert_number_from_config(number)
+                number = int(number)
             return [
                 {
-                    "number": number + "-0"
+                    "number": "{}-0".format(number)
                 },
                 {
-                    "number": number + "-1"
+                    "number": "{}-1".format(number)
                 },
                 {
-                    "number": number + "-2"
+                    "number": "{}-2".format(number)
                 },
             ]
 

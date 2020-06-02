@@ -4,6 +4,7 @@ import logging
 from typing import Optional
 from typing import List
 
+from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
 
@@ -15,8 +16,8 @@ class FASTDirectLED:
 
     def __init__(self, number: str, hardware_fade_ms: int, machine) -> None:
         """Initialise FAST LED."""
-        self.number = number
         self.number_int = int(number)
+        self.number = Util.int_to_hex_string(self.number_int)
         self.dirty = True
         self.machine = machine
         self.hardware_fade_ms = hardware_fade_ms
@@ -104,7 +105,7 @@ class FASTDirectLEDChannel(LightPlatformInterface):
         if self.channel == 2:
             return "{}-0".format(self.led.number_int + 1)
 
-        return "{}-{}".format(self.led.number, self.channel + 1)
+        return "{}-{}".format(self.led.number_int, self.channel + 1)
 
     def __lt__(self, other):
         """Order lights by their order on the hardware."""
