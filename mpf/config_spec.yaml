@@ -1523,6 +1523,8 @@ sounds:
     pan: single|float|0
     streaming: single|bool|false
     loops: single|int|0
+    loop_start_at: single|secs|0
+    loop_end_at: single|secs|None
     priority: single|int|0
     start_at: single|secs|0
     fade_in: single|secs|0
