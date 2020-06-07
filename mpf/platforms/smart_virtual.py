@@ -219,11 +219,11 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
         if self.result == "success":
             if (self.device.config['entrance_switch_full_timeout'] and
                     self.device.machine.switch_controller.is_active(
-                    self.device.config['entrance_switch'])):
+                    self.device.config['entrance_switch'][0])):
 
                 self.machine.switch_controller.process_switch_obj(
-                    self.device.config['entrance_switch'], 0, logical=True)
-                self.log.debug("Deactivating: %s", self.device.config['entrance_switch'].name)
+                    self.device.config['entrance_switch'][0], 0, logical=True)
+                self.log.debug("Deactivating: %s", self.device.config['entrance_switch'][0].name)
 
             if self.confirm_eject_switch:
                 self.delay.add(ms=50, callback=self.confirm_eject_via_switch,
@@ -367,25 +367,25 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
                 if device.balls == device.config['ball_capacity'] - 1:
 
                     if LogMixin.unit_test and self.machine.switch_controller.is_active(
-                            device.config['entrance_switch']):
+                            device.config['entrance_switch'][0]):
                         raise AssertionError(
                             "KABOOM! We just added a ball to {} which already "
                             "had an active entrance switch".format(
                                 device.name))
 
                     self.log.debug('Enabling switch %s due to ball being added to %s',
-                                   device.config['entrance_switch'].name, device.name)
+                                   device.config['entrance_switch'][0].name, device.name)
 
                     self.machine.switch_controller.process_switch_obj(
-                        device.config['entrance_switch'], 1, True)
+                        device.config['entrance_switch'][0], 1, True)
                     return
 
             self.log.debug('Hitting switch %s due to ball being added to %s',
-                           device.config['entrance_switch'].name, device.name)
+                           device.config['entrance_switch'][0].name, device.name)
             self.machine.switch_controller.process_switch_obj(
-                device.config['entrance_switch'], 1, True)
+                device.config['entrance_switch'][0], 1, True)
             self.machine.switch_controller.process_switch_obj(
-                device.config['entrance_switch'], 0, True)
+                device.config['entrance_switch'][0], 0, True)
 
         if device.config['ball_switches']:
             found_switch = False
