@@ -49,3 +49,21 @@ class OPPLightChannel(PlatformBatchLight):
     def get_board_name(self):
         """Return OPP chain and addr."""
         return "OPP LED {} on Chain {} Board {}".format(self.pixel_num, self.chain_serial, self.addr)
+
+    def is_successor_of(self, other):
+        """Return true if the other light has the previous pixel_num and is on the same chain and addr."""
+        return (self.chain_serial == other.chain_serial and self.addr == other.addr and
+                self.pixel_num == other.pixel_num + 1)
+
+    def get_successor_number(self):
+        """Return nex pixel_num on the same chain and addr."""
+        return "{}-{}-{}".format(self.chain_serial, self.addr, self.pixel_num + 1)
+
+    def __lt__(self, other):
+        """Order lights by their position on the hardware."""
+        return (self.chain_serial < other.chain_serial or self.addr < other.addr or
+                self.pixel_num < other.pixel_num)
+
+    def __repr__(self):
+        """Return str representation."""
+        return "<OPPLightChannel chain={} addr={} pixel={}>".format(self.chain_serial, self.addr, self.pixel_num)

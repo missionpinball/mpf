@@ -141,7 +141,7 @@ class Stepper(SystemWideDevice):
                 self.hw_stepper.move_vel_mode(-1)
 
             # wait until home switch becomes active
-            await self.machine.switch_controller.wait_for_switch(self.config['homing_switch'].name,
+            await self.machine.switch_controller.wait_for_switch(self.config['homing_switch'],
                                                                  only_on_change=False)
             self.hw_stepper.stop()
             self.hw_stepper.set_home_position()

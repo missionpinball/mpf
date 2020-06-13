@@ -1,6 +1,7 @@
 """Handles incoming balls."""
 import asyncio
 from functools import partial
+from mpf.devices.switch import Switch
 
 from mpf.core.utility_functions import Util
 from mpf.devices.ball_device.ball_device_state_handler import BallDeviceStateHandler
@@ -38,12 +39,12 @@ class IncomingBall:
         return self._state == "left_device" and \
             (not self._external_confirm_future or self._external_confirm_future.done())
 
-    def add_external_confirm_switch(self, switch_name):
+    def add_external_confirm_switch(self, switch: Switch):
         """Add external confirm switch."""
         if self._external_confirm_future:
             raise AssertionError("Can only add external confirm once.")
 
-        self._external_confirm_future = self._source.machine.switch_controller.wait_for_switch(switch_name)
+        self._external_confirm_future = self._source.machine.switch_controller.wait_for_switch(switch)
         self._external_confirm_future.add_done_callback(self._external_confirm)
 
     def add_external_confirm_event(self, event):

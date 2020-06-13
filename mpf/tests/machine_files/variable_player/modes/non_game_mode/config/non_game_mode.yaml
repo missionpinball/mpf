@@ -12,3 +12,7 @@ variable_player:
     test2:
       int: 7
       action: add_machine
+  "{machine.test5}":
+    test6:
+      action: set_machine
+      string: "{value}-suffix"

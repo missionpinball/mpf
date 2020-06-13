@@ -1,3 +1,5 @@
+from mpf.core.config_validator import ValidationPath
+
 from mpf.core.utility_functions import Util
 from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.tests.MpfTestCase import MpfTestCase
@@ -57,7 +59,7 @@ class TestConfig(MpfTestCase):
         self.assertEqual(self.machine.config['test_section']['case_sensitive_3'], 'Test')
 
     def test_config_validator(self):
-        validation_failure_info = (("key", "entry"), "subkey")
+        validation_failure_info = ValidationPath(ValidationPath(ValidationPath(None, "key"), "entry"), "subkey")
         # test config spec syntax error
         self.assertRaises(ValueError,
                           self.machine.config_validator.validate_config_item,
@@ -91,7 +93,7 @@ class TestConfig(MpfTestCase):
         validation_string = 'single|int|'.split("|")  # default required
         self.assertRaises(ConfigFileError,
                           self.machine.config_validator.validate_config_item,
-                          validation_string, 'test_failure_info')  # no item
+                          validation_string, ValidationPath(None, "test"))  # no item
 
         # test broken int
         validation_string = 'single|int|'.split("|")  # default required

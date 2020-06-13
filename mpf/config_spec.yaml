@@ -130,7 +130,7 @@ ball_devices:
     hold_coil_release_time: single|ms|1s
     hold_events: event_handler|event_handler:ms|None
     hold_switches: list|machine(switches)|None
-    entrance_switch: single|machine(switches)|None
+    entrance_switch: list|machine(switches)|None
     entrance_switch_ignore_window_ms: single|ms|0
     entrance_switch_full_timeout: single|ms|0
     entrance_events: event_handler|event_handler:ms|None
@@ -244,7 +244,7 @@ coils:
     __type__: device
     allow_enable: single|bool|false
     number: single|str|
-    default_recycle: single|bool|false
+    default_recycle: single|bool|None
     default_pulse_ms: single|ms|None
     default_pulse_power: single|float(0,1)|None
     default_hold_power: single|float(0,1)|None
@@ -280,6 +280,7 @@ opp_coils:
 fast_coils:
     connection: single|enum(network,local,auto)|auto
     recycle_ms: single|ms|None
+    hold_pwm_patter: single|str|None
 coil_player:
     __valid_in__: machine, mode, show
     __type__: config_player
@@ -708,6 +709,8 @@ lights:
     __valid_in__: machine
     __type__: device
     number: single|str|None
+    previous: single|machine(lights)|None
+    start_channel: single|str|None
     type: single|str|None
     subtype: single|str|None
     platform: single|str|None
@@ -1521,6 +1524,8 @@ sounds:
     pan: single|float|0
     streaming: single|bool|false
     loops: single|int|0
+    loop_start_at: single|secs|0
+    loop_end_at: single|secs|None
     priority: single|int|0
     start_at: single|secs|0
     fade_in: single|secs|0
@@ -1774,7 +1779,7 @@ variable_player:
     __type__: config_player
     int: single|template_int|None
     float: single|template_float|None
-    string: single|str|None
+    string: single|template_str|None
     block: single|bool|false
     action: single|enum(add,set,add_machine,set_machine)|add
     player: single|int|None

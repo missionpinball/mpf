@@ -300,14 +300,14 @@ LEDs:
 
     def _test_switches(self):
         # initial switches
-        self.assertTrue(self.machine.switch_controller.is_active("s_test"))
-        self.assertTrue(self.machine.switch_controller.is_active("s_test_no_debounce"))
-        self.assertTrue(self.machine.switch_controller.is_active("s_test_nc"))
-        self.assertFalse(self.machine.switch_controller.is_active("s_flipper"))
-        self.assertTrue(self.machine.switch_controller.is_active("s_test_card2"))
-        self.assertTrue(self.machine.switch_controller.is_active("s_matrix_test"))
-        self.assertFalse(self.machine.switch_controller.is_active("s_matrix_test2"))
-        self.assertTrue(self.machine.switch_controller.is_active("s_matrix_test3"))
+        self.assertSwitchState("s_test", 1)
+        self.assertSwitchState("s_test_no_debounce", 1)
+        self.assertSwitchState("s_test_nc", 1)
+        self.assertSwitchState("s_flipper", 0)
+        self.assertSwitchState("s_test_card2", 1)
+        self.assertSwitchState("s_matrix_test", 1)
+        self.assertSwitchState("s_matrix_test2", 0)
+        self.assertSwitchState("s_matrix_test3", 1)
 
         # switch change
         permanent_commands = copy.deepcopy(self.serialMock.permanent_commands)
@@ -323,17 +323,18 @@ LEDs:
                 self._crc_message(inputs3a_message, False) + self._crc_message(inputs3b_message),  # read inputs
         }
 
-        while self.machine.switch_controller.is_active("s_test_nc"):
+        switch = self.machine.switches["s_test_nc"]
+        while self.machine.switch_controller.is_active(switch):
             self.advance_time_and_run(0.1)
 
-        self.assertTrue(self.machine.switch_controller.is_active("s_test"))
-        self.assertTrue(self.machine.switch_controller.is_active("s_test_no_debounce"))
-        self.assertFalse(self.machine.switch_controller.is_active("s_test_nc"))
-        self.assertFalse(self.machine.switch_controller.is_active("s_flipper"))
-        self.assertFalse(self.machine.switch_controller.is_active("s_test_card2"))
-        self.assertFalse(self.machine.switch_controller.is_active("s_matrix_test"))
-        self.assertTrue(self.machine.switch_controller.is_active("s_matrix_test2"))
-        self.assertFalse(self.machine.switch_controller.is_active("s_matrix_test3"))
+        self.assertSwitchState("s_test", 1)
+        self.assertSwitchState("s_test_no_debounce", 1)
+        self.assertSwitchState("s_test_nc", 0)
+        self.assertSwitchState("s_flipper", 0)
+        self.assertSwitchState("s_test_card2", 0)
+        self.assertSwitchState("s_matrix_test", 0)
+        self.assertSwitchState("s_matrix_test2", 1)
+        self.assertSwitchState("s_matrix_test3", 0)
 
         self.serialMock.permanent_commands = permanent_commands
 
@@ -483,11 +484,11 @@ LEDs:
 
     def _test_switches(self):
         # initial switches
-        self.assertTrue(self.machine.switch_controller.is_active("s_test"))
-        self.assertTrue(self.machine.switch_controller.is_active("s_test_no_debounce"))
-        self.assertTrue(self.machine.switch_controller.is_active("s_test_nc"))
-        self.assertFalse(self.machine.switch_controller.is_active("s_flipper"))
-        self.assertTrue(self.machine.switch_controller.is_active("s_test_card2"))
+        self.assertSwitchState("s_test", 1)
+        self.assertSwitchState("s_test_no_debounce", 1)
+        self.assertSwitchState("s_test_nc", 1)
+        self.assertSwitchState("s_flipper", 0)
+        self.assertSwitchState("s_test_card2", 1)
 
         # switch change
         permanent_commands = copy.deepcopy(self.serialMock.permanent_commands)
@@ -499,14 +500,15 @@ LEDs:
                 self._crc_message(inputs1_message, False) + self._crc_message(inputs2_message)
         }
 
-        while self.machine.switch_controller.is_active("s_test_nc"):
+        switch = self.machine.switches["s_test_nc"]
+        while self.machine.switch_controller.is_active(switch):
             self.advance_time_and_run(0.1)
 
-        self.assertTrue(self.machine.switch_controller.is_active("s_test"))
-        self.assertTrue(self.machine.switch_controller.is_active("s_test_no_debounce"))
-        self.assertFalse(self.machine.switch_controller.is_active("s_test_nc"))
-        self.assertFalse(self.machine.switch_controller.is_active("s_flipper"))
-        self.assertFalse(self.machine.switch_controller.is_active("s_test_card2"))
+        self.assertSwitchState("s_test", 1)
+        self.assertSwitchState("s_test_no_debounce", 1)
+        self.assertSwitchState("s_test_nc", 0)
+        self.assertSwitchState("s_flipper", 0)
+        self.assertSwitchState("s_test_card2", 0)
 
         self.serialMock.permanent_commands = permanent_commands
 

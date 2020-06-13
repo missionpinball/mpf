@@ -107,6 +107,18 @@ class SpikeBacklight(LightPlatformSoftwareFade):
         """Return name for service mode."""
         return "Spike Node 0"
 
+    def is_successor_of(self, other):
+        """There can only be one backlight."""
+        raise AssertionError("Not possible for backlight.")
+
+    def get_successor_number(self):
+        """There can only be one backlight."""
+        raise AssertionError("Not possible for backlight.")
+
+    def __lt__(self, other):
+        """There can only be one backlight."""
+        return self.number < other.number
+
 
 class SpikeLight(PlatformBatchLight):
 
@@ -135,6 +147,18 @@ class SpikeLight(PlatformBatchLight):
     def get_board_name(self):
         """Return name for service mode."""
         return "Spike Node {}".format(self.node)
+
+    def is_successor_of(self, other):
+        """Return true if the other light has the previous index and is on the same node."""
+        return self.node == other.node and self.index == other.index + 1
+
+    def get_successor_number(self):
+        """Return next index on node."""
+        return self.node, self.index + 1
+
+    def __lt__(self, other):
+        """Order lights by their order on the hardware."""
+        return self.node < other.node or self.index < other.index
 
 
 class SpikeDMD(DmdPlatformInterface):
@@ -455,16 +479,6 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         self.send_cmd_async(sequential_brightness_list[0][0].node,
                             SpikeNodebus.SetLed + sequential_brightness_list[0][0].index, data)
 
-    @staticmethod
-    def _light_key(light: SpikeLight):
-        """Sort lights by this key."""
-        return light.node * 100 + light.index
-
-    @staticmethod
-    def _are_lights_sequential(a: SpikeLight, b: SpikeLight):
-        """Return True if lights are sequential."""
-        return a.node == b.node and a.index + 1 == b.index
-
     # pylint: disable-msg=too-many-arguments
     def _write_rule(self, node, enable_switch_index, disable_switch_index, coil_index, pulse_settings: PulseSettings,
                     hold_settings: Optional[HoldSettings], param1, param2, param3, hold_param1=0):
@@ -751,8 +765,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             self._query_nodes_task = self.machine.clock.loop.create_task(self._query_status_and_coil_current())
             self._query_nodes_task.add_done_callback(Util.raise_exceptions)
 
-        self._light_system = PlatformBatchLightSystem(self.machine.clock, self._light_key,
-                                                      self._are_lights_sequential, self._send_multiple_light_update,
+        self._light_system = PlatformBatchLightSystem(self.machine.clock, self._send_multiple_light_update,
                                                       self.machine.config['mpf']['default_light_hw_update_hz'],
                                                       self.config['max_led_batch_size'])
         self._light_system.start()

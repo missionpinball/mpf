@@ -323,15 +323,15 @@ class Credits(Mode):
 
     def _enable_credit_handlers(self):
         for switch_settings in self.credits_config['switches']:
-            self.machine.switch_controller.add_switch_handler(
-                switch_name=switch_settings['switch'].name,
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch=switch_settings['switch'],
                 callback=self._credit_switch_callback,
                 callback_kwargs={'value': switch_settings['value'].evaluate([]),
                                  'audit_class': switch_settings['type']})
 
         for switch in self.credits_config['service_credits_switch']:
-            self.machine.switch_controller.add_switch_handler(
-                switch_name=switch.name,
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch=switch,
                 callback=self._service_credit_callback)
 
         for event_settings in self.credits_config['events']:

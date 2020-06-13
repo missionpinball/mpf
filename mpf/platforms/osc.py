@@ -33,6 +33,18 @@ class OscLight(LightPlatformSoftwareFade):
         """Set brightness of OSC light."""
         self.client.send_message("/light/" + self.number, brightness)
 
+    def is_successor_of(self, other):
+        """Return true if the other light has the previous number."""
+        raise AssertionError("Not possible in OSC")
+
+    def get_successor_number(self):
+        """Return next number."""
+        raise AssertionError("Not possible in OSC")
+
+    def __lt__(self, other):
+        """Order lights by string."""
+        return self.number < other.number
+
 
 class OscSwitch(SwitchPlatformInterface):
 

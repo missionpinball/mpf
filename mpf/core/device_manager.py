@@ -1,4 +1,5 @@
 """Contains the DeviceManager base class."""
+import asyncio
 from collections import OrderedDict
 
 from typing import Callable, Tuple, List
@@ -181,6 +182,7 @@ class DeviceManager(MpfController):
 
     async def initialize_devices(self):
         """Initialise devices."""
+        futures = []
         for device_type in self.machine.config['mpf']['device_modules']:
 
             device_cls = Util.string_to_class(device_type)
@@ -196,7 +198,9 @@ class DeviceManager(MpfController):
 
             # add machine wide
             for device_name in config:
-                await collection[device_name].device_added_system_wide()
+                futures.append(collection[device_name].device_added_system_wide())
+
+        await asyncio.wait(futures, loop=self.machine.clock.loop)
 
     # pylint: disable-msg=too-many-nested-blocks
     def get_device_control_events(self, config) -> Tuple[str, Callable, int, "Device"]:

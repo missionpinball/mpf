@@ -17,7 +17,7 @@ class TestSwitchController(MpfTestCase):
         assert(switch_name == "s_test")
         assert(ms == 300)
         assert(state == 1)
-        self.isActive = self.machine.switch_controller.is_active("s_test", ms=300)
+        self.isActive = self.machine.switch_controller.is_active(self.machine.switches["s_test"], ms=300)
 
     def test_monitor(self):
         # add monitor
@@ -52,9 +52,9 @@ class TestSwitchController(MpfTestCase):
 
     def test_wait_futures(self):
         self.hit_switch_and_run("s_test", 1)
-        future = self.machine.switch_controller.wait_for_switch("s_test")
-        future2 = self.machine.switch_controller.wait_for_switch("s_test", only_on_change=False)
-        future3 = self.machine.switch_controller.wait_for_switch("s_test")
+        future = self.machine.switch_controller.wait_for_switch(self.machine.switches["s_test"])
+        future2 = self.machine.switch_controller.wait_for_switch(self.machine.switches["s_test"], only_on_change=False)
+        future3 = self.machine.switch_controller.wait_for_switch(self.machine.switches["s_test"])
         future3.cancel()
         self.assertTrue(future2.done())
         self.release_switch_and_run("s_test", 1)
@@ -81,8 +81,7 @@ class TestSwitchController(MpfTestCase):
     def test_initial_state(self):
         # tests that when MPF starts, the initial states of switches that
         # started in that state are read correctly.
-        self.assertFalse(self.machine.switch_controller.is_active('s_test',
-                                                                  1000))
+        self.assertFalse(self.machine.switch_controller.is_active(self.machine.switches['s_test'], 1000))
 
     def _callback_invalid(self):
          raise AssertionError("Should not be called")
@@ -222,19 +221,19 @@ class TestSwitchController(MpfTestCase):
     def test_invert(self):
         self.machine.switch_controller.process_switch("s_test_invert", 1, logical=False)
         self.advance_time_and_run()
-        self.assertFalse(self.machine.switch_controller.is_active("s_test_invert"))
+        self.assertSwitchState("s_test_invert", 0)
 
         self.machine.switch_controller.process_switch("s_test_invert", 1, logical=True)
         self.advance_time_and_run()
-        self.assertTrue(self.machine.switch_controller.is_active("s_test_invert"))
+        self.assertSwitchState("s_test_invert", 1)
 
         self.machine.switch_controller.process_switch("s_test_invert", 0, logical=False)
         self.advance_time_and_run()
-        self.assertTrue(self.machine.switch_controller.is_active("s_test_invert"))
+        self.assertSwitchState("s_test_invert", 1)
 
         self.machine.switch_controller.process_switch("s_test_invert", 0, logical=True)
         self.advance_time_and_run()
-        self.assertFalse(self.machine.switch_controller.is_active("s_test_invert"))
+        self.assertSwitchState("s_test_invert", 0)
 
     def _cb1a(self, **kwargs):
         del kwargs

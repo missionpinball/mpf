@@ -159,8 +159,19 @@ class PROCMatrixLight(LightPlatformSoftwareFade):
 
     def get_board_name(self):
         """Return board of the light."""
-        # TODO: Implement this for PDB matrixes
         return "P-Roc Matrix"
+
+    def is_successor_of(self, other):
+        """Return true if the other light has the previous number."""
+        return self.number == other.number + 1
+
+    def get_successor_number(self):
+        """Return next number."""
+        return self.number + 1
+
+    def __lt__(self, other):
+        """Order lights by hardware number."""
+        return self.number < other.number
 
 
 class PDBSwitch:
@@ -366,6 +377,18 @@ class PDBLED(PlatformBatchLight):
     def get_board_name(self):
         """Return board of the light."""
         return "PD-LED Board {}".format(self.board)
+
+    def is_successor_of(self, other):
+        """Return true if the other light has the previous address and is on the same board."""
+        return self.board == other.board and self.address == other.address + 1
+
+    def get_successor_number(self):
+        """Return address on the same board."""
+        return "{}-{}".format(self.board, self.address + 1)
+
+    def __lt__(self, other):
+        """Order lights by their position on the hardware."""
+        return self.board < other.board or self.address < other.address
 
 
 class PdLedServo(ServoPlatformInterface):

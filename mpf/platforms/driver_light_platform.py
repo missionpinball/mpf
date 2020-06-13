@@ -9,9 +9,9 @@ class DriverLight(LightPlatformSoftwareFade):
 
     __slots__ = ["driver"]
 
-    def __init__(self, driver, loop, software_fade_ms):
+    def __init__(self, number, driver, loop, software_fade_ms):
         """Initialise coil as light."""
-        super().__init__(driver.hw_driver.number, loop, software_fade_ms)
+        super().__init__(number, loop, software_fade_ms)
         self.driver = driver
 
     def set_brightness(self, brightness: float):
@@ -24,6 +24,18 @@ class DriverLight(LightPlatformSoftwareFade):
     def get_board_name(self):
         """Return board name of underlaying driver."""
         return self.driver.hw_driver.get_board_name()
+
+    def is_successor_of(self, other):
+        """Not possible."""
+        raise AssertionError("Not possible in DriverLights.")
+
+    def get_successor_number(self):
+        """Not possible."""
+        raise AssertionError("Not possible in DriverLights.")
+
+    def __lt__(self, other):
+        """Order lights by string."""
+        return self.number < other.number
 
 
 class DriverLightPlatform(LightsPlatform):
@@ -46,7 +58,7 @@ class DriverLightPlatform(LightsPlatform):
 
     def configure_light(self, number: str, subtype: str, platform_settings: dict) -> LightPlatformInterface:
         """Configure a light on a driver."""
-        driver = DriverLight(self.machine.coils[number.strip()], self.machine.clock.loop,
+        driver = DriverLight(number.strip(), self.machine.coils[number.strip()], self.machine.clock.loop,
                              int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000))
         self._lights.append(driver)
         return driver

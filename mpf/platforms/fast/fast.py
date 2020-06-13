@@ -687,18 +687,18 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             # FAST hardware number
             if '-' in str(number):
                 num = str(number).split('-')
-                number = Util.int_to_hex_string((int(num[0]) * 64) + int(num[1]))
+                number = (int(num[0]) * 64) + int(num[1])
             else:
-                number = self.convert_number_from_config(number)
+                number = int(number)
             return [
                 {
-                    "number": number + "-0"
+                    "number": "{}-0".format(number)
                 },
                 {
-                    "number": number + "-1"
+                    "number": "{}-1".format(number)
                 },
                 {
-                    "number": number + "-2"
+                    "number": "{}-2".format(number)
                 },
             ]
 
@@ -840,7 +840,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             enable_switch.hw_switch.number[0],
             Util.int_to_hex_string(coil.pulse_settings.duration),
             driver.get_pwm_for_cmd(coil.pulse_settings.power),
-            driver.get_pwm_for_cmd(coil.hold_settings.power),
+            driver.get_hold_pwm_for_cmd(coil.hold_settings.power),
             driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
         enable_switch.hw_switch.configure_debounce(enable_switch.debounce)

@@ -148,10 +148,10 @@ class BallController(MpfController):
             else:
                 for switch in device.config['ball_switches']:
                     if self.machine.switch_controller.is_active(
-                            switch.name, ms=device.config['entrance_count_delay']):
+                            switch, ms=device.config['entrance_count_delay']):
                         balls += 1
                     elif self.machine.switch_controller.is_inactive(
-                            switch.name, ms=device.config['exit_count_delay']):
+                            switch, ms=device.config['exit_count_delay']):
                         continue
                     else:
                         raise ValueError("switches not stable")

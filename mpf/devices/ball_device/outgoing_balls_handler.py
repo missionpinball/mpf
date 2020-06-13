@@ -425,7 +425,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         # we are the source of this ball
         incoming_ball_at_target = IncomingBall(self.ball_device, target)
         if self.ball_device.config['confirm_eject_type'] == "switch":
-            incoming_ball_at_target.add_external_confirm_switch(self.ball_device.config['confirm_eject_switch'].name)
+            incoming_ball_at_target.add_external_confirm_switch(self.ball_device.config['confirm_eject_switch'])
         elif self.ball_device.config['confirm_eject_type'] == "event":
             incoming_ball_at_target.add_external_confirm_event(self.ball_device.config['confirm_eject_event'])
 

@@ -185,6 +185,7 @@ class TestFast(MpfTestCase):
             "DN:07,00,00,00": "DN:P",
             "DN:11,00,00,00": "DN:P",
             "DN:12,00,00,00": "DN:P",
+            "DN:13,00,00,00": "DN:P",
             "DN:20,00,00,00": "DN:P",
             "DN:21,00,00,00": "DN:P",
             "XO:03,7F": "XO:P",
@@ -220,6 +221,7 @@ class TestFast(MpfTestCase):
         self._test_long_pulse()
         self._test_enable_exception()
         self._test_allow_enable()
+        self._test_pwm_ssm()
         self._test_coil_configure()
 
         # test hardware scan
@@ -306,6 +308,14 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
             "DN:06,C1,00,18,17,FF,FF,00": "DN:P"
         }
         self.machine.coils["c_test_allow_enable"].enable()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.net_cpu.expected_commands)
+
+    def _test_pwm_ssm(self):
+        self.net_cpu.expected_commands = {
+            "DN:13,C1,00,18,0A,FF,84224244,00": "DN:P"
+        }
+        self.machine.coils["c_hold_ssm"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
@@ -490,12 +500,12 @@ Update done.
             self.machine.default_platform.configure_switch('72', SwitchConfig(debounce='auto', invert=0), {})
 
     def _test_switch_changes(self):
-        self.assertFalse(self.machine.switch_controller.is_active("s_flipper"))
-        self.assertTrue(self.machine.switch_controller.is_active("s_flipper_eos"))
+        self.assertSwitchState("s_flipper", 0)
+        self.assertSwitchState("s_flipper_eos", 1)
 
         self.switch_hit = False
         self.advance_time_and_run(1)
-        self.assertFalse(self.machine.switch_controller.is_active("s_test"))
+        self.assertSwitchState("s_test", 0)
         self.assertFalse(self.switch_hit)
 
         self.machine.events.add_handler("s_test_active", self._switch_hit_cb)
@@ -503,38 +513,38 @@ Update done.
         self.advance_time_and_run(1)
 
         self.assertTrue(self.switch_hit)
-        self.assertTrue(self.machine.switch_controller.is_active("s_test"))
+        self.assertSwitchState("s_test", 1)
         self.switch_hit = False
 
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
-        self.assertTrue(self.machine.switch_controller.is_active("s_test"))
+        self.assertSwitchState("s_test", 1)
 
         self.machine.default_platform.process_received_message("/N:07", "NET")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
-        self.assertFalse(self.machine.switch_controller.is_active("s_test"))
+        self.assertSwitchState("s_test", 0)
 
     def _test_switch_changes_nc(self):
         self.switch_hit = False
         self.advance_time_and_run(1)
-        self.assertTrue(self.machine.switch_controller.is_active("s_test_nc"))
+        self.assertSwitchState("s_test_nc", 1)
         self.assertFalse(self.switch_hit)
 
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
-        self.assertTrue(self.machine.switch_controller.is_active("s_test_nc"))
+        self.assertSwitchState("s_test_nc", 1)
 
         self.machine.default_platform.process_received_message("-N:1A", "NET")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
-        self.assertFalse(self.machine.switch_controller.is_active("s_test_nc"))
+        self.assertSwitchState("s_test_nc", 0)
 
         self.machine.events.add_handler("s_test_nc_active", self._switch_hit_cb)
         self.machine.default_platform.process_received_message("/N:1A", "NET")
         self.advance_time_and_run(1)
 
-        self.assertTrue(self.machine.switch_controller.is_active("s_test_nc"))
+        self.assertSwitchState("s_test_nc", 1)
         self.assertTrue(self.switch_hit)
         self.switch_hit = False
 
@@ -840,12 +850,12 @@ Update done.
         device = self.machine.lights["test_led"]
         device2 = self.machine.lights["test_led2"]
         self.assertEqual("000000", self.rgb_cpu.leds['97'])
-        self.assertEqual("000000", self.rgb_cpu.leds['99'])
+        self.assertEqual("000000", self.rgb_cpu.leds['98'])
         # test led on
         device.on()
         self.advance_time_and_run(1)
         self.assertEqual("ffffff", self.rgb_cpu.leds['97'])
-        self.assertEqual("000000", self.rgb_cpu.leds['99'])
+        self.assertEqual("000000", self.rgb_cpu.leds['98'])
 
         device2.color("001122")
 
@@ -853,7 +863,7 @@ Update done.
         device.off()
         self.advance_time_and_run(1)
         self.assertEqual("000000", self.rgb_cpu.leds['97'])
-        self.assertEqual("001122", self.rgb_cpu.leds['99'])
+        self.assertEqual("001122", self.rgb_cpu.leds['98'])
 
         # test led color
         device.color(RGBColor((2, 23, 42)))

@@ -16,24 +16,28 @@ class EntranceSwitchCounter(PhysicalBallCounter):
         super().__init__(ball_device, config)
 
         self.recycle_secs = self.config['entrance_switch_ignore_window_ms'] / 1000.0
-        self.recycle_clear_time = None
+        self.recycle_clear_time = {}
 
-        # Configure switch handlers for entrance switch activity
-        self.machine.switch_controller.add_switch_handler(
-            switch_name=self.config['entrance_switch'].name, state=1,
-            ms=0,
-            callback=self._entrance_switch_handler)
+        for switch in self.config['entrance_switch']:
+            # Configure switch handlers for entrance switch activity
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch=switch, state=1,
+                ms=0,
+                callback=self._entrance_switch_handler,
+                callback_kwargs={"switch_name": switch.name})
 
         if self.config['entrance_switch_full_timeout'] and self.config['ball_capacity']:
-            self.machine.switch_controller.add_switch_handler(
-                switch_name=self.config['entrance_switch'].name, state=1,
+            if len(self.config['entrance_switch']) > 1:
+                raise AssertionError("entrance_switch_full_timeout not supported with multiple entrance switches.")
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch=self.config['entrance_switch'][0], state=1,
                 ms=self.config['entrance_switch_full_timeout'],
                 callback=self._entrance_switch_full_handler)
 
         # Handle initial ball count with entrance_switch. If there is a ball on the entrance_switch at boot
         # assume that we are at max capacity.
         if (self.config['ball_capacity'] and self.config['entrance_switch_full_timeout'] and
-                self.machine.switch_controller.is_active(self.config['entrance_switch'].name,
+                self.machine.switch_controller.is_active(self.config['entrance_switch'][0],
                                                          ms=self.config['entrance_switch_full_timeout'])):
             self._last_count = self.config['ball_capacity']
         else:
@@ -50,21 +54,21 @@ class EntranceSwitchCounter(PhysicalBallCounter):
 
     def received_entrance_event(self):
         """Handle entrance event."""
-        self._entrance_switch_handler()
+        self._entrance_switch_handler("event")
 
-    def _recycle_passed(self):
-        self.recycle_clear_time = None
+    def _recycle_passed(self, switch):
+        self.recycle_clear_time[switch] = None
 
-    def _entrance_switch_handler(self):
+    def _entrance_switch_handler(self, switch_name):
         """Add a ball to the device since the entrance switch has been hit."""
         # If recycle is ongoing, do nothing
-        if self.recycle_clear_time:
+        if self.recycle_clear_time.get(switch_name, False):
             self.debug_log("Entrance switch hit within ignore window, taking no action")
             return
         # If a recycle time is configured, set a timeout to prevent future entrance activity
         if self.recycle_secs:
-            self.recycle_clear_time = self.machine.clock.get_time() + self.recycle_secs
-            self.machine.clock.loop.call_at(self.recycle_clear_time, self._recycle_passed)
+            self.recycle_clear_time[switch_name] = self.machine.clock.get_time() + self.recycle_secs
+            self.machine.clock.loop.call_at(self.recycle_clear_time[switch_name], self._recycle_passed, switch_name)
 
         self.debug_log("Entrance switch hit")
         if self.config['ball_capacity'] and self.config['ball_capacity'] <= self._last_count:
@@ -101,11 +105,11 @@ class EntranceSwitchCounter(PhysicalBallCounter):
             pass
         elif self.config['ball_capacity'] and self.config['entrance_switch_full_timeout'] and \
             self.config['ball_capacity'] == self._last_count + 1 and \
-            self.machine.switch_controller.is_active(self.config['entrance_switch'].name,
+            self.machine.switch_controller.is_active(self.config['entrance_switch'][0],
                                                      ms=self.config['entrance_switch_full_timeout']):
             # can count when entrance switch is active for at least entrance_switch_full_timeout
             pass
-        elif self.machine.switch_controller.is_active(self.config['entrance_switch'].name):
+        elif not self.is_ready_to_receive:
             # cannot count when the entrance_switch is still active
             raise ValueError
 
@@ -129,10 +133,14 @@ class EntranceSwitchCounter(PhysicalBallCounter):
     @property
     def is_ready_to_receive(self):
         """Return true if entrance switch is inactive."""
-        return self.machine.switch_controller.is_inactive(switch_name=self.config['entrance_switch'].name)
+        return not all(self.machine.switch_controller.is_active(switch) for switch in self.config['entrance_switch'])
 
-    def wait_for_ready_to_receive(self):
-        """Wait until the entrance switch is inactive."""
-        return self.machine.switch_controller.wait_for_switch(
-            switch_name=self.config['entrance_switch'].name,
-            state=0, only_on_change=False)
+    async def wait_for_ready_to_receive(self):
+        """Wait until all entrance switch are inactive."""
+        while True:
+            if self.is_ready_to_receive:
+                return True
+
+            await self.machine.switch_controller.wait_for_any_switch(
+                switches=self.config['entrance_switch'],
+                state=0, only_on_change=True)

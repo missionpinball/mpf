@@ -106,21 +106,10 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self.opp_commands[ord(OppRs232Intf.READ_GEN2_INP_CMD)] = self.read_gen2_inp_resp
         self.opp_commands[ord(OppRs232Intf.READ_MATRIX_INP)] = self.read_matrix_inp_resp
 
-        self._light_system = PlatformBatchLightSystem(self.machine.clock, self._light_key,
-                                                      self._are_lights_sequential, self._send_multiple_light_update,
+        self._light_system = PlatformBatchLightSystem(self.machine.clock, self._send_multiple_light_update,
                                                       self.machine.config['mpf']['default_light_hw_update_hz'],
                                                       128)
         self._light_system.start()
-
-    @staticmethod
-    def _light_key(light: OPPLightChannel):
-        """Sort lights by this key."""
-        return light.number
-
-    @staticmethod
-    def _are_lights_sequential(a: OPPLightChannel, b: OPPLightChannel):
-        """Return True if lights are sequential."""
-        return a.chain_serial == b.chain_serial and a.addr == b.addr and a.pixel_num + 1 == b.pixel_num
 
     async def _send_multiple_light_update(self, sequential_brightness_list: List[Tuple[OPPLightChannel, float, int]]):
         first_light, _, common_fade_ms = sequential_brightness_list[0]

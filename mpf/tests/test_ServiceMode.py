@@ -87,7 +87,7 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.start_game()
         self.assertModeRunning("game")
         self.assertModeRunning("service")
-        self.assertFalse(self.machine.switch_controller.is_active("s_door_open"))
+        self.assertSwitchState("s_door_open", 0)
 
         # open door. game still running
         self.hit_switch_and_run("s_door_open", 0)

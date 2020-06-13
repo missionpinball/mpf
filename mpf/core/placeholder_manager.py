@@ -98,7 +98,8 @@ class BaseTemplate(metaclass=abc.ABCMeta):
 
     def evaluate_and_subscribe(self, parameters) -> Tuple[bool, asyncio.Future]:
         """Evaluate template and subscribe."""
-        result, subscriptions = self.placeholder_manager.evaluate_and_subscribe_template(self.template, parameters)
+        result, subscriptions = self.placeholder_manager.evaluate_and_subscribe_template(self.template, parameters,
+                                                                                         self.text)
         if isinstance(result, TemplateEvalError) or result is None:
             result = self.default_value
         return self.convert_result(result), subscriptions
@@ -245,16 +246,12 @@ class TextTemplate:
 
     """Text placeholder."""
 
-    var_finder = re.compile("(?<=\\()[a-zA-Z_0-9|]+(?=\\))")
-    string_finder = re.compile("(?<=\\$)[a-zA-Z_0-9]+")
-
-    __slots__ = ["machine", "text", "vars", "_change_callback"]
+    __slots__ = ["machine", "text", "_change_callback"]
 
     def __init__(self, machine: "MachineController", text: str) -> None:
         """Initialise placeholder."""
         self.machine = machine
         self.text = text
-        self.vars = self.var_finder.findall(text)
         self._change_callback = None
 
     def evaluate(self, parameters) -> str:
@@ -595,7 +592,7 @@ class BasePlaceholderManager(MpfController):
         try:
             return ast.parse(template_str, mode='eval').body
         except SyntaxError:
-            raise AssertionError("Failed to parse template {}".format(template_str))
+            raise AssertionError('Failed to parse template "{}"'.format(template_str))
 
     @staticmethod
     def _eval_num(node, variables, subscribe):
@@ -751,6 +748,10 @@ class BasePlaceholderManager(MpfController):
         """Build a string template from a string."""
         return StringTemplate(self._parse_template(template_str), template_str, self, default_value)
 
+    def build_text_template(self, template_str):
+        """Build a full featured text template."""
+        return TextTemplate(self.machine, template_str)
+
     def build_quoted_string_template(self, template_str, default_value=""):
         """Build a string template from a string if enclosed in brackets."""
         if isinstance(template_str, str) and (template_str[0:1] != "(" or template_str[-1:] != ")"):
@@ -769,13 +770,16 @@ class BasePlaceholderManager(MpfController):
         """Evaluate template."""
         return self._eval(template, parameters, False)[0]
 
-    def evaluate_and_subscribe_template(self, template, parameters):
+    def evaluate_and_subscribe_template(self, template, parameters, text=None):
         """Evaluate and subscribe template."""
         try:
             value, subscriptions = self._eval(template, parameters, True)
         except TemplateEvalError as e:
             value = e
             subscriptions = e.subscriptions
+        except ValueError as e:
+            raise AssertionError("Failed to evaluate and subscribe template {} with parameters {}. "
+                                 "See error above.".format(text, parameters))
 
         if not subscriptions:
             future = asyncio.Future(loop=self.machine.clock.loop)

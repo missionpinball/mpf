@@ -49,6 +49,11 @@ coils:
         number: 17
         default_pulse_power: 0.53
         default_hold_power: 0.40
+    c_hold_ssm:
+        number: 19
+        default_hold_power: 0.25    # approximately
+        platform_settings:
+            hold_pwm_patter: "84224244"
     c_long_pulse:
         number: 18
         default_pulse_ms: 2000
@@ -125,5 +130,8 @@ lights:
     number: 2-23
     type: grb
   test_led2:
-    number: 2-25
+    previous: test_led
+    type: grb
+  l_o_circle:
+    number: 0-10
     type: grb

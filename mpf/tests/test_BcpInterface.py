@@ -351,32 +351,32 @@ class TestBcpInterface(MpfBcpTestCase):
         self.advance_time_and_run()
 
         # initially inactive
-        self.assertFalse(self.machine.switch_controller.is_active('s_test'))
+        self.assertSwitchState("s_test", 0)
 
         # receive active
         self._bcp_external_client.send('switch', {'name': 's_test', 'state': 1})
         self.advance_time_and_run()
-        self.assertTrue(self.machine.switch_controller.is_active('s_test'))
+        self.assertSwitchState("s_test", 1)
 
         # receive active
         self._bcp_external_client.send('switch', {'name': 's_test', 'state': 1})
         self.advance_time_and_run()
-        self.assertTrue(self.machine.switch_controller.is_active('s_test'))
+        self.assertSwitchState("s_test", 1)
 
         # and inactive again
         self._bcp_external_client.send('switch', {'name': 's_test', 'state': 0})
         self.advance_time_and_run()
-        self.assertFalse(self.machine.switch_controller.is_active('s_test'))
+        self.assertSwitchState("s_test", 0)
 
         # invert
         self._bcp_external_client.send('switch', {'name': 's_test', 'state': -1})
         self.advance_time_and_run()
-        self.assertTrue(self.machine.switch_controller.is_active('s_test'))
+        self.assertSwitchState("s_test", 1)
 
         # invert
         self._bcp_external_client.send('switch', {'name': 's_test', 'state': -1})
         self.advance_time_and_run()
-        self.assertFalse(self.machine.switch_controller.is_active('s_test'))
+        self.assertSwitchState("s_test", 0)
 
     def test_double_reset_complete(self):
         # Test when a BCP server sends reset_complete twice (was causing MPF to crash)

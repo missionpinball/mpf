@@ -23,23 +23,29 @@ class SwitchCounter(PhysicalBallCounter):
         self._trigger_recount = asyncio.Event(loop=self.machine.clock.loop)
         # Register switch handlers with delays for entrance & exit counts
         for switch in self.config['ball_switches']:
-            self.machine.switch_controller.add_switch_handler(
-                switch_name=switch.name, state=1,
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch=switch, state=1,
                 ms=self.config['entrance_count_delay'],
                 callback=self.trigger_recount)
-            self.machine.switch_controller.add_switch_handler(
-                switch_name=switch.name, state=1,
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch=switch, state=1,
                 callback=self.invalidate_count)
-            self.machine.switch_controller.add_switch_handler(
-                switch_name=switch.name, state=0,
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch=switch, state=0,
                 ms=self.config['exit_count_delay'],
                 callback=self.trigger_recount)
-            self.machine.switch_controller.add_switch_handler(
-                switch_name=switch.name, state=0,
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch=switch, state=0,
                 callback=self.invalidate_count)
 
         self._task = self.machine.clock.loop.create_task(self._run())
+        self._task.add_done_callback(self._done)
         self._is_unreliable = False
+
+    @staticmethod
+    def _done(future):
+        """Handle crashes."""
+        future.result()
 
     def stop(self):
         """Stop task."""
@@ -122,11 +128,11 @@ class SwitchCounter(PhysicalBallCounter):
         for switch in self.config['ball_switches']:
             valid = False
             if self.machine.switch_controller.is_active(
-                    switch.name, ms=self.config['entrance_count_delay']):
-                switches.append(switch.name)
+                    switch, ms=self.config['entrance_count_delay']):
+                switches.append(switch)
                 valid = True
             elif self.machine.switch_controller.is_inactive(
-                    switch.name, ms=self.config['exit_count_delay']):
+                    switch, ms=self.config['exit_count_delay']):
                 valid = True
 
             if not valid:
@@ -147,7 +153,7 @@ class SwitchCounter(PhysicalBallCounter):
     def is_jammed(self):
         """Return true if the jam switch is currently active."""
         return self.config['jam_switch'] and self.machine.switch_controller.is_active(
-            self.config['jam_switch'].name, ms=self.config['entrance_count_delay'])
+            self.config['jam_switch'], ms=self.config['entrance_count_delay'])
 
     def is_count_unreliable(self):
         """Return true if only the jam switch is active and the count is unknown."""
@@ -157,7 +163,7 @@ class SwitchCounter(PhysicalBallCounter):
     def is_ready_to_receive(self):
         """Return true if count is stable and we got at least one slot."""
         try:
-            count = self._count_switches_sync()
+            count = len(self._count_switches_sync())
         except ValueError:
             # count not stable
             return False
@@ -180,9 +186,9 @@ class SwitchCounter(PhysicalBallCounter):
                 await waiter
 
         waiters = []
-        for switch_name in active_switches:
+        for switch in active_switches:
             waiters.append(self.machine.switch_controller.wait_for_switch(
-                switch_name=switch_name, state=0))
+                switch=switch, state=0))
 
         if not waiters:
             self.ball_device.log.warning("No switch is active. Cannot wait on empty list.")

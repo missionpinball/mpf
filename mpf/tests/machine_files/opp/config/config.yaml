@@ -55,7 +55,8 @@ lights:
   test_led1:
     number: 1-0
   test_led2:
-    number: 1-1
+    previous: test_led1
+    type: rgb
 
 autofire_coils:
     ac_slingshot_test:

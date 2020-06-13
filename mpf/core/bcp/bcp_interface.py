@@ -641,20 +641,20 @@ class BcpInterface(MpfController):
         del client
         state = int(state)
 
-        if name not in self.machine.switches:
+        try:
+            switch = self.machine.switches[name]
+        except KeyError:
             self.warning_log("Received BCP switch message with invalid switch"
                              "name: '%s'", name)
             return
 
         if state == -1:
-            if self.machine.switch_controller.is_active(name):
+            if self.machine.switch_controller.is_active(switch):
                 state = 0
             else:
                 state = 1
 
-        self.machine.switch_controller.process_switch(name=name,
-                                                      state=state,
-                                                      logical=True)
+        self.machine.switch_controller.process_switch_obj(obj=switch, state=state, logical=True)
 
     async def _evaluate_placeholder(self, client, placeholder, parameters=None, **kwargs):
         """Evaluate and return placeholder."""

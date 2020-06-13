@@ -222,7 +222,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
 
     # pylint: disable-msg=too-many-arguments
     def _create_subscription(self, template_str, subscription_list, settings, priority, mode):
-        template = self.machine.placeholder_manager.build_bool_template(template_str)
+        template = self.machine.placeholder_manager.build_raw_template(template_str)
         if mode:
             context = mode.name
             actual_priority = priority + mode.priority
@@ -250,7 +250,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         del settings
         del priority
         del context
-        raise AssertionError("Subscriptions are not supported in this player.")
+        raise AssertionError("Subscriptions are not supported in this player ({}).".format(self.__class__))
 
     def register_player_events(self, config, mode: Mode = None, priority=0):
         """Register events for standalone player."""

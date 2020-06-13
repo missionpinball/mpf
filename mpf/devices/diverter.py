@@ -70,13 +70,13 @@ class Diverter(SystemWideDevice):
         del kwargs
         # register for deactivation switches
         for switch in self.config['deactivation_switches']:
-            self.machine.switch_controller.add_switch_handler(
-                switch.name, self.deactivate)
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch, self.deactivate)
 
         # register for disable switches:
         for switch in self.config['disable_switches']:
-            self.machine.switch_controller.add_switch_handler(
-                switch.name, self.disable)
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch, self.disable)
 
     @event_handler(1)
     def event_reset(self, **kwargs):
@@ -250,8 +250,8 @@ class Diverter(SystemWideDevice):
                        self.config['activation_switches'])
 
         for switch in self.config['activation_switches']:
-            self.machine.switch_controller.add_switch_handler(
-                switch_name=switch.name, callback=self.activate)
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch=switch, callback=self.activate)
 
     def _disable_switches(self):
         """Deregister switch handlers for activation switches."""

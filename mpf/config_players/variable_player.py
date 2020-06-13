@@ -34,6 +34,34 @@ class VariablePlayer(ConfigPlayer):
         # true if only set_machine or add_machine are used
         return True
 
+    # pylint: disable-msg=too-many-arguments
+    def handle_subscription_change(self, value, settings, priority, context, key):
+        """Handle subscriptions."""
+        for var, s in settings.items():
+            if var == "block":
+                self.raise_config_error('Do not use "block" as variable name in variable_player.', 1, context=context)
+
+            if s['action'] not in ("set", "set_machine"):
+                self.raise_config_error('Cannot use add on subscriptions. '
+                                        'Use action set or set_machine.', 8, context=context)
+
+            args = {"value": value}
+
+            if s['condition'] and not s['condition'].evaluate(args):
+                continue
+
+            block_item = var + ":" + str(key)
+
+            if self._is_blocked(block_item, context, priority):
+                continue
+            if s['block']:
+                if block_item not in self.blocks:
+                    self.blocks[block_item] = []
+                if VarBlock(priority, context) not in self.blocks[block_item]:
+                    self.blocks[block_item].append(VarBlock(priority, context))
+
+            self._set_variable(var, s, args, context)
+
     def play(self, settings: dict, context: str, calling_context: str,
              priority: int = 0, **kwargs) -> None:
         """Variable name."""
@@ -74,7 +102,7 @@ class VariablePlayer(ConfigPlayer):
         elif entry['int']:
             value = entry['int'].evaluate(placeholder_parameters)
         elif entry['string']:
-            value = entry['string']
+            value = entry['string'].evaluate(placeholder_parameters)
         else:
             value = None    # prevent type confusion
             self.raise_config_error("You need to either set float, int or string", 2, context=context)

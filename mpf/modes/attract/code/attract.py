@@ -32,11 +32,11 @@ class Attract(Mode):
         for switch in self.machine.switches.items_tagged(
                 self.machine.config['game']['start_game_switch_tag']):
             self.switch_handlers.append(
-                self.machine.switch_controller.add_switch_handler(
-                    switch.name, self.start_button_pressed, 1))
+                self.machine.switch_controller.add_switch_handler_obj(
+                    switch, self.start_button_pressed, 1))
             self.switch_handlers.append(
-                self.machine.switch_controller.add_switch_handler(
-                    switch.name, self.start_button_released, 0))
+                self.machine.switch_controller.add_switch_handler_obj(
+                    switch, self.start_button_released, 0))
 
         if self.machine.config['game']['start_game_event']:
             self.add_mode_event_handler(self.machine.config['game']['start_game_event'], self.start_button_released)
@@ -78,7 +78,7 @@ class Attract(Mode):
         self.start_buttons_held = list()
 
         for switch in self.machine.switches.items_tagged('player'):
-            if self.machine.switch_controller.is_active(switch.name):
+            if self.machine.switch_controller.is_active(switch):
                 self.start_buttons_held.append(switch.name)
 
         self.machine.events.post_boolean('request_to_start_game',

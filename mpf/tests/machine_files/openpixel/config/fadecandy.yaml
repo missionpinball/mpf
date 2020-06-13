@@ -24,3 +24,9 @@ lights:
         - number: 2-6
       white:
         - number: 2-7
+  test_led_serial:
+    previous: test_led2
+    type: rgb
+  test_led_serial2:
+    previous: test_led_serial
+    type: rgbw

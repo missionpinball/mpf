@@ -25,10 +25,10 @@ class TestSmartVirtualPlatform(MpfTestCase):
         self.advance_time_and_run(.6)
         self.assertEqual(1, self.machine.ball_devices["device1"].balls)
         self.assertEqual(0, self.machine.ball_devices["device2"].balls)
-        self.assertEqual(False, self.machine.switch_controller.is_active('device2_s1'))
-        self.assertEqual(False, self.machine.switch_controller.is_active('device2_s2'))
-        self.assertEqual(True, self.machine.switch_controller.is_active('device1_s1'))
-        self.assertEqual(False, self.machine.switch_controller.is_active('device1_s2'))
+        self.assertSwitchState("device2_s1", 0)
+        self.assertSwitchState("device2_s2", 0)
+        self.assertSwitchState("device1_s1", 1)
+        self.assertSwitchState("device1_s2", 0)
 
         self.machine.ball_devices["device1"].eject()
         self.advance_time_and_run(1)
@@ -36,10 +36,10 @@ class TestSmartVirtualPlatform(MpfTestCase):
         self.assertEqual(0, self.machine.ball_devices["device1"].balls)
         self.assertEqual(1, self.machine.ball_devices["device2"].balls)
 
-        self.assertEqual(True, self.machine.switch_controller.is_active('device2_s1'))
-        self.assertEqual(False, self.machine.switch_controller.is_active('device2_s2'))
-        self.assertEqual(False, self.machine.switch_controller.is_active('device1_s1'))
-        self.assertEqual(False, self.machine.switch_controller.is_active('device1_s2'))
+        self.assertSwitchState("device2_s1", 1)
+        self.assertSwitchState("device2_s2", 0)
+        self.assertSwitchState("device1_s1", 0)
+        self.assertSwitchState("device1_s2", 0)
 
     @test_config("test_smart_virtual_initial.yaml")
     def test_eject_with_plunger(self):
@@ -54,10 +54,10 @@ class TestSmartVirtualPlatform(MpfTestCase):
         self.assertEqual(2, trough.balls)
         self.assertEqual(0, plunger.balls)
         self.assertBallsOnPlayfield(0)
-        self.assertTrue(self.machine.switch_controller.is_active('trough2_1'))
-        self.assertTrue(self.machine.switch_controller.is_active('trough2_2'))
-        self.assertFalse(self.machine.switch_controller.is_active('trough2_3'))
-        self.assertFalse(self.machine.switch_controller.is_active('plunger2'))
+        self.assertSwitchState("trough2_1", 1)
+        self.assertSwitchState("trough2_2", 1)
+        self.assertSwitchState("trough2_3", 0)
+        self.assertSwitchState("plunger2", 0)
 
         self.machine.playfield.add_ball(1, plunger)
         self.advance_time_and_run(1)
@@ -65,28 +65,28 @@ class TestSmartVirtualPlatform(MpfTestCase):
         self.assertEqual(1, trough.balls)
         self.assertEqual(1, plunger.balls)
         self.assertBallsOnPlayfield(0)
-        self.assertFalse(self.machine.switch_controller.is_active('trough2_1'))
-        self.assertTrue(self.machine.switch_controller.is_active('trough2_2'))
-        self.assertFalse(self.machine.switch_controller.is_active('trough2_3'))
-        self.assertTrue(self.machine.switch_controller.is_active('plunger2'))
+        self.assertSwitchState("trough2_1", 0)
+        self.assertSwitchState("trough2_2", 1)
+        self.assertSwitchState("trough2_3", 0)
+        self.assertSwitchState("plunger2", 1)
 
         self.advance_time_and_run(3)
         self.assertEqual(1, trough.balls)
         self.assertEqual(0, plunger.balls)
         self.assertBallsOnPlayfield(0)
-        self.assertFalse(self.machine.switch_controller.is_active('trough2_1'))
-        self.assertTrue(self.machine.switch_controller.is_active('trough2_2'))
-        self.assertFalse(self.machine.switch_controller.is_active('trough2_3'))
-        self.assertFalse(self.machine.switch_controller.is_active('plunger2'))
+        self.assertSwitchState("trough2_1", 0)
+        self.assertSwitchState("trough2_2", 1)
+        self.assertSwitchState("trough2_3", 0)
+        self.assertSwitchState("plunger2", 0)
 
         self.advance_time_and_run(10)
         self.assertEqual(1, trough.balls)
         self.assertEqual(0, plunger.balls)
         self.assertBallsOnPlayfield(1)
-        self.assertFalse(self.machine.switch_controller.is_active('trough2_1'))
-        self.assertTrue(self.machine.switch_controller.is_active('trough2_2'))
-        self.assertFalse(self.machine.switch_controller.is_active('trough2_3'))
-        self.assertFalse(self.machine.switch_controller.is_active('plunger2'))
+        self.assertSwitchState("trough2_1", 0)
+        self.assertSwitchState("trough2_2", 1)
+        self.assertSwitchState("trough2_3", 0)
+        self.assertSwitchState("plunger2", 0)
 
     def _ball_swallower(self, unclaimed_balls, **kwargs):
         return {'unclaimed_balls': 0}
@@ -137,27 +137,27 @@ class TestSmartVirtualPlatform(MpfTestCase):
         self.hit_switch_and_run('playfield', 1)
 
         self.assertEqual(2, self.machine.ball_devices["device4"].balls)
-        self.assertFalse(self.machine.switch_controller.is_active('device4_s'))
+        self.assertSwitchState("device4_s", 0)
 
     def test_eject_with_no_ball(self):
         # tests that firing a coil of a device with no balls in it does not
         # put a ball in the target device.
         self.assertEqual(0, self.machine.ball_devices["device1"].balls)
         self.assertEqual(0, self.machine.ball_devices["device2"].balls)
-        self.assertEqual(False, self.machine.switch_controller.is_active('device2_s1'))
-        self.assertEqual(False, self.machine.switch_controller.is_active('device2_s2'))
-        self.assertEqual(False, self.machine.switch_controller.is_active('device1_s1'))
-        self.assertEqual(False, self.machine.switch_controller.is_active('device1_s2'))
+        self.assertSwitchState("device2_s1", 0)
+        self.assertSwitchState("device2_s2", 0)
+        self.assertSwitchState("device1_s1", 0)
+        self.assertSwitchState("device1_s2", 0)
 
         self.machine.coils["plunger"].pulse()
         self.advance_time_and_run(1)
 
         self.assertEqual(0, self.machine.ball_devices["device1"].balls)
         self.assertEqual(0, self.machine.ball_devices["device2"].balls)
-        self.assertEqual(False, self.machine.switch_controller.is_active('device2_s1'))
-        self.assertEqual(False, self.machine.switch_controller.is_active('device2_s2'))
-        self.assertEqual(False, self.machine.switch_controller.is_active('device1_s1'))
-        self.assertEqual(False, self.machine.switch_controller.is_active('device1_s2'))
+        self.assertSwitchState("device2_s1", 0)
+        self.assertSwitchState("device2_s2", 0)
+        self.assertSwitchState("device1_s1", 0)
+        self.assertSwitchState("device1_s2", 0)
 
     def test_start_active_switches(self):
         # tests that the virtual_platform_start_active_switches really do start
@@ -173,13 +173,13 @@ class TestSmartVirtualPlatform(MpfTestCase):
         # reset target
         self.machine.drop_targets['left3'].reset()
         self.advance_time_and_run()
-        self.assertFalse(self.machine.switch_controller.is_active('switch3'))
+        self.assertSwitchState("switch3", 0)
         self.assertFalse(self.machine.drop_targets['left3'].complete)
 
         # knockdown single target
         self.machine.drop_targets['left3'].knockdown()
         self.advance_time_and_run()
-        self.assertTrue(self.machine.switch_controller.is_active('switch3'))
+        self.assertSwitchState("switch3", 1)
         self.assertTrue(self.machine.drop_targets['left3'].complete)
 
         # test bank
@@ -195,8 +195,8 @@ class TestSmartVirtualPlatform(MpfTestCase):
 
         # it should reset after 1.5s
         self.advance_time_and_run(1.5)
-        self.assertFalse(self.machine.switch_controller.is_active('switch1'))
-        self.assertFalse(self.machine.switch_controller.is_active('switch2'))
+        self.assertSwitchState("switch1", 0)
+        self.assertSwitchState("switch2", 0)
         self.assertFalse(self.machine.drop_targets['left1'].complete)
         self.assertFalse(self.machine.drop_targets['left2'].complete)
         self.assertFalse(self.machine.drop_target_banks['left_bank'].complete)

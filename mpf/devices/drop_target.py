@@ -35,7 +35,7 @@ class DropTarget(SystemWideDevice):
         """Initialise drop target."""
         self.reset_coil = None              # type: Driver
         self.knockdown_coil = None          # type: Driver
-        self.banks = None                   # type: Set[DropTargetBank]
+        self.banks = set()                  # type: Set[DropTargetBank]
         super().__init__(machine, name)
 
         self._in_ball_search = False
@@ -48,7 +48,6 @@ class DropTarget(SystemWideDevice):
         await super()._initialize()
         self.reset_coil = self.config['reset_coil']
         self.knockdown_coil = self.config['knockdown_coil']
-        self.banks = set()
 
         # can't read the switch until the switch controller is set up
         self.machine.events.add_handler('init_phase_4',
@@ -153,11 +152,11 @@ class DropTarget(SystemWideDevice):
         # this is in addition to the parent since drop targets track
         # self.complete in separately
 
-        self.machine.switch_controller.add_switch_handler(
-            self.config['switch'].name,
+        self.machine.switch_controller.add_switch_handler_obj(
+            self.config['switch'],
             self._update_state_from_switch, 0)
-        self.machine.switch_controller.add_switch_handler(
-            self.config['switch'].name,
+        self.machine.switch_controller.add_switch_handler_obj(
+            self.config['switch'],
             self._update_state_from_switch, 1)
 
     @event_handler(6)
@@ -190,7 +189,7 @@ class DropTarget(SystemWideDevice):
 
     def knockdown(self):
         """Pulse the knockdown coil to knock down this drop target."""
-        if self.knockdown_coil and not self.machine.switch_controller.is_active(self.config['switch'].name):
+        if self.knockdown_coil and not self.machine.switch_controller.is_active(self.config['switch']):
             self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
             self.knockdown_coil.pulse(max_wait_ms=self.config['knockdown_coil_max_wait_ms'])
 
@@ -198,7 +197,7 @@ class DropTarget(SystemWideDevice):
         del kwargs
 
         is_complete = self.machine.switch_controller.is_active(
-            self.config['switch'].name)
+            self.config['switch'])
 
         if (self._in_ball_search or self._ignore_switch_hits or
                 is_complete == self.complete):
@@ -269,7 +268,7 @@ class DropTarget(SystemWideDevice):
         handler should reset the target profile on its own when the drop target
         physically moves back to the up position.
         """
-        if self.reset_coil and self.machine.switch_controller.is_active(self.config['switch'].name):
+        if self.reset_coil and self.machine.switch_controller.is_active(self.config['switch']):
             self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
             self.reset_coil.pulse(max_wait_ms=self.config['reset_coil_max_wait_ms'])
 

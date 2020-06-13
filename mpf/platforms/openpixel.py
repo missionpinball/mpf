@@ -114,6 +114,22 @@ class OpenPixelLED(LightPlatformInterface):
         """Return name for service mode."""
         return "OPC Channel {}".format(self.channel_number)
 
+    def __repr__(self):
+        """Return string representation."""
+        return "<OpenPixelLED channel={} number={}>".format(self.opc_channel, self.channel_number)
+
+    def is_successor_of(self, other):
+        """Return true if the other light has the previous index and is on the same channel."""
+        return self.opc_channel == other.opc_channel and self.channel_number == other.channel_number + 1
+
+    def get_successor_number(self):
+        """Return next index on node."""
+        return "{}-{}".format(self.opc_channel, self.channel_number + 1)
+
+    def __lt__(self, other):
+        """Order lights by their order on the hardware."""
+        return self.opc_channel < other.opc_channel or self.channel_number < other.channel_number
+
 
 class OpenPixelClient:
 
@@ -240,10 +256,6 @@ class OpenPixelClient:
         """Send the list of pixel colors to the OPC server.
 
         Args:
-            pixels: A list of 3-item iterables (tuples or lists). Each item is
-                a 0-255 value of the intensity of the red, green, and blue
-                values for the pixel. The first item in the list is the first
-                pixel on the channel, the second item is the second one, etc.
             channel: Which OPC channel the pixel data will be written to.
 
         Returns True on success. False if it was unable to connect to the OPC
