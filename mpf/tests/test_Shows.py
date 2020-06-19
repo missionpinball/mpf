@@ -884,3 +884,41 @@ class TestShows(MpfTestCase):
         self.advance_time_and_run()
         # check that machine variable was incremented
         self.assertEqual(self.machine.variables.get_machine_var('foo'), 1)
+
+    @test_config("test_show_player_queue.yaml")
+    def test_show_player_queue(self):
+        for show_num in range(1, 4):
+            for step_num in range(1, 4):
+                self.mock_event("step{}_{}".format(show_num, step_num))
+
+        self.post_event("play_show1_on_queue1")
+        self.post_event("play_show2_on_queue1")
+
+        self.advance_time_and_run(.5)
+        self.assertEventCalled("step1_1")
+        self.assertEventNotCalled("step1_2")
+        self.assertEventNotCalled("step2_1")
+        self.advance_time_and_run()
+        self.assertEventCalled("step1_2")
+        self.assertEventNotCalled("step1_3")
+        self.assertEventNotCalled("step2_1")
+        self.advance_time_and_run()
+        self.assertEventCalled("step1_3")
+        self.assertEventNotCalled("step2_1")
+        self.advance_time_and_run()
+        self.assertEventCalled("step2_1")
+        self.assertEventNotCalled("step2_2")
+
+        self.mock_event("step1_1")
+        self.mock_event("step1_2")
+        self.mock_event("step1_3")
+        self.post_event("play_show1_on_queue2")
+        self.advance_time_and_run(.1)
+        self.assertEventCalled("step1_1")
+        self.assertEventNotCalled("step1_2")
+
+        self.advance_time_and_run()
+        self.assertEventCalled("step2_2")
+        self.assertEventNotCalled("step2_3")
+        self.assertEventCalled("step1_2")
+        self.assertEventNotCalled("step1_3")

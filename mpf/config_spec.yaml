@@ -1336,7 +1336,7 @@ show_config:
 show_player:
     __valid_in__: machine, mode, show
     __type__: config_player
-    action: single|enum(play,stop,pause,resume,advance,step_back,update)|play
+    action: single|enum(play,stop,pause,resume,advance,step_back,update,queue)|play
     show: single|str|None
     priority: single|int_or_token|0
     speed: single|float_or_token|1
@@ -1345,6 +1345,7 @@ show_player:
     loops: single|int_or_token|-1
     sync_ms: single|int_or_token|None
     manual_advance: single|bool|false
+    show_queue: single|machine(show_queues)|None
     key: single|str|None
     show_tokens: dict|str:template_str|None
     events_when_played: list|event_posted|None
@@ -1364,6 +1365,8 @@ show_pools:
 show_step:
     time: single|str|
     __allow_others__:
+show_queues:
+    __valid_in__: machine
 shows:
     __valid_in__: machine, mode                      # todo add to validator
     __type__: named_lists
