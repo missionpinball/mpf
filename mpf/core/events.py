@@ -153,13 +153,16 @@ class EventManager(MpfController):
         for handler in handler_list:
         ``events.remove_handler(my_handler)``
         """
+        if event is None:
+            raise AssertionError("Cannot pass event None.")
         if not self.machine.options['production']:
-            if event is None:
-                raise AssertionError("Cannot pass event None.")
+            if hasattr(self.machine, "switches") and event in self.machine.switches:
+                self.raise_config_error('Switch name "{name}" name used as event handler for {handler}. '
+                                        'Did you mean "{name}_active"?'.format(name=event, handler=handler), 1)
             if not callable(handler):
-                raise ValueError('Cannot add handler "{}" for event "{}". Did you '
-                                 'accidentally add parenthesis to the end of the '
-                                 'handler you passed?'.format(handler, event))
+                raise AssertionError('Cannot add handler "{}" for event "{}". Did you '
+                                     'accidentally add parenthesis to the end of the '
+                                     'handler you passed?'.format(handler, event))
 
             sig = inspect.signature(handler)
             if 'kwargs' not in sig.parameters:
