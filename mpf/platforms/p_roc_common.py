@@ -35,34 +35,7 @@ except ImportError:     # pragma: no cover
         if sys.platform == 'darwin':
             from mpf.platforms.pinproc.osx import pinproc
         elif sys.platform == 'win32':
-            if platform.architecture()[0] == '32bit':
-                if platform.python_version_tuple()[1] == '8':
-                    from mpf.platforms.pinproc.x86.python38 import pinproc
-                elif platform.python_version_tuple()[1] == '7':
-                    from mpf.platforms.pinproc.x86.python37 import pinproc
-                elif platform.python_version_tuple()[1] == '6':
-                    from mpf.platforms.pinproc.x86.python36 import pinproc
-                elif platform.python_version_tuple()[1] == '5':
-                    from mpf.platforms.pinproc.x86.python35 import pinproc
-                elif platform.python_version_tuple()[1] == '4':
-                    from mpf.platforms.pinproc.x86.python34 import pinproc
-                else:
-                    raise ImportError
-            elif platform.architecture()[0] == '64bit':
-                if platform.python_version_tuple()[1] == '8':
-                    from mpf.platforms.pinproc.x64.python38 import pinproc
-                elif platform.python_version_tuple()[1] == '7':
-                    from mpf.platforms.pinproc.x64.python37 import pinproc
-                elif platform.python_version_tuple()[1] == '6':
-                    from mpf.platforms.pinproc.x64.python36 import pinproc
-                elif platform.python_version_tuple()[1] == '5':
-                    from mpf.platforms.pinproc.x64.python35 import pinproc
-                elif platform.python_version_tuple()[1] == '4':
-                    from mpf.platforms.pinproc.x64.python34 import pinproc
-                else:
-                    raise ImportError
-            else:
-                raise ImportError
+            from mpf.platforms.pinproc.windows import pinproc
         else:
             raise ImportError
 
