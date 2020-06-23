@@ -61,13 +61,12 @@ community.''',
     keywords='pinball',
 
     include_package_data=True,
-    package_data={'mpf': ['*.yaml', '*.png', '*.so', '*.pyd', '*.ogg', '*.wav'] },
+    package_data={'': ['*.yaml', '*.png', '*.so', '*.pyd', '*.ogg', '*.wav']},
 
     # MANIFEST.in picks up the rest
     packages=['mpf'],
 
     zip_safe=False,
-
 
     install_requires=['ruamel.yaml==0.15.100',
                       'pyserial==3.4',
