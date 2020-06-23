@@ -48,6 +48,7 @@ community.''',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Natural Language :: English',
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',
@@ -60,8 +61,7 @@ community.''',
     keywords='pinball',
 
     include_package_data=True,
-
-    package_data={'': ['*.yaml', '*.png', '*.so', '*.pyd', '*.dll', '*.ogg', '*.wav']},
+    package_data={'mpf': ['*.yaml', '*.png', '*.so', '*.pyd', '*.ogg', '*.wav'] },
 
     # MANIFEST.in picks up the rest
     packages=['mpf'],
