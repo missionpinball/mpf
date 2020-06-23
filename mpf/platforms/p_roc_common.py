@@ -4,7 +4,6 @@ import abc
 import asyncio
 import logging
 
-import platform
 import sys
 from threading import Thread
 
