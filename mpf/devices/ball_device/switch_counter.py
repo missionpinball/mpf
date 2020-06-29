@@ -39,13 +39,8 @@ class SwitchCounter(PhysicalBallCounter):
                 callback=self.invalidate_count)
 
         self._task = self.machine.clock.loop.create_task(self._run())
-        self._task.add_done_callback(self._done)
+        self._task.add_done_callback(Util.raise_exceptions)
         self._is_unreliable = False
-
-    @staticmethod
-    def _done(future):
-        """Handle crashes."""
-        future.result()
 
     def stop(self):
         """Stop task."""
