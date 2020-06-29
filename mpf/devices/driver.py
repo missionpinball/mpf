@@ -71,7 +71,6 @@ class Driver(SystemWideDevice):
         platform = self.machine.get_platform_sections('coils', getattr(config, "platform", None))
         platform.assert_has_feature("drivers")
         config['platform_settings'] = platform.validate_coil_section(self, config.get('platform_settings', None))
-        self._configure_device_logging(config)
         return config
 
     async def _initialize(self):

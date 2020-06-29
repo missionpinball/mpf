@@ -176,10 +176,13 @@ class TestFast(MpfTestCase):
             "SN:01,01,04,04": "SN:P",
             "SN:02,01,04,04": "SN:P",
             "SN:03,01,04,04": "SN:P",
+            "SN:0B,01,04,04": "SN:P",
+            "SN:0C,01,04,04": "SN:P",
             "SN:16,01,04,04": "SN:P",
             "SN:07,01,1A,05": "SN:P",
             "SN:1A,01,04,04": "SN:P",
             "SN:39,01,04,04": "SN:P",
+            "DN:01,00,00,00": "DN:P",
             "DN:04,00,00,00": "DN:P",
             "DN:06,00,00,00": "DN:P",
             "DN:07,00,00,00": "DN:P",
@@ -188,6 +191,7 @@ class TestFast(MpfTestCase):
             "DN:13,00,00,00": "DN:P",
             "DN:20,00,00,00": "DN:P",
             "DN:21,00,00,00": "DN:P",
+            "DN:01,C1,00,18,00,FF,FF,00": "DN:P",   # configure digital output
             "XO:03,7F": "XO:P",
             "XO:14,7F": "XO:P"
         }

@@ -58,6 +58,27 @@ class DigitalOutput(SystemWideDevice):
         except AssertionError as e:
             raise AssertionError("Failed to configure light {} in platform. See error above".format(self.name)) from e
 
+    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
+        """Return the parsed and validated config.
+
+        Args:
+            config: Config of device
+            is_mode_config: Whether this device is loaded in a mode or system-wide
+            debug_prefix: Prefix to use when logging.
+
+        Returns: Validated config
+        """
+        config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
+        if config['type'] == "driver":
+            platform = self.machine.get_platform_sections('coils', getattr(config, "platform", None))
+            platform.assert_has_feature("drivers")
+            config['platform_settings'] = platform.validate_coil_section(self, config.get('platform_settings', None))
+        elif config['type'] == "light":
+            pass
+        else:
+            raise AssertionError("Invalid type {}".format(config['type']))
+        return config
+
     def _initialize_driver(self):
         """Configure a driver as digital output."""
         self.platform = self.machine.get_platform_sections('coils', self.config['platform'])
@@ -77,7 +98,8 @@ class DigitalOutput(SystemWideDevice):
             self.raise_config_error("Digital Output must have a number.", 2)
 
         try:
-            self.hw_driver = self.platform.configure_driver(config, self.config['number'], {})
+            self.hw_driver = self.platform.configure_driver(config, self.config['number'],
+                                                            self.config['platform_settings'])
         except AssertionError as e:
             raise AssertionError("Failed to configure driver {} in platform. See error above".format(self.name)) from e
 

@@ -31,6 +31,26 @@ switches:
         number: 3
     s_test3:
         number: 3-1
+    s_nux_up:
+        number: 0-11
+    s_nux_down:
+        number: 0-12
+
+digital_outputs:
+  c_nux_motor:
+    number: 0-1
+    type: driver
+
+motors:
+  motorized_drop_target_bank:
+    motor_left_output: c_nux_motor
+    position_switches: !!omap
+      - up: s_nux_up
+      - down: s_nux_down
+    reset_position: up
+    go_to_position:
+      go_up: up
+      go_down: down
 
 coils:
     c_test:

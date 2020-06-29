@@ -267,6 +267,7 @@ digital_outputs:
     disable_events: event_handler|event_handler:ms|None
     enable_events: event_handler|event_handler:ms|None
     platform: single|str|None
+    platform_settings: single|dict|None
     type: single|enum(light,driver)|
     light_subtype: single|str|None
 dual_wound_coils:
