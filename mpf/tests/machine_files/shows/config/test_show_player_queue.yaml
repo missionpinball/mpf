@@ -1,0 +1,67 @@
+#config_version=5
+
+
+shows:
+  show1:
+    - duration: 1
+      events:
+        - step1_1
+    - duration: 1
+      events:
+        - step1_2
+    - duration: 1
+      events:
+        - step1_3
+  show2:
+    - duration: 1
+      events:
+        - step2_1
+    - duration: 1
+      events:
+        - step2_2
+    - duration: 1
+      events:
+        - step2_3
+  show3:
+    - duration: 1
+      events:
+        - step3_1
+    - duration: 1
+      events:
+        - step3_2
+    - duration: 1
+      events:
+        - step3_3
+
+show_queues:
+  queue1:
+    label: Queue 1
+  queue2:
+    label: Queue 2
+
+show_player:
+  play_show1_on_queue1:
+    show1:
+      action: queue
+      show_queue: queue1
+      loops: 0
+  play_show2_on_queue1:
+    show2:
+      action: queue
+      show_queue: queue1
+      loops: 0
+  play_show3_on_queue1:
+    show3:
+      action: queue
+      show_queue: queue1
+      loops: 0
+  play_show1_on_queue2:
+    show1:
+      action: queue
+      show_queue: queue2
+      loops: 0
+  play_show2_on_queue2:
+    show2:
+      action: queue
+      show_queue: queue2
+      loops: 0

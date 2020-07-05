@@ -29,7 +29,8 @@ class ShowPlayer(DeviceConfigPlayer):
             'resume': self._resume,
             'advance': self._advance,
             'step_back': self._step_back,
-            'update': self._update
+            'update': self._update,
+            'queue': self._queue
         }
 
     # pylint: disable-msg=too-many-arguments
@@ -46,15 +47,15 @@ class ShowPlayer(DeviceConfigPlayer):
             if show.condition and not show.condition.evaluate(kwargs):
                 continue
 
-            show_settings = dict(show_settings)
             if 'hold' in show_settings and show_settings['hold'] is not None:
                 raise AssertionError(
                     "Setting 'hold' is no longer supported for shows. Use duration -1 in your show.")
-            try:
-                show_settings['priority'] += priority
-            except KeyError:
-                show_settings['priority'] = priority
-            # todo need to add this key back to the config player
+            if priority:
+                show_settings = dict(show_settings)
+                try:
+                    show_settings['priority'] += priority
+                except KeyError:
+                    show_settings['priority'] = priority
 
             self._update_show(show.name, show_settings, context, queue, start_time, show_tokens)
 
@@ -111,6 +112,28 @@ class ShowPlayer(DeviceConfigPlayer):
 
         instance_dict[key] = self.machine.show_controller.replace_or_advance_show(previous_show, show_config,
                                                                                   start_step, start_time, stop_callback)
+
+    # pylint: disable-msg=too-many-arguments
+    def _queue(self, key, instance_dict, show, show_settings, queue, start_time, placeholder_args):
+        del queue
+        del instance_dict
+        del start_time
+        del key
+        if show_settings['block_queue']:
+            raise AssertionError("Cannot use queue with block_queue.")
+
+        start_step = show_settings['start_step'].evaluate(placeholder_args)
+        show_tokens = {k: v.evaluate(placeholder_args) for k, v in show_settings['show_tokens'].items()}
+
+        show_config = self.machine.show_controller.create_show_config(
+            show, show_settings['priority'], show_settings['speed'], show_settings['loops'], show_settings['sync_ms'],
+            show_settings['manual_advance'], show_tokens, show_settings['events_when_played'],
+            show_settings['events_when_stopped'], show_settings['events_when_looped'],
+            show_settings['events_when_paused'], show_settings['events_when_resumed'],
+            show_settings['events_when_advanced'], show_settings['events_when_stepped_back'],
+            show_settings['events_when_updated'], show_settings['events_when_completed'])
+
+        show_settings["show_queue"].enqueue_show(show_config, start_step)
 
     @staticmethod
     def _stop(key, instance_dict, show, show_settings, queue, start_time, placeholder_args):

@@ -86,6 +86,7 @@ mpf:
         - mpf.devices.state_machine.StateMachine
         - mpf.devices.score_queue.ScoreQueue
         - mpf.devices.ball_routing.BallRouting
+        - mpf.devices.show_queue.ShowQueue
 
     plugins:
         - mpf.plugins.auditor.Auditor
