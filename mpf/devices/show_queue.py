@@ -22,7 +22,7 @@ class ShowQueue(SystemWideDevice):
 
         self.shows_queue = deque()  # type: Deque[Tuple[ShowConfig, int]]
         self._current_show = None   # type: RunningShow
-        
+
     def enqueue_show(self, show_config: ShowConfig, start_step: int):
         """Add a show to the end of the queue."""
         self.shows_queue.append((show_config, start_step))
