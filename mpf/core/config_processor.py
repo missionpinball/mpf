@@ -179,7 +179,7 @@ class ConfigProcessor:
 
         self.log.info('Loading config: %s', filename)
 
-        if config_type in ("machine", "mode") and config_spec:
+        if config_type in ("machine", "mode"):
             self._check_sections(config_spec, config, config_type, filename, ignore_unknown_sections)
 
         try:
