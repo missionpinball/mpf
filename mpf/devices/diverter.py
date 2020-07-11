@@ -16,6 +16,8 @@ class Diverter(SystemWideDevice):
     Args: Same as the Device parent class.
     """
 
+    __slots__ = ["delay", "active", "enabled", "diverting_ejects_count", "eject_state", "eject_attempt_queue"]
+
     config_section = 'diverters'
     collection = 'diverters'
     class_label = 'diverter'

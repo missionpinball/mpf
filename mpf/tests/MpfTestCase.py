@@ -792,6 +792,9 @@ class MpfTestCase(unittest.TestCase):
             raise AssertionError("Event {} not mocked.".format(event_name))
 
         if self._events[event_name] == 0 and times != 0:
+            if times is None:
+                raise AssertionError("Event {} was not called.".format(event_name))
+
             raise AssertionError("Event {} was not called but we expected {} calls.".format(event_name, times))
 
         if times is not None and self._events[event_name] != times:
