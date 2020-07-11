@@ -1,6 +1,6 @@
 """A show queue which can will be played sequentially."""
 from collections import deque
-from typing import Deque, Tuple
+from typing import Tuple
 
 from mpf.assets.show import Show, RunningShow, ShowConfig
 from mpf.core.system_wide_device import SystemWideDevice
