@@ -297,7 +297,8 @@ class Show:
              events_when_looped=None, events_when_paused=None,
              events_when_resumed=None, events_when_advanced=None,
              events_when_stepped_back=None, events_when_updated=None,
-             events_when_completed=None, start_time=None, start_callback=None) -> "RunningShow":
+             events_when_completed=None, start_time=None, start_callback=None,
+             start_running=True) -> "RunningShow":
         """Play a Show.
 
         There are many parameters you can use here which
@@ -389,7 +390,7 @@ class Show:
             events_when_stopped, events_when_looped, events_when_paused, events_when_resumed, events_when_advanced,
             events_when_stepped_back, events_when_updated, events_when_completed)
 
-        return self.play_with_config(show_config, start_time, start_callback, callback, start_step)
+        return self.play_with_config(show_config, start_time, start_running, start_callback, callback, start_step)
 
     def get_show_steps_with_token(self, show_tokens):
         """Get show steps and replace additional tokens."""
