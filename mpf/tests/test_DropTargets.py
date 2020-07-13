@@ -15,6 +15,28 @@ class TestDropTargets(MpfTestCase):
     def get_platform(self):
         return 'smart_virtual'
 
+    def test_reset_and_playfield_active(self):
+        self.mock_event("playfield_active")
+        self.hit_switch_and_run("switch1", 1)
+        self.hit_switch_and_run("switch2", 1)
+
+        # playfield should is active when drop target are shot down
+        self.assertEventCalled("playfield_active")
+        self.mock_event("playfield_active")
+
+        self.assertTrue(self.machine.drop_targets["left1"].complete)
+        self.assertTrue(self.machine.drop_targets["left2"].complete)
+        self.assertFalse(self.machine.drop_targets["left3"].complete)
+
+        # reset the bank. this should not trigger playfield_active
+        self.machine.drop_target_banks["left_bank"].reset()
+        self.advance_time_and_run(1)
+
+        self.assertEventNotCalled("playfield_active")
+        self.assertFalse(self.machine.drop_targets["left1"].complete)
+        self.assertFalse(self.machine.drop_targets["left2"].complete)
+        self.assertFalse(self.machine.drop_targets["left3"].complete)
+
     def test_drop_target_bank(self):
         self.assertIn('left1', self.machine.drop_targets)
         self.assertIn('left2', self.machine.drop_targets)

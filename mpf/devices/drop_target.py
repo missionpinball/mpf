@@ -242,6 +242,17 @@ class DropTarget(SystemWideDevice):
         """
         self.banks.add(bank)
 
+    def external_reset_from_bank(self):
+        """Handle the reset from our bank.
+
+        The bank might pulse the coil from this device or it might have a
+        separate reset coil which will trigger a reset on switch of this
+        device.
+        Make sure we do not mark the playfield as active.
+        """
+        if self.machine.switch_controller.is_active(self.config['switch']):
+            self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
+
     def remove_from_bank(self, bank):
         """Remove the DropTarget from a bank.
 
@@ -355,6 +366,9 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
             # add all reset coil for targets which are down
             if drop_target.reset_coil and drop_target.complete:
                 coils.add(drop_target.reset_coil)
+
+            # tell the drop target that we are going to reset it physically
+            drop_target.external_reset_from_bank()
 
         for coil in self.reset_coils:
             coils.add(coil)
