@@ -166,11 +166,11 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             self.debug_log("We do not have an eject but an available ball.")
             return True
 
-        if self._current_target.is_playfield():
-            self.debug_log("End of path is playfield %s", self._current_target)
-            return True
-
         if self._current_target:
+            if self._current_target.is_playfield():
+                self.debug_log("End of path is playfield %s", self._current_target)
+                return True
+
             return self._current_target.find_available_ball_in_path(start)
 
         self.ball_device.log.warning("No eject and no available_balls. Path went nowhere.")
@@ -486,7 +486,8 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         #     return False
 
         # assume that the ball may have skipped the target device by now
-        incoming_ball_at_target.set_can_skip()
+        if self.ball_device.config['confirm_eject_type'] == "target":
+            incoming_ball_at_target.set_can_skip()
 
         if not eject_request.target.is_playfield():
             await eject_request.target.ball_count_handler.wait_for_count_is_valid()
