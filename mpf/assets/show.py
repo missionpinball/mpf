@@ -273,7 +273,7 @@ class Show:
             self.token_values[token].append(path)
 
     # pylint: disable-msg=too-many-arguments
-    def play_with_config(self, show_config: ShowConfig, start_time=None, start_running=True, 
+    def play_with_config(self, show_config: ShowConfig, start_time=None, start_running=True,
                          start_callback=None, stop_callback=None, start_step=None) -> "RunningShow":
         """Play this show with config."""
         if not start_time:
@@ -475,7 +475,7 @@ class RunningShow:
 
     """A running instance of a show."""
 
-    __slots__ = ["machine", "show", "show_steps", "show_config", "callback", "start_step", "start_running", 
+    __slots__ = ["machine", "show", "show_steps", "show_config", "callback", "start_step", "start_running",
                  "start_callback", "_delay_handler", "next_step_index", "current_step_index", "next_step_time",
                  "name", "loops", "id", "_players", "debug", "_stopped", "_total_steps", "context"]
 
