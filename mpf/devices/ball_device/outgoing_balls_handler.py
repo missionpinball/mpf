@@ -486,7 +486,8 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         #     return False
 
         # assume that the ball may have skipped the target device by now
-        incoming_ball_at_target.set_can_skip()
+        if self.ball_device.config['confirm_eject_type'] == "target":
+            incoming_ball_at_target.set_can_skip()
 
         if not eject_request.target.is_playfield():
             await eject_request.target.ball_count_handler.wait_for_count_is_valid()
