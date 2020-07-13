@@ -166,11 +166,11 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             self.debug_log("We do not have an eject but an available ball.")
             return True
 
-        if self._current_target.is_playfield():
-            self.debug_log("End of path is playfield %s", self._current_target)
-            return True
-
         if self._current_target:
+            if self._current_target.is_playfield():
+                self.debug_log("End of path is playfield %s", self._current_target)
+                return True
+
             return self._current_target.find_available_ball_in_path(start)
 
         self.ball_device.log.warning("No eject and no available_balls. Path went nowhere.")
