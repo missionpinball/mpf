@@ -111,7 +111,8 @@ class ShowPlayer(DeviceConfigPlayer):
         previous_show = instance_dict.get(key, None)
 
         instance_dict[key] = self.machine.show_controller.replace_or_advance_show(previous_show, show_config,
-                                                                                  start_step, start_time, start_running, stop_callback)
+                                                                                  start_step, start_time, 
+                                                                                  start_running, stop_callback)
 
     # pylint: disable-msg=too-many-arguments
     def _queue(self, key, instance_dict, show, show_settings, queue, start_time, placeholder_args):
