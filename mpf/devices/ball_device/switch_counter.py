@@ -14,15 +14,18 @@ class SwitchCounter(PhysicalBallCounter):
     should use a simpler counter.
     """
 
-    __slots__ = ["_entrances", "_trigger_recount", "_task", "_is_unreliable"]
+    __slots__ = ["_entrances", "_trigger_recount", "_task", "_is_unreliable", "_switches"]
 
     def __init__(self, ball_device, config):
         """Initialise ball counter."""
         super().__init__(ball_device, config)
         self._entrances = []
+        self._switches = set(self.config['ball_switches'])
+        if self.config['jam_switch']:
+            self._switches.add(self.config['jam_switch'])
         self._trigger_recount = asyncio.Event(loop=self.machine.clock.loop)
         # Register switch handlers with delays for entrance & exit counts
-        for switch in self.config['ball_switches']:
+        for switch in self._switches:
             self.machine.switch_controller.add_switch_handler_obj(
                 switch=switch, state=1,
                 ms=self.config['entrance_count_delay'],
@@ -120,7 +123,7 @@ class SwitchCounter(PhysicalBallCounter):
     def _count_switches_sync(self):
         """Return active switches or raise ValueError if switches are unstable."""
         switches = []
-        for switch in self.config['ball_switches']:
+        for switch in self._switches:
             valid = False
             if self.machine.switch_controller.is_active(
                     switch, ms=self.config['entrance_count_delay']):
@@ -162,11 +165,13 @@ class SwitchCounter(PhysicalBallCounter):
         except ValueError:
             # count not stable
             return False
+        # we intentionally do not consider jam_switch here (which would be part of self._switches)
         return count != len(self.config['ball_switches'])
 
     def wait_for_ready_to_receive(self):
         """Wait until there is at least on inactive switch."""
         # future returns when ball_count != number of switches
+        # we intentionally do not consider jam_switch here (which would be part of self._switches)
         return self.wait_for_ball_count_changes(len(self.config['ball_switches']))
 
     async def wait_for_ball_to_leave(self):
