@@ -383,8 +383,8 @@ class ConfigValidator:
 
         if item is None and "none" in enum_values:
             return None
-        if item in enum_values:
-            return item
+        if str(item) in enum_values:
+            return str(item)
 
         if item is False and 'no' in enum_values:
             return 'no'
