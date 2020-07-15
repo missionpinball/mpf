@@ -1,4 +1,6 @@
 """Contains the BallLock device class."""
+from typing import List
+
 from mpf.core.enable_disable_mixin import EnableDisableMixin
 
 from mpf.core.device_monitor import DeviceMonitor
@@ -8,6 +10,7 @@ from mpf.core.mode_device import ModeDevice
 MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.devices.ball_device.ball_device import BallDevice  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.playfield import Playfield     # pylint: disable-msg=cyclic-import,unused-import
 
 
 @DeviceMonitor("locked_balls")
@@ -19,12 +22,13 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
     collection = 'multiball_locks'
     class_label = 'multiball_lock'
 
-    __slots__ = ["lock_devices", "source_playfield", "_events", "_locked_balls"]
+    __slots__ = ["lock_devices", "source_playfield", "_events", "_locked_balls", "_source_devices"]
 
     def __init__(self, machine, name):
         """Initialise ball lock."""
         self.lock_devices = []
-        self.source_playfield = None
+        self.source_playfield = None    # type: Playfield
+        self._source_devices = None     # type: List[BallDevice]
 
         # initialise variables
         self._events = {}
@@ -44,6 +48,7 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
             self._events[device] = []
 
         self.source_playfield = self.config['source_playfield']
+        self._source_devices = self.config['source_devices']
 
         self.machine.events.add_handler("player_turn_starting", self._player_turn_starting)
 
@@ -306,4 +311,10 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
 
     def _request_new_balls(self, balls):
         """Request new ball to playfield."""
-        self.source_playfield.add_ball(balls=balls)
+        balls_added = 0
+        for device in self._source_devices:
+            balls_to_add = max(min(device.available_balls, balls - balls_added), 0)
+            device.eject(balls=balls_to_add, target=self.source_playfield)
+            balls_added += balls_to_add
+
+        self.source_playfield.add_ball(balls=max(balls - balls_added, 0))

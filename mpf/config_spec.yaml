@@ -904,6 +904,7 @@ multiball_locks:
     balls_to_lock: single|int|
     balls_to_replace: single|int|-1
     lock_devices: list|machine(ball_devices)|
+    source_devices: list|machine(ball_devices)|None
     source_playfield: single|machine(ball_devices)|playfield
     enable_events: event_handler|event_handler:ms|None
     disable_events: event_handler|event_handler:ms|None

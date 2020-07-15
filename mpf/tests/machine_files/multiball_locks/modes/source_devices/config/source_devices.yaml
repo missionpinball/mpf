@@ -1,0 +1,14 @@
+#config_version=5
+mode:
+  start_events: start_source_devices
+
+multiball_locks:
+  lock2:
+    lock_devices: bd_lock
+    source_devices: bd_lock_triple
+    balls_to_lock: 2
+    locked_ball_counting_strategy: virtual_only
+  lock1:
+    lock_devices: bd_lock_triple
+    balls_to_lock: 2
+    locked_ball_counting_strategy: virtual_only

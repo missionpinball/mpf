@@ -1,5 +1,6 @@
 """Test multiball_locks."""
 from mpf.tests.MpfGameTestCase import MpfGameTestCase
+from mpf.tests.MpfTestCase import test_config
 
 
 class TestMultiballLock(MpfGameTestCase):
@@ -11,6 +12,36 @@ class TestMultiballLock(MpfGameTestCase):
 
     def get_platform(self):
         return 'smart_virtual'
+
+    @test_config("testSourceDevices.yaml")
+    def test_source_devices(self):
+        self.fill_troughs()
+        self.start_game()
+        self.post_event("start_source_devices")
+        self.assertModeRunning("source_devices")
+
+        lock_device = self.machine.ball_devices["bd_lock_triple"]
+        lock_device2 = self.machine.ball_devices["bd_lock"]
+        self.machine.default_platform.add_ball_to_device(lock_device)
+        self.advance_time_and_run(10)
+        self.assertEqual(1, lock_device.balls)
+        self.assertEqual(0, lock_device2.balls)
+        self.assertBallsInPlay(1)
+        self.assertBallsOnPlayfield(1)
+
+        self.machine.default_platform.add_ball_to_device(lock_device2)
+        self.advance_time_and_run(10)
+        self.assertEqual(0, lock_device.balls)
+        self.assertEqual(1, lock_device2.balls)
+        self.assertBallsInPlay(1)
+        self.assertBallsOnPlayfield(1)
+
+        self.machine.default_platform.add_ball_to_device(lock_device2)
+        self.advance_time_and_run(10)
+        self.assertEqual(0, lock_device.balls)
+        self.assertEqual(2, lock_device2.balls)
+        self.assertBallsInPlay(1)
+        self.assertBallsOnPlayfield(1)
 
     def test_filling_two(self):
         self.fill_troughs()
