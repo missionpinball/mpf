@@ -1190,10 +1190,10 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         bridge_version = await self._read_raw(3)
         self.log.debug("Bridge version: %s", "".join("0x%02x " % b for b in bridge_version))
 
-        # get bridge state
-        await self.send_cmd_raw([SpikeNodebus.GetBridgeState, 0, 1], 0)
-        bridge_state = await self._read_raw(1)
-        self.log.debug("Bridge state: %s", "".join("0x%02x " % b for b in bridge_state))
+        # get bridge status
+        await self.send_cmd_raw([SpikeNodebus.GetBridgeStatus, 0, 1], 0)
+        bridge_status = await self._read_raw(1)
+        self.log.debug("Bridge status: %s", "".join("0x%02x " % b for b in bridge_status))
 
         for node in self._nodes:
             if node == 0:

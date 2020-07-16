@@ -10,9 +10,10 @@ class SpikeNodebus:
 
     Poll = 0x00
     GetBridgeVersion = 0x03
-    GetBridgeState = 0x05
+    GetBridgeStatus = 0x05
     SetResponseTime = 0x06
     SetBackboxLight = 0x09      # Spike 2
+    GetBridgeState = 0x0a
     SetBackboxPWMFreqDiv = 0x0b     # Spike 2
     GetInputState = 0x11
     GetInputMask = 0x12         # unused
