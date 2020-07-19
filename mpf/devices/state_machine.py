@@ -52,7 +52,7 @@ class StateMachine(SystemWideDevice, ModeDevice):
     @property
     def state(self):
         """Return the current state."""
-        if self.config['persist_state']:
+        if self.config['persist_state'] and self.player:
             return self.player["state_machine_{}".format(self.name)]
 
         return self._state

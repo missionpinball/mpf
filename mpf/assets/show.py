@@ -273,16 +273,16 @@ class Show:
             self.token_values[token].append(path)
 
     # pylint: disable-msg=too-many-arguments
-    def play_with_config(self, show_config: ShowConfig, start_time=None, start_callback=None, stop_callback=None,
-                         start_step=None) -> "RunningShow":
+    def play_with_config(self, show_config: ShowConfig, start_time=None, start_running=True,
+                         start_callback=None, stop_callback=None, start_step=None) -> "RunningShow":
         """Play this show with config."""
         if not start_time:
             start_time = self.machine.clock.get_time()
-
         running_show = RunningShow(machine=self.machine,
                                    show=self,
                                    start_time=start_time,
                                    start_step=int(start_step),
+                                   start_running=start_running,
                                    callback=stop_callback,
                                    start_callback=start_callback,
                                    show_config=show_config)
@@ -297,7 +297,8 @@ class Show:
              events_when_looped=None, events_when_paused=None,
              events_when_resumed=None, events_when_advanced=None,
              events_when_stepped_back=None, events_when_updated=None,
-             events_when_completed=None, start_time=None, start_callback=None) -> "RunningShow":
+             events_when_completed=None, start_time=None, start_callback=None,
+             start_running=True) -> "RunningShow":
         """Play a Show.
 
         There are many parameters you can use here which
@@ -335,6 +336,9 @@ class Show:
                 will count backwards from the end (-1 is the last position,
                 -2 is second to last, etc.). Note this is the "human readable"
                 step, so the first step is 1, not 0.
+            start_running: Boolean of whether this show should start in a running
+                state, i.e. begin advancing through steps. If false, the show will
+                load the first step and enter a paused state. Default value is true.
             callback: A callback function that is invoked when the show is
                 stopped.
             loops: Integer of how many times you want this show to repeat
@@ -389,7 +393,7 @@ class Show:
             events_when_stopped, events_when_looped, events_when_paused, events_when_resumed, events_when_advanced,
             events_when_stepped_back, events_when_updated, events_when_completed)
 
-        return self.play_with_config(show_config, start_time, start_callback, callback, start_step)
+        return self.play_with_config(show_config, start_time, start_running, start_callback, callback, start_step)
 
     def get_show_steps_with_token(self, show_tokens):
         """Get show steps and replace additional tokens."""
@@ -471,19 +475,20 @@ class RunningShow:
 
     """A running instance of a show."""
 
-    __slots__ = ["machine", "show", "show_steps", "show_config", "callback", "start_step", "start_callback",
-                 "_delay_handler", "next_step_index", "current_step_index", "next_step_time", "name", "loops",
-                 "id", "_players", "debug", "_stopped", "_total_steps", "context"]
+    __slots__ = ["machine", "show", "show_steps", "show_config", "callback", "start_step", "start_running",
+                 "start_callback", "_delay_handler", "next_step_index", "current_step_index", "next_step_time",
+                 "name", "loops", "id", "_players", "debug", "_stopped", "_total_steps", "context"]
 
     # pylint: disable-msg=too-many-arguments
     # pylint: disable-msg=too-many-locals
-    def __init__(self, machine, show, start_step, callback, start_time, start_callback, show_config):
+    def __init__(self, machine, show, start_step, start_running, callback, start_time, start_callback, show_config):
         """Initialise an instance of a show."""
         self.machine = machine
         self.show = show
         self.show_config = show_config
         self.callback = callback
         self.start_step = start_step
+        self.start_running = start_running
         self.start_callback = start_callback
         self._delay_handler = None
         self.next_step_index = None
@@ -574,7 +579,7 @@ class RunningShow:
     def pause(self):
         """Pause show."""
         self._remove_delay_handler()
-        if self.show_config.events_when_stopped:
+        if self.show_config.events_when_paused:
             self._post_events(self.show_config.events_when_paused)
 
     def resume(self):
@@ -621,9 +626,11 @@ class RunningShow:
         if self.start_callback:
             self.start_callback()
             self.start_callback = None
-        self._run_next_step(post_events=self.show_config.events_when_played)
+        pause_after_step = not self.start_running
+        self._run_next_step(post_events=self.show_config.events_when_played,
+                            pause_after_step=pause_after_step)
 
-    def _run_next_step(self, post_events=None) -> None:
+    def _run_next_step(self, post_events=None, pause_after_step=False) -> None:
         """Run the next show step."""
         events = []
         if post_events:
@@ -679,7 +686,7 @@ class RunningShow:
         self.next_step_index += 1
 
         time_to_next_step = self.show_steps[self.current_step_index]['duration'] / self.show_config.speed
-        if not self.show_config.manual_advance and time_to_next_step > 0:
+        if not self.show_config.manual_advance and time_to_next_step > 0 and not pause_after_step:
             self.next_step_time += time_to_next_step
             self._delay_handler = self.machine.clock.loop.call_at(when=self.next_step_time,
                                                                   callback=self._run_next_step)
