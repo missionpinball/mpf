@@ -171,10 +171,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         states = await self.run_proc_cmd("switch_get_states")
 
         for switch, state in enumerate(states):
-            if state in (1, 3):
-                states[switch] = True
-            else:
-                states[switch] = False
+            states[switch] = bool(state in (1, 3))
 
         return states
 

@@ -36,6 +36,7 @@ mode:
 
     @staticmethod
     def _create_show(name):
+        del name
         raise AssertionError("Not implemented")
 
     def do_copy(self, args):
