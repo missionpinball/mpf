@@ -24,11 +24,11 @@ class HoldCoilEjector(BallDeviceEjector):
                 ms=0,
                 callback=self.hold)
 
-    async def eject_one_ball(self, is_jammed, eject_try):
+    async def eject_one_ball(self, is_jammed, eject_try, balls_in_device):
         """Eject one ball by disabling hold coil."""
+        del balls_in_device
         # TODO: wait for some time to allow balls to settle for
         #       both entrance and after a release
-
         self._disable_hold_coil()
         self.hold_release_in_progress = True
 

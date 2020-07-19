@@ -119,13 +119,13 @@ ball_devices:
     __type__: device
     exit_count_delay: single|ms|500ms
     entrance_count_delay: single|ms|500ms
-    eject_coil: single|machine(coils)|None
-    eject_coil_jam_pulse: single|ms|None
-    eject_coil_retry_pulse: single|ms|None
-    eject_coil_reorder_pulse: single|ms|None
-    eject_coil_max_wait_ms: single|ms|200ms
-    eject_coil_enable_time: list|ms|None
-    retries_before_increasing_pulse: single|int|4
+    eject_coil: ignore                          # deprecated: see ball_devices_ejector_pulse for new options
+    eject_coil_jam_pulse: ignore                # deprecated: see ball_devices_ejector_pulse for new options
+    eject_coil_retry_pulse: ignore              # deprecated: see ball_devices_ejector_pulse for new options
+    eject_coil_reorder_pulse: ignore            # deprecated: see ball_devices_ejector_pulse for new options
+    eject_coil_max_wait_ms: ignore              # deprecated: see ball_devices_ejector_pulse for new options
+    eject_coil_enable_time: ignore              # deprecated: see ball_devices_ejector_enable for new options
+    retries_before_increasing_pulse: ignore     # deprecated: see ball_devices_ejector_pulse for new options
     hold_coil: single|machine(coils)|None
     hold_coil_release_time: single|ms|1s
     hold_events: event_handler|event_handler:ms|None
@@ -164,6 +164,19 @@ ball_devices_ejector_event:
     events_when_eject_try: list|event_posted|None
     events_when_reoder_balls: list|event_posted|None
     events_when_ball_search: list|event_posted|None
+ball_devices_ejector_pulse:
+    class: ignore
+    eject_coil: single|machine(coils)|
+    eject_times: list|ms|None
+    eject_coil_jam_pulse: list|ms|None
+    eject_coil_retry_pulse: list|ms|None
+    eject_coil_reorder_pulse: single|ms|None
+    eject_coil_max_wait_ms: single|ms|200ms
+    retries_before_increasing_pulse: single|int|4
+ball_devices_ejector_enable:
+    class: ignore
+    eject_coil: single|machine(coils)|None
+    eject_coil_enable_time: list|ms|None
 ball_holds:
     __valid_in__: machine, mode
     __type__: device

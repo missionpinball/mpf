@@ -390,7 +390,8 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                     # do nothing
                     pass
                 else:
-                    await self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try)
+                    await self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try,
+                                                                  self.ball_device.ball_count_handler.handled_balls)
 
             # wait until the ball has left
             if (self.ball_device.config['mechanical_eject'] or
@@ -406,7 +407,8 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 return False
 
             if (trigger and trigger.done()) or (tilt and tilt.done()):
-                await self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try)
+                await self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try,
+                                                              self.ball_device.ball_count_handler.handled_balls)
                 # TODO: add timeout here
                 await ball_left
 
