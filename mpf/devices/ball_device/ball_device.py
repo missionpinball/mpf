@@ -338,7 +338,7 @@ class BallDevice(SystemWideDevice):
     def _validate_config(self):
         # perform logical validation
         # a device cannot have hold_coil and eject_coil
-        if (not self.config['eject_coil'] and not self.config['hold_coil'] and
+        if (not self.config.get('eject_coil') and not self.config.get('hold_coil') and
                 not self.config['mechanical_eject'] and not self.config.get('ejector', False)):
             self.raise_config_error('Configuration error in {} ball device. '
                                     'Device needs an eject_coil, a hold_coil, or '
@@ -426,12 +426,12 @@ class BallDevice(SystemWideDevice):
 
         # no ejector config. support legacy config
         if not ejector_config:
-            if self.config['eject_coil']:
-                if self.config['eject_coil_enable_time']:
+            if self.config.get('eject_coil'):
+                if self.config.get('eject_coil_enable_time'):
                     ejector_config["class"] = "mpf.devices.ball_device.enable_coil_ejector.EnableCoilEjector"
                 else:
                     ejector_config["class"] = "mpf.devices.ball_device.pulse_coil_ejector.PulseCoilEjector"
-            elif self.config['hold_coil']:
+            elif self.config.get('hold_coil'):
                 ejector_config["class"] = "mpf.devices.ball_device.hold_coil_ejector.HoldCoilEjector"
 
         if not ejector_config:

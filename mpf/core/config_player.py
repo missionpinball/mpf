@@ -250,6 +250,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         del settings
         del priority
         del context
+        del key
         raise AssertionError("Subscriptions are not supported in this player ({}).".format(self.__class__))
 
     def register_player_events(self, config, mode: Mode = None, priority=0):

@@ -21,7 +21,7 @@ class BallDeviceEjector:
         self.ball_device = ball_device
         self.machine = machine
 
-    async def eject_one_ball(self, is_jammed, eject_try):
+    async def eject_one_ball(self, is_jammed, eject_try, balls_in_device):
         """Eject one ball."""
         raise NotImplementedError()
 

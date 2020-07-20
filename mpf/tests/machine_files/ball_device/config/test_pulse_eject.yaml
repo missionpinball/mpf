@@ -1,0 +1,31 @@
+#config_version=5
+
+playfields:
+  playfield:
+    default_source_device: test
+    tags: default
+
+coils:
+  eject_coil:
+    number:
+
+switches:
+  s_ball1:
+    number:
+  s_ball2:
+    number:
+  s_ball3:
+    number:
+  s_ball4:
+    number:
+
+ball_devices:
+  test:
+    ejector:
+      class: mpf.devices.ball_device.pulse_coil_ejector.PulseCoilEjector
+      eject_coil: eject_coil
+      eject_times: 40ms, 20ms, 15ms
+
+    ball_switches: s_ball1, s_ball2, s_ball3, s_ball4
+    tags: home, trough
+    debug: true

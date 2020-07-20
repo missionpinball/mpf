@@ -534,6 +534,9 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         When the switch is released the pulse continues.
         Typically used for kickbacks.
         """
+        del enable_switch
+        del coil
+        del delay_ms
         raise AssertionError("This platform does not support delayed pulse hardware rules.")
 
     @abc.abstractmethod
