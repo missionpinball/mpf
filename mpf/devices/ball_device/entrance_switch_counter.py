@@ -44,6 +44,11 @@ class EntranceSwitchCounter(PhysicalBallCounter):
             self._last_count = 0
         self._count_stable.set()
 
+    @property
+    def capacity(self):
+        """Return capacity under normal circumstances (i.e. without jam switches)."""
+        return self.config['ball_capacity']
+
     def is_jammed(self) -> bool:
         """Return False because this device can not know if it is jammed."""
         return False

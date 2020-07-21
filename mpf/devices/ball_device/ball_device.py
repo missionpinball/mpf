@@ -325,14 +325,12 @@ class BallDevice(SystemWideDevice):
         if self.config['ball_switches'] and self.config['ball_capacity']:
             self.raise_config_error("Cannot use capacity and ball switches.", 3)
         elif not self.config['ball_capacity'] and not self.config['ball_switches']:
-            self.raise_config_error("Need ball capcity if there are no switches.", 2)
-        elif self.config['ball_switches']:
-            self.config['ball_capacity'] = len(self.config['ball_switches'])
+            self.raise_config_error("Need ball capacity if there are no switches.", 2)
 
     @property
     def capacity(self):
         """Return the ball capacity."""
-        return self.config['ball_capacity']
+        return self.ball_count_handler.counter.capacity
 
     def _validate_config(self):
         # perform logical validation

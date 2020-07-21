@@ -148,6 +148,11 @@ class SwitchCounter(PhysicalBallCounter):
         self.debug_log("Counted %s balls. Active switches: %s. Old: %s", ball_count, switches, self._last_count)
         return ball_count
 
+    @property
+    def capacity(self):
+        """Return capacity under normal circumstances (i.e. without jam switches)."""
+        return len(self.config['ball_switches'])
+
     def is_jammed(self):
         """Return true if the jam switch is currently active."""
         return self.config['jam_switch'] and self.machine.switch_controller.is_active(
@@ -166,13 +171,13 @@ class SwitchCounter(PhysicalBallCounter):
             # count not stable
             return False
         # we intentionally do not consider jam_switch here (which would be part of self._switches)
-        return count != len(self.config['ball_switches'])
+        return count != self.capacity
 
     def wait_for_ready_to_receive(self):
         """Wait until there is at least on inactive switch."""
         # future returns when ball_count != number of switches
         # we intentionally do not consider jam_switch here (which would be part of self._switches)
-        return self.wait_for_ball_count_changes(len(self.config['ball_switches']))
+        return self.wait_for_ball_count_changes(self.capacity)
 
     async def wait_for_ball_to_leave(self):
         """Wait for any active switch to become inactive."""

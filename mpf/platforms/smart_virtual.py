@@ -13,11 +13,11 @@ from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, Ho
 
 from mpf.core.delays import DelayManager
 from mpf.platforms.virtual import (VirtualHardwarePlatform as VirtualPlatform, VirtualDriver)
+from mpf.devices.ball_device.ball_device import BallDevice  # pylint: disable-msg=cyclic-import,unused-import
 
 MYPY = False
 if MYPY:   # pragma: no cover
     from typing import Dict     # pylint: disable-msg=cyclic-import,unused-import
-    from mpf.devices.ball_device.ball_device import BallDevice  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
@@ -353,13 +353,13 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
 
         return driver
 
-    def add_ball_to_device(self, device):
+    def add_ball_to_device(self, device: BallDevice):
         """Add ball to device."""
         self.log.debug("Adding ball to %s", device.name)
-        if LogMixin.unit_test and device.balls >= device.config['ball_capacity']:
+        if LogMixin.unit_test and device.balls >= device.capacity:
             raise AssertionError("KABOOM! We just added a ball to {} which has a capacity "
                                  "of {} but already had {} ball(s)".format(
-                                     device.name, device.config['ball_capacity'], device.balls))
+                                     device.name, device.capacity, device.balls))
 
         if device.config['entrance_switch']:
 
@@ -368,7 +368,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
             # will pass over it, hitting during the process
 
             if device.config['entrance_switch_full_timeout']:
-                if device.balls == device.config['ball_capacity'] - 1:
+                if device.balls == device.capacity - 1:
 
                     if LogMixin.unit_test and self.machine.switch_controller.is_active(
                             device.config['entrance_switch'][0]):

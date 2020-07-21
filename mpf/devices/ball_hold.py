@@ -32,6 +32,7 @@ class BallHold(EnableDisableMixin, SystemWideDevice, ModeDevice):
         self._released_balls = 0
         self._release_hold = None
         self.hold_queue = deque()
+        self.machine.events.add_handler('init_phase_3', self._initialize_late)
 
     @property
     def can_exist_outside_of_game(self):
@@ -54,13 +55,16 @@ class BallHold(EnableDisableMixin, SystemWideDevice, ModeDevice):
         for device in self.config['hold_devices']:
             self.hold_devices.append(device)
 
+        self.source_playfield = self.config['source_playfield']
+
+    def _initialize_late(self, **kwargs):
+        del kwargs
+        # postpone until ball devices are ready
         if not self.config['balls_to_hold']:
             self.config['balls_to_hold'] = 0
 
             for device in self.config['hold_devices']:
-                self.config['balls_to_hold'] += device.config['ball_capacity']
-
-        self.source_playfield = self.config['source_playfield']
+                self.config['balls_to_hold'] += device.capacity
 
     def _enable(self):
         """Enable the hold.

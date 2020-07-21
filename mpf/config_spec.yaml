@@ -158,6 +158,10 @@ ball_devices:
     target_on_unexpected_ball: single|machine(ball_devices)|None
     ejector: ignore
     counter: ignore
+ball_device_counter_ball_switches:
+    class: ignore
+ball_device_counter_entrance_switches:
+    class: ignore
 ball_devices_ejector_event:
     class: ignore
     events_when_eject_try: list|event_posted|None

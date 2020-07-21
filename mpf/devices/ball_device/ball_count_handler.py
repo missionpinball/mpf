@@ -112,7 +112,7 @@ class BallCountHandler(BallDeviceStateHandler):
     @property
     def is_full(self) -> bool:
         """Return true if the device is full."""
-        return self.ball_device.config['ball_capacity'] - self._ball_count <= 0
+        return self.counter.capacity - self._ball_count <= 0
 
     async def wait_for_ball(self):
         """Wait until the device has a ball."""
@@ -143,13 +143,13 @@ class BallCountHandler(BallDeviceStateHandler):
     async def wait_for_ready_to_receive(self, source):
         """Wait until this device is ready to receive a ball."""
         while True:
-            free_space = self.ball_device.config['ball_capacity'] - self._ball_count
+            free_space = self.counter.capacity - self._ball_count
             incoming_balls = self.ball_device.incoming_balls_handler.get_num_incoming_balls()
             if free_space <= incoming_balls:
                 self.debug_log(
                     "Not ready to receive from %s. Not enough space. "
                     "Free space %s (Capacity: %s, Balls: %s), incoming_balls: %s",
-                    source, free_space, self.ball_device.config['ball_capacity'], self._ball_count,
+                    source, free_space, self.counter.capacity, self._ball_count,
                     incoming_balls)
                 await self.wait_for_ball_count_changed()
                 continue
@@ -158,7 +158,7 @@ class BallCountHandler(BallDeviceStateHandler):
                 self.debug_log(
                     "Not ready to receive from %s. Waiting on counter to become ready. "
                     "Free space %s (Capacity: %s, Balls: %s), incoming_balls: %s",
-                    source, free_space, self.ball_device.config['ball_capacity'], self._ball_count,
+                    source, free_space, self.counter.capacity, self._ball_count,
                     incoming_balls)
                 # wait for the counter to be ready
                 await self.counter.wait_for_ready_to_receive()
@@ -169,13 +169,13 @@ class BallCountHandler(BallDeviceStateHandler):
                 self.debug_log(
                     "Not ready to receive from %s. Target is currently ejecting. "
                     "Free space %s (Capacity: %s, Balls: %s), incoming_balls: %s",
-                    source, free_space, self.ball_device.config['ball_capacity'], self._ball_count,
+                    source, free_space, self.counter.capacity, self._ball_count,
                     incoming_balls)
                 await self.ball_device.outgoing_balls_handler.wait_for_ready_to_receive()
                 continue
 
             self.debug_log("Ready to receive from %s. Free space %s (Capacity: %s, Balls: %s), incoming_balls: %s",
-                           source, free_space, self.ball_device.config['ball_capacity'], self._ball_count,
+                           source, free_space, self.counter.capacity, self._ball_count,
                            incoming_balls)
             return True
 
