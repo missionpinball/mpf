@@ -76,7 +76,7 @@ community.''',
                       'typing',
                       'asciimatics>=1.11.0',
                       'terminaltables',
-                      'psutil',
+                      'psutil==5.7.0',
                       'pypiwin32>=223;platform_system=="Windows"'],
 
     tests_require=[],
