@@ -220,34 +220,36 @@ class DeviceManager(MpfController):
             * The delay in ms
             * The device object
         """
+        config_spec = self.machine.config_validator.get_config_spec()
         for collection in self.collections:
-            if self.collections[collection].config_section in config:
-                for device, settings in iter(config[self.collections[collection].config_section].items()):
+            config_section = self.collections[collection].config_section
+            if config_section in config:
+                for device, settings in iter(config[config_section].items()):
 
                     control_events = [x for x in settings if
                                       x.endswith('_events') and x != "control_events"]
+                    device_obj = self.collections[collection][device]
 
                     for control_event in control_events:
                         # get events from this device's config
-                        if settings[control_event]:
-                            if not isinstance(settings[control_event], dict):
-                                raise AssertionError(
-                                    "Type of {}:{} should be event_handler|event_handler:ms| in config_spec".format(
-                                        collection, control_event))
-                            for event, delay in settings[control_event].items():
-                                # try the new style first
-                                try:
-                                    method = getattr(self.collections[collection][device],
-                                                     "event_{}".format(control_event[:-7]))
-                                except AttributeError:
-                                    raise AssertionError("Class {} needs to have method event_{} to handle {}".format(
-                                        self.collections[collection][device], control_event[:-7], control_event
-                                    ))
-
-                                yield (event,
-                                       method,
-                                       delay,
-                                       self.collections[collection][device])
+                        if not isinstance(settings[control_event], dict):
+                            if config_spec[config_section][control_event] == "ignore":
+                                continue
+                            raise AssertionError(
+                                "Type of {}:{} should be event_handler|event_handler:ms| in config_spec".format(
+                                    collection, control_event))
+                        # try the new style first
+                        try:
+                            method = getattr(device_obj, "event_{}".format(control_event[:-7]))
+                        except AttributeError:
+                            raise AssertionError("Class {} needs to have method event_{} to handle {}".format(
+                                device_obj, control_event[:-7], control_event
+                            ))
+                        for event, delay in settings[control_event].items():
+                            yield (event,
+                                   method,
+                                   delay,
+                                   device_obj)
 
     def create_machinewide_device_control_events(self, **kwargs):
         """Create machine wide control events."""

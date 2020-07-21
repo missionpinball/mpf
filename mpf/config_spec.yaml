@@ -126,10 +126,10 @@ ball_devices:
     eject_coil_max_wait_ms: ignore              # deprecated: see ball_devices_ejector_pulse for new options
     eject_coil_enable_time: ignore              # deprecated: see ball_devices_ejector_enable for new options
     retries_before_increasing_pulse: ignore     # deprecated: see ball_devices_ejector_pulse for new options
-    hold_coil: single|machine(coils)|None
-    hold_coil_release_time: single|ms|1s
-    hold_events: event_handler|event_handler:ms|None
-    hold_switches: list|machine(switches)|None
+    hold_coil: ignore                           # deprecated: see ball_devices_ejector_hold for new options
+    hold_coil_release_time: ignore              # deprecated: see ball_devices_ejector_hold for new options
+    hold_events: ignore                         # deprecated: see ball_devices_ejector_hold for new options
+    hold_switches: ignore                       # deprecated: see ball_devices_ejector_hold for new options
     entrance_switch: list|machine(switches)|None
     entrance_switch_ignore_window_ms: single|ms|0
     entrance_switch_full_timeout: single|ms|0
@@ -173,6 +173,12 @@ ball_devices_ejector_pulse:
     eject_coil_reorder_pulse: single|ms|None
     eject_coil_max_wait_ms: single|ms|200ms
     retries_before_increasing_pulse: single|int|4
+ball_devices_ejector_hold:
+    class: ignore
+    hold_coil: single|machine(coils)|None
+    hold_coil_release_time: single|ms|1s
+    hold_events: event_handler|event_handler:ms|None
+    hold_switches: list|machine(switches)|None
 ball_devices_ejector_enable:
     class: ignore
     eject_coil: single|machine(coils)|None

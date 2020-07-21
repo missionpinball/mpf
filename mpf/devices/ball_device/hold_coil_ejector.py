@@ -14,15 +14,23 @@ class HoldCoilEjector(BallDeviceEjector):
 
     def __init__(self, config, ball_device, machine):
         """Initialise hold coil ejector."""
+        for option in ["hold_switches", "hold_coil", "hold_coil_release_time", "hold_events"]:
+            if option not in config and option in ball_device.config:
+                config[option] = ball_device.config[option]
         super().__init__(config, ball_device, machine)
         self.hold_release_in_progress = False
 
+        self.config = self.machine.config_validator.validate_config("ball_devices_ejector_hold", self.config)
+
         # handle hold_coil activation when a ball hits a switch
-        for switch in self.ball_device.config['hold_switches']:
+        for switch in self.config['hold_switches']:
             self.ball_device.machine.switch_controller.add_switch_handler_obj(
                 switch=switch, state=1,
                 ms=0,
                 callback=self.hold)
+
+        for event in self.config["hold_events"]:
+            self.machine.events.add_handler(event, self.hold)
 
     async def eject_one_ball(self, is_jammed, eject_try, balls_in_device):
         """Eject one ball by disabling hold coil."""
@@ -35,7 +43,7 @@ class HoldCoilEjector(BallDeviceEjector):
         # allow timed release of single balls and reenable coil after
         # release. Disable coil when device is empty
         self.ball_device.delay.add(name='hold_coil_release',
-                                   ms=self.ball_device.config['hold_coil_release_time'],
+                                   ms=self.config['hold_coil_release_time'],
                                    callback=self._hold_release_done)
         # TODO: support ejecting a single ball by checking the ball_counter
 
@@ -44,7 +52,7 @@ class HoldCoilEjector(BallDeviceEjector):
         # TODO: disable coil for a short period
 
     def _disable_hold_coil(self):
-        self.ball_device.config['hold_coil'].disable()
+        self.config['hold_coil'].disable()
         self.ball_device.debug_log("Disabling hold coil. New "
                                    "balls: %s.", self.ball_device.balls)
 
@@ -58,7 +66,7 @@ class HoldCoilEjector(BallDeviceEjector):
         self._enable_hold_coil()
 
     def _enable_hold_coil(self):
-        self.ball_device.config['hold_coil'].enable()
+        self.config['hold_coil'].enable()
         self.ball_device.debug_log("Enabling hold coil. New "
                                    "balls: %s.", self.ball_device.balls)
 
@@ -72,5 +80,5 @@ class HoldCoilEjector(BallDeviceEjector):
 
     def ball_search(self, phase, iteration):
         """Run ball search."""
-        self.ball_device.config['hold_coil'].pulse()
+        self.config['hold_coil'].pulse()
         return True

@@ -103,9 +103,8 @@ class BallDevice(SystemWideDevice):
 
         switch_set = set()
 
-        for section in ('hold_switches', 'ball_switches'):
-            for switch in self.config[section]:
-                switch_set.add(switch)
+        for switch in self.config['ball_switches']:
+            switch_set.add(switch)
 
         for switch in self.config['entrance_switch']:
             switch_set.add(switch)
@@ -751,13 +750,6 @@ class BallDevice(SystemWideDevice):
             return True
 
         return False
-
-    @event_handler(10)
-    def event_hold(self, **kwargs):
-        """Event handler for hold event."""
-        del kwargs
-        # TODO: remove when migrating config to ejectors
-        self.ejector.hold()
 
     @classmethod
     def is_playfield(cls):

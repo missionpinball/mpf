@@ -6,6 +6,7 @@ from typing import List
 from mpf.core.logging import LogMixin
 from mpf.core.platform import DriverConfig
 from mpf.devices.ball_device.enable_coil_ejector import EnableCoilEjector
+from mpf.devices.ball_device.hold_coil_ejector import HoldCoilEjector
 from mpf.devices.ball_device.pulse_coil_ejector import PulseCoilEjector
 
 from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
@@ -189,8 +190,8 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
         driver = None
         if isinstance(source.ejector, (EnableCoilEjector, PulseCoilEjector)) and source.ejector.config['eject_coil']:
             driver = source.ejector.config['eject_coil'].hw_driver
-        elif source.config['hold_coil']:
-            driver = source.config['hold_coil'].hw_driver
+        elif isinstance(source.ejector, HoldCoilEjector) and source.ejector.config['hold_coil']:
+            driver = source.ejector.config['hold_coil'].hw_driver
         if driver and driver.action:
             driver.action.target_device = target
 
@@ -328,8 +329,8 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
                 action = device.ejector.config['eject_coil'].hw_driver.action = AddBallToTargetAction(
                     ["pulse", "enable"], self.machine, self, device)
 
-            elif device.config['hold_coil']:
-                action = device.config['hold_coil'].hw_driver.action = AddBallToTargetAction(
+            elif isinstance(device.ejector, HoldCoilEjector) and device.ejector.config['hold_coil']:
+                action = device.ejector.config['hold_coil'].hw_driver.action = AddBallToTargetAction(
                     ["disable"], self.machine, self, device)
             elif device.config['mechanical_eject']:
                 action = AddBallToTargetAction(["delay"], self.machine, self, device)
