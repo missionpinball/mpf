@@ -80,10 +80,15 @@ class BallCountHandler(BallDeviceStateHandler):
 
     async def initialise(self):
         """Initialise handler."""
-        if self.ball_device.config['ball_switches']:
-            self.counter = SwitchCounter(self.ball_device, self.ball_device.config)
+        counter_config = self.ball_device.config.get("counter", {})
+        if counter_config:
+            counter_class = Util.string_to_class(counter_config["class"])
+        elif self.ball_device.config['ball_switches']:
+            counter_class = SwitchCounter
         else:
-            self.counter = EntranceSwitchCounter(self.ball_device, self.ball_device.config)
+            counter_class = EntranceSwitchCounter
+
+        self.counter = counter_class(self.ball_device, self.ball_device.config)
 
         self._ball_count = await self.counter.count_balls()
         # on start try to reorder balls if count is unstable

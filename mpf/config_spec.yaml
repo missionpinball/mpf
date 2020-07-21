@@ -157,8 +157,7 @@ ball_devices:
     auto_fire_on_unexpected_ball: single|bool|true
     target_on_unexpected_ball: single|machine(ball_devices)|None
     ejector: ignore
-ball_devices_ejector_common:
-    class: single|str|mpf.devices.ball_device.pulse_coil_ejector.PulseCoilEjector
+    counter: ignore
 ball_devices_ejector_event:
     class: ignore
     events_when_eject_try: list|event_posted|None
