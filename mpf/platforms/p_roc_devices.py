@@ -60,7 +60,7 @@ class PROCDriver(DriverPlatformInterface):
     # pylint: disable-msg=too-many-arguments
     def __init__(self, number, config, platform, string_number, polarity):
         """Initialise driver."""
-        self.log = logging.getLogger('PROCDriver')
+        self.log = logging.getLogger('PROCDriver {}'.format(number))
         super().__init__(config, number)
         self.platform = platform
         self.polarity = polarity
@@ -112,11 +112,16 @@ class PROCDriver(DriverPlatformInterface):
         ``ValueError`` will be raised if `milliseconds` is outside of the range
         0-255.
         """
-        # TODO: implement pulsed_patter for pulse_power != 1
+        # make sure we never set 0 (due to a bug elsewhere) as this would turn the driver on permanently
+        assert pulse_settings.duration != 0
+
+        self.log.debug('Pulsing for %sms at %s pulse power.', pulse_settings.duration, pulse_settings.power)
         if pulse_settings.power != 1:
-            raise AssertionError("Not pulse_power not supported in P-Roc currently.")
-        self.log.debug('Pulsing for %sms', pulse_settings.duration)
-        self.platform.run_proc_cmd_no_wait("driver_pulse", self.number, pulse_settings.duration)
+            on_time, off_time = Util.power_to_on_off(pulse_settings.power)
+            self.platform.run_proc_cmd_no_wait("driver_pulsed_patter", self.number, on_time, off_time,
+                                               pulse_settings.duration)
+        else:
+            self.platform.run_proc_cmd_no_wait("driver_pulse", self.number, pulse_settings.duration)
 
     def state(self):
         """Return a dictionary representing this driver's current configuration state."""

@@ -200,9 +200,13 @@ SW-16 boards found:
         self.machine.coils["c_test"].pulse()
         self.wait_for_platform()
         number = self.machine.coils["c_test"].hw_driver.number
-        self.pinproc.driver_pulse.assert_called_with(
-            number, 23)
+        self.pinproc.driver_pulse.assert_called_with(number, 23)
         assert not self.pinproc.driver_schedule.called
+
+        self.machine.coils["c_sling_pulse_power"].pulse()
+        self.wait_for_platform()
+        number = self.machine.coils["c_sling_pulse_power"].hw_driver.number
+        self.pinproc.driver_pulsed_patter.assert_called_with(number, 1, 1, 12)
 
     def _test_enable_exception(self):
         # enable coil which does not have allow_enable

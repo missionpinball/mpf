@@ -523,6 +523,9 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
     def _add_pulse_rule_to_switch(self, switch, coil):
         """Add a rule to pulse a coil on switch hit for a certain duration and optional with PWM."""
+        # make sure we never set 0 (due to a bug elsewhere) as this would turn the driver on permanently
+        assert coil.pulse_settings.duration != 0
+
         if coil.pulse_settings.power < 1.0:
             pwm_on, pwm_off = coil.hw_driver.get_pwm_on_off_ms(coil.pulse_settings)
             if self.version < 2 or (self.version == 2 and self.revision < 14):
@@ -544,6 +547,9 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
         The initial pulse will always be at full power and this method will error out if it is set differently.
         """
+        # make sure we never set 0 (due to a bug elsewhere) as this would turn the driver on permanently
+        assert coil.pulse_settings.duration != 0
+
         if coil.pulse_settings.power < 1.0:
             self.raise_config_error("Any rules with hold need to have pulse_power set to 1.0. This is a limitation "
                                     "with the P/P3-Roc.", 6)
