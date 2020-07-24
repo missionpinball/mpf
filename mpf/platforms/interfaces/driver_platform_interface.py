@@ -50,3 +50,7 @@ class DriverPlatformInterface(metaclass=abc.ABCMeta):
     def get_board_name(self):
         """Return the name of the board of this driver."""
         raise NotImplementedError
+
+    def __repr__(self):
+        """Return board + number."""
+        return "<Driver {} {} (config: {})>".format(self.get_board_name(), self.number, self.config)

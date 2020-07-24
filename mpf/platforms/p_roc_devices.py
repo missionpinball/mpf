@@ -27,7 +27,7 @@ class PROCSwitch(SwitchPlatformInterface):
         """Initialise P-ROC switch."""
         super().__init__(config, number)
         self.string_number = number
-        self.log = logging.getLogger('PROCSwitch')
+        self.log = logging.getLogger('PROCSwitch {}'.format(self.string_number))
         self.notify_on_nondebounce = notify_on_nondebounce
         self.hw_rules = {"closed_debounced": [],
                          "closed_nondebounced": [],
@@ -92,7 +92,7 @@ class PROCDriver(DriverPlatformInterface):
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable (turn on) this driver."""
         if pulse_settings.power != 1:
-            raise AssertionError("Not pulse_power not supported in P-Roc currently.")
+            raise AssertionError("pulse_power != 1.0 with hold/enable is not supported in P/P3-Roc.")
 
         if hold_settings.power < 1.0:
             pwm_on, pwm_off = self.get_pwm_on_off_ms(hold_settings)
@@ -149,7 +149,7 @@ class PROCMatrixLight(LightPlatformSoftwareFade):
         """Initialise matrix light device."""
         super().__init__(number, machine.clock.loop,
                          int(1 / machine.config['mpf']['default_light_hw_update_hz'] * 1000))
-        self.log = logging.getLogger('PROCMatrixLight')
+        self.log = logging.getLogger('PROCMatrixLight {}'.format(number))
         self.platform = platform
 
     def set_brightness(self, brightness: float):
