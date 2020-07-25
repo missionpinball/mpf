@@ -131,7 +131,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         msg.extend(OppRs232Intf.calc_crc8_whole_msg(msg))
         cmd = bytes(msg)
 
-        self.log.debug("Set color: %s", "".join(" 0x%02x" % b for b in cmd))
+        if self.debug:
+            self.log.debug("Set color on %s: %s", first_light.chain_serial, "".join(" 0x%02x" % b for b in cmd))
         self.send_to_processor(first_light.chain_serial, cmd)
 
     async def start(self):
@@ -336,8 +337,10 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                 # Note:  No need to send EOM at end of cmds
                 send_cmd = bytes(whole_msg)
 
+                if self.debug:
+                    self.log.debug("Update incand on %s cmd:%s", incand.chain_serial,
+                                   "".join(" 0x%02x" % b for b in send_cmd))
                 self.send_to_processor(incand.chain_serial, send_cmd)
-                self.log.debug("Update incand cmd:%s", "".join(" 0x%02x" % b for b in send_cmd))
 
     @classmethod
     def get_coil_config_section(cls):
@@ -756,7 +759,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         opp_sol = self.sol_dict[number]
         opp_sol.config = config
         opp_sol.platform_settings = platform_settings
-        self.log.debug("Configure driver %s", number)
+        if self.debug:
+            self.log.debug("Configure driver %s", number)
         default_pulse = PulseSettings(config.default_pulse_power, config.default_pulse_ms)
         default_hold = HoldSettings(config.default_hold_power)
         opp_sol.reconfigure_driver(default_pulse, default_hold)
@@ -962,7 +966,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         msg.extend(OppRs232Intf.EOM_CMD)
         final_cmd = bytes(msg)
 
-        self.log.debug("Unmapping input %s and coil %s", switch_num, coil_num)
+        if self.debug:
+            self.log.debug("Unmapping input %s and coil %s on %s", switch_num, coil_num, driver.sol_card.chain_serial)
         self.send_to_processor(driver.sol_card.chain_serial, final_cmd)
 
     def _add_switch_coil_mapping(self, switch_num, driver: "OPPSolenoid"):
@@ -979,7 +984,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         msg.extend(OppRs232Intf.EOM_CMD)
         final_cmd = bytes(msg)
 
-        self.log.debug("Mapping input %s and coil %s", switch_num, coil_num)
+        if self.debug:
+            self.log.debug("Mapping input %s and coil %s on %s", switch_num, coil_num, driver.sol_card.chain_serial)
         self.send_to_processor(driver.sol_card.chain_serial, final_cmd)
 
     def clear_hw_rule(self, switch: SwitchSettings, coil: DriverSettings):
@@ -993,8 +999,9 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         """
         if switch.hw_switch.number in coil.hw_driver.switches:
-            self.log.debug("Clearing HW Rule for switch: %s, coils: %s", switch.hw_switch.number,
-                           coil.hw_driver.number)
+            if self.debug:
+                self.log.debug("Clearing HW Rule for switch: %s, coils: %s", switch.hw_switch.number,
+                               coil.hw_driver.number)
             coil.hw_driver.switches.remove(switch.hw_switch.number)
             _, _, switch_num = switch.hw_switch.number.split("-")
             switch_num = int(switch_num)

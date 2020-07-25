@@ -65,14 +65,16 @@ class OPPSolenoid(DriverPlatformInterface):
         msg.append(mask & 0xff)
         msg.extend(OppRs232Intf.calc_crc8_whole_msg(msg))
         cmd = bytes(msg)
-        self.log.debug("Triggering solenoid driver: %s", "".join(" 0x%02x" % b for b in cmd))
+        if self.sol_card.platform.debug:
+            self.log.debug("Triggering solenoid driver: %s", "".join(" 0x%02x" % b for b in cmd))
         self.sol_card.platform.send_to_processor(self.sol_card.chain_serial, cmd)
 
     def disable(self):
         """Disable (turns off) this driver."""
         _, _, solenoid = self.number.split("-")
         sol_int = int(solenoid)
-        self.log.debug("Disabling solenoid %s", self.number)
+        if self.sol_card.platform.debug:
+            self.log.debug("Disabling solenoid %s", self.number)
         self._kick_coil(sol_int, False)
 
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
@@ -81,7 +83,8 @@ class OPPSolenoid(DriverPlatformInterface):
 
         _, _, solenoid = self.number.split("-")
         sol_int = int(solenoid)
-        self.log.debug("Enabling solenoid %s", self.number)
+        if self.sol_card.platform.debug:
+            self.log.debug("Enabling solenoid %s", self.number)
         self._kick_coil(sol_int, True)
 
         # restore rule if there was one
@@ -94,7 +97,8 @@ class OPPSolenoid(DriverPlatformInterface):
 
         _, _, solenoid = self.number.split("-")
         sol_int = int(solenoid)
-        self.log.debug("Pulsing solenoid %s", self.number)
+        if self.sol_card.platform.debug:
+            self.log.debug("Pulsing solenoid %s", self.number)
         self._kick_coil(sol_int, True)
 
         # restore rule if there was one
@@ -192,7 +196,9 @@ class OPPSolenoid(DriverPlatformInterface):
         msg.extend(OppRs232Intf.EOM_CMD)
         final_cmd = bytes(msg)
 
-        self.log.debug("Writing individual config: %s", "".join(" 0x%02x" % b for b in final_cmd))
+        if self.sol_card.platform.debug:
+            self.log.debug("Writing individual config: %s on %s", "".join(" 0x%02x" % b for b in final_cmd),
+                           self.sol_card.chain_serial)
         self.sol_card.platform.send_to_processor(self.sol_card.chain_serial, final_cmd)
 
 
@@ -205,7 +211,7 @@ class OPPSolenoidCard:
     # pylint: disable-msg=too-many-arguments
     def __init__(self, chain_serial, addr, mask, sol_dict, platform):
         """Initialise OPP solenoid card."""
-        self.log = logging.getLogger('OPPSolenoid')
+        self.log = logging.getLogger('OPPSolenoid {} on {}'.format(addr, chain_serial))
         self.chain_serial = chain_serial
         self.addr = addr
         self.mask = mask

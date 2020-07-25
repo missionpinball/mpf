@@ -15,7 +15,7 @@ class OPPNeopixelCard:
 
     def __init__(self, chain_serial, addr, neo_card_dict, platform):
         """Initialise OPP Neopixel/WS2812 card."""
-        self.log = logging.getLogger('OPPNeopixel')
+        self.log = logging.getLogger('OPPNeopixel {} on {}'.format(addr, chain_serial))
         self.chain_serial = chain_serial
         self.addr = addr
         self.platform = platform

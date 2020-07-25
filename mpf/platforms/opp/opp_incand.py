@@ -15,7 +15,7 @@ class OPPIncandCard:
     # pylint: disable-msg=too-many-arguments
     def __init__(self, chain_serial, addr, mask, incand_dict, machine):
         """Initialise OPP incandescent card."""
-        self.log = logging.getLogger('OPPIncand')
+        self.log = logging.getLogger('OPPIncand {} on {}'.format(addr, chain_serial))
         self.addr = addr
         self.chain_serial = chain_serial
         self.old_state = None
