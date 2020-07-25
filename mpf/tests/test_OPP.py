@@ -120,6 +120,8 @@ class TestOPPStm32(MpfTestCase):
         while sum([len(mock.expected_commands) for mock in self.serialMocks.values()]) and \
                 not sum([mock.crashed for mock in self.serialMocks.values()]) and time.time() < start + 10:
             self.advance_time_and_run(.01)
+        self.assertFalse(self.serialMocks["com1"].expected_commands)
+        self.assertFalse(self.serialMocks["com2"].expected_commands)
 
     def get_config_file(self):
         return 'config_stm32.yaml'
@@ -168,8 +170,6 @@ class TestOPPStm32(MpfTestCase):
         self.assertEqual(0x00020002, self.machine.default_platform.min_version["19088743"])
         self.assertEqual(0x00020002, self.machine.default_platform.min_version["2"])
 
-        self.assertFalse(self.serialMocks["com1"].expected_commands)
-        self.assertFalse(self.serialMocks["com2"].expected_commands)
         self.maxDiff = 100000
 
         # test hardware scan
@@ -222,8 +222,6 @@ LEDs:
 
         self.advance_time_and_run(.15)
 
-        self.serialMocks["com1"].expected_commands[
-            self._crc_message(b'\x20\x40\x00\x00\x00\x06\x00\x64\x00\x00\xff\xff\x00\x00', False)] = False
         self.machine.lights["l_neo_0"].color("blue", fade_ms=100)
         self.machine.lights["l_neo_1"].color("red", fade_ms=100)
         self.advance_time_and_run(.01)

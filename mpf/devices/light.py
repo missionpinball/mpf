@@ -56,7 +56,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
     class_label = 'light'
 
     __slots__ = ["hw_drivers", "platforms", "delay", "default_fade_ms", "_color_correction_profile", "stack",
-                 "_off_color", "_drivers_loaded"]
+                 "_off_color", "_drivers_loaded", "_last_fade_target"]
 
     def __init__(self, machine, name):
         """Initialise light."""
@@ -71,6 +71,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         self._off_color = RGBColor("off")
 
         self._color_correction_profile = None
+        self._last_fade_target = None
 
         self.stack = list()     # type: List[LightStackEntry]
         """A list of dicts which represents different commands that have come
@@ -561,14 +562,25 @@ class Light(SystemWideDevice, DevicePositionMixin):
 
     def _schedule_update(self):
         start_color, start_time, target_color, target_time = self._get_color_and_target_time(self.stack)
+
+        # check if our fade target really changed
+        if (start_color, start_time, target_color, target_time) == self._last_fade_target:
+            # nope its the same -> nothing to do
+            return
+
+        if self._last_fade_target and target_color == self._last_fade_target[2] and \
+                (self._last_fade_target[3] < 0 or self._last_fade_target[3] < self.machine.clock.get_time()):
+            # last fade had the same target and finished already -> nothing to do
+            return
+
+        self._last_fade_target = (start_color, start_time, target_color, target_time)
+
         if start_color != target_color:
             start_color = self.color_correct(self.gamma_correct(start_color))
             target_color = self.color_correct(self.gamma_correct(target_color))
         else:
             start_color = self.color_correct(self.gamma_correct(start_color))
             target_color = start_color
-
-        # TODO: add some logic to check if the target color + time changed at all
 
         for color, drivers in self.hw_drivers.items():
             if color in ["red", "blue", "green"]:

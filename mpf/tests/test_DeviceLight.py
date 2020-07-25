@@ -414,13 +414,13 @@ class TestDeviceLight(MpfTestCase):
 
         self.machine.variables.set_machine_var("brightness", 0.8)
         self.advance_time_and_run(.1)
-        led.color(RGBColor((100, 100, 100)))
+        led.color(RGBColor((200, 200, 200)))    # color needs to change once for this to take effect
         self.advance_time_and_run(1)
 
-        self.assertLightColor("led1", [100, 100, 100])
-        self.assertEqual(80 / 255.0, led.hw_drivers["red"][0].current_brightness)
-        self.assertEqual(80 / 255.0, led.hw_drivers["green"][0].current_brightness)
-        self.assertEqual(80 / 255.0, led.hw_drivers["blue"][0].current_brightness)
+        self.assertLightColor("led1", [200, 200, 200])
+        self.assertEqual(160 / 255.0, led.hw_drivers["red"][0].current_brightness)
+        self.assertEqual(160 / 255.0, led.hw_drivers["green"][0].current_brightness)
+        self.assertEqual(160 / 255.0, led.hw_drivers["blue"][0].current_brightness)
 
 
 class TestLightOnDriver(MpfTestCase):

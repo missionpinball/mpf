@@ -843,6 +843,13 @@ Update done.
         self.assertFalse(self.net_cpu.expected_commands)
 
         self.net_cpu.expected_commands = {
+            "GI:2A,F5": "GI:P",
+        }
+        device.on(brightness=245)
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        self.net_cpu.expected_commands = {
             "GI:2A,00": "GI:P",
         }
         device.on(brightness=0)
