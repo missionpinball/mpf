@@ -587,8 +587,11 @@ LEDs:
 
         self.assertFalse(self.serialMock.expected_commands)
 
+        # align with update task
+        self.advance_time_and_run(.1)
+
         # fade leds 3, 4, 5 to brightness 245, 222, 179
-        self.serialMock.expected_commands[self._crc_message(b'\x21\x40\x00\x03\x00\x03\x07\xcf\xf5\xde\xb3', False)] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x21\x40\x00\x03\x00\x03\x07\xd0\xf5\xde\xb3', False)] = False
 
         self.machine.lights["test_led2"].color("wheat", fade_ms=2000)
 

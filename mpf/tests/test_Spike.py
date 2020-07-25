@@ -473,7 +473,7 @@ class SpikePlatformTest(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.serialMock.expected_commands)     # first fade
         self.serialMock.expected_commands = {
-            self._checksummed_cmd(b'\x81\x06\x8a\xfa\xaa\xbb\xcc'): b'',
+            self._checksummed_cmd(b'\x81\x06\x8a\xfc\xaa\xbb\xcc'): b'',
         }
         self.advance_time_and_run(.2)
         self.assertFalse(self.serialMock.expected_commands)
@@ -962,7 +962,7 @@ class SpikePlatformFirmware0_49Test(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.serialMock.expected_commands)     # first fade
         self.serialMock.expected_commands = {
-            self._checksummed_cmd(b'\x81\x06\x8a\xfa\xaa\xbb\xcc'): b'',
+            self._checksummed_cmd(b'\x81\x06\x8a\xfc\xaa\xbb\xcc'): b'',
         }
         self.advance_time_and_run(.2)
         self.assertFalse(self.serialMock.expected_commands)

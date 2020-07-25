@@ -59,14 +59,17 @@ class PlatformBatchLightSystem:
     """Batch light system for platforms."""
 
     __slots__ = ["dirty_lights", "dirty_schedule", "clock", "update_task", "update_callback",
-                 "update_hz", "max_batch_size"]
+                 "update_hz", "max_batch_size", "scheduler_task", "schedule_changed", "dirty_lights_changed"]
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, clock, update_callback, update_hz, max_batch_size):
         """Initialise light system."""
         self.dirty_lights = SortedSet()    # type: Set[PlatformBatchLight]
+        self.dirty_lights_changed = asyncio.Event(loop=clock.loop)
         self.dirty_schedule = SortedList()
+        self.schedule_changed = asyncio.Event(loop=clock.loop)
         self.update_task = None
+        self.scheduler_task = None
         self.clock = clock
         self.update_callback = update_callback
         self.update_hz = update_hz
@@ -76,19 +79,38 @@ class PlatformBatchLightSystem:
         """Start light system."""
         self.update_task = self.clock.loop.create_task(self._send_updates())
         self.update_task.add_done_callback(Util.raise_exceptions)
+        self.scheduler_task = self.clock.loop.create_task(self._schedule_updates())
+        self.scheduler_task.add_done_callback(Util.raise_exceptions)
 
     def stop(self):
         """Stop light system."""
+        if self.scheduler_task:
+            self.scheduler_task.cancel()
+            self.scheduler_task = None
         if self.update_task:
             self.update_task.cancel()
             self.update_task = None
 
-    async def _send_updates(self):
+    async def _schedule_updates(self):
         while True:
-            while self.dirty_schedule and self.dirty_schedule[0][0] <= self.clock.get_time():
+            run_time = self.clock.get_time()
+            self.schedule_changed.clear()
+            while self.dirty_schedule and self.dirty_schedule[0][0] <= run_time:
                 self.dirty_lights.add(self.dirty_schedule[0][1])
                 del self.dirty_schedule[0]
+            self.dirty_lights_changed.set()
 
+            if self.dirty_schedule:
+                await asyncio.wait([self.schedule_changed.wait()], loop=self.clock.loop,
+                                   timeout=self.dirty_schedule[0][0] - run_time, return_when=asyncio.FIRST_COMPLETED)
+            else:
+                await self.schedule_changed.wait()
+
+    async def _send_updates(self):
+        poll_sleep_time = 1 / self.update_hz
+        while True:
+            await self.dirty_lights_changed.wait()
+            self.dirty_lights_changed.clear()
             sequential_lights = []
             for light in list(self.dirty_lights):
                 if not sequential_lights:
@@ -108,7 +130,7 @@ class PlatformBatchLightSystem:
 
             self.dirty_lights.clear()
 
-            await asyncio.sleep(.001, loop=self.clock.loop)
+            await asyncio.sleep(poll_sleep_time, loop=self.clock.loop)
 
     async def _send_update_batch(self, sequential_lights):
         sequential_brightness_list = []     # type: List[Tuple[LightPlatformInterface, float, int]]
@@ -117,7 +139,10 @@ class PlatformBatchLightSystem:
         for light in sequential_lights:
             brightness, fade_ms, done = light.get_fade_and_brightness(current_time)
             if not done:
-                self.dirty_schedule.add((current_time + (fade_ms / 1000), light))
+                schedule_time = current_time + (fade_ms / 1000)
+                if not self.dirty_schedule or self.dirty_schedule[0][0] > schedule_time:
+                    self.schedule_changed.set()
+                self.dirty_schedule.add((schedule_time, light))
             if common_fade_ms is None:
                 common_fade_ms = fade_ms
 
@@ -136,4 +161,5 @@ class PlatformBatchLightSystem:
     def mark_dirty(self, light: "PlatformBatchLight"):
         """Mark as dirty."""
         self.dirty_lights.add(light)
+        self.dirty_lights_changed.set()
         self.dirty_schedule = SortedList([x for x in self.dirty_schedule if x[1] != light])

@@ -924,7 +924,7 @@ SW-16 boards found:
         self.wait_for_platform()
         self.pinproc.write_data.assert_has_calls([
             # fade ms
-            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (3 << 8) | 4),   # set fade lower (42/4 = 10)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (3 << 8) | 5),    # set fade lower (20/4 = 5)
             call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (4 << 8) | 0),    # set fade higher (0)
             # first LED addr
             call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | 7),               # low byte of address (7)
