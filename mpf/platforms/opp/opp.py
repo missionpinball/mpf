@@ -424,6 +424,11 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                 inp_mask |= (0xef << (8 * wing_index))
             elif msg[2 + wing_index] == ord(OppRs232Intf.WING_HI_SIDE_INCAND):
                 incand_mask |= (0xff << (8 * wing_index))
+            elif msg[2 + wing_index] == ord(OppRs232Intf.WING_NEO_SOL):
+                inp_mask |= (0x0e << (8 * wing_index))
+                sol_mask |= (0x0f << (4 * wing_index))
+                has_neo = True
+
             wing_index += 1
         if incand_mask != 0:
             self.opp_incands.append(OPPIncandCard(chain_serial, msg[0], incand_mask, self.incand_dict, self.machine))

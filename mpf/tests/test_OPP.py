@@ -130,7 +130,7 @@ class TestOPPStm32(MpfTestCase):
         opp.serial = MagicMock()
         self.serialMocks["com1"] = MockOppSocket()
         self.serialMocks["com2"] = MockOppSocket()
-        board1_config = b'\x20\x0d\x01\x02\x03\x03'      # wing1: solenoids, wing2: inputs, wing3: lamps, wing4: lamps
+        board1_config = b'\x20\x0d\x01\x02\x03\x08'      # wing1: solenoids, wing2: inputs, wing3: lamps, wing4: neo_sol
         board2_config = b'\x20\x0d\x03\x03\x03\x03'      # wing1: lamps, wing2: lamps, wing3: lamps, wing4: lamps
         board1_version = b'\x20\x02\x00\x02\x00\x02'     # 0.2.0.2
         board2_version = b'\x20\x02\x00\x02\x00\x02'     # 0.2.0.2
@@ -180,16 +180,18 @@ class TestOPPStm32(MpfTestCase):
  -> Board: 0x20 Firmware: 0x20002
 
 Incand cards:
- - Chain: 19088743 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
- - Chain: 2 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+ - Chain: 19088743 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23]
+ - Chain: 2 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,\
+ 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
 
 Input cards:
- - Chain: 19088743 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15]
+ - Chain: 19088743 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15, 25, 26, 27]
 
 Solenoid cards:
- - Chain: 19088743 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3]
+ - Chain: 19088743 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 12, 13, 14, 15]
 
 LEDs:
+ - Chain: 19088743 Board: 0x20 Card: 0
 """
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
@@ -201,6 +203,31 @@ LEDs:
             # log something to prevent the test from breaking
             logging.getLogger("OPP").warning("DEBUG")
 
+        # set color of neo pixel
+        self.serialMocks["com1"].expected_commands[
+            self._crc_message(b'\x20\x40\x00\x00\x00\x06\x00\x64\xff\x00\x00\x00\x00\xff', False)] = False
+        self.machine.lights["l_neo_0"].color("red", fade_ms=100)
+        self.machine.lights["l_neo_1"].color("blue", fade_ms=100)
+        self.advance_time_and_run(.01)
+        self._wait_for_processing()
+
+        self.advance_time_and_run(.15)
+
+        self.serialMocks["com1"].expected_commands[
+            self._crc_message(b'\x20\x40\x00\x00\x00\x06\x00\x64\x00\x00\xff\xff\x00\x00', False)] = False
+        self.machine.lights["l_neo_0"].color("blue", fade_ms=100)
+        self.machine.lights["l_neo_1"].color("red", fade_ms=100)
+        self.advance_time_and_run(.01)
+        self._wait_for_processing()
+
+        self.advance_time_and_run(.15)
+
+        self.serialMocks["com1"].expected_commands[
+            self._crc_message(b'\x20\x40\x00\x00\x00\x06\x00\x64\x00\x00\xff\xff\x00\x00', False)] = False
+        self.machine.lights["l_neo_0"].color("blue", fade_ms=100)
+        self.machine.lights["l_neo_1"].color("red", fade_ms=100)
+        self.advance_time_and_run(.01)
+        self._wait_for_processing()
 
 
 class TestOPPFirmware2(OPPCommon, MpfTestCase):
@@ -213,15 +240,15 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         opp.serial_imported = True
         opp.serial = MagicMock()
         self.serialMock = MockOppSocket()
-        board1_config = b'\x20\x0d\x01\x02\x03\x03'      # wing1: solenoids, wing2: inputs, wing3: lamps, wing4: lamps
-        board2_config = b'\x21\x0d\x06\x02\x02\x01'      # wing1: neo, wing2: inputs, wing3: inputs, wing4: solenoids
-        board3_config = b'\x22\x0d\x03\x03\x03\x07'      # wing1: lamps, wing2: lamps, wing3: lamps, wing4: hi-side lamps
-        board4_config = b'\x23\x0d\x01\x01\x04\x05'      # wing1: solenoids, wing2: solenoids, wing3: matrix_out, wing4: matrix_in
-        board1_version = b'\x20\x02\x00\x02\x00\x00'      # 0.2.0.0
-        board2_version = b'\x21\x02\x00\x02\x00\x00'  # 0.2.0.0
-        board3_version = b'\x22\x02\x00\x02\x00\x00'  # 0.2.0.0
-        board4_version = b'\x23\x02\x00\x02\x00\x00'  # 0.2.0.0
-        inputs1_message = b"\x20\x08\x00\xff\x00\x0c"    # inputs 0+1 off, 2+3 on, 8 on
+        board1_config = b'\x20\x0d\x01\x02\x03\x03'     # wing1: solenoids, wing2: inputs, wing3: lamps, wing4: lamps
+        board2_config = b'\x21\x0d\x06\x02\x02\x01'     # wing1: neo, wing2: inputs, wing3: inputs, wing4: solenoids
+        board3_config = b'\x22\x0d\x03\x03\x03\x07'     # wing1: lamps, wing2: lamps, wing3: lamps, wing4: hi-side lamps
+        board4_config = b'\x23\x0d\x01\x01\x04\x05'     # wing1: sol, wing2: sol, wing3: matrix_out, wing4: matrix_in
+        board1_version = b'\x20\x02\x00\x02\x00\x00'    # 0.2.0.0
+        board2_version = b'\x21\x02\x00\x02\x00\x00'    # 0.2.0.0
+        board3_version = b'\x22\x02\x00\x02\x00\x00'    # 0.2.0.0
+        board4_version = b'\x23\x02\x00\x02\x00\x00'    # 0.2.0.0
+        inputs1_message = b"\x20\x08\x00\xff\x00\x0c"   # inputs 0+1 off, 2+3 on, 8 on
         inputs2_message = b"\x21\x08\x00\x00\x00\x00"
         inputs3a_message = b"\x23\x08\x00\x00\x00\x00"
         inputs3b_message = b"\x23\x19\x00\x00\x00\x00\x00\x00\x00\x01"
@@ -251,8 +278,10 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         }
         self.serialMock.permanent_commands = {
             b'\xff': b'\xff',
-            self._crc_message(b'\x20\x08\x00\x00\x00\x00', False) + self._crc_message(b'\x21\x08\x00\x00\x00\x00', False) +
-                self._crc_message(b'\x23\x08\x00\x00\x00\x00', False) + self._crc_message(b'\x23\x19\x00\x00\x00\x00\x00\x00\x00\x00'):
+            self._crc_message(b'\x20\x08\x00\x00\x00\x00', False) +
+            self._crc_message(b'\x21\x08\x00\x00\x00\x00', False) +
+                self._crc_message(b'\x23\x08\x00\x00\x00\x00', False) +
+            self._crc_message(b'\x23\x19\x00\x00\x00\x00\x00\x00\x00\x00'):
                 self._crc_message(inputs1_message, False) + self._crc_message(inputs2_message, False) +
                 self._crc_message(inputs3a_message, False) + self._crc_message(inputs3b_message),  # read inputs
         }
@@ -276,13 +305,17 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
 
 Incand cards:
  - Chain: com1 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
- - Chain: com1 Board: 0x22 Card: 2 Numbers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+ - Chain: com1 Board: 0x22 Card: 2 Numbers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,\
+ 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
 
 Input cards:
  - Chain: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15]
- - Chain: com1 Board: 0x21 Card: 1 Numbers: [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
+ - Chain: com1 Board: 0x21 Card: 1 Numbers: [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,\
+ 22, 23, 24, 25, 26, 27]
  - Chain: com1 Board: 0x23 Card: 3 Numbers: [0, 1, 2, 3, 8, 9, 10, 11]
- - Chain: com1 Board: 0x23 Card: 3 Numbers: [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95]
+ - Chain: com1 Board: 0x23 Card: 3 Numbers: [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,\
+ 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,\
+ 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95]
 
 Solenoid cards:
  - Chain: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3]

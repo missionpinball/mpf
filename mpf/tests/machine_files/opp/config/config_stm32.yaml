@@ -67,3 +67,11 @@ lights:
   l3-7:
     number: 2-0-31
     subtype: matrix
+  l_neo_0:
+    number: 19088743-0-0
+    subtype: led
+    type: rgb
+  l_neo_1:
+    previous: l_neo_0
+    type: rgb
+    subtype: led

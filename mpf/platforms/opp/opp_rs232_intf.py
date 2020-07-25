@@ -49,6 +49,7 @@ class OppRs232Intf:
     WING_SW_MATRIX_IN = b'\x05'
     WING_NEO = b'\x06'
     WING_HI_SIDE_INCAND = b'\x07'
+    WING_NEO_SOL = b'\x08'
 
     NUM_G2_INP_PER_BRD = 32
     CFG_INP_STATE = b'\x00'
