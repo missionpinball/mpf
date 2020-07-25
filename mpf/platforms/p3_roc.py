@@ -9,10 +9,13 @@ More info on the P3-ROC hardware platform: http://pinballcontrollers.com/
 Original code source on which this module was based:
 https://github.com/preble/pyprocgame
 """
+import asyncio
 import logging
 
 from typing import Dict
 
+from mpf.core.utility_functions import Util
+from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
 from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
@@ -27,6 +30,66 @@ if MYPY:   # pragma: no cover
     from mpf.devices.accelerometer import Accelerometer     # pylint: disable-msg=cyclic-import,unused-import
 
 
+class P3RocGpioSwitch(SwitchPlatformInterface):
+
+    """P3-ROC switch on GPIOs."""
+
+    __slots__ = ["index"]
+
+    def __init__(self, config, number, index):
+        """Initialise P-ROC switch."""
+        super().__init__(config, number)
+        self.index = index
+
+    def get_board_name(self):
+        """Return board of the GPIOs."""
+        return "P3-Roc GPIOs"
+
+    @property
+    def has_rules(self):
+        """Return false as we do not support rules."""
+        return False
+
+
+class P3RocGpioDriver(DriverPlatformInterface):
+
+    """P3-Roc driver in GPIOs."""
+
+    __slots__ = ["index", "platform"]
+
+    # pylint: disable-msg=too-many-arguments
+    def __init__(self, number, config, index, platform):
+        """Initialise driver."""
+        super().__init__(config, number)
+        self.index = index
+        self.platform = platform
+
+    def get_board_name(self):
+        """Return board of the GPIOs."""
+        return "P3-Roc GPIOs"
+
+    def disable(self):
+        """Disable (turn off) this GPIO."""
+        self.platform.set_gpio(self.index, False)
+
+    def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
+        """Enable (turn on) this GPIO."""
+        if pulse_settings.power != 1 or hold_settings.power != 1:
+            raise AssertionError("pulse_power and hold_power both must be 1.0 for GPIO drivers. Let us know in the "
+                                 "forum if you need this.")
+
+        self.platform.set_gpio(self.index, True)
+
+    def pulse(self, pulse_settings: PulseSettings):
+        """Pulse GPIO."""
+        raise AssertionError("Not currently implemented. Let us know in the forum if you need pulses on GPIOs.")
+
+    @property
+    def has_rules(self):
+        """Return false as we do not support rules."""
+        return False
+
+
 class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
 
     """Platform class for the P3-ROC hardware controller.
@@ -36,7 +99,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
     """
 
     __slots__ = ["_burst_opto_drivers_to_switch_map", "_burst_switches", "_bursts_enabled", "acceleration",
-                 "accelerometer_device"]
+                 "accelerometer_device", "gpio_poll_task", "gpio_config"]
 
     def __init__(self, machine):
         """Initialise and connect P3-Roc."""
@@ -67,6 +130,8 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         self._burst_opto_drivers_to_switch_map = {}
         self._burst_switches = []
         self._bursts_enabled = False
+        self.gpio_poll_task = None
+        self.gpio_config = 0
 
         self.acceleration = [0] * 3
         self.accelerometer_device = None    # type: PROCAccelerometer
@@ -107,6 +172,55 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         # disable burst IRs
         burst_config1 = 0
         self.run_proc_cmd_no_wait("write_data", 0x02, 0x01, burst_config1)
+
+    async def start(self):
+        """Start GPIO poller."""
+        await super().start()
+        if self.config["gpio_map"]:
+            has_inputs = False
+            for gpio_index, state in self.config["gpio_map"].items():
+                if state == "output":
+                    self.gpio_config += 1 << (gpio_index + 8)
+                else:
+                    has_inputs = True
+
+            if has_inputs:
+                self.gpio_poll_task = self.machine.clock.loop.create_task(self._poll_gpios())
+                self.gpio_poll_task.add_done_callback(Util.raise_exceptions)
+
+            self.run_proc_cmd_no_wait("write_data", 0x00, 0x03, self.gpio_config)
+
+    async def _poll_gpios(self):
+        """Poll GPIOs."""
+        poll_sleep = 1 / self.config["gpio_poll_frequency"]
+        gpio_state_old = None
+        while True:
+            await asyncio.sleep(poll_sleep, loop=self.machine.clock.loop)
+            gpio_state = await self.run_proc_cmd("read_data", 0x00, 0x04)
+            for gpio_index, state in self.config["gpio_map"].items():
+                if state == "input" and (gpio_state_old is None or (gpio_state ^ gpio_state_old) & (1 << gpio_index)):
+                    self.machine.switch_controller.process_switch_by_num("gpio-{}".format(gpio_index),
+                                                                         bool(gpio_state & (1 << gpio_index)), self)
+            gpio_state_old = gpio_state
+
+    def set_gpio(self, index, state):
+        """Set GPIO state."""
+        new_gpio_config = self.gpio_config
+        if state:
+            new_gpio_config |= 1 << index
+        else:
+            new_gpio_config &= 0xffff ^ (1 << index)
+
+        if new_gpio_config != self.gpio_config:
+            self.gpio_config = new_gpio_config
+            self.run_proc_cmd_no_wait("write_data", 0x00, 0x03, self.gpio_config)
+
+    def stop(self):
+        """Stop platform."""
+        super().stop()
+        if self.gpio_poll_task:
+            self.gpio_poll_task.cancel()
+            self.gpio_poll_task = None
 
     def _get_default_subtype(self):
         """Return default subtype for P3-Roc."""
@@ -208,6 +322,8 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
 
         if number.startswith("direct-"):
             return self._configure_direct_driver(config, number)
+        if number.startswith("gpio-"):
+            return self._configure_gpio_driver(config, number)
 
         proc_num = self.pdbconfig.get_proc_coil_number(str(number))
         if proc_num == -1:
@@ -251,12 +367,32 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
             return self._configure_burst_opto(config, number)
         if number.startswith("direct-"):
             return self._configure_direct_switch(config, number)
+        if number.startswith("gpio-"):
+            return self._configure_gpio_switch(config, number)
 
         proc_num = self.pdbconfig.get_proc_switch_number(str(number))
         if 0 <= proc_num < 64 and self.dipswitches & 0x02:
             raise AssertionError("Cannot use SW-16 with ID 0-3 when DIP 2 is on the P3-Roc. Turn DIP 2 off or "
                                  "renumber SW-16s. Switch: {}".format(number))
         return self._configure_switch(config, proc_num)
+
+    def _configure_gpio_switch(self, config, number):
+        _, switch_number_str = number.split("-", 2)
+        index = int(switch_number_str)
+
+        if self.config["gpio_map"].get(index, None) != "input":
+            self.raise_config_error("GPIO {} is not configured as input in gpio_map.".format(number), 1)
+
+        return P3RocGpioSwitch(config, number, index)
+
+    def _configure_gpio_driver(self, config, number):
+        _, driver_number_str = number.split("-", 2)
+        index = int(driver_number_str)
+
+        if self.config["gpio_map"].get(index, None) != "output":
+            self.raise_config_error("GPIO {} is not configured as output in gpio_map.".format(number), 2)
+
+        return P3RocGpioDriver(config, number, index, self)
 
     def _configure_direct_switch(self, config, number):
         try:
@@ -389,6 +525,13 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         # assume 0 for all bursts initially
         for switch in self._burst_switches:
             result[switch.number] = False
+
+        # read GPIOs
+        if self.config["gpio_map"]:
+            gpio_state = await self.run_proc_cmd("read_data", 0x00, 0x04)
+            for gpio_index, state in self.config["gpio_map"].items():
+                if state == "input":
+                    result["gpio-{}".format(gpio_index)] = bool(gpio_state & (1 << gpio_index))
 
         return result
 

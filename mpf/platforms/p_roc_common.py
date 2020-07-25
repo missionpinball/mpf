@@ -512,6 +512,12 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
     def _add_hw_rule(self, switch: SwitchSettings, coil: DriverSettings, rule, invert=False):
         rule_type = self._get_event_type(switch.invert == invert, switch.debounce)
 
+        if not switch.hw_switch.has_rules:
+            raise AssertionError("Switch {} does not support hardware rules.".format(switch.hw_switch))
+
+        if not coil.hw_driver.has_rules:
+            raise AssertionError("Driver {} does not support hardware rules.".format(coil.hw_driver))
+
         # overwrite rules for the same switch and coil combination
         for rule_num, rule_obj in enumerate(switch.hw_switch.hw_rules[rule_type]):
             if rule_obj[0] == switch.hw_switch.number and rule_obj[1] == coil.hw_driver.number:

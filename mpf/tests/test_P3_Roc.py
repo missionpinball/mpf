@@ -141,7 +141,8 @@ class TestP3Roc(MpfTestCase):
             0x00: {         # manager
                 0x00: 0,            # chip id
                 0x01: 0x0002000E,   # version
-                0x03: 0x01FF,       # dip switches
+                0x03: 0x01FF,       # dip switches (will be overwritten by GPIO config)
+                0x04: 0x80          # GPIO state (GPIO 7 active)
             },
             0x02: {         # switch controller
                 0x1000: 0xA3,       # SW-16 Address 0 Reg 0
@@ -158,7 +159,10 @@ class TestP3Roc(MpfTestCase):
         p_roc_common.pinproc.normalize_machine_type.assert_called_once_with("pdb")
 
     def test_platform(self):
+        self._test_write_data_init()
         self._test_accelerometer()
+        self._test_servo_via_i2c()
+        self._test_digital_outputs()
         self._test_pulse()
         self._test_pdb_matrix_light()
         self._test_enable_exception()
@@ -169,7 +173,6 @@ class TestP3Roc(MpfTestCase):
         self._test_hw_rule_hold_pwm()
         self._test_hw_rule_hold_allow_enable()
         self._test_hw_rule_multiple_pulse()
-        self._test_servo_via_i2c()
         self._test_pd_led_servo()
         self._test_initial_switches()
         self._test_switches()
@@ -193,6 +196,34 @@ SW-16 boards found:
         self.assertEqual(2, self.machine.variables["p_roc_version"])
         self.assertEqual(14, self.machine.variables["p_roc_revision"])
         self.assertEqual(1, self.machine.variables["p_roc_hardware_version"])
+
+    def _test_write_data_init(self):
+        """All tests which assert init stuff."""
+        # verify init of accelerometer
+        self.pinproc.write_data.assert_has_calls([
+            call(6, 0x0000, 0x000F),
+            call(6, 0x012A, 0x0000),
+            call(6, 0x010E, 0x0000),
+            call(6, 0x012A, 0x0005),
+            call(6, 0x012B, 0x0002),
+            call(6, 0x0000, 0x1E0F)
+        ])
+
+        # assert on init of servo controller on i2c
+        self.pinproc.write_data.assert_has_calls([
+            call(7, 0x8000, 0x11),
+            call(7, 0x8001, 0x04),
+            call(7, 0x80FE, 130),
+            call(7, 0x8000, 0x01)
+        ], any_order=True)
+
+        # assert on init of gpios
+        self.pinproc.write_data.assert_has_calls([
+            call(0, 3, 0x2600),
+        ], any_order=True)
+
+        # reset write_data
+        self.pinproc.write_data.reset_mock()
 
     def _test_pulse(self):
         self.assertEqual("PD-16 Board 1 Bank 1", self.machine.coils["c_test"].hw_driver.get_board_name())
@@ -497,13 +528,6 @@ SW-16 boards found:
         ], any_order=True)
 
     def _test_servo_via_i2c(self):
-        # assert on init
-        self.pinproc.write_data.assert_has_calls([
-            call(7, 0x8000, 0x11),
-            call(7, 0x8001, 0x04),
-            call(7, 0x80FE, 130),
-            call(7, 0x8000, 0x01)
-        ], any_order=True)
         self.pinproc.write_data = MagicMock(return_value=True)
         self.machine.servos["servo1"].go_to_position(0)
         self.wait_for_platform()
@@ -549,6 +573,8 @@ SW-16 boards found:
         self.assertSwitchState("s_test", 0)
         self.assertSwitchState("s_test_000", 0)
         self.assertSwitchState("s_flipper", 1)
+        self.assertSwitchState("s_gpio0", 0)
+        self.assertSwitchState("s_gpio7", 1)
 
     def _test_switches(self):
         self.assertSwitchState("s_test", 0)
@@ -587,17 +613,15 @@ SW-16 boards found:
 
         self.pinproc.get_events = MagicMock(return_value=[])
 
-    def _test_accelerometer(self):
-        # verify init
-        self.pinproc.write_data.assert_has_calls([
-            call(6, 0x0000, 0x000F),
-            call(6, 0x012A, 0x0000),
-            call(6, 0x010E, 0x0000),
-            call(6, 0x012A, 0x0005),
-            call(6, 0x012B, 0x0002),
-            call(6, 0x0000, 0x1E0F)
-        ])
+        # test gpio changes
+        self._memory[0][4] = 0x01   # gpio 7 low, gpio 0 high
+        self.advance_time_and_run(.01)
+        self.wait_for_platform()
+        self.advance_time_and_run(.01)
+        self.assertSwitchState("s_gpio0", 1)
+        self.assertSwitchState("s_gpio7", 0)
 
+    def _test_accelerometer(self):
         self.machine.accelerometers["p3_roc_accelerometer"].update_acceleration = MagicMock(return_value=True)
 
         # process accelerometer event
@@ -1020,3 +1044,24 @@ SW-16 boards found:
             call(3, 3072, 0x1040600 + (1 << 7)),
             call(3, 3072, 0x1040700 + 24)
         ], True)
+
+    def _test_digital_outputs(self):
+        self.pinproc.write_data.reset_mock()
+
+        self.machine.digital_outputs["d_gpio1"].enable()
+        self.machine.digital_outputs["d_gpio5"].enable()
+        self.advance_time_and_run(.01)
+        self.wait_for_platform()
+        self.pinproc.write_data.assert_has_calls([
+            call(0, 3, 0x2602),
+            call(0, 3, 0x2622),
+        ], any_order=False)
+
+        self.pinproc.write_data.reset_mock()
+
+        self.machine.digital_outputs["d_gpio1"].disable()
+        self.advance_time_and_run(.01)
+        self.wait_for_platform()
+        self.pinproc.write_data.assert_has_calls([
+            call(0, 3, 0x2620),
+        ], any_order=False)

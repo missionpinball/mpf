@@ -44,6 +44,11 @@ class PROCSwitch(SwitchPlatformInterface):
 
         return "SW-16 Board {} Bank {}".format(board, bank)
 
+    @property
+    def has_rules(self):
+        """Return true as we support hardware rules."""
+        return True
+
 
 class PROCDriver(DriverPlatformInterface):
 
@@ -137,6 +142,11 @@ class PROCDriver(DriverPlatformInterface):
             'patterEnable': False,
             'futureEnable': False
         }
+
+    @property
+    def has_rules(self):
+        """Return true as we support hardware rules."""
+        return True
 
 
 class PROCMatrixLight(LightPlatformSoftwareFade):

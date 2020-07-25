@@ -13,6 +13,21 @@ p_roc:
       4:
         use_stepper_0: True
         use_stepper_1: True
+    gpio_map:
+      0: input
+      1: output
+      2: output
+      3: input
+      5: output
+      7: input
+
+digital_outputs:
+    d_gpio1:
+      number: gpio-1
+      type: driver
+    d_gpio5:
+      number: gpio-5
+      type: driver
 
 switches:
     s_test_000:
@@ -39,6 +54,10 @@ switches:
         number: A4-B0-1
     s_sling_default:  # just defaults
         number: A4-B0-2
+    s_gpio0:
+        number: gpio-0
+    s_gpio7:
+        number: gpio-7
 
 coils:
     c_test:

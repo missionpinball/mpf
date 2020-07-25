@@ -999,6 +999,8 @@ p3_roc:
     pd_led_boards: dict|int:subconfig(pd_led_boards)|none
     use_separate_thread: single|bool|true
     trace_bus: single|bool|false
+    gpio_poll_frequency: single|int|50
+    gpio_map: dict|int:enum(input,output)|None
 pin2dmd:
     __valid_in__: machine
     __type__: config
