@@ -12,6 +12,8 @@ class SpikeNodebus:
     GetBridgeVersion = 0x03
     GetBridgeStatus = 0x05
     SetResponseTime = 0x06
+    SetPower = 0x07             # Spike 2
+    SetAmpPower = 0x08          # Spike 2
     SetBackboxLight = 0x09      # Spike 2
     GetBridgeState = 0x0a
     SetBackboxPWMFreqDiv = 0x0b     # Spike 2
