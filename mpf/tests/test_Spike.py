@@ -459,7 +459,7 @@ class SpikePlatformTest(MpfTestCase):
 
         # batched light updates with common fade
         self.serialMock.expected_commands = {
-            self._checksummed_cmd(b'\x81\x06\x8a\x7e\x00\x00\x00'): b'',
+            self._checksummed_cmd(b'\x81\x06\x8a\x80\x00\x00\x00'): b'',
         }
         self.machine.lights["l_rgb_insert"].color([0x00, 0x00, 0x00], fade_ms=100)
         self.advance_time_and_run(.1)
@@ -473,7 +473,7 @@ class SpikePlatformTest(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.serialMock.expected_commands)     # first fade
         self.serialMock.expected_commands = {
-            self._checksummed_cmd(b'\x81\x06\x8a\xfc\xaa\xbb\xcc'): b'',
+            self._checksummed_cmd(b'\x81\x06\x8a\xfd\xaa\xbb\xcc'): b'',
         }
         self.advance_time_and_run(.2)
         self.assertFalse(self.serialMock.expected_commands)
@@ -948,7 +948,7 @@ class SpikePlatformFirmware0_49Test(MpfTestCase):
 
         # batched light updates with common fade
         self.serialMock.expected_commands = {
-            self._checksummed_cmd(b'\x81\x06\x8a\x7e\x00\x00\x00'): b'',
+            self._checksummed_cmd(b'\x81\x06\x8a\x80\x00\x00\x00'): b'',
         }
         self.machine.lights["l_rgb_insert"].color([0x00, 0x00, 0x00], fade_ms=100)
         self.advance_time_and_run(.1)
@@ -962,7 +962,7 @@ class SpikePlatformFirmware0_49Test(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.serialMock.expected_commands)     # first fade
         self.serialMock.expected_commands = {
-            self._checksummed_cmd(b'\x81\x06\x8a\xfc\xaa\xbb\xcc'): b'',
+            self._checksummed_cmd(b'\x81\x06\x8a\xfd\xaa\xbb\xcc'): b'',
         }
         self.advance_time_and_run(.2)
         self.assertFalse(self.serialMock.expected_commands)
