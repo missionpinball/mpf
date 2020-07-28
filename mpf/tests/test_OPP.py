@@ -86,6 +86,8 @@ class OPPCommon(MpfTestCase):
         while self.serialMock.expected_commands and not self.serialMock.crashed and time.time() < start + 10:
             self.advance_time_and_run(.01)
 
+        self.assertFalse(self.serialMock.crashed)
+
 
 class TestOPPStm32(MpfTestCase):
 
@@ -617,6 +619,15 @@ LEDs:
         self._wait_for_processing()
 
         self.assertFalse(self.serialMock.expected_commands)
+
+        # align with update task
+        self.advance_time_and_run(.1)
+
+        # two fades which are close enough together are batched
+        self.serialMock.expected_commands[self._crc_message(b'\x21\x40\x00\x00\x00\x06\x00\x64\xff\x00\x00\xff\x00\x00', False)] = False
+        self.machine.lights["test_led1"].color("red", fade_ms=100)
+        self.machine.lights["test_led2"].color("red", fade_ms=95)
+
 
         # align with update task
         self.advance_time_and_run(.1)

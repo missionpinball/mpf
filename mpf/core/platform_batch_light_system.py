@@ -108,6 +108,7 @@ class PlatformBatchLightSystem:
 
     async def _send_updates(self):
         poll_sleep_time = 1 / self.update_hz
+        max_fade_tolerance = int(poll_sleep_time * 1000)
         while True:
             await self.dirty_lights_changed.wait()
             self.dirty_lights_changed.clear()
@@ -121,18 +122,18 @@ class PlatformBatchLightSystem:
                     sequential_lights.append(light)
                 else:
                     # sequence ended
-                    await self._send_update_batch(sequential_lights)
+                    await self._send_update_batch(sequential_lights, max_fade_tolerance)
                     # this light is a new sequence
                     sequential_lights = [light]
 
             if sequential_lights:
-                await self._send_update_batch(sequential_lights)
+                await self._send_update_batch(sequential_lights, max_fade_tolerance)
 
             self.dirty_lights.clear()
 
             await asyncio.sleep(poll_sleep_time, loop=self.clock.loop)
 
-    async def _send_update_batch(self, sequential_lights):
+    async def _send_update_batch(self, sequential_lights: List[PlatformBatchLight], max_fade_tolerance):
         sequential_brightness_list = []     # type: List[Tuple[LightPlatformInterface, float, int]]
         common_fade_ms = None
         current_time = self.clock.get_time()
@@ -146,7 +147,8 @@ class PlatformBatchLightSystem:
             if common_fade_ms is None:
                 common_fade_ms = fade_ms
 
-            if common_fade_ms == fade_ms and len(sequential_brightness_list) < self.max_batch_size:
+            if -max_fade_tolerance < common_fade_ms - fade_ms < max_fade_tolerance and \
+                    len(sequential_brightness_list) < self.max_batch_size:
                 sequential_brightness_list.append((light, brightness, common_fade_ms))
             else:
                 await self.update_callback(sequential_brightness_list)
