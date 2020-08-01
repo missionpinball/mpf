@@ -20,10 +20,18 @@ class HoldCoilEjector(BallDeviceEjector):
         super().__init__(config, ball_device, machine)
         self.hold_release_in_progress = False
 
-        self.config = self.machine.config_validator.validate_config("ball_devices_ejector_hold", self.config)
+        self.config = self.machine.config_validator.validate_config("ball_device_ejector_hold", self.config)
 
         # handle hold_coil activation when a ball hits a switch
         for switch in self.config['hold_switches']:
+            if '{}_active'.format(self.ball_device.config['captures_from'].name) in switch.tags:
+                self.ball_device.raise_config_error(
+                    "Ball device '{}' uses switch '{}' which has a "
+                    "'{}_active' tag. This is handled internally by the device. Remove the "
+                    "redundant '{}_active' tag from that switch.".format(
+                        self.ball_device.name, switch.name, self.ball_device.config['captures_from'].name,
+                        self.ball_device.config['captures_from'].name), 13)
+
             self.ball_device.machine.switch_controller.add_switch_handler_obj(
                 switch=switch, state=1,
                 ms=0,

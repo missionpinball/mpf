@@ -96,31 +96,6 @@ class BallDevice(SystemWideDevice):
         # delay ball counters because we have to wait for switches to be ready
         self.machine.events.add_handler('init_phase_2', self._initialize_late)
 
-        # check to make sure no switches from this device are tagged with
-        # playfield_active, because ball devices have their own logic for
-        # working with the playfield and this will break things. Plus, a ball
-        # in a ball device is not technically on the playfield.
-
-        switch_set = set()
-
-        for switch in self.config['ball_switches']:
-            switch_set.add(switch)
-
-        for switch in self.config['entrance_switch']:
-            switch_set.add(switch)
-
-        if self.config['jam_switch']:
-            switch_set.add(self.config['jam_switch'])
-
-        for switch in switch_set:
-            if switch and '{}_active'.format(self.config['captures_from'].name) in switch.tags:
-                self.raise_config_error(
-                    "Ball device '{}' uses switch '{}' which has a "
-                    "'{}_active' tag. This is handled internally by the device. Remove the "
-                    "redundant '{}_active' tag from that switch.".format(
-                        self.name, switch.name, self.config['captures_from'].name,
-                        self.config['captures_from'].name), 13)
-
     def _initialize_late(self, queue: QueuedEvent, **kwargs):
         """Create ball counters."""
         del kwargs
@@ -321,12 +296,6 @@ class BallDevice(SystemWideDevice):
                 Util.string_to_ms(timeouts_list[i]))
         # End code to create timeouts list ------------------------------------
 
-        # cannot have ball switches and capacity
-        if self.config['ball_switches'] and self.config['ball_capacity']:
-            self.raise_config_error("Cannot use capacity and ball switches.", 3)
-        elif not self.config['ball_capacity'] and not self.config['ball_switches']:
-            self.raise_config_error("Need ball capacity if there are no switches.", 2)
-
     @property
     def capacity(self):
         """Return the ball capacity."""
@@ -340,31 +309,6 @@ class BallDevice(SystemWideDevice):
             self.raise_config_error('Configuration error in {} ball device. '
                                     'Device needs an eject_coil, a hold_coil, or '
                                     '"mechanical_eject: True"'.format(self.name), 4)
-
-        # entrance switch + mechanical eject is not supported
-        if (len(self.config['ball_switches']) > 1 and
-                self.config['mechanical_eject']):
-            self.raise_config_error('Configuration error in {} ball device. '
-                                    'mechanical_eject can only be used with '
-                                    'devices that have 1 ball switch'.
-                                    format(self.name), 5)
-
-        # make sure timeouts are reasonable:
-        # exit_count_delay < all eject_timeout
-        if self.config['exit_count_delay'] > min(
-                self.config['eject_timeouts'].values()):
-            self.raise_config_error('Configuration error in {} ball device. '
-                                    'all eject_timeouts have to be larger than '
-                                    'exit_count_delay'.
-                                    format(self.name), 6)
-
-        # entrance_count_delay < all eject_timeout
-        if self.config['entrance_count_delay'] > min(
-                self.config['eject_timeouts'].values()):
-            self.raise_config_error('Configuration error in {} ball device. '
-                                    'all eject_timeouts have to be larger than '
-                                    'entrance_count_delay'.
-                                    format(self.name), 7)
 
         # all eject_timeout < all ball_missing_timeouts
         if max(self.config['eject_timeouts'].values()) > min(

@@ -18,7 +18,13 @@ class SwitchCounter(PhysicalBallCounter):
 
     def __init__(self, ball_device, config):
         """Initialise ball counter."""
+        for option in ["entrance_count_delay", "exit_count_delay", "entrance_event_timeout", "jam_switch",
+                       "ball_switches"]:
+            if option not in config and option in ball_device.config:
+                config[option] = ball_device.config[option]
         super().__init__(ball_device, config)
+
+        self.config = self.machine.config_validator.validate_config("ball_device_counter_ball_switches", self.config)
         self._entrances = []
         self._switches = set(self.config['ball_switches'])
         if self.config['jam_switch']:
@@ -44,6 +50,44 @@ class SwitchCounter(PhysicalBallCounter):
         self._task = self.machine.clock.loop.create_task(self._run())
         self._task.add_done_callback(Util.raise_exceptions)
         self._is_unreliable = False
+
+        # make sure timeouts are reasonable:
+        # exit_count_delay < all eject_timeout
+        if self.config['exit_count_delay'] > min(
+                self.ball_device.config['eject_timeouts'].values()):
+            self.ball_device.raise_config_error('Configuration error in {} ball device. '
+                                                'all eject_timeouts have to be larger than '
+                                                'exit_count_delay'.
+                                                format(self.ball_device.name), 6)
+
+        # entrance_count_delay < all eject_timeout
+        if self.config['entrance_count_delay'] > min(
+                self.ball_device.config['eject_timeouts'].values()):
+            self.ball_device.raise_config_error('Configuration error in {} ball device. '
+                                                'all eject_timeouts have to be larger than '
+                                                'entrance_count_delay'.
+                                                format(self.ball_device.name), 7)
+
+        # multiple switches + mechanical eject is not supported
+        if (self.capacity > 1 and
+                self.ball_device.config['mechanical_eject']):
+            self.ball_device.raise_config_error('Configuration error in {} ball device. '
+                                                'mechanical_eject can only be used with '
+                                                'devices that have 1 ball switch'.
+                                                format(self.ball_device.name), 5)
+
+        for switch in self._switches:
+            if switch and '{}_active'.format(self.ball_device.config['captures_from'].name) in switch.tags:
+                self.ball_device.raise_config_error(
+                    "Ball device '{}' uses switch '{}' which has a "
+                    "'{}_active' tag. This is handled internally by the device. Remove the "
+                    "redundant '{}_active' tag from that switch.".format(
+                        self.ball_device.name, switch.name, self.ball_device.config['captures_from'].name,
+                        self.ball_device.config['captures_from'].name), 13)
+
+        # cannot have ball switches and capacity
+        if self.ball_device.config.get('ball_capacity'):
+            self.ball_device.raise_config_error("Cannot use capacity and ball switches.", 3)
 
     def stop(self):
         """Stop task."""
@@ -74,7 +118,7 @@ class SwitchCounter(PhysicalBallCounter):
             if self._last_count is None:
                 self._last_count = new_count
             elif self._last_count < 0:
-                raise AssertionError("Count may never be negativ")
+                raise AssertionError("Count may never be negative")
 
             if self.is_jammed() and new_count == 1:
                 # only jam is active. keep previous count

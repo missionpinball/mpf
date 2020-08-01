@@ -52,6 +52,7 @@ class TestGottliebTrough(MpfTestCase):
 
         self.assertEqual(1, self.machine.ball_devices["outhole"].balls)
         self.assertEqual(3, self.machine.ball_devices["trough"].balls)
+        self.assertNumBallsKnown(4)
         self.assertEqual(0, self.machine.ball_devices["playfield"].balls)
         self.assertEqual(0, self.machine.coils["outhole"].pulse.call_count)
         self.assertEqual(0, self.machine.coils["trough"].pulse.call_count)
