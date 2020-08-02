@@ -27,7 +27,7 @@ from mpf.core.utility_functions import Util
 from mpf.file_interfaces.yaml_interface import YamlInterface
 
 YamlInterface.cache = True
-UNITTEST_CONFIG_CACHE = {}
+UNITTEST_CONFIG_CACHE = {}      # type: ignore
 
 
 class UnitTestConfigLoader(YamlMultifileConfigLoader):

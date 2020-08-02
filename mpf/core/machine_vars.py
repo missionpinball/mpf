@@ -2,7 +2,7 @@
 
 import copy
 from platform import platform, python_version, system, release, version, system_alias, machine as platform_machine
-from typing import Any
+from typing import Any, Dict, Optional
 
 from mpf._version import version as mpf_version, extended_version as mpf_extended_version
 from mpf.core.data_manager import DataManager
@@ -21,9 +21,9 @@ class MachineVariables(LogMixin):
         super().__init__()
 
         self.machine = machine
-        self.machine_vars = dict()
+        self.machine_vars = dict()          # type: Dict[str, Any]
         self.machine_var_monitor = False
-        self.machine_var_data_manager = None    # type: DataManager
+        self.machine_var_data_manager = None    # type: Optional[DataManager]
 
     def load_machine_vars(self, machine_var_data_manager: DataManager, current_time) -> None:
         """Load machine vars from data manager."""

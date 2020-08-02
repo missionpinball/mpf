@@ -1,5 +1,5 @@
 """Contains the Tilt mode code."""
-from typing import Set, Any
+from typing import Set, Any, Optional
 
 from mpf.core.events import EventHandlerKey
 from mpf.core.events import QueuedEvent
@@ -19,11 +19,11 @@ class Tilt(Mode):
 
     def __init__(self, *args, **kwargs) -> None:
         """Create mode."""
-        self._balls_to_collect = None   # type: int
-        self._last_warning = None       # type: int
-        self.ball_ending_tilted_queue = None    # type: QueuedEvent
-        self.tilt_event_handlers = None         # type: Set[EventHandlerKey]
-        self.last_tilt_warning_switch = None    # type: int
+        self._balls_to_collect = None           # type: Optional[int]
+        self._last_warning = None               # type: Optional[int]
+        self.ball_ending_tilted_queue = None    # type: Optional[QueuedEvent]
+        self.tilt_event_handlers = None         # type: Optional[Set[EventHandlerKey]]
+        self.last_tilt_warning_switch = None    # type: Optional[int]
         self.tilt_config = None                 # type: Any
         self._settle_time = None
         self._warnings_to_tilt = None

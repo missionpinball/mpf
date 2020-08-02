@@ -42,7 +42,7 @@ class ModeController(MpfController):
         super().__init__(machine)
 
         # ball ending event queue
-        self.queue = None                           # type: QueuedEvent
+        self.queue = None                           # type: Optional[QueuedEvent]
 
         self.active_modes = list()                  # type: List[Mode]
         self.mode_stop_count = 0

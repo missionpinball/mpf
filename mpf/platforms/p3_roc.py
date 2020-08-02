@@ -12,7 +12,7 @@ https://github.com/preble/pyprocgame
 import asyncio
 import logging
 
-from typing import Dict
+from typing import Dict, List, Optional  # pylint: disable-msg=cyclic-import,unused-import
 
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
@@ -128,13 +128,13 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
 
         self.debug_log("Configuring P3-ROC for PDB driver boards.")
         self._burst_opto_drivers_to_switch_map = {}
-        self._burst_switches = []
+        self._burst_switches = []   # type: List[P3RocBurstOpto]
         self._bursts_enabled = False
         self.gpio_poll_task = None
         self.gpio_config = 0
 
         self.acceleration = [0] * 3
-        self.accelerometer_device = None    # type: PROCAccelerometer
+        self.accelerometer_device = None    # type: Optional[PROCAccelerometer]
 
     async def connect(self):
         """Connect to the P3-Roc."""
@@ -515,7 +515,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         4 - open (not debounced)
         """
         states = await self.run_proc_cmd("switch_get_states")
-        result = {}
+        result = {}     # type: Dict[str, bool]
 
         for switch, state in enumerate(states):
             # Note: The P3-ROC will return a state of "3" for switches from non-
@@ -523,8 +523,8 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
             result[switch] = bool(state == 1)
 
         # assume 0 for all bursts initially
-        for switch in self._burst_switches:
-            result[switch.number] = False
+        for burst_switch in self._burst_switches:
+            result[burst_switch.number] = False
 
         # read GPIOs
         if self.config["gpio_map"]:

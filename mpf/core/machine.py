@@ -4,7 +4,7 @@ import asyncio
 import logging
 import sys
 import threading
-from typing import Any, Callable, Dict, List, Set
+from typing import Any, Callable, Dict, List, Set, Optional
 
 from pkg_resources import iter_entry_points
 
@@ -106,7 +106,7 @@ class MachineController(LogMixin):
         super().__init__()
         self.log = logging.getLogger("Machine")     # type: Logger
         self.log.info("Mission Pinball Framework Core Engine v%s", __version__)
-        self._crash_handlers = []
+        self._crash_handlers = []   # type: List[Callable]
 
         self.log.info("Command line arguments: %s", options)
         self.options = options
@@ -120,14 +120,14 @@ class MachineController(LogMixin):
         self.verify_system_info()
         self._exception = None      # type: Any
         self._boot_holds = set()    # type: Set[str]
-        self.is_init_done = None    # type: asyncio.Event
+        self.is_init_done = None    # type: Optional[asyncio.Event]
 
         self._done = False
         self.monitors = dict()      # type: Dict[str, Set[Callable]]
         self.plugins = list()       # type: List[Any]
         self.custom_code = list()   # type: List[CustomCode]
         self.modes = DeviceCollection(self, 'modes', None)          # type: Dict[str, Mode]
-        self.game = None            # type: Game
+        self.game = None            # type: Optional[Game]
         self.variables = MachineVariables(self)                     # type: MachineVariables
         self.thread_stopper = threading.Event()
 
@@ -138,60 +138,60 @@ class MachineController(LogMixin):
         # add some type hints
         if MYPY:   # pragma: no cover
             # controllers
-            self.events = None                          # type: EventManager
-            self.switch_controller = None               # type: SwitchController
-            self.mode_controller = None                 # type: ModeController
-            self.settings = None                        # type: SettingsController
-            self.bcp = None                             # type: Bcp
-            self.asset_manager = None                   # type: BaseAssetManager
-            self.ball_controller = None                 # type: BallController
-            self.show_controller = None                 # type: ShowController
-            self.placeholder_manager = None             # type: PlaceholderManager
-            self.device_manager = None                  # type: DeviceManager
-            self.auditor = None                         # type: Auditor
-            self.tui = None                             # type: TextUi
-            self.service = None                         # type: ServiceController
-            self.show_player = None                     # type: ShowPlayer
-            self.light_controller = None                # type: LightController
-            self.platform_controller = None             # type: PlatformController
+            self.events = self.events                               # type: EventManager
+            self.switch_controller = self.switch_controller         # type: SwitchController
+            self.mode_controller = self.mode_controller             # type: ModeController
+            self.settings = self.settings                           # type: SettingsController
+            self.bcp = self.bcp                                     # type: Bcp
+            self.asset_manager = self.asset_manager                 # type: BaseAssetManager
+            self.ball_controller = self.ball_controller             # type: BallController
+            self.show_controller = self.show_controller             # type: ShowController
+            self.placeholder_manager = self.placeholder_manager     # type: PlaceholderManager
+            self.device_manager = self.device_manager               # type: DeviceManager
+            self.auditor = self.auditor                             # type: Auditor
+            self.tui = self.tui                                     # type: TextUi
+            self.service = self.service                             # type: ServiceController
+            self.show_player = self.show_player                     # type: ShowPlayer
+            self.light_controller = self.light_controller           # type: LightController
+            self.platform_controller = self.platform_controller     # type: PlatformController
 
             # devices
-            self.autofires = None                       # type: Dict[str, AutofireCoil]
-            self.motors = None                          # type: Dict[str, Motor]
-            self.digital_outputs = None                 # type: Dict[str, DigitalOutput]
-            self.shows = None                           # type: Dict[str, Show]
-            self.shots = None                           # type: Dict[str, Shot]
-            self.shot_groups = None                     # type: Dict[str, ShotGroup]
-            self.switches = None                        # type: Dict[str, Switch]
-            self.steppers = None                        # type: Dict[str, Stepper]
-            self.coils = None                           # type: Dict[str, Driver]
-            self.lights = None                          # type: Dict[str, Light]
-            self.ball_devices = None                    # type: Dict[str, BallDevice]
-            self.accelerometers = None                  # type: Dict[str, Accelerometer]
-            self.playfield = None                       # type: Playfield
-            self.playfields = None                      # type: Dict[str, Playfield]
-            self.counters = None                        # type: Dict[str, Counter]
-            self.sequences = None                       # type: Dict[str, Sequence]
-            self.accruals = None                        # type: Dict[str, Accrual]
-            self.drop_targets = None                    # type: Dict[str, DropTarget]
-            self.drop_target_banks = None               # type: Dict[str, DropTargetBank]
-            self.servos = None                          # type: Dict[str, Servo]
-            self.segment_displays = None                # type: Dict[str, SegmentDisplay]
-            self.dmds = None                            # type: Dict[str, Dmd]
-            self.rgb_dmds = None                        # type: Dict[str, RgbDmd]
-            self.flippers = None                        # type: Dict[str, Flipper]
-            self.diverters = None                       # type: Dict[str, Diverter]
-            self.multiball_locks = None                 # type: Dict[str, MultiballLock]
-            self.multiballs = None                      # type: Dict[str, Multiball]
-            self.ball_holds = None                      # type: Dict[str, BallHold]
-            self.ball_saves = None                      # type: Dict[str, BallSave]
-            self.magnets = None                         # type: Dict[str, Magnet]
-            self.state_machines = None                  # type: Dict[str, StateMachine]
-            self.extra_balls = None                     # type: Dict[str, ExtraBall]
-            self.extra_ball_groups = None               # type: Dict[str, ExtraBallGroup]
-            self.achievements = None                    # type: Dict[str, Achievement]
-            self.achievement_groups = None              # type: Dict[str, AchievementGroup]
-            self.combo_switches = None                  # type: Dict[str, ComboSwitch]
+            self.autofires = {}                         # type: Dict[str, AutofireCoil]
+            self.motors = {}                            # type: Dict[str, Motor]
+            self.digital_outputs = {}                   # type: Dict[str, DigitalOutput]
+            self.shows = {}                             # type: Dict[str, Show]
+            self.shots = {}                             # type: Dict[str, Shot]
+            self.shot_groups = {}                       # type: Dict[str, ShotGroup]
+            self.switches = {}                          # type: Dict[str, Switch]
+            self.steppers = {}                          # type: Dict[str, Stepper]
+            self.coils = {}                             # type: Dict[str, Driver]
+            self.lights = {}                            # type: Dict[str, Light]
+            self.ball_devices = {}                      # type: Dict[str, BallDevice]
+            self.accelerometers = {}                    # type: Dict[str, Accelerometer]
+            self.playfield = None                       # type: Optional[Playfield]
+            self.playfields = {}                        # type: Dict[str, Playfield]
+            self.counters = {}                          # type: Dict[str, Counter]
+            self.sequences = {}                         # type: Dict[str, Sequence]
+            self.accruals = {}                          # type: Dict[str, Accrual]
+            self.drop_targets = {}                      # type: Dict[str, DropTarget]
+            self.drop_target_banks = {}                 # type: Dict[str, DropTargetBank]
+            self.servos = {}                            # type: Dict[str, Servo]
+            self.segment_displays = {}                  # type: Dict[str, SegmentDisplay]
+            self.dmds = {}                              # type: Dict[str, Dmd]
+            self.rgb_dmds = {}                          # type: Dict[str, RgbDmd]
+            self.flippers = {}                          # type: Dict[str, Flipper]
+            self.diverters = {}                         # type: Dict[str, Diverter]
+            self.multiball_locks = {}                   # type: Dict[str, MultiballLock]
+            self.multiballs = {}                        # type: Dict[str, Multiball]
+            self.ball_holds = {}                        # type: Dict[str, BallHold]
+            self.ball_saves = {}                        # type: Dict[str, BallSave]
+            self.magnets = {}                           # type: Dict[str, Magnet]
+            self.state_machines = {}                    # type: Dict[str, StateMachine]
+            self.extra_balls = {}                       # type: Dict[str, ExtraBall]
+            self.extra_ball_groups = {}                 # type: Dict[str, ExtraBallGroup]
+            self.achievements = {}                      # type: Dict[str, Achievement]
+            self.achievement_groups = {}                # type: Dict[str, AchievementGroup]
+            self.combo_switches = {}                    # type: Dict[str, ComboSwitch]
 
         self._set_machine_path()
 
@@ -203,7 +203,7 @@ class MachineController(LogMixin):
         self.delay = DelayManager(self)
 
         self.hardware_platforms = dict()    # type: Dict[str, SmartVirtualHardwarePlatform]
-        self.default_platform = None        # type: SmartVirtualHardwarePlatform
+        self.default_platform = None        # type: Optional[SmartVirtualHardwarePlatform]
 
         self.clock = self._load_clock()
         self.stop_future = asyncio.Future(loop=self.clock.loop)     # type: asyncio.Future
@@ -217,7 +217,7 @@ class MachineController(LogMixin):
 
     async def initialise_core_and_hardware(self) -> None:
         """Load core modules and hardware."""
-        self._boot_holds = set()    # type: Set[str]
+        self._boot_holds = set()
         self.is_init_done = asyncio.Event(loop=self.clock.loop)
         self.register_boot_hold('init')
         self._load_hardware_platforms()
@@ -247,6 +247,7 @@ class MachineController(LogMixin):
         await self._start_platforms()
 
         # wait until all boot holds were released
+        assert self.is_init_done is not None
         await self.is_init_done.wait()
         await self.init_done()
 
@@ -752,6 +753,7 @@ class MachineController(LogMixin):
 
     def get_platform_sections(self, platform_section: str, overwrite: str) -> "SmartVirtualHardwarePlatform":
         """Return platform section."""
+        assert self.default_platform is not None
         if overwrite == "drivers":
             return self.hardware_platforms[overwrite]
 
@@ -772,12 +774,14 @@ class MachineController(LogMixin):
 
     def register_boot_hold(self, hold: str) -> None:
         """Register a boot hold."""
+        assert self.is_init_done is not None
         if self.is_init_done.is_set():
             raise AssertionError("Register hold after init_done")
         self._boot_holds.add(hold)
 
     def clear_boot_hold(self, hold: str) -> None:
         """Clear a boot hold."""
+        assert self.is_init_done is not None
         if self.is_init_done.is_set():
             raise AssertionError("Clearing hold after init_done")
         self._boot_holds.remove(hold)

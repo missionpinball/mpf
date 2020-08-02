@@ -168,9 +168,10 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         3 - closed (not debounced)
         4 - open (not debounced)
         """
-        states = await self.run_proc_cmd("switch_get_states")
+        switch_states = await self.run_proc_cmd("switch_get_states")
+        states = {}
 
-        for switch, state in enumerate(states):
+        for switch, state in enumerate(switch_states):
             states[switch] = bool(state in (1, 3))
 
         return states

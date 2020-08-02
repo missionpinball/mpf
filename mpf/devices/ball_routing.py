@@ -1,9 +1,11 @@
 """Routes balls from one device to another when captured."""
 from collections import defaultdict
+from typing import List, Dict
 
 from mpf.core.device_monitor import DeviceMonitor
 
 from mpf.core.enable_disable_mixin import EnableDisableMixin
+from mpf.core.events import EventHandlerKey
 
 from mpf.devices.ball_device.ball_device import BallDevice
 
@@ -26,9 +28,9 @@ class BallRouting(EnableDisableMixin, ModeDevice):
     def __init__(self, machine: "MachineController", name: str) -> None:
         """Initialise device."""
         super().__init__(machine, name)
-        self._routing_queue = defaultdict(int)
+        self._routing_queue = defaultdict(int)      # type: Dict[BallDevice, int]
         self._balls_at_target = 0
-        self._handler = []
+        self._handler = []                          # type: List[EventHandlerKey]
 
     def _enable(self):
         """Enable routing."""

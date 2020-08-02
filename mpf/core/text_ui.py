@@ -5,7 +5,7 @@ from datetime import datetime
 from psutil import cpu_percent, virtual_memory, Process
 
 from asciimatics.scene import Scene
-from asciimatics.widgets import Frame, Layout, THEMES, Label, Divider, PopUpDialog
+from asciimatics.widgets import Frame, Layout, THEMES, Label, Divider, PopUpDialog, Widget
 from asciimatics.screen import Screen
 
 import mpf._version
@@ -111,9 +111,9 @@ class TextUi(MpfController):
 
         self._pending_bcp_connection = False
         self._asset_percent = 0
-        self._bcp_status = (0, 0, 0)  # type: Tuple[float, int, int]
+        self._bcp_status = (0, 0, 0)    # type: Tuple[float, int, int]
         self.switch_widgets = []
-        self.mode_widgets = []
+        self.mode_widgets = []          # type: List[Widget]
         self.ball_device_widgets = []
         self._machine_widgets = []
         self._player_widgets = []

@@ -687,18 +687,18 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             # FAST hardware number
             if '-' in str(number):
                 num = str(number).split('-')
-                number = (int(num[0]) * 64) + int(num[1])
+                index = (int(num[0]) * 64) + int(num[1])
             else:
-                number = int(number)
+                index = int(number)
             return [
                 {
-                    "number": "{}-0".format(number)
+                    "number": "{}-0".format(index)
                 },
                 {
-                    "number": "{}-1".format(number)
+                    "number": "{}-1".format(index)
                 },
                 {
-                    "number": "{}-2".format(number)
+                    "number": "{}-2".format(index)
                 },
             ]
 

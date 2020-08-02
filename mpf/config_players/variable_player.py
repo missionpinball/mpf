@@ -108,6 +108,8 @@ class VariablePlayer(ConfigPlayer):
             self.raise_config_error("You need to either set float, int or string", 2, context=context)
 
         if entry['action'] == "add":
+            assert self.machine.game is not None
+            assert self.machine.game.player is not None
             if entry['player']:
                 # specific player
                 try:
@@ -119,6 +121,8 @@ class VariablePlayer(ConfigPlayer):
                 # default to current player
                 self.machine.game.player[var] += value
         elif entry['action'] == "set":
+            assert self.machine.game is not None
+            assert self.machine.game.player is not None
             if entry['player']:
                 # specific player
                 try:

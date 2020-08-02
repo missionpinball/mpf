@@ -1,5 +1,5 @@
 """Contains the Mode base class."""
-from typing import Any
+from typing import Any, Optional
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -10,10 +10,10 @@ from mpf.core.delays import DelayManager
 from mpf.core.logging import LogMixin
 from mpf.core.switch_controller import SwitchHandler
 from mpf.core.events import EventHandlerKey
+from mpf.core.events import QueuedEvent  # pylint: disable-msg=cyclic-import,unused-import
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.events import QueuedEvent     # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.mode_device import ModeDevice     # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.player import Player  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
@@ -49,22 +49,22 @@ class Mode(LogMixin):
         self.priority = 0
         self._active = False
         self._starting = False
-        self._mode_start_wait_queue = None      # type: QueuedEvent
+        self._mode_start_wait_queue = None      # type: Optional[QueuedEvent]
         self.stop_methods = list()              # type: List[Tuple[Callable[[Any], None], Any]]
-        self.start_callback = None              # type: Callable[[], None]
+        self.start_callback = None              # type: Optional[Callable[[], None]]
         self.stop_callbacks = []                # type: List[Callable[[], None]]
         self.event_handlers = set()             # type: Set[EventHandlerKey]
         self.switch_handlers = list()           # type: List[SwitchHandler]
         self.mode_stop_kwargs = dict()          # type: Dict[str, Any]
         self.mode_devices = set()               # type: Set[ModeDevice]
-        self.start_event_kwargs = None          # type: Dict[str, Any]
+        self.start_event_kwargs = {}            # type: Dict[str, Any]
         self.stopping = False
 
         self.delay = DelayManager(self.machine)
         '''DelayManager instance for delays in this mode. Note that all delays
         scheduled here will be automatically canceled when the mode stops.'''
 
-        self.player = None                      # type: Player
+        self.player = None                      # type: Optional[Player]
         '''Reference to the current player object.'''
 
         self.configure_logging('Mode.' + name,
@@ -176,6 +176,7 @@ class Mode(LogMixin):
             self.debug_log("Registering a mode start wait queue")
 
             self._mode_start_wait_queue = kwargs['queue']
+            assert isinstance(self._mode_start_wait_queue, QueuedEvent)
             self._mode_start_wait_queue.wait()
 
         if isinstance(mode_priority, int):
@@ -490,7 +491,7 @@ class Mode(LogMixin):
                     blocking_facility=device.class_label)
 
         # get all devices in the mode
-        device_list = set()
+        device_list = set()     # type: Set[ModeDevice]
         for collection in self.machine.device_manager.collections:
             if self.machine.device_manager.collections[collection].config_section in self.config:
                 for device, _ in \

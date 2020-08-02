@@ -2,7 +2,7 @@
 import asyncio
 from collections import OrderedDict
 
-from typing import Callable, Tuple, List
+from typing import Callable, Tuple, List, Generator
 
 from mpf.core.utility_functions import Util
 from mpf.core.mpf_controller import MpfController
@@ -203,7 +203,7 @@ class DeviceManager(MpfController):
         await asyncio.wait(futures, loop=self.machine.clock.loop)
 
     # pylint: disable-msg=too-many-nested-blocks
-    def get_device_control_events(self, config) -> Tuple[str, Callable, int, "Device"]:
+    def get_device_control_events(self, config) -> Generator[Tuple[str, Callable, int, "Device"], None, None]:
         """Scan a config dictionary for control_events.
 
          Yields events, methods, delays, and devices for all the devices and

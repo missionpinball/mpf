@@ -181,6 +181,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         self._commands_running = 0
         self.config = {}
         self._light_system = None
+        self.machine_type = None
 
     def _decrement_running_commands(self, future):
         del future

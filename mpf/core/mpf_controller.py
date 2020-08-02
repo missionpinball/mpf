@@ -23,7 +23,7 @@ class MpfController(LogMixin, metaclass=abc.ABCMeta):
             machine(mpf.core.machine.MachineController): the machine controller
         """
         super().__init__()
-        self.machine = machine
+        self.machine = machine  # type: MachineController
 
         if not self.config_name:
             raise AssertionError("Please specify a config name for {}".format(self))

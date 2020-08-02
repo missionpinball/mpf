@@ -7,7 +7,7 @@ boards.
 """
 import asyncio
 from collections import defaultdict
-from typing import Dict, List, Set, Union, Tuple  # pylint: disable-msg=cyclic-import,unused-import
+from typing import Dict, List, Set, Union, Tuple, Optional  # pylint: disable-msg=cyclic-import,unused-import
 
 from mpf.core.platform_batch_light_system import PlatformBatchLightSystem
 from mpf.core.utility_functions import Util
@@ -16,7 +16,7 @@ from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, Ho
 
 from mpf.platforms.opp.opp_coil import OPPSolenoidCard
 from mpf.platforms.opp.opp_incand import OPPIncandCard
-from mpf.platforms.opp.opp_neopixel import OPPNeopixelCard, OPPLightChannel
+from mpf.platforms.opp.opp_neopixel import OPPLightChannel, OPPNeopixelCard
 from mpf.platforms.opp.opp_serial_communicator import OPPSerialCommunicator, BAD_FW_VERSION
 from mpf.platforms.opp.opp_switch import OPPInputCard
 from mpf.platforms.opp.opp_switch import OPPMatrixCard
@@ -28,7 +28,6 @@ MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.platforms.opp.opp_coil import OPPSolenoid  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.platforms.opp.opp_incand import OPPIncand  # pylint: disable-msg=cyclic-import,unused-import
-    from mpf.platforms.opp.opp_neopixel import OPPNeopixel  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.platforms.opp.opp_switch import OPPSwitch  # pylint: disable-msg=cyclic-import,unused-import
 
 
@@ -60,16 +59,16 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self.inp_dict = dict()              # type: Dict[str, OPPSwitch]
         self.inp_addr_dict = dict()         # type: Dict[str, OPPInputCard]
         self.matrix_inp_addr_dict = dict()  # type: Dict[str, OPPMatrixCard]
-        self.read_input_msg = {}            # type: Dict[str, bytearray]
+        self.read_input_msg = {}            # type: Dict[str, bytes]
         self.opp_neopixels = []             # type: List[OPPNeopixelCard]
         self.neo_card_dict = dict()         # type: Dict[str, OPPNeopixelCard]
-        self.neo_dict = dict()              # type: Dict[str, OPPNeopixel]
+        self.neo_dict = dict()              # type: Dict[str, OPPLightChannel]
         self.num_gen2_brd = 0
-        self.gen2_addr_arr = {}             # type: Dict[str, Dict[int, int]]
+        self.gen2_addr_arr = {}             # type: Dict[str, Dict[int, Optional[int]]]
         self.bad_crc = 0
-        self.min_version = defaultdict(lambda: 0xffffffff)
+        self.min_version = defaultdict(lambda: 0xffffffff)      # type: Dict[str, int]
         self._poll_task = {}                # type: Dict[str, asyncio.Task]
-        self._incand_task = None            # type: asyncio.Task
+        self._incand_task = None            # type: Optional[asyncio.Task]
         self._light_system = None
 
         self.features['tickless'] = True
@@ -937,7 +936,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         raise AssertionError("Not implemented in OPP currently")
 
     # pylint: disable-msg=too-many-arguments
-    def _write_hw_rule(self, switch_obj: SwitchSettings, driver_obj: DriverSettings, use_hold, can_cancel=False,
+    def _write_hw_rule(self, switch_obj: SwitchSettings, driver_obj: DriverSettings, use_hold, can_cancel,
                        delay_ms=None):
         if switch_obj.invert:
             raise AssertionError("Cannot handle inverted switches")

@@ -1,4 +1,6 @@
 """Base class for asyncio modes."""
+from typing import Optional
+
 import abc
 import asyncio
 
@@ -19,7 +21,7 @@ class AsyncMode(Mode, metaclass=abc.ABCMeta):
         """Initialise async mode."""
         super().__init__(machine, *args, **kwargs)
 
-        self._task = None   # type: asyncio.Task
+        self._task = None   # type: Optional[asyncio.Task]
 
     def _started(self, **kwargs) -> None:
         """Start main task."""
@@ -46,7 +48,9 @@ class AsyncMode(Mode, metaclass=abc.ABCMeta):
         """Cancel task."""
         super()._stopped()
 
-        self._task.cancel()
+        if self._task:
+            self._task.cancel()
+            self._task = None
 
     @abc.abstractmethod
     async def _run(self) -> None:

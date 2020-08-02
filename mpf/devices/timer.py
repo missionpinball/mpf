@@ -1,5 +1,5 @@
 """Mode timers."""
-from typing import List
+from typing import List, Optional
 
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.delays import DelayManager
@@ -36,19 +36,19 @@ class Timer(ModeDevice):
         self.name = name
 
         self.running = False
-        self.start_value = None             # type: int
-        self.restart_on_complete = None     # type: bool
+        self.start_value = None             # type: Optional[int]
+        self.restart_on_complete = None     # type: Optional[bool]
         self._ticks = 0
-        self.tick_var = None                # type: str
-        self.tick_secs = None               # type: float
-        self.player = None                  # type: Player
-        self.end_value = None               # type: int
-        self.max_value = None               # type: int
-        self.ticks_remaining = None         # type: int
-        self.direction = None               # type: str
-        self.timer = None                   # type: PeriodicTask
+        self.tick_var = None                # type: Optional[str]
+        self.tick_secs = None               # type: Optional[float]
+        self.player = None                  # type: Optional[Player]
+        self.end_value = None               # type: Optional[int]
+        self.max_value = None               # type: Optional[int]
+        self.ticks_remaining = None         # type: Optional[int]
+        self.direction = None               # type: Optional[str]
+        self.timer = None                   # type: Optional[PeriodicTask]
         self.event_keys = list()            # type: List[EventHandlerKey]
-        self.delay = None                   # type: DelayManager
+        self.delay = None                   # type: Optional[DelayManager]
 
     async def device_added_to_mode(self, mode: Mode) -> None:
         """Device added in mode."""

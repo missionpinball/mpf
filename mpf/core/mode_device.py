@@ -1,4 +1,6 @@
 """Contains a class to implement mode devices."""
+from typing import Optional
+
 import abc
 
 from mpf.core.device import Device
@@ -17,7 +19,7 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise mode device."""
         super().__init__(machine, name)
-        self.mode = None    # type: Mode
+        self.mode = None    # type: Optional[Mode]
 
     async def device_added_to_mode(self, mode: Mode) -> None:
         """Add device to a running mode.
