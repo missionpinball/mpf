@@ -13,7 +13,14 @@ class EntranceSwitchCounter(PhysicalBallCounter):
 
     def __init__(self, ball_device, config):
         """Initialise entrance switch counter."""
+        for option in ["entrance_switch", "entrance_switch_ignore_window_ms", "entrance_switch_full_timeout",
+                       "ball_capacity"]:
+            if option not in config and option in ball_device.config:
+                config[option] = ball_device.config[option]
         super().__init__(ball_device, config)
+
+        self.config = self.machine.config_validator.validate_config("ball_device_counter_entrance_switches",
+                                                                    self.config)
 
         self.recycle_secs = self.config['entrance_switch_ignore_window_ms'] / 1000.0
         self.recycle_clear_time = {}
@@ -43,6 +50,17 @@ class EntranceSwitchCounter(PhysicalBallCounter):
         else:
             self._last_count = 0
         self._count_stable.set()
+
+        # TODO validate that we are not used with mechanical eject
+        if not self.config['ball_capacity']:
+            self.ball_device.raise_config_error("Need ball capacity if there are no switches.", 2)
+        elif self.ball_device.config.get('ball_switches'):
+            self.ball_device.raise_config_error("Cannot use capacity and ball switches.", 3)
+
+    @property
+    def capacity(self):
+        """Return capacity under normal circumstances (i.e. without jam switches)."""
+        return self.config['ball_capacity']
 
     def is_jammed(self) -> bool:
         """Return False because this device can not know if it is jammed."""

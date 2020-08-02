@@ -13,11 +13,11 @@ from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, Ho
 
 from mpf.core.delays import DelayManager
 from mpf.platforms.virtual import (VirtualHardwarePlatform as VirtualPlatform, VirtualDriver)
+from mpf.devices.ball_device.ball_device import BallDevice  # pylint: disable-msg=cyclic-import,unused-import
 
 MYPY = False
 if MYPY:   # pragma: no cover
     from typing import Dict     # pylint: disable-msg=cyclic-import,unused-import
-    from mpf.devices.ball_device.ball_device import BallDevice  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
@@ -162,11 +162,11 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
     """Hit switches when coil is pulsed."""
 
     # pylint: disable-msg=too-many-arguments
-    def __init__(self, actions, machine, platform, device):
+    def __init__(self, actions, machine, platform, device: BallDevice):
         """Initialise add ball to target action."""
         super().__init__(actions, machine)
-        self.device = device
-        self.ball_switches = device.config['ball_switches']
+        self.device = device    # type: BallDevice
+        self.ball_switches = device.ball_count_handler.counter.config.get('ball_switches', [])
         self.platform = platform
         self.confirm_eject_switch = device.config['confirm_eject_switch']
         self.target_device = None
@@ -220,13 +220,14 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
                 break
 
         if self.result == "success":
-            if (self.device.config['entrance_switch_full_timeout'] and
+            if (self.device.ball_count_handler.counter.config.get('entrance_switch_full_timeout') and
                     self.device.machine.switch_controller.is_active(
-                    self.device.config['entrance_switch'][0])):
+                        self.device.ball_count_handler.counter.config['entrance_switch'][0])):
 
                 self.machine.switch_controller.process_switch_obj(
-                    self.device.config['entrance_switch'][0], 0, logical=True)
-                self.log.debug("Deactivating: %s", self.device.config['entrance_switch'][0].name)
+                    self.device.ball_count_handler.counter.config['entrance_switch'][0], 0, logical=True)
+                self.log.debug("Deactivating: %s",
+                               self.device.ball_count_handler.counter.config['entrance_switch'][0].name)
 
             if self.confirm_eject_switch:
                 self.delay.add(ms=50, callback=self.confirm_eject_via_switch,
@@ -353,47 +354,41 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
 
         return driver
 
-    def add_ball_to_device(self, device):
+    def add_ball_to_device(self, device: BallDevice):
         """Add ball to device."""
         self.log.debug("Adding ball to %s", device.name)
-        if LogMixin.unit_test and device.balls >= device.config['ball_capacity']:
+        if LogMixin.unit_test and device.balls >= device.capacity:
             raise AssertionError("KABOOM! We just added a ball to {} which has a capacity "
                                  "of {} but already had {} ball(s)".format(
-                                     device.name, device.config['ball_capacity'], device.balls))
+                                     device.name, device.capacity, device.balls))
 
-        if device.config['entrance_switch']:
-
+        if device.ball_count_handler.counter.config.get('entrance_switch'):
+            entrance_switch = device.ball_count_handler.counter.config['entrance_switch'][0]
             # if there's an entrance_switch_full_timeout, that means the ball
             # will sit on this switch if the device is full, otherwise, it
             # will pass over it, hitting during the process
+            if device.ball_count_handler.counter.config.get('entrance_switch_full_timeout'):
+                if device.balls == device.capacity - 1:
 
-            if device.config['entrance_switch_full_timeout']:
-                if device.balls == device.config['ball_capacity'] - 1:
-
-                    if LogMixin.unit_test and self.machine.switch_controller.is_active(
-                            device.config['entrance_switch'][0]):
+                    if LogMixin.unit_test and self.machine.switch_controller.is_active(entrance_switch):
                         raise AssertionError(
                             "KABOOM! We just added a ball to {} which already "
-                            "had an active entrance switch".format(
-                                device.name))
+                            "had an active entrance switch {}".format(
+                                device.name, entrance_switch))
 
                     self.log.debug('Enabling switch %s due to ball being added to %s',
-                                   device.config['entrance_switch'][0].name, device.name)
+                                   entrance_switch.name, device.name)
 
-                    self.machine.switch_controller.process_switch_obj(
-                        device.config['entrance_switch'][0], 1, True)
+                    self.machine.switch_controller.process_switch_obj(entrance_switch, 1, True)
                     return
 
-            self.log.debug('Hitting switch %s due to ball being added to %s',
-                           device.config['entrance_switch'][0].name, device.name)
-            self.machine.switch_controller.process_switch_obj(
-                device.config['entrance_switch'][0], 1, True)
-            self.machine.switch_controller.process_switch_obj(
-                device.config['entrance_switch'][0], 0, True)
+            self.log.debug('Hitting switch %s due to ball being added to %s', entrance_switch.name, device.name)
+            self.machine.switch_controller.process_switch_obj(entrance_switch, 1, True)
+            self.machine.switch_controller.process_switch_obj(entrance_switch, 0, True)
 
-        if device.config['ball_switches']:
+        if device.ball_count_handler.counter.config.get('ball_switches'):
             found_switch = False
-            for switch in device.config['ball_switches']:
+            for switch in device.ball_count_handler.counter.config['ball_switches']:
                 if self.machine.switch_controller.is_inactive(switch):
                     self.log.debug('Enabling switch %s due to ball being added to %s', switch.name, device.name)
                     self.machine.switch_controller.process_switch_obj(

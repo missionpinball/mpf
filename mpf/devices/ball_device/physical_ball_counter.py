@@ -264,6 +264,14 @@ class PhysicalBallCounter:
         self._ball_change_futures.append(future)
         return future
 
+    @property
+    def capacity(self):
+        """Return capacity under normal circumstances.
+
+        This should not include jam switches or similar overflow mechanisms.
+        """
+        raise NotImplementedError()
+
     # pylint: disable-msg=inconsistent-return-statements
     async def wait_for_ball_count_changes(self, old_count: int):
         """Wait for ball count changes and return the new count.

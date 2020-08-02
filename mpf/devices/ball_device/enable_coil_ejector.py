@@ -20,7 +20,7 @@ class EnableCoilEjector(DefaultBallSearch, BallDeviceEjector):
         super().__init__(config, ball_device, machine)
         self.delay = DelayManager(self.ball_device.machine)
 
-        self.config = self.machine.config_validator.validate_config("ball_devices_ejector_enable", self.config)
+        self.config = self.machine.config_validator.validate_config("ball_device_ejector_enable", self.config)
 
     async def eject_one_ball(self, is_jammed, eject_try, balls_in_device):
         """Enable eject coil."""

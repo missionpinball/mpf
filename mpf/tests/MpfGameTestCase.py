@@ -32,7 +32,7 @@ class MpfGameTestCase(MpfTestCase):
     def fill_troughs(self):
         """Fill all ball devices tagged with  ``trough`` with balls."""
         for trough in self.machine.ball_devices.items_tagged("trough"):
-            for switch in trough.config['ball_switches']:
+            for switch in trough.ball_count_handler.counter.config['ball_switches']:
                 self.hit_switch_and_run(switch.name, 0)
 
         self.advance_time_and_run()

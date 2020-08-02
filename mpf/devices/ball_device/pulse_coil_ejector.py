@@ -21,7 +21,7 @@ class PulseCoilEjector(DefaultBallSearch, BallDeviceEjector):
 
         super().__init__(config, ball_device, machine)
 
-        self.config = self.machine.config_validator.validate_config("ball_devices_ejector_pulse", self.config)
+        self.config = self.machine.config_validator.validate_config("ball_device_ejector_pulse", self.config)
 
         # prevent conflicting options
         if "eject_coil_enable_time" in self.ball_device.config and self.ball_device.config['eject_coil_enable_time']:
