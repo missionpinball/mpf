@@ -72,5 +72,5 @@ class OPPIncand(LightPlatformSoftwareFade):
 
     def __lt__(self, other):
         """Order lights by their order on the hardware."""
-        return (self.incand_card.chain_serial < other.incand_card.chain_serial or
-                self.incand_card.addr < other.incand_card.addr or self.index < self.index)
+        return ((self.incand_card.chain_serial, self.incand_card.addr, self.index) <
+                (other.incand_card.chain_serial, other.incand_card.addr, other.index))

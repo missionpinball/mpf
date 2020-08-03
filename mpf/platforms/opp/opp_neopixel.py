@@ -61,8 +61,7 @@ class OPPLightChannel(PlatformBatchLight):
 
     def __lt__(self, other):
         """Order lights by their position on the hardware."""
-        return (self.chain_serial < other.chain_serial or self.addr < other.addr or
-                self.pixel_num < other.pixel_num)
+        return (self.chain_serial, self.addr, self.pixel_num) < (other.chain_serial, other.addr, other.pixel_num)
 
     def __repr__(self):
         """Return str representation."""

@@ -403,7 +403,7 @@ class PDBLED(PlatformBatchLight):
 
     def __lt__(self, other):
         """Order lights by their position on the hardware."""
-        return self.board < other.board or self.address < other.address
+        return (self.board, self.address) < (other.board, other.address)
 
 
 class PdLedServo(ServoPlatformInterface):

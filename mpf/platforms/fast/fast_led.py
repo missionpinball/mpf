@@ -109,4 +109,4 @@ class FASTDirectLEDChannel(LightPlatformInterface):
 
     def __lt__(self, other):
         """Order lights by their order on the hardware."""
-        return self.led.number_int < other.led.number_int or self.channel < other.channel
+        return (self.led.number_int, self.channel) < (other.led.number_int, other.channel)

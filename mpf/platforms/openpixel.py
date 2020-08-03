@@ -128,7 +128,7 @@ class OpenPixelLED(LightPlatformInterface):
 
     def __lt__(self, other):
         """Order lights by their order on the hardware."""
-        return self.opc_channel < other.opc_channel or self.channel_number < other.channel_number
+        return (self.opc_channel, self.channel_number) < (other.opc_channel, other.channel_number)
 
 
 class OpenPixelClient:

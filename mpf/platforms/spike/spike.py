@@ -158,7 +158,7 @@ class SpikeLight(PlatformBatchLight):
 
     def __lt__(self, other):
         """Order lights by their order on the hardware."""
-        return self.node < other.node or self.index < other.index
+        return (self.node, self.index) < (other.node, other.index)
 
 
 class SpikeDMD(DmdPlatformInterface):

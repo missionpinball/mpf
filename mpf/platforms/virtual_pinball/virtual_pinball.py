@@ -61,6 +61,18 @@ class VirtualPinballLight(LightPlatformInterface):
         """Return the name of the board of this light."""
         return "VPX"
 
+    def is_successor_of(self, other):
+        """Not implemented."""
+        raise AssertionError("Not implemented. Let us know if you need it.")
+
+    def get_successor_number(self):
+        """Not implemented."""
+        raise AssertionError("Not implemented. Let us know if you need it.")
+
+    def __lt__(self, other):
+        """Not implemented."""
+        raise AssertionError("Not implemented. Let us know if you need it.")
+
 
 class VirtualPinballDriver(DriverPlatformInterface):
 
