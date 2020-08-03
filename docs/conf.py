@@ -350,10 +350,9 @@ class RstBuilder(object):
         self.dest_folder = 'api'
         self.template_folder = '_templates'
 
-        config_validator = ConfigValidator(None)
-        config_processor = ConfigProcessor(config_validator)
-        self.mpfconfig = config_processor.load_config_file(os.path.join(
-            os.pardir, 'mpf', 'mpfconfig.yaml'), 'machine')
+        config_processor = ConfigProcessor(False, False)
+        self.mpfconfig = config_processor.load_config_files_with_cache(
+            [os.path.join(os.pardir, 'mpf', 'mpfconfig.yaml')], 'machine', config_spec=config_processor.load_config_spec())
 
         self.doc_sections = dict()
         self.index_entries = dict()
