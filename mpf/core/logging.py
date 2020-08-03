@@ -1,6 +1,4 @@
 """Contains the LogMixin class."""
-from typing import NoReturn     # pylint: disable-msg=cyclic-import,unused-import
-
 import logging
 
 from mpf.exceptions.config_file_error import ConfigFileError
@@ -9,6 +7,7 @@ from mpf._version import log_url
 MYPY = False
 if MYPY:   # pragma: no cover
     from logging import Logger  # pylint: disable-msg=cyclic-import,unused-import
+    from typing import NoReturn  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class LogMixin:
@@ -163,7 +162,7 @@ class LogMixin:
 
         return msg
 
-    def raise_config_error(self, msg, error_no, *, context=None) -> NoReturn:
+    def raise_config_error(self, msg, error_no, *, context=None) -> "NoReturn":
         """Raise a ConfigFileError exception."""
         raise ConfigFileError(msg, error_no, self.log.name, context, self._url_base)
 
