@@ -576,7 +576,7 @@ class BasePlaceholderManager(MpfController):
         self._eval_methods = {
             ast.Num: self._eval_num,
             ast.Str: self._eval_str,
-            ast.NameConstant: self._eval_name_constant,
+            ast.NameConstant: self._eval_constant,
             ast.BinOp: self._eval_bin_op,
             ast.UnaryOp: self._eval_unary_op,
             ast.Compare: self._eval_compare,
@@ -586,6 +586,8 @@ class BasePlaceholderManager(MpfController):
             ast.Name: self._eval_name,
             ast.IfExp: self._eval_if
         }
+        if hasattr(ast, "Constant"):
+            self._eval_methods[ast.Constant] = self._eval_constant
 
     @staticmethod
     def _parse_template(template_str):
@@ -607,7 +609,7 @@ class BasePlaceholderManager(MpfController):
         return node.s, []
 
     @staticmethod
-    def _eval_name_constant(node, variables, subscribe):
+    def _eval_constant(node, variables, subscribe):
         del variables
         del subscribe
         return node.value, []
