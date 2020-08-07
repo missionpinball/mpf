@@ -1,8 +1,8 @@
 """A show queue which can will be played sequentially."""
 from collections import deque
-from typing import Tuple
+from typing import Tuple, Deque, Optional
 
-from mpf.assets.show import Show, RunningShow, ShowConfig
+from mpf.assets.show import RunningShow, ShowConfig
 from mpf.core.system_wide_device import SystemWideDevice
 
 
@@ -21,7 +21,7 @@ class ShowQueue(SystemWideDevice):
         super().__init__(machine, name)
 
         self.shows_queue = deque()  # type: Deque[Tuple[ShowConfig, int]]
-        self._current_show = None   # type: RunningShow
+        self._current_show = None   # type: Optional[RunningShow]
 
     def enqueue_show(self, show_config: ShowConfig, start_step: int):
         """Add a show to the end of the queue."""
