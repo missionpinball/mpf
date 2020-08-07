@@ -17,14 +17,14 @@ class OutgoingBall:
 
     """One outgoing ball."""
 
-    __slots__ = ["max_tries", "eject_timeout", "target", "mechanical", "already_left"]
+    __slots__ = ["max_tries", "eject_timeout", "target", "player_controlled", "already_left"]
 
     def __init__(self, target: "BallDevice") -> None:
         """Initialise outgoing ball."""
         self.max_tries = None               # type: int
         self.eject_timeout = None           # type: int
         self.target = target                # type: BallDevice
-        self.mechanical = None              # type: bool
+        self.player_controlled = None              # type: bool
         self.already_left = False           # type: bool
 
 
@@ -298,7 +298,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             balls=1,
             target=eject_request.target,
             source=self.ball_device,
-            mechanical_eject=eject_request.mechanical,
+            mechanical_eject=eject_request.player_controlled,
             num_attempts=eject_try)
         '''event: balldevice_(name)_ball_eject_attempt
         config_section: ball_devices
@@ -344,7 +344,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             balls=1,
             target=eject_request.target,
             source=self.ball_device,
-            mechanical_eject=eject_request.mechanical,
+            mechanical_eject=eject_request.player_controlled,
             num_attempts=eject_try)
         '''event: balldevice_(name)_ejecting_ball
         config_section: ball_devices
@@ -377,16 +377,16 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             tilt = None
             if self.ball_device.ejector:
                 # eject on tilt
-                if eject_request.mechanical:
+                if eject_request.player_controlled:
                     tilt = self.machine.events.wait_for_event("tilt")
                     waiters.append(tilt)
 
                 # wait for trigger event
-                if eject_request.mechanical and self.ball_device.config['player_controlled_eject_event']:
+                if eject_request.player_controlled and self.ball_device.config['player_controlled_eject_event']:
                     trigger = self.machine.events.wait_for_event(
                         self.ball_device.config['player_controlled_eject_event'])
                     waiters.append(trigger)
-                elif eject_request.mechanical and self.ball_device.config['mechanical_eject']:
+                elif eject_request.player_controlled and self.ball_device.config['mechanical_eject']:
                     # do nothing
                     pass
                 else:
@@ -395,7 +395,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
 
             # wait until the ball has left
             if (self.ball_device.config['mechanical_eject'] or
-                    self.ball_device.config['player_controlled_eject_event']) and eject_request.mechanical:
+                    self.ball_device.config['player_controlled_eject_event']) and eject_request.player_controlled:
                 timeout = None
             else:
                 timeout = eject_request.eject_timeout

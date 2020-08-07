@@ -134,7 +134,7 @@ class BallDevice(SystemWideDevice):
         eject = OutgoingBall(self.config['eject_targets'][0])
         eject.eject_timeout = self.config['eject_timeouts'][eject.target] / 1000
         eject.max_tries = self.config['max_eject_attempts']
-        eject.mechanical = True
+        eject.player_controlled = True
         eject.already_left = True
         self.outgoing_balls_handler.add_eject_to_queue(eject)
 
@@ -601,7 +601,7 @@ class BallDevice(SystemWideDevice):
         eject = OutgoingBall(next_hop)
         eject.eject_timeout = self.config['eject_timeouts'][next_hop] / 1000
         eject.max_tries = self.config['max_eject_attempts']
-        eject.mechanical = player_controlled
+        eject.player_controlled = player_controlled
 
         self.outgoing_balls_handler.add_eject_to_queue(eject)
 
