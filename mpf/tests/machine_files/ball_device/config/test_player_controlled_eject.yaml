@@ -1,0 +1,45 @@
+#config_version=5
+
+switches:
+  s_start_button:
+    number:
+    tags: start
+  s_launch_button:
+    number:
+  s_plunger_lane:
+    number:
+  s_trough1:
+    number:
+  s_trough2:
+    number:
+  s_trough3:
+    number:
+
+coils:
+  c_plunger:
+    number:
+  c_trough_eject:
+    number:
+
+ball_devices:
+  bd_trough:
+    ball_switches: s_trough1, s_trough2, s_trough3
+    eject_coil: c_trough_eject
+    tags: trough, home, drain
+    eject_targets: bd_plunger
+    eject_timeouts: 3s
+    debug: true
+  bd_plunger:
+    ball_switches: s_plunger_lane
+    eject_coil: c_plunger
+    player_controlled_eject_event: s_launch_button_active
+    eject_timeouts: 1s
+    debug: true
+
+playfields:
+  playfield:
+    default_source_device: bd_plunger
+    tags: default
+    debug: true
+
+virtual_platform_start_active_switches: s_trough1, s_trough2, s_trough3
