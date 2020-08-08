@@ -1,7 +1,7 @@
 """Handles all light updates."""
 import asyncio
 
-from typing import Dict
+from typing import Dict, Optional
 
 from mpf.core.machine import MachineController
 from mpf.core.settings_controller import SettingEntry
@@ -33,7 +33,7 @@ class LightController(MpfController):
         self._brightness_template = self.machine.placeholder_manager.build_float_template("machine.brightness", 1.0)
         self._update_brightness()
 
-        self._monitor_update_task = None                    # type: asyncio.Task
+        self._monitor_update_task = None                    # type: Optional[asyncio.Task]
 
         if 'named_colors' in self.machine.config:
             self._load_named_colors()

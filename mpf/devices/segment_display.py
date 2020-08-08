@@ -1,7 +1,7 @@
 """Physical segment displays."""
 from collections import namedtuple
 from operator import attrgetter
-from typing import List
+from typing import List, Optional
 
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.placeholder_manager import TextTemplate
@@ -10,6 +10,7 @@ from mpf.core.system_wide_device import SystemWideDevice
 MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface     # pylint: disable-msg=cyclic-import,unused-import; # noqa
+    from mpf.core.platform import SegmentDisplayPlatform    # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 TextStack = namedtuple("TextStack", ["text", "priority", "key"])
 
@@ -26,11 +27,11 @@ class SegmentDisplay(SystemWideDevice):
     def __init__(self, machine, name: str) -> None:
         """Initialise segment display device."""
         super().__init__(machine, name)
-        self.hw_display = None              # type: SegmentDisplayPlatformInterface
-        self.platform = None
+        self.hw_display = None              # type: Optional[SegmentDisplayPlatformInterface]
+        self.platform = None                # type: Optional[SegmentDisplayPlatform]
         self._text_stack = []               # type: List[TextStack]
-        self._current_placeholder = None    # type: TextTemplate
-        self.text = ""                      # type: str
+        self._current_placeholder = None    # type: Optional[TextTemplate]
+        self.text = ""                      # type: Optional[str]
         self.flashing = False               # type: bool
 
     async def _initialize(self):
@@ -77,6 +78,7 @@ class SegmentDisplay(SystemWideDevice):
     def _update_stack(self) -> None:
         """Sort stack and show top entry on display."""
         # do nothing if stack is emtpy. set display empty
+        assert self.hw_display is not None
         if not self._text_stack:
             self.hw_display.set_text("", flashing=False)
             if self._current_placeholder:
@@ -96,6 +98,7 @@ class SegmentDisplay(SystemWideDevice):
         """Update display to current text."""
         del args
         del kwargs
+        assert self.hw_display is not None
         if not self._current_placeholder:
             new_text = ""
         else:

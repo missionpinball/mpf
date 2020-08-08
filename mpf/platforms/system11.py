@@ -27,12 +27,14 @@ class System11OverlayPlatform(DriverPlatform):
 
         self.delay = DelayManager(machine)
 
-        self.platform = None            # type: DriverPlatform
+        self.platform = None            # type: Optional[DriverPlatform]
 
         self.system11_config = None     # type: Any
 
-        self.a_side_queue = set()       # type: Set[Tuple[DriverPlatformInterface, PulseSettings, HoldSettings]]
-        self.c_side_queue = set()       # type: Set[Tuple[DriverPlatformInterface, PulseSettings, HoldSettings]]
+        self.a_side_queue = \
+            set()   # type: Set[Tuple[DriverPlatformInterface, Optional[PulseSettings], Optional[HoldSettings]]]
+        self.c_side_queue = \
+            set()   # type: Set[Tuple[DriverPlatformInterface, Optional[PulseSettings], Optional[HoldSettings]]]
 
         self.a_side_done_time = 0
         self.c_side_done_time = 0
@@ -149,6 +151,7 @@ class System11OverlayPlatform(DriverPlatform):
             number: Number of the driver.
             platform_settings: Platform specific config.
         """
+        assert self.platform is not None
         orig_number = number
 
         if number and (number.lower().endswith('a') or number.lower().endswith('c')):

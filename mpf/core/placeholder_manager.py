@@ -724,7 +724,7 @@ class BasePlaceholderManager(MpfController):
         except ValueError:
             pass
         else:
-            return NativeTypeTemplate(value, self.machine)
+            return NativeTypeTemplate(value, self.machine)  # type: ignore
 
         return FloatTemplate(self._parse_template(template_str), template_str, self, default_value)
 
@@ -736,14 +736,14 @@ class BasePlaceholderManager(MpfController):
         except ValueError:
             pass
         else:
-            return NativeTypeTemplate(value, self.machine)
+            return NativeTypeTemplate(value, self.machine)  # type: ignore
 
         return IntTemplate(self._parse_template(template_str), template_str, self, default_value)
 
     def build_bool_template(self, template_str, default_value=False) -> BoolTemplate:
         """Build a bool template from a string."""
         if isinstance(template_str, bool):
-            return NativeTypeTemplate(template_str, self.machine)
+            return NativeTypeTemplate(template_str, self.machine)   # type: ignore
         return BoolTemplate(self._parse_template(template_str), template_str, self, default_value)
 
     def build_string_template(self, template_str, default_value=""):

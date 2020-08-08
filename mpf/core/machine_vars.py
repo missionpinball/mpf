@@ -9,6 +9,10 @@ from mpf.core.data_manager import DataManager
 from mpf.core.logging import LogMixin
 from mpf.core.utility_functions import Util
 
+MYPY = False
+if MYPY:   # pragma: no cover
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
+
 
 class MachineVariables(LogMixin):
 
@@ -20,7 +24,7 @@ class MachineVariables(LogMixin):
         """Initialize machine controller."""
         super().__init__()
 
-        self.machine = machine
+        self.machine = machine              # type: MachineController
         self.machine_vars = dict()          # type: Dict[str, Any]
         self.machine_var_monitor = False
         self.machine_var_data_manager = None    # type: Optional[DataManager]

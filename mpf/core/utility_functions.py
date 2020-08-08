@@ -60,7 +60,7 @@ class Util:
         raise AssertionError("Unknown type {}".format(type_name))
 
     @staticmethod
-    def keys_to_lower(source_dict) -> dict:
+    def keys_to_lower(source_dict) -> Union[dict, list]:
         """Convert the keys of a dictionary to lowercase.
 
         Args:

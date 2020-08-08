@@ -1,7 +1,9 @@
 """An achievement group which manages and groups achievements."""
+from typing import Optional, List
+
 from random import choice
 
-from mpf.core.events import event_handler
+from mpf.core.events import event_handler, EventHandlerKey
 from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
@@ -33,13 +35,13 @@ class AchievementGroup(ModeDevice):
         """Initialize achievement."""
         super().__init__(machine, name)
 
-        self._show = None       # type: RunningShow
+        self._show = None       # type: Optional[RunningShow]
 
         self._enabled = False
         self._loaded = False
-        self._selected_member = None    # type: Achievement
+        self._selected_member = None    # type: Optional[Achievement]
         self._rotation_in_progress = False
-        self._handlers = []
+        self._handlers = []             # type: List[EventHandlerKey]
 
     @property
     def enabled(self):

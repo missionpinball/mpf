@@ -92,6 +92,7 @@ class ServiceController(MpfController):
             raise AssertionError("Not in service mode!")
         coil_map = []
         for coil in self.machine.coils.values():
+            assert coil.hw_driver is not None
             coil_map.append(CoilMap(coil.hw_driver.get_board_name(), coil))
 
         # sort by board + driver number

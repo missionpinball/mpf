@@ -86,7 +86,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         if self.machine_type == 'gen1':
             raise AssertionError("Original OPP boards not currently supported.")
         if self.machine_type == 'gen2':
-            self.log.debug("Configuring the OPP Gen2 boards")
+            self.debug_log("Configuring the OPP Gen2 boards")
         else:
             self.raise_config_error('Invalid driverboards type: {}'.format(self.machine_type), 15)
 
@@ -132,7 +132,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         cmd = bytes(msg)
 
         if self.debug:
-            self.log.debug("Set color on %s: %s", first_light.chain_serial, "".join(" 0x%02x" % b for b in cmd))
+            self.debug_log("Set color on %s: %s", first_light.chain_serial, "".join(" 0x%02x" % b for b in cmd))
         self.send_to_processor(first_light.chain_serial, cmd)
 
     async def start(self):
@@ -338,7 +338,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                 send_cmd = bytes(whole_msg)
 
                 if self.debug:
-                    self.log.debug("Update incand on %s cmd:%s", incand.chain_serial,
+                    self.debug_log("Update incand on %s cmd:%s", incand.chain_serial,
                                    "".join(" 0x%02x" % b for b in send_cmd))
                 self.send_to_processor(incand.chain_serial, send_cmd)
 
@@ -379,7 +379,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
-        self.log.debug("Received Inventory Response: %s for %s", "".join(" 0x%02x" % b for b in msg), chain_serial)
+        self.debug_log("Received Inventory Response: %s for %s", "".join(" 0x%02x" % b for b in msg), chain_serial)
 
         index = 1
         self.gen2_addr_arr[chain_serial] = {}
@@ -390,7 +390,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             else:
                 self.log.warning("Invalid inventory response %s for %s.", msg[index], chain_serial)
             index += 1
-        self.log.debug("Found %d Gen2 OPP boards on %s.", self.num_gen2_brd, chain_serial)
+        self.debug_log("Found %d Gen2 OPP boards on %s.", self.num_gen2_brd, chain_serial)
 
     @staticmethod
     def eom_resp(chain_serial, msg):
@@ -481,7 +481,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             msg: Message to parse.
         """
         # Multiple get gen2 cfg responses can be received at once
-        self.log.debug("Received Gen2 Cfg Response:%s", "".join(" 0x%02x" % b for b in msg))
+        self.debug_log("Received Gen2 Cfg Response:%s", "".join(" 0x%02x" % b for b in msg))
         curr_index = 0
         read_input_msg = bytearray()
         while True:
@@ -521,7 +521,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             msg: Message to parse.
         """
         # Multiple get version responses can be received at once
-        self.log.debug("Received Version Response (Chain: %s): %s", chain_serial, "".join(" 0x%02x" % b for b in msg))
+        self.debug_log("Received Version Response (Chain: %s): %s", chain_serial, "".join(" 0x%02x" % b for b in msg))
         curr_index = 0
         while True:
             # check that message is long enough, must include crc8
@@ -540,7 +540,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                 (msg[curr_index + 3] << 16) | \
                 (msg[curr_index + 4] << 8) | \
                 msg[curr_index + 5]
-            self.log.debug("Firmware version of board 0x%02x (Chain: %s): %d.%d.%d.%d", msg[curr_index], chain_serial,
+            self.debug_log("Firmware version of board 0x%02x (Chain: %s): %d.%d.%d.%d", msg[curr_index], chain_serial,
                            msg[curr_index + 2], msg[curr_index + 3], msg[curr_index + 4], msg[curr_index + 5])
             if msg[curr_index] not in self.gen2_addr_arr[chain_serial]:
                 self.log.warning("Got firmware response for %s but not in inventory at %s", msg[curr_index],
@@ -765,7 +765,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         opp_sol.config = config
         opp_sol.platform_settings = platform_settings
         if self.debug:
-            self.log.debug("Configure driver %s", number)
+            self.debug_log("Configure driver %s", number)
         default_pulse = PulseSettings(config.default_pulse_power, config.default_pulse_ms)
         default_hold = HoldSettings(config.default_hold_power)
         opp_sol.reconfigure_driver(default_pulse, default_hold)
@@ -947,7 +947,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         self._verify_coil_and_switch_fit(switch_obj, driver_obj)
 
-        self.log.debug("Setting HW Rule. Driver: %s", driver_obj.hw_driver.number)
+        self.debug_log("Setting HW Rule. Driver: %s", driver_obj.hw_driver.number)
 
         driver_obj.hw_driver.switches.append(switch_obj.hw_switch.number)
         driver_obj.hw_driver.set_switch_rule(driver_obj.pulse_settings, driver_obj.hold_settings, driver_obj.recycle,
@@ -972,7 +972,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         final_cmd = bytes(msg)
 
         if self.debug:
-            self.log.debug("Unmapping input %s and coil %s on %s", switch_num, coil_num, driver.sol_card.chain_serial)
+            self.debug_log("Unmapping input %s and coil %s on %s", switch_num, coil_num, driver.sol_card.chain_serial)
         self.send_to_processor(driver.sol_card.chain_serial, final_cmd)
 
     def _add_switch_coil_mapping(self, switch_num, driver: "OPPSolenoid"):
@@ -990,7 +990,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         final_cmd = bytes(msg)
 
         if self.debug:
-            self.log.debug("Mapping input %s and coil %s on %s", switch_num, coil_num, driver.sol_card.chain_serial)
+            self.debug_log("Mapping input %s and coil %s on %s", switch_num, coil_num, driver.sol_card.chain_serial)
         self.send_to_processor(driver.sol_card.chain_serial, final_cmd)
 
     def clear_hw_rule(self, switch: SwitchSettings, coil: DriverSettings):
@@ -1005,7 +1005,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """
         if switch.hw_switch.number in coil.hw_driver.switches:
             if self.debug:
-                self.log.debug("Clearing HW Rule for switch: %s, coils: %s", switch.hw_switch.number,
+                self.debug_log("Clearing HW Rule for switch: %s, coils: %s", switch.hw_switch.number,
                                coil.hw_driver.number)
             coil.hw_driver.switches.remove(switch.hw_switch.number)
             _, _, switch_num = switch.hw_switch.number.split("-")

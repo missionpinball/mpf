@@ -266,7 +266,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
 
     def _setup_log(self):
         self.log = logging.getLogger("Smart Virtual Platform")
-        self.log.debug("Configuring smart_virtual hardware interface.")
+        self.debug_log("Configuring smart_virtual hardware interface.")
 
     async def start(self):
         """Initialise platform when all devices are ready."""
@@ -356,7 +356,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
 
     def add_ball_to_device(self, device: BallDevice):
         """Add ball to device."""
-        self.log.debug("Adding ball to %s", device.name)
+        self.debug_log("Adding ball to %s", device.name)
         if LogMixin.unit_test and device.balls >= device.capacity:
             raise AssertionError("KABOOM! We just added a ball to {} which has a capacity "
                                  "of {} but already had {} ball(s)".format(
@@ -376,13 +376,13 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
                             "had an active entrance switch {}".format(
                                 device.name, entrance_switch))
 
-                    self.log.debug('Enabling switch %s due to ball being added to %s',
+                    self.debug_log('Enabling switch %s due to ball being added to %s',
                                    entrance_switch.name, device.name)
 
                     self.machine.switch_controller.process_switch_obj(entrance_switch, 1, True)
                     return
 
-            self.log.debug('Hitting switch %s due to ball being added to %s', entrance_switch.name, device.name)
+            self.debug_log('Hitting switch %s due to ball being added to %s', entrance_switch.name, device.name)
             self.machine.switch_controller.process_switch_obj(entrance_switch, 1, True)
             self.machine.switch_controller.process_switch_obj(entrance_switch, 0, True)
 
@@ -390,7 +390,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
             found_switch = False
             for switch in device.ball_count_handler.counter.config['ball_switches']:
                 if self.machine.switch_controller.is_inactive(switch):
-                    self.log.debug('Enabling switch %s due to ball being added to %s', switch.name, device.name)
+                    self.debug_log('Enabling switch %s due to ball being added to %s', switch.name, device.name)
                     self.machine.switch_controller.process_switch_obj(
                         switch, 1, logical=True)
                     found_switch = True

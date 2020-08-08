@@ -1,4 +1,6 @@
 """Contains the Switch parent class."""
+from typing import Optional, Dict, List
+
 from functools import partial
 
 from mpf.core.device_monitor import DeviceMonitor
@@ -29,8 +31,8 @@ class Switch(SystemWideDevice, DevicePositionMixin):
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise switch."""
-        self.hw_switch = None   # type: SwitchPlatformInterface
-        self.platform = None    # type: SwitchPlatform
+        self.hw_switch = None   # type: Optional[SwitchPlatformInterface]
+        self.platform = None    # type: Optional[SwitchPlatform]
         super().__init__(machine, name)
 
         self.state = 0
@@ -46,7 +48,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         self.recycle_secs = 0
         self.recycle_clear_time = None
         self.recycle_jitter_count = 0
-        self._events_to_post = {0: [], 1: []}
+        self._events_to_post = {0: [], 1: []}       # type: Dict[int, List[str]]
         self.last_change = -100000
 
         # register switch so other devices can add handlers to it

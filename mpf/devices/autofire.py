@@ -9,7 +9,7 @@ from mpf.core.system_wide_device import SystemWideDevice
 MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
-    from typing import List     # pylint: disable-msg=cyclic-import,unused-import
+    from typing import List, Optional  # pylint: disable-msg=cyclic-import,unused-import
 
 
 @DeviceMonitor(_enabled="enabled")
@@ -40,7 +40,7 @@ class AutofireCoil(SystemWideDevice):
     def __init__(self, machine: "MachineController", name: str) -> None:
         """Initialise autofire."""
         self._enabled = False
-        self._rule = None       # type: HardwareRule
+        self._rule = None       # type: Optional[HardwareRule]
         super().__init__(machine, name)
         self.delay = DelayManager(self.machine)
         self._ball_search_in_progress = False

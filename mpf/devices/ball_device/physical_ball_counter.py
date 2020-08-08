@@ -4,7 +4,7 @@ The duty of this device is to maintain the current ball count of the device.
 """
 import asyncio
 
-from typing import List
+from typing import List, Optional
 from mpf.core.utility_functions import Util
 
 MYPY = False
@@ -185,7 +185,7 @@ class PhysicalBallCounter:
         self.config = config
         self.machine = self.ball_device.machine     # type: MachineController
 
-        self._last_count = None                     # type: int
+        self._last_count = None                     # type: Optional[int]
         self._count_stable = asyncio.Event(loop=self.machine.clock.loop)
         self._activity_queues = []                  # type: List[asyncio.Queue[BallActivity]]
         self._ball_change_futures = []              # type: List[asyncio.Future]
@@ -224,6 +224,7 @@ class PhysicalBallCounter:
         """Return the current ball count."""
         # wait until count is stable
         await self._count_stable.wait()
+        assert self._last_count is not None
         return self._last_count
 
     def wait_for_count_stable(self):

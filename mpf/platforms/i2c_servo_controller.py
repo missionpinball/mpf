@@ -57,19 +57,19 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
             i2c_address, servo_number = number.rsplit("-", 1)
         except ValueError:
             servo_number = number
-            i2c_address = 0x40
+            i2c_address = str(0x40)
         try:
             number_int = int(servo_number)
         except ValueError:
             raise ConfigFileError("Invalid servo number {} in {}.".format(servo_number, number),
-                                  2, self.log.name)
+                                  2, self.log.name if self.log else "")
 
         i2c_device = await self._initialize_controller(i2c_address)
 
         # check bounds
         if number_int < 0 or number_int > 15:
             raise ConfigFileError("Invalid number {} in {}. The controller only supports servos 0 to 15.".format(
-                number_int, number), 1, self.log.name)
+                number_int, number), 1, self.log.name if self.log else "")
 
         return I2cServo(number_int, self.config, i2c_device)
 

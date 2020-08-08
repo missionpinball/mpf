@@ -1,4 +1,6 @@
 """Contains code for a virtual hardware platform."""
+from typing import Dict, Tuple, Optional, Union
+
 import asyncio
 import logging
 
@@ -37,14 +39,14 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         # maintain an internal list of switches that were confirmed so we have
         # something to send when MPF needs to know the hardware states of
         # switches
-        self.hw_switches = dict()
+        self.hw_switches = dict()   # type: Dict[str, bool]
         self.initial_states_sent = False
         self.features['tickless'] = True
         self.features['allow_empty_numbers'] = True
         self._next_driver = 1000
         self._next_switch = 1000
         self._next_light = 1000
-        self.rules = {}
+        self.rules = {}     # type: Dict[Tuple[SwitchPlatformInterface, DriverPlatformInterface], str]
 
     def __repr__(self):
         """Return string representation."""
@@ -311,8 +313,8 @@ class VirtualSound(HardwareSoundPlatformInterface):
 
     def __init__(self) -> None:
         """Initialise virtual hardware sound."""
-        self.playing = None
-        self.volume = None
+        self.playing = None     # type: Optional[Union[int, str]]
+        self.volume = None      # type: Optional[float]
 
     def play_sound(self, number: int, track: int = 1):
         """Play virtual sound."""
@@ -343,8 +345,8 @@ class VirtualDmd(DmdPlatformInterface):
 
     def __init__(self) -> None:
         """Initialise virtual DMD."""
-        self.data = None
-        self.brightness = None
+        self.data = None        # type: Optional[bytes]
+        self.brightness = None  # type: Optional[float]
 
     def update(self, data: bytes):
         """Update data on the DMD.

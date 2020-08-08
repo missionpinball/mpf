@@ -3,6 +3,7 @@
 import abc
 import asyncio
 import logging
+from logging import Logger
 
 import sys
 from threading import Thread
@@ -65,7 +66,8 @@ class ProcProcess:
         self.loop = loop
         self.stop_future = asyncio.Future(loop=self.loop)
         self.trace = trace
-        self.log = log
+        assert log is not None
+        self.log = log  # type: Logger
         while not self.proc:
             try:
                 self.proc = pinproc.PinPROC(machine_type)
@@ -112,6 +114,7 @@ class ProcProcess:
             return getattr(self, cmd)(*args)
 
         if self.trace:
+            assert self.log is not None
             result = getattr(self.proc, cmd)(*args)
             self.log.debug("pinproc.PinPROC.%s%s -> %s", cmd, args, result)
             return result
@@ -239,7 +242,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         """Update a list of light at once."""
         first_light, _, common_fade_ms = sequential_brightness_list[0]
         board = first_light.board
-        command_buffer = []
+        command_buffer = []     # type: List[Tuple[int, int, int]]
         if common_fade_ms > 0:
             # set the fade time
             self._write_fade_time_buffered(board, int(common_fade_ms / 4), command_buffer)
@@ -248,7 +251,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         self._write_addr_buffered(board, first_light.address, command_buffer)
 
         if self.debug:
-            self.log.debug("Fading %s lights with %s fade_ms ",
+            self.debug_log("Fading %s lights with %s fade_ms ",
                            len(sequential_brightness_list), common_fade_ms)
 
         for light, brightness, fade_ms in sequential_brightness_list:
@@ -258,7 +261,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
                 value = int(brightness * 255)
 
             if self.debug:
-                self.log.debug("Setting color %s with fade_ms %s to %s-%s",
+                self.debug_log("Setting color %s with fade_ms %s to %s-%s",
                                value, fade_ms, light.board, light.address)
             if common_fade_ms > 0:
                 self._write_fade_color_buffered(board, value, command_buffer)

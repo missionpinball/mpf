@@ -3,6 +3,8 @@
 The python code to build the OPC message packet came from here:
 https://github.com/zestyping/openpixelcontrol/blob/master/python_clients/opc.py
 """
+from typing import Optional
+
 import logging
 
 from mpf.core.platform import LightsPlatform
@@ -30,7 +32,7 @@ class OpenpixelHardwarePlatform(LightsPlatform):
 
         self.log = logging.getLogger("OpenPixel")
         self.log.debug("Configuring Open Pixel hardware interface.")
-        self.opc_client = None      # type: OpenPixelClient
+        self.opc_client = None      # type: Optional[OpenPixelClient]
         self.features['tickless'] = True
 
     def __repr__(self):

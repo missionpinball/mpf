@@ -35,7 +35,6 @@ if MYPY:   # pragma: no cover
     from mpf.core.bcp.bcp import Bcp    # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.text_ui import TextUi     # pylint: disable-msg=cyclic-import,unused-import
     from mpf.assets.show import Show    # pylint: disable-msg=cyclic-import,unused-import
-    from mpf.core.assets import BaseAssetManager    # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.switch import Switch   # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.driver import Driver   # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.mode import Mode  # pylint: disable-msg=cyclic-import,unused-import
@@ -75,6 +74,7 @@ if MYPY:   # pragma: no cover
     from mpf.devices.achievement_group import AchievementGroup  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.achievement import Achievement     # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.combo_switch import ComboSwitch    # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.score_queue import ScoreQueue      # pylint: disable-msg=cyclic-import,unused-import
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -95,7 +95,7 @@ class MachineController(LogMixin):
                  "is_init_done", "_done", "monitors", "plugins", "custom_code", "modes", "game",
                  "variables", "thread_stopper", "config", "config_validator",
                  "delay", "hardware_platforms", "default_platform", "clock",
-                 "stop_future", "events", "switch_controller", "mode_controller", "settings", "asset_manager",
+                 "stop_future", "events", "switch_controller", "mode_controller", "settings",
                  "bcp", "ball_controller", "show_controller", "placeholder_manager", "device_manager", "auditor",
                  "tui", "service", "switches", "shows", "coils", "ball_devices", "lights", "playfield", "playfields",
                  "autofires", "_crash_handlers", "__dict__", "mpf_config"]
@@ -144,7 +144,6 @@ class MachineController(LogMixin):
             self.mode_controller = self.mode_controller             # type: ModeController
             self.settings = self.settings                           # type: SettingsController
             self.bcp = self.bcp                                     # type: Bcp
-            self.asset_manager = self.asset_manager                 # type: BaseAssetManager
             self.ball_controller = self.ball_controller             # type: BallController
             self.show_controller = self.show_controller             # type: ShowController
             self.placeholder_manager = self.placeholder_manager     # type: PlaceholderManager
@@ -193,6 +192,7 @@ class MachineController(LogMixin):
             self.achievements = {}                      # type: Dict[str, Achievement]
             self.achievement_groups = {}                # type: Dict[str, AchievementGroup]
             self.combo_switches = {}                    # type: Dict[str, ComboSwitch]
+            self.score_queues = {}                      # type: Dict[str, ScoreQueue]
 
         self._set_machine_path()
 

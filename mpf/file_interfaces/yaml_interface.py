@@ -203,7 +203,8 @@ class YamlInterface(FileInterface):
         except MarkedYAMLError as e:
             mark = e.problem_mark
             msg = "YAML error found in file {}. Line {}, " \
-                  "Position {}: {}".format(filename, mark.line + 1, mark.column + 1, e)
+                  "Position {}: {}".format(filename, mark.line + 1 if mark else None,
+                                           mark.column + 1 if mark else None, e)
 
             if halt_on_error:
                 raise ValueError(msg)
@@ -228,5 +229,8 @@ class YamlInterface(FileInterface):
 
     def save(self, filename: str, data: dict) -> None:   # pragma: no cover
         """Save config to yaml file."""
+        data_str = yaml.dump(data, default_flow_style=False)
+        if not data_str:
+            raise AssertionError("Failed to serialize data.")
         with open(filename, 'w', encoding='utf8') as output_file:
-            output_file.write(yaml.dump(data, default_flow_style=False))
+            output_file.write(data_str)

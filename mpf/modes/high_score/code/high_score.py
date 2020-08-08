@@ -121,7 +121,7 @@ class HighScore(AsyncMode):
     async def _run(self) -> None:
         """Run high score mode."""
         if not self.machine.game or not self.machine.game.player_list:
-            self.log.warning("High Score started but there was no game. Will not start.")
+            self.warning_log("High Score started but there was no game. Will not start.")
             return
 
         new_high_score_list = {}

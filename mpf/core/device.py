@@ -1,7 +1,7 @@
 """Contains the Device base class."""
 import abc
 
-from typing import List, Any
+from typing import List, Any, Optional
 
 from mpf.core.machine import MachineController
 from mpf.core.logging import LogMixin
@@ -9,7 +9,7 @@ from mpf.core.logging import LogMixin
 MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.mode import Mode      # pylint: disable-msg=cyclic-import,unused-import
-    from mpf.platforms.smart_virtual import SmartVirtualHardwarePlatform    # pylint: disable-msg=cyclic-import,unused-import; # noqa
+    from mpf.core.platform import BasePlatform    # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 
 class Device(LogMixin, metaclass=abc.ABCMeta):
@@ -41,10 +41,10 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         self.machine = machine
         self.name = name
         self.tags = []          # type: List[str]
-        self.platform = None    # type: SmartVirtualHardwarePlatform
+        self.platform = None    # type: Optional[BasePlatform]
         """List of tags applied to this device."""
 
-        self.label = None       # type: str
+        self.label = None       # type: Optional[str]
         self.config = dict()    # type: Any
         """Validated dictionary of this device's settings. Note that this will
         map to the YAML-based config specified in the Config Spec section of

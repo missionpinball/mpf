@@ -52,7 +52,7 @@ class FileManager:
             if not ext:
                 for config_processor in set(FileManager.file_interfaces.values()):
                     questionable_file, ext = config_processor.find_file(filename)
-                    if questionable_file:
+                    if isinstance(questionable_file, str):
                         return questionable_file
 
             raise FileNotFoundError("File not found: {}".format(filename))

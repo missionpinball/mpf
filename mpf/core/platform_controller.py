@@ -25,6 +25,8 @@ class PlatformController(MpfController):
 
     @staticmethod
     def _check_and_get_platform(switch: Switch, driver: Driver) -> DriverPlatform:
+        assert driver.platform is not None
+        assert switch.platform is not None
         if driver.platform != switch.platform:
             raise AssertionError("Switch and Coil have to use the same platform")
 
@@ -59,8 +61,8 @@ class PlatformController(MpfController):
             debounce=switch.debounce)
 
     @staticmethod
-    def _get_configured_driver_with_hold(driver: DriverRuleSettings, pulse_setting: PulseRuleSettings,
-                                         hold_settings: HoldRuleSettings) -> DriverSettings:
+    def _get_configured_driver_with_hold(driver: DriverRuleSettings, pulse_setting: Optional[PulseRuleSettings],
+                                         hold_settings: Optional[HoldRuleSettings]) -> DriverSettings:
         """Return configured driver with hold > 0 for rule."""
         pulse_duration = driver.driver.get_and_verify_pulse_ms(pulse_setting.duration if pulse_setting else None)
         pulse_power = driver.driver.get_and_verify_pulse_power(pulse_setting.power if pulse_setting else None)
@@ -76,8 +78,9 @@ class PlatformController(MpfController):
             recycle=driver.recycle)
 
     @staticmethod
-    def _get_configured_driver_with_optional_hold(driver: DriverRuleSettings, pulse_setting: PulseRuleSettings,
-                                                  hold_settings: HoldRuleSettings) -> DriverSettings:
+    def _get_configured_driver_with_optional_hold(driver: DriverRuleSettings,
+                                                  pulse_setting: Optional[PulseRuleSettings],
+                                                  hold_settings: Optional[HoldRuleSettings]) -> DriverSettings:
         """Return configured driver for rule which might have hold."""
         pulse_duration = driver.driver.get_and_verify_pulse_ms(pulse_setting.duration if pulse_setting else None)
         pulse_power = driver.driver.get_and_verify_pulse_power(pulse_setting.power if pulse_setting else None)
@@ -90,7 +93,8 @@ class PlatformController(MpfController):
             recycle=driver.recycle)
 
     @staticmethod
-    def _get_configured_driver_no_hold(driver: DriverRuleSettings, pulse_setting: PulseRuleSettings) -> DriverSettings:
+    def _get_configured_driver_no_hold(driver: DriverRuleSettings,
+                                       pulse_setting: Optional[PulseRuleSettings]) -> DriverSettings:
         """Return configured driver without hold for rule."""
         pulse_duration = driver.driver.get_and_verify_pulse_ms(pulse_setting.duration if pulse_setting else None)
         pulse_power = driver.driver.get_and_verify_pulse_power(pulse_setting.power if pulse_setting else None)

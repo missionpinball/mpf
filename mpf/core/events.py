@@ -745,7 +745,7 @@ class EventManager(MpfController):
 
     def process_event_queue(self) -> None:
         """Check if there are any other events that need to be processed, and then process them."""
-        inner_queue = deque()
+        inner_queue = deque()   # type: Deque[Deque[PostedEvent]]
         while self.event_queue or self.callback_queue:
             # first process all events. if they post more events we will
             # process them in the same loop.
@@ -791,7 +791,7 @@ class QueuedEvent:
         """Initialize QueueEvent."""
         self.debug_log = debug_log
         self.waiter = False
-        self.event = None   # type: asyncio.Event
+        self.event = None   # type: Optional[asyncio.Event]
 
     def __repr__(self):
         """Return str representation."""

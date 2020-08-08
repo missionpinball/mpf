@@ -118,7 +118,7 @@ class DelayManager(MpfController):
         """
         return delay in self.delays
 
-    def reset(self, ms: int, callback: Callable[..., None], name: Union[str, uuid.UUID],
+    def reset(self, ms: int, callback: Callable[..., None], name: str,
               **kwargs) -> str:
         """Reset a delay.
 

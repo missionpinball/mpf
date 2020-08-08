@@ -322,6 +322,7 @@ class SwitchController(MpfController):
         handles NC versus NO switches and translates them to 'active' versus
         'inactive'.)
         """
+        assert obj.hw_switch is not None
         # We need int, but this lets it come in as boolean also
         if state:
             state = 1

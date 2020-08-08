@@ -1,7 +1,7 @@
 """Handles outgoing balls."""
 import asyncio
 
-from typing import List
+from typing import List, Optional
 
 from mpf.core.utility_functions import Util
 from mpf.devices.ball_device.ball_count_handler import EjectTracker
@@ -21,10 +21,10 @@ class OutgoingBall:
 
     def __init__(self, target: "BallDevice") -> None:
         """Initialise outgoing ball."""
-        self.max_tries = None               # type: int
-        self.eject_timeout = None           # type: int
+        self.max_tries = 0                  # type: int
+        self.eject_timeout = 0              # type: int
         self.target = target                # type: BallDevice
-        self.player_controlled = None              # type: bool
+        self.player_controlled = False      # type: bool
         self.already_left = False           # type: bool
 
 
@@ -39,14 +39,14 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         """Initialise outgoing balls handler."""
         super().__init__(ball_device)
         self._eject_queue = asyncio.Queue(loop=self.machine.clock.loop)     # type: asyncio.Queue
-        self._current_target = None     # type: BallDevice
-        self._cancel_future = None      # type: asyncio.Future
+        self._current_target = None     # type: Optional[BallDevice]
+        self._cancel_future = None      # type: Optional[asyncio.Future]
         self._incoming_ball_which_may_skip = asyncio.Event(loop=self.machine.clock.loop)
         self._incoming_ball_which_may_skip.clear()
         self._no_incoming_ball_which_may_skip = asyncio.Event(loop=self.machine.clock.loop)
         self._no_incoming_ball_which_may_skip.set()
         self._incoming_ball_which_may_skip_obj = []     # type: List[IncomingBall]
-        self._eject_future = None       # type: asyncio.Future
+        self._eject_future = None       # type: Optional[asyncio.Future]
 
     def add_eject_to_queue(self, eject: OutgoingBall):
         """Add an eject request to queue."""
@@ -219,6 +219,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
     # pylint: disable-msg=inconsistent-return-statements
     async def _ejecting(self, eject_request: OutgoingBall):
         """Perform main eject loop."""
+        assert self._current_target is not None
         eject_try = 0
         while True:
             # make sure the count is currently valid. process incoming and lost balls

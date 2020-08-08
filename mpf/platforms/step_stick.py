@@ -1,7 +1,7 @@
 """StepStick or similar stepper driver connected to a digital output."""
 import asyncio
 
-from typing import Optional
+from typing import Optional, Union
 
 import logging
 
@@ -113,9 +113,10 @@ class StepStickDigitalOutputPlatform(StepperPlatform):
     async def configure_stepper(self, number: str, config: dict) -> "StepperPlatformInterface":
         """Configure a stepper driven by StepStick on a digital output."""
         try:
-            direction_output_str, step_output_str, enable_output_str = number.split(":")
+            direction_output_str, step_output_str, enable_output_str = \
+                number.split(":")   # type: str, str, Optional[str]
         except IndexError:
-            enable_output_str = False
+            enable_output_str = None
             try:
                 direction_output_str, step_output_str = number.split(":")
             except IndexError:
@@ -136,7 +137,7 @@ class StepStickDigitalOutputPlatform(StepperPlatform):
 
         if enable_output_str:
             try:
-                enable_output = self.machine.digital_outputs[enable_output_str]
+                enable_output = self.machine.digital_outputs[enable_output_str]     # type: Optional[DigitalOutput]
             except IndexError:
                 return self.raise_config_error("enable_output {} does not exist".format(enable_output_str), 4)
         else:

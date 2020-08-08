@@ -7,7 +7,8 @@ from mpf._version import log_url
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from typing import NoReturn, Optional  # pylint: disable-msg=cyclic-import,unused-import
+    from typing import NoReturn, Optional, Any  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class LogMixin:
@@ -31,7 +32,7 @@ class LogMixin:
         self._url_base = None   # type: Optional[str]
 
         if MYPY:
-            self.machine = None     # noqa
+            self.machine = self.machine     # type: MachineController # noqa
 
         logging.addLevelName(21, "INFO")
         logging.addLevelName(11, "DEBUG")

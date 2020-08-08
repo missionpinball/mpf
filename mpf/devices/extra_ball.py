@@ -1,4 +1,6 @@
 """Device that implements an extra ball."""
+from typing import Optional
+
 from mpf.core.events import event_handler
 from mpf.core.machine import MachineController
 from mpf.core.device_monitor import DeviceMonitor
@@ -22,9 +24,9 @@ class ExtraBall(ModeDevice):
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise extra ball."""
         super().__init__(machine, name)
-        self.player = None  # type: Player
+        self.player = None  # type: Optional[Player]
         """The current player"""
-        self.group = None  # type: ExtraBallGroup
+        self.group = None   # type: Optional[ExtraBallGroup]
         """The ExtraBallGroup this ExtraBall belongs to, or None."""
 
     @property

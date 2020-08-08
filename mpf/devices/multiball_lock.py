@@ -1,5 +1,5 @@
 """Contains the BallLock device class."""
-from typing import List
+from typing import List, Optional
 
 from mpf.core.enable_disable_mixin import EnableDisableMixin
 
@@ -27,8 +27,8 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
     def __init__(self, machine, name):
         """Initialise ball lock."""
         self.lock_devices = []
-        self.source_playfield = None    # type: Playfield
-        self._source_devices = None     # type: List[BallDevice]
+        self.source_playfield = None    # type: Optional[Playfield]
+        self._source_devices = None     # type: Optional[List[BallDevice]]
 
         # initialise variables
         self._events = {}
@@ -215,6 +215,10 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
 
         # MPF will make sure that devices get one event per ball
         assert unclaimed_balls == 1
+
+        if not self.machine.game or not self.machine.game.player:
+            # bail out if we are outside of a game
+            return {'unclaimed_balls': unclaimed_balls}
 
         # if already full do not take any balls
         if self.is_virtually_full:

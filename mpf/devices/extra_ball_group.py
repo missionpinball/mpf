@@ -1,4 +1,6 @@
 """Device that implements an extra ball group."""
+from typing import Optional
+
 from mpf.core.events import event_handler
 from mpf.core.machine import MachineController
 from mpf.core.device_monitor import DeviceMonitor
@@ -21,7 +23,7 @@ class ExtraBallGroup(SystemWideDevice):
         """Initialize ExtraBallGroup."""
         super().__init__(machine, name)
 
-        self.player = None  # type: Player
+        self.player = None  # type: Optional[Player]
         self.machine.events.add_handler('player_added',
                                         self._player_added)
         self.machine.events.add_handler('player_turn_starting',
@@ -93,7 +95,7 @@ class ExtraBallGroup(SystemWideDevice):
         This method checks to see if the group is enabled and whether the
         max_lit setting has been exceeded.
         """
-        if not self.enabled:
+        if not self.enabled or not self.player:
             return False
 
         return not (

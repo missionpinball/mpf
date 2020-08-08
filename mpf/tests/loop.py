@@ -5,7 +5,7 @@ import collections
 import heapq
 
 # A class to manage set of next events:
-from asyncio.selector_events import _SelectorSocketTransport
+from asyncio.selector_events import _SelectorSocketTransport    # type: ignore # noqa
 
 import asyncio
 
@@ -500,13 +500,13 @@ class TestClock(ClockBase):
         really nothing special here except some convenience.)
         """
         if not limit:
-            limit = asyncio.streams._DEFAULT_LIMIT
+            limit = asyncio.streams._DEFAULT_LIMIT  # type: ignore
         reader = asyncio.streams.StreamReader(limit=limit, loop=self.loop)
         protocol = asyncio.streams.StreamReaderProtocol(reader, loop=self.loop)
         sock = self._open_mock_socket(host, port)
         transport = _SelectorSocketTransport(self.loop, sock, protocol)
         writer = asyncio.streams.StreamWriter(transport, protocol, reader, self.loop)
-        return reader, writer
+        return reader, writer   # type: ignore
 
     def mock_serial(self, url, serial):
         """Mock a socket and use it for connections."""
@@ -525,7 +525,7 @@ class TestClock(ClockBase):
         return serial
 
     @coroutine
-    def open_serial_connection(self, limit=None, **kwargs):
+    def open_serial_connection(self, limit=None, **kwargs):     # type: ignore
         """A wrapper for create_serial_connection() returning a (reader,
         writer) pair.
 
@@ -540,7 +540,7 @@ class TestClock(ClockBase):
         This function is a coroutine.
         """
         if not limit:
-            limit = asyncio.streams._DEFAULT_LIMIT
+            limit = asyncio.streams._DEFAULT_LIMIT  # type: ignore
 
         reader = asyncio.StreamReader(limit=limit, loop=self.loop)
         protocol = asyncio.StreamReaderProtocol(reader, loop=self.loop)

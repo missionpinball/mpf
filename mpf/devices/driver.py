@@ -33,10 +33,10 @@ class Driver(SystemWideDevice):
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise driver."""
-        self.hw_driver = None   # type: DriverPlatformInterface
+        self.hw_driver = None   # type: Optional[DriverPlatformInterface]
         super().__init__(machine, name)
         self.delay = DelayManager(self.machine)
-        self.platform = None                # type: DriverPlatform
+        self.platform = None                # type: Optional[DriverPlatform]
 
     @classmethod
     def device_class_init(cls, machine: MachineController):
@@ -155,6 +155,7 @@ class Driver(SystemWideDevice):
 
         If pulse_ms is None return the default.
         """
+        assert self.platform is not None
         if pulse_ms is None:
             if self.config['default_pulse_ms'] is not None:
                 pulse_ms = self.config['default_pulse_ms']
@@ -199,6 +200,7 @@ class Driver(SystemWideDevice):
 
         allow_enable: True
         """
+        assert self.hw_driver is not None
         pulse_ms = self.get_and_verify_pulse_ms(pulse_ms)
 
         pulse_power = self.get_and_verify_pulse_power(pulse_power)
@@ -239,6 +241,8 @@ class Driver(SystemWideDevice):
 
     def _pulse_now(self, pulse_ms: int, pulse_power: float) -> None:
         """Pulse this driver now."""
+        assert self.hw_driver is not None
+        assert self.platform is not None
         if 0 < pulse_ms <= self.platform.features['max_pulse']:
             self.info_log("Pulsing Driver for %sms (%s pulse_power)", pulse_ms, pulse_power)
             self.hw_driver.pulse(PulseSettings(power=pulse_power, duration=pulse_ms))

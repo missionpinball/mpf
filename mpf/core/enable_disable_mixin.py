@@ -1,4 +1,6 @@
 """Implements enable and disable events for devices."""
+from typing import Optional
+
 import abc
 
 from mpf.core.system_wide_device import SystemWideDevice
@@ -13,6 +15,7 @@ from mpf.core.machine import MachineController
 MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.mode import Mode  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.player import Player  # pylint: disable-msg=cyclic-import,unused-import
 
 
 @DeviceMonitor("enabled")
@@ -24,8 +27,8 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Remember the enable state."""
-        self._enabled = None    # type: bool
-        self.player = None
+        self._enabled = None    # type: Optional[bool]
+        self.player = None      # type: Optional[Player]
         super().__init__(machine, name)
 
     def _enable(self):
@@ -52,7 +55,7 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
         if self.enabled is True:
             return
         self.enabled = True
-        self.notify_virtual_change("enabled", False, True)
+        self.notify_virtual_change("enabled", False, True)      # type: ignore
         self._enable()
 
     def add_control_events_in_mode(self, mode) -> None:

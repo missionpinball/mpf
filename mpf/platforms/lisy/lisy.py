@@ -352,7 +352,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         # pylint: disable-msg=protected-access
         if self.debug and self._reader._buffer:
             # pylint: disable-msg=protected-access
-            self.log.debug("Flushed: %s%s", self._reader._buffer, "".join(" 0x%02x" % b for b in self._reader._buffer))
+            self.debug_log("Flushed: %s%s", self._reader._buffer, "".join(" 0x%02x" % b for b in self._reader._buffer))
         if hasattr(self._writer.transport, "_serial"):
             # pylint: disable-msg=protected-access
             self._writer.transport._serial.reset_input_buffer()
@@ -738,11 +738,12 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
         cmd_str = bytes([cmd])
         cmd_str += byte
-        self.log.debug("Sending 0x%02x%s (Cmd: %s)", cmd, "".join(" 0x%02x" % b for b in byte), cmd)
+        self.debug_log("Sending 0x%02x%s (Cmd: %s)", cmd, "".join(" 0x%02x" % b for b in byte), cmd)
         self._writer.write(cmd_str)
 
     async def send_byte_and_read_response(self, cmd: int, byte: bytes = None, read_bytes=0):
         """Send byte and read response."""
+        assert self._reader is not None
         async with self._bus_lock:
             self.send_byte(cmd, byte)
             return await self._reader.readexactly(read_bytes)
@@ -751,16 +752,16 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         """Send a command with null terminated string."""
         assert self._writer is not None
 
-        self.log.debug("Sending %s (0x%02x) %s (%s)", cmd, cmd, string, "".join(" 0x%02x" % ord(b) for b in string))
+        self.debug_log("Sending %s (0x%02x) %s (%s)", cmd, cmd, string, "".join(" 0x%02x" % ord(b) for b in string))
         self._writer.write(bytes([cmd]) + string.encode() + bytes([0]))
 
     async def _read_byte(self) -> int:
         """Read one byte."""
         assert self._reader is not None
 
-        self.log.debug("Reading one byte")
+        self.debug_log("Reading one byte")
         data = await self._reader.readexactly(1)
-        self.log.debug("Received %s", ord(data))
+        self.debug_log("Received %s", ord(data))
         return ord(data)
 
     # pylint: disable-msg=inconsistent-return-statements
@@ -783,11 +784,11 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
     async def _read_string(self) -> bytes:
         """Read zero terminated string."""
-        self.log.debug("Reading zero terminated string")
+        self.debug_log("Reading zero terminated string")
         data = await self._readuntil(b'\x00')
         # remove terminator
         data = data[:-1]
-        self.log.debug("Received %s", data)
+        self.debug_log("Received %s", data)
         return data
 
     def get_info_string(self):

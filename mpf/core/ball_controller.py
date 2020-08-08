@@ -236,7 +236,7 @@ class BallController(MpfController):
         devices = set()
 
         for tag in target:
-            for device in self.machine.ball_devices.items_tagged(tag):
+            for device in self.machine.ball_devices.items_tagged(tag):      # type: ignore
                 devices.add(device)
 
         if not devices:
@@ -280,7 +280,7 @@ class BallController(MpfController):
         balls_to_collect = False
 
         for tag in tag_list:
-            for device in self.machine.ball_devices.items_tagged(tag):
+            for device in self.machine.ball_devices.items_tagged(tag):      # type: ignore
                 target_devices.add(device)
 
         for device in self.machine.ball_devices.values():

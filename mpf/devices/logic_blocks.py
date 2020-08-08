@@ -1,5 +1,5 @@
 """Logic Blocks devices."""
-from typing import Any, List
+from typing import Any, List, Optional
 
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
@@ -35,8 +35,8 @@ class LogicBlock(SystemWideDevice, ModeDevice):
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialize logic block."""
         super().__init__(machine, name)
-        self._state = None          # type: LogicBlockState
-        self._start_enabled = None  # type: bool
+        self._state = None          # type: Optional[LogicBlockState]
+        self._start_enabled = None  # type: Optional[bool]
 
         self.player_state_variable = "{}_state".format(self.name)
         '''player_var: (logic_block)_state

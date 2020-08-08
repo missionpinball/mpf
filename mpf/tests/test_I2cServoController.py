@@ -13,14 +13,14 @@ class TestI2cServoController(MpfTestCase):
         return False
 
     def test_servo_move(self):
-        self.assertEqual(0x40, self.machine.servos["servo1"].hw_servo.i2c_device.number)
+        self.assertEqual("64", self.machine.servos["servo1"].hw_servo.i2c_device.number)
         self.assertEqual(3, self.machine.servos["servo1"].hw_servo.number)
         self.assertEqual("bus1-64", self.machine.servos["servo2"].hw_servo.i2c_device.number)
         self.assertEqual(7, self.machine.servos["servo2"].hw_servo.number)
-        self.assertEqual(0x40, self.machine.servos["servo3"].hw_servo.i2c_device.number)
+        self.assertEqual("64", self.machine.servos["servo3"].hw_servo.i2c_device.number)
         self.assertEqual(4, self.machine.servos["servo3"].hw_servo.number)
         self.assertEqual(self.machine.servos["servo1"].hw_servo.i2c_device,
-                         self.machine.servos["servo3"].hw_servo.i2c_device)#
+                         self.machine.servos["servo3"].hw_servo.i2c_device)
 
         # move servo1
         self.assertEqual(119, self.machine.servos["servo1"].hw_servo.i2c_device.data[0x08 + 3 * 4])

@@ -118,6 +118,7 @@ class EntranceSwitchCounter(PhysicalBallCounter):
 
     def count_balls_sync(self) -> int:
         """Return the number of balls entered."""
+        assert self._last_count is not None
         if self.config['ball_capacity'] and self.config['ball_capacity'] == self._last_count:
             # we are at capacity. this is fine
             pass

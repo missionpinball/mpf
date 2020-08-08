@@ -13,7 +13,7 @@ try:
 except ImportError as e:
     IMPORT_FAILED = e
 else:
-    IMPORT_FAILED = None
+    IMPORT_FAILED = None    # type: ignore
 
 
 GAMMA_TABLE = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,

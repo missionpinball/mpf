@@ -9,6 +9,10 @@ from mpf.core.config_validator import RuntimeToken
 from mpf.core.utility_functions import Util
 from mpf.exceptions.config_file_error import ConfigFileError
 
+MYPY = False
+if MYPY:   # pragma: no cover
+    from typing import NoReturn     # pylint: disable-msg=cyclic-import,unused-import
+
 __api__ = ['Show', 'RunningShow', 'ShowPool']
 
 ShowConfig = namedtuple("ShowConfig", ["name", "priority", "speed", "loops", "sync_ms", "manual_advance", "show_tokens",
@@ -79,7 +83,7 @@ class Show:
 
         self.name = name
         self.total_steps = None
-        self.show_steps = None      # type: List[Dict[str, Any]]
+        self.show_steps = []      # type: List[Dict[str, Any]]
         self._step_cache = {}
 
     def __lt__(self, other):
@@ -175,7 +179,7 @@ class Show:
 
         self._get_tokens()
 
-    def _show_validation_error(self, msg, error_code):  # pragma: no cover
+    def _show_validation_error(self, msg, error_code) -> "NoReturn":  # pragma: no cover
         raise ConfigFileError("Show {}: {}".format(self.name, msg), error_code, "show", self.name)
 
     def _process_step_actions(self, step, actions):

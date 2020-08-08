@@ -283,7 +283,7 @@ class Achievement(ModeDevice):
             self._restore_state()
 
         # state might have changed
-        self.notify_virtual_change("selected", None, self.state)
+        self.notify_virtual_change("selected", None, self.state)    # type: ignore
 
     def _restore_state(self):
         if self.state == "started" and not (

@@ -7,7 +7,7 @@ The MIT License (MIT)
 """
 import random
 
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, Optional
 
 from mpf.core.utility_functions import Util
 
@@ -275,7 +275,7 @@ class RGBColor:
         return RGBColor.rgb_to_hex(self.rgb)
 
     @property
-    def name(self) -> str:
+    def name(self) -> Optional[str]:
         """Return the color name or None.
 
         Returns a string containing a standard color name or None
@@ -445,7 +445,7 @@ class RGBColorCorrectionProfile:
 
     """Encapsulates a named RGB color correction profile and its associated lookup tables."""
 
-    def __init__(self, name: str = None) -> None:
+    def __init__(self, name: str) -> None:
         """Create a linear correction profile that does not alter color values by default.
 
         Args:

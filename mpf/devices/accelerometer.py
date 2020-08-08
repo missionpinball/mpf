@@ -1,6 +1,6 @@
 """Contains the Accelerometer device."""
 import math
-from typing import Tuple
+from typing import Tuple, Optional
 
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.machine import MachineController
@@ -32,12 +32,12 @@ class Accelerometer(SystemWideDevice):
 
         Args: Same as the Device parent class
         """
-        self.platform = None        # type: AccelerometerPlatform
+        self.platform = None        # type: Optional[AccelerometerPlatform]
         super().__init__(machine, name)
 
-        self.history = None     # type: Tuple[float, float, float]
-        self.value = None       # type: Tuple[float, float, float]
-        self.hw_device = None   # type: AccelerometerPlatformInterface
+        self.history = None     # type: Optional[Tuple[float, float, float]]
+        self.value = None       # type: Optional[Tuple[float, float, float]]
+        self.hw_device = None   # type: Optional[AccelerometerPlatformInterface]
 
     async def _initialize(self):
         """Initialise and configure accelerometer."""
@@ -72,7 +72,7 @@ class Accelerometer(SystemWideDevice):
 
         if not self.history:
             self.history = (x, y, z)
-            dx = dy = dz = 0
+            dx = dy = dz = 0.0
         else:
             dx = x - self.history[0]
             dy = y - self.history[1]
@@ -90,6 +90,7 @@ class Accelerometer(SystemWideDevice):
 
     def get_level_xyz(self) -> float:
         """Return current 3D level."""
+        assert self.value is not None
         return self._calculate_angle(self.config['level_x'],
                                      self.config['level_y'],
                                      self.config['level_z'],
@@ -98,19 +99,20 @@ class Accelerometer(SystemWideDevice):
 
     def get_level_xz(self) -> float:
         """Return current 2D x/z level."""
+        assert self.value is not None
         return self._calculate_angle(self.config['level_x'],
                                      0.0, self.config['level_z'],
                                      self.value[0], 0.0, self.value[2])
 
     def get_level_yz(self) -> float:
         """Return current 2D y/z level."""
+        assert self.value is not None
         return self._calculate_angle(0.0,
                                      self.config['level_y'],
                                      self.config['level_z'],
                                      0.0, self.value[1], self.value[2])
 
     def _handle_level(self) -> None:
-
         deviation_xyz = self.get_level_xyz()
         deviation_xz = self.get_level_xz()
         deviation_yz = self.get_level_yz()

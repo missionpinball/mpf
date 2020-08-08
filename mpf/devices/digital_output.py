@@ -1,5 +1,5 @@
 """A digital output on either a light or driver platform."""
-from typing import Union
+from typing import Union, Optional
 
 from mpf.core.delays import DelayManager
 from mpf.core.events import event_handler
@@ -28,9 +28,9 @@ class DigitalOutput(SystemWideDevice):
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise digital output."""
-        self.hw_driver = None           # type: Union[DriverPlatformInterface, LightPlatformInterface]
-        self.platform = None            # type: Union[DriverPlatform, LightsPlatform]
-        self.type = None                # type: str
+        self.hw_driver = None           # type: Optional[Union[DriverPlatformInterface, LightPlatformInterface]]
+        self.platform = None            # type: Optional[Union[DriverPlatform, LightsPlatform]]
+        self.type = None                # type: Optional[str]
         super().__init__(machine, name)
         self.delay = DelayManager(self.machine)
 

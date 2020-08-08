@@ -4,12 +4,12 @@ import asyncio
 from asyncio import AbstractEventLoop
 from functools import total_ordering
 
-from typing import Any
+from typing import Any, Optional
 
 from mpf.core.utility_functions import Util
 
 
-@total_ordering
+@total_ordering     # type: ignore
 class LightPlatformInterface(metaclass=abc.ABCMeta):
 
     """Interface for a light in hardware platforms."""
@@ -63,7 +63,7 @@ class LightPlatformDirectFade(LightPlatformInterface, metaclass=abc.ABCMeta):
         """Initialise light."""
         super().__init__(number)
         self.loop = loop
-        self.task = None    # type: asyncio.Task
+        self.task = None    # type: Optional[asyncio.Task]
 
     @abc.abstractmethod
     def get_max_fade_ms(self) -> int:

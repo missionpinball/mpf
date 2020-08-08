@@ -15,8 +15,9 @@ from mpf.core.mpf_controller import MpfController
 MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController                  # pylint: disable-msg=cyclic-import,unused-import
-    from typing import List, Tuple                                  # pylint: disable-msg=cyclic-import,unused-import
+    from typing import List, Tuple, Dict  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.ball_device.ball_device import BallDevice      # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.switch import Switch   # pylint: disable-msg=cyclic-import,unused-import
 
 
 class MpfLayout(Layout):
@@ -89,7 +90,7 @@ class TextUi(MpfController):
         self.mpf_process = Process()
         self.ball_devices = list()      # type: List[BallDevice]
 
-        self.switches = {}
+        self.switches = {}      # type: Dict[str, Switch]
 
         self.machine.events.add_handler('init_phase_2', self._init)
         # self.machine.events.add_handler('init_phase_3', self._init2)
@@ -112,11 +113,11 @@ class TextUi(MpfController):
         self._pending_bcp_connection = False
         self._asset_percent = 0
         self._bcp_status = (0, 0, 0)    # type: Tuple[float, int, int]
-        self.switch_widgets = []
+        self.switch_widgets = []        # type: List[Widget]
         self.mode_widgets = []          # type: List[Widget]
-        self.ball_device_widgets = []
-        self._machine_widgets = []
-        self._player_widgets = []
+        self.ball_device_widgets = []   # type: List[Widget]
+        self._machine_widgets = []      # type: List[Widget]
+        self._player_widgets = []       # type: List[Widget]
         self.footer_memory = None
         self.footer_cpu = None
         self.footer_mc_cpu = None

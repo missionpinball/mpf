@@ -100,7 +100,7 @@ class Bcp(MpfController):
         for settings in self.machine.config['bcp']['servers'].values():
             server = BcpServer(self.machine, settings['ip'], settings['port'], settings['type'])
             server_future = asyncio.ensure_future(server.start(), loop=self.machine.clock.loop)
-            server_future.add_done_callback(lambda x, s=server: self.servers.append(s))
+            server_future.add_done_callback(lambda x, s=server: self.servers.append(s))     # type: ignore
             servers_start_futures.append(server_future)
 
         # block init until all servers were started

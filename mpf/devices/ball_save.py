@@ -28,8 +28,8 @@ class BallSave(SystemWideDevice, ModeDevice):
 
     def __init__(self, machine: "MachineController", name: str) -> None:
         """Initialise ball save."""
-        self.unlimited_saves = None         # type: bool
-        self.source_playfield = None        # type: Playfield
+        self.unlimited_saves = None         # type: Optional[bool]
+        self.source_playfield = None        # type: Optional[Playfield]
         super().__init__(machine, name)
 
         self.delay = DelayManager(machine)
@@ -179,19 +179,11 @@ class BallSave(SystemWideDevice, ModeDevice):
         '''
 
     def _get_number_of_balls_to_save(self, available_balls: int) -> int:
-        no_balls_in_play = False
-
-        try:
-            if not self.machine.game.balls_in_play:
-                no_balls_in_play = True
-
+        if self.machine.game and self.machine.game.balls_in_play > 0:
             if self.config['only_last_ball'] and self.machine.game.balls_in_play > 1:
                 self.debug_log("Will only save last ball but %s are in play.", self.machine.game.balls_in_play)
                 return 0
-        except AttributeError:
-            no_balls_in_play = True
-
-        if no_balls_in_play:
+        else:
             self.debug_log("Received request to save ball, but no balls are in"
                            " play. Discarding request.")
             return 0

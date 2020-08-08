@@ -1,5 +1,5 @@
 """Contains the base classes for drop targets and drop target banks."""
-from typing import List
+from typing import List, Optional
 from typing import Set
 
 from mpf.core.machine import MachineController
@@ -33,8 +33,8 @@ class DropTarget(SystemWideDevice):
 
     def __init__(self, machine: "MachineController", name: str) -> None:
         """Initialise drop target."""
-        self.reset_coil = None              # type: Driver
-        self.knockdown_coil = None          # type: Driver
+        self.reset_coil = None              # type: Optional[Driver]
+        self.knockdown_coil = None          # type: Optional[Driver]
         self.banks = set()                  # type: Set[DropTargetBank]
         super().__init__(machine, name)
 
@@ -298,7 +298,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         super().__init__(machine, name)
 
         self.drop_targets = list()          # type: List[DropTarget]
-        self.reset_coil = None              # type: Driver
+        self.reset_coil = None              # type: Optional[Driver]
         self.reset_coils = set()            # type: Set[Driver]
         self.complete = False
         self.down = 0

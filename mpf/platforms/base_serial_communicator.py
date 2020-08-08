@@ -1,4 +1,6 @@
 """Base class for serial communicator."""
+from typing import Optional
+
 import asyncio
 from serial import SerialException
 
@@ -33,8 +35,8 @@ class BaseSerialCommunicator:
         self.port = port
         self.baud = baud
         self.xonxoff = xonxoff
-        self.reader = None      # type: asyncio.StreamReader
-        self.writer = None      # type: asyncio.StreamWriter
+        self.reader = None      # type: Optional[asyncio.StreamReader]
+        self.writer = None      # type: Optional[asyncio.StreamWriter]
         self.read_task = None
 
     async def connect(self):
@@ -83,6 +85,7 @@ class BaseSerialCommunicator:
             separator: Read until this separator byte.
             min_chars: Minimum message length before separator
         """
+        assert self.reader is not None
         # asyncio StreamReader only supports this from python 3.5.2 on
         buffer = b''
         while True:
