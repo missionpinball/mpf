@@ -1053,8 +1053,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         self._cmd_queue.put_nowait((data, wait_ms))
 
     def _read_inputs(self, node):
-        if self.node_firmware_version[node] >= 0x3100:
-            # in node firmware 0.49.0 and newer the response uses 12 bytes (10 payload)
+        if self.node_firmware_version[node] >= 0x2800:
+            # in node firmware 0.40.0 and newer the response uses 12 bytes (10 payload)
             return self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetInputState, bytearray(), 12)
 
         # older firmware used 10 bytes responses (8 payload)
