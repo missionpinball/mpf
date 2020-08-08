@@ -310,8 +310,6 @@ class Counter(LogicBlock):
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise counter."""
         super().__init__(machine, name)
-        self.debug_log("Creating Counter LogicBlock")
-
         self.delay = DelayManager(self.machine)
 
         self.ignore_hits = False
@@ -319,6 +317,7 @@ class Counter(LogicBlock):
 
     async def _initialize(self):
         await super()._initialize()
+        self.debug_log("Creating Counter LogicBlock")
         self.hit_value = self.config['count_interval']
 
         if self.config['direction'] == 'down' and self.hit_value > 0:
@@ -500,13 +499,9 @@ class Accrual(LogicBlock):
         """Return config section."""
         return "accrual"
 
-    def __init__(self, machine, name):
-        """Initialise Accrual."""
-        super().__init__(machine, name)
-        self.debug_log("Creating Accrual LogicBlock")
-
     async def _initialize(self):
         await super()._initialize()
+        self.debug_log("Creating Accrual LogicBlock")
         self.setup_event_handlers()
 
     def get_start_value(self) -> List[bool]:
@@ -561,14 +556,10 @@ class Sequence(LogicBlock):
         """Return config section."""
         return "sequence"
 
-    def __init__(self, machine: MachineController, name: str) -> None:
-        """Initialise sequence."""
-        super().__init__(machine, name)
-        self.debug_log("Creating Sequence LogicBlock")
-
     async def _initialize(self):
         """Initialise sequence."""
         await super()._initialize()
+        self.debug_log("Creating Sequence LogicBlock")
         self.setup_event_handlers()
 
     def get_start_value(self) -> int:

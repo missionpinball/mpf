@@ -24,6 +24,8 @@ class MachineVariables(LogMixin):
         self.machine_vars = dict()          # type: Dict[str, Any]
         self.machine_var_monitor = False
         self.machine_var_data_manager = None    # type: Optional[DataManager]
+        self.configure_logging("machine_vars", self.machine.config['logging']['console']['machine_vars'],
+                               self.machine.config['logging']['file']['machine_vars'])
 
     def load_machine_vars(self, machine_var_data_manager: DataManager, current_time) -> None:
         """Load machine vars from data manager."""

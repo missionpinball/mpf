@@ -1,13 +1,13 @@
 """Contains the LogMixin class."""
 import logging
+from logging import Logger
 
 from mpf.exceptions.config_file_error import ConfigFileError
 from mpf._version import log_url
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from logging import Logger  # pylint: disable-msg=cyclic-import,unused-import
-    from typing import NoReturn  # pylint: disable-msg=cyclic-import,unused-import
+    from typing import NoReturn, Optional  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class LogMixin:
@@ -21,14 +21,17 @@ class LogMixin:
 
     def __init__(self) -> None:
         """Initialise Log Mixin."""
-        self.log = None     # type: Logger
+        self.log = None     # type: Optional[Logger]
         self._info_to_console = False
         self._debug_to_console = False
         self._info_to_file = False
         self._info = False
         self._debug_to_file = False
         self._debug = False
-        self._url_base = None
+        self._url_base = None   # type: Optional[str]
+
+        if MYPY:
+            self.machine = None     # noqa
 
         logging.addLevelName(21, "INFO")
         logging.addLevelName(11, "DEBUG")
@@ -47,7 +50,7 @@ class LogMixin:
                 are "none", "basic", or "full".
             url_base: Base URL for docs links in exceptions.
         """
-        if url_base:
+        if isinstance(url_base, str):
             self._url_base = url_base
         else:
             self._url_base = logger
@@ -86,7 +89,7 @@ class LogMixin:
         Note that whether this message shows up in the console or log file is
         controlled by the settings used with configure_logging().
         """
-        if not hasattr(self, 'log'):
+        if not self.log:
             self._logging_not_configured()
 
         if self._debug_to_console:
@@ -151,7 +154,7 @@ class LogMixin:
     def format_log_line(self, msg, context, error_no) -> str:
         """Return a formatted log line with log link and context."""
         if error_no:
-            error_slug = "Log-{}-{}".format(self.log.name, error_no)
+            error_slug = "Log-{}-{}".format(self.log.name if self.log else "", error_no)
             error_url = log_url.format(error_slug)
         if error_no and context:
             return "{} Context: {} Log Code: {} ({})".format(msg, context, error_slug, error_url)
@@ -164,7 +167,7 @@ class LogMixin:
 
     def raise_config_error(self, msg, error_no, *, context=None) -> "NoReturn":
         """Raise a ConfigFileError exception."""
-        raise ConfigFileError(msg, error_no, self.log.name, context, self._url_base)
+        raise ConfigFileError(msg, error_no, self.log.name if self.log else "", context, self._url_base)
 
     def ignorable_runtime_exception(self, msg: str) -> None:
         """Handle ignorable runtime exception.
@@ -176,7 +179,7 @@ class LogMixin:
 
         self.error_log(msg)
 
-    def _logging_not_configured(self) -> None:
+    def _logging_not_configured(self) -> "NoReturn":
         raise RuntimeError(
             "Logging has not been configured for the {} module. You must call "
             "configure_logging() before you can post a log message".

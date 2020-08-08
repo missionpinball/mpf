@@ -21,6 +21,7 @@ if MYPY:   # pragma: no cover
     from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.platforms.interfaces.accelerometer_platform_interface import AccelerometerPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 
 class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
@@ -35,7 +36,7 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         Args:
             machine(mpf.core.machine.MachineController: The machine.
         """
-        self.machine = machine
+        self.machine = machine  # type: MachineController
         self.features = {}
         super().__init__()
         self.debug = False

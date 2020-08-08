@@ -128,12 +128,13 @@ class MachineController(LogMixin):
         self.custom_code = list()   # type: List[CustomCode]
         self.modes = DeviceCollection(self, 'modes', None)          # type: Dict[str, Mode]
         self.game = None            # type: Optional[Game]
-        self.variables = MachineVariables(self)                     # type: MachineVariables
         self.thread_stopper = threading.Event()
 
         self.config = config.get_machine_config()       # type: Any
         self.mpf_config = config                        # type: MpfConfig
         self.config_validator = ConfigValidator(self, self.mpf_config.get_config_spec())
+
+        self.variables = MachineVariables(self)  # type: MachineVariables
 
         # add some type hints
         if MYPY:   # pragma: no cover

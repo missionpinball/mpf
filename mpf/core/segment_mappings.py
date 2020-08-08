@@ -5,6 +5,7 @@ You can use convert_segments.py (based on https://github.com/dmadison/LED-Segmen
 
 BCD were created by us.
 """
+from typing import Dict, Union
 
 
 class TextToSegmentMapper:
@@ -611,6 +612,6 @@ class AsciiSegment(Segment):
 
 ASCII_SEGMENTS = {
     None: AsciiSegment(dp=0, ascii_value=ord(" "), char=" ")
-}
+}   # type: Dict[Union[None, int], AsciiSegment]
 for i in range(128):
     ASCII_SEGMENTS[i] = AsciiSegment(dp=0, ascii_value=i, char=chr(i))

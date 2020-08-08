@@ -219,6 +219,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             msg: messaged which was received
             remote_processor: Processor which sent the message.
         """
+        assert self.log is not None
         if msg == "!SRE":
             # ignore system interrupt
             self.log.info("Received system interrupt from %s.", remote_processor)

@@ -158,6 +158,7 @@ logging:
       light_controller: none
       logic_blocks: none
       machine_controller: basic
+      machine_vars: basic
       mode_controller: basic
       placeholder_manager: none
       platforms: none  # todo
@@ -191,6 +192,7 @@ logging:
       light_controller: basic
       logic_blocks: basic
       machine_controller: basic
+      machine_vars: basic
       mode_controller: basic
       placeholder_manager: basic
       platforms: basic

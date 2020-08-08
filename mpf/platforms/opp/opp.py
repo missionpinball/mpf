@@ -76,6 +76,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self.config = self.machine.config_validator.validate_config("opp", self.machine.config['opp'])
         self._configure_device_logging_and_debug("OPP", self.config)
         self._poll_response_received = {}   # type: Dict[str, asyncio.Event]
+        assert self.log is not None
 
         if self.config['driverboards']:
             self.machine_type = self.config['driverboards']
