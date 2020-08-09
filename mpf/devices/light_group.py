@@ -87,7 +87,7 @@ class LightStrip(LightGroup):
     collection = 'light_stripes'
     class_label = 'light_stripe'
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def _create_lights(self):
         distance = 0
@@ -111,7 +111,7 @@ class LightRing(LightGroup):
     collection = 'light_rings'
     class_label = 'light_ring'
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def _create_lights(self):
         angle = self.config['start_angle'] / 180 * math.pi

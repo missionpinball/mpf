@@ -12,4 +12,4 @@ sphinx:
 	cd docs/ && sphinx-build -b html -d _build/doctrees  -n -w BUILD_WARNINGS.txt . _build/html; cd ..
 
 mypy:
-	mypy mpf | grep -v __slots__
+	mypy mpf

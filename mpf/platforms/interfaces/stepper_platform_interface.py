@@ -1,4 +1,6 @@
 """Platform interface for smart steppers."""
+from typing import List
+
 import abc
 
 
@@ -14,7 +16,7 @@ class StepperPlatformInterface(metaclass=abc.ABCMeta):
     methods are implemented to support smart stepper operations in MPF.
     """
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     @abc.abstractmethod
     def home(self, direction):

@@ -117,7 +117,7 @@ class BoolTemplate(BaseTemplate):
 
     """Bool template."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def convert_result(self, value):
         """Convert the result to bool."""
@@ -128,7 +128,7 @@ class FloatTemplate(BaseTemplate):
 
     """Float template."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def convert_result(self, value):
         """Convert the result to float."""
@@ -139,7 +139,7 @@ class IntTemplate(BaseTemplate):
 
     """Float template."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def convert_result(self, value):
         """Convert the result to int."""
@@ -150,7 +150,7 @@ class StringTemplate(BaseTemplate):
 
     """String template."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def convert_result(self, value):
         """Convert the result to str."""
@@ -161,7 +161,7 @@ class RawTemplate(BaseTemplate):
 
     """Raw template."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def convert_result(self, value):
         """Keep the value."""
@@ -278,7 +278,7 @@ class BasePlaceholder:
 
     """Base class for placeholder variables."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     # pylint: disable-msg=no-self-use
     def subscribe(self):
@@ -828,7 +828,7 @@ class PlaceholderManager(BasePlaceholderManager):
 
     """Manages templates and placeholders for MPF."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     # pylint: disable-msg=too-many-return-statements
     def get_global_parameters(self, name):

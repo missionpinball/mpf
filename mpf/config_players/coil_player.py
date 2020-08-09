@@ -1,5 +1,6 @@
 """Coil config player."""
 from copy import deepcopy
+from typing import List
 
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 from mpf.devices.driver import Driver
@@ -13,7 +14,7 @@ class CoilPlayer(DeviceConfigPlayer):
     show_section = 'coils'
     machine_collection_name = 'coils'
 
-    __slots__ = []  # List[str]
+    __slots__ = []  # type: List[str]
 
     def play(self, settings, context: str, calling_context: str, priority: int = 0, **kwargs):
         """Enable, Pulse or disable coils."""

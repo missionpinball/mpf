@@ -1,4 +1,6 @@
 """Bit bang SPI to read switches."""
+from typing import List
+
 import asyncio
 import logging
 
@@ -12,7 +14,7 @@ class SpiBitBangSwitch(SwitchPlatformInterface):
 
     """Switch on SPI Bit Bang."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def get_board_name(self):
         """Return board name."""

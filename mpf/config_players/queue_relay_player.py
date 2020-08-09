@@ -1,4 +1,6 @@
 """Queue Relay Config Player."""
+from typing import List
+
 from mpf.core.utility_functions import Util
 
 from mpf.core.config_player import ConfigPlayer
@@ -10,7 +12,7 @@ class QueueRelayPlayer(ConfigPlayer):
 
     config_file_section = 'queue_relay_player'
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Block queue event."""

@@ -1,4 +1,5 @@
 """Device Mixins."""
+from typing import List
 
 
 class DevicePositionMixin():
@@ -10,7 +11,7 @@ class DevicePositionMixin():
     device.y and device.z instead of device.config['x']
     """
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     @property
     def x(self):

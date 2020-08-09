@@ -1,4 +1,6 @@
 """File interface for pickled binary files."""
+from typing import List
+
 import pickle
 
 from mpf.core.file_interface import FileInterface
@@ -8,7 +10,7 @@ class PickleInterface(FileInterface):
 
     """Loads and saves pickled binary files."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     file_types = ['.bin']
 

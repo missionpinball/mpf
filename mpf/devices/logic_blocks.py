@@ -492,7 +492,7 @@ class Accrual(LogicBlock):
     collection = 'accruals'
     class_label = 'accrual'
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     @property
     def config_section_name(self):
@@ -549,7 +549,7 @@ class Sequence(LogicBlock):
     collection = 'sequences'
     class_label = 'sequence'
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     @property
     def config_section_name(self):

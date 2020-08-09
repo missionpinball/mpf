@@ -1,4 +1,6 @@
 """Light config player."""
+from typing import List
+
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 from mpf.core.rgb_color import RGBColor
 from mpf.core.utility_functions import Util
@@ -13,7 +15,7 @@ class LightPlayer(DeviceConfigPlayer):
     machine_collection_name = 'lights'
     allow_placeholders_in_keys = True
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     # pylint: disable-msg=too-many-locals
     def play(self, settings, context, calling_context, priority=0, **kwargs):

@@ -1,4 +1,6 @@
 """Queue Event Config Player."""
+from typing import List
+
 from functools import partial
 
 from mpf.core.config_player import ConfigPlayer
@@ -10,7 +12,7 @@ class QueueEventPlayer(ConfigPlayer):
 
     config_file_section = 'queue_event_player'
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Post queue events."""

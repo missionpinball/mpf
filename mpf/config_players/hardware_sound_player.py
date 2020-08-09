@@ -1,4 +1,6 @@
 """Config player for sounds on an external sound card."""
+from typing import List
+
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 
 MYPY = False
@@ -13,7 +15,7 @@ class HardwareSoundPlayer(DeviceConfigPlayer):
     config_file_section = 'hardware_sound_player'
     show_section = 'hardware_sounds'
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Play sound on external card."""

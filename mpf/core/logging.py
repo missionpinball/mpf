@@ -7,7 +7,7 @@ from mpf._version import log_url
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from typing import NoReturn, Optional, Any  # pylint: disable-msg=cyclic-import,unused-import
+    from typing import NoReturn, Optional  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 

@@ -1,4 +1,6 @@
 """A kickback device which will fire a ball back into the playfield."""
+from typing import List
+
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.devices.autofire import AutofireCoil
 
@@ -12,7 +14,7 @@ class Kickback(AutofireCoil):
     collection = 'kickbacks'
     class_label = 'kickback'
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def _hit(self):
         """Post fired event."""

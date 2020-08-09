@@ -1,4 +1,6 @@
 """Interface for an accelerometer device."""
+from typing import List
+
 import abc
 
 
@@ -8,3 +10,5 @@ class AccelerometerPlatformInterface(metaclass=abc.ABCMeta):
 
     Currently no public methods.
     """
+
+    __slots__ = []  # type: List[str]

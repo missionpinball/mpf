@@ -1,4 +1,6 @@
 """Shot profiles."""
+from typing import List
+
 from mpf.core.mode import Mode
 
 from mpf.core.system_wide_device import SystemWideDevice
@@ -14,7 +16,7 @@ class ShotProfile(ModeDevice, SystemWideDevice):
     collection = 'shot_profiles'
     class_label = 'shot_profile'
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def device_removed_from_mode(self, mode: Mode) -> None:
         """Remove from mode."""

@@ -1,4 +1,6 @@
 """Base class for flat config players."""
+from typing import List
+
 import abc
 
 from mpf.core.config_player import ConfigPlayer
@@ -8,7 +10,7 @@ class FlatConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
 
     """Flat show players."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def validate_config_entry(self, settings, name):
         """Validate one entry of this player."""

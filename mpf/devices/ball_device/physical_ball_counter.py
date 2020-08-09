@@ -131,35 +131,35 @@ class BallActivity:
 
     """An acticity in a ball device."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
 
 class BallLostActivity(BallActivity):
 
     """A ball was lost/ejected from device."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
 
 class NewBallActivity(BallActivity):
 
     """A new ball was found in the device."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
 
 class BallEntranceActivity(NewBallActivity):
 
     """A new ball entered the device (did not return)."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
 
 class BallReturnActivity(NewBallActivity):
 
     """A ball returned."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
 
 class UnknownBallActivity(NewBallActivity):
@@ -169,7 +169,7 @@ class UnknownBallActivity(NewBallActivity):
     This could be a returned or entered ball.
     """
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
 
 class PhysicalBallCounter:

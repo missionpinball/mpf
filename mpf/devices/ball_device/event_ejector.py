@@ -1,4 +1,6 @@
 """Post an event to trigger an eject."""
+from typing import List
+
 from mpf.devices.ball_device.ball_device_ejector import BallDeviceEjector
 
 
@@ -6,7 +8,7 @@ class EventEjector(BallDeviceEjector):
 
     """Post an event to trigger an eject."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def __init__(self, config, ball_device, machine):
         """Initialise ejector."""

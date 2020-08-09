@@ -5,7 +5,7 @@ http://stackoverflow.com/questions/32965846/cant-parse-yaml-correctly/
 """
 import copy
 import re
-from typing import Any, Iterable
+from typing import Any, Iterable, List
 from typing import Dict
 
 from collections.abc import Hashable
@@ -170,7 +170,7 @@ class YamlInterface(FileInterface):
     cache = False
     file_cache = dict()     # type: Dict[str, Any]
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def load(self, filename, expected_version_str=None, halt_on_error=True) -> dict:
         """Load a YAML file from disk.

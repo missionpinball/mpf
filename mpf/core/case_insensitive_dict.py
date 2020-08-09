@@ -1,12 +1,13 @@
 """Case insensitive dict."""
 # Based on this: http://stackoverflow.com/questions/2082152/case-insensitive-dictionary
+from typing import List
 
 
 class CaseInsensitiveDict(dict):
 
     """A dict which lowercases all keys."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     @staticmethod
     def lower(key):

@@ -1,4 +1,6 @@
 """Interface for a hardware sound platform."""
+from typing import List
+
 import abc
 
 
@@ -6,7 +8,7 @@ class HardwareSoundPlatformInterface(metaclass=abc.ABCMeta):
 
     """Interface for a hardware sound platform."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     @abc.abstractmethod
     def play_sound(self, number: int, track: int = 1):

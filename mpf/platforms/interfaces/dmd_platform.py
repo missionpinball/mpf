@@ -1,4 +1,6 @@
 """Interface for monochrome and rgb platform devices."""
+from typing import List
+
 import abc
 
 
@@ -6,7 +8,7 @@ class DmdPlatformInterface(metaclass=abc.ABCMeta):
 
     """Interface for monochrome DMDs in hardware platforms."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     @abc.abstractmethod
     def update(self, data: bytes):

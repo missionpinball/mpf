@@ -1,4 +1,6 @@
 """Base class for config players which have multiple entries."""
+from typing import List
+
 import abc
 
 from mpf.core.utility_functions import Util
@@ -11,7 +13,7 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
 
     """Base class for config players which have multiple entries."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     allow_placeholders_in_keys = False
 

@@ -1,4 +1,6 @@
 """Platform interface for servos."""
+from typing import List
+
 import abc
 
 
@@ -11,7 +13,7 @@ class ServoPlatformInterface(metaclass=abc.ABCMeta):
     methods are implemented to support servo operations in MPF.
     """
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     @abc.abstractmethod
     def go_to_position(self, position):

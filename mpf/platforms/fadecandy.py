@@ -1,4 +1,6 @@
 """Contains code for an FadeCandy hardware for RGB LEDs."""
+from typing import List
+
 import logging
 import json
 import struct
@@ -16,7 +18,7 @@ class FadecandyHardwarePlatform(OpenpixelHardwarePlatform):
 
     """Base class for the FadeCandy hardware platform."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def __init__(self, machine: "MachineController") -> None:
         """Initialise Fadecandy.

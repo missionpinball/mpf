@@ -1,4 +1,6 @@
 """Block Event Config Player."""
+from typing import List
+
 from mpf.core.config_player import ConfigPlayer
 
 
@@ -8,7 +10,7 @@ class BlockEventPlayer(ConfigPlayer):
 
     config_file_section = 'blocking'
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Block event."""

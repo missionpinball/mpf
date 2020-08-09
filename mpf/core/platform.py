@@ -3,7 +3,7 @@ import abc
 import asyncio
 from collections import namedtuple
 
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 from mpf.core.logging import LogMixin
 from mpf.core.utility_functions import Util
@@ -128,7 +128,7 @@ class DmdPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for DMDs in MPF."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def __init__(self, machine):
         """Add dmd feature."""
@@ -150,7 +150,7 @@ class HardwareSoundPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for hardware sounds in MPF."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def __init__(self, machine):
         """Add hardware sound feature."""
@@ -167,7 +167,7 @@ class RgbDmdPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for RGB DMDs in MPF."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def __init__(self, machine):
         """Add rgb dmd feature."""
@@ -189,7 +189,7 @@ class SegmentDisplayPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for 7-segment/6-digits display in MPF."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def __init__(self, machine):
         """Add segment display feature."""
@@ -252,7 +252,7 @@ class AccelerometerPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for Accelerometer platforms."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def __init__(self, machine):
         """Add accelerometer feature."""
@@ -275,7 +275,7 @@ class I2cPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for I2C Platforms."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def __init__(self, machine):
         """Initialise I2C platform and set feature."""
@@ -291,7 +291,7 @@ class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for servo platforms in MPF."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def __init__(self, machine):
         """Add servo feature."""
@@ -312,7 +312,7 @@ class StepperPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for smart servo (axis) platforms in MPF."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def __init__(self, machine):
         """Add smart servo feature."""
@@ -360,7 +360,7 @@ class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
     This includes LEDs, GIs, Matrix Lights and any other lights.
     """
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def __init__(self, machine):
         """Add led feature."""
@@ -395,7 +395,7 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for platforms with switches in MPF."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def __init__(self, machine):
         """Add switch feature."""
@@ -467,7 +467,7 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for platforms with drivers."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def __init__(self, machine):
         """Add driver feature and default max_pulse length."""

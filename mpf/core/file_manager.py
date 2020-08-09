@@ -8,14 +8,14 @@ from mpf.file_interfaces.yaml_interface import YamlInterface
 
 MYPY = False
 if MYPY:    # pragma: no cover
-    from typing import Dict     # pylint: disable-msg=cyclic-import,unused-import
+    from typing import Dict, List  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class FileManager:
 
     """Manages file interfaces."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     log = logging.getLogger('FileManager')
     file_interfaces = dict()    # type: Dict[str, YamlInterface]

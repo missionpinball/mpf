@@ -25,7 +25,7 @@ class ShowPool(AssetPool):
 
     """A pool of shows."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def __repr__(self):
         """Return str representation."""

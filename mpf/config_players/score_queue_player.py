@@ -12,7 +12,7 @@ class ScoreQueuePlayer(ConfigPlayer):
     config_file_section = 'score_queue_player'
     show_section = 'score_queues'
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     @staticmethod
     def is_entry_valid_outside_mode(settings) -> bool:

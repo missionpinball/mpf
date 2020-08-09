@@ -1,4 +1,5 @@
 """Loads MPF configs."""
+from typing import List
 
 import logging
 import os
@@ -111,7 +112,7 @@ class ConfigLoader:
 
     """Generic loader for MPF and MC configs."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def load_mpf_config(self) -> MpfConfig:
         """Load and return a MPF config."""

@@ -1,4 +1,6 @@
 """Standard pulse ejector."""
+from typing import List
+
 import asyncio
 
 from mpf.devices.ball_device.ball_device_ejector import BallDeviceEjector
@@ -10,7 +12,7 @@ class PulseCoilEjector(DefaultBallSearch, BallDeviceEjector):
 
     """Pulse a coil to eject one ball."""
 
-    __slots__ = []
+    __slots__ = []  # type: List[str]
 
     def __init__(self, config, ball_device, machine):
         """Initialise pulse coil ejector."""
