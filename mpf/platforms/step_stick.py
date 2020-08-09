@@ -1,7 +1,7 @@
 """StepStick or similar stepper driver connected to a digital output."""
 import asyncio
 
-from typing import Optional, Union
+from typing import Optional
 
 import logging
 
