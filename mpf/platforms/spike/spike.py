@@ -497,7 +497,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         """
         pulse_value = int(pulse_settings.duration * self.ticks_per_sec[node] / 1000)
 
-        if self.node_firmware_version[node] >= 0x3100:
+        if self.node_firmware_version[node] >= 0x2800:
             # length: 0x24
             self.send_cmd_async(node, SpikeNodebus.CoilSetReflex, bytearray(
                 [coil_index,                                                # coil [3]
@@ -614,7 +614,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         self._check_coil_switch_combination(enable_switch, coil)
         self._check_coil_switch_combination(disable_switch, coil)
 
-        if self.node_firmware_version[coil.hw_driver.node] >= 0x3100:
+        if self.node_firmware_version[coil.hw_driver.node] >= 0x2800:
             flag1 = 5
             hold_param1 = 0x28
         else:
@@ -649,7 +649,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
     def clear_hw_rule(self, switch, coil):
         """Disable hardware rule for this coil."""
         del switch
-        if self.node_firmware_version[coil.hw_driver.node] >= 0x3100:
+        if self.node_firmware_version[coil.hw_driver.node] >= 0x2800:
             self.send_cmd_async(coil.hw_driver.node, SpikeNodebus.CoilSetReflex, bytearray(
                 [coil.hw_driver.index] + [0x00] * 33))
         else:
