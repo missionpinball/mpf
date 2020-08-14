@@ -502,7 +502,8 @@ class ModeController(MpfController):
         # sort the active mode list by priority
         self.active_modes.sort(key=lambda x: x.priority, reverse=True)
 
-        self.dump()
+        if self._debug:
+            self.dump()
 
     def dump(self):
         """Dump the current status of the running modes to the log file."""
