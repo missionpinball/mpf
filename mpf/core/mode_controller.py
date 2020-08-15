@@ -484,6 +484,10 @@ class ModeController(MpfController):
 
         # notify about changed active mode list
         self.machine.events.post("modes_active_modes_changed")
+        '''event: modes_active_modes_changed
+
+        The list of active mode changed. A mode has been started or stopped.
+        '''
 
         if self._debug:
             self.dump()
