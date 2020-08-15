@@ -46,14 +46,14 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         self.instances['_global'][self.config_file_section] = dict()
 
     def _add_handlers(self):
-        self.machine.events.add_handler('init_phase_1', self._initialize_in_mode, priority=20)
+        self.machine.events.add_handler('init_phase_1', self._initialize_mode_handlers, priority=20)
         self.machine.events.add_handler('init_phase_1', self._initialise_system_wide, priority=1)
 
     def __repr__(self):
         """Return string representation."""
         return 'ConfigPlayer.{}/{}'.format(self.config_file_section, self.show_section)
 
-    def _initialize_in_mode(self, **kwargs):
+    def _initialize_mode_handlers(self, **kwargs):
         del kwargs
         self.machine.mode_controller.register_load_method(
             self.process_mode_config, self.config_file_section)

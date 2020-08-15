@@ -217,32 +217,39 @@ class TestBcpInterface(MpfBcpTestCase):
             queue)
 
         # start mode 1
-        self.machine.modes['mode1'].config['mode']['game_mode'] = False
-        self.machine.modes['mode1'].start(mode_priority=200)
-        self.machine.modes['mode1'].active = True
+        self.post_event("start_mode1")
+        self.advance_time_and_run()
 
         queue = self._bcp_external_client.reset_and_return_queue()
         self.assertListEqual(
             [
-                ("mode_start", {"priority": 200, "name": "mode1", "running_modes": [("attract", 10), ("mode1", 200)]})
+                ("mode_start", {"priority": 200, "name": "mode1"}),
+                ("mode_list", {"running_modes": [("mode1", 200), ("attract", 10)]})
             ],
             queue)
 
         # start mode 2
-        self.machine.modes['mode2'].config['mode']['game_mode'] = False
-        self.machine.modes['mode2'].start(mode_priority=100)
-        self.machine.modes['mode2'].active = True
-
-        # stop mode 1
-        self.machine.modes['mode1'].stop()
+        self.post_event("start_mode2")
         self.advance_time_and_run()
 
         queue = self._bcp_external_client.reset_and_return_queue()
-        self.assertIn(
-            ("mode_start", {"priority": 100, "name": "mode2", "running_modes": [("attract", 10), ("mode1", 200), ("mode2", 100)]}),
+        self.assertListEqual(
+            [
+                ("mode_start", {"priority": 100, "name": "mode2"}),
+                ("mode_list", {"running_modes": [("mode1", 200), ("mode2", 100), ("attract", 10)]})
+            ],
             queue)
-        self.assertIn(
-            ("mode_stop", {"name": "mode1", "running_modes": [("attract", 10), ("mode2", 100)]}),
+
+        # stop mode 1
+        self.post_event("stop_mode1")
+        self.advance_time_and_run()
+
+        queue = self._bcp_external_client.reset_and_return_queue()
+        self.assertListEqual(
+            [
+                ("mode_stop", {"name": "mode1"}),
+                ("mode_list", {"running_modes": [("mode2", 100), ("attract", 10)]})
+            ],
             queue)
 
         # Stop monitoring modes
@@ -250,9 +257,8 @@ class TestBcpInterface(MpfBcpTestCase):
         self.advance_time_and_run()
 
         # start mode 1 again
-        self.machine.modes['mode1'].config['mode']['game_mode'] = False
-        self.machine.modes['mode1'].start(mode_priority=200)
-        self.machine.modes['mode1'].active = True
+        self.post_event("start_mode1")
+        self.advance_time_and_run()
 
         # The BCP queue should be empty
         queue = self._bcp_external_client.reset_and_return_queue()

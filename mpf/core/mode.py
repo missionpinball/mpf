@@ -231,6 +231,10 @@ class Mode(LogMixin):
     def _started(self, **kwargs) -> None:
         """Handle result of mode_<name>_starting queue event."""
         del kwargs
+        if self.machine.is_shutting_down:
+            self.info_log("Will not start because machine is shutting down.")
+            return
+
         self.info_log('Started. Priority: %s', self.priority)
 
         self.active = True
@@ -325,9 +329,6 @@ class Mode(LogMixin):
         self.priority = 0
         self.active = False
         self.stopping = False
-
-        for callback in self.machine.mode_controller.stop_methods:
-            callback[0](self)
 
         for item in self.stop_methods:
             item[0](item[1])

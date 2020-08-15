@@ -98,7 +98,7 @@ class MachineController(LogMixin):
                  "stop_future", "events", "switch_controller", "mode_controller", "settings",
                  "bcp", "ball_controller", "show_controller", "placeholder_manager", "device_manager", "auditor",
                  "tui", "service", "switches", "shows", "coils", "ball_devices", "lights", "playfield", "playfields",
-                 "autofires", "_crash_handlers", "__dict__", "mpf_config"]
+                 "autofires", "_crash_handlers", "__dict__", "mpf_config", "is_shutting_down"]
 
     # pylint: disable-msg=too-many-statements
     def __init__(self, options: dict, config: MpfConfig) -> None:
@@ -107,6 +107,7 @@ class MachineController(LogMixin):
         self.log = logging.getLogger("Machine")     # type: Logger
         self.log.info("Mission Pinball Framework Core Engine v%s", __version__)
         self._crash_handlers = []   # type: List[Callable]
+        self.is_shutting_down = False
 
         self.log.info("Command line arguments: %s", options)
         self.options = options
@@ -686,6 +687,7 @@ class MachineController(LogMixin):
         self.stop_future.set_result(reason)
 
     def _do_stop(self) -> None:
+        self.is_shutting_down = True
         self.log.info("Shutting down...")
         self.events.post('shutdown')
         '''event: shutdown

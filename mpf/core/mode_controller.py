@@ -30,7 +30,7 @@ class ModeController(MpfController):
     config_name = "mode_controller"
 
     __slots__ = ["queue", "active_modes", "mode_stop_count", "_machine_mode_folders", "_mpf_mode_folders",
-                 "loader_methods", "start_methods", "stop_methods"]
+                 "loader_methods", "start_methods"]
 
     def __init__(self, machine: MachineController) -> None:
         """Initialise mode controller.
@@ -55,7 +55,6 @@ class ModeController(MpfController):
         # started.
         self.loader_methods = list()                # type: List[RemoteMethod]
         self.start_methods = list()                 # type: List[RemoteMethod]
-        self.stop_methods = list()                  # type: List[Tuple[Callable[[Mode], None], int]]
 
         if 'modes' in self.machine.config:
             # priority needs to be higher than device_manager::_load_device_modules
@@ -473,25 +472,6 @@ class ModeController(MpfController):
         if method in self.start_methods:
             self.start_methods.remove(method)
 
-    def register_stop_method(self, callback, priority=0):
-        """Register a method which is called when the mode is stopped.
-
-        These are universal, in that they're called every time a mode stops priority is the priority they're called.
-        Has nothing to do with mode priority.
-        """
-        if not callable(callback):
-            raise ValueError("Cannot add stop method '{}' as it is not"
-                             "callable".format(callback))
-
-        self.stop_methods.append((callback, priority))
-
-        self.stop_methods.sort(key=lambda x: x[1], reverse=True)
-
-    def remove_stop_method(self, callback, priority=0):
-        """Remove an existing stop method."""
-        if (callback, priority) in self.stop_methods:
-            self.stop_methods.remove((callback, priority))
-
     def set_mode_state(self, mode: Mode, active: bool):
         """Remember mode state."""
         if active:
@@ -500,7 +480,10 @@ class ModeController(MpfController):
             self.active_modes.remove(mode)
 
         # sort the active mode list by priority
-        self.active_modes.sort(key=lambda x: x.priority, reverse=True)
+        self.active_modes.sort(key=lambda x: (x.priority, x.name), reverse=True)
+
+        # notify about changed active mode list
+        self.machine.events.post("modes_active_modes_changed")
 
         if self._debug:
             self.dump()
