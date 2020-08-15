@@ -179,6 +179,7 @@ class TestP3Roc(MpfTestCase):
         self._test_flipper_single_coil()
         self._test_flipper_two_coils()
         self._test_flipper_two_coils_with_eos()
+        self._test_flipper_one_coil_with_eos()
         self._test_pdb_gi_light()
         self._test_hw_rule_hold_no_allow_enable()
         self._test_leds()
@@ -739,8 +740,8 @@ SW-16 boards found:
             call(1, 'closed_debounced', {'reloadActive': False, 'notifyHost': True}, [], False),
             call(1, 'open_debounced', {'reloadActive': False, 'notifyHost': True}, [], False),
             call(1, 'closed_nondebounced', {'reloadActive': False, 'notifyHost': False}, [
-                {'patterOnTime': 3, 'outputDriveTime': 10, 'timeslots': 0, 'patterOffTime': 5, 'polarity': True,
-                 'driverNum': coil_number, 'state': True, 'futureEnable': False, 'patterEnable': True,
+                {'patterOnTime': 0, 'outputDriveTime': 10, 'timeslots': 0, 'patterOffTime': 0, 'polarity': True,
+                 'driverNum': coil_number, 'state': True, 'futureEnable': False, 'patterEnable': False,
                  'waitForFirstTimeSlot': False},
                 {'patterOnTime': 1, 'outputDriveTime': 10, 'timeslots': 0, 'patterOffTime': 7, 'polarity': True,
                  'driverNum': coil_number2, 'state': True, 'futureEnable': False, 'patterEnable': True,
@@ -750,6 +751,47 @@ SW-16 boards found:
         # disable
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
         self.machine.flippers["f_test_hold_eos"].disable()
+        self.wait_for_platform()
+        self.pinproc.switch_update_rule.assert_has_calls([
+            call(1, 'open_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
+            call(1, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
+            call(1, 'open_debounced', {'notifyHost': True, 'reloadActive': False}, []),
+            call(1, 'closed_debounced', {'notifyHost': True, 'reloadActive': False}, []),
+            call(2, 'open_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
+            call(2, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
+            call(2, 'open_debounced', {'notifyHost': True, 'reloadActive': False}, []),
+            call(2, 'closed_debounced', {'notifyHost': True, 'reloadActive': False}, []),
+        ], any_order=True)
+
+    def _test_flipper_one_coil_with_eos(self):
+        # single coil with eos
+        coil_number = self.machine.coils["c_flipper_main"].hw_driver.number
+        self.pinproc.switch_update_rule = MagicMock(return_value=True)
+        self.machine.flippers["f_test_single_eos"].enable()
+        self.wait_for_platform()
+        self.pinproc.switch_update_rule.assert_has_calls([
+            call(2, 'open_nondebounced', {'reloadActive': False, 'notifyHost': False}, [], False),
+            call(2, 'closed_debounced', {'reloadActive': False, 'notifyHost': True}, [], False),
+            call(2, 'open_debounced', {'reloadActive': False, 'notifyHost': True}, [], False),
+            call(2, 'closed_nondebounced', {'reloadActive': False, 'notifyHost': False}, [
+                {'patterOnTime': 0, 'outputDriveTime': 0, 'timeslots': 0, 'patterOffTime': 0, 'polarity': True,
+                 'driverNum': coil_number, 'state': 0, 'futureEnable': False, 'patterEnable': False,
+                 'waitForFirstTimeSlot': False}], False),
+            call(1, 'open_nondebounced', {'reloadActive': False, 'notifyHost': False}, [
+                {'patterOnTime': 0, 'outputDriveTime': 0, 'timeslots': 0, 'patterOffTime': 0, 'polarity': True,
+                 'driverNum': coil_number, 'state': 0, 'futureEnable': False, 'patterEnable': False,
+                 'waitForFirstTimeSlot': False}], False),
+            call(1, 'closed_debounced', {'reloadActive': False, 'notifyHost': True}, [], False),
+            call(1, 'open_debounced', {'reloadActive': False, 'notifyHost': True}, [], False),
+            call(1, 'closed_nondebounced', {'reloadActive': False, 'notifyHost': False}, [
+                {'patterOnTime': 3, 'outputDriveTime': 10, 'timeslots': 0, 'patterOffTime': 5, 'polarity': True,
+                 'driverNum': coil_number, 'state': True, 'futureEnable': False, 'patterEnable': True,
+                 'waitForFirstTimeSlot': False}], False)
+        ], any_order=True)
+
+        # disable
+        self.pinproc.switch_update_rule = MagicMock(return_value=True)
+        self.machine.flippers["f_test_single_eos"].disable()
         self.wait_for_platform()
         self.pinproc.switch_update_rule.assert_has_calls([
             call(1, 'open_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),

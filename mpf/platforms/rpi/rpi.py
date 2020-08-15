@@ -12,7 +12,7 @@ from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInter
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.core.platform import SwitchPlatform, DriverPlatform, ServoPlatform, SwitchSettings, \
-    DriverSettings, DriverConfig, SwitchConfig, I2cPlatform
+    DriverSettings, DriverConfig, SwitchConfig, I2cPlatform, RepulseSettings
 
 # apiogpio is not a requirement for MPF so we fail with a nice error when loading
 try:
@@ -157,13 +157,13 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
             raise AssertionError("To use the Raspberry Pi platform you need to install the apigpio extension. "
                                  "Run: pip3 install apigpio-mpf.")
 
-        self.pi = None          # type: apigpio.Pi
+        self.pi = None          # type: Optional[apigpio.Pi]
         # load config
         self.config = self.machine.config_validator.validate_config("raspberry_pi", self.machine.config['raspberry_pi'])
-        self._switches = None   # type: int
+        self._switches = None   # type: Optional[int]
 
-        self._cmd_queue = None  # type: asyncio.Queue
-        self._cmd_task = None   # type: asyncio.Task
+        self._cmd_queue = None  # type: Optional[asyncio.Queue]
+        self._cmd_task = None   # type: Optional[asyncio.Task]
         self._configure_device_logging_and_debug("Raspberry Pi", self.config)
 
     async def initialize(self):
@@ -245,8 +245,15 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
         """Raise exception."""
         raise AssertionError("Not supported on the RPi currently. Write in the forum if you need it.")
 
+    def set_pulse_on_hit_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
+                                                      eos_switch: SwitchSettings, coil: DriverSettings,
+                                                      repulse_settings: Optional[RepulseSettings]):
+        """Raise exception."""
+        raise AssertionError("Not supported on the RPi currently. Write in the forum if you need it.")
+
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
-                                                                 disable_switch: SwitchSettings, coil: DriverSettings):
+                                                                 eos_switch: SwitchSettings, coil: DriverSettings,
+                                                                 repulse_settings: Optional[RepulseSettings]):
         """Raise exception."""
         raise AssertionError("Not supported on the RPi currently. Write in the forum if you need it.")
 

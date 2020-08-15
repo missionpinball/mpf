@@ -1,6 +1,6 @@
 """VPX platform."""
 import asyncio
-from typing import Callable, Tuple, Dict
+from typing import Callable, Tuple, Dict, Optional
 
 import logging
 
@@ -11,7 +11,7 @@ from mpf.platforms.interfaces.light_platform_interface import LightPlatformInter
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
 from mpf.core.platform import LightsPlatform, SwitchPlatform, DriverPlatform, SwitchSettings, DriverSettings, \
-    SwitchConfig, DriverConfig
+    SwitchConfig, DriverConfig, RepulseSettings
 
 
 class VirtualPinballSwitch(SwitchPlatformInterface):
@@ -277,8 +277,20 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         else:
             self.rules[(enable_switch.hw_switch, coil.hw_driver)] = True
 
+    def set_pulse_on_hit_and_release_and_disable_rule(self, enable_switch: SwitchSettings, eos_switch: SwitchSettings,
+                                                      coil: DriverSettings,
+                                                      repulse_settings: Optional[RepulseSettings]):
+        """Pulse on hit, disable on disable_switch hit."""
+        if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
+            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
+                enable_switch.hw_switch, coil.hw_driver))
+        else:
+            """disable_switch missing"""
+            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = False
+
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
-                                                                 disable_switch: SwitchSettings, coil: DriverSettings):
+                                                                 eos_switch: SwitchSettings, coil: DriverSettings,
+                                                                 repulse_settings: Optional[RepulseSettings]):
         """Pulse on hit and hold, disable on disable_switch hit."""
         if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
             raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(

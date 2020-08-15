@@ -16,7 +16,7 @@ from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformI
 
 from mpf.core.platform import ServoPlatform, SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform, \
     DmdPlatform, RgbDmdPlatform, LightsPlatform, DriverConfig, SwitchConfig, SegmentDisplayPlatform, StepperPlatform, \
-    HardwareSoundPlatform
+    HardwareSoundPlatform, SwitchSettings, DriverSettings, RepulseSettings
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
@@ -210,7 +210,26 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
         self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_release"
 
-    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
+    def set_pulse_on_hit_and_release_and_disable_rule(self, enable_switch: SwitchSettings, eos_switch: SwitchSettings,
+                                                      coil: DriverSettings,
+                                                      repulse_settings: Optional[RepulseSettings]):
+        """Set rule."""
+        if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
+            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
+                enable_switch.hw_switch, coil.hw_driver))
+
+        self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_release_and_disable"
+
+        if (eos_switch.hw_switch, coil.hw_driver) in self.rules:
+            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
+                eos_switch.hw_switch, coil.hw_driver))
+
+        self.rules[(eos_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_release_and_disable"
+
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
+                                                                 eos_switch: SwitchSettings,
+                                                                 coil: DriverSettings,
+                                                                 repulse_settings: Optional[RepulseSettings]):
         """Set rule."""
         if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
             raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
@@ -218,11 +237,11 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
         self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_enable_and_release_and_disable"
 
-        if (disable_switch.hw_switch, coil.hw_driver) in self.rules:
+        if (eos_switch.hw_switch, coil.hw_driver) in self.rules:
             raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
-                disable_switch.hw_switch, coil.hw_driver))
+                eos_switch.hw_switch, coil.hw_driver))
 
-        self.rules[(disable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_enable_and_release_and_disable"
+        self.rules[(eos_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_enable_and_release_and_disable"
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
         """Set rule."""

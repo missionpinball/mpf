@@ -605,8 +605,6 @@ flippers:
     disable_events: event_handler|event_handler:ms|ball_will_end, service_mode_entered
     sw_flip_events: event_handler|event_handler:ms|None
     sw_release_events: event_handler|event_handler:ms|None
-    # enable_no_hold_events: event_handler|event_handler:ms|None
-    # invert_events: event_handler|event_handler:ms|None
     main_coil_overwrite: single|subconfig(coil_overwrites)|None
     hold_coil_overwrite: single|subconfig(coil_overwrites)|None
     switch_overwrite: dict|str:str|None
@@ -616,6 +614,7 @@ flippers:
     ball_search_order: single|int|100
     ball_search_hold_time: single|ms|1s
     playfield: single|machine(playfields)|playfield
+    repulse_on_eos_open: single|bool|false
 game:
     __valid_in__: machine
     __type__: config

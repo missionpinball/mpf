@@ -4,7 +4,7 @@ from collections import namedtuple
 from typing import Optional
 
 from mpf.core.mpf_controller import MpfController
-from mpf.core.platform import DriverPlatform, SwitchSettings, DriverSettings
+from mpf.core.platform import DriverPlatform, SwitchSettings, DriverSettings, RepulseSettings
 from mpf.core.switch_controller import SwitchHandler
 from mpf.devices.driver import Driver
 from mpf.devices.switch import Switch
@@ -13,6 +13,7 @@ from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, Ho
 SwitchRuleSettings = namedtuple("SwitchRuleSettings", ["switch", "invert", "debounce"])
 DriverRuleSettings = namedtuple("DriverRuleSettings", ["driver", "recycle"])
 PulseRuleSettings = namedtuple("PulseRuleSettings", ["power", "duration"])
+EosRuleSettings = namedtuple("RepulseRuleSettings", ["enable_repulse"])
 HoldRuleSettings = namedtuple("HoldRuleSettings", ["power"])
 HardwareRule = namedtuple("HardwareRule", ["platform", "switch_settings", "driver_settings", "switch_key"])
 
@@ -53,6 +54,14 @@ class PlatformController(MpfController):
         driver.config['psu'].notify_about_instant_pulse(pulse_ms=pulse_ms)
 
     @staticmethod
+    def _get_repulse_settings(eos_settings: Optional[EosRuleSettings]) -> Optional[RepulseSettings]:
+        """Return repulse settings for rule."""
+        if eos_settings:
+            return RepulseSettings(
+                enable_repulse=eos_settings.enable_repulse)
+        return None
+
+    @staticmethod
     def _get_configured_switch(switch: SwitchRuleSettings) -> SwitchSettings:
         """Return configured switch for rule."""
         return SwitchSettings(
@@ -70,21 +79,6 @@ class PlatformController(MpfController):
 
         if hold_power == 0.0:
             raise AssertionError("Cannot enable driver with hold_power 0.0")
-
-        return DriverSettings(
-            hw_driver=driver.driver.hw_driver,
-            pulse_settings=PulseSettings(duration=pulse_duration, power=pulse_power),
-            hold_settings=HoldSettings(power=hold_power),
-            recycle=driver.recycle)
-
-    @staticmethod
-    def _get_configured_driver_with_optional_hold(driver: DriverRuleSettings,
-                                                  pulse_setting: Optional[PulseRuleSettings],
-                                                  hold_settings: Optional[HoldRuleSettings]) -> DriverSettings:
-        """Return configured driver for rule which might have hold."""
-        pulse_duration = driver.driver.get_and_verify_pulse_ms(pulse_setting.duration if pulse_setting else None)
-        pulse_power = driver.driver.get_and_verify_pulse_power(pulse_setting.power if pulse_setting else None)
-        hold_power = driver.driver.get_and_verify_hold_power(hold_settings.power if hold_settings else None)
 
         return DriverSettings(
             hw_driver=driver.driver.hw_driver,
@@ -185,7 +179,7 @@ class PlatformController(MpfController):
     def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchRuleSettings,
                                           driver: DriverRuleSettings,
                                           pulse_setting: PulseRuleSettings = None) -> HardwareRule:
-        """Add pulse on hit and relase rule to driver.
+        """Add pulse on hit and release rule to driver.
 
         Pulse a driver but cancel pulse when switch is released.
 
@@ -224,7 +218,7 @@ class PlatformController(MpfController):
                                                      driver: DriverRuleSettings,
                                                      pulse_setting: PulseRuleSettings = None,
                                                      hold_settings: HoldRuleSettings = None) -> HardwareRule:
-        """Add pulse on hit and enable and relase rule to driver.
+        """Add pulse on hit and enable and release rule to driver.
 
         Pulse and enable a driver. Cancel pulse and enable if switch is released.
 
@@ -261,32 +255,33 @@ class PlatformController(MpfController):
                             switch_key=switch_key)
 
     # pylint: disable-msg=too-many-arguments
-    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchRuleSettings,
-                                                                 disable_switch: SwitchRuleSettings,
-                                                                 driver: DriverRuleSettings,
-                                                                 pulse_setting: PulseRuleSettings = None,
-                                                                 hold_settings: HoldRuleSettings = None
-                                                                 ) -> HardwareRule:
-        """Add pulse on hit and enable and release and disable rule to driver.
+    def set_pulse_on_hit_and_release_and_disable_rule(self, enable_switch: SwitchRuleSettings,
+                                                      eos_switch: SwitchRuleSettings,
+                                                      driver: DriverRuleSettings,
+                                                      pulse_setting: Optional[PulseRuleSettings] = None,
+                                                      eos_settings: Optional[EosRuleSettings] = None
+                                                      ) -> HardwareRule:
+        """Add pulse on hit and release and disable rule to driver.
 
-        Pulse and then enable driver. Cancel pulse and enable when switch is released or a disable switch is hit.
+        Pulse driver. Cancel pulse when switch is released or a disable switch is hit.
 
         Args:
             enable_switch: Switch to enable coil.
-            disable_switch: Switch to disable coil.
+            eos_switch: Switch to cancel pulse and trigger repulses.
             driver: Driver to enable.
-            pulse_setting: Pulse setttings.
-            hold_settings: Hold settings.
+            pulse_setting: Pulse settings.
+            eos_settings: How to repulse the coil when EOS opens.
         """
         platform = self._check_and_get_platform(enable_switch.switch, driver.driver)
-        self._check_and_get_platform(disable_switch.switch, driver.driver)
+        self._check_and_get_platform(eos_switch.switch, driver.driver)
 
         enable_settings = self._get_configured_switch(enable_switch)
-        disable_settings = self._get_configured_switch(disable_switch)
-        driver_settings = self._get_configured_driver_with_optional_hold(driver, pulse_setting, hold_settings)
+        disable_settings = self._get_configured_switch(eos_switch)
+        driver_settings = self._get_configured_driver_no_hold(driver, pulse_setting)
+        repulse_settings = self._get_repulse_settings(eos_settings)
 
-        platform.set_pulse_on_hit_and_enable_and_release_and_disable_rule(
-            enable_settings, disable_settings, driver_settings)
+        platform.set_pulse_on_hit_and_release_and_disable_rule(
+            enable_settings, disable_settings, driver_settings, repulse_settings)
 
         switch_key = self._setup_switch_callback_for_psu(enable_switch.switch, driver.driver, enable_settings,
                                                          driver_settings)
@@ -297,8 +292,62 @@ class PlatformController(MpfController):
             enable_switch_name=enable_switch.switch.name,
             enable_switch_invert=enable_settings.invert,
             enable_switch_debounce=enable_settings.debounce,
-            disable_switch_number=disable_switch.switch.hw_switch.number,
-            disable_switch_name=disable_switch.switch.name,
+            disable_switch_number=eos_switch.switch.hw_switch.number,
+            disable_switch_name=eos_switch.switch.name,
+            disable_switch_invert=disable_settings.invert,
+            disable_switch_debounce=disable_settings.debounce,
+            coil_number=driver.driver.hw_driver.number,
+            coil_name=driver.driver.name,
+            coil_pulse_power=driver_settings.pulse_settings.power,
+            coil_pulse_ms=driver_settings.pulse_settings.duration,
+            coil_hold_power=driver_settings.hold_settings,
+            coil_recycle=driver_settings.recycle)
+
+        return HardwareRule(platform=platform, switch_settings=[enable_settings, disable_settings],
+                            driver_settings=driver_settings, switch_key=switch_key)
+
+    # pylint: disable-msg=too-many-arguments
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchRuleSettings,
+                                                                 eos_switch: SwitchRuleSettings,
+                                                                 driver: DriverRuleSettings,
+                                                                 pulse_setting: Optional[PulseRuleSettings] = None,
+                                                                 hold_settings: Optional[HoldRuleSettings] = None,
+                                                                 eos_settings: Optional[EosRuleSettings] = None
+                                                                 ) -> HardwareRule:
+        """Add pulse on hit and enable and release and disable rule to driver.
+
+        Pulse and then enable driver. Cancel pulse and enable when switch is released or a disable switch is hit.
+
+        Args:
+            enable_switch: Switch to enable coil.
+            eos_switch: Switch to switch from pulse to hold and to trigger repulses.
+            driver: Driver to enable.
+            pulse_setting: Pulse settings.
+            hold_settings: Hold settings.
+            eos_settings: How to repulse the coil when EOS opens.
+        """
+        platform = self._check_and_get_platform(enable_switch.switch, driver.driver)
+        self._check_and_get_platform(eos_switch.switch, driver.driver)
+
+        enable_settings = self._get_configured_switch(enable_switch)
+        disable_settings = self._get_configured_switch(eos_switch)
+        driver_settings = self._get_configured_driver_with_hold(driver, pulse_setting, hold_settings)
+        repulse_settings = self._get_repulse_settings(eos_settings)
+
+        platform.set_pulse_on_hit_and_enable_and_release_and_disable_rule(
+            enable_settings, disable_settings, driver_settings, repulse_settings)
+
+        switch_key = self._setup_switch_callback_for_psu(enable_switch.switch, driver.driver, enable_settings,
+                                                         driver_settings)
+
+        self.machine.bcp.interface.send_driver_event(
+            action="pulse_on_hit_and_enable_and_release_and_disable",
+            enable_switch_number=enable_switch.switch.hw_switch.number,
+            enable_switch_name=enable_switch.switch.name,
+            enable_switch_invert=enable_settings.invert,
+            enable_switch_debounce=enable_settings.debounce,
+            disable_switch_number=eos_switch.switch.hw_switch.number,
+            disable_switch_name=eos_switch.switch.name,
             disable_switch_invert=disable_settings.invert,
             disable_switch_debounce=disable_settings.debounce,
             coil_number=driver.driver.hw_driver.number,

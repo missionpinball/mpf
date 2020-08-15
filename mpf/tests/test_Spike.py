@@ -389,7 +389,7 @@ class SpikePlatformTest(MpfTestCase):
         # dual-wound flippers with eos
         self.serialMock.expected_commands = {
             # main should be pulsed and disabled when eos is hit (or timed). retriggers when eos is released.
-            self._checksummed_cmd(b'\x88\x19\x41\x01\xff\x0c\x00\x9f\x00\x00\x00\x00\x00'
+            self._checksummed_cmd(b'\x88\x19\x41\x01\xff\x0c\x00\x00\x00\x00\x00\x00\x00'
                                   b'\x00\x00\x00\x00\x00\x00\x00\x4d\x4f\x00\x02\x06\x00'): b'',
 
             # hold should be pulsed and then pwmed (100% here)
@@ -833,7 +833,7 @@ class SpikePlatformFirmware0_49Test(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.serialMock.expected_commands)
 
-        # single-wound flippers
+        # single-wound flippers without EOS
         self.serialMock.expected_commands = {
             self._checksummed_cmd(b'\x88\x24\x41\x01\xff\x0c\x00\x9f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
                                   b'\x00\x00\x00\x4d\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x06\x05'): b'',
@@ -875,15 +875,44 @@ class SpikePlatformFirmware0_49Test(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.serialMock.expected_commands)
 
-        # dual-wound flippers with eos
+        # single-wound with EOS
         self.serialMock.expected_commands = {
             # main should be pulsed and disabled when eos is hit (or timed). retriggers when eos is released.
             self._checksummed_cmd(b'\x88\x24\x41\x01\xff\x0c\x00\x9f\x28\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
                                   b'\x00\x00\x00\x4d\x00\x00\x4f\x00\x00\x00\x00\x00\x00\x00\x00\x05\x06\x00'): b'',
+            self._checksummed_cmd(b'\x88\x05\x70\x0f\x02\x02'): b'',  # set debounce
+        }
+        self.machine.flippers["f_test_single_eos"].enable()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # this is send twice due to MPF internals. will fix in the future
+        self.serialMock.permanent_commands[self._checksummed_cmd(
+            b'\x88\x24\x41\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')] = b''
+
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x88\x24\x41\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                                  b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'): b''
+        }
+        self.machine.flippers["f_test_single_eos"].disable()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        del self.serialMock.permanent_commands[self._checksummed_cmd(
+            b'\x88\x24\x41\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')]
+
+        # dual-wound flippers with eos
+        self.serialMock.expected_commands = {
+            # main should be pulsed and disabled when eos is hit (or timed). retriggers when eos is released.
+            self._checksummed_cmd(b'\x88\x24\x41\x01\xff\x0c\x00\x00\x28\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                                  b'\x00\x00\x00\x4d\x00\x00\x4f\x00\x00\x00\x00\x00\x00\x00\x00\x05\x06\x00'): b'',
             # hold should be pulsed and then pwmed (100% here)
             self._checksummed_cmd(b'\x88\x24\x41\x03\xff\x0c\x00\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
                                   b'\x00\x00\x00\x4d\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x06\x05'): b'',
-            self._checksummed_cmd(b'\x88\x05\x70\x0f\x02\x02'): b'',  # set debounce
+            # debouce is already set because of the previous flipper rule
+            #self._checksummed_cmd(b'\x88\x05\x70\x0f\x02\x02'): b'',  # set debounce
         }
         self.machine.flippers["f_test_hold_eos"].enable()
         self.advance_time_and_run(.1)

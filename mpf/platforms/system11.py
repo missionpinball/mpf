@@ -5,7 +5,7 @@ This is based on the Snux platform to generically support all kinds of System11 
 from typing import Any, Optional, Set, Tuple, Dict
 
 from mpf.core.machine import MachineController
-from mpf.core.platform import DriverPlatform, DriverConfig
+from mpf.core.platform import DriverPlatform, DriverConfig, SwitchSettings, DriverSettings, RepulseSettings
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
@@ -191,7 +191,9 @@ class System11OverlayPlatform(DriverPlatform):
 
         self.platform.set_pulse_on_hit_and_enable_and_release_rule(enable_switch, coil)
 
-    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
+    def set_pulse_on_hit_and_release_and_disable_rule(self, enable_switch: SwitchSettings, eos_switch: SwitchSettings,
+                                                      coil: DriverSettings,
+                                                      repulse_settings: Optional[RepulseSettings]):
         """Configure a rule for a driver on the system11 overlay.
 
         Will pass the call onto the parent platform if the driver is not on A/C relay.
@@ -200,7 +202,22 @@ class System11OverlayPlatform(DriverPlatform):
             raise AssertionError("Received a request to set a hardware rule for a System11 driver {}. "
                                  "This is not supported.".format(coil))
 
-        self.platform.set_pulse_on_hit_and_enable_and_release_and_disable_rule(enable_switch, disable_switch, coil)
+        self.platform.set_pulse_on_hit_and_release_and_disable_rule(enable_switch, eos_switch, coil, repulse_settings)
+
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
+                                                                 eos_switch: SwitchSettings,
+                                                                 coil: DriverSettings,
+                                                                 repulse_settings: Optional[RepulseSettings]):
+        """Configure a rule for a driver on the system11 overlay.
+
+        Will pass the call onto the parent platform if the driver is not on A/C relay.
+        """
+        if coil.hw_driver in self.drivers.values():
+            raise AssertionError("Received a request to set a hardware rule for a System11 driver {}. "
+                                 "This is not supported.".format(coil))
+
+        self.platform.set_pulse_on_hit_and_enable_and_release_and_disable_rule(enable_switch, eos_switch, coil,
+                                                                               repulse_settings)
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
         """Configure a rule on the system11 overlay.

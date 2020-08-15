@@ -9,7 +9,7 @@ import sys
 from threading import Thread
 
 import time
-from typing import Any, List, Union, Tuple
+from typing import Any, List, Union, Tuple, Optional
 
 from mpf.core.utility_functions import Util
 from mpf.core.platform_batch_light_system import PlatformBatchLightSystem
@@ -20,7 +20,7 @@ from mpf.platforms.p_roc_devices import PROCSwitch, PROCMatrixLight, PDBLED, PDB
 
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
-    SwitchConfig, ServoPlatform, StepperPlatform
+    SwitchConfig, ServoPlatform, StepperPlatform, RepulseSettings
 
 from mpf.exceptions.runtime_error import MpfRuntimeError
 
@@ -619,18 +619,34 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
         self._write_rules_to_switch(enable_switch, coil, False)
 
+    def set_pulse_on_hit_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
+                                                      eos_switch: SwitchSettings, coil: DriverSettings,
+                                                      repulse_settings: Optional[RepulseSettings]):
+        """Set pulse on hit and enable and release and disable rule on driver."""
+        self.debug_log("Setting Pulse on hit and release and disable HW Rule. Enable Switch: %s,"
+                       "Disable Switch: %s, Driver: %s", enable_switch.hw_switch.number,
+                       eos_switch.hw_switch.number, coil.hw_driver.number)
+        self._add_pulse_rule_to_switch(enable_switch, coil)
+        self._add_release_disable_rule_to_switch(enable_switch, coil)
+        self._add_disable_rule_to_switch(eos_switch, coil)
+
+        self._write_rules_to_switch(enable_switch, coil, False)
+        self._write_rules_to_switch(eos_switch, coil, False)
+
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
-                                                                 disable_switch: SwitchSettings, coil: DriverSettings):
+                                                                 eos_switch: SwitchSettings, coil: DriverSettings,
+                                                                 repulse_settings: Optional[RepulseSettings]):
         """Set pulse on hit and enable and release and disable rule on driver."""
         self.debug_log("Setting Pulse on hit and enable and release and disable HW Rule. Enable Switch: %s,"
                        "Disable Switch: %s, Driver: %s", enable_switch.hw_switch.number,
-                       disable_switch.hw_switch.number, coil.hw_driver.number)
+                       eos_switch.hw_switch.number, coil.hw_driver.number)
         self._add_pulse_and_hold_rule_to_switch(enable_switch, coil)
         self._add_release_disable_rule_to_switch(enable_switch, coil)
-        self._add_disable_rule_to_switch(disable_switch, coil)
+        # TODO: this is incorrect. EOS should switch from pulse to hold only
+        self._add_disable_rule_to_switch(eos_switch, coil)
 
         self._write_rules_to_switch(enable_switch, coil, False)
-        self._write_rules_to_switch(disable_switch, coil, False)
+        self._write_rules_to_switch(eos_switch, coil, False)
 
     def clear_hw_rule(self, switch, coil):
         """Clear a hardware rule.

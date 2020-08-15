@@ -461,6 +461,7 @@ SwitchSettings = namedtuple("SwitchSettings", ["hw_switch", "invert", "debounce"
 DriverSettings = namedtuple("DriverSettings", ["hw_driver", "pulse_settings", "hold_settings", "recycle"])
 DriverConfig = namedtuple("DriverConfig", ["default_pulse_ms", "default_pulse_power", "default_hold_power",
                                            "default_recycle", "max_pulse_ms", "max_pulse_power", "max_hold_power"])
+RepulseSettings = namedtuple("RepulseSettings", ["enable_repulse"])
 
 
 class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
@@ -559,12 +560,26 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def set_pulse_on_hit_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
+                                                      eos_switch: SwitchSettings, coil: DriverSettings,
+                                                      repulse_settings: Optional[RepulseSettings]):
+        """Set pulse on hit and enable and release and disable rule on driver.
+
+        Pulses a driver when a switch is hit. When the switch is released
+        the pulse is canceled and the driver gets disabled. When the eos_switch is hit the pulse is canceled
+        and the driver becomes disabled. Typically used on the main coil for dual-wound coil flippers with eos switch.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
-                                                                 disable_switch: SwitchSettings, coil: DriverSettings):
+                                                                 eos_switch: SwitchSettings, coil: DriverSettings,
+                                                                 repulse_settings: Optional[RepulseSettings]):
         """Set pulse on hit and enable and release and disable rule on driver.
 
         Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
-        the pulse is canceled and the driver gets disabled. When the second disable_switch is hit the pulse is canceled
-        and the driver gets disabled. Typically used on the main coil for dual coil flippers with eos switch.
+        the pulse is canceled and the driver becomes disabled. When the eos_switch is hit the pulse is canceled
+        and the driver becomes enabled (likely with PWM).
+        Typically used on the coil for single-wound coil flippers with eos switch.
         """
         raise NotImplementedError

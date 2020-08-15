@@ -1,6 +1,6 @@
 from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
 
-from mpf.core.platform import SwitchSettings, DriverSettings
+from mpf.core.platform import SwitchSettings, DriverSettings, RepulseSettings
 
 from mpf.tests.MpfTestCase import MpfTestCase
 from unittest.mock import MagicMock, call
@@ -42,7 +42,7 @@ class TestFlippers(MpfTestCase):
         )
 
     def test_hold_with_eos(self):
-        self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_and_disable_rule = MagicMock()
+        self.machine.default_platform.set_pulse_on_hit_and_release_and_disable_rule = MagicMock()
         self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule = MagicMock()
 
         self.machine.flippers["f_test_hold_eos"].enable()
@@ -53,12 +53,13 @@ class TestFlippers(MpfTestCase):
                            pulse_settings=PulseSettings(power=1.0, duration=10),
                            hold_settings=HoldSettings(power=1.0), recycle=False)
         )
-        self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_and_disable_rule.assert_called_with(
+        self.machine.default_platform.set_pulse_on_hit_and_release_and_disable_rule.assert_called_with(
             SwitchSettings(hw_switch=self.machine.switches["s_flipper"].hw_switch, invert=False, debounce=False),
             SwitchSettings(hw_switch=self.machine.switches["s_flipper_eos"].hw_switch, invert=False, debounce=False),
             DriverSettings(hw_driver=self.machine.coils["c_flipper_main"].hw_driver,
                            pulse_settings=PulseSettings(power=1.0, duration=10),
-                           hold_settings=HoldSettings(power=0.125), recycle=False)
+                           hold_settings=None, recycle=False),
+            RepulseSettings(enable_repulse=False)
         )
 
         self.machine.default_platform.clear_hw_rule = MagicMock()
@@ -69,13 +70,13 @@ class TestFlippers(MpfTestCase):
                 SwitchSettings(hw_switch=self.machine.switches["s_flipper"].hw_switch, invert=False, debounce=False),
                 DriverSettings(hw_driver=self.machine.coils["c_flipper_main"].hw_driver,
                                pulse_settings=PulseSettings(power=1.0, duration=10),
-                               hold_settings=HoldSettings(power=0.125), recycle=False)
+                               hold_settings=None, recycle=False)
             ),
             call(
                 SwitchSettings(hw_switch=self.machine.switches["s_flipper_eos"].hw_switch, invert=False, debounce=False),
                 DriverSettings(hw_driver=self.machine.coils["c_flipper_main"].hw_driver,
                                pulse_settings=PulseSettings(power=1.0, duration=10),
-                               hold_settings=HoldSettings(power=0.125), recycle=False)
+                               hold_settings=None, recycle=False)
             ),
             call(
                 SwitchSettings(hw_switch=self.machine.switches["s_flipper"].hw_switch, invert=False, debounce=False),
@@ -83,7 +84,7 @@ class TestFlippers(MpfTestCase):
                                pulse_settings=PulseSettings(power=1.0, duration=10),
                                hold_settings=HoldSettings(power=1.0), recycle=False)
             ),
-        ], any_order = True)
+        ], any_order=True)
 
     def test_flipper_with_settings(self):
         flipper = self.machine.flippers["f_test_flippers_with_settings"]

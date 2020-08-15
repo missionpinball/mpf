@@ -7,7 +7,7 @@ boards.
 import os
 from copy import deepcopy
 from distutils.version import StrictVersion
-from typing import Dict, Set
+from typing import Dict, Set, Optional
 import serial.tools.list_ports
 
 from mpf.platforms.fast.fast_io_board import FastIoBoard
@@ -21,8 +21,8 @@ from mpf.platforms.fast.fast_light import FASTMatrixLight
 from mpf.platforms.fast.fast_serial_communicator import FastSerialCommunicator
 from mpf.platforms.fast.fast_switch import FASTSwitch
 
-from mpf.core.platform import ServoPlatform, DmdPlatform, SwitchPlatform, DriverPlatform, LightsPlatform,\
-    DriverSettings, SwitchSettings, DriverConfig, SwitchConfig
+from mpf.core.platform import ServoPlatform, DmdPlatform, SwitchPlatform, DriverPlatform, LightsPlatform, \
+    DriverSettings, SwitchSettings, DriverConfig, SwitchConfig, RepulseSettings
 from mpf.core.utility_functions import Util
 
 
@@ -767,8 +767,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
         driver.set_autofire(cmd, coil.pulse_settings.duration, coil.pulse_settings.power, 0)
 
-    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
-        """Set pulse on hit and enable and release and disable rule on driver."""
+    def set_pulse_on_hit_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
+                                                      eos_switch: SwitchSettings, coil: DriverSettings,
+                                                      repulse_settings: Optional[RepulseSettings]):
+        """Set pulse on hit and release and disable rule on driver."""
         # Potential command from Dave:
         # Command
         # [DL/DN]:<DRIVER_ID>,<CONTROL>,<SWITCH_ID_ON>,<75>,<SWITCH_ID_OFF>,<Driver On Time1>,<Driver On Time2 X 100mS>,
@@ -782,25 +784,30 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                        "%s, Driver: %s", enable_switch.hw_switch.number,
                        coil.hw_driver.number)
 
-        # TODO: hold does not work here
         self._check_switch_coil_combincation(enable_switch, coil)
-        self._check_switch_coil_combincation(disable_switch, coil)
+        self._check_switch_coil_combincation(eos_switch, coil)
 
         driver = coil.hw_driver
 
         cmd = '{}{},{},{},75,{},{},00,{},{}'.format(
             driver.get_config_cmd(),
             coil.hw_driver.number,
-            driver.get_control_for_cmd(enable_switch, disable_switch),
+            driver.get_control_for_cmd(enable_switch, eos_switch),
             enable_switch.hw_switch.number[0],
-            disable_switch.hw_switch.number[0],
+            eos_switch.hw_switch.number[0],
             Util.int_to_hex_string(coil.pulse_settings.duration),
             driver.get_pwm_for_cmd(coil.pulse_settings.power),
             driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
         enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
-        disable_switch.hw_switch.configure_debounce(disable_switch.debounce)
+        eos_switch.hw_switch.configure_debounce(eos_switch.debounce)
         driver.set_autofire(cmd, coil.pulse_settings.duration, coil.pulse_settings.power, 0)
+
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
+                                                                 eos_switch: SwitchSettings, coil: DriverSettings,
+                                                                 repulse_settings: Optional[RepulseSettings]):
+        """Set pulse on hit and enable and release and disable rule on driver."""
+        raise AssertionError("Single-wound with EOS are not implemented in FAST firmware.")
 
     def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit rule on driver."""

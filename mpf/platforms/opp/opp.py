@@ -22,7 +22,7 @@ from mpf.platforms.opp.opp_switch import OPPInputCard
 from mpf.platforms.opp.opp_switch import OPPMatrixCard
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
-    DriverConfig, SwitchConfig
+    DriverConfig, SwitchConfig, RepulseSettings
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -926,13 +926,26 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """
         self._write_hw_rule(enable_switch, coil, use_hold=True, can_cancel=True)
 
-    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
-                                                                 disable_switch: SwitchSettings, coil: DriverSettings):
-        """Set pulse on hit and enable and release and disable rule on driver.
+    def set_pulse_on_hit_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
+                                                      eos_switch: SwitchSettings, coil: DriverSettings,
+                                                      repulse_settings: Optional[RepulseSettings]):
+        """Set pulse on hit and release and disable rule on driver.
 
         Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
         the pulse is canceled and the driver gets disabled. When the second disable_switch is hit the pulse is canceled
         and the driver gets disabled. Typically used on the main coil for dual coil flippers with eos switch.
+        """
+        raise AssertionError("Not implemented in OPP currently")
+
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
+                                                                 eos_switch: SwitchSettings, coil: DriverSettings,
+                                                                 repulse_settings: Optional[RepulseSettings]):
+        """Set pulse on hit and enable and release and disable rule on driver.
+
+        Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
+        the pulse is canceled and the driver becomes disabled. When the eos_switch is hit the pulse is canceled
+        and the driver becomes enabled (likely with PWM).
+        Typically used on the coil for single-wound coil flippers with eos switch.
         """
         raise AssertionError("Not implemented in OPP currently")
 

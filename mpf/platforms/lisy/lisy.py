@@ -21,7 +21,7 @@ from mpf.platforms.lisy.defines import LisyDefines
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade, LightPlatformInterface
 
 from mpf.core.platform import SwitchPlatform, LightsPlatform, DriverPlatform, SwitchSettings, DriverSettings, \
-    DriverConfig, SwitchConfig, SegmentDisplaySoftwareFlashPlatform, HardwareSoundPlatform
+    DriverConfig, SwitchConfig, SegmentDisplaySoftwareFlashPlatform, HardwareSoundPlatform, RepulseSettings
 
 
 class LisySwitch(SwitchPlatformInterface):
@@ -604,10 +604,29 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         assert coil.hold_settings.power > 0
         self._configure_hardware_rule(coil, enable_switch, None, 3, 0)
 
+    def set_pulse_on_hit_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
+                                                      eos_switch: SwitchSettings, coil: DriverSettings,
+                                                      repulse_settings: Optional[RepulseSettings]):
+        """Set pulse on hit and enable and release and disable rule on driver.
+
+        Pulses a driver when a switch is hit. When the switch is released
+        the pulse is canceled and the driver gets disabled. When the eos_switch is hit the pulse is canceled
+        and the driver becomes disabled. Typically used on the main coil for dual-wound coil flippers with eos switch.
+        """
+        assert coil.hold_settings is None
+        self._configure_hardware_rule(coil, enable_switch, eos_switch, 3, 2)
+
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
-                                                                 disable_switch: SwitchSettings, coil: DriverSettings):
-        """Set pulse on hit and enable and release and disable rule on driver."""
-        self._configure_hardware_rule(coil, enable_switch, disable_switch, 3, 2)
+                                                                 eos_switch: SwitchSettings, coil: DriverSettings,
+                                                                 repulse_settings: Optional[RepulseSettings]):
+        """Set pulse on hit and enable and release and disable rule on driver.
+
+        Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
+        the pulse is canceled and the driver becomes disabled. When the eos_switch is hit the pulse is canceled
+        and the driver becomes enabled (likely with PWM).
+        Typically used on the coil for single-wound coil flippers with eos switch.
+        """
+        self._configure_hardware_rule(coil, enable_switch, eos_switch, 3, 2)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and release rule to driver."""

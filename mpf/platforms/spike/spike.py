@@ -13,7 +13,7 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.platforms.spike.spike_defines import SpikeNodebus
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
-    DriverConfig, SwitchConfig, DmdPlatform, StepperPlatform
+    DriverConfig, SwitchConfig, DmdPlatform, StepperPlatform, RepulseSettings
 
 from mpf.core.utility_functions import Util
 
@@ -375,7 +375,7 @@ class SpikeStepper(StepperPlatformInterface):
         result = await self.platform.send_cmd_and_wait_for_response(
             self.node, SpikeNodebus.StepperInfo + self.stepper_id, [], 7)
         if result is None:
-            self.platform.warning_log("Failed to read stepper %s positon", self.number)
+            self.platform.warning_log("Failed to read stepper %s position", self.number)
             return None
         return {
             "position": result[0] + (result[1] << 8),
@@ -501,12 +501,12 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             # length: 0x24
             self.send_cmd_async(node, SpikeNodebus.CoilSetReflex, bytearray(
                 [coil_index,                                                # coil [3]
-                 int(pulse_settings.power * 255),                           # pulse power [4]
-                 pulse_value & 0xFF,                                        # pulse time lower [5]
-                 (pulse_value & 0xFF00) >> 8,                               # pulse time upper [6]
-                 int(hold_settings.power * 255) if hold_settings else 0,    # hold power [7]
-                 hold_param1,                                               # some time lower (probably hold) [8]
-                 0x00,                                                      # some time upper (probably hold) [9]
+                 int(pulse_settings.power * 255),                           # pulse power (coil1)[4]
+                 pulse_value & 0xFF,                                        # pulse time lower (coil1) [5]
+                 (pulse_value & 0xFF00) >> 8,                               # pulse time upper (coil2) [6]
+                 int(hold_settings.power * 255) if hold_settings else 0,    # hold power (coil1) [7]
+                 hold_param1,                                               # some time lower (probably pulse coil2) [8]
+                 0x00,                                                      # some time upper (probably pulse coil2) [9]
                  0x00,                                                      # some time lower (unknown) [10]
                  0x00,                                                      # some time upper (unknown) [11]
                  0,                                                         # a unknown time lower (1) [12]
@@ -585,7 +585,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                          coil.pulse_settings, None, 0, 0, 0)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
-        """Set pulse on hit and enable and relase rule on driver.
+        """Set pulse on hit and enable and release rule on driver.
 
         Used for single coil flippers. Examples from WWE:
         Dual-wound flipper hold coil:
@@ -603,8 +603,9 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                          None, coil.hw_driver.index,
                          coil.pulse_settings, coil.hold_settings, 0, 6, 5)
 
-    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
-                                                                 disable_switch: SwitchSettings, coil: DriverSettings):
+    def set_pulse_on_hit_and_release_and_disable_rule(self, enable_switch: SwitchSettings, eos_switch: SwitchSettings,
+                                                      coil: DriverSettings,
+                                                      repulse_settings: Optional[RepulseSettings]):
         """Set pulse on hit and release rule to driver.
 
         Used for high-power coil on dual-wound flippers. Example from WWE:
@@ -612,7 +613,38 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         0x00 0x42 0x40 0x00 0x02 0x06 0x00  Len: 25
         """
         self._check_coil_switch_combination(enable_switch, coil)
-        self._check_coil_switch_combination(disable_switch, coil)
+        self._check_coil_switch_combination(eos_switch, coil)
+
+        if self.node_firmware_version[coil.hw_driver.node] >= 0x2800:
+            flag1 = 5
+            hold_param1 = 0x28
+        else:
+            flag1 = 2
+            hold_param1 = 0
+
+        enable_switch.hw_switch.configure_debounce_and_recycle(enable_switch.debounce, enable_switch.invert,
+                                                               coil.recycle)
+        eos_switch.hw_switch.configure_debounce_and_recycle(eos_switch.debounce, eos_switch.invert,
+                                                            coil.recycle)
+
+        # this might have to be the same flags as set_pulse_on_hit_and_enable_and_release_and_disable_rule
+        # it might also just depend on Spike System 1 vs 2
+        self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index ^ (enable_switch.invert * 0x40),
+                         eos_switch.hw_switch.index ^ (eos_switch.invert * 0x40),
+                         coil.hw_driver.index, coil.pulse_settings, coil.hold_settings, flag1, 6, 0,
+                         hold_param1=hold_param1)
+
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
+                                                                 eos_switch: SwitchSettings, coil: DriverSettings,
+                                                                 repulse_settings: Optional[RepulseSettings]):
+        """Set pulse on hit and release rule to driver.
+
+        Used for high-power coil on single-wound flippers. Example from GoT:
+        Node: 8 Command CoilSetReflex (0x41) Params: 0x00 0xff 0x33 0x00 0x1e 0x28 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+        0x00 0x00 0x00 0x00 0x00 0x00 0x42 0x00 0x00 0x40 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x05 0x06 0x00 Len: 36
+        """
+        self._check_coil_switch_combination(enable_switch, coil)
+        self._check_coil_switch_combination(eos_switch, coil)
 
         if self.node_firmware_version[coil.hw_driver.node] >= 0x2800:
             flag1 = 5
@@ -622,10 +654,10 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             hold_param1 = 0
         enable_switch.hw_switch.configure_debounce_and_recycle(enable_switch.debounce, enable_switch.invert,
                                                                coil.recycle)
-        disable_switch.hw_switch.configure_debounce_and_recycle(disable_switch.debounce, disable_switch.invert,
-                                                                coil.recycle)
+        eos_switch.hw_switch.configure_debounce_and_recycle(eos_switch.debounce, eos_switch.invert,
+                                                            coil.recycle)
         self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index ^ (enable_switch.invert * 0x40),
-                         disable_switch.hw_switch.index ^ (disable_switch.invert * 0x40),
+                         eos_switch.hw_switch.index ^ (eos_switch.invert * 0x40),
                          coil.hw_driver.index, coil.pulse_settings, coil.hold_settings, flag1, 6, 0,
                          hold_param1=hold_param1)
 
@@ -1320,17 +1352,16 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
             await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetCoilCurrent, bytearray([0]), 12)
 
-        if self.node_firmware_version[node] >= 0x3100:
-            for node, config in self.config['node_config'].items():
-                if config['coil_priorities']:
-                    # configure coil priorities
-                    priority_response = await self.send_cmd_and_wait_for_response(
-                        node, SpikeNodebus.CoilSetPriority,
-                        bytearray([len(config['coil_priorities'])] + config['coil_priorities'] +
-                                  [len(config['coil_priorities'])]), 3)
+        for node, config in self.config['node_config'].items():
+            if self.node_firmware_version[node] >= 0x3100 and config['coil_priorities']:
+                # configure coil priorities
+                priority_response = await self.send_cmd_and_wait_for_response(
+                    node, SpikeNodebus.CoilSetPriority,
+                    bytearray([len(config['coil_priorities'])] + config['coil_priorities'] +
+                              [len(config['coil_priorities'])]), 3)
 
-                    if not priority_response:
-                        self.warning_log("Failed to set coil priority on node %s", node)
+                if not priority_response:
+                    self.warning_log("Failed to set coil priority on node %s", node)
 
         self.debug_log("Configuring traffic.")
         await self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([0x11]))  # set traffic
