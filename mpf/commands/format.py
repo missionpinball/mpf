@@ -83,7 +83,7 @@ class Command(MpfCommandLineParser):
     def _reformat_test_case(self, test_case):
         test_case = test_case.replace("\t", "  ")
         test_case = re.sub(r" +\n", "\n", test_case)
-        machine_config, mode_configs, show_configs, assets, tests = MpfDocTestCaseBase.prepare_config(
+        machine_config, mode_configs, show_configs, assets, code, tests = MpfDocTestCaseBase.prepare_config(
             test_case, fixup_config=False)
         formatted_yaml = ""
         if machine_config:
@@ -99,6 +99,11 @@ class Command(MpfCommandLineParser):
             for show_name, show_config in show_configs.items():
                 formatted_yaml += "##! show: " + show_name + "\n"
                 formatted_yaml += self._reformat(show_config, show_file=True)
+
+        if code:
+            for file_path, file_content in code:
+                formatted_yaml += "##! code: " + "/".join(file_path) + "\n"
+                formatted_yaml += file_content
 
         if assets:
             for asset_path, asset_source in assets.items():
