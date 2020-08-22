@@ -112,8 +112,9 @@ class SwitchController(MpfController):
                 try:
                     switch.state = switch_states[number] ^ switch.invert
                 except (IndexError, KeyError):
-                    raise AssertionError("Missing switch {} in update from hw.  Update from HW: {}, switches: {}".
-                                         format(number, switch_states, switches))
+                    raise AssertionError("Missing switch {} in update from HW: {} "
+                                         "State from HW: {}, switches known: {}".
+                                         format(switch, platform, switch_states, switches))
 
     async def verify_switches(self) -> bool:
         """Verify that switches states match the hardware.
