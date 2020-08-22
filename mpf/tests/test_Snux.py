@@ -120,3 +120,6 @@ class TestSnux(MpfFakeGameTestCase):
         # disable driver on a side.
         self.machine.coils["c_side_a2"].disable()
         self.advance_time_and_run(0.2)
+
+    def test_flippers(self):
+        self.machine.flippers["f_test_single"].enable()

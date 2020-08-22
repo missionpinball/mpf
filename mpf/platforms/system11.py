@@ -5,15 +5,21 @@ This is based on the Snux platform to generically support all kinds of System11 
 from typing import Any, Optional, Set, Tuple, Dict
 
 from mpf.core.machine import MachineController
-from mpf.core.platform import DriverPlatform, DriverConfig, SwitchSettings, DriverSettings, RepulseSettings
+from mpf.core.platform import DriverPlatform, DriverConfig, SwitchSettings, DriverSettings, RepulseSettings, \
+    SwitchPlatform, SwitchConfig
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 from mpf.core.delays import DelayManager
 
+MYPY = False
+if MYPY:   # pragma: no cover
+    class SwitchDriverPlatform(DriverPlatform, SwitchPlatform):     # noqa
+        pass
+
 
 # pylint: disable-msg=too-many-instance-attributes
-class System11OverlayPlatform(DriverPlatform):
+class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
 
     """Overlay platform to drive system11 machines using a WPC controller."""
 
@@ -27,7 +33,7 @@ class System11OverlayPlatform(DriverPlatform):
 
         self.delay = DelayManager(machine)
 
-        self.platform = None            # type: Optional[DriverPlatform]
+        self.platform = None            # type: Optional[SwitchDriverPlatform]
 
         self.system11_config = None     # type: Any
 
@@ -143,6 +149,14 @@ class System11OverlayPlatform(DriverPlatform):
             elif self.a_side_enabled and not self.a_side_active:
                 self._enable_c_side()
 
+    def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
+        """Configure switch on system11 overlay."""
+        return self.platform.configure_switch(number, config, platform_config)
+
+    def get_hw_switch_states(self):
+        """Get initial hardware state."""
+        return self.platform.get_hw_switch_states()
+
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Configure a driver on the system11 overlay.
 
@@ -169,14 +183,20 @@ class System11OverlayPlatform(DriverPlatform):
 
         return self.platform.configure_driver(config, number, platform_settings)
 
+    @staticmethod
+    def _check_if_driver_is_capable_for_rule(driver: DriverPlatformInterface):
+        """Check if driver is capable for rule and bail out with an exception if not."""
+        number = driver.number
+        if number and (number.lower().endswith('a') or number.lower().endswith('c')):
+            raise AssertionError("Received a request to set a hardware rule for a System11 driver {}. "
+                                 "This is not supported.".format(driver))
+
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         """Configure a rule for a driver on the system11 overlay.
 
         Will pass the call onto the parent platform if the driver is not on A/C relay.
         """
-        if coil.hw_driver in self.drivers.values():
-            raise AssertionError("Received a request to set a hardware rule for a System11 driver {}. "
-                                 "This is not supported.".format(coil))
+        self._check_if_driver_is_capable_for_rule(coil.hw_driver)
 
         self.platform.set_pulse_on_hit_and_release_rule(enable_switch, coil)
 
@@ -185,9 +205,7 @@ class System11OverlayPlatform(DriverPlatform):
 
         Will pass the call onto the parent platform if the driver is not on A/C relay.
         """
-        if coil.hw_driver in self.drivers.values():
-            raise AssertionError("Received a request to set a hardware rule for a System11 driver {}. "
-                                 "This is not supported.".format(coil))
+        self._check_if_driver_is_capable_for_rule(coil.hw_driver)
 
         self.platform.set_pulse_on_hit_and_enable_and_release_rule(enable_switch, coil)
 
@@ -198,9 +216,7 @@ class System11OverlayPlatform(DriverPlatform):
 
         Will pass the call onto the parent platform if the driver is not on A/C relay.
         """
-        if coil.hw_driver in self.drivers.values():
-            raise AssertionError("Received a request to set a hardware rule for a System11 driver {}. "
-                                 "This is not supported.".format(coil))
+        self._check_if_driver_is_capable_for_rule(coil.hw_driver)
 
         self.platform.set_pulse_on_hit_and_release_and_disable_rule(enable_switch, eos_switch, coil, repulse_settings)
 
@@ -212,9 +228,7 @@ class System11OverlayPlatform(DriverPlatform):
 
         Will pass the call onto the parent platform if the driver is not on A/C relay.
         """
-        if coil.hw_driver in self.drivers.values():
-            raise AssertionError("Received a request to set a hardware rule for a System11 driver {}. "
-                                 "This is not supported.".format(coil))
+        self._check_if_driver_is_capable_for_rule(coil.hw_driver)
 
         self.platform.set_pulse_on_hit_and_enable_and_release_and_disable_rule(enable_switch, eos_switch, coil,
                                                                                repulse_settings)
@@ -224,17 +238,13 @@ class System11OverlayPlatform(DriverPlatform):
 
         Will pass the call onto the parent platform if the driver is not on A/C relay.
         """
-        if coil.hw_driver in self.drivers.values():
-            raise AssertionError("Received a request to set a hardware rule for a System11 driver {}. "
-                                 "This is not supported.".format(coil))
+        self._check_if_driver_is_capable_for_rule(coil.hw_driver)
 
         self.platform.set_pulse_on_hit_rule(enable_switch, coil)
 
     def clear_hw_rule(self, switch, coil):
         """Clear a rule for a driver on the system11 overlay."""
-        if coil.hw_driver in self.drivers.values():
-            raise AssertionError("Received a request to clear a hardware rule for a System11 driver {}. "
-                                 "This is not supported.".format(coil))
+        self._check_if_driver_is_capable_for_rule(coil.hw_driver)
 
         self.platform.clear_hw_rule(switch, coil)
 
