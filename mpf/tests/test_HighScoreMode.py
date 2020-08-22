@@ -103,6 +103,31 @@ class TestHighScoreMode(MpfBcpTestCase):
         # high score should not end
         self.assertTrue(self.machine.modes["high_score"].active)
 
+    def test_reset(self):
+        """Test high score reset."""
+        self.machine.modes["high_score"].high_scores = OrderedDict(
+            score=[('ABC', 1000000),
+                   ('ABC', 900000),
+                   ('ABC', 800000),
+                   ('ABC', 700000),
+                   ('ABC', 600000)],
+            loops=[])
+
+        self.advance_time_and_run(.1)
+
+        self.post_event("high_scores_reset")
+        self.advance_time_and_run(10)
+
+        new_score_data = OrderedDict()
+        new_score_data['score'] = [('BRI', 4242),
+                                   ('GHK', 2323),
+                                   ('JK', 1337),
+                                   ('QC', 42),
+                                   ('MPF', 23)]
+        new_score_data['loops'] = [('JK', 42)]
+
+        self.assertEqual(new_score_data, self.machine.modes["high_score"].high_scores)
+        self.assertEqual(new_score_data, self.machine.modes["high_score"].data_manager.written_data)
 
     def test_add_player_during_high_score(self):
         self.mock_event("high_score_enter_initials")

@@ -40,11 +40,25 @@ class HighScore(AsyncMode):
 
         # Load defaults if no high_scores are stored
         if not self.high_scores:
-            self.high_scores = {k: [(next(iter(a.keys())), next(iter(a.values()))) for a in v] for (k, v) in
-                                self.config['high_score']['defaults'].items()}
+            self._load_defaults()
 
         self._create_machine_vars()
         self.pending_award = None
+
+        for event in self.high_score_config['reset_high_scores_events']:
+            self.add_mode_event_handler(event, self._reset)
+
+    def _load_defaults(self):
+        """Load default high scores."""
+        self.high_scores = {k: [(next(iter(a.keys())), next(iter(a.values()))) for a in v] for (k, v) in
+                            self.config['high_score']['defaults'].items()}
+
+    def _reset(self, **kwargs):
+        """Reset high scores."""
+        del kwargs
+        self._load_defaults()
+        self._create_machine_vars()
+        self._write_scores_to_disk()
 
     def _validate_data(self, data):
         try:
