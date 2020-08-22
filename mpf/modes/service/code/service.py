@@ -86,7 +86,7 @@ software_update_script: single|str|None
         self.machine.events.post("service_menu_selected_{}".format(items[position].label))
 
     def _load_menu_entries(self):
-        """Return the menu items wich label and callback."""
+        """Return the menu items with label and callback."""
         # If you want to add menu entries overload the mode and this method.
         entries = [
             ServiceMenuEntry("switch", self._switch_test_menu),
