@@ -804,7 +804,7 @@ counters:
     count_complete_value: single|template_int|None
     multiple_hit_window: single|ms|0
     count_interval: single|int|1
-    direction: single|str|up
+    direction: single|enum(up,down)|up
     starting_count: single|template_int|0
     control_events: list|subconfig(counter_control_events)|None
 counter_control_events:  # subconfig for mode counters
