@@ -95,6 +95,7 @@ class TestCreditsMode(MpfTestCase):
 
         self.assertEqual("CREDITS 1/2", self.machine.variables.get_machine_var('credits_string'))
         self.assertEqual(0.25, self.machine.modes["credits"].earnings["money"]["total_value"])
+        self.assertMachineVarEqual(1.0, "credit_units")
 
         self.assertMachineVarEqual(0.5, "price_per_game_raw_0")
         self.assertMachineVarEqual("1 CREDITS $0.5", "price_per_game_string_0")
@@ -136,6 +137,15 @@ class TestCreditsMode(MpfTestCase):
 
         self.assertEqual({}, self.machine.modes["credits"].earnings)
         self.assertEqual({}, self.machine.modes["credits"].data_manager.written_data)
+
+        self.assertMachineVarEqual(6.0, "credit_units")
+        self.post_event("credits_reset")
+        self.advance_time_and_run(.1)
+        self.assertEqual("CREDITS 0", self.machine.variables.get_machine_var('credits_string'))
+        self.assertMachineVarEqual(0.0, "credit_units")
+
+        # should not be able to start a game without credits
+        self.start_game(False)
 
     def testReplay(self):
         # add coins

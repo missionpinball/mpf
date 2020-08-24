@@ -66,6 +66,9 @@ class Credits(Mode):
         for event in self.credits_config['reset_earnings_events']:
             self.add_mode_event_handler(event, self._reset_earnings)
 
+        for event in self.credits_config['reset_credits_events']:
+            self.add_mode_event_handler(event, self._reset_credits)
+
         if self.machine.settings.get_setting_value("free_play"):
             self.enable_free_play(post_event=False)
         else:
@@ -78,6 +81,12 @@ class Credits(Mode):
         del kwargs
         self.earnings = {}
         self.data_manager.save_all(data=self.earnings)
+
+    def _reset_credits(self, **kwargs):
+        """Reset credits."""
+        del kwargs
+        self.machine.variables.set_machine_var('credit_units', 0)
+        self._update_credit_strings()
 
     def mode_stop(self, **kwargs):
         """Stop mode."""
