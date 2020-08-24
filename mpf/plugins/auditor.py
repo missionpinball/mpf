@@ -51,15 +51,8 @@ class Auditor:
         """Return string representation."""
         return '<Auditor>'
 
-    def _initialize(self, **kwargs):
-        del kwargs
-        # Initializes the auditor. We do this separate from __init__() since
-        # we need everything else to be setup first.
-
-        self.config = self.machine.config_validator.validate_config('auditor', self.machine.config['auditor'])
-
-        self.current_audits = self.data_manager.get_data()
-
+    def _load_defaults(self):
+        """Load defaults if audits are missing."""
         if not isinstance(self.current_audits, dict):
             self.current_audits = dict()
 
@@ -92,6 +85,26 @@ class Auditor:
                     self.current_audits['player'][item]['average'] = 0
                     self.current_audits['player'][item]['total'] = 0
 
+    def _set_machine_variables(self):
+        """Set machine variables for audits."""
+        for category, audits in self.current_audits.items():
+            if not isinstance(audits, dict):
+                continue
+            for name, value in audits.items():
+                self.machine.variables.set_machine_var("audits_{}_{}".format(category, name), value)
+
+    def _initialize(self, **kwargs):
+        del kwargs
+        # Initializes the auditor. We do this separate from __init__() since
+        # we need everything else to be setup first.
+
+        self.config = self.machine.config_validator.validate_config('auditor', self.machine.config['auditor'])
+
+        self.current_audits = self.data_manager.get_data()
+
+        self._load_defaults()
+        self._set_machine_variables()
+
         # Register for the events the auditor needs to do its job
         self.machine.events.add_handler('game_starting', self.enable)
         self.machine.events.add_handler('game_ended', self.disable)
@@ -105,11 +118,16 @@ class Auditor:
         # Add the switches monitor
         self.machine.switch_controller.add_monitor(self.audit_switch)
 
-        for category, audits in self.current_audits.items():
-            if not isinstance(audits, dict):
-                continue
-            for name, value in audits.items():
-                self.machine.variables.set_machine_var("audits_{}_{}".format(category, name), value)
+        for event in self.config['reset_audit_events']:
+            self.machine.events.add_handler(event, self._reset)
+
+    def _reset(self, **kwargs):
+        """Reset audits."""
+        del kwargs
+        self.current_audits = {}
+        self._load_defaults()
+        self._set_machine_variables()
+        self._save_audits()
 
     def audit(self, audit_class, event, **kwargs):
         """Log an auditable event.
