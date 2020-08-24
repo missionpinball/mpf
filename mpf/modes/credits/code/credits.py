@@ -33,6 +33,10 @@ class Credits(Mode):
         self.data_manager = self.machine.create_data_manager('earnings')
         self.earnings = self.data_manager.get_data()
 
+        # prevent crashes because of data corruption
+        if not isinstance(self.earnings, dict):
+            self.earnings = {}
+
         self.credit_units_per_game = 0
         self.credit_unit = 0
         self.pricing_tiers = set()
@@ -59,6 +63,8 @@ class Credits(Mode):
                                     self.toggle_credit_play)
         self.add_mode_event_handler('slam_tilt',
                                     self.clear_all_credits)
+        for event in self.credits_config['reset_earnings_events']:
+            self.add_mode_event_handler(event, self._reset_earnings)
 
         if self.machine.settings.get_setting_value("free_play"):
             self.enable_free_play(post_event=False)
@@ -66,6 +72,12 @@ class Credits(Mode):
             self._calculate_credit_units()
             self._calculate_pricing_tiers()
             self.enable_credit_play(post_event=False)
+
+    def _reset_earnings(self, **kwargs):
+        """Reset earnings."""
+        del kwargs
+        self.earnings = {}
+        self.data_manager.save_all(data=self.earnings)
 
     def mode_stop(self, **kwargs):
         """Stop mode."""

@@ -362,6 +362,7 @@ credits:
     switches: list|subconfig(credits_switches)|None
     events: list|subconfig(credits_events)|None
     pricing_tiers: list|subconfig(credits_pricing_tiers)|None
+    reset_earnings_events: list|event_handler|earnings_reset,factory_reset
 credits_switches:
     switch: single|machine(switches)|None
     value: single|template_float|0.25

@@ -94,6 +94,7 @@ class TestCreditsMode(MpfTestCase):
         self.machine_run()
 
         self.assertEqual("CREDITS 1/2", self.machine.variables.get_machine_var('credits_string'))
+        self.assertEqual(0.25, self.machine.modes["credits"].earnings["money"]["total_value"])
 
         self.assertMachineVarEqual(0.5, "price_per_game_raw_0")
         self.assertMachineVarEqual("1 CREDITS $0.5", "price_per_game_string_0")
@@ -107,6 +108,7 @@ class TestCreditsMode(MpfTestCase):
         self.machine_run()
 
         self.assertEqual("CREDITS 1", self.machine.variables.get_machine_var('credits_string'))
+        self.assertEqual(0.5, self.machine.modes["credits"].earnings["money"]["total_value"])
 
         # one is enough for a game
         self.start_game(True)
@@ -120,12 +122,20 @@ class TestCreditsMode(MpfTestCase):
         self.hit_and_release_switch("s_right_coin")
         self.machine_run()
         self.assertEqual("CREDITS 2", self.machine.variables.get_machine_var('credits_string'))
+        self.assertEqual(1.5, self.machine.modes["credits"].earnings["money"]["total_value"])
 
         # no more price tier after game
         self.hit_and_release_switch("s_left_coin")
         self.hit_and_release_switch("s_left_coin")
         self.machine_run()
         self.assertEqual("CREDITS 3", self.machine.variables.get_machine_var('credits_string'))
+        self.assertEqual(2.0, self.machine.modes["credits"].earnings["money"]["total_value"])
+
+        self.post_event("earnings_reset")
+        self.advance_time_and_run(.1)
+
+        self.assertEqual({}, self.machine.modes["credits"].earnings)
+        self.assertEqual({}, self.machine.modes["credits"].data_manager.written_data)
 
     def testReplay(self):
         # add coins
