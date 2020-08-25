@@ -69,7 +69,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self.min_version = defaultdict(lambda: 0xffffffff)      # type: Dict[str, int]
         self._poll_task = {}                # type: Dict[str, asyncio.Task]
         self._incand_task = None            # type: Optional[asyncio.Task]
-        self._light_system = None
+        self._light_system = None           # type: Optional[PlatformBatchLightSystem]
 
         self.features['tickless'] = True
 
