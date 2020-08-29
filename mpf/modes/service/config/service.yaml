@@ -81,6 +81,15 @@ slide_player:
     service_light_test:
       action: remove
 
+  # confirm slides
+  service_options_slide_start:
+    service_options_slide:
+      action: play
+      priority: 2
+  service_options_slide_stop:
+    service_options_slide:
+      action: remove
+
   # software update
   service_software_update_choice:
     software_update:
@@ -123,43 +132,14 @@ widget_player:
       slide: service_coil_test
 
   # menu items
+  service_menu_selected:
+    service_menu_item:
+      action: add
+      slide: service_menu
   service_menu_deselected:
-    service_menu_item_switch:
+    service_menu_item:
       action: remove
       slide: service_menu
-    service_menu_item_coil:
-      action: remove
-      slide: service_menu
-    service_menu_item_light:
-      action: remove
-      slide: service_menu
-    service_menu_item_settings:
-      action: remove
-      slide: service_menu
-    service_menu_item_update:
-      action: remove
-      slide: service_menu
-  service_menu_selected_switch:
-    service_menu_item_switch:
-      action: add
-      slide: service_menu
-  service_menu_selected_coil:
-    service_menu_item_coil:
-      action: add
-      slide: service_menu
-  service_menu_selected_light:
-    service_menu_item_light:
-      action: add
-      slide: service_menu
-  service_menu_selected_settings:
-    service_menu_item_settings:
-      action: add
-      slide: service_menu
-  service_menu_selected_update:
-    service_menu_item_update:
-      action: add
-      slide: service_menu
-
 
 slides:
   # door open
@@ -179,6 +159,25 @@ slides:
     style: small
     x: center
     y: bottom + 80%
+  # confirm slide
+  service_options_slide:
+  - type: text
+    text: "(title)"
+    style: small
+    x: center
+    y: bottom + 80%
+  - type: text
+    text: "(question)"
+    style: small
+    y: bottom + 60%
+  - type: text
+    text: "(option)"
+    style: small
+    y: bottom + 40%
+  - type: text
+    text: "(warning)"
+    style: small
+    y: bottom + 20%
   # switch test
   service_switch_test:
   - type: text
@@ -321,23 +320,10 @@ widgets:
         repeat: true
 
   # menu items
-  service_menu_item_switch:
+  service_menu_item:
     type: text
-    text: Switch Test
+    text: (label)
     style: medium
-  service_menu_item_coil:
-    type: text
-    text: Coil Test
-    style: medium
-  service_menu_item_light:
-    type: text
-    text: Light Test
-    style: medium
-  service_menu_item_settings:
-    type: text
-    text: Settings
-    style: medium
-  service_menu_item_update:
-    type: text
-    text: Software Update
-    style: medium
+    valign: top
+    halign: left
+

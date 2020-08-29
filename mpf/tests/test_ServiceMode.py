@@ -115,42 +115,54 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.assertEventCalled('service_mode_exited')
 
     def test_start_menu(self):
-        self.mock_event("service_menu_selected_switch")
-        self.mock_event("service_menu_selected_coil")
-        self.mock_event("service_menu_selected_light")
-        self.mock_event("service_menu_selected_settings")
+        self.mock_event("service_menu_selected")
         # enter menu
         self.hit_and_release_switch("s_service_enter")
         self.advance_time_and_run()
 
-        self.assertEventCalled("service_menu_selected_switch", 1)
+        self.assertEventCalledWith("service_menu_selected", label='Diagnostics Menu')
 
         self.hit_and_release_switch("s_service_up")
         self.advance_time_and_run()
-        self.assertEventCalled("service_menu_selected_coil", 1)
+        self.assertEventCalledWith("service_menu_selected", label='Audits Menu')
 
         self.hit_and_release_switch("s_service_up")
         self.advance_time_and_run()
-        self.assertEventCalled("service_menu_selected_light", 1)
+        self.assertEventCalledWith("service_menu_selected", label='Adjustments Menu')
 
         self.hit_and_release_switch("s_service_up")
         self.advance_time_and_run()
-        self.assertEventCalled("service_menu_selected_settings", 1)
+        self.assertEventCalledWith("service_menu_selected", label='Utilities Menu')
 
         self.hit_and_release_switch("s_service_up")
         self.advance_time_and_run()
-        self.assertEventCalled("service_menu_selected_switch", 2)
+        self.assertEventCalledWith("service_menu_selected", label='Diagnostics Menu')
 
         self.hit_and_release_switch("s_service_down")
         self.advance_time_and_run()
-        self.assertEventCalled("service_menu_selected_settings", 2)
+        self.assertEventCalledWith("service_menu_selected", label='Utilities Menu')
 
     def test_switch_test(self):
+        self.mock_event("service_menu_selected")
         # enter menu
         self.hit_and_release_switch("s_service_enter")
         self.advance_time_and_run()
 
-        # enter switch test
+        self.assertEventCalledWith("service_menu_selected", label='Diagnostics Menu')
+
+        # enter diagnostics menu
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+
+        self.assertEventCalledWith("service_menu_selected", label='Switch Menu')
+
+        # enter switch menu
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+
+        self.assertEventCalledWith("service_menu_selected", label='Switch Edge Test')
+
+        # start edge test
         self.hit_and_release_switch("s_service_enter")
         self.advance_time_and_run()
 
@@ -167,20 +179,41 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.assertEventCalled("service_switch_test_stop")
 
     def test_light_test(self):
+        self.mock_event("service_menu_selected")
         # enter menu
         self.hit_and_release_switch("s_service_enter")
         self.advance_time_and_run()
 
+        self.assertEventCalledWith("service_menu_selected", label='Diagnostics Menu')
+
+        # enter diagnostics menu
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+
+        self.assertEventCalledWith("service_menu_selected", label='Switch Menu')
+
+        # select coil menu
         self.hit_and_release_switch("s_service_up")
         self.advance_time_and_run()
 
+        self.assertEventCalledWith("service_menu_selected", label='Coil Menu')
+
+        # select light menu
         self.hit_and_release_switch("s_service_up")
         self.advance_time_and_run()
+
+        self.assertEventCalledWith("service_menu_selected", label='Light Menu')
+
+        # enter light menu
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+
+        self.assertEventCalledWith("service_menu_selected", label='Single Light Test')
 
         self.mock_event("service_light_test_start")
         self.mock_event("service_light_test_stop")
 
-        # enter switch test
+        # enter single light test
         self.hit_and_release_switch("s_service_enter")
         self.advance_time_and_run()
 
@@ -229,16 +262,34 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.assertEventCalled("service_light_test_stop")
 
     def test_coil_test(self):
+        self.mock_event("service_menu_selected")
         self.mock_event("service_coil_test_start")
         self.mock_event("service_coil_test_stop")
         # enter menu
         self.hit_and_release_switch("s_service_enter")
         self.advance_time_and_run()
 
+        self.assertEventCalledWith("service_menu_selected", label='Diagnostics Menu')
+
+        # enter diagnostics menu
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+
+        self.assertEventCalledWith("service_menu_selected", label='Switch Menu')
+
+        # select coil menu
         self.hit_and_release_switch("s_service_up")
         self.advance_time_and_run()
 
-        # enter coil test
+        self.assertEventCalledWith("service_menu_selected", label='Coil Menu')
+
+        # enter coil menu
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+
+        self.assertEventCalledWith("service_menu_selected", label='Single Coil Test')
+
+        # start edge test
         self.hit_and_release_switch("s_service_enter")
         self.advance_time_and_run()
 
@@ -322,14 +373,33 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.mock_event("service_settings_start")
         self.mock_event("service_settings_edit")
         self.mock_event("service_settings_stop")
+
+        self.mock_event("service_menu_selected")
         # enter menu
         self.hit_and_release_switch("s_service_enter")
         self.advance_time_and_run()
 
-        self.hit_and_release_switch("s_service_down")
+        self.assertEventCalledWith("service_menu_selected", label='Diagnostics Menu')
+
+        # select audits menu
+        self.hit_and_release_switch("s_service_up")
         self.advance_time_and_run()
 
-        # enter settings
+        self.assertEventCalledWith("service_menu_selected", label='Audits Menu')
+
+        # select adjustments menu
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+
+        self.assertEventCalledWith("service_menu_selected", label='Adjustments Menu')
+
+        # enter adjustments menu
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+
+        self.assertEventCalledWith("service_menu_selected", label='Standard Adjustments')
+
+        # enter standard adjustments menu
         self.hit_and_release_switch("s_service_enter")
         self.advance_time_and_run()
 

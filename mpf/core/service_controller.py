@@ -60,8 +60,6 @@ class ServiceController(MpfController):
 
         self.machine.events.post("service_mode_entered")
 
-        # TODO: reset hardware interface
-
     async def stop_service(self):
         """Stop service mode."""
         if not self.is_in_service():
@@ -74,9 +72,6 @@ class ServiceController(MpfController):
 
     def get_switch_map(self):
         """Return a map of all switches in the machine."""
-        if not self.is_in_service():
-            raise AssertionError("Not in service mode!")
-
         switch_map = []
         for switch in self.machine.switches.values():
             switch_map.append(SwitchMap(switch.hw_switch.get_board_name(), switch))
@@ -88,8 +83,6 @@ class ServiceController(MpfController):
 
     def get_coil_map(self) -> List[CoilMap]:
         """Return a map of all coils in the machine."""
-        if not self.is_in_service():
-            raise AssertionError("Not in service mode!")
         coil_map = []
         for coil in self.machine.coils.values():
             assert coil.hw_driver is not None
@@ -101,8 +94,6 @@ class ServiceController(MpfController):
 
     def get_light_map(self) -> List[LightMap]:
         """Return a map of all lights in the machine."""
-        if not self.is_in_service():
-            raise AssertionError("Not in service mode!")
         light_map = []
         for light in self.machine.lights.values():
             light_map.append(LightMap(next(iter(light.hw_drivers.values()))[0].get_board_name(), light))
