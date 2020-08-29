@@ -34,7 +34,7 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         """Create features and set default variables.
 
         Args:
-            machine(mpf.core.machine.MachineController: The machine.
+            machine(mpf.core.machine.MachineController): The machine.
         """
         self.machine = machine  # type: MachineController
         self.features = {}
