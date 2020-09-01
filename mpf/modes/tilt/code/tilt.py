@@ -118,7 +118,7 @@ class Tilt(Mode):
             not self.machine.game.player or
             self.machine.game.ending or
             self.machine.game.tilted):
-            return
+                return
 
         self.info_log("Tilt Warning")
 
