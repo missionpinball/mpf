@@ -7,7 +7,7 @@ from .twitch.twitch_client import TwitchClient
 
 class TwitchBot:
 
-    """Adds Twitch Chat Room events"""
+    """Adds Twitch Chat Room events."""
 
     def __init__(self, machine):
         """Initialise Twitch client."""

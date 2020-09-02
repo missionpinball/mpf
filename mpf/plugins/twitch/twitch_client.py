@@ -7,13 +7,12 @@ import textwrap
 
 class TwitchClient(irc.bot.SingleServerIRCBot):
 
-    """Thread to process Twitch chat events"""
+    """Thread to process Twitch chat events."""
 
     TWITCH_PLAYS_ENABLED = False
 
     def __init__(self, machine, username, password, channel):
-        """Initialize Twitch Bot"""
-
+        """Initialize Twitch Bot."""
         self.log = logging.getLogger('twitch_client') 
         self.machine = machine
         self.password = password
@@ -27,8 +26,7 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
         # self.connection.add_global_handler("all_events", self.on_all_events, -100)
 
     def on_welcome(self, c, e):
-        """Called when IRC server is joined"""
-
+        """Called when IRC server is joined."""
         self.log.info('Joining ' + self.channel)
 
         # You must request specific capabilities before you can use them
@@ -38,8 +36,7 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
         c.join(self.channel)
 
     def on_pubmsg(self, c, e):
-        """Called when a public message is posted in chat"""
-
+        """Called when a public message is posted in chat."""
         # If a chat message starts with ! or ?, try to run it as a command
         if e.arguments[0][:1] == '!' or e.arguments[0][:1] == '?':
             cmd = e.arguments[0].split(' ')[0][1:]
@@ -85,20 +82,17 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
                 )
 
     def on_privmsg(self, c, e):
-        """Called when a private message is posted in chat"""
-
+        """Called when a private message is posted in chat."""
         user = e.source.split('!')[0]
         self.log.info('Private chat: [' + user + '] ' + e.arguments[0])
 
     def on_all_events(self, c, e):
-        """Called when any IRC event is posted"""
-
+        """Called when any IRC event is posted."""
         message = 'All Events: ' + e
         self.log.info(message.replace(self.password, 'XXXXX'))
 
     def do_command(self, e, cmd):
-        """Handles a chat command (starts with ? or !)"""
-
+        """Handles a chat command (starts with ? or !)."""
         user = e.source.split('!')[0]
         self.log.info('Received command: [' + user + '] ' + cmd)
 
@@ -109,18 +103,16 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
                 self.machine.events.post('twitch_flip_right', user=user)
 
     def is_connected(self):
-        """Returns true if the server is connected"""
-
+        """Returns true if the server is connected."""
         return self.connection.is_connected()
 
     def build_tag_dict(self, seq):
-        """Builds a Python dict from IRC chat tags"""
+        """Builds a Python dict from IRC chat tags."""
 
         return dict((d['key'], d['value']) for (index, d) in enumerate(seq))
 
     def split_message(self, message, min_lines):
-        """Splits up a string into lines broken on words"""
-
+        """Splits up a string into lines broken on words."""
         lines = textwrap.wrap(message, 21)
         length = len(lines)
 
