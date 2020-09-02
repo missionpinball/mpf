@@ -8,7 +8,7 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
     TWITCH_PLAYS_ENABLED = False
 
     def __init__(self, machine, username, password, channel):
-        self.log = logging.getLogger('TwitchClient') 
+        self.log = logging.getLogger('twitch_client') 
         self.machine = machine
         self.password = password
         self.channel = '#' + channel

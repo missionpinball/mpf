@@ -1,4 +1,4 @@
-"""MPF plugin which automatically plays back switch events from the config file."""
+"""MPF plugin which adds events from monitoring a Twitch chatroom."""
 
 import logging
 import os
@@ -20,6 +20,7 @@ class TwitchBot:
         self.config = self.machine.config['twitch_client']
 
         self.log.info('Attempting to connect to Twitch')
+        # THIS SHOULD BE MACHINE VARIABLES
         self.client = TwitchClient(self.machine, self.config['user'], self.config['password'], self.config['channel'])
         thread = threading.Thread(target=self.client.start, args=())
         thread.daemon = True
