@@ -9,12 +9,13 @@ from .twitch.twitch_client import TwitchClient
 class TwitchBot:
     def __init__(self, machine):
         """Initialise Twitch client."""
+        self.machine = machine
         self.log = logging.getLogger('twitch_client')
 
         if 'twitch_client' not in machine.config:
-            machine.log.debug('"twitch_client:" section not found in '
-                              'machine configuration, so the Twitch Client'
-                              'plugin will not be used.')
+            self.log.debug('"twitch_client:" section not found in '
+                           'machine configuration, so the Twitch Client'
+                           'plugin will not be used.')
             return
 
         self.config = self.machine.config['twitch_client']
