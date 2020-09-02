@@ -77,7 +77,7 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
                 self.machine.set_machine_var('twitch_last_chat_message_line_5', lines[4])
                 self.machine.set_machine_var('twitch_last_chat_message_line_6', lines[5])
                 self.machine.events.post(
-                    'twitch_new_chat_message',
+                    'twitch_chat_message',
                     user=user,
                     message=e.arguments[0],
                     line_count=length,
