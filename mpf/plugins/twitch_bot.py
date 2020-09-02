@@ -1,12 +1,14 @@
 """MPF plugin which adds events from monitoring a Twitch chatroom."""
 
 import logging
-import os
 import threading
-from mpf.core.scriptlet import Scriptlet
 from .twitch.twitch_client import TwitchClient
 
+
 class TwitchBot:
+
+    """Adds Twitch Chat Room events"""
+
     def __init__(self, machine):
         """Initialise Twitch client."""
         self.machine = machine
@@ -31,4 +33,3 @@ class TwitchBot:
             self.info_log('Successful connection to Twitch')
         else:
             self.info_log('Connection error')
-
