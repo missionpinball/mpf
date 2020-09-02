@@ -1,3 +1,5 @@
+"""IRC Chat Bot for monitoring a Twitch chatroom."""
+
 import sys
 import irc.bot
 import requests
@@ -13,7 +15,7 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
 
     def __init__(self, machine, username, password, channel):
         """Initialize Twitch Bot."""
-        self.log = logging.getLogger('twitch_client') 
+        self.log = logging.getLogger('twitch_client')
         self.machine = machine
         self.password = password
         self.channel = '#' + channel
@@ -26,7 +28,7 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
         # self.connection.add_global_handler("all_events", self.on_all_events, -100)
 
     def on_welcome(self, c, e):
-        """Called when IRC server is joined."""
+        """Framework will call when IRC server is joined."""
         self.log.info('Joining ' + self.channel)
 
         # You must request specific capabilities before you can use them
@@ -36,7 +38,7 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
         c.join(self.channel)
 
     def on_pubmsg(self, c, e):
-        """Called when a public message is posted in chat."""
+        """Framework will call when a public message is posted in chat."""
         # If a chat message starts with ! or ?, try to run it as a command
         if e.arguments[0][:1] == '!' or e.arguments[0][:1] == '?':
             cmd = e.arguments[0].split(' ')[0][1:]
@@ -52,7 +54,13 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
             if message_type == 'sub' or message_type == 'resub':
                 months = tags.get('msg-param-months', 1)
                 subscriber_message = tags.get('message', '')
-                self.machine.events.post('twitch_subscription', user=user, message=e.arguments[0], months=int(months), subscriber_message=subscriber_message)
+                self.machine.events.post(
+                    'twitch_subscription',
+                    user=user,
+                    message=e.arguments[0],
+                    months=int(months),
+                    subscriber_message=subscriber_message
+                )
             elif bits is not None:
                 self.machine.set_machine_var('twitch_last_bits_user', user)
                 self.machine.set_machine_var('twitch_last_bits_amount', bits)
@@ -82,17 +90,17 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
                 )
 
     def on_privmsg(self, c, e):
-        """Called when a private message is posted in chat."""
+        """Framework will call when a private message is posted in chat."""
         user = e.source.split('!')[0]
         self.log.info('Private chat: [' + user + '] ' + e.arguments[0])
 
     def on_all_events(self, c, e):
-        """Called when any IRC event is posted."""
+        """Framework will call when any IRC event is posted."""
         message = 'All Events: ' + e
         self.log.info(message.replace(self.password, 'XXXXX'))
 
     def do_command(self, e, cmd):
-        """Handles a chat command (starts with ? or !)."""
+        """Handle a chat command (starts with ? or !)."""
         user = e.source.split('!')[0]
         self.log.info('Received command: [' + user + '] ' + cmd)
 
@@ -103,16 +111,15 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
                 self.machine.events.post('twitch_flip_right', user=user)
 
     def is_connected(self):
-        """Returns true if the server is connected."""
+        """Return true if the server is connected."""
         return self.connection.is_connected()
 
     def build_tag_dict(self, seq):
-        """Builds a Python dict from IRC chat tags."""
-
+        """Build a Python dict from IRC chat tags."""
         return dict((d['key'], d['value']) for (index, d) in enumerate(seq))
 
     def split_message(self, message, min_lines):
-        """Splits up a string into lines broken on words."""
+        """Split up a string into lines broken on words."""
         lines = textwrap.wrap(message, 21)
         length = len(lines)
 
