@@ -1,8 +1,6 @@
 """IRC Chat Bot for monitoring a Twitch chatroom."""
 
-import sys
 import irc.bot
-import requests
 import logging
 import textwrap
 
