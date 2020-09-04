@@ -62,20 +62,20 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
                     subscriber_message=subscriber_message
                 )
             elif bits is not None:
-                self.machine.set_machine_var('twitch_last_bits_user', user)
-                self.machine.set_machine_var('twitch_last_bits_amount', bits)
+                self.machine.variables.set_machine_var('twitch_last_bits_user', user)
+                self.machine.variables.set_machine_var('twitch_last_bits_amount', bits)
                 self.machine.events.post('twitch_bit_donation', user=user, message=e.arguments[0], bits=int(bits))
             else:
                 length, lines = self.split_message(e.arguments[0], 6)
-                self.machine.set_machine_var('twitch_last_chat_user', user)
-                self.machine.set_machine_var('twitch_last_chat_message', e.arguments[0])
-                self.machine.set_machine_var('twitch_last_chat_message_line_count', length)
-                self.machine.set_machine_var('twitch_last_chat_message_line_1', lines[0])
-                self.machine.set_machine_var('twitch_last_chat_message_line_2', lines[1])
-                self.machine.set_machine_var('twitch_last_chat_message_line_3', lines[2])
-                self.machine.set_machine_var('twitch_last_chat_message_line_4', lines[3])
-                self.machine.set_machine_var('twitch_last_chat_message_line_5', lines[4])
-                self.machine.set_machine_var('twitch_last_chat_message_line_6', lines[5])
+                self.machine.variables.set_machine_var('twitch_last_chat_user', user)
+                self.machine.variables.set_machine_var('twitch_last_chat_message', e.arguments[0])
+                self.machine.variables.set_machine_var('twitch_last_chat_message_line_count', length)
+                self.machine.variables.set_machine_var('twitch_last_chat_message_line_1', lines[0])
+                self.machine.variables.set_machine_var('twitch_last_chat_message_line_2', lines[1])
+                self.machine.variables.set_machine_var('twitch_last_chat_message_line_3', lines[2])
+                self.machine.variables.set_machine_var('twitch_last_chat_message_line_4', lines[3])
+                self.machine.variables.set_machine_var('twitch_last_chat_message_line_5', lines[4])
+                self.machine.variables.set_machine_var('twitch_last_chat_message_line_6', lines[5])
                 self.machine.events.post(
                     'twitch_chat_message',
                     user=user,
