@@ -39,4 +39,4 @@ class TwitchBot(LogMixin):
         if self.client.is_connected():
             self.info_log('Successful connection to Twitch')
         else:
-            self.info_log('Not Yet Connected')
+            self.info_log('Connecting...')
