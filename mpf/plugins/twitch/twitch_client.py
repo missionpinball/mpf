@@ -26,7 +26,10 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
         server = 'irc.chat.twitch.tv'
         port = 6667
         self.log.info('Connecting to ' + server + ' on port ' + str(port) + '...')
-        super().__init__([(server, port, 'oauth:' + password)], username, username)
+        super().__init__([(
+            server, port,
+            (password if password.lower().startswith('oauth:') else ('oauth:' + password))
+        )], username, username)
         # self.connection.add_global_handler("all_events", self.on_all_events, -100)
 
     def on_welcome(self, c, e):
