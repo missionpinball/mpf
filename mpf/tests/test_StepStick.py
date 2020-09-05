@@ -1,6 +1,4 @@
-import asyncio
-
-from mpf.tests.MpfTestCase import MpfTestCase, MagicMock, patch
+from mpf.tests.MpfTestCase import MpfTestCase, MagicMock
 
 
 class TestStepStick(MpfTestCase):
