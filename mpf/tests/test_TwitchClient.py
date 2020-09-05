@@ -51,7 +51,7 @@ class TestTwitchClient(MpfFakeGameTestCase):
         del sys.modules['irc']
         del sys.modules['irc.bot']
 
-    def test_twitch_client(self):
+    def test_twitch_chat(self):
         """Test connect and event posting."""
         self.mock_event("twitch_chat_message")
         tags = [
@@ -67,3 +67,50 @@ class TestTwitchClient(MpfFakeGameTestCase):
         self.assertEventCalled("twitch_chat_message")
         self.assertMachineVarEqual("Some User", "twitch_last_chat_user")
         self.assertMachineVarEqual("Hello Bot", "twitch_last_chat_message")
+
+    def test_twitch_bits(self):
+        """Test connect and event posting."""
+        self.mock_event("twitch_bit_donation")
+        tags = [
+            {"key": "msg-id", "value": None},
+            {"key": "bits", "value": 42},
+            {"key": "display-name", "value": "Some User"},
+            {"key": "msg-param-months", "value": None},
+            {"key": "message", "value": None},
+        ]
+        event = MockEvent("pubmsg", "some_user", "bot", ["Hello Bot"], tags)
+        self.machine.plugins[0].client.on_pubmsg("some_channel", event)
+        self.advance_time_and_run(.1)
+        self.assertEventCalled("twitch_bit_donation")
+        self.assertMachineVarEqual("Some User", "twitch_last_bits_user")
+        self.assertMachineVarEqual(42, "twitch_last_bits_amount")
+
+    def test_twitch_sub(self):
+        """Test connect and event posting."""
+        self.mock_event("twitch_subscription")
+        tags = [
+            {"key": "msg-id", "value": "sub"},
+            {"key": "bits", "value": None},
+            {"key": "display-name", "value": "Some User"},
+            {"key": "msg-param-months", "value": 1},
+            {"key": "message", "value": "Sub message"},
+        ]
+        event = MockEvent("pubmsg", "some_user", "bot", ["Hello Bot"], tags)
+        self.machine.plugins[0].client.on_pubmsg("some_channel", event)
+        self.advance_time_and_run(.1)
+        self.assertEventCalled("twitch_subscription")
+
+    def test_twitch_resub(self):
+        """Test connect and event posting."""
+        self.mock_event("twitch_subscription")
+        tags = [
+            {"key": "msg-id", "value": "resub"},
+            {"key": "bits", "value": None},
+            {"key": "display-name", "value": "Some User"},
+            {"key": "msg-param-months", "value": 42},
+            {"key": "message", "value": "Sub message"},
+        ]
+        event = MockEvent("pubmsg", "some_user", "bot", ["Hello Bot"], tags)
+        self.machine.plugins[0].client.on_pubmsg("some_channel", event)
+        self.advance_time_and_run(.1)
+        self.assertEventCalled("twitch_subscription")
