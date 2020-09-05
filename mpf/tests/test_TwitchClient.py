@@ -1,8 +1,6 @@
+from unittest.mock import MagicMock
+
 import sys
-
-from mock import MagicMock
-from unittest.mock import patch, PropertyMock
-
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 
@@ -25,13 +23,13 @@ class MockEvent:
 
 class MockSingleServerIRCBot():
 
+    """Mock server."""
+
     def __init__(self, server_list, nickname, realname, reconnection_interval=None, recon=None, **connect_params):
         self.connection = MagicMock()
 
     def start(self):
         pass
-
-
 
 
 class TestTwitchClient(MpfFakeGameTestCase):
