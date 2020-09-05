@@ -66,10 +66,25 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
                     months=int(months),
                     subscriber_message=subscriber_message
                 )
+                '''event: twitch_subscription
+                desc: A chat user has subscribed or resubscribed on Twitch
+                args:
+                message: Chat message text
+                months: The number of months that the user has been a subscriber
+                subscriber_message: The message the user typed when subscribing
+                user: The chat user name who subscribed
+                '''
             elif bits is not None:
                 self.set_machine_variable_in_mpf('twitch_last_bits_user', user)
                 self.set_machine_variable_in_mpf('twitch_last_bits_amount', bits)
                 self.post_event_in_mpf('twitch_bit_donation', user=user, message=e.arguments[0], bits=int(bits))
+                '''event: twitch_bit_donation
+                desc: A chat user has donated bits on Twitch
+                args:
+                message: Chat message text
+                bits: The number of bits donated
+                user: The chat user name who subscribed
+                '''
             else:
                 length, lines = self.split_message(e.arguments[0], 6)
                 self.set_machine_variable_in_mpf('twitch_last_chat_user', user)
@@ -93,6 +108,19 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
                     line_5=lines[4],
                     line_6=lines[5]
                 )
+                '''event: twitch_chat_message
+                desc: A chat message was received via Twitch
+                args:
+                line_count: The number of lines that the text splitter produced
+                line_1: Split line 1
+                line_2: Split line 2
+                line_3: Split line 3
+                line_4: Split line 4
+                line_5: Split line 5
+                line_6: Split line 6
+                message: Full chat message text
+                user: The chat user name who subscribed
+                '''
 
     def on_privmsg(self, c, e):
         """Framework will call when a private message is posted in chat."""
