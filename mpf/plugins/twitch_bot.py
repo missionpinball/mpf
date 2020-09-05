@@ -1,7 +1,8 @@
 """MPF plugin which adds events from monitoring a Twitch chatroom."""
 import threading
-from .twitch.twitch_client import TwitchClient
 from mpf.core.logging import LogMixin
+
+from .twitch.twitch_client import TwitchClient
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -29,7 +30,8 @@ class TwitchBot(LogMixin):
 
         self.log.info('Attempting to connect to Twitch')
         # THIS SHOULD BE MACHINE VARIABLES
-        self.client = TwitchClient(self.machine, self.config['user'], self.config['password'], self.config['channel'])
+        self.client = TwitchClient(self.machine, self.config['user'], self.config['password'], self.config['channel'],
+                                   self.machine.clock.loop)
         thread = threading.Thread(target=self.client.start, args=())
         thread.daemon = True
         thread.start()

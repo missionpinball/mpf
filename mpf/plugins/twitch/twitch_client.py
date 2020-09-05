@@ -1,4 +1,7 @@
 """IRC Chat Bot for monitoring a Twitch chatroom."""
+from functools import partial
+
+import asyncio
 
 import irc.bot
 import logging
@@ -11,12 +14,13 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
 
     TWITCH_PLAYS_ENABLED = False
 
-    def __init__(self, machine, username, password, channel):
+    def __init__(self, machine, username, password, channel, loop):
         """Initialize Twitch Bot."""
         self.log = logging.getLogger('twitch_client')
         self.machine = machine
         self.password = password
         self.channel = '#' + channel
+        self.loop = loop    # type: asyncio.AbstractEventLoop
 
         # Create IRC bot connection
         server = 'irc.chat.twitch.tv'
@@ -52,7 +56,7 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
             if message_type == 'sub' or message_type == 'resub':
                 months = tags.get('msg-param-months', 1)
                 subscriber_message = tags.get('message', '')
-                self.machine.events.post(
+                self.post_event_in_mpf(
                     'twitch_subscription',
                     user=user,
                     message=e.arguments[0],
@@ -60,21 +64,21 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
                     subscriber_message=subscriber_message
                 )
             elif bits is not None:
-                self.machine.variables.set_machine_var('twitch_last_bits_user', user)
-                self.machine.variables.set_machine_var('twitch_last_bits_amount', bits)
-                self.machine.events.post('twitch_bit_donation', user=user, message=e.arguments[0], bits=int(bits))
+                self.set_machine_variable_in_mpf('twitch_last_bits_user', user)
+                self.set_machine_variable_in_mpf('twitch_last_bits_amount', bits)
+                self.post_event_in_mpf('twitch_bit_donation', user=user, message=e.arguments[0], bits=int(bits))
             else:
                 length, lines = self.split_message(e.arguments[0], 6)
-                self.machine.variables.set_machine_var('twitch_last_chat_user', user)
-                self.machine.variables.set_machine_var('twitch_last_chat_message', e.arguments[0])
-                self.machine.variables.set_machine_var('twitch_last_chat_message_line_count', length)
-                self.machine.variables.set_machine_var('twitch_last_chat_message_line_1', lines[0])
-                self.machine.variables.set_machine_var('twitch_last_chat_message_line_2', lines[1])
-                self.machine.variables.set_machine_var('twitch_last_chat_message_line_3', lines[2])
-                self.machine.variables.set_machine_var('twitch_last_chat_message_line_4', lines[3])
-                self.machine.variables.set_machine_var('twitch_last_chat_message_line_5', lines[4])
-                self.machine.variables.set_machine_var('twitch_last_chat_message_line_6', lines[5])
-                self.machine.events.post(
+                self.set_machine_variable_in_mpf('twitch_last_chat_user', user)
+                self.set_machine_variable_in_mpf('twitch_last_chat_message', e.arguments[0])
+                self.set_machine_variable_in_mpf('twitch_last_chat_message_line_count', length)
+                self.set_machine_variable_in_mpf('twitch_last_chat_message_line_1', lines[0])
+                self.set_machine_variable_in_mpf('twitch_last_chat_message_line_2', lines[1])
+                self.set_machine_variable_in_mpf('twitch_last_chat_message_line_3', lines[2])
+                self.set_machine_variable_in_mpf('twitch_last_chat_message_line_4', lines[3])
+                self.set_machine_variable_in_mpf('twitch_last_chat_message_line_5', lines[4])
+                self.set_machine_variable_in_mpf('twitch_last_chat_message_line_6', lines[5])
+                self.post_event_in_mpf(
                     'twitch_chat_message',
                     user=user,
                     message=e.arguments[0],
@@ -104,9 +108,17 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
 
         if self.TWITCH_PLAYS_ENABLED:
             if cmd == 'l':
-                self.machine.events.post('twitch_flip_left', user=user)
+                self.post_event_in_mpf('twitch_flip_left', user=user)
             elif cmd == 'r':
-                self.machine.events.post('twitch_flip_right', user=user)
+                self.post_event_in_mpf('twitch_flip_right', user=user)
+
+    def post_event_in_mpf(self, event, *args, **kwargs):
+        """Post event in MPF via async loop to prevent race conditions."""
+        self.loop.call_soon_threadsafe(partial(self.machine.events.post, *args, **kwargs))
+
+    def set_machine_variable_in_mpf(self, name, value):
+        """Set machine var in MPF via async loop to prevent race conditions."""
+        self.loop.call_soon_threadsafe(self.machine.variables.set_machine_var, name, value)
 
     def is_connected(self):
         """Return true if the server is connected."""
