@@ -26,7 +26,7 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
         server = 'irc.chat.twitch.tv'
         port = 6667
         self.log.info('Connecting to ' + server + ' on port ' + str(port) + '...')
-        irc.bot.SingleServerIRCBot.__init__(self, [(server, port, 'oauth:' + password)], username, username)
+        super().__init__(self, [(server, port, 'oauth:' + password)], username, username)
         # self.connection.add_global_handler("all_events", self.on_all_events, -100)
 
     def on_welcome(self, c, e):
@@ -114,7 +114,7 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
 
     def post_event_in_mpf(self, event, *args, **kwargs):
         """Post event in MPF via async loop to prevent race conditions."""
-        self.loop.call_soon_threadsafe(partial(self.machine.events.post, *args, **kwargs))
+        self.loop.call_soon_threadsafe(partial(self.machine.events.post, event, *args, **kwargs))
 
     def set_machine_variable_in_mpf(self, name, value):
         """Set machine var in MPF via async loop to prevent race conditions."""
