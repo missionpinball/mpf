@@ -1,4 +1,4 @@
-"""MPF plugin which adds events from monitoring a Twitch chatroom."""
+"""MPF plugin which adds events from monitoring a Twitch chat room."""
 import threading
 from mpf.core.logging import LogMixin
 
@@ -11,7 +11,7 @@ if MYPY:   # pragma: no cover
 
 class TwitchBot(LogMixin):
 
-    """Adds Twitch Chat Room events."""
+    """Adds Twitch chat room events."""
 
     def __init__(self, machine):
         """Initialise Twitch client."""
@@ -39,4 +39,4 @@ class TwitchBot(LogMixin):
         if self.client.is_connected():
             self.info_log('Successful connection to Twitch')
         else:
-            self.info_log('Connection error')
+            self.info_log('Not Yet Connected')
