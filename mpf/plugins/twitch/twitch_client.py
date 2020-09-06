@@ -1,19 +1,28 @@
 """IRC Chat Bot for monitoring a Twitch chatroom."""
 from functools import partial
 
-import asyncio
-
-import irc.bot
 import logging
 import textwrap
 
+try:
+    from irc.bot import SingleServerIRCBot
+    IMPORT_SUCCESS = True
+except ImportError:
+    SingleServerIRCBot = object     # prevent class loading error
+    IMPORT_SUCCESS = False
 
-class TwitchClient(irc.bot.SingleServerIRCBot):
+MYPY = False
+if MYPY:   # pragma: no cover
+    import asyncio  # pylint: disable-msg=cyclic-import,unused-import
+
+
+class TwitchClient(SingleServerIRCBot):
 
     """Thread to process Twitch chat events."""
 
     TWITCH_PLAYS_ENABLED = False
 
+    # pylint: disable-msg=too-many-arguments
     def __init__(self, machine, username, password, channel, loop):
         """Initialize Twitch Bot."""
         self.log = logging.getLogger('twitch_client')
@@ -22,10 +31,13 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
         self.channel = '#' + channel
         self.loop = loop    # type: asyncio.AbstractEventLoop
 
+        if not IMPORT_SUCCESS:
+            raise AssertionError('Please install irc extension using "pip3 install irc" to use the twitch client.')
+
         # Create IRC bot connection
         server = 'irc.chat.twitch.tv'
         port = 6667
-        self.log.info('Connecting to ' + server + ' on port ' + str(port) + '...')
+        self.log.info('Connecting to %s on port %s...', server, port)
         super().__init__([(
             server, port,
             (password if password.lower().startswith('oauth:') else ('oauth:' + password))
@@ -34,7 +46,8 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
 
     def on_welcome(self, c, e):
         """Framework will call when IRC server is joined."""
-        self.log.info('Joining ' + self.channel)
+        del e
+        self.log.info('Joining %s', self.channel)
 
         # You must request specific capabilities before you can use them
         c.cap('REQ', ':twitch.tv/membership')
@@ -44,6 +57,7 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
 
     def on_pubmsg(self, c, e):
         """Framework will call when a public message is posted in chat."""
+        del c
         # If a chat message starts with ! or ?, try to run it as a command
         if e.arguments[0][:1] == '!' or e.arguments[0][:1] == '?':
             cmd = e.arguments[0].split(' ')[0][1:]
@@ -57,7 +71,7 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
         message_type = tags.get('msg-id')
         user = tags.get('display-name', user)
 
-        if message_type == 'sub' or message_type == 'resub':
+        if message_type in ('sub', 'resub'):
             months = tags.get('msg-param-months', 1)
             subscriber_message = tags.get('message', '')
             self.post_event_in_mpf(
@@ -125,11 +139,13 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
 
     def on_privmsg(self, c, e):
         """Framework will call when a private message is posted in chat."""
+        del c
         user = e.source.split('!')[0]
         self.log.info('Private chat: [' + user + '] ' + e.arguments[0])
 
     def on_all_events(self, c, e):
         """Framework will call when any IRC event is posted."""
+        del c
         message = 'All Events: ' + e
         self.log.info(message.replace(self.password, 'XXXXX'))
 
@@ -156,11 +172,13 @@ class TwitchClient(irc.bot.SingleServerIRCBot):
         """Return true if the server is connected."""
         return self.connection.is_connected()
 
-    def build_tag_dict(self, seq):
+    @staticmethod
+    def build_tag_dict(seq):
         """Build a Python dict from IRC chat tags."""
         return dict((d['key'], d['value']) for (index, d) in enumerate(seq))
 
-    def split_message(self, message, min_lines):
+    @staticmethod
+    def split_message(message, min_lines):
         """Split up a string into lines broken on words."""
         lines = textwrap.wrap(message, 21)
         length = len(lines)
