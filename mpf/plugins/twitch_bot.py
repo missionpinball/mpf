@@ -29,8 +29,16 @@ class TwitchBot(LogMixin):
             "twitch_client", self.machine.config['twitch_client'])
 
         self.log.info('Attempting to connect to Twitch')
-        # THIS SHOULD BE MACHINE VARIABLES
-        self.client = TwitchClient(self.machine, self.config['user'], self.config['password'], self.config['channel'],
+
+        user_var = self.config['user_var']
+        password_var = self.config['password_var']
+        channel_var = self.config['channel_var']
+
+        user = self.machine.variables.get_machine_var(user_var) if user_var != None else self.config['user']
+        password = self.machine.variables.get_machine_var(password_var) if password_var != None else self.config['password']
+        channel = self.machine.variables.get_machine_var(channel_var) if channel_var != None else self.config['channel']
+
+        self.client = TwitchClient(self.machine, user, password, channel,
                                    self.machine.clock.loop)
         thread = threading.Thread(target=self.client.start, args=())
         thread.daemon = True
