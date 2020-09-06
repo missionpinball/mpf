@@ -42,13 +42,11 @@ class TestTwitchClient(MpfFakeGameTestCase):
 
     def setUp(self):
         self.machine_config_patches['mpf']['plugins'] = ['mpf.plugins.twitch_bot.TwitchBot']
-        sys.modules['irc'] = MagicMock()
         sys.modules['irc.bot'] = MagicMock()
-        sys.modules['irc'].bot.SingleServerIRCBot = MockSingleServerIRCBot
+        sys.modules['irc.bot'].SingleServerIRCBot = MockSingleServerIRCBot
         super().setUp()
 
     def tearDown(self):
-        del sys.modules['irc']
         del sys.modules['irc.bot']
 
     def test_twitch_chat(self):
