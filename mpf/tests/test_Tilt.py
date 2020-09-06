@@ -259,7 +259,7 @@ class TestTilt(MpfGameTestCase):
         self.post_event("tilt_reset_warnings")
         self.advance_time_and_run()
 
-    def test_carry_over(self):
+    def test_carry_over_multiple_player(self):
         self._add_tilt_handler()
         self._prepare_trough()
         self.start_two_player_game()
@@ -303,6 +303,64 @@ class TestTilt(MpfGameTestCase):
 
         self.assertBallsOnPlayfield(1)
 
+        self.hit_and_release_switch("s_tilt_warning")
+        self.advance_time_and_run(2)
+        self.assertPlayerVarEqual(1, "tilt_warnings")
+        self.assertFalse(self._is_tilted)
+
+
+    def test_carry_over_single_player(self):
+        self._add_tilt_handler()
+        self._prepare_trough()
+        self.start_game()
+
+        self.advance_time_and_run(10)
+        self.assertBallsOnPlayfield(1)
+        self.assertPlayerVarEqual(0, "tilt_warnings")
+
+        # tilt machine
+        self.hit_and_release_switch("s_tilt_warning")
+        self.advance_time_and_run(2)
+        self.assertFalse(self._is_tilted)
+        self.assertPlayerVarEqual(1, "tilt_warnings")
+        self.hit_and_release_switch("s_tilt_warning")
+        self.advance_time_and_run(2)
+        self.assertFalse(self._is_tilted)
+        self.assertPlayerVarEqual(2, "tilt_warnings")
+
+        self.hit_and_release_switch("s_tilt_warning")
+        self.advance_time_and_run(2)
+        self.assertTrue(self._is_tilted)
+        self.assertPlayerVarEqual(3, "tilt_warnings")
+
+        # tilt_warnings player var no longer increases because machine is tilted
+        self.hit_and_release_switch("s_tilt_warning")
+        self.advance_time_and_run(2)
+        self.assertPlayerVarEqual(3, "tilt_warnings")
+
+        # reset tilt warnings and ensure player var no longer increases until next ball
+        self.machine.game.player['tilt_warnings'] = 0
+
+        self.hit_and_release_switch("s_tilt_warning")
+        self.advance_time_and_run(2)
+        self.assertPlayerVarEqual(0, "tilt_warnings")
+        self.hit_and_release_switch("s_tilt_warning")
+        self.advance_time_and_run(2)
+        self.assertPlayerVarEqual(0, "tilt_warnings")
+        self.assertPlayerNumber(1)
+
+        # advance to ball 2
+        self.drain_one_ball()
+        self.advance_time_and_run(10)
+        self.assertPlayerNumber(1)
+
+        self.assertPlayerVarEqual(0, "tilt_warnings")
+        self._is_tilted = False
+
+        self.assertBallNumber(2)
+        self.assertBallsOnPlayfield(1)
+
+        # generate tilt warning and ensure no carry over from previous ball
         self.hit_and_release_switch("s_tilt_warning")
         self.advance_time_and_run(2)
         self.assertPlayerVarEqual(1, "tilt_warnings")
