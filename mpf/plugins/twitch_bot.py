@@ -34,12 +34,17 @@ class TwitchBot(LogMixin):
         password_var = self.config['password_var']
         channel_var = self.config['channel_var']
 
-        user = self.machine.variables.
-            get_machine_var(user_var) if user_var is not None else self.config['user']
-        password = self.machine.variables.
-            get_machine_var(password_var) if password_var is not None else self.config['password']
-        channel = self.machine.variables.
-            get_machine_var(channel_var) if channel_var is not None else self.config['channel']
+        user = self.machine.variables.get_machine_var(
+            user_var
+        ) if user_var is not None else self.config['user']
+
+        password = self.machine.variables.get_machine_var(
+            password_var
+        ) if password_var is not None else self.config['password']
+
+        channel = self.machine.variables.get_machine_var(
+            channel_var
+        ) if channel_var is not None else self.config['channel']
 
         self.client = TwitchClient(self.machine, user, password, channel,
                                    self.machine.clock.loop)
