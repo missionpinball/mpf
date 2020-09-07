@@ -681,6 +681,10 @@ class AssetPool:
     @property
     def asset(self):
         """Pop one asset from the pool."""
+        return self.get_next()
+
+    def get_next(self):
+        """Pop one asset from the pool."""
         if self.config['type'] == 'random':
             return self._get_random_asset()
         if self.config['type'] == 'sequence':
@@ -840,6 +844,11 @@ class AssetPool:
 
         return assets[-1]
 
+    @property
+    def is_pool(self):
+        """Return that this is a pool."""
+        return True
+
 
 class Asset:
 
@@ -975,3 +984,8 @@ class Asset:
     def _do_unload(self):
         # This is the actual method that unloads the asset
         raise NotImplementedError
+
+    @property
+    def is_pool(self):
+        """Return that this is not a pool."""
+        return False
