@@ -66,7 +66,7 @@ class TwitchClient(SingleServerIRCBot):
     def on_privmsg(self, c, e):
         """Framework will call when a private message is posted in chat."""
         del c
-        self.log.info('Private Chat: ' + e.arguments[0])
+        self.log.info('Private Chat: %s', e.arguments[0])
 
     def on_usernotice(self, c, e):
         """Framework will call when a user notice is posted in chat."""
@@ -105,9 +105,9 @@ class TwitchClient(SingleServerIRCBot):
         return self.connection.is_connected()
 
     def process_twitch_event(self, e):
+        """Process the event and delegate to the proper handler."""
         tags = self.build_tag_dict(e.tags)
-        # user = e.source.split('!')[0]
-        message = next(iter(e.arguments or []), '') # e.arguments[0]
+        message = next(iter(e.arguments or []), '')
         bits = tags.get('bits')
         message_type = tags.get('msg-id', '')
         user = tags.get('display-name', 'Unknown')
@@ -116,16 +116,16 @@ class TwitchClient(SingleServerIRCBot):
         is_raid = message_type == 'raid'
 
         log_message = 'Chat: [' + user + '] ' + message + ' : ' + str(e)
-        self.log.info(message.replace(self.password, 'XXXXX'))
+        self.log.info(log_message.replace(self.password, 'XXXXX'))
 
         if is_sub or is_gift_sub:
             self.process_subscription(user, message, tags, is_gift_sub)
         elif is_raid:
-            self.process_raid(user, message, tags)
+            self.process_raid(user, tags)
         elif bits is not None:
-            self.process_bits(user, message, tags, bits)
+            self.process_bits(user, message, bits)
         else:
-            self.process_chat(user, message, tags)
+            self.process_chat(user, message)
 
     def process_subscription(self, user, message, tags, is_gift):
         """Send the subscription event to MPF"""
@@ -166,8 +166,8 @@ class TwitchClient(SingleServerIRCBot):
         user: The chat user name who paid for the subscription
         '''
 
-    def process_raid(self, user, message, tags):
-        """Send the raid event to MPF"""
+    def process_raid(self, user, tags):
+        """Send the raid event to MPF."""
         raid_user = tags.get('msg-param-displayName', user)
         raid_count = tags.get('msg-param-viewerCount', 0)
         self.set_machine_variable_in_mpf('twitch_last_raid_user', raid_user)
@@ -184,8 +184,8 @@ class TwitchClient(SingleServerIRCBot):
         raid_count: The count of viewers in the raid
         '''
 
-    def process_bits(self, user, message, tags, bits):
-        """Send the bit donation event to MPF"""
+    def process_bits(self, user, message, bits):
+        """Send the bit donation event to MPF."""
         self.set_machine_variable_in_mpf('twitch_last_bits_user', user)
         self.set_machine_variable_in_mpf('twitch_last_bits_amount', int(bits))
         self.post_event_in_mpf('twitch_bit_donation', user=user, message=message, bits=int(bits))
@@ -197,7 +197,8 @@ class TwitchClient(SingleServerIRCBot):
         user: The chat user name who subscribed
         '''
 
-    def process_chat(self, user, message, tags):
+    def process_chat(self, user, message):
+        """Send the chat event to MPF."""
         length, lines = self.split_message(message, 6)
         self.set_machine_variable_in_mpf('twitch_last_chat_user', user)
         self.set_machine_variable_in_mpf('twitch_last_chat_message', message)
