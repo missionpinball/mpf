@@ -93,8 +93,8 @@ class TestTwitchClient(MpfFakeGameTestCase):
             {"key": "msg-param-months", "value": 1},
             {"key": "message", "value": "Sub message"},
         ]
-        event = MockEvent("pubmsg", "some_user", "bot", ["Hello Bot"], tags)
-        self.machine.plugins[0].client.on_pubmsg("some_channel", event)
+        event = MockEvent("usernotice", "some_user", "bot", ["Hello Bot"], tags)
+        self.machine.plugins[0].client.on_usernotice("some_channel", event)
         self.advance_time_and_run(.1)
         self.assertEventCalled("twitch_subscription")
 
@@ -108,7 +108,67 @@ class TestTwitchClient(MpfFakeGameTestCase):
             {"key": "msg-param-months", "value": 42},
             {"key": "message", "value": "Sub message"},
         ]
-        event = MockEvent("pubmsg", "some_user", "bot", ["Hello Bot"], tags)
-        self.machine.plugins[0].client.on_pubmsg("some_channel", event)
+        event = MockEvent("usernotice", "some_user", "bot", ["Hello Bot"], tags)
+        self.machine.plugins[0].client.on_usernotice("some_channel", event)
         self.advance_time_and_run(.1)
         self.assertEventCalled("twitch_subscription")
+
+    def test_twitch_gift_sub(self):
+        """Test connect and event posting."""
+        self.mock_event("twitch_subscription")
+        tags = [
+            {"key": "msg-id", "value": "subgift"},
+            {"key": "bits", "value": None},
+            {"key": "display-name", "value": "Some User"},
+            {"key": "msg-param-months", "value": 1},
+            {"key": "message", "value": "Sub message"},
+        ]
+        event = MockEvent("usernotice", "some_user", "bot", ["Hello Bot"], tags)
+        self.machine.plugins[0].client.on_usernotice("some_channel", event)
+        self.advance_time_and_run(.1)
+        self.assertEventCalled("twitch_subscription")
+
+    def test_twitch_anon_gift_sub(self):
+        """Test connect and event posting."""
+        self.mock_event("twitch_subscription")
+        tags = [
+            {"key": "msg-id", "value": "anonsubgift"},
+            {"key": "bits", "value": None},
+            {"key": "display-name", "value": "Some User"},
+            {"key": "msg-param-months", "value": 42},
+            {"key": "message", "value": "Sub message"},
+        ]
+        event = MockEvent("usernotice", "some_user", "bot", ["Hello Bot"], tags)
+        self.machine.plugins[0].client.on_usernotice("some_channel", event)
+        self.advance_time_and_run(.1)
+        self.assertEventCalled("twitch_subscription")
+
+    def test_twitch_sub_no_message(self):
+        """Test connect and event posting."""
+        self.mock_event("twitch_subscription")
+        tags = [
+            {"key": "msg-id", "value": "sub"},
+            {"key": "bits", "value": None},
+            {"key": "display-name", "value": "Some User"},
+            {"key": "msg-param-months", "value": 1},
+            {"key": "message", "value": "Sub message"},
+        ]
+        event = MockEvent("usernotice", "some_user", "bot", [], tags)
+        self.machine.plugins[0].client.on_usernotice("some_channel", event)
+        self.advance_time_and_run(.1)
+        self.assertEventCalled("twitch_subscription")
+
+    def test_twitch_raid(self):
+        """Test connect and event posting."""
+        self.mock_event("twitch_raid")
+        tags = [
+            {"key": "msg-id", "value": "raid"},
+            {"key": "bits", "value": None},
+            {"key": "display-name", "value": "Some User"},
+            {"key": "msg-param-months", "value": 1},
+            {"key": "message", "value": "Sub message"},
+        ]
+        event = MockEvent("usernotice", "some_user", "bot", ["Hello Bot"], tags)
+        self.machine.plugins[0].client.on_usernotice("some_channel", event)
+        self.advance_time_and_run(.1)
+        self.assertEventCalled("twitch_raid")
