@@ -128,7 +128,7 @@ class TwitchClient(SingleServerIRCBot):
             self.process_chat(user, message)
 
     def process_subscription(self, user, message, tags, is_gift):
-        """Send the subscription event to MPF"""
+        """Send the subscription event to MPF."""
         months = tags.get('msg-param-months' if is_gift else 'msg-param-cumulative-months', 1)
         subscriber_message = tags.get('message', '')
         sub_plan = tags.get('msg-param-sub-plan', '')
