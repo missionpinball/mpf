@@ -135,7 +135,6 @@ class TwitchClient(SingleServerIRCBot):
         sub_plan_name = tags.get('msg-param-sub-plan-name', '')
         sub_recipient = tags.get('msg-param-recipient-display-name', user) if is_gift else user
         self.set_machine_variable_in_mpf('twitch_last_sub_user', user)
-        self.set_machine_variable_in_mpf('twitch_last_sub_message', message)
         self.set_machine_variable_in_mpf('twitch_last_sub_recipient', sub_recipient)
         self.set_machine_variable_in_mpf('twitch_last_sub_months', int(months))
         self.set_machine_variable_in_mpf('twitch_last_sub_message', subscriber_message)
