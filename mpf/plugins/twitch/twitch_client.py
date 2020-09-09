@@ -170,7 +170,7 @@ class TwitchClient(SingleServerIRCBot):
         raid_user = tags.get('msg-param-displayName', user)
         raid_count = tags.get('msg-param-viewerCount', 0)
         self.set_machine_variable_in_mpf('twitch_last_raid_user', raid_user)
-        self.set_machine_variable_in_mpf('twitch_last_bits_count', raid_count)
+        self.set_machine_variable_in_mpf('twitch_last_raid_count', int(raid_count))
         self.post_event_in_mpf(
             'twitch_raid',
             raid_user=raid_user,
