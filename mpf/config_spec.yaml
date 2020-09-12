@@ -800,6 +800,7 @@ accruals:
     __type__: device
     __parent__: logic_blocks_common
     events: list|event_handler|
+    advance_random_events: event_handler|event_handler:ms|None
 counters:
     __valid_in__: machine, mode
     __type__: device

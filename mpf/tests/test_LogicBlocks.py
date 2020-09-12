@@ -118,6 +118,33 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.assertLightColor("led2", "black")
         self.assertLightColor("led3", "white")
 
+    def test_accrual_random_advance(self):
+        self.start_game()
+        self.mock_event("accrual1_complete1")
+
+        # should do nothing
+        self.post_event("accrual1_random_advance")
+        self.assertEqual([False, False, False], self.machine.accruals["accrual1"].value)
+
+        # enable accrual
+        self.post_event("accrual1_enable")
+
+        # complete one step
+        self.post_event("accrual1_step1a")
+        self.assertEqual([True, False, False], self.machine.accruals["accrual1"].value)
+
+        # should advance one of the remaining steps
+        self.post_event("accrual1_random_advance")
+
+        # exactly two steps should be hit
+        self.assertEqual(2, sum(self.machine.accruals["accrual1"].value))
+        self.assertEventNotCalled("accrual1_complete1")
+
+        # should complete the accrual
+        self.post_event("accrual1_random_advance")
+
+        self.assertEventCalled("accrual1_complete1")
+
     def test_accruals_simple(self):
         self.start_game()
         self.mock_event("accrual1_complete1")

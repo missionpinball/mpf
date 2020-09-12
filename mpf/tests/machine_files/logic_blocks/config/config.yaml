@@ -26,6 +26,7 @@ accruals:
         disable_events: accrual1_disable
         reset_events: accrual1_reset
         events_when_hit: accrual1_hit
+        advance_random_events: accrual1_random_advance
     accrual2:
         events:
             - accrual2_step1

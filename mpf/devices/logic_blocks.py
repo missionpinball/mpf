@@ -1,4 +1,6 @@
 """Logic Blocks devices."""
+from random import shuffle
+
 from typing import Any, List, Optional
 
 from mpf.core.delays import DelayManager
@@ -513,6 +515,25 @@ class Accrual(LogicBlock):
         for step, events in enumerate(self.config['events']):
             for event in Util.string_to_event_list(events):
                 self.machine.events.add_handler(event, self.hit, step=step)
+
+    @event_handler(0)
+    def event_advance_random(self, **kwargs):
+        """Event handler for advance random events."""
+        del kwargs
+        if not self.enabled:
+            return
+
+        self.debug_log("Advancing random step in accrual.")
+        randomized_values = list(enumerate(self.value))
+        shuffle(randomized_values)
+        for step, state in randomized_values:
+            if not state:
+                break
+        else:
+            return
+
+        # call existing path
+        self.hit(step)
 
     def hit(self, step: int, **kwargs):
         """Increase the hit progress towards completion.
