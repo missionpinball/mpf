@@ -110,16 +110,20 @@ class ProcProcess:
 
     async def run_command(self, cmd, *args):
         """Run command in proc thread."""
-        if cmd.startswith("_"):
-            return getattr(self, cmd)(*args)
+        try:
+            if cmd.startswith("_"):
+                return getattr(self, cmd)(*args)
 
-        if self.trace:
-            assert self.log is not None
-            result = getattr(self.proc, cmd)(*args)
-            self.log.debug("pinproc.PinPROC.%s%s -> %s", cmd, args, result)
-            return result
+            if self.trace:
+                assert self.log is not None
+                result = getattr(self.proc, cmd)(*args)
+                self.log.debug("pinproc.PinPROC.%s%s -> %s", cmd, args, result)
+                return result
 
-        return getattr(self.proc, cmd)(*args)
+            return getattr(self.proc, cmd)(*args)
+        except IOError as error:  # pragma: no cover
+            raise MpfRuntimeError("Communication with P/P3-Roc broke down. Check USB cable and power supply.", 2,
+                                  self.log.name) from error
 
     def _dmd_send(self, data):
         if not self.dmd:
@@ -131,16 +135,20 @@ class ProcProcess:
 
     async def read_events_and_watchdog(self, poll_sleep):
         """Return all events and tickle watchdog."""
-        while not self.stop_future.done():
-            events = self.proc.get_events()
-            self.proc.watchdog_tickle()
-            self.proc.flush()
-            if events:
-                return list(events)
+        try:
+            while not self.stop_future.done():
+                events = self.proc.get_events()
+                self.proc.watchdog_tickle()
+                self.proc.flush()
+                if events:
+                    return list(events)
 
-            await asyncio.sleep(poll_sleep, loop=self.loop)
+                await asyncio.sleep(poll_sleep, loop=self.loop)
 
-        return []
+            return []
+        except IOError as error:  # pragma: no cover
+            raise MpfRuntimeError("Communication with P/P3-Roc broke down. Check USB cable and power supply.", 2,
+                                  self.log.name) from error
 
 
 # pylint does not understand that this class is abstract

@@ -104,11 +104,9 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
     def __init__(self, machine):
         """Initialise and connect P3-Roc."""
         super().__init__(machine)
-        self.log = logging.getLogger('P3-ROC')
-        self.debug_log("Configuring P3-ROC hardware.")
-
         # validate config for p3_roc
         self.config = self.machine.config_validator.validate_config("p3_roc", self.machine.config.get('p_roc', {}))
+        self._configure_device_logging_and_debug('P-Roc', self.config)
 
         if self.config['driverboards']:
             self.machine_type = self.pinproc.normalize_machine_type(self.config['driverboards'])
