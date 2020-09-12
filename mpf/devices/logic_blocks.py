@@ -526,10 +526,14 @@ class Accrual(LogicBlock):
         self.debug_log("Advancing random step in accrual.")
         randomized_values = list(enumerate(self.value))
         shuffle(randomized_values)
+        step = None
         for step, state in randomized_values:
             if not state:
                 break
         else:
+            return
+
+        if step is None:
             return
 
         # call existing path
