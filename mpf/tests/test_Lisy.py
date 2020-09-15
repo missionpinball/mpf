@@ -645,3 +645,150 @@ class TestAPC(MpfTestCase):
         self.machine.coils["c_test"].pulse()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
+
+
+class TestLisyV10(MpfTestCase):
+
+    def get_config_file(self):
+        return 'config_modern.yaml'
+
+    def get_machine_path(self):
+        return 'tests/machine_files/lisy/'
+
+    def _mock_loop(self):
+        self.clock.mock_serial("com1", self.serialMock)
+
+    def tearDown(self):
+        self.assertFalse(self.serialMock.crashed)
+        super().tearDown()
+
+    def get_platform(self):
+        return False
+
+    def _wait_for_processing(self):
+        start = time.time()
+        while self.serialMock.expected_commands and not self.serialMock.crashed and time.time() < start + 10:
+            self.advance_time_and_run(.01)
+
+    def setUp(self):
+        self.expected_duration = 1.5
+        self.serialMock = MockLisySocket()
+
+        self.serialMock.permanent_commands = {
+            b'\x29': b'\x7F',           # changed switches? -> no
+            b'\x65': b'\x00'            # watchdog
+        }
+
+        self.serialMock.expected_commands = {
+            b'\x00': b'FUTURE_HARDWARE\00',         # hw not known yet
+            b'\x01': b'0.42\00',        # hardware version
+            b'\x02': b'0.10\00',        # api version
+            b'\x64': b'\x00',           # reset -> ok
+            b'\x03': b'\x00',           # get number of simple lamps -> 0
+            b'\x04': b'\x09',           # get number of solenoids -> 9
+            b'\x06': b'\x00',           # get number of displays -> 0
+            b'\x09': b'\x58',           # get number of switches -> 88
+            b'\x13': b'\x02\x01',       # get number of modern lights -> 512 + 1 = 513 modern lights
+            b'\x19\x00\x0a': None,
+            b'\x19\x01\x0a': None,
+            b'\x19\x05\x1e': None,
+            b'\x19\x06\x0a': None,
+            b'\x19\x07\x0a': None,
+        }
+
+        for number in range(88):
+            if number % 10 >= 8:
+                self.serialMock.expected_commands[bytes([40, number])] = b'\x02'
+            else:
+                self.serialMock.expected_commands[bytes([40, number])] = b'\x00' if number != 37 else b'\x01'
+
+        # prevent changes on real hardware
+        lisy.LisyHardwarePlatform._disable_dts_on_start_of_serial = MagicMock()
+
+        super().setUp()
+
+        lisy.LisyHardwarePlatform._disable_dts_on_start_of_serial.assert_called_with()
+
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+    def test_rules(self):
+        """Test HW Rules."""
+        # wait for watchdog
+        self.serialMock.expected_commands = {
+            b'\x65': b'\x00'  # watchdog
+        }
+        self._wait_for_processing()
+
+        self.serialMock.expected_commands = {
+            b'\x3c\x05\x01\x02\x00\x1e\xff\x00\x03\x02\x00': None,      # create rule for main
+            b'\x3c\x06\x01\x00\x00\x0a\xff\xff\x03\x00\x00': None,      # create rule for hold
+        }
+        self.machine.flippers["f_test_hold_eos"].enable()
+        self.advance_time_and_run(.2)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands = {
+            b'\x3c\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00': None,      # remove rule for main
+            b'\x3c\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00': None,      # remove rule for hold
+        }
+        self.machine.flippers["f_test_hold_eos"].disable()
+        self.advance_time_and_run(.2)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands = {
+            b'\x3c\x07\x03\x00\x00\x0a\xff\x00\x01\x00\x00': None,      # add rule for slingshot
+            b'\x19\x07\x14': None
+        }
+        self.machine.autofires["ac_slingshot"].enable()
+        self.advance_time_and_run(.2)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands = {
+            b'\x3c\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00': None,      # remove rule for slingshot
+        }
+        self.machine.autofires["ac_slingshot"].disable()
+        self.advance_time_and_run(.2)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # test recycle
+        # pulse coil
+        self.serialMock.expected_commands = {
+            b'\x18\x00\x0a': None,      # set pulse_ms to 10ms
+            b'\x17\x00': None
+        }
+        self.machine.coils["c_test"].pulse()
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+    def test_lights(self):
+        """Test lights."""
+        # set color to one light without fade
+        self.serialMock.expected_commands = {
+            b'\x0d\x00\x00\x00\x03\x11\x22\x33': None,      # fade with 0ms fade time
+        }
+        self.machine.lights["test_light0"].color([0x11, 0x22, 0x33])
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # set color to the second light without fade
+        self.serialMock.expected_commands = {
+            b'\x0d\x03\x00\x00\x04\x11\x22\x33\x11': None,      # fade with 0ms fade time starting at channel 3
+                                                                # 4 channels because this is a RGBW light
+        }
+        self.machine.lights["test_light1"].color([0x11, 0x22, 0x33])
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # fade both lights together
+        self.serialMock.expected_commands = {
+            b'\x0d\x00\x01\x18\x07\xaa\xbb\xcc\xdd\xee\xff\xdd': None,      # fade with 300ms fade time
+        }
+        self.machine.lights["test_light0"].color([0xaa, 0xbb, 0xcc], fade_ms=300)
+        self.machine.lights["test_light1"].color([0xdd, 0xee, 0xff], fade_ms=300)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)

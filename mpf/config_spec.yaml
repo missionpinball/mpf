@@ -778,7 +778,7 @@ lisy:
     connection: single|enum(network,serial)|network
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
-    max_led_batch_size: single|int|3
+    max_led_batch_size: single|int|12
     network_host: single|str|None
     network_port: single|int|None
     poll_hz: single|int|100

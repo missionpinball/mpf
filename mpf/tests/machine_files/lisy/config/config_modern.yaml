@@ -1,0 +1,64 @@
+#config_version=5
+
+hardware:
+    platform: lisy
+
+lisy:
+    connection: serial
+    port: com1
+    baud: 115200
+    debug: true
+
+switches:
+    s_test00:
+        number: 00
+    s_flipper:
+        number: 1
+    s_flipper_eos:
+        number: 2
+    s_slingshot:
+        number: 3
+    s_test37:
+        number: 37
+    s_test77_nc:
+        number: 77
+        type: 'NC'
+
+coils:
+    c_test:
+        number: 0
+    c_test_allow_enable:
+        number: 1
+        default_hold_power: 1.0
+    c_flipper_main:
+      number: 5
+      default_pulse_ms: 30
+    c_flipper_hold:
+      number: 6
+      allow_enable: True
+    c_slingshot:
+      number: 7
+
+lights:
+  test_light0:
+    start_channel: 0
+    type: rgb
+    subtype: light
+  test_light1:
+    previous: test_light0
+    type: rgbw
+    subtype: light
+
+flippers:
+    f_test_hold_eos:
+        debug: true
+        main_coil: c_flipper_main
+        hold_coil: c_flipper_hold
+        activation_switch: s_flipper
+        eos_switch: s_flipper_eos
+        use_eos: true
+
+autofire_coils:
+    ac_slingshot:
+        coil: c_slingshot
+        switch: s_slingshot

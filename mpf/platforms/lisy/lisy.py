@@ -471,7 +471,12 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             self.send_byte(LisyDefines.InfoGetSwitchCount)
             self._number_of_switches = await self._read_byte()
 
-            if self.api_version >= StrictVersion("0.9"):
+            if self.api_version >= StrictVersion("0.10"):
+                # get number of modern lights
+                self.send_byte(LisyDefines.GetModernLightsCount)
+                # in api version 10+ this returns two bytes
+                self._number_of_modern_lights = await self._read_two_bytes()
+            elif self.api_version >= StrictVersion("0.9"):
                 # get number of modern lights
                 self.send_byte(LisyDefines.GetModernLightsCount)
                 self._number_of_modern_lights = await self._read_byte()
@@ -486,9 +491,10 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                                                               self.config['max_led_batch_size'])
                 self._light_system.start()
 
-            self.debug_log("Number of lamps: %s. Number of coils: %s. Numbers of display: %s. Number of switches: %s",
+            self.debug_log("Number of lamps: %s. Number of coils: %s. Numbers of display: %s. Number of switches: %s "
+                           "Number of modern lights: %s",
                            self._number_of_lamps, self._number_of_solenoids, self._number_of_displays,
-                           self._number_of_switches)
+                           self._number_of_switches, self._number_of_modern_lights)
 
             # initially read all switches
             self.debug_log("Reading all switches.")
@@ -782,6 +788,15 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         data = await self._reader.readexactly(1)
         self.debug_log("Received %s", ord(data))
         return ord(data)
+
+    async def _read_two_bytes(self) -> int:
+        """Read two bytes."""
+        assert self._reader is not None
+
+        self.debug_log("Reading two bytes")
+        data = await self._reader.readexactly(2)
+        self.debug_log("Received %s %s", data[0], data[1])
+        return (data[0] << 8) + data[1]
 
     # pylint: disable-msg=inconsistent-return-statements
     async def _readuntil(self, separator, min_chars: int = 0):
