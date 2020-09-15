@@ -519,7 +519,9 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             common_fade_ms = 0
         fade_time = int(common_fade_ms)
 
-        data = bytearray([sequential_brightness_list[0][0].number, int(fade_time / 255), int(fade_time & 0xFF),
+        data = bytearray([int(sequential_brightness_list[0][0].number / 256),
+                          sequential_brightness_list[0][0].number % 256,
+                          int(fade_time / 255), int(fade_time & 0xFF),
                           len(sequential_brightness_list)])
         for _, brightness, _ in sequential_brightness_list:
             data.append(int(255 * brightness))

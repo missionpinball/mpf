@@ -769,7 +769,7 @@ class TestLisyV10(MpfTestCase):
         """Test lights."""
         # set color to one light without fade
         self.serialMock.expected_commands = {
-            b'\x0d\x00\x00\x00\x03\x11\x22\x33': None,      # fade with 0ms fade time
+            b'\x0d\x00\x00\x00\x00\x03\x11\x22\x33': None,      # fade with 0ms fade time
         }
         self.machine.lights["test_light0"].color([0x11, 0x22, 0x33])
         self._wait_for_processing()
@@ -777,8 +777,8 @@ class TestLisyV10(MpfTestCase):
 
         # set color to the second light without fade
         self.serialMock.expected_commands = {
-            b'\x0d\x03\x00\x00\x04\x11\x22\x33\x11': None,      # fade with 0ms fade time starting at channel 3
-                                                                # 4 channels because this is a RGBW light
+            b'\x0d\x00\x03\x00\x00\x04\x11\x22\x33\x11': None,      # fade with 0ms fade time starting at channel 3
+                                                                    # 4 channels because this is a RGBW light
         }
         self.machine.lights["test_light1"].color([0x11, 0x22, 0x33])
         self._wait_for_processing()
@@ -786,7 +786,7 @@ class TestLisyV10(MpfTestCase):
 
         # fade both lights together
         self.serialMock.expected_commands = {
-            b'\x0d\x00\x01\x18\x07\xaa\xbb\xcc\xdd\xee\xff\xdd': None,      # fade with 300ms fade time
+            b'\x0d\x00\x00\x01\x18\x07\xaa\xbb\xcc\xdd\xee\xff\xdd': None,      # fade with 300ms fade time
         }
         self.machine.lights["test_light0"].color([0xaa, 0xbb, 0xcc], fade_ms=300)
         self.machine.lights["test_light1"].color([0xdd, 0xee, 0xff], fade_ms=300)
