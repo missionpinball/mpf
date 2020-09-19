@@ -1,0 +1,36 @@
+#config_version=5
+
+switches:
+    s_multiposition_motor_1:
+        number:
+    s_multiposition_motor_2:
+        number:
+    s_multiposition_motor_3:
+        number:
+    s_multiposition_motor_4:
+        number:
+
+digital_outputs:
+    c_multiposition_motor_left:
+        number:
+        type: driver
+    c_multiposition_motor_right:
+        number:
+        type: driver
+
+motors:
+    multiposition_motor:
+        debug: True
+        motor_left_output: c_multiposition_motor_left
+        motor_right_output: c_multiposition_motor_right
+        position_switches:  !!omap
+            - position1: s_multiposition_motor_1
+            - position2: s_multiposition_motor_2
+            - position3: s_multiposition_motor_3
+            - position4: s_multiposition_motor_4
+        reset_position: position4
+        go_to_position:
+            goto_position1: position1
+            goto_position2: position2
+            goto_position3: position3
+            goto_position4: position4

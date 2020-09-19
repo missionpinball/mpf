@@ -1,11 +1,15 @@
 """Motor device."""
+from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
 from mpf.core.system_wide_device import SystemWideDevice
 
 
+@DeviceMonitor(_move_direction="move_direction", _target_position="target_position", _last_position="last_position")
 class Motor(SystemWideDevice):
 
     """A motor which can be controlled using drivers."""
+
+    __slots__ = ["_target_position", "_last_position", "type", "_move_direction"]
 
     config_section = 'motors'
     collection = 'motors'
@@ -16,6 +20,7 @@ class Motor(SystemWideDevice):
         self._target_position = None
         self._last_position = None
         self.type = None
+        self._move_direction = "stopped"
         super().__init__(machine, name)
 
     async def _initialize(self):
@@ -33,11 +38,6 @@ class Motor(SystemWideDevice):
 
         if self.config['motor_left_output'] and self.config['motor_right_output']:
             self.type = "two_directions"
-            # add handlers to stop the motor when it reaches the end to prevent damage
-            self.machine.switch_controller.add_switch_handler_obj(
-                next(iter(self.config['position_switches'].values())), self._end_reached)  # noqa
-            self.machine.switch_controller.add_switch_handler_obj(
-                next(reversed(list(self.config['position_switches'].values()))), self._end_reached)    # noqa
         else:
             self.type = "one_direction"
 
@@ -56,6 +56,20 @@ class Motor(SystemWideDevice):
                                             self._ball_search_start)
             self.machine.events.add_handler("ball_search_stopped",
                                             self._ball_search_stop)
+
+    def _validate_last_position(self) -> bool:
+        """Verify that at most one position switch is active."""
+        active_position_switches = [(position, switch) for position, switch in
+                                    self.config['position_switches'].items() if switch.state]
+        if len(active_position_switches) > 1:
+            self.warning_log("Found %s active position switches: %s. There should be only one position switch active "
+                             "at a time.", len(active_position_switches),
+                             active_position_switches)
+            self.machine.service.add_technical_alert(
+                self, "Multiple position switches are active: {}. Verify switches.".format(active_position_switches))
+            return False
+
+        return True
 
     @event_handler(1)
     def event_reset(self, **kwargs):
@@ -83,42 +97,80 @@ class Motor(SystemWideDevice):
         self._move_to_position(position)
 
     def _move_to_position(self, position):
+        if not self._validate_last_position():
+            self.warning_log("Will not move motor because multiple position switches are active.")
+            self._stop_motor()
+            return
+
         switch = self.config['position_switches'][position]
         # check if we are already in this position
         if self.machine.switch_controller.is_active(switch):
             # already in position
             self._reached_position(position)
+            self._stop_motor()
         else:
             if self.type == "two_directions":
-                if self._last_position is None or list(self.config['position_switches']).index(self._last_position) > \
-                        list(self.config['position_switches']).index(position):
-                    self.config['motor_left_output'].enable()
-                    self.config['motor_right_output'].disable()
+                if self._last_position:
+                    assumed_position = self._last_position
                 else:
-                    self.config['motor_left_output'].disable()
-                    self.config['motor_right_output'].enable()
+                    active_position_switches = [position for position, switch in
+                                                self.config['position_switches'].items()
+                                                if switch.state]
+                    if len(active_position_switches) == 1:
+                        assumed_position = active_position_switches[0]
+                        self.debug_log("Assuming position based on switches to be %s", assumed_position)
+                    else:
+                        assumed_position = None
+
+                if assumed_position is None and \
+                        list(self.config['position_switches']).index(self.config['reset_position']) == 0:
+                    self._move_left()
+                elif assumed_position is None:
+                    self._move_right()
+                elif list(self.config['position_switches']).index(assumed_position) > \
+                        list(self.config['position_switches']).index(position):
+                    self._move_left()
+                else:
+                    self._move_right()
             else:
                 # not in position. start motor
                 if self.config['motor_left_output']:
-                    self.config['motor_left_output'].enable()
+                    self._move_left()
                 else:
-                    self.config['motor_right_output'].enable()
-
-    def _end_reached(self, **kwargs):
-        """Stop all motors since we reached one of the end switches."""
-        del kwargs
-        self.info_log("Motor hit end switch. Stopping motor.")
-        self._stop_motor()
+                    self._move_right()
 
     def _update_position(self, position, **kwargs):
         """Handle that motor reached a certain position."""
         del kwargs
+        first_known_position = self._last_position is None
+        if not self._validate_last_position():
+            self.warning_log("Will stop motor because multiple position switches are active.")
+            self._stop_motor()
+            self._last_position = None
+            return
+
         self._last_position = position
 
         if position == self._target_position:
             self._reached_position(position)
         else:
             self.debug_log("Motor is at position %s", position)
+
+            if self.type == "two_directions":
+                # special case: initial position has been unknown and we reached our first position
+                # we might have moved in the wrong direction so correct this now
+                if first_known_position and self._move_direction == "right" and \
+                        list(self.config['position_switches']).index(self._last_position) > \
+                        list(self.config['position_switches']).index(self._target_position):
+                    self._move_left()
+                elif first_known_position and self._move_direction == "left" and \
+                        list(self.config['position_switches']).index(self._last_position) < \
+                        list(self.config['position_switches']).index(self._target_position):
+                    self._move_right()
+                elif list(self.config['position_switches']).index(position) in \
+                        (0, len(self.config['position_switches']) - 1):
+                    self.warning_log("Motor hit end switch %s unexpectedly. Stopping motor.", position)
+                    self._stop_motor()
 
     def _reached_position(self, position):
         """Handle that motor handled its target position."""
@@ -139,6 +191,22 @@ class Motor(SystemWideDevice):
 
         if self.config['motor_right_output']:
             self.config['motor_right_output'].disable()
+
+        self._move_direction = "stopped"
+
+    def _move_right(self):
+        if self.config['motor_left_output']:
+            self.config['motor_left_output'].disable()
+
+        self.config['motor_right_output'].enable()
+        self._move_direction = "right"
+
+    def _move_left(self):
+        if self.config['motor_right_output']:
+            self.config['motor_right_output'].disable()
+
+        self.config['motor_left_output'].enable()
+        self._move_direction = "left"
 
     def _ball_search_start(self, **kwargs):
         del kwargs

@@ -1,0 +1,25 @@
+#config_version=5
+
+switches:
+    s_position_up:
+        number:
+    s_position_down:
+        number:
+
+digital_outputs:
+    c_motor_run:
+        number:
+        type: driver
+
+motors:
+    motorized_drop_target_bank:
+        debug: True
+        motor_left_output: c_motor_run
+        position_switches:  !!omap
+            - up: s_position_up
+            - down: s_position_down
+        reset_position: down
+        go_to_position:
+            go_up: up
+            go_down: down
+            go_down2: down

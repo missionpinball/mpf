@@ -70,6 +70,13 @@ class ServiceController(MpfController):
         self.machine.events.post("service_mode_exited")
         await self.machine.reset()
 
+    # pylint: disable-msg=no-self-use
+    def add_technical_alert(self, device, issue):
+        """Add an alert about a technical problem."""
+        del device
+        del issue
+        # this is prepared but not yet implemented in service mode
+
     def get_switch_map(self):
         """Return a map of all switches in the machine."""
         switch_map = []

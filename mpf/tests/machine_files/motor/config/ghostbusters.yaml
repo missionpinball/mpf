@@ -1,19 +1,12 @@
 #config_version=5
 
 switches:
-    s_position_up:
-        number:
-    s_position_down:
-        number:
     s_slimer_home:
         number: 8-1
     s_slimer_away:
         number: 8-2
 
 digital_outputs:
-    c_motor_run:
-        number:
-        type: driver
     c_slimer_motor_forward:
         number: 8-3
         type: light
@@ -22,18 +15,8 @@ digital_outputs:
         type: light
 
 motors:
-    motorized_drop_target_bank:
-        motor_left_output: c_motor_run
-        position_switches:  !!omap
-            - up: s_position_up
-            - down: s_position_down
-        reset_position: down
-        go_to_position:
-            go_up: up
-            go_down: down
-            go_down2: down
-
     ghostbusters_slimer:
+        debug: True
         motor_left_output: c_slimer_motor_forward
         motor_right_output: c_slimer_motor_backward
         position_switches:  !!omap
