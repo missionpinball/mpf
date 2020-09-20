@@ -409,7 +409,9 @@ class Shot(EnableDisableMixin, ModeDevice):
         Args:
             state: int of the state number you want to jump to. Note that states
                 are zero-based, so the first state is 0.
-            force: if try also jumps if disabled
+            force: if true, will jump even if the shot is disabled
+            force_show: if true, will update the profile show even if the jumped
+                state index is the same as before the jump
 
         """
         self.debug_log("Received jump request. State: %s, Force: %s", state, force)

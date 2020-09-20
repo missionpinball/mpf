@@ -27,6 +27,8 @@ shots:
     show_tokens:
       leds: (machine.leds)
     profile: show_tokens_profile
+  mode2_shot_changing_profile:
+    profile: changing_profile_one
 
 shows:
   show_with_tokens:
@@ -84,6 +86,20 @@ shot_profiles:
         show: rainbow
         start_step: 6
         manual_advance: True
+  changing_profile_one:
+    states:
+      - name: first
+        show: show_with_tokens
+        show_tokens:
+          leds: led_20
+          color: yellow
+  changing_profile_two:
+    states:
+      - name: first
+        show: show_with_tokens
+        show_tokens:
+          leds: led_20
+          color: purple
   mode2_shot_26:
     states:
     - name: mode2_one
