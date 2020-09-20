@@ -403,7 +403,7 @@ class Shot(EnableDisableMixin, ModeDevice):
     def _release_delay(self, switch):
         self.active_delays.remove(switch)
 
-    def jump(self, state, force=True):
+    def jump(self, state, force=True, force_show=False):
         """Jump to a certain state in the active shot profile.
 
         Args:
@@ -423,8 +423,7 @@ class Shot(EnableDisableMixin, ModeDevice):
             return
 
         current_state = self._get_state()
-
-        if state == current_state:
+        if state == current_state and not force_show:
             self.debug_log("Shot is already in the jump destination state")
             return
 
