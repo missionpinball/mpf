@@ -917,3 +917,23 @@ class TestShots(MpfTestCase):
         self.post_event("mode2_shot_show_tokens_advance")
         self.assertLightColor("led_29", "blue")
         self.assertEqual("three", self.machine.shots["mode2_shot_show_tokens"].state_name)
+
+    def test_jump(self):
+        """Test jumping shots and shot_profiles."""
+        self.start_game()
+        self.machine.modes["mode2"].start()
+        shot = self.machine.device_manager.collections["shots"]["mode2_shot_changing_profile"]
+        
+        # Initial color of the light for this profile
+        self.assertLightColor("led_20", "yellow")
+
+        # Change the profile and jump without force_show
+        shot.config['profile'] = self.machine.device_manager.collections["shot_profiles"]['changing_profile_two']
+        shot.jump(0)
+        # State is the same, no color change
+        self.assertLightColor("led_20", "yellow")
+
+        # Jump and force_show
+        shot.jump(0, True, True)
+        # Should see the color of the new profile at the same state
+        self.assertLightColor("led_20", "purple")
