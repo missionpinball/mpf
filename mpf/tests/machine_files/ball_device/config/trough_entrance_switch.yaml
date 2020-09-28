@@ -1,0 +1,38 @@
+#config_version=5
+playfields:
+  playfield:
+    default_source_device: bd_trough
+    tags: default
+switches:
+  s_drain:
+    number: 01
+  s_trough_enter:
+    number: 02
+coils:
+  c_drain_eject:
+    number: 03
+    default_pulse_ms: 20
+  c_trough_release:
+    number: 04
+    default_pulse_ms: 20
+ball_devices:
+  bd_drain:
+    ball_switches: s_drain
+    eject_coil: c_drain_eject
+    eject_targets: bd_trough
+    tags: drain
+    eject_timeouts: 4s
+  bd_trough:
+    counter:
+      class: mpf.devices.ball_device.entrance_switch_counter.EntranceSwitchCounter
+      entrance_switch: s_trough_enter
+      entrance_switch_full_timeout: 500ms
+      settle_time_ms: 3000
+    ball_capacity: 3
+    eject_coil: c_trough_release
+    tags: trough, home
+    eject_timeouts: 3s
+
+machine:
+  balls_installed: 4
+

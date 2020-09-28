@@ -1,0 +1,5 @@
+#config_version=5
+config:
+  - trough_entrance_switch.yaml
+
+virtual_platform_start_active_switches: s_trough_enter

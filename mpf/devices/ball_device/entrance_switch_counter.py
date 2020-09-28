@@ -1,6 +1,7 @@
 """Count balls using an entrance switch."""
 import asyncio
 
+from mpf.core.delays import DelayManager
 from mpf.devices.ball_device.physical_ball_counter import PhysicalBallCounter, BallEntranceActivity, \
     BallLostActivity
 
@@ -9,7 +10,7 @@ class EntranceSwitchCounter(PhysicalBallCounter):
 
     """Count balls using an entrance switch."""
 
-    __slots__ = ["recycle_secs", "recycle_clear_time"]
+    __slots__ = ["recycle_secs", "recycle_clear_time", "_settle_delay"]
 
     def __init__(self, ball_device, config):
         """Initialise entrance switch counter."""
@@ -18,6 +19,7 @@ class EntranceSwitchCounter(PhysicalBallCounter):
             if option not in config and option in ball_device.config:
                 config[option] = ball_device.config[option]
         super().__init__(ball_device, config)
+        self._settle_delay = DelayManager(self.machine)
 
         self.config = self.machine.config_validator.validate_config("ball_device_counter_entrance_switches",
                                                                     self.config)
@@ -96,18 +98,18 @@ class EntranceSwitchCounter(PhysicalBallCounter):
                 self.config['ball_capacity'] == self._last_count + 1:
             # wait for entrance_switch_full_timeout before setting the device to full capacity
             self.invalidate_count()
+            self._settle_delay.remove("count_stable")
         else:
             # increase count
+            self._settle_delay.reset(self.config['settle_time_ms'], self.mark_count_as_stable_and_trigger_activity,
+                                     "count_stable")
             self._last_count += 1
-            self._count_stable.set()
-            self.trigger_activity()
             self.record_activity(BallEntranceActivity())
 
     def _entrance_switch_full_handler(self):
         # a ball is sitting on the entrance_switch. assume the device is full
         new_balls = self.config['ball_capacity'] - self._last_count
-        self._count_stable.set()
-        self.trigger_activity()
+        self.mark_count_as_stable_and_trigger_activity()
         if new_balls > 0:
             self.debug_log("Ball is sitting on entrance_switch. Assuming "
                            "device is full. Adding %s balls and setting balls"

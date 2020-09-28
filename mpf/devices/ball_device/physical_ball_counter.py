@@ -197,6 +197,11 @@ class PhysicalBallCounter:
         """Invalidate the count."""
         self._count_stable.clear()
 
+    def mark_count_as_stable_and_trigger_activity(self):
+        """Mark count as stable and trigger activity."""
+        self._count_stable.set()
+        self.trigger_activity()
+
     def trigger_activity(self):
         """Trigger all activity futures."""
         for future in self._ball_change_futures:
