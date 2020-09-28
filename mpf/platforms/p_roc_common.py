@@ -72,7 +72,8 @@ class ProcProcess:
             try:
                 self.proc = pinproc.PinPROC(machine_type)
             except IOError as e:     # pragma: no cover
-                self.log.warning("Failed to instantiate pinproc.PinPROC(%s): %s", machine_type, e)
+                self.log.warning("Failed to instantiate pinproc.PinPROC(%s): %s. Is your P/P3-Roc connected "
+                                 "and powered up?", machine_type, e)
                 self.log.info("Will retry creating PinPROC in 1s.")
                 time.sleep(1)
                 continue
@@ -80,7 +81,7 @@ class ProcProcess:
             try:
                 self.proc.reset(1)
             except IOError as e:  # pragma: no cover
-                self.log.warning("Failed to reset P/P3-Roc: %s", e)
+                self.log.warning("Failed to reset P/P3-Roc: %s. Is your P/P3-Roc connected and powered up?", e)
                 self.log.info("Will retry creating PinPROC and resetting it in 1s.")
                 time.sleep(1)
                 continue
