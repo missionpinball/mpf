@@ -173,10 +173,10 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         super().__init__(machine)
 
         if not PINPROC_IMPORTED:
-            raise AssertionError('Could not import "pinproc". Most likely you do not '
-                                 'have libpinproc and/or pypinproc installed. You can '
-                                 'run MPF in software-only "virtual" mode by using '
-                                 'the -x command like option for now instead.') from IMPORT_ERROR
+            raise MpfRuntimeError('Could not import "pinproc". Either the library is not installed or is missing '
+                                  'some of its dependencies. Check the install instructions for your OS in '
+                                  'Multimorphic section of the MPF docs. You can run mpf with "-X" to use virtual '
+                                  'hardware in the meantime.', 3, self.log.name) from IMPORT_ERROR
 
         self.pdbconfig = None
         self.pinproc = pinproc
