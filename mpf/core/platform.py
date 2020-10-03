@@ -373,7 +373,7 @@ class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     def light_sync(self):
-        """Update lights synchonously.
+        """Update lights synchronously.
 
         Called after channels of a light were updated. Can be used if multiple channels need to be flushed at once.
         """
