@@ -77,7 +77,11 @@ community.''',
                       'terminaltables==3.1.0',
                       'psutil==5.7.0',
                       'prompt_toolkit',
-                      'pypiwin32==223;platform_system=="Windows"'],
+                      'pypiwin32==223;platform_system=="Windows"',
+                      'grpc_tools==1.31.0',
+                      'grpc==1.31.0',
+                      'protobuf==3.13.0'
+                      ],
 
     tests_require=[],
     test_suite="mpf.tests",
