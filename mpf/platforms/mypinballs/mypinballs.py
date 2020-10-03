@@ -1,6 +1,4 @@
 """Mypinballs hardware platform."""
-import asyncio
-import logging
 import re
 
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
