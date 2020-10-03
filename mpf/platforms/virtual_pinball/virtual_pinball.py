@@ -1,15 +1,12 @@
 """VPX platform."""
 import asyncio
-from typing import Callable, Tuple, Dict, Optional
+from typing import Dict, Optional
 
 import logging
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
-
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
-
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
-
 from mpf.core.platform import LightsPlatform, SwitchPlatform, DriverPlatform, SwitchSettings, DriverSettings, \
     SwitchConfig, DriverConfig, RepulseSettings
 
@@ -55,7 +52,6 @@ class VirtualPinballLight(LightPlatformInterface):
     def set_fade(self, start_brightness, start_time, target_brightness, target_time):
         """Set fade."""
         self._current_fade = (start_brightness, start_time, target_brightness, target_time)
-        self._last_brightness = None
 
     def get_board_name(self):
         """Return the name of the board of this light."""
@@ -104,6 +100,7 @@ class VirtualPinballDriver(DriverPlatformInterface):
     @property
     def state(self) -> bool:
         """Return current state."""
+        # pylint: disable-msg=no-else-return
         if isinstance(self._state, bool):
             return self._state
         else:
@@ -150,6 +147,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         try:
             result = method(**kwargs)
+        # pylint: disable-msg=broad-except
         except Exception as e:
             self.machine.bcp.transport.send_to_client(client, "vpcom_bridge_response",
                                                       error="Exception: {}".format(e))
@@ -163,6 +161,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     def vpx_get_switch(self, number):
         """Return switch value."""
+        # pylint: disable-msg=no-else-return
         if self._switches[str(number)].config.invert:
             return not self._switches[str(number)].state
         else:
@@ -274,38 +273,40 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
             raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
                 enable_switch.hw_switch, coil.hw_driver))
-        else:
-            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = True
+
+        self.rules[(enable_switch.hw_switch, coil.hw_driver)] = True
 
     def set_pulse_on_hit_and_release_and_disable_rule(self, enable_switch: SwitchSettings, eos_switch: SwitchSettings,
                                                       coil: DriverSettings,
                                                       repulse_settings: Optional[RepulseSettings]):
         """Pulse on hit, disable on disable_switch hit."""
+        del eos_switch
         if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
             raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
                 enable_switch.hw_switch, coil.hw_driver))
-        else:
-            """disable_switch missing"""
-            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = False
+
+        # eos_switch is missing here intentionally
+        self.rules[(enable_switch.hw_switch, coil.hw_driver)] = False
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
                                                                  eos_switch: SwitchSettings, coil: DriverSettings,
                                                                  repulse_settings: Optional[RepulseSettings]):
         """Pulse on hit and hold, disable on disable_switch hit."""
+        del eos_switch
         if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
             raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
                 enable_switch.hw_switch, coil.hw_driver))
-        else:
-            """disable_switch missing"""
-            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = True
+
+        # eos_switch is missing here intentionally
+        self.rules[(enable_switch.hw_switch, coil.hw_driver)] = True
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Pulse on hit and hold."""
         if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
             raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
                 enable_switch.hw_switch, coil.hw_driver))
-        else:
-            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = True
+
+        self.rules[(enable_switch.hw_switch, coil.hw_driver)] = True
 
     def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings,
                               coil: DriverSettings):
@@ -313,8 +314,8 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
             raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
                 enable_switch.hw_switch, coil.hw_driver))
-        else:
-            self.rules[(enable_switch.hw_switch, coil.hw_driver)] = False
+
+        self.rules[(enable_switch.hw_switch, coil.hw_driver)] = False
 
     def clear_hw_rule(self, switch: SwitchSettings, coil: DriverSettings):
         """Clear hw rule."""
@@ -325,7 +326,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     def vpx_get_coilactive(self, number):
         """Return True if a MPF hw rule for the coil(number) exists."""
-        for rswitchandcoil, hold in self.rules.items():
+        for rswitchandcoil, _ in self.rules.items():
             if rswitchandcoil[1].number == number:
                 return True
 
@@ -353,6 +354,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Parse channel str to a list of channels."""
+        # pylint: disable-msg=no-else-return
         if subtype in ("gi", "matrix", "led", "flasher") or not subtype:
             return [
                 {
