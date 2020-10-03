@@ -67,6 +67,8 @@ class ClockBase(LogMixin):
         else:
             self.loop = loop                        # type: asyncio.AbstractEventLoop
 
+        asyncio.set_event_loop(self.loop)
+
     # pylint: disable-msg=no-self-use
     def _create_event_loop(self):
         try:
