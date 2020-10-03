@@ -133,9 +133,6 @@ class MpfTestCase(unittest.TestCase):
     """Primary TestCase class used for all MPF unit tests."""
 
     def __init__(self, methodName='runTest'):
-        self._get_event_loop = None
-        self._get_event_loop2 = None
-
         LogMixin.unit_test = True
 
         super().__init__(methodName)
@@ -494,11 +491,6 @@ class MpfTestCase(unittest.TestCase):
 
     def setUp(self):
         """Setup test."""
-        self._get_event_loop = asyncio.get_event_loop
-        asyncio.get_event_loop = None
-        self._get_event_loop2 = asyncio.events.get_event_loop
-        events.get_event_loop = None
-
         # we want to reuse config_specs to speed tests up
         mpf.core.config_validator.ConfigValidator.unload_config_spec = (
             MagicMock())
@@ -942,10 +934,6 @@ class MpfTestCase(unittest.TestCase):
         self.machine = None
 
         self.restore_sys_path()
-        asyncio.get_event_loop = self._get_event_loop
-        self._get_event_loop = None
-        events.get_event_loop = self._get_event_loop2
-        self._get_event_loop2 = None
 
     @staticmethod
     def add_to_config_validator(machine, key, new_dict):
