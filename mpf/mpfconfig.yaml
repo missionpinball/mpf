@@ -124,6 +124,7 @@ mpf:
         spi_bit_bang: mpf.platforms.spi_bit_bang.SpiBitBangPlatform
         light_segment_displays: mpf.platforms.light_segment_displays.LightSegmentDisplaysPlatform
         pin2dmd: mpf.platforms.pin2dmd.Pin2DmdHardwarePlatform
+        visual_pinball_evolution: mpf.platforms.visual_pinball_evolution.visual_pinball_evolution.VisualPinballEvolutionPlatform
 
     paths:
         scriptlets: scriptlets

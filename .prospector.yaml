@@ -41,3 +41,6 @@ ignore-paths:
   - mpf/platforms/trinamics/
   - tools/
   - _mpf-mc                     # ignore mc in subpath on travis
+
+ignore-patterns:
+  - .*_pb2(_|\.).*

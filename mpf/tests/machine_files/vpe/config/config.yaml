@@ -1,0 +1,47 @@
+#config_version=5
+
+hardware:
+    platform: visual_pinball_evolution
+
+playfields:
+  playfield:
+    tags: default
+    default_source_device: None
+
+vpe:
+  debug: True
+
+switches:
+    s_sling:
+        number: 0
+    s_flipper:
+        number: 3
+    s_test:
+      number: 6
+
+coils:
+    c_sling:
+        number: 0
+    c_flipper:
+        number: 1
+        allow_enable: True
+    c_test:
+        number: 2
+        allow_enable: True
+
+lights:
+  test_light1:
+    number: 0
+  test_light2:
+    number: 1
+
+autofire_coils:
+    ac_slingshot_test:
+        coil: c_sling
+        switch: s_sling
+
+flippers:
+    f_test:
+        main_coil: c_flipper
+        activation_switch: s_flipper
+

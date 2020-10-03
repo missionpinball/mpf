@@ -15,6 +15,8 @@ class VirtualPinballSwitch(SwitchPlatformInterface):
 
     """A switch in VPX."""
 
+    __slots__ = ["state"]
+
     def __init__(self, config, number):
         """Initialise switch."""
         super().__init__(config, number)
@@ -28,6 +30,8 @@ class VirtualPinballSwitch(SwitchPlatformInterface):
 class VirtualPinballLight(LightPlatformInterface):
 
     """A light in VPX."""
+
+    __slots__ = ["_current_fade", "subtype", "hw_number", "machine"]
 
     def __init__(self, number, subtype, hw_number, machine):
         """Initialise LED."""
@@ -74,6 +78,8 @@ class VirtualPinballDriver(DriverPlatformInterface):
 
     """A driver in VPX."""
 
+    __slots__ = ["clock", "_state"]
+
     def __init__(self, config, number, clock):
         """Initialise virtual driver to disabled."""
         super().__init__(config, number)
@@ -110,6 +116,8 @@ class VirtualPinballDriver(DriverPlatformInterface):
 class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     """VPX platform."""
+
+    __slots__ = ["_lights", "_switches", "_drivers", "_last_drivers", "_last_lights", "_started", "rules"]
 
     def __init__(self, machine):
         """Initialise VPX platform."""
