@@ -14,8 +14,8 @@ matrix:
      sudo: required
      language: python
      python: "3.6"
-   - os: linux  # this is python 3.7
-     env: LINUX=ubuntu:19.10
+   - os: linux  # this is python 3.8
+     env: LINUX=ubuntu:20.04
      sudo: required
      language: python
      python: "3.6"
