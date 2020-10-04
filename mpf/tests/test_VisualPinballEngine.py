@@ -5,7 +5,6 @@ from functools import partial
 import asyncio
 import grpc
 
-import mpf.platforms.visual_pinball_engine.visual_pinball_engine
 from mpf.platforms.visual_pinball_engine import platform_pb2_grpc
 from mpf.platforms.visual_pinball_engine.coils_pb2 import ConfigureHardwareRuleRequest
 from mpf.platforms.visual_pinball_engine.get_plaform_details_pb2 import GetPlatformDetailsResponse
@@ -143,6 +142,7 @@ class TestVPE(MpfTestCase):
             return
 
         self.simulator = VpeSimulation({"0": True, "3": False, "6": False})
+        import mpf.platforms.visual_pinball_engine.visual_pinball_engine
         mpf.platforms.visual_pinball_engine.visual_pinball_engine.VisualPinballEnginePlatform.connect = self._connect_to_mock_server
         super().setUp()
 
