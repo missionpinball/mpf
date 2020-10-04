@@ -13,59 +13,60 @@ from mpf.platforms.visual_pinball_evolution.switch_pb2 import SwitchChanges
 
 from mpf.tests.MpfTestCase import MpfTestCase
 
-try:
-    class VpeSimulation(platform_pb2_grpc.HardwarePlatformServicer):
 
-        def __init__(self, switches):
-            self.switches = switches
-            self.change_queue = None
-            self.lights = {}
-            self.coils = {}
-            self.rules = {}
+class VpeSimulation(platform_pb2_grpc.HardwarePlatformServicer):
 
-        def init_async(self):
-            self.change_queue = asyncio.Queue()
+    def __init__(self, switches):
+        self.switches = switches
+        self.change_queue = None
+        self.lights = {}
+        self.coils = {}
+        self.rules = {}
 
-        async def GetPlatformDetails(self, request, context):
-            return GetPlatformDetailsResponse(
-                known_switches_with_initial_state=self.switches,
-                known_lights=["light-0", "light-1"],
-                known_coils=["0", "1", "2"])
+    def init_async(self):
+        self.change_queue = asyncio.Queue()
 
-        def set_switch(self, switch, state):
-            self.switches[switch] = state
-            self.change_queue.put_nowait((switch, state))
+    async def GetPlatformDetails(self, request, context):
+        return GetPlatformDetailsResponse(
+            known_switches_with_initial_state=self.switches,
+            known_lights=["light-0", "light-1"],
+            known_coils=["0", "1", "2"])
 
-        async def GetSwitchChanges(self, request, context):
-            while True:
+    def set_switch(self, switch, state):
+        self.switches[switch] = state
+        self.change_queue.put_nowait((switch, state))
+
+    def GetSwitchChanges(self, request, context):
+        class AsyncIterator:
+            async def __anext__(self_inner):
                 changed_switch = await self.change_queue.get()
-                yield SwitchChanges(switch_number=changed_switch[0], switch_state=changed_switch[1])
+                return SwitchChanges(switch_number=changed_switch[0], switch_state=changed_switch[1])
 
-        async def LightFade(self, request, context):
-            for fade in request.fades:
-                if request.common_fade_ms > 0:
-                    self.lights[fade.light_number] = (asyncio.get_event_loop().time() +
-                                                      (request.common_fade_ms / 1000.0), fade.target_brightness)
-                else:
-                    self.lights[fade.light_number] = fade.target_brightness
+        return AsyncIterator()
 
-        async def CoilPulse(self, request, context):
-            self.coils[request.coil_number] = "pulsed-{}-{}".format(request.pulse_ms, request.pulse_power)
+    async def LightFade(self, request, context):
+        for fade in request.fades:
+            if request.common_fade_ms > 0:
+                self.lights[fade.light_number] = (asyncio.get_event_loop().time() +
+                                                  (request.common_fade_ms / 1000.0), fade.target_brightness)
+            else:
+                self.lights[fade.light_number] = fade.target_brightness
 
-        async def CoilEnable(self, request, context):
-            self.coils[request.coil_number] = "enabled-{}-{}-{}".format(request.pulse_ms, request.pulse_power, request.hold_power)
+    async def CoilPulse(self, request, context):
+        self.coils[request.coil_number] = "pulsed-{}-{}".format(request.pulse_ms, request.pulse_power)
 
-        async def CoilDisable(self, request, context):
-            self.coils[request.coil_number] = "disabled"
+    async def CoilEnable(self, request, context):
+        self.coils[request.coil_number] = "enabled-{}-{}-{}".format(request.pulse_ms, request.pulse_power, request.hold_power)
 
-        async def ConfigureHardwareRule(self, request, context):
-            self.rules["{}-{}".format(request.coil_number, request.switch_number)] = request
+    async def CoilDisable(self, request, context):
+        self.coils[request.coil_number] = "disabled"
 
-        async def RemoveHardwareRule(self, request, context):
-            del self.rules["{}-{}".format(request.coil_number, request.switch_number)]
-except SyntaxError:
-    # python 3.5 and earlier will fail to parse this code
-    pass
+    async def ConfigureHardwareRule(self, request, context):
+        self.rules["{}-{}".format(request.coil_number, request.switch_number)] = request
+
+    async def RemoveHardwareRule(self, request, context):
+        del self.rules["{}-{}".format(request.coil_number, request.switch_number)]
+
 
 
 class GrpcAsyncTestChannel(grpc.Channel):
@@ -90,7 +91,6 @@ class GrpcAsyncTestChannel(grpc.Channel):
 
     def _async_stream_call(self, method, request):
         coroutine = method(request=request, context=[])
-        print(coroutine)
         class Stream:
             def read(self):
                 return coroutine.__anext__()
