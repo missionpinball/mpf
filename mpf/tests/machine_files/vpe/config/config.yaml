@@ -1,7 +1,7 @@
 #config_version=5
 
 hardware:
-    platform: visual_pinball_evolution
+    platform: visual_pinball_engine
 
 playfields:
   playfield:

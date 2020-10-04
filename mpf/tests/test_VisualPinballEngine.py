@@ -5,11 +5,11 @@ from functools import partial
 import asyncio
 import grpc
 
-import mpf.platforms.visual_pinball_evolution.visual_pinball_evolution
-from mpf.platforms.visual_pinball_evolution import platform_pb2_grpc
-from mpf.platforms.visual_pinball_evolution.coils_pb2 import ConfigureHardwareRuleRequest
-from mpf.platforms.visual_pinball_evolution.get_plaform_details_pb2 import GetPlatformDetailsResponse
-from mpf.platforms.visual_pinball_evolution.switch_pb2 import SwitchChanges
+import mpf.platforms.visual_pinball_engine.visual_pinball_engine
+from mpf.platforms.visual_pinball_engine import platform_pb2_grpc
+from mpf.platforms.visual_pinball_engine.coils_pb2 import ConfigureHardwareRuleRequest
+from mpf.platforms.visual_pinball_engine.get_plaform_details_pb2 import GetPlatformDetailsResponse
+from mpf.platforms.visual_pinball_engine.switch_pb2 import SwitchChanges
 
 from mpf.tests.MpfTestCase import MpfTestCase
 
@@ -124,7 +124,6 @@ class GrpcAsyncTestChannel(grpc.Channel):
 
 class TestVPE(MpfTestCase):
 
-
     def get_config_file(self):
         return 'config.yaml'
 
@@ -144,7 +143,7 @@ class TestVPE(MpfTestCase):
             return
 
         self.simulator = VpeSimulation({"0": True, "3": False, "6": False})
-        mpf.platforms.visual_pinball_evolution.visual_pinball_evolution.VisualPinballEvolutionPlatform.connect = self._connect_to_mock_server
+        mpf.platforms.visual_pinball_engine.visual_pinball_engine.VisualPinballEnginePlatform.connect = self._connect_to_mock_server
         super().setUp()
 
     def get_platform(self):

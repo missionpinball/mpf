@@ -11,15 +11,15 @@ from mpf.platforms.interfaces.light_platform_interface import LightPlatformInter
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.core.platform import LightsPlatform, SwitchPlatform, DriverPlatform, SwitchSettings, DriverSettings, \
     SwitchConfig, DriverConfig, RepulseSettings
-from mpf.platforms.visual_pinball_evolution.coils_pb2 import PulseCoilRequest, DisableCoilRequest, EnableCoilRequest, \
+from mpf.platforms.visual_pinball_engine.coils_pb2 import PulseCoilRequest, DisableCoilRequest, EnableCoilRequest, \
     ConfigureHardwareRuleRequest, RemoveHardwareRuleRequest
-from mpf.platforms.visual_pinball_evolution.fade_light_pb2 import FadeLightRequest
-from mpf.platforms.visual_pinball_evolution.get_plaform_details_pb2 import GetPlatformDetailsRequest
-from mpf.platforms.visual_pinball_evolution.platform_pb2_grpc import HardwarePlatformStub
-from mpf.platforms.visual_pinball_evolution.switch_pb2 import SwitchChangesRequest
+from mpf.platforms.visual_pinball_engine.fade_light_pb2 import FadeLightRequest
+from mpf.platforms.visual_pinball_engine.get_plaform_details_pb2 import GetPlatformDetailsRequest
+from mpf.platforms.visual_pinball_engine.platform_pb2_grpc import HardwarePlatformStub
+from mpf.platforms.visual_pinball_engine.switch_pb2 import SwitchChangesRequest
 
 
-class VisualPinballEvolutionSwitch(SwitchPlatformInterface):
+class VisualPinballEngineSwitch(SwitchPlatformInterface):
 
     """A switch in VPE."""
 
@@ -33,7 +33,7 @@ class VisualPinballEvolutionSwitch(SwitchPlatformInterface):
         return "VPE"
 
 
-class VisualPinballEvolutionLight(LightPlatformInterface):
+class VisualPinballEngineLight(LightPlatformInterface):
 
     """A light in VPE."""
 
@@ -42,7 +42,7 @@ class VisualPinballEvolutionLight(LightPlatformInterface):
     def __init__(self, number, platform):
         """Initialise LED."""
         super().__init__(number)
-        self.platform = platform    # type: VisualPinballEvolutionPlatform
+        self.platform = platform    # type: VisualPinballEnginePlatform
         self.clock = self.platform.machine.clock
 
     def set_fade(self, start_brightness, start_time, target_brightness, target_time):
@@ -77,7 +77,7 @@ class VisualPinballEvolutionLight(LightPlatformInterface):
         raise AssertionError("Not implemented. Let us know if you need it.")
 
 
-class VisualPinballEvolutionDriver(DriverPlatformInterface):
+class VisualPinballEngineDriver(DriverPlatformInterface):
 
     """A driver in VPE."""
 
@@ -86,7 +86,7 @@ class VisualPinballEvolutionDriver(DriverPlatformInterface):
     def __init__(self, config, number, platform):
         """Initialise virtual driver to disabled."""
         super().__init__(config, number)
-        self.platform = platform    # type: VisualPinballEvolutionPlatform
+        self.platform = platform    # type: VisualPinballEnginePlatform
 
     def get_board_name(self):
         """Return the name of the board of this driver."""
@@ -113,7 +113,7 @@ class VisualPinballEvolutionDriver(DriverPlatformInterface):
         self.platform.send_command(command)
 
 
-class VisualPinballEvolutionPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
+class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     """VPE platform."""
 
@@ -182,14 +182,14 @@ class VisualPinballEvolutionPlatform(LightsPlatform, SwitchPlatform, DriverPlatf
         number = str(number)
         if number not in self._known_switches:
             self.raise_config_error("Switch {} is not known to VPE".format(number), 1)
-        return VisualPinballEvolutionSwitch(config, number)
+        return VisualPinballEngineSwitch(config, number)
 
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict) -> "DriverPlatformInterface":
         """Configure VPE driver."""
         number = str(number)
         if number not in self._known_coils:
             self.raise_config_error("Coil {} is not known to VPE".format(number), 2)
-        return VisualPinballEvolutionDriver(config, number, self)
+        return VisualPinballEngineDriver(config, number, self)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Pulse on hit and hold."""
@@ -271,7 +271,7 @@ class VisualPinballEvolutionPlatform(LightsPlatform, SwitchPlatform, DriverPlatf
         number = "{}-{}".format(subtype, number)
         if number not in self._known_lights:
             self.raise_config_error("Light {} is not known to VPE".format(number), 3)
-        return VisualPinballEvolutionLight(number, self)
+        return VisualPinballEngineLight(number, self)
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Parse channel str to a list of channels."""
