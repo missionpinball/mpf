@@ -9,7 +9,8 @@ class Carousel(Mode):
     """Mode which allows the player to select another mode to run."""
 
     __slots__ = ["_all_items", "_items", "_select_item_events", "_next_item_events",
-                 "_previous_item_events", "_highlighted_item_index", "_done"]
+                 "_previous_item_events", "_highlighted_item_index", "_done",
+                 "_block_on_flipper_cancel", "_is_flipper_cancelling"]
 
     def __init__(self, *args, **kwargs):
         """Initialise carousel mode."""
@@ -19,6 +20,8 @@ class Carousel(Mode):
         self._next_item_events = None
         self._previous_item_events = None
         self._highlighted_item_index = None
+        self._block_on_flipper_cancel = None
+        self._is_flipper_cancelling = None
         self._done = None
         super().__init__(*args, **kwargs)
 
@@ -35,6 +38,8 @@ class Carousel(Mode):
         self._next_item_events = Util.string_to_event_list(mode_settings.get("next_item_events", ""))
         self._previous_item_events = Util.string_to_event_list(mode_settings.get("previous_item_events", ""))
         self._highlighted_item_index = 0
+        self._block_on_flipper_cancel = mode_settings.get("block_on_flipper_cancel", False)
+        self._is_flipper_cancelling = False
 
         if not self._all_items:
             raise AssertionError("Specify at least one item to select from")
@@ -67,6 +72,15 @@ class Carousel(Mode):
         self._highlighted_item_index = 0
         self._update_highlighted_item(None)
 
+        # If set to block next/prev on flipper cancel, set those event handlers
+        if self._block_on_flipper_cancel:
+            self._register_handlers(
+                ["flipper_cradle", "flipper_cancel"],
+                self._block_enable)
+            self._register_handlers(
+                ["both_flippers_inactive", "flipper_cradle_release"],
+                self._block_disable)
+            
     def _register_handlers(self, events, handler):
         for event in events:
             self.add_mode_event_handler(event, handler)
@@ -91,7 +105,7 @@ class Carousel(Mode):
 
     def _next_item(self, **kwargs):
         del kwargs
-        if self._done:
+        if self._done or self._is_flipper_cancelling:
             return
         self._highlighted_item_index += 1
         if self._highlighted_item_index >= len(self._get_available_items()):
@@ -100,7 +114,7 @@ class Carousel(Mode):
 
     def _previous_item(self, **kwargs):
         del kwargs
-        if self._done:
+        if self._done or self._is_flipper_cancelling:
             return
         self._highlighted_item_index -= 1
         if self._highlighted_item_index < 0:
@@ -121,3 +135,13 @@ class Carousel(Mode):
         self.machine.events.post("{}_item_selected".format(self.name))
         '''event (carousel_name)_item_selected
             desc: Player selected any item in a carousel. Used to stop mode. '''
+
+    def _block_enable(self, **kwargs):
+        del kwargs
+        self.debug_log("Blocking next/prev during flipper cradle or cancel")
+        self._is_flipper_cancelling = True
+
+    def _block_disable(self, **kwargs):
+        del kwargs
+        self.debug_log("Releasing next/prev block with flipper release")
+        self._is_flipper_cancelling = False

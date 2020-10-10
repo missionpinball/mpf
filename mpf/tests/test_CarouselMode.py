@@ -23,6 +23,36 @@ class TestCarouselMode(MpfTestCase):
         self.advance_time_and_run()
         self.assertIsNone(self.machine.game)
 
+    def testBlockingCarousel(self):
+        self.mock_event("blocking_carousel_item1_highlighted")
+        self.mock_event("blocking_carousel_item2_highlighted")
+        self.mock_event("blocking_carousel_item3_highlighted")
+        self.mock_event("flipper_cancel")
+        
+        self._start_game()
+        self.post_event("start_mode4")
+
+        self.assertIn(self.machine.modes["blocking_carousel"], self.machine.mode_controller.active_modes)
+        self.assertEqual(1, self._events["blocking_carousel_item1_highlighted"])
+        self.assertEqual(0, self._events["blocking_carousel_item2_highlighted"]) 
+        self.post_event("s_flipper_right_active")
+        self.post_event("s_flipper_right_inactive")
+        self.assertEqual(1, self._events["blocking_carousel_item2_highlighted"])
+        self.assertEqual(0, self._events["blocking_carousel_item3_highlighted"]) 
+        self.assertEqual(0, self._events["flipper_cancel"]) 
+        self.post_event("s_flipper_right_active")
+        self.post_event("s_flipper_left_active")
+        self.post_event("flipper_cancel")
+        self.post_event("s_flipper_right_inactive")
+        self.post_event("s_flipper_left_inactive")
+        self.assertEqual(1, self._events["flipper_cancel"])
+        self.assertEqual(1, self._events["blocking_carousel_item1_highlighted"])
+        self.assertEqual(1, self._events["blocking_carousel_item2_highlighted"]) 
+        self.assertEqual(0, self._events["blocking_carousel_item3_highlighted"]) 
+        self.post_event("both_flippers_inactive")
+        self.post_event("s_flipper_right_inactive")
+        self.assertEqual(1, self._events["blocking_carousel_item3_highlighted"]) 
+
     def testConditionalCarousel(self):
         self.mock_event("conditional_carousel_item1_highlighted")
         self.mock_event("conditional_carousel_item2_highlighted")
