@@ -80,7 +80,7 @@ class Carousel(Mode):
             self._register_handlers(
                 ["both_flippers_inactive", "flipper_cradle_release"],
                 self._block_disable)
-            
+
     def _register_handlers(self, events, handler):
         for event in events:
             self.add_mode_event_handler(event, handler)
