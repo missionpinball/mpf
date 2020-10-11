@@ -288,7 +288,7 @@ class FourteenSegments(Segment):
 
     # pylint: disable-msg=too-many-arguments
     # pylint: disable-msg=too-many-locals
-    def __init__(self, dp, l, m, n, k, j, h, g2, g1, f, e, d, c, b, a, char):
+    def __init__(self, dp, l, m, n, k, j, h, g2, g1, f, e, d, c, b, a, char):   # noqa E741
         """Create segment entry."""
         super().__init__(dp, char)
         self.a = a

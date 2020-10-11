@@ -781,7 +781,7 @@ class BasePlaceholderManager(MpfController):
             subscriptions = e.subscriptions
         except ValueError as e:
             raise AssertionError("Failed to evaluate and subscribe template {} with parameters {}. "
-                                 "See error above.".format(text, parameters))
+                                 "See error above.".format(text, parameters)) from e
 
         if not subscriptions:
             future = asyncio.Future(loop=self.machine.clock.loop)

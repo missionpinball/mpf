@@ -64,17 +64,6 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(result[0][0], '1')
         self.assertEqual(result[1][4], 'e')
 
-    def test_chunker(self):
-        my_string = '0123456789'
-        result = list()
-        for chunk in Util.chunker(my_string, 3):
-            result.append(chunk)
-
-        self.assertEqual(result[0], '012')
-        self.assertEqual(result[1], '345')
-        self.assertEqual(result[2], '678')
-        self.assertEqual(result[3], '9')
-
     def test_dict_merge(self):
         dict_a = dict(key1='val1', key2='val2', list1=[1, 2, 3])
         dict_b = dict(key3='val3', key4='val4', list1=[4, 5, 6])

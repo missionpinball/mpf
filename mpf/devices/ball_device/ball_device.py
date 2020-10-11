@@ -485,10 +485,13 @@ class BallDevice(SystemWideDevice):
         """Return the device state."""
         return self._state
 
-    def find_one_available_ball(self, path=deque()):
+    def find_one_available_ball(self, path=None):
         """Find a path to a source device which has at least one available ball."""
-        # copy path
-        path = deque(path)
+        if path is None:
+            path = deque()
+        else:
+            # copy path
+            path = deque(path)
 
         # prevent loops
         if self in path:

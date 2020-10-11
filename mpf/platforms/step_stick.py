@@ -91,9 +91,9 @@ class DigitalOutputStepStickStepper(StepperPlatformInterface):
         """Not implemented."""
         self.platform.raise_config_error("Please use homing_mode switch", 5, context=self.number)
 
-    def wait_for_move_completed(self):
+    async def wait_for_move_completed(self):
         """Wait for move complete."""
-        return self._move_complete.wait()
+        return await self._move_complete.wait()
 
 
 class StepStickDigitalOutputPlatform(StepperPlatform):

@@ -97,7 +97,7 @@ class ConfigProcessor:
             if not config:
                 load_from_cache = False
         else:
-            loaded_files = None
+            loaded_files = []
 
         # Step 3: Check timestamps of included files vs cache
         if loaded_files:

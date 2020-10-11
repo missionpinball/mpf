@@ -135,11 +135,13 @@ class YamlMultifileConfigLoader(ConfigLoader):
         self.config_processor = ConfigProcessor(load_cache, store_cache)
         self.log = logging.getLogger("YamlMultifileConfigLoader")
         try:
+            # pylint: disable-msg=import-outside-toplevel
             import mpf.core
             self.mpf_path = os.path.abspath(os.path.join(mpf.core.__path__[0], os.pardir))
         except ImportError:
             self.mpf_path = None
         try:
+            # pylint: disable-msg=import-outside-toplevel
             import mpfmc.core
             self.mc_path = os.path.abspath(os.path.join(mpfmc.core.__path__[0], os.pardir))
         except ImportError:

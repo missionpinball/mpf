@@ -182,12 +182,6 @@ class Util:
         return final_list
 
     @staticmethod
-    def chunker(l, n):
-        """Yield successive n-sized chunks from l."""
-        for i in range(0, len(l), n):
-            yield l[i:i + n]
-
-    @staticmethod
     def dict_merge(a, b, combine_lists=True) -> dict:
         """Recursively merge dictionaries.
 

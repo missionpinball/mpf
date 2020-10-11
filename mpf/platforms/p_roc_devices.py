@@ -1,4 +1,6 @@
 """P-Roc hardware platform devices."""
+from typing import Tuple
+
 import asyncio
 import logging
 
@@ -328,7 +330,7 @@ class PDBLight:
         return True
 
     @classmethod
-    def split_matrix_addr_parts(cls, string):
+    def split_matrix_addr_parts(cls, string) -> Tuple[str, str]:
         """Split the string of a matrix lamp address.
 
         Input is of form C-Ax-By-z:R-Ax-By-z  or  C-x/y/z:R-x/y/z  or
@@ -337,7 +339,8 @@ class PDBLight:
         """
         addrs = string.rsplit(':')
         if len(addrs) != 2:
-            return []
+            raise AssertionError("Cannot split address {}. "
+                                 "Expected form C-Ax-By-z:R-Ax-By-z or C-x/y/z:R-x/y/z".format(string))
         addrs_out = []
         for addr in addrs:
             bits = addr.split('-')
@@ -346,7 +349,8 @@ class PDBLight:
             else:  # Generally this will be len(bits) 2 or 4.
                 # Remove the first bit and rejoin.
                 addrs_out.append('-'.join(bits[1:]))
-        return addrs_out
+        assert len(addrs_out) == 2
+        return addrs_out[0], addrs_out[1]
 
     def is_pdb_lamp(self, string):
         """Return true if it looks like a pdb lamp string."""
@@ -495,6 +499,6 @@ class PdLedStepper(StepperPlatformInterface):
         if self._move_timer:
             self._move_timer.cancel()
 
-    def wait_for_move_completed(self):
+    async def wait_for_move_completed(self):
         """Wait for move complete."""
-        return self._move_complete.wait()
+        return await self._move_complete.wait()

@@ -31,7 +31,6 @@ class DeviceMonitor:
         old_setattr = getattr(cls, '__setattr__', None)
         super_get_placeholder_value = getattr(cls, "get_placeholder_value", None)
 
-        # pylint: disable-msg=
         def __setattr__(self_inner, name, value):   # noqa
             """If the value changed notify subscribers."""
             attribute_name = False

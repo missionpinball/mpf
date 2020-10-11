@@ -10,7 +10,7 @@ protoc.main([
     '--proto_path=protobuf/',
     '--python_out=.',
     '--grpc_python_out=.'
-] + [proto for proto in glob.iglob('./protobuf/*.proto')])
+] + list(glob.iglob('./protobuf/*.proto')))
 
 # Make pb2 imports in generated scripts relative
 for script in glob.iglob('./*_pb2*.py'):

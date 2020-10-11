@@ -135,6 +135,7 @@ class Timer(ModeDevice):
         except TypeError:
             pass
 
+    @property
     def can_exist_outside_of_game(self):
         """Timer can live outside of games."""
         return True

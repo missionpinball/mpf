@@ -500,7 +500,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
             if (len(msg) > curr_index + 7) and (msg[curr_index + 7] == ord(OppRs232Intf.EOM_CMD)):
                 break
-            elif (len(msg) > curr_index + 8) and (msg[curr_index + 8] == ord(OppRs232Intf.GET_GEN2_CFG)):
+            if (len(msg) > curr_index + 8) and (msg[curr_index + 8] == ord(OppRs232Intf.GET_GEN2_CFG)):
                 curr_index += 7
             else:
                 self.log.warning("Malformed GET_GEN2_CFG response:%s.",
@@ -556,7 +556,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                                      "MPF will work.")
             if (len(msg) > curr_index + 7) and (msg[curr_index + 7] == ord(OppRs232Intf.EOM_CMD)):
                 break
-            elif (len(msg) > curr_index + 8) and (msg[curr_index + 8] == ord(OppRs232Intf.GET_VERS_CMD)):
+            if (len(msg) > curr_index + 8) and (msg[curr_index + 8] == ord(OppRs232Intf.GET_VERS_CMD)):
                 curr_index += 7
             else:
                 self.log.warning("Malformed GET_VERS_CMD response (Chain %s): %s.", chain_serial,

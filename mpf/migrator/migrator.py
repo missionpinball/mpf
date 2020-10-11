@@ -332,14 +332,14 @@ class VersionMigrator:
                     # If the first key isn't even here, we can skip all this
                     continue
 
-                else:  # key found, key is nested
-                    for dummy_iterator in range(20):
+                # key found, key is nested
+                for dummy_iterator in range(20):
 
-                        if self._remove_key(first_key, key):
-                            continue
+                    if self._remove_key(first_key, key):
+                        continue
 
-                        # Not found, but we have a list, so increment & repeat
-                        key = self._increment_key_with_list(key)
+                    # Not found, but we have a list, so increment & repeat
+                    key = self._increment_key_with_list(key)
 
             else:  # dict only, no list
                 self._remove_key(first_key, key)

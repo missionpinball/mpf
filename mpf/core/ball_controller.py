@@ -142,7 +142,7 @@ class BallController(MpfController):
             # skip playfields
             if device.is_playfield():
                 continue
-            elif device.ball_count_handler.counter.config.get('ball_switches'):
+            if device.ball_count_handler.counter.config.get('ball_switches'):
                 for switch in device.ball_count_handler.counter.config['ball_switches']:
                     if self.machine.switch_controller.is_active(
                             switch, ms=device.ball_count_handler.counter.config['entrance_count_delay']):
