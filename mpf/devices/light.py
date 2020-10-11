@@ -488,7 +488,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
                 stack = self.stack[i:]
                 priority = entry.priority
                 break
-            elif entry.dest_color is not None:
+            if entry.dest_color is not None:
                 # no transparency above key
                 color_changes = False
 
@@ -535,7 +535,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
             if entry.key == key and entry.dest_color is None:
                 found = True
                 break
-            elif entry.dest_color is not None:
+            if entry.dest_color is not None:
                 # found entry above the removed which is non-transparent
                 color_change = False
 

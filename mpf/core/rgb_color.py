@@ -459,7 +459,7 @@ class RGBColorCorrectionProfile:
         self._lookup_table = []             # type: List[List[int]]
 
         for dummy_channel in range(3):
-            self._lookup_table.append([i for i in range(256)])
+            self._lookup_table.append(list(range(256)))
 
     def generate_from_parameters(self, gamma=2.5, whitepoint=(1.0, 1.0, 1.0),
                                  linear_slope=1.0, linear_cutoff=0.0):

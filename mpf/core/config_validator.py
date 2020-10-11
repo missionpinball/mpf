@@ -198,7 +198,7 @@ class ConfigValidator:
             if this_spec[k] == 'ignore' or k[0] == '_':
                 continue
 
-            elif k in source:  # validate the entry that exists
+            if k in source:  # validate the entry that exists
 
                 if isinstance(this_spec[k], dict):
                     # This means we're looking for a list of dicts

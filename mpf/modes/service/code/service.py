@@ -349,7 +349,7 @@ software_update_script: single|str|None
             key = await self._get_key()
             if key == 'ESC':
                 break
-            elif key == 'UP':
+            if key == 'UP':
                 position += 1
                 if position >= len(items):
                     position = 0
@@ -394,7 +394,7 @@ software_update_script: single|str|None
             items[position].light.remove_from_stack_by_key("service")
             if key == 'ESC':
                 break
-            elif key == 'UP':
+            if key == 'UP':
                 position += 1
                 if position >= len(items):
                     position = 0
@@ -432,7 +432,7 @@ software_update_script: single|str|None
             key = await self._get_key()
             if key == 'ESC':
                 break
-            elif key == 'UP':
+            if key == 'UP':
                 position += 1
                 if position >= len(items):
                     position = 0
@@ -460,7 +460,7 @@ software_update_script: single|str|None
             if key == 'ESC':
                 self._update_settings_slide(items, position)
                 break
-            elif key == 'UP':
+            if key == 'UP':
                 value_position += 1
                 if value_position >= len(values):
                     value_position = 0

@@ -153,9 +153,9 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
         """Configure switch on system11 overlay."""
         return self.platform.configure_switch(number, config, platform_config)
 
-    def get_hw_switch_states(self):
+    async def get_hw_switch_states(self):
         """Get initial hardware state."""
-        return self.platform.get_hw_switch_states()
+        return await self.platform.get_hw_switch_states()
 
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Configure a driver on the system11 overlay.

@@ -694,7 +694,7 @@ class EventManager(MpfController):
                     self.debug_log("Aborting future event processing")
                 break
 
-            elif ev_type == 'relay' and isinstance(result, dict):
+            if ev_type == 'relay' and isinstance(result, dict):
                 kwargs.update(result)
             elif isinstance(result, dict) and '_min_priority' in result:
                 kwargs['_min_priority'] = result['_min_priority']

@@ -241,11 +241,11 @@ class PhysicalBallCounter:
         """Return true if the counter is ready to receive."""
         raise NotImplementedError()
 
-    def wait_for_ready_to_receive(self):
+    async def wait_for_ready_to_receive(self):
         """Wait until the counter is ready to count an incoming ball."""
         raise NotImplementedError()
 
-    def wait_for_ball_to_leave(self):
+    async def wait_for_ball_to_leave(self):
         """Wait until a ball left."""
         raise NotImplementedError()
 

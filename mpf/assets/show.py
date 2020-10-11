@@ -155,7 +155,7 @@ class Show:
             # special case: empty last step
             if duration is False:
                 break
-            elif duration == 0:     # pragma: no cover
+            if duration == 0:     # pragma: no cover
                 self._show_validation_error("Step {} has 0 duration".format(step_num), 7)
 
             # Calculate the time since previous step
