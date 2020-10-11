@@ -76,8 +76,6 @@ class Carousel(Mode):
 
         # If set to block next/prev on flipper cancel, set those event handlers
         if self._block_events:
-            if not self._release_events:
-                raise AssertionError("Carousels with block_events require at least one release_events")
             # This rudimentary implementation will block on any block_event
             # and release on any release_event. If future requirements need to
             # track *which* block_event blocked and *only* release on the
