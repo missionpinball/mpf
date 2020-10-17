@@ -1,5 +1,5 @@
 """P-Roc hardware platform devices."""
-from typing import Tuple
+from typing import Tuple, Optional
 
 import asyncio
 import logging
@@ -253,6 +253,16 @@ class PDBCoil:
             return self.boardnum * 2 + self.banknum
 
         return -1
+
+    def bank_secondary(self) -> Optional[int]:
+        """Return the other bank if this is a PDB board."""
+        if self.coil_type == 'pdb':
+            if self.banknum == 0:
+                return self.boardnum * 2 + 1
+
+            return self.boardnum * 2
+
+        return None
 
     def output(self):
         """Return the output number."""

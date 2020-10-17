@@ -1049,8 +1049,13 @@ class PDBConfig:
             for name in config['coils']:
                 item_dict = config['coils'][name]
                 coil = PDBCoil(self, str(item_dict['number']))
-                if coil.bank() not in coil_bank_list:
-                    coil_bank_list.append(coil.bank())
+                bank = coil.bank()
+                if bank not in coil_bank_list:
+                    coil_bank_list.append(bank)
+
+                secondary_bank = coil.bank_secondary()
+                if secondary_bank is not None and secondary_bank not in coil_bank_list:
+                    coil_bank_list.append(secondary_bank)
 
         return coil_bank_list
 

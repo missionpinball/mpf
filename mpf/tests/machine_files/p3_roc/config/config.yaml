@@ -88,6 +88,14 @@ coils:
         default_pulse_power: 0.5
         default_pulse_ms: 12
 
+    # with those two coils we test that we also configure the opposite bank on the PD-16
+    # do not configure other coils on A5 or A6 in this test
+    c_bank_test:
+        number: A5-B0-2
+    c_bank2_test:
+        number: A6-B1-7
+
+
 autofire_coils:
     ac_slingshot_test:
         coil: c_slingshot_test

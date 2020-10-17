@@ -185,6 +185,7 @@ class TestP3Roc(MpfTestCase):
         self._test_leds()
         self._test_leds_inverted()
         self._test_steppers()
+        self._test_driver_bank_config()
 
         # test hardware scan
         info_str = """Firmware Version: 2 Firmware Revision: 14 Hardware Board ID: 1
@@ -1107,3 +1108,11 @@ SW-16 boards found:
         self.pinproc.write_data.assert_has_calls([
             call(0, 3, 0x2620),
         ], any_order=False)
+
+    def _test_driver_bank_config(self):
+        """Check configured banks."""
+        configured_banks = set()
+        for call in self.pinproc.driver_update_group_config.mock_calls:
+            configured_banks.add(call[1][2])
+
+        self.assertEqual({0, 1, 2, 3, 4, 5, 10, 11, 12, 13}, configured_banks)
