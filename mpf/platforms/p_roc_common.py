@@ -9,7 +9,7 @@ import sys
 from threading import Thread
 
 import time
-from typing import Any, List, Union, Tuple, Optional
+from typing import Any, List, Union, Tuple, Optional, Set
 
 from mpf.core.utility_functions import Util
 from mpf.core.platform_batch_light_system import PlatformBatchLightSystem
@@ -820,6 +820,7 @@ class PDBConfig:
     indexes = []    # type: List[Any]
     proc = None     # type: pinproc.PinPROC
 
+    # pylint: disable-msg=too-many-locals
     def __init__(self, proc_platform, config, driver_count):
         """Set up PDB config.
 
@@ -836,7 +837,7 @@ class PDBConfig:
         self.use_watchdog = config['p_roc']['use_watchdog']
 
         # Initialize some lists for data collecting
-        coil_bank_list = self._load_coil_bank_list_from_config(config)
+        coil_bank_list, unconfigured_coil_bank_list = self._load_coil_bank_list_from_config(config)
         lamp_source_bank_list, lamp_list, lamp_list_for_index = self._load_lamp_lists_from_config(config)
 
         # Create a list of indexes.  The PDB banks will be mapped into this
@@ -851,6 +852,9 @@ class PDBConfig:
         for group_ctr in range(0, 4):
             # PDB Banks 0-3 are interpreted as dedicated bank here. Therefore, we do not use them.
             enable = group_ctr in coil_bank_list
+            if enable:
+                self.indexes[group_ctr] = group_ctr
+
             self.log.debug("Driver group %02d (dedicated): Enable=%s",
                            group_ctr, enable)
             self.platform.run_proc_cmd_no_wait("driver_update_group_config",
@@ -873,7 +877,7 @@ class PDBConfig:
         # groups for coils, the overflow coils can be controlled by software
         # via VirtualDrivers (which should get set up automatically by this
         # code.)
-
+        lamp_banks = set()
         for i, lamp_dict in enumerate(lamp_list):
             # If the bank is 16 or higher, the P-ROC/P3-ROC can't control it
             # directly. Software can't really control lamp matrixes either
@@ -892,6 +896,7 @@ class PDBConfig:
                            lamp_dict['source_output'],
                            lamp_dict['source_index'], True)
             self.indexes[group_ctr] = lamp_list_for_index[i]
+            lamp_banks.add(lamp_dict['sink_bank'])
             self.platform.run_proc_cmd_no_wait("driver_update_group_config",
                                                group_ctr,
                                                self.lamp_matrix_strobe_time,
@@ -904,6 +909,9 @@ class PDBConfig:
                                                True)
             group_ctr += 1
 
+        unconfigured_coil_bank_list -= lamp_banks
+        unconfigured_coil_bank_list -= set(lamp_source_bank_list)
+
         for coil_bank in coil_bank_list:
             # If the bank is 16 or higher, the P-ROC/P3-ROC can't control it directly.
             # Software will have do the driver logic and write any changes to
@@ -911,6 +919,10 @@ class PDBConfig:
             # driver count, which will force the drivers to be created
             # as VirtualDrivers. Appending the bank avoids conflicts when
             # group_ctr gets too high.
+
+            if coil_bank <= 3:
+                # we already configured the first three banks above so do not configure them again
+                continue
 
             if group_ctr >= num_proc_banks or coil_bank >= 32:
                 self.log.warning("Driver group %d mapped to driver index"
@@ -936,6 +948,30 @@ class PDBConfig:
                                                    True,
                                                    True)
                 group_ctr += 1
+
+        # configure all unconfigured coil banks but do not enable them
+        for coil_bank in unconfigured_coil_bank_list:
+            if coil_bank <= 3:
+                # we already configured the first three banks above so do not configure them again
+                continue
+
+            if group_ctr >= num_proc_banks or coil_bank >= 32:
+                self.log.warning("Cannot configure %s. The polarity on those banks might be incorrect.", coil_bank)
+                continue
+
+            self.log.debug("Driver group %02d: slow_time=%d Disabled "
+                           "Index=%d", group_ctr, 0, coil_bank)
+            self.platform.run_proc_cmd_no_wait("driver_update_group_config",
+                                               group_ctr,
+                                               0,
+                                               coil_bank,
+                                               0,
+                                               0,
+                                               False,
+                                               True,
+                                               False,   # disabled
+                                               True)
+            group_ctr += 1
 
         for i in range(group_ctr, 26):
             self.log.debug("Driver group %02d: disabled", i)
@@ -1027,7 +1063,7 @@ class PDBConfig:
                                  'source_output': lamp.source_output()}
 
                     # lamp_dict_for_index.  This will be used later when the
-                    # p-roc numbers are requested.  The requestor won't know
+                    # p-roc numbers are requested.  The requester won't know
                     # the source_index, but it will know the source board.
                     # This is why two separate lists are needed.
                     lamp_dict_for_index = {'source_board': lamp.source_board(),
@@ -1041,8 +1077,9 @@ class PDBConfig:
 
         return lamp_source_bank_list, lamp_list, lamp_list_for_index
 
-    def _load_coil_bank_list_from_config(self, config):
-        coil_bank_list = []
+    def _load_coil_bank_list_from_config(self, config) -> Tuple[Set[int], Set[int]]:
+        coil_bank_list = set()
+        secondary_coil_bank_list = set()
 
         # Make a list of unique coil banks
         if 'coils' in config:
@@ -1050,14 +1087,15 @@ class PDBConfig:
                 item_dict = config['coils'][name]
                 coil = PDBCoil(self, str(item_dict['number']))
                 bank = coil.bank()
-                if bank not in coil_bank_list:
-                    coil_bank_list.append(bank)
+                coil_bank_list.add(bank)
 
                 secondary_bank = coil.bank_secondary()
-                if secondary_bank is not None and secondary_bank not in coil_bank_list:
-                    coil_bank_list.append(secondary_bank)
+                if secondary_bank is not None:
+                    secondary_coil_bank_list.add(secondary_bank)
 
-        return coil_bank_list
+        secondary_coil_bank_list -= coil_bank_list
+
+        return coil_bank_list, secondary_coil_bank_list
 
     def _initialize_drivers(self):
         """Loop through all of the drivers, initializing them with the polarity."""

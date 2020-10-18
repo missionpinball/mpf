@@ -1112,7 +1112,11 @@ SW-16 boards found:
     def _test_driver_bank_config(self):
         """Check configured banks."""
         configured_banks = set()
+        enabled_banks = []
         for call in self.pinproc.driver_update_group_config.mock_calls:
             configured_banks.add(call[1][2])
+            if call[1][7]:
+                enabled_banks.append(call[1][2])
 
         self.assertEqual({0, 1, 2, 3, 4, 5, 10, 11, 12, 13}, configured_banks)
+        self.assertEqual([0, 1, 3, 4, 5, 10, 13], sorted(enabled_banks))
