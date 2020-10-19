@@ -1113,7 +1113,7 @@ SW-16 boards found:
         """Check configured banks."""
         configured_banks = set()
         enabled_banks = []
-        for call in self.pinproc.driver_update_group_config.mock_calls:
+        for call in self.pinproc.driver_update_group_config.mock_calls[4:]:
             configured_banks.add(call[1][2])
             if call[1][7]:
                 enabled_banks.append(call[1][2])

@@ -852,9 +852,6 @@ class PDBConfig:
         for group_ctr in range(0, 4):
             # PDB Banks 0-3 are interpreted as dedicated bank here. Therefore, we do not use them.
             enable = group_ctr in coil_bank_list
-            if enable:
-                self.indexes[group_ctr] = group_ctr
-
             self.log.debug("Driver group %02d (dedicated): Enable=%s",
                            group_ctr, enable)
             self.platform.run_proc_cmd_no_wait("driver_update_group_config",
@@ -919,11 +916,6 @@ class PDBConfig:
             # driver count, which will force the drivers to be created
             # as VirtualDrivers. Appending the bank avoids conflicts when
             # group_ctr gets too high.
-
-            if coil_bank <= 3:
-                # we already configured the first three banks above so do not configure them again
-                continue
-
             if group_ctr >= num_proc_banks or coil_bank >= 32:
                 self.log.warning("Driver group %d mapped to driver index"
                                  "outside of P-ROC/P3-ROC control.  These Drivers "
@@ -951,10 +943,6 @@ class PDBConfig:
 
         # configure all unconfigured coil banks but do not enable them
         for coil_bank in unconfigured_coil_bank_list:
-            if coil_bank <= 3:
-                # we already configured the first three banks above so do not configure them again
-                continue
-
             if group_ctr >= num_proc_banks or coil_bank >= 32:
                 self.log.warning("Cannot configure %s. The polarity on those banks might be incorrect.", coil_bank)
                 continue
