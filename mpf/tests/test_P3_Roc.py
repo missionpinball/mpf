@@ -1119,4 +1119,4 @@ SW-16 boards found:
                 enabled_banks.append(call[1][2])
 
         self.assertEqual({0, 1, 2, 3, 4, 5, 10, 11, 12, 13}, configured_banks)
-        self.assertEqual([0, 1, 3, 4, 5, 10, 13], sorted(enabled_banks))
+        self.assertEqual([0, 1, 2, 3, 4, 5, 10, 11, 12, 13], sorted(enabled_banks))

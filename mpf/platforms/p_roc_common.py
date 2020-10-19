@@ -825,6 +825,7 @@ class PDBConfig:
         """Set up PDB config.
 
         Will configure driver groups for matrixes, lamps and normal drivers.
+        We always use polarity True in this method because it is only used for PDB machines.
         """
         self.log = logging.getLogger('PDBConfig')
         self.log.debug("Processing PDB Driver Board configuration")
@@ -947,7 +948,7 @@ class PDBConfig:
                 self.log.warning("Cannot configure %s. The polarity on those banks might be incorrect.", coil_bank)
                 continue
 
-            self.log.debug("Driver group %02d: slow_time=%d Disabled "
+            self.log.debug("Driver group %02d: slow_time=%d Enabled "
                            "Index=%d", group_ctr, 0, coil_bank)
             self.platform.run_proc_cmd_no_wait("driver_update_group_config",
                                                group_ctr,
@@ -957,7 +958,7 @@ class PDBConfig:
                                                0,
                                                False,
                                                True,
-                                               False,   # disabled
+                                               True,
                                                True)
             group_ctr += 1
 
