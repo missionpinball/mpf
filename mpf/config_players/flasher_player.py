@@ -33,7 +33,7 @@ class FlasherPlayer(DeviceConfigPlayer):
                 self._flash(flasher, duration_ms=s['ms'], key=context)
 
     def _flash(self, light, duration_ms, key):
-        light.color("white", fade_ms=0, key=key)
+        light.color("on", fade_ms=0, key=key)
         self.delay.add(duration_ms, self._remove_flash, light=light, key=key)
 
     @staticmethod

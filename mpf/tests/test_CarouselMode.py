@@ -53,6 +53,15 @@ class TestCarouselMode(MpfTestCase):
         self.post_event("s_flipper_right_inactive")
         self.assertEqual(1, self._events["blocking_carousel_item3_highlighted"]) 
 
+        # Restart the mode to ensure that the block is cleared
+        self.post_event("flipper_cancel")
+        self.post_event("stop_mode4")
+        self.advance_time_and_run()
+        self.post_event("start_mode4")
+        self.post_event("s_flipper_right_inactive")
+        self.assertEqual(2, self._events["blocking_carousel_item2_highlighted"], 
+            "item2_highlighted should be called when a blocked mode restarts") 
+
     def testConditionalCarousel(self):
         self.mock_event("conditional_carousel_item1_highlighted")
         self.mock_event("conditional_carousel_item2_highlighted")

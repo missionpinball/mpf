@@ -41,7 +41,6 @@ class Carousel(Mode):
         self._highlighted_item_index = 0
         self._block_events = Util.string_to_event_list(mode_settings.get("block_events", ""))
         self._release_events = Util.string_to_event_list(mode_settings.get("release_events", ""))
-        self._is_blocking = False
 
         if not self._all_items:
             raise AssertionError("Specify at least one item to select from")
@@ -66,6 +65,7 @@ class Carousel(Mode):
 
         super().mode_start(**kwargs)
         self._done = False
+        self._is_blocking = False
 
         self._register_handlers(self._next_item_events, self._next_item)
         self._register_handlers(self._previous_item_events, self._previous_item)
@@ -81,9 +81,9 @@ class Carousel(Mode):
             # track *which* block_event blocked and *only* release on the
             # corresponding release_event, additional work will be needed.
             for event in self._block_events:
-                self.add_mode_event_handler(event, self._block_enable)
+                self.add_mode_event_handler(event, self._block_enable, priority=100)
             for event in self._release_events:
-                self.add_mode_event_handler(event, self._block_disable)
+                self.add_mode_event_handler(event, self._block_disable, priority=100)
 
     def _register_handlers(self, events, handler):
         for event in events:
