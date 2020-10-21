@@ -78,6 +78,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         self._configure_device_logging(config)
         return config
 
+    @property
     def can_exist_outside_of_game(self) -> bool:
         """Return true if persist_state is not set."""
         return not bool(self.config['persist_state'])

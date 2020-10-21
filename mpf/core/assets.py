@@ -791,7 +791,7 @@ class AssetPool:
             self._total_weights = sum([x[1] for x in conditional_assets])
         return self._pick_weighed_random(conditional_assets)[0]
 
-    def _get_sequence_asset(self) -> AssetClass:
+    def _get_sequence_asset(self) -> Optional[AssetClass]:
         self._asset_sequence.rotate(-1)
         if self._has_conditions:
             # Get the names of all assets that evaluate true
@@ -800,11 +800,11 @@ class AssetPool:
             for x in range(len(self._asset_sequence)):
                 if self._asset_sequence[0].name in truthy_asset_names:
                     break
-                elif x == len(self._asset_sequence) - 1:
+                if x == len(self._asset_sequence) - 1:
                     self.machine.log.warning("AssetPool {}: All assets in sequence evaluated False.".format(self.name))
                     return None
-                else:
-                    self._asset_sequence.rotate(-1)
+
+                self._asset_sequence.rotate(-1)
         return self._asset_sequence[0]
 
     def _get_random_force_next_asset(self) -> AssetClass:

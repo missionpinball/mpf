@@ -39,10 +39,10 @@ class BcpPickleClient(BaseBcpClient):
                 if config.get('required'):
                     await asyncio.sleep(.1)
                     continue
-                else:
-                    self.info_log("No BCP connection made to '%s' %s:%s",
-                                  self.name, config['host'], config['port'])
-                    return False
+
+                self.info_log("No BCP connection made to '%s' %s:%s",
+                              self.name, config['host'], config['port'])
+                return False
             break
 
         self.info_log("Connected BCP to '%s' %s:%s", self.name, config['host'], config['port'])

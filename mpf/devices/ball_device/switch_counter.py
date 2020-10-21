@@ -129,8 +129,8 @@ class SwitchCounter(PhysicalBallCounter):
                     self.record_activity(BallReturnActivity())
                     self._is_unreliable = True
                 continue
-            else:
-                self._is_unreliable = False
+
+            self._is_unreliable = False
 
             if new_count == self._last_count:
                 # count did not change
@@ -217,11 +217,11 @@ class SwitchCounter(PhysicalBallCounter):
         # we intentionally do not consider jam_switch here (which would be part of self._switches)
         return count != self.capacity
 
-    def wait_for_ready_to_receive(self):
+    async def wait_for_ready_to_receive(self):
         """Wait until there is at least on inactive switch."""
         # future returns when ball_count != number of switches
         # we intentionally do not consider jam_switch here (which would be part of self._switches)
-        return self.wait_for_ball_count_changes(self.capacity)
+        return await self.wait_for_ball_count_changes(self.capacity)
 
     async def wait_for_ball_to_leave(self):
         """Wait for any active switch to become inactive."""

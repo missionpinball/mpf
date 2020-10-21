@@ -72,6 +72,7 @@ class ClockBase(LogMixin):
     # pylint: disable-msg=no-self-use
     def _create_event_loop(self):
         try:
+            # pylint: disable-msg=import-outside-toplevel
             import uvloop
         except ImportError:
             pass

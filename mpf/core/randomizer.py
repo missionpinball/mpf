@@ -71,7 +71,7 @@ class Randomizer:
                 potential_nexts = [x for x in self.items if x[0] is not (
                     self.data['current_item'])]
             else:
-                potential_nexts = [x for x in self.items]
+                potential_nexts = list(self.items)
 
         self.data['current_item'] = self.pick_weighted_random(potential_nexts)
         self.data['items_sent'].add(self.data['current_item'])

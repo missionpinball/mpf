@@ -222,10 +222,9 @@ class BCPClientSocket(BaseBcpClient):
         """Return str representation."""
         return 'BCPClientSocket.{}'.format(self.name)
 
-    def connect(self, config):
+    async def connect(self, config):
         """Actively connect to server."""
-        # return a future
-        return self._setup_client_socket(config['host'], config['port'], config.get('required'))
+        return await self._setup_client_socket(config['host'], config['port'], config.get('required'))
 
     async def _setup_client_socket(self, client_host, client_port, required=True):
         """Set up the client socket."""
@@ -240,10 +239,10 @@ class BCPClientSocket(BaseBcpClient):
                 if required:
                     await asyncio.sleep(.1)
                     continue
-                else:
-                    self.info_log("No BCP connection made to '%s' %s:%s",
-                                  self.name, client_host, client_port)
-                    return False
+
+                self.info_log("No BCP connection made to '%s' %s:%s",
+                              self.name, client_host, client_port)
+                return False
 
             break
 
@@ -282,7 +281,7 @@ class BCPClientSocket(BaseBcpClient):
             self.warning_log("Failed to encode bcp_command %s with args %s. %s", bcp_command, kwargs, e)
             return
 
-        if self.debug_log:
+        if self._debug:
             self.debug_log('Sending "%s"', bcp_string)
 
         if hasattr(self._sender.transport, "is_closing") and self._sender.transport.is_closing():
@@ -318,7 +317,7 @@ class BCPClientSocket(BaseBcpClient):
                 return message_obj
 
     def _process_command(self, message, rawbytes=None):
-        if self.debug_log:
+        if self._debug:
             self.debug_log('Received "%s"', message)
 
         cmd, kwargs = decode_command_string(message.decode())

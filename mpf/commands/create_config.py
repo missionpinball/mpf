@@ -1,4 +1,5 @@
 """Command to format yaml files."""
+import sys
 
 import os
 from prompt_toolkit.formatted_text import HTML
@@ -60,7 +61,7 @@ class Command(MpfCommandLineParser):
             else:
                 self.show_not_in_machine_folder_dialog()
         else:
-            exit()
+            sys.exit()
         self.creation_loop()
 
     def create_mode(self):
@@ -100,7 +101,7 @@ class Command(MpfCommandLineParser):
             style=self.example_style).run()
 
         if config_name is None:
-            quit()
+            sys.exit()
 
         # create machine_config folder
         self.machine_path = os.path.join(self.current_path, config_name)
@@ -171,7 +172,7 @@ class Command(MpfCommandLineParser):
                 '<style fg="red">Error:</style> You dont\'t seem to be in a machine folder.\nPlease switch to one!'),
             style=self.example_style
         ).run()
-        quit()
+        sys.exit()
 
     @staticmethod
     def create_machine_config_structure(config_name, machine_path):

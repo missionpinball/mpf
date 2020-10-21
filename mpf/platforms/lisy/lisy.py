@@ -337,6 +337,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         This works only on unix. On other platforms import of termios will fail.
         """
         try:
+            # pylint: disable-msg=import-outside-toplevel
             import termios
         except ImportError:
             self.warning_log("Could not import terminos (this is ok on windows).")
@@ -425,8 +426,8 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 if not lisy_version:
                     self.error_log("Failed to read lisy_version from LISY. Got %s", lisy_version)
                     continue
-                else:
-                    self._lisy_version = lisy_version.decode()
+
+                self._lisy_version = lisy_version.decode()
 
                 if api_version:
                     self.api_version = StrictVersion(api_version.decode())
