@@ -9,7 +9,8 @@ class Carousel(Mode):
     """Mode which allows the player to select another mode to run."""
 
     __slots__ = ["_all_items", "_items", "_select_item_events", "_next_item_events",
-                 "_previous_item_events", "_highlighted_item_index", "_done"]
+                 "_previous_item_events", "_highlighted_item_index", "_done",
+                 "_block_events", "_release_events", "_is_blocking"]
 
     def __init__(self, *args, **kwargs):
         """Initialise carousel mode."""
@@ -19,6 +20,9 @@ class Carousel(Mode):
         self._next_item_events = None
         self._previous_item_events = None
         self._highlighted_item_index = None
+        self._block_events = None
+        self._release_events = None
+        self._is_blocking = None
         self._done = None
         super().__init__(*args, **kwargs)
 
@@ -35,6 +39,8 @@ class Carousel(Mode):
         self._next_item_events = Util.string_to_event_list(mode_settings.get("next_item_events", ""))
         self._previous_item_events = Util.string_to_event_list(mode_settings.get("previous_item_events", ""))
         self._highlighted_item_index = 0
+        self._block_events = Util.string_to_event_list(mode_settings.get("block_events", ""))
+        self._release_events = Util.string_to_event_list(mode_settings.get("release_events", ""))
 
         if not self._all_items:
             raise AssertionError("Specify at least one item to select from")
@@ -59,6 +65,7 @@ class Carousel(Mode):
 
         super().mode_start(**kwargs)
         self._done = False
+        self._is_blocking = False
 
         self._register_handlers(self._next_item_events, self._next_item)
         self._register_handlers(self._previous_item_events, self._previous_item)
@@ -66,6 +73,17 @@ class Carousel(Mode):
 
         self._highlighted_item_index = 0
         self._update_highlighted_item(None)
+
+        # If set to block next/prev on flipper cancel, set those event handlers
+        if self._block_events:
+            # This rudimentary implementation will block on any block_event
+            # and release on any release_event. If future requirements need to
+            # track *which* block_event blocked and *only* release on the
+            # corresponding release_event, additional work will be needed.
+            for event in self._block_events:
+                self.add_mode_event_handler(event, self._block_enable, priority=100)
+            for event in self._release_events:
+                self.add_mode_event_handler(event, self._block_disable, priority=100)
 
     def _register_handlers(self, events, handler):
         for event in events:
@@ -91,7 +109,7 @@ class Carousel(Mode):
 
     def _next_item(self, **kwargs):
         del kwargs
-        if self._done:
+        if self._done or self._is_blocking:
             return
         self._highlighted_item_index += 1
         if self._highlighted_item_index >= len(self._get_available_items()):
@@ -100,7 +118,7 @@ class Carousel(Mode):
 
     def _previous_item(self, **kwargs):
         del kwargs
-        if self._done:
+        if self._done or self._is_blocking:
             return
         self._highlighted_item_index -= 1
         if self._highlighted_item_index < 0:
@@ -121,3 +139,11 @@ class Carousel(Mode):
         self.machine.events.post("{}_item_selected".format(self.name))
         '''event (carousel_name)_item_selected
             desc: Player selected any item in a carousel. Used to stop mode. '''
+
+    def _block_enable(self, **kwargs):
+        del kwargs
+        self._is_blocking = True
+
+    def _block_disable(self, **kwargs):
+        del kwargs
+        self._is_blocking = False

@@ -1,0 +1,13 @@
+#config_version=5
+mode:
+  start_events: start_mode4
+  stop_events: stop_mode4, carousel_item_selected
+  code: mpf.modes.carousel.code.carousel.Carousel
+
+mode_settings:
+  selectable_items: item1, item2, item3
+  select_item_events: select_item
+  next_item_events: s_flipper_right_inactive
+  previous_item_events: s_flipper_left_inactive
+  block_events: flipper_cancel
+  release_events: both_flippers_inactive

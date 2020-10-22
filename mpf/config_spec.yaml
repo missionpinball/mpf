@@ -2005,6 +2005,8 @@ widgets:
         select_event: single|event_handler|sw_start
         abort_event: single|event_handler|sw_esc
         force_complete_event: single|event_handler|None
+        block_events: list|event_handler|None
+        release_events: list|event_handler|None
         bold: single|bool_or_token|false
         italic: single|bool_or_token|false
         number_grouping: single|bool_or_token|false
