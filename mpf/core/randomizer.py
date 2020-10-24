@@ -40,7 +40,7 @@ class Randomizer:
                 if machine and template_type:
                     this_item = self.generate_template(machine, template_type, this_item)
                 self.items.append((this_item, int(this_weight)))
-                self.items.sort()
+                self.items.sort(key = lambda x: x[0].name or x[0])
         else:
             raise AssertionError("Invalid input for Randomizer")
 
@@ -51,8 +51,11 @@ class Randomizer:
         """Return iterator."""
         return self
 
-    def __next__(self, conditional_args={}):
+    def __next__(self, conditional_args=None):
         """Return next."""
+        if not conditional_args:
+            conditional_args = {}
+
         if self.disable_random:
             return self._next_not_random(conditional_args)
 
@@ -132,7 +135,7 @@ class Randomizer:
 
         return self.__next__()
 
-    def get_next(self, conditional_args={}):
+    def get_next(self, conditional_args=None):
         """Return next item."""
         return self.__next__(conditional_args)
 
@@ -149,7 +152,7 @@ class Randomizer:
 
     @staticmethod
     def generate_template(machine, template_type, value):
-        """ Convert a string with conditions into a conditional event template object """
+        """Convert a string with conditions into a conditional event template object."""
         if template_type == "event":
             return machine.placeholder_manager.parse_conditional_template(value)
         # Add additional template_type support here, as needed
