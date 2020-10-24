@@ -7,8 +7,9 @@ class Randomizer:
 
     """Generic list randomizer."""
 
-    def __init__(self, items):
+    def __init__(self, items, machine=None, template_type=None):
         """Initialise Randomizer."""
+        self.fallback_event = None
         self.force_different = True
         self.force_all = False
         self.disable_random = False
@@ -16,6 +17,7 @@ class Randomizer:
         self.items = list()
 
         self._loop = True
+        self._template_type = template_type
         self.data = None
         self._uuid = uuid4()
 
@@ -27,11 +29,16 @@ class Randomizer:
                 else:
                     this_item = i
                     this_weight = 1
-
+                # If a template_type is provided, convert the event into a conditional template
+                if machine and template_type:
+                    this_item = self.generate_template(machine, template_type, this_item)
                 self.items.append((this_item, this_weight))
 
         elif isinstance(items, dict):
             for this_item, this_weight in items.items():
+                # If a template_type is provided, convert the event into a conditional template
+                if machine and template_type:
+                    this_item = self.generate_template(machine, template_type, this_item)
                 self.items.append((this_item, int(this_weight)))
                 self.items.sort()
         else:
@@ -72,6 +79,18 @@ class Randomizer:
                     self.data['current_item'])]
             else:
                 potential_nexts = list(self.items)
+        if potential_nexts and self._template_type:
+            conditional_nexts = list()
+            for event, weight in potential_nexts:
+                if not event.condition:
+                    conditional_nexts.append((event.name or event, weight))
+                elif event.condition.evaluate({}):
+                    conditional_nexts.append((event.name, weight))
+            potential_nexts = conditional_nexts
+
+        # If no events were found due to all conditions failing, return the fallback
+        if not potential_nexts:
+            return self.fallback_event
 
         self.data['current_item'] = self.pick_weighted_random(potential_nexts)
         self.data['items_sent'].add(self.data['current_item'])
@@ -123,6 +142,12 @@ class Randomizer:
     def get_next(self):
         """Return next item."""
         return self.__next__()
+
+    def generate_template(self, machine, template_type, value):
+        if template_type == "event":
+            return machine.placeholder_manager.parse_conditional_template(value)
+        # Add additional template_type support here, as needed
+        return value
 
     @staticmethod
     def pick_weighted_random(items):
