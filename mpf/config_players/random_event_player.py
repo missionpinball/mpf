@@ -72,7 +72,7 @@ class RandomEventPlayer(ConfigPlayer):
         del priority
         randomizer = self._get_randomizer(settings, context, calling_context)
         # With conditional events in randomizer, there may not be a next event
-        next_event = randomizer.get_next()
+        next_event = randomizer.get_next(kwargs)
         if next_event:
             self.machine.events.post(next_event, **kwargs)
 
