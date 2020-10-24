@@ -9,7 +9,7 @@ class Randomizer:
 
     def __init__(self, items, machine=None, template_type=None):
         """Initialise Randomizer."""
-        self.fallback_event = None
+        self.fallback_value = None
         self.force_different = True
         self.force_all = False
         self.disable_random = False
@@ -88,9 +88,9 @@ class Randomizer:
                     conditional_nexts.append((event.name, weight))
             potential_nexts = conditional_nexts
 
-        # If no events were found due to all conditions failing, return the fallback
+        # If no values were found due to all conditions failing, return the fallback
         if not potential_nexts:
-            return self.fallback_event
+            return self.fallback_value
 
         self.data['current_item'] = self.pick_weighted_random(potential_nexts)
         self.data['items_sent'].add(self.data['current_item'])

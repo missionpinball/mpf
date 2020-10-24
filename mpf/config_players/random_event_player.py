@@ -46,12 +46,13 @@ class RandomEventPlayer(ConfigPlayer):
                 if settings['disable_random']:
                     self.machine.game.player[key].disable_random = True
 
-                self.machine.game.player[key].fallback_event = settings.get('fallback_event')
+                self.machine.game.player[key].fallback_value = settings.get('fallback_event')
 
             return self.machine.game.player[key]
 
         if key not in self._machine_wide_dict:
-            self._machine_wide_dict[key] = Randomizer(settings['events'], self.machine, template_type="event")
+            self._machine_wide_dict[key] = Randomizer(
+                settings['events'], self.machine, template_type="event")
 
             if settings['force_all']:
                 self._machine_wide_dict[key].force_all = True
@@ -62,7 +63,7 @@ class RandomEventPlayer(ConfigPlayer):
             if settings['disable_random']:
                 self._machine_wide_dict[key].disable_random = True
 
-            self._machine_wide_dict[key].fallback_event = settings.get('fallback_event')
+            self._machine_wide_dict[key].fallback_value = settings.get('fallback_event')
 
         return self._machine_wide_dict[key]
 
