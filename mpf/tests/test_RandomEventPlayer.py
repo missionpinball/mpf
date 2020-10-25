@@ -98,3 +98,30 @@ class TestRandomEventPlayerBase():
             self.runner.advance_time_and_run()
             self.runner.assertNotEqual(self.prevEvent, self.lastEvent)
             self.runner.assertEqual(self.lastEvent, self.events[expectedIdx])
+    
+    def _test_conditional_random(self):
+        self._reset()
+        
+        # Only one event is true
+        results = list()
+        for x in range(RANDOM_RUNS):
+            self.runner.post_event("test_{}_conditional_random".format(self.scope))
+            self.runner.advance_time_and_run()
+            self.assertEqual(RANDOM_RUNS, results.count('event1'))
+        
+        # Conditional event kwarg is true
+        results = list()
+        for x in range(RANDOM_RUNS):
+            self.runner.post_event("test_{}_conditional_random".format(self.scope), event_arg="foo")
+            self.runner.advance_time_and_run()
+            self.assertAlmostEqual(RANDOM_RUNS / 2, results.count('event1'), delta=3)
+            self.assertAlmostEqual(RANDOM_RUNS / 2, results.count('event3'), delta=3)
+
+        # Machine setting event is true
+        self.runner.machine.settings.set_setting_value("foo","bar")
+        results = list()
+        for x in range(RANDOM_RUNS):
+            self.runner.post_event("test_{}_conditional_random".format(self.scope))
+            self.runner.advance_time_and_run()
+            self.assertAlmostEqual(RANDOM_RUNS / 2, results.count('event1'), delta=3)
+            self.assertAlmostEqual(RANDOM_RUNS / 2, results.count('event4'), delta=3)

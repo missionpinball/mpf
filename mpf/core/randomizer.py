@@ -7,8 +7,9 @@ class Randomizer:
 
     """Generic list randomizer."""
 
-    def __init__(self, items):
+    def __init__(self, items, machine=None, template_type=None):
         """Initialise Randomizer."""
+        self.fallback_value = None
         self.force_different = True
         self.force_all = False
         self.disable_random = False
@@ -16,6 +17,7 @@ class Randomizer:
         self.items = list()
 
         self._loop = True
+        self._template_type = template_type
         self.data = None
         self._uuid = uuid4()
 
@@ -27,13 +29,18 @@ class Randomizer:
                 else:
                     this_item = i
                     this_weight = 1
-
+                # If a template_type is provided, convert the event into a conditional template
+                if machine and template_type:
+                    this_item = self.generate_template(machine, template_type, this_item)
                 self.items.append((this_item, this_weight))
 
         elif isinstance(items, dict):
             for this_item, this_weight in items.items():
+                # If a template_type is provided, convert the event into a conditional template
+                if machine and template_type:
+                    this_item = self.generate_template(machine, template_type, this_item)
                 self.items.append((this_item, int(this_weight)))
-                self.items.sort()
+                self.items.sort(key=lambda x: x[0].name or x[0])
         else:
             raise AssertionError("Invalid input for Randomizer")
 
@@ -44,20 +51,24 @@ class Randomizer:
         """Return iterator."""
         return self
 
-    def __next__(self):
+    def __next__(self, conditional_args=None):
         """Return next."""
+        if not conditional_args:
+            conditional_args = {}
+
         if self.disable_random:
-            return self._next_not_random()
+            return self._next_not_random(conditional_args)
 
         potential_nexts = list()
+        items = self._get_items(conditional_args)
 
         if self.force_all:
             potential_nexts = [
-                x for x in self.items if x[0] not in self.data['items_sent']]
+                x for x in items if x[0] not in self.data['items_sent']]
 
         elif self.force_different:
             potential_nexts = [
-                x for x in self.items if x[0] is not self.data['current_item']]
+                x for x in items if x[0] is not self.data['current_item']]
 
         if not potential_nexts:
 
@@ -68,10 +79,14 @@ class Randomizer:
 
             # force different only works with more than 1 elements
             if self.force_different and len(self.items) > 1:
-                potential_nexts = [x for x in self.items if x[0] is not (
+                potential_nexts = [x for x in items if x[0] is not (
                     self.data['current_item'])]
             else:
-                potential_nexts = list(self.items)
+                potential_nexts = list(items)
+
+        # If no values were found due to all conditions failing, return the fallback
+        if not potential_nexts:
+            return self.fallback_value
 
         self.data['current_item'] = self.pick_weighted_random(potential_nexts)
         self.data['items_sent'].add(self.data['current_item'])
@@ -92,7 +107,7 @@ class Randomizer:
             self._loop = False
             self.force_all = True
 
-    def _next_not_random(self):
+    def _next_not_random(self, conditional_args):
         if self.data['current_item_index'] == len(self.items):
             if not self.loop:
                 raise StopIteration
@@ -100,7 +115,7 @@ class Randomizer:
             self.data['current_item_index'] = 0
 
         self.data['current_item'] = (
-            self.items[self.data['current_item_index']][0])
+            self._get_items(conditional_args)[self.data['current_item_index']][0])
 
         self.data['current_item_index'] += 1
 
@@ -120,9 +135,28 @@ class Randomizer:
 
         return self.__next__()
 
-    def get_next(self):
+    def get_next(self, conditional_args=None):
         """Return next item."""
-        return self.__next__()
+        return self.__next__(conditional_args)
+
+    def _get_items(self, conditional_args):
+        if self._template_type:
+            conditional_items = list()
+            for event, weight in self.items:
+                if not event.condition:
+                    conditional_items.append((event.name or event, weight))
+                elif event.condition.evaluate(conditional_args):
+                    conditional_items.append((event.name, weight))
+            return conditional_items
+        return self.items
+
+    @staticmethod
+    def generate_template(machine, template_type, value):
+        """Convert a string with conditions into a conditional event template object."""
+        if template_type == "event":
+            return machine.placeholder_manager.parse_conditional_template(value)
+        # Add additional template_type support here, as needed
+        return value
 
     @staticmethod
     def pick_weighted_random(items):

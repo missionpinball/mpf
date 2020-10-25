@@ -187,3 +187,17 @@ class TestRandomizer(MpfTestCase):
                 self.assertEqual(items[i][0], result)
 
             self.assertEqual(3, x)
+
+    def test_fallback_value(self):
+
+        items = []
+
+        r = Randomizer(items)
+        r.fallback_value = "foo"
+
+        results = list()
+
+        for x in range(100):
+            results.append(next(r))
+
+        self.assertEqual(100, results.count('foo'))

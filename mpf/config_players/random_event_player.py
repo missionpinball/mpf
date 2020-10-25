@@ -27,7 +27,8 @@ class RandomEventPlayer(ConfigPlayer):
         key = "random_{}.{}".format(context, calling_context)
         if settings['scope'] == "player":
             if not self.machine.game.player[key]:
-                self.machine.game.player[key] = Randomizer(settings['events'])
+                self.machine.game.player[key] = Randomizer(
+                    settings['events'], self.machine, template_type="event")
                 r'''player_var: random_(x).(y)
 
                 desc: Holds references to Randomizer settings that need to be
@@ -45,10 +46,13 @@ class RandomEventPlayer(ConfigPlayer):
                 if settings['disable_random']:
                     self.machine.game.player[key].disable_random = True
 
+                self.machine.game.player[key].fallback_value = settings.get('fallback_event')
+
             return self.machine.game.player[key]
 
         if key not in self._machine_wide_dict:
-            self._machine_wide_dict[key] = Randomizer(settings['events'])
+            self._machine_wide_dict[key] = Randomizer(
+                settings['events'], self.machine, template_type="event")
 
             if settings['force_all']:
                 self._machine_wide_dict[key].force_all = True
@@ -59,13 +63,18 @@ class RandomEventPlayer(ConfigPlayer):
             if settings['disable_random']:
                 self._machine_wide_dict[key].disable_random = True
 
+            self._machine_wide_dict[key].fallback_value = settings.get('fallback_event')
+
         return self._machine_wide_dict[key]
 
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Play a random event from list based on config."""
         del priority
         randomizer = self._get_randomizer(settings, context, calling_context)
-        self.machine.events.post(randomizer.get_next(), **kwargs)
+        # With conditional events in randomizer, there may not be a next event
+        next_event = randomizer.get_next(kwargs)
+        if next_event:
+            self.machine.events.post(next_event, **kwargs)
 
     def validate_config_entry(self, settings, name):
         """Validate one entry of this player."""

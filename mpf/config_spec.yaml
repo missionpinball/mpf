@@ -1164,6 +1164,7 @@ random_event_player:
     __valid_in__: machine, mode, show
     __type__: config_player
     events: ignore
+    fallback_event: single|str|None
     force_different: single|bool|true
     force_all: single|bool|true
     disable_random: single|bool|false
