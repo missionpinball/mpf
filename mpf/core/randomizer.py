@@ -40,7 +40,7 @@ class Randomizer:
                 if machine and template_type:
                     this_item = self.generate_template(machine, template_type, this_item)
                 self.items.append((this_item, int(this_weight)))
-                self.items.sort(key = lambda x: x[0].name or x[0])
+                self.items.sort(key=lambda x: x[0].name or x[0])
         else:
             raise AssertionError("Invalid input for Randomizer")
 
