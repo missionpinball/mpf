@@ -193,17 +193,20 @@ class Show:
             # check to see if we know how to process this kind of entry
             if key in self.machine.show_controller.show_players.keys():
                 try:
-                    actions[key] = self.machine.show_controller.show_players[key].validate_config_entry(value, self.name)
-                # If something in the show itself triggered a config error, bubble it up to preserve the logger and context
+                    actions[key] = \
+                        self.machine.show_controller.show_players[key].validate_config_entry(value, self.name)
+                # If something in the show triggered a config error, bubble it up to preserve logger and context
                 except ConfigFileError as e:
-                    raise ConfigFileError('Show "{}" >> {}'.format(self.name, e._message), e._error_no, e._logger_name, self.name) from e
+                    e.extend('Show "{}"'.format(self.name))
+                    raise e
 
             elif key not in ('duration', 'time'):   # pragma: no cover
                 for player in self.machine.show_controller.show_players.values():
                     if key == player.config_file_section or key == player.machine_collection_name or \
                             key + "s" == player.show_section:
-                        self._show_validation_error('Invalid section "{}:" found. Did you mean "{}:" instead?'.format(key,
-                                                                                         player.show_section), 3)
+                        self._show_validation_error(
+                            'Invalid section "{}:" found. Did you mean "{}:" instead?'.format(
+                                key, player.show_section), 3)
                 self._show_validation_error('Invalid section "{}:" found.'.format(key), 4)
 
     def _get_tokens(self):
