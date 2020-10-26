@@ -168,7 +168,7 @@ class Show:
 
             # Now process show step actions
             self._process_step_actions(step, actions)
-            
+
             self.show_steps.append(actions)
 
         # Count how many total steps are in the show. We need this later
