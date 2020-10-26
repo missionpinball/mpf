@@ -12,6 +12,7 @@ class BaseError(AssertionError):
         self._logger_name = logger_name
         self._error_no = error_no
         self._context = context
+        self._message = message
         if url_name:
             self._url_name = url_name
         else:

@@ -167,7 +167,10 @@ class Show:
                 total_step_time = -1
 
             # Now process show step actions
-            self._process_step_actions(step, actions)
+            try:
+                self._process_step_actions(step, actions)
+            except Exception as e:
+                raise type(e)("An error occurred while processing show {}: '{}'".format(self.name, e)) from e
 
             self.show_steps.append(actions)
 
