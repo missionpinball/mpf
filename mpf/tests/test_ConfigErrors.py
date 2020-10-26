@@ -17,9 +17,8 @@ class TestConfigErrors(MpfTestCase):
         with self.assertRaises(AssertionError) as e:
             super().setUp()
             self.post_event("play_broken_show")
-
         self.assertEqual(str(e.exception),
-                         'Config File Error in show: Show broken_show: Invalid section "light_player:" '
-                         'found in show broken_show. Did you mean "lights:" instead? Context: broken_show '
+                         'Config File Error in show: "broken_show" >> Invalid section "light_player:" '
+                         'found. Did you mean "lights:" instead? Context: broken_show '
                          'Error Code: CFE-show-3 ({})'.format(log_url.format("CFE-show-3")))
         self.loop.close()
