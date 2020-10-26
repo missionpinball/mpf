@@ -597,6 +597,7 @@ flasher_player:
     __valid_in__: machine, mode, show
     __type__: config_player
     ms: single|ms_or_token|100ms
+    color: single|str|on
 flippers:
     __valid_in__: machine
     __type__: device
