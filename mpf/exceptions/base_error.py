@@ -28,8 +28,7 @@ class BaseError(AssertionError):
         raise NotImplementedError
 
     def extend(self, message):
-        """Chain a new message onto an existing error.
-           Maintains the original error's logger, context, and error_no."""
+        """Chain a new message onto an existing error, keeping the original error's logger, context, and error_no."""
         self._message = "{} >> {}".format(message, self._message)
         super().__init__(self._message)
 
