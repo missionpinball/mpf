@@ -175,16 +175,16 @@ class Show:
         # so we can know when we're at the end of a show
         self.total_steps = len(self.show_steps)
         if self.total_steps == 0:   # pragma: no cover
-            self._show_validation_error("Show is empty", 2)
+            self._show_validation_error('Show "{}" is empty', 2)
 
         self._get_tokens()
 
     def _show_validation_error(self, msg, error_code) -> "NoReturn":  # pragma: no cover
-        raise ConfigFileError("Show {}: {}".format(self.name, msg), error_code, "show", self.name)
+        raise ConfigFileError('"{}" >> {}'.format(self.name, msg), error_code, "show", self.name)
 
     def _process_step_actions(self, step, actions):
         if not isinstance(step, dict):
-            raise AssertionError("Steps in show {} need to be dicts.".format(self.name))
+            raise AssertionError('Steps in show "{}" need to be dicts.'.format(self.name))
         for key, value in step.items():
 
             # key: the section of the show, like 'leds'
@@ -192,16 +192,22 @@ class Show:
 
             # check to see if we know how to process this kind of entry
             if key in self.machine.show_controller.show_players.keys():
-                actions[key] = self.machine.show_controller.show_players[key].validate_config_entry(value, self.name)
+                try:
+                    actions[key] = \
+                        self.machine.show_controller.show_players[key].validate_config_entry(value, self.name)
+                # If something in the show triggered a config error, bubble it up to preserve logger and context
+                except ConfigFileError as e:
+                    e.extend('Show "{}"'.format(self.name))
+                    raise e
 
             elif key not in ('duration', 'time'):   # pragma: no cover
                 for player in self.machine.show_controller.show_players.values():
                     if key == player.config_file_section or key == player.machine_collection_name or \
                             key + "s" == player.show_section:
-                        self._show_validation_error('Invalid section "{}:" found in show {}. '
-                                                    'Did you mean "{}:" instead?'.format(key, self.name,
-                                                                                         player.show_section), 3)
-                self._show_validation_error('Invalid section "{}:" found in show {}'.format(key, self.name), 4)
+                        self._show_validation_error(
+                            'Invalid section "{}:" found. Did you mean "{}:" instead?'.format(
+                                key, player.show_section), 3)
+                self._show_validation_error('Invalid section "{}:" found.'.format(key), 4)
 
     def _get_tokens(self):
         self._walk_show(self.show_steps)

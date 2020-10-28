@@ -50,8 +50,9 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
                 validated_config.update(
                     self._validate_config_item(device, device_settings))
             except ConfigFileError as e:
-                raise ConfigFileError("Failed to load config player {}:{} {}".format(
-                    name, self.show_section, settings), 1, self.log.name) from e
+                e.extend("Failed to load config player {}:{} with settings {}".format(
+                    name, self.show_section, settings))
+                raise e
 
         return validated_config
 
