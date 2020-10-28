@@ -12,6 +12,7 @@ class BaseError(AssertionError):
         self._logger_name = logger_name
         self._error_no = error_no
         self._context = context
+        self._message = message
         if url_name:
             self._url_name = url_name
         else:
@@ -25,6 +26,11 @@ class BaseError(AssertionError):
     def get_long_name(self):
         """Return long name."""
         raise NotImplementedError
+
+    def extend(self, message):
+        """Chain a new message onto an existing error, keeping the original error's logger, context, and error_no."""
+        self._message = "{} >> {}".format(message, self._message)
+        super().__init__(self._message)
 
     def __str__(self):
         """Return nice string."""
