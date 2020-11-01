@@ -349,6 +349,14 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         # **kwargs since this is an event callback
         raise NotImplementedError
 
+    def check_delayed_play(self, key, settings, context, calling_context, priority=0, **kwargs):
+
+        delay = settings.get("delay", 0)
+        if delay:
+            del settings["delay"]
+            self.machine.clock.schedule_once(lambda dt: self.play({key: settings}, context, calling_context, priority, **kwargs), delay)
+            return True
+
     def expand_config_entry(self, settings):
         """Expend objects in config entry idempotently."""
         return settings
