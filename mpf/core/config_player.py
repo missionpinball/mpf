@@ -350,8 +350,13 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     def check_delayed_play(self, key, settings, context, calling_context, priority=0, **kwargs):
+        """Check the settings dict for a 'delay' property and re-post the play event later.
 
-        delay = settings.get("delay", 0)
+        This method will return True if it has scheduled the play for later, in which case the
+        calling function should not proceed. Otherwise, the calling function should continue
+        with its play behavior.
+        """
+        delay = settings.get("delay")
         if delay:
             del settings["delay"]
             self.machine.clock.schedule_once(lambda dt: self.play({key: settings}, context, calling_context, priority, **kwargs), delay)
