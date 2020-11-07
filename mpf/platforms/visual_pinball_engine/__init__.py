@@ -1,1 +1,0 @@
-"""VPE platform in MPF."""
