@@ -2,7 +2,7 @@
 import logging
 from mpf.core.segment_mappings import SEVEN_SEGMENTS, BCD_SEGMENTS, FOURTEEN_SEGMENTS, SIXTEEN_SEGMENTS
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
-from mpf.core.platform import SegmentDisplayPlatform
+from mpf.core.platform import SegmentDisplaySoftwareFlashPlatform
 
 
 class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
@@ -32,6 +32,7 @@ class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
         """Set text to lights."""
         # get the last chars for the number of chars we have
         text = text[-len(self._lights):]
+        text = text.zfill(len(self._lights))
         # iterate lights and chars
         for char, lights_for_char in zip(text, self._lights):
             try:
@@ -46,19 +47,23 @@ class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
                     light.remove_from_stack_by_key(key=self._key)
 
 
-class LightSegmentDisplaysPlatform(SegmentDisplayPlatform):
+class LightSegmentDisplaysPlatform(SegmentDisplaySoftwareFlashPlatform):
 
     """Platform which drives segment displays on lights of another platform."""
 
-    __slots__ = ["log"]
+    __slots__ = ["log", "config"]
 
     def __init__(self, machine):
         """Initialise platform."""
         super().__init__(machine)
         self.log = logging.getLogger('Light Segment Displays')
         self.log.debug("Configuring Light Segment Displays")
+        self.config = self.machine.config_validator.validate_config("light_segment_displays",
+                                                                    self.machine.config.get("light_segment_displays"))
 
     async def configure_segment_display(self, number: str, platform_settings) -> LightSegmentDisplay:
         """Configure light segment display."""
-        settings = self.machine.config_validator.validate_config("light_segment_displays", platform_settings)
-        return LightSegmentDisplay(number, lights=settings['lights'], segment_type=settings['type'])
+        settings = self.machine.config_validator.validate_config("light_segment_displays_device", platform_settings)
+        display = LightSegmentDisplay(number, lights=settings['lights'], segment_type=settings['type'])
+        self._handle_software_flash(display)
+        return display

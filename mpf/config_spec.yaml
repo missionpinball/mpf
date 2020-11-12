@@ -717,6 +717,10 @@ light_settings:
     default_color_correction_profile: single|str|None
     default_fade_ms: single|int|0
 light_segment_displays:
+    __valid_in__: machine
+    __type__: config
+    display_flash_frequency: single|float|1.0
+light_segment_displays_device:
     lights: list|dict(str:machine(lights))|
     type: single|enum(7segment,bcd,14segment,16segment)|
 light_stripes:
