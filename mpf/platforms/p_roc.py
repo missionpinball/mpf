@@ -14,9 +14,9 @@ https://github.com/preble/pyprocgame
 """
 from typing import Dict
 
-from mpf.core.platform import DmdPlatform, DriverConfig, SwitchConfig, SegmentDisplayPlatform
+from mpf.core.platform import DmdPlatform, DriverConfig, SwitchConfig, SegmentDisplaySoftwareFlashPlatform
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
-from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
+from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
 from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.p_roc_devices import PROCDriver
@@ -26,7 +26,7 @@ if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
-class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform):
+class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplaySoftwareFlashPlatform):
 
     """Platform class for the P-ROC hardware controller.
 
@@ -181,7 +181,8 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         self.dmd = PROCDMD(self, self.machine)
         return self.dmd
 
-    async def configure_segment_display(self, number: str, platform_settings) -> "SegmentDisplayPlatformInterface":
+    async def configure_segment_display(self, number: str, platform_settings) \
+            -> "SegmentDisplaySoftwareFlashPlatformInterface":
         """Configure display."""
         del platform_settings
         number_int = int(number)
@@ -191,7 +192,9 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         if not self.alpha_display:
             self.alpha_display = AuxAlphanumericDisplay(self, self.aux_port)
 
-        return PRocAlphanumericDisplay(self.alpha_display, number_int)
+        display = PRocAlphanumericDisplay(self.alpha_display, number_int)
+        self._handle_software_flash(display)
+        return display
 
     def process_events(self, events):
         """Process events from the P-Roc."""
@@ -302,7 +305,7 @@ class AuxPort:
             self.platform.run_proc_cmd_no_wait("aux_send_commands", 0, [self.platform.pinproc.aux_command_jump(1)])
 
 
-class PRocAlphanumericDisplay(SegmentDisplayPlatformInterface):
+class PRocAlphanumericDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
 
     """Since AuxAlphanumericDisplay updates all four displays wrap it and set the correct offset."""
 
@@ -313,9 +316,8 @@ class PRocAlphanumericDisplay(SegmentDisplayPlatformInterface):
         super().__init__(index)
         self.display = display
 
-    def set_text(self, text: str, flashing: bool):
+    def _set_text(self, text: str):
         """Set digits to display."""
-        # TODO: handle flashing using delay
         self.display.set_text(text, self.number)
 
 

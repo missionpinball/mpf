@@ -211,8 +211,6 @@ class SegmentDisplaySoftwareFlashPlatform(SegmentDisplayPlatform, metaclass=abc.
 
     """SegmentDisplayPlatform with software flash support."""
 
-    __slots__ = ["_displays", "_display_flash_task"]
-
     def __init__(self, machine):
         """Initialise software flash support."""
         super().__init__(machine)

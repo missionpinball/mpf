@@ -321,7 +321,8 @@ class TestPRoc(MpfTestCase):
         ], any_order=False)
 
         self.pinproc.aux_send_commands = MagicMock(return_value=True)
-        self.machine.segment_displays["display1"].remove_text_by_key("score")
+        self.machine.segment_displays["display1"].set_flashing(True)
+        self.advance_time_and_run(2)
         self.machine_run()
         self.wait_for_platform()
         self.pinproc.aux_send_commands.assert_has_calls([
@@ -376,7 +377,7 @@ class TestPRoc(MpfTestCase):
             'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0',
             'delay_40']),
             call(0, ["jump1"])
-        ], any_order=False)
+        ], any_order=True)
 
     def _test_enable_exception(self):
         # enable coil which does not have allow_enable

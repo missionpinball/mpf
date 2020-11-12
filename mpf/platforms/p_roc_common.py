@@ -221,6 +221,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
     async def initialize(self):
         """Set machine vars."""
+        await super().initialize()
         await self.connect()
         self.machine.variables.set_machine_var("p_roc_version", self.version)
         '''machine_var: p_roc_version
