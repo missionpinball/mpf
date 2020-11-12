@@ -1265,7 +1265,7 @@ segment_display_player:
     __type__: config_player
     priority: single|int_or_token|0
     text: single|str|None
-    action: single|enum(add,remove,flash,no_flash)|add
+    action: single|enum(add,remove,flash,no_flash,flash_match)|add
     key: single|str|None
     expire: single|ms_or_token|None
 servo_controllers:

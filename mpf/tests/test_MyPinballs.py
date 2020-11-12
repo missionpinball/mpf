@@ -1,6 +1,7 @@
 """Test MyPinballs Platform."""
 import time
 
+from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.tests.loop import MockSerial
 
@@ -137,13 +138,20 @@ class MyPinballsPlatformTest(MpfTestCase):
         self.serialMock.expected_commands = {
             b'2:2:424242\n': False,
         }
-        self.machine.segment_displays["display2"].set_flashing(True)
+        self.machine.segment_displays["display2"].set_flashing(FlashingType.FLASH_ALL)
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands = {
             b'1:2:424242\n': False,
         }
-        self.machine.segment_displays["display2"].set_flashing(False)
+        self.machine.segment_displays["display2"].set_flashing(FlashingType.NO_FLASH)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands = {
+            b'4:2:424242\n': False,
+        }
+        self.machine.segment_displays["display2"].set_flashing(FlashingType.FLASH_MATCH)
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)

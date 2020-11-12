@@ -1,3 +1,4 @@
+from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
 from mpf.tests.MpfTestCase import MpfTestCase, test_config
 from unittest.mock import MagicMock, call
 from mpf.platforms import p_roc_common, p_roc
@@ -321,7 +322,7 @@ class TestPRoc(MpfTestCase):
         ], any_order=False)
 
         self.pinproc.aux_send_commands = MagicMock(return_value=True)
-        self.machine.segment_displays["display1"].set_flashing(True)
+        self.machine.segment_displays["display1"].set_flashing(FlashingType.FLASH_ALL)
         self.advance_time_and_run(2)
         self.machine_run()
         self.wait_for_platform()
