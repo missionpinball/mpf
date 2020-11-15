@@ -247,6 +247,12 @@ class TestPRoc(MpfTestCase):
             number, 23)
         assert not self.pinproc.driver_schedule.called
 
+        self.machine.coils["c_direct2_pulse_power"].pulse()
+        self.wait_for_platform()
+        number = self.machine.coils["c_direct2_pulse_power"].hw_driver.number
+        self.pinproc.driver_pulsed_patter.assert_called_with(
+            number, 9, 1, 20)
+
     def _test_alpha_display(self):
         self.pinproc.aux_send_commands = MagicMock(return_value=True)
         self.machine.segment_displays["display1"].add_text("1234", key="score")
