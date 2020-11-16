@@ -46,6 +46,10 @@ coils:
         number: A2-B0-3
         default_hold_power: 1.0
         default_pulse_ms: 0
+    c_direct2_pulse_power:
+        number: C02
+        default_pulse_power: 0.9
+        default_pulse_ms: 20
 
 autofire_coils:
     ac_slingshot_test:

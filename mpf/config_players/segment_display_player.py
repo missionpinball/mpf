@@ -2,6 +2,7 @@
 from mpf.core.delays import DelayManager
 
 from mpf.config_players.device_config_player import DeviceConfigPlayer
+from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -55,9 +56,11 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
                 self._remove(instance_dict=instance_dict,
                              key=key, display=display)
             elif action == "flash":
-                display.set_flashing(True)
+                display.set_flashing(FlashingType.FLASH_ALL)
+            elif action == "flash_match":
+                display.set_flashing(FlashingType.FLASH_MATCH)
             elif action == "no_flash":
-                display.set_flashing(False)
+                display.set_flashing(FlashingType.NO_FLASH)
             else:
                 raise AssertionError("Invalid action {}".format(action))
 

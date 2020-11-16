@@ -176,7 +176,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
             raise MpfRuntimeError('Could not import "pinproc". Either the library is not installed or is missing '
                                   'some of its dependencies. Check the install instructions for your OS in '
                                   'Multimorphic section of the MPF docs. You can run mpf with "-X" to use virtual '
-                                  'hardware in the meantime.', 3, self.log.name) from IMPORT_ERROR
+                                  'hardware in the meantime.', 3, 'P-Roc') from IMPORT_ERROR
 
         self.pdbconfig = None
         self.pinproc = pinproc
@@ -221,6 +221,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
     async def initialize(self):
         """Set machine vars."""
+        await super().initialize()
         await self.connect()
         self.machine.variables.set_machine_var("p_roc_version", self.version)
         '''machine_var: p_roc_version

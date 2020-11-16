@@ -1,5 +1,6 @@
 import time
 
+from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
 from mpf.platforms.lisy import lisy
 
 from mpf.tests.MpfTestCase import MpfTestCase, test_config, MagicMock
@@ -254,7 +255,7 @@ Display count: 5
         self.serialMock.expected_commands = {
             b'\x1F42000\x00': None,
         }
-        self.machine.segment_displays["player1_display"].set_flashing(True)
+        self.machine.segment_displays["player1_display"].set_flashing(FlashingType.FLASH_ALL)
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -269,7 +270,7 @@ Display count: 5
         self.serialMock.expected_commands = {
             b'\x1F42000\x00': None,
         }
-        self.machine.segment_displays["player1_display"].set_flashing(False)
+        self.machine.segment_displays["player1_display"].set_flashing(FlashingType.NO_FLASH)
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 

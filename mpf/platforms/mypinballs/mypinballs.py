@@ -1,7 +1,7 @@
 """Mypinballs hardware platform."""
 import re
 
-from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
+from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface, FlashingType
 
 from mpf.core.platform import SegmentDisplayPlatform
 
@@ -16,9 +16,9 @@ class MyPinballsSegmentDisplay(SegmentDisplayPlatformInterface):
         self.platform = platform        # type: MyPinballsHardwarePlatform
 
         # clear the display
-        self.set_text("", False)
+        self.set_text("", FlashingType.NO_FLASH)
 
-    def set_text(self, text: str, flashing: bool):
+    def set_text(self, text: str, flashing: FlashingType):
         """Set digits to display."""
         if not text:
             # blank display
@@ -30,8 +30,10 @@ class MyPinballsSegmentDisplay(SegmentDisplayPlatformInterface):
             # special char for spaces
             text = text.replace(" ", "?")
             # set text
-            if flashing:
+            if flashing == FlashingType.FLASH_ALL:
                 cmd = b'2:'
+            elif flashing == FlashingType.FLASH_MATCH:
+                cmd = b'4:'
             else:
                 cmd = b'1:'
             cmd += bytes([ord(str(self.number))]) + b':' + text.encode() + b'\n'

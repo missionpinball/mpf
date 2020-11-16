@@ -6,6 +6,7 @@ from typing import List, Optional
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.placeholder_manager import TextTemplate
 from mpf.core.system_wide_device import SystemWideDevice
+from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -27,12 +28,12 @@ class SegmentDisplay(SystemWideDevice):
     def __init__(self, machine, name: str) -> None:
         """Initialise segment display device."""
         super().__init__(machine, name)
-        self.hw_display = None              # type: Optional[SegmentDisplayPlatformInterface]
-        self.platform = None                # type: Optional[SegmentDisplayPlatform]
-        self._text_stack = []               # type: List[TextStack]
-        self._current_placeholder = None    # type: Optional[TextTemplate]
-        self.text = ""                      # type: Optional[str]
-        self.flashing = False               # type: bool
+        self.hw_display = None                  # type: Optional[SegmentDisplayPlatformInterface]
+        self.platform = None                    # type: Optional[SegmentDisplayPlatform]
+        self._text_stack = []                   # type: List[TextStack]
+        self._current_placeholder = None        # type: Optional[TextTemplate]
+        self.text = ""                          # type: Optional[str]
+        self.flashing = FlashingType.NO_FLASH   # type: FlashingType
 
     async def _initialize(self):
         await super()._initialize()
@@ -63,7 +64,7 @@ class SegmentDisplay(SystemWideDevice):
         self._text_stack.append(TextStack(text, priority, key))
         self._update_stack()
 
-    def set_flashing(self, flashing: bool):
+    def set_flashing(self, flashing: FlashingType):
         """Enable/Disable flashing."""
         self.flashing = flashing
         # invalidate text to force an update
@@ -80,7 +81,7 @@ class SegmentDisplay(SystemWideDevice):
         # do nothing if stack is emtpy. set display empty
         assert self.hw_display is not None
         if not self._text_stack:
-            self.hw_display.set_text("", flashing=False)
+            self.hw_display.set_text("", flashing=FlashingType.NO_FLASH)
             if self._current_placeholder:
                 self.text = ""
                 self._current_placeholder = None

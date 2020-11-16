@@ -718,6 +718,10 @@ light_settings:
     default_color_correction_profile: single|str|None
     default_fade_ms: single|int|0
 light_segment_displays:
+    __valid_in__: machine
+    __type__: config
+    display_flash_frequency: single|float|1.0
+light_segment_displays_device:
     lights: list|dict(str:machine(lights))|
     type: single|enum(7segment,bcd,14segment,16segment)|
 light_stripes:
@@ -995,6 +999,7 @@ p_roc:
     use_watchdog: single|bool|true
     dmd_timing_cycles: list|int|None
     dmd_update_interval: single|ms|33ms
+    display_flash_frequency: single|float|1.0
     debug: single|bool|false
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
@@ -1261,7 +1266,7 @@ segment_display_player:
     __type__: config_player
     priority: single|int_or_token|0
     text: single|str|None
-    action: single|enum(add,remove,flash,no_flash)|add
+    action: single|enum(add,remove,flash,no_flash,flash_match)|add
     key: single|str|None
     expire: single|ms_or_token|None
 servo_controllers:

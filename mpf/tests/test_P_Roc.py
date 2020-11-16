@@ -1,3 +1,4 @@
+from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
 from mpf.tests.MpfTestCase import MpfTestCase, test_config
 from unittest.mock import MagicMock, call
 from mpf.platforms import p_roc_common, p_roc
@@ -246,6 +247,12 @@ class TestPRoc(MpfTestCase):
             number, 23)
         assert not self.pinproc.driver_schedule.called
 
+        self.machine.coils["c_direct2_pulse_power"].pulse()
+        self.wait_for_platform()
+        number = self.machine.coils["c_direct2_pulse_power"].hw_driver.number
+        self.pinproc.driver_pulsed_patter.assert_called_with(
+            number, 9, 1, 20)
+
     def _test_alpha_display(self):
         self.pinproc.aux_send_commands = MagicMock(return_value=True)
         self.machine.segment_displays["display1"].add_text("1234", key="score")
@@ -321,7 +328,8 @@ class TestPRoc(MpfTestCase):
         ], any_order=False)
 
         self.pinproc.aux_send_commands = MagicMock(return_value=True)
-        self.machine.segment_displays["display1"].remove_text_by_key("score")
+        self.machine.segment_displays["display1"].set_flashing(FlashingType.FLASH_ALL)
+        self.advance_time_and_run(2)
         self.machine_run()
         self.wait_for_platform()
         self.pinproc.aux_send_commands.assert_has_calls([
@@ -376,7 +384,7 @@ class TestPRoc(MpfTestCase):
             'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0',
             'delay_40']),
             call(0, ["jump1"])
-        ], any_order=False)
+        ], any_order=True)
 
     def _test_enable_exception(self):
         # enable coil which does not have allow_enable

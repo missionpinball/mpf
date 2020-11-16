@@ -1,6 +1,16 @@
 """Support for physical segment displays."""
 import abc
 from typing import Any
+from enum import Enum
+
+
+class FlashingType(Enum):
+
+    """Determine how a segment display should flash."""
+
+    NO_FLASH = False
+    FLASH_ALL = True
+    FLASH_MATCH = "match"
 
 
 class SegmentDisplayPlatformInterface(metaclass=abc.ABCMeta):
@@ -14,7 +24,7 @@ class SegmentDisplayPlatformInterface(metaclass=abc.ABCMeta):
         self.number = number
 
     @abc.abstractmethod
-    def set_text(self, text: str, flashing: bool) -> None:
+    def set_text(self, text: str, flashing: FlashingType) -> None:
         """Set a text to the display.
 
         This text will be right aligned in case the text is shorter than the display.
@@ -33,14 +43,14 @@ class SegmentDisplaySoftwareFlashPlatformInterface(SegmentDisplayPlatformInterfa
         """Remember the number."""
         super().__init__(number)
         self._flash_on = True
-        self._flashing = False
+        self._flashing = FlashingType.NO_FLASH      # type: FlashingType
         self._text = ""
 
     def set_software_flash(self, state):
         """Set software flashing state."""
         self._flash_on = state
 
-        if not self._flashing:
+        if self._flashing == FlashingType.NO_FLASH:
             return
 
         # do not flash empty text
@@ -50,15 +60,19 @@ class SegmentDisplaySoftwareFlashPlatformInterface(SegmentDisplayPlatformInterfa
         if state:
             self._set_text(self._text)
         else:
-            self._set_text("")
+            if self._flashing == FlashingType.FLASH_MATCH:
+                # blank the last two chars
+                self._set_text(self._text[0:-2] + "  ")
+            else:
+                self._set_text("")
 
-    def set_text(self, text: str, flashing: bool) -> None:
+    def set_text(self, text: str, flashing: FlashingType) -> None:
         """Set a text to the display."""
         self._text = text
         self._flashing = flashing
-        if not self._flashing:
+        if flashing == FlashingType.NO_FLASH:
             self._flash_on = True
-        if not flashing or self._flash_on or not text:
+        if flashing == FlashingType.NO_FLASH or self._flash_on or not text:
             self._set_text(text)
 
     @abc.abstractmethod

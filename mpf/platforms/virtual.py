@@ -6,7 +6,7 @@ import logging
 
 from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
 from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
-from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
+from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface, FlashingType
 
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
@@ -316,9 +316,9 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
         """Initialise virtual segment display."""
         super().__init__(number)
         self.text = ''
-        self.flashing = False
+        self.flashing = FlashingType.NO_FLASH
 
-    def set_text(self, text: str, flashing: bool):
+    def set_text(self, text: str, flashing: FlashingType):
         """Set text."""
         self.text = text
         self.flashing = flashing
