@@ -1,17 +1,86 @@
 syntax = "proto3";
 
-import "get_plaform_details.proto";
-import "coils.proto";
-import "fade_light.proto";
-import "switch.proto";
+package mpf.vpe;
 
-service HardwarePlatform {
-  rpc GetPlatformDetails(GetPlatformDetailsRequest) returns (GetPlatformDetailsResponse);
-  rpc GetSwitchChanges(SwitchChangesRequest) returns (stream SwitchChanges);
-  rpc LightFade(FadeLightRequest) returns (FadeLightResponse);
-  rpc CoilPulse(PulseCoilRequest) returns (CoilResponse);
-  rpc CoilEnable(EnableCoilRequest) returns (CoilResponse);
-  rpc CoilDisable(DisableCoilRequest) returns (CoilResponse);
-  rpc ConfigureHardwareRule(ConfigureHardwareRuleRequest) returns (CoilResponse);
-  rpc RemoveHardwareRule(RemoveHardwareRuleRequest) returns (CoilResponse);
+service MpfHardwareService {
+  rpc Start(MachineConfiguration) returns (stream Commands);
+  rpc SendSwitchChanges(stream SwitchChanges) returns (EmptyResponse);
+  rpc Quit(QuitRequest) returns (EmptyResponse);
+}
+
+message EmptyResponse {}
+message QuitRequest {}
+
+message MachineConfiguration {
+  map<string, bool> known_switches_with_initial_state = 1;
+  repeated string known_lights = 2;
+  repeated string known_coils = 3;
+  // TODO: add MPF optional config here
+}
+
+// Platform streams switch changes to MPF
+message SwitchChanges {
+  string switch_number = 1;
+  bool switch_state = 2;
+  uint64 change_time = 3;
+}
+
+message Commands {
+  oneof command {
+    FadeLightRequest fade_light = 1;
+    PulseCoilRequest pulse_coil = 2;
+    EnableCoilRequest enable_coil = 3;
+    DisableCoilRequest disable_coil = 4;
+    ConfigureHardwareRuleRequest configure_hardware_rule = 5;
+    RemoveHardwareRuleRequest remove_hardware_rule = 6;
+  }
+}
+
+message FadeLightRequest {
+  // This is up to discussion
+  message ChannelFade {
+    string light_number = 1;
+    float target_brightness = 2;
+  }
+  uint32 common_fade_ms = 1;
+  repeated ChannelFade fades = 2;
+}
+
+// Pulse a coil
+// If it has been enabled before disable it afterwards
+message PulseCoilRequest {
+  string coil_number = 1;
+  uint32 pulse_ms = 2;
+  float pulse_power = 3;
+}
+
+// Enable a coil
+// Not sure if hold_power is simulated in VPE or if we should remove it
+message EnableCoilRequest {
+  string coil_number = 1;
+  uint32 pulse_ms = 2;
+  float pulse_power = 3;
+  float hold_power = 4;   // Probably not important for VPE. Can a ball be knocked off from a magnet?
+}
+
+// Disable a coil
+message DisableCoilRequest {
+  string coil_number = 1;
+}
+
+// Configure a minimal hardware rule to hide latency from pops/slings/flippers
+// Dual-wound, EOS, cut-off rules and more are ignored here
+// Not sure if hold_power is simulated in VPE or if we should remove it
+message ConfigureHardwareRuleRequest {
+  string coil_number = 1;
+  string switch_number = 2;
+  uint32 pulse_ms = 3;
+  float pulse_power = 4;
+  float hold_power = 5;   // Probably not important for VPE because knocking down a flipper will probably not happen there
+}
+
+// Remove a rule between switch and coil
+message RemoveHardwareRuleRequest {
+  string coil_number = 1;
+  string switch_number = 2;
 }

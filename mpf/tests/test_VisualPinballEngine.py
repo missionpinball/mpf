@@ -1,123 +1,15 @@
 import sys
 
-from functools import partial
-
-import asyncio
-import grpc
-
-from mpf.platforms.visual_pinball_engine import platform_pb2_grpc
-from mpf.platforms.visual_pinball_engine.coils_pb2 import ConfigureHardwareRuleRequest
-from mpf.platforms.visual_pinball_engine.get_plaform_details_pb2 import GetPlatformDetailsResponse
-from mpf.platforms.visual_pinball_engine.switch_pb2 import SwitchChanges
-
+from mpf.platforms.visual_pinball_engine import platform_pb2
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
-class VpeSimulation(platform_pb2_grpc.HardwarePlatformServicer):
+class MockServer:
 
-    def __init__(self, switches):
-        self.switches = switches
-        self.change_queue = None
-        self.lights = {}
-        self.coils = {}
-        self.rules = {}
-
-    def init_async(self):
-        self.change_queue = asyncio.Queue()
-
-    async def GetPlatformDetails(self, request, context):
-        return GetPlatformDetailsResponse(
-            known_switches_with_initial_state=self.switches,
-            known_lights=["light-0", "light-1"],
-            known_coils=["0", "1", "2"])
-
-    def set_switch(self, switch, state):
-        self.switches[switch] = state
-        self.change_queue.put_nowait((switch, state))
-
-    def GetSwitchChanges(self, request, context):
-        class AsyncIterator:
-            async def __anext__(self_inner):
-                changed_switch = await self.change_queue.get()
-                return SwitchChanges(switch_number=changed_switch[0], switch_state=changed_switch[1])
-
-        return AsyncIterator()
-
-    async def LightFade(self, request, context):
-        for fade in request.fades:
-            if request.common_fade_ms > 0:
-                self.lights[fade.light_number] = (asyncio.get_event_loop().time() +
-                                                  (request.common_fade_ms / 1000.0), fade.target_brightness)
-            else:
-                self.lights[fade.light_number] = fade.target_brightness
-
-    async def CoilPulse(self, request, context):
-        self.coils[request.coil_number] = "pulsed-{}-{}".format(request.pulse_ms, request.pulse_power)
-
-    async def CoilEnable(self, request, context):
-        self.coils[request.coil_number] = "enabled-{}-{}-{}".format(request.pulse_ms, request.pulse_power, request.hold_power)
-
-    async def CoilDisable(self, request, context):
-        self.coils[request.coil_number] = "disabled"
-
-    async def ConfigureHardwareRule(self, request, context):
-        self.rules["{}-{}".format(request.coil_number, request.switch_number)] = request
-
-    async def RemoveHardwareRule(self, request, context):
-        del self.rules["{}-{}".format(request.coil_number, request.switch_number)]
-
-
-
-class GrpcAsyncTestChannel(grpc.Channel):
-
-    def __init__(self, simulator):
-        super().__init__()
-        self.simulator = simulator
-
-    def _get_method(self, method):
-        parts = method.split("/")
-        assert len(parts) == 3
-        return getattr(self.simulator, parts[2])
-
-    def subscribe(self, callback, try_to_connect=False):
+    async def stop(self):
         pass
 
-    def unsubscribe(self, callback):
-        pass
-
-    def _async_call(self, method, request):
-        return method(request=request, context=[])
-
-    def _async_stream_call(self, method, request):
-        coroutine = method(request=request, context=[])
-        class Stream:
-            def read(self):
-                return coroutine.__anext__()
-
-        return Stream()
-
-    def unary_unary(self, method, request_serializer=None, response_deserializer=None):
-        method = self._get_method(method)
-        return partial(self._async_call, method)
-
-    def unary_stream(self, method, request_serializer=None, response_deserializer=None):
-        method = self._get_method(method)
-        return partial(self._async_stream_call, method)
-
-    def stream_unary(self, method, request_serializer=None, response_deserializer=None):
-        print(method)
-        return method()
-
-    def stream_stream(self, method, request_serializer=None, response_deserializer=None):
-        pass
-
-    def close(self):
-        pass
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    async def wait_for_termination(self):
         pass
 
 
@@ -129,9 +21,10 @@ class TestVPE(MpfTestCase):
     def get_machine_path(self):
         return 'tests/machine_files/vpe/'
 
-    async def _connect_to_mock_server(self, host, port):
-        channel = GrpcAsyncTestChannel(self.simulator)
-        return platform_pb2_grpc.HardwarePlatformStub(channel)
+    async def _connect_to_mock_client(self, service, port):
+        self.service = service
+        await self.simulator.connect(self.service)
+        return MockServer()
 
     def _mock_loop(self):
         self.simulator.init_async()
@@ -140,10 +33,15 @@ class TestVPE(MpfTestCase):
         if sys.version_info < (3, 6):
             self.skipTest("Test requires Python 3.6+")
             return
+        try:
+            from mpf.tests.vpe_simulator import VpeSimulation
+        except SyntaxError:
+            self.skipTest("Cannot import VPE simulator.")
+            return
 
         self.simulator = VpeSimulation({"0": True, "3": False, "6": False})
         import mpf.platforms.visual_pinball_engine.visual_pinball_engine
-        mpf.platforms.visual_pinball_engine.visual_pinball_engine.VisualPinballEnginePlatform.connect = self._connect_to_mock_server
+        mpf.platforms.visual_pinball_engine.visual_pinball_engine.VisualPinballEnginePlatform.listen = self._connect_to_mock_client
         super().setUp()
 
     def get_platform(self):
@@ -179,7 +77,7 @@ class TestVPE(MpfTestCase):
 
         self.machine.flippers["f_test"].enable()
         self.advance_time_and_run(.1)
-        self.assertEqual(ConfigureHardwareRuleRequest(
+        self.assertEqual(platform_pb2.ConfigureHardwareRuleRequest(
             coil_number="1", switch_number="3", pulse_ms=10, pulse_power=1.0, hold_power=1.0),
             self.simulator.rules["1-3"])
 
