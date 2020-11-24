@@ -359,8 +359,10 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         delay = settings.get("delay")
         if delay:
             del settings["delay"]
-            self.machine.clock.schedule_once(lambda dt: self.play({key: settings}, context, calling_context, priority, **kwargs), delay)
+            self.machine.clock.schedule_once(
+                lambda dt: self.play({key: settings}, context, calling_context, priority, **kwargs), delay)
             return True
+        return False
 
     def expand_config_entry(self, settings):
         """Expend objects in config entry idempotently."""
