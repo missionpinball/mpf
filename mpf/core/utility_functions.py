@@ -242,7 +242,7 @@ class Util:
             elif k in result and isinstance(result[k], dict):
                 result[k] = Util.dict_merge(result[k], v, combine_lists)
             elif k in result and isinstance(result[k], list):
-                if isinstance(v, list) and v[0] == dict(_overwrite=True):
+                if isinstance(v, dict) and v[0] == dict(_overwrite=True):
                     result[k] = v[1:]
                 elif isinstance(v, list) and combine_lists:
                     result[k].extend(v)
