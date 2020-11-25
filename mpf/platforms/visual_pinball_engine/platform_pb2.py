@@ -11,121 +11,758 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
-from . import get_plaform_details_pb2 as get__plaform__details__pb2
-from . import coils_pb2 as coils__pb2
-from . import fade_light_pb2 as fade__light__pb2
-from . import switch_pb2 as switch__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='platform.proto',
-  package='',
+  package='mpf.vpe',
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x0eplatform.proto\x1a\x19get_plaform_details.proto\x1a\x0b\x63oils.proto\x1a\x10\x66\x61\x64\x65_light.proto\x1a\x0cswitch.proto2\xed\x03\n\x10HardwarePlatform\x12M\n\x12GetPlatformDetails\x12\x1a.GetPlatformDetailsRequest\x1a\x1b.GetPlatformDetailsResponse\x12;\n\x10GetSwitchChanges\x12\x15.SwitchChangesRequest\x1a\x0e.SwitchChanges0\x01\x12\x32\n\tLightFade\x12\x11.FadeLightRequest\x1a\x12.FadeLightResponse\x12-\n\tCoilPulse\x12\x11.PulseCoilRequest\x1a\r.CoilResponse\x12/\n\nCoilEnable\x12\x12.EnableCoilRequest\x1a\r.CoilResponse\x12\x31\n\x0b\x43oilDisable\x12\x13.DisableCoilRequest\x1a\r.CoilResponse\x12\x45\n\x15\x43onfigureHardwareRule\x12\x1d.ConfigureHardwareRuleRequest\x1a\r.CoilResponse\x12?\n\x12RemoveHardwareRule\x12\x1a.RemoveHardwareRuleRequest\x1a\r.CoilResponseb\x06proto3'
-  ,
-  dependencies=[get__plaform__details__pb2.DESCRIPTOR,coils__pb2.DESCRIPTOR,fade__light__pb2.DESCRIPTOR,switch__pb2.DESCRIPTOR,])
+  serialized_pb=b'\n\x0eplatform.proto\x12\x07mpf.vpe\"\x0f\n\rEmptyResponse\"\r\n\x0bQuitRequest\"\xf4\x01\n\x14MachineConfiguration\x12k\n!known_switches_with_initial_state\x18\x01 \x03(\x0b\x32@.mpf.vpe.MachineConfiguration.KnownSwitchesWithInitialStateEntry\x12\x14\n\x0cknown_lights\x18\x02 \x03(\t\x12\x13\n\x0bknown_coils\x18\x03 \x03(\t\x1a\x44\n\"KnownSwitchesWithInitialStateEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x08:\x02\x38\x01\"Q\n\rSwitchChanges\x12\x15\n\rswitch_number\x18\x01 \x01(\t\x12\x14\n\x0cswitch_state\x18\x02 \x01(\x08\x12\x13\n\x0b\x63hange_time\x18\x03 \x01(\x04\"\xed\x02\n\x08\x43ommands\x12/\n\nfade_light\x18\x01 \x01(\x0b\x32\x19.mpf.vpe.FadeLightRequestH\x00\x12/\n\npulse_coil\x18\x02 \x01(\x0b\x32\x19.mpf.vpe.PulseCoilRequestH\x00\x12\x31\n\x0b\x65nable_coil\x18\x03 \x01(\x0b\x32\x1a.mpf.vpe.EnableCoilRequestH\x00\x12\x33\n\x0c\x64isable_coil\x18\x04 \x01(\x0b\x32\x1b.mpf.vpe.DisableCoilRequestH\x00\x12H\n\x17\x63onfigure_hardware_rule\x18\x05 \x01(\x0b\x32%.mpf.vpe.ConfigureHardwareRuleRequestH\x00\x12\x42\n\x14remove_hardware_rule\x18\x06 \x01(\x0b\x32\".mpf.vpe.RemoveHardwareRuleRequestH\x00\x42\t\n\x07\x63ommand\"\xa0\x01\n\x10\x46\x61\x64\x65LightRequest\x12\x16\n\x0e\x63ommon_fade_ms\x18\x01 \x01(\r\x12\x34\n\x05\x66\x61\x64\x65s\x18\x02 \x03(\x0b\x32%.mpf.vpe.FadeLightRequest.ChannelFade\x1a>\n\x0b\x43hannelFade\x12\x14\n\x0clight_number\x18\x01 \x01(\t\x12\x19\n\x11target_brightness\x18\x02 \x01(\x02\"N\n\x10PulseCoilRequest\x12\x13\n\x0b\x63oil_number\x18\x01 \x01(\t\x12\x10\n\x08pulse_ms\x18\x02 \x01(\r\x12\x13\n\x0bpulse_power\x18\x03 \x01(\x02\"c\n\x11\x45nableCoilRequest\x12\x13\n\x0b\x63oil_number\x18\x01 \x01(\t\x12\x10\n\x08pulse_ms\x18\x02 \x01(\r\x12\x13\n\x0bpulse_power\x18\x03 \x01(\x02\x12\x12\n\nhold_power\x18\x04 \x01(\x02\")\n\x12\x44isableCoilRequest\x12\x13\n\x0b\x63oil_number\x18\x01 \x01(\t\"\x85\x01\n\x1c\x43onfigureHardwareRuleRequest\x12\x13\n\x0b\x63oil_number\x18\x01 \x01(\t\x12\x15\n\rswitch_number\x18\x02 \x01(\t\x12\x10\n\x08pulse_ms\x18\x03 \x01(\r\x12\x13\n\x0bpulse_power\x18\x04 \x01(\x02\x12\x12\n\nhold_power\x18\x05 \x01(\x02\"G\n\x19RemoveHardwareRuleRequest\x12\x13\n\x0b\x63oil_number\x18\x01 \x01(\t\x12\x15\n\rswitch_number\x18\x02 \x01(\t2\xce\x01\n\x12MpfHardwareService\x12;\n\x05Start\x12\x1d.mpf.vpe.MachineConfiguration\x1a\x11.mpf.vpe.Commands0\x01\x12\x45\n\x11SendSwitchChanges\x12\x16.mpf.vpe.SwitchChanges\x1a\x16.mpf.vpe.EmptyResponse(\x01\x12\x34\n\x04Quit\x12\x14.mpf.vpe.QuitRequest\x1a\x16.mpf.vpe.EmptyResponseb\x06proto3'
+)
 
 
 
+
+_EMPTYRESPONSE = _descriptor.Descriptor(
+  name='EmptyResponse',
+  full_name='mpf.vpe.EmptyResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=27,
+  serialized_end=42,
+)
+
+
+_QUITREQUEST = _descriptor.Descriptor(
+  name='QuitRequest',
+  full_name='mpf.vpe.QuitRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=44,
+  serialized_end=57,
+)
+
+
+_MACHINECONFIGURATION_KNOWNSWITCHESWITHINITIALSTATEENTRY = _descriptor.Descriptor(
+  name='KnownSwitchesWithInitialStateEntry',
+  full_name='mpf.vpe.MachineConfiguration.KnownSwitchesWithInitialStateEntry',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='key', full_name='mpf.vpe.MachineConfiguration.KnownSwitchesWithInitialStateEntry.key', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='value', full_name='mpf.vpe.MachineConfiguration.KnownSwitchesWithInitialStateEntry.value', index=1,
+      number=2, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=b'8\001',
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=236,
+  serialized_end=304,
+)
+
+_MACHINECONFIGURATION = _descriptor.Descriptor(
+  name='MachineConfiguration',
+  full_name='mpf.vpe.MachineConfiguration',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='known_switches_with_initial_state', full_name='mpf.vpe.MachineConfiguration.known_switches_with_initial_state', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='known_lights', full_name='mpf.vpe.MachineConfiguration.known_lights', index=1,
+      number=2, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='known_coils', full_name='mpf.vpe.MachineConfiguration.known_coils', index=2,
+      number=3, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[_MACHINECONFIGURATION_KNOWNSWITCHESWITHINITIALSTATEENTRY, ],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=60,
+  serialized_end=304,
+)
+
+
+_SWITCHCHANGES = _descriptor.Descriptor(
+  name='SwitchChanges',
+  full_name='mpf.vpe.SwitchChanges',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='switch_number', full_name='mpf.vpe.SwitchChanges.switch_number', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='switch_state', full_name='mpf.vpe.SwitchChanges.switch_state', index=1,
+      number=2, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='change_time', full_name='mpf.vpe.SwitchChanges.change_time', index=2,
+      number=3, type=4, cpp_type=4, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=306,
+  serialized_end=387,
+)
+
+
+_COMMANDS = _descriptor.Descriptor(
+  name='Commands',
+  full_name='mpf.vpe.Commands',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='fade_light', full_name='mpf.vpe.Commands.fade_light', index=0,
+      number=1, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='pulse_coil', full_name='mpf.vpe.Commands.pulse_coil', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='enable_coil', full_name='mpf.vpe.Commands.enable_coil', index=2,
+      number=3, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='disable_coil', full_name='mpf.vpe.Commands.disable_coil', index=3,
+      number=4, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='configure_hardware_rule', full_name='mpf.vpe.Commands.configure_hardware_rule', index=4,
+      number=5, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='remove_hardware_rule', full_name='mpf.vpe.Commands.remove_hardware_rule', index=5,
+      number=6, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+    _descriptor.OneofDescriptor(
+      name='command', full_name='mpf.vpe.Commands.command',
+      index=0, containing_type=None,
+      create_key=_descriptor._internal_create_key,
+    fields=[]),
+  ],
+  serialized_start=390,
+  serialized_end=755,
+)
+
+
+_FADELIGHTREQUEST_CHANNELFADE = _descriptor.Descriptor(
+  name='ChannelFade',
+  full_name='mpf.vpe.FadeLightRequest.ChannelFade',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='light_number', full_name='mpf.vpe.FadeLightRequest.ChannelFade.light_number', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='target_brightness', full_name='mpf.vpe.FadeLightRequest.ChannelFade.target_brightness', index=1,
+      number=2, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=856,
+  serialized_end=918,
+)
+
+_FADELIGHTREQUEST = _descriptor.Descriptor(
+  name='FadeLightRequest',
+  full_name='mpf.vpe.FadeLightRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='common_fade_ms', full_name='mpf.vpe.FadeLightRequest.common_fade_ms', index=0,
+      number=1, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='fades', full_name='mpf.vpe.FadeLightRequest.fades', index=1,
+      number=2, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[_FADELIGHTREQUEST_CHANNELFADE, ],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=758,
+  serialized_end=918,
+)
+
+
+_PULSECOILREQUEST = _descriptor.Descriptor(
+  name='PulseCoilRequest',
+  full_name='mpf.vpe.PulseCoilRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='coil_number', full_name='mpf.vpe.PulseCoilRequest.coil_number', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='pulse_ms', full_name='mpf.vpe.PulseCoilRequest.pulse_ms', index=1,
+      number=2, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='pulse_power', full_name='mpf.vpe.PulseCoilRequest.pulse_power', index=2,
+      number=3, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=920,
+  serialized_end=998,
+)
+
+
+_ENABLECOILREQUEST = _descriptor.Descriptor(
+  name='EnableCoilRequest',
+  full_name='mpf.vpe.EnableCoilRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='coil_number', full_name='mpf.vpe.EnableCoilRequest.coil_number', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='pulse_ms', full_name='mpf.vpe.EnableCoilRequest.pulse_ms', index=1,
+      number=2, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='pulse_power', full_name='mpf.vpe.EnableCoilRequest.pulse_power', index=2,
+      number=3, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='hold_power', full_name='mpf.vpe.EnableCoilRequest.hold_power', index=3,
+      number=4, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1000,
+  serialized_end=1099,
+)
+
+
+_DISABLECOILREQUEST = _descriptor.Descriptor(
+  name='DisableCoilRequest',
+  full_name='mpf.vpe.DisableCoilRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='coil_number', full_name='mpf.vpe.DisableCoilRequest.coil_number', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1101,
+  serialized_end=1142,
+)
+
+
+_CONFIGUREHARDWARERULEREQUEST = _descriptor.Descriptor(
+  name='ConfigureHardwareRuleRequest',
+  full_name='mpf.vpe.ConfigureHardwareRuleRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='coil_number', full_name='mpf.vpe.ConfigureHardwareRuleRequest.coil_number', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='switch_number', full_name='mpf.vpe.ConfigureHardwareRuleRequest.switch_number', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='pulse_ms', full_name='mpf.vpe.ConfigureHardwareRuleRequest.pulse_ms', index=2,
+      number=3, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='pulse_power', full_name='mpf.vpe.ConfigureHardwareRuleRequest.pulse_power', index=3,
+      number=4, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='hold_power', full_name='mpf.vpe.ConfigureHardwareRuleRequest.hold_power', index=4,
+      number=5, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1145,
+  serialized_end=1278,
+)
+
+
+_REMOVEHARDWARERULEREQUEST = _descriptor.Descriptor(
+  name='RemoveHardwareRuleRequest',
+  full_name='mpf.vpe.RemoveHardwareRuleRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='coil_number', full_name='mpf.vpe.RemoveHardwareRuleRequest.coil_number', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='switch_number', full_name='mpf.vpe.RemoveHardwareRuleRequest.switch_number', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1280,
+  serialized_end=1351,
+)
+
+_MACHINECONFIGURATION_KNOWNSWITCHESWITHINITIALSTATEENTRY.containing_type = _MACHINECONFIGURATION
+_MACHINECONFIGURATION.fields_by_name['known_switches_with_initial_state'].message_type = _MACHINECONFIGURATION_KNOWNSWITCHESWITHINITIALSTATEENTRY
+_COMMANDS.fields_by_name['fade_light'].message_type = _FADELIGHTREQUEST
+_COMMANDS.fields_by_name['pulse_coil'].message_type = _PULSECOILREQUEST
+_COMMANDS.fields_by_name['enable_coil'].message_type = _ENABLECOILREQUEST
+_COMMANDS.fields_by_name['disable_coil'].message_type = _DISABLECOILREQUEST
+_COMMANDS.fields_by_name['configure_hardware_rule'].message_type = _CONFIGUREHARDWARERULEREQUEST
+_COMMANDS.fields_by_name['remove_hardware_rule'].message_type = _REMOVEHARDWARERULEREQUEST
+_COMMANDS.oneofs_by_name['command'].fields.append(
+  _COMMANDS.fields_by_name['fade_light'])
+_COMMANDS.fields_by_name['fade_light'].containing_oneof = _COMMANDS.oneofs_by_name['command']
+_COMMANDS.oneofs_by_name['command'].fields.append(
+  _COMMANDS.fields_by_name['pulse_coil'])
+_COMMANDS.fields_by_name['pulse_coil'].containing_oneof = _COMMANDS.oneofs_by_name['command']
+_COMMANDS.oneofs_by_name['command'].fields.append(
+  _COMMANDS.fields_by_name['enable_coil'])
+_COMMANDS.fields_by_name['enable_coil'].containing_oneof = _COMMANDS.oneofs_by_name['command']
+_COMMANDS.oneofs_by_name['command'].fields.append(
+  _COMMANDS.fields_by_name['disable_coil'])
+_COMMANDS.fields_by_name['disable_coil'].containing_oneof = _COMMANDS.oneofs_by_name['command']
+_COMMANDS.oneofs_by_name['command'].fields.append(
+  _COMMANDS.fields_by_name['configure_hardware_rule'])
+_COMMANDS.fields_by_name['configure_hardware_rule'].containing_oneof = _COMMANDS.oneofs_by_name['command']
+_COMMANDS.oneofs_by_name['command'].fields.append(
+  _COMMANDS.fields_by_name['remove_hardware_rule'])
+_COMMANDS.fields_by_name['remove_hardware_rule'].containing_oneof = _COMMANDS.oneofs_by_name['command']
+_FADELIGHTREQUEST_CHANNELFADE.containing_type = _FADELIGHTREQUEST
+_FADELIGHTREQUEST.fields_by_name['fades'].message_type = _FADELIGHTREQUEST_CHANNELFADE
+DESCRIPTOR.message_types_by_name['EmptyResponse'] = _EMPTYRESPONSE
+DESCRIPTOR.message_types_by_name['QuitRequest'] = _QUITREQUEST
+DESCRIPTOR.message_types_by_name['MachineConfiguration'] = _MACHINECONFIGURATION
+DESCRIPTOR.message_types_by_name['SwitchChanges'] = _SWITCHCHANGES
+DESCRIPTOR.message_types_by_name['Commands'] = _COMMANDS
+DESCRIPTOR.message_types_by_name['FadeLightRequest'] = _FADELIGHTREQUEST
+DESCRIPTOR.message_types_by_name['PulseCoilRequest'] = _PULSECOILREQUEST
+DESCRIPTOR.message_types_by_name['EnableCoilRequest'] = _ENABLECOILREQUEST
+DESCRIPTOR.message_types_by_name['DisableCoilRequest'] = _DISABLECOILREQUEST
+DESCRIPTOR.message_types_by_name['ConfigureHardwareRuleRequest'] = _CONFIGUREHARDWARERULEREQUEST
+DESCRIPTOR.message_types_by_name['RemoveHardwareRuleRequest'] = _REMOVEHARDWARERULEREQUEST
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
+EmptyResponse = _reflection.GeneratedProtocolMessageType('EmptyResponse', (_message.Message,), {
+  'DESCRIPTOR' : _EMPTYRESPONSE,
+  '__module__' : 'platform_pb2'
+  # @@protoc_insertion_point(class_scope:mpf.vpe.EmptyResponse)
+  })
+_sym_db.RegisterMessage(EmptyResponse)
+
+QuitRequest = _reflection.GeneratedProtocolMessageType('QuitRequest', (_message.Message,), {
+  'DESCRIPTOR' : _QUITREQUEST,
+  '__module__' : 'platform_pb2'
+  # @@protoc_insertion_point(class_scope:mpf.vpe.QuitRequest)
+  })
+_sym_db.RegisterMessage(QuitRequest)
+
+MachineConfiguration = _reflection.GeneratedProtocolMessageType('MachineConfiguration', (_message.Message,), {
+
+  'KnownSwitchesWithInitialStateEntry' : _reflection.GeneratedProtocolMessageType('KnownSwitchesWithInitialStateEntry', (_message.Message,), {
+    'DESCRIPTOR' : _MACHINECONFIGURATION_KNOWNSWITCHESWITHINITIALSTATEENTRY,
+    '__module__' : 'platform_pb2'
+    # @@protoc_insertion_point(class_scope:mpf.vpe.MachineConfiguration.KnownSwitchesWithInitialStateEntry)
+    })
+  ,
+  'DESCRIPTOR' : _MACHINECONFIGURATION,
+  '__module__' : 'platform_pb2'
+  # @@protoc_insertion_point(class_scope:mpf.vpe.MachineConfiguration)
+  })
+_sym_db.RegisterMessage(MachineConfiguration)
+_sym_db.RegisterMessage(MachineConfiguration.KnownSwitchesWithInitialStateEntry)
+
+SwitchChanges = _reflection.GeneratedProtocolMessageType('SwitchChanges', (_message.Message,), {
+  'DESCRIPTOR' : _SWITCHCHANGES,
+  '__module__' : 'platform_pb2'
+  # @@protoc_insertion_point(class_scope:mpf.vpe.SwitchChanges)
+  })
+_sym_db.RegisterMessage(SwitchChanges)
+
+Commands = _reflection.GeneratedProtocolMessageType('Commands', (_message.Message,), {
+  'DESCRIPTOR' : _COMMANDS,
+  '__module__' : 'platform_pb2'
+  # @@protoc_insertion_point(class_scope:mpf.vpe.Commands)
+  })
+_sym_db.RegisterMessage(Commands)
+
+FadeLightRequest = _reflection.GeneratedProtocolMessageType('FadeLightRequest', (_message.Message,), {
+
+  'ChannelFade' : _reflection.GeneratedProtocolMessageType('ChannelFade', (_message.Message,), {
+    'DESCRIPTOR' : _FADELIGHTREQUEST_CHANNELFADE,
+    '__module__' : 'platform_pb2'
+    # @@protoc_insertion_point(class_scope:mpf.vpe.FadeLightRequest.ChannelFade)
+    })
+  ,
+  'DESCRIPTOR' : _FADELIGHTREQUEST,
+  '__module__' : 'platform_pb2'
+  # @@protoc_insertion_point(class_scope:mpf.vpe.FadeLightRequest)
+  })
+_sym_db.RegisterMessage(FadeLightRequest)
+_sym_db.RegisterMessage(FadeLightRequest.ChannelFade)
+
+PulseCoilRequest = _reflection.GeneratedProtocolMessageType('PulseCoilRequest', (_message.Message,), {
+  'DESCRIPTOR' : _PULSECOILREQUEST,
+  '__module__' : 'platform_pb2'
+  # @@protoc_insertion_point(class_scope:mpf.vpe.PulseCoilRequest)
+  })
+_sym_db.RegisterMessage(PulseCoilRequest)
+
+EnableCoilRequest = _reflection.GeneratedProtocolMessageType('EnableCoilRequest', (_message.Message,), {
+  'DESCRIPTOR' : _ENABLECOILREQUEST,
+  '__module__' : 'platform_pb2'
+  # @@protoc_insertion_point(class_scope:mpf.vpe.EnableCoilRequest)
+  })
+_sym_db.RegisterMessage(EnableCoilRequest)
+
+DisableCoilRequest = _reflection.GeneratedProtocolMessageType('DisableCoilRequest', (_message.Message,), {
+  'DESCRIPTOR' : _DISABLECOILREQUEST,
+  '__module__' : 'platform_pb2'
+  # @@protoc_insertion_point(class_scope:mpf.vpe.DisableCoilRequest)
+  })
+_sym_db.RegisterMessage(DisableCoilRequest)
+
+ConfigureHardwareRuleRequest = _reflection.GeneratedProtocolMessageType('ConfigureHardwareRuleRequest', (_message.Message,), {
+  'DESCRIPTOR' : _CONFIGUREHARDWARERULEREQUEST,
+  '__module__' : 'platform_pb2'
+  # @@protoc_insertion_point(class_scope:mpf.vpe.ConfigureHardwareRuleRequest)
+  })
+_sym_db.RegisterMessage(ConfigureHardwareRuleRequest)
+
+RemoveHardwareRuleRequest = _reflection.GeneratedProtocolMessageType('RemoveHardwareRuleRequest', (_message.Message,), {
+  'DESCRIPTOR' : _REMOVEHARDWARERULEREQUEST,
+  '__module__' : 'platform_pb2'
+  # @@protoc_insertion_point(class_scope:mpf.vpe.RemoveHardwareRuleRequest)
+  })
+_sym_db.RegisterMessage(RemoveHardwareRuleRequest)
 
 
-_HARDWAREPLATFORM = _descriptor.ServiceDescriptor(
-  name='HardwarePlatform',
-  full_name='HardwarePlatform',
+_MACHINECONFIGURATION_KNOWNSWITCHESWITHINITIALSTATEENTRY._options = None
+
+_MPFHARDWARESERVICE = _descriptor.ServiceDescriptor(
+  name='MpfHardwareService',
+  full_name='mpf.vpe.MpfHardwareService',
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=91,
-  serialized_end=584,
+  serialized_start=1354,
+  serialized_end=1560,
   methods=[
   _descriptor.MethodDescriptor(
-    name='GetPlatformDetails',
-    full_name='HardwarePlatform.GetPlatformDetails',
+    name='Start',
+    full_name='mpf.vpe.MpfHardwareService.Start',
     index=0,
     containing_service=None,
-    input_type=get__plaform__details__pb2._GETPLATFORMDETAILSREQUEST,
-    output_type=get__plaform__details__pb2._GETPLATFORMDETAILSRESPONSE,
+    input_type=_MACHINECONFIGURATION,
+    output_type=_COMMANDS,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
-    name='GetSwitchChanges',
-    full_name='HardwarePlatform.GetSwitchChanges',
+    name='SendSwitchChanges',
+    full_name='mpf.vpe.MpfHardwareService.SendSwitchChanges',
     index=1,
     containing_service=None,
-    input_type=switch__pb2._SWITCHCHANGESREQUEST,
-    output_type=switch__pb2._SWITCHCHANGES,
+    input_type=_SWITCHCHANGES,
+    output_type=_EMPTYRESPONSE,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
-    name='LightFade',
-    full_name='HardwarePlatform.LightFade',
+    name='Quit',
+    full_name='mpf.vpe.MpfHardwareService.Quit',
     index=2,
     containing_service=None,
-    input_type=fade__light__pb2._FADELIGHTREQUEST,
-    output_type=fade__light__pb2._FADELIGHTRESPONSE,
-    serialized_options=None,
-    create_key=_descriptor._internal_create_key,
-  ),
-  _descriptor.MethodDescriptor(
-    name='CoilPulse',
-    full_name='HardwarePlatform.CoilPulse',
-    index=3,
-    containing_service=None,
-    input_type=coils__pb2._PULSECOILREQUEST,
-    output_type=coils__pb2._COILRESPONSE,
-    serialized_options=None,
-    create_key=_descriptor._internal_create_key,
-  ),
-  _descriptor.MethodDescriptor(
-    name='CoilEnable',
-    full_name='HardwarePlatform.CoilEnable',
-    index=4,
-    containing_service=None,
-    input_type=coils__pb2._ENABLECOILREQUEST,
-    output_type=coils__pb2._COILRESPONSE,
-    serialized_options=None,
-    create_key=_descriptor._internal_create_key,
-  ),
-  _descriptor.MethodDescriptor(
-    name='CoilDisable',
-    full_name='HardwarePlatform.CoilDisable',
-    index=5,
-    containing_service=None,
-    input_type=coils__pb2._DISABLECOILREQUEST,
-    output_type=coils__pb2._COILRESPONSE,
-    serialized_options=None,
-    create_key=_descriptor._internal_create_key,
-  ),
-  _descriptor.MethodDescriptor(
-    name='ConfigureHardwareRule',
-    full_name='HardwarePlatform.ConfigureHardwareRule',
-    index=6,
-    containing_service=None,
-    input_type=coils__pb2._CONFIGUREHARDWARERULEREQUEST,
-    output_type=coils__pb2._COILRESPONSE,
-    serialized_options=None,
-    create_key=_descriptor._internal_create_key,
-  ),
-  _descriptor.MethodDescriptor(
-    name='RemoveHardwareRule',
-    full_name='HardwarePlatform.RemoveHardwareRule',
-    index=7,
-    containing_service=None,
-    input_type=coils__pb2._REMOVEHARDWARERULEREQUEST,
-    output_type=coils__pb2._COILRESPONSE,
+    input_type=_QUITREQUEST,
+    output_type=_EMPTYRESPONSE,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),
 ])
-_sym_db.RegisterServiceDescriptor(_HARDWAREPLATFORM)
+_sym_db.RegisterServiceDescriptor(_MPFHARDWARESERVICE)
 
-DESCRIPTOR.services_by_name['HardwarePlatform'] = _HARDWAREPLATFORM
+DESCRIPTOR.services_by_name['MpfHardwareService'] = _MPFHARDWARESERVICE
 
 # @@protoc_insertion_point(module_scope)

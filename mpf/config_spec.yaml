@@ -1863,8 +1863,7 @@ vpe:
     __valid_in__: machine
     __type__: config
     debug: single|bool|false
-    remote_host: single|str|localhost
-    remote_port: single|int|50051
+    listen_port: single|int|50051
 widget_player:
     __valid_in__: machine, mode, show
     __type__: config_player

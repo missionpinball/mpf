@@ -1,22 +1,22 @@
 """VPE platform."""
-import asyncio
 from typing import Optional
 
 from grpc.experimental import aio
 
-from mpf import _version
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.core.platform import LightsPlatform, SwitchPlatform, DriverPlatform, SwitchSettings, DriverSettings, \
     SwitchConfig, DriverConfig, RepulseSettings
-from mpf.platforms.visual_pinball_engine.coils_pb2 import PulseCoilRequest, DisableCoilRequest, EnableCoilRequest, \
-    ConfigureHardwareRuleRequest, RemoveHardwareRuleRequest
-from mpf.platforms.visual_pinball_engine.fade_light_pb2 import FadeLightRequest
-from mpf.platforms.visual_pinball_engine.get_plaform_details_pb2 import GetPlatformDetailsRequest
-from mpf.platforms.visual_pinball_engine.platform_pb2_grpc import HardwarePlatformStub
-from mpf.platforms.visual_pinball_engine.switch_pb2 import SwitchChangesRequest
+from mpf.platforms.visual_pinball_engine import platform_pb2_grpc
+from mpf.platforms.visual_pinball_engine import platform_pb2
+
+try:
+    from mpf.platforms.visual_pinball_engine.service import MpfHardwareService
+except SyntaxError:
+    # pylint: disable-msg=invalid-name
+    MpfHardwareService = None
 
 
 class VisualPinballEngineSwitch(SwitchPlatformInterface):
@@ -53,11 +53,12 @@ class VisualPinballEngineLight(LightPlatformInterface):
             fade_ms = int((target_time - current_time) * 1000)
         else:
             fade_ms = 0
-        command = self.platform.platform_rpc.LightFade(
-            FadeLightRequest(common_fade_ms=fade_ms,
-                             fades=[FadeLightRequest.ChannelFade(
-                                 light_number=self.number,
-                                 target_brightness=target_brightness)]))
+
+        command = platform_pb2.Commands()
+        command.fade_light.common_fade_ms = fade_ms
+        command.fade_light.fades.append(platform_pb2.FadeLightRequest.ChannelFade(
+            light_number=self.number,
+            target_brightness=target_brightness))
         self.platform.send_command(command)
 
     def get_board_name(self):
@@ -94,22 +95,25 @@ class VisualPinballEngineDriver(DriverPlatformInterface):
 
     def disable(self):
         """Disable virtual coil."""
-        command = self.platform.platform_rpc.CoilDisable(DisableCoilRequest(coil_number=self.number))
+        command = platform_pb2.Commands()
+        command.disable_coil.coil_number = self.number
         self.platform.send_command(command)
 
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable virtual coil."""
-        command = self.platform.platform_rpc.CoilEnable(EnableCoilRequest(coil_number=self.number,
-                                                                          pulse_ms=pulse_settings.duration,
-                                                                          pulse_power=pulse_settings.power,
-                                                                          hold_power=hold_settings.power))
+        command = platform_pb2.Commands()
+        command.enable_coil.coil_number = self.number
+        command.enable_coil.pulse_ms = pulse_settings.duration
+        command.enable_coil.pulse_power = pulse_settings.power
+        command.enable_coil.hold_power = hold_settings.power
         self.platform.send_command(command)
 
     def pulse(self, pulse_settings: PulseSettings):
         """Pulse virtual coil."""
-        command = self.platform.platform_rpc.CoilPulse(PulseCoilRequest(coil_number=self.number,
-                                                                        pulse_ms=pulse_settings.duration,
-                                                                        pulse_power=pulse_settings.power))
+        command = platform_pb2.Commands()
+        command.pulse_coil.coil_number = self.number
+        command.pulse_coil.pulse_ms = pulse_settings.duration
+        command.pulse_coil.pulse_power = pulse_settings.power
         self.platform.send_command(command)
 
 
@@ -118,7 +122,7 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
     """VPE platform."""
 
     __slots__ = ["config", "_known_switches", "_known_lights", "_known_coils", "_initial_switch_state",
-                 "_switch_poll_task", "platform_rpc"]
+                 "_switch_poll_task", "platform_rpc", "platform_server"]
 
     def __init__(self, machine):
         """Initialise VPE platform."""
@@ -130,28 +134,44 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
         self._known_lights = []
         self._known_coils = []
         self._switch_poll_task = None
-        self.platform_rpc = None
+        self.platform_rpc = None        # type: Optional[MpfHardwareService]
+        self.platform_server = None
 
-    async def connect(self, host, port):
+        if not MpfHardwareService:
+            raise AssertionError("Error loading MpfHardwareService. Is your python version older than 3.6?")
+
+    async def listen(self, service, port):
         """Connect to remote host and port."""
-        connection_string = "{}:{}".format(host, port)
-        channel = aio.insecure_channel(connection_string)
-        self.log.info("Connecting to VPE on %s", connection_string)
-        await channel.channel_ready()
-        return HardwarePlatformStub(channel)
+        server = aio.server()
+        platform_pb2_grpc.add_MpfHardwareServiceServicer_to_server(service, server)
+        listen_addr = "[::]:{}".format(port)
+        server.add_insecure_port(listen_addr)
+        self.log.info("Starting server on %s", listen_addr)
+        await server.start()
+        return server
 
     async def initialize(self):
-        """Connect to VPE via gRPC."""
-        self.platform_rpc = await self.connect(self.config['remote_host'], self.config['remote_port'])
-        detail_request = GetPlatformDetailsRequest()
-        detail_request.mpf_version = _version.version
-        response = await self.platform_rpc.GetPlatformDetails(detail_request)
+        """Wait for incoming gRPC connect from VPE."""
+        self.platform_rpc = MpfHardwareService(self.machine)
+        self.platform_server = await self.listen(self.platform_rpc, self.config['listen_port'])
+        response = await self.platform_rpc.wait_for_vpe_connect()
         self.info_log("VPE connected")
         self.debug_log("Got response %s", response)
         self._known_switches = list(response.known_switches_with_initial_state.keys())
         self._initial_switch_state = response.known_switches_with_initial_state
         self._known_coils = response.known_coils
         self._known_lights = response.known_lights
+
+    def stop(self):
+        """Stop VPE server."""
+        if self._switch_poll_task:
+            self._switch_poll_task.cancel()
+            self._switch_poll_task = None
+
+        if self.platform_server:
+            self.machine.clock.loop.run_until_complete(self.platform_server.stop())
+            self.machine.clock.loop.run_until_complete(self.platform_server.wait_for_termination())
+            self.platform_server = None
 
     async def start(self):
         """Start listening for switch changes."""
@@ -161,21 +181,18 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
 
     async def _switch_poll(self):
         """Listen to switch changes from VPE."""
-        switch_change_request = SwitchChangesRequest()
-        switch_stream = self.platform_rpc.GetSwitchChanges(switch_change_request)
+        switch_stream = self.platform_rpc.get_switch_queue()
         while True:
-            change = await switch_stream.read()
+            change = await switch_stream.get()
             if self._debug:
                 self.debug_log("Got Switch Change: %s", change)
             self.machine.switch_controller.process_switch_by_num(state=1 if change.switch_state else 0,
                                                                  num=change.switch_number,
                                                                  platform=self)
 
-    @staticmethod
-    def send_command(command):
-        """Send command in the background using asyncio."""
-        command_future = asyncio.ensure_future(command)
-        command_future.add_done_callback(Util.raise_exceptions)
+    def send_command(self, command):
+        """Send command to VPE."""
+        self.platform_rpc.send_command(command)
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict) -> "SwitchPlatformInterface":
         """Configure VPE switch."""
@@ -193,13 +210,12 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Pulse on hit and hold."""
-        command = self.platform_rpc.ConfigureHardwareRule(ConfigureHardwareRuleRequest(
-            coil_number=coil.hw_driver.number,
-            switch_number=enable_switch.hw_switch.number,
-            pulse_ms=coil.pulse_settings.duration,
-            pulse_power=coil.pulse_settings.power,
-            hold_power=coil.hold_settings.power
-        ))
+        command = platform_pb2.Commands()
+        command.configure_hardware_rule.coil_number = coil.hw_driver.number
+        command.configure_hardware_rule.switch_number = enable_switch.hw_switch.number
+        command.configure_hardware_rule.pulse_ms = coil.pulse_settings.duration
+        command.configure_hardware_rule.pulse_power = coil.pulse_settings.power
+        command.configure_hardware_rule.hold_power = coil.hold_settings.power
         self.send_command(command)
 
     def set_pulse_on_hit_and_release_and_disable_rule(self, enable_switch: SwitchSettings, eos_switch: SwitchSettings,
@@ -207,57 +223,52 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
                                                       repulse_settings: Optional[RepulseSettings]):
         """Pulse on hit, disable on disable_switch hit."""
         del eos_switch, repulse_settings
-        command = self.platform_rpc.ConfigureHardwareRule(ConfigureHardwareRuleRequest(
-            coil_number=coil.hw_driver.number,
-            switch_number=enable_switch.hw_switch.number,
-            pulse_ms=coil.pulse_settings.duration,
-            pulse_power=coil.pulse_settings.power,
-            hold_power=0.0
-        ))
+        command = platform_pb2.Commands()
+        command.configure_hardware_rule.coil_number = coil.hw_driver.number
+        command.configure_hardware_rule.switch_number = enable_switch.hw_switch.number
+        command.configure_hardware_rule.pulse_ms = coil.pulse_settings.duration
+        command.configure_hardware_rule.pulse_power = coil.pulse_settings.power
+        command.configure_hardware_rule.hold_power = 0.0
         self.send_command(command)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
                                                                  eos_switch: SwitchSettings, coil: DriverSettings,
                                                                  repulse_settings: Optional[RepulseSettings]):
         """Pulse on hit and hold, disable on disable_switch hit."""
-        command = self.platform_rpc.ConfigureHardwareRule(ConfigureHardwareRuleRequest(
-            coil_number=coil.hw_driver.number,
-            switch_number=enable_switch.hw_switch.number,
-            pulse_ms=coil.pulse_settings.duration,
-            pulse_power=coil.pulse_settings.power,
-            hold_power=coil.hold_settings.power
-        ))
+        command = platform_pb2.Commands()
+        command.configure_hardware_rule.coil_number = coil.hw_driver.number
+        command.configure_hardware_rule.switch_number = enable_switch.hw_switch.number
+        command.configure_hardware_rule.pulse_ms = coil.pulse_settings.duration
+        command.configure_hardware_rule.pulse_power = coil.pulse_settings.power
+        command.configure_hardware_rule.hold_power = coil.hold_settings.power
         self.send_command(command)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Pulse on hit."""
-        command = self.platform_rpc.ConfigureHardwareRule(ConfigureHardwareRuleRequest(
-            coil_number=coil.hw_driver.number,
-            switch_number=enable_switch.hw_switch.number,
-            pulse_ms=coil.pulse_settings.duration,
-            pulse_power=coil.pulse_settings.power,
-            hold_power=0.0
-        ))
+        command = platform_pb2.Commands()
+        command.configure_hardware_rule.coil_number = coil.hw_driver.number
+        command.configure_hardware_rule.switch_number = enable_switch.hw_switch.number
+        command.configure_hardware_rule.pulse_ms = coil.pulse_settings.duration
+        command.configure_hardware_rule.pulse_power = coil.pulse_settings.power
+        command.configure_hardware_rule.hold_power = 0.0
         self.send_command(command)
 
     def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings,
                               coil: DriverSettings):
         """Pulse on hit and release."""
-        command = self.platform_rpc.ConfigureHardwareRule(ConfigureHardwareRuleRequest(
-            coil_number=coil.hw_driver.number,
-            switch_number=enable_switch.hw_switch.number,
-            pulse_ms=coil.pulse_settings.duration,
-            pulse_power=coil.pulse_settings.power,
-            hold_power=0.0
-        ))
+        command = platform_pb2.Commands()
+        command.configure_hardware_rule.coil_number = coil.hw_driver.number
+        command.configure_hardware_rule.switch_number = enable_switch.hw_switch.number
+        command.configure_hardware_rule.pulse_ms = coil.pulse_settings.duration
+        command.configure_hardware_rule.pulse_power = coil.pulse_settings.power
+        command.configure_hardware_rule.hold_power = 0.0
         self.send_command(command)
 
     def clear_hw_rule(self, switch: SwitchSettings, coil: DriverSettings):
         """Clear hw rule."""
-        command = self.platform_rpc.RemoveHardwareRule(RemoveHardwareRuleRequest(
-            coil_number=coil.hw_driver.number,
-            switch_number=switch.hw_switch.number,
-        ))
+        command = platform_pb2.Commands()
+        command.remove_hardware_rule.coil_number = coil.hw_driver.number
+        command.remove_hardware_rule.switch_number = switch.hw_switch.number
         self.send_command(command)
 
     async def get_hw_switch_states(self):

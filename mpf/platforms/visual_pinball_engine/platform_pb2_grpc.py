@@ -2,14 +2,16 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from . import coils_pb2 as coils__pb2
-from . import fade_light_pb2 as fade__light__pb2
-from . import get_plaform_details_pb2 as get__plaform__details__pb2
-from . import switch_pb2 as switch__pb2
+from . import platform_pb2 as platform__pb2
 
 
-class HardwarePlatformStub(object):
-    """Missing associated documentation comment in .proto file."""
+class MpfHardwareServiceStub(object):
+    """import "get_plaform_details.proto";
+    import "coils.proto";
+    import "fade_light.proto";
+    import "switch.proto";
+
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -17,154 +19,84 @@ class HardwarePlatformStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.GetPlatformDetails = channel.unary_unary(
-                '/HardwarePlatform/GetPlatformDetails',
-                request_serializer=get__plaform__details__pb2.GetPlatformDetailsRequest.SerializeToString,
-                response_deserializer=get__plaform__details__pb2.GetPlatformDetailsResponse.FromString,
+        self.Start = channel.unary_stream(
+                '/mpf.vpe.MpfHardwareService/Start',
+                request_serializer=platform__pb2.MachineConfiguration.SerializeToString,
+                response_deserializer=platform__pb2.Commands.FromString,
                 )
-        self.GetSwitchChanges = channel.unary_stream(
-                '/HardwarePlatform/GetSwitchChanges',
-                request_serializer=switch__pb2.SwitchChangesRequest.SerializeToString,
-                response_deserializer=switch__pb2.SwitchChanges.FromString,
+        self.SendSwitchChanges = channel.stream_unary(
+                '/mpf.vpe.MpfHardwareService/SendSwitchChanges',
+                request_serializer=platform__pb2.SwitchChanges.SerializeToString,
+                response_deserializer=platform__pb2.EmptyResponse.FromString,
                 )
-        self.LightFade = channel.unary_unary(
-                '/HardwarePlatform/LightFade',
-                request_serializer=fade__light__pb2.FadeLightRequest.SerializeToString,
-                response_deserializer=fade__light__pb2.FadeLightResponse.FromString,
-                )
-        self.CoilPulse = channel.unary_unary(
-                '/HardwarePlatform/CoilPulse',
-                request_serializer=coils__pb2.PulseCoilRequest.SerializeToString,
-                response_deserializer=coils__pb2.CoilResponse.FromString,
-                )
-        self.CoilEnable = channel.unary_unary(
-                '/HardwarePlatform/CoilEnable',
-                request_serializer=coils__pb2.EnableCoilRequest.SerializeToString,
-                response_deserializer=coils__pb2.CoilResponse.FromString,
-                )
-        self.CoilDisable = channel.unary_unary(
-                '/HardwarePlatform/CoilDisable',
-                request_serializer=coils__pb2.DisableCoilRequest.SerializeToString,
-                response_deserializer=coils__pb2.CoilResponse.FromString,
-                )
-        self.ConfigureHardwareRule = channel.unary_unary(
-                '/HardwarePlatform/ConfigureHardwareRule',
-                request_serializer=coils__pb2.ConfigureHardwareRuleRequest.SerializeToString,
-                response_deserializer=coils__pb2.CoilResponse.FromString,
-                )
-        self.RemoveHardwareRule = channel.unary_unary(
-                '/HardwarePlatform/RemoveHardwareRule',
-                request_serializer=coils__pb2.RemoveHardwareRuleRequest.SerializeToString,
-                response_deserializer=coils__pb2.CoilResponse.FromString,
+        self.Quit = channel.unary_unary(
+                '/mpf.vpe.MpfHardwareService/Quit',
+                request_serializer=platform__pb2.QuitRequest.SerializeToString,
+                response_deserializer=platform__pb2.EmptyResponse.FromString,
                 )
 
 
-class HardwarePlatformServicer(object):
-    """Missing associated documentation comment in .proto file."""
+class MpfHardwareServiceServicer(object):
+    """import "get_plaform_details.proto";
+    import "coils.proto";
+    import "fade_light.proto";
+    import "switch.proto";
 
-    def GetPlatformDetails(self, request, context):
+    """
+
+    def Start(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetSwitchChanges(self, request, context):
+    def SendSwitchChanges(self, request_iterator, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def LightFade(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def CoilPulse(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def CoilEnable(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def CoilDisable(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def ConfigureHardwareRule(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def RemoveHardwareRule(self, request, context):
+    def Quit(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
 
-def add_HardwarePlatformServicer_to_server(servicer, server):
+def add_MpfHardwareServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'GetPlatformDetails': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetPlatformDetails,
-                    request_deserializer=get__plaform__details__pb2.GetPlatformDetailsRequest.FromString,
-                    response_serializer=get__plaform__details__pb2.GetPlatformDetailsResponse.SerializeToString,
+            'Start': grpc.unary_stream_rpc_method_handler(
+                    servicer.Start,
+                    request_deserializer=platform__pb2.MachineConfiguration.FromString,
+                    response_serializer=platform__pb2.Commands.SerializeToString,
             ),
-            'GetSwitchChanges': grpc.unary_stream_rpc_method_handler(
-                    servicer.GetSwitchChanges,
-                    request_deserializer=switch__pb2.SwitchChangesRequest.FromString,
-                    response_serializer=switch__pb2.SwitchChanges.SerializeToString,
+            'SendSwitchChanges': grpc.stream_unary_rpc_method_handler(
+                    servicer.SendSwitchChanges,
+                    request_deserializer=platform__pb2.SwitchChanges.FromString,
+                    response_serializer=platform__pb2.EmptyResponse.SerializeToString,
             ),
-            'LightFade': grpc.unary_unary_rpc_method_handler(
-                    servicer.LightFade,
-                    request_deserializer=fade__light__pb2.FadeLightRequest.FromString,
-                    response_serializer=fade__light__pb2.FadeLightResponse.SerializeToString,
-            ),
-            'CoilPulse': grpc.unary_unary_rpc_method_handler(
-                    servicer.CoilPulse,
-                    request_deserializer=coils__pb2.PulseCoilRequest.FromString,
-                    response_serializer=coils__pb2.CoilResponse.SerializeToString,
-            ),
-            'CoilEnable': grpc.unary_unary_rpc_method_handler(
-                    servicer.CoilEnable,
-                    request_deserializer=coils__pb2.EnableCoilRequest.FromString,
-                    response_serializer=coils__pb2.CoilResponse.SerializeToString,
-            ),
-            'CoilDisable': grpc.unary_unary_rpc_method_handler(
-                    servicer.CoilDisable,
-                    request_deserializer=coils__pb2.DisableCoilRequest.FromString,
-                    response_serializer=coils__pb2.CoilResponse.SerializeToString,
-            ),
-            'ConfigureHardwareRule': grpc.unary_unary_rpc_method_handler(
-                    servicer.ConfigureHardwareRule,
-                    request_deserializer=coils__pb2.ConfigureHardwareRuleRequest.FromString,
-                    response_serializer=coils__pb2.CoilResponse.SerializeToString,
-            ),
-            'RemoveHardwareRule': grpc.unary_unary_rpc_method_handler(
-                    servicer.RemoveHardwareRule,
-                    request_deserializer=coils__pb2.RemoveHardwareRuleRequest.FromString,
-                    response_serializer=coils__pb2.CoilResponse.SerializeToString,
+            'Quit': grpc.unary_unary_rpc_method_handler(
+                    servicer.Quit,
+                    request_deserializer=platform__pb2.QuitRequest.FromString,
+                    response_serializer=platform__pb2.EmptyResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'HardwarePlatform', rpc_method_handlers)
+            'mpf.vpe.MpfHardwareService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
  # This class is part of an EXPERIMENTAL API.
-class HardwarePlatform(object):
-    """Missing associated documentation comment in .proto file."""
+class MpfHardwareService(object):
+    """import "get_plaform_details.proto";
+    import "coils.proto";
+    import "fade_light.proto";
+    import "switch.proto";
+
+    """
 
     @staticmethod
-    def GetPlatformDetails(request,
+    def Start(request,
             target,
             options=(),
             channel_credentials=None,
@@ -174,14 +106,14 @@ class HardwarePlatform(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/HardwarePlatform/GetPlatformDetails',
-            get__plaform__details__pb2.GetPlatformDetailsRequest.SerializeToString,
-            get__plaform__details__pb2.GetPlatformDetailsResponse.FromString,
+        return grpc.experimental.unary_stream(request, target, '/mpf.vpe.MpfHardwareService/Start',
+            platform__pb2.MachineConfiguration.SerializeToString,
+            platform__pb2.Commands.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def GetSwitchChanges(request,
+    def SendSwitchChanges(request_iterator,
             target,
             options=(),
             channel_credentials=None,
@@ -191,14 +123,14 @@ class HardwarePlatform(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(request, target, '/HardwarePlatform/GetSwitchChanges',
-            switch__pb2.SwitchChangesRequest.SerializeToString,
-            switch__pb2.SwitchChanges.FromString,
+        return grpc.experimental.stream_unary(request_iterator, target, '/mpf.vpe.MpfHardwareService/SendSwitchChanges',
+            platform__pb2.SwitchChanges.SerializeToString,
+            platform__pb2.EmptyResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def LightFade(request,
+    def Quit(request,
             target,
             options=(),
             channel_credentials=None,
@@ -208,93 +140,8 @@ class HardwarePlatform(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/HardwarePlatform/LightFade',
-            fade__light__pb2.FadeLightRequest.SerializeToString,
-            fade__light__pb2.FadeLightResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def CoilPulse(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/HardwarePlatform/CoilPulse',
-            coils__pb2.PulseCoilRequest.SerializeToString,
-            coils__pb2.CoilResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def CoilEnable(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/HardwarePlatform/CoilEnable',
-            coils__pb2.EnableCoilRequest.SerializeToString,
-            coils__pb2.CoilResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def CoilDisable(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/HardwarePlatform/CoilDisable',
-            coils__pb2.DisableCoilRequest.SerializeToString,
-            coils__pb2.CoilResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def ConfigureHardwareRule(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/HardwarePlatform/ConfigureHardwareRule',
-            coils__pb2.ConfigureHardwareRuleRequest.SerializeToString,
-            coils__pb2.CoilResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def RemoveHardwareRule(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/HardwarePlatform/RemoveHardwareRule',
-            coils__pb2.RemoveHardwareRuleRequest.SerializeToString,
-            coils__pb2.CoilResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/mpf.vpe.MpfHardwareService/Quit',
+            platform__pb2.QuitRequest.SerializeToString,
+            platform__pb2.EmptyResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
