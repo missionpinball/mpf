@@ -28,12 +28,13 @@ class FlasherPlayer(DeviceConfigPlayer):
                 for flasher_name in flasher_names:
                     self._flash(self.machine.lights[flasher_name],
                                 duration_ms=s['ms'],
+                                color=s['color'],
                                 key=context)
             else:
-                self._flash(flasher, duration_ms=s['ms'], key=context)
+                self._flash(flasher, duration_ms=s['ms'], key=context, color=s['color'])
 
-    def _flash(self, light, duration_ms, key):
-        light.color("on", fade_ms=0, key=key)
+    def _flash(self, light, duration_ms, key, color):
+        light.color(color, fade_ms=0, key=key)
         self.delay.add(duration_ms, self._remove_flash, light=light, key=key)
 
     @staticmethod

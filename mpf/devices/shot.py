@@ -171,7 +171,13 @@ class Shot(EnableDisableMixin, ModeDevice):
 
     def _set_state(self, state):
         old = self.player["shot_{}".format(self.name)]
-        old_name = self.state_name
+        try:
+            old_name = self.state_name
+        except IndexError:
+            # In this case, the shot profile was changed and the old state index
+            # doesn't exist in the new profile. That's okay, but we can't include
+            # the old state name in our event.
+            old_name = "unknown"
         self.player["shot_{}".format(self.name)] = state
         self.notify_virtual_change("state", old, state)
         self.notify_virtual_change("state_name", old_name, self.state_name)
