@@ -25,14 +25,15 @@ class MpfDocTestCaseBase(MockConfigPlayers, MpfGameTestCase):
         self.log = logging.getLogger("TEST")
 
     def setUp(self):
-        machine_config, mode_configs, show_configs, assets, code, self.tests = self.prepare_config(self._config_string)
+        machine_config, extra_configs, mode_configs, show_configs, assets, code, self.tests = \
+            self.prepare_config(self._config_string)
         self.config_dir = tempfile.mkdtemp()
         # cleanup at the end
         self.addCleanup(self._delete_tmp_dir, self.config_dir)
 
         # create machine config
         os.mkdir(os.path.join(self.config_dir, "config"))
-        self.verify_yaml(machine_config, "config.yaml")
+        self.verify_yaml(machine_config, "config/config.yaml")
         with open(os.path.join(self.config_dir, "config/", "config.yaml"), "w") as f:
             f.write(machine_config)
 
@@ -57,6 +58,12 @@ class MpfDocTestCaseBase(MockConfigPlayers, MpfGameTestCase):
             os.mkdir(os.path.join(self.config_dir, *file_path[:-1]))
             with open(os.path.join(self.config_dir, *file_path), "w") as f:
                 f.write(file_content)
+
+        # create extra configs
+        for config_name, extra_config in extra_configs.items():
+            self.verify_yaml(extra_config, config_name + ".yaml")
+            with open(os.path.join(self.config_dir, config_name + ".yaml"), "w") as f:
+                f.write(extra_config)
 
         # link assets
         for asset_path, asset_source in assets.items():
@@ -119,7 +126,7 @@ class MpfDocTestCaseBase(MockConfigPlayers, MpfGameTestCase):
             config_string = re.sub(r'^#! ([^\n]+)', '\\1', config_string, flags=re.MULTILINE)
 
         # first find sections
-        configs = re.split(r'^##! (config: \w+|test|show: \w+|mode: \w+|asset: [^\n]+|code: [^\n]+)\n', config_string,
+        configs = re.split(r'^##! (config: [^\n]+|test|show: \w+|mode: \w+|asset: [^\n]+|code: [^\n]+)\n', config_string,
                            flags=re.MULTILINE)
         machine_config = configs.pop(0)
 
@@ -131,6 +138,7 @@ class MpfDocTestCaseBase(MockConfigPlayers, MpfGameTestCase):
         shows = {}
         tests = []
         assets = {}
+        extra_configs = {}
         game_code = []
         while configs:
             section_type = configs.pop(0)
@@ -138,7 +146,13 @@ class MpfDocTestCaseBase(MockConfigPlayers, MpfGameTestCase):
             if section_type.startswith("test"):
                 # unit test
                 tests = section_config.splitlines()
-            elif section_type.startswith("mode:") or section_type.startswith("config:"):
+            elif section_type.startswith("config:"):
+                # extra config file
+                _, file_name = section_type.split(": ", 2)
+                if fixup_config and not section_config.startswith("#config_version=5"):
+                    section_config = "#config_version=5\n" + section_config
+                extra_configs[file_name] = section_config
+            elif section_type.startswith("mode:"):
                 # normal mode
                 _, mode_name = section_type.split(": ", 2)
                 if fixup_config and not section_config.startswith("#config_version=5"):
@@ -168,7 +182,7 @@ class MpfDocTestCaseBase(MockConfigPlayers, MpfGameTestCase):
             for mode in modes.keys():
                 machine_config += "  - " + mode + "\n"
 
-        return machine_config, modes, shows, assets, game_code, tests
+        return machine_config, extra_configs, modes, shows, assets, game_code, tests
 
     def get_config_file(self):
         return "config.yaml"
