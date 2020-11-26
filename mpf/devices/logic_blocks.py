@@ -460,7 +460,12 @@ class Counter(LogicBlock):
                 "count": self.value
             }
             if count_complete_value is not None:
-                args['remaining'] = count_complete_value - self.value
+                if self.config['direction'] == 'down':
+                    args['hits'] = self.get_start_value() - self.value
+                    args['remaining'] = self.value - count_complete_value
+                else:
+                    args['hits'] = self.value - self.get_start_value()
+                    args['remaining'] = count_complete_value - self.value
 
             self._post_hit_events(**args)
 
