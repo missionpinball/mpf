@@ -390,6 +390,7 @@ displays:
     default: single|bool|false
     round_anchor_x: single|str|center
     round_anchor_y: single|str|middle
+    enabled: single|bool|true
 display_light_player:
     __valid_in__: machine, mode, show
     __type__: config_player
