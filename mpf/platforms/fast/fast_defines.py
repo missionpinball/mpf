@@ -1,4 +1,14 @@
 """Defines for FAST WPC."""
+
+RETRO_CONFIGS = {
+    'WPC89': {
+        # Setting    HEX     DEC
+        "node_id":  '00',   # 0
+        "drivers":  '40',   # 64
+        "switches": '80',   # 128
+    }
+}
+
 WPC_SWITCH_MAP = {
 
     # WPC   HEX    DEC
@@ -113,14 +123,23 @@ WPC_SWITCH_MAP = {
     'DIP8': '5F',  # 95
 
     # Fliptronics
-    'SF1': '60',  # 96
-    'SF2': '61',  # 97
-    'SF3': '62',  # 98
-    'SF4': '63',  # 99
-    'SF5': '64',  # 100
-    'SF6': '65',  # 101
-    'SF7': '66',  # 102
-    'SF8': '67',  # 103
+    # Temporarily offset by 8 to match firmware config
+    # 'SF1': '60',  # 96
+    # 'SF2': '61',  # 97
+    # 'SF3': '62',  # 98
+    # 'SF4': '63',  # 99
+    # 'SF5': '64',  # 100
+    # 'SF6': '65',  # 101
+    # 'SF7': '66',  # 102
+    # 'SF8': '67',  # 103
+    'SF1': '58',  # 96
+    'SF2': '59',  # 97
+    'SF3': '5A',  # 98
+    'SF4': '5B',  # 99
+    'SF5': '5C',  # 100
+    'SF6': '5D',  # 101
+    'SF7': '5E',  # 102
+    'SF8': '5F',  # 103
 }
 
 WPC_LIGHT_MAP = {

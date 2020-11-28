@@ -5,6 +5,7 @@ from distutils.version import StrictVersion
 from mpf.core.utility_functions import Util
 
 from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
+from mpf.platforms.fast.fast_defines import RETRO_CONFIGS
 
 # Minimum firmware versions needed for this module
 from mpf.platforms.fast.fast_io_board import FastIoBoard
@@ -13,6 +14,9 @@ DMD_MIN_FW = '0.88'
 NET_MIN_FW = '0.88'
 RGB_MIN_FW = '0.87'
 IO_MIN_FW = '0.87'
+
+RETRO_ID = 'FP-SBI-0095-3'
+RETRO_MIN_FW = '1.15'
 
 # DMD_LATEST_FW = '0.88'
 # NET_LATEST_FW = '0.90'
@@ -42,7 +46,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                         'XX:N'
                         ]
 
-    __slots__ = ["dmd", "remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
+    __slots__ = ["dmd", "remote_processor", "remote_model", "remote_firmware", "remote_config", "max_messages_in_flight",
                  "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
                  "send_queue"]
 
@@ -58,6 +62,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
         self.remote_processor = None
         self.remote_model = None
+        self.remote_config = None
         self.remote_firmware = 0.0
         self.max_messages_in_flight = 10
         self.messages_in_flight = 0
@@ -116,11 +121,28 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         # ID:NET FP-CPU-002-2 00.85
         # ID:RGB FP-CPU-002-2 00.85
 
-        try:
-            self.remote_processor, self.remote_model, self.remote_firmware = (
-                msg[3:].split())
-        except ValueError:
-            self.remote_processor, self.remote_model, = msg[3:].split()
+        board_id = msg[3:].split()
+        # FAST Retro doesn't provide a remote_processor value, but it behaves like a NET
+        if board_id[0] == RETRO_ID:
+            self.remote_processor = 'NET'
+            self.remote_firmware = board_id[1]
+
+            # Query the board for its build configuration
+            while True:
+                self.writer.write('IF:\r'.encode())
+                msg = await self._read_with_timeout(0.5)
+                 # ignore XX replies here.
+                while msg.startswith('XX:'):
+                    msg = await self._read_with_timeout(.5)
+
+                if msg.startswith('IF:'):
+                    break
+
+                await asyncio.sleep(.5, loop=self.machine.clock.loop)
+            self.platform.log.debug("Found retro board configuration: %s", msg)
+            self.remote_model, self.remote_config = msg[3:].split(' Config:')
+        else:
+            self.remote_processor, self.remote_model, self.remote_firmware = board_id
 
         self.platform.log.info("Connected! Processor: %s, "
                                "Board Type: %s, Firmware: %s",
@@ -153,7 +175,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             self.platform.debug_log("Setting DMD buffer size: %s",
                                     self.max_messages_in_flight)
         elif self.remote_processor == 'NET':
-            min_version = NET_MIN_FW
+            min_version = RETRO_MIN_FW if self.remote_config else NET_MIN_FW
             # latest_version = NET_LATEST_FW
             self.max_messages_in_flight = self.platform.config['net_buffer']
             self.platform.debug_log("Setting NET buffer size: %s",
@@ -172,7 +194,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                                  ' the {} processor to be firmware {}, but yours is {}'.
                                  format(self.remote_processor, min_version, self.remote_firmware))
 
-        if self.remote_processor == 'NET' and self.platform.machine_type == 'fast':
+        if self.remote_processor == 'NET' and (self.platform.machine_type == 'fast' or self.platform.machine_type == 'retro'):
             await self.query_fast_io_boards()
 
         self.platform.register_processor_connection(self.remote_processor, self)
@@ -210,12 +232,33 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         while not msg.startswith('SA:'):
             msg = (await self.readuntil(b'\r')).decode()
             if not msg.startswith('SA:'):
-                self.platform.log.warning("Got unexpected message from FAST: {}".format(msg))
+                self.platform.log.warning("Parsing SA, Got unexpected message from FAST: {}".format(msg))
 
         self.platform.process_received_message(msg, "NET")
         self.platform.debug_log('Querying FAST IO boards...')
 
         firmware_ok = True
+
+        if RETRO_CONFIGS.get(self.remote_model):
+            # TODO: Move the config defines to the firmware an extract via serial query
+            node_id, drivers, switches = RETRO_CONFIGS[self.remote_model].values()
+            self.platform.register_io_board(FastIoBoard(
+                int(node_id,16),
+                self.remote_model,
+                self.remote_firmware,
+                int(switches, 16),
+                int(drivers, 16))
+            )
+
+            self.platform.debug_log('Fast Retro Board {0}: Model: {1}, '
+                                    'Firmware: {2}, Switches: {3}, '
+                                    'Drivers: {4}'.format(node_id,
+                                                          self.remote_model,
+                                                          self.remote_firmware,
+                                                          int(switches, 16),
+                                                          int(drivers, 16)))
+
+            return
 
         for board_id in range(128):
             self.writer.write('NN:{:02X}\r'.format(board_id).encode())
@@ -223,7 +266,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             while not msg.startswith('NN:'):
                 msg = (await self.readuntil(b'\r')).decode()
                 if not msg.startswith('NN:'):
-                    self.platform.debug_log("Got unexpected message from FAST: {}".format(msg))
+                    self.platform.debug_log("Querying IO Boards, Got unexpected message from FAST: {}".format(msg))
 
             if msg == 'NN:F\r':
                 break
