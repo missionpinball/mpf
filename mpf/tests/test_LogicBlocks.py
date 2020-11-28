@@ -341,11 +341,11 @@ class TestLogicBlocks(MpfFakeGameTestCase):
             self.post_event("counter2_count")
             self.assertEqual(i + 1, self._events["counter2_hit"])
             self.assertEqual(0, self._events["counter2_complete"])
-            self.assertEventCalledWith("counter2_hit", count=i + 1, remaining=2 - i)
+            self.assertEventCalledWith("counter2_hit", count=i + 1, remaining=2 - i, hits=i+1)
 
         self.post_event("counter2_count")
         self.assertEqual(1, self._events["counter2_complete"])
-        self.assertEventCalledWith("counter2_hit", count=3, remaining=0)
+        self.assertEventCalledWith("counter2_hit", count=3, hits=3, remaining=0)
 
         # should run again
         for i in range(2):
@@ -392,7 +392,7 @@ class TestLogicBlocks(MpfFakeGameTestCase):
             self.post_event("increase_counter6_3")
             self.assertEqual(0, self._events["counter6_complete"])
         self.post_event("counter6_count")
-        self.assertEventCalledWith("counter6_hit", count=7, remaining=3)
+        self.assertEventCalledWith("counter6_hit", count=7, hits=7, remaining=3)
         self.post_event("increase_counter6_3")
         self.assertEqual(1, self._events["counter6_complete"])
 
@@ -406,25 +406,25 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         # Test subtraction
         reset_event_mocks()
         self.post_event("counter6_count")
-        self.assertEventCalledWith("counter6_hit", count=1, remaining=9)
+        self.assertEventCalledWith("counter6_hit", count=1, hits=1, remaining=9)
         self.post_event("reduce_counter6_5")
         self.post_event("counter6_count")
-        self.assertEventCalledWith("counter6_hit", count=-3, remaining=13)
+        self.assertEventCalledWith("counter6_hit", count=-3, hits=-3, remaining=13)
         self.post_event("reduce_counter6_3")
         self.post_event("counter6_count")
-        self.assertEventCalledWith("counter6_hit", count=-5, remaining=15)
+        self.assertEventCalledWith("counter6_hit", count=-5, hits=-5, remaining=15)
         self.post_event("reduce_counter6_0")
         self.post_event("counter6_count")
-        self.assertEventCalledWith("counter6_hit", count=-4, remaining=14)
+        self.assertEventCalledWith("counter6_hit", count=-4, hits=-4, remaining=14)
 
         # Test Setting the Counter to a value
         reset_event_mocks()
         # Make sure that the counter holds a nonzero value
         self.post_event("counter6_count")
-        self.assertEventCalledWith("counter6_hit", count=-3, remaining=13)
+        self.assertEventCalledWith("counter6_hit", count=-3, hits=-3, remaining=13)
         self.post_event("set_counter6_0")
         self.post_event("counter6_count")
-        self.assertEventCalledWith("counter6_hit", count=1, remaining=9)
+        self.assertEventCalledWith("counter6_hit", count=1, hits=1, remaining=9)
         # Set the counter to a value above the completion value
         self.assertEqual(0, self._events["counter6_complete"])
         self.post_event("set_counter6_25")
@@ -434,13 +434,13 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         # Test increasing and reducing
         reset_event_mocks()
         self.post_event("counter7_count")
-        self.assertEventCalledWith("counter7_hit", count=4, remaining=-4)
+        self.assertEventCalledWith("counter7_hit", count=4, hits=1, remaining=4)
         self.post_event("increase_counter7_5")
         self.post_event("counter7_count")
-        self.assertEventCalledWith("counter7_hit", count=8, remaining=-8)
+        self.assertEventCalledWith("counter7_hit", count=8, hits=-3, remaining=8)
         self.post_event("reduce_counter7_5")
         self.post_event("counter7_count")
-        self.assertEventCalledWith("counter7_hit", count=2, remaining=-2)
+        self.assertEventCalledWith("counter7_hit", count=2, hits=3, remaining=2)
         self.assertEqual(0, self._events["counter7_complete"])
         self.post_event("reduce_counter7_3")
         self.assertEqual(1, self._events["counter7_complete"])
@@ -454,7 +454,7 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.assertEqual(2, self._events["counter7_complete"])
         self.post_event("set_counter7_3")
         self.post_event("counter7_count")
-        self.assertEventCalledWith("counter7_hit", count=2, remaining=-2)
+        self.assertEventCalledWith("counter7_hit", count=2, hits=3, remaining=2)
 
         self.assertPlaceholderEvaluates(2, "device.counters.counter7.value")
 
