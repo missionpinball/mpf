@@ -15,9 +15,7 @@ def autodetect_smartmatrix_dmd_port():
 def _find_fast_retro():
     devices = [port.device for port in serial.tools.list_ports.comports()]
     for d in devices:
-        print("Looking at device {}".format(d))
         if re.search(r'\.usbmodem\d+$',d):
-            print("!!MATCH")
             return [d]
 
 def _find_fast_quad():

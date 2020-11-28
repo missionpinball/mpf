@@ -359,7 +359,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """
         assert remote_processor == "NET"
         self.debug_log("Received SA: %s", msg)
-        print("SA: {}".format(msg))
         hw_states = dict()
 
         try:
@@ -368,7 +367,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             _, local_states = msg.split(',')
             nw_states = ''
 
-        print("Checknig network states...")
         for offset, byte in enumerate(bytearray.fromhex(nw_states)):
             for i in range(8):
                 num = Util.int_to_hex_string((offset * 8) + i)
