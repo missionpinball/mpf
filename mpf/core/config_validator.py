@@ -432,9 +432,10 @@ class ConfigValidator:
             return None
         return Util.string_to_gain(item)
 
-    @classmethod
-    def _validate_type_str(cls, item, validation_failure_info):
-        del validation_failure_info
+    def _validate_type_str(self, item, validation_failure_info):
+        if isinstance(item, (list, dict)):
+            self.validation_error(item, validation_failure_info, "List or dict are not string")
+
         if item is not None:
             return str(item)
 
