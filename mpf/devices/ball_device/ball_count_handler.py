@@ -1,5 +1,6 @@
 """Maintains the ball count for a ball device."""
 import asyncio
+from typing import Optional
 
 from mpf.devices.ball_device.physical_ball_counter import PhysicalBallCounter, EjectTracker
 from mpf.devices.ball_device.entrance_switch_counter import EntranceSwitchCounter
@@ -28,7 +29,7 @@ class BallCountHandler(BallDeviceStateHandler):
         self._has_balls = asyncio.Event(loop=self.machine.clock.loop)
         self._ball_count = 0
         self._ball_count_changed_futures = []
-        self.counter = None  # type: PhysicalBallCounter
+        self.counter = None  # type: Optional[PhysicalBallCounter]
 
     def wait_for_ball_count_changed(self):
         """Wait until ball count changed."""
@@ -112,6 +113,8 @@ class BallCountHandler(BallDeviceStateHandler):
     @property
     def is_full(self) -> bool:
         """Return true if the device is full."""
+        if not self.counter:
+            raise asyncio.CancelledError
         return self.counter.capacity - self._ball_count <= 0
 
     async def wait_for_ball(self):
@@ -123,6 +126,8 @@ class BallCountHandler(BallDeviceStateHandler):
         self.debug_log("No ball found. Waiting for balls.")
 
         # wait until we have more than 0 balls
+        if not self.counter:
+            raise asyncio.CancelledError
         ball_changes = asyncio.ensure_future(self.counter.wait_for_ball_count_changes(0),
                                              loop=self.machine.clock.loop)
         new_balls = await ball_changes
@@ -143,6 +148,8 @@ class BallCountHandler(BallDeviceStateHandler):
     async def wait_for_ready_to_receive(self, source):
         """Wait until this device is ready to receive a ball."""
         while True:
+            if not self.counter:
+                raise asyncio.CancelledError
             free_space = self.counter.capacity - self._ball_count
             incoming_balls = self.ball_device.incoming_balls_handler.get_num_incoming_balls()
             if free_space <= incoming_balls:
@@ -154,6 +161,8 @@ class BallCountHandler(BallDeviceStateHandler):
                 await self.wait_for_ball_count_changed()
                 continue
 
+            if not self.counter:
+                raise asyncio.CancelledError
             if not self.counter.is_ready_to_receive:
                 self.debug_log(
                     "Not ready to receive from %s. Waiting on counter to become ready. "
@@ -174,6 +183,8 @@ class BallCountHandler(BallDeviceStateHandler):
                 await self.ball_device.outgoing_balls_handler.wait_for_ready_to_receive()
                 continue
 
+            if not self.counter:
+                raise asyncio.CancelledError
             self.debug_log("Ready to receive from %s. Free space %s (Capacity: %s, Balls: %s), incoming_balls: %s",
                            source, free_space, self.counter.capacity, self._ball_count,
                            incoming_balls)
@@ -203,6 +214,8 @@ class BallCountHandler(BallDeviceStateHandler):
         self.ball_device.incoming_balls_handler.end_eject()
 
     async def _run(self):
+        if not self.counter:
+            raise asyncio.CancelledError
         changes = self.counter.register_change_stream()
         while True:
             # wait for ball changes
@@ -215,9 +228,13 @@ class BallCountHandler(BallDeviceStateHandler):
             # get lock and update count
             await self._is_counting.acquire()
 
+            if not self.counter:
+                raise asyncio.CancelledError
             new_balls = await self.counter.count_balls()
 
             # try to re-order the device if count is unstable
+            if not self.counter:
+                raise asyncio.CancelledError
             if self.counter.is_count_unreliable():
                 self.debug_log("BCH: Count is unstable. Trying to reorder balls.")
                 await self.ball_device.ejector.reorder_balls()
@@ -226,6 +243,8 @@ class BallCountHandler(BallDeviceStateHandler):
             self.debug_log("BCH: Counting. New count: %s Old count: %s", new_balls, self._ball_count)
 
             # when jammed do not trust other switches except the jam. keep old count
+            if not self.counter:
+                raise asyncio.CancelledError
             if not self.counter.is_count_unreliable():
                 # otherwise handle balls
                 old_ball_count = self._ball_count
@@ -249,6 +268,8 @@ class BallCountHandler(BallDeviceStateHandler):
                 await self.ball_device.handle_mechanial_eject_during_idle()
             else:
                 try:
+                    if not self.counter:
+                        raise asyncio.CancelledError
                     await asyncio.wait_for(self.counter.wait_for_ball_activity(),
                                            loop=self.machine.clock.loop,
                                            timeout=self.ball_device.config['idle_missing_ball_timeout'])
