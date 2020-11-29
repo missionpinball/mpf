@@ -83,8 +83,8 @@ class Command(MpfCommandLineParser):
     def _reformat_test_case(self, test_case):
         test_case = test_case.replace("\t", "  ")
         test_case = re.sub(r" +\n", "\n", test_case)
-        machine_config, mode_configs, show_configs, assets, code, tests = MpfDocTestCaseBase.prepare_config(
-            test_case, fixup_config=False)
+        machine_config, extra_configs, mode_configs, show_configs, assets, code, tests = \
+            MpfDocTestCaseBase.prepare_config(test_case, fixup_config=False)
         formatted_yaml = ""
         if machine_config:
             new_config = self._reformat(machine_config, show_file=False)
@@ -92,6 +92,9 @@ class Command(MpfCommandLineParser):
                 formatted_yaml += machine_config
             else:
                 formatted_yaml += new_config
+        for config_name, extra_config in extra_configs.items():
+            formatted_yaml += "##! config: " + config_name + "\n"
+            formatted_yaml += self._reformat(extra_config, show_file=False)
         for mode_name, mode_config in mode_configs.items():
             formatted_yaml += "##! mode: " + mode_name + "\n"
             formatted_yaml += self._reformat(mode_config, show_file=False)
