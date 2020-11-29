@@ -537,6 +537,12 @@ class RGBColorCorrectionProfile:
 
         Returns: RGBColor
         """
+        assert 0 <= color.red <= 255
+        assert 0 <= color.green <= 255
+        assert 0 <= color.blue <= 255
+        assert len(self._lookup_table[0]) == 256
+        assert len(self._lookup_table[1]) == 256
+        assert len(self._lookup_table[2]) == 256
         return RGBColor((self._lookup_table[0][color.red],
                          self._lookup_table[1][color.green],
                          self._lookup_table[2][color.blue]))
