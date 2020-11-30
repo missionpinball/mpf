@@ -9,7 +9,7 @@ import sys
 from threading import Thread
 
 import time
-from typing import Any, List, Union, Tuple, Optional, Set
+from typing import List, Union, Tuple, Optional, Set
 
 from mpf.core.utility_functions import Util
 from mpf.core.platform_batch_light_system import PlatformBatchLightSystem
@@ -198,6 +198,10 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
     def _decrement_running_commands(self, future):
         del future
         self._commands_running -= 1
+
+    def get_polarity(self):
+        """Get driver polarity."""
+        raise NotImplementedError()
 
     def run_proc_cmd(self, cmd, *args):
         """Run a command in the p-roc thread and return a future."""
@@ -818,8 +822,7 @@ class PDBConfig:
     WPC or Stern mode.
     """
 
-    indexes = []    # type: List[Any]
-    proc = None     # type: pinproc.PinPROC
+    __slots__ = ["log", "platform", "polarity", "lamp_matrix_strobe_time", "watchdog_time", "use_watchdog", "indexes"]
 
     # pylint: disable-msg=too-many-locals
     def __init__(self, proc_platform, config, driver_count):

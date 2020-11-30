@@ -56,6 +56,15 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplaySoftware
         self._use_extended_matrix = False
         self._use_first_eight_direct_inputs = False
 
+    def get_polarity(self):
+        """Get polarity based on machine type."""
+        if self.machine_type == self.pinproc.MachineTypePDB:
+            polarity = True
+        else:
+            polarity = self.machine_type in (self.pinproc.MachineTypeSternWhitestar, self.pinproc.MachineTypeSternSAM)
+
+        return polarity
+
     async def connect(self):
         """Connect to the P-Roc."""
         await super().connect()
@@ -116,12 +125,10 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplaySoftware
             proc_num = self.pdbconfig.get_proc_coil_number(str(number))
             if proc_num == -1:
                 raise AssertionError("Driver {} cannot be controlled by the P-ROC. ".format(str(number)))
-            polarity = True
         else:
             proc_num = self.pinproc.decode(self.machine_type, str(number))
-            polarity = self.machine_type in (self.pinproc.MachineTypeSternWhitestar, self.pinproc.MachineTypeSternSAM)
 
-        return PROCDriver(proc_num, config, self, number, polarity)
+        return PROCDriver(proc_num, config, self, number, self.get_polarity())
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure a P-ROC switch.
