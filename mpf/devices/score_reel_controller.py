@@ -156,8 +156,8 @@ class ScoreReelController:
             score_reel_group.set_value(0)
             futures.append(score_reel_group.wait_for_ready())
 
-        future = asyncio.wait(iter(futures), loop=self.machine.clock.loop)
-        future = asyncio.ensure_future(future, loop=self.machine.clock.loop)
+        future = asyncio.wait(iter(futures))
+        future = asyncio.ensure_future(future)
         future.add_done_callback(partial(self._reels_ready, queue=queue))
 
     @staticmethod
@@ -180,5 +180,5 @@ class ScoreReelController:
         # score reel is still catching up.
         queue.wait()
 
-        future = asyncio.ensure_future(self.active_scorereelgroup.wait_for_ready(), loop=self.machine.clock.loop)
+        future = asyncio.ensure_future(self.active_scorereelgroup.wait_for_ready())
         future.add_done_callback(partial(self._reels_ready, queue=queue))

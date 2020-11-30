@@ -508,6 +508,7 @@ class MpfTestCase(unittest.TestCase):
         machine_path = self.get_absolute_machine_path()
 
         self.loop = TimeTravelLoop()
+        events.set_event_loop(self.loop)
         self.loop.set_exception_handler(self._exception_handler)
         self.clock = TestClock(self.loop)
         self._mock_loop()
@@ -566,7 +567,7 @@ class MpfTestCase(unittest.TestCase):
     def _wait_for_start(self, init, timeout):
         start = time.time()
         while not init.done() and not self._exception:
-            self.loop._run_once()
+            self.loop.run_once()
             if time.time() > start + timeout:
                 raise AssertionError("Start took more than {}s".format(timeout))
 
@@ -934,6 +935,7 @@ class MpfTestCase(unittest.TestCase):
         self.machine = None
 
         self.restore_sys_path()
+        events.set_event_loop(None)
 
     @staticmethod
     def add_to_config_validator(machine, key, new_dict):

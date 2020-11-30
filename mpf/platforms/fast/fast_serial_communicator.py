@@ -63,13 +63,13 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         self.messages_in_flight = 0
         self.ignored_messages_in_flight = {b'-N', b'/N', b'/L', b'-L'}
 
-        self.send_ready = asyncio.Event(loop=platform.machine.clock.loop)
+        self.send_ready = asyncio.Event()
         self.send_ready.set()
         self.write_task = None
 
         self.received_msg = b''
 
-        self.send_queue = asyncio.Queue(loop=platform.machine.clock.loop)
+        self.send_queue = asyncio.Queue()
 
         super().__init__(platform, port, baud)
 
@@ -79,7 +79,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         super().stop()
 
     async def _read_with_timeout(self, timeout):
-        msg_raw = await asyncio.wait([self.readuntil(b'\r')], timeout=timeout, loop=self.machine.clock.loop)
+        msg_raw = await asyncio.wait([self.readuntil(b'\r')], timeout=timeout)
         if not msg_raw[0]:
             msg_raw[1].pop().cancel()
             return ""
@@ -109,7 +109,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             if msg.startswith('ID:'):
                 break
 
-            await asyncio.sleep(.5, loop=self.machine.clock.loop)
+            await asyncio.sleep(.5)
 
         # examples of ID responses
         # ID:DMD FP-CPU-002-1 00.87
@@ -196,13 +196,13 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         """
         # reset CPU early
         try:
-            await asyncio.wait_for(self.reset_net_cpu(), 5, loop=self.machine.clock.loop)
+            await asyncio.wait_for(self.reset_net_cpu(), 5)
         except asyncio.TimeoutError:
             self.platform.warning_log("Reset of NET CPU failed. This might be a firmware bug in your version.")
         else:
             self.platform.debug_log("Reset successful")
 
-        await asyncio.sleep(.5, loop=self.machine.clock.loop)
+        await asyncio.sleep(.5)
 
         self.platform.debug_log('Reading all switches.')
         self.writer.write('SA:\r'.encode())
@@ -291,7 +291,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         while True:
             msg = await self.send_queue.get()
             try:
-                await asyncio.wait_for(self.send_ready.wait(), 1.0, loop=self.machine.clock.loop)
+                await asyncio.wait_for(self.send_ready.wait(), 1.0)
             except asyncio.TimeoutError:
                 self.log.warning("Port %s was blocked for more than 1s. Reseting send queue! If this happens "
                                  "frequently report a bug!", self.port)

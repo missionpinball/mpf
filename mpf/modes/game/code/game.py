@@ -59,9 +59,9 @@ class Game(AsyncMode):
         self._balls_in_play = 0
         self._stopping_modes = []
         self._stopping_queue = None
-        self._end_ball_event = asyncio.Event(loop=self.machine.clock.loop)
+        self._end_ball_event = asyncio.Event()
         self._end_ball_event.clear()
-        self._at_least_one_player_event = asyncio.Event(loop=self.machine.clock.loop)
+        self._at_least_one_player_event = asyncio.Event()
         self._at_least_one_player_event.clear()
         self.balls_per_game = self.machine.config['game']['balls_per_game'].evaluate([])
 

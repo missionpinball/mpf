@@ -203,8 +203,7 @@ class HighScore(AsyncMode):
 
         event_result = await asyncio.wait_for(
             self.machine.events.wait_for_event("text_input_high_score_complete"),
-            timeout=self.high_score_config['enter_initials_timeout'],
-            loop=self.machine.clock.loop
+            timeout=self.high_score_config['enter_initials_timeout']
         )   # type: dict
 
         return event_result["text"] if "text" in event_result else ''
@@ -223,8 +222,7 @@ class HighScore(AsyncMode):
             player_name=player_name,
             award=award,
             value=value)
-        await asyncio.sleep(self.high_score_config['award_slide_display_time'] / 1000,
-                            loop=self.machine.clock.loop)
+        await asyncio.sleep(self.high_score_config['award_slide_display_time'] / 1000)
 
     def _write_scores_to_disk(self) -> None:
         self.data_manager.save_all(data=self.high_scores)

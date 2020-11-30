@@ -171,7 +171,7 @@ class SpikeDMD(DmdPlatformInterface):
         """Initialise DMD."""
         self.platform = platform
         self.data = None
-        self.new_frame_event = asyncio.Event(loop=platform.machine.clock.loop)
+        self.new_frame_event = asyncio.Event()
         self.dmd_task = platform.machine.clock.loop.create_task(self._dmd_send())
         self.dmd_task.add_done_callback(Util.raise_exceptions)
 
@@ -186,7 +186,7 @@ class SpikeDMD(DmdPlatformInterface):
             self.new_frame_event.clear()
             await self.send_update()
             # sleep at least 5ms
-            await asyncio.sleep(.005, loop=self.platform.machine.clock.loop)
+            await asyncio.sleep(.005)
 
     async def send_update(self):
         """Send update to platform."""
@@ -278,7 +278,7 @@ class SpikeDriver(DriverPlatformInterface):
 
     async def _enable(self, power):
         while True:
-            await asyncio.sleep(.25, loop=self.platform.machine.clock.loop)
+            await asyncio.sleep(.25)
             self.trigger(power, 0x1FF, power, 0x1FF)
 
     def pulse(self, pulse_settings: PulseSettings):
@@ -394,7 +394,7 @@ class SpikeStepper(StepperPlatformInterface):
     async def wait_for_move_completed(self):
         """Wait until move completed."""
         while not await self.is_move_complete():
-            await asyncio.sleep(1 / self.config['poll_ms'], loop=self.platform.machine.clock.loop)
+            await asyncio.sleep(1 / self.config['poll_ms'])
 
     async def is_move_complete(self) -> bool:
         """Return true if move is complete."""
@@ -445,9 +445,9 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         self.dmd = None
 
         self._nodes = None
-        self._bus_read = asyncio.Lock(loop=self.machine.clock.loop)
-        self._bus_write = asyncio.Lock(loop=self.machine.clock.loop)
-        self._cmd_queue = asyncio.Queue(loop=self.machine.clock.loop)
+        self._bus_read = asyncio.Lock()
+        self._bus_write = asyncio.Lock()
+        self._cmd_queue = asyncio.Queue()
 
         self._light_system = None
 
@@ -866,7 +866,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                 await self.send_cmd_sync(node, SpikeNodebus.SendKey, key)
 
                 # wait one second
-                await asyncio.sleep(1, loop=self.machine.clock.loop)
+                await asyncio.sleep(1.0)
 
     async def _query_status_and_coil_current(self):
         while True:
@@ -880,7 +880,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                 await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetCoilCurrent, bytearray([0]), 12)
 
                 # wait before querying the next board
-                await asyncio.sleep(.5, loop=self.machine.clock.loop)
+                await asyncio.sleep(.5)
 
     async def _poll(self):
         while True:
@@ -889,7 +889,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                     await self._send_raw(bytearray([0]))
 
                 try:
-                    result = await asyncio.wait_for(self._read_raw(1), 2, loop=self.machine.clock.loop)
+                    result = await asyncio.wait_for(self._read_raw(1), 2)
                 except asyncio.TimeoutError:    # pragma: no cover
                     self.warning_log("Spike watchdog expired.")
                     # clear buffer
@@ -900,7 +900,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             if not result:
                 self.warning_log("Empty poll result. Spike desynced.")
                 # give it a break of 50ms
-                await asyncio.sleep(.05, loop=self.machine.clock.loop)
+                await asyncio.sleep(.05)
                 # clear buffer
                 # pylint: disable-msg=protected-access
                 self._reader._buffer = bytearray()
@@ -916,7 +916,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                 result = await self._update_switches(ready_node)
                 if not result:
                     self.warning_log("Spike desynced during input.")
-                    await asyncio.sleep(.05, loop=self.machine.clock.loop)
+                    await asyncio.sleep(.05)
                     # clear buffer
                     # pylint: disable-msg=protected-access
                     self._reader._buffer = bytearray()
@@ -924,13 +924,13 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                 # invalid node ids
                 self.warning_log("Spike desynced (invalid node %s).", ready_node)
                 # give it a break of 50ms
-                await asyncio.sleep(.05, loop=self.machine.clock.loop)
+                await asyncio.sleep(.05)
                 # clear buffer
                 # pylint: disable-msg=protected-access
                 self._reader._buffer = bytearray()
             else:
                 # sleep only if spike is idle
-                await asyncio.sleep(1 / self.config['poll_hz'], loop=self.machine.clock.loop)
+                await asyncio.sleep(1 / self.config['poll_hz'])
 
     def stop(self):
         """Stop hardware and close connections."""
@@ -1016,8 +1016,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             async with self._bus_write:
                 await self._send_raw(cmd_str)
             try:
-                response = await asyncio.wait_for(self._read_raw(response_len), 2,
-                                                  loop=self.machine.clock.loop)    # type: bytearray
+                response = await asyncio.wait_for(self._read_raw(response_len), 2)    # type: bytearray
             except asyncio.TimeoutError:    # pragma: no cover
                 self.warning_log("Failed to read %s bytes from Spike", response_len)
                 return None
@@ -1125,7 +1124,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         self.debug_log("Resetting console")
         self._writer.write(b'\x03reset\n')
         # wait for the serial
-        await asyncio.sleep(.1, loop=self.machine.clock.loop)
+        await asyncio.sleep(.1)
         # flush input
         self._writer.transport.serial.reset_input_buffer()
         # pylint: disable-msg=protected-access
@@ -1147,7 +1146,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                                                       log_file).encode())
 
         welcome_str = b'MPF Spike Bridge!'
-        await asyncio.sleep(.1, loop=self.machine.clock.loop)
+        await asyncio.sleep(.1)
         # read until first capital M
         while True:
             byte = await self._reader.readexactly(1)
@@ -1164,7 +1163,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             self.debug_log("Increasing baudrate to %s", self.config['runtime_baud'])
             self._writer.transport.serial.baudrate = self.config['runtime_baud']
 
-        await asyncio.sleep(.1, loop=self.machine.clock.loop)
+        await asyncio.sleep(.1)
         self._reader._buffer = bytearray()
 
     # pylint: disable-msg=too-many-statements
@@ -1189,7 +1188,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             node_str = await self._read_raw(1)
             if node_str is None:
                 self.warning_log("Initial poll timeouted")
-                await asyncio.sleep(.5, loop=self.machine.clock.loop)
+                await asyncio.sleep(.5)
                 continue
 
             node = node_str[0]

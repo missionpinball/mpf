@@ -208,7 +208,7 @@ class MachineController(LogMixin):
         self.default_platform = None        # type: Optional[SmartVirtualHardwarePlatform]
 
         self.clock = self._load_clock()
-        self.stop_future = asyncio.Future(loop=self.clock.loop)     # type: asyncio.Future
+        self.stop_future = asyncio.Future()     # type: asyncio.Future
 
     def add_crash_handler(self, handler: Callable):
         """Add a crash handler which is called on a crash.
@@ -220,7 +220,7 @@ class MachineController(LogMixin):
     async def initialise_core_and_hardware(self) -> None:
         """Load core modules and hardware."""
         self._boot_holds = set()
-        self.is_init_done = asyncio.Event(loop=self.clock.loop)
+        self.is_init_done = asyncio.Event()
         self.register_boot_hold('init')
         self._load_hardware_platforms()
 
@@ -321,7 +321,7 @@ class MachineController(LogMixin):
             init_done.append(hardware_platform.initialize())
 
         # wait for all of them in parallel
-        results = await asyncio.wait(init_done, loop=self.clock.loop)
+        results = await asyncio.wait(init_done)
         for result in results[0]:
             result.result()
 
@@ -645,9 +645,9 @@ class MachineController(LogMixin):
         self.info_log("Initialise MPF.")
         timeout = 30 if self.options["production"] else None
         try:
-            init = asyncio.ensure_future(self.initialise(), loop=self.clock.loop)
+            init = asyncio.ensure_future(self.initialise())
             self.clock.loop.run_until_complete(Util.first([init, self.stop_future], cancel_others=False,
-                                                          loop=self.clock.loop, timeout=timeout))
+                                                          timeout=timeout))
         except asyncio.TimeoutError:
             self._crash_shutdown()
             self.error_log("MPF needed more than {}s for initialisation. Aborting!".format(timeout))

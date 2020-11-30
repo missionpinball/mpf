@@ -27,11 +27,11 @@ class EjectTracker:
         self._already_left = already_left
         self._ball_count_handler = ball_counter_handler     # type: BallCountHandler
         self._task = None
-        self._event_queue = asyncio.Queue(loop=self._ball_count_handler.machine.clock.loop)
-        self._ball_left = asyncio.Future(loop=self._ball_count_handler.machine.clock.loop)
-        self._ball_returned = asyncio.Future(loop=self._ball_count_handler.machine.clock.loop)
-        self._ready = asyncio.Future(loop=self._ball_count_handler.machine.clock.loop)
-        self._unknown_balls = asyncio.Future(loop=self._ball_count_handler.machine.clock.loop)
+        self._event_queue = asyncio.Queue()
+        self._ball_left = asyncio.Future()
+        self._ball_returned = asyncio.Future()
+        self._ready = asyncio.Future()
+        self._unknown_balls = asyncio.Future()
         self._num_unknown_balls = 0
         self._num_lost_balls = 0
 
@@ -41,7 +41,7 @@ class EjectTracker:
         ball_changes = self._ball_count_handler.counter.register_change_stream()
         if not self._already_left:
             ball_left = await self._ball_count_handler.counter.wait_for_ball_to_leave()
-            self._ball_left = asyncio.ensure_future(ball_left, loop=self.machine.clock.loop)
+            self._ball_left = asyncio.ensure_future(ball_left)
 
         self._task = self.machine.clock.loop.create_task(self._run(ball_changes))
         self._task.add_done_callback(Util.raise_exceptions)
@@ -102,25 +102,25 @@ class EjectTracker:
         """Track lost ball."""
         self._num_lost_balls += balls
         if self._num_lost_balls >= self._num_unknown_balls and self._unknown_balls.done():
-            self._unknown_balls = asyncio.Future(loop=self._ball_count_handler.machine.clock.loop)
+            self._unknown_balls = asyncio.Future()
 
     def wait_for_ball_return(self):
         """Wait until a ball returned."""
-        return asyncio.shield(self._ball_returned, loop=self.machine.clock.loop)
+        return asyncio.shield(self._ball_returned)
 
     def wait_for_ball_unknown_ball(self):
         """Return true if the device has unknown balls which are neither clearly new or returned."""
-        return asyncio.shield(self._unknown_balls, loop=self.machine.clock.loop)
+        return asyncio.shield(self._unknown_balls)
 
     def wait_for_ball_left(self):
         """Wait until a ball left."""
         if self._already_left:
             raise AssertionError("Invalid wait. Ball left before eject.")
-        return asyncio.shield(self._ball_left, loop=self.machine.clock.loop)
+        return asyncio.shield(self._ball_left)
 
     def wait_for_ready(self):
         """Wait until the device is ready."""
-        return asyncio.shield(self._ready, loop=self.machine.clock.loop)
+        return asyncio.shield(self._ready)
 
     def set_ready(self):
         """Set device ready."""
@@ -186,7 +186,7 @@ class PhysicalBallCounter:
         self.machine = self.ball_device.machine     # type: MachineController
 
         self._last_count = None                     # type: Optional[int]
-        self._count_stable = asyncio.Event(loop=self.machine.clock.loop)
+        self._count_stable = asyncio.Event()
         self._activity_queues = []                  # type: List[asyncio.Queue[BallActivity]]
         self._ball_change_futures = []              # type: List[asyncio.Future]
 
@@ -234,7 +234,7 @@ class PhysicalBallCounter:
 
     def wait_for_count_stable(self):
         """Wait for stable count."""
-        return asyncio.ensure_future(self._count_stable.wait(), loop=self.machine.clock.loop)
+        return asyncio.ensure_future(self._count_stable.wait())
 
     @property
     def is_ready_to_receive(self):
@@ -255,7 +255,7 @@ class PhysicalBallCounter:
 
     def register_change_stream(self):
         """Register queue which returns all changes."""
-        queue = asyncio.Queue(loop=self.machine.clock.loop)
+        queue = asyncio.Queue()
         self._activity_queues.append(queue)
         return queue
 
@@ -266,7 +266,7 @@ class PhysicalBallCounter:
 
     def wait_for_ball_activity(self):
         """Wait for (settled) ball activity in device."""
-        future = asyncio.Future(loop=self.machine.clock.loop)
+        future = asyncio.Future()
         self._ball_change_futures.append(future)
         return future
 

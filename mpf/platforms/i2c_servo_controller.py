@@ -46,9 +46,9 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
         i2c_device.i2c_write8(0x00, 0x11)  # set sleep
         i2c_device.i2c_write8(0x01, 0x04)  # configure output
         i2c_device.i2c_write8(0xFE, 130)   # set approx 50Hz
-        await asyncio.sleep(.01, loop=self.machine.clock.loop)     # needed according to datasheet to sync PLL
+        await asyncio.sleep(.01)     # needed according to datasheet to sync PLL
         i2c_device.i2c_write8(0x00, 0x01)  # no more sleep
-        await asyncio.sleep(.01, loop=self.machine.clock.loop)     # needed to end sleep according to datasheet
+        await asyncio.sleep(.01)     # needed to end sleep according to datasheet
         return i2c_device
 
     async def configure_servo(self, number: str):

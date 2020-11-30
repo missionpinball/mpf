@@ -313,7 +313,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         self._reader = None                 # type: Optional[asyncio.StreamReader]
         self._poll_task = None
         self._watchdog_task = None
-        self._bus_lock = asyncio.Lock(loop=self.machine.clock.loop)
+        self._bus_lock = asyncio.Lock()
         self._number_of_lamps = None        # type: Optional[int]
         self._number_of_solenoids = None    # type: Optional[int]
         self._number_of_displays = None     # type: Optional[int]
@@ -390,7 +390,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 self._writer.transport._serial.open()
 
             # give the serial a few ms to read the first bytes
-            await asyncio.sleep(.1, loop=self.machine.clock.loop)
+            await asyncio.sleep(.1)
 
             while True:
                 # reset platform
@@ -399,8 +399,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 # send command
                 self.send_byte(LisyDefines.GeneralReset)
                 try:
-                    return_code = await asyncio.wait_for(self._read_byte(), timeout=0.5,
-                                                         loop=self.machine.clock.loop)
+                    return_code = await asyncio.wait_for(self._read_byte(), timeout=0.5)
                 except asyncio.TimeoutError:
                     self.warning_log("Reset of LISY failed. Did not get a response in 500ms. Will retry.")
                     continue
@@ -558,7 +557,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 status = await self._read_byte()
             if status == 127:
                 # no changes. sleep according to poll_hz
-                await asyncio.sleep(sleep_time, loop=self.machine.clock.loop)
+                await asyncio.sleep(sleep_time)
             else:
                 # bit 7 is state
                 switch_state = 1 if status & 0b10000000 else 0
@@ -581,7 +580,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 if response != 0:
                     self.warning_log("Watchdog returned %s instead 0", response)
             # sleep 500ms
-            await asyncio.sleep(.5, loop=self.machine.clock.loop)
+            await asyncio.sleep(.5)
 
     # pylint: disable-msg=too-many-arguments
     def _configure_hardware_rule(self, coil: DriverSettings, switch1: SwitchSettings,

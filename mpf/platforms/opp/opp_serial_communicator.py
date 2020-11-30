@@ -57,7 +57,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         count = 0
         # read and discard all messages in buffer
         self.send(OppRs232Intf.EOM_CMD)
-        await asyncio.sleep(.01, loop=self.machine.clock.loop)
+        await asyncio.sleep(.01)
         await self.read(1000)
         while True:
             if (count % 10) == 0:
@@ -65,7 +65,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
                                self.port)
             count += 1
             self.send(OppRs232Intf.EOM_CMD)
-            await asyncio.sleep(.01, loop=self.machine.clock.loop)
+            await asyncio.sleep(.01)
             resp = await self.read(30)
             if resp.startswith(OppRs232Intf.EOM_CMD):
                 break

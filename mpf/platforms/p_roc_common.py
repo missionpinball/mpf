@@ -144,7 +144,7 @@ class ProcProcess:
                 if events:
                     return list(events)
 
-                await asyncio.sleep(poll_sleep, loop=self.loop)
+                await asyncio.sleep(poll_sleep)
 
             return []
         except IOError as error:  # pragma: no cover
@@ -208,8 +208,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         if self.debug:
             self.debug_log("Calling P-Roc cmd: %s (%s)", cmd, args)
         future = asyncio.wrap_future(
-            asyncio.run_coroutine_threadsafe(self.proc_process.run_command(cmd, *args), self.proc_process_instance),
-            loop=self.machine.clock.loop)
+            asyncio.run_coroutine_threadsafe(self.proc_process.run_command(cmd, *args), self.proc_process_instance))
         future.add_done_callback(Util.raise_exceptions)
         return future
 
@@ -299,12 +298,11 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         while True:
             events = await asyncio.wrap_future(
                 asyncio.run_coroutine_threadsafe(self.proc_process.read_events_and_watchdog(poll_sleep),
-                                                 self.proc_process_instance),
-                loop=self.machine.clock.loop)
+                                                 self.proc_process_instance))
             if events:
                 self.process_events(events)
 
-            await asyncio.sleep(poll_sleep, loop=self.machine.clock.loop)
+            await asyncio.sleep(poll_sleep)
 
     def stop(self):
         """Stop proc."""
