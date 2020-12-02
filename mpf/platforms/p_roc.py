@@ -89,6 +89,11 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
             self.version, self.revision, self.hardware_version)
         return infos
 
+    @classmethod
+    def get_coil_config_section(cls):
+        """Return coil config section."""
+        return "p_roc_coils"
+
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Create a P-ROC driver.
 
@@ -121,7 +126,11 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
             proc_num = self.pinproc.decode(self.machine_type, str(number))
             polarity = self.machine_type in (self.pinproc.MachineTypeSternWhitestar, self.pinproc.MachineTypeSternSAM)
 
-        return PROCDriver(proc_num, config, self, number, polarity)
+        polarity = platform_settings.get("polarity", None)
+        driver = PROCDriver(proc_num, config, self, number, polarity)
+        self._late_init_futures.append(driver.initialise())
+
+        return driver
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure a P-ROC switch.

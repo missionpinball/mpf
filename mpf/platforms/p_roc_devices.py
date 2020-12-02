@@ -69,10 +69,18 @@ class PROCDriver(DriverPlatformInterface):
         """Initialise driver."""
         self.log = logging.getLogger('PROCDriver {}'.format(number))
         super().__init__(config, number)
-        self.platform = platform
+        self.platform = platform            # type: PROCBasePlatform
         self.polarity = polarity
         self.string_number = string_number
         self.pdbconfig = getattr(platform, "pdbconfig", None)
+
+    async def initialise(self):
+        """Initialize driver."""
+        if self.polarity is None:
+            self.log.debug("Getting polarity for driver %s", self.number)
+            state = await self.platform.run_proc_cmd("driver_get_state", self.number)
+            self.polarity = state["polarity"]
+            self.log.debug("Got Polarity %s for driver %s", self.polarity, self.number)
 
         self.log.debug("Driver Settings for %s", self.number)
         self.platform.run_proc_cmd_no_wait("driver_update_state", self.state())

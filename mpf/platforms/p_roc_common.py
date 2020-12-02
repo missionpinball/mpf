@@ -165,7 +165,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
     """
 
     __slots__ = ["pdbconfig", "pinproc", "proc", "log", "hw_switch_rules", "version", "revision", "hardware_version",
-                 "dipswitches", "machine_type", "event_task",
+                 "dipswitches", "machine_type", "event_task", "_late_init_futures",
                  "proc_thread", "proc_process", "proc_process_instance", "_commands_running", "config", "_light_system"]
 
     def __init__(self, machine):
@@ -194,6 +194,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         self.config = {}
         self._light_system = None
         self.machine_type = None
+        self._late_init_futures = []
 
     def _decrement_running_commands(self, future):
         del future
@@ -281,6 +282,9 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
     async def start(self):
         """Start listening for switches."""
+        if self._late_init_futures:
+            await asyncio.wait(self._late_init_futures, loop=self.machine.clock.loop)
+
         self.event_task = self.machine.clock.loop.create_task(self._poll_events())
         self.event_task.add_done_callback(Util.raise_exceptions)
         self._light_system.start()
