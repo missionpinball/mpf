@@ -6,6 +6,7 @@ import abc
 from mpf.core.utility_functions import Util
 
 from mpf.core.config_player import ConfigPlayer
+from mpf.exceptions.base_error import BaseError
 from mpf.exceptions.config_file_error import ConfigFileError
 
 
@@ -76,7 +77,11 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
             device_settings = device
 
         device_settings = self._parse_config(device_settings, device)
-        device_settings = self._expand_device_config(device_settings)
+        try:
+            device_settings = self._expand_device_config(device_settings)
+        except BaseError as e:
+            e.extend('Failed to expand entry "{}".'.format(device))
+            raise e
 
         devices = self._expand_device(device)
 
@@ -110,7 +115,7 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
                     return self.raise_config_error(
                         "Could not find a {} device with name or tag {}, from list {}".format(
                             self.device_collection.name, device_name, device_or_tag_names),
-                        1)
+                        101)
 
                 # placeholders may be evaluated later
                 device_list.append(device_name)

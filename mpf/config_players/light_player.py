@@ -2,7 +2,7 @@
 from typing import List
 
 from mpf.config_players.device_config_player import DeviceConfigPlayer
-from mpf.core.rgb_color import RGBColor
+from mpf.core.rgb_color import RGBColor, ColorException
 from mpf.core.utility_functions import Util
 
 
@@ -99,13 +99,7 @@ class LightPlayer(DeviceConfigPlayer):
             self._light_remove(light, instance_dict, full_context, fade_ms)
             return
         if isinstance(color, str) and color != "on":
-            # hack to keep compatibility for matrix_light values
-            if len(color) == 1:
-                color = "0" + color + "0" + color + "0" + color
-            elif len(color) == 2:
-                color = color + color + color
-
-            color = RGBColor(color)
+            color = self._convert_color(color, context=light)
         light.color(color, key=full_context, fade_ms=fade_ms, priority=priority, start_time=start_time)
         instance_dict[(full_context, light)] = light
 
@@ -116,17 +110,28 @@ class LightPlayer(DeviceConfigPlayer):
 
         self._reset_instance_dict(context)
 
+    def _convert_color(self, color, *, context=None) -> RGBColor:
+        """Convert color to RGBColor."""
+        # hack to keep compatibility for matrix_light values
+        if len(color) == 1:
+            color = "0" + color + "0" + color + "0" + color
+        elif len(color) == 2:
+            color = color + color + color
+
+        try:
+            color = RGBColor(color)
+        except ColorException as e:
+            self.raise_config_error("Invalid color {}".format(color), 1, source_exception=e, context=context)
+
+        return color
+
     def _expand_device_config(self, device_settings):
         # convert all colors to RGBColor
         device_settings = super()._expand_device_config(device_settings)
         color = device_settings['color']
         if isinstance(color, str) and "(" not in color and color not in ("on", "stop"):
-            # hack to keep compatibility for matrix_light values
-            if len(color) == 1:
-                color = "0" + color + "0" + color + "0" + color
-            elif len(color) == 2:
-                color = color + color + color
-            device_settings['color'] = RGBColor(color)
+            device_settings['color'] = self._convert_color(color)
+
         return device_settings
 
     def get_express_config(self, value):
