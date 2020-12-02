@@ -1007,6 +1007,8 @@ p_roc:
     pd_led_boards: dict|int:subconfig(pd_led_boards)|none
     use_separate_thread: single|bool|true
     trace_bus: single|bool|false
+p_roc_coils:
+    polarity: single|bool|None
 p3_roc:
     driverboards: single|enum(pdb,custom,None)|None
     lamp_matrix_strobe_time: single|ms|100ms

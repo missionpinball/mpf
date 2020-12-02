@@ -134,10 +134,6 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         self.acceleration = [0] * 3
         self.accelerometer_device = None    # type: Optional[PROCAccelerometer]
 
-    def get_polarity(self):
-        """Polarity is always true on the P3-Roc."""
-        return True
-
     async def connect(self):
         """Connect to the P3-Roc."""
         await super().connect()
@@ -335,7 +331,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
             raise AssertionError("Cannot use PD-16 with ID 0 or 1 when DIP 1 is on the P3-Roc. Turn DIP 1 off or "
                                  "renumber PD-16s. Driver: {}".format(number))
 
-        proc_driver_object = PROCDriver(proc_num, config, self, number, self.get_polarity())
+        proc_driver_object = PROCDriver(proc_num, config, self, number, True)
 
         return proc_driver_object
 
