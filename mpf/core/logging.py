@@ -181,6 +181,9 @@ class LogMixin:
         self.error_log(msg)
 
     def _logging_not_configured(self) -> "NoReturn":
+        if self.machine and self.machine.is_shutting_down:
+            # omit errors on shutdown
+            return
         raise RuntimeError(
             "Logging has not been configured for the {} module. You must call "
             "configure_logging() before you can post a log message".
