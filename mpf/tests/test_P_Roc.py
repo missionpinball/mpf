@@ -251,7 +251,7 @@ class TestPRoc(MpfTestCase):
         self.wait_for_platform()
         number = self.machine.coils["c_direct2_pulse_power"].hw_driver.number
         self.pinproc.driver_pulsed_patter.assert_called_with(
-            number, 9, 1, 20)
+            number, 9, 1, 20, True)
 
     def _test_alpha_display(self):
         self.pinproc.aux_send_commands = MagicMock(return_value=True)

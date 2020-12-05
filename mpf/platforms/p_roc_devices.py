@@ -126,7 +126,7 @@ class PROCDriver(DriverPlatformInterface):
         if pulse_settings.power != 1:
             on_time, off_time = Util.power_to_on_off(pulse_settings.power)
             self.platform.run_proc_cmd_no_wait("driver_pulsed_patter", self.number, on_time, off_time,
-                                               pulse_settings.duration)
+                                               pulse_settings.duration, True)
         else:
             self.platform.run_proc_cmd_no_wait("driver_pulse", self.number, pulse_settings.duration)
 
