@@ -88,6 +88,7 @@ class ProcProcess:
 
     def start_proc_process(self, machine_type, loop, trace, log):
         """Run the pinproc communication."""
+        asyncio.set_event_loop(loop)
         self.start_pinproc(machine_type, loop, trace, log)
 
         loop.run_until_complete(self.stop_future)
