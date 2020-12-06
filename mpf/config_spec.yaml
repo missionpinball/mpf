@@ -1863,6 +1863,7 @@ virtual_platform_start_active_switches:
 virtual_score_reels:
     __valid_in__: machine
     __type__: device
+    reel_count: single|num|0
     frames: list|subconfig(virtual_score_reel_frame)|None
 virtual_score_reel_frame:
     character: single|str|None
