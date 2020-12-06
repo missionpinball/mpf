@@ -682,6 +682,12 @@ images:
     __type__: config_dict
     file: single|str|None
     load: single|str|None
+    frame_skips: list|subconfig(images_frame_skips)|None
+images_frame_skips:
+    __valid_in__: machine, mode
+    __type__: config_dict
+    from: single|int|None
+    to: single|int|None
 keyboard:
     __valid_in__: machine                           # todo add to validator
     __type__: config_dict
