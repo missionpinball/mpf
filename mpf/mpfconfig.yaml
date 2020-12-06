@@ -87,6 +87,7 @@ mpf:
         - mpf.devices.score_queue.ScoreQueue
         - mpf.devices.ball_routing.BallRouting
         - mpf.devices.show_queue.ShowQueue
+        - mpf.devices.virtual_score_reel.VirtualScoreReel
 
     plugins:
         - mpf.plugins.auditor.Auditor

@@ -1860,6 +1860,13 @@ videos:         # not really used
 virtual_platform_start_active_switches:
     __valid_in__: machine                           # todo add to validator
     __type__: list
+virtual_score_reels:
+    __valid_in__: machine
+    __type__: device
+    frames: list|subconfig(virtual_score_reel_frame)|None
+virtual_score_reel_frame:
+    character: single|str|None
+    frame: single|int|None
 vpe:
     __valid_in__: machine
     __type__: config
