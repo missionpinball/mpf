@@ -45,7 +45,7 @@ class BallController(MpfController):
                                         self._stop)
 
         self._add_new_balls_task = None                                         # type: Optional[asyncio.Task]
-        self._captured_balls = asyncio.Queue(loop=self.machine.clock.loop)      # type: asyncio.Queue
+        self._captured_balls = asyncio.Queue()      # type: asyncio.Queue
 
     def _init4(self, **kwargs):
         del kwargs
@@ -124,13 +124,12 @@ class BallController(MpfController):
             futures = []
             for device in self.machine.ball_devices.values():
                 if not device.is_playfield():
-                    futures.append(asyncio.ensure_future(device.ball_count_handler.counter.wait_for_ball_activity(),
-                                                         loop=self.machine.clock.loop))
+                    futures.append(asyncio.ensure_future(device.ball_count_handler.counter.wait_for_ball_activity()))
 
             try:
                 return self._get_total_balls_in_devices()
             except ValueError:
-                await Util.first(futures, self.machine.clock.loop)
+                await Util.first(futures)
                 continue
 
     def _count_balls(self) -> int:

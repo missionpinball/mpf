@@ -120,7 +120,7 @@ class ScoreReelGroup(SystemWideDevice):
             if reel:
                 futures.append(reel.wait_for_ready())
 
-        return asyncio.wait(iter(futures), loop=self.machine.clock.loop)
+        return asyncio.wait(iter(futures))
 
     def int_to_reel_list(self, value):
         """Convert an integer to a list of integers that represent each positional digit in this ScoreReelGroup.

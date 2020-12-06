@@ -141,7 +141,7 @@ class MockQueueSocket(MockSocket):
 
     def __init__(self, loop):
         super().__init__()
-        self.send_queue = asyncio.Queue(loop=loop)
+        self.send_queue = asyncio.Queue()
         self.recv_queue = []
 
     def write_ready(self):
@@ -164,7 +164,7 @@ class MockServer:
 
     def __init__(self, loop):
         self.loop = loop
-        self.is_bound = asyncio.Future(loop=loop)
+        self.is_bound = asyncio.Future()
         self.client_connected_cb = None
 
     async def bind(self, client_connected_cb):
@@ -396,6 +396,15 @@ class TimeTravelLoop(base_events.BaseEventLoop):
     def reset_counters(self):
         self.remove_reader_count = collections.defaultdict(int)
         self.remove_writer_count = collections.defaultdict(int)
+
+    def run_once(self):
+        if hasattr(events, "_set_running_loop"):
+            events._set_running_loop(self)
+
+        self._run_once()
+
+        if hasattr(events, "_set_running_loop"):
+            events._set_running_loop(None)
 
     def _run_once(self):
         # Advance time only when we finished everything at the present:

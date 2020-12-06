@@ -71,9 +71,9 @@ class SpiBitBangPlatform(SwitchPlatform):
         """Read from SPI."""
         self.config['clock_pin'].disable()
         self._disable_chip_select()
-        await asyncio.sleep(self.config['bit_time'], loop=self.machine.clock.loop)
+        await asyncio.sleep(self.config['bit_time'])
         self._enable_chip_select()
-        await asyncio.sleep(self.config['bit_time'], loop=self.machine.clock.loop)
+        await asyncio.sleep(self.config['bit_time'])
 
         read_bits = 0
         for _ in range(bits):
@@ -83,7 +83,7 @@ class SpiBitBangPlatform(SwitchPlatform):
                 read_bits |= 0x1
 
             self.config['clock_pin'].pulse(int(self.config['clock_time']))
-            await asyncio.sleep(self.config['bit_time'], loop=self.machine.clock.loop)
+            await asyncio.sleep(self.config['bit_time'])
 
         self._disable_chip_select()
         return read_bits

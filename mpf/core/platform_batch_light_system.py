@@ -65,9 +65,9 @@ class PlatformBatchLightSystem:
     def __init__(self, clock, update_callback, update_hz, max_batch_size):
         """Initialise light system."""
         self.dirty_lights = SortedSet()    # type: Set[PlatformBatchLight]
-        self.dirty_lights_changed = asyncio.Event(loop=clock.loop)
+        self.dirty_lights_changed = asyncio.Event()
         self.dirty_schedule = SortedList()
-        self.schedule_changed = asyncio.Event(loop=clock.loop)
+        self.schedule_changed = asyncio.Event()
         self.update_task = None
         self.scheduler_task = None
         self.clock = clock
@@ -101,7 +101,7 @@ class PlatformBatchLightSystem:
             self.dirty_lights_changed.set()
 
             if self.dirty_schedule:
-                await asyncio.wait([self.schedule_changed.wait()], loop=self.clock.loop,
+                await asyncio.wait([self.schedule_changed.wait()],
                                    timeout=self.dirty_schedule[0][0] - run_time, return_when=asyncio.FIRST_COMPLETED)
             else:
                 await self.schedule_changed.wait()
@@ -131,7 +131,7 @@ class PlatformBatchLightSystem:
 
             self.dirty_lights.clear()
 
-            await asyncio.sleep(poll_sleep_time, loop=self.clock.loop)
+            await asyncio.sleep(poll_sleep_time)
 
     async def _send_update_batch(self, sequential_lights: List[PlatformBatchLight], max_fade_tolerance):
         sequential_brightness_list = []     # type: List[Tuple[LightPlatformInterface, float, int]]

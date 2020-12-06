@@ -66,7 +66,7 @@ class TestVPX(MpfTestCase):
 
     def test_vpx(self):
         self.advance_time_and_run()
-        self.client.send_queue = asyncio.Queue(loop=self.loop)
+        self.client.send_queue = asyncio.Queue()
 
         self._encode_and_send("changed_lamps")
         self._encode_and_send("changed_solenoids")

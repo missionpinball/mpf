@@ -20,8 +20,8 @@ class MockBcpClient(BaseBcpClient):
 
         super().__init__(machine, name, bcp)
         self.name = name
-        self.receive_queue = asyncio.Queue(loop=self.machine.clock.loop)
-        self.send_queue = asyncio.Queue(loop=self.machine.clock.loop)
+        self.receive_queue = asyncio.Queue()
+        self.send_queue = asyncio.Queue()
 
     async def connect(self, config):
         return
