@@ -677,12 +677,16 @@ info_lights:
 image_pools:
     __valid_in__: machine, mode                      # todo add to validator
     __type__: config_dict
+image_templates:
+    __valid_in__: machine
+    __type: config
 images:
     __valid_in__: machine, mode
     __type__: config_dict
     file: single|str|None
-    load: single|str|None
     frame_skips: list|subconfig(images_frame_skips)|None
+    image_template: single|subconfig(images,device)|
+    load: single|str|None
 images_frame_skips:
     __valid_in__: machine, mode
     __type__: config_dict
