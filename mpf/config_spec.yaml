@@ -1875,6 +1875,7 @@ virtual_score_reels:
     __type__: device
     reel_count: single|num|0
     frames: list|subconfig(virtual_score_reel_frame)|None
+    include_player_number: single|bool|False
 virtual_score_reel_frame:
     character: single|str|None
     frame: single|int|None
