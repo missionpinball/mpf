@@ -303,6 +303,15 @@ digital_outputs:
     platform_settings: single|dict|None
     type: single|enum(light,driver)|
     light_subtype: single|str|None
+digital_score_reels:
+    __valid_in__: machine
+    __type__: device
+    reel_count: single|num|0
+    frames: list|subconfig(digital_score_reel_frame)|None
+    include_player_number: single|bool|False
+digital_score_reel_frame:
+    character: single|str|None
+    frame: single|int|None
 dual_wound_coils:
     __valid_in__: machine
     __type__: device
@@ -1872,15 +1881,6 @@ videos:         # not really used
 virtual_platform_start_active_switches:
     __valid_in__: machine                           # todo add to validator
     __type__: list
-virtual_score_reels:
-    __valid_in__: machine
-    __type__: device
-    reel_count: single|num|0
-    frames: list|subconfig(virtual_score_reel_frame)|None
-    include_player_number: single|bool|False
-virtual_score_reel_frame:
-    character: single|str|None
-    frame: single|int|None
 vpe:
     __valid_in__: machine
     __type__: config

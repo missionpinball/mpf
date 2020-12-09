@@ -1,12 +1,12 @@
-"""Contains the base class for virtual (image-based) score reels."""
+"""Contains the base class for digital (image-based) score reels."""
 
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-class VirtualScoreReel(SystemWideDevice):
-  config_section = 'virtual_score_reels'
-  collection = 'virtual_score_reels'
-  class_label = 'virtual_score_reel'
+class DigitalScoreReel(SystemWideDevice):
+  config_section = 'digital_score_reels'
+  collection = 'digital_score_reels'
+  class_label = 'digital_score_reel'
 
   def __init__(self, machine, name):
     super().__init__(machine, name)
@@ -25,7 +25,7 @@ class VirtualScoreReel(SystemWideDevice):
     self.machine.events.add_handler(self.name, self._post_reel_values)
 
   def _post_reel_values(self, **kwargs):
-    # Virtual score reels support scores up to ten trillion
+    # Digital score reels support scores up to 9.99 trillion
     names = ["1", "10", "100", "1k", "10k", "100k", "1m", "10m", "100m", "1b", "10b", "100b", "1t"]
     # Reverse the score and pad with zeroes up to the reel count
     score = str(kwargs["value"])[::-1].ljust(self._reel_count, "0")

@@ -64,6 +64,7 @@ mpf:
         - mpf.devices.servo.Servo
         - mpf.devices.achievement.Achievement
         - mpf.devices.achievement_group.AchievementGroup
+        - mpf.devices.digital_score_reel.DigitalScoreReel
         - mpf.devices.dmd.Dmd
         - mpf.devices.rgb_dmd.RgbDmd
         - mpf.devices.light_group.LightStrip
@@ -87,7 +88,6 @@ mpf:
         - mpf.devices.score_queue.ScoreQueue
         - mpf.devices.ball_routing.BallRouting
         - mpf.devices.show_queue.ShowQueue
-        - mpf.devices.virtual_score_reel.VirtualScoreReel
 
     plugins:
         - mpf.plugins.auditor.Auditor
