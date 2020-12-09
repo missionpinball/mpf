@@ -109,7 +109,7 @@ class LightPlatformDirectFade(LightPlatformInterface, metaclass=abc.ABCMeta):
             self.set_brightness_and_fade(brightness, max(fade_ms, 0))
             if target_fade_ms <= max_fade_ms:
                 return
-            await asyncio.sleep(interval, loop=self.loop)
+            await asyncio.sleep(interval)
 
     @abc.abstractmethod
     def set_brightness_and_fade(self, brightness: float, fade_ms: int) -> None:

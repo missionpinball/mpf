@@ -510,7 +510,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         read_input_msg.extend(OppRs232Intf.EOM_CMD)
         self.read_input_msg[chain_serial] = bytes(read_input_msg)
-        self._poll_response_received[chain_serial] = asyncio.Event(loop=self.machine.clock.loop)
+        self._poll_response_received[chain_serial] = asyncio.Event()
         self._poll_response_received[chain_serial].set()
 
     def vers_resp(self, chain_serial, msg):
@@ -858,8 +858,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             # wait for previous poll response
             timeout = 1 / self.config['poll_hz'] * 25
             try:
-                await asyncio.wait_for(self._poll_response_received[chain_serial].wait(), timeout,
-                                       loop=self.machine.clock.loop)
+                await asyncio.wait_for(self._poll_response_received[chain_serial].wait(), timeout)
             except asyncio.TimeoutError:
                 self.log.warning("Poll took more than %sms for %s", timeout * 1000, chain_serial)
             else:
@@ -868,7 +867,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             self.send_to_processor(chain_serial, self.read_input_msg[chain_serial])
             await self.opp_connection[chain_serial].writer.drain()
             # the line above saturates the link and seems to overwhelm the hardware. limit it to 100Hz
-            await asyncio.sleep(1 / self.config['poll_hz'], loop=self.machine.clock.loop)
+            await asyncio.sleep(1 / self.config['poll_hz'])
 
     def _verify_coil_and_switch_fit(self, switch, coil):
         chain_serial, card, solenoid = coil.hw_driver.number.split('-')

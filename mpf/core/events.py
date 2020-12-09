@@ -381,7 +381,7 @@ class EventManager(MpfController):
 
     def wait_for_any_event(self, event_names: List[str]) -> asyncio.Future:
         """Wait for any event from event_names."""
-        future = asyncio.Future(loop=self.machine.clock.loop)   # type: asyncio.Future
+        future = asyncio.Future()   # type: asyncio.Future
         keys = []   # type: List[EventHandlerKey]
         for event_name in event_names:
             keys.append(self.add_handler(event_name, partial(self._wait_handler,
@@ -415,19 +415,19 @@ class EventManager(MpfController):
 
     def post_async(self, event: str, **kwargs: dict) -> asyncio.Future:
         """Post event and wait until all handlers are done."""
-        future = asyncio.Future(loop=self.machine.clock.loop)   # type: asyncio.Future
+        future = asyncio.Future()   # type: asyncio.Future
         self.post(event, partial(self._set_result, _future=future), **kwargs)
         return future
 
     def post_relay_async(self, event: str, **kwargs: dict) -> asyncio.Future:
         """Post relay event, wait until all handlers are done and return result."""
-        future = asyncio.Future(loop=self.machine.clock.loop)   # type: asyncio.Future
+        future = asyncio.Future()   # type: asyncio.Future
         self.post_relay(event, partial(self._set_result, _future=future), **kwargs)
         return future
 
     def post_queue_async(self, event: str, **kwargs: dict) -> asyncio.Future:
         """Post queue event, wait until all handlers are done and locks are released."""
-        future = asyncio.Future(loop=self.machine.clock.loop)   # type: asyncio.Future
+        future = asyncio.Future()   # type: asyncio.Future
         self.post_queue(event, partial(self._set_result, _future=future), **kwargs)
         return future
 
@@ -633,7 +633,7 @@ class EventManager(MpfController):
             handler.callback(queue=queue, **merged_kwargs)
 
             if queue.waiter:
-                queue.event = asyncio.Event(loop=self.machine.clock.loop)
+                queue.event = asyncio.Event()
                 await queue.event.wait()
 
         if self._debug:

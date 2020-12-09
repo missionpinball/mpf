@@ -55,7 +55,7 @@ class BaseSerialCommunicator:
                     raise
 
                 # if we are in production mode retry
-                await asyncio.sleep(.1, loop=self.machine.clock.loop)
+                await asyncio.sleep(.1)
                 self.log.debug("Connection to %s failed. Will retry.", port)
             else:
                 # we got a connection

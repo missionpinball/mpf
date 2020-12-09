@@ -22,8 +22,8 @@ class ScoreQueue(SystemWideDevice):
     def __init__(self, machine, name):
         """Initialise ball lock."""
         super().__init__(machine, name)
-        self._score_queue = asyncio.Queue(loop=self.machine.clock.loop)
-        self._score_queue_empty = asyncio.Event(loop=self.machine.clock.loop)
+        self._score_queue = asyncio.Queue()
+        self._score_queue_empty = asyncio.Event()
         self._score_queue_empty.set()
         self._score_task = None
 
@@ -71,7 +71,7 @@ class ScoreQueue(SystemWideDevice):
                 if len(self.config['chimes']) >= digit_pos and self.config['chimes'][-(digit_pos + 1)]:
                     self.config['chimes'][-(digit_pos + 1)].pulse()
                     self.debug_log("Played chime for pos %s. Waiting %ss", digit_pos, self.config['delay'])
-                    await asyncio.sleep(self.config['delay'], loop=self.machine.clock.loop)
+                    await asyncio.sleep(self.config['delay'])
 
             if self._score_queue.empty():
                 self._score_queue_empty.set()

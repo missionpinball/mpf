@@ -134,10 +134,6 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         self.acceleration = [0] * 3
         self.accelerometer_device = None    # type: Optional[PROCAccelerometer]
 
-    def get_polarity(self):
-        """Polarity is always true on the P3-Roc."""
-        return True
-
     async def connect(self):
         """Connect to the P3-Roc."""
         await super().connect()
@@ -197,7 +193,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         poll_sleep = 1 / self.config["gpio_poll_frequency"]
         gpio_state_old = None
         while True:
-            await asyncio.sleep(poll_sleep, loop=self.machine.clock.loop)
+            await asyncio.sleep(poll_sleep)
             gpio_state = await self.run_proc_cmd("read_data", 0x00, 0x04)
             for gpio_index, state in self.config["gpio_map"].items():
                 if state == "input" and (gpio_state_old is None or (gpio_state ^ gpio_state_old) & (1 << gpio_index)):
@@ -335,7 +331,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
             raise AssertionError("Cannot use PD-16 with ID 0 or 1 when DIP 1 is on the P3-Roc. Turn DIP 1 off or "
                                  "renumber PD-16s. Driver: {}".format(number))
 
-        proc_driver_object = PROCDriver(proc_num, config, self, number, self.get_polarity())
+        proc_driver_object = PROCDriver(proc_num, config, self, number, True)
 
         return proc_driver_object
 

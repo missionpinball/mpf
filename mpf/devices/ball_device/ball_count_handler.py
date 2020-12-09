@@ -21,19 +21,19 @@ class BallCountHandler(BallDeviceStateHandler):
         """Initialise ball count handler."""
         super().__init__(ball_device)
         # inputs
-        self._is_counting = asyncio.Lock(loop=self.machine.clock.loop)
-        self._count_valid = asyncio.Event(loop=self.machine.clock.loop)
-        self._revalidate = asyncio.Event(loop=self.machine.clock.loop)
-        self._eject_started = asyncio.Event(loop=self.machine.clock.loop)
-        self._eject_ended = asyncio.Event(loop=self.machine.clock.loop)
-        self._has_balls = asyncio.Event(loop=self.machine.clock.loop)
+        self._is_counting = asyncio.Lock()
+        self._count_valid = asyncio.Event()
+        self._revalidate = asyncio.Event()
+        self._eject_started = asyncio.Event()
+        self._eject_ended = asyncio.Event()
+        self._has_balls = asyncio.Event()
         self._ball_count = 0
         self._ball_count_changed_futures = []
         self.counter = None  # type: Optional[PhysicalBallCounter]
 
     def wait_for_ball_count_changed(self):
         """Wait until ball count changed."""
-        future = asyncio.Future(loop=self.machine.clock.loop)
+        future = asyncio.Future()
         self._ball_count_changed_futures.append(future)
         return future
 
@@ -128,8 +128,7 @@ class BallCountHandler(BallDeviceStateHandler):
         # wait until we have more than 0 balls
         if not self.counter:
             raise asyncio.CancelledError
-        ball_changes = asyncio.ensure_future(self.counter.wait_for_ball_count_changes(0),
-                                             loop=self.machine.clock.loop)
+        ball_changes = asyncio.ensure_future(self.counter.wait_for_ball_count_changes(0))
         new_balls = await ball_changes
 
         # update count
@@ -219,10 +218,9 @@ class BallCountHandler(BallDeviceStateHandler):
         changes = self.counter.register_change_stream()
         while True:
             # wait for ball changes
-            ball_changes = asyncio.ensure_future(changes.get(), loop=self.machine.clock.loop)
-            revalidate_future = asyncio.ensure_future(self._revalidate.wait(), loop=self.machine.clock.loop)
-            await Util.first([ball_changes, revalidate_future, self._eject_started.wait()],
-                             loop=self.machine.clock.loop)
+            ball_changes = asyncio.ensure_future(changes.get())
+            revalidate_future = asyncio.ensure_future(self._revalidate.wait())
+            await Util.first([ball_changes, revalidate_future, self._eject_started.wait()])
             self._revalidate.clear()
 
             # get lock and update count
@@ -271,7 +269,6 @@ class BallCountHandler(BallDeviceStateHandler):
                     if not self.counter:
                         raise asyncio.CancelledError
                     await asyncio.wait_for(self.counter.wait_for_ball_activity(),
-                                           loop=self.machine.clock.loop,
                                            timeout=self.ball_device.config['idle_missing_ball_timeout'])
                 except asyncio.TimeoutError:
                     self.debug_log("BCH: Lost %s balls", missing_balls)

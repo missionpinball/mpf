@@ -6,6 +6,9 @@ hardware:
 
 p_roc:
     driverboards: wpc
+    use_separate_thread: False
+    trace_bus: True
+    debug: true
 
 system11:
     ac_relay_delay_ms: 75

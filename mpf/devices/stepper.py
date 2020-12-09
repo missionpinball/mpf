@@ -37,7 +37,7 @@ class Stepper(SystemWideDevice):
         self._ball_search_started = False
         self._ball_search_old_target = 0
         self._is_homed = False
-        self._is_moving = asyncio.Event(loop=machine.clock.loop)
+        self._is_moving = asyncio.Event()
         self._move_task = None          # type: Optional[asyncio.Task]
         self.delay = DelayManager(machine)
         super().__init__(machine, name)

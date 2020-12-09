@@ -686,16 +686,16 @@ class Util:
                 future.cancel()
 
     @staticmethod
-    def any(futures: Iterable[asyncio.Future], loop, timeout=None):
+    def any(futures: Iterable[asyncio.Future], timeout=None):
         """Return first future."""
-        return Util.first(futures, loop, timeout, False)
+        return Util.first(futures, timeout, False)
 
     @staticmethod
-    async def first(futures: Iterable[asyncio.Future], loop, timeout=None, cancel_others=True):
+    async def first(futures: Iterable[asyncio.Future], timeout=None, cancel_others=True):
         """Return first future and cancel others."""
         # wait for first
         try:
-            done, pending = await asyncio.wait(iter(futures), loop=loop, timeout=timeout,
+            done, pending = await asyncio.wait(iter(futures), timeout=timeout,
                                                return_when=asyncio.FIRST_COMPLETED)
         except asyncio.CancelledError:
             Util.cancel_futures(futures)
@@ -712,10 +712,10 @@ class Util:
         return next(iter(done))
 
     @staticmethod
-    async def race(futures: Dict[asyncio.Future, str], loop):
+    async def race(futures: Dict[asyncio.Future, str]):
         """Return key of first future and cancel others."""
         # wait for first
-        first = await Util.first(futures.keys(), loop=loop)
+        first = await Util.first(futures.keys())
         return futures[first]
 
     @staticmethod

@@ -130,7 +130,7 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
     async def wait_for_move_completed(self):
         """Wait until move completed."""
         while not self.is_move_complete():
-            await asyncio.sleep(1 / self.config['poll_ms'], loop=self.machine.clock.loop)
+            await asyncio.sleep(1 / self.config['poll_ms'])
 
     def is_move_complete(self) -> bool:
         """Return true if move is complete."""

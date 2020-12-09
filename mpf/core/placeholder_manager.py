@@ -193,7 +193,7 @@ class NativeTypeTemplate:
     def evaluate_and_subscribe(self, parameters) -> Tuple[int, asyncio.Future]:
         """Evaluate and subscribe template."""
         del parameters
-        future = asyncio.Future(loop=self.machine.clock.loop)   # type: asyncio.Future
+        future = asyncio.Future()   # type: asyncio.Future
         return self.value, future
 
     def __eq__(self, other):
@@ -265,12 +265,12 @@ class TextTemplate:
         value = f.format(self.text)
         subscriptions = f.subscriptions
         if not subscriptions:
-            future = asyncio.Future(loop=self.machine.clock.loop)   # type: asyncio.Future
+            future = asyncio.Future()   # type: asyncio.Future
         elif len(subscriptions) == 1:
             future = subscriptions[0]
         else:
-            future = Util.any(subscriptions, loop=self.machine.clock.loop)
-        future = asyncio.ensure_future(future, loop=self.machine.clock.loop)
+            future = Util.any(subscriptions)
+        future = asyncio.ensure_future(future)
         return value, future
 
 
@@ -784,12 +784,12 @@ class BasePlaceholderManager(MpfController):
                                  "See error above.".format(text, parameters)) from e
 
         if not subscriptions:
-            future = asyncio.Future(loop=self.machine.clock.loop)
+            future = asyncio.Future()
         elif len(subscriptions) == 1:
             future = subscriptions[0]
         else:
-            future = Util.any(subscriptions, loop=self.machine.clock.loop)
-        future = asyncio.ensure_future(future, loop=self.machine.clock.loop)
+            future = Util.any(subscriptions)
+        future = asyncio.ensure_future(future)
         return value, future
 
     @lru_cache(typed=True)
