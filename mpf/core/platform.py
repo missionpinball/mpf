@@ -227,11 +227,11 @@ class SegmentDisplaySoftwareFlashPlatform(SegmentDisplayPlatform, metaclass=abc.
         wait_time = 1 / (self.config['display_flash_frequency'] * 2)
         while True:
             # set on
-            await asyncio.sleep(wait_time, loop=self.machine.clock.loop)
+            await asyncio.sleep(wait_time)
             for display in self._displays:
                 display.set_software_flash(True)
             # set off
-            await asyncio.sleep(wait_time, loop=self.machine.clock.loop)
+            await asyncio.sleep(wait_time)
             for display in self._displays:
                 display.set_software_flash(False)
 

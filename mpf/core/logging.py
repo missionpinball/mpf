@@ -166,9 +166,10 @@ class LogMixin:
 
         return msg
 
-    def raise_config_error(self, msg, error_no, *, context=None) -> "NoReturn":
+    def raise_config_error(self, msg, error_no, *, source_exception=None, context=None) -> "NoReturn":
         """Raise a ConfigFileError exception."""
-        raise ConfigFileError(msg, error_no, self.log.name if self.log else "", context, self._url_base)
+        raise ConfigFileError(msg, error_no, self.log.name if self.log else "", context, self._url_base) \
+            from source_exception
 
     def ignorable_runtime_exception(self, msg: str) -> None:
         """Handle ignorable runtime exception.
@@ -181,6 +182,9 @@ class LogMixin:
         self.error_log(msg)
 
     def _logging_not_configured(self) -> "NoReturn":
+        if self.machine and self.machine.is_shutting_down:
+            # omit errors on shutdown
+            return
         raise RuntimeError(
             "Logging has not been configured for the {} module. You must call "
             "configure_logging() before you can post a log message".

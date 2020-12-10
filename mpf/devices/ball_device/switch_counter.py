@@ -29,7 +29,7 @@ class SwitchCounter(PhysicalBallCounter):
         self._switches = set(self.config['ball_switches'])
         if self.config['jam_switch']:
             self._switches.add(self.config['jam_switch'])
-        self._trigger_recount = asyncio.Event(loop=self.machine.clock.loop)
+        self._trigger_recount = asyncio.Event()
         # Register switch handlers with delays for entrance & exit counts
         for switch in self._switches:
             self.machine.switch_controller.add_switch_handler_obj(
@@ -241,12 +241,11 @@ class SwitchCounter(PhysicalBallCounter):
 
         if not waiters:
             self.ball_device.log.warning("No switch is active. Cannot wait on empty list.")
-            future = asyncio.Future(loop=self.machine.clock.loop)
+            future = asyncio.Future()
             future.set_result(True)
             return future
 
-        done_future = asyncio.ensure_future(Util.first(waiters, self.machine.clock.loop),
-                                            loop=self.machine.clock.loop)
+        done_future = asyncio.ensure_future(Util.first(waiters))
         done_future.add_done_callback(self._ball_left)
         return done_future
 

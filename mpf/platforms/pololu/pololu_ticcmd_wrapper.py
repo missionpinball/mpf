@@ -62,8 +62,7 @@ class PololuTiccmdWrapper:
     def _ticcmd_future(self, *args):
         """Run ticcmd in another thread."""
         future = asyncio.wrap_future(
-            asyncio.run_coroutine_threadsafe(self._ticcmd_remote(*args), self.loop),
-            loop=self._machine.clock.loop)
+            asyncio.run_coroutine_threadsafe(self._ticcmd_remote(*args), self.loop))
         future.add_done_callback(Util.raise_exceptions)
         return future
 

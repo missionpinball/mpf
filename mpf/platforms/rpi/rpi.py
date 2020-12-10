@@ -174,7 +174,7 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
 
         self._switches = await self.pi.read_bank_1()
 
-        self._cmd_queue = asyncio.Queue(loop=self.machine.clock.loop)
+        self._cmd_queue = asyncio.Queue()
         self._cmd_task = self.machine.clock.loop.create_task(self._run())
         self._cmd_task.add_done_callback(Util.raise_exceptions)
 

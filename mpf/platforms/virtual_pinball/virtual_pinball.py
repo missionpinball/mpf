@@ -127,7 +127,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self._drivers = {}          # type: Dict[str, VirtualPinballDriver]
         self._last_drivers = {}     # type: Dict[str, bool]
         self._last_lights = {}      # type: Dict[str, bool]
-        self._started = asyncio.Event(loop=self.machine.clock.loop)
+        self._started = asyncio.Event()
         self.log = logging.getLogger("VPX Platform")
         self.log.debug("Configuring VPX hardware interface.")
         self.rules = {}

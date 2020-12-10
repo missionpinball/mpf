@@ -399,7 +399,7 @@ class SwitchController(MpfController):
                 the wait.
 
         """
-        future = asyncio.Future(loop=self.machine.clock.loop)   # type: asyncio.Future
+        future = asyncio.Future()   # type: asyncio.Future
 
         if not only_on_change:
             for switch in switches:

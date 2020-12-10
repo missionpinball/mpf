@@ -193,7 +193,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         poll_sleep = 1 / self.config["gpio_poll_frequency"]
         gpio_state_old = None
         while True:
-            await asyncio.sleep(poll_sleep, loop=self.machine.clock.loop)
+            await asyncio.sleep(poll_sleep)
             gpio_state = await self.run_proc_cmd("read_data", 0x00, 0x04)
             for gpio_index, state in self.config["gpio_map"].items():
                 if state == "input" and (gpio_state_old is None or (gpio_state ^ gpio_state_old) & (1 << gpio_index)):

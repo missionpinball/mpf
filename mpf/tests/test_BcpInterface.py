@@ -189,7 +189,7 @@ class TestBcpInterface(MpfBcpTestCase):
             queue)
 
         # Stop switch monitor
-        self._bcp_client.send_queue = asyncio.Queue(loop=self.machine.clock.loop)
+        self._bcp_client.send_queue = asyncio.Queue()
         self._bcp_client.receive_queue.put_nowait(('monitor_stop', {'category': 'switches'}))
         self.advance_time_and_run()
 

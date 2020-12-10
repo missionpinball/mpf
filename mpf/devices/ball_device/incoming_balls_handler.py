@@ -13,9 +13,9 @@ class IncomingBall:
 
     def __init__(self, source, target):
         """Initialise incoming ball."""
-        self._timeout_future = asyncio.Future(loop=source.machine.clock.loop)
-        self._confirm_future = asyncio.Future(loop=source.machine.clock.loop)
-        self._can_skip_future = asyncio.Future(loop=source.machine.clock.loop)
+        self._timeout_future = asyncio.Future()
+        self._confirm_future = asyncio.Future()
+        self._can_skip_future = asyncio.Future()
         self._source = source
         self._target = target
         self._external_confirm_future = None
@@ -31,7 +31,7 @@ class IncomingBall:
 
     def wait_for_can_skip(self):
         """Wait until this future can skip."""
-        return asyncio.shield(self._can_skip_future, loop=self._source.machine.clock.loop)
+        return asyncio.shield(self._can_skip_future)
 
     @property
     def can_arrive(self):
@@ -64,8 +64,7 @@ class IncomingBall:
         self._timeout_future.cancel()
         # set up a timeout for ball missing at target
         timeout = self._source.config['ball_missing_timeouts'][self._target] / 1000
-        self._timeout_future = asyncio.ensure_future(asyncio.sleep(timeout, loop=self._source.machine.clock.loop),
-                                                     loop=self._source.machine.clock.loop)
+        self._timeout_future = asyncio.ensure_future(asyncio.sleep(timeout))
         # set confirmed for source
         self._confirm_future.set_result(True)
 
@@ -101,11 +100,11 @@ class IncomingBall:
 
     def wait_for_confirm(self):
         """Wait for confirm."""
-        return asyncio.shield(self._confirm_future, loop=self._source.machine.clock.loop)
+        return asyncio.shield(self._confirm_future)
 
     def wait_for_timeout(self):
         """Wait for timeout."""
-        return asyncio.shield(self._timeout_future, loop=self._source.machine.clock.loop)
+        return asyncio.shield(self._timeout_future)
 
     @property
     def is_timeouted(self):
@@ -124,10 +123,10 @@ class IncomingBallsHandler(BallDeviceStateHandler):
         super().__init__(ball_device)
         # list of incoming balls sorted by their expiring time
         self._incoming_balls = []
-        self._has_incoming_balls = asyncio.Event(loop=self.machine.clock.loop)
-        self._has_no_incoming_balls = asyncio.Event(loop=self.machine.clock.loop)
+        self._has_incoming_balls = asyncio.Event()
+        self._has_no_incoming_balls = asyncio.Event()
         self._has_no_incoming_balls.set()
-        self._is_timeouting = asyncio.Lock(loop=self.machine.clock.loop)
+        self._is_timeouting = asyncio.Lock()
 
     def get_num_incoming_balls(self):
         """Return number of incoming ball."""
@@ -153,7 +152,7 @@ class IncomingBallsHandler(BallDeviceStateHandler):
 
             # wait for timeouts on incoming balls
             futures = [incoming_ball.wait_for_timeout() for incoming_ball in self._incoming_balls]
-            await Util.first(futures, loop=self.machine.clock.loop)
+            await Util.first(futures)
 
             await self._is_timeouting.acquire()
 

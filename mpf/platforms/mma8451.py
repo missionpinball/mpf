@@ -36,14 +36,14 @@ class MMA8451Device(AccelerometerPlatformInterface):
         # reset
         self.platform.log.info("Resetting device at: %s", self.number)
         device.i2c_write8(0x2B, 0x40)
-        await asyncio.sleep(.3, loop=self.platform.machine.clock.loop)
+        await asyncio.sleep(.3)
         result = -1
         for _ in range(10):
             result = await device.i2c_read8(0x2B)
             if result == 0:
                 break
             self.platform.log.warning("Failed to reset: %s at %s", result, self.number)
-            await asyncio.sleep(.5, loop=self.platform.machine.clock.loop)
+            await asyncio.sleep(.5)
         else:
             raise AssertionError("Failed to reset MMA8451 accelerometer. Result: {}".format(result))
 
@@ -61,7 +61,7 @@ class MMA8451Device(AccelerometerPlatformInterface):
         device.i2c_write8(0x2A, 0x2D)
 
         # wait for activate
-        await asyncio.sleep(.3, loop=self.platform.machine.clock.loop)
+        await asyncio.sleep(.3)
 
         self.platform.log.info("Init done for device at: %s", self.number)
 
@@ -80,7 +80,7 @@ class MMA8451Device(AccelerometerPlatformInterface):
             y = round((float(y)) / range_divisor, 3)
             z = round((float(z)) / range_divisor, 3)
             self.callback.update_acceleration(x, y, z)
-            await asyncio.sleep(.1, loop=self.platform.machine.clock.loop)
+            await asyncio.sleep(.1)
 
 
 class MMA8451Platform(AccelerometerPlatform):

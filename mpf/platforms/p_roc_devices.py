@@ -69,10 +69,18 @@ class PROCDriver(DriverPlatformInterface):
         """Initialise driver."""
         self.log = logging.getLogger('PROCDriver {}'.format(number))
         super().__init__(config, number)
-        self.platform = platform
+        self.platform = platform            # type: PROCBasePlatform
         self.polarity = polarity
         self.string_number = string_number
         self.pdbconfig = getattr(platform, "pdbconfig", None)
+
+    async def initialise(self):
+        """Initialize driver."""
+        if self.polarity is None:
+            self.log.debug("Getting polarity for driver %s", self.number)
+            state = await self.platform.run_proc_cmd("driver_get_state", self.number)
+            self.polarity = state["polarity"]
+            self.log.debug("Got Polarity %s for driver %s", self.polarity, self.number)
 
         self.log.debug("Driver Settings for %s", self.number)
         self.platform.run_proc_cmd_no_wait("driver_update_state", self.state())
@@ -126,7 +134,7 @@ class PROCDriver(DriverPlatformInterface):
         if pulse_settings.power != 1:
             on_time, off_time = Util.power_to_on_off(pulse_settings.power)
             self.platform.run_proc_cmd_no_wait("driver_pulsed_patter", self.number, on_time, off_time,
-                                               pulse_settings.duration)
+                                               pulse_settings.duration, True)
         else:
             self.platform.run_proc_cmd_no_wait("driver_pulse", self.number, pulse_settings.duration)
 
@@ -453,7 +461,7 @@ class PdLedStepper(StepperPlatformInterface):
         self.debug = debug
         self.log = logging.getLogger('PD-LED.Stepper.{}-{}'.format(board, number))
         self.platform = platform
-        self._move_complete = asyncio.Event(loop=platform.machine.clock.loop)
+        self._move_complete = asyncio.Event()
         self._move_complete.set()
         self._move_timer = None
         self.stepper_ticks_per_half_period = stepper_ticks_per_half_period
@@ -481,10 +489,10 @@ class PdLedStepper(StepperPlatformInterface):
         self._move_complete.clear()
         # we need to time the steps and add 30ms for usb latency/jitter
         wait_time = ((int(abs(position)) * 2 * self.stepper_ticks_per_half_period) / 32000000) + 0.03
-        self._move_timer = asyncio.sleep(wait_time, loop=self.platform.machine.clock.loop)
+        self._move_timer = asyncio.sleep(wait_time)
         if self.debug:
             self.log.debug("Moving %s ticks. This will take %s", position, wait_time)
-        self._move_timer = asyncio.ensure_future(self._move_timer, loop=self.platform.machine.clock.loop)
+        self._move_timer = asyncio.ensure_future(self._move_timer)
         self._move_timer.add_done_callback(self._move_done)
 
     def _move_done(self, future):

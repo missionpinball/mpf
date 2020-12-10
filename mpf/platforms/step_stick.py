@@ -21,7 +21,7 @@ class DigitalOutputStepStickStepper(StepperPlatformInterface):
         """Initialize stepper."""
         self.platform = platform
         self.number = number
-        self._move_complete = asyncio.Event(loop=self.platform.machine.clock.loop)
+        self._move_complete = asyncio.Event()
         self._move_complete.set()
         self._move_task = None
         self.config = config
@@ -50,9 +50,9 @@ class DigitalOutputStepStickStepper(StepperPlatformInterface):
             self.direction_output.disable()
         for _ in range(int(abs(steps))):
             self.step_output.enable()
-            await asyncio.sleep(self.config['high_time'], loop=self.platform.machine.clock.loop)
+            await asyncio.sleep(self.config['high_time'])
             self.step_output.disable()
-            await asyncio.sleep(self.config['low_time'], loop=self.platform.machine.clock.loop)
+            await asyncio.sleep(self.config['low_time'])
 
         self._move_complete.set()
 
@@ -74,9 +74,9 @@ class DigitalOutputStepStickStepper(StepperPlatformInterface):
             self.direction_output.disable()
         while True:
             self.step_output.enable()
-            await asyncio.sleep(self.config['high_time'] * abs(velocity), loop=self.platform.machine.clock.loop)
+            await asyncio.sleep(self.config['high_time'] * abs(velocity))
             self.step_output.disable()
-            await asyncio.sleep(self.config['low_time'] * abs(velocity), loop=self.platform.machine.clock.loop)
+            await asyncio.sleep(self.config['low_time'] * abs(velocity))
         # this will never complete. you need to call stop
 
     def stop(self):

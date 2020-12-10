@@ -124,7 +124,7 @@ class ModeController(MpfController):
             self.machine.modes[mode] = self._load_mode(mode)
 
             # add a very very short yield to prevent hangs in platforms (e.g. watchdog timeouts during IO)
-            await asyncio.sleep(.0001, loop=self.machine.clock.loop)
+            await asyncio.sleep(.0001)
             self.log.debug("Loaded mode %s", mode)
 
     def _find_mode_path(self, mode_string):

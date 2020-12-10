@@ -65,7 +65,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         super().__init__(machine, name)
         self.machine.light_controller.initialise_light_subsystem()
         self.delay = DelayManager(self.machine)
-        self._drivers_loaded = asyncio.Future(loop=self.machine.clock.loop)
+        self._drivers_loaded = asyncio.Future()
 
         self.default_fade_ms = None
         self._off_color = RGBColor("off")
@@ -182,7 +182,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
 
     def wait_for_loaded(self):
         """Return future."""
-        return asyncio.shield(self._drivers_loaded, loop=self.machine.clock.loop)
+        return asyncio.shield(self._drivers_loaded)
 
     def get_successor_number(self):
         """Get the number of the next light channel.

@@ -52,7 +52,7 @@ class TestVirtualPinball(MpfTestCase):
         self._encode_and_send(client, "monitor_start", category="devices")
 
         self.advance_time_and_run()
-        client.send_queue = asyncio.Queue(loop=self.loop)
+        client.send_queue = asyncio.Queue()
 
         self.machine.lights["test_light1"].on()
 

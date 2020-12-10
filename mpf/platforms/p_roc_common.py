@@ -9,7 +9,7 @@ import sys
 from threading import Thread
 
 import time
-from typing import Any, List, Union, Tuple, Optional, Set
+from typing import List, Union, Tuple, Optional, Set
 
 from mpf.core.utility_functions import Util
 from mpf.core.platform_batch_light_system import PlatformBatchLightSystem
@@ -88,6 +88,7 @@ class ProcProcess:
 
     def start_proc_process(self, machine_type, loop, trace, log):
         """Run the pinproc communication."""
+        asyncio.set_event_loop(loop)
         self.start_pinproc(machine_type, loop, trace, log)
 
         loop.run_until_complete(self.stop_future)
@@ -144,7 +145,7 @@ class ProcProcess:
                 if events:
                     return list(events)
 
-                await asyncio.sleep(poll_sleep, loop=self.loop)
+                await asyncio.sleep(poll_sleep)
 
             return []
         except IOError as error:  # pragma: no cover
@@ -165,7 +166,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
     """
 
     __slots__ = ["pdbconfig", "pinproc", "proc", "log", "hw_switch_rules", "version", "revision", "hardware_version",
-                 "dipswitches", "machine_type", "event_task",
+                 "dipswitches", "machine_type", "event_task", "_late_init_futures",
                  "proc_thread", "proc_process", "proc_process_instance", "_commands_running", "config", "_light_system"]
 
     def __init__(self, machine):
@@ -194,6 +195,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         self.config = {}
         self._light_system = None
         self.machine_type = None
+        self._late_init_futures = []
 
     def _decrement_running_commands(self, future):
         del future
@@ -204,8 +206,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         if self.debug:
             self.debug_log("Calling P-Roc cmd: %s (%s)", cmd, args)
         future = asyncio.wrap_future(
-            asyncio.run_coroutine_threadsafe(self.proc_process.run_command(cmd, *args), self.proc_process_instance),
-            loop=self.machine.clock.loop)
+            asyncio.run_coroutine_threadsafe(self.proc_process.run_command(cmd, *args), self.proc_process_instance))
         future.add_done_callback(Util.raise_exceptions)
         return future
 
@@ -282,6 +283,9 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
     async def start(self):
         """Start listening for switches."""
+        if self._late_init_futures:
+            await asyncio.wait(self._late_init_futures)
+
         self.event_task = self.machine.clock.loop.create_task(self._poll_events())
         self.event_task.add_done_callback(Util.raise_exceptions)
         self._light_system.start()
@@ -295,12 +299,11 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         while True:
             events = await asyncio.wrap_future(
                 asyncio.run_coroutine_threadsafe(self.proc_process.read_events_and_watchdog(poll_sleep),
-                                                 self.proc_process_instance),
-                loop=self.machine.clock.loop)
+                                                 self.proc_process_instance))
             if events:
                 self.process_events(events)
 
-            await asyncio.sleep(poll_sleep, loop=self.machine.clock.loop)
+            await asyncio.sleep(poll_sleep)
 
     def stop(self):
         """Stop proc."""
@@ -818,8 +821,7 @@ class PDBConfig:
     WPC or Stern mode.
     """
 
-    indexes = []    # type: List[Any]
-    proc = None     # type: pinproc.PinPROC
+    __slots__ = ["log", "platform", "polarity", "lamp_matrix_strobe_time", "watchdog_time", "use_watchdog", "indexes"]
 
     # pylint: disable-msg=too-many-locals
     def __init__(self, proc_platform, config, driver_count):

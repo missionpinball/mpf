@@ -103,6 +103,7 @@ class TestPRoc(MpfTestCase):
         return False
 
     def _normalize(self, type_name):
+        self._machine_type = type_name
         if type_name == "pdb":
             return MockPinProcModule.MachineTypePDB
         elif type_name == "wpc":
@@ -123,6 +124,22 @@ class TestPRoc(MpfTestCase):
     def _mock_loop(self):
         super()._mock_loop()
         self.loop._wait_for_external_executor = True
+
+    def _driver_get_state(self, driver_num):
+        polarity = self._machine_type != "wpc"
+
+        return {
+            'driverNum': driver_num,
+            'outputDriveTime': 0,
+            'polarity': polarity,
+            'state': False,
+            'waitForFirstTimeSlot': False,
+            'timeslots': 0,
+            'patterOnTime': 0,
+            'patterOffTime': 0,
+            'patterEnable': False,
+            'futureEnable': False
+        }
 
     def _driver_state_pulse(self, driver, milliseconds):
         driver["state"] = 1
@@ -159,6 +176,7 @@ class TestPRoc(MpfTestCase):
 
     def setUp(self):
         self._sync_count = 0
+        self._machine_type = None
         self.expected_duration = 2
         p_roc_common.PINPROC_IMPORTED = True
         p_roc_common.pinproc = MockPinProcModule()
@@ -183,6 +201,8 @@ class TestPRoc(MpfTestCase):
         self.pinproc.reset = MagicMock(return_value=True)
         self.pinproc.get_events = MagicMock(return_value=[])
         self.pinproc.dmd_update_config = MagicMock(return_value=True)
+        self.pinproc.driver_get_state = self._driver_get_state
+
         p_roc_common.pinproc.PinPROC = MagicMock(return_value=self.pinproc)
         p_roc_common.pinproc.normalize_machine_type = self._normalize
         p_roc_common.pinproc.driver_state_pulse = self._driver_state_pulse
@@ -251,7 +271,7 @@ class TestPRoc(MpfTestCase):
         self.wait_for_platform()
         number = self.machine.coils["c_direct2_pulse_power"].hw_driver.number
         self.pinproc.driver_pulsed_patter.assert_called_with(
-            number, 9, 1, 20)
+            number, 9, 1, 20, True)
 
     def _test_alpha_display(self):
         self.pinproc.aux_send_commands = MagicMock(return_value=True)

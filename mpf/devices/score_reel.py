@@ -45,11 +45,11 @@ class ScoreReel(SystemWideDevice):
         self._runner = None
         # asyncio task which advances the reel
 
-        self._busy = asyncio.Event(loop=self.machine.clock.loop)
+        self._busy = asyncio.Event()
         self._busy.set()
         # will be cleared when the runner is done. set to trigger the runner
 
-        self._ready = asyncio.Event(loop=self.machine.clock.loop)
+        self._ready = asyncio.Event()
         # will be set when this real is ready and shows the destination value
 
         # stop device on shutdown
@@ -133,7 +133,7 @@ class ScoreReel(SystemWideDevice):
             switch_change_future = self.machine.switch_controller.wait_for_any_switch(
                 switches=[switch for switch in self.value_switches if switch is not None], state=2,
                 ms=self.config['hw_confirm_time'])
-            result = await Util.first([switch_change_future, self._busy.wait()], loop=self.machine.clock.loop)
+            result = await Util.first([switch_change_future, self._busy.wait()])
             if result == switch_change_future:
                 self.check_hw_switches()
                 continue
@@ -156,7 +156,7 @@ class ScoreReel(SystemWideDevice):
             wait_ms = self.config['coil_inc'].pulse(max_wait_ms=500)
             previous_value = self.assumed_value
 
-            await asyncio.sleep((wait_ms + self.config['repeat_pulse_time']) / 1000, loop=self.machine.clock.loop)
+            await asyncio.sleep((wait_ms + self.config['repeat_pulse_time']) / 1000)
             if self.assumed_value >= 0:
                 self.assumed_value += 1
                 self.assumed_value %= len(self.value_switches)
