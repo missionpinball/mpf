@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 class TestDeviceDriver(MpfTestCase):
 
     def get_config_file(self):
-        return 'config.yaml'
+        return 'coils.yaml'
 
     def get_machine_path(self):
         return 'tests/machine_files/device/'
@@ -66,3 +66,26 @@ class TestDeviceDriver(MpfTestCase):
         self.advance_time_and_run(.5)
 
         self.machine.coils["coil_03"].hw_driver.disable.assert_called_with()
+
+    def testMaxHoldDuration(self):
+        coil = self.machine.coils["coil_max_hold_duration"]
+
+        # check that coil disables after max_hold_duration (5s)
+        coil.enable()
+        self.advance_time_and_run(.5)
+        self.assertEqual("enabled", coil.hw_driver.state)
+        self.advance_time_and_run(4)
+        self.assertEqual("enabled", coil.hw_driver.state)
+        self.advance_time_and_run(1)
+        self.assertEqual("disabled", coil.hw_driver.state)
+
+        # make sure a disable resets the timer
+        coil.enable()
+        self.advance_time_and_run(3.0)
+        self.assertEqual("enabled", coil.hw_driver.state)
+        coil.disable()
+        self.advance_time_and_run(.5)
+        self.assertEqual("disabled", coil.hw_driver.state)
+        coil.enable()
+        self.advance_time_and_run(3.0)
+        self.assertEqual("enabled", coil.hw_driver.state)

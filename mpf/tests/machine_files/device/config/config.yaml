@@ -33,15 +33,6 @@ lights:
         debug: True
 
 coils:
-    coil_01:
-        number: 1
-        default_pulse_ms: 30
-        allow_enable: True
-    coil_02:
-        number: 2
-        default_pulse_ms: 60
-    coil_03:
-        number: 3
     flasher_01:
         number: 4
         label: Test flasher

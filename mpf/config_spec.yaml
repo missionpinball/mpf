@@ -284,6 +284,7 @@ coils:
     max_pulse_ms: single|ms|None
     max_pulse_power: single|float(0,1)|1.0
     max_hold_power: single|float(0,1)|None
+    max_hold_duration: single|secs|None
     disable_events: event_handler|event_handler:ms|None
     enable_events: event_handler|event_handler:ms|None
     pulse_events: event_handler|event_handler:ms|None
