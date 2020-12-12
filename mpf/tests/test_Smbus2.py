@@ -24,7 +24,7 @@ class TestSmbus2(MpfTestCase):
         super().setUp()
 
     def test_i2c(self):
-        result = asyncio.Future(loop=self.loop)
+        result = asyncio.Future()
         result.set_result(True)
         self.smbus_instance.write_byte_data = MagicMock(return_value=result)
 
@@ -33,9 +33,9 @@ class TestSmbus2(MpfTestCase):
         device.i2c_write8(23, 1337)
         self.machine_run()
         self.smbus_instance.write_byte_data.assert_called_once_with(17, 23, 1337)
-        self.smbus.assert_called_once_with('1', loop=self.loop)
+        self.smbus.assert_called_once_with('1')
 
-        result = asyncio.Future(loop=self.loop)
+        result = asyncio.Future()
         result.set_result(1337)
         self.smbus_instance.read_byte_data = MagicMock(return_value=result)
         self.assertEqual(1337, self.loop.run_until_complete(device.i2c_read8(23)))

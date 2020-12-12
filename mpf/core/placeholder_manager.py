@@ -310,7 +310,7 @@ class DevicePlaceholder:
 
     def subscribe(self):
         """Subscribe to object changes."""
-        return asyncio.Future(loop=self._machine.clock.loop)
+        return asyncio.Future()
 
     def subscribe_attribute(self, item):
         """Subscribe to device changes."""
@@ -339,12 +339,12 @@ class DeviceClassPlaceholder:
 
     def subscribe(self):
         """Subscribe to object changes."""
-        return asyncio.Future(loop=self._machine.clock.loop)
+        return asyncio.Future()
 
     def subscribe_attribute(self, item):
         """Subscribe to device changes."""
         del item
-        return asyncio.Future(loop=self._machine.clock.loop)
+        return asyncio.Future()
 
     def __getitem__(self, item):
         """Array access."""
@@ -375,12 +375,12 @@ class DevicesPlaceholder:
 
     def subscribe(self):
         """Subscribe to object changes."""
-        return asyncio.Future(loop=self._machine.clock.loop)
+        return asyncio.Future()
 
     def subscribe_attribute(self, item):
         """Subscribe to device changes."""
         del item
-        return asyncio.Future(loop=self._machine.clock.loop)
+        return asyncio.Future()
 
     def __getattr__(self, item):
         """Attribute access."""
@@ -518,7 +518,7 @@ class MachinePlaceholder(BasePlaceholder):
 
         Will never return.
         """
-        return asyncio.Future(loop=self._machine.clock.loop)
+        return asyncio.Future()
 
     def subscribe_attribute(self, item):
         """Subscribe to machine variable."""
@@ -548,7 +548,7 @@ class SettingsPlaceholder(BasePlaceholder):
 
         Will never return.
         """
-        return asyncio.Future(loop=self._machine.clock.loop)
+        return asyncio.Future()
 
     def subscribe_attribute(self, item):
         """Subscribe to machine variable for this setting."""
