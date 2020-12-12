@@ -226,7 +226,6 @@ class Driver(SystemWideDevice):
     def disable(self):
         """Disable this driver."""
         self.info_log("Disabling Driver")
-        self.machine.delay.remove(name='{}_timed_enable'.format(self.name))
         self.hw_driver.disable()
         # inform bcp clients
         self.machine.bcp.interface.send_driver_event(action="disable", name=self.name, number=self.config['number'])
