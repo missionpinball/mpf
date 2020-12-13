@@ -1,16 +1,15 @@
 environment:
 
   global:
-    MPF_VERSION: 0.53
+    MPF_VERSION: 0.55
 
   matrix:
-    - PYTHON: "C:\\Python35"
-    - PYTHON: "C:\\Python35-x64"
     - PYTHON: "C:\\Python36"
     - PYTHON: "C:\\Python36-x64"
     - PYTHON: "C:\\Python37"
     - PYTHON: "C:\\Python37-x64"
-
+    - PYTHON: "C:\\Python38"
+    - PYTHON: "C:\\Python38-x64"
 
   pypi_password:
     secure: rCMmmOBIvdX3F9PXj/Vx8dgJFtLMcY7uYLR/6hlV8wZow8AUr1l76s+vfe5YDT6sWuWg2hMUW61pMIE2fOmQw6Echq82ALz/rp85CBUMLic/ZPZMKiJMab7hVSA5460tI3vfmgKo7+FTOVyQEXTc4jiejRpbCkHmlbyPWjI0rXRZU3LJLu3wU21tyzPZS8L73nVu+Knfq52fMMpWFIOvKr61GhkPDFEpRN8EckUYFVqu8w9L352QbDH/526jFUr3BU03oz0LaXuWfHqAksih4w==

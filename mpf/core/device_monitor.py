@@ -73,7 +73,8 @@ class DeviceMonitor:
 
         def subscribe_attribute(self_inner, item, machine):
             """Subscribe to an attribute."""
-            future = asyncio.Future(loop=machine.clock.loop)
+            del machine
+            future = asyncio.Future()
             cls.attribute_futures[self_inner][item].append(future)
             return future
 

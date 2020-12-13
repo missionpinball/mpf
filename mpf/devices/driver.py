@@ -213,9 +213,20 @@ class Driver(SystemWideDevice):
                       pulse_power)
         self.hw_driver.enable(PulseSettings(power=pulse_power, duration=pulse_ms),
                               HoldSettings(power=hold_power))
+
+        if self.config['max_hold_duration']:
+            self.delay.add_if_doesnt_exist(self.config['max_hold_duration'] * 1000, self._enable_limit_reached,
+                                           "enable_limit_reached")
+
         # inform bcp clients
         self.machine.bcp.interface.send_driver_event(action="enable", name=self.name, number=self.config['number'],
                                                      pulse_ms=pulse_ms, pulse_power=pulse_power, hold_power=hold_power)
+
+    def _enable_limit_reached(self):
+        """Disable driver and report service alert if max_hold_duration has been reached."""
+        self.log.warning("Reached max_hold_duration for this coil. Will disable driver now to prevent damage!")
+        self.disable()
+        self.machine.service.add_technical_alert(self, "Reached max_hold_duration. Driver disabled to prevent damage!")
 
     @event_handler(1)
     def event_disable(self, **kwargs):
@@ -226,8 +237,8 @@ class Driver(SystemWideDevice):
     def disable(self):
         """Disable this driver."""
         self.info_log("Disabling Driver")
-        self.machine.delay.remove(name='{}_timed_enable'.format(self.name))
         self.hw_driver.disable()
+        self.delay.remove("enable_limit_reached")
         # inform bcp clients
         self.machine.bcp.interface.send_driver_event(action="disable", name=self.name, number=self.config['number'])
 

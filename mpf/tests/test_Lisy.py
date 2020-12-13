@@ -6,6 +6,31 @@ from mpf.platforms.lisy import lisy
 from mpf.tests.MpfTestCase import MpfTestCase, test_config, MagicMock
 from mpf.tests.loop import MockSerial, MockSocket
 
+COMMAND_LENGTH = {
+    0: 1,
+    1: 1,
+    2: 1,
+    3: 1,
+    4: 1,
+    6: 1,
+    7: 2,
+    9: 1,
+    11: 2,
+    12: 2,
+    19: 1,
+    21: 2,
+    22: 2,
+    23: 2,
+    24: 3,
+    25: 3,
+    40: 2,
+    41: 1,
+    51: 1,
+    60: 11,
+    100: 1,
+    101: 1,
+}
+
 
 class MockLisySocket(MockSocket, MockSerial):
 
@@ -23,12 +48,44 @@ class MockLisySocket(MockSocket, MockSerial):
         return True
 
     def write(self, msg):
+        """Write message."""
+        # print("Serial received: " + "".join("\\x%02x" % b for b in msg) + " len: " + str(len(msg)))
+        total_msg_len = len(msg)
+        while msg:
+            command = msg[0]
+            if command == 13:
+                command_length = 6 + msg[5]
+            elif 30 <= command <= 35:
+                if self.api_version >= 9:
+                    command_length = 2 + msg[1]
+                else:
+                    command_length = msg.index(b'\x00') + 1
+            elif command in (50, 54):
+                command_length = 3 if self.api_version >= 9 else 2
+            elif command == 51:
+                command_length = 2 if self.api_version >= 9 else 1
+            elif command in (52, 53):
+                command_length = msg[3:].index(b'\x00') + 4
+            else:
+                command_length = COMMAND_LENGTH.get(command, None)
+            if command_length is None:
+                raise AssertionError("Unknown command {} in {}".format(command, "".join("\\x%02x" % b for b in msg)))
+            if len(msg) < command_length:
+                raise AssertionError("Message too short ({}) for command {} with length {} in {}".format(
+                    len(msg), command_length, command,
+                    "".join("\\x%02x" % b for b in msg)))
+
+            self._handle_msg(msg[0:command_length])
+            msg = msg[command_length:]
+
+        return total_msg_len
+
+    def _handle_msg(self, msg):
         if msg in self.permanent_commands and msg not in self.expected_commands:
             if self.permanent_commands[msg] is not None:
                 self.queue.append(self.permanent_commands[msg])
             return len(msg)
 
-        # print("Serial received: " + "".join("\\x%02x" % b for b in msg) + " len: " + str(len(msg)))
         if msg not in self.expected_commands:
             self.crashed = True
             print("Unexpected command: " + "".join("\\x%02x" % b for b in msg) + " len: " + str(len(msg)))
@@ -47,13 +104,14 @@ class MockLisySocket(MockSocket, MockSerial):
     def recv(self, size):
         return self.read(size)
 
-    def __init__(self):
+    def __init__(self, api_version):
         super().__init__()
         self.name = "SerialMock"
         self.expected_commands = {}
         self.queue = []
         self.permanent_commands = {}
         self.crashed = False
+        self.api_version = api_version
 
 
 class TestLisy(MpfTestCase):
@@ -81,7 +139,7 @@ class TestLisy(MpfTestCase):
 
     def setUp(self):
         self.expected_duration = 1.5
-        self.serialMock = MockLisySocket()
+        self.serialMock = MockLisySocket(api_version=8)
 
         self.serialMock.permanent_commands = {
             b'\x29': b'\x7F',           # changed switches? -> no
@@ -454,7 +512,7 @@ class TestAPC(MpfTestCase):
 
     def setUp(self):
         self.expected_duration = 1.5
-        self.serialMock = MockLisySocket()
+        self.serialMock = MockLisySocket(api_version=9)
 
         self.serialMock.permanent_commands = {
             b'\x29': b'\x7F',           # changed switches? -> no
@@ -673,7 +731,7 @@ class TestLisyV10(MpfTestCase):
 
     def setUp(self):
         self.expected_duration = 1.5
-        self.serialMock = MockLisySocket()
+        self.serialMock = MockLisySocket(api_version=10)
 
         self.serialMock.permanent_commands = {
             b'\x29': b'\x7F',           # changed switches? -> no
@@ -785,11 +843,17 @@ class TestLisyV10(MpfTestCase):
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
-        # fade both lights together
+        # fade both lights together (fade depending on serial timing)
         self.serialMock.expected_commands = {
             b'\x0d\x00\x00\x01\x18\x07\xaa\xbb\xcc\xdd\xee\xff\xdd': None,      # fade with 300ms fade time
+            b'\x0d\x00\x00\x01\x19\x07\xaa\xbb\xcc\xdd\xee\xff\xdd': None,      # fade with 300ms fade time
+            b'\x0d\x00\x00\x01\x20\x07\xaa\xbb\xcc\xdd\xee\xff\xdd': None,      # fade with 300ms fade time
+            b'\x0d\x00\x00\x01\x21\x07\xaa\xbb\xcc\xdd\xee\xff\xdd': None,      # fade with 300ms fade time
+            b'\x0d\x00\x00\x01\x22\x07\xaa\xbb\xcc\xdd\xee\xff\xdd': None,      # fade with 300ms fade time
         }
         self.machine.lights["test_light0"].color([0xaa, 0xbb, 0xcc], fade_ms=300)
         self.machine.lights["test_light1"].color([0xdd, 0xee, 0xff], fade_ms=300)
-        self._wait_for_processing()
-        self.assertFalse(self.serialMock.expected_commands)
+        start = time.time()
+        while len(self.serialMock.expected_commands) > 4 and not self.serialMock.crashed and time.time() < start + 10:
+            self.advance_time_and_run(.01)
+        self.assertEqual(4, len(self.serialMock.expected_commands))

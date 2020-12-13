@@ -404,7 +404,7 @@ class MpfTestCase(unittest.TestCase):
         """
         self.machine.log.info("Advancing time by %s", delta)
         try:
-            self.loop.run_until_complete(asyncio.sleep(delay=delta, loop=self.loop))
+            self.loop.run_until_complete(asyncio.sleep(delay=delta))
             return
         except RuntimeError as e:
             try:
@@ -559,7 +559,7 @@ class MpfTestCase(unittest.TestCase):
             raise e
 
     def _initialise_machine(self):
-        init = asyncio.ensure_future(self.machine.initialise(), loop=self.loop)
+        init = asyncio.ensure_future(self.machine.initialise())
         self._wait_for_start(init, 20)
         self.machine.events.process_event_queue()
         self.advance_time_and_run(.001)

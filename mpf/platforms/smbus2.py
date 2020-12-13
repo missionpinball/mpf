@@ -41,7 +41,7 @@ class Smbus2I2cDevice(I2cPlatformInterface):
                     raise
 
                 # if we are in production mode retry
-                await asyncio.sleep(.1, loop=self.platform.machine.clock.loop)
+                await asyncio.sleep(.1)
                 self.platform.log.debug("Connection to %s failed. Will retry.", self.number)
             else:
                 break
@@ -58,7 +58,7 @@ class Smbus2I2cDevice(I2cPlatformInterface):
         """Get or open handle for i2c bus."""
         if bus in self.busses:
             return self.busses[bus]
-        handle = SMBus2Asyncio(bus, loop=self.loop)
+        handle = SMBus2Asyncio(bus)
         self.busses[bus] = handle
         return handle
 
@@ -68,7 +68,7 @@ class Smbus2I2cDevice(I2cPlatformInterface):
 
     def i2c_write8(self, register, value):
         """Write a byte to I2C."""
-        asyncio.ensure_future(self.smbus.write_byte_data(self.address, int(register), int(value)), loop=self.loop)
+        asyncio.ensure_future(self.smbus.write_byte_data(self.address, int(register), int(value)))
         # this does not return
 
     async def i2c_read_block(self, register, count):

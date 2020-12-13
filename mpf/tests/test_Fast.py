@@ -31,11 +31,20 @@ class BaseMockFast(MockSerial):
         return False
 
     def write(self, msg):
+        """Write message."""
+        parts = msg.split(b'\r')
+        # remove last newline
+        assert parts.pop() == b''
+
+        for part in parts:
+            self._handle_msg(part)
+
+        return len(msg)
+
+    def _handle_msg(self, msg):
         msg_len = len(msg)
         cmd = msg.decode()
         # strip newline
-        cmd = cmd[:-1]
-
         # ignore init garbage
         if cmd == (' ' * 256 * 4):
             return msg_len
@@ -69,8 +78,21 @@ class MockFastDmd(BaseMockFast):
         self.type = "DMD"
 
     def write(self, msg):
+        """Write message."""
+        parts = msg.split(b'\r')
+
+        # remove last newline
+        if parts[len(parts) - 1] == b'':
+            parts.pop() == b''
+
+        for part in parts:
+            self._handle_msg(part)
+
+        return len(msg)
+
+    def _handle_msg(self, msg):
         msg_len = len(msg)
-        if msg == (b' ' * 256 * 4) + b"\r":
+        if msg == (b' ' * 256 * 4):
             return msg_len
 
         cmd = msg
@@ -135,7 +157,7 @@ class TestFast(MpfTestCase):
 
     def tearDown(self):
         self.dmd_cpu.expected_commands = {
-            b'BL:AA55\r': "!SRE"
+            b'BL:AA55': "!SRE"
         }
         self.rgb_cpu.expected_commands = {
             "BL:AA55": "!SRE"
@@ -155,7 +177,7 @@ class TestFast(MpfTestCase):
         self.dmd_cpu = MockFastDmd()
 
         self.dmd_cpu.expected_commands = {
-            b'ID:\r': 'ID:DMD FP-CPU-002-1 00.88',
+            b'ID:': 'ID:DMD FP-CPU-002-1 00.88',
 
         }
         self.rgb_cpu.expected_commands = {
@@ -429,21 +451,21 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
 
         def _catch_update(cmd):
             commands.append(cmd)
-            return True
-        parse_func = self.net_cpu._parse
-        self.net_cpu._parse = _catch_update
+            return len(cmd)
+        parse_func = self.net_cpu.write
+        self.net_cpu.write = _catch_update
         output = self.machine.default_platform.update_firmware()
         self.advance_time_and_run()
-        self.net_cpu._parse = parse_func
+        self.net_cpu.write = parse_func
         # check if we send the dummy update
-        self.assertEqual(['BL:AA55\r>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-                          '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-                          '>>>>>>>>>>>>>>>>>>>>>>>>>\rBL:AA55\r<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
-                          '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
-                          '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\rBL:AA55\r>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-                          '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-                          '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\rDUMMY UPDAT'
-                          'E'], commands)
+        self.assertEqual([b'BL:AA55\r>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
+                          b'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
+                          b'>>>>>>>>>>>>>>>>>>>>>>>>>\rBL:AA55\r<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
+                          b'<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
+                          b'<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\rBL:AA55\r>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
+                          b'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
+                          b'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\rDUMMY UPDAT'
+                          b'E\r', b'WD:3e8\r', b'WD:3e8\r'], commands)
         expected_output = """NET CPU is version 01.03
 Found an update to version 1.04 for the NET CPU. Will flash file firmware/FAST_NET_01_04_00.txt
 Update done.
@@ -693,7 +715,7 @@ Update done.
         # test set frame to buffer
         frame = bytearray()
         for i in range(4096):
-            frame.append(i % 256)
+            frame.append(64 + i % 192)
 
         frame = bytes(frame)
 

@@ -976,7 +976,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             self.debug_log("Sending: %s", "".join("%02x " % b for b in data))
         for start in range(0, len(data), 256):
             block = data[start:start + 256]
-            self._writer.write(block)
+            self._writer.write(bytes(block))
         await self._writer.drain()
 
     async def _read_raw(self, msg_len: int) -> bytearray:

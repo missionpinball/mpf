@@ -11,6 +11,17 @@ from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.tests.loop import MockSerial
 
+COMMAND_LENGTH = {
+    0x00: 7,
+    0x02: 7,
+    0x07: 7,
+    0x08: 7,
+    0x0d: 7,
+    0x13: 8,
+    0x14: 7,
+    0x17: 5,
+    0x19: 11,
+}
 
 class MockOppSocket(MockSerial):
 
@@ -18,7 +29,9 @@ class MockOppSocket(MockSerial):
         del length
         if not self.queue:
             return b""
-        msg = self.queue.pop()
+        msg = b""
+        while self.queue:
+            msg += self.queue.pop(0)
         return msg
 
     def read_ready(self):
@@ -28,23 +41,61 @@ class MockOppSocket(MockSerial):
         return True
 
     def write(self, msg):
+        """Handle messages in fake OPP."""
+        #print("Serial received: " + "".join("\\x%02x" % b for b in msg) + " len: " + str(len(msg)))
+        total_msg_len = len(msg)
+        if self.crashed:
+            return
+
+        while msg:
+            # special case: EOM and inventory map
+            if msg[0] in (0xff, 0xf0):
+                self._handle_msg(msg[0:1])
+                msg = msg[1:]
+                continue
+
+            if len(msg) < 2:
+                raise AssertionError("Message too short. " + "".join("\\x%02x" % b for b in msg))
+
+            command = msg[1]
+            if command == 0x40:
+                # special case of variable length message
+                if len(msg) < 6:
+                    raise AssertionError("Fade too short. " + "".join("\\x%02x" % b for b in msg))
+                command_len = 9 + msg[5]
+            else:
+                if command not in COMMAND_LENGTH:
+                    raise AssertionError("Unknown command. " + "".join("\\x%02x" % b for b in msg))
+                command_len = COMMAND_LENGTH[command]
+
+            if len(msg) < command_len:
+                raise AssertionError("Command length ({}) does not match message length ({}). {}".format(
+                    command_len, len(msg), "".join("\\x%02x" % b for b in msg)
+                ))
+
+            self._handle_msg(msg[0:command_len])
+            msg = msg[command_len:]
+
+        return total_msg_len
+
+    def _handle_msg(self, msg):
+        # print("Handling: " + "".join("\\x%02x" % b for b in msg) + " len: " + str(len(msg)))
         if msg in self.permanent_commands:
             self.queue.append(self.permanent_commands[msg])
             return len(msg)
 
-        # print("Serial received: " + "".join("\\x%02x" % b for b in msg) + " len: " + str(len(msg)))
         if msg not in self.expected_commands:
             self.crashed = True
-            self.expected_commands = {"crashed"}
-            print("Unexpected command: " + "".join("\\x%02x" % b for b in msg) + " len: " + str(len(msg)))
+            remaining_expected_commands = dict(self.expected_commands)
+            self.expected_commands = {"crashed": True}
             raise AssertionError("Unexpected command: " + "".join("\\x%02x" % b for b in msg) +
-                                 " len: " + str(len(msg)))
+                                 " len: " + str(len(msg)) + " Remaining expected commands: " +
+                                 str(remaining_expected_commands))
 
         if self.expected_commands[msg] is not False:
             self.queue.append(self.expected_commands[msg])
 
         del self.expected_commands[msg]
-        return len(msg)
 
     def __init__(self):
         super().__init__()
@@ -65,7 +116,7 @@ class OPPCommon(MpfTestCase):
     def get_machine_path(self):
         return 'tests/machine_files/opp/'
 
-    def _crc_message(self, msg, term=True):
+    def _crc_message(self, msg, term=False):
         crc_msg = msg + OppRs232Intf.calc_crc8_part_msg(msg, 0, len(msg))
         if term:
             crc_msg += b'\xff'
@@ -99,7 +150,7 @@ class TestOPPStm32(MpfTestCase):
     def get_machine_path(self):
         return 'tests/machine_files/opp/'
 
-    def _crc_message(self, msg, term=True):
+    def _crc_message(self, msg, term=False):
         crc_msg = msg + OppRs232Intf.calc_crc8_part_msg(msg, 0, len(msg))
         if term:
             crc_msg += b'\xff'
@@ -142,7 +193,7 @@ class TestOPPStm32(MpfTestCase):
         inputs2_message = b"\x20\x08\x00\x00\x00\x00"
 
         self.serialMocks["com1"].expected_commands = {
-            b'\xf0\xff': b'\xf0\x20\xff',     # boards 20 installed
+            b'\xf0': b'\xf0\x20',     # boards 20 installed
             self._crc_message(b'\x20\x0d\x00\x00\x00\x00'): self._crc_message(board1_config), # get config
             self._crc_message(b'\x20\x02\x00\x00\x00\x00'): self._crc_message(board1_version),   # get version
             self._crc_message(b'\x20\x13\x07\x00\x00\x00\x00', False): False,  # turn off all incands
@@ -154,7 +205,7 @@ class TestOPPStm32(MpfTestCase):
         }
 
         self.serialMocks["com2"].expected_commands = {
-            b'\xf0\xff': b'\xf0\x20\xff',     # boards 20 installed
+            b'\xf0': b'\xf0\x20',     # boards 20 installed
             self._crc_message(b'\x20\x0d\x00\x00\x00\x00'): self._crc_message(board2_config), # get config
             self._crc_message(b'\x20\x02\x00\x00\x00\x00'): self._crc_message(board2_version),   # get version
             self._crc_message(b'\x20\x13\x07\x00\x00\x00\x00', False): False,  # turn off all incands
@@ -254,19 +305,15 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         inputs3b_message = b"\x23\x19\x00\x00\x00\x00\x00\x00\x00\x01"
 
         self.serialMock.expected_commands = {
-            b'\xf0\xff': b'\xf0\x20\x21\x22\x23\xff',     # boards 20 + 21 + 22 + 23 installed
-            self._crc_message(b'\x20\x0d\x00\x00\x00\x00', False) +
-            self._crc_message(b'\x21\x0d\x00\x00\x00\x00', False) +
-            self._crc_message(b'\x22\x0d\x00\x00\x00\x00', False) +
-            self._crc_message(b'\x23\x0d\x00\x00\x00\x00'):
-                self._crc_message(board1_config, False) + self._crc_message(board2_config, False) +
-                self._crc_message(board3_config, False) + self._crc_message(board4_config),     # get config
-            self._crc_message(b'\x20\x02\x00\x00\x00\x00', False) +
-            self._crc_message(b'\x21\x02\x00\x00\x00\x00', False) +
-            self._crc_message(b'\x22\x02\x00\x00\x00\x00', False) +
-            self._crc_message(b'\x23\x02\x00\x00\x00\x00'):
-                self._crc_message(board1_version, False) + self._crc_message(board2_version, False) +
-                self._crc_message(board3_version, False) + self._crc_message(board4_version),   # get version
+            b'\xf0': b'\xf0\x20\x21\x22\x23',     # boards 20 + 21 + 22 + 23 installed
+            self._crc_message(b'\x20\x0d\x00\x00\x00\x00'): self._crc_message(board1_config),
+            self._crc_message(b'\x21\x0d\x00\x00\x00\x00'): self._crc_message(board2_config),
+            self._crc_message(b'\x22\x0d\x00\x00\x00\x00'): self._crc_message(board3_config),
+            self._crc_message(b'\x23\x0d\x00\x00\x00\x00'): self._crc_message(board4_config), # get config
+            self._crc_message(b'\x20\x02\x00\x00\x00\x00'): self._crc_message(board1_version),
+            self._crc_message(b'\x21\x02\x00\x00\x00\x00'): self._crc_message(board2_version),
+            self._crc_message(b'\x22\x02\x00\x00\x00\x00'): self._crc_message(board3_version),
+            self._crc_message(b'\x23\x02\x00\x00\x00\x00'): self._crc_message(board4_version),   # get version
             self._crc_message(b'\x20\x14\x00\x02\x17\x00'): False,  # configure coil 0
             self._crc_message(b'\x20\x14\x01\x04\x17\x00'): False,  # configure coil 1
             self._crc_message(b'\x20\x14\x02\x04\x0a\x00'): False,  # configure coil 2
@@ -278,12 +325,10 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         }
         self.serialMock.permanent_commands = {
             b'\xff': b'\xff',
-            self._crc_message(b'\x20\x08\x00\x00\x00\x00', False) +
-            self._crc_message(b'\x21\x08\x00\x00\x00\x00', False) +
-                self._crc_message(b'\x23\x08\x00\x00\x00\x00', False) +
-            self._crc_message(b'\x23\x19\x00\x00\x00\x00\x00\x00\x00\x00'):
-                self._crc_message(inputs1_message, False) + self._crc_message(inputs2_message, False) +
-                self._crc_message(inputs3a_message, False) + self._crc_message(inputs3b_message),  # read inputs
+            self._crc_message(b'\x20\x08\x00\x00\x00\x00'): self._crc_message(inputs1_message),
+            self._crc_message(b'\x21\x08\x00\x00\x00\x00'): self._crc_message(inputs2_message),
+            self._crc_message(b'\x23\x08\x00\x00\x00\x00'): self._crc_message(inputs3a_message),
+            self._crc_message(b'\x23\x19\x00\x00\x00\x00\x00\x00\x00\x00'): self._crc_message(inputs3b_message),  # read inputs
         }
         super().setUp()
 
@@ -350,10 +395,11 @@ LEDs:
         inputs3a_message = b"\x23\x08\x00\x00\x00\x00"
         inputs3b_message = b"\x23\x19\x80\x00\x00\x00\x00\x01\x00\x00"
         self.serialMock.permanent_commands = {
-            self._crc_message(b'\x20\x08\x00\x00\x00\x00', False) + self._crc_message(b'\x21\x08\x00\x00\x00\x00', False) +
-                self._crc_message(b'\x23\x08\x00\x00\x00\x00', False) + self._crc_message(b'\x23\x19\x00\x00\x00\x00\x00\x00\x00\x00'):
-                self._crc_message(inputs1_message, False) + self._crc_message(inputs2_message, False) +
-                self._crc_message(inputs3a_message, False) + self._crc_message(inputs3b_message),  # read inputs
+            b'\xff': b'\xff',
+            self._crc_message(b'\x20\x08\x00\x00\x00\x00'): self._crc_message(inputs1_message),
+            self._crc_message(b'\x21\x08\x00\x00\x00\x00'): self._crc_message(inputs2_message),
+            self._crc_message(b'\x23\x08\x00\x00\x00\x00'): self._crc_message(inputs3a_message),
+            self._crc_message(b'\x23\x19\x00\x00\x00\x00\x00\x00\x00\x00'): self._crc_message(inputs3b_message),
         }
 
         switch = self.machine.switches["s_test_nc"]
@@ -461,22 +507,22 @@ class TestOPP(OPPCommon, MpfTestCase):
         inputs2_message = b'\x21\x08\x00\x00\x00\x00'
 
         self.serialMock.expected_commands = {
-            b'\xf0\xff': b'\xf0\x20\x21\xff',     # boards 20 + 21 installed
-            self._crc_message(b'\x20\x0d\x00\x00\x00\x00', False) + self._crc_message(b'\x21\x0d\x00\x00\x00\x00'):
-                self._crc_message(board1_config, False) + self._crc_message(board2_config),     # get config
-            self._crc_message(b'\x20\x02\x00\x00\x00\x00', False) + self._crc_message(b'\x21\x02\x00\x00\x00\x00'):
-                self._crc_message(board1_version, False) + self._crc_message(board2_version),   # get version
+            b'\xf0': b'\xf0\x20\x21',     # boards 20 + 21 installed
+            self._crc_message(b'\x20\x0d\x00\x00\x00\x00'): self._crc_message(board1_config),
+            self._crc_message(b'\x21\x0d\x00\x00\x00\x00'): self._crc_message(board2_config),     # get config
+            self._crc_message(b'\x20\x02\x00\x00\x00\x00'): self._crc_message(board1_version),
+            self._crc_message(b'\x21\x02\x00\x00\x00\x00'): self._crc_message(board2_version),   # get version
             self._crc_message(b'\x20\x14\x00\x02\x17\x00'): False,  # configure coil 0
             self._crc_message(b'\x20\x14\x01\x00\x17\x0f'): False,  # configure coil 1
             self._crc_message(b'\x20\x14\x02\x00\x0a\x0f'): False,  # configure coil 2
             self._crc_message(b'\x20\x14\x03\x00\x0a\x06'): False,  # configure coil 3
             self._crc_message(b'\x21\x14\x0c\x00\x0a\x01'): False,  # configure coil 1-12
-            self._crc_message(b'\x20\x13\x07\x00\x00\x00\x00', False): False,  # turn off all incands
+            self._crc_message(b'\x20\x13\x07\x00\x00\x00\x00'): False,  # turn off all incands
         }
         self.serialMock.permanent_commands = {
             b'\xff': b'\xff',
-            self._crc_message(b'\x20\x08\x00\x00\x00\x00', False) + self._crc_message(b'\x21\x08\x00\x00\x00\x00'):
-                self._crc_message(inputs1_message, False) + self._crc_message(inputs2_message),  # read inputs
+            self._crc_message(b'\x20\x08\x00\x00\x00\x00'): self._crc_message(inputs1_message),
+            self._crc_message(b'\x21\x08\x00\x00\x00\x00'): self._crc_message(inputs2_message),  # read inputs
         }
         super().setUp()
 
@@ -529,8 +575,9 @@ LEDs:
         inputs1_message = b"\x20\x08\x00\x00\x01\x08"  # inputs 0+1+2 off, 3 on, 8 off
         inputs2_message = b'\x21\x08\x00\x00\x00\x00'
         self.serialMock.permanent_commands = {
-            self._crc_message(b'\x20\x08\x00\x00\x00\x00', False) + self._crc_message(b'\x21\x08\x00\x00\x00\x00'):
-                self._crc_message(inputs1_message, False) + self._crc_message(inputs2_message)
+            b'\xff': b'\xff',
+            self._crc_message(b'\x20\x08\x00\x00\x00\x00'): self._crc_message(inputs1_message),
+            self._crc_message(b'\x21\x08\x00\x00\x00\x00'): self._crc_message(inputs2_message)
         }
 
         switch = self.machine.switches["s_test_nc"]
@@ -548,19 +595,20 @@ LEDs:
     def _test_coils(self):
         self.assertEqual("OPP com1 Board 0x20", self.machine.coils["c_test"].hw_driver.get_board_name())
         # pulse coil
-        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x00\x02\x17\x00')] = False,   # configure coil 0
-        self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x01\x00\x01', False)] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x00\x02\x17\x00')] = False   # configure coil 0
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x01\x00\x01')] = False
         self.machine.coils["c_test"].pulse()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands[self._crc_message(b'\x21\x14\x0c\x02\x0a\x00')] = False
-        self.serialMock.expected_commands[self._crc_message(b'\x21\x07\x10\x00\x10\x00', False)] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x21\x07\x10\x00\x10\x00')] = False
         self.machine.coils["c_holdpower_16"].pulse(10)
 
         # enable coil (not allowed)
         with self.assertRaises(AssertionError):
             self.machine.coils["c_test"].enable()
+        self._wait_for_processing()
 
         self.assertFalse(self.serialMock.expected_commands)
         self.assertFalse(self.serialMock.crashed)
