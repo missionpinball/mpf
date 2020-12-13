@@ -6,13 +6,6 @@ matrix:
   include:
    - os: linux
      env:
-       - LINUX=ubuntu:16.04
-       - RUN_PROSPECTOR=0
-     sudo: required
-     language: python
-     python: "3.5"
-   - os: linux
-     env:
        - LINUX=ubuntu:18.04
        - RUN_PROSPECTOR=1
      sudo: required
@@ -27,11 +20,11 @@ matrix:
      python: "3.6"
    - os: linux  # stable
      env:
-       - LINUX=debian:stretch
-       - RUN_PROSPECTOR=0
+       - LINUX=debian:bullseye
+       - RUN_PROSPECTOR=1
      sudo: required
      language: python
-     python: "3.5"
+     python: "3.6"
    - os: linux  # testing; this is actually python 3.7
      env:
        - LINUX=debian:buster
@@ -58,8 +51,8 @@ before_install:
 
 install:
 - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
-      curl -sS https://www.python.org/ftp/python/3.5.4/python-3.5.4-macosx10.6.pkg > python-3.5.4-macosx10.6.pkg;
-      sudo installer -pkg python-3.5.4-macosx10.6.pkg -target /;
+      curl -sS https://www.python.org/ftp/python/3.9.1/python-3.9.1-macosx10.9.pkg > python-3.9.1-macosx10.9.pkg;
+      sudo installer -pkg python-3.9.1-macosx10.9.pkg -target /;
       curl -sS https://bootstrap.pypa.io/get-pip.py > get-pip.py;
       sudo python3 get-pip.py;
       pip3 install .;
@@ -67,7 +60,7 @@ install:
 
 script:
 - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
-    docker run -v $PWD:$PWD -w $PWD $LINUX /bin/sh -c "export DEBIAN_FRONTEND=noninteractive; _mpf_installer/install-mpf-dependencies && pip3 install --upgrade coveralls && if [ \"${RUN_PROSPECTOR}\" == \"1\" ]; then pip3 install prospector==1.3.0; fi && pip3 install . && export PYTHONPATH=$PYTHONPATH:$(pwd):$(pwd)/_mpf-mc && if [ \"${RUN_PROSPECTOR}\" == \"1\" ]; then prospector; fi && coverage3 run --concurrency=thread -m unittest discover -s mpf/tests && python3 test_regression.py;";
+    docker run -v $PWD:$PWD -w $PWD $LINUX /bin/sh -c "export DEBIAN_FRONTEND=noninteractive; _mpf_installer/install-mpf-dependencies && pip3 install --upgrade coveralls && if [ \"${RUN_PROSPECTOR}\" == \"1\" ]; then pip3 install prospector==1.3.1; fi && pip3 install . && export PYTHONPATH=$PYTHONPATH:$(pwd):$(pwd)/_mpf-mc && if [ \"${RUN_PROSPECTOR}\" == \"1\" ]; then prospector; fi && coverage3 run --concurrency=thread -m unittest discover -s mpf/tests && python3 test_regression.py;";
   fi;
 - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
       export PYTHONPATH=$PYTHONPATH:$(pwd)/_mpf-mc;

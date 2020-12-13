@@ -64,7 +64,8 @@ class ProcProcess:
     def start_pinproc(self, machine_type, loop, trace, log):
         """Initialise libpinproc."""
         self.loop = loop
-        self.stop_future = asyncio.Future(loop=self.loop)
+        asyncio.set_event_loop(loop)
+        self.stop_future = asyncio.Future()
         self.trace = trace
         assert log is not None
         self.log = log  # type: Logger

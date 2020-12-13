@@ -37,7 +37,7 @@ class ClockTestCase(unittest.TestCase):
         self.loop.close()
 
     def advance_time_and_run(self, delta=1.0):
-        self.loop.run_until_complete(asyncio.sleep(delay=delta, loop=self.loop))
+        self.loop.run_until_complete(asyncio.sleep(delay=delta))
 
     def callback1(self, number):
         self.callback_order.append(number)

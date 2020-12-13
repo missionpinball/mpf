@@ -61,6 +61,10 @@ class BaseSerialCommunicator:
                 # we got a connection
                 break
 
+        serial = self.writer.transport.serial
+        if hasattr(serial, "set_low_latency_mode"):
+            serial.set_low_latency_mode(True)
+
         # defaults are slightly high for our usecase
         self.writer.transport.set_write_buffer_limits(2048, 1024)
 
