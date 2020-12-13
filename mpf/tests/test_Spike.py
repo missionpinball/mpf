@@ -1,5 +1,6 @@
 """Test Stern Spike Platform."""
 import time
+import serial_asyncio
 
 from mpf.platforms.spike.spike import SpikePlatform
 
@@ -499,6 +500,9 @@ class SpikePlatformTest(MpfTestCase):
         self.assertFalse(self.serialMock.expected_commands)
 
     def _testDmd(self):
+        if serial_asyncio.__version__ == '0.4':
+            return
+
         self.serialMock.permanent_commands = {
             b'\x80\x00\x90\x55\x00\xf0\x00\x55\x00\xf0\x00\x55\x00\xf0\x00\x55\x00\xf0\x00\x55\x00\xf0\x00\x55\x00\xf0'
             b'\x00\x55\x00\xf0\x00\x55\x00\xf0\x00\x55\x00\xf0\x00\x55\x00\xf0\x00\x55\x00\xf0\x00\x55\x00\xf0\x00\x55'
@@ -1090,6 +1094,9 @@ class SpikePlatformFirmware0_49Test(MpfTestCase):
         self.assertFalse(self.serialMock.expected_commands)
 
     def _testDmd(self):
+        if serial_asyncio.__version__ == '0.4':
+            return
+
         self.serialMock.permanent_commands = {
             b'\x80\x00\x90\x55\x00\xf0\x00\x55\x00\xf0\x00\x55\x00\xf0\x00\x55\x00\xf0\x00\x55\x00\xf0\x00\x55\x00\xf0'
             b'\x00\x55\x00\xf0\x00\x55\x00\xf0\x00\x55\x00\xf0\x00\x55\x00\xf0\x00\x55\x00\xf0\x00\x55\x00\xf0\x00\x55'
