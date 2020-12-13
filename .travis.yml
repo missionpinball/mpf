@@ -6,13 +6,6 @@ matrix:
   include:
    - os: linux
      env:
-       - LINUX=ubuntu:16.04
-       - RUN_PROSPECTOR=0
-     sudo: required
-     language: python
-     python: "3.5"
-   - os: linux
-     env:
        - LINUX=ubuntu:18.04
        - RUN_PROSPECTOR=1
      sudo: required
@@ -27,11 +20,11 @@ matrix:
      python: "3.6"
    - os: linux  # stable
      env:
-       - LINUX=debian:stretch
-       - RUN_PROSPECTOR=0
+       - LINUX=debian:bullseye
+       - RUN_PROSPECTOR=1
      sudo: required
      language: python
-     python: "3.5"
+     python: "3.6"
    - os: linux  # testing; this is actually python 3.7
      env:
        - LINUX=debian:buster
