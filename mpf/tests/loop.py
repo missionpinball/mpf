@@ -207,18 +207,11 @@ class MockSerial(MockFd):
         pass
 
     @property
-    def in_waiting(self):
-        if self.read_ready():
-            return 1
-        else:
-            return 0
-
-    @property
     def out_waiting(self):
-        if self.write_ready():
-            return 0
-        else:
-            return 1
+        return 0 if self.write_ready() else 1024
+
+    def in_waiting(self):
+        return 1024 if self.read_ready() else 0
 
     def read(self, length):
         raise AssertionError("Not implemented")

@@ -843,11 +843,17 @@ class TestLisyV10(MpfTestCase):
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
-        # fade both lights together
+        # fade both lights together (fade depending on serial timing)
         self.serialMock.expected_commands = {
             b'\x0d\x00\x00\x01\x18\x07\xaa\xbb\xcc\xdd\xee\xff\xdd': None,      # fade with 300ms fade time
+            b'\x0d\x00\x00\x01\x19\x07\xaa\xbb\xcc\xdd\xee\xff\xdd': None,      # fade with 300ms fade time
+            b'\x0d\x00\x00\x01\x20\x07\xaa\xbb\xcc\xdd\xee\xff\xdd': None,      # fade with 300ms fade time
+            b'\x0d\x00\x00\x01\x21\x07\xaa\xbb\xcc\xdd\xee\xff\xdd': None,      # fade with 300ms fade time
+            b'\x0d\x00\x00\x01\x22\x07\xaa\xbb\xcc\xdd\xee\xff\xdd': None,      # fade with 300ms fade time
         }
         self.machine.lights["test_light0"].color([0xaa, 0xbb, 0xcc], fade_ms=300)
         self.machine.lights["test_light1"].color([0xdd, 0xee, 0xff], fade_ms=300)
-        self._wait_for_processing()
-        self.assertFalse(self.serialMock.expected_commands)
+        start = time.time()
+        while len(self.serialMock.expected_commands) > 4 and not self.serialMock.crashed and time.time() < start + 10:
+            self.advance_time_and_run(.01)
+        self.assertEqual(4, len(self.serialMock.expected_commands))

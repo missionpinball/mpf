@@ -4,6 +4,7 @@ Contains the hardware interface and drivers for the FAST Pinball platform
 hardware, including the FAST Core and WPC controllers as well as FAST I/O
 boards.
 """
+import asyncio
 import os
 from copy import deepcopy
 from distutils.version import StrictVersion
@@ -171,16 +172,23 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if self.net_connection:
             # set watchdog to expire in 1ms
             self.net_connection.writer.write(b'WD:1\r')
+        if self.rgb_connection:
+            self.rgb_connection.writer.write(b'BL:AA55\r')  # reset CPU using bootloader
+        if self.dmd_connection:
+            self.dmd_connection.writer.write(b'BL:AA55\r')  # reset CPU using bootloader
+
+        # wait 100ms for the messages to be send
+        self.machine.clock.loop.run_until_complete(asyncio.sleep(.1))
+
+        if self.net_connection:
             self.net_connection.stop()
             self.net_connection = None
 
         if self.rgb_connection:
-            self.rgb_connection.writer.write(b'BL:AA55\r')  # reset CPU using bootloader
             self.rgb_connection.stop()
             self.rgb_connection = None
 
         if self.dmd_connection:
-            self.dmd_connection.writer.write(b'BL:AA55\r')  # reset CPU using bootloader
             self.dmd_connection.stop()
             self.dmd_connection = None
 
