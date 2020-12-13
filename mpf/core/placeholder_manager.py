@@ -308,7 +308,8 @@ class DevicePlaceholder:
         self._attribute = attribute
         self._machine = machine
 
-    def subscribe(self):
+    @staticmethod
+    def subscribe():
         """Subscribe to object changes."""
         return asyncio.Future()
 
@@ -337,11 +338,13 @@ class DeviceClassPlaceholder:
         self._device_name = device_name
         self._machine = machine
 
-    def subscribe(self):
+    @staticmethod
+    def subscribe():
         """Subscribe to object changes."""
         return asyncio.Future()
 
-    def subscribe_attribute(self, item):
+    @staticmethod
+    def subscribe_attribute(item):
         """Subscribe to device changes."""
         del item
         return asyncio.Future()
@@ -373,11 +376,13 @@ class DevicesPlaceholder:
         """Array access."""
         return self.__getattr__(item)
 
-    def subscribe(self):
+    @staticmethod
+    def subscribe():
         """Subscribe to object changes."""
         return asyncio.Future()
 
-    def subscribe_attribute(self, item):
+    @staticmethod
+    def subscribe_attribute(item):
         """Subscribe to device changes."""
         del item
         return asyncio.Future()
