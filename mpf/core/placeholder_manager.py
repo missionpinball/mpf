@@ -681,7 +681,9 @@ class BasePlaceholderManager(MpfController):
 
     def _eval_subscript(self, node, variables, subscribe):
         value, subscription = self._eval(node.value, variables, subscribe)
-        if isinstance(node.slice, ast.Index):
+        if isinstance(node.slice, ast.Constant):
+            return value[node.slice.value], subscription
+        elif isinstance(node.slice, ast.Index):
             slice_value, slice_subscript = self._eval(node.slice.value, variables, subscribe)
             try:
                 return value[slice_value], subscription + slice_subscript
@@ -693,7 +695,7 @@ class BasePlaceholderManager(MpfController):
             step, step_subscription = self._eval(node.slice.step, variables, subscribe)
             return value[lower:upper:step], subscription + lower_subscription + upper_subscription + step_subscription
         else:
-            raise TypeError(type(node))
+            raise TypeError(type(node.slice))
 
     def _eval_name(self, node, variables, subscribe):
         if node.id in ("true", "false"):
