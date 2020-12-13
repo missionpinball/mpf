@@ -76,7 +76,8 @@ community.''',
                       'psutil==5.7.3',
                       'grpcio_tools==1.31.0',
                       'grpcio==1.31.0',
-                      'protobuf==3.13.0'
+                      'protobuf==3.13.0',
+                      'prompt_toolkit==3.0.8',
                       ],
 
     tests_require=[],
