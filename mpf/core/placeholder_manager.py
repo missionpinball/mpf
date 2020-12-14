@@ -683,19 +683,19 @@ class BasePlaceholderManager(MpfController):
         value, subscription = self._eval(node.value, variables, subscribe)
         if isinstance(node.slice, ast.Constant):
             return value[node.slice.value], subscription
-        elif isinstance(node.slice, ast.Index):
+        if isinstance(node.slice, ast.Index):
             slice_value, slice_subscript = self._eval(node.slice.value, variables, subscribe)
             try:
                 return value[slice_value], subscription + slice_subscript
             except ValueError:
                 raise TemplateEvalError(subscription + slice_subscript)
-        elif isinstance(node.slice, ast.Slice):
+        if isinstance(node.slice, ast.Slice):
             lower, lower_subscription = self._eval(node.slice.lower, variables, subscribe)
             upper, upper_subscription = self._eval(node.slice.upper, variables, subscribe)
             step, step_subscription = self._eval(node.slice.step, variables, subscribe)
             return value[lower:upper:step], subscription + lower_subscription + upper_subscription + step_subscription
-        else:
-            raise TypeError(type(node.slice))
+
+        raise TypeError(type(node.slice))
 
     def _eval_name(self, node, variables, subscribe):
         if node.id in ("true", "false"):
