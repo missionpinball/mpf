@@ -20,21 +20,25 @@ class TestDigitalScoreReels(MpfFakeGameTestCase):
         self.advance_time_and_run()
         self.machine.game.player.score = 123
         self.advance_time_and_run()
-        self.assertEqual({"1k": "20", "100": "2", "10": "4", "1": "6"}, self._last_event_kwargs['score_reel_player_score_player1'])
+        self.assertEqual({"1": "20", "2": "2", "3": "4", "4": "6"}, self._last_event_kwargs['score_reel_player_score_player1'])
         self.assertEventNotCalled('score_reel_player_score_player2')
 
         self.drain_all_balls()
         self.assertPlayerNumber(2)
         self.machine.game.player.score = 9876
         self.advance_time_and_run()
-        self.assertEqual({"1k": "18", "100": "16", "10": "14", "1": "12"}, self._last_event_kwargs['score_reel_player_score_player2'])
+        self.assertEqual({"1": "18", "2": "16", "3": "14", "4": "12"}, self._last_event_kwargs['score_reel_player_score_player2'])
 
     def test_arbitrary_event(self):
         self.mock_event('score_reel_arbitrary_event')
         self.post_event_with_params('arbitrary_event', value='AB')
         self.advance_time_and_run()
-        self.assertEqual({"10": "1", "1": "2"}, self._last_event_kwargs['score_reel_arbitrary_event'])
+        self.assertEqual({"1": "6", "2": "1", "3": "2"}, self._last_event_kwargs['score_reel_arbitrary_event'])
+
+        self.post_event_with_params('arbitrary_event', value='DXB')
+        self.advance_time_and_run()
+        self.assertEqual({"1": "4", "2":"6", "3": "2"}, self._last_event_kwargs['score_reel_arbitrary_event'])
 
         self.post_event_with_params('arbitrary_event', value='EC')
         self.advance_time_and_run()
-        self.assertEqual({"10": "5", "1": "3"}, self._last_event_kwargs['score_reel_arbitrary_event'])
+        self.assertEqual({"1": "6", "2":"5", "3": "3"}, self._last_event_kwargs['score_reel_arbitrary_event'])

@@ -25,12 +25,10 @@ class DigitalScoreReel(SystemWideDevice):
     self.machine.events.add_handler(self.name, self._post_reel_values)
 
   def _post_reel_values(self, **kwargs):
-    # Digital score reels support scores up to 9.99 trillion
-    names = ["1", "10", "100", "1k", "10k", "100k", "1m", "10m", "100m", "1b", "10b", "100b", "1t"]
-    # Reverse the score and pad with zeroes up to the reel count
-    score = str(kwargs["value"])[::-1].ljust(self._reel_count, "0")
+    # Pad the string up to the necessary number of characters in the reel
+    score = str(kwargs["value"]).rjust(self._reel_count, self.config["start_value"])
     # Create a dict of reel name keys to target frame values
-    result = { names[i]: self._frames[score[i]] for i in range(self._reel_count)}
+    result = { str(i + 1): self._frames[score[i]] for i in range(self._reel_count)}
     # Post the event
     event_name = "score_reel_{}_player{}".format(self.name, self.machine.game.player.number) if \
       self._include_player_number else "score_reel_{}".format(self.name)

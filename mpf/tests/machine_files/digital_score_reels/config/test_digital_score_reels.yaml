@@ -26,7 +26,8 @@ digital_score_reels:
       - character: 0
         frame: 20
   arbitrary_event:
-    reel_count: 2
+    reel_count: 3
+    start_value: X
     frames:
       - character: A
         frame: 1
@@ -38,3 +39,5 @@ digital_score_reels:
         frame: 4
       - character: E
         frame: 5
+      - character: X
+        frame: 6
