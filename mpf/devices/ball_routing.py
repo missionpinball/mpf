@@ -9,9 +9,12 @@ from mpf.core.events import EventHandlerKey
 
 from mpf.devices.ball_device.ball_device import BallDevice
 
-from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
+
+MYPY = False
+if MYPY:   # pragma: no cover
+    from mpf.core.machine import MachineController   # pylint: disable-msg=cyclic-import,unused-import
 
 
 @DeviceMonitor("balls_routing")

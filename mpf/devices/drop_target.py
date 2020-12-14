@@ -2,7 +2,6 @@
 from typing import List, Optional
 from typing import Set
 
-from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.core.player import Player
 
@@ -14,7 +13,8 @@ from mpf.core.system_wide_device import SystemWideDevice
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.devices.driver import Driver   # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.driver import Driver           # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
 @DeviceMonitor("complete")
