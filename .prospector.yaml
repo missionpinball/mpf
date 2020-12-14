@@ -22,6 +22,7 @@ pylint:
   disable:
     - pointless-string-statement  # pointless statement, which is how our event docstrings are seen
     - too-few-public-methods
+    - unsubscriptable-object    # broken on python 3.9
 
   options:
     max-attributes: 12
