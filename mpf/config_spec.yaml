@@ -696,7 +696,7 @@ images:
     __type__: config_dict
     file: single|str|None
     frame_skips: list|subconfig(images_frame_skips)|None
-    image_template: single|subconfig(images,device)|
+    image_template: single|subconfig(images,device)|None
     load: single|str|None
 images_frame_skips:
     __valid_in__: machine, mode

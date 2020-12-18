@@ -454,7 +454,7 @@ class BaseAssetManager(MpfController, LogMixin):
 
                 config[name] = built_up_config
 
-                self.info_log("Registering Asset: %s, File: %s, Default "
+                self.debug_log("Registering Asset: %s, File: %s, Default "
                               "Group: %s, Final Config: %s", name, file_name,
                               default_string, built_up_config)
         return config
