@@ -1447,7 +1447,7 @@ slide_player:
     __type__: config_player
     target: single|str|None
     background_color: single|kivycolor|000000ff
-    priority: single|int_or_token|None               # todo should this be 0?
+    priority: single|int_or_token|0
     show: single|bool|true
     force: single|bool|false
     transition: ignore

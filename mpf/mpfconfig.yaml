@@ -20,6 +20,7 @@ mpf:
         - placeholder_manager: mpf.core.placeholder_manager.PlaceholderManager
         - light_controller: mpf.core.light_controller.LightController
         - platform_controller: mpf.core.platform_controller.PlatformController
+        - media_controller: mpf.core.media_controller.MediaController
 
     config_players:
         coil: mpf.config_players.coil_player.CoilPlayer
@@ -31,6 +32,7 @@ mpf:
         light: mpf.config_players.light_player.LightPlayer
         random_event: mpf.config_players.random_event_player.RandomEventPlayer
         show: mpf.config_players.show_player.ShowPlayer
+        slide_player: mpf.config_players.slide_player.SlidePlayer
         variable: mpf.config_players.variable_player.VariablePlayer
         segment_display_player: mpf.config_players.segment_display_player.SegmentDisplayPlayer
         hardware_sound_player: mpf.config_players.hardware_sound_player.HardwareSoundPlayer
@@ -162,6 +164,7 @@ logging:
       logic_blocks: none
       machine_controller: basic
       machine_vars: basic
+      media_controller: basic
       mode_controller: basic
       placeholder_manager: none
       platforms: none  # todo
@@ -196,6 +199,7 @@ logging:
       logic_blocks: basic
       machine_controller: basic
       machine_vars: basic
+      media_controller: basic
       mode_controller: basic
       placeholder_manager: basic
       platforms: basic
