@@ -454,9 +454,9 @@ class BaseAssetManager(MpfController, LogMixin):
 
                 config[name] = built_up_config
 
-                self.info_log("Registering Asset: %s, File: %s, Default "
-                              "Group: %s, Final Config: %s", name, file_name,
-                              default_string, built_up_config)
+                self.debug_log("Registering Asset: %s, File: %s, Default "
+                               "Group: %s, Final Config: %s", name, file_name,
+                               default_string, built_up_config)
         return config
 
     def _create_asset_groups(self, config, mode=None) -> None:
