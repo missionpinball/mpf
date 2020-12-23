@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x0cserver.proto\x12\x03mpf\"\x11\n\x0fSlideAddRequest\"$\n\x10SlideAddResponse\x12\x10\n\x08slide_id\x18\x01 \x01(\r\"&\n\x12SlideRemoveRequest\x12\x10\n\x08slide_id\x18\x01 \x01(\r\"\x15\n\x13SlideRemoveResponse\"@\n\x05\x43olor\x12\x0b\n\x03red\x18\x01 \x01(\x02\x12\r\n\x05green\x18\x02 \x01(\x02\x12\x0c\n\x04\x62lue\x18\x03 \x01(\x02\x12\r\n\x05\x61lpha\x18\x04 \x01(\x02\"\x1f\n\rScaleRelative\x12\x0e\n\x06\x66\x61\x63tor\x18\x01 \x01(\x02\".\n\rScaleAbsolute\x12\r\n\x05width\x18\x01 \x01(\x01\x12\x0e\n\x06height\x18\x02 \x01(\x01\"9\n\x18ScaleAbsoluteKeepAspects\x12\r\n\x05width\x18\x01 \x01(\x01\x12\x0e\n\x06height\x18\x02 \x01(\x01\"\x10\n\x0eScaleUnchanged\"\\\n\x0bWidgetLabel\x12\x0c\n\x04text\x18\x01 \x01(\t\x12\x11\n\tfont_size\x18\x02 \x01(\x05\x12\x11\n\tfont_name\x18\x03 \x01(\t\x12\x19\n\x05\x63olor\x18\x04 \x01(\x0b\x32\n.mpf.Color\"K\n\x0fWidgetRectangle\x12\r\n\x05width\x18\x01 \x01(\x01\x12\x0e\n\x06height\x18\x02 \x01(\x01\x12\x19\n\x05\x63olor\x18\x03 \x01(\x0b\x32\n.mpf.Color\"\xde\x01\n\x0bWidgetImage\x12\x0c\n\x04path\x18\x01 \x01(\t\x12(\n\tunchanged\x18\n \x01(\x0b\x32\x13.mpf.ScaleUnchangedH\x00\x12&\n\x08relative\x18\x0b \x01(\x0b\x32\x12.mpf.ScaleRelativeH\x00\x12&\n\x08\x61\x62solute\x18\x0c \x01(\x0b\x32\x12.mpf.ScaleAbsoluteH\x00\x12>\n\x15\x61\x62solute_keep_aspects\x18\r \x01(\x0b\x32\x1d.mpf.ScaleAbsoluteKeepAspectsH\x00\x42\x07\n\x05scale\"\x99\x02\n\x11WidgetImageSprite\x12\x0c\n\x04path\x18\x01 \x01(\t\x12\t\n\x01x\x18\x02 \x01(\x01\x12\t\n\x01y\x18\x03 \x01(\x01\x12\r\n\x05width\x18\x04 \x01(\x01\x12\x0e\n\x06height\x18\x05 \x01(\x01\x12(\n\tunchanged\x18\n \x01(\x0b\x32\x13.mpf.ScaleUnchangedH\x00\x12&\n\x08relative\x18\x0b \x01(\x0b\x32\x12.mpf.ScaleRelativeH\x00\x12&\n\x08\x61\x62solute\x18\x0c \x01(\x0b\x32\x12.mpf.ScaleAbsoluteH\x00\x12>\n\x15\x61\x62solute_keep_aspects\x18\r \x01(\x0b\x32\x1d.mpf.ScaleAbsoluteKeepAspectsH\x00\x42\x07\n\x05scale\"\x97\x02\n\x13WidgetAnimatedImage\x12\x0c\n\x04path\x18\x01 \x01(\t\x12\x0b\n\x03\x66ps\x18\x02 \x01(\x05\x12\r\n\x05loops\x18\x03 \x01(\x05\x12\x13\n\x0bstart_frame\x18\x04 \x01(\x03\x12(\n\tunchanged\x18\n \x01(\x0b\x32\x13.mpf.ScaleUnchangedH\x00\x12&\n\x08relative\x18\x0b \x01(\x0b\x32\x12.mpf.ScaleRelativeH\x00\x12&\n\x08\x61\x62solute\x18\x0c \x01(\x0b\x32\x12.mpf.ScaleAbsoluteH\x00\x12>\n\x15\x61\x62solute_keep_aspects\x18\r \x01(\x0b\x32\x1d.mpf.ScaleAbsoluteKeepAspectsH\x00\x42\x07\n\x05scale\"\xea\x01\n\x0bWidgetVideo\x12\x0c\n\x04path\x18\x01 \x01(\t\x12\x0e\n\x06volume\x18\x04 \x01(\x02\x12\x13\n\x0bsound_track\x18\x05 \x01(\t\x12\r\n\x05loops\x18\x06 \x01(\x05\x12(\n\tunchanged\x18\n \x01(\x0b\x32\x13.mpf.ScaleUnchangedH\x00\x12&\n\x08relative\x18\x0b \x01(\x0b\x32\x12.mpf.ScaleRelativeH\x00\x12>\n\x15\x61\x62solute_keep_aspects\x18\x0c \x01(\x0b\x32\x1d.mpf.ScaleAbsoluteKeepAspectsH\x00\x42\x07\n\x05scale\"#\n\rWidgetDisplay\x12\x12\n\ndisplay_id\x18\x01 \x01(\r\"f\n\nWidgetLine\x12\n\n\x02x1\x18\x01 \x01(\x02\x12\n\n\x02y1\x18\x02 \x01(\x02\x12\n\n\x02x2\x18\x03 \x01(\x02\x12\n\n\x02y2\x18\x04 \x01(\x02\x12\x19\n\x05\x63olor\x18\x05 \x01(\x0b\x32\n.mpf.Color\x12\r\n\x05width\x18\x06 \x01(\x02\"\x0f\n\rWidgetPolygon\"\x0e\n\x0cWidgetBezier\"\x84\x05\n\x10WidgetAddRequest\x12\x10\n\x08slide_id\x18\x01 \x01(\r\x12\t\n\x01x\x18\x02 \x01(\x01\x12\t\n\x01y\x18\x03 \x01(\x01\x12\t\n\x01z\x18\x04 \x01(\r\x12\x10\n\x08rotation\x18\x05 \x01(\x01\x12\x1e\n\x08\x61nchor_x\x18\x06 \x01(\x0e\x32\x0c.mpf.AnchorX\x12\x1e\n\x08\x61nchor_y\x18\x07 \x01(\x0e\x32\x0c.mpf.AnchorY\x12\x0f\n\x07opacity\x18\x08 \x01(\x01\x12(\n\x0clabel_widget\x18\x14 \x01(\x0b\x32\x10.mpf.WidgetLabelH\x00\x12\x30\n\x10rectangle_widget\x18\x15 \x01(\x0b\x32\x14.mpf.WidgetRectangleH\x00\x12(\n\x0cimage_widget\x18\x16 \x01(\x0b\x32\x10.mpf.WidgetImageH\x00\x12\x35\n\x13image_sprite_widget\x18\x17 \x01(\x0b\x32\x16.mpf.WidgetImageSpriteH\x00\x12\x39\n\x15\x61nimated_image_widget\x18\x18 \x01(\x0b\x32\x18.mpf.WidgetAnimatedImageH\x00\x12(\n\x0cvideo_widget\x18\x19 \x01(\x0b\x32\x10.mpf.WidgetVideoH\x00\x12,\n\x0e\x64isplay_widget\x18\x1a \x01(\x0b\x32\x12.mpf.WidgetDisplayH\x00\x12&\n\x0bline_widget\x18\x1b \x01(\x0b\x32\x0f.mpf.WidgetLineH\x00\x12,\n\x0epolygon_widget\x18\x1c \x01(\x0b\x32\x12.mpf.WidgetPolygonH\x00\x12*\n\rbezier_widget\x18\x1d \x01(\x0b\x32\x11.mpf.WidgetBezierH\x00\x42\x08\n\x06widget\"\x13\n\x11WidgetAddResponse\"$\n\x10ShowSlideRequest\x12\x10\n\x08slide_id\x18\x01 \x01(\r\"\x13\n\x11ShowSlideResponse**\n\x07\x41nchorX\x12\x07\n\x03TOP\x10\x00\x12\n\n\x06MIDDLE\x10\x01\x12\n\n\x06\x42OTTOM\x10\x02**\n\x07\x41nchorY\x12\x08\n\x04LEFT\x10\x00\x12\n\n\x06\x43\x45NTER\x10\x01\x12\t\n\x05RIGHT\x10\x02\x32\x8c\x02\n\x0fMediaController\x12\x37\n\x08\x41\x64\x64Slide\x12\x14.mpf.SlideAddRequest\x1a\x15.mpf.SlideAddResponse\x12@\n\x0bRemoveSlide\x12\x17.mpf.SlideRemoveRequest\x1a\x18.mpf.SlideRemoveResponse\x12\x42\n\x11\x41\x64\x64WidgetsToSlide\x12\x15.mpf.WidgetAddRequest\x1a\x16.mpf.WidgetAddResponse\x12:\n\tShowSlide\x12\x15.mpf.ShowSlideRequest\x1a\x16.mpf.ShowSlideResponseb\x06proto3'
+  serialized_pb=b'\n\x0cserver.proto\x12\x03mpf\"/\n\x0fSlideAddRequest\x12\x1c\n\x07widgets\x18\x01 \x03(\x0b\x32\x0b.mpf.Widget\"$\n\x10SlideAddResponse\x12\x10\n\x08slide_id\x18\x01 \x01(\r\"&\n\x12SlideRemoveRequest\x12\x10\n\x08slide_id\x18\x01 \x01(\r\"\x15\n\x13SlideRemoveResponse\"@\n\x05\x43olor\x12\x0b\n\x03red\x18\x01 \x01(\x02\x12\r\n\x05green\x18\x02 \x01(\x02\x12\x0c\n\x04\x62lue\x18\x03 \x01(\x02\x12\r\n\x05\x61lpha\x18\x04 \x01(\x02\"\x1f\n\rScaleRelative\x12\x0e\n\x06\x66\x61\x63tor\x18\x01 \x01(\x02\".\n\rScaleAbsolute\x12\r\n\x05width\x18\x01 \x01(\x01\x12\x0e\n\x06height\x18\x02 \x01(\x01\"9\n\x18ScaleAbsoluteKeepAspects\x12\r\n\x05width\x18\x01 \x01(\x01\x12\x0e\n\x06height\x18\x02 \x01(\x01\"\x10\n\x0eScaleUnchanged\"\\\n\x0bWidgetLabel\x12\x0c\n\x04text\x18\x01 \x01(\t\x12\x11\n\tfont_size\x18\x02 \x01(\x05\x12\x11\n\tfont_name\x18\x03 \x01(\t\x12\x19\n\x05\x63olor\x18\x04 \x01(\x0b\x32\n.mpf.Color\"K\n\x0fWidgetRectangle\x12\r\n\x05width\x18\x01 \x01(\x01\x12\x0e\n\x06height\x18\x02 \x01(\x01\x12\x19\n\x05\x63olor\x18\x03 \x01(\x0b\x32\n.mpf.Color\"\xde\x01\n\x0bWidgetImage\x12\x0c\n\x04path\x18\x01 \x01(\t\x12(\n\tunchanged\x18\n \x01(\x0b\x32\x13.mpf.ScaleUnchangedH\x00\x12&\n\x08relative\x18\x0b \x01(\x0b\x32\x12.mpf.ScaleRelativeH\x00\x12&\n\x08\x61\x62solute\x18\x0c \x01(\x0b\x32\x12.mpf.ScaleAbsoluteH\x00\x12>\n\x15\x61\x62solute_keep_aspects\x18\r \x01(\x0b\x32\x1d.mpf.ScaleAbsoluteKeepAspectsH\x00\x42\x07\n\x05scale\"\x99\x02\n\x11WidgetImageSprite\x12\x0c\n\x04path\x18\x01 \x01(\t\x12\t\n\x01x\x18\x02 \x01(\x01\x12\t\n\x01y\x18\x03 \x01(\x01\x12\r\n\x05width\x18\x04 \x01(\x01\x12\x0e\n\x06height\x18\x05 \x01(\x01\x12(\n\tunchanged\x18\n \x01(\x0b\x32\x13.mpf.ScaleUnchangedH\x00\x12&\n\x08relative\x18\x0b \x01(\x0b\x32\x12.mpf.ScaleRelativeH\x00\x12&\n\x08\x61\x62solute\x18\x0c \x01(\x0b\x32\x12.mpf.ScaleAbsoluteH\x00\x12>\n\x15\x61\x62solute_keep_aspects\x18\r \x01(\x0b\x32\x1d.mpf.ScaleAbsoluteKeepAspectsH\x00\x42\x07\n\x05scale\"\x97\x02\n\x13WidgetAnimatedImage\x12\x0c\n\x04path\x18\x01 \x01(\t\x12\x0b\n\x03\x66ps\x18\x02 \x01(\x05\x12\r\n\x05loops\x18\x03 \x01(\x05\x12\x13\n\x0bstart_frame\x18\x04 \x01(\x03\x12(\n\tunchanged\x18\n \x01(\x0b\x32\x13.mpf.ScaleUnchangedH\x00\x12&\n\x08relative\x18\x0b \x01(\x0b\x32\x12.mpf.ScaleRelativeH\x00\x12&\n\x08\x61\x62solute\x18\x0c \x01(\x0b\x32\x12.mpf.ScaleAbsoluteH\x00\x12>\n\x15\x61\x62solute_keep_aspects\x18\r \x01(\x0b\x32\x1d.mpf.ScaleAbsoluteKeepAspectsH\x00\x42\x07\n\x05scale\"\xea\x01\n\x0bWidgetVideo\x12\x0c\n\x04path\x18\x01 \x01(\t\x12\x0e\n\x06volume\x18\x04 \x01(\x02\x12\x13\n\x0bsound_track\x18\x05 \x01(\t\x12\r\n\x05loops\x18\x06 \x01(\x05\x12(\n\tunchanged\x18\n \x01(\x0b\x32\x13.mpf.ScaleUnchangedH\x00\x12&\n\x08relative\x18\x0b \x01(\x0b\x32\x12.mpf.ScaleRelativeH\x00\x12>\n\x15\x61\x62solute_keep_aspects\x18\x0c \x01(\x0b\x32\x1d.mpf.ScaleAbsoluteKeepAspectsH\x00\x42\x07\n\x05scale\"#\n\rWidgetDisplay\x12\x12\n\ndisplay_id\x18\x01 \x01(\r\"f\n\nWidgetLine\x12\n\n\x02x1\x18\x01 \x01(\x02\x12\n\n\x02y1\x18\x02 \x01(\x02\x12\n\n\x02x2\x18\x03 \x01(\x02\x12\n\n\x02y2\x18\x04 \x01(\x02\x12\x19\n\x05\x63olor\x18\x05 \x01(\x0b\x32\n.mpf.Color\x12\r\n\x05width\x18\x06 \x01(\x02\"\x0f\n\rWidgetPolygon\"\x0e\n\x0cWidgetBezier\"\xe8\x04\n\x06Widget\x12\t\n\x01x\x18\x02 \x01(\x01\x12\t\n\x01y\x18\x03 \x01(\x01\x12\t\n\x01z\x18\x04 \x01(\r\x12\x10\n\x08rotation\x18\x05 \x01(\x01\x12\x1e\n\x08\x61nchor_x\x18\x06 \x01(\x0e\x32\x0c.mpf.AnchorX\x12\x1e\n\x08\x61nchor_y\x18\x07 \x01(\x0e\x32\x0c.mpf.AnchorY\x12\x0f\n\x07opacity\x18\x08 \x01(\x01\x12(\n\x0clabel_widget\x18\x14 \x01(\x0b\x32\x10.mpf.WidgetLabelH\x00\x12\x30\n\x10rectangle_widget\x18\x15 \x01(\x0b\x32\x14.mpf.WidgetRectangleH\x00\x12(\n\x0cimage_widget\x18\x16 \x01(\x0b\x32\x10.mpf.WidgetImageH\x00\x12\x35\n\x13image_sprite_widget\x18\x17 \x01(\x0b\x32\x16.mpf.WidgetImageSpriteH\x00\x12\x39\n\x15\x61nimated_image_widget\x18\x18 \x01(\x0b\x32\x18.mpf.WidgetAnimatedImageH\x00\x12(\n\x0cvideo_widget\x18\x19 \x01(\x0b\x32\x10.mpf.WidgetVideoH\x00\x12,\n\x0e\x64isplay_widget\x18\x1a \x01(\x0b\x32\x12.mpf.WidgetDisplayH\x00\x12&\n\x0bline_widget\x18\x1b \x01(\x0b\x32\x0f.mpf.WidgetLineH\x00\x12,\n\x0epolygon_widget\x18\x1c \x01(\x0b\x32\x12.mpf.WidgetPolygonH\x00\x12*\n\rbezier_widget\x18\x1d \x01(\x0b\x32\x11.mpf.WidgetBezierH\x00\x42\x08\n\x06widget\"B\n\x10WidgetAddRequest\x12\x10\n\x08slide_id\x18\x01 \x01(\r\x12\x1c\n\x07widgets\x18\x02 \x03(\x0b\x32\x0b.mpf.Widget\"\x13\n\x11WidgetAddResponse\"$\n\x10ShowSlideRequest\x12\x10\n\x08slide_id\x18\x01 \x01(\r\"\x13\n\x11ShowSlideResponse**\n\x07\x41nchorX\x12\x07\n\x03TOP\x10\x00\x12\n\n\x06MIDDLE\x10\x01\x12\n\n\x06\x42OTTOM\x10\x02**\n\x07\x41nchorY\x12\x08\n\x04LEFT\x10\x00\x12\n\n\x06\x43\x45NTER\x10\x01\x12\t\n\x05RIGHT\x10\x02\x32\x8c\x02\n\x0fMediaController\x12\x37\n\x08\x41\x64\x64Slide\x12\x14.mpf.SlideAddRequest\x1a\x15.mpf.SlideAddResponse\x12@\n\x0bRemoveSlide\x12\x17.mpf.SlideRemoveRequest\x1a\x18.mpf.SlideRemoveResponse\x12\x42\n\x11\x41\x64\x64WidgetsToSlide\x12\x15.mpf.WidgetAddRequest\x1a\x16.mpf.WidgetAddResponse\x12:\n\tShowSlide\x12\x15.mpf.ShowSlideRequest\x1a\x16.mpf.ShowSlideResponseb\x06proto3'
 )
 
 _ANCHORX = _descriptor.EnumDescriptor(
@@ -48,8 +48,8 @@ _ANCHORX = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=2465,
-  serialized_end=2507,
+  serialized_start=2535,
+  serialized_end=2577,
 )
 _sym_db.RegisterEnumDescriptor(_ANCHORX)
 
@@ -79,8 +79,8 @@ _ANCHORY = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=2509,
-  serialized_end=2551,
+  serialized_start=2579,
+  serialized_end=2621,
 )
 _sym_db.RegisterEnumDescriptor(_ANCHORY)
 
@@ -102,6 +102,13 @@ _SLIDEADDREQUEST = _descriptor.Descriptor(
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
+    _descriptor.FieldDescriptor(
+      name='widgets', full_name='mpf.SlideAddRequest.widgets', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -115,7 +122,7 @@ _SLIDEADDREQUEST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=21,
-  serialized_end=38,
+  serialized_end=68,
 )
 
 
@@ -146,8 +153,8 @@ _SLIDEADDRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=40,
-  serialized_end=76,
+  serialized_start=70,
+  serialized_end=106,
 )
 
 
@@ -178,8 +185,8 @@ _SLIDEREMOVEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=78,
-  serialized_end=116,
+  serialized_start=108,
+  serialized_end=146,
 )
 
 
@@ -203,8 +210,8 @@ _SLIDEREMOVERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=118,
-  serialized_end=139,
+  serialized_start=148,
+  serialized_end=169,
 )
 
 
@@ -256,8 +263,8 @@ _COLOR = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=141,
-  serialized_end=205,
+  serialized_start=171,
+  serialized_end=235,
 )
 
 
@@ -288,8 +295,8 @@ _SCALERELATIVE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=207,
-  serialized_end=238,
+  serialized_start=237,
+  serialized_end=268,
 )
 
 
@@ -327,8 +334,8 @@ _SCALEABSOLUTE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=240,
-  serialized_end=286,
+  serialized_start=270,
+  serialized_end=316,
 )
 
 
@@ -366,8 +373,8 @@ _SCALEABSOLUTEKEEPASPECTS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=288,
-  serialized_end=345,
+  serialized_start=318,
+  serialized_end=375,
 )
 
 
@@ -391,8 +398,8 @@ _SCALEUNCHANGED = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=347,
-  serialized_end=363,
+  serialized_start=377,
+  serialized_end=393,
 )
 
 
@@ -444,8 +451,8 @@ _WIDGETLABEL = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=365,
-  serialized_end=457,
+  serialized_start=395,
+  serialized_end=487,
 )
 
 
@@ -490,8 +497,8 @@ _WIDGETRECTANGLE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=459,
-  serialized_end=534,
+  serialized_start=489,
+  serialized_end=564,
 )
 
 
@@ -555,8 +562,8 @@ _WIDGETIMAGE = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=537,
-  serialized_end=759,
+  serialized_start=567,
+  serialized_end=789,
 )
 
 
@@ -648,8 +655,8 @@ _WIDGETIMAGESPRITE = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=762,
-  serialized_end=1043,
+  serialized_start=792,
+  serialized_end=1073,
 )
 
 
@@ -734,8 +741,8 @@ _WIDGETANIMATEDIMAGE = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=1046,
-  serialized_end=1325,
+  serialized_start=1076,
+  serialized_end=1355,
 )
 
 
@@ -813,8 +820,8 @@ _WIDGETVIDEO = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=1328,
-  serialized_end=1562,
+  serialized_start=1358,
+  serialized_end=1592,
 )
 
 
@@ -845,8 +852,8 @@ _WIDGETDISPLAY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1564,
-  serialized_end=1599,
+  serialized_start=1594,
+  serialized_end=1629,
 )
 
 
@@ -912,8 +919,8 @@ _WIDGETLINE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1601,
-  serialized_end=1703,
+  serialized_start=1631,
+  serialized_end=1733,
 )
 
 
@@ -937,8 +944,8 @@ _WIDGETPOLYGON = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1705,
-  serialized_end=1720,
+  serialized_start=1735,
+  serialized_end=1750,
 )
 
 
@@ -962,8 +969,157 @@ _WIDGETBEZIER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1722,
-  serialized_end=1736,
+  serialized_start=1752,
+  serialized_end=1766,
+)
+
+
+_WIDGET = _descriptor.Descriptor(
+  name='Widget',
+  full_name='mpf.Widget',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='x', full_name='mpf.Widget.x', index=0,
+      number=2, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='y', full_name='mpf.Widget.y', index=1,
+      number=3, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='z', full_name='mpf.Widget.z', index=2,
+      number=4, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='rotation', full_name='mpf.Widget.rotation', index=3,
+      number=5, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='anchor_x', full_name='mpf.Widget.anchor_x', index=4,
+      number=6, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='anchor_y', full_name='mpf.Widget.anchor_y', index=5,
+      number=7, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='opacity', full_name='mpf.Widget.opacity', index=6,
+      number=8, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='label_widget', full_name='mpf.Widget.label_widget', index=7,
+      number=20, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='rectangle_widget', full_name='mpf.Widget.rectangle_widget', index=8,
+      number=21, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='image_widget', full_name='mpf.Widget.image_widget', index=9,
+      number=22, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='image_sprite_widget', full_name='mpf.Widget.image_sprite_widget', index=10,
+      number=23, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='animated_image_widget', full_name='mpf.Widget.animated_image_widget', index=11,
+      number=24, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='video_widget', full_name='mpf.Widget.video_widget', index=12,
+      number=25, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='display_widget', full_name='mpf.Widget.display_widget', index=13,
+      number=26, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='line_widget', full_name='mpf.Widget.line_widget', index=14,
+      number=27, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='polygon_widget', full_name='mpf.Widget.polygon_widget', index=15,
+      number=28, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='bezier_widget', full_name='mpf.Widget.bezier_widget', index=16,
+      number=29, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+    _descriptor.OneofDescriptor(
+      name='widget', full_name='mpf.Widget.widget',
+      index=0, containing_type=None,
+      create_key=_descriptor._internal_create_key,
+    fields=[]),
+  ],
+  serialized_start=1769,
+  serialized_end=2385,
 )
 
 
@@ -983,121 +1139,9 @@ _WIDGETADDREQUEST = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='x', full_name='mpf.WidgetAddRequest.x', index=1,
-      number=2, type=1, cpp_type=5, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='y', full_name='mpf.WidgetAddRequest.y', index=2,
-      number=3, type=1, cpp_type=5, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='z', full_name='mpf.WidgetAddRequest.z', index=3,
-      number=4, type=13, cpp_type=3, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='rotation', full_name='mpf.WidgetAddRequest.rotation', index=4,
-      number=5, type=1, cpp_type=5, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='anchor_x', full_name='mpf.WidgetAddRequest.anchor_x', index=5,
-      number=6, type=14, cpp_type=8, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='anchor_y', full_name='mpf.WidgetAddRequest.anchor_y', index=6,
-      number=7, type=14, cpp_type=8, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='opacity', full_name='mpf.WidgetAddRequest.opacity', index=7,
-      number=8, type=1, cpp_type=5, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='label_widget', full_name='mpf.WidgetAddRequest.label_widget', index=8,
-      number=20, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='rectangle_widget', full_name='mpf.WidgetAddRequest.rectangle_widget', index=9,
-      number=21, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='image_widget', full_name='mpf.WidgetAddRequest.image_widget', index=10,
-      number=22, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='image_sprite_widget', full_name='mpf.WidgetAddRequest.image_sprite_widget', index=11,
-      number=23, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='animated_image_widget', full_name='mpf.WidgetAddRequest.animated_image_widget', index=12,
-      number=24, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='video_widget', full_name='mpf.WidgetAddRequest.video_widget', index=13,
-      number=25, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='display_widget', full_name='mpf.WidgetAddRequest.display_widget', index=14,
-      number=26, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='line_widget', full_name='mpf.WidgetAddRequest.line_widget', index=15,
-      number=27, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='polygon_widget', full_name='mpf.WidgetAddRequest.polygon_widget', index=16,
-      number=28, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='bezier_widget', full_name='mpf.WidgetAddRequest.bezier_widget', index=17,
-      number=29, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
+      name='widgets', full_name='mpf.WidgetAddRequest.widgets', index=1,
+      number=2, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
@@ -1112,14 +1156,9 @@ _WIDGETADDREQUEST = _descriptor.Descriptor(
   syntax='proto3',
   extension_ranges=[],
   oneofs=[
-    _descriptor.OneofDescriptor(
-      name='widget', full_name='mpf.WidgetAddRequest.widget',
-      index=0, containing_type=None,
-      create_key=_descriptor._internal_create_key,
-    fields=[]),
   ],
-  serialized_start=1739,
-  serialized_end=2383,
+  serialized_start=2387,
+  serialized_end=2453,
 )
 
 
@@ -1143,8 +1182,8 @@ _WIDGETADDRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2385,
-  serialized_end=2404,
+  serialized_start=2455,
+  serialized_end=2474,
 )
 
 
@@ -1175,8 +1214,8 @@ _SHOWSLIDEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2406,
-  serialized_end=2442,
+  serialized_start=2476,
+  serialized_end=2512,
 )
 
 
@@ -1200,10 +1239,11 @@ _SHOWSLIDERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2444,
-  serialized_end=2463,
+  serialized_start=2514,
+  serialized_end=2533,
 )
 
+_SLIDEADDREQUEST.fields_by_name['widgets'].message_type = _WIDGET
 _WIDGETLABEL.fields_by_name['color'].message_type = _COLOR
 _WIDGETRECTANGLE.fields_by_name['color'].message_type = _COLOR
 _WIDGETIMAGE.fields_by_name['unchanged'].message_type = _SCALEUNCHANGED
@@ -1267,48 +1307,49 @@ _WIDGETVIDEO.oneofs_by_name['scale'].fields.append(
   _WIDGETVIDEO.fields_by_name['absolute_keep_aspects'])
 _WIDGETVIDEO.fields_by_name['absolute_keep_aspects'].containing_oneof = _WIDGETVIDEO.oneofs_by_name['scale']
 _WIDGETLINE.fields_by_name['color'].message_type = _COLOR
-_WIDGETADDREQUEST.fields_by_name['anchor_x'].enum_type = _ANCHORX
-_WIDGETADDREQUEST.fields_by_name['anchor_y'].enum_type = _ANCHORY
-_WIDGETADDREQUEST.fields_by_name['label_widget'].message_type = _WIDGETLABEL
-_WIDGETADDREQUEST.fields_by_name['rectangle_widget'].message_type = _WIDGETRECTANGLE
-_WIDGETADDREQUEST.fields_by_name['image_widget'].message_type = _WIDGETIMAGE
-_WIDGETADDREQUEST.fields_by_name['image_sprite_widget'].message_type = _WIDGETIMAGESPRITE
-_WIDGETADDREQUEST.fields_by_name['animated_image_widget'].message_type = _WIDGETANIMATEDIMAGE
-_WIDGETADDREQUEST.fields_by_name['video_widget'].message_type = _WIDGETVIDEO
-_WIDGETADDREQUEST.fields_by_name['display_widget'].message_type = _WIDGETDISPLAY
-_WIDGETADDREQUEST.fields_by_name['line_widget'].message_type = _WIDGETLINE
-_WIDGETADDREQUEST.fields_by_name['polygon_widget'].message_type = _WIDGETPOLYGON
-_WIDGETADDREQUEST.fields_by_name['bezier_widget'].message_type = _WIDGETBEZIER
-_WIDGETADDREQUEST.oneofs_by_name['widget'].fields.append(
-  _WIDGETADDREQUEST.fields_by_name['label_widget'])
-_WIDGETADDREQUEST.fields_by_name['label_widget'].containing_oneof = _WIDGETADDREQUEST.oneofs_by_name['widget']
-_WIDGETADDREQUEST.oneofs_by_name['widget'].fields.append(
-  _WIDGETADDREQUEST.fields_by_name['rectangle_widget'])
-_WIDGETADDREQUEST.fields_by_name['rectangle_widget'].containing_oneof = _WIDGETADDREQUEST.oneofs_by_name['widget']
-_WIDGETADDREQUEST.oneofs_by_name['widget'].fields.append(
-  _WIDGETADDREQUEST.fields_by_name['image_widget'])
-_WIDGETADDREQUEST.fields_by_name['image_widget'].containing_oneof = _WIDGETADDREQUEST.oneofs_by_name['widget']
-_WIDGETADDREQUEST.oneofs_by_name['widget'].fields.append(
-  _WIDGETADDREQUEST.fields_by_name['image_sprite_widget'])
-_WIDGETADDREQUEST.fields_by_name['image_sprite_widget'].containing_oneof = _WIDGETADDREQUEST.oneofs_by_name['widget']
-_WIDGETADDREQUEST.oneofs_by_name['widget'].fields.append(
-  _WIDGETADDREQUEST.fields_by_name['animated_image_widget'])
-_WIDGETADDREQUEST.fields_by_name['animated_image_widget'].containing_oneof = _WIDGETADDREQUEST.oneofs_by_name['widget']
-_WIDGETADDREQUEST.oneofs_by_name['widget'].fields.append(
-  _WIDGETADDREQUEST.fields_by_name['video_widget'])
-_WIDGETADDREQUEST.fields_by_name['video_widget'].containing_oneof = _WIDGETADDREQUEST.oneofs_by_name['widget']
-_WIDGETADDREQUEST.oneofs_by_name['widget'].fields.append(
-  _WIDGETADDREQUEST.fields_by_name['display_widget'])
-_WIDGETADDREQUEST.fields_by_name['display_widget'].containing_oneof = _WIDGETADDREQUEST.oneofs_by_name['widget']
-_WIDGETADDREQUEST.oneofs_by_name['widget'].fields.append(
-  _WIDGETADDREQUEST.fields_by_name['line_widget'])
-_WIDGETADDREQUEST.fields_by_name['line_widget'].containing_oneof = _WIDGETADDREQUEST.oneofs_by_name['widget']
-_WIDGETADDREQUEST.oneofs_by_name['widget'].fields.append(
-  _WIDGETADDREQUEST.fields_by_name['polygon_widget'])
-_WIDGETADDREQUEST.fields_by_name['polygon_widget'].containing_oneof = _WIDGETADDREQUEST.oneofs_by_name['widget']
-_WIDGETADDREQUEST.oneofs_by_name['widget'].fields.append(
-  _WIDGETADDREQUEST.fields_by_name['bezier_widget'])
-_WIDGETADDREQUEST.fields_by_name['bezier_widget'].containing_oneof = _WIDGETADDREQUEST.oneofs_by_name['widget']
+_WIDGET.fields_by_name['anchor_x'].enum_type = _ANCHORX
+_WIDGET.fields_by_name['anchor_y'].enum_type = _ANCHORY
+_WIDGET.fields_by_name['label_widget'].message_type = _WIDGETLABEL
+_WIDGET.fields_by_name['rectangle_widget'].message_type = _WIDGETRECTANGLE
+_WIDGET.fields_by_name['image_widget'].message_type = _WIDGETIMAGE
+_WIDGET.fields_by_name['image_sprite_widget'].message_type = _WIDGETIMAGESPRITE
+_WIDGET.fields_by_name['animated_image_widget'].message_type = _WIDGETANIMATEDIMAGE
+_WIDGET.fields_by_name['video_widget'].message_type = _WIDGETVIDEO
+_WIDGET.fields_by_name['display_widget'].message_type = _WIDGETDISPLAY
+_WIDGET.fields_by_name['line_widget'].message_type = _WIDGETLINE
+_WIDGET.fields_by_name['polygon_widget'].message_type = _WIDGETPOLYGON
+_WIDGET.fields_by_name['bezier_widget'].message_type = _WIDGETBEZIER
+_WIDGET.oneofs_by_name['widget'].fields.append(
+  _WIDGET.fields_by_name['label_widget'])
+_WIDGET.fields_by_name['label_widget'].containing_oneof = _WIDGET.oneofs_by_name['widget']
+_WIDGET.oneofs_by_name['widget'].fields.append(
+  _WIDGET.fields_by_name['rectangle_widget'])
+_WIDGET.fields_by_name['rectangle_widget'].containing_oneof = _WIDGET.oneofs_by_name['widget']
+_WIDGET.oneofs_by_name['widget'].fields.append(
+  _WIDGET.fields_by_name['image_widget'])
+_WIDGET.fields_by_name['image_widget'].containing_oneof = _WIDGET.oneofs_by_name['widget']
+_WIDGET.oneofs_by_name['widget'].fields.append(
+  _WIDGET.fields_by_name['image_sprite_widget'])
+_WIDGET.fields_by_name['image_sprite_widget'].containing_oneof = _WIDGET.oneofs_by_name['widget']
+_WIDGET.oneofs_by_name['widget'].fields.append(
+  _WIDGET.fields_by_name['animated_image_widget'])
+_WIDGET.fields_by_name['animated_image_widget'].containing_oneof = _WIDGET.oneofs_by_name['widget']
+_WIDGET.oneofs_by_name['widget'].fields.append(
+  _WIDGET.fields_by_name['video_widget'])
+_WIDGET.fields_by_name['video_widget'].containing_oneof = _WIDGET.oneofs_by_name['widget']
+_WIDGET.oneofs_by_name['widget'].fields.append(
+  _WIDGET.fields_by_name['display_widget'])
+_WIDGET.fields_by_name['display_widget'].containing_oneof = _WIDGET.oneofs_by_name['widget']
+_WIDGET.oneofs_by_name['widget'].fields.append(
+  _WIDGET.fields_by_name['line_widget'])
+_WIDGET.fields_by_name['line_widget'].containing_oneof = _WIDGET.oneofs_by_name['widget']
+_WIDGET.oneofs_by_name['widget'].fields.append(
+  _WIDGET.fields_by_name['polygon_widget'])
+_WIDGET.fields_by_name['polygon_widget'].containing_oneof = _WIDGET.oneofs_by_name['widget']
+_WIDGET.oneofs_by_name['widget'].fields.append(
+  _WIDGET.fields_by_name['bezier_widget'])
+_WIDGET.fields_by_name['bezier_widget'].containing_oneof = _WIDGET.oneofs_by_name['widget']
+_WIDGETADDREQUEST.fields_by_name['widgets'].message_type = _WIDGET
 DESCRIPTOR.message_types_by_name['SlideAddRequest'] = _SLIDEADDREQUEST
 DESCRIPTOR.message_types_by_name['SlideAddResponse'] = _SLIDEADDRESPONSE
 DESCRIPTOR.message_types_by_name['SlideRemoveRequest'] = _SLIDEREMOVEREQUEST
@@ -1328,6 +1369,7 @@ DESCRIPTOR.message_types_by_name['WidgetDisplay'] = _WIDGETDISPLAY
 DESCRIPTOR.message_types_by_name['WidgetLine'] = _WIDGETLINE
 DESCRIPTOR.message_types_by_name['WidgetPolygon'] = _WIDGETPOLYGON
 DESCRIPTOR.message_types_by_name['WidgetBezier'] = _WIDGETBEZIER
+DESCRIPTOR.message_types_by_name['Widget'] = _WIDGET
 DESCRIPTOR.message_types_by_name['WidgetAddRequest'] = _WIDGETADDREQUEST
 DESCRIPTOR.message_types_by_name['WidgetAddResponse'] = _WIDGETADDRESPONSE
 DESCRIPTOR.message_types_by_name['ShowSlideRequest'] = _SHOWSLIDEREQUEST
@@ -1469,6 +1511,13 @@ WidgetBezier = _reflection.GeneratedProtocolMessageType('WidgetBezier', (_messag
   })
 _sym_db.RegisterMessage(WidgetBezier)
 
+Widget = _reflection.GeneratedProtocolMessageType('Widget', (_message.Message,), {
+  'DESCRIPTOR' : _WIDGET,
+  '__module__' : 'server_pb2'
+  # @@protoc_insertion_point(class_scope:mpf.Widget)
+  })
+_sym_db.RegisterMessage(Widget)
+
 WidgetAddRequest = _reflection.GeneratedProtocolMessageType('WidgetAddRequest', (_message.Message,), {
   'DESCRIPTOR' : _WIDGETADDREQUEST,
   '__module__' : 'server_pb2'
@@ -1506,8 +1555,8 @@ _MEDIACONTROLLER = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=2554,
-  serialized_end=2822,
+  serialized_start=2624,
+  serialized_end=2892,
   methods=[
   _descriptor.MethodDescriptor(
     name='AddSlide',

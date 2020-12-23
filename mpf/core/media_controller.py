@@ -1,10 +1,8 @@
-import asyncio
-
 from grpc import aio
 
 from mpf.core.mpf_controller import MpfController
-from mpf.core.utility_functions import Util
-from mpf.media_controller.server_pb2 import SlideAddRequest, WidgetAddRequest, ShowSlideRequest, SlideRemoveRequest
+from mpf.media_controller.server_pb2 import SlideAddRequest, WidgetAddRequest, ShowSlideRequest, SlideRemoveRequest, \
+    Widget
 from mpf.media_controller.server_pb2_grpc import MediaControllerStub
 
 
@@ -22,13 +20,15 @@ class TempTarget:
 
         return None
 
-    async def add_slide(self, slide, transition_config):
+    async def _add_slide_to_remove_and_assign_id(self, slide):
         slide_add_request = SlideAddRequest()
+        slide_add_request.widgets.extend(slide.get_widgets())
         new_slide = await self.rpc.AddSlide(slide_add_request)
         slide.slide_id = new_slide.slide_id
+        return slide
 
-        await slide.add_widgets(self.rpc)
-
+    async def add_slide(self, slide, transition_config):
+        slide = await self._add_slide_to_remove_and_assign_id(slide)
         if self.slides and self.slides[0].priority < slide.priority:
             self.slides.insert(0, slide)
             await self.update_target(transition_config)
@@ -38,25 +38,41 @@ class TempTarget:
             await self.update_target(transition_config)
         else:
             self.slides.append(slide)
+            self.slides = sorted(self.slides, key=lambda x: x.priority)
 
     async def replace_slide(self, old_slide, new_slide, transition_config):
-        # TODO: only call update_target once here (and transition only once also)
-        await self.remove_slide(old_slide, transition_config)
-        await self.add_slide(new_slide, transition_config)
+        needs_transition = False
+        if self.slides[0] == old_slide or self.slides[0].priority < new_slide.priority:
+            needs_transition = True
 
-    async def remove_slide(self, slide, transition_config=None):
-        print("YYY", self.slides, slide)
-        self.slides.remove(slide)
-        # TODO: this can be optimized by remembering if we need to sort
+        await self._add_slide_to_remove_and_assign_id(new_slide)
+
+        # replace element in place
+        self.slides[self.slides.index(old_slide)] = new_slide
+        # sort
         self.slides = sorted(self.slides, key=lambda x: x.priority)
-        # remove slide in MC
+        if needs_transition:
+            await self.update_target(transition_config)
+
+        await self._remove_slide_from_remote(old_slide)
+
+    async def _remove_slide_from_remote(self, slide):
         slide_remove_request = SlideRemoveRequest()
         slide_remove_request.slide_id = slide.slide_id
         await self.rpc.RemoveSlide(slide_remove_request)
-        await self.update_target(transition_config)
+
+    async def remove_slide(self, slide, transition_config=None):
+        has_been_top_slide = self.slides[0] == slide
+        self.slides.remove(slide)
+        if has_been_top_slide:
+            # only transition if slide has been on top
+            await self.update_target(transition_config)
+        # remove slide in MC after triggering (potential) transition
+        await self._remove_slide_from_remote(slide)
 
     async def update_target(self, transition_config=None):
         """Update top slide."""
+        print("UPDATE", self.slides)
         if not self.slides:
             return
         show_slide_request = ShowSlideRequest()
@@ -66,24 +82,31 @@ class TempTarget:
 
 class TempSlide:
 
-    def __init__(self, name, priority, slide_id):
+    def __init__(self, name, priority, widgets):
         self.name = name
-        self.slide_id = slide_id
+        self.slide_id = None
         self.priority = priority
-        self.widgets = []
+        self._widgets = widgets
+
+    def get_widgets(self):
+        widgets = []
+        widget = Widget()
+        widget.x = 5
+        widget.y = 5
+        widget.z = 2
+        widget.rectangle_widget.color.red = 0.0
+        widget.rectangle_widget.color.blue = 1.0
+        widget.rectangle_widget.color.green = 0.5
+        widget.rectangle_widget.color.alpha = 1.0
+        widget.rectangle_widget.width = 500
+        widget.rectangle_widget.height = 300
+        widgets.append(widget)
+        return widgets
 
     async def add_widgets(self, rpc):
         widget_add_request = WidgetAddRequest()
         widget_add_request.slide_id = self.slide_id
-        widget_add_request.x = 5
-        widget_add_request.y = 5
-        widget_add_request.z = 2
-        widget_add_request.rectangle_widget.color.red = 0.0
-        widget_add_request.rectangle_widget.color.blue = 1.0
-        widget_add_request.rectangle_widget.color.green = 0.5
-        widget_add_request.rectangle_widget.color.alpha = 1.0
-        widget_add_request.rectangle_widget.width = 500
-        widget_add_request.rectangle_widget.height = 300
+        widget_add_request.widgets.extend(self.get_widgets())
         await rpc.AddWidgetsToSlide(widget_add_request)
 
 
@@ -110,8 +133,14 @@ class MediaController(MpfController):
     #     self._next_slide_id += 1
     #     return self._next_slide_id
 
-    def create_slide(self, slide_name, priority):
-        return TempSlide(slide_name, priority, None)
+    def parse_widgets(self, widget_config):
+        widgets = []
+
+        return widgets
+
+    def create_slide(self, slide_name, widgets_config, priority):
+        widgets = self.parse_widgets(widgets_config)
+        return TempSlide(slide_name, priority, widgets)
 
     async def _load_slides(self):
         await self.connect()

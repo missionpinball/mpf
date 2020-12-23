@@ -1,8 +1,5 @@
 """Slide config player."""
 import asyncio
-from copy import deepcopy
-
-from mpf.core.media_controller import TempSlide
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 
 
@@ -48,7 +45,7 @@ class SlidePlayer(DeviceConfigPlayer):
             elif s["widgets"]:
                 # name of anonymous slides depends on context + event name
                 slide = calling_context
-                slide_obj = self.machine.media_controller.create_slide(slide, priority)
+                slide_obj = self.machine.media_controller.create_slide(slide, s["widgets"], priority)
                 # TODO: add widgets here
             else:
                 raise AssertionError("TODO: Implement named_slides loading")

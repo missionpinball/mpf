@@ -1909,8 +1909,8 @@ widgets:
         type: single|str|
         x: single|str|None
         y: single|str|None
-        anchor_x: single|str|center
-        anchor_y: single|str|center
+        anchor_x: single|enum(left,center,right)|center
+        anchor_y: single|enum(top,middle,bottom)|middle
         round_anchor_x: single|str|None
         round_anchor_y: single|str|None
         opacity: single|float_or_token|1.0
