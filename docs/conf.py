@@ -12,6 +12,8 @@ import time
 
 import git
 import sphinx_rtd_theme
+import stat
+
 from mpf.core.config_validator import ConfigValidator
 
 sys.path.insert(0, os.path.abspath(os.pardir))
@@ -27,11 +29,7 @@ mpf_examples_link_name = 'examples'
 
 
 def setup_mpf_examples_link():
-    try:
-        os.unlink(mpf_examples_link_name)
-    except FileNotFoundError:
-        pass
-
+    
     if os.path.isdir(os.path.join(os.getcwd(), os.pardir, os.pardir, 'mpf-examples')):
         examples_root = os.path.join(os.getcwd(), os.pardir, os.pardir, 'mpf-examples')
 
@@ -43,8 +41,19 @@ def setup_mpf_examples_link():
 
     verify_version(os.path.join(examples_root, '_version.py'))
 
-    print("Creating '{}' link to {}".format(mpf_examples_link_name, examples_root))
-    os.symlink(examples_root, mpf_examples_link_name)
+    ok = False
+    try:    
+        linkinfo = os.stat(mpf_examples_link_name, follow_symlinks=False)
+        if (stat.S_ISLNK(linkinfo.st_mode)):
+            linkPath = os.readlink(mpf_examples_link_name)
+            if os.path.abspath(linkPath) == os.path.abspath(examples_root):
+                ok = True
+    except FileNotFoundError:
+        pass
+
+    if not ok:
+        print("Creating '{}' link to {}".format(mpf_examples_link_name, examples_root), flush=True)
+        os.symlink(examples_root, mpf_examples_link_name)
 
 def verify_version(version_file):
 
