@@ -33,7 +33,7 @@ MPF is installed.
 * ``grpcio`` >= 1.34.0
 * ``protobuf`` >= 3.14.0
 * ``prompt_toolkit`` >= 3.0.8
-* ``typing`` Used for type-checking & type hinting.
+* ``typing`` Used for type-checking & type hinting. This is built-in to Python versions above 3.5.
 
 Note that some of these dependencies will install their own dependencies.
 
