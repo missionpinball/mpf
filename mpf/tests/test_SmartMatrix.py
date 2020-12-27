@@ -37,9 +37,7 @@ class TestSmartMatrix(MpfTestCase):
         return self.serial_mocks[port]
 
     def setUp(self):
-        self.serial_mocks = {}
-        self.serial_mocks["com4"] = MagicMock()
-        self.serial_mocks["com5"] = MagicMock()
+        self.serial_mocks = {"com4": MagicMock(), "com5": MagicMock()}
 
         with patch('mpf.platforms.smartmatrix.serial.Serial', self.serial_connect, create=True):
             super().setUp()
