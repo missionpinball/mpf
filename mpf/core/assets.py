@@ -8,7 +8,7 @@ import threading
 from collections import deque, namedtuple
 from pathlib import PurePath
 
-from typing import Iterable, Optional, Set, Callable, Tuple
+from typing import Iterable, Optional, Set, Callable, Tuple, Union
 from typing import List
 
 from mpf.core.mode import Mode
@@ -17,6 +17,8 @@ from mpf.core.machine import MachineController
 from mpf.core.mpf_controller import MpfController
 from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
+from mpf.core.placeholder_manager import BoolTemplate
+
 
 AssetClass = namedtuple("AssetClass", ["attribute", "cls", "path_string", "config_section", "disk_asset_section",
                                        "extensions", "priority", "pool_config_section", "defaults"])
@@ -627,6 +629,13 @@ class AsyncioSyncAssetManager(BaseAssetManager):
         task.add_done_callback(Util.raise_exceptions)
 
 
+tUnconditionalAssetEntry = Tuple[AssetClass, int]
+tConditionalAssetEntry = Tuple[AssetClass, int, BoolTemplate]
+tMaybeConditionalAssetEntry = Union[tUnconditionalAssetEntry, tConditionalAssetEntry]
+tNullableAssetEntry = Union[tMaybeConditionalAssetEntry, Tuple[None, int]]
+
+
+
 # pylint: disable=too-many-instance-attributes
 class AssetPool:
 
@@ -645,7 +654,7 @@ class AssetPool:
         self.member_cls = member_cls
         self.loading_members = set()
         self._callbacks = set()
-        self.assets = list()
+        self.assets = list()         # type: List[tMaybeConditionalAssetEntry]
         self._last_asset = None
         self._asset_sequence = deque()
         self._assets_sent = set()
@@ -771,12 +780,12 @@ class AssetPool:
 
         self._callbacks = set()
 
-    def _get_conditional_assets(self):
+    def _get_conditional_assets(self) -> List[tNullableAssetEntry]:
         if not self._has_conditions:
             return self.assets
 
         result = [asset for asset in self.assets
-                  if not asset[2] or asset[2].evaluate([])]
+                  if not asset[2] or asset[2].evaluate([])]  # type: List[tNullableAssetEntry]
         # Avoid crashes, return None as the asset if no conditions evaluate true
         if not result:
             self.machine.log.warning("AssetPool {}: {}".format(
@@ -807,7 +816,7 @@ class AssetPool:
                 self._asset_sequence.rotate(-1)
         return self._asset_sequence[0]
 
-    def _get_random_force_next_asset(self) -> AssetClass:
+    def _get_random_force_next_asset(self) -> Optional[AssetClass]:
         conditional_assets = self._get_conditional_assets()  # Store to variable to avoid calling twice
         self._total_weights = sum([x[1] for x in conditional_assets
                                    if x is not self._last_asset])
@@ -818,7 +827,7 @@ class AssetPool:
                                                       self._last_asset])
         return self._last_asset[0]
 
-    def _get_random_force_all_asset(self) -> AssetClass:
+    def _get_random_force_all_asset(self) -> Optional[AssetClass]:
         conditional_assets = self._get_conditional_assets()  # Store to variable to avoid calling twice
         if len(self._assets_sent) == len(conditional_assets):
             self._assets_sent = set()
@@ -829,7 +838,7 @@ class AssetPool:
             self._assets_sent.add(asset)
         return asset[0]
 
-    def _pick_weighed_random(self, assets: List[Tuple[AssetClass, int]]) -> Tuple[AssetClass, int]:
+    def _pick_weighed_random(self, assets: List[tConditionalAssetEntry]) -> tNullableAssetEntry:
         if not assets or assets[0][0] is None:
             return (None, 0)
 
