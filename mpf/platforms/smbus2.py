@@ -22,6 +22,7 @@ class Smbus2I2cDevice(I2cPlatformInterface):
 
     __slots__ = ["loop", "platform", "busses", "address", "smbus"]
 
+    # noinspection PyNoneFunctionAssignment
     def __init__(self, number: str, platform, busses) -> None:
         """Initialise smbus2 device."""
         super().__init__(number)
@@ -54,6 +55,7 @@ class Smbus2I2cDevice(I2cPlatformInterface):
         bus, address = address.split("-", 1)
         return bus, int(address)
 
+    # noinspection PyCallingNonCallable
     def _get_i2c_bus(self, bus) -> SMBus2Asyncio:
         """Get or open handle for i2c bus."""
         if bus in self.busses:
