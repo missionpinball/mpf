@@ -635,7 +635,6 @@ TMaybeConditionalAssetEntry = Union[TUnconditionalAssetEntry, TConditionalAssetE
 TNullableAssetEntry = Union[TMaybeConditionalAssetEntry, Tuple[None, int]]
 
 
-
 # pylint: disable=too-many-instance-attributes
 class AssetPool:
 
