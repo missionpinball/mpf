@@ -629,10 +629,10 @@ class AsyncioSyncAssetManager(BaseAssetManager):
         task.add_done_callback(Util.raise_exceptions)
 
 
-tUnconditionalAssetEntry = Tuple[AssetClass, int]
-tConditionalAssetEntry = Tuple[AssetClass, int, BoolTemplate]
-tMaybeConditionalAssetEntry = Union[tUnconditionalAssetEntry, tConditionalAssetEntry]
-tNullableAssetEntry = Union[tMaybeConditionalAssetEntry, Tuple[None, int]]
+TUnconditionalAssetEntry = Tuple[AssetClass, int]
+TConditionalAssetEntry = Tuple[AssetClass, int, BoolTemplate]
+TMaybeConditionalAssetEntry = Union[TUnconditionalAssetEntry, TConditionalAssetEntry]
+TNullableAssetEntry = Union[TMaybeConditionalAssetEntry, Tuple[None, int]]
 
 
 
@@ -654,7 +654,7 @@ class AssetPool:
         self.member_cls = member_cls
         self.loading_members = set()
         self._callbacks = set()
-        self.assets = list()         # type: List[tMaybeConditionalAssetEntry]
+        self.assets = list()         # type: List[TMaybeConditionalAssetEntry]
         self._last_asset = None
         self._asset_sequence = deque()
         self._assets_sent = set()
@@ -780,12 +780,12 @@ class AssetPool:
 
         self._callbacks = set()
 
-    def _get_conditional_assets(self) -> List[tNullableAssetEntry]:
+    def _get_conditional_assets(self) -> List[TNullableAssetEntry]:
         if not self._has_conditions:
             return self.assets
 
         result = [asset for asset in self.assets
-                  if not asset[2] or asset[2].evaluate([])]  # type: List[tNullableAssetEntry]
+                  if not asset[2] or asset[2].evaluate([])]  # type: List[TNullableAssetEntry]
         # Avoid crashes, return None as the asset if no conditions evaluate true
         if not result:
             self.machine.log.warning("AssetPool {}: {}".format(
@@ -838,7 +838,7 @@ class AssetPool:
             self._assets_sent.add(asset)
         return asset[0]
 
-    def _pick_weighed_random(self, assets: List[tConditionalAssetEntry]) -> tNullableAssetEntry:
+    def _pick_weighed_random(self, assets: List[TConditionalAssetEntry]) -> TNullableAssetEntry:
         if not assets or assets[0][0] is None:
             return (None, 0)
 
