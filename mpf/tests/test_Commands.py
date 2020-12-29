@@ -6,6 +6,19 @@ from mpf.commands import game, migrate
 
 class TestCommands(TestCase):
 
+    def setUp(self) -> None:
+        modules = {
+            'asciimatics': MagicMock(),
+        }
+
+        self.module_patcher = patch.dict('sys.modules', modules)
+        self.module_patcher.start()
+        super().setUp()
+
+    def tearDown(self) -> None:
+        super().tearDown()
+        self.module_patcher.stop()
+
     def test_game(self):
         loader_mock = MagicMock()
 
