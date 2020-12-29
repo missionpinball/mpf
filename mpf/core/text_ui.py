@@ -15,7 +15,7 @@ try:
 except ImportError:
     Scene = None
     Frame = None
-    Layout = None
+    Layout = object
     THEMES = None
     Label = None
     Divider = None
