@@ -2,9 +2,12 @@
 import asyncio
 import cmd
 
-from terminaltables import AsciiTable
-
 from mpf.core.bcp.bcp_socket_client import AsyncioBcpClientSocket
+
+try:
+    from terminaltables import AsciiTable
+except ImportError:
+    AsciiTable = None
 
 
 class ServiceCli(cmd.Cmd):
@@ -24,6 +27,9 @@ class ServiceCli(cmd.Cmd):
         self._known_coils = None
         self._known_lights = None
         self._known_shows = None
+
+        if not AsciiTable:
+            raise AssertionError("You need to install the [cli] or [all] feature of mpf to use this.")
 
     def _build_known_coils(self, list_coils_response):
         self._known_coils = []

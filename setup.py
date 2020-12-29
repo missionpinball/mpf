@@ -31,7 +31,7 @@ cli_requires = [
 ]
 
 osc_requires = [
-     'python-osc==1.7.4'
+    'python-osc==1.7.4'
 ]
 
 irc_requires = [
