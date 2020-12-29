@@ -38,6 +38,7 @@ class MpfLayout(Layout):
 
     def __init__(self, columns, fill_frame=False):
         """Store max_height."""
+        self._columns = []
         super().__init__(columns, fill_frame)
         self.max_height = None
 
