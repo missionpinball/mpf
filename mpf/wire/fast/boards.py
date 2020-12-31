@@ -107,7 +107,6 @@ class FastIO0804(FastIOBoard):
 
 
 class FastNC(FastNetBoard):
-
     def __init__(self):
         super().__init__("NC")
         ledConnector = [("GND", 0), ("DO", 1), ("5v", 5)]
@@ -127,6 +126,18 @@ class FastNC(FastNetBoard):
         self.addConnector("J10", self.fastNetConnector())
         self.addConnector("J11", self.fastNetConnector())
 
+class SerialLED(Board):
+    def __init__(self, name):
+        super().__init__("WS2812 " + name)
+        self.addConnector("", [
+            ("DOUT",1),
+            ("DIN",1),
+            ("VCC",1),
+            ("NC",-1),
+            ("VDD",5),
+            ("GND",0)])
+
+
 
 class FastSystem(System):
     def __init__(self):
@@ -143,10 +154,65 @@ class FastSystem(System):
         self.connect(self.pfb["J4"][9], self.nc["J7"][6])
 
 
-s = FastSystem()
-yaml = YAML()
-yaml.default_flow_style = False
-yaml.dump(s.dump(), stdout)
+def wire(machine):
+    s = FastSystem()
+    LEDBoards = dict()
+    for l in machine.lights:
+        newBoard = SerialLED(l.name)
+
+        numSpec = l.config["number"]
+        if "-" in numSpec:
+            parts = numSpec.split("-")
+            realNum = (int(parts[0])*64) + (int(parts[1]))
+        else:
+            realNum = int(numSpec)
+        LEDBoards[realNum] = newBoard
+        s.addBoard(newBoard)
+
+    channels = [(0, 63, "J1"),
+                (64, 127, "J2"),
+                (128, 191, "J4"),
+                (192, 255, "J5")]
+
+    for (start, end, ncport) in channels:
+        # Daisy chain lights in channel
+        # Sequentiality check for lights in channel
+        for l in range(start+1,end+1):
+            used = False
+            if l in LEDBoards.keys():
+                used = True
+                cur = LEDBoards[l]
+                if l-1 not in LEDBoards.keys():
+                    print("Can't wire light", l, "because there is no previous light to connect it to.")
+                    break
+                prev = LEDBoards[l-1]
+                s.connect(prev[""][0], cur[""][1])  # Wire data in sequence
+                s.connect(prev[""][4], cur[""][4])  # Daisy chain power
+                s.connect(prev[""][5], cur[""][5])  # Daisy chain ground
+            if used:                      # If there were some lights on channel
+                if start not in LEDBoards.keys():
+                    print("Can't wire a FAST lighting channel because there is no light number", start, "to begin it.")
+                    break
+                startBoard = LEDBoards[start]  # Get first light
+                s.connect(s.nc[ncport][1], startBoard[""][1])  # Data
+                s.connect(s.nc[ncport][2], startBoard[""][4])  # Power
+                s.connect(s.nc[ncport][0], startBoard[""][5])  # Ground
+
+
+
+
+
+
+    if len(machine.lights) > 0:
+        check = 0
+        while check in LEDBoards.keys():
+            check += 1
+        if check != len(machine.lights):
+            print("Problem: Lights on FAST have to be sequential. Light",check,"of",len(machine.lights),"is missing.")
+
+    yaml = YAML()
+    yaml.default_flow_style = False
+    yaml.dump(s.dump(), stdout)
 
 
 

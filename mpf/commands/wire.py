@@ -9,6 +9,7 @@ import sys
 from datetime import datetime
 import logging
 from logging.handlers import QueueHandler, SysLogHandler
+import mpf.wire.fast.boards
 
 from queue import Queue
 
@@ -45,7 +46,7 @@ class Command:
         self.args.configfile = Util.string_to_event_list(self.args.configfile)
 
         self.args.__dict__["production"] = False
-        self.args.__dict__["force_platform"] = None
+        self.args.__dict__["force_platform"] = "smart_virtual"
         self.args.__dict__["text_ui"] = False
         self.args.__dict__["bcp"] = False
 
@@ -60,8 +61,8 @@ class Command:
         self.machine = MachineController(vars(self.args), config)
         self.machine.initialise_mpf()
 
-        for l in self.machine.lights:
-            print(l.name)
+        mpf.wire.fast.boards.wire(self.machine)
+
 
         # pylint: disable-msg=broad-except
 
