@@ -84,17 +84,26 @@ class FastIOBoard(FastNetBoard):
     def getSwitchPin(self, id):
         pass
 
+    def getDriverPin(self, id):
+        pass
+
+    def getSwitchGrounds(self, index):
+        pass
+
+    def getDriverGrounds(self, index):
+        pass
+
 
 class FastIO3208(FastIOBoard):
     def __init__(self):
         super().__init__("IO 3208")
         self.addConnector("J1", self.fastNetConnector())
         self.addConnector("J2", self.fastNetConnector())
-        self.addConnector("J3", self.fastConnectorBlock("Sw", 11, 12, 8, 3, 9))
+        self.addConnector("J3", self.fastConnectorBlock("Sw", 11, 5, 8, 3, 9))
         self.addConnector("J4", self.fastConnectorBlock("Dr", 12, 48, 0, 5, 9))
-        self.addConnector("J6", self.fastConnectorBlock("Sw", 11, 12, 16, 2, 9))
-        self.addConnector("J8", self.fastConnectorBlock("Sw", 11, 12, 0, 4, 9))
-        self.addConnector("J9", self.fastConnectorBlock("Sw", 11, 12, 24, 1, 9))
+        self.addConnector("J6", self.fastConnectorBlock("Sw", 11, 5, 16, 2, 9))
+        self.addConnector("J8", self.fastConnectorBlock("Sw", 11, 5, 0, 4, 9))
+        self.addConnector("J9", self.fastConnectorBlock("Sw", 11, 5, 24, 1, 9))
 
     def getNetOut(self):
         return self["J1"][0]
@@ -130,6 +139,14 @@ class FastIO3208(FastIOBoard):
         else:
             pass
 
+    def getSwitchGrounds(self, index):
+        return [self["J3"][9+index],
+                self["J6"][9+index],
+                self["J8"][9+index],
+                self["J9"][9+index]]
+
+    def getDriverGrounds(self, index):
+        return [self["J4"][9+index]]
 
 
 
@@ -140,14 +157,47 @@ class FastIO1616(FastIOBoard):
         self.addConnector("J2", self.fastNetConnector())
         self.addConnector("J3", self.fastConnectorBlock("Dr", 12, 48, 0, 4, 9))
         self.addConnector("J4", self.fastConnectorBlock("Dr", 12, 48, 8, 5, 9))
-        self.addConnector("J7", self.fastConnectorBlock("Sw", 11, 12, 0, 4, 9))
-        self.addConnector("J8", self.fastConnectorBlock("Sw", 11, 12, 8, 3, 9))
+        self.addConnector("J7", self.fastConnectorBlock("Sw", 11, 5, 0, 4, 9))
+        self.addConnector("J8", self.fastConnectorBlock("Sw", 11, 5, 8, 3, 9))
 
     def getNetOut(self):
         return self["J1"][0]
 
     def getNetIn(self):
         return self["J2"][0]
+
+    def getSwitchGrounds(self, index):
+        return [self["J7"][9+index],
+                self["J8"][9+index]]
+
+    def getDriverGrounds(self, index):
+        return [self["J3"][9+index],
+                self["J4"][9+index]]
+
+    def getSwitchPin(self, id):
+        if id < 4:
+            return self["J7"][id]
+        elif id < 8:
+            return self["J7"][id+1]
+        elif id < 11:
+            return self["J8"][id-8]
+        elif id < 16:
+            return self["J8"][id-7]
+        else:
+            pass
+
+    def getDriverPin(self, id):
+        if id < 4:
+            return self["J3"][id]
+        elif id < 8:
+            return self["J3"][id+1]
+        elif id < 13:
+            return self["J4"][id-8]
+        elif id < 16:
+            return self["J4"][id-7]
+        else:
+            pass
+
 
 
 class FastIO0804(FastIOBoard):
@@ -156,7 +206,7 @@ class FastIO0804(FastIOBoard):
         self.addConnector("J1", self.fastNetConnector())
         self.addConnector("J2", self.fastNetConnector())
         self.addConnector("J3", self.fastConnectorBlock("Dr", 7, 48, 0, 4, 5))
-        self.addConnector("J4", self.fastConnectorBlock("SW", 11, 12, 0, 4, 9))
+        self.addConnector("J4", self.fastConnectorBlock("SW", 11, 5, 0, 4, 9))
 
     def getNetOut(self):
         return self["J1"][0]
@@ -177,10 +227,18 @@ class FastIO0804(FastIOBoard):
         return self["J3"][i]
 
 
+    def getSwitchGrounds(self, index):
+        return [self["J4"][9+index]]
+
+    def getDriverGrounds(self, index):
+        return [self["J3"][5+index]]
+
+
+
 class FastNC(FastNetBoard):
     def __init__(self):
         super().__init__("NC")
-        ledConnector = [("GND", 0), ("DO", 1), ("5v", 5)]
+        ledConnector = [("GND", 0), ("DO", 5), ("5v", 5)]
         self.addConnector("J1", ledConnector)
         self.addConnector("J2", ledConnector)
         self.addConnector("J4", ledConnector)
@@ -208,9 +266,9 @@ class SerialLED(Board):
     def __init__(self, name):
         super().__init__("WS2812 " + name)
         self.addConnector("", [
-            ("DOUT",1),
-            ("DIN",1),
-            ("VCC",1),
+            ("DOUT",5),
+            ("DIN",5),
+            ("VCC",5),
             ("NC",-1),
             ("VDD",5),
             ("GND",0)])
@@ -219,8 +277,8 @@ class Switch(Board):
     def __init__(self, name):
         super().__init__("SW " + name)
         self.addConnector("", [
-            ("+", 12),
-            ("-", 12)])
+            ("+", 5),
+            ("-", 5)])
 
 class Coil(Board):
     def __init__(self, name):
@@ -239,6 +297,7 @@ class FastSystem(System):
         self.nc = FastNC()
         self.addBoard(self.pfb)
         self.addBoard(self.nc)
+        # Wire nano controller to power
         self.connect(self.pfb["J4"][4], self.nc["J7"][2])
         self.connect(self.pfb["J4"][5], self.nc["J7"][3])
         self.connect(self.pfb["J4"][7], self.nc["J7"][0])
@@ -328,7 +387,7 @@ def determineBoards(machine, s):
     maxBoard = max(maxSwitchBoard, maxDriverBoard)
     for x in range(maxBoard+1):
         if x not in fastBoardsSwitches and x not in fastBoardsDrivers:
-            print("I/O board numbers aren't consecutive. An empty board number",x,"would be needed!")
+            print("I/O board numbers aren't consecutive. An empty board number", x, "would be needed!")
 
     fastBoards = dict()
 
@@ -336,7 +395,7 @@ def determineBoards(machine, s):
     for board in range(maxBoard+1):
         switchesOnBoard = len(fastBoardsSwitches[board])
         driversOnBoard = len(fastBoardsDrivers[board])
-        print("Board",board,"has",switchesOnBoard,"switches and",driversOnBoard,"drivers.")
+        print("Board", board, "has", switchesOnBoard, "switches and", driversOnBoard, "drivers.")
         if switchesOnBoard > 32:
             print("Too many switches on board", board, ". No FAST board can support more than 32.")
             return
@@ -369,6 +428,28 @@ def determineBoards(machine, s):
     s.connect(fastBoards[0].getNetIn(), s.nc.getNetOut())
     s.connect(fastBoards[maxBoard].getNetOut(), s.nc.getNetIn())
 
+    # Ground logic connectors
+    logicGrounds = [fastBoards[board].getSwitchGrounds(0) for board in range(maxBoard+1)]
+    mostSlots = max([len(x) for x in logicGrounds])
+    for slot in range(mostSlots):
+        lastPin = s.pfb["J4"][8 + (slot % 2)]   # PFB logic grounds
+        for board in range(maxBoard+1):
+            if len(logicGrounds[board]) > slot:
+                s.connect(lastPin, logicGrounds[board][slot])
+                lastPin = logicGrounds[board][slot]
+
+
+    # Ground HV connectors
+    HVGrounds = [fastBoards[board].getDriverGrounds(0) for board in range(maxBoard+1)]
+    mostSlots = max([len(x) for x in HVGrounds])
+    for slot in range(mostSlots):
+        lastPin = s.pfb["J4"][2 + (slot % 2)]   # PFB HV grounds
+        for board in range(maxBoard+1):
+            if len(HVGrounds[board]) > slot:
+                s.connect(lastPin, HVGrounds[board][slot])
+                lastPin = HVGrounds[board][slot]
+
+
     # Wire up switches and drivers to board
     for board in range(maxBoard+1):
         if board in fastBoardsSwitches.keys():
@@ -384,8 +465,16 @@ def determineBoards(machine, s):
         if board in fastBoardsSwitches.keys():
             switchesOnBoard = list(fastBoardsSwitches[board].values())
             for switch in range(1, len(switchesOnBoard)):
-                s.connect(switchesOnBoard[switch][""][0], switchesOnBoard[switch-1][""][0])
+                s.connect(switchesOnBoard[switch-1][""][0], switchesOnBoard[switch][""][0])
+            s.connect(s.pfb["J4"][4+(board%2)], switchesOnBoard[0][""][0])
 
+    # Daisy chain driver power
+    for board in range(maxBoard+1):
+        if board in fastBoardsDrivers.keys():
+            driversOnBoard = list(fastBoardsDrivers[board].values())
+            for switch in range(1, len(driversOnBoard)):
+                s.connect(driversOnBoard[switch-1][""][0], driversOnBoard[switch][""][0])
+            s.connect(s.pfb["J4"][0+(board%2)], driversOnBoard[0][""][0])
 
 
 
@@ -426,7 +515,10 @@ def wire(machine):
 
     yaml = YAML()
     yaml.default_flow_style = False
-    yaml.dump(s.dump(), stdout)
+    f = open("wiretest.yaml", "w", encoding="utf-8")
+    yaml.dump(s.dump(), f)
+    f.close()
+
 
 
 
