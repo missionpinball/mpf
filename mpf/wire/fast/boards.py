@@ -55,10 +55,18 @@ class FastNetBoard(Board):
     def fastNetConnector(self):
         return [("RJ45",1)]
 
+    def getNetIn(self):
+        pass
+
+    def getNetOut(self):
+        pass
+
 
 class FastIOBoard(FastNetBoard):
     def __init__(self, name):
         super().__init__(name)
+        pinRef = dict()
+
 
     def fastConnectorBlock(self, prefix, size, vclass, offset, keyLoc, firstGround):
         pins = []
@@ -73,6 +81,9 @@ class FastIOBoard(FastNetBoard):
                 nonKeys += 1
         return pins
 
+    def getSwitchPin(self, id):
+        pass
+
 
 class FastIO3208(FastIOBoard):
     def __init__(self):
@@ -85,6 +96,42 @@ class FastIO3208(FastIOBoard):
         self.addConnector("J8", self.fastConnectorBlock("Sw", 11, 12, 0, 4, 9))
         self.addConnector("J9", self.fastConnectorBlock("Sw", 11, 12, 24, 1, 9))
 
+    def getNetOut(self):
+        return self["J1"][0]
+
+    def getNetIn(self):
+        return self["J2"][0]
+
+    def getSwitchPin(self, id):
+        if id < 4:
+            return self["J8"][id]
+        elif id < 8:
+            return self["J8"][id+1]
+        elif id < 11:
+            return self["J3"][id-8]
+        elif id < 16:
+            return self["J3"][id-7]
+        elif id < 18:
+            return self["J6"][id-16]
+        elif id < 24:
+            return self["J6"][id-15]
+        elif id == 24:
+            return self["J9"][0]
+        elif id < 32:
+            return self["J9"][id-23]
+        else:
+            pass
+
+    def getDriverPin(self, id):
+        if id < 5:
+            return self["J4"][id]
+        elif id < 8:
+            return self["J4"][id+1]
+        else:
+            pass
+
+
+
 
 class FastIO1616(FastIOBoard):
     def __init__(self):
@@ -96,6 +143,12 @@ class FastIO1616(FastIOBoard):
         self.addConnector("J7", self.fastConnectorBlock("Sw", 11, 12, 0, 4, 9))
         self.addConnector("J8", self.fastConnectorBlock("Sw", 11, 12, 8, 3, 9))
 
+    def getNetOut(self):
+        return self["J1"][0]
+
+    def getNetIn(self):
+        return self["J2"][0]
+
 
 class FastIO0804(FastIOBoard):
     def __init__(self):
@@ -104,6 +157,24 @@ class FastIO0804(FastIOBoard):
         self.addConnector("J2", self.fastNetConnector())
         self.addConnector("J3", self.fastConnectorBlock("Dr", 7, 48, 0, 4, 5))
         self.addConnector("J4", self.fastConnectorBlock("SW", 11, 12, 0, 4, 9))
+
+    def getNetOut(self):
+        return self["J1"][0]
+
+    def getNetIn(self):
+        return self["J2"][0]
+
+    def getSwitchPin(self, i):
+        if i < 4:
+            return self["J4"][i]
+        elif i < 8:
+            return self["J4"][i+1]
+        else:
+            pass
+
+    def getDriverPin(self, i):
+        assert i <= 4
+        return self["J3"][i]
 
 
 class FastNC(FastNetBoard):
@@ -126,6 +197,13 @@ class FastNC(FastNetBoard):
         self.addConnector("J10", self.fastNetConnector())
         self.addConnector("J11", self.fastNetConnector())
 
+    def getNetOut(self):
+        return self["J10"][0]
+
+    def getNetIn(self):
+        return self["J11"][0]
+
+
 class SerialLED(Board):
     def __init__(self, name):
         super().__init__("WS2812 " + name)
@@ -136,6 +214,20 @@ class SerialLED(Board):
             ("NC",-1),
             ("VDD",5),
             ("GND",0)])
+
+class Switch(Board):
+    def __init__(self, name):
+        super().__init__("SW " + name)
+        self.addConnector("", [
+            ("+", 12),
+            ("-", 12)])
+
+class Coil(Board):
+    def __init__(self, name):
+        super().__init__("DR " + name)
+        self.addConnector("", [
+            ("+", 48),
+            ("-", 48)])
 
 
 
@@ -154,8 +246,7 @@ class FastSystem(System):
         self.connect(self.pfb["J4"][9], self.nc["J7"][6])
 
 
-def wire(machine):
-    s = FastSystem()
+def wireLights(machine, s):
     LEDBoards = dict()
     for l in machine.lights:
         newBoard = SerialLED(l.name)
@@ -199,16 +290,139 @@ def wire(machine):
                 s.connect(s.nc[ncport][0], startBoard[""][5])  # Ground
 
 
+def determineBoards(machine, s):
+    # Used if switches and drivers specify board numbers.
+
+    # Sort switches and drivers by board
+    maxSwitchBoard = 0
+    fastBoardsSwitches = dict()
+    for l in machine.switches:
+        sw = Switch(l.name)
+        s.addBoard(sw)
+        numSpec = l.config["number"]
+        parts = numSpec.split("-")
+        boardNo = int(parts[0])
+        if boardNo > maxSwitchBoard:
+            maxSwitchBoard = boardNo
+        switchNo = int(parts[1])
+        if boardNo not in fastBoardsSwitches.keys():
+            fastBoardsSwitches[boardNo] = dict()
+        fastBoardsSwitches[boardNo][switchNo] = sw
+
+    maxDriverBoard = 0
+    fastBoardsDrivers = dict()
+    for l in machine.coils:
+        cl = Coil(l.name)
+        s.addBoard(cl)
+        numSpec = l.config["number"]
+        parts = numSpec.split("-")
+        boardNo = int(parts[0])
+        if boardNo > maxDriverBoard:
+            maxDriverBoard = boardNo
+        driverNo = int(parts[1])
+        if boardNo not in fastBoardsDrivers.keys():
+            fastBoardsDrivers[boardNo] = dict()
+        fastBoardsDrivers[boardNo][driverNo] = cl
+
+    # Check for board consistency
+    maxBoard = max(maxSwitchBoard, maxDriverBoard)
+    for x in range(maxBoard+1):
+        if x not in fastBoardsSwitches and x not in fastBoardsDrivers:
+            print("I/O board numbers aren't consecutive. An empty board number",x,"would be needed!")
+
+    fastBoards = dict()
+
+    # Work out type of each board and add
+    for board in range(maxBoard+1):
+        switchesOnBoard = len(fastBoardsSwitches[board])
+        driversOnBoard = len(fastBoardsDrivers[board])
+        print("Board",board,"has",switchesOnBoard,"switches and",driversOnBoard,"drivers.")
+        if switchesOnBoard > 32:
+            print("Too many switches on board", board, ". No FAST board can support more than 32.")
+            return
+        if driversOnBoard > 16:
+            print("Too many drivers on board", board, ". No FAST board can support more than 16.")
+            return
+        if switchesOnBoard > 16:
+            if driversOnBoard > 8:
+                print("Bad board", board, ". The only FAST board with more than 16 switches is the 3208, which",
+                      "supports only 8 drivers.")
+                return
+            else:
+                b = FastIO3208()
+                s.addBoard(b)
+                fastBoards[board] = b
+                continue
+        if switchesOnBoard <= 8:
+            if driversOnBoard <= 4:
+                b = FastIO0804()
+                s.addBoard(b)
+                fastBoards[board] = b
+                continue
+        b = FastIO1616()
+        s.addBoard(b)
+        fastBoards[board] = b
+
+    # Build loop network
+    for board in range(1,maxBoard+1):
+        s.connect(fastBoards[board-1].getNetOut(), fastBoards[board].getNetIn())
+    s.connect(fastBoards[0].getNetIn(), s.nc.getNetOut())
+    s.connect(fastBoards[maxBoard].getNetOut(), s.nc.getNetIn())
+
+    # Wire up switches and drivers to board
+    for board in range(maxBoard+1):
+        if board in fastBoardsSwitches.keys():
+            for (pin, switch) in fastBoardsSwitches[board].items():
+                s.connect(fastBoards[board].getSwitchPin(pin), switch[""][1])
+
+        if board in fastBoardsDrivers.keys():
+            for (pin, driver) in fastBoardsDrivers[board].items():
+                s.connect(fastBoards[board].getDriverPin(pin), driver[""][1])
+
+    # Daisy chain switch power
+    for board in range(maxBoard+1):
+        if board in fastBoardsSwitches.keys():
+            switchesOnBoard = list(fastBoardsSwitches[board].values())
+            for switch in range(1, len(switchesOnBoard)):
+                s.connect(switchesOnBoard[switch][""][0], switchesOnBoard[switch-1][""][0])
 
 
 
 
-    if len(machine.lights) > 0:
-        check = 0
-        while check in LEDBoards.keys():
-            check += 1
-        if check != len(machine.lights):
-            print("Problem: Lights on FAST have to be sequential. Light",check,"of",len(machine.lights),"is missing.")
+def wire(machine):
+    s = FastSystem()
+    wireLights(machine, s)
+    inconsistentErr = "Can't wire: all switch and driver numbers must be in the same format, (board-index) or " +\
+                      "raw number, not a mixture of both."
+
+    switchesSpecifyBoards = None
+    for l in machine.switches:
+        numSpec = l.config["number"]
+        if switchesSpecifyBoards is None:
+            switchesSpecifyBoards = ("-" in numSpec)
+        else:
+            if ("-" in numSpec) != switchesSpecifyBoards:
+                print(inconsistentErr)
+                return
+
+    driversSpecifyBoards = None
+    for l in machine.coils:
+        numSpec = l.config["number"]
+        if driversSpecifyBoards is None:
+            driversSpecifyBoards = ("-" in numSpec)
+        else:
+            if ("-" in numSpec) != switchesSpecifyBoards:
+                print(inconsistentErr)
+                return
+
+    if switchesSpecifyBoards != driversSpecifyBoards:
+        print(inconsistentErr)
+        return
+
+    if switchesSpecifyBoards:
+        determineBoards(machine, s)
+
+
 
     yaml = YAML()
     yaml.default_flow_style = False

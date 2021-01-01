@@ -137,8 +137,9 @@ class System:
                 5: "RD",
                 48: "BU",
                 0: "BK",
-                -2: "WT",
-                1: "WT"
+                -2: "WH",
+                1: "WH",
+                -1: "PK"
             }
             for x,awire in enumerate(activeWires):
                 srcPinList.append(awire.src.ordinal+1)
