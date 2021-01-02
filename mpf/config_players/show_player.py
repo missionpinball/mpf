@@ -195,8 +195,9 @@ class ShowPlayer(DeviceConfigPlayer):
         del placeholder_args
         if key in instance_dict:
             instance_dict[key].update(
-                show_tokens=show_settings['show_tokens'],
-                priority=show_settings['priority'])
+                speed=show_settings.get('speed'),
+                manual_advance=show_settings.get('manual_advance')
+            )
 
     # pylint: disable-msg=too-many-arguments
     def _update_show(self, show, show_settings, context, queue, start_time, placeholder_args):
