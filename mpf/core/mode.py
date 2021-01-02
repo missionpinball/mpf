@@ -366,12 +366,14 @@ class Mode(LogMixin):
 
     def _mode_stopped_callback(self, **kwargs) -> None:
         del kwargs
+
+        # Call the mode_stop() method before removing the devices
+        self.mode_stop(**self.mode_stop_kwargs)
+        self.mode_stop_kwargs = dict()
+
+        # Clean up the mode handlers and devices
         self._remove_mode_event_handlers()
         self._remove_mode_devices()
-
-        self.mode_stop(**self.mode_stop_kwargs)
-
-        self.mode_stop_kwargs = dict()
 
         for callback in self.stop_callbacks:
             callback()
