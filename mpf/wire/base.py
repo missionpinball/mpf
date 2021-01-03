@@ -200,7 +200,9 @@ class Coil(Board):
             ("-", 48)])
 
 
+# pylint: disable=invalid-name
 T = TypeVar("T")
+
 
 class System:
 
@@ -227,26 +229,43 @@ class System:
             self.wires.append(nw)
 
     def daisy_chain_list(self, items: List[T], get_in: Callable[[T], Pin], get_out: Callable[[T], Pin]):
-        """Daisy chains connections between arbitrary items that can calculate pins."""
+        """Daisy chains connections between arbitrary items that can calculate pins.
+
+        :param items The list of items, of any type.
+        :param get_in Function to apply to an item to get the input pin.
+        :param get_out Function to apply to an item to get the output pin.
+        """
         if len(items) < 2:
             return
         for index in range(1, len(items)):
-            self.connect(get_out(items[index-1]), get_in(items[index]))
+            self.connect(get_out(items[index - 1]), get_in(items[index]))
 
+# pylint: disable=too-many-arguments
     def daisy_chain_dict(self, items: Dict[int, T], get_in: Callable[[T], Pin], get_out: Callable[[T], Pin],
                          start: int, ladder: bool) -> bool:
+        """Like daisy_chain_list but takes a dict and checks it for sequentiality in the process of daisy chaining.
+
+        Used for directly daisy chaining elements with specified numbers.
+        :param items The dictionary from numbers to items, of any type.
+        :param get_in Function to apply to an item to get the input pin.
+        :param get_out Function to apply to an item to get the output pin.
+        :param start Number to start accessing the dictionary from.
+        :param ladder If true, alternate chain connections are flipped to create a vertical ladder in wireviz.
+        :return True if all items in the dictionary were sequentially numbered. If not, the chain stops
+                     at the first gap.
+        """
         if len(items) < 2:
             return True
         if start not in items:
             return False
         even = False
-        for index in range(start+1, start+len(items)):
+        for index in range(start + 1, start + len(items)):
             if index not in items:
                 return False
             if even or not ladder:
-                self.connect(get_out(items[index-1]), get_in(items[index]))
+                self.connect(get_out(items[index - 1]), get_in(items[index]))
             else:
-                self.connect(get_in(items[index]), get_out(items[index-1]))
+                self.connect(get_in(items[index]), get_out(items[index - 1]))
             even = not even
         return True
 
