@@ -21,17 +21,16 @@ class Command:
         self.machine = None
         self._sigint_count = 0
 
-        parser = argparse.ArgumentParser(
-            description='Generates wiring .yaml file')
+        parser = argparse.ArgumentParser(description='Generates wiring .yaml file')
 
         parser.add_argument("-c",
-                    action="store", dest="configfile",
-                    default="config.yaml", metavar='config_file',
-                    help="The name of a config file to load. Default "
-                         "is "
-                         "config.yaml. Multiple files can be used "
-                         "via a comma-"
-                         "separated list (no spaces between)")
+                            action="store", dest="configfile",
+                            default="config.yaml", metavar='config_file',
+                            help="The name of a config file to load. Default "
+                                 "is "
+                                 "config.yaml. Multiple files can be used "
+                                 "via a comma-"
+                                 "separated list (no spaces between)")
 
         self.args = parser.parse_args(args)
         self.args.configfile = Util.string_to_event_list(self.args.configfile)
