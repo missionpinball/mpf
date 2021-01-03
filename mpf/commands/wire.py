@@ -1,23 +1,11 @@
 """Command to start the MPF game engine."""
 
 import argparse
-import errno
-import os
-import signal
-import socket
-import sys
-from datetime import datetime
-import logging
-from logging.handlers import QueueHandler, SysLogHandler
-import mpf.wire.fast.boards
-
-from queue import Queue
 
 from mpf.core.machine import MachineController
 from mpf.core.utility_functions import Util
-from mpf.core.config_loader import YamlMultifileConfigLoader, ProductionConfigLoader
-from mpf.commands.logging_formatters import JSONFormatter
-
+from mpf.core.config_loader import YamlMultifileConfigLoader
+from mpf.wire.fast import wire
 
 class Command:
 
@@ -61,7 +49,7 @@ class Command:
         self.machine = MachineController(vars(self.args), config)
         self.machine.initialise_mpf()
 
-        mpf.wire.fast.boards.wire(self.machine)
+        wire(self.machine)
 
 
         # pylint: disable-msg=broad-except
