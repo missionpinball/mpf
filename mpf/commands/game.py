@@ -147,6 +147,7 @@ class Command:
                             action="store_true", dest="no_sound", default=False)
 
         self.args = parser.parse_args(args)
+        print(self.args, flush=True)
         self.args.configfile = Util.string_to_event_list(self.args.configfile)
 
         # Configure logging. Creates a logfile and logs to the console.
