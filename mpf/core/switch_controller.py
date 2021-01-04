@@ -621,7 +621,7 @@ class SwitchController(MpfController):
         del kwargs
         for k, v in self._switch_lookup.items():
             if v.state:
-                self.info_log("Found active switch: %s", k)
+                self.info_log("Found active switch: %s %s", k, v)
 
     @staticmethod
     def get_active_event_for_switch(switch_name):
