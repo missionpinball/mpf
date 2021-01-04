@@ -14,20 +14,21 @@ class TestRpiDmd(MpfTestCase):
         return False
 
     def setUp(self):
-        RGBMatrix = patch('mpf.platforms.rpi_dmd.RGBMatrix')
-        RGBMatrixOptions = patch('mpf.platforms.rpi_dmd.RGBMatrixOptions')
-        Image = patch('mpf.platforms.rpi_dmd.Image')
-        self.rgbmatrixoptions = RGBMatrixOptions.start()
-        self.rgbmatrix = RGBMatrix.start()
-        self.rgbmatrix_instance = MagicMock()
-        self.rgbmatrix.return_value = self.rgbmatrix_instance
-        self.image = Image.start()
         modules = {
             'PIL': MagicMock(),
             'PIL.Image': MagicMock(),
         }
         self.module_patcher = patch.dict('sys.modules', modules)
         self.module_patcher.start()
+        Image = patch('mpf.platforms.rpi_dmd.Image')
+        self.image = Image.start()
+
+        RGBMatrix = patch('mpf.platforms.rpi_dmd.RGBMatrix')
+        RGBMatrixOptions = patch('mpf.platforms.rpi_dmd.RGBMatrixOptions')
+        self.rgbmatrixoptions = RGBMatrixOptions.start()
+        self.rgbmatrix = RGBMatrix.start()
+        self.rgbmatrix_instance = MagicMock()
+        self.rgbmatrix.return_value = self.rgbmatrix_instance
         self.addCleanup(self.rgbmatrix.stop)
         super().setUp()
 
