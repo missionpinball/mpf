@@ -1,8 +1,7 @@
 import sys
 
 from mpf.tests.MpfBcpTestCase import MpfBcpTestCase
-from mpf.commands.service import ServiceCli
-from unittest.mock import create_autospec
+from unittest.mock import create_autospec, patch, MagicMock
 
 
 class TestServiceCli(MpfBcpTestCase):
@@ -13,12 +12,33 @@ class TestServiceCli(MpfBcpTestCase):
     def get_machine_path(self):
         return 'tests/machine_files/service_mode/'
 
+    def _table(self, data):
+        result = ""
+        for row in data:
+            for col in row:
+                result += str(col) + ";"
+            result += "\n"
+        obj = MagicMock()
+        obj.table = result[:-1]
+        return obj
+
     def setUp(self):
+        modules = {
+            'terminaltables': MagicMock(),
+        }
+        modules["terminaltables"].AsciiTable = self._table
+
+        self.module_patcher = patch.dict('sys.modules', modules)
+        self.module_patcher.start()
         super().setUp()
         self.mock_stdin = create_autospec(sys.stdin)
         self.mock_stdout = create_autospec(sys.stdout)
         # we are connected as anonymous client
         self._bcp_client.name = None
+
+    def tearDown(self) -> None:
+        super().tearDown()
+        self.module_patcher.stop()
 
     def _last_write(self, n=None):
         """:return: last `n` output lines"""
@@ -28,7 +48,9 @@ class TestServiceCli(MpfBcpTestCase):
 
     def test_cli(self):
         self.maxDiff = None
-        cli = ServiceCli(self._bcp_external_client, self.loop, self.mock_stdin, self.mock_stdout)
+        with patch("mpf.commands.service.AsciiTable"):
+            from mpf.commands.service import ServiceCli
+            cli = ServiceCli(self._bcp_external_client, self.loop, self.mock_stdin, self.mock_stdout)
 
         cli.onecmd("light_color l_light5 red")
         self.assertEqual("Success\n", self._last_write())
@@ -40,12 +62,9 @@ class TestServiceCli(MpfBcpTestCase):
         self.assertEqual("Success\n", self._last_write())
 
         cli.onecmd("list_lights")
-        expected = """+---------+-----------------------------------+----------+-----------------+
-| Board   | Number                            | Name     | Color           |
-+---------+-----------------------------------+----------+-----------------+
-| Virtual | ['led-1-b', 'led-1-g', 'led-1-r'] | l_light1 | (255, 255, 255) |
-| Virtual | ['led-5-b', 'led-5-g', 'led-5-r'] | l_light5 | (255, 0, 0)     |
-+---------+-----------------------------------+----------+-----------------+
+        expected = """Board;Number;Name;Color;
+Virtual;['led-1-b', 'led-1-g', 'led-1-r'];l_light1;(255, 255, 255);
+Virtual;['led-5-b', 'led-5-g', 'led-5-r'];l_light5;(255, 0, 0);
 """
         self.assertEqual(expected, self._last_write())
 
@@ -67,42 +86,33 @@ class TestServiceCli(MpfBcpTestCase):
         self.hit_switch_and_run("s_door_open", 0)
 
         cli.onecmd("list_switches")
-        expected = """+---------+--------+-----------------+--------+
-| Board   | Number | Name            | State  |
-+---------+--------+-----------------+--------+
-| Virtual | 1      | s_door_open     | closed |
-| Virtual | 17     | s_service_enter | open   |
-| Virtual | 18     | s_service_esc   | open   |
-| Virtual | 19     | s_service_up    | open   |
-| Virtual | 20     | s_service_down  | open   |
-+---------+--------+-----------------+--------+
+        expected = """Board;Number;Name;State;
+Virtual;1;s_door_open;closed;
+Virtual;17;s_service_enter;open;
+Virtual;18;s_service_esc;open;
+Virtual;19;s_service_up;open;
+Virtual;20;s_service_down;open;
 """
         self.assertEqual(expected, self._last_write())
 
         cli.onecmd("list_coils")
-        expected = """+---------+--------+---------+
-| Board   | Number | Name    |
-+---------+--------+---------+
-| Virtual | 1      | c_test  |
-| Virtual | 2      | c_test2 |
-| Virtual | 3      | c_test5 |
-| Virtual | 10     | c_test6 |
-| Virtual | 100    | c_test4 |
-| Virtual | 1000   | c_test3 |
-+---------+--------+---------+
+        expected = """Board;Number;Name;
+Virtual;1;c_test;
+Virtual;2;c_test2;
+Virtual;3;c_test5;
+Virtual;10;c_test6;
+Virtual;100;c_test4;
+Virtual;1000;c_test3;
 """
         self.assertEqual(expected, self._last_write())
 
         cli.onecmd("list_shows")
-        expected = """+-------------+---------------------------------------------+
-| Name        | Token                                       |
-+-------------+---------------------------------------------+
-| flash       | ['led', 'leds', 'light', 'lights']          |
-| flash_color | ['color', 'led', 'leds', 'light', 'lights'] |
-| led_color   | ['color', 'led', 'leds', 'light', 'lights'] |
-| off         | ['led', 'leds', 'light', 'lights']          |
-| on          | ['led', 'leds', 'light', 'lights']          |
-+-------------+---------------------------------------------+
+        expected = """Name;Token;
+flash;['led', 'leds', 'light', 'lights'];
+flash_color;['color', 'led', 'leds', 'light', 'lights'];
+led_color;['color', 'led', 'leds', 'light', 'lights'];
+off;['led', 'leds', 'light', 'lights'];
+on;['led', 'leds', 'light', 'lights'];
 """
         self.assertEqual(expected, self._last_write())
 
