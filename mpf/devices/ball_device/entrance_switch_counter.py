@@ -35,6 +35,12 @@ class EntranceSwitchCounter(PhysicalBallCounter):
                 callback=self._entrance_switch_handler,
                 callback_kwargs={"switch_name": switch.name})
 
+            self.machine.switch_controller.add_switch_handler_obj(
+                switch=switch, state=0,
+                ms=0,
+                callback=self._entrance_switch_released_handler,
+                callback_kwargs={"switch_name": switch.name})
+
         if self.config['entrance_switch_full_timeout'] and self.config['ball_capacity']:
             if len(self.config['entrance_switch']) > 1:
                 raise AssertionError("entrance_switch_full_timeout not supported with multiple entrance switches.")
@@ -81,6 +87,9 @@ class EntranceSwitchCounter(PhysicalBallCounter):
 
     def _entrance_switch_handler(self, switch_name):
         """Add a ball to the device since the entrance switch has been hit."""
+        # always invalidate count if this has been triggered by a real switch
+        if switch_name != "event":
+            self.invalidate_count()
         # If recycle is ongoing, do nothing
         if self.recycle_clear_time.get(switch_name, False):
             self.debug_log("Entrance switch hit within ignore window, taking no action")
@@ -97,7 +106,6 @@ class EntranceSwitchCounter(PhysicalBallCounter):
         elif self.config['ball_capacity'] and self.config['entrance_switch_full_timeout'] and \
                 self.config['ball_capacity'] == self._last_count + 1:
             # wait for entrance_switch_full_timeout before setting the device to full capacity
-            self.invalidate_count()
             self._settle_delay.remove("count_stable")
         else:
             # increase count
@@ -106,8 +114,16 @@ class EntranceSwitchCounter(PhysicalBallCounter):
             self._last_count += 1
             self.record_activity(BallEntranceActivity())
 
+    def _entrance_switch_released_handler(self, switch_name):
+        """Entrance switch has been released."""
+        del switch_name
+        # count is stable once switch is inactive
+        # (or if it stays on the switch long enough; see _entrance_switch_full_handler)
+        self._count_stable.set()
+
     def _entrance_switch_full_handler(self):
         # a ball is sitting on the entrance_switch. assume the device is full
+        self._count_stable.set()
         new_balls = self.config['ball_capacity'] - self._last_count
         self.mark_count_as_stable_and_trigger_activity()
         if new_balls > 0:

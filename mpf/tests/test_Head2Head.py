@@ -134,14 +134,8 @@ class TestHead2Head(MpfTestCase):
         self.assertFalse(self.machine.ball_controller.request_to_start_game())
 
         self.machine.switch_controller.process_switch("s_transfer_front_back", 1)
-        self.advance_time_and_run(2)
-
-        self.assertEqual(0, pf1.balls)
-        self.assertEqual(0, pf1.available_balls)
-        self.assertEqual(2, pf2.balls)
-        self.assertEqual(2, pf2.available_balls)
-
-        self.machine.switch_controller.process_switch("s_transfer_front_back", 1)
+        self.advance_time_and_run(.1)
+        self.machine.switch_controller.process_switch("s_transfer_front_back", 0)
         self.advance_time_and_run(2)
 
         self.assertEqual(0, pf1.balls)

@@ -1,0 +1,94 @@
+#config_version=5
+
+playfields:
+  playfield:
+    enable_ball_search: True
+    default_source_device: shooter_lane
+    tags: default
+
+machine:
+  balls_installed: 6
+
+switches:
+  s_shooter_lane:
+    number:
+  s_trough_1:
+    number:
+  s_trough_2:
+    number:
+  s_trough_3:
+    number:
+  s_trough_4:
+    number:
+  s_trough_5:
+    number:
+  s_trough_6:
+    number:
+  s_trough_jam:
+    number:
+  s_popBumperAreaEject:
+    number:
+  s_underRightRampEject:
+    number:
+  s_underRightRampJam:
+    number:
+  s_sandTrap:
+    number:
+
+coils:
+  c_plunger_lane:
+    number:
+  c_trough_eject:
+    number:
+  c_PopBumperAreaEject:
+    number:
+  c_UpperRightEject:
+    number:
+  c_SandTrapEject:
+    number:
+
+ball_devices:
+  shooter_lane:
+    ball_switches: s_shooter_lane
+    eject_coil: c_plunger_lane
+    player_controlled_eject_event: sw_plunger # for flipper launch
+    mechanical_eject: true # player can plunge as well
+    eject_timeouts: 2s
+    ball_search_order: 1
+
+  trough:
+    tags: trough, home, drain
+    ball_switches: s_trough_1, s_trough_2, s_trough_3, s_trough_4, s_trough_5, s_trough_6, s_trough_jam
+    eject_coil: c_trough_eject
+    confirm_eject_type: target
+    eject_targets: shooter_lane
+    eject_timeouts: 2s # default is 10 seconds, these needs to be lowered for multiballs
+    jam_switch: s_trough_jam
+
+  PopsEject:
+    ball_switches: s_popBumperAreaEject
+    eject_coil: c_PopBumperAreaEject
+    ball_search_order: 1230 # default 200 so do this last
+    entrance_event_timeout: 2s # default is 5 second
+
+  underRightRampEject:
+    ball_switches: s_underRightRampEject
+    eject_coil: c_UpperRightEject
+    ball_search_order: 1220 # default 200 so do this last
+    auto_fire_on_unexpected_ball: true
+    entrance_event_timeout: 1500ms  # default is 5 second
+    jam_switch: s_underRightRampJam # only happens if 2 balls in there, one on top of the other
+    eject_coil_jam_pulse: 100       # if jammed, pulse harder since 2 balls there (in ms)
+
+  sandTrapEject:
+    ball_switches: s_sandTrap
+    eject_coil: c_SandTrapEject
+    ball_search_order: 2
+    auto_fire_on_unexpected_ball: true
+    entrance_event_timeout: 400ms # default is 5 second
+
+virtual_platform_start_active_switches:
+  - s_trough_1
+  - s_trough_2
+  - s_trough_3
+  - s_trough_4

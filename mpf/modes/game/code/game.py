@@ -234,6 +234,7 @@ class Game(AsyncMode):
         prev_balls_in_play = self._balls_in_play
 
         if value > self.machine.ball_controller.num_balls_known:
+            self.warning_log("Balls in play have been capped by num_balls_known.")
             self._balls_in_play = self.machine.ball_controller.num_balls_known
 
         elif value < 0:
