@@ -805,6 +805,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         """Read until separator.
 
         Args:
+        ----
             separator: Read until this separator byte.
             min_chars: Minimum message length before separator
         """

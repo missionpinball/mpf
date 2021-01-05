@@ -61,6 +61,7 @@ class Driver(SystemWideDevice):
         """Return the parsed and validated config.
 
         Args:
+        ----
             config: Config of device
             is_mode_config: Whether this device is loaded in a mode or system-wide
             debug_prefix: Prefix to use when logging.
@@ -184,6 +185,7 @@ class Driver(SystemWideDevice):
         """Enable a driver by holding it 'on'.
 
         Args:
+        ----
             pulse_ms: The number of milliseconds the driver should be
                 enabled for. If no value is provided, the driver will be
                 enabled for the value specified in the config dictionary.
@@ -278,6 +280,7 @@ class Driver(SystemWideDevice):
         """Pulse this driver.
 
         Args:
+        ----
             pulse_ms: The number of milliseconds the driver should be
                 enabled for. If no value is provided, the driver will be
                 enabled for the value specified in the config dictionary.

@@ -31,6 +31,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplaySoftware
     """Platform class for the P-ROC hardware controller.
 
     Args:
+    ----
         machine: The MachineController instance.
     """
 
@@ -101,6 +102,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplaySoftware
         also used for matrix-based lights.
 
         Args:
+        ----
             config: Dictionary of settings for the driver.
             number: Number of this driver
             platform_settings: Platform specific setting for this driver.
@@ -134,6 +136,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplaySoftware
         """Configure a P-ROC switch.
 
         Args:
+        ----
             number: String number of the switch to configure.
             config: SwitchConfig settings.
             platform_config: Platform specific settings.
@@ -232,6 +235,7 @@ class PROCDMD(DmdPlatformInterface):
     """Parent class for a physical DMD attached to a P-ROC.
 
     Args:
+    ----
         platform: Reference to the MachineController's proc attribute.
         machine: Reference to the MachineController
     """
@@ -259,6 +263,7 @@ class PROCDMD(DmdPlatformInterface):
         """Update the DMD with a new frame.
 
         Args:
+        ----
             data: A 4096-byte raw string.
 
         """

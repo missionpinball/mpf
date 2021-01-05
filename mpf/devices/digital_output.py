@@ -62,6 +62,7 @@ class DigitalOutput(SystemWideDevice):
         """Return the parsed and validated config.
 
         Args:
+        ----
             config: Config of device
             is_mode_config: Whether this device is loaded in a mode or system-wide
             debug_prefix: Prefix to use when logging.

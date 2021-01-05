@@ -29,6 +29,7 @@ class LightGroup(SystemWideDevice):
         """Add light_template and number to config.
 
         Args:
+        ----
             config: unparsed config
             is_mode_config: if in mode (not used)
         """

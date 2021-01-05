@@ -219,6 +219,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         ``add_switch_handler()`` method behind the scenes.
 
         Args:
+        ----
             callback: A callable method that will be called when the switch
                 state changes.
             state: The state that the switch which change into which triggers

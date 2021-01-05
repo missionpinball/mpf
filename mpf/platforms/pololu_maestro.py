@@ -45,6 +45,7 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
         """Configure a servo device in platform.
 
         Args:
+        ----
             number: Number of the servo.
         """
         try:
@@ -84,6 +85,7 @@ class PololuServo(ServoPlatformInterface):
         If channel is configured for digital output, values < 6000 = Low ouputco.
 
         Args:
+        ----
             position: Servo position between 0 and 1
         """
         servo_min = self.config['servo_min']
@@ -120,6 +122,7 @@ class PololuServo(ServoPlatformInterface):
         Speed of 0 is unrestricted.
 
         Args:
+        ----
             speed_limit: speed_limit to set
 
         """

@@ -133,6 +133,7 @@ class ClockBase(LogMixin):
         This function is a coroutine.
 
         Args:
+        ----
             loop: asyncio loop
             limit: line length limit
         """
@@ -156,6 +157,7 @@ class ClockBase(LogMixin):
         or 0, the callback will be called after the next frame is rendered.
 
         Args:
+        ----
             callback: callback to call on timeout
             timeout: seconds to wait
 
@@ -176,6 +178,7 @@ class ClockBase(LogMixin):
         """Schedule an event to be called every <timeout> seconds.
 
         Args:
+        ----
             callback: callback to call on timeout
             timeout: period to wait
 
@@ -197,6 +200,7 @@ class ClockBase(LogMixin):
         """Remove a previously scheduled event. Wrapper for cancel for compatibility to kivy clock.
 
         Args:
+        ----
             event: Event to cancel
         """
         try:

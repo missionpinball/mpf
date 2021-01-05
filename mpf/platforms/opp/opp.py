@@ -37,6 +37,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
     """Platform class for the OPP hardware.
 
     Args:
+    ----
         machine: The main ``MachineController`` instance.
 
     """
@@ -173,6 +174,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Send an incoming message from the OPP hardware to the proper method for servicing.
 
         Args:
+        ----
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
@@ -293,6 +295,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Register the processors to the platform.
 
         Args:
+        ----
             serial_number: Serial number of chain.
             communicator: Instance of OPPSerialCommunicator
         """
@@ -302,6 +305,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Send message to processor with specific serial number.
 
         Args:
+        ----
             chain_serial: Serial of the processor.
             msg: Message to send.
         """
@@ -376,6 +380,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Parse inventory response.
 
         Args:
+        ----
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
@@ -397,6 +402,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Process an EOM.
 
         Args:
+        ----
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
@@ -477,6 +483,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Process cfg response.
 
         Args:
+        ----
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
@@ -517,6 +524,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Process version response.
 
         Args:
+        ----
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
@@ -568,6 +576,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Read initial switch states.
 
         Args:
+        ----
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
@@ -596,6 +605,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Read switch changes.
 
         Args:
+        ----
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
@@ -649,6 +659,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Read initial matrix switch states.
 
         Args:
+        ----
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
@@ -673,6 +684,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Read matrix switch changes.
 
         Args:
+        ----
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
@@ -746,6 +758,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Configure a driver.
 
         Args:
+        ----
             config: Config dict.
             number: Number of this driver.
             platform_settings: Platform specific settings.
@@ -779,6 +792,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Configure a switch.
 
         Args:
+        ----
             number: Number of this switch.
             config: Config dict.
             platform_config: Platform specific settings.

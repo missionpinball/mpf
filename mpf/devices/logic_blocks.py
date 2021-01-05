@@ -370,6 +370,7 @@ class Counter(LogicBlock):
         """Add to the value of this counter.
 
         Args:
+        ----
             value: Value to add to the counter.
             kwargs: Additional arguments.
         """
@@ -387,6 +388,7 @@ class Counter(LogicBlock):
         """Subtract from the value of this counter.
 
         Args:
+        ----
             value: Value to subtract from the counter.
             kwargs: Additional arguments.
         """
@@ -404,6 +406,7 @@ class Counter(LogicBlock):
         """Set the internal value of the counter.
 
         Args:
+        ----
             value: Value to add to jump to.
             kwargs: Additional arguments.
         """
@@ -553,6 +556,7 @@ class Accrual(LogicBlock):
         called.
 
         Args:
+        ----
             step: Integer of the step number (0 indexed) that was just hit.
         """
         del kwargs

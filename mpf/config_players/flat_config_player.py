@@ -48,6 +48,7 @@ class FlatConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
         NotImplementedError and most be configured in the child class.
 
         Args:
+        ----
             value: The single line string value from a config file.
 
         Returns a dictionary (which will then be passed through the config

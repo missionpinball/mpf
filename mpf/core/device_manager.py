@@ -45,6 +45,7 @@ class DeviceManager(MpfController):
         """Register a monitorable device.
 
         Args:
+        ----
             device: The device to register.
         """
         if device.collection not in self._monitorable_devices:
@@ -55,6 +56,7 @@ class DeviceManager(MpfController):
         """Notify subscribers about changes in a registered device.
 
         Args:
+        ----
             device: The device that changed.
             notify: Attribute name which changed.
             old: The old value.
@@ -210,6 +212,7 @@ class DeviceManager(MpfController):
          control_events in that config.
 
         Args:
+        ----
             config: An MPF config dictionary (either machine-wide or mode-
                 specific).
 
@@ -345,6 +348,7 @@ class DeviceCollection(dict):
         """Return of list of device objects which have a certain tag.
 
         Args:
+        ----
             tag: A string of the tag name which specifies what devices are
                 returned.
 

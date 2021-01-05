@@ -28,10 +28,7 @@ class Accelerometer(SystemWideDevice):
     class_label = 'accelerometer'
 
     def __init__(self, machine: MachineController, name: str) -> None:
-        """Initialise accelerometer.
-
-        Args: Same as the Device parent class
-        """
+        """Initialise accelerometer."""
         self.platform = None        # type: Optional[AccelerometerPlatform]
         super().__init__(machine, name)
 

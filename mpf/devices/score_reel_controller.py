@@ -107,6 +107,7 @@ class ScoreReelController:
         automatically.
 
         Args:
+        ----
             value: Integer value of the new score. This parameter is ignored,
                 and included only because the score change event passes it.
             change: Change compared to the previous score-
@@ -129,6 +130,7 @@ class ScoreReelController:
         until it's done.
 
         Args:
+        ----
             queue: A reference to the queue object for the game starting event.
         """
         del kwargs

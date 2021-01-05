@@ -238,6 +238,7 @@ class DropTarget(SystemWideDevice):
          This allows the bank to update its status based on state changes to this drop target.
 
         Args:
+        ----
             bank: DropTargetBank object to add this drop target to.
         """
         self.banks.add(bank)
@@ -257,6 +258,7 @@ class DropTarget(SystemWideDevice):
         """Remove the DropTarget from a bank.
 
         Args:
+        ----
             bank: DropTargetBank object to remove
         """
         self.banks.remove(bank)

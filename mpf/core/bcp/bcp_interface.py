@@ -16,6 +16,7 @@ class BcpInterface(MpfController):
     """Implements the BCP interface which can be used by all clients.
 
     Args:
+    ----
         machine: A reference to the main MPF machine object.
 
     The following BCP commands are currently implemented:
@@ -561,6 +562,7 @@ class BcpInterface(MpfController):
         """Process BCP message.
 
         Args:
+        ----
             cmd: The command for this message.
             kwargs: Arguments for the command.
             client: Client which send this message.
@@ -638,6 +640,7 @@ class BcpInterface(MpfController):
         """Process an incoming switch state change request from a remote BCP host.
 
         Args:
+        ----
             client: Client which sent the switch state.
             name: String name of the switch to set.
             state: Integer representing the state this switch will be set to.

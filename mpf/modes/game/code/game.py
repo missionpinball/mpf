@@ -392,6 +392,7 @@ class Game(AsyncMode):
         Drained balls will be subtracted from the number of balls in play.
 
         Args:
+        ----
             balls: The number of balls that just drained.
 
         Returns a dictionary: {balls: *number of balls drained*}.

@@ -44,6 +44,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Initialise fast hardware platform.
 
         Args:
+        ----
             machine: The main ``MachineController`` instance.
         """
         super().__init__(machine)
@@ -210,6 +211,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Register an IO board.
 
         Args:
+        ----
             board: 'mpf.platform.fast.fast_io_board.FastIoBoard' to register
         """
         if board.node_id in self.io_boards:
@@ -224,6 +226,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Send an incoming message from the FAST controller to the proper method for servicing.
 
         Args:
+        ----
             msg: messaged which was received
             remote_processor: Processor which sent the message.
         """
@@ -293,6 +296,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         which serial port ahead of time.
 
         Args:
+        ----
             communicator: communicator object
             name: name of processor
         """
@@ -331,6 +335,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Process network switch open.
 
         Args:
+        ----
             msg: switch number
             remote_processor: Processor which sent the message.
         """
@@ -343,6 +348,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Process network switch closed.
 
         Args:
+        ----
             msg: switch number
             remote_processor: Processor which sent the message.
         """
@@ -355,6 +361,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Process local switch open.
 
         Args:
+        ----
             msg: switch number
             remote_processor: Processor which sent the message.
         """
@@ -367,6 +374,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Process local switch closed.
 
         Args:
+        ----
             msg: switch number
             remote_processor: Processor which sent the message.
         """
@@ -379,6 +387,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Receive all switch states.
 
         Args:
+        ----
             msg: switch states as bytearray
             remote_processor: Processor which sent the message.
         """
@@ -451,6 +460,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Configure a driver.
 
         Args:
+        ----
             config: Driver config.
             number: Number of this driver.
             platform_settings: Platform specific settings.
@@ -520,6 +530,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Configure a servo.
 
         Args:
+        ----
             number: Number of servo
 
         Returns: Servo object.
@@ -582,6 +593,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         can be mixed and matched in the same machine.
 
         Args:
+        ----
             number: Number of this switch.
             config: Switch config.
             platform_config: Platform specific settings.
@@ -872,6 +884,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         as the *sw_num*.
 
         Args:
+        ----
             switch: The switch whose rule you want to clear.
             coil: The coil whose rule you want to clear.
 

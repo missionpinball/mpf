@@ -163,6 +163,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
     """Platform class for the P-Roc and P3-ROC hardware controller.
 
     Args:
+    ----
         machine: The MachineController instance.
     """
 
@@ -408,6 +409,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         """Write a pdled config register.
 
         Args:
+        ----
             board_addr: Address of the board
             addr: Register address
             reg_data: Register data
@@ -672,6 +674,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         as the *sw_num*.
 
         Args:
+        ----
             switch: Switch object
             coil: Coil object
         """
@@ -750,6 +753,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         """Configure a P3-ROC switch.
 
         Args:
+        ----
             config: Dictionary of settings for the switch.
             proc_num: decoded switch number
 
@@ -782,6 +786,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         """Configure a servo on a PD-LED board.
 
         Args:
+        ----
             number: Number of the servo
         """
         try:
@@ -797,6 +802,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         """Configure a stepper (axis) device in platform.
 
         Args:
+        ----
             number: Number of the stepper.
             config: Config for this stepper.
         """
@@ -1132,6 +1138,7 @@ class PDBConfig:
         """Get the actual number of a coil from the bank index config.
 
         Args:
+        ----
             number_str (str): PDB string
         """
         coil = PDBCoil(self, number_str)
@@ -1146,6 +1153,7 @@ class PDBConfig:
         """Get the actual number of a light from the lamp config.
 
         Args:
+        ----
             number_str (str): PDB string
         """
         lamp = PDBLight(self, number_str)
@@ -1167,6 +1175,7 @@ class PDBConfig:
         """Get the actual number of a switch based on the string only.
 
         Args:
+        ----
             number_str (str): PDB string
         """
         switch = PDBSwitch(self, number_str)

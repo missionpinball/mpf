@@ -96,6 +96,7 @@ class BallSearch(MpfController):
         callback returns true.
 
         Args:
+        ----
             priority: priority of this callback in the ball search procedure
             callback: callback to call. ball search will wait before the next
                 callback, if it returns true

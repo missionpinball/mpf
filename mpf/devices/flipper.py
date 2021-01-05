@@ -23,6 +23,7 @@ class Flipper(SystemWideDevice):
     multiple coil options (pulsing, hold coils, etc.)
 
     Args:
+    ----
         machine: A reference to the machine controller instance.
         name: A string of the name you'll refer to this flipper object as.
     """

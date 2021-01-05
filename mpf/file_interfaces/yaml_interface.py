@@ -176,6 +176,7 @@ class YamlInterface(FileInterface):
         """Load a YAML file from disk.
 
         Args:
+        ----
             filename: The file to load.
             expected_version_str: Version string to expect or None for no check.
             halt_on_error: Boolean which controls what happens if the file

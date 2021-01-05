@@ -34,6 +34,7 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         """Create features and set default variables.
 
         Args:
+        ----
             machine(mpf.core.machine.MachineController): The machine.
         """
         self.machine = machine  # type: MachineController
@@ -262,6 +263,7 @@ class AccelerometerPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Configure accelerometer.
 
         Args:
+        ----
             number: Number of this accelerometer
             config (dict): Configuration of this accelerometer
             callback (mpf.devices.accelerometer.Accelerometer): Callback device to send data to
@@ -301,6 +303,7 @@ class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Configure a servo device in platform.
 
         Args:
+        ----
             number: Number of the servo
         """
         raise NotImplementedError
@@ -326,6 +329,7 @@ class StepperPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Validate a stepper config for platform.
 
         Args:
+        ----
             stepper: Stepper to validate.
             config: Config to validate.
 
@@ -345,6 +349,7 @@ class StepperPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Configure a smart stepper (axis) device in platform.
 
         Args:
+        ----
             number: Number of the smart servo
             config: Config for this stepper.
         """
@@ -408,6 +413,7 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         object which will be called to access the hardware.
 
         Args:
+        ----
             number: Switch number.
             config : Config of switch.
             platform_config: Platform specific settings.
@@ -424,6 +430,7 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Validate a switch config for platform.
 
         Args:
+        ----
             switch: Switch to validate.
             config: Config to validate.
 

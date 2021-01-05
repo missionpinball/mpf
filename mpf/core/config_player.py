@@ -89,6 +89,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         """Validate this player's section of a config file (either a machine-wide config or a mode config).
 
         Args:
+        ----
             config: A dict of the contents of this config_player's section
             from the config file. It's assumed that keys are event names, and
             values are settings for what this config_player does when that
@@ -186,6 +187,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         NotImplementedError and most be configured in the child class.
 
         Args:
+        ----
             value: The single line string value from a config file.
 
         Returns a dictionary (which will then be passed through the config

@@ -160,6 +160,7 @@ class ExtraBall(ModeDevice):
         """Load extra ball in mode and initialise player.
 
         Args:
+        ----
             mode: Mode which is loaded
             player: Current player
         """
@@ -181,6 +182,7 @@ class ExtraBall(ModeDevice):
         """Unload extra ball.
 
         Args:
+        ----
             mode: Mode which is unloaded
         """
         del mode

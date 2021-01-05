@@ -330,6 +330,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """Apply a color correction profile to this light.
 
         Args:
+        ----
             profile: An RGBColorCorrectionProfile() instance
 
         """
@@ -342,6 +343,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         Calling this methods is how you tell this light what color you want it to be.
 
         Args:
+        ----
             color: RGBColor() instance, or a string color name, hex value, or
                 3-integer list/tuple of colors.
             fade_ms: Int of the number of ms you want this light to fade to the
@@ -386,6 +388,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """Turn light on.
 
         Args:
+        ----
             brightness: Brightness factor for "on".
             key: key for removal later on
             priority: priority on stack
@@ -402,6 +405,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """Turn light off.
 
         Args:
+        ----
             key: key for removal later on
             priority: priority on stack
             fade_ms: duration of fade
@@ -463,6 +467,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """Remove a group of color settings from the stack.
 
         Args:
+        ----
             key: The key of the settings to remove (based on the 'key'
                 parameter that was originally passed to the color() method.)
             fade_ms: Time to fade out the light.
@@ -620,6 +625,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """Apply max brightness correction to color.
 
         Args:
+        ----
             color: The RGBColor() instance you want to have gamma applied.
 
         Returns an updated RGBColor() instance with gamma corrected.
@@ -634,6 +640,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """Apply the current color correction profile to the color passed.
 
         Args:
+        ----
             color: The RGBColor() instance you want to get color corrected.
 
         Returns an updated RGBColor() instance with the current color

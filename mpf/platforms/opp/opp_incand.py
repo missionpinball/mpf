@@ -50,6 +50,7 @@ class OPPIncand(LightPlatformSoftwareFade):
         """Enable (turns on) this driver.
 
         Args:
+        ----
             brightness: brightness 0 (off) to 255 (on) for this incandescent light. OPP only supports on (>0) or off.
         """
         curr_bit = (1 << self.index)

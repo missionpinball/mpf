@@ -78,6 +78,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
         """Mode ended.
 
         Args:
+        ----
             mode: mode which stopped
         """
         del mode

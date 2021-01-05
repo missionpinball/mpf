@@ -23,6 +23,7 @@ class BallController(MpfController):
         """Initialise ball controller.
 
         Args:
+        ----
             machine : :class:`MachineController`. A reference to the instance
                 of the MachineController object.
 
@@ -222,6 +223,7 @@ class BallController(MpfController):
         nowhere, and they always are. :)
 
         Args:
+        ----
             target: String or list of strings of the tags you'd like to
                 collect the balls to. Default of None will be replaced with
                 'home' and 'trough'.
@@ -265,6 +267,7 @@ class BallController(MpfController):
         tagged with 'home' and/or 'trough'.
 
         Args:
+        ----
             target: A string of the tag name or a list of tags names of the
                 ball devices you want all the balls to end up in. Default is
                 ['home', 'trough'].

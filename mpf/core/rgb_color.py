@@ -307,6 +307,7 @@ class RGBColor:
         """Convert a HEX color representation to an RGB color representation.
 
         Args:
+        ----
             hex_string: The 3- or 6-char hexadecimal string representing the color
                 value.
             default: The default value to return if _hex is invalid.
@@ -331,6 +332,7 @@ class RGBColor:
         """Blend two colors.
 
         Args:
+        ----
             start_color: The start color
             end_color:  The end color
             fraction: The fraction between 0 and 1 that is used to set the
@@ -426,6 +428,7 @@ class RGBColor:
         take place the next time an LED switches to that color).
 
         Args:
+        ----
             name: String name of the color you want to add/update
             color: The color you want to set. You can pass the same types as
                 the RGBColor class constructor, including a tuple or list of
@@ -449,6 +452,7 @@ class RGBColorCorrectionProfile:
         """Create a linear correction profile that does not alter color values by default.
 
         Args:
+        ----
             name: The color correction profile name
 
         Returns: None
@@ -466,6 +470,7 @@ class RGBColorCorrectionProfile:
         """Generate an RGB color correction profile lookup table based on the parameters supplied.
 
         Args:
+        ----
             gamma: Exponent for the nonlinear portion of the brightness curve.
             whitepoint: Tuple of (red, green, blue) values to multiply by
                 colors prior to gamma correction.
@@ -502,6 +507,7 @@ class RGBColorCorrectionProfile:
         """Assign the specified lookup table values to the profile channel.
 
         Args:
+        ----
             channel: The channel number (0..2)
             table_values: A list of 256 integer values between 0 and 255
 
@@ -533,6 +539,7 @@ class RGBColorCorrectionProfile:
         """Apply the current color correction profile to the specified RGBColor object.
 
         Args:
+        ----
             color: The RGBColor object which to apply the color correction profile.
 
         Returns: RGBColor

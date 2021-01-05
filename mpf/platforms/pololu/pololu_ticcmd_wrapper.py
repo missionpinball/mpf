@@ -22,6 +22,7 @@ class PololuTiccmdWrapper:
         """Return the current status of the TIC device.
 
         Args:
+        ----
             serial_number (number): The serial number of the TIC to control
             machine (object): The machine object
             debug (boolean): Turn on debugging or not
@@ -109,6 +110,7 @@ class PololuTiccmdWrapper:
         """Tells the TIC to move the stepper to the target position.
 
         Args:
+        ----
             position (number): The desired position in microsteps
         """
         self._ticcmd('--position', str(int(position)))
@@ -117,6 +119,7 @@ class PololuTiccmdWrapper:
         """Tells the TIC to move the stepper continuously at the specified velocity.
 
         Args:
+        ----
             velocity (number): The desired speed in microsteps per 10,000 s
         """
         self._ticcmd('--velocity', str(int(velocity)))
@@ -133,6 +136,7 @@ class PololuTiccmdWrapper:
         """Set the Step Mode of the stepper.
 
         Args:
+        ----
             mode (number): One of 1, 2, 4, 8, 16, 32, the number of microsteps per step
         """
         self._ticcmd('--step-mode', str(int(mode)))
@@ -141,6 +145,7 @@ class PololuTiccmdWrapper:
         """Set the max speed of the stepper.
 
         Args:
+        ----
             speed (number): The maximum speed of the stepper in microsteps per 10,000s
         """
         self._ticcmd('--max-speed', str(int(speed)))
@@ -149,6 +154,7 @@ class PololuTiccmdWrapper:
         """Set the starting speed of the stepper.
 
         Args:
+        ----
             speed (number): The starting speed of the stepper in microsteps per 10,000s
         """
         self._ticcmd('--starting-speed', str(int(speed)))
@@ -157,6 +163,7 @@ class PololuTiccmdWrapper:
         """Set the max acceleration of the stepper.
 
         Args:
+        ----
             acceleration (number): The maximum acceleration of the stepper in microsteps per 100 s^2
         """
         self._ticcmd('--max-accel', str(int(acceleration)))
@@ -165,6 +172,7 @@ class PololuTiccmdWrapper:
         """Set the max deceleration of the stepper.
 
         Args:
+        ----
             deceleration (number): The maximum deceleration of the stepper in microsteps per 100 s^2
         """
         self._ticcmd('--max-decel', str(int(deceleration)))
@@ -173,6 +181,7 @@ class PololuTiccmdWrapper:
         """Set the max current of the stepper driver.
 
         Args:
+        ----
             current (number): The maximum current of the stepper in milliamps
         """
         self._ticcmd('--current', str(int(current)))

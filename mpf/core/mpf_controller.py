@@ -20,6 +20,7 @@ class MpfController(LogMixin, metaclass=abc.ABCMeta):
         """Initialise controller.
 
         Args:
+        ----
             machine(mpf.core.machine.MachineController): the machine controller
         """
         super().__init__()

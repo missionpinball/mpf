@@ -36,6 +36,7 @@ class ModeController(MpfController):
         """Initialise mode controller.
 
         Args:
+        ----
             machine: The main MachineController instance.
 
         """
@@ -245,6 +246,7 @@ class ModeController(MpfController):
         """Load a mode, reads in its config, and creates the Mode object.
 
         Args:
+        ----
             mode_string: String name of the mode you're loading. This is the name of
                 the mode's folder in your game's machine_files/modes folder.
         """
@@ -407,6 +409,7 @@ class ModeController(MpfController):
         registered.
 
         Args:
+        ----
             load_method: The method that will be called when this mode code
                 loads.
             config_section_name: An optional string for the section of the
@@ -438,6 +441,7 @@ class ModeController(MpfController):
         the Mode Controller for anything that they a mode to do when it starts.
 
         Args:
+        ----
             start_method: The method that will be called when this mode code
                 loads.
             config_section_name: An optional string for the section of the
@@ -507,6 +511,7 @@ class ModeController(MpfController):
         """Return true if the mode is active, False if it is not.
 
         Args:
+        ----
             mode_name: String name of the mode to check.
         """
         return mode_name in [x.name for x in self.active_modes

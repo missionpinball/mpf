@@ -28,6 +28,7 @@ class MpfCommandLineParser:
         """Find the full machine path based on the current directory and option hint.
 
         Args:
+        ----
             machine_path_hint: Helps MPF locate the machine path. If None,
                 the 'config' folder in the current working directory is used.
 
@@ -167,6 +168,7 @@ def run_from_command_line(args=None):
     """Run a CLI command.
 
     Args:
+    ----
         args: Command line arguments that were passed.
 
     """

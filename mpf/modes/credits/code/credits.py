@@ -437,6 +437,7 @@ class Credits(Mode):
         """Add a single credit to the machine.
 
         Args:
+        ----
             price_tiering: Boolean which controls whether this credit will be
                 eligible for the pricing tier bonuses. Default is True.
 

@@ -72,6 +72,7 @@ class SwitchController(MpfController):
         """Add a switch object to the switch controller for tracking.
 
         Args:
+        ----
             switch: Switch object to add
         """
         self.registered_switches[switch] = [list(), list()]
@@ -153,6 +154,7 @@ class SwitchController(MpfController):
         whether it has been in that state for the specified number of ms.
 
         Args:
+        ----
             switch: Switch object to check.
             state: Bool of the state to check. True is active and False is
                 inactive.
@@ -179,6 +181,7 @@ class SwitchController(MpfController):
         """Query whether a switch is active.
 
         Args:
+        ----
             switch: Switch object to check.
             ms: Milliseconds that the switch has been active. If this
                 is non-zero, then this method will only return True if the
@@ -203,6 +206,7 @@ class SwitchController(MpfController):
         """Query whether a switch is inactive.
 
         Args:
+        ----
             switch: Switch object to check.
             ms: Milliseconds that the switch has been inactive. If this
                 is non-zero, then this method will only return True if the
@@ -228,6 +232,7 @@ class SwitchController(MpfController):
         """Process a switch state change by switch number.
 
         Args:
+        ----
             num: The switch number (based on the platform number) for the
                 switch you're setting.
             state: The state to set, either 0 or 1.
@@ -268,6 +273,7 @@ class SwitchController(MpfController):
         'inactive'.)
 
         Args:
+        ----
             name: The string name of the switch.
             state: Boolean or int of state of the switch you're processing,
                 True/1 is active, False/0 is inactive.
@@ -300,6 +306,7 @@ class SwitchController(MpfController):
         """Process a new switch state change for a switch by name.
 
         Args:
+        ----
             obj: The switch object.
             state: Boolean or int of state of the switch you're processing,
                 True/1 is active, False/0 is inactive.
@@ -375,6 +382,7 @@ class SwitchController(MpfController):
         """Wait for a switch to change into a state.
 
         Args:
+        ----
             switch: String to wait for.
             state: The state to wait for. 0 = inactive, 1 = active, 2 = opposite to current.
             only_on_change: Bool which controls whether this wait will be
@@ -390,6 +398,7 @@ class SwitchController(MpfController):
         """Wait for the first switch in the list to change into state.
 
         Args:
+        ----
             switches: Iterable of switches. Whichever switch changes first will trigger this wait.
             state: The state to wait for. 0 = inactive, 1 = active, 2 = opposite to current.
             only_on_change: Bool which controls whether this wait will be
@@ -507,6 +516,7 @@ class SwitchController(MpfController):
         """Register a handler to take action on a switch event.
 
         Args:
+        ----
             switch_name: String name of the switch you're adding this handler
                 for.
             callback: The method you want called when this switch handler fires.

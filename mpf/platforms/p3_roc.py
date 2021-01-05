@@ -95,6 +95,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
     """Platform class for the P3-ROC hardware controller.
 
     Args:
+    ----
         machine: The MachineController instance.
     """
 
@@ -306,6 +307,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         also used for matrix-based lights.
 
         Args:
+        ----
             config: Dictionary of settings for the driver.
             number: Number of this driver.
             platform_settings: Platform specific settings
@@ -354,6 +356,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         """Configure a P3-ROC switch.
 
         Args:
+        ----
             number: Number of this switch
             config: Dictionary of settings for the switch.
             platform_config: Platform specific settings.

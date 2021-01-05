@@ -15,7 +15,6 @@ pep257:
    disable:
     - D211  # in conflict with D203
     - D213  # in conflict with D212
-    - D407  # Missing dashed underline after section - need to fix a lot of docstrings first
     - D413  # Missing blank line after last section - need to fix a lot of docstrings first
 
 pylint:

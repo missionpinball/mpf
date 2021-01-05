@@ -1,3 +1,4 @@
+# pylint: disable-msg=too-many-lines
 """Contains AssetManager, AssetLoader, and Asset base classes."""
 import copy
 import os
@@ -39,6 +40,7 @@ class BaseAssetManager(MpfController, LogMixin):
         """Initialise asset manager.
 
         Args:
+        ----
             machine: The machine controller
         """
         super().__init__(machine)
@@ -121,6 +123,7 @@ class BaseAssetManager(MpfController, LogMixin):
         """Register a a type of assets to be controlled by the AssetManager.
 
         Args:
+        ----
             asset_class: Reference to the class you want to register, based on
                 mc.core.assets.Asset. e.g. mc.assets.images.ImageClass
             attribute: String of the name of the attribute dict that will be
@@ -232,6 +235,7 @@ class BaseAssetManager(MpfController, LogMixin):
         Then it creates the asset objects based on the built-up config.
 
         Args:
+        ----
             config: A config dictionary.
             mode: Optional reference to the mode object which is used when
                   assets are being created from mode folders.
@@ -334,6 +338,7 @@ class BaseAssetManager(MpfController, LogMixin):
         Automatically creates or updates entries in the config dict for any asset files it finds.
 
         Args:
+        ----
             asset_class: An asset class entry from the self._asset_classes
             dict.
             config: A dictionary which contains a list of asset names with
@@ -488,6 +493,7 @@ class BaseAssetManager(MpfController, LogMixin):
         """Load all the assets with a given load key.
 
         Args:
+        ----
             key_name: String of the load: key name.
             priority: Priority of this asset.
         """
@@ -509,6 +515,7 @@ class BaseAssetManager(MpfController, LogMixin):
         """Unload multiple assets.
 
         Args:
+        ----
             assets: An iterable of asset objects. You can safely mix
                     different classes of assets.
         """

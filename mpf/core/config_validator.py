@@ -158,6 +158,7 @@ class ConfigValidator:
         """Validate a config dict against spec.
 
         Args:
+        ----
             config_spec (str): Path of the config specification
             source: Dict to validate against config spec
             section_name: Name of the section for debugging and error messages

@@ -35,6 +35,7 @@ class PololuTICHardwarePlatform(StepperPlatform):
         """Configure a smart stepper device in platform.
 
         Args:
+        ----
             number: Number of this stepper.
             config (dict): Configuration of device
         """
@@ -143,6 +144,7 @@ class PololuTICStepper(StepperPlatformInterface):
         """Set the current position of the stepper.
 
         Args:
+        ----
             position (number): The position to set
         """
         self.log.debug("Setting Position To %s", position)

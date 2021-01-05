@@ -371,6 +371,7 @@ class VirtualDmd(DmdPlatformInterface):
         """Update data on the DMD.
 
         Args:
+        ----
             data: bytes to send to DMD
         """
         self.data = data
