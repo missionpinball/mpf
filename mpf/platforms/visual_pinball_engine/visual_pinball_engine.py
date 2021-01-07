@@ -1,7 +1,10 @@
 """VPE platform."""
 from typing import Optional, List
 
-from grpc.experimental import aio
+try:
+    from grpc.experimental import aio   # pylint: disable-msg=import-error
+except ImportError:
+    aio = None
 
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
@@ -15,7 +18,7 @@ from mpf.platforms.visual_pinball_engine import platform_pb2
 
 try:
     from mpf.platforms.visual_pinball_engine.service import MpfHardwareService
-except SyntaxError:
+except (SyntaxError, ImportError):
     # pylint: disable-msg=invalid-name
     MpfHardwareService = None
 
@@ -181,6 +184,9 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
         self._switch_poll_task = None
         self.platform_rpc = None        # type: Optional[MpfHardwareService]
         self.platform_server = None
+
+        if not aio:
+            raise AssertionError("Please install mpf with the VPE feature.")
 
         if not MpfHardwareService:
             raise AssertionError("Error loading MpfHardwareService. Is your python version older than 3.6?")

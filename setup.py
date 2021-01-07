@@ -45,7 +45,8 @@ vpe_requires = [
 ]
 
 
-all_requires = pin2dmd_requires + cli_requires + linux_i2c_requires + rpi_requires + osc_requires + irc_requires + vpe_requires
+all_requires = (pin2dmd_requires + cli_requires + linux_i2c_requires + rpi_requires + osc_requires + irc_requires +
+                vpe_requires)
 
 setup(
 
