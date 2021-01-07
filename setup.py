@@ -38,14 +38,7 @@ irc_requires = [
     'irc==19.0.1'
 ]
 
-vpe_requires = [
-    'grpcio_tools==1.34.0',
-    'grpcio==1.34.0',
-    'protobuf==3.14.0',
-]
-
-
-all_requires = pin2dmd_requires + cli_requires + linux_i2c_requires + rpi_requires + osc_requires + irc_requires + vpe_requires
+all_requires = pin2dmd_requires + cli_requires + linux_i2c_requires + rpi_requires + osc_requires + irc_requires
 
 setup(
 
@@ -109,6 +102,9 @@ community.''',
                       'pyserial-asyncio==0.5;platform_system!="Windows"',
                       'sortedcontainers==2.3.0',
                       'psutil==5.7.3',
+                      'grpcio_tools==1.34.0',
+                      'grpcio==1.34.0',
+                      'protobuf==3.14.0',
                       ],
 
     extra_requires={
@@ -119,7 +115,6 @@ community.''',
         'cli': cli_requires,
         'osc': osc_requires,
         'irc': irc_requires,
-        'vpe': vpe_requires,
     },
 
     tests_require=[],
