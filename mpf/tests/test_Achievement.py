@@ -769,7 +769,7 @@ class TestAchievement(MpfFakeGameTestCase):
 
     def test_auto_select_with_allow_selection_change_while_disabled(self):
         self.start_game()
-        self.start_mode("auto_select_with_allow_selection_change_while_disabled")
+        self.start_mode("auto_select")
         self._assert_selected(0)
 
         self.post_event("enable_group")
