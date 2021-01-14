@@ -628,23 +628,24 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             try:
                 number = self._parse_switch_number(number)
             except ValueError:
-                raise AssertionError("Could not parse switch number {}. Seems "
+                raise AssertionError("Could not parse switch number {}/{}. Seems "
                                      "to be not a valid switch number for the"
-                                     "FAST platform.".format(number))
+                                     "FAST platform.".format(config.name, number))
 
         # convert the switch number into a tuple which is:
         # (switch number, connection)
         number_tuple = (number, platform_config['connection'])
 
-        self.debug_log("FAST Switch hardware tuple: %s", number)
+        self.debug_log("FAST Switch hardware tuple: %s (%s)", number, config.name)
 
         switch = FASTSwitch(config=config, number_tuple=number_tuple,
                             platform=self, platform_settings=platform_config)
 
         return switch
 
-    def configure_light(self, number, subtype, platform_settings) -> LightPlatformInterface:
+    def configure_light(self, number, subtype, config, platform_settings) -> LightPlatformInterface:
         """Configure light in platform."""
+        del config
         if not self.net_connection:
             raise AssertionError('A request was made to configure a FAST Light, '
                                  'but no connection to a NET processor is '

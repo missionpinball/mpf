@@ -5,7 +5,7 @@ from mpf.core.delays import DelayManager
 from mpf.core.events import event_handler
 
 from mpf.core.machine import MachineController
-from mpf.core.platform import DriverConfig
+from mpf.core.platform import DriverConfig, LightConfig, LightConfigColors
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
 
@@ -53,8 +53,14 @@ class DigitalOutput(SystemWideDevice):
         if not self.platform.features['allow_empty_numbers'] and self.config['number'] is None:
             self.raise_config_error("Digital Output must have a number.", 1)
 
+        config = LightConfig(
+            name=self.name,
+            color=LightConfigColors.NONE
+        )
+
         try:
-            self.hw_driver = self.platform.configure_light(self.config['number'], self.config['light_subtype'], {})
+            self.hw_driver = self.platform.configure_light(self.config['number'], self.config['light_subtype'],
+                                                           config, {})
         except AssertionError as e:
             raise AssertionError("Failed to configure light {} in platform. See error above".format(self.name)) from e
 
@@ -87,6 +93,7 @@ class DigitalOutput(SystemWideDevice):
         self.type = "driver"
 
         config = DriverConfig(
+            name=self.name,
             default_pulse_ms=255,
             default_pulse_power=1.0,
             default_hold_power=1.0,

@@ -20,10 +20,8 @@ class VpeSimulation:
         self.change_queue = asyncio.Queue()
 
     async def connect(self, service):
-        configuration = platform_pb2.MachineConfiguration(
-            known_switches_with_initial_state=self.switches,
-            known_lights=["light-0", "light-1"],
-            known_coils=["0", "1", "2"])
+        configuration = platform_pb2.MachineState(
+            initial_switch_states=self.switches)
         command_stream = service.Start(configuration, None)
         asyncio.ensure_future(self.read_commands(command_stream))
 

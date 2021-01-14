@@ -7,7 +7,7 @@ from typing import Set, Dict, List, Tuple, Any
 
 from mpf.core.delays import DelayManager
 
-from mpf.core.platform import LightsPlatform
+from mpf.core.platform import LightsPlatform, LightConfig, LightConfigColors
 
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.machine import MachineController
@@ -224,7 +224,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
             channel = {'subtype': self.config['subtype'], 'platform': self.config['platform'],
                        'platform_settings': self.config['platform_settings'], 'number': next_channel}
             channel = self.machine.config_validator.validate_config("light_channels", channel)
-            driver = self._load_hw_driver(channel)
+            driver = self._load_hw_driver(channel, full_color_name)
             next_channel = driver.get_successor_number()
             self.hw_drivers[full_color_name].append(driver)
 
@@ -264,10 +264,10 @@ class Light(SystemWideDevice, DevicePositionMixin):
             self.hw_drivers[color] = []
             for channel in channel_list:
                 channel = self.machine.config_validator.validate_config("light_channels", channel)
-                driver = self._load_hw_driver(channel)
+                driver = self._load_hw_driver(channel, color)
                 self.hw_drivers[color].append(driver)
 
-    def _load_hw_driver(self, channel):
+    def _load_hw_driver(self, channel, color):
         """Load one channel."""
         platform = self.machine.get_platform_sections('lights', channel['platform'])
         self.platforms.add(platform)
@@ -275,8 +275,13 @@ class Light(SystemWideDevice, DevicePositionMixin):
         if not platform.features['allow_empty_numbers'] and channel['number'] is None:
             self.raise_config_error("Light must have a number.", 1)
 
+        config = LightConfig(
+            name=self.name,
+            color=LightConfigColors[color.upper()]
+        )
+
         try:
-            return platform.configure_light(channel['number'], channel['subtype'], channel['platform_settings'])
+            return platform.configure_light(channel['number'], channel['subtype'], config, channel['platform_settings'])
         except AssertionError as e:
             raise AssertionError("Failed to configure light {} in platform. See error above".
                                  format(self.name)) from e

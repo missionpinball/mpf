@@ -666,9 +666,9 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                           ])
         self.send_byte(LisyDefines.ConfigureHardwareRuleForSolenoid, data)
 
-    def configure_light(self, number: str, subtype: str, platform_settings: dict) -> LightPlatformInterface:
+    def configure_light(self, number: str, subtype: str, config, platform_settings: dict) -> LightPlatformInterface:
         """Configure light on LISY."""
-        del platform_settings
+        del platform_settings, config
         assert self._number_of_lamps is not None
         assert self._number_of_modern_lights is not None
 

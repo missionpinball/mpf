@@ -79,6 +79,7 @@ class Driver(SystemWideDevice):
         self.platform = self.machine.get_platform_sections('coils', self.config['platform'])
 
         config = DriverConfig(
+            name=self.name,
             default_pulse_ms=self.get_and_verify_pulse_ms(None),
             default_pulse_power=self.get_and_verify_pulse_power(None),
             default_hold_power=self.get_and_verify_hold_power(None),

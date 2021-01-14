@@ -727,7 +727,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
         raise AssertionError("Unknown subtype {}".format(subtype))
 
-    def configure_light(self, number, subtype, platform_settings) -> LightPlatformInterface:
+    def configure_light(self, number, subtype, config, platform_settings) -> LightPlatformInterface:
         """Configure a light channel."""
         if not subtype:
             subtype = self._get_default_subtype()
@@ -735,8 +735,8 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
             if self.machine_type == self.pinproc.MachineTypePDB:
                 proc_num = self.pdbconfig.get_proc_light_number(str(number))
                 if proc_num == -1:
-                    raise AssertionError("Matrixlight {} cannot be controlled by the P-ROC. ".format(
-                        str(number)))
+                    raise AssertionError("Matrixlight {}/{} cannot be controlled by the P-ROC. ".format(
+                        config.name, str(number)))
 
             else:
                 proc_num = self.pinproc.decode(self.machine_type, str(number))
@@ -760,8 +760,8 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         Returns a reference to the switch object that was just created.
         """
         if proc_num == -1:
-            raise AssertionError("Switch {} cannot be controlled by the "
-                                 "P-ROC/P3-ROC.".format(proc_num))
+            raise AssertionError("Switch {}/{} cannot be controlled by the "
+                                 "P-ROC/P3-ROC.".format(config.name, proc_num))
 
         switch = PROCSwitch(config, proc_num, config.debounce == "quick", self)
         # The P3-ROC needs to be configured to notify the host computers of

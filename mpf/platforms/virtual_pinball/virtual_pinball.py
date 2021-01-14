@@ -347,8 +347,9 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             hw_switches[switch.number] = switch.state ^ switch.config.invert
         return hw_switches
 
-    def configure_light(self, number: str, subtype: str, platform_settings: dict) -> "LightPlatformInterface":
+    def configure_light(self, number: str, subtype: str, config, platform_settings: dict) -> "LightPlatformInterface":
         """Configure a VPX light."""
+        del config
         if subtype and subtype not in ("gi", "matrix", "led", "flasher"):
             raise AssertionError("Unknown subtype: {}".format(subtype))
         if not subtype:

@@ -2,6 +2,7 @@
 import abc
 import asyncio
 from collections import namedtuple
+from enum import Enum
 
 from typing import Optional, Dict, List
 
@@ -356,6 +357,20 @@ class StepperPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
+class LightConfigColors(Enum):
+
+    """Light color for LightConfig."""
+
+    RED = 1
+    GREEN = 2
+    BLUE = 3
+    WHITE = 4
+    NONE = 5
+
+
+LightConfig = namedtuple("LightConfig", ["name", "color"])
+
+
 class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for platforms with any kind of lights in MPF.
@@ -382,7 +397,8 @@ class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def configure_light(self, number: str, subtype: str, platform_settings: dict) -> "LightPlatformInterface":
+    def configure_light(self, number: str, subtype: str, config: LightConfig,
+                        platform_settings: dict) -> "LightPlatformInterface":
         """Subclass this method in a platform module to configure a light.
 
         This method should return a reference to the light
@@ -391,7 +407,7 @@ class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
-SwitchConfig = namedtuple("SwitchConfig", ["invert", "debounce"])
+SwitchConfig = namedtuple("SwitchConfig", ["name", "invert", "debounce"])
 
 
 class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
@@ -464,7 +480,7 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
 SwitchSettings = namedtuple("SwitchSettings", ["hw_switch", "invert", "debounce"])
 DriverSettings = namedtuple("DriverSettings", ["hw_driver", "pulse_settings", "hold_settings", "recycle"])
-DriverConfig = namedtuple("DriverConfig", ["default_pulse_ms", "default_pulse_power", "default_hold_power",
+DriverConfig = namedtuple("DriverConfig", ["name", "default_pulse_ms", "default_pulse_power", "default_hold_power",
                                            "default_recycle", "max_pulse_ms", "max_pulse_power", "max_hold_power"])
 RepulseSettings = namedtuple("RepulseSettings", ["enable_repulse"])
 

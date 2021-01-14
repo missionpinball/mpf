@@ -838,8 +838,9 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self.raise_config_error("Unknown subtype {}".format(subtype), 8)
         return []
 
-    def configure_light(self, number, subtype, platform_settings):
+    def configure_light(self, number, subtype, config, platform_settings):
         """Configure a led or matrix light."""
+        del config
         if not self.opp_connection:
             self.raise_config_error("A request was made to configure an OPP light, "
                                     "but no OPP connection is available", 9)

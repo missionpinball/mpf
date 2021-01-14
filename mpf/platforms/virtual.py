@@ -150,8 +150,9 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
     def configure_accelerometer(self, number, config, callback):
         """Configure accelerometer."""
 
-    def configure_light(self, number, subtype, platform_settings):
+    def configure_light(self, number, subtype, config, platform_settings):
         """Configure light channel."""
+        del config
         if not subtype:
             subtype = "led"
         return VirtualLight("{}-{}".format(subtype, number), platform_settings, self.machine)

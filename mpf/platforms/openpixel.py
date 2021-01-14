@@ -81,8 +81,9 @@ class OpenpixelHardwarePlatform(LightsPlatform):
             }
         ]
 
-    def configure_light(self, number, subtype, platform_settings) -> LightPlatformInterface:
+    def configure_light(self, number, subtype, config, platform_settings) -> LightPlatformInterface:
         """Configure an LED."""
+        del config
         return OpenPixelLED(number, self.opc_client, self.debug)
 
     async def _setup_opc_client(self):
