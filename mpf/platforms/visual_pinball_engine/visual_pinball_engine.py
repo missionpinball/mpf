@@ -186,6 +186,7 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
     async def start(self):
         """Start listening for switch changes."""
         await super().start()
+        self.platform_rpc.set_ready()
         self._switch_poll_task = self.machine.clock.loop.create_task(self._switch_poll())
         self._switch_poll_task.add_done_callback(Util.raise_exceptions)
 
