@@ -264,7 +264,7 @@ class ConfigValidator:
             new_list = list()
 
             for i in item_list:
-                if not i:
+                if i in ("", " "):
                     self.validation_error(item, validation_failure_info, "List contains an empty element.", 15)
                 new_list.append(self.validate_item(i, validation, validation_failure_info))
 
