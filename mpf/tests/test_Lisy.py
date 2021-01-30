@@ -830,7 +830,13 @@ class TestLisyV10(MpfTestCase):
         self.serialMock.expected_commands = {
             b'\x0d\x00\x00\x00\x00\x03\x11\x22\x33': None,      # fade with 0ms fade time
         }
-        self.machine.lights["test_light0"].color([0x11, 0x22, 0x33])
+        self.machine.lights["test_light0"].color([0x11, 0x22, 0x33], key="test")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # set color again (should do nothing)
+        self.machine.lights["test_light0"].remove_from_stack_by_key("test")
+        self.machine.lights["test_light0"].color([0x11, 0x22, 0x33], fade_ms=100)
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
