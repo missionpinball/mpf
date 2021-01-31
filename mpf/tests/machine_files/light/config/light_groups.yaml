@@ -16,6 +16,16 @@ light_stripes:
     start_y: 20
     distance: 5
     debug: True
+  stripe3:
+    start_channel: ABC-123
+    count: 5
+    direction: 90
+    start_x: 10
+    start_y: 20
+    distance: 5
+    debug: True
+    light_template:
+      type: rgbw
 
 light_rings:
   ring1:
