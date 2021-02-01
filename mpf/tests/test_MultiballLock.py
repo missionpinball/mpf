@@ -410,6 +410,7 @@ class TestMultiballLockCountingStrategies(MpfGameTestCase):
         # start mode
         self.post_event("start_physical_only")
 
+        self.mock_event("multiball_lock_lock_physical_only_smaller_than_device_locked_ball")
         self.mock_event("multiball_lock_lock_physical_only_smaller_than_device_full")
         lock2 = self.machine.multiball_locks["lock_physical_only_smaller_than_device"]
         self.machine.default_platform.add_ball_to_device(self.machine.ball_devices["bd_lock_triple"])
@@ -419,6 +420,7 @@ class TestMultiballLockCountingStrategies(MpfGameTestCase):
         self.assertEqual(1, self.machine.playfield.balls)
         self.assertEqual(1, lock2.locked_balls)
         self.assertEventNotCalled("multiball_lock_lock_physical_only_smaller_than_device_full")
+        self.assertEventCalled("multiball_lock_lock_physical_only_smaller_than_device_locked_ball", times=1)
 
         self.machine.default_platform.add_ball_to_device(self.machine.ball_devices["bd_lock_triple"])
         self.advance_time_and_run(10)
@@ -426,6 +428,17 @@ class TestMultiballLockCountingStrategies(MpfGameTestCase):
         self.assertEqual(1, self.machine.playfield.balls)
         self.assertEqual(2, lock2.locked_balls)
         self.assertEventCalled("multiball_lock_lock_physical_only_smaller_than_device_full")
+        self.assertEventCalled("multiball_lock_lock_physical_only_smaller_than_device_locked_ball", times=2)
+
+        self.mock_event("multiball_lock_lock_physical_only_smaller_than_device_full")
+        self.mock_event("multiball_lock_lock_physical_only_smaller_than_device_locked_ball")
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices["bd_lock_triple"])
+        self.advance_time_and_run(10)
+        self.assertEqual(2, self.machine.ball_devices["bd_lock_triple"].balls)
+        self.assertEqual(1, self.machine.playfield.balls)
+        self.assertEqual(2, lock2.locked_balls)
+        self.assertEventNotCalled("multiball_lock_lock_physical_only_smaller_than_device_full")
+        self.assertEventNotCalled("multiball_lock_lock_physical_only_smaller_than_device_locked_ball")
 
         lock = self.machine.multiball_locks["lock_physical_only"]
 
