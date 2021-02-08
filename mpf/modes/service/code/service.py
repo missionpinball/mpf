@@ -48,7 +48,7 @@ software_update_script: single|str|None
             self.machine.events.wait_for_any_event(self.config['mode_settings']['enter_events']): "ENTER",
             self.machine.events.wait_for_any_event(self.config['mode_settings']['up_events']): "UP",
             self.machine.events.wait_for_any_event(self.config['mode_settings']['down_events']): "DOWN",
-        })
+        }, self.machine.clock.loop)
 
     async def _run(self):
         while True:
@@ -143,13 +143,13 @@ software_update_script: single|str|None
         await self._make_menu(self._load_diagnostic_light_menu_entries())
 
     # Audits
-    @staticmethod
-    def _load_audit_menu_entries() -> List[ServiceMenuEntry]:
+    # @staticmethod
+    def _load_audit_menu_entries(self) -> List[ServiceMenuEntry]: # () -> List[ServiceMenuEntry]:
         """Return the audit menu items with label and callback."""
         return [
             # ServiceMenuEntry("Earning Audits", None),
-            # ServiceMenuEntry("Standard Audits", None),
-            # ServiceMenuEntry("Feature Audits", None),
+            ServiceMenuEntry("Standard Audits", self._audit_standard_menu), # None),
+            ServiceMenuEntry("Feature Audits", self._audit_feature_menu), # None),
         ]
 
     async def _audits_menu(self):
@@ -472,3 +472,30 @@ software_update_script: single|str|None
                     value_position = len(values) - 1
                 self.machine.settings.set_setting_value(items[position].name, values[value_position])
                 self._update_settings_slide(items, position, is_change=True)
+
+    # ENTER hit when on Standard Audit sub menu, post events for user to show slides
+    async def _audit_standard_menu(self):
+        self.machine.events.post("service_audit_standard_start")
+
+        while True:
+            key = await self._get_key()
+            if key == 'ESC':
+                break
+            if key == 'ENTER':
+                pass
+
+        self.machine.events.post("service_audit_standard_stop")
+
+    # ENTER hit when on Features Audit sub menu, post events for user to show slides
+    async def _audit_feature_menu(self):
+        self.machine.events.post("service_audit_feature_start")
+
+        while True:
+            key = await self._get_key()
+            if key == 'ESC':
+                break
+            if key == 'ENTER':
+                pass
+
+        self.machine.events.post("service_audit_feature_stop")
+        
