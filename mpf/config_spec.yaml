@@ -76,6 +76,7 @@ assets:
         descriptor: ignore
     images: # no image-specific config items
         __allow_others__:
+        persist_frame: single|bool|false
     shows:  # no show-specific config items
         __allow_others__:
     sounds:
