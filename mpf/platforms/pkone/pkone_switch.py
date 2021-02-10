@@ -1,6 +1,8 @@
 """A switch input on a PKONE Extension board."""
 import logging
 
+from typing import Tuple
+
 from mpf.core.platform import SwitchConfig
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
@@ -11,19 +13,16 @@ if MYPY:   # pragma: no cover
 
 
 class PKONESwitch(SwitchPlatformInterface):
-
     """An PKONE input on a PKONE Extension board."""
 
-    __slots__ = ["log", "connection", "platform", "platform_settings"]
+    __slots__ = ["log", "platform"]
 
-    def __init__(self, config: SwitchConfig, number_tuple, platform: "PKONEHardwarePlatform", platform_settings) -> None:
+    def __init__(self, config: SwitchConfig, number_tuple: Tuple[int, int], platform: "PKONEHardwarePlatform") -> None:
         """Initialise switch."""
         super().__init__(config, number_tuple)
-        self.log = logging.getLogger('FASTSwitch')
-        self.connection = number_tuple[1]
+        self.log = logging.getLogger('PKONESwitch')
         self.platform = platform
-        self.platform_settings = platform_settings
 
     def get_board_name(self):
-        """Return OPP chain and addr."""
-        return "OPP {} Board {}".format(str(self.card.chain_serial), "0x%02x" % self.card.addr)
+        """Return PKONE Extension addr."""
+        return "PKONE Extension Board {}".format(self.number[0])

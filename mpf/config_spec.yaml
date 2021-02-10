@@ -326,6 +326,8 @@ fast_coils:
     connection: single|enum(network,local,auto)|auto
     recycle_ms: single|ms|None
     hold_pwm_patter: single|str|None
+pkone_coils:
+    recycle_ms: single|ms|None
 coil_player:
     __valid_in__: machine, mode, show
     __type__: config_player
@@ -1059,13 +1061,8 @@ pin2dmd:
 pkone:
     __valid_in__: machine
     __type__: config
-    ports: list|str|
-    baud: single|int|921600
-    watchdog: single|ms|1000
-    default_quick_debounce_open: single|ms|
-    default_quick_debounce_close: single|ms|
-    default_normal_debounce_open: single|ms|
-    default_normal_debounce_close: single|ms|
+    port: single|str|
+    baud: single|int|115200
     debug: single|bool|false
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
