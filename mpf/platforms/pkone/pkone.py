@@ -4,15 +4,18 @@
 Contains the hardware interface and drivers for the Penny K Pinball PKONE
 platform hardware.
 """
-import serial.tools.list_ports
-from typing import Tuple
+import asyncio
+from copy import deepcopy
+from typing import Tuple, Optional
 
 from mpf.platforms.pkone.pkone_serial_communicator import PKONESerialCommunicator
 from mpf.platforms.pkone.pkone_extension import PKONEExtensionBoard
-from mpf.platforms.pkone.pkone_switch import PKONESwitch
+from mpf.platforms.pkone.pkone_switch import PKONESwitch, PKONESwitchNumber
+from mpf.platforms.pkone.pkone_coil import PKONECoil, PKONECoilNumber
+from mpf.platforms.pkone.pkone_servo import PKONEServo, PKONEServoNumber
 
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
-    DriverConfig, SwitchConfig
+    DriverConfig, SwitchConfig, RepulseSettings
 from mpf.core.utility_functions import Util
 
 
@@ -130,38 +133,81 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
 
         self.pkone_extensions[board.address_id] = board
 
-    def _parse_driver_number(self, number):
+    def _parse_coil_number(self, number: str) -> PKONECoilNumber:
         try:
-            board_str, driver_str = number.split("-")
+            board_id_str, coil_num_str = number.split("-")
         except ValueError:
-            total_drivers = 0
-            for board_obj in self.pkone_extensions.values():
-                total_drivers += board_obj.driver_count
-            index = self.convert_number_from_config(number)
+            raise AssertionError("Invalid coil number {}".format(number))
 
-            if int(index, 16) >= total_drivers:
-                raise AssertionError("Driver {} does not exist. Only {} drivers found. Driver number: {}".format(
-                    int(index, 16), total_drivers, number))
+        board_id = int(board_id_str)
+        coil_num = int(coil_num_str)
 
-            return index
+        if board_id not in self.pkone_extensions:
+            raise AssertionError("PKONE Extension {} does not exist for coil {}".format(board_id, number))
 
-        board = int(board_str)
-        driver = int(driver_str)
+        coil_count = self.pkone_extensions[board_id].coil_count
+        if coil_count <= coil_num:
+            raise AssertionError("PKONE Extension {} only has {} coils ({} - {}). Servo: {}".format(
+                board_id, coil_count, 1, coil_count, number))
 
-        if board not in self.pkone_extensions:
-            raise AssertionError("Board {} does not exist for driver {}".format(board, number))
+        return PKONECoilNumber(board_id, coil_num)
 
-        if self.pkone_extensions[board].driver_count <= driver:
-            raise AssertionError("Board {} only has {} drivers. Driver: {}".format(
-                board, self.pkone_extensions[board].driver_count, number))
+    def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict) -> PKONECoil:
+        """Configure a coil/driver.
 
-        index = 0
-        for board_number, board_obj in self.pkone_extensions.items():
-            if board_number >= board:
-                continue
-            index += board_obj.driver_count
+        Args:
+        ----
+            config: Coil/driver config.
+            number: Number of this coil/driver.
+            platform_settings: Platform specific settings.
 
-        return Util.int_to_hex_string(index + driver)
+        Returns: Coil/driver object
+        """
+        # dont modify the config. make a copy
+        platform_settings = deepcopy(platform_settings)
+
+        if not self.controller_connection:
+            raise AssertionError('A request was made to configure a PKONE coil, but no '
+                                 'connection to a PKONE controller is available')
+
+        if not number:
+            raise AssertionError("Coil number is required")
+
+        coil_number = self._parse_coil_number(str(number))
+        return PKONECoil(config, self, coil_number, platform_settings)
+
+    def _parse_servo_number(self, number: str) -> PKONEServoNumber:
+        try:
+            board_id_str, servo_num_str = number.split("-")
+        except ValueError:
+            raise AssertionError("Invalid servo number {}".format(number))
+
+        board_id = int(board_id_str)
+        servo_num = int(servo_num_str)
+
+        if board_id not in self.pkone_extensions:
+            raise AssertionError("PKONE Extension {} does not exist for servo {}".format(board_id, number))
+
+        # Servos are numbered in sequence immediately after the highest coil number
+        driver_count = self.pkone_extensions[board_id].coil_count
+        servo_count = self.pkone_extensions[board_id].servo_count
+        if servo_count <= servo_num - driver_count:
+            raise AssertionError("PKONE Extension {} only has {} servos ({} - {}). Servo: {}".format(
+                board_id, servo_count, driver_count + 1, driver_count + servo_count, number))
+
+        return PKONEServoNumber(board_id, servo_num)
+
+    async def configure_servo(self, number: str) -> PKONEServo:
+        """Configure a servo.
+
+        Args:
+        ----
+            number: Number of servo
+
+        Returns: Servo object.
+        """
+        servo_number = self._parse_servo_number(str(number))
+        return PKONEServo(servo_number, self.controller_connection)
 
     @classmethod
     def get_coil_config_section(cls):
@@ -177,15 +223,15 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
         for extension_board in self.pkone_extensions.values():
             # if switch and coil are on the same board we are fine
             if switch_index <= switch_number < switch_index + extension_board.switch_count and \
-                    coil_index <= coil_number < coil_index + extension_board.driver_count:
+                    coil_index <= coil_number < coil_index + extension_board.coil_count:
                 return
-            coil_index += extension_board.driver_count
+            coil_index += extension_board.coil_count
             switch_index += extension_board.switch_count
 
         raise AssertionError("Driver {} and switch {} are on different boards. Cannot apply rule!".format(
             coil.hw_driver.number, switch.hw_switch.number))
 
-    def _parse_switch_number(self, number) -> Tuple[int, int]:
+    def _parse_switch_number(self, number: str) -> PKONESwitchNumber:
         try:
             board_id_str, switch_num_str = number.split("-")
         except ValueError:
@@ -198,10 +244,10 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
             raise AssertionError("PKONE Extension {} does not exist for switch {}".format(board_id, number))
 
         if self.pkone_extensions[board_id].switch_count <= switch_num:
-            raise AssertionError("PKONE Extensoin {} only has {} switches. Switch: {}".format(
+            raise AssertionError("PKONE Extension {} only has {} switches. Switch: {}".format(
                 board_id, self.pkone_extensions[board_id].switch_count, number))
 
-        return board_id, switch_num
+        return PKONESwitchNumber(board_id, switch_num)
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict) -> PKONESwitch:
         """Configure the switch object for a PKONE controller.
@@ -215,7 +261,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
         Returns: Switch object.
         """
         if not number:
-            raise AssertionError("Switch must have a number")
+            raise AssertionError("Switch requires a number")
 
         if not self.controller_connection:
             raise AssertionError("A request was made to configure a PKONE switch, but no "
@@ -228,11 +274,10 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
                                  "to be not a valid switch number for the"
                                  "PKONE platform.".format(config.name, number))
 
-        self.debug_log("PKONE Switch: %s (%s)", number_tuple, config.name)
+        self.debug_log("PKONE Switch: %s (%s)", number, config.name)
 
-        switch = PKONESwitch(config=config, number_tuple=number_tuple, platform=self)
-
-        return switch
+        switch_number = self._parse_switch_number(number)
+        return PKONESwitch(config, switch_number, self)
 
     def receive_all_switches(self, msg):
         """Process the all switch states message."""
@@ -242,7 +287,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
 
         extension_id = int(msg[3:4])
         switch_state_array = bytearray()
-        switch_state_array.extend(msg[5:])
+        switch_state_array.extend(msg[5:-1])
 
         for i in range(len(switch_state_array)):
             self.hw_switch_data[(extension_id, i)] = switch_state_array[i]
@@ -259,5 +304,10 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
                                                              num=switch_number_tuple,
                                                              platform=self)
 
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
+                                                                 eos_switch: SwitchSettings, coil: DriverSettings,
+                                                                 repulse_settings: Optional[RepulseSettings]):
+        """Set pulse on hit and enable and release and disable rule on driver."""
+        raise AssertionError("Single-wound coils with EOS are not implemented in PKONE hardware.")
 
 

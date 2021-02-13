@@ -98,8 +98,7 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
 
         await self.query_pkone_boards()
 
-        self.write_task = self.machine.clock.loop.create_task(self._socket_writer())
-        self.write_task.add_done_callback(Util.raise_exceptions)
+        self.platform.controller_connection = self
 
     async def query_pkone_boards(self):
         """Query the NANO processor to discover which additional boards are connected.
