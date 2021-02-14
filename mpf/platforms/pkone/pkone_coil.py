@@ -3,37 +3,36 @@ import logging
 from collections import namedtuple
 from typing import Dict, Tuple, Optional
 
-from mpf.core.platform import DriverConfig
+from mpf.core.platform import DriverConfig, SwitchSettings
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 MYPY = False
-if MYPY:   # pragma: no cover
-    from mpf.platforms.pkone.pkone import PKONEHardwarePlatform    # pylint: disable-msg=cyclic-import,unused-import
+if MYPY:  # pragma: no cover
+    from mpf.platforms.pkone.pkone import PKONEHardwarePlatform  # pylint: disable-msg=cyclic-import,unused-import
 
 PKONECoilNumber = namedtuple("PKONECoilNumber", ["board_address_id", "coil_number"])
+PKONECoilConfiguration = namedtuple("PKONECoilConfiguration", ["pulse_settings", "hold_settings", "recycle_time"])
 
 
 class PKONECoil(DriverPlatformInterface):
     """Base class for coils/drivers connected to a PKONE Controller/Extension."""
 
-    __slots__ = ["log", "autofire", "_autofire_cleared", "config_state", "machine", "platform", "coil_settings",
+    __slots__ = ["log", "hardware_rule", "_config_state", "machine", "platform",
                  "send", "platform_settings"]
 
     def __init__(self, config: DriverConfig, platform: "PKONEHardwarePlatform", number: PKONECoilNumber,
                  platform_settings: dict) -> None:
-        """Initialise Coil."""
+        """Initialize Coil."""
         super().__init__(config, number)
         self.log = logging.getLogger('PKONECoil')
-        self.autofire = None                        # type: Optional[Tuple[str, Dict[str, float]]]
-        self._autofire_cleared = False
-        self.config_state = None                    # type: Optional[Tuple[float, float, float]]
+        self.hardware_rule = False  # type: bool
+        self._config_state = None  # type: Optional[PKONECoilConfiguration]
         self.machine = platform.machine
         self.platform = platform
-        self.coil_settings = dict()               # type: Dict[str, str]
         self.send = platform.controller_connection.send
         self.platform_settings = platform_settings
 
-        self.log.debug("Coil Settings: %s", self.coil_settings)
+        self.log.debug("Initialize Coil Settings: %s", self.config)
         self.reset()
 
     def get_board_name(self):
@@ -42,110 +41,107 @@ class PKONECoil(DriverPlatformInterface):
             return "PKONE Unknown Board"
         return "PKONE Extension Board {}".format(self.number.board_address_id)
 
-    def get_recycle_ms_for_cmd(self, recycle, pulse_ms):
+    def get_recycle_time_ms_for_cmd(self, recycle, pulse_ms):
         """Return recycle ms."""
         if not recycle:
             return 0
         if self.platform_settings['recycle_ms'] is not None:
             return self.platform_settings['recycle_ms']
 
-        # default recycle_ms to pulse_ms * 2 (cap at 250ms)
-        return min(pulse_ms * 2, 250)
+        # default recycle_ms to pulse_ms * 2 (cap at 500ms)
+        return min(pulse_ms * 2, 500)
 
     def reset(self):
-        """Reset a coil."""
-        self.log.debug("Resetting coil %s", self.coil_settings)
+        """Reset a coil - removes all settings, including any hardware rules, for the coil."""
+        self.log.debug("Resetting coil %s", self.number)
 
-        # TODO: Determine command to reset a driver/coil
-        cmd = ""
+        # Ensure settings will be sent to the coil before it is activated again
+        self._config_state = None
 
+        if self.hardware_rule:
+            self.clear_hardware_rule()
+
+        # Configure coil with default/empty/0 settings (coil will not fire until it is configured with
+        # real settings values)
+        cmd = "PCC{}{:02d}0000000000E".format(self.number.board_address_id, self.number.coil_number)
         self.send(cmd)
 
-    def disable(self):
-        """Disable (turn off) this coil."""
+    def configure_coil(self, pulse_settings: PulseSettings, hold_settings: Optional[HoldSettings],
+                       recycle_time: int = 0) -> None:
+        """Configure a coil (will overwrite existing configuration settings)."""
+        new_config_state = PKONECoilConfiguration(pulse_settings, hold_settings, recycle_time)
 
-        # TODO: Determine command to disable coil/driver
-        cmd = ""
+        # if config would not change do nothing
+        if new_config_state == self._config_state:
+            return
 
-        self.log.debug("Sending Disable Command: %s", cmd)
+        # send the new coil configuration
+        self._config_state = new_config_state
+        cmd = "PCC{}{:02d}{:03d}{:02d}{:02d}{:03d}E".format(self.number.board_address_id,
+                                                            self.number.coil_number,
+                                                            pulse_settings.duration,
+                                                            # power must be mapped from 0-1 to 0-99
+                                                            int(pulse_settings.power * 99),
+                                                            int(hold_settings.power * 99) if hold_settings else 0,
+                                                            recycle_time)
+        self.log.debug("Sending Configure Coil command: %s", cmd)
         self.send(cmd)
 
-        self._reenable_autofire_if_configured()
-
-        # re-enable the autofire
-        if self.autofire:
-            # TODO: Determine command to re-enable hardware rule for a coil
-            cmd = ""
-
-            self.log.debug("Re-enabling auto fire mode: %s", cmd)
-            self.send(cmd)
-
-    def set_autofire(self, autofire_cmd, pulse_duration, pulse_power, hold_power):
-        """Set an autofire."""
-        self.autofire = autofire_cmd, (pulse_duration, pulse_power, hold_power)
-        self.config_state = pulse_duration, pulse_power, hold_power
-        self._autofire_cleared = False
-        self.log.debug("Writing hardware rule: %s", autofire_cmd)
-        self.send(autofire_cmd)
-
-    def clear_autofire(self, config_cmd, number):
-        """Clear autofire."""
-        # TODO: Determine command to clear a hardware rule for a coil
-        cmd = ""
-        self.log.debug("Clearing hardware rule: %s", cmd)
+    def disable(self) -> None:
+        """Disable/release (turn off) this coil."""
+        cmd = "PCR{}{:02d}E".format(self.number.board_address_id, self.number.coil_number)
+        self.log.debug("Sending Release/Disable Coil command: %s", cmd)
         self.send(cmd)
-        self.autofire = None
-        self.config_state = None
 
-    def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
+    def set_hardware_rule(self, mode: int, switch_settings: SwitchSettings,
+                          eos_switch_settings: Optional[SwitchSettings], delay_time: int,
+                          pulse_settings: PulseSettings, hold_settings: Optional[HoldSettings]) -> None:
+        """Set a hardware rule for an autofire coil."""
+        self.hardware_rule = True
+        cmd = "PHR{}{:02d}{}{:02d}{}{:02d}{}" \
+              "{:03d}{:03d}{:02d}{:02d){:03d}E".format(self.number.board_address_id,
+                                                       self.number.coil_number,
+                                                       mode,
+                                                       switch_settings.hw_switch.number.switch_number,
+                                                       1 if switch_settings.invert else 0,
+                                                       eos_switch_settings.hw_switch.number.switch_number,
+                                                       1 if eos_switch_settings and eos_switch_settings.invert else 0,
+                                                       delay_time,
+                                                       pulse_settings.duration,
+                                                       int(pulse_settings.power * 99),
+                                                       int(hold_settings.power * 99) if hold_settings else 0,
+                                                       self.get_recycle_time_ms_for_cmd(self.config.default_recycle,
+                                                                                        pulse_settings.duration))
+
+        self.log.debug("Writing Hardware Rule for coil: %s", cmd)
+        self.send(cmd)
+
+    def clear_hardware_rule(self) -> None:
+        """Clear hardware rule."""
+        cmd = "PHD{}{:02d}E".format(self.number.board_address_id, self.number.coil_number)
+        self.log.debug("Clearing Hardware Rule for coil: %s", cmd)
+        self.send(cmd)
+        self.hardware_rule = False
+
+    def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings) -> None:
         """Enable (turn on) this coil/driver."""
-        config_state = pulse_settings.duration, pulse_settings.power, hold_settings.power
-        if self.autofire and self.config_state == config_state:
-            # If this driver is also configured for an autofire rule, we just
-            # manually trigger it with the trigger_cmd and manual on ('03')
-            # TODO: Determine command to enable coil with a hardware rule
-            cmd = ""
-        else:
-            # Otherwise we send a full config command, trigger C1 (logic triggered
-            # and drive now) switch ID 00, mode 18 (latched)
-            self._autofire_cleared = True
-
-            # TODO: Determine command to enable this coil/driver with all options
-            cmd = ""
-            self.config_state = (pulse_settings.duration, pulse_settings.duration, hold_settings.power)
-
-        self.log.debug("Sending Enable Command: %s", cmd)
+        # reconfigure coil (if necessary)
+        self.configure_coil(pulse_settings, hold_settings,
+                            self.get_recycle_time_ms_for_cmd(self.config.default_recycle, pulse_settings.duration))
+        cmd = "PCH{}{:02d}E".format(self.number.board_address_id, self.number.coil_number)
+        self.log.debug("Sending Hold/Enable coil command: %s", cmd)
         self.send(cmd)
 
-    def pulse(self, pulse_settings: PulseSettings):
+    def pulse(self, pulse_settings: PulseSettings) -> None:
         """Pulse this coil/driver."""
-        # Determine existing configuration state
-        config_state = (pulse_settings.duration, pulse_settings.power, 0)
+        # reconfigure coil (if necessary) -- use existing hold settings (if they exist) as the
+        # hold settings do not matter for a pulse command (may keep the coil configuration from
+        # having to be rewritten)
+        hold_settings = self._config_state.hold_settings if self._config_state else None
+        self.configure_coil(pulse_settings, hold_settings,
+                            self.get_recycle_time_ms_for_cmd(self.config.default_recycle, pulse_settings.duration))
 
-        # Reconfigure configuration (if necessary)
-        if not self.config_state or self.config_state[0] != config_state[0] or self.config_state[1] != config_state[1]:
-            self.config_state = config_state
-            self._autofire_cleared = True
-
-            # TODO: Determine command to reconfigure coil/driver
-            cmd = ""
-            self.send(cmd)
-
-        # pulse/trigger driver
-        cmd = "PCP{}{}E".format(self.number.board_address_id, self.number.coil_number)
+        # pulse/trigger coil
+        cmd = "PCP{}{:02}E".format(self.number.board_address_id, self.number.coil_number)
+        self.log.debug("Sending Pulse coil command: %s", cmd)
         self.send(cmd)
-
-        # restore autofire
-        self._reenable_autofire_if_configured()
-
-        return pulse_settings.duration
-
-    def _reenable_autofire_if_configured(self):
-        """Reenable autofire if configured."""
-        if self.autofire and self._autofire_cleared:
-            self._autofire_cleared = False
-            cmd = self.autofire[0]
-            self.config_state = self.autofire[1]
-
-            self.log.debug("Re-enabling auto fire mode: %s", cmd)
-            self.send(cmd)

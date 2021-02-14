@@ -197,5 +197,6 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
         """
         if self.debug:
             self.log.debug("%s sending: %s", self, msg)
+
         self.writer.write(msg)
 

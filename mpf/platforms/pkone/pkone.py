@@ -6,7 +6,7 @@ platform hardware.
 """
 import asyncio
 from copy import deepcopy
-from typing import Tuple, Optional
+from typing import Optional, Dict
 
 from mpf.platforms.pkone.pkone_serial_communicator import PKONESerialCommunicator
 from mpf.platforms.pkone.pkone_extension import PKONEExtensionBoard
@@ -16,7 +16,6 @@ from mpf.platforms.pkone.pkone_servo import PKONEServo, PKONEServoNumber
 
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
     DriverConfig, SwitchConfig, RepulseSettings
-from mpf.core.utility_functions import Util
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -34,11 +33,29 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
     def __init__(self, machine) -> None:
         """Initialize PKONE platform."""
         super().__init__(machine)
+        self.controller_connection = None
         self.serial_connections = set()     # type: Set[PKONESerialCommunicator]
         self.pkone_extensions = {}          # type: Dict[int, PKONEExtensionBoard]
         self.pkone_lightshows = {}          # type: Dict[int, PKONELightshowBoard]
         self._watchdog_task = None
         self.hw_switch_data = None
+
+        # Set platform features. Each platform interface can change
+        # these to notify the framework of the specific features it supports.
+        self.features['has_dmds'] = False
+        self.features['has_rgb_dmds'] = False
+        self.features['has_accelerometers'] = False
+        self.features['has_i2c'] = False
+        self.features['has_servos'] = True
+        self.features['has_lights'] = True
+        self.features['has_switches'] = True
+        self.features['has_drivers'] = True
+        self.features['max_pulse'] = 250
+        self.features['tickless'] = True
+        self.features['has_segment_displays'] = False
+        self.features['has_hardware_sound_systems'] = False
+        self.features['has_steppers'] = False
+        self.features['allow_empty_numbers'] = False
 
         self.config = self.machine.config_validator.validate_config("pkone", self.machine.config['pkone'])
         self._configure_device_logging_and_debug("PKONE", self.config)
@@ -50,6 +67,10 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
 
     def stop(self):
         """Stop platform and close connections."""
+        if self.controller_connection:
+            # send reset message to turn off all lights, disable all drivers
+            self.controller_connection.send("PRSE")
+
         if self._watchdog_task:
             self._watchdog_task.cancel()
             self._watchdog_task = None
@@ -74,7 +95,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
     def _update_watchdog(self):
         """Send Watchdog command."""
         # PKONE watchdog timeout is 1 sec
-        self.controller_connection.send('PWD')
+        self.controller_connection.send('PWDE')
 
     def get_info_string(self):
         """Dump infos about boards."""
@@ -175,6 +196,86 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
 
         coil_number = self._parse_coil_number(str(number))
         return PKONECoil(config, self, coil_number, platform_settings)
+
+    def clear_hw_rule(self, switch: SwitchSettings, coil: DriverSettings):
+        """Clear a hardware rule.
+
+        This is used if you want to remove the linkage between a switch and
+        some coil activity. For example, if you wanted to disable your
+        flippers (so that a player pushing the flipper buttons wouldn't cause
+        the flippers to flip), you'd call this method with your flipper button
+        as the *sw_num*.
+
+        Args:
+        ----
+            switch: The switch whose rule you want to clear.
+            coil: The coil whose rule you want to clear.
+        """
+        self.debug_log("Clearing Hardware Rule for coil: %s, switch: %s",
+                       coil.hw_driver.number, switch.hw_switch.number)
+        driver = coil.hw_driver
+        driver.clear_hardware_rule(driver.number)
+
+    def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
+        """Set pulse on hit rule on driver.
+
+        Pulses a driver when a switch is hit. When the switch is released the pulse continues. Typically used for
+        autofire coils such as pop bumpers.
+        """
+        driver = coil.hw_driver
+        driver.set_hardware_rule(1, enable_switch, None, 0, coil.pulse_settings, None)
+
+    def set_delayed_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings, delay_ms: int):
+        """Set pulse on hit and release rule to driver.
+
+        When a switch is hit and a certain delay passed it pulses a driver.
+        When the switch is released the pulse continues.
+        Typically used for kickbacks.
+        """
+        driver = coil.hw_driver
+        driver.set_hardware_rule(2, enable_switch, None, delay_ms, coil.pulse_settings, None)
+
+    def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
+        """Set pulse on hit and release rule to driver.
+
+        Pulses a driver when a switch is hit. When the switch is released the pulse is canceled. Typically used on
+        the main coil for dual coil flippers without eos switch.
+        """
+        driver = coil.hw_driver
+        driver.set_hardware_rule(3, enable_switch, None, 0, coil.pulse_settings, coil.hold_settings)
+
+    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
+        """Set pulse on hit and enable and release rule on driver.
+
+        Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
+        the pulse is canceled and the driver gets disabled. Typically used for single coil flippers.
+        """
+        driver = coil.hw_driver
+        driver.set_hardware_rule(4, enable_switch, None, 0, coil.pulse_settings, coil.hold_settings)
+
+    def set_pulse_on_hit_and_release_and_disable_rule(self, enable_switch: SwitchSettings, eos_switch: SwitchSettings,
+                                                      coil: DriverSettings,
+                                                      repulse_settings: Optional[RepulseSettings]):
+        """Set pulse on hit and enable and release and disable rule on driver.
+
+        Pulses a driver when a switch is hit. When the switch is released
+        the pulse is canceled and the driver gets disabled. When the eos_switch is hit the pulse is canceled
+        and the driver becomes disabled. Typically used on the main coil for dual-wound coil flippers with eos switch.
+        """
+        driver = coil.hw_driver
+        driver.set_hardware_rule(5, enable_switch, eos_switch, 0, coil.pulse_settings, coil.hold_settings)
+
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
+                                                                 eos_switch: SwitchSettings, coil: DriverSettings,
+                                                                 repulse_settings: Optional[RepulseSettings]):
+        """Set pulse on hit and enable and release and disable rule on driver.
+
+        Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
+        the pulse is canceled and the driver becomes disabled. When the eos_switch is hit the pulse is canceled
+        and the driver becomes enabled (likely with PWM).
+        Typically used on the coil for single-wound coil flippers with eos switch.
+        """
+        raise AssertionError("Single-wound coils with EOS are not implemented in PKONE hardware.")
 
     def _parse_servo_number(self, number: str) -> PKONEServoNumber:
         try:
@@ -279,35 +380,33 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
         switch_number = self._parse_switch_number(number)
         return PKONESwitch(config, switch_number, self)
 
+    async def get_hw_switch_states(self) -> Dict[str, bool]:
+        """Return hardware states."""
+        return self.hw_switch_data
+
     def receive_all_switches(self, msg):
         """Process the all switch states message."""
         # The PSA message contains the following information:
         # [PSA opcode] + [board address id] + 0 or 1 for each switch on the board + E
-        self.debug_log("Received PSA: %s", msg)
+        self.debug_log("Received all switch states (PSA): %s", msg)
 
         extension_id = int(msg[3:4])
         switch_state_array = bytearray()
         switch_state_array.extend(msg[5:-1])
 
-        for i in range(len(switch_state_array)):
-            self.hw_switch_data[(extension_id, i)] = switch_state_array[i]
+        for index in range(len(switch_state_array)):
+            self.hw_switch_data["{}-{}".format(extension_id, index + 1)] = switch_state_array[index]
 
     def receive_switch(self, msg):
         """Process a single switch state change."""
         # The PSW message contains the following information:
         # [PSW opcode] + [board address id] + switch number + switch state (0 or 1) + E
-        self.debug_log("Received PSW: %s", msg)
+        self.debug_log("Received switch state change (PSW): %s", msg)
 
         switch_number_tuple = int(msg[4]), int(msg[5:-2])
         switch_state = int(msg[-1])
         self.machine.switch_controller.process_switch_by_num(state=switch_state,
                                                              num=switch_number_tuple,
                                                              platform=self)
-
-    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
-                                                                 eos_switch: SwitchSettings, coil: DriverSettings,
-                                                                 repulse_settings: Optional[RepulseSettings]):
-        """Set pulse on hit and enable and release and disable rule on driver."""
-        raise AssertionError("Single-wound coils with EOS are not implemented in PKONE hardware.")
 
 
