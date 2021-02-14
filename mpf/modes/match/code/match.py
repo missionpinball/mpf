@@ -49,7 +49,7 @@ class Match(AsyncMode):
     async def _run(self) -> None:
         """Run match mode."""
         # no player, no match
-        if not self.machine.game.player_list:
+        if not self.machine.game or not self.machine.game.player_list:
             return
 
         match_percentage = self.machine.settings.get_setting_value("match_percentage")

@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
+from mpf.tests.MpfTestCase import test_config
 
 
 class TestMatchMode(MpfFakeGameTestCase):
@@ -13,6 +14,22 @@ class TestMatchMode(MpfFakeGameTestCase):
 
     def get_platform(self):
         return 'smart_virtual'
+
+    @test_config("config_highscore.yaml")
+    def test_service_during_high_score(self):
+        """Regression test for crash when service started during high score and cancels match."""
+        self.post_event("add_credit")
+        self.start_game()
+
+        self.machine.game.player_list[0].score = 8000000
+        self.drain_one_ball()
+        self.advance_time_and_run(10)
+        self.drain_one_ball()
+        self.advance_time_and_run(10)
+        self.drain_one_ball()
+        self.advance_time_and_run(1)
+        self.post_event("sw_service_enter_active")
+        self.advance_time_and_run(1)
 
     def test_no_match(self):
         self.post_event("add_credit")
