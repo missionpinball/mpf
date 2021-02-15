@@ -387,15 +387,26 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
     def receive_all_switches(self, msg):
         """Process the all switch states message."""
         # The PSA message contains the following information:
-        # [PSA opcode] + [board address id] + 0 or 1 for each switch on the board + E
+        # [PSA opcode] + [[board address id] + 0 or 1 for each switch on the board + X] (repeats for each
+        # connected Extension board) + E
         self.debug_log("Received all switch states (PSA): %s", msg)
 
-        extension_id = int(msg[3:4])
-        switch_state_array = bytearray()
-        switch_state_array.extend(msg[5:-1])
+        hw_states = dict()
 
-        for index in range(len(switch_state_array)):
-            self.hw_switch_data["{}-{}".format(extension_id, index + 1)] = switch_state_array[index]
+        # the message payload is delimited with an 'X' character for the switches on each board
+        for switch_states in msg[3:-1].split('X'):
+            # The first character is the board address ID
+            extension_id = int(switch_states[0])
+
+            # There is one character for each switch on the board (1 = active, 0 = inactive)
+            switch_state_array = bytearray()
+            switch_state_array.extend(switch_states[1:])
+
+            # Loop over each character and map the state to the appropriate switch number
+            for index in range(len(switch_state_array)):
+                hw_states["{}-{}".format(extension_id, index + 1)] = switch_state_array[index]
+
+        self.hw_switch_data = hw_states
 
     def receive_switch(self, msg):
         """Process a single switch state change."""
@@ -403,10 +414,8 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
         # [PSW opcode] + [board address id] + switch number + switch state (0 or 1) + E
         self.debug_log("Received switch state change (PSW): %s", msg)
 
-        switch_number_tuple = int(msg[4]), int(msg[5:-2])
+        switch_number = PKONESwitchNumber(int(msg[4]), int(msg[5:-2]))
         switch_state = int(msg[-1])
         self.machine.switch_controller.process_switch_by_num(state=switch_state,
-                                                             num=switch_number_tuple,
+                                                             num=switch_number,
                                                              platform=self)
-
-
