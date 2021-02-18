@@ -1,0 +1,133 @@
+#config_version=5
+
+hardware:
+    platform: pkone
+
+pkone:
+    port: com4
+    debug: true
+
+switches:
+    s_test:
+        number: 0-7
+    s_test_nc:
+        number: 0-26
+        type: 'NC'
+    s_slingshot_test:
+        number: 0-22
+    s_flipper:
+        number: 0-1
+    s_flipper_eos:
+        number: 0-2
+    s_autofire:
+        number: 0-3
+    s_test3:
+        number: 2-1
+    s_nux_up:
+        number: 2-11
+    s_nux_down:
+        number: 2-12
+
+coils:
+    c_test:
+        number: 0-4
+        default_pulse_ms: 23
+        default_recycle: True
+        platform_settings:
+            recycle_ms: 27
+    c_test_allow_enable:
+        number: 0-6
+        default_pulse_ms: 23
+        max_hold_power: 1.0
+    c_slingshot_test:
+        number: 0-7
+    c_pulse_pwm32_mask:
+        number: 0-9
+        default_pulse_power: 0.53
+        default_hold_power: 0.40
+    c_hold_ssm:
+        number: 1-9
+        default_hold_power: 0.25    # approximately
+        platform_settings:
+            hold_pwm_patter: "84224244"
+    c_long_pulse:
+        number: 1-10
+        default_pulse_ms: 2000
+        max_hold_power: 1.0
+    c_flipper_main:
+        number: 1-2
+        default_pulse_ms: 10
+        default_hold_power: 0.125
+    c_flipper_hold:
+        number: 1-3
+        default_hold_power: 0.125
+
+autofire_coils:
+    ac_slingshot_test:
+        coil: c_slingshot_test
+        switch: s_slingshot_test
+    ac_inverted_switch:
+        coil: c_slingshot_test
+        switch: s_test_nc
+    ac_same_switch1:
+        coil: c_test
+        switch: s_autofire
+        enable_events: ac_same_switch
+    ac_same_switch2:
+        coil: c_test_allow_enable
+        switch: s_autofire
+        enable_events: ac_same_switch
+    ac_broken_combination:
+        coil: c_flipper_hold
+        switch: s_slingshot_test
+    ac_different_boards:
+        coil: c_flipper_hold
+        switch: s_test
+    ac_board_3:
+        coil: c_flipper_hold
+        switch: s_test3
+
+servos:
+    servo1:
+        number: 0-11
+    servo20:
+        number: 0-12
+
+flippers:
+    f_test_single:
+        debug: true
+        main_coil_overwrite:
+            pulse_ms: 11
+        main_coil: c_flipper_main
+        activation_switch: s_flipper
+
+    f_test_hold:
+        debug: true
+        main_coil: c_flipper_main
+        hold_coil: c_flipper_hold
+        activation_switch: s_flipper
+
+    f_test_hold_eos:
+        debug: true
+        main_coil: c_flipper_main
+        hold_coil: c_flipper_hold
+        activation_switch: s_flipper
+        eos_switch: s_flipper_eos
+        use_eos: true
+
+lights:
+  test_pdb_light:
+    number: 2-35
+    subtype: simple
+  test_gi:
+    number: 2-34
+    subtype: simple
+  test_led:
+    number: 2-A-23
+    type: grb
+  test_led2:
+    previous: test_led
+    type: grb
+  l_o_circle:
+    number: 2-A-10
+    type: grb
