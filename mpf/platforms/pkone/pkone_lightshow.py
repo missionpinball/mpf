@@ -17,7 +17,7 @@ class PKONELightshowBoard:
         self.addr = addr
         self.firmware_version = firmware_version
         self.hardware_rev = hardware_rev
-        self.simple_led_count = 54  # numbers 1 - 54
+        self.simple_led_count = 45  # numbers 1 - 45
         self.led_groups = 8  # letters A - H
         self.max_leds_per_group = 64  # numbers 1 - 64
 

@@ -8,11 +8,14 @@ import asyncio
 from copy import deepcopy
 from typing import Optional, Dict
 
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.pkone.pkone_serial_communicator import PKONESerialCommunicator
 from mpf.platforms.pkone.pkone_extension import PKONEExtensionBoard
+from mpf.platforms.pkone.pkone_lightshow import PKONELightshowBoard
 from mpf.platforms.pkone.pkone_switch import PKONESwitch, PKONESwitchNumber
 from mpf.platforms.pkone.pkone_coil import PKONECoil, PKONECoilNumber
 from mpf.platforms.pkone.pkone_servo import PKONEServo, PKONEServoNumber
+from mpf.platforms.pkone.pkone_lights import PKONESimpleLED, PKONESimpleLEDNumber
 
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
     DriverConfig, SwitchConfig, RepulseSettings
@@ -27,7 +30,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
         machine: The MachineController instance.
     """
 
-    __slots__ = ["config", "serial_connections", "pkone_extensions", "pkone_lightshows",
+    __slots__ = ["config", "serial_connections", "pkone_extensions", "pkone_lightshows", "leds",
                  "_watchdog_task", "hw_switch_data", "controller_connection"]
 
     def __init__(self, machine) -> None:
@@ -37,6 +40,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
         self.serial_connections = set()     # type: Set[PKONESerialCommunicator]
         self.pkone_extensions = {}          # type: Dict[int, PKONEExtensionBoard]
         self.pkone_lightshows = {}          # type: Dict[int, PKONELightshowBoard]
+        self.leds = {}
         self._watchdog_task = None
         self.hw_switch_data = None
 
@@ -152,7 +156,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
         if board.address_id not in range(4):
             raise AssertionError("Address out of range: Lightshow board address id must be between 0 and 3")
 
-        self.pkone_extensions[board.address_id] = board
+        self.pkone_lightshows[board.address_id] = board
 
     def _parse_coil_number(self, number: str) -> PKONECoilNumber:
         try:
@@ -419,3 +423,62 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
         self.machine.switch_controller.process_switch_by_num(state=switch_state,
                                                              num=switch_number,
                                                              platform=self)
+
+    def configure_light(self, number, subtype, config, platform_settings) -> LightPlatformInterface:
+        """Configure light in platform."""
+        del config
+        if not self.controller_connection:
+            raise AssertionError("A request was made to configure a PKONE switch, but no "
+                                 "connection to PKONE controller is available")
+
+        if subtype == "simple":
+            return PKONESimpleLED(number, self.controller_connection.send, self.machine, self)
+
+        if not subtype or subtype == "led":
+            board_address_id, group, index  = number.split("-")
+            """
+            if number_str not in self.fast_leds:
+                self.fast_leds[number_str] = FASTDirectLED(
+                    number_str, int(self.config['hardware_led_fade_time']), self.machine)
+            fast_led_channel = FASTDirectLEDChannel(self.fast_leds[number_str], channel)
+            self.fast_leds[number_str].add_channel(int(channel), fast_led_channel)
+
+            return fast_led_channel
+            """
+            return None
+
+        raise AssertionError("Unknown subtype {}".format(subtype))
+
+    def parse_light_number_to_channels(self, number: str, subtype: str):
+        """Parse light channels from number string."""
+        if subtype == "simple":
+            number = self.convert_number_from_config(number)
+
+            return [
+                {
+                    "number": number
+                }
+            ]
+
+        if not subtype or subtype == "led":
+            # if the LED number is in <board_address_id> - <group> - <channel> - <led> format, convert it to a
+            # FAST hardware number
+            if '-' in str(number):
+                board_address_id, group, number_str, channel = str(number).split('-')
+                index = 0  # TODO: implement me
+            else:
+                index = int(number)
+            return [
+                {
+                    "number": "{}-{}-{}-0".format(index)
+                },
+                {
+                    "number": "{}-{}-{}-1".format(index)
+                },
+                {
+                    "number": "{}-{}-{}-2".format(index)
+                },
+            ]
+
+        raise AssertionError("Unknown subtype {}".format(subtype))
+

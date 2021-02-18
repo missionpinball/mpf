@@ -5,7 +5,7 @@ import logging
 class PKONEExtensionBoard:
     """PKONE Extension board."""
 
-    __slots__ = ["log", "addr", "firmware_version", "hardware_rev", "switch_count", "opto_count",
+    __slots__ = ["log", "addr", "firmware_version", "hardware_rev", "switch_count",
                  "coil_count", "servo_count"]
 
     # pylint: disable-msg=too-many-arguments
@@ -15,8 +15,7 @@ class PKONEExtensionBoard:
         self.addr = addr
         self.firmware_version = firmware_version
         self.hardware_rev = hardware_rev
-        self.switch_count = 30  # numbers 1 - 30
-        self.opto_count = 5     # numbers 1 - 5
+        self.switch_count = 35  # numbers 1 - 35 (31-35 are NC opto switches)
         self.coil_count = 10  # numbers 1 - 10
         self.servo_count = 4    # numbers 11-14
 

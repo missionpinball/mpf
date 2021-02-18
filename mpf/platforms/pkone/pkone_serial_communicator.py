@@ -41,6 +41,14 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
         """Stop and shut down this serial connection."""
         super().stop()
 
+    async def _read_with_timeout(self, timeout):
+        msg_raw = await asyncio.wait([self.readuntil(b'E')], timeout=timeout)
+        if not msg_raw[0]:
+            msg_raw[1].pop().cancel()
+            return ""
+        element = msg_raw[0].pop()
+        return (await element).decode()
+
     async def _identify_connection(self):
         """Identify which processor this serial connection is talking to."""
 
@@ -50,7 +58,7 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
                 self.platform.debug_log("Sending 'PCN' command to port '%s'", self.port)
 
             count += 1
-            self.writer.write('PCNE'.encode())
+            self.writer.write('PCNE'.encode('ascii', 'replace'))
             msg = await self._read_with_timeout(.5)
             if msg.startswith('PCN'):
                 break
@@ -82,7 +90,7 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
         '''
 
         self.machine.variables.set_machine_var("pkone_hardware",
-                                               "PKONE Nano Controller (rev {})".format(self.remote_model))
+                                               "PKONE Nano Controller (rev {})".format(self.remote_hardware_rev))
 
         '''machine_var: pkone_hardware
 
@@ -111,7 +119,7 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
         # Lightshow board - PCB01LF10H1 = PCB[board number 0-3]LF[firmware rev]H[hardware rev]
         # No board at the address: PCB[board number 0-7]N
         for address_id in range(8):
-            self.writer.write('PCB{:02d}E'.format(address_id).encode())
+            self.writer.write('PCB{}E'.format(address_id).encode('ascii', 'replace'))
             msg = await self.readuntil('E')
 
             match = re.match('PCB([0-7])([XLN])F([0-9]+)H([0-9]+)E', msg)
