@@ -15,7 +15,7 @@ DriverRuleSettings = namedtuple("DriverRuleSettings", ["driver", "recycle"])
 PulseRuleSettings = namedtuple("PulseRuleSettings", ["power", "duration"])
 EosRuleSettings = namedtuple("RepulseRuleSettings", ["enable_repulse"])
 HoldRuleSettings = namedtuple("HoldRuleSettings", ["power"])
-HardwareRule = namedtuple("HardwareRule", ["platform", "switch_settings", "coil_settings", "switch_key"])
+HardwareRule = namedtuple("HardwareRule", ["platform", "switch_settings", "driver_settings", "switch_key"])
 
 
 class PlatformController(MpfController):

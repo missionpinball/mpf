@@ -31,7 +31,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
     """
 
     __slots__ = ["config", "serial_connections", "pkone_extensions", "pkone_lightshows", "leds",
-                 "_watchdog_task", "hw_switch_data", "controller_connection"]
+                 "_watchdog_task", "hw_switch_data", "controller_connection", "pkone_commands"]
 
     def __init__(self, machine) -> None:
         """Initialize PKONE platform."""
@@ -43,6 +43,14 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
         self.leds = {}
         self._watchdog_task = None
         self.hw_switch_data = None
+
+        self.pkone_commands = {'PCN': lambda x, y: None,            # connected Nano processor
+                               'PCB': lambda x, y: None,            # connected board
+                               'PWD': lambda x, y: None,            # watchdog
+                               'PSA': self.receive_all_switches,    # all switch states
+                               'PSW': self.receive_switch,          # switch state change
+                               'PXX': self.receive_error,           # error
+                               }
 
         # Set platform features. Each platform interface can change
         # these to notify the framework of the specific features it supports.
@@ -136,27 +144,47 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
         await comm.connect()
         self.serial_connections.add(comm)
 
-    def register_extension_board(self, board):
+    def register_extension_board(self, board: PKONEExtensionBoard):
         """Register an Extension board."""
-        if board.address_id in self.pkone_extensions or board.address_id in self.pkone_lightshows:
+        if board.addr in self.pkone_extensions or board.addr in self.pkone_lightshows:
             raise AssertionError("Duplicate address id: a board has already been "
-                                 "registered at address {}".format(board.address_id))
+                                 "registered at address {}".format(board.addr))
 
-        if board.address_id not in range(8):
+        if board.addr not in range(8):
             raise AssertionError("Address out of range: Extension board address id must be between 0 and 7")
 
-        self.pkone_extensions[board.address_id] = board
+        self.pkone_extensions[board.addr] = board
 
-    def register_lightshow_board(self, board):
+    def register_lightshow_board(self, board: PKONELightshowBoard):
         """Register a Lightshow board."""
-        if board.address_id in self.pkone_extensions or board.address_id in self.pkone_lightshows:
+        if board.addr in self.pkone_extensions or board.addr in self.pkone_lightshows:
             raise AssertionError("Duplicate address id: a board has already been "
-                                 "registered at address {}".format(board.address_id))
+                                 "registered at address {}".format(board.addr))
 
-        if board.address_id not in range(4):
+        if board.addr not in range(4):
             raise AssertionError("Address out of range: Lightshow board address id must be between 0 and 3")
 
-        self.pkone_lightshows[board.address_id] = board
+        self.pkone_lightshows[board.addr] = board
+
+    def process_received_message(self, msg: str):
+        """Send an incoming message from the PKONE controller to the proper method for servicing.
+
+        Args:
+        ----
+            msg: messaged which was received
+        """
+        assert self.log is not None
+        cmd = msg[0:3]
+        payload = msg[3:].replace('E', '')
+
+        # Can't use try since it swallows too many errors for now
+        if cmd in self.pkone_commands:
+            self.pkone_commands[cmd](payload)
+        else:   # pragma: no cover
+            self.log.warning("Received unknown serial command %s.", msg)
+
+    def receive_error(self, msg):
+        self.log.error("Received an error message from the controller: {}".format(msg))
 
     def _parse_coil_number(self, number: str) -> PKONECoilNumber:
         try:
@@ -398,17 +426,18 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
         hw_states = dict()
 
         # the message payload is delimited with an 'X' character for the switches on each board
-        for switch_states in msg[3:-1].split('X'):
+        for board_switches in msg.split('X'):
+            if len(board_switches) == 0:
+                continue
+
             # The first character is the board address ID
-            extension_id = int(switch_states[0])
+            board_address_id = int(board_switches[0])
+            switch_states = board_switches[1:]
 
             # There is one character for each switch on the board (1 = active, 0 = inactive)
-            switch_state_array = bytearray()
-            switch_state_array.extend(switch_states[1:])
-
             # Loop over each character and map the state to the appropriate switch number
-            for index in range(len(switch_state_array)):
-                hw_states["{}-{}".format(extension_id, index + 1)] = switch_state_array[index]
+            for index in range(len(switch_states)):
+                hw_states["{}-{}".format(board_address_id, index + 1)] = int(switch_states[index])
 
         self.hw_switch_data = hw_states
 

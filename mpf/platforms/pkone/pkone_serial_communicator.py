@@ -104,9 +104,27 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
                                  'Please update your firmware.'.
                                  format(NANO_MIN_FW, self.remote_firmware))
 
+        # Reset the Nano controller
+        await self.reset_controller()
+
+        # Determine what additional boards are connected to the Nano controller
         await self.query_pkone_boards()
 
+        await self.read_all_switches()
+
         self.platform.controller_connection = self
+
+    async def reset_controller(self):
+        """Reset the controller."""
+        self.platform.debug_log('Resetting controller.')
+        self.writer.write('PRSE'.encode())
+        msg = ''
+        while msg != 'PRSE' and not msg.startswith('PXX'):
+            msg = (await self.readuntil(b'E')).decode()
+            self.platform.debug_log("Got: {}".format(msg))
+
+        if msg.startswith('PXX'):
+            raise AssertionError('Received an error while resetting the controller: {}'.format(msg))
 
     async def query_pkone_boards(self):
         """Query the NANO processor to discover which additional boards are connected.
@@ -120,16 +138,19 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
         # No board at the address: PCB[board number 0-7]N
         for address_id in range(8):
             self.writer.write('PCB{}E'.format(address_id).encode('ascii', 'replace'))
-            msg = await self.readuntil('E')
+            msg = await self._read_with_timeout(.5)
+            if msg == 'PCB{}NE'.format(address_id):
+                self.platform.log.debug("No board at address ID {}".format(address_id))
+                continue
 
-            match = re.match('PCB([0-7])([XLN])F([0-9]+)H([0-9]+)E', msg)
+            match = re.fullmatch('PCB([0-7])([XLN])F([0-9]+)H([0-9]+)(P[YN])*E', msg)
             if not match:
                 self.platform.log.warning("Received unexpected message from PKONE: {}".format(msg))
 
-            if match[2] == "X":
+            if match.group(2) == "X":
                 # Extension board
-                firmware = match[3][:-1] + '.' + match[3][-1]
-                hardware_rev = match[4]
+                firmware = match.group(3)[:-1] + '.' + match.group(3)[-1]
+                hardware_rev = match.group(4)
 
                 if StrictVersion(EXTENSION_MIN_FW) > StrictVersion(firmware):
                     raise AssertionError('Firmware version mismatch. MPF requires '
@@ -143,10 +164,10 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
 
                 self.platform.register_extension_board(PKONEExtensionBoard(address_id, firmware, hardware_rev))
 
-            elif match[2] == "L":
+            elif match.group(2) == "L":
                 # Lightshow board
-                firmware = match[3][:-1] + '.' + match[3][-1]
-                hardware_rev = match[4]
+                firmware = match.group(3)[:-1] + '.' + match.group(3)[-1]
+                hardware_rev = match.group(4)
 
                 if StrictVersion(LIGHTSHOW_MIN_FW) > StrictVersion(firmware):
                     raise AssertionError('Firmware version mismatch. MPF requires '
@@ -158,13 +179,21 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
                                         'Firmware: {1}, Hardware Rev: {2}'.format(address_id,
                                                                                   firmware, hardware_rev))
 
-                self.platform.register_lighshow_board(PKONELightshowBoard(address_id, firmware, hardware_rev))
+                self.platform.register_lightshow_board(PKONELightshowBoard(address_id, firmware, hardware_rev))
 
-            elif match[2] == "N":
-                # No board at address
-                continue
             else:
                 raise AttributeError("Unrecognized PKONE board type in message: {}".format(msg))
+
+    async def read_all_switches(self):
+        self.platform.debug_log('Reading all switches.')
+        self.writer.write('PSAE'.encode())
+        msg = ''
+        while not msg.startswith('PSA'):
+            msg = (await self.readuntil(b'E')).decode()
+            if not msg.startswith('PSA'):
+                self.platform.log.warning("Received unexpected message from PKONE: {}".format(msg))
+
+        self.platform.process_received_message(msg)
 
     def _parse_msg(self, msg):
         self.received_msg += msg
