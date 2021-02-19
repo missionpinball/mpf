@@ -63,7 +63,7 @@ class PKONECoil(DriverPlatformInterface):
 
         # Configure coil with default/empty/0 settings (coil will not fire until it is configured with
         # real settings values)
-        cmd = "PCC{}{:02d}0000000000E".format(self.number.board_address_id, self.number.coil_number)
+        cmd = "PCC{}{:02d}0000000000".format(self.number.board_address_id, self.number.coil_number)
         self.send(cmd)
 
     def configure_coil(self, pulse_settings: PulseSettings, hold_settings: Optional[HoldSettings],
@@ -77,7 +77,7 @@ class PKONECoil(DriverPlatformInterface):
 
         # send the new coil configuration
         self._config_state = new_config_state
-        cmd = "PCC{}{:02d}{:03d}{:02d}{:02d}{:03d}E".format(self.number.board_address_id,
+        cmd = "PCC{}{:02d}{:03d}{:02d}{:02d}{:03d}".format(self.number.board_address_id,
                                                             self.number.coil_number,
                                                             pulse_settings.duration,
                                                             # power must be mapped from 0-1 to 0-99
@@ -89,7 +89,7 @@ class PKONECoil(DriverPlatformInterface):
 
     def disable(self) -> None:
         """Disable/release (turn off) this coil."""
-        cmd = "PCR{}{:02d}E".format(self.number.board_address_id, self.number.coil_number)
+        cmd = "PCR{}{:02d}".format(self.number.board_address_id, self.number.coil_number)
         self.log.debug("Sending Release/Disable Coil command: %s", cmd)
         self.send(cmd)
 
@@ -99,7 +99,7 @@ class PKONECoil(DriverPlatformInterface):
         """Set a hardware rule for an autofire coil."""
         self.hardware_rule = True
         cmd = "PHR{}{:02d}{}{:02d}{}{:02d}{}" \
-              "{:03d}{:03d}{:02d}{:02d){:03d}E".format(self.number.board_address_id,
+              "{:03d}{:03d}{:02d}{:02d){:03d}".format(self.number.board_address_id,
                                                        self.number.coil_number,
                                                        mode,
                                                        switch_settings.hw_switch.number.switch_number,
@@ -118,7 +118,7 @@ class PKONECoil(DriverPlatformInterface):
 
     def clear_hardware_rule(self) -> None:
         """Clear hardware rule."""
-        cmd = "PHD{}{:02d}E".format(self.number.board_address_id, self.number.coil_number)
+        cmd = "PHD{}{:02d}".format(self.number.board_address_id, self.number.coil_number)
         self.log.debug("Clearing Hardware Rule for coil: %s", cmd)
         self.send(cmd)
         self.hardware_rule = False
@@ -128,7 +128,7 @@ class PKONECoil(DriverPlatformInterface):
         # reconfigure coil (if necessary)
         self.configure_coil(pulse_settings, hold_settings,
                             self.get_recycle_time_ms_for_cmd(self.config.default_recycle, pulse_settings.duration))
-        cmd = "PCH{}{:02d}E".format(self.number.board_address_id, self.number.coil_number)
+        cmd = "PCH{}{:02d}".format(self.number.board_address_id, self.number.coil_number)
         self.log.debug("Sending Hold/Enable coil command: %s", cmd)
         self.send(cmd)
 
@@ -142,6 +142,6 @@ class PKONECoil(DriverPlatformInterface):
                             self.get_recycle_time_ms_for_cmd(self.config.default_recycle, pulse_settings.duration))
 
         # pulse/trigger coil
-        cmd = "PCP{}{:02}E".format(self.number.board_address_id, self.number.coil_number)
+        cmd = "PCP{}{:02}".format(self.number.board_address_id, self.number.coil_number)
         self.log.debug("Sending Pulse coil command: %s", cmd)
         self.send(cmd)

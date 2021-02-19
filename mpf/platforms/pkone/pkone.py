@@ -81,7 +81,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
         """Stop platform and close connections."""
         if self.controller_connection:
             # send reset message to turn off all lights, disable all drivers
-            self.controller_connection.send("PRSE")
+            self.controller_connection.send('PRS')
 
         if self._watchdog_task:
             self._watchdog_task.cancel()
@@ -115,23 +115,23 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
             return "No connection to any Penny K Pinball PKONE controller board."
 
         infos = "Penny K Pinball Hardware\n"
-        infos += "------------------------\n\n"
+        infos += "------------------------\n"
         infos += " - Connected Controllers:\n"
-        for connection in sorted(self.serial_connections, key=lambda x: x.chain_serial):
+        for connection in sorted(self.serial_connections, key=lambda x: x.port):
             infos += "   -> PKONE Nano - Port: {} at {} baud " \
                      "(firmware v{}, hardware rev {}).\n".format(connection.port,
                                                                  connection.baud,
                                                                  connection.remote_firmware,
-                                                                 connection.remove_hardware_rev)
+                                                                 connection.remote_hardware_rev)
 
         infos += "\n - Extension boards:\n"
-        for extension in self.pkone_extensions:
+        for extension in self.pkone_extensions.values():
             infos += "   -> Address ID: {} (firmware v{}, hardware rev {})\n".format(extension.addr,
                                                                                      extension.firmware_version,
                                                                                      extension.hardware_rev)
 
         infos += "\n - Lightshow boards:\n"
-        for lightshow in self.pkone_lightshows:
+        for lightshow in self.pkone_lightshows.values():
             infos += "   -> Address ID: {} (firmware v{}, hardware rev {})\n".format(lightshow.addr,
                                                                                      lightshow.firmware_version,
                                                                                      lightshow.hardware_rev)
@@ -199,8 +199,8 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
             raise AssertionError("PKONE Extension {} does not exist for coil {}".format(board_id, number))
 
         coil_count = self.pkone_extensions[board_id].coil_count
-        if coil_count <= coil_num:
-            raise AssertionError("PKONE Extension {} only has {} coils ({} - {}). Servo: {}".format(
+        if coil_count < coil_num:
+            raise AssertionError("PKONE Extension {} only has {} coils ({} - {}). Coil: {}".format(
                 board_id, coil_count, 1, coil_count, number))
 
         return PKONECoilNumber(board_id, coil_num)
@@ -437,7 +437,8 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
             # There is one character for each switch on the board (1 = active, 0 = inactive)
             # Loop over each character and map the state to the appropriate switch number
             for index in range(len(switch_states)):
-                hw_states["{}-{}".format(board_address_id, index + 1)] = int(switch_states[index])
+                hw_states[PKONESwitchNumber(board_address_id=board_address_id, switch_number=index + 1)] = int(
+                    switch_states[index])
 
         self.hw_switch_data = hw_states
 

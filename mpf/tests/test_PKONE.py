@@ -1,5 +1,6 @@
 from mpf.core.platform import SwitchConfig
 from mpf.core.rgb_color import RGBColor
+from mpf.platforms.pkone.pkone_coil import PKONECoilNumber
 from mpf.tests.MpfTestCase import MpfTestCase, MagicMock
 
 from mpf.tests.loop import MockSerial
@@ -75,7 +76,7 @@ class TestPKONE(MpfTestCase):
 
     def tearDown(self):
         self.controller.expected_commands = {
-            "PWD": "PWDE"
+            'PRS': 'PRS',
         }
         super().tearDown()
         self.assertFalse(self.controller.expected_commands)
@@ -94,11 +95,13 @@ class TestPKONE(MpfTestCase):
             'PCB5': 'PCB5N',
             'PCB6': 'PCB6N',
             'PCB7': 'PCB7N',
-            'PWS': 'PWS',
-            'PWD': 'PWD',
-            'PWF': 'PWF',
             'PRS': 'PRS',
-            'PSA': 'PSA011000000000000000000000000000000000X100000000000000000000000000000000000XE'
+            'PSA': 'PSA011000000000000000000000000000000000X100000000000000000000000000000000000XE',
+            'PCC0040000000000': None,
+            'PCC0060000000000': None,
+            'PCC1080000000000': None,
+            'PCC1010000000000': None,
+            'PCC1020000000000': None,
         }
 
         super().setUp()
@@ -117,67 +120,68 @@ class TestPKONE(MpfTestCase):
         self.assertEqual(1, self.machine.default_platform.pkone_extensions[1].addr)
 
         self.assertEqual(1, len(self.machine.default_platform.pkone_lightshows))
-        self.assertEqual(45, self.machine.default_platform.pkone_lightshows[0].simple_led_count)
-        self.assertEqual(8, self.machine.default_platform.pkone_lightshows[0].led_groups)
-        self.assertEqual(64, self.machine.default_platform.pkone_lightshows[0].max_leds_per_group)
-        self.assertEqual(2, self.machine.default_platform.pkone_lightshows[0].addr)
+        self.assertEqual(45, self.machine.default_platform.pkone_lightshows[2].simple_led_count)
+        self.assertEqual(8, self.machine.default_platform.pkone_lightshows[2].led_groups)
+        self.assertEqual(64, self.machine.default_platform.pkone_lightshows[2].max_leds_per_group)
+        self.assertEqual(2, self.machine.default_platform.pkone_lightshows[2].addr)
 
         self.assertEqual("1.1", self.machine.variables.get_machine_var("pkone_firmware"))
         self.assertEqual("PKONE Nano Controller (rev 1)", self.machine.variables.get_machine_var("pkone_hardware"))
 
     def test_coils(self):
-        #self._test_pulse()
-        #self._test_long_pulse()
-        #self._test_enable_exception()
-        #self._test_allow_enable()
-        #self._test_pwm_ssm()
-        #self._test_coil_configure()
+        self._test_pulse()
+        self._test_long_pulse()
+        self._test_enable_exception()
+        self._test_allow_enable()
+        self._test_coil_configure()
 
         # test hardware scan
-        info_str = """NET CPU: NET FP-CPU-002-1 01.03
-RGB CPU: RGB FP-CPU-002-1 00.89
-DMD CPU: DMD FP-CPU-002-1 00.88
+        info_str = """Penny K Pinball Hardware
+------------------------
+ - Connected Controllers:
+   -> PKONE Nano - Port: com3 at 115200 baud (firmware v1.1, hardware rev 1).
 
-Boards:
-Board 0 - Model: FP-I/O-3208-2    Firmware: 01.00 Switches: 32 Drivers: 8
-Board 1 - Model: FP-I/O-0804-1    Firmware: 01.00 Switches: 8 Drivers: 4
-Board 2 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
-Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
+ - Extension boards:
+   -> Address ID: 0 (firmware v1.1, hardware rev 2)
+   -> Address ID: 1 (firmware v1.1, hardware rev 2)
+
+ - Lightshow boards:
+   -> Address ID: 2 (firmware v1.0, hardware rev 1)
 """
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
     def _test_coil_configure(self):
         self.assertEqual("PKONE Extension Board 0", self.machine.coils["c_test"].hw_driver.get_board_name())
-        self.assertEqual("PKONE Extension Board 3", self.machine.coils["c_flipper_hold"].hw_driver.get_board_name())
+        self.assertEqual("PKONE Extension Board 1", self.machine.coils["c_flipper_hold"].hw_driver.get_board_name())
         # last driver on board
         self.controller.expected_commands = {
-            "DN:2B,00,00,00": "DN:P"
+            "PCC1100000000000": None
         }
-        coil = self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '3-15',
+        coil = self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '1-10',
                                                               {"recycle_ms": 10})
-        self.assertEqual('2B', coil.number)
+        self.assertEqual(PKONECoilNumber(1, 10), coil.number)
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 
-        # board 0 has 8 drivers. configuring driver 9 should not work
+        # board 0 has 10 coils/drivers. configuring driver 17 should not work
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '0-8',
+            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '0-17',
                                                            {"recycle_ms": 10})
 
-        # only boards 0-3 exist
+        # only extension boards 0-1 exist
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '4-0',
+            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '4-1',
                                                            {"recycle_ms": 10})
 
-        # only 8 + 4 + 16 + 16 = 44 = 0x2C driver exist
+        # a lightshow board is at address id 2 (no coils are on a lightshow board)
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '44',
+            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '2-1',
                                                            {"recycle_ms": 10})
 
     def _test_pulse(self):
         self.controller.expected_commands = {
-            "DN:04,81,00,10,17,FF,00,00,00": "DN:P",
-            "TN:04,01": "TN:P"
+            "PCC0040239900027": None,
+            "PCP004": None
         }
         # pulse coil 4f
         self.machine.coils["c_test"].pulse()
@@ -187,7 +191,8 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
     def _test_long_pulse(self):
         # enable command
         self.controller.expected_commands = {
-            "DN:12,C1,00,18,00,FF,FF,00": "DN:P"
+            "PCC1080009999000": None,
+            "PCH108": None
         }
         self.machine.coils["c_long_pulse"].pulse()
         self.advance_time_and_run(.1)
@@ -195,7 +200,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
 
         # disable command
         self.controller.expected_commands = {
-            "TN:12,02": "TN:P"
+            "PCR108": None
         }
 
         self.advance_time_and_run(1)
@@ -214,26 +219,12 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
 
     def _test_allow_enable(self):
         self.controller.expected_commands = {
-            "DN:06,C1,00,18,17,FF,FF,00": "DN:P"
+            "PCC0060239999000": None,
+            "PCH006": None
         }
         self.machine.coils["c_test_allow_enable"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
-
-    def _test_pwm_ssm(self):
-        self.controller.expected_commands = {
-            "DN:13,C1,00,18,0A,FF,84224244,00": "DN:P"
-        }
-        self.machine.coils["c_hold_ssm"].enable()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.controller.expected_commands)
-
-    def test_nano_reboot(self):
-        # NANO reboots
-        self.controller.queue.append("!B:00")
-        self.advance_time_and_run(.1)
-        # assert that MPF will stop
-        self.assertTrue(self.machine.stop_future.done())
 
     def test_rules(self):
         self._test_enable_exception_hw_rule()

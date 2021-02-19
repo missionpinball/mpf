@@ -17,10 +17,13 @@ LIGHTSHOW_MIN_FW = '1.0'
 
 
 class PKONESerialCommunicator(BaseSerialCommunicator):
-
     """Handles the serial communication to the PKONE platform."""
 
-    __slots__ = ["part_msg", "send_queue", "remote_firmware", "remote_hardware_rev"]
+    ignored_messages = ['PWD',  # Watchdog
+                        ]
+
+    __slots__ = ["part_msg", "send_queue", "remote_firmware", "remote_hardware_rev", "received_msg",
+                 "max_messages_in_flight", "messages_in_flight", "send_ready"]
 
     # pylint: disable=too-many-arguments
     def __init__(self, platform: "PKONEHardwarePlatform", port, baud) -> None:
@@ -35,6 +38,13 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
         self.send_queue = asyncio.Queue()
         self.remote_firmware = None
         self.remote_hardware_rev = None
+        self.received_msg = b''
+        self.max_messages_in_flight = 10
+        self.messages_in_flight = 0
+
+        self.send_ready = asyncio.Event()
+        self.send_ready.set()
+
         super().__init__(platform, port, baud)
 
     def stop(self):
@@ -199,7 +209,7 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
         self.received_msg += msg
 
         while True:
-            pos = self.received_msg.find('E')
+            pos = self.received_msg.find(b'E')
 
             # no more complete messages
             if pos == -1:
@@ -208,22 +218,18 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
             msg = self.received_msg[:pos]
             self.received_msg = self.received_msg[pos + 1:]
 
-            if msg[:2] not in self.ignored_messages_in_flight:
-
-                self.messages_in_flight -= 1
-                if self.messages_in_flight <= self.max_messages_in_flight or not self.read_task:
-                    self.send_ready.set()
-                if self.messages_in_flight < 0:
-                    self.log.warning("Port %s received more messages than "
-                                     "were sent! Resetting!",
-                                     self.remote_processor)
-                    self.messages_in_flight = 0
+            self.messages_in_flight -= 1
+            if self.messages_in_flight <= self.max_messages_in_flight or not self.read_task:
+                self.send_ready.set()
+            if self.messages_in_flight < 0:
+                self.log.warning("Received more messages than were sent! Resetting!")
+                self.messages_in_flight = 0
 
             if not msg:
                 continue
 
             if msg.decode() not in self.ignored_messages:
-                self.platform.process_received_message(msg.decode(), self.remote_processor)
+                self.platform.process_received_message(msg.decode())
 
     def send(self, msg):
         """Send a message to the remote processor over the serial connection.
@@ -235,5 +241,4 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
         if self.debug:
             self.log.debug("%s sending: %s", self, msg)
 
-        self.writer.write(msg)
-
+        self.writer.write(msg.encode() + b'E')
