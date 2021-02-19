@@ -9,7 +9,6 @@ class BaseMockPKONE(MockSerial):
 
     def __init__(self):
         super().__init__()
-        self.type = None
         self.queue = []
         self.expected_commands = {}
         self.ignore_commands = {}
@@ -43,11 +42,6 @@ class BaseMockPKONE(MockSerial):
     def _handle_msg(self, msg):
         msg_len = len(msg)
         cmd = msg.decode()
-        # strip newline
-        # ignore init garbage
-        if cmd == (' ' * 256 * 4):
-            return msg_len
-
         if cmd in self.ignore_commands:
             return msg_len
 
@@ -77,7 +71,7 @@ class TestPKONE(MpfTestCase):
         return False
 
     def _mock_loop(self):
-        self.clock.mock_serial("com4", self.controller)
+        self.clock.mock_serial("com3", self.controller)
 
     def tearDown(self):
         self.controller.expected_commands = {
@@ -91,15 +85,20 @@ class TestPKONE(MpfTestCase):
         self.controller = BaseMockPKONE()
 
         self.controller.expected_commands = {
-            'PCN': 'PCNF11H1E',
-            'PCB0': 'PCB0XF11H2EPY',
-            'PCB1': 'PCB1XF11H2EPN',
-            'PCB2': 'PCB2LF10H1E',
-            'PCB3': 'PCB3NE',
-            'PCB4': 'PCB4NE',
-            'PCB5': 'PCB5NE',
-            'PCB6': 'PCB6NE',
-            'PCB7': 'PCB7NE',
+            'PCN': 'PCNF11H1',
+            'PCB0': 'PCB0XF11H2PY',
+            'PCB1': 'PCB1XF11H2PN',
+            'PCB2': 'PCB2LF10H1',
+            'PCB3': 'PCB3N',
+            'PCB4': 'PCB4N',
+            'PCB5': 'PCB5N',
+            'PCB6': 'PCB6N',
+            'PCB7': 'PCB7N',
+            'PWS': 'PWS',
+            'PWD': 'PWD',
+            'PWF': 'PWF',
+            'PRS': 'PRS',
+            'PSA': 'PSA011000000000000000000000000000000000X100000000000000000000000000000000000XE'
         }
 
         super().setUp()
