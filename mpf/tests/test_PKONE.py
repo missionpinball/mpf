@@ -239,7 +239,7 @@ class TestPKONE(MpfTestCase):
 
     def test_rules(self):
         self._test_enable_exception_hw_rule()
-        # self._test_two_rules_one_switch()
+        self._test_two_rules_one_switch()
         self._test_hw_rule_pulse()
         self._test_hw_rule_pulse_inverted_switch()
         self._test_hw_rule_same_board()
@@ -268,9 +268,8 @@ class TestPKONE(MpfTestCase):
 
     def _test_two_rules_one_switch(self):
         self.controller.expected_commands = {
-            "SN:03,01,02,02": "SN:P",
-            "DN:04,01,03,10,17,FF,00,00,1B": "DN:P",
-            "DN:06,01,03,10,17,FF,00,00,2E": "DN:P"
+            "PHR00410300000000239900027": None,
+            "PHR00610300000000239900000": None
         }
         self.post_event("ac_same_switch")
         self.hit_and_release_switch("s_flipper")

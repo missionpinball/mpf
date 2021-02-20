@@ -60,6 +60,14 @@ autofire_coils:
     ac_inverted_switch:
         coil: c_slingshot_test
         switch: s_test_nc
+    ac_same_switch1:
+        coil: c_test
+        switch: s_autofire
+        enable_events: ac_same_switch
+    ac_same_switch2:
+        coil: c_test_allow_enable
+        switch: s_autofire
+        enable_events: ac_same_switch
     ac_different_boards:
         coil: c_flipper_hold
         switch: s_test
