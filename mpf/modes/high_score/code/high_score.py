@@ -46,7 +46,8 @@ class HighScore(AsyncMode):
         self.pending_award = None
 
         for event in self.high_score_config['reset_high_scores_events']:
-            self.add_mode_event_handler(event, self._reset)
+            # important: this may not be a mode handler as it should be always active
+            self.machine.events.add_handler(event, self._reset)
 
     def _load_defaults(self):
         """Load default high scores."""
@@ -75,6 +76,11 @@ class HighScore(AsyncMode):
                     if not isinstance(entry[0], str) or not isinstance(entry[1], (int, float)):
                         self.log.warning("Found invalid data type in high score entry.")
                         return False
+                if len(data[category]) != len(self.config['high_score']['defaults'][category]):
+                    self.log.warning("High Score Category %s contains %s entries while defaults contain %s",
+                                     category, len(data[category]),
+                                     len(self.config['high_score']['defaults'][category]))
+                    return False
 
         except TypeError:
             return False

@@ -76,6 +76,7 @@ assets:
         descriptor: ignore
     images: # no image-specific config items
         __allow_others__:
+        persist_frame: single|bool|false
     shows:  # no show-specific config items
         __allow_others__:
     sounds:
@@ -751,7 +752,8 @@ light_segment_displays_device:
 light_stripes:
     __valid_in__: machine
     __type__: device
-    number_start: single|int|
+    number_start: single|int|0
+    start_channel: single|str|None
     number_template: single|str|None
     start_x: single|float|None
     start_y: single|float|None
@@ -762,7 +764,8 @@ light_stripes:
 light_rings:
     __valid_in__: machine
     __type__: device
-    number_start: single|int|
+    number_start: single|int|0
+    start_channel: single|str|None
     number_template: single|str|None
     center_x: single|float|None
     center_y: single|float|None

@@ -179,7 +179,7 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
             self._switch_poll_task = None
 
         if self.platform_server:
-            self.machine.clock.loop.run_until_complete(self.platform_server.stop())
+            self.machine.clock.loop.run_until_complete(self.platform_server.stop(1))
             self.machine.clock.loop.run_until_complete(self.platform_server.wait_for_termination())
             self.platform_server = None
 

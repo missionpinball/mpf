@@ -264,6 +264,8 @@ class ConfigValidator:
             new_list = list()
 
             for i in item_list:
+                if i in ("", " "):
+                    self.validation_error(item, validation_failure_info, "List contains an empty element.", 15)
                 new_list.append(self.validate_item(i, validation, validation_failure_info))
 
             return new_list
@@ -405,8 +407,13 @@ class ConfigValidator:
 
         if not isinstance(item, str):
             return self.validation_error(item, validation_failure_info,
-                                         "Expected {} in {} to be string".format(item, param),
+                                         'Expected "{}" in "{}" to be string'.format(item, param),
                                          10)
+
+        if not item:
+            return self.validation_error(item, validation_failure_info,
+                                         'Setting "{}" is empty'.format(param),
+                                         14)
 
         if item in section:
             return section[item]

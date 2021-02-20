@@ -11,6 +11,7 @@ from threading import Thread
 import time
 from typing import List, Union, Tuple, Optional, Set
 
+from mpf._version import log_url
 from mpf.core.utility_functions import Util
 from mpf.core.platform_batch_light_system import PlatformBatchLightSystem
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
@@ -361,7 +362,8 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
         if self.version < 2 or (self.version == 2 and self.revision < 14):
             self.log.warning("Consider upgrading the firmware of your P/P3-Roc to at least 2.14. "
-                             "Your version contains known bugs.")
+                             "Your version contains known bugs. See: %s",
+                             log_url.format("{}-{}-{}".format("RE", self.log.name, 1)))
 
         # for unknown reasons we have to postpone this a bit after init
         self.machine.delay.add(100, self._configure_pd_led)

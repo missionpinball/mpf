@@ -6,7 +6,7 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class MockServer:
 
-    async def stop(self):
+    async def stop(self, grace):
         pass
 
     async def wait_for_termination(self):

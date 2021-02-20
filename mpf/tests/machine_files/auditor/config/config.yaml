@@ -3,6 +3,11 @@
 game:
     balls_per_game: 1
 
+auditor:
+    events:
+        - test_event1
+        - test_event2
+
 switches:
     s_test:
         number:

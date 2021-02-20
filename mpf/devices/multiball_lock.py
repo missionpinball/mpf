@@ -280,7 +280,7 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
 
         # check if we are full now and post event if yes
         if (self.config['locked_ball_counting_strategy'] == "physical_only" and
-            self._physically_remaining_space <= balls_to_lock_physically) or \
+            new_locked_balls >= self.config['balls_to_lock']) or \
                 self.remaining_virtual_space_in_lock == 0:
             self._events[device].append({'event': 'multiball_lock_' + self.name + '_full',
                                          'balls': new_locked_balls})

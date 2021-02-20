@@ -240,7 +240,7 @@ class Auditor:
         self.enabled = True
 
         # Register for the events we're auditing
-        if 'events' in self.config['audit']:
+        if 'events' in self.config:
             for event in self.config['events']:
                 self.machine.events.add_handler(event,
                                                 self.audit_event,

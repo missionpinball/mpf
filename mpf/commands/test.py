@@ -5,6 +5,20 @@ import re
 import unittest
 import sys
 
+# some hacks to unbreak logging afte loading the kivy logger
+import logging
+root = logging.root
+os.environ['KIVY_NO_FILELOG'] = '1'
+os.environ['KIVY_NO_CONSOLELOG'] = '1'
+os.environ["KIVY_NO_ARGS"] = "1"
+
+from kivy.logger import Logger
+for handler in Logger.handlers:
+    Logger.removeHandler(handler)
+sys.stdout = sys.__stdout__
+logging.root = root
+# end of anti kivy hacks
+
 from mpf.commands import MpfCommandLineParser
 from mpf.tests.MpfDocTestCase import MpfDocTestCase, MpfDocTestCaseNoFakeGame
 from mpf.tests.MpfIntegrationDocTestCase import MpfIntegrationDocTestCase

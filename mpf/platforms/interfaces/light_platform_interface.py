@@ -53,6 +53,10 @@ class LightPlatformInterface(metaclass=abc.ABCMeta):
         """Order lights by their position on the hardware."""
         raise NotImplementedError
 
+    def __repr__(self):
+        """Return string representation."""
+        return "<{} number={}>".format(self.__class__, self.number)
+
 
 class LightPlatformDirectFade(LightPlatformInterface, metaclass=abc.ABCMeta):
 
