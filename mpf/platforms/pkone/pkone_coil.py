@@ -41,7 +41,7 @@ class PKONECoil(DriverPlatformInterface):
             return "PKONE Unknown Board"
         return "PKONE Extension Board {}".format(self.number.board_address_id)
 
-    def get_recycle_time_ms_for_cmd(self, recycle, pulse_ms):
+    def get_recycle_time_ms_for_cmd(self, recycle, pulse_ms) -> int:
         """Return recycle ms."""
         if not recycle:
             return 0
@@ -78,12 +78,12 @@ class PKONECoil(DriverPlatformInterface):
         # send the new coil configuration
         self._config_state = new_config_state
         cmd = "PCC{}{:02d}{:03d}{:02d}{:02d}{:03d}".format(self.number.board_address_id,
-                                                            self.number.coil_number,
-                                                            pulse_settings.duration,
-                                                            # power must be mapped from 0-1 to 0-99
-                                                            int(pulse_settings.power * 99),
-                                                            int(hold_settings.power * 99) if hold_settings else 0,
-                                                            recycle_time)
+                                                           self.number.coil_number,
+                                                           pulse_settings.duration,
+                                                           # power must be mapped from 0-1 to 0-99
+                                                           int(pulse_settings.power * 99),
+                                                           int(hold_settings.power * 99) if hold_settings else 0,
+                                                           recycle_time)
         self.log.debug("Sending Configure Coil command: %s", cmd)
         self.send(cmd)
 
@@ -98,20 +98,21 @@ class PKONECoil(DriverPlatformInterface):
                           pulse_settings: PulseSettings, hold_settings: Optional[HoldSettings]) -> None:
         """Set a hardware rule for an autofire coil."""
         self.hardware_rule = True
+
         cmd = "PHR{}{:02d}{}{:02d}{}{:02d}{}" \
-              "{:03d}{:03d}{:02d}{:02d){:03d}".format(self.number.board_address_id,
-                                                       self.number.coil_number,
-                                                       mode,
-                                                       switch_settings.hw_switch.number.switch_number,
-                                                       1 if switch_settings.invert else 0,
-                                                       eos_switch_settings.hw_switch.number.switch_number,
-                                                       1 if eos_switch_settings and eos_switch_settings.invert else 0,
-                                                       delay_time,
-                                                       pulse_settings.duration,
-                                                       int(pulse_settings.power * 99),
-                                                       int(hold_settings.power * 99) if hold_settings else 0,
-                                                       self.get_recycle_time_ms_for_cmd(self.config.default_recycle,
-                                                                                        pulse_settings.duration))
+              "{:03d}{:03d}{:02d}{:02d}{:03d}".format(self.number.board_address_id,
+                                                      self.number.coil_number,
+                                                      mode,
+                                                      switch_settings.hw_switch.number.switch_number,
+                                                      1 if switch_settings.invert else 0,
+                                                      eos_switch_settings.hw_switch.number.switch_number if eos_switch_settings else 0,
+                                                      1 if eos_switch_settings and eos_switch_settings.invert else 0,
+                                                      delay_time,
+                                                      pulse_settings.duration,
+                                                      int(pulse_settings.power * 99),
+                                                      int(hold_settings.power * 99) if hold_settings else 0,
+                                                      self.get_recycle_time_ms_for_cmd(self.config.default_recycle,
+                                                                                       pulse_settings.duration))
 
         self.log.debug("Writing Hardware Rule for coil: %s", cmd)
         self.send(cmd)

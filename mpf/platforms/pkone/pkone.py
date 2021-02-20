@@ -199,7 +199,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
             raise AssertionError("PKONE Extension {} does not exist for coil {}".format(board_id, number))
 
         coil_count = self.pkone_extensions[board_id].coil_count
-        if coil_count < coil_num:
+        if coil_count < coil_num or coil_num < 1:
             raise AssertionError("PKONE Extension {} only has {} coils ({} - {}). Coil: {}".format(
                 board_id, coil_count, 1, coil_count, number))
 
@@ -229,6 +229,15 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
         coil_number = self._parse_coil_number(str(number))
         return PKONECoil(config, self, coil_number, platform_settings)
 
+    @staticmethod
+    def _check_coil_switch_combination(coil: DriverSettings, switch: SwitchSettings):
+        """Checks to see if the coil/switch combination is legal for hardware rules"""
+
+        # coil and switch must be on the same extension board (same board address id)
+        if switch.hw_switch.number.board_address_id != coil.hw_driver.number.board_address_id:
+            raise AssertionError("Coil {} and switch {} are on different boards. Cannot apply hardware rule!".format(
+                coil.hw_driver.number, switch.hw_switch.number))
+
     def clear_hw_rule(self, switch: SwitchSettings, coil: DriverSettings):
         """Clear a hardware rule.
 
@@ -246,7 +255,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
         self.debug_log("Clearing Hardware Rule for coil: %s, switch: %s",
                        coil.hw_driver.number, switch.hw_switch.number)
         driver = coil.hw_driver
-        driver.clear_hardware_rule(driver.number)
+        driver.clear_hardware_rule()
 
     def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit rule on driver.
@@ -254,6 +263,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
         Pulses a driver when a switch is hit. When the switch is released the pulse continues. Typically used for
         autofire coils such as pop bumpers.
         """
+        self._check_coil_switch_combination(coil, enable_switch)
         driver = coil.hw_driver
         driver.set_hardware_rule(1, enable_switch, None, 0, coil.pulse_settings, None)
 
@@ -264,6 +274,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
         When the switch is released the pulse continues.
         Typically used for kickbacks.
         """
+        self._check_coil_switch_combination(coil, enable_switch)
         driver = coil.hw_driver
         driver.set_hardware_rule(2, enable_switch, None, delay_ms, coil.pulse_settings, None)
 
@@ -273,6 +284,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
         Pulses a driver when a switch is hit. When the switch is released the pulse is canceled. Typically used on
         the main coil for dual coil flippers without eos switch.
         """
+        self._check_coil_switch_combination(coil, enable_switch)
         driver = coil.hw_driver
         driver.set_hardware_rule(3, enable_switch, None, 0, coil.pulse_settings, coil.hold_settings)
 
@@ -282,6 +294,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
         Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
         the pulse is canceled and the driver gets disabled. Typically used for single coil flippers.
         """
+        self._check_coil_switch_combination(coil, enable_switch)
         driver = coil.hw_driver
         driver.set_hardware_rule(4, enable_switch, None, 0, coil.pulse_settings, coil.hold_settings)
 
@@ -294,6 +307,8 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
         the pulse is canceled and the driver gets disabled. When the eos_switch is hit the pulse is canceled
         and the driver becomes disabled. Typically used on the main coil for dual-wound coil flippers with eos switch.
         """
+        self._check_coil_switch_combination(coil, enable_switch)
+        self._check_coil_switch_combination(coil, eos_switch)
         driver = coil.hw_driver
         driver.set_hardware_rule(5, enable_switch, eos_switch, 0, coil.pulse_settings, coil.hold_settings)
 
@@ -346,23 +361,6 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
     def get_coil_config_section(cls):
         """Return coil config section."""
         return "pkone_coils"
-
-    def _check_switch_coil_combination(self, switch, coil):
-        switch_number = int(switch.hw_switch.number[0])
-        coil_number = int(coil.hw_driver.number)
-
-        switch_index = 0
-        coil_index = 0
-        for extension_board in self.pkone_extensions.values():
-            # if switch and coil are on the same board we are fine
-            if switch_index <= switch_number < switch_index + extension_board.switch_count and \
-                    coil_index <= coil_number < coil_index + extension_board.coil_count:
-                return
-            coil_index += extension_board.coil_count
-            switch_index += extension_board.switch_count
-
-        raise AssertionError("Driver {} and switch {} are on different boards. Cannot apply rule!".format(
-            coil.hw_driver.number, switch.hw_switch.number))
 
     def _parse_switch_number(self, number: str) -> PKONESwitchNumber:
         try:

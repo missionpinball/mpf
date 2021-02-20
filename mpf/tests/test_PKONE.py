@@ -99,6 +99,7 @@ class TestPKONE(MpfTestCase):
             'PSA': 'PSA011000000000000000000000000000000000X100000000000000000000000000000000000XE',
             'PCC0040000000000': None,
             'PCC0060000000000': None,
+            'PCC0070000000000': None,
             'PCC1080000000000': None,
             'PCC1010000000000': None,
             'PCC1020000000000': None,
@@ -168,6 +169,16 @@ class TestPKONE(MpfTestCase):
             self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '0-17',
                                                            {"recycle_ms": 10})
 
+        # board 0 has 10 coils/drivers. configuring driver 11 should not work
+        with self.assertRaises(AssertionError):
+            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '0-11',
+                                                           {"recycle_ms": 10})
+
+        # board 0 has 10 coils/drivers. configuring driver 0 should not work (only 1-10)
+        with self.assertRaises(AssertionError):
+            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '0-0',
+                                                           {"recycle_ms": 10})
+
         # only extension boards 0-1 exist
         with self.assertRaises(AssertionError):
             self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '4-1',
@@ -228,37 +239,24 @@ class TestPKONE(MpfTestCase):
 
     def test_rules(self):
         self._test_enable_exception_hw_rule()
-        self._test_two_rules_one_switch()
+        # self._test_two_rules_one_switch()
         self._test_hw_rule_pulse()
-        self._test_hw_rule_pulse_pwm32()
         self._test_hw_rule_pulse_inverted_switch()
         self._test_hw_rule_same_board()
 
     def _test_hw_rule_same_board(self):
-        self.controller.expected_commands = {
-            "DN:21,01,07,10,0A,FF,00,00,14": "DN:P"
-        }
-        # coil and switch are on different boards but first 8 switches always work
-        self.machine.autofires["ac_different_boards"].enable()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.controller.expected_commands)
+        # coil and switch are on different boards
+        with self.assertRaises(AssertionError):
+            self.machine.autofires["ac_different_boards"].enable()
+            self.advance_time_and_run(.1)
 
-        # switch and coil on board 3. should work
+        # switch and coil on board with address id 1. should work
         self.controller.expected_commands = {
-            "DN:21,01,39,10,0A,FF,00,00,14": "DN:P",
-            "SN:39,01,02,02": "SN:P"
+            "PHR10210100000000109900000": None
         }
         self.machine.autofires["ac_board_3"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
-
-        self.controller.expected_commands = {
-            "DN:10,01,03,10,0A,89,00,00,14": "DN:P",
-        }
-        # coil and switch are on different boards
-        with self.assertRaises(AssertionError):
-            self.machine.autofires["ac_broken_combination"].enable()
-            self.advance_time_and_run(.1)
 
     def _test_enable_exception_hw_rule(self):
         # enable coil which does not have allow_enable
@@ -281,70 +279,26 @@ class TestPKONE(MpfTestCase):
 
     def _test_hw_rule_pulse(self):
         self.controller.expected_commands = {
-            "DN:07,01,16,10,0A,FF,00,00,14": "DN:P",  # hw rule
-            "SN:16,01,02,02": "SN:P"                  # debounce quick on switch
+            "PHR00712200000000109900000": None     # hw rule
         }
         self.machine.autofires["ac_slingshot_test"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 
         self.controller.expected_commands = {
-            "DN:07,81": "DN:P"
+            "PHD007": None
         }
         self.machine.autofires["ac_slingshot_test"].disable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 
-    def _test_hw_rule_pulse_pwm32(self):
-        self.controller.expected_commands = {
-            "DN:11,81,00,10,0A,AAAAAAAA,00,00,00": "DN:P",
-            "TN:11,01": "TN:P"
-        }
-        self.machine.coils["c_pulse_pwm32_mask"].pulse()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.controller.expected_commands)
-
-        self.controller.expected_commands = {
-            "DN:11,C1,00,18,0A,AAAAAAAA,4A4A4A4A,00": "DN:P"
-        }
-        self.machine.coils["c_pulse_pwm32_mask"].enable()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.controller.expected_commands)
-
     def _test_hw_rule_pulse_inverted_switch(self):
         self.controller.expected_commands = {
-            "DN:07,11,1A,10,0A,FF,00,00,14": "DN:P",
-            "SN:1A,01,02,02": "SN:P"
+            "PHR00712610000000109900000": None
         }
         self.machine.autofires["ac_inverted_switch"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
-
-    def test_firmware_update(self):
-        commands = []
-
-        def _catch_update(cmd):
-            commands.append(cmd)
-            return len(cmd)
-        parse_func = self.controller.write
-        self.controller.write = _catch_update
-        output = self.machine.default_platform.update_firmware()
-        self.advance_time_and_run()
-        self.controller.write = parse_func
-        # check if we send the dummy update
-        self.assertEqual([b'BL:AA55\r>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-                          b'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-                          b'>>>>>>>>>>>>>>>>>>>>>>>>>\rBL:AA55\r<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
-                          b'<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
-                          b'<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\rBL:AA55\r>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-                          b'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-                          b'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\rDUMMY UPDAT'
-                          b'E\r', b'WD:3e8\r', b'WD:3e8\r'], commands)
-        expected_output = """NET CPU is version 01.03
-Found an update to version 1.04 for the NET CPU. Will flash file firmware/FAST_NET_01_04_00.txt
-Update done.
-"""
-        self.assertEqual(expected_output, output)
 
     def test_servo(self):
         # go to min position
