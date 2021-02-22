@@ -28,7 +28,7 @@ class PKONESimpleLED(LightPlatformSoftwareFade):
     def set_brightness(self, brightness: float):
         """Set simple LED brightness."""
         on_off = 1 if brightness > 0 else 0
-        cmd = "PLS{}{:02d}{}{:02d}E".format(self.number.board_address_id, self.number.light_number, on_off,
+        cmd = "PLS{}{:02d}{}{:02d}E".format(self.number.board_address_id, self.number.led_number, on_off,
                                             int(brightness * 99))
         self.send(cmd)
 

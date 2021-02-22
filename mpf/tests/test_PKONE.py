@@ -97,8 +97,8 @@ class TestPKONE(MpfTestCase):
             'PCB7': 'PCB7N',
             'PRS': 'PRS',
             'PSA': 'PSA011000000000000000000000000000000000X100000000000000000000000000000000000XE',
-            'PCC0040000000000': None,
-            'PCC0060000000000': None,
+            'PCC1040000000000': None,
+            'PCC1060000000000': None,
             'PCC0070000000000': None,
             'PCC1080000000000': None,
             'PCC1010000000000': None,
@@ -152,7 +152,8 @@ class TestPKONE(MpfTestCase):
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
     def _test_coil_configure(self):
-        self.assertEqual("PKONE Extension Board 0", self.machine.coils["c_test"].hw_driver.get_board_name())
+        self.assertEqual("PKONE Extension Board 0", self.machine.coils["c_slingshot_test"].hw_driver.get_board_name())
+        self.assertEqual("PKONE Extension Board 1", self.machine.coils["c_test"].hw_driver.get_board_name())
         self.assertEqual("PKONE Extension Board 1", self.machine.coils["c_flipper_hold"].hw_driver.get_board_name())
         # last driver on board
         self.controller.expected_commands = {
@@ -191,8 +192,8 @@ class TestPKONE(MpfTestCase):
 
     def _test_pulse(self):
         self.controller.expected_commands = {
-            "PCC0040239900027": None,
-            "PCP004": None
+            "PCC1040239900027": None,
+            "PCP104": None
         }
         # pulse coil 4f
         self.machine.coils["c_test"].pulse()
@@ -230,8 +231,8 @@ class TestPKONE(MpfTestCase):
 
     def _test_allow_enable(self):
         self.controller.expected_commands = {
-            "PCC0060239999000": None,
-            "PCH006": None
+            "PCC1060239999000": None,
+            "PCH106": None
         }
         self.machine.coils["c_test_allow_enable"].enable()
         self.advance_time_and_run(.1)
@@ -268,8 +269,8 @@ class TestPKONE(MpfTestCase):
 
     def _test_two_rules_one_switch(self):
         self.controller.expected_commands = {
-            "PHR00410300000000239900027": None,
-            "PHR00610300000000239900000": None
+            "PHR10410400000000239900027": None,
+            "PHR10610400000000239900000": None
         }
         self.post_event("ac_same_switch")
         self.hit_and_release_switch("s_flipper")
@@ -404,8 +405,8 @@ class TestPKONE(MpfTestCase):
     def test_flipper_single_coil(self):
         # manual flip no hw rule
         self.controller.expected_commands = {
-            "DN:20,81,00,10,0A,FF,00,00,00": "DN:P",
-            "TN:20,01": "TN:P",
+            "PCC1010109900000": None,
+            "PCP101": None,
         }
         self.machine.coils["c_flipper_main"].pulse()
         self.advance_time_and_run(.1)
@@ -413,7 +414,8 @@ class TestPKONE(MpfTestCase):
 
         # manual enable no hw rule
         self.controller.expected_commands = {
-            "DN:20,C1,00,18,0A,FF,01,00": "DN:P"
+            "PCH101": None,
+            "PCC1010109912000": None
         }
         self.machine.coils["c_flipper_main"].enable()
         self.advance_time_and_run(.1)
@@ -421,7 +423,7 @@ class TestPKONE(MpfTestCase):
 
         # manual disable no hw rule
         self.controller.expected_commands = {
-            "TN:20,02": "TN:P"
+            "PCR101": None
         }
         self.machine.coils["c_flipper_main"].disable()
         self.advance_time_and_run(.1)
@@ -429,8 +431,7 @@ class TestPKONE(MpfTestCase):
 
         # flipper rule enable
         self.controller.expected_commands = {
-            "DN:20,01,01,18,0B,FF,01,00,00": "DN:P",
-            "SN:01,01,02,02": "SN:P"
+            "PHR10140200000000119912000": None
         }
         self.machine.flippers["f_test_single"].enable()
         self.advance_time_and_run(.1)
@@ -438,9 +439,7 @@ class TestPKONE(MpfTestCase):
 
         # manual flip with hw rule in action
         self.controller.expected_commands = {
-            "DN:20,81,00,10,0A,FF,00,00,00": "DN:P",    # configure pulse
-            "TN:20,01": "TN:P",                         # pulse
-            "DN:20,01,01,18,0B,FF,01,00,00": "DN:P",    # restore rule
+            "PCP101": None  # pulse (no need to configure because config did not change)
         }
         self.machine.coils["c_flipper_main"].pulse()
         self.advance_time_and_run(.1)
@@ -448,7 +447,8 @@ class TestPKONE(MpfTestCase):
 
         # manual flip with hw rule in action without reconfigure (same pulse)
         self.controller.expected_commands = {
-            "TN:20,01": "TN:P",                         # pulse
+            "PCC1010119912000": None,       # reconfigure coil
+            "PCP101": None,                 # pulse
         }
         self.machine.coils["c_flipper_main"].pulse(11)
         self.advance_time_and_run(.1)
@@ -456,7 +456,7 @@ class TestPKONE(MpfTestCase):
 
         # manual enable with hw rule (same pulse)
         self.controller.expected_commands = {
-            "TN:20,03": "TN:P"
+            "PCH101": None      # pulse (config did not change so no config msg necessary)
         }
         self.machine.coils["c_flipper_main"].enable(pulse_ms=11)
         self.advance_time_and_run(.1)
@@ -464,8 +464,7 @@ class TestPKONE(MpfTestCase):
 
         # manual disable with hw rule
         self.controller.expected_commands = {
-            "TN:20,02": "TN:P",
-            "TN:20,00": "TN:P"   # reenable autofire rule
+            "PCR101": None,
         }
         self.machine.coils["c_flipper_main"].disable()
         self.advance_time_and_run(.1)
@@ -473,7 +472,8 @@ class TestPKONE(MpfTestCase):
 
         # manual enable with hw rule (different pulse)
         self.controller.expected_commands = {
-            "DN:20,C1,00,18,0A,FF,01,00": "DN:P",       # configure pwm + enable
+            "PCC1010109912000": None,       # configure + enable
+            "PCH101": None
         }
         self.machine.coils["c_flipper_main"].enable()
         self.advance_time_and_run(.1)
@@ -481,9 +481,7 @@ class TestPKONE(MpfTestCase):
 
         # manual disable with hw rule
         self.controller.expected_commands = {
-            "TN:20,02": "TN:P",
-            "DN:20,01,01,18,0B,FF,01,00,00": "DN_P",    # configure rules
-            "TN:20,00": "TN:P"                          # reenable autofire rule
+            "PCR101": None
         }
         self.machine.coils["c_flipper_main"].disable()
         self.advance_time_and_run(.1)
@@ -491,16 +489,15 @@ class TestPKONE(MpfTestCase):
 
         # disable rule
         self.controller.expected_commands = {
-            "DN:20,81": "DN:P"
+            "PHD101": None
         }
         self.machine.flippers["f_test_single"].disable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 
-        # manual flip no hw rule
+        # manual flip no hw rule (config is still cached)
         self.controller.expected_commands = {
-            "DN:20,81,00,10,0A,FF,00,00,00": "DN:P",
-            "TN:20,01": "TN:P",
+            "PCP101": None
         }
         self.machine.coils["c_flipper_main"].pulse()
         self.advance_time_and_run(.1)
@@ -508,82 +505,41 @@ class TestPKONE(MpfTestCase):
 
         # manual flip again with cached config
         self.controller.expected_commands = {
-            "TN:20,01": "TN:P",
+            "PCP101": None
         }
         self.machine.coils["c_flipper_main"].pulse()
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 
     def test_flipper_two_coils(self):
-        # we pulse the main coil (20)
-        # hold coil (21) is pulsed + enabled
+        # we pulse the main coil
+        # hold coil is pulsed + enabled
         self.controller.expected_commands = {
-            "DN:20,01,01,18,0A,FF,00,00,00": "DN:P",
-            "DN:21,01,01,18,0A,FF,01,00,00": "DN:P",
-            "SN:01,01,02,02": "SN:P",
+            "PHR10130200000000109900000": None,
+            "PHR10240200000000109912000": None,
         }
         self.machine.flippers["f_test_hold"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 
         self.controller.expected_commands = {
-            "DN:20,81": "DN:P",
-            "DN:21,81": "DN:P"
+            "PHD101": None,
+            "PHD102": None
         }
         self.machine.flippers["f_test_hold"].disable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 
-    def test_dmd_update(self):
+    def test_leds(self):
+        self._test_simple_led()
+        # self._test_ws281x_led()
 
-        # test configure
-        dmd = self.machine.default_platform.configure_dmd()
-
-        # test set frame to buffer
-        frame = bytearray()
-        for i in range(4096):
-            frame.append(64 + i % 192)
-
-        frame = bytes(frame)
-
-        # test draw
-        self.dmd_cpu.expected_commands = {
-            b'BM:' + frame: False
-        }
-        dmd.update(frame)
-
-        self.advance_time_and_run(.1)
-
-        self.assertFalse(self.dmd_cpu.expected_commands)
-
-    def test_bootloader_crash(self):
-        # Test that the machine stops if the RGB processor sends a bootloader msg
-        self.machine.stop = MagicMock()
-        self.machine.default_platform.process_received_message("!B:00", "RGB")
-        self.advance_time_and_run(1)
-        self.assertTrue(self.machine.stop.called)
-
-    def test_bootloader_crash_ignored(self):
-        # Test that RGB processor bootloader msgs can be ignored
-        self.machine.default_platform.config['ignore_rgb_crash'] = True
-        self.mock_event('fast_rgb_rebooted')
-        self.machine.stop = MagicMock()
-        self.machine.default_platform.process_received_message("!B:00", "RGB")
-        self.advance_time_and_run(1)
-        self.assertFalse(self.machine.stop.called)
-        self.assertEventCalled('fast_rgb_rebooted')
-
-    def test_lights_and_leds(self):
-        self._test_matrix_light()
-        self._test_pdb_gi_light()
-        self._test_pdb_led()
-
-    def _test_matrix_light(self):
-        # test enable of matrix light
+    def _test_simple_led(self):
+        # test enable of simple led
         self.controller.expected_commands = {
             "L1:23,FF": "L1:P",
         }
-        self.machine.lights["test_pdb_light"].on()
+        self.machine.lights["test_simple_led"].on()
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 
