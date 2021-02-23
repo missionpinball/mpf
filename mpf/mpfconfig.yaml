@@ -253,20 +253,20 @@ modes:
 
 auditor:
     save_events:
-        game_started
-        ball_ended
-        game_ended
+      -  game_started
+      -  ball_ended
+      -  game_ended
     num_player_top_records: 10
     audit:
-        shots
-        switches
-        events
-        player
+      -  shots
+      -  switches
+      -  events
+      -  player
     events:
-        game_started
-        game_ended
+      -  game_started
+      -  game_ended
     player:
-        score
+      -  score
 
 sound_system:
     tracks:
