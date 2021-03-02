@@ -480,11 +480,10 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Parse light channels from number string."""
         if subtype == "simple":
-            number = self.convert_number_from_config(number)
-
+            board_address_id, index = number.split('-')
             return [
                 {
-                    "number": number
+                    "number": "{}-{}-0".format(board_address_id, index)
                 }
             ]
 
