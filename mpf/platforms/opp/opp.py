@@ -109,7 +109,6 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self._light_system = PlatformBatchLightSystem(self.machine.clock, self._send_multiple_light_update,
                                                       self.machine.config['mpf']['default_light_hw_update_hz'],
                                                       128)
-        self._light_system.start()
 
     async def _send_multiple_light_update(self, sequential_brightness_list: List[Tuple[OPPModernLightChannel,
                                                                                        float, int]]):
@@ -147,10 +146,12 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         for connection in self.serial_connections:
             await connection.start_read_loop()
 
-        if [version for version in self.min_version.values() if version < 0x00020100]:
+        if [version for version in self.min_version.values() if version < 0x02010000]:
             # if we run any CPUs with firmware prior to 2.1.0 start incands updater
             self._incand_task = self.machine.clock.schedule_interval(self.update_incand,
                                                                      1 / self.config['incand_update_hz'])
+
+        self._light_system.start()
 
     def stop(self):
         """Stop hardware and close connections."""
@@ -325,7 +326,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         This is used for board with firmware < 2.1.0
         """
         for incand in self.opp_incands.values():
-            if self.min_version[incand.chain_serial] > 0x00020100:
+            if self.min_version[incand.chain_serial] >= 0x02010000:
                 continue
             whole_msg = bytearray()
             # Check if any changes have been made
@@ -875,8 +876,11 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                                         "with card number {} but number '{}' is "
                                         "invalid".format(card, light_num), 22)
 
-            return OPPModernLightChannel(chain_serial, int(card), int(light_num), self._light_system)
-        if subtype == "matrix" and self.min_version[chain_serial] >= 0x00020100:
+            light = OPPModernLightChannel(chain_serial, int(card), int(light_num), self._light_system)
+            self._light_system.mark_dirty(light)
+            return light
+
+        if subtype == "matrix" and self.min_version[chain_serial] >= 0x02010000:
             # modern matrix lights
             if index not in self.matrix_light_cards:
                 self.raise_config_error("A request was made to configure an OPP matrix light "
@@ -887,7 +891,9 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                                         "with card number {} but number '{}' is "
                                         "invalid".format(card, light_num), 19)
 
-            return OPPModernLightChannel(chain_serial, int(card), int(light_num) + 0x2000, self._light_system)
+            light = OPPModernLightChannel(chain_serial, int(card), int(light_num) + 0x2000, self._light_system)
+            self._light_system.mark_dirty(light)
+            return light
 
         if subtype in ("incand", "matrix"):
             if index not in self.opp_incands:
@@ -898,8 +904,10 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                 self.raise_config_error("A request was made to configure an OPP incand light "
                                         "with card number {} but number '{}' is "
                                         "invalid".format(card, light_num), 21)
-            if self.min_version[chain_serial] >= 0x00020100:
-                return self.opp_incands[index].configure_modern_fade_incand(light_num, self._light_system)
+            if self.min_version[chain_serial] >= 0x02010000:
+                light = self.opp_incands[index].configure_modern_fade_incand(light_num, self._light_system)
+                self._light_system.mark_dirty(light)
+                return light
 
             # legacy incands with new or old subtype
             return self.opp_incands[index].configure_software_fade_incand(light_num)
@@ -931,7 +939,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
     def _verify_coil_and_switch_fit(self, switch, coil):
         chain_serial, card, solenoid = coil.hw_driver.number.split('-')
         sw_chain_serial, sw_card, sw_num = switch.hw_switch.number.split('-')
-        if self.min_version[chain_serial] >= 0x00020000:
+        if self.min_version[chain_serial] >= 0x02000000:
             if chain_serial != sw_chain_serial or card != sw_card:
                 self.raise_config_error('Invalid switch being configured for driver. Driver = {} '
                                         'Switch = {}. Driver and switch have to be on the same '
@@ -1029,7 +1037,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     def _remove_switch_coil_mapping(self, switch_num, driver: "OPPSolenoid"):
         """Remove mapping between switch and coil."""
-        if self.min_version[driver.sol_card.chain_serial] < 0x00020000:
+        if self.min_version[driver.sol_card.chain_serial] < 0x02000000:
             return
 
         _, _, coil_num = driver.number.split('-')
@@ -1048,7 +1056,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     def _add_switch_coil_mapping(self, switch_num, driver: "OPPSolenoid"):
         """Add mapping between switch and coil."""
-        if self.min_version[driver.sol_card.chain_serial] < 0x00020000:
+        if self.min_version[driver.sol_card.chain_serial] < 0x02000000:
             return
         _, _, coil_num = driver.number.split('-')
         msg = bytearray()
