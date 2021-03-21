@@ -143,13 +143,12 @@ software_update_script: single|str|None
         await self._make_menu(self._load_diagnostic_light_menu_entries())
 
     # Audits
-    # @staticmethod
     def _load_audit_menu_entries(self) -> List[ServiceMenuEntry]: # () -> List[ServiceMenuEntry]:
         """Return the audit menu items with label and callback."""
         return [
             # ServiceMenuEntry("Earning Audits", None),
-            ServiceMenuEntry("Standard Audits", self._audit_standard_menu), # None),
-            ServiceMenuEntry("Feature Audits", self._audit_feature_menu), # None),
+            ServiceMenuEntry("Standard Audits", self._audit_standard_menu),
+            ServiceMenuEntry("Feature Audits", self._audit_feature_menu),
         ]
 
     async def _audits_menu(self):
