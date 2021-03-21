@@ -14,6 +14,7 @@ class BallDeviceStateHandler:
         """Initialise handler.
 
         Args:
+        ----
             ball_device(mpf.devices.ball_device.ball_device.BallDevice): parent ball device
         """
         self.ball_device = ball_device

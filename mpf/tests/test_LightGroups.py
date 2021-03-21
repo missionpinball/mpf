@@ -38,6 +38,16 @@ class TestLightGroups(MpfTestCase):
         self.assertEqual(15, self.machine.lights["stripe2_light_1"].config['x'])
         self.assertEqual(20, self.machine.lights["stripe2_light_1"].config['y'])
 
+        # stripe 3
+        self.assertEqual("led-ABC-123", self.machine.lights["stripe3_light_0"].hw_drivers["red"][0].number)
+        self.assertEqual("led-led-ABC-123+1", self.machine.lights["stripe3_light_0"].hw_drivers["green"][0].number)
+        self.assertEqual("led-led-led-ABC-123+1+1",
+                         self.machine.lights["stripe3_light_0"].hw_drivers["blue"][0].number)
+        self.assertEqual("led-led-led-led-ABC-123+1+1+1",
+                         self.machine.lights["stripe3_light_0"].hw_drivers["white"][0].number)
+        self.assertEqual("led-led-led-led-led-ABC-123+1+1+1+1",
+                         self.machine.lights["stripe3_light_1"].hw_drivers["red"][0].number)
+
         # ring 1
         self.assertEqual("led-20-r", self.machine.lights["ring1_light_0"].hw_drivers["red"][0].number)
         self.assertEqual("led-21-r", self.machine.lights["ring1_light_1"].hw_drivers["red"][0].number)

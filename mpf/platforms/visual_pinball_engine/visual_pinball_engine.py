@@ -37,13 +37,14 @@ class VisualPinballEngineLight(LightPlatformInterface):
 
     """A light in VPE."""
 
-    __slots__ = ["platform", "clock"]
+    __slots__ = ["platform", "clock", "config"]
 
-    def __init__(self, number, platform):
+    def __init__(self, number, platform, config):
         """Initialise LED."""
         super().__init__(number)
         self.platform = platform    # type: VisualPinballEnginePlatform
         self.clock = self.platform.machine.clock
+        self.config = config
 
     def set_fade(self, start_brightness, start_time, target_brightness, target_time):
         """Set fade."""
@@ -121,7 +122,7 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
 
     """VPE platform."""
 
-    __slots__ = ["config", "_known_switches", "_known_lights", "_known_coils", "_initial_switch_state",
+    __slots__ = ["config", "_configured_switches", "_configured_lights", "_configured_coils", "_initial_switch_state",
                  "_switch_poll_task", "platform_rpc", "platform_server"]
 
     def __init__(self, machine):
@@ -130,9 +131,9 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
         self.config = self.machine.config_validator.validate_config("vpe", self.machine.config.get('vpe', {}))
         self._configure_device_logging_and_debug("VPE Platform", self.config)
         self._initial_switch_state = {}
-        self._known_switches = []
-        self._known_lights = []
-        self._known_coils = []
+        self._configured_coils = []
+        self._configured_switches = []
+        self._configured_lights = []
         self._switch_poll_task = None
         self.platform_rpc = None        # type: Optional[MpfHardwareService]
         self.platform_server = None
@@ -152,15 +153,24 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
 
     async def initialize(self):
         """Wait for incoming gRPC connect from VPE."""
-        self.platform_rpc = MpfHardwareService(self.machine)
+        self.platform_rpc = MpfHardwareService(self.machine, self)
         self.platform_server = await self.listen(self.platform_rpc, self.config['listen_port'])
         response = await self.platform_rpc.wait_for_vpe_connect()
         self.info_log("VPE connected")
         self.debug_log("Got response %s", response)
-        self._known_switches = list(response.known_switches_with_initial_state.keys())
-        self._initial_switch_state = response.known_switches_with_initial_state
-        self._known_coils = response.known_coils
-        self._known_lights = response.known_lights
+        self._initial_switch_state = response.initial_switch_states
+
+    def get_configured_switches(self):
+        """Return configured switches."""
+        return self._configured_switches
+
+    def get_configured_coils(self):
+        """Return configured coils."""
+        return self._configured_coils
+
+    def get_configured_lights(self):
+        """Return configured lights."""
+        return self._configured_lights
 
     def stop(self):
         """Stop VPE server."""
@@ -169,13 +179,14 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
             self._switch_poll_task = None
 
         if self.platform_server:
-            self.machine.clock.loop.run_until_complete(self.platform_server.stop())
+            self.machine.clock.loop.run_until_complete(self.platform_server.stop(1))
             self.machine.clock.loop.run_until_complete(self.platform_server.wait_for_termination())
             self.platform_server = None
 
     async def start(self):
         """Start listening for switch changes."""
         await super().start()
+        self.platform_rpc.set_ready()
         self._switch_poll_task = self.machine.clock.loop.create_task(self._switch_poll())
         self._switch_poll_task.add_done_callback(Util.raise_exceptions)
 
@@ -197,16 +208,16 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict) -> "SwitchPlatformInterface":
         """Configure VPE switch."""
         number = str(number)
-        if number not in self._known_switches:
-            self.raise_config_error("Switch {} is not known to VPE".format(number), 1)
-        return VisualPinballEngineSwitch(config, number)
+        switch = VisualPinballEngineSwitch(config, number)
+        self._configured_switches.append(switch)
+        return switch
 
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict) -> "DriverPlatformInterface":
         """Configure VPE driver."""
         number = str(number)
-        if number not in self._known_coils:
-            self.raise_config_error("Coil {} is not known to VPE".format(number), 2)
-        return VisualPinballEngineDriver(config, number, self)
+        coil = VisualPinballEngineDriver(config, number, self)
+        self._configured_coils.append(coil)
+        return coil
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Pulse on hit and hold."""
@@ -275,14 +286,14 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
         """Return initial switch state."""
         return self._initial_switch_state
 
-    def configure_light(self, number: str, subtype: str, platform_settings: dict) -> "LightPlatformInterface":
+    def configure_light(self, number: str, subtype: str, config, platform_settings: dict) -> "LightPlatformInterface":
         """Configure a VPE light."""
         if not subtype:
             subtype = "light"
         number = "{}-{}".format(subtype, number)
-        if number not in self._known_lights:
-            self.raise_config_error("Light {} is not known to VPE".format(number), 3)
-        return VisualPinballEngineLight(number, self)
+        light = VisualPinballEngineLight(number, self, config)
+        self._configured_lights.append(light)
+        return light
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Parse channel str to a list of channels."""

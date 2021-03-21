@@ -283,6 +283,7 @@ class PhysicalBallCounter:
         """Wait for ball count changes and return the new count.
 
         Args:
+        ----
             old_count: Old ball count. Will return when the current count differs
         """
         while True:

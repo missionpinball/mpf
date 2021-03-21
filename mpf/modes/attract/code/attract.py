@@ -103,6 +103,7 @@ class Attract(Mode):
         request was denied by some handler.
 
         Args:
+        ----
             ev_result : Bool result of the boolean event
                 *request_to_start_game.* If any registered event handler did not
                 want the game to start, this will be False. Otherwise it's True.

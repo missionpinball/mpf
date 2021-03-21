@@ -676,7 +676,6 @@ LEDs:
         self.machine.lights["test_led1"].color("red", fade_ms=100)
         self.machine.lights["test_led2"].color("red", fade_ms=95)
 
-
         # align with update task
         self.advance_time_and_run(.1)
 

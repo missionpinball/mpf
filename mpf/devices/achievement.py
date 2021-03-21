@@ -269,6 +269,7 @@ class Achievement(ModeDevice):
         """Load device on mode start and restore state.
 
         Args:
+        ----
             mode: mode which was contains the device
             player: player which is currently active
         """
@@ -302,6 +303,7 @@ class Achievement(ModeDevice):
         """Mode ended.
 
         Args:
+        ----
             mode: mode which stopped
         """
         del mode

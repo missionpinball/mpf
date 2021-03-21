@@ -3,19 +3,41 @@ syntax = "proto3";
 package mpf.vpe;
 
 service MpfHardwareService {
-  rpc Start(MachineConfiguration) returns (stream Commands);
+  rpc Start(MachineState) returns (stream Commands);
+  rpc GetMachineDescription(EmptyRequest) returns (MachineDescription);
   rpc SendSwitchChanges(stream SwitchChanges) returns (EmptyResponse);
   rpc Quit(QuitRequest) returns (EmptyResponse);
 }
 
+message EmptyRequest {}
 message EmptyResponse {}
 message QuitRequest {}
 
-message MachineConfiguration {
-  map<string, bool> known_switches_with_initial_state = 1;
-  repeated string known_lights = 2;
-  repeated string known_coils = 3;
-  // TODO: add MPF optional config here
+message MachineState {
+  map<string, bool> initial_switch_states = 1;
+}
+
+message SwitchDescription {
+  string name = 1;
+  string hardware_number = 2;
+  string switch_type = 3;   // NO or NC
+}
+
+message CoilDescription {
+  string name = 1;
+  string hardware_number = 2;
+}
+
+message LightDescription {
+  string name = 1;
+  string hardware_channel_number = 2;
+  string hardware_channel_color = 3;
+}
+
+message MachineDescription {
+  repeated SwitchDescription switches = 1;
+  repeated CoilDescription coils = 2;
+  repeated LightDescription lights = 3;
 }
 
 // Platform streams switch changes to MPF

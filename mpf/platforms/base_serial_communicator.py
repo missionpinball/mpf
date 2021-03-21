@@ -23,6 +23,7 @@ class BaseSerialCommunicator:
         """Initialise Serial Connection Hardware.
 
         Args:
+        ----
             platform(mpf.core.platform.BasePlatform): the platform
             port: Port to open.
             baud: Baudrate to use
@@ -86,6 +87,7 @@ class BaseSerialCommunicator:
         """Read until separator.
 
         Args:
+        ----
             separator: Read until this separator byte.
             min_chars: Minimum message length before separator
         """
@@ -141,6 +143,7 @@ class BaseSerialCommunicator:
         """Send a message to the remote processor over the serial connection.
 
         Args:
+        ----
             msg: Byes of the message you want to send.
         """
         if self.debug:
@@ -153,6 +156,7 @@ class BaseSerialCommunicator:
         Msg may be partial.
 
         Args:
+        ----
             msg: Bytes of the message (part) received.
         """
         raise NotImplementedError("Implement!")

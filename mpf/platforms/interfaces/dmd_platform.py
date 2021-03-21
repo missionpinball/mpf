@@ -15,6 +15,7 @@ class DmdPlatformInterface(metaclass=abc.ABCMeta):
         """Update data on the DMD.
 
         Args:
+        ----
             data: bytes to send to DMD
         """
         raise NotImplementedError

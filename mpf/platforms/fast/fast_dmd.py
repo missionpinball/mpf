@@ -23,6 +23,7 @@ class FASTDMD(DmdPlatformInterface):
         """Update data on the DMD.
 
         Args:
+        ----
             data: bytes to send to DMD
         """
         self.send(data)

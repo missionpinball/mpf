@@ -77,6 +77,22 @@ class TestAuditor(MpfTestCase):
         self.assertMachineVarEqual(2, "audits_switches_s_test")
         self.assertEqual(2, data_manager.written_data['switches']['s_test'])
 
+        self.post_event("test_event1")
+        self.post_event("test_event2")
+        self.post_event("test_event3")
+        self.advance_time_and_run(.1)
+
+        self.assertMachineVarEqual(2, "audits_switches_s_test")
+        self.assertEqual(1, data_manager.written_data['events']['test_event1'])
+        self.assertEqual(1, data_manager.written_data['events']['test_event2'])
+        self.assertNotIn("test_event3", data_manager.written_data['events'])
+
+        self.post_event("test_event1")
+        self.advance_time_and_run(.1)
+
+        self.assertEqual(2, data_manager.written_data['events']['test_event1'])
+        self.assertEqual(1, data_manager.written_data['events']['test_event2'])
+
         # should not crash on unknown switch
         self.machine.switch_controller.process_switch_by_num(123123123123, 1, self.machine.default_platform)
         self.advance_time_and_run(.1)

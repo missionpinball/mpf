@@ -6,12 +6,7 @@ from . import platform_pb2 as platform__pb2
 
 
 class MpfHardwareServiceStub(object):
-    """import "get_plaform_details.proto";
-    import "coils.proto";
-    import "fade_light.proto";
-    import "switch.proto";
-
-    """
+    """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
         """Constructor.
@@ -21,8 +16,13 @@ class MpfHardwareServiceStub(object):
         """
         self.Start = channel.unary_stream(
                 '/mpf.vpe.MpfHardwareService/Start',
-                request_serializer=platform__pb2.MachineConfiguration.SerializeToString,
+                request_serializer=platform__pb2.MachineState.SerializeToString,
                 response_deserializer=platform__pb2.Commands.FromString,
+                )
+        self.GetMachineDescription = channel.unary_unary(
+                '/mpf.vpe.MpfHardwareService/GetMachineDescription',
+                request_serializer=platform__pb2.EmptyRequest.SerializeToString,
+                response_deserializer=platform__pb2.MachineDescription.FromString,
                 )
         self.SendSwitchChanges = channel.stream_unary(
                 '/mpf.vpe.MpfHardwareService/SendSwitchChanges',
@@ -37,14 +37,15 @@ class MpfHardwareServiceStub(object):
 
 
 class MpfHardwareServiceServicer(object):
-    """import "get_plaform_details.proto";
-    import "coils.proto";
-    import "fade_light.proto";
-    import "switch.proto";
-
-    """
+    """Missing associated documentation comment in .proto file."""
 
     def Start(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetMachineDescription(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -67,8 +68,13 @@ def add_MpfHardwareServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'Start': grpc.unary_stream_rpc_method_handler(
                     servicer.Start,
-                    request_deserializer=platform__pb2.MachineConfiguration.FromString,
+                    request_deserializer=platform__pb2.MachineState.FromString,
                     response_serializer=platform__pb2.Commands.SerializeToString,
+            ),
+            'GetMachineDescription': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetMachineDescription,
+                    request_deserializer=platform__pb2.EmptyRequest.FromString,
+                    response_serializer=platform__pb2.MachineDescription.SerializeToString,
             ),
             'SendSwitchChanges': grpc.stream_unary_rpc_method_handler(
                     servicer.SendSwitchChanges,
@@ -88,12 +94,7 @@ def add_MpfHardwareServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class MpfHardwareService(object):
-    """import "get_plaform_details.proto";
-    import "coils.proto";
-    import "fade_light.proto";
-    import "switch.proto";
-
-    """
+    """Missing associated documentation comment in .proto file."""
 
     @staticmethod
     def Start(request,
@@ -107,8 +108,25 @@ class MpfHardwareService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_stream(request, target, '/mpf.vpe.MpfHardwareService/Start',
-            platform__pb2.MachineConfiguration.SerializeToString,
+            platform__pb2.MachineState.SerializeToString,
             platform__pb2.Commands.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetMachineDescription(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/mpf.vpe.MpfHardwareService/GetMachineDescription',
+            platform__pb2.EmptyRequest.SerializeToString,
+            platform__pb2.MachineDescription.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

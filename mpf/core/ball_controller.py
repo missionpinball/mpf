@@ -23,6 +23,7 @@ class BallController(MpfController):
         """Initialise ball controller.
 
         Args:
+        ----
             machine : :class:`MachineController`. A reference to the instance
                 of the MachineController object.
 
@@ -81,12 +82,13 @@ class BallController(MpfController):
         return balls
 
     def add_captured_ball(self, source: BallDevice) -> None:
-        """Inform ball controller about a capured ball (which might be new)."""
+        """Inform ball controller about a captured ball (which might be new)."""
         self._captured_balls.put_nowait(source)
 
     async def _add_new_balls_to_playfield(self) -> None:
         # initial count
         self.num_balls_known = await self._count_all_balls_in_devices()
+        self.info_log("Initial balls found: %s", self.num_balls_known)
 
         while True:
             capture = await self._captured_balls.get()
@@ -124,12 +126,12 @@ class BallController(MpfController):
             futures = []
             for device in self.machine.ball_devices.values():
                 if not device.is_playfield():
-                    futures.append(asyncio.ensure_future(device.ball_count_handler.counter.wait_for_ball_activity()))
+                    futures.append(asyncio.ensure_future(device.ball_count_handler.counter.wait_for_count_stable()))
 
             try:
                 return self._get_total_balls_in_devices()
             except ValueError:
-                await Util.first(futures)
+                await asyncio.wait(futures)
                 continue
 
     def _count_balls(self) -> int:
@@ -166,12 +168,12 @@ class BallController(MpfController):
             return
 
         for device in self.machine.ball_devices.values():
-            prio = 0
+            priority = 0
             if 'drain' in device.tags or 'trough' in device.tags:  # device is used to drain balls from pf
-                prio += 1   # order handlers
+                priority += 1   # order handlers
                 self.machine.events.add_handler('balldevice_' + device.name +
                                                 '_ball_enter',
-                                                self._ball_drained_handler, priority=20 + prio)
+                                                self._ball_drained_handler, priority=20 + priority)
 
     def dump_ball_counts(self) -> None:
         """Dump ball count of all devices."""
@@ -221,6 +223,7 @@ class BallController(MpfController):
         nowhere, and they always are. :)
 
         Args:
+        ----
             target: String or list of strings of the tags you'd like to
                 collect the balls to. Default of None will be replaced with
                 'home' and 'trough'.
@@ -264,6 +267,7 @@ class BallController(MpfController):
         tagged with 'home' and/or 'trough'.
 
         Args:
+        ----
             target: A string of the tag name or a list of tags names of the
                 ball devices you want all the balls to end up in. Default is
                 ['home', 'trough'].

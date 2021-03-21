@@ -21,6 +21,7 @@ class Auditor:
         """Initialise auditor.
 
         Args:
+        ----
             machine: A reference to the machine controller object.
         """
         if 'auditor' not in machine.config:
@@ -133,6 +134,7 @@ class Auditor:
         """Log an auditable event.
 
         Args:
+        ----
             audit_class: A string of the section we want this event to be
                 logged to.
             event: A string name of the event we're auditing.
@@ -167,6 +169,7 @@ class Auditor:
         """Record this event in the audit log.
 
         Args:
+        ----
             eventname: The string name of the event.
             **kwargs: not used, but included since some types of events include
                 kwargs.
@@ -182,6 +185,7 @@ class Auditor:
         Typically this is only called at the end of a game.
 
         Args:
+        ----
             **kwargs: not used, but included since some types of events include
                 kwargs.
         """
@@ -222,6 +226,7 @@ class Auditor:
         you want it to. Typically this is called at the beginning of a game.
 
         Args:
+        ----
             **kwargs: No function here. They just exist to allow this method
                 to be registered as a handler for events that might contain
                 keyword arguments.
@@ -235,7 +240,7 @@ class Auditor:
         self.enabled = True
 
         # Register for the events we're auditing
-        if 'events' in self.config['audit']:
+        if 'events' in self.config:
             for event in self.config['events']:
                 self.machine.events.add_handler(event,
                                                 self.audit_event,

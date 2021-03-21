@@ -6,7 +6,7 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class MockServer:
 
-    async def stop(self):
+    async def stop(self, grace):
         pass
 
     async def wait_for_termination(self):
@@ -48,6 +48,29 @@ class TestVPE(MpfTestCase):
         return False
 
     def test_vpe(self):
+        description = self.loop.run_until_complete(
+            self.service.GetMachineDescription(platform_pb2.EmptyRequest(), None))
+        self.assertEqual(len(description.switches), 3)
+        self.assertEqual(len(description.coils), 3)
+        self.assertEqual(len(description.lights), 2)
+
+        self.assertTrue(platform_pb2.SwitchDescription(
+            name="s_sling",
+            hardware_number="0",
+            switch_type="NO",
+        ) in description.switches)
+
+        self.assertTrue(platform_pb2.CoilDescription(
+            name="c_flipper",
+            hardware_number="1"
+        ) in description.coils)
+
+        self.assertTrue(platform_pb2.LightDescription(
+            name="test_light1",
+            hardware_channel_number="light-0",
+            hardware_channel_color="WHITE"
+        ) in description.lights)
+
         self.assertSwitchState("s_sling", True)
         self.assertSwitchState("s_flipper", False)
         self.assertSwitchState("s_test", False)

@@ -44,6 +44,7 @@ class LogMixin:
         """Configure logging.
 
         Args:
+        ----
             logger: The string name of the logger to use.
             console_level: The level of logging for the console. Valid options
                 are "none", "basic", or "full".

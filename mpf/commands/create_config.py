@@ -2,12 +2,20 @@
 import sys
 
 import os
-from prompt_toolkit.formatted_text import HTML
-from prompt_toolkit.shortcuts import message_dialog
-from prompt_toolkit.styles import Style
-from prompt_toolkit.shortcuts import button_dialog
-from prompt_toolkit.shortcuts import input_dialog
 from mpf.commands import MpfCommandLineParser
+
+try:
+    from prompt_toolkit.formatted_text import HTML
+    from prompt_toolkit.shortcuts import message_dialog
+    from prompt_toolkit.styles import Style
+    from prompt_toolkit.shortcuts import button_dialog
+    from prompt_toolkit.shortcuts import input_dialog
+except ImportError:
+    HTML = None
+    message_dialog = None
+    Style = None
+    button_dialog = None
+    input_dialog = None
 
 
 SUBCOMMAND = True
@@ -23,6 +31,9 @@ class Command(MpfCommandLineParser):
         self.current_path = path
         if self.in_machine_folder():
             self.machine_path = self.current_path
+
+        if not HTML:
+            raise AssertionError("You need to install the [cli] or [all] feature of mpf to use this.")
 
         self.example_style = Style.from_dict({
             'dialog': 'bg:#f2521d',

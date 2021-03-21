@@ -22,6 +22,7 @@ class Dmd(SystemWideDevice):
         """Create BCP methods.
 
         Args:
+        ----
             machine: MachineController which is used
         """
         machine.bcp.interface.register_command_callback("dmd_frame", partial(cls._bcp_receive_dmd_frame, machine))
@@ -53,6 +54,7 @@ class Dmd(SystemWideDevice):
         """Update data on the dmd.
 
         Args:
+        ----
             data: bytes to send
         """
         self.hw_device.update(data)

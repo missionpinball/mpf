@@ -46,6 +46,7 @@ class Bcp(MpfController):
         """Emulate legacy send.
 
         Args:
+        ----
             bcp_command: Commmand to send
         """
         self.transport.send_to_all_clients(bcp_command, **kwargs)

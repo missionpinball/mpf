@@ -85,8 +85,7 @@ class Credits(Mode):
     def _reset_credits(self, **kwargs):
         """Reset credits."""
         del kwargs
-        self.machine.variables.set_machine_var('credit_units', 0)
-        self._update_credit_strings()
+        self.clear_all_credits()
 
     def mode_stop(self, **kwargs):
         """Stop mode."""
@@ -437,6 +436,7 @@ class Credits(Mode):
         """Add a single credit to the machine.
 
         Args:
+        ----
             price_tiering: Boolean which controls whether this credit will be
                 eligible for the pricing tier bonuses. Default is True.
 

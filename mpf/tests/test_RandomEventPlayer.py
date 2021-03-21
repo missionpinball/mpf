@@ -45,7 +45,9 @@ class TestRandomEventPlayerGame(MpfGameTestCase):
 
 # Below are the common setup and test run methods shared by the machine and player test cases
 class TestRandomEventPlayerBase():
-    def __init__(self, runner, scope, events=["event1", "event2", "event3", "event4"]):
+    def __init__(self, runner, scope, events=None):
+        if events is None:
+            events = ["event1", "event2", "event3", "event4"]
         self.runner = runner
         self.scope = scope
         self.events = events

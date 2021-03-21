@@ -72,6 +72,7 @@ class OscPlatform(LightsPlatform, SwitchPlatform):
         if not SimpleUDPClient:
             raise AssertionError("python-osc is not installed. Please run 'pip3 install python-osc'.")
 
+    # noinspection PyCallingNonCallable
     async def initialize(self):
         """Initialise platform."""
         self.config = self.machine.config['osc']
@@ -107,8 +108,9 @@ class OscPlatform(LightsPlatform, SwitchPlatform):
             },
         ]
 
-    def configure_light(self, number: str, subtype: str, platform_settings: dict) -> LightPlatformInterface:
+    def configure_light(self, number: str, subtype: str, config, platform_settings: dict) -> LightPlatformInterface:
         """Configure an OSC light."""
+        del config
         return OscLight(number, self.machine.clock.loop,
                         int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000), self.client)
 

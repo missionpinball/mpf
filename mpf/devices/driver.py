@@ -61,6 +61,7 @@ class Driver(SystemWideDevice):
         """Return the parsed and validated config.
 
         Args:
+        ----
             config: Config of device
             is_mode_config: Whether this device is loaded in a mode or system-wide
             debug_prefix: Prefix to use when logging.
@@ -78,6 +79,7 @@ class Driver(SystemWideDevice):
         self.platform = self.machine.get_platform_sections('coils', self.config['platform'])
 
         config = DriverConfig(
+            name=self.name,
             default_pulse_ms=self.get_and_verify_pulse_ms(None),
             default_pulse_power=self.get_and_verify_pulse_power(None),
             default_hold_power=self.get_and_verify_hold_power(None),
@@ -184,6 +186,7 @@ class Driver(SystemWideDevice):
         """Enable a driver by holding it 'on'.
 
         Args:
+        ----
             pulse_ms: The number of milliseconds the driver should be
                 enabled for. If no value is provided, the driver will be
                 enabled for the value specified in the config dictionary.
@@ -278,6 +281,7 @@ class Driver(SystemWideDevice):
         """Pulse this driver.
 
         Args:
+        ----
             pulse_ms: The number of milliseconds the driver should be
                 enabled for. If no value is provided, the driver will be
                 enabled for the value specified in the config dictionary.

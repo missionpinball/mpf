@@ -26,6 +26,7 @@ class DataManager(MpfController):
         file on disk.
 
         Args:
+        ----
             machine: The main MachineController instance.
             name: A string name that represents what this DataManager instance
                 is for. This name is used to lookup the configuration option
@@ -84,6 +85,7 @@ class DataManager(MpfController):
         """Return the value of this DataManager's data.
 
         Args:
+        ----
             section: Optional string name of a section (dictionary key) for the
                 data you want returned. Default is None which returns the
                 entire dictionary.

@@ -4,20 +4,32 @@ from collections import defaultdict
 from datetime import datetime
 from psutil import cpu_percent, virtual_memory, Process
 
-from asciimatics.scene import Scene
-from asciimatics.widgets import Frame, Layout, THEMES, Label, Divider, PopUpDialog, Widget
-from asciimatics.screen import Screen
-
 import mpf._version
 from mpf.core.delays import DelayManager
 from mpf.core.mpf_controller import MpfController
 
+try:
+    from asciimatics.scene import Scene
+    from asciimatics.widgets import Frame, Layout, THEMES, Label, Divider, PopUpDialog, Widget
+    from asciimatics.screen import Screen
+except ImportError:
+    Scene = None
+    Frame = None
+    Layout = object
+    THEMES = None
+    Label = None
+    Divider = None
+    PopUpDialog = None
+    Widget = None
+    Screen = None
+
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.core.machine import MachineController                  # pylint: disable-msg=cyclic-import,unused-import
     from typing import List, Tuple, Dict  # pylint: disable-msg=cyclic-import,unused-import
-    from mpf.devices.ball_device.ball_device import BallDevice      # pylint: disable-msg=cyclic-import,unused-import
-    from mpf.devices.switch import Switch   # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import,ungrouped-imports
+    from mpf.devices.ball_device.ball_device \
+        import BallDevice  # pylint: disable-msg=cyclic-import,unused-import,ungrouped-imports
+    from mpf.devices.switch import Switch   # pylint: disable-msg=cyclic-import,unused-import,ungrouped-imports
 
 
 class MpfLayout(Layout):
@@ -26,6 +38,7 @@ class MpfLayout(Layout):
 
     def __init__(self, columns, fill_frame=False):
         """Store max_height."""
+        self._columns = []
         super().__init__(columns, fill_frame)
         self.max_height = None
 
@@ -65,7 +78,7 @@ class TextUi(MpfController):
 
         self.screen = None
 
-        if not machine.options['text_ui']:
+        if not machine.options['text_ui'] or not Scene:
             return
 
         # hack to add themes until https://github.com/peterbrittain/asciimatics/issues/207 is implemented

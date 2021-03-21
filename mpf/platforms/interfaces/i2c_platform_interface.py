@@ -18,6 +18,7 @@ class I2cPlatformInterface(metaclass=abc.ABCMeta):
         """Write an 8-bit value to a specific register via I2C.
 
         Args:
+        ----
             register (int): Register
             value (int): Value to write
         """
@@ -28,6 +29,7 @@ class I2cPlatformInterface(metaclass=abc.ABCMeta):
         """Read an len bytes from an register via I2C.
 
         Args:
+        ----
             register (int): Register
             count (int): Bytes to read
         """
@@ -38,6 +40,7 @@ class I2cPlatformInterface(metaclass=abc.ABCMeta):
         """Read an 8-bit value from an register via I2C.
 
         Args:
+        ----
             register (int): Register
         """
         raise NotImplementedError

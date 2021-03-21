@@ -86,6 +86,7 @@ class MachineController(LogMixin):
     main part that's in charge and makes things happen.
 
     Args:
+    ----
         config(MpfConfig): The machine configuration
         options(dict): A dictionary of options built from the command line options
             used to launch mpf.py.
@@ -398,6 +399,7 @@ class MachineController(LogMixin):
         """Return a new DataManager for a certain config.
 
         Args:
+        ----
             config_name: Name of the config
         """
         return DataManager(self, config_name)
@@ -568,6 +570,7 @@ class MachineController(LogMixin):
         """Make an additional hardware platform interface available to MPF.
 
         Args:
+        ----
             name: String name of the platform to add. Must match the name of a
                 platform file in the mpf/platforms folder (without the .py
                 extension).
@@ -605,6 +608,7 @@ class MachineController(LogMixin):
         It is used if a device class-specific or device-specific platform is not specified.
 
         Args:
+        ----
             name: String name of the platform to set to default.
         """
         try:
@@ -618,6 +622,7 @@ class MachineController(LogMixin):
         """Register a monitor.
 
         Args:
+        ----
             monitor_class: String name of the monitor class for this monitor
                 that's being registered.
             monitor: Callback to notify

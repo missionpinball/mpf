@@ -114,7 +114,8 @@ class Tilt(Mode):
         del kwargs
         self.last_tilt_warning_switch = self.machine.clock.get_time()
 
-        if not self.machine.game or not self.machine.game.player or self.machine.game.ending:
+        if (not self.machine.game or not self.machine.game.player or
+                self.machine.game.ending or self.machine.game.tilted):
             return
 
         self.info_log("Tilt Warning")

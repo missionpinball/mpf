@@ -165,6 +165,7 @@ class VersionMigrator:
         A new instance is created for each file to be migrated.
 
         Args:
+        ----
             file_name: Full path and file name of the file being migrated.
             file_contents: ruamel.load(ed) contents of the file which includes
                 the comments.

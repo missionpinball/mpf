@@ -1,3 +1,4 @@
+# pylint: disable-msg=too-many-lines
 """Contains AssetManager, AssetLoader, and Asset base classes."""
 import copy
 import os
@@ -8,7 +9,7 @@ import threading
 from collections import deque, namedtuple
 from pathlib import PurePath
 
-from typing import Iterable, Optional, Set, Callable, Tuple
+from typing import Iterable, Optional, Set, Callable, Tuple, Union
 from typing import List
 
 from mpf.core.mode import Mode
@@ -17,6 +18,8 @@ from mpf.core.machine import MachineController
 from mpf.core.mpf_controller import MpfController
 from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
+from mpf.core.placeholder_manager import BoolTemplate
+
 
 AssetClass = namedtuple("AssetClass", ["attribute", "cls", "path_string", "config_section", "disk_asset_section",
                                        "extensions", "priority", "pool_config_section", "defaults"])
@@ -37,6 +40,7 @@ class BaseAssetManager(MpfController, LogMixin):
         """Initialise asset manager.
 
         Args:
+        ----
             machine: The machine controller
         """
         super().__init__(machine)
@@ -119,6 +123,7 @@ class BaseAssetManager(MpfController, LogMixin):
         """Register a a type of assets to be controlled by the AssetManager.
 
         Args:
+        ----
             asset_class: Reference to the class you want to register, based on
                 mc.core.assets.Asset. e.g. mc.assets.images.ImageClass
             attribute: String of the name of the attribute dict that will be
@@ -230,6 +235,7 @@ class BaseAssetManager(MpfController, LogMixin):
         Then it creates the asset objects based on the built-up config.
 
         Args:
+        ----
             config: A config dictionary.
             mode: Optional reference to the mode object which is used when
                   assets are being created from mode folders.
@@ -332,6 +338,7 @@ class BaseAssetManager(MpfController, LogMixin):
         Automatically creates or updates entries in the config dict for any asset files it finds.
 
         Args:
+        ----
             asset_class: An asset class entry from the self._asset_classes
             dict.
             config: A dictionary which contains a list of asset names with
@@ -486,6 +493,7 @@ class BaseAssetManager(MpfController, LogMixin):
         """Load all the assets with a given load key.
 
         Args:
+        ----
             key_name: String of the load: key name.
             priority: Priority of this asset.
         """
@@ -507,6 +515,7 @@ class BaseAssetManager(MpfController, LogMixin):
         """Unload multiple assets.
 
         Args:
+        ----
             assets: An iterable of asset objects. You can safely mix
                     different classes of assets.
         """
@@ -627,6 +636,12 @@ class AsyncioSyncAssetManager(BaseAssetManager):
         task.add_done_callback(Util.raise_exceptions)
 
 
+TUnconditionalAssetEntry = Tuple[AssetClass, int]
+TConditionalAssetEntry = Tuple[AssetClass, int, BoolTemplate]
+TMaybeConditionalAssetEntry = Union[TUnconditionalAssetEntry, TConditionalAssetEntry]
+TNullableAssetEntry = Union[TMaybeConditionalAssetEntry, Tuple[None, int]]
+
+
 # pylint: disable=too-many-instance-attributes
 class AssetPool:
 
@@ -645,7 +660,7 @@ class AssetPool:
         self.member_cls = member_cls
         self.loading_members = set()
         self._callbacks = set()
-        self.assets = list()
+        self.assets = list()         # type: List[TMaybeConditionalAssetEntry]
         self._last_asset = None
         self._asset_sequence = deque()
         self._assets_sent = set()
@@ -771,12 +786,12 @@ class AssetPool:
 
         self._callbacks = set()
 
-    def _get_conditional_assets(self):
+    def _get_conditional_assets(self) -> List[TNullableAssetEntry]:
         if not self._has_conditions:
             return self.assets
 
         result = [asset for asset in self.assets
-                  if not asset[2] or asset[2].evaluate([])]
+                  if not asset[2] or asset[2].evaluate([])]  # type: List[TNullableAssetEntry]
         # Avoid crashes, return None as the asset if no conditions evaluate true
         if not result:
             self.machine.log.warning("AssetPool {}: {}".format(
@@ -807,7 +822,7 @@ class AssetPool:
                 self._asset_sequence.rotate(-1)
         return self._asset_sequence[0]
 
-    def _get_random_force_next_asset(self) -> AssetClass:
+    def _get_random_force_next_asset(self) -> Optional[AssetClass]:
         conditional_assets = self._get_conditional_assets()  # Store to variable to avoid calling twice
         self._total_weights = sum([x[1] for x in conditional_assets
                                    if x is not self._last_asset])
@@ -818,7 +833,7 @@ class AssetPool:
                                                       self._last_asset])
         return self._last_asset[0]
 
-    def _get_random_force_all_asset(self) -> AssetClass:
+    def _get_random_force_all_asset(self) -> Optional[AssetClass]:
         conditional_assets = self._get_conditional_assets()  # Store to variable to avoid calling twice
         if len(self._assets_sent) == len(conditional_assets):
             self._assets_sent = set()
@@ -829,7 +844,7 @@ class AssetPool:
             self._assets_sent.add(asset)
         return asset[0]
 
-    def _pick_weighed_random(self, assets: List[Tuple[AssetClass, int]]) -> Tuple[AssetClass, int]:
+    def _pick_weighed_random(self, assets: List[TConditionalAssetEntry]) -> TNullableAssetEntry:
         if not assets or assets[0][0] is None:
             return (None, 0)
 

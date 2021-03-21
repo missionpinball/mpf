@@ -39,13 +39,9 @@ def decodeRequestCommand(cmd_string):
         raise TMCLError("Commandstring shorter than 9 bytes")
     if byte_array[8] != sum(byte_array[:8]) % (1<<8):
         raise TMCLError("Checksum error in command %s" % cmd_string)
-    ret = {}
-    ret['module-address'] = byte_array[0]
-    ret['command-number'] = byte_array[1]
-    ret['type-number'] = byte_array[2]
-    ret['motor-number'] = byte_array[3]
-    ret['value'] = sum(b << (3-i)*8 for i,b in enumerate(byte_array[4:8]))
-    ret['checksum'] = byte_array[8]
+    ret = {'module-address': byte_array[0], 'command-number': byte_array[1], 'type-number': byte_array[2],
+           'motor-number': byte_array[3], 'value': sum(b << (3 - i) * 8 for i, b in enumerate(byte_array[4:8])),
+           'checksum': byte_array[8]}
     return ret
 
 def decodeReplyCommand(cmd_string):
@@ -54,13 +50,9 @@ def decodeReplyCommand(cmd_string):
         raise TMCLError("Commandstring shorter than 9 bytes")
     if byte_array[8] != sum(byte_array[:8]) % (1<<8):
         raise TMCLError("Checksum error in command %s" % cmd_string)
-    ret = {}
-    ret['reply-address'] = byte_array[0]
-    ret['module-address'] = byte_array[1]
-    ret['status'] = byte_array[2]
-    ret['command-number'] = byte_array[3]
-    ret['value'] = sum(b << (3-i)*8 for i,b in enumerate(byte_array[4:8]))
-    ret['checksum'] = byte_array[8]
+    ret = {'reply-address': byte_array[0], 'module-address': byte_array[1], 'status': byte_array[2],
+           'command-number': byte_array[3], 'value': sum(b << (3 - i) * 8 for i, b in enumerate(byte_array[4:8])),
+           'checksum': byte_array[8]}
     return ret
 
 STATUSCODES = { 100 : "Succesfully executed, no error",

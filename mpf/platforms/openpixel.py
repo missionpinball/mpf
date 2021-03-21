@@ -20,6 +20,7 @@ class OpenpixelHardwarePlatform(LightsPlatform):
     """Base class for the open pixel hardware platform.
 
     Args:
+    ----
         machine: The main ``MachineController`` object.
 
     """
@@ -80,8 +81,9 @@ class OpenpixelHardwarePlatform(LightsPlatform):
             }
         ]
 
-    def configure_light(self, number, subtype, platform_settings) -> LightPlatformInterface:
+    def configure_light(self, number, subtype, config, platform_settings) -> LightPlatformInterface:
         """Configure an LED."""
+        del config
         return OpenPixelLED(number, self.opc_client, self.debug)
 
     async def _setup_opc_client(self):
@@ -138,6 +140,7 @@ class OpenPixelClient:
     """Base class of an OPC client which connects to a FadeCandy server.
 
     Args:
+    ----
         machine: The main ``MachineController`` instance.
         config: Config to use
     """
@@ -183,6 +186,7 @@ class OpenPixelClient:
         """Add a pixel to the list that will be sent to the OPC server.
 
         Args:
+        ----
             channel: Integer of the OPC channel this pixel is on.
             led: Integer of the pixel number (i.e. its position in the list) for
                 this pixel.
@@ -211,6 +215,7 @@ class OpenPixelClient:
         """Set an individual pixel color.
 
         Args:
+        ----
             channel: Int of the OPC channel for this pixel.
             pixel: Int of the number for this pixel on that channel.
             start_brightness: Brightness at start of fade.
@@ -258,6 +263,7 @@ class OpenPixelClient:
         """Send the list of pixel colors to the OPC server.
 
         Args:
+        ----
             channel: Which OPC channel the pixel data will be written to.
 
         Returns True on success. False if it was unable to connect to the OPC
@@ -300,6 +306,7 @@ class OpenPixelClient:
         """Send a message to the socket.
 
         Args:
+        ----
             message: Message to send
         """
         if not self.socket_sender:

@@ -11,6 +11,7 @@ from threading import Thread
 import time
 from typing import List, Union, Tuple, Optional, Set
 
+from mpf._version import log_url
 from mpf.core.utility_functions import Util
 from mpf.core.platform_batch_light_system import PlatformBatchLightSystem
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
@@ -163,6 +164,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
     """Platform class for the P-Roc and P3-ROC hardware controller.
 
     Args:
+    ----
         machine: The MachineController instance.
     """
 
@@ -360,7 +362,8 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
         if self.version < 2 or (self.version == 2 and self.revision < 14):
             self.log.warning("Consider upgrading the firmware of your P/P3-Roc to at least 2.14. "
-                             "Your version contains known bugs.")
+                             "Your version contains known bugs. See: %s",
+                             log_url.format("{}-{}-{}".format("RE", self.log.name, 1)))
 
         # for unknown reasons we have to postpone this a bit after init
         self.machine.delay.add(100, self._configure_pd_led)
@@ -408,6 +411,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         """Write a pdled config register.
 
         Args:
+        ----
             board_addr: Address of the board
             addr: Register address
             reg_data: Register data
@@ -672,6 +676,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         as the *sw_num*.
 
         Args:
+        ----
             switch: Switch object
             coil: Coil object
         """
@@ -724,7 +729,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
         raise AssertionError("Unknown subtype {}".format(subtype))
 
-    def configure_light(self, number, subtype, platform_settings) -> LightPlatformInterface:
+    def configure_light(self, number, subtype, config, platform_settings) -> LightPlatformInterface:
         """Configure a light channel."""
         if not subtype:
             subtype = self._get_default_subtype()
@@ -732,8 +737,8 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
             if self.machine_type == self.pinproc.MachineTypePDB:
                 proc_num = self.pdbconfig.get_proc_light_number(str(number))
                 if proc_num == -1:
-                    raise AssertionError("Matrixlight {} cannot be controlled by the P-ROC. ".format(
-                        str(number)))
+                    raise AssertionError("Matrixlight {}/{} cannot be controlled by the P-ROC. ".format(
+                        config.name, str(number)))
 
             else:
                 proc_num = self.pinproc.decode(self.machine_type, str(number))
@@ -750,14 +755,15 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         """Configure a P3-ROC switch.
 
         Args:
+        ----
             config: Dictionary of settings for the switch.
             proc_num: decoded switch number
 
         Returns a reference to the switch object that was just created.
         """
         if proc_num == -1:
-            raise AssertionError("Switch {} cannot be controlled by the "
-                                 "P-ROC/P3-ROC.".format(proc_num))
+            raise AssertionError("Switch {}/{} cannot be controlled by the "
+                                 "P-ROC/P3-ROC.".format(config.name, proc_num))
 
         switch = PROCSwitch(config, proc_num, config.debounce == "quick", self)
         # The P3-ROC needs to be configured to notify the host computers of
@@ -782,6 +788,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         """Configure a servo on a PD-LED board.
 
         Args:
+        ----
             number: Number of the servo
         """
         try:
@@ -797,6 +804,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         """Configure a stepper (axis) device in platform.
 
         Args:
+        ----
             number: Number of the stepper.
             config: Config for this stepper.
         """
@@ -1132,6 +1140,7 @@ class PDBConfig:
         """Get the actual number of a coil from the bank index config.
 
         Args:
+        ----
             number_str (str): PDB string
         """
         coil = PDBCoil(self, number_str)
@@ -1146,6 +1155,7 @@ class PDBConfig:
         """Get the actual number of a light from the lamp config.
 
         Args:
+        ----
             number_str (str): PDB string
         """
         lamp = PDBLight(self, number_str)
@@ -1167,6 +1177,7 @@ class PDBConfig:
         """Get the actual number of a switch based on the string only.
 
         Args:
+        ----
             number_str (str): PDB string
         """
         switch = PDBSwitch(self, number_str)

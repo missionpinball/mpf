@@ -171,6 +171,7 @@ class Playfield(SystemWideDevice):
         """Add live ball(s) to the playfield.
 
         Args:
+        ----
             balls: Integer of the number of balls you'd like to add.
             source_device: Optional ball device object you'd like to add the
                 ball(s) from.

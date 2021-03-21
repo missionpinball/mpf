@@ -25,6 +25,7 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
         """Add device to a running mode.
 
         Args:
+        ----
             mode: Mode which loaded the device
         """
         del mode
@@ -36,6 +37,7 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
         The mode just started.
 
         Args:
+        ----
             mode: Mode which loaded the device
             player: Current active player
         """
@@ -66,6 +68,7 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
         """Add control events in mode if this device has any mode control events.
 
         Args:
+        ----
             mode: Mode which loaded the device
         """
         if "enable_events" in self.config and not self.config['enable_events']:
@@ -81,6 +84,7 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
         Device object will continue to exist and may be added to the mode again later.
 
         Args:
+        ----
             mode: Mode which stopped
         """
         del mode

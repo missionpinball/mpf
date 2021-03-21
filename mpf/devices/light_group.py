@@ -29,15 +29,13 @@ class LightGroup(SystemWideDevice):
         """Add light_template and number to config.
 
         Args:
+        ----
             config: unparsed config
             is_mode_config: if in mode (not used)
         """
         del is_mode_config
         if 'light_template' not in config:
             config['light_template'] = {}
-
-        if 'number' not in config['light_template']:
-            config['light_template']['number'] = 'x'
 
         return config
 
@@ -53,11 +51,16 @@ class LightGroup(SystemWideDevice):
         return {'lights': self.lights}
 
     def _create_light_at_index(self, index, x, y, relative_index):
-        light = Light(self.machine, self.name + "_light_" + str(relative_index))
+        light = Light(self.machine, "{}_light_{}".format(self.name, relative_index))
         tags = [self.name]
         tags.extend(self.config['tags'])
         light_config = copy.deepcopy(self.config['light_template'])
-        if self.config['number_template']:
+        if self.config['start_channel']:
+            if relative_index == 0:
+                light_config['start_channel'] = self.config['start_channel']
+            else:
+                light_config['previous'] = "{}_light_{}".format(self.name, relative_index - 1)
+        elif self.config['number_template']:
             light_config['number'] = self.config['number_template'].format(index)
         else:
             light_config['number'] = index

@@ -14,6 +14,10 @@ test that's run), and then when it's done, you should see a message showing
 how many tests were run and that they were successful. The whole process should
 take less a minute or so.
 
+Note that ``mpf-mc`` must be installed as well as ``mpf`` for all tests to run. 
+If it isn't, some tests will fail with the error "start took more than 20s", because 
+MPF waited endlessly for the nonexistent media controller to be available.
+
 (If you see any messages about some tests taking more than 0.5s, that's ok.)
 
 The important thing is that when the tests are done, you should have a message

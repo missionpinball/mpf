@@ -413,6 +413,7 @@ class Shot(EnableDisableMixin, ModeDevice):
         """Jump to a certain state in the active shot profile.
 
         Args:
+        ----
             state: int of the state number you want to jump to. Note that states
                 are zero-based, so the first state is 0.
             force: if true, will jump even if the shot is disabled

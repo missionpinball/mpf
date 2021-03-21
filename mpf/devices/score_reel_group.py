@@ -94,6 +94,7 @@ class ScoreReelGroup(SystemWideDevice):
         value, or a value list.
 
         Args:
+        ----
             value: An integer value of what the new displayed value (i.e. score)
                 should be. This is the default option if you only pass a single
                 positional argument, e.g. `set_value(2100)`.
@@ -143,6 +144,7 @@ class ScoreReelGroup(SystemWideDevice):
         rolled over.)
 
         Args:
+        ----
             value: The interger value you'd like to convert.
 
         Returns a list containing the values for each corresponding score reel,

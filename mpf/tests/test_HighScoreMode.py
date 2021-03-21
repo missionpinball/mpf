@@ -105,18 +105,29 @@ class TestHighScoreMode(MpfBcpTestCase):
 
     def test_reset(self):
         """Test high score reset."""
-        self.machine.modes["high_score"].high_scores = OrderedDict(
-            score=[('ABC', 1000000),
-                   ('ABC', 900000),
-                   ('ABC', 800000),
-                   ('ABC', 700000),
-                   ('ABC', 600000)],
-            loops=[])
+        self.assertMachineVarEqual('GRAND CHAMPION', "score1_label")
+        self.assertMachineVarEqual(1000000, "score1_value")
+        self.assertMachineVarEqual('ABC', "score1_name")
+        self.assertMachineVarEqual('HIGH SCORE 1', "score2_label")
+        self.assertMachineVarEqual(900000, "score2_value")
+        self.assertMachineVarEqual('ABC', "score2_name")
+        self.assertMachineVarEqual('HIGH SCORE 2', "score3_label")
+        self.assertMachineVarEqual(800000, "score3_value")
+        self.assertMachineVarEqual('ABC', "score3_name")
+        self.assertMachineVarEqual('HIGH SCORE 3', "score4_label")
+        self.assertMachineVarEqual(700000, "score4_value")
+        self.assertMachineVarEqual('ABC', "score4_name")
+        self.assertMachineVarEqual('HIGH SCORE 4', "score5_label")
+        self.assertMachineVarEqual(600000, "score5_value")
+        self.assertMachineVarEqual('ABC', "score5_name")
+        self.assertMachineVarEqual('LOOP CHAMP', "loops1_label")
+        self.assertMachineVarEqual(500000, "loops1_value")
+        self.assertMachineVarEqual('MPF', "loops1_name")
 
-        self.advance_time_and_run(.1)
+        self.assertModeNotRunning("high_score")
 
         self.post_event("high_scores_reset")
-        self.advance_time_and_run(10)
+        self.advance_time_and_run(.1)
 
         new_score_data = OrderedDict()
         new_score_data['score'] = [('BRI', 4242),
@@ -125,6 +136,82 @@ class TestHighScoreMode(MpfBcpTestCase):
                                    ('QC', 42),
                                    ('MPF', 23)]
         new_score_data['loops'] = [('JK', 42)]
+
+        self.assertEqual(new_score_data, self.machine.modes["high_score"].high_scores)
+        self.assertEqual(new_score_data, self.machine.modes["high_score"].data_manager.written_data)
+
+        self.assertMachineVarEqual('GRAND CHAMPION', "score1_label")
+        self.assertMachineVarEqual(4242, "score1_value")
+        self.assertMachineVarEqual('BRI', "score1_name")
+        self.assertMachineVarEqual('HIGH SCORE 1', "score2_label")
+        self.assertMachineVarEqual(2323, "score2_value")
+        self.assertMachineVarEqual('GHK', "score2_name")
+        self.assertMachineVarEqual('HIGH SCORE 2', "score3_label")
+        self.assertMachineVarEqual(1337, "score3_value")
+        self.assertMachineVarEqual('JK', "score3_name")
+        self.assertMachineVarEqual('HIGH SCORE 3', "score4_label")
+        self.assertMachineVarEqual(42, "score4_value")
+        self.assertMachineVarEqual('QC', "score4_name")
+        self.assertMachineVarEqual('HIGH SCORE 4', "score5_label")
+        self.assertMachineVarEqual(23, "score5_value")
+        self.assertMachineVarEqual('MPF', "score5_name")
+        self.assertMachineVarEqual('LOOP CHAMP', "loops1_label")
+        self.assertMachineVarEqual(42, "loops1_value")
+        self.assertMachineVarEqual('JK', "loops1_name")
+
+        self.mock_event("high_score_enter_initials")
+        self.start_game()
+        self.advance_time_and_run()
+        self.machine.game.player_list[0].score = 8000000
+        self.machine.game.end_game()
+        self.advance_time_and_run()
+        self.assertTrue(self.machine.modes["high_score"].active)
+        self.assertEqual(1, self._events['high_score_enter_initials'])
+        self._bcp_client.receive_queue.put_nowait(('trigger', dict(name='text_input_high_score_complete', text='NEW')))
+
+        self.advance_time_and_run(5)
+
+        self.assertMachineVarEqual('GRAND CHAMPION', "score1_label")
+        self.assertMachineVarEqual(8000000, "score1_value")
+        self.assertMachineVarEqual('NEW', "score1_name")
+        self.assertMachineVarEqual('HIGH SCORE 1', "score2_label")
+        self.assertMachineVarEqual(4242, "score2_value")
+        self.assertMachineVarEqual('BRI', "score2_name")
+        self.assertMachineVarEqual('HIGH SCORE 2', "score3_label")
+        self.assertMachineVarEqual(2323, "score3_value")
+        self.assertMachineVarEqual('GHK', "score3_name")
+        self.assertMachineVarEqual('HIGH SCORE 3', "score4_label")
+        self.assertMachineVarEqual(1337, "score4_value")
+        self.assertMachineVarEqual('JK', "score4_name")
+        self.assertMachineVarEqual('HIGH SCORE 4', "score5_label")
+        self.assertMachineVarEqual(42, "score5_value")
+        self.assertMachineVarEqual('QC', "score5_name")
+        self.assertMachineVarEqual('LOOP CHAMP', "loops1_label")
+        self.assertMachineVarEqual(42, "loops1_value")
+        self.assertMachineVarEqual('JK', "loops1_name")
+
+        # test reset after a game
+        self.post_event("high_scores_reset")
+        self.advance_time_and_run(.1)
+
+        self.assertMachineVarEqual('GRAND CHAMPION', "score1_label")
+        self.assertMachineVarEqual(4242, "score1_value")
+        self.assertMachineVarEqual('BRI', "score1_name")
+        self.assertMachineVarEqual('HIGH SCORE 1', "score2_label")
+        self.assertMachineVarEqual(2323, "score2_value")
+        self.assertMachineVarEqual('GHK', "score2_name")
+        self.assertMachineVarEqual('HIGH SCORE 2', "score3_label")
+        self.assertMachineVarEqual(1337, "score3_value")
+        self.assertMachineVarEqual('JK', "score3_name")
+        self.assertMachineVarEqual('HIGH SCORE 3', "score4_label")
+        self.assertMachineVarEqual(42, "score4_value")
+        self.assertMachineVarEqual('QC', "score4_name")
+        self.assertMachineVarEqual('HIGH SCORE 4', "score5_label")
+        self.assertMachineVarEqual(23, "score5_value")
+        self.assertMachineVarEqual('MPF', "score5_name")
+        self.assertMachineVarEqual('LOOP CHAMP', "loops1_label")
+        self.assertMachineVarEqual(42, "loops1_value")
+        self.assertMachineVarEqual('JK', "loops1_name")
 
         self.assertEqual(new_score_data, self.machine.modes["high_score"].high_scores)
         self.assertEqual(new_score_data, self.machine.modes["high_score"].data_manager.written_data)
@@ -498,7 +585,16 @@ class TestHighScoreMode(MpfBcpTestCase):
                                        ('JK', 3),
                                        ('QC', 2),
                                        ('MPF', 1)]
-            new_score_data['loops'] = []
+            new_score_data['loops'] = [('MPF', 7)]
+            return {"high_scores": new_score_data}
+        elif self._testMethodName == "test_reset":
+            new_score_data = OrderedDict(
+                score=[('ABC', 1000000),
+                       ('ABC', 900000),
+                       ('ABC', 800000),
+                       ('ABC', 700000),
+                       ('ABC', 600000)],
+                loops=[('MPF', 500000)])
             return {"high_scores": new_score_data}
 
         return super()._get_mock_data()
@@ -510,7 +606,7 @@ class TestHighScoreMode(MpfBcpTestCase):
                                    ('JK', 3),
                                    ('QC', 2),
                                    ('MPF', 1)]
-        new_score_data['loops'] = []
+        new_score_data['loops'] = [('MPF', 7)]
         self.assertEqual(new_score_data, self.machine.modes["high_score"].high_scores)
         # no changes yet
         self.assertEqual(None, self.machine.modes["high_score"].data_manager.written_data)

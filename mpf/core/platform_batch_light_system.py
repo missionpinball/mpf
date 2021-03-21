@@ -59,7 +59,8 @@ class PlatformBatchLightSystem:
     """Batch light system for platforms."""
 
     __slots__ = ["dirty_lights", "dirty_schedule", "clock", "update_task", "update_callback",
-                 "update_hz", "max_batch_size", "scheduler_task", "schedule_changed", "dirty_lights_changed"]
+                 "update_hz", "max_batch_size", "scheduler_task", "schedule_changed", "dirty_lights_changed",
+                 "last_state"]
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, clock, update_callback, update_hz, max_batch_size):
@@ -74,6 +75,7 @@ class PlatformBatchLightSystem:
         self.update_callback = update_callback
         self.update_hz = update_hz
         self.max_batch_size = max_batch_size
+        self.last_state = {}
 
     def start(self):
         """Start light system."""
@@ -139,11 +141,25 @@ class PlatformBatchLightSystem:
         current_time = self.clock.get_time()
         for light in sequential_lights:
             brightness, fade_ms, done = light.get_fade_and_brightness(current_time)
+            schedule_time = current_time + (fade_ms / 1000)
             if not done:
-                schedule_time = current_time + (fade_ms / 1000)
                 if not self.dirty_schedule or self.dirty_schedule[0][0] > schedule_time:
                     self.schedule_changed.set()
                 self.dirty_schedule.add((schedule_time, light))
+            else:
+                # check if we realized this brightness earlier
+                last_state = self.last_state.get(light, None)
+                if last_state and last_state[0] == brightness and last_state[1] < schedule_time:
+                    # we already set the light to that color earlier. skip it
+                    if not sequential_brightness_list:
+                        # we only skip this light if we are in the beginning of the list for now
+                        # the reason for that is that we do not want to break fade chains when one color channel
+                        # of an RGB light did not change
+                        # this could become an option in the future
+                        continue
+
+            self.last_state[light] = (brightness, schedule_time)
+
             if common_fade_ms is None:
                 common_fade_ms = fade_ms
 

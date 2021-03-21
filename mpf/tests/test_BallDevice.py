@@ -2083,18 +2083,22 @@ class TestBallDevice(MpfTestCase):
         # First call should register the capture
         self.machine.switch_controller.process_switch("s_entrance", 1)
         self.advance_time_and_run(0.1)
-        self.assertEventCalled("balldevice_captured_from_playfield", times=1)
         self.machine.switch_controller.process_switch("s_entrance", 0)
+        self.advance_time_and_run(0.1)
+        self.assertEventCalled("balldevice_captured_from_playfield", times=1)
 
         # Second call, 2 seconds later, should be ignored
         self.advance_time_and_run(2)
         self.machine.switch_controller.process_switch("s_entrance", 1)
         self.advance_time_and_run(0.1)
-        self.assertEventCalled("balldevice_captured_from_playfield", times=1)
         self.machine.switch_controller.process_switch("s_entrance", 0)
+        self.advance_time_and_run(0.1)
+        self.assertEventCalled("balldevice_captured_from_playfield", times=1)
 
         # Third call, 2 seconds later, should capture
         self.advance_time_and_run(2)
         self.machine.switch_controller.process_switch("s_entrance", 1)
+        self.advance_time_and_run(0.1)
+        self.machine.switch_controller.process_switch("s_entrance", 0)
         self.advance_time_and_run(0.1)
         self.assertEventCalled("balldevice_captured_from_playfield", times=2)

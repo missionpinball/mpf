@@ -21,6 +21,7 @@ class Timer(ModeDevice):
     """Parent class for a mode timer.
 
     Args:
+    ----
         machine: The main MPF MachineController object.
         name: The string name of this timer.
     """
@@ -179,6 +180,7 @@ class Timer(ModeDevice):
         Does not start or stop the timer.
 
         Args:
+        ----
             **kwargs: Not used in this method. Only exists since this method is
                 often registered as an event handler which may contain
                 additional keyword arguments.
@@ -195,6 +197,7 @@ class Timer(ModeDevice):
         Use jump() if you want to set the starting time value.
 
         Args:
+        ----
             **kwargs: Not used in this method. Only exists since this method is
                 often registered as an event handler which may contain
                 additional keyword arguments.
@@ -238,6 +241,7 @@ class Timer(ModeDevice):
         Essentially this is just a reset() then a start().
 
         Args:
+        ----
             **kwargs: Not used in this method. Only exists since this method is
                 often registered as an event handler which may contain
                 additional keyword arguments.
@@ -250,6 +254,7 @@ class Timer(ModeDevice):
         """Stop the timer and posts the 'timer_<name>_stopped' event.
 
         Args:
+        ----
             **kwargs: Not used in this method. Only exists since this method is
                 often registered as an event handler which may contain
                 additional keyword arguments.
@@ -282,6 +287,7 @@ class Timer(ModeDevice):
         """Pause the timer and posts the 'timer_<name>_paused' event.
 
         Args:
+        ----
             timer_value: How many seconds you want to pause the timer for. Note
                 that this pause time is real-world seconds and does not take
                 into consideration this timer's tick interval.
@@ -323,6 +329,7 @@ class Timer(ModeDevice):
         this timer as complete.
 
         Args:
+        ----
             **kwargs: Not used in this method. Only exists since this method is
                 often registered as an event handler which may contain
                 additional keyword arguments.
@@ -397,6 +404,7 @@ class Timer(ModeDevice):
         """Add ticks to this timer.
 
         Args:
+        ----
             timer_value: The number of ticks you want to add to this timer's
                 current value.
             kwargs: Not used in this method. Only exists since this method is
@@ -436,6 +444,7 @@ class Timer(ModeDevice):
         """Subtract ticks from this timer.
 
         Args:
+        ----
             timer_value: The number of ticks you want to subtract from this
                 timer's current value.
             **kwargs: Not used in this method. Only exists since this method is
@@ -516,6 +525,7 @@ class Timer(ModeDevice):
         """Change the interval for each "tick" of this timer.
 
         Args:
+        ----
             change: Float or int of the change you want to make to this timer's
                 tick rate. Note this value is multiplied by the current tick
                 interval: >1 will increase the tick interval (slow the timer) and
@@ -537,6 +547,7 @@ class Timer(ModeDevice):
         use the change_tick_interval() method.
 
         Args:
+        ----
             timer_value: The new number of seconds between each tick of this
                 timer. This value should always be positive.
             **kwargs: Not used in this method. Only exists since this method is
@@ -555,6 +566,7 @@ class Timer(ModeDevice):
         something other than 1 second).
 
         Args:
+        ----
             timer_value: Integer of the current value you want this timer to be.
             **kwargs: Not used in this method. Only exists since this method is
                 often registered as an event handler which may contain

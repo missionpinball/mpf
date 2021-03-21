@@ -320,6 +320,7 @@ class Show:
         how you play the show.)
 
         Args:
+        ----
             priority: Integer value of the relative priority of this show. If
                 there's ever a situation where multiple shows want to control
                 the same item, the one with the higher priority will win.

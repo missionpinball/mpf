@@ -106,6 +106,7 @@ class PlatformController(MpfController):
         Always do the full pulse. Even when the switch is released.
 
         Args:
+        ----
             enable_switch: Switch which triggers the rule.
             driver: .. class:: DriverRuleSettings
             pulse_setting: .. class:: PulseRuleSettings
@@ -144,6 +145,7 @@ class PlatformController(MpfController):
         Always do the full pulse. Even when the switch is released. Pulse is delayed accurately by the hardware.
 
         Args:
+        ----
             enable_switch: Switch which triggers the rule.
             driver: .. class:: DriverRuleSettings
             delay_ms: Delay before the pulse in ms
@@ -184,6 +186,7 @@ class PlatformController(MpfController):
         Pulse a driver but cancel pulse when switch is released.
 
         Args:
+        ----
             enable_switch: Switch which triggers the rule.
             driver: .. class:: DriverRuleSettings
             pulse_setting: .. class:: PulseRuleSettings
@@ -223,6 +226,7 @@ class PlatformController(MpfController):
         Pulse and enable a driver. Cancel pulse and enable if switch is released.
 
         Args:
+        ----
             enable_switch: Switch which triggers the rule.
             driver: Driver to trigger.
             pulse_setting: .. class:: PulseRuleSettings
@@ -266,6 +270,7 @@ class PlatformController(MpfController):
         Pulse driver. Cancel pulse when switch is released or a disable switch is hit.
 
         Args:
+        ----
             enable_switch: Switch to enable coil.
             eos_switch: Switch to cancel pulse and trigger repulses.
             driver: Driver to enable.
@@ -319,6 +324,7 @@ class PlatformController(MpfController):
         Pulse and then enable driver. Cancel pulse and enable when switch is released or a disable switch is hit.
 
         Args:
+        ----
             enable_switch: Switch to enable coil.
             eos_switch: Switch to switch from pulse to hold and to trigger repulses.
             driver: Driver to enable.
@@ -364,6 +370,7 @@ class PlatformController(MpfController):
         """Clear all rules for switch and this driver.
 
         Args:
+        ----
             rule: Hardware rule to clean.
         """
         for switch_settings in rule.switch_settings:

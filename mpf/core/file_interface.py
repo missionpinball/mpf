@@ -28,6 +28,7 @@ class FileInterface:
         all the extensions it can read.
 
         Args:
+        ----
             filename: Full absolute path of a file to check, with or without
                 an extension.
 

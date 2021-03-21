@@ -34,6 +34,7 @@ class Mode(LogMixin):
         """Initialise mode.
 
         Args:
+        ----
             machine: the machine controller
             config: config dict for mode
             name: name of mode
@@ -131,6 +132,7 @@ class Mode(LogMixin):
         """Start this mode.
 
         Args:
+        ----
             mode_priority: Integer value of what you want this mode to run at. If you
                 don't specify one, it will use the "Mode: priority" setting from
                 this mode's configuration file.
@@ -270,6 +272,7 @@ class Mode(LogMixin):
         """Stop this mode.
 
         Args:
+        ----
             callback: Method which will be called once this mode has stopped. Will only be called when the mode is
                 running (includes currently stopping)
             **kwargs: Catch-all since this mode might start from events with
@@ -366,12 +369,14 @@ class Mode(LogMixin):
 
     def _mode_stopped_callback(self, **kwargs) -> None:
         del kwargs
+
+        # Call the mode_stop() method before removing the devices
+        self.mode_stop(**self.mode_stop_kwargs)
+        self.mode_stop_kwargs = dict()
+
+        # Clean up the mode handlers and devices
         self._remove_mode_event_handlers()
         self._remove_mode_devices()
-
-        self.mode_stop(**self.mode_stop_kwargs)
-
-        self.mode_stop_kwargs = dict()
 
         for callback in self.stop_callbacks:
             callback()
@@ -516,6 +521,7 @@ class Mode(LogMixin):
         ends.
 
         Args:
+        ----
             event: String name of the event you're adding a handler for. Since
                 events are text strings, they don't have to be pre-defined.
             handler: The method that will be called when the event is fired.

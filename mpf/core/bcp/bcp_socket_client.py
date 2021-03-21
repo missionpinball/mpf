@@ -165,6 +165,7 @@ class AsyncioBcpClientSocket():
         """Send a message to the BCP host.
 
         Args:
+        ----
             bcp_command: command to send
             kwargs: parameters to command
         """
@@ -197,6 +198,7 @@ class BCPClientSocket(BaseBcpClient):
     (There can be multiple of these to connect to multiple BCP media controllers simultaneously.)
 
     Args:
+    ----
         machine: The main MachineController object.
         name: String name this client.
         bcp: The bcp object.
@@ -271,6 +273,7 @@ class BCPClientSocket(BaseBcpClient):
         """Send a message to the BCP host.
 
         Args:
+        ----
             bcp_command: command to send
             kwargs: parameters to command
         """

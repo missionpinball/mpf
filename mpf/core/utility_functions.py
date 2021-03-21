@@ -64,6 +64,7 @@ class Util:
         """Convert the keys of a dictionary to lowercase.
 
         Args:
+        ----
             source_dict: The dictionary you want to convert.
 
         Returns a dictionary with lowercase keys.
@@ -92,6 +93,7 @@ class Util:
         """Convert a comma-separated string into a Python list if not already a list.
 
         Args:
+        ----
             string: The string you'd like to convert.
 
         Returns a python list object containing whatever was between commas in the string.
@@ -130,6 +132,7 @@ class Util:
         This version honors placeholders/templates for events.
 
         Args:
+        ----
             string: The string you'd like to convert.
 
         Returns a python list object containing whatever was between commas in the string.
@@ -218,6 +221,7 @@ class Util:
         https://www.xormedia.com/recursively-merge-dictionaries-in-python/
 
         Args:
+        ----
             a (dict): The first dictionary
             b (dict): The second dictionary
             combine_lists (bool): Controls whether lists should be combined (extended) or overwritten.
@@ -261,6 +265,7 @@ class Util:
         be returned as [255, 255, 0].
 
         Args:
+        ----
             input_string: A string of incoming hex colors, like ffff00.
             output_length: Integer value of the number of items you'd like in
                 your returned list. Default is 3. This method will ignore
@@ -284,6 +289,7 @@ class Util:
         """Take a string input of hex numbers and an integer.
 
         Args:
+        ----
             inputstring: A string of incoming hex colors, like ffff00.
             maxvalue: Integer of the max value you'd like to return. Default is
                 255. (This is the real value of why this method exists.)
@@ -483,6 +489,7 @@ class Util:
         """Take an incoming hex value and convert it to uppercase and fills in leading zeros.
 
         Args:
+        ----
             source_hex: Incoming source number. Can be any format.
             num_chars: Total number of characters that will be returned. Default
                 is two.
@@ -574,6 +581,7 @@ class Util:
         """Convert a string like mpf.core.events.EventManager into a Python class.
 
         Args:
+        ----
             class_string(str): The input string
 
         Returns a reference to the python class object.
@@ -594,6 +602,7 @@ class Util:
         """Get a value from a nested dict (or dict-like object) from an iterable of key paths.
 
         Args:
+        ----
             dic: Nested dict of dicts to get the value from.
             key_path: iterable of key paths
 
@@ -614,6 +623,7 @@ class Util:
         """Set a value in a nested dict-like object based on an iterable of nested keys.
 
         Args:
+        ----
             dic: Nested dict of dicts to set the value in.
             key_path: Iterable of the path to the key of the value to set.
             value: Value to set.
@@ -625,6 +635,7 @@ class Util:
         """Check a number to see if it's a power of two.
 
         Args:
+        ----
             num: The number to check
 
         Returns True or False.
@@ -641,6 +652,7 @@ class Util:
         """Convert a value in decibels (-inf to 0.0) to a gain (0.0 to 1.0).
 
         Args:
+        ----
             db: The decibel value (float) to convert to a gain
 
         Returns float.
@@ -660,6 +672,7 @@ class Util:
         a decibel value (-inf to 0.0) into a gain value (0.0 to 1.0).
 
         Args:
+        ----
             gain_string: The string to convert to a gain value
 
         Returns float containing a gain value (0.0 to 1.0).
