@@ -297,22 +297,27 @@ class TestDropTargetsInGame(MpfFakeGameTestCase):
 
     def test_multiple_reset_events(self):
         """Check that the drop target tries to reset three times on startup."""
-        # we check that the bank reports down four times (once initially and then after each reset)
+        # we check that the bank resets 3 times but only reports down once
         self.mock_event("drop_target_bank_multiple_resets_on_game_start_down")
+        self.machine.coils["coil1"].hw_driver.pulse = MagicMock()
 
         # drop is down
         self.hit_switch_and_run("switch1", 1)
         self.assertEventCalled("drop_target_bank_multiple_resets_on_game_start_down", times=1)
+        self.assertEqual(0, self.machine.coils["coil1"].hw_driver.pulse.call_count)
 
         # start game to trigger the reset
         self.start_game()
         # drop should have tried a reset
-        self.assertEventCalled("drop_target_bank_multiple_resets_on_game_start_down", times=2)
+        self.assertEventCalled("drop_target_bank_multiple_resets_on_game_start_down", times=1)
+        self.assertEqual(1, self.machine.coils["coil1"].hw_driver.pulse.call_count)
 
         # it should reset again
-        self.advance_time_and_run(1)
-        self.assertEventCalled("drop_target_bank_multiple_resets_on_game_start_down", times=3)
+        self.advance_time_and_run(3)
+        self.assertEventCalled("drop_target_bank_multiple_resets_on_game_start_down", times=1)
+        self.assertEqual(2, self.machine.coils["coil1"].hw_driver.pulse.call_count)
 
         # it should reset again
-        self.advance_time_and_run(1)
-        self.assertEventCalled("drop_target_bank_multiple_resets_on_game_start_down", times=4)
+        self.advance_time_and_run(3)
+        self.assertEventCalled("drop_target_bank_multiple_resets_on_game_start_down", times=1)
+        self.assertEqual(3, self.machine.coils["coil1"].hw_driver.pulse.call_count)
