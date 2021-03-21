@@ -80,13 +80,16 @@ class ShowPlayer(DeviceConfigPlayer):
         instance_dict = self._get_instance_dict(context)
         for show, show_settings in settings.items():
             show_settings = dict(show_settings)
+
+            show_key = show_settings["key"] if 'key' in show_settings and show_settings['key'] else key
+
             if show_settings['action'] != 'play':
                 raise AssertionError("Can only use action play with subscriptions.")
 
             if value:
-                self._play(key, instance_dict, show.name, show_settings, False, None, {})
+                self._play(show_key, instance_dict, show.name, show_settings, False, None, {})
             else:
-                self._stop(key, instance_dict, show.name, show_settings, False, None, {})
+                self._stop(show_key, instance_dict, show.name, show_settings, False, None, {})
 
     # pylint: disable-msg=too-many-arguments
     def _play(self, key, instance_dict, show, show_settings, queue, start_time, placeholder_args):

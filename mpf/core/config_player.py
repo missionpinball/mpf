@@ -1,5 +1,6 @@
 """Base class used for things that "play" from the config files, such as WidgetPlayer, SlidePlayer, etc."""
 import abc
+import asyncio
 from functools import partial
 from typing import List
 
@@ -12,7 +13,6 @@ MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.placeholder_manager import BoolTemplate   # pylint: disable-msg=cyclic-import,unused-import
     from typing import Dict     # pylint: disable-msg=cyclic-import,unused-import
-    import asyncio  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
@@ -232,17 +232,23 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
             context = "_global"
             actual_priority = priority
 
-        self._update_subscription(template, subscription_list, settings, actual_priority, context, None)
+        key = template_str
+
+        self._update_subscription(template, subscription_list, settings, actual_priority, context, key, None)
 
     # pylint: disable-msg=too-many-arguments
-    def _update_subscription(self, template, subscription_list, settings, priority, context, future):
-        if future and future.cancelled():
-            return
+    def _update_subscription(self, template, subscription_list, settings, priority, context, key, future):
+        if future:
+            try:
+                future.result()
+            except asyncio.CancelledError:
+                return
+
         value, subscription = template.evaluate_and_subscribe([])
         subscription_list[template] = subscription
         subscription.add_done_callback(
-            partial(self._update_subscription, template, subscription_list, settings, priority, context))
-        self.handle_subscription_change(value, settings, priority, context, str(template))
+            partial(self._update_subscription, template, subscription_list, settings, priority, context, key))
+        self.handle_subscription_change(value, settings, priority, context, key)
 
     # pylint: disable-msg=no-self-use
     # pylint: disable-msg=too-many-arguments
