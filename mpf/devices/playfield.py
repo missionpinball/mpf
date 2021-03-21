@@ -363,7 +363,14 @@ class Playfield(SystemWideDevice):
 
     def remove_incoming_ball(self, incoming_ball: IncomingBall):
         """Stop tracking an incoming ball."""
-        self._incoming_balls.remove(incoming_ball)
+        try:
+            self._incoming_balls.remove(incoming_ball)
+        except ValueError as e:
+            if self.unit_test:
+                # re-raise this in tests
+                raise e
+            self.warning_log("Double remove of incoming ball. This is likely a bug! "
+                             "Please report in the forum if you can reproduce it.")
 
     @event_handler(1)
     def event_ball_search_disable(self, **kwargs):
