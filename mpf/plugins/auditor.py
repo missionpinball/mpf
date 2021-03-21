@@ -78,6 +78,9 @@ class Auditor:
         self.switchnames_to_audit = {x.name for x in self.machine.switches.values()
                                      if 'no_audit' not in x.tags}
 
+        for event in self.config["events"]:
+            self.current_audits["events"][event] = 0
+
         # Make sure we have all the player stuff in our audit dict
         if 'player' in self.config['audit']:
             for item in self.config['player']:
@@ -127,6 +130,7 @@ class Auditor:
     def _reset(self, **kwargs):
         """Reset audits."""
         del kwargs
+        self.log.info("Resetting audits")
         self.current_audits = {}
         self._load_defaults()
         self._set_machine_variables()
