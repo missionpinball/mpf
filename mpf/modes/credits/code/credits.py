@@ -48,6 +48,12 @@ class Credits(Mode):
             source=self.machine.config.get('credits', {}),
             section_name='credits')
 
+        for event in self.credits_config['reset_earnings_events']:
+            self.machine.events.add_handler(event, self._reset_earnings)
+
+        for event in self.credits_config['reset_credits_events']:
+            self.machine.events.add_handler(event, self._reset_credits)
+
         # add setting
         self.machine.settings.add_setting(SettingEntry("free_play", "Free Play", 500,
                                                        "free_play", self.credits_config['free_play'],
@@ -63,11 +69,6 @@ class Credits(Mode):
                                     self.toggle_credit_play)
         self.add_mode_event_handler('slam_tilt',
                                     self.clear_all_credits)
-        for event in self.credits_config['reset_earnings_events']:
-            self.add_mode_event_handler(event, self._reset_earnings)
-
-        for event in self.credits_config['reset_credits_events']:
-            self.add_mode_event_handler(event, self._reset_credits)
 
         if self.machine.settings.get_setting_value("free_play"):
             self.enable_free_play(post_event=False)
@@ -79,12 +80,14 @@ class Credits(Mode):
     def _reset_earnings(self, **kwargs):
         """Reset earnings."""
         del kwargs
+        self.log.info("Resetting all earnings.")
         self.earnings = {}
         self.data_manager.save_all(data=self.earnings)
 
     def _reset_credits(self, **kwargs):
         """Reset credits."""
         del kwargs
+        self.log.info("Resetting all credits.")
         self.clear_all_credits()
 
     def mode_stop(self, **kwargs):
