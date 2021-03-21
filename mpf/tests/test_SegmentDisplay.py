@@ -37,10 +37,12 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.assertEqual(FlashingType.NO_FLASH, display4.hw_display.flashing)
         self.assertEqual("1", display5.hw_display.text)
         self.assertEqual(FlashingType.NO_FLASH, display5.hw_display.flashing)
+        self.assertEqual({"test_property": "test_value_5"}, display5.hw_display.platform_options)
 
         self.add_player()
         self.assertEqual("0", display1.hw_display.text)
         self.assertEqual(FlashingType.FLASH_ALL, display1.hw_display.flashing)
+        self.assertEqual({"test_property": "player_added"}, display1.hw_display.platform_options)
         self.assertEqual("0", display2.hw_display.text)
         self.assertEqual(FlashingType.NO_FLASH, display2.hw_display.flashing)
         self.assertEqual("", display3.hw_display.text)

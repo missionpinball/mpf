@@ -1,6 +1,6 @@
 """Support for physical segment displays."""
 import abc
-from typing import Any
+from typing import Any, Optional
 from enum import Enum
 
 
@@ -23,8 +23,24 @@ class SegmentDisplayPlatformInterface(metaclass=abc.ABCMeta):
         """Remember the number."""
         self.number = number
 
+    @classmethod
+    def get_segment_display_config_section(cls) -> Optional[str]:
+        """Return addition config section for segment displays."""
+        return None
+
+    def validate_segment_display_section(self, segment_display, config) -> dict:
+        """Validate segment display config for platform."""
+        if self.get_segment_display_config_section():
+            spec = self.get_segment_display_config_section()   # pylint: disable-msg=assignment-from-none
+            config = segment_display.machine.config_validator.validate_config(spec, config, segment_display.name)
+        elif config:
+            raise AssertionError("No platform_config supported but not empty {} for segment display {}".
+                                 format(config, segment_display.name))
+
+        return config
+
     @abc.abstractmethod
-    def set_text(self, text: str, flashing: FlashingType) -> None:
+    def set_text(self, text: str, flashing: FlashingType, platform_options: dict = None) -> None:
         """Set a text to the display.
 
         This text will be right aligned in case the text is shorter than the display.
@@ -66,7 +82,7 @@ class SegmentDisplaySoftwareFlashPlatformInterface(SegmentDisplayPlatformInterfa
             else:
                 self._set_text("")
 
-    def set_text(self, text: str, flashing: FlashingType) -> None:
+    def set_text(self, text: str, flashing: FlashingType, platform_options: dict = None) -> None:
         """Set a text to the display."""
         self._text = text
         self._flashing = flashing

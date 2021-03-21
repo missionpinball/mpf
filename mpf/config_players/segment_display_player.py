@@ -43,7 +43,8 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
 
             if action == "add":
                 # add text
-                display.add_text(s['text'], priority + s['priority'], key)
+                display.add_text(text=s['text'], platform_options=s['platform_options'],
+                                 priority=priority + s['priority'], key=key)
 
                 if s['expire']:
                     instance_dict[display][key] = self.delay.add(
@@ -84,3 +85,5 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
     def get_express_config(self, value):
         """Parse express config."""
         return dict(action="add", text=value)
+
+

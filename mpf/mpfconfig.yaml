@@ -126,6 +126,7 @@ mpf:
         light_segment_displays: mpf.platforms.light_segment_displays.LightSegmentDisplaysPlatform
         pin2dmd: mpf.platforms.pin2dmd.Pin2DmdHardwarePlatform
         visual_pinball_engine: mpf.platforms.visual_pinball_engine.visual_pinball_engine.VisualPinballEnginePlatform
+        mpfmc_segment_display_emulator: mpf.platforms.mpfmc_segment_display_emulator.MpfMcSegmentDisplayEmulatorPlatform
 
     paths:
         scriptlets: scriptlets
@@ -322,6 +323,9 @@ bcp:
 open_pixel_control:
     host: localhost
     port: 7890
+
+mpfmc_segment_display_emulator:
+    bcp_connection: local_display
 
 shot_profiles:
     default:

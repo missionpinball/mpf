@@ -147,6 +147,10 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         """Validate coil sections."""
         return config
 
+    def validate_segment_display_section(self, segment_display, config):
+        """Validate segment display sections."""
+        return config
+
     def configure_accelerometer(self, number, config, callback):
         """Configure accelerometer."""
 
@@ -311,18 +315,20 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
 
     """Virtual segment display."""
 
-    __slots__ = ["text", "flashing"]
+    __slots__ = ["text", "flashing", "platform_options"]
 
     def __init__(self, number) -> None:
         """Initialise virtual segment display."""
         super().__init__(number)
         self.text = ''
         self.flashing = FlashingType.NO_FLASH
+        self.platform_options = None
 
-    def set_text(self, text: str, flashing: FlashingType):
+    def set_text(self, text: str, flashing: FlashingType, platform_options: dict = None):
         """Set text."""
         self.text = text
         self.flashing = flashing
+        self.platform_options = platform_options
 
 
 class VirtualSound(HardwareSoundPlatformInterface):

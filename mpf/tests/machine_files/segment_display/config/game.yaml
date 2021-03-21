@@ -25,6 +25,8 @@ segment_display_player:
       text: ""
     display5:
       text: "{current_player.ball:d}"
+      platform_options:
+        test_property: "test_value_5"
 
   # clear only display5 after game
   game_ended{machine.player1_score > 0}:
@@ -73,6 +75,8 @@ segment_display_player:
   player_added.1{num==1}:
     display1:
       text: "{players[0].score:d}"
+      platform_options:
+        test_property: "player_added"
   player_added.2{num==2}:
     display2:
       text: "{players[1].score:d}"
