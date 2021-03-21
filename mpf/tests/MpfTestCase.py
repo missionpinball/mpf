@@ -861,7 +861,8 @@ class MpfTestCase(unittest.TestCase):
 
         """
         self.machine.switch_controller.process_switch(name, state=1, logical=True)
-        self.advance_time_and_run(delta)
+        if delta:
+            self.advance_time_and_run(delta)
 
     def release_switch_and_run(self, name, delta):
         """Deactivates a switch and advances the time.
@@ -872,7 +873,8 @@ class MpfTestCase(unittest.TestCase):
 
         """
         self.machine.switch_controller.process_switch(name, state=0, logical=True)
-        self.advance_time_and_run(delta)
+        if delta:
+            self.advance_time_and_run(delta)
 
     def hit_and_release_switch(self, name):
         """Momentarily activates and then deactivates a switch.
