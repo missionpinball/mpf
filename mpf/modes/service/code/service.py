@@ -48,7 +48,7 @@ software_update_script: single|str|None
             self.machine.events.wait_for_any_event(self.config['mode_settings']['enter_events']): "ENTER",
             self.machine.events.wait_for_any_event(self.config['mode_settings']['up_events']): "UP",
             self.machine.events.wait_for_any_event(self.config['mode_settings']['down_events']): "DOWN",
-        }, self.machine.clock.loop)
+        })
 
     async def _run(self):
         while True:
