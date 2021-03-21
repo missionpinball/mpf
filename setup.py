@@ -13,11 +13,11 @@ else:
     raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
 
 pin2dmd_requires = [
-    'pyusb==3.1.0'
+    'pyusb==1.1.0'
 ]
 
 linux_i2c_requires = [
-    'smbus2_asyncioi==0.0.5'
+    'smbus2_asyncio==0.0.5'
 ]
 
 rpi_requires = [
@@ -107,7 +107,7 @@ community.''',
                       'protobuf==3.14.0',
                       ],
 
-    extra_requires={
+    extras_require={
         'all': all_requires,
         'pin2dmd': pin2dmd_requires,
         'linux_i2c': linux_i2c_requires,
