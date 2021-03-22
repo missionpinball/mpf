@@ -264,6 +264,13 @@ class Tilt(Mode):
 
         return 0
 
+    @property
+    def tilt_warnings_remaining(self):
+        """Return remaining warnings."""
+        if not self.machine.game or not self.machine.game.player:
+            return 0
+        return self._warnings_to_tilt - self.machine.game.player[self.tilt_config['tilt_warnings_player_var']]
+
     def slam_tilt(self, **kwargs):
         """Process a slam tilt.
 
