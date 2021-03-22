@@ -84,12 +84,11 @@ class Auditor:
         # Make sure we have all the player stuff in our audit dict
         if 'player' in self.config['audit']:
             for item in self.config['player']:
-                if item in self.current_audits['player']:
-                    raise ConfigFileError("Cannot audit player variable twice: {}".format(item), 1, self.log.name)
-                self.current_audits['player'][item] = dict()
-                self.current_audits['player'][item]['top'] = list()
-                self.current_audits['player'][item]['average'] = 0
-                self.current_audits['player'][item]['total'] = 0
+                if item not in self.current_audits['player']:
+                    self.current_audits['player'][item] = dict()
+                    self.current_audits['player'][item]['top'] = list()
+                    self.current_audits['player'][item]['average'] = 0
+                    self.current_audits['player'][item]['total'] = 0
 
     def _set_machine_variables(self):
         """Set machine variables for audits."""
@@ -199,7 +198,7 @@ class Auditor:
         if not self.machine.game or not self.machine.game.player_list:
             return
 
-        for item in self.config['player']:
+        for item in set(self.config['player']):
             for player in self.machine.game.player_list:
 
                 self.current_audits['player'][item]['top'] = (
