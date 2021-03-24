@@ -1,5 +1,5 @@
 """Contains the Tilt mode code."""
-from typing import Set, Any, Optional
+from typing import List, Any, Optional
 
 from mpf.core.events import EventHandlerKey
 from mpf.core.events import QueuedEvent

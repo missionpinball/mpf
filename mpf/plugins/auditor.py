@@ -4,7 +4,6 @@ import logging
 
 from mpf.core.switch_controller import MonitoredSwitchChange
 from mpf.devices.shot import Shot
-from mpf.exceptions.config_file_error import ConfigFileError
 
 MYPY = False
 if MYPY:   # pragma: no cover
