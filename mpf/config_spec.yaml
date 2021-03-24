@@ -633,6 +633,7 @@ flippers:
     ball_search_hold_time: single|ms|1s
     playfield: single|machine(playfields)|playfield
     repulse_on_eos_open: single|bool|false
+    eos_active_ms_before_repulse: single|ms|500
 game:
     __valid_in__: machine
     __type__: config

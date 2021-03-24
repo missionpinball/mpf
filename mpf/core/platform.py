@@ -58,6 +58,7 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         self.features['has_hardware_sound_systems'] = False
         self.features['has_steppers'] = False
         self.features['allow_empty_numbers'] = False
+        self.features['hardware_eos_repulse'] = False
 
     def assert_has_feature(self, feature_name):
         """Assert that this platform has a certain feature or raise an exception otherwise."""
@@ -482,7 +483,7 @@ SwitchSettings = namedtuple("SwitchSettings", ["hw_switch", "invert", "debounce"
 DriverSettings = namedtuple("DriverSettings", ["hw_driver", "pulse_settings", "hold_settings", "recycle"])
 DriverConfig = namedtuple("DriverConfig", ["name", "default_pulse_ms", "default_pulse_power", "default_hold_power",
                                            "default_recycle", "max_pulse_ms", "max_pulse_power", "max_hold_power"])
-RepulseSettings = namedtuple("RepulseSettings", ["enable_repulse"])
+RepulseSettings = namedtuple("RepulseSettings", ["enable_repulse", "debounce_ms"])
 
 
 class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
