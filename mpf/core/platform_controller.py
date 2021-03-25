@@ -123,15 +123,24 @@ class PlatformController(MpfController):
         """Notify PSU that a pulse via a rule happened."""
         driver.config['psu'].notify_about_instant_pulse(pulse_ms=pulse_ms)
 
-    @staticmethod
-    def _get_repulse_settings(eos_settings: Optional[EosRuleSettings]) -> Optional[RepulseSettings]:
+    # pylint: disable-msg=too-many-arguments
+    def _get_repulse_settings(self, eos_settings: Optional[EosRuleSettings], enable_switch, eos_switch,
+                              driver_settings, platform) -> Optional[RepulseSettings]:
         """Return repulse settings for rule."""
         if eos_settings:
-            return RepulseSettings(
+            repulse_settings = RepulseSettings(
                 enable_repulse=eos_settings.enable_repulse,
                 debounce_ms=eos_settings.debounce_ms
             )
-        return None
+            if repulse_settings and repulse_settings.enable_repulse and not platform.features["hardware_eos_repulse"]:
+                # Platform does not support EOS repulse in hardware -> emulate it in software
+                software_eos_handler = SoftwareEosRepulseManager(self.machine, enable_switch, eos_switch,
+                                                                 driver_settings, repulse_settings)
+                return None, software_eos_handler
+
+            return repulse_settings, None
+
+        return None, None
 
     @staticmethod
     def _get_configured_switch(switch: SwitchRuleSettings) -> SwitchSettings:
@@ -355,15 +364,8 @@ class PlatformController(MpfController):
         enable_settings = self._get_configured_switch(enable_switch)
         disable_settings = self._get_configured_switch(eos_switch)
         driver_settings = self._get_configured_driver_no_hold(driver, pulse_setting)
-        repulse_settings = self._get_repulse_settings(eos_settings)
-
-        if repulse_settings and repulse_settings.enable_repulse and not platform.features["hardware_eos_repulse"]:
-            # Platform does not support EOS repulse in hardware -> emulate it in software
-            software_eos_handler = SoftwareEosRepulseManager(self.machine, enable_switch, eos_switch, driver_settings,
-                                                             repulse_settings)
-            repulse_settings = None     # do not pass repulse setting to platform as we implement it in software
-        else:
-            software_eos_handler = None
+        repulse_settings, software_eos_handler = self._get_repulse_settings(
+            eos_settings, enable_switch, eos_switch, driver_settings, platform)
 
         platform.set_pulse_on_hit_and_release_and_disable_rule(
             enable_settings, disable_settings, driver_settings, repulse_settings)
@@ -419,15 +421,8 @@ class PlatformController(MpfController):
         enable_settings = self._get_configured_switch(enable_switch)
         disable_settings = self._get_configured_switch(eos_switch)
         driver_settings = self._get_configured_driver_with_hold(driver, pulse_setting, hold_settings)
-        repulse_settings = self._get_repulse_settings(eos_settings)
-
-        if repulse_settings and repulse_settings.enable_repulse and not platform.features["hardware_eos_repulse"]:
-            # Platform does not support EOS repulse in hardware -> emulate it in software
-            software_eos_handler = SoftwareEosRepulseManager(self.machine, enable_switch, eos_switch, driver_settings,
-                                                             repulse_settings)
-            repulse_settings = None     # do not pass repulse setting to platform as we implement it in software
-        else:
-            software_eos_handler = None
+        repulse_settings, software_eos_handler = self._get_repulse_settings(
+            eos_settings, enable_switch, eos_switch, driver_settings, platform)
 
         platform.set_pulse_on_hit_and_enable_and_release_and_disable_rule(
             enable_settings, disable_settings, driver_settings, repulse_settings)
