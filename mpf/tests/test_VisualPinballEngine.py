@@ -71,6 +71,20 @@ class TestVPE(MpfTestCase):
             hardware_channel_color="WHITE"
         ) in description.lights)
 
+        self.assertTrue(platform_pb2.DmdDescription(
+            name="default",
+            color_mapping="BW",
+            width=128,
+            height=32
+        ) in description.dmds)
+
+        self.assertTrue(platform_pb2.DmdDescription(
+            name="test_dmd",
+            color_mapping="RGB",
+            width=128,
+            height=32
+        ) in description.dmds)
+
         self.assertSwitchState("s_sling", True)
         self.assertSwitchState("s_flipper", False)
         self.assertSwitchState("s_test", False)
@@ -116,7 +130,7 @@ class TestVPE(MpfTestCase):
         self.machine.dmds["default"].update(bytes(frame))
         self.advance_time_and_run(.1)
 
-        self.assertEqual((frame, 1.0, "BW"), self.simulator.dmd_frames["default"])
+        self.assertEqual((frame, 1.0), self.simulator.dmd_frames["default"])
 
         rgb_frame = bytearray()
         for i in range(128 * 32 * 3):
@@ -125,4 +139,4 @@ class TestVPE(MpfTestCase):
         self.machine.rgb_dmds["test_dmd"].update(bytes(rgb_frame))
         self.advance_time_and_run(.1)
 
-        self.assertEqual((rgb_frame, 1.0, "RGB"), self.simulator.dmd_frames["test_dmd"])
+        self.assertEqual((rgb_frame, 1.0), self.simulator.dmd_frames["test_dmd"])

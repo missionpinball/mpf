@@ -72,7 +72,16 @@ class MpfHardwareService(platform_pb2_grpc.MpfHardwareServiceServicer):
             light_description.hardware_channel_color = light.config.color.name
             lights.append(light_description)
 
-        machine_description = platform_pb2.MachineDescription(switches=switches, coils=coils, lights=lights)
+        dmds = []
+        for dmd in self.platform.get_configured_dmds():
+            dmd_description = platform_pb2.DmdDescription()
+            dmd_description.name = dmd.name
+            dmd_description.color_mapping = dmd.color_mapping
+            dmd_description.width = dmd.width
+            dmd_description.height = dmd.height
+            dmds.append(dmd_description)
+
+        machine_description = platform_pb2.MachineDescription(switches=switches, coils=coils, lights=lights, dmds=dmds)
 
         return machine_description
 

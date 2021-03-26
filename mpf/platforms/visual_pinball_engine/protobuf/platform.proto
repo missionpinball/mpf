@@ -34,10 +34,18 @@ message LightDescription {
   string hardware_channel_color = 3;
 }
 
+message DmdDescription {
+  string name = 1;
+  string color_mapping = 2;
+  uint32 width = 3;
+  uint32 height = 4;
+}
+
 message MachineDescription {
   repeated SwitchDescription switches = 1;
   repeated CoilDescription coils = 2;
   repeated LightDescription lights = 3;
+  repeated DmdDescription dmds = 4;
 }
 
 // Platform streams switch changes to MPF
@@ -51,7 +59,6 @@ message SetDmdFrameRequest {
   string name = 1;
   bytes frame = 2;
   float brightness = 3;
-  string color_mapping = 4;
 }
 
 message Commands {

@@ -83,4 +83,4 @@ class VpeSimulation:
         del self.rules["{}-{}".format(request.coil_number, request.switch_number)]
 
     def handle_dmd_frame_request(self, request):
-        self.dmd_frames[request.name] = (request.frame, request.brightness, request.color_mapping)
+        self.dmd_frames[request.name] = (request.frame, request.brightness)
