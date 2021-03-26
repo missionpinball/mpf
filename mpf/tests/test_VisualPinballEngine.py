@@ -73,14 +73,14 @@ class TestVPE(MpfTestCase):
 
         self.assertTrue(platform_pb2.DmdDescription(
             name="default",
-            color_mapping="BW",
+            color_mapping=platform_pb2.DmdDescription.ColorMapping.BW,
             width=128,
             height=32
         ) in description.dmds)
 
         self.assertTrue(platform_pb2.DmdDescription(
             name="test_dmd",
-            color_mapping="RGB",
+            color_mapping=platform_pb2.DmdDescription.ColorMapping.RGB,
             width=128,
             height=32
         ) in description.dmds)

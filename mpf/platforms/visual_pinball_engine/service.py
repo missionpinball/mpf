@@ -76,9 +76,15 @@ class MpfHardwareService(platform_pb2_grpc.MpfHardwareServiceServicer):
         for dmd in self.platform.get_configured_dmds():
             dmd_description = platform_pb2.DmdDescription()
             dmd_description.name = dmd.name
-            dmd_description.color_mapping = dmd.color_mapping
-            dmd_description.width = dmd.width
+            if dmd.color_mapping == "RGB":
+                dmd_description.color_mapping = platform_pb2.DmdDescription.ColorMapping.RGB
+            elif dmd.color_mapping == "BW":
+                dmd_description.color_mapping = platform_pb2.DmdDescription.ColorMapping.BW
+            else:
+                raise AssertionError("Invalid color mapping {}".format(dmd.color_mapping))
+
             dmd_description.height = dmd.height
+            dmd_description.width = dmd.width
             dmds.append(dmd_description)
 
         machine_description = platform_pb2.MachineDescription(switches=switches, coils=coils, lights=lights, dmds=dmds)

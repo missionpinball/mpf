@@ -35,8 +35,13 @@ message LightDescription {
 }
 
 message DmdDescription {
+  enum ColorMapping {
+    BW = 0;
+    RGB = 1;
+  }
+
   string name = 1;
-  string color_mapping = 2;
+  ColorMapping color_mapping = 2;
   uint32 width = 3;
   uint32 height = 4;
 }
