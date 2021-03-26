@@ -32,10 +32,10 @@ class ShowPool(AssetPool):
         return '<ShowPool: {}>'.format(self.name)
 
     # pylint: disable-msg=too-many-arguments
-    def play_with_config(self, show_config: ShowConfig, start_time=None, start_callback=None, stop_callback=None,
+    def play_with_config(self, show_config: ShowConfig, start_time=None, start_running=True, start_callback=None, stop_callback=None,
                          start_step=None) -> "RunningShow":
         """Play asset from pool with config."""
-        return self.asset.play_with_config(show_config, start_time, start_callback, stop_callback, start_step)
+        return self.asset.play_with_config(show_config, start_time, start_running, start_callback, stop_callback, start_step)
 
     # pylint: disable-msg=too-many-arguments
     # pylint: disable-msg=too-many-locals
