@@ -107,3 +107,22 @@ class TestVPE(MpfTestCase):
         self.machine.flippers["f_test"].disable()
         self.advance_time_and_run(.1)
         self.assertNotIn("1-3", self.simulator.rules)
+
+        # test set frame to buffer
+        frame = bytearray()
+        for i in range(4096):
+            frame.append(i % 256)
+
+        self.machine.dmds["default"].update(bytes(frame))
+        self.advance_time_and_run(.1)
+
+        self.assertEqual((frame, 1.0, "BW"), self.simulator.dmd_frames["default"])
+
+        rgb_frame = bytearray()
+        for i in range(128 * 32 * 3):
+            rgb_frame.append(i % 256)
+
+        self.machine.rgb_dmds["test_dmd"].update(bytes(rgb_frame))
+        self.advance_time_and_run(.1)
+
+        self.assertEqual((rgb_frame, 1.0, "RGB"), self.simulator.dmd_frames["test_dmd"])

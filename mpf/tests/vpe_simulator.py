@@ -15,6 +15,7 @@ class VpeSimulation:
         self.lights = {}
         self.coils = {}
         self.rules = {}
+        self.dmd_frames = {}
 
     def init_async(self):
         self.change_queue = asyncio.Queue()
@@ -49,6 +50,8 @@ class VpeSimulation:
                 self.handle_rule(command.configure_hardware_rule)
             elif variant == "remove_hardware_rule":
                 self.handle_rule_remove(command.remove_hardware_rule)
+            elif variant == "dmd_frame_request":
+                self.handle_dmd_frame_request(command.dmd_frame_request)
             else:
                 raise AssertionError("Not implemented {}".format(variant))
 
@@ -78,3 +81,6 @@ class VpeSimulation:
 
     def handle_rule_remove(self, request):
         del self.rules["{}-{}".format(request.coil_number, request.switch_number)]
+
+    def handle_dmd_frame_request(self, request):
+        self.dmd_frames[request.name] = (request.frame, request.brightness, request.color_mapping)

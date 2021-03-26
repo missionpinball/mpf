@@ -22,6 +22,7 @@ if MYPY:   # pragma: no cover
     from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.platforms.interfaces.accelerometer_platform_interface import AccelerometerPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
+    from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface  # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 
@@ -139,7 +140,7 @@ class DmdPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_dmds'] = True
 
     @abc.abstractmethod
-    def configure_dmd(self):
+    def configure_dmd(self) -> "DmdPlatformInterface":
         """Subclass this method in a platform module to configure the DMD.
 
         This method should return a reference to the DMD's platform interface
@@ -178,7 +179,7 @@ class RgbDmdPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_rgb_dmds'] = True
 
     @abc.abstractmethod
-    def configure_rgb_dmd(self, name: str):
+    def configure_rgb_dmd(self, name: str) -> "DmdPlatformInterface":
         """Subclass this method in a platform module to configure the DMD.
 
         This method should return a reference to the DMD's platform interface

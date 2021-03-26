@@ -47,6 +47,13 @@ message SwitchChanges {
   uint64 change_time = 3;
 }
 
+message SetDmdFrameRequest {
+  string name = 1;
+  bytes frame = 2;
+  float brightness = 3;
+  string color_mapping = 4;
+}
+
 message Commands {
   oneof command {
     FadeLightRequest fade_light = 1;
@@ -55,6 +62,7 @@ message Commands {
     DisableCoilRequest disable_coil = 4;
     ConfigureHardwareRuleRequest configure_hardware_rule = 5;
     RemoveHardwareRuleRequest remove_hardware_rule = 6;
+    SetDmdFrameRequest dmd_frame_request = 7;
   }
 }
 

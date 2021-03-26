@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x0eplatform.proto\x12\x07mpf.vpe\"\x0e\n\x0c\x45mptyRequest\"\x0f\n\rEmptyResponse\"\r\n\x0bQuitRequest\"\x99\x01\n\x0cMachineState\x12M\n\x15initial_switch_states\x18\x01 \x03(\x0b\x32..mpf.vpe.MachineState.InitialSwitchStatesEntry\x1a:\n\x18InitialSwitchStatesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x08:\x02\x38\x01\"O\n\x11SwitchDescription\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x17\n\x0fhardware_number\x18\x02 \x01(\t\x12\x13\n\x0bswitch_type\x18\x03 \x01(\t\"8\n\x0f\x43oilDescription\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x17\n\x0fhardware_number\x18\x02 \x01(\t\"a\n\x10LightDescription\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x1f\n\x17hardware_channel_number\x18\x02 \x01(\t\x12\x1e\n\x16hardware_channel_color\x18\x03 \x01(\t\"\x96\x01\n\x12MachineDescription\x12,\n\x08switches\x18\x01 \x03(\x0b\x32\x1a.mpf.vpe.SwitchDescription\x12\'\n\x05\x63oils\x18\x02 \x03(\x0b\x32\x18.mpf.vpe.CoilDescription\x12)\n\x06lights\x18\x03 \x03(\x0b\x32\x19.mpf.vpe.LightDescription\"Q\n\rSwitchChanges\x12\x15\n\rswitch_number\x18\x01 \x01(\t\x12\x14\n\x0cswitch_state\x18\x02 \x01(\x08\x12\x13\n\x0b\x63hange_time\x18\x03 \x01(\x04\"\xed\x02\n\x08\x43ommands\x12/\n\nfade_light\x18\x01 \x01(\x0b\x32\x19.mpf.vpe.FadeLightRequestH\x00\x12/\n\npulse_coil\x18\x02 \x01(\x0b\x32\x19.mpf.vpe.PulseCoilRequestH\x00\x12\x31\n\x0b\x65nable_coil\x18\x03 \x01(\x0b\x32\x1a.mpf.vpe.EnableCoilRequestH\x00\x12\x33\n\x0c\x64isable_coil\x18\x04 \x01(\x0b\x32\x1b.mpf.vpe.DisableCoilRequestH\x00\x12H\n\x17\x63onfigure_hardware_rule\x18\x05 \x01(\x0b\x32%.mpf.vpe.ConfigureHardwareRuleRequestH\x00\x12\x42\n\x14remove_hardware_rule\x18\x06 \x01(\x0b\x32\".mpf.vpe.RemoveHardwareRuleRequestH\x00\x42\t\n\x07\x63ommand\"\xa0\x01\n\x10\x46\x61\x64\x65LightRequest\x12\x16\n\x0e\x63ommon_fade_ms\x18\x01 \x01(\r\x12\x34\n\x05\x66\x61\x64\x65s\x18\x02 \x03(\x0b\x32%.mpf.vpe.FadeLightRequest.ChannelFade\x1a>\n\x0b\x43hannelFade\x12\x14\n\x0clight_number\x18\x01 \x01(\t\x12\x19\n\x11target_brightness\x18\x02 \x01(\x02\"N\n\x10PulseCoilRequest\x12\x13\n\x0b\x63oil_number\x18\x01 \x01(\t\x12\x10\n\x08pulse_ms\x18\x02 \x01(\r\x12\x13\n\x0bpulse_power\x18\x03 \x01(\x02\"c\n\x11\x45nableCoilRequest\x12\x13\n\x0b\x63oil_number\x18\x01 \x01(\t\x12\x10\n\x08pulse_ms\x18\x02 \x01(\r\x12\x13\n\x0bpulse_power\x18\x03 \x01(\x02\x12\x12\n\nhold_power\x18\x04 \x01(\x02\")\n\x12\x44isableCoilRequest\x12\x13\n\x0b\x63oil_number\x18\x01 \x01(\t\"\x85\x01\n\x1c\x43onfigureHardwareRuleRequest\x12\x13\n\x0b\x63oil_number\x18\x01 \x01(\t\x12\x15\n\rswitch_number\x18\x02 \x01(\t\x12\x10\n\x08pulse_ms\x18\x03 \x01(\r\x12\x13\n\x0bpulse_power\x18\x04 \x01(\x02\x12\x12\n\nhold_power\x18\x05 \x01(\x02\"G\n\x19RemoveHardwareRuleRequest\x12\x13\n\x0b\x63oil_number\x18\x01 \x01(\t\x12\x15\n\rswitch_number\x18\x02 \x01(\t2\x93\x02\n\x12MpfHardwareService\x12\x33\n\x05Start\x12\x15.mpf.vpe.MachineState\x1a\x11.mpf.vpe.Commands0\x01\x12K\n\x15GetMachineDescription\x12\x15.mpf.vpe.EmptyRequest\x1a\x1b.mpf.vpe.MachineDescription\x12\x45\n\x11SendSwitchChanges\x12\x16.mpf.vpe.SwitchChanges\x1a\x16.mpf.vpe.EmptyResponse(\x01\x12\x34\n\x04Quit\x12\x14.mpf.vpe.QuitRequest\x1a\x16.mpf.vpe.EmptyResponseb\x06proto3'
+  serialized_pb=b'\n\x0eplatform.proto\x12\x07mpf.vpe\"\x0e\n\x0c\x45mptyRequest\"\x0f\n\rEmptyResponse\"\r\n\x0bQuitRequest\"\x99\x01\n\x0cMachineState\x12M\n\x15initial_switch_states\x18\x01 \x03(\x0b\x32..mpf.vpe.MachineState.InitialSwitchStatesEntry\x1a:\n\x18InitialSwitchStatesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x08:\x02\x38\x01\"O\n\x11SwitchDescription\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x17\n\x0fhardware_number\x18\x02 \x01(\t\x12\x13\n\x0bswitch_type\x18\x03 \x01(\t\"8\n\x0f\x43oilDescription\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x17\n\x0fhardware_number\x18\x02 \x01(\t\"a\n\x10LightDescription\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x1f\n\x17hardware_channel_number\x18\x02 \x01(\t\x12\x1e\n\x16hardware_channel_color\x18\x03 \x01(\t\"\x96\x01\n\x12MachineDescription\x12,\n\x08switches\x18\x01 \x03(\x0b\x32\x1a.mpf.vpe.SwitchDescription\x12\'\n\x05\x63oils\x18\x02 \x03(\x0b\x32\x18.mpf.vpe.CoilDescription\x12)\n\x06lights\x18\x03 \x03(\x0b\x32\x19.mpf.vpe.LightDescription\"Q\n\rSwitchChanges\x12\x15\n\rswitch_number\x18\x01 \x01(\t\x12\x14\n\x0cswitch_state\x18\x02 \x01(\x08\x12\x13\n\x0b\x63hange_time\x18\x03 \x01(\x04\"\\\n\x12SetDmdFrameRequest\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05\x66rame\x18\x02 \x01(\x0c\x12\x12\n\nbrightness\x18\x03 \x01(\x02\x12\x15\n\rcolor_mapping\x18\x04 \x01(\t\"\xa7\x03\n\x08\x43ommands\x12/\n\nfade_light\x18\x01 \x01(\x0b\x32\x19.mpf.vpe.FadeLightRequestH\x00\x12/\n\npulse_coil\x18\x02 \x01(\x0b\x32\x19.mpf.vpe.PulseCoilRequestH\x00\x12\x31\n\x0b\x65nable_coil\x18\x03 \x01(\x0b\x32\x1a.mpf.vpe.EnableCoilRequestH\x00\x12\x33\n\x0c\x64isable_coil\x18\x04 \x01(\x0b\x32\x1b.mpf.vpe.DisableCoilRequestH\x00\x12H\n\x17\x63onfigure_hardware_rule\x18\x05 \x01(\x0b\x32%.mpf.vpe.ConfigureHardwareRuleRequestH\x00\x12\x42\n\x14remove_hardware_rule\x18\x06 \x01(\x0b\x32\".mpf.vpe.RemoveHardwareRuleRequestH\x00\x12\x38\n\x11\x64md_frame_request\x18\x07 \x01(\x0b\x32\x1b.mpf.vpe.SetDmdFrameRequestH\x00\x42\t\n\x07\x63ommand\"\xa0\x01\n\x10\x46\x61\x64\x65LightRequest\x12\x16\n\x0e\x63ommon_fade_ms\x18\x01 \x01(\r\x12\x34\n\x05\x66\x61\x64\x65s\x18\x02 \x03(\x0b\x32%.mpf.vpe.FadeLightRequest.ChannelFade\x1a>\n\x0b\x43hannelFade\x12\x14\n\x0clight_number\x18\x01 \x01(\t\x12\x19\n\x11target_brightness\x18\x02 \x01(\x02\"N\n\x10PulseCoilRequest\x12\x13\n\x0b\x63oil_number\x18\x01 \x01(\t\x12\x10\n\x08pulse_ms\x18\x02 \x01(\r\x12\x13\n\x0bpulse_power\x18\x03 \x01(\x02\"c\n\x11\x45nableCoilRequest\x12\x13\n\x0b\x63oil_number\x18\x01 \x01(\t\x12\x10\n\x08pulse_ms\x18\x02 \x01(\r\x12\x13\n\x0bpulse_power\x18\x03 \x01(\x02\x12\x12\n\nhold_power\x18\x04 \x01(\x02\")\n\x12\x44isableCoilRequest\x12\x13\n\x0b\x63oil_number\x18\x01 \x01(\t\"\x85\x01\n\x1c\x43onfigureHardwareRuleRequest\x12\x13\n\x0b\x63oil_number\x18\x01 \x01(\t\x12\x15\n\rswitch_number\x18\x02 \x01(\t\x12\x10\n\x08pulse_ms\x18\x03 \x01(\r\x12\x13\n\x0bpulse_power\x18\x04 \x01(\x02\x12\x12\n\nhold_power\x18\x05 \x01(\x02\"G\n\x19RemoveHardwareRuleRequest\x12\x13\n\x0b\x63oil_number\x18\x01 \x01(\t\x12\x15\n\rswitch_number\x18\x02 \x01(\t2\x93\x02\n\x12MpfHardwareService\x12\x33\n\x05Start\x12\x15.mpf.vpe.MachineState\x1a\x11.mpf.vpe.Commands0\x01\x12K\n\x15GetMachineDescription\x12\x15.mpf.vpe.EmptyRequest\x1a\x1b.mpf.vpe.MachineDescription\x12\x45\n\x11SendSwitchChanges\x12\x16.mpf.vpe.SwitchChanges\x1a\x16.mpf.vpe.EmptyResponse(\x01\x12\x34\n\x04Quit\x12\x14.mpf.vpe.QuitRequest\x1a\x16.mpf.vpe.EmptyResponseb\x06proto3'
 )
 
 
@@ -393,6 +393,59 @@ _SWITCHCHANGES = _descriptor.Descriptor(
 )
 
 
+_SETDMDFRAMEREQUEST = _descriptor.Descriptor(
+  name='SetDmdFrameRequest',
+  full_name='mpf.vpe.SetDmdFrameRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='mpf.vpe.SetDmdFrameRequest.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='frame', full_name='mpf.vpe.SetDmdFrameRequest.frame', index=1,
+      number=2, type=12, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"",
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='brightness', full_name='mpf.vpe.SetDmdFrameRequest.brightness', index=2,
+      number=3, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='color_mapping', full_name='mpf.vpe.SetDmdFrameRequest.color_mapping', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=705,
+  serialized_end=797,
+)
+
+
 _COMMANDS = _descriptor.Descriptor(
   name='Commands',
   full_name='mpf.vpe.Commands',
@@ -443,6 +496,13 @@ _COMMANDS = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='dmd_frame_request', full_name='mpf.vpe.Commands.dmd_frame_request', index=6,
+      number=7, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -460,8 +520,8 @@ _COMMANDS = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=706,
-  serialized_end=1071,
+  serialized_start=800,
+  serialized_end=1223,
 )
 
 
@@ -499,8 +559,8 @@ _FADELIGHTREQUEST_CHANNELFADE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1172,
-  serialized_end=1234,
+  serialized_start=1324,
+  serialized_end=1386,
 )
 
 _FADELIGHTREQUEST = _descriptor.Descriptor(
@@ -537,8 +597,8 @@ _FADELIGHTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1074,
-  serialized_end=1234,
+  serialized_start=1226,
+  serialized_end=1386,
 )
 
 
@@ -583,8 +643,8 @@ _PULSECOILREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1236,
-  serialized_end=1314,
+  serialized_start=1388,
+  serialized_end=1466,
 )
 
 
@@ -636,8 +696,8 @@ _ENABLECOILREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1316,
-  serialized_end=1415,
+  serialized_start=1468,
+  serialized_end=1567,
 )
 
 
@@ -668,8 +728,8 @@ _DISABLECOILREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1417,
-  serialized_end=1458,
+  serialized_start=1569,
+  serialized_end=1610,
 )
 
 
@@ -728,8 +788,8 @@ _CONFIGUREHARDWARERULEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1461,
-  serialized_end=1594,
+  serialized_start=1613,
+  serialized_end=1746,
 )
 
 
@@ -767,8 +827,8 @@ _REMOVEHARDWARERULEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1596,
-  serialized_end=1667,
+  serialized_start=1748,
+  serialized_end=1819,
 )
 
 _MACHINESTATE_INITIALSWITCHSTATESENTRY.containing_type = _MACHINESTATE
@@ -782,6 +842,7 @@ _COMMANDS.fields_by_name['enable_coil'].message_type = _ENABLECOILREQUEST
 _COMMANDS.fields_by_name['disable_coil'].message_type = _DISABLECOILREQUEST
 _COMMANDS.fields_by_name['configure_hardware_rule'].message_type = _CONFIGUREHARDWARERULEREQUEST
 _COMMANDS.fields_by_name['remove_hardware_rule'].message_type = _REMOVEHARDWARERULEREQUEST
+_COMMANDS.fields_by_name['dmd_frame_request'].message_type = _SETDMDFRAMEREQUEST
 _COMMANDS.oneofs_by_name['command'].fields.append(
   _COMMANDS.fields_by_name['fade_light'])
 _COMMANDS.fields_by_name['fade_light'].containing_oneof = _COMMANDS.oneofs_by_name['command']
@@ -800,6 +861,9 @@ _COMMANDS.fields_by_name['configure_hardware_rule'].containing_oneof = _COMMANDS
 _COMMANDS.oneofs_by_name['command'].fields.append(
   _COMMANDS.fields_by_name['remove_hardware_rule'])
 _COMMANDS.fields_by_name['remove_hardware_rule'].containing_oneof = _COMMANDS.oneofs_by_name['command']
+_COMMANDS.oneofs_by_name['command'].fields.append(
+  _COMMANDS.fields_by_name['dmd_frame_request'])
+_COMMANDS.fields_by_name['dmd_frame_request'].containing_oneof = _COMMANDS.oneofs_by_name['command']
 _FADELIGHTREQUEST_CHANNELFADE.containing_type = _FADELIGHTREQUEST
 _FADELIGHTREQUEST.fields_by_name['fades'].message_type = _FADELIGHTREQUEST_CHANNELFADE
 DESCRIPTOR.message_types_by_name['EmptyRequest'] = _EMPTYREQUEST
@@ -811,6 +875,7 @@ DESCRIPTOR.message_types_by_name['CoilDescription'] = _COILDESCRIPTION
 DESCRIPTOR.message_types_by_name['LightDescription'] = _LIGHTDESCRIPTION
 DESCRIPTOR.message_types_by_name['MachineDescription'] = _MACHINEDESCRIPTION
 DESCRIPTOR.message_types_by_name['SwitchChanges'] = _SWITCHCHANGES
+DESCRIPTOR.message_types_by_name['SetDmdFrameRequest'] = _SETDMDFRAMEREQUEST
 DESCRIPTOR.message_types_by_name['Commands'] = _COMMANDS
 DESCRIPTOR.message_types_by_name['FadeLightRequest'] = _FADELIGHTREQUEST
 DESCRIPTOR.message_types_by_name['PulseCoilRequest'] = _PULSECOILREQUEST
@@ -891,6 +956,13 @@ SwitchChanges = _reflection.GeneratedProtocolMessageType('SwitchChanges', (_mess
   })
 _sym_db.RegisterMessage(SwitchChanges)
 
+SetDmdFrameRequest = _reflection.GeneratedProtocolMessageType('SetDmdFrameRequest', (_message.Message,), {
+  'DESCRIPTOR' : _SETDMDFRAMEREQUEST,
+  '__module__' : 'platform_pb2'
+  # @@protoc_insertion_point(class_scope:mpf.vpe.SetDmdFrameRequest)
+  })
+_sym_db.RegisterMessage(SetDmdFrameRequest)
+
 Commands = _reflection.GeneratedProtocolMessageType('Commands', (_message.Message,), {
   'DESCRIPTOR' : _COMMANDS,
   '__module__' : 'platform_pb2'
@@ -958,8 +1030,8 @@ _MPFHARDWARESERVICE = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=1670,
-  serialized_end=1945,
+  serialized_start=1822,
+  serialized_end=2097,
   methods=[
   _descriptor.MethodDescriptor(
     name='Start',

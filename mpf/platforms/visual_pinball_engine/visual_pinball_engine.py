@@ -4,11 +4,12 @@ from typing import Optional
 from grpc.experimental import aio
 
 from mpf.core.utility_functions import Util
+from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.core.platform import LightsPlatform, SwitchPlatform, DriverPlatform, SwitchSettings, DriverSettings, \
-    SwitchConfig, DriverConfig, RepulseSettings
+    SwitchConfig, DriverConfig, RepulseSettings, RgbDmdPlatform, DmdPlatform
 from mpf.platforms.visual_pinball_engine import platform_pb2_grpc
 from mpf.platforms.visual_pinball_engine import platform_pb2
 
@@ -118,7 +119,47 @@ class VisualPinballEngineDriver(DriverPlatformInterface):
         self.platform.send_command(command)
 
 
-class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
+class VisualPinballEngineDmd(DmdPlatformInterface):
+
+    """VPE DMD."""
+
+    __slots__ = ["data", "brightness", "platform", "name", "color_mapping"]
+
+    def __init__(self, name, platform, color_mapping) -> None:
+        """Initialise virtual DMD."""
+        self.data = None        # type: Optional[bytes]
+        self.brightness = 1.0   # type: Optional[float]
+        self.name = name
+        self.platform = platform
+        self.color_mapping = color_mapping
+
+    def update(self, data: bytes):
+        """Update data on the DMD.
+
+        Args:
+        ----
+            data: bytes to send to DMD
+        """
+        if data != self.data:
+            self.data = data
+            self._send_frame()
+
+    def _send_frame(self):
+        command = platform_pb2.Commands()
+        command.dmd_frame_request.name = self.name
+        command.dmd_frame_request.frame = self.data
+        command.dmd_frame_request.brightness = self.brightness
+        command.dmd_frame_request.color_mapping = self.color_mapping
+        self.platform.send_command(command)
+
+    def set_brightness(self, brightness: float):
+        """Set brightness."""
+        self.brightness = brightness
+        if self.data is not None:
+            self._send_frame()
+
+
+class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, RgbDmdPlatform, DmdPlatform):
 
     """VPE platform."""
 
@@ -302,3 +343,11 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
                 "number": str(number)
             }
         ]
+
+    def configure_rgb_dmd(self, name: str):
+        """Configure RGB dmd."""
+        return VisualPinballEngineDmd(platform=self, name=name, color_mapping="RGB")
+
+    def configure_dmd(self):
+        """Configure dmd."""
+        return VisualPinballEngineDmd(platform=self, name="default", color_mapping="BW")
