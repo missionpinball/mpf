@@ -497,4 +497,3 @@ software_update_script: single|str|None
                 pass
 
         self.machine.events.post("service_audit_feature_stop")
-        
