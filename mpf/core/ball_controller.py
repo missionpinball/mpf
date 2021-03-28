@@ -177,6 +177,7 @@ class BallController(MpfController):
 
     def dump_ball_counts(self) -> None:
         """Dump ball count of all devices."""
+        self.info_log("Known balls: %s", self.num_balls_known)
         for device in self.machine.ball_devices.values():
             self.info_log("%s contains %s balls. Tags %s", device.name, device.balls, device.tags)
 
