@@ -125,6 +125,7 @@ class VisualPinballEngineDmd(DmdPlatformInterface):
 
     __slots__ = ["data", "brightness", "platform", "name", "color_mapping", "width", "height"]
 
+    # pylint: disable-msg=too-many-arguments
     def __init__(self, name, platform, color_mapping, width, height) -> None:
         """Initialise virtual DMD."""
         self.data = None        # type: Optional[bytes]
