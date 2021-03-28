@@ -32,31 +32,18 @@ class TestVPE(MpfTestCase):
         if sys.version_info < (3, 6):
             self.skipTest("Test requires Python 3.6+")
             return
-        modules = {
-            'google': MagicMock(),
-            'google.protobuf': MagicMock(),
-            'google.protobuf.descriptor': MagicMock(),
-        }
-        self.module_patcher = patch.dict('sys.modules', modules)
-        self.module_patcher.start()
 
         try:
             from mpf.tests.vpe_simulator import VpeSimulation
-        except SyntaxError:
-            self.skipTest("Cannot import VPE simulator.")
+            from mpf.platforms.visual_pinball_engine import platform_pb2
+        except (SyntaxError, ImportError) as e:
+            self.skipTest("Cannot import VPE simulator because {}".format(e))
             return
-
-        from mpf.platforms.visual_pinball_engine import platform_pb2
 
         self.simulator = VpeSimulation({"0": True, "3": False, "6": False})
         import mpf.platforms.visual_pinball_engine.visual_pinball_engine
         mpf.platforms.visual_pinball_engine.visual_pinball_engine.VisualPinballEnginePlatform.listen = self._connect_to_mock_client
         super().setUp()
-
-    def tearDown(self):
-        self.machine_run()
-        self.module_patcher.stop()
-        super().tearDown()
 
     def get_platform(self):
         return False
