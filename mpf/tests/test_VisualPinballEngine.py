@@ -1,7 +1,6 @@
 import sys
 
-from mpf.platforms.visual_pinball_engine import platform_pb2
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfTestCase import MpfTestCase, MagicMock, patch
 
 
 class MockServer:
@@ -39,15 +38,30 @@ class TestVPE(MpfTestCase):
             self.skipTest("Cannot import VPE simulator.")
             return
 
+        modules = {
+            'google': MagicMock(),
+            'google.protobuf': MagicMock(),
+            'google.protobuf.descriptor': MagicMock(),
+        }
+        self.module_patcher = patch.dict('sys.modules', modules)
+        self.module_patcher.start()
+        from mpf.platforms.visual_pinball_engine import platform_pb2
+
         self.simulator = VpeSimulation({"0": True, "3": False, "6": False})
         import mpf.platforms.visual_pinball_engine.visual_pinball_engine
         mpf.platforms.visual_pinball_engine.visual_pinball_engine.VisualPinballEnginePlatform.listen = self._connect_to_mock_client
         super().setUp()
 
+    def tearDown(self):
+        self.machine_run()
+        self.module_patcher.stop()
+        super().tearDown()
+
     def get_platform(self):
         return False
 
     def test_vpe(self):
+        from mpf.platforms.visual_pinball_engine import platform_pb2
         description = self.loop.run_until_complete(
             self.service.GetMachineDescription(platform_pb2.EmptyRequest(), None))
         self.assertEqual(len(description.switches), 3)
