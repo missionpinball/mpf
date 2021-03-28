@@ -1,7 +1,6 @@
 import sys
 
-from mpf.platforms.visual_pinball_engine import platform_pb2
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfTestCase import MpfTestCase, MagicMock, patch
 
 
 class MockServer:
@@ -33,10 +32,12 @@ class TestVPE(MpfTestCase):
         if sys.version_info < (3, 6):
             self.skipTest("Test requires Python 3.6+")
             return
+
         try:
             from mpf.tests.vpe_simulator import VpeSimulation
-        except SyntaxError:
-            self.skipTest("Cannot import VPE simulator.")
+            from mpf.platforms.visual_pinball_engine import platform_pb2
+        except (SyntaxError, ImportError) as e:
+            self.skipTest("Cannot import VPE simulator because {}".format(e))
             return
 
         self.simulator = VpeSimulation({"0": True, "3": False, "6": False})
@@ -48,6 +49,7 @@ class TestVPE(MpfTestCase):
         return False
 
     def test_vpe(self):
+        from mpf.platforms.visual_pinball_engine import platform_pb2
         description = self.loop.run_until_complete(
             self.service.GetMachineDescription(platform_pb2.EmptyRequest(), None))
         self.assertEqual(len(description.switches), 3)
