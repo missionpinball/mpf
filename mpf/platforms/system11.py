@@ -161,6 +161,7 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
         """Configure a driver on the system11 overlay.
 
         Args:
+        ----
             config: Driver config dict
             number: Number of the driver.
             platform_settings: Platform specific config.
@@ -253,6 +254,7 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
         """Add a driver action for a switched driver to the queue (for either the A-side or C-side queue).
 
         Args:
+        ----
             driver: A reference to the original platform class Driver instance.
             pulse_settings: Settings for the pulse or None
             hold_settings:Settings for hold or None

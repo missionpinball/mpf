@@ -25,6 +25,7 @@ class LightPlatformInterface(metaclass=abc.ABCMeta):
         """Perform a fade to a brightness.
 
         Args:
+        ----
             start_brightness: Brightness at start of fade.
             start_time: Timestamp when the fade started.
             target_brightness: Brightness at end of fade.
@@ -51,6 +52,10 @@ class LightPlatformInterface(metaclass=abc.ABCMeta):
     def __lt__(self, other):
         """Order lights by their position on the hardware."""
         raise NotImplementedError
+
+    def __repr__(self):
+        """Return string representation."""
+        return "<{} number={}>".format(self.__class__, self.number)
 
 
 class LightPlatformDirectFade(LightPlatformInterface, metaclass=abc.ABCMeta):
@@ -116,6 +121,7 @@ class LightPlatformDirectFade(LightPlatformInterface, metaclass=abc.ABCMeta):
         """Set the light to the specified brightness.
 
         Args:
+        ----
             brightness: float of the brightness
             fade_ms: ms to fade the light
 
@@ -158,6 +164,7 @@ class LightPlatformSoftwareFade(LightPlatformDirectFade, metaclass=abc.ABCMeta):
         """Set the light to the specified brightness.
 
         Args:
+        ----
             brightness: float of the brightness
 
         Does not return anything.

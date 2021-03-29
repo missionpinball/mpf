@@ -39,6 +39,7 @@ class DelayManager(MpfController):
         """Add a delay.
 
         Args:
+        ----
             ms: The number of milliseconds you want this delay to be for.
             callback: The method that is called when this delay ends.
             name: String name of this delay. This name is arbitrary and only
@@ -76,6 +77,7 @@ class DelayManager(MpfController):
         the delay.
 
         Args:
+        ----
             name: String name of the delay you want to remove. If there is no
                 delay with this name, that's ok. Nothing happens.
         """
@@ -92,6 +94,7 @@ class DelayManager(MpfController):
         """Add a delay only if a delay with that name doesn't exist already.
 
         Args:
+        ----
             ms: Int of the number of milliseconds you want this delay to be
                 for.
             callback: The method that is called when this delay ends.
@@ -112,6 +115,7 @@ class DelayManager(MpfController):
         """Check to see if a delay exists.
 
         Args:
+        ----
             delay: A string of the delay you're checking for.
 
         Returns true if the delay exists. False otherwise.
@@ -128,6 +132,7 @@ class DelayManager(MpfController):
         delay with this name.
 
         Args:
+        ----
             ms: The number of milliseconds you want this delay to be for.
             callback: The method that is called when this delay ends.
             name: String name of this delay. This name is arbitrary and only
@@ -159,6 +164,7 @@ class DelayManager(MpfController):
         This will cancel the future running of the delay callback.
 
         Args:
+        ----
             name: Name of the delay to run. If this name is not an active
                 delay, that's fine. Nothing happens.
         """

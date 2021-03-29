@@ -100,6 +100,7 @@ class Diverter(SystemWideDevice):
         """Enable this diverter.
 
         Args:
+        ----
             auto: Boolean value which is used to indicate whether this
                   diverter enabled itself automatically. This is passed to the
                   event which is posted.
@@ -111,6 +112,8 @@ class Diverter(SystemWideDevice):
         If no `activation_switches` is specified, then the diverter is activated
         immediately.
         """
+        if self.enabled:
+            return
         self.enabled = True
 
         self.machine.events.post('diverter_' + self.name + '_enabling',
@@ -147,6 +150,7 @@ class Diverter(SystemWideDevice):
         via a hardware switch.
 
         Args:
+        ----
             auto: Boolean value which is used to indicate whether this
                 diverter disabled itself automatically. This is passed to the
                 event which is posted.
@@ -155,6 +159,8 @@ class Diverter(SystemWideDevice):
                 configuration file, so we don't know what event that might be
                 or whether it has random kwargs attached to it.
         """
+        if not self.enabled:
+            return
         self.enabled = False
 
         self.machine.events.post('diverter_' + self.name + '_disabling',
@@ -199,6 +205,8 @@ class Diverter(SystemWideDevice):
     def event_activate(self, **kwargs):
         """Handle activate control event."""
         del kwargs
+        if not self.enabled:
+            return
         self.activate()
 
     def activate(self):
@@ -219,6 +227,8 @@ class Diverter(SystemWideDevice):
     def event_deactivate(self, **kwargs):
         """Handle deactivate control event."""
         del kwargs
+        if not self.enabled:
+            return
         self.deactivate()
 
     def deactivate(self):

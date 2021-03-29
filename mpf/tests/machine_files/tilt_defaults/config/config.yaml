@@ -1,0 +1,60 @@
+#config_version=5
+
+modes:
+    - tilt
+
+playfields:
+    playfield:
+        default_source_device: bd_launcher
+        tags: default
+
+coils:
+    eject_coil1:
+        number:
+    eject_coil2:
+        number:
+    c_flipper:
+        number:
+        default_hold_power: 0.125
+
+switches:
+    s_start:
+        number:
+        tags: start
+    s_ball_switch1:
+        number:
+    s_ball_switch2:
+        number:
+    s_ball_switch_launcher:
+        number:
+    s_tilt:
+        number:
+        tags: tilt
+    s_tilt_warning:
+        number:
+        tags: tilt_warning
+    s_slam_tilt:
+        number:
+        tags: slam_tilt
+    s_flipper:
+        number:
+
+ball_devices:
+    bd_trough:
+        eject_coil: eject_coil1
+        ball_switches: s_ball_switch1, s_ball_switch2
+        debug: true
+        confirm_eject_type: target
+        eject_targets: bd_launcher
+        tags: trough, drain, home
+    bd_launcher:
+        eject_coil: eject_coil2
+        ball_switches: s_ball_switch_launcher
+        debug: true
+        confirm_eject_type: target
+        eject_timeouts: 6s, 10s
+
+flippers:
+    f_test:
+        main_coil: c_flipper
+        activation_switch: s_flipper

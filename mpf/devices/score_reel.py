@@ -183,6 +183,7 @@ class ScoreReel(SystemWideDevice):
         """Return the integer value of the destination this reel is moving to.
 
         Args:
+        ----
             value: Destination value which this reel should try to reach.
 
         Returns: The value of the destination. If the current

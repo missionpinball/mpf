@@ -3,6 +3,34 @@ from mpf.tests.MpfTestCase import MpfTestCase
 from unittest.mock import MagicMock
 
 
+class TestBallControllerRegression(MpfTestCase):
+
+    def setUp(self):
+        super().setUp()
+        #self.machine.ball_controller.num_balls_known = 0
+
+    def get_config_file(self):
+        return 'regression.yaml'
+
+    def get_machine_path(self):
+        return 'tests/machine_files/ball_controller/'
+
+    def get_platform(self):
+        return 'virtual'
+
+    def test_regression(self):
+        self.release_switch_and_run("s_shooter_lane", 4)
+        self.hit_switch_and_run("s_trough_5", .1)
+        self.hit_switch_and_run("s_underRightRampEject", .1)
+        self.release_switch_and_run("s_underRightRampEject", .2)
+        self.hit_switch_and_run("s_trough_6", .2)
+        self.hit_switch_and_run("s_underRightRampEject", .1)
+        self.release_switch_and_run("s_underRightRampEject", .2)
+        self.advance_time_and_run(10)
+        self.assertEqual(6, self.machine.ball_controller.num_balls_known)
+        self.assertBallsOnPlayfield(0)
+        self.assertAvailableBallsOnPlayfield(0)
+
 class TestBallController(MpfTestCase):
     def setUp(self):
         super().setUp()

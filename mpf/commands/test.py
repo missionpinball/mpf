@@ -5,6 +5,20 @@ import re
 import unittest
 import sys
 
+# some hacks to unbreak logging afte loading the kivy logger
+import logging
+root = logging.root
+os.environ['KIVY_NO_FILELOG'] = '1'
+os.environ['KIVY_NO_CONSOLELOG'] = '1'
+os.environ["KIVY_NO_ARGS"] = "1"
+
+from kivy.logger import Logger
+for handler in Logger.handlers:
+    Logger.removeHandler(handler)
+sys.stdout = sys.__stdout__
+logging.root = root
+# end of anti kivy hacks
+
 from mpf.commands import MpfCommandLineParser
 from mpf.tests.MpfDocTestCase import MpfDocTestCase, MpfDocTestCaseNoFakeGame
 from mpf.tests.MpfIntegrationDocTestCase import MpfIntegrationDocTestCase
@@ -56,7 +70,11 @@ class Command(MpfCommandLineParser):
                         indent_len = len(indent.group(0))
                     test_case += line[indent_len:] + "\n"
                 if block.group("type") == "mpf-config":
-                    test = MpfDocTestCase(config_string=test_case, base_dir=base_dir, simulation=simulation)
+                    if "##! no_fake_game" in test_case:
+                        test = MpfDocTestCaseNoFakeGame(config_string=test_case, base_dir=base_dir,
+                                                        simulation=simulation)
+                    else:
+                        test = MpfDocTestCase(config_string=test_case, base_dir=base_dir, simulation=simulation)
                 else:
                     test = MpfIntegrationDocTestCase(config_string=test_case, base_dir=base_dir, simulation=simulation)
                 test._testMethodDoc = "Block {} (starting at 0)".format(num)

@@ -20,6 +20,7 @@ class ShowController(MpfController):
         """Initialise show controller.
 
         Args:
+        ----
             machine: Parent machine object.
         """
         super().__init__(machine)

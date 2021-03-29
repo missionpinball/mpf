@@ -19,5 +19,5 @@ drop_target_banks:
      reset_coils: coil1
      reset_events:
        game_started.0: 0
-       game_started.1: 1s
-       game_started.2: 2s
+       game_started.1: 3s
+       game_started.2: 6s

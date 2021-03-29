@@ -21,6 +21,7 @@ class Auditor:
         """Initialise auditor.
 
         Args:
+        ----
             machine: A reference to the machine controller object.
         """
         if 'auditor' not in machine.config:
@@ -76,6 +77,9 @@ class Auditor:
         self.switchnames_to_audit = {x.name for x in self.machine.switches.values()
                                      if 'no_audit' not in x.tags}
 
+        for event in self.config["events"]:
+            self.current_audits["events"][event] = 0
+
         # Make sure we have all the player stuff in our audit dict
         if 'player' in self.config['audit']:
             for item in self.config['player']:
@@ -124,6 +128,7 @@ class Auditor:
     def _reset(self, **kwargs):
         """Reset audits."""
         del kwargs
+        self.log.info("Resetting audits")
         self.current_audits = {}
         self._load_defaults()
         self._set_machine_variables()
@@ -133,6 +138,7 @@ class Auditor:
         """Log an auditable event.
 
         Args:
+        ----
             audit_class: A string of the section we want this event to be
                 logged to.
             event: A string name of the event we're auditing.
@@ -167,6 +173,7 @@ class Auditor:
         """Record this event in the audit log.
 
         Args:
+        ----
             eventname: The string name of the event.
             **kwargs: not used, but included since some types of events include
                 kwargs.
@@ -182,6 +189,7 @@ class Auditor:
         Typically this is only called at the end of a game.
 
         Args:
+        ----
             **kwargs: not used, but included since some types of events include
                 kwargs.
         """
@@ -189,7 +197,7 @@ class Auditor:
         if not self.machine.game or not self.machine.game.player_list:
             return
 
-        for item in self.config['player']:
+        for item in set(self.config['player']):
             for player in self.machine.game.player_list:
 
                 self.current_audits['player'][item]['top'] = (
@@ -222,6 +230,7 @@ class Auditor:
         you want it to. Typically this is called at the beginning of a game.
 
         Args:
+        ----
             **kwargs: No function here. They just exist to allow this method
                 to be registered as a handler for events that might contain
                 keyword arguments.
@@ -235,7 +244,7 @@ class Auditor:
         self.enabled = True
 
         # Register for the events we're auditing
-        if 'events' in self.config['audit']:
+        if 'events' in self.config:
             for event in self.config['events']:
                 self.machine.events.add_handler(event,
                                                 self.audit_event,

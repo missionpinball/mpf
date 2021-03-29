@@ -92,6 +92,7 @@ class I2cServo(ServoPlatformInterface):
         """Move servo to position.
 
         Args:
+        ----
             position: Position to set the servo. 0 to 1
 
         """

@@ -1,5 +1,8 @@
 #config_version=5
 
+game:
+    balls_per_game: 1
+
 modes:
     - attract
     - game

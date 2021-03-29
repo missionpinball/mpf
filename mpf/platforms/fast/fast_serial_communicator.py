@@ -54,6 +54,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         """Initialise communicator.
 
         Args:
+        ----
             platform(mpf.platforms.fast.fast.HardwarePlatform): the fast hardware platform
             port: serial port
             baud: baud rate
@@ -302,6 +303,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         """Send a message to the remote processor over the serial connection.
 
         Args:
+        ----
             msg: String of the message you want to send. THe <CR> character will
                 be added automatically.
 

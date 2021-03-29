@@ -52,6 +52,7 @@ class DualWoundCoil(SystemWideDevice):
         """Pulse this driver.
 
         Args:
+        ----
             milliseconds: The number of milliseconds the driver should be
                 enabled for. If no value is provided, the driver will be
                 enabled for the value specified in the config dictionary.

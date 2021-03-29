@@ -50,6 +50,11 @@ class StateMachine(SystemWideDevice, ModeDevice):
         return result
 
     @property
+    def can_exist_outside_of_game(self) -> bool:
+        """Return true if persist_state is not set."""
+        return not self.config['persist_state']
+
+    @property
     def state(self):
         """Return the current state."""
         if self.config['persist_state'] and self.player:

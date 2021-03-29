@@ -138,7 +138,8 @@ class Switch(SystemWideDevice, DevicePositionMixin):
 
         self.recycle_secs = self.config['ignore_window_ms'] / 1000.0
 
-        config = SwitchConfig(invert=self.invert,
+        config = SwitchConfig(name=self.name,
+                              invert=self.invert,
                               debounce=self.config['debounce'])
         if not self.platform.features['allow_empty_numbers'] and self.config['number'] is None:
             self.raise_config_error("Switch must have a number.", 1)
@@ -219,6 +220,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         ``add_switch_handler()`` method behind the scenes.
 
         Args:
+        ----
             callback: A callable method that will be called when the switch
                 state changes.
             state: The state that the switch which change into which triggers

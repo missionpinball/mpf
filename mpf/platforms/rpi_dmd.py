@@ -58,6 +58,7 @@ class RpiDmdPlatform(RgbDmdPlatform):
         return self._dmd
 
 
+# noinspection PyCallingNonCallable
 class RpiRgbDmdDevice(DmdPlatformInterface):
 
     """A RpiRgbDmd device."""

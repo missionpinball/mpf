@@ -52,6 +52,25 @@ class TestStateMachine(MpfFakeGameTestCase):
         self.post_event("state_machine_reset")
         self.assertEqual("start", self.machine.state_machines["my_state"].state)
 
+    def test_state_machines_in_modes(self):
+        self.mock_event("non_game_mode_state_machine_done")
+        self.mock_event("game_mode_state_machine_done")
+
+        self.post_event("non_game_mode_state_machine_proceed")
+        self.assertEventCalled("non_game_mode_state_machine_done")
+        self.assertEventNotCalled("game_mode_state_machine_done")
+        self.mock_event("non_game_mode_state_machine_done")
+
+        self.post_event("game_mode_state_machine_proceed")
+        self.assertEventNotCalled("non_game_mode_state_machine_done")
+        self.assertEventNotCalled("game_mode_state_machine_done")
+
+        self.start_game()
+
+        self.post_event("game_mode_state_machine_proceed")
+        self.assertEventNotCalled("non_game_mode_state_machine_done")
+        self.assertEventCalled("game_mode_state_machine_done")
+
     def test_starting_state(self):
         self.assertEqual("foo", self.machine.state_machines["second_state"].state)
         self.post_event("state_machine_outoforder")

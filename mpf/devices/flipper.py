@@ -23,6 +23,7 @@ class Flipper(SystemWideDevice):
     multiple coil options (pulsing, hold coils, etc.)
 
     Args:
+    ----
         machine: A reference to the machine controller instance.
         name: A string of the name you'll refer to this flipper object as.
     """
@@ -227,7 +228,8 @@ class Flipper(SystemWideDevice):
                 SwitchRuleSettings(switch=self.config['eos_switch'], debounce=False, invert=False),
                 DriverRuleSettings(driver=self.config['main_coil'], recycle=False),
                 PulseRuleSettings(duration=self._get_hold_pulse_ms(), power=self._get_hold_pulse_power()),
-                EosRuleSettings(enable_repulse=self.config["repulse_on_eos_open"])
+                EosRuleSettings(enable_repulse=self.config["repulse_on_eos_open"],
+                                debounce_ms=self.config["eos_active_ms_before_repulse"])
             )
             self._active_rules.append(rule)
         else:
@@ -238,7 +240,8 @@ class Flipper(SystemWideDevice):
                 DriverRuleSettings(driver=self.config['main_coil'], recycle=False),
                 PulseRuleSettings(duration=self._get_hold_pulse_ms(), power=self._get_hold_pulse_power()),
                 HoldRuleSettings(power=self._get_hold_power()),
-                EosRuleSettings(enable_repulse=self.config["repulse_on_eos_open"])
+                EosRuleSettings(enable_repulse=self.config["repulse_on_eos_open"],
+                                debounce_ms=self.config["eos_active_ms_before_repulse"])
             )
             self._active_rules.append(rule)
 

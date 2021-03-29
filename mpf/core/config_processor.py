@@ -69,7 +69,7 @@ class ConfigProcessor:
             if exception.errno != errno.ENOENT:
                 raise  # some unknown error?
 
-            self.log.warning('Cache file not found: %s', filename)
+            self.log.debug('Cache file not found: %s', filename)
             return -1
 
     # pylint: disable-msg=too-many-arguments

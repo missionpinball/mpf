@@ -8,3 +8,8 @@ multiball_locks:
         balls_to_lock: 2
         locked_ball_counting_strategy: physical_only
         debug: True
+    lock_physical_only_smaller_than_device:
+        lock_devices: bd_lock_triple
+        balls_to_lock: 2
+        locked_ball_counting_strategy: physical_only
+        debug: True

@@ -15,13 +15,13 @@ pep257:
    disable:
     - D211  # in conflict with D203
     - D213  # in conflict with D212
-    - D407  # Missing dashed underline after section - need to fix a lot of docstrings first
     - D413  # Missing blank line after last section - need to fix a lot of docstrings first
 
 pylint:
   disable:
     - pointless-string-statement  # pointless statement, which is how our event docstrings are seen
     - too-few-public-methods
+    - unsubscriptable-object    # broken on python 3.9
 
   options:
     max-attributes: 12

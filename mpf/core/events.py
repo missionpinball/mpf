@@ -65,6 +65,7 @@ class EventManager(MpfController):
         """Parse an event string to divide the event name from a possible placeholder / conditional in braces.
 
         Args:
+        ----
             event_string: String to parse
 
         Returns 2-item tuple- First item is the event name. Second item is the
@@ -121,6 +122,7 @@ class EventManager(MpfController):
         """Register an event handler to respond to an event.
 
         Args:
+        ----
             event: String name of the event you're adding a handler for. Since
                 events are text strings, they don't have to be pre-defined.
             handler: The callable method that will be called when the event is
@@ -253,6 +255,7 @@ class EventManager(MpfController):
         """Check to see if a handler (optionally with kwargs) is registered for an event and replaces it if so.
 
         Args:
+        ----
             event: The event you want to check to see if this handler is
                 registered for.
             handler: The method of the handler you want to check.
@@ -297,6 +300,7 @@ class EventManager(MpfController):
         """Remove an event handler from all events a method is registered to handle.
 
         Args:
+        ----
             method : The method whose handlers you want to remove.
         """
         events_to_delete_if_empty = []
@@ -315,6 +319,7 @@ class EventManager(MpfController):
         """Remove the handler you pass from the event you pass.
 
         Args:
+        ----
             event: The name of the event you want to remove the handler from.
             handler: The handler method you want to remove.
 
@@ -339,6 +344,7 @@ class EventManager(MpfController):
         """Remove a registered event handler by key.
 
         Args:
+        ----
             key: The key of the handler you want to remove
         """
         if key.event not in self.registered_handlers:
@@ -357,6 +363,7 @@ class EventManager(MpfController):
         """Remove multiple event handlers based on a passed list of keys.
 
         Args:
+        ----
             key_list: A list of keys of the handlers you want to remove
         """
         for key in key_list:
@@ -402,6 +409,7 @@ class EventManager(MpfController):
         """Check to see if any handlers are registered for the event name that is passed.
 
         Args:
+        ----
             event_name : The string name of the event you want to check.
 
         Returns True or False.
@@ -443,6 +451,7 @@ class EventManager(MpfController):
         priority values will be processed first.)
 
         Args:
+        ----
             event: A string name of the event you're posting. Note that you can
                 post whatever event you want. You don't have to set up anything
                 ahead of time, and if no handlers are registered for the event
@@ -472,6 +481,7 @@ class EventManager(MpfController):
         priority values will be processed first.)
 
         Args:
+        ----
             event: A string name of the event you're posting. Note that you can
                 post whatever event you want. You don't have to set up anything
                 ahead of time, and if no handlers are registered for the event
@@ -505,6 +515,7 @@ class EventManager(MpfController):
 
         Args:
         ----
+        ----
             event: A string name of the event you're posting. Note that you can
                 post whatever event you want. You don't have to set up anything
                 ahead of time, and if no handlers are registered for the event
@@ -536,6 +547,7 @@ class EventManager(MpfController):
         as needed.
 
         Args:
+        ----
             event: A string name of the event you're posting. Note that you can
                 post whatever event you want. You don't have to set up anything
                 ahead of time, and if no handlers are registered for the event

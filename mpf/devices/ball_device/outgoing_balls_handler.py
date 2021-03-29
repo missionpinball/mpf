@@ -60,7 +60,14 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
 
     def remove_incoming_ball_which_may_skip(self, incoming_ball: IncomingBall):
         """Remove incoming ball which may skip the device."""
-        self._incoming_ball_which_may_skip_obj.remove(incoming_ball)
+        try:
+            self._incoming_ball_which_may_skip_obj.remove(incoming_ball)
+        except ValueError as e:
+            if self.unit_test:
+                # re-raise this in tests
+                raise e
+            self.warning_log("Double remove of incoming ball. This is likely a bug! "
+                             "Please report in the forum if you can reproduce it.")
         if not self._incoming_ball_which_may_skip_obj:
             self._incoming_ball_which_may_skip.clear()
             self._no_incoming_ball_which_may_skip.set()
@@ -132,13 +139,14 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         else:
             timeout = None
 
+        has_timeouted = False
         try:
-            event = await Util.first(futures, timeout=timeout)
+            await Util.first(futures, timeout=timeout)
         except asyncio.TimeoutError:
-            event = confirm_future
+            has_timeouted = True
 
         # if we got an confirm
-        if event == confirm_future:
+        if (confirm_future.done() and not confirm_future.cancelled()) or has_timeouted:
             self.info_log("Got confirm for skipping ball.")
             await self._handle_eject_success(eject_request)
             incoming_skipping_ball.ball_arrived()
@@ -176,6 +184,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         """Check if the ball is going to a certain target and cancel the path in that case.
 
         Args:
+        ----
             start: Start ball device.
             target: Target to check
 

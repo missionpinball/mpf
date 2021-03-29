@@ -91,6 +91,7 @@ class AutofireCoil(SystemWideDevice):
         user documentation for the hardware platform for details.
 
         Args:
+        ----
             **kwargs: Not used, just included so this method can be used as an
                 event callback.
 
@@ -149,6 +150,7 @@ class AutofireCoil(SystemWideDevice):
         happens.
 
         Args:
+        ----
             **kwargs: Not used, just included so this method can be used as an
                 event callback.
 

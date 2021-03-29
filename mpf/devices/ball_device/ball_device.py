@@ -519,6 +519,7 @@ class BallDevice(SystemWideDevice):
         """Request that one or more balls is added to this device.
 
         Args:
+        ----
             balls: Integer of the number of balls that should be added to this
                 device. A value of -1 will cause this device to try to fill
                 itself.
@@ -683,6 +684,7 @@ class BallDevice(SystemWideDevice):
         """Eject all the balls from this device.
 
         Args:
+        ----
             target: The string or BallDevice target for this eject. Default of
                 None means `playfield`.
             **kwargs: unused

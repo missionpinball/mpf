@@ -11,12 +11,16 @@ class MpfHardwareService(platform_pb2_grpc.MpfHardwareServiceServicer):
 
     """MPF Service for VPE."""
 
-    def __init__(self, machine):
+    __slots__ = ["machine", "platform", "switch_queue", "command_queue", "_started"]
+
+    def __init__(self, machine, platform):
         """Initialise MPF service for VPE."""
         self._connected = asyncio.Future()
         self.machine = machine
+        self.platform = platform
         self.switch_queue = asyncio.Queue()
         self.command_queue = asyncio.Queue()
+        self._started = asyncio.Future()
 
     def send_command(self, command):
         """Send command to VPE."""
@@ -30,6 +34,10 @@ class MpfHardwareService(platform_pb2_grpc.MpfHardwareServiceServicer):
         """Wait until VPE has connected."""
         return await self._connected
 
+    def set_ready(self):
+        """Mark service as ready."""
+        self._started.set_result(True)
+
     async def Start(self, request, context):    # noqa
         """Start MPF."""
         self._connected.set_result(request)
@@ -37,6 +45,51 @@ class MpfHardwareService(platform_pb2_grpc.MpfHardwareServiceServicer):
             command = await self.command_queue.get()
             # this only works in Python 3.6+
             yield command
+
+    async def GetMachineDescription(self, request, context):    # noqa
+        """Get Platform Configuration of VPE platform."""
+        switches = []
+        await self._started
+        for switch in self.platform.get_configured_switches():
+            switch_description = platform_pb2.SwitchDescription()
+            switch_description.name = switch.config.name
+            switch_description.hardware_number = switch.number
+            switch_description.switch_type = "NC" if switch.config.invert else "NO"
+            switches.append(switch_description)
+
+        coils = []
+        for coil in self.platform.get_configured_coils():
+            coil_description = platform_pb2.CoilDescription()
+            coil_description.name = coil.config.name
+            coil_description.hardware_number = coil.number
+            coils.append(coil_description)
+
+        lights = []
+        for light in self.platform.get_configured_lights():
+            light_description = platform_pb2.LightDescription()
+            light_description.name = light.config.name
+            light_description.hardware_channel_number = light.number
+            light_description.hardware_channel_color = light.config.color.name
+            lights.append(light_description)
+
+        dmds = []
+        for dmd in self.platform.get_configured_dmds():
+            dmd_description = platform_pb2.DmdDescription()
+            dmd_description.name = dmd.name
+            if dmd.color_mapping == "RGB":
+                dmd_description.color_mapping = platform_pb2.DmdDescription.ColorMapping.RGB
+            elif dmd.color_mapping == "BW":
+                dmd_description.color_mapping = platform_pb2.DmdDescription.ColorMapping.BW
+            else:
+                raise AssertionError("Invalid color mapping {}".format(dmd.color_mapping))
+
+            dmd_description.height = dmd.height
+            dmd_description.width = dmd.width
+            dmds.append(dmd_description)
+
+        machine_description = platform_pb2.MachineDescription(switches=switches, coils=coils, lights=lights, dmds=dmds)
+
+        return machine_description
 
     async def SendSwitchChanges(self, request_iterator, context):   # noqa
         """Process a stream of switches."""

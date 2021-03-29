@@ -134,6 +134,7 @@ class MachineVariables(LogMixin):
         """Return the value of the variable if it exists, or None if the variable does not exist.
 
         Args:
+        ----
             name: String name of the variable you want to get that value for.
         """
         try:
@@ -149,6 +150,7 @@ class MachineVariables(LogMixin):
         """Create a new machine variable.
 
         Args:
+        ----
             name: String name of the variable.
             persist: Boolean as to whether this variable should be saved to
                 disk so it's available the next time MPF boots.
@@ -169,6 +171,7 @@ class MachineVariables(LogMixin):
         """Set the value of a machine variable.
 
         Args:
+        ----
             name: String name of the variable you're setting the value for.
             value: The value you're setting. This can be any Type.
         """
@@ -228,6 +231,7 @@ class MachineVariables(LogMixin):
         If this variable persists to disk, it will remove it from there too.
 
         Args:
+        ----
             name: String name of the variable you want to remove.
         """
         try:
@@ -246,6 +250,7 @@ class MachineVariables(LogMixin):
         """Remove a machine variable by matching parts of its name.
 
         Args:
+        ----
             startswith: Optional start of the variable name to match.
             endswith: Optional end of the variable name to match.
 

@@ -7,7 +7,7 @@ from typing import Set, Dict, List, Tuple, Any
 
 from mpf.core.delays import DelayManager
 
-from mpf.core.platform import LightsPlatform
+from mpf.core.platform import LightsPlatform, LightConfig, LightConfigColors
 
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.machine import MachineController
@@ -224,7 +224,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
             channel = {'subtype': self.config['subtype'], 'platform': self.config['platform'],
                        'platform_settings': self.config['platform_settings'], 'number': next_channel}
             channel = self.machine.config_validator.validate_config("light_channels", channel)
-            driver = self._load_hw_driver(channel)
+            driver = self._load_hw_driver(channel, full_color_name)
             next_channel = driver.get_successor_number()
             self.hw_drivers[full_color_name].append(driver)
 
@@ -264,10 +264,10 @@ class Light(SystemWideDevice, DevicePositionMixin):
             self.hw_drivers[color] = []
             for channel in channel_list:
                 channel = self.machine.config_validator.validate_config("light_channels", channel)
-                driver = self._load_hw_driver(channel)
+                driver = self._load_hw_driver(channel, color)
                 self.hw_drivers[color].append(driver)
 
-    def _load_hw_driver(self, channel):
+    def _load_hw_driver(self, channel, color):
         """Load one channel."""
         platform = self.machine.get_platform_sections('lights', channel['platform'])
         self.platforms.add(platform)
@@ -275,8 +275,13 @@ class Light(SystemWideDevice, DevicePositionMixin):
         if not platform.features['allow_empty_numbers'] and channel['number'] is None:
             self.raise_config_error("Light must have a number.", 1)
 
+        config = LightConfig(
+            name=self.name,
+            color=LightConfigColors[color.upper()]
+        )
+
         try:
-            return platform.configure_light(channel['number'], channel['subtype'], channel['platform_settings'])
+            return platform.configure_light(channel['number'], channel['subtype'], config, channel['platform_settings'])
         except AssertionError as e:
             raise AssertionError("Failed to configure light {} in platform. See error above".
                                  format(self.name)) from e
@@ -330,6 +335,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """Apply a color correction profile to this light.
 
         Args:
+        ----
             profile: An RGBColorCorrectionProfile() instance
 
         """
@@ -342,6 +348,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         Calling this methods is how you tell this light what color you want it to be.
 
         Args:
+        ----
             color: RGBColor() instance, or a string color name, hex value, or
                 3-integer list/tuple of colors.
             fade_ms: Int of the number of ms you want this light to fade to the
@@ -386,6 +393,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """Turn light on.
 
         Args:
+        ----
             brightness: Brightness factor for "on".
             key: key for removal later on
             priority: priority on stack
@@ -402,6 +410,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """Turn light off.
 
         Args:
+        ----
             key: key for removal later on
             priority: priority on stack
             fade_ms: duration of fade
@@ -463,6 +472,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """Remove a group of color settings from the stack.
 
         Args:
+        ----
             key: The key of the settings to remove (based on the 'key'
                 parameter that was originally passed to the color() method.)
             fade_ms: Time to fade out the light.
@@ -620,6 +630,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """Apply max brightness correction to color.
 
         Args:
+        ----
             color: The RGBColor() instance you want to have gamma applied.
 
         Returns an updated RGBColor() instance with gamma corrected.
@@ -634,6 +645,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """Apply the current color correction profile to the color passed.
 
         Args:
+        ----
             color: The RGBColor() instance you want to get color corrected.
 
         Returns an updated RGBColor() instance with the current color

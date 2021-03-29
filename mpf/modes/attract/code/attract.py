@@ -44,8 +44,8 @@ class Attract(Mode):
         if hasattr(self.machine, 'ball_devices'):
             self.machine.ball_controller.collect_balls()
 
-        # trigger ball search if we are missing balls
-        if self.machine.ball_controller.num_balls_known < self.machine.config['machine']['balls_installed']:
+        # trigger ball search if we are missing balls and have at least one ball
+        if 0 < self.machine.ball_controller.num_balls_known < self.machine.config['machine']['balls_installed']:
             for playfield in self.machine.playfields.values():
                 playfield.ball_search.enable()
                 playfield.ball_search.start()
@@ -103,6 +103,7 @@ class Attract(Mode):
         request was denied by some handler.
 
         Args:
+        ----
             ev_result : Bool result of the boolean event
                 *request_to_start_game.* If any registered event handler did not
                 want the game to start, this will be False. Otherwise it's True.

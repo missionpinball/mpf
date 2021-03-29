@@ -30,6 +30,11 @@ class TestShots(MpfTestCase):
         self.assertIsNone(self.machine.game)
 
     def test_block(self):
+        self.mock_event("playfield_active")
+        self.hit_and_release_switch("switch_3")
+        self.advance_time_and_run(.1)
+        self.assertEventCalled("playfield_active")
+
         self.start_game()
         self.assertEqual("unlit", self.machine.shots["shot_3"].state_name)
 
@@ -923,7 +928,7 @@ class TestShots(MpfTestCase):
         self.start_game()
         self.machine.modes["mode2"].start()
         shot = self.machine.device_manager.collections["shots"]["mode2_shot_changing_profile"]
-        
+
         # Initial color of the light for this profile
         self.assertLightColor("led_20", "yellow")
 

@@ -40,6 +40,19 @@ class Shot(EnableDisableMixin, ModeDevice):
         self.running_show = None
         self._handlers = []
 
+    async def _initialize(self) -> None:
+        """Register playfield active handlers."""
+        await super()._initialize()
+
+        for switch in self.config['switches'] + list(self.config['delay_switch'].keys()):
+            # mark the playfield active no matter what
+            switch.add_handler(self._mark_active)
+
+    def _mark_active(self, **kwargs):
+        """Mark playfield active."""
+        del kwargs
+        self.config['playfield'].mark_playfield_active_from_device_action()
+
     def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Add device to a mode that was already started.
 
@@ -286,9 +299,6 @@ class Shot(EnableDisableMixin, ModeDevice):
 
         Returns true if the shot was enabled or false if the hit has been ignored.
         """
-        # mark the playfield active no matter what
-        self.config['playfield'].mark_playfield_active_from_device_action()
-
         if not self.enabled or not self.player:
             return False
 
@@ -394,7 +404,6 @@ class Shot(EnableDisableMixin, ModeDevice):
     @event_handler(4)
     def _delay_switch_hit(self, switch_name, **kwargs):
         del kwargs
-        self.config['playfield'].mark_playfield_active_from_device_action()
         if not self.enabled:
             return
 
@@ -413,6 +422,7 @@ class Shot(EnableDisableMixin, ModeDevice):
         """Jump to a certain state in the active shot profile.
 
         Args:
+        ----
             state: int of the state number you want to jump to. Note that states
                 are zero-based, so the first state is 0.
             force: if true, will jump even if the shot is disabled

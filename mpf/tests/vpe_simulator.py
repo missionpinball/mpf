@@ -15,15 +15,14 @@ class VpeSimulation:
         self.lights = {}
         self.coils = {}
         self.rules = {}
+        self.dmd_frames = {}
 
     def init_async(self):
         self.change_queue = asyncio.Queue()
 
     async def connect(self, service):
-        configuration = platform_pb2.MachineConfiguration(
-            known_switches_with_initial_state=self.switches,
-            known_lights=["light-0", "light-1"],
-            known_coils=["0", "1", "2"])
+        configuration = platform_pb2.MachineState(
+            initial_switch_states=self.switches)
         command_stream = service.Start(configuration, None)
         asyncio.ensure_future(self.read_commands(command_stream))
 
@@ -51,6 +50,8 @@ class VpeSimulation:
                 self.handle_rule(command.configure_hardware_rule)
             elif variant == "remove_hardware_rule":
                 self.handle_rule_remove(command.remove_hardware_rule)
+            elif variant == "dmd_frame_request":
+                self.handle_dmd_frame_request(command.dmd_frame_request)
             else:
                 raise AssertionError("Not implemented {}".format(variant))
 
@@ -80,3 +81,6 @@ class VpeSimulation:
 
     def handle_rule_remove(self, request):
         del self.rules["{}-{}".format(request.coil_number, request.switch_number)]
+
+    def handle_dmd_frame_request(self, request):
+        self.dmd_frames[request.name] = (request.frame, request.brightness)

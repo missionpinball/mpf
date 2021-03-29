@@ -16,7 +16,7 @@ from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, Ho
 
 from mpf.platforms.opp.opp_coil import OPPSolenoidCard
 from mpf.platforms.opp.opp_incand import OPPIncandCard
-from mpf.platforms.opp.opp_neopixel import OPPLightChannel, OPPNeopixelCard
+from mpf.platforms.opp.opp_modern_lights import OPPModernLightChannel, OPPNeopixelCard, OPPModernMatrixLightsCard
 from mpf.platforms.opp.opp_serial_communicator import OPPSerialCommunicator, BAD_FW_VERSION
 from mpf.platforms.opp.opp_switch import OPPInputCard
 from mpf.platforms.opp.opp_switch import OPPMatrixCard
@@ -37,22 +37,23 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
     """Platform class for the OPP hardware.
 
     Args:
+    ----
         machine: The main ``MachineController`` instance.
 
     """
 
-    __slots__ = ["opp_connection", "serial_connections", "opp_incands", "incand_dict", "opp_solenoid", "sol_dict",
-                 "opp_inputs", "inp_dict", "inp_addr_dict", "matrix_inp_addr_dict", "read_input_msg", "opp_neopixels",
-                 "neo_card_dict", "neo_dict", "num_gen2_brd", "gen2_addr_arr", "bad_crc", "min_version", "_poll_task",
-                 "config", "_poll_response_received", "machine_type", "opp_commands", "_incand_task", "_light_system"]
+    __slots__ = ["opp_connection", "serial_connections", "opp_incands", "opp_solenoid", "sol_dict",
+                 "opp_inputs", "inp_dict", "inp_addr_dict", "matrix_inp_addr_dict", "read_input_msg",
+                 "neo_card_dict", "num_gen2_brd", "gen2_addr_arr", "bad_crc", "min_version", "_poll_task",
+                 "config", "_poll_response_received", "machine_type", "opp_commands", "_incand_task", "_light_system",
+                 "matrix_light_cards"]
 
     def __init__(self, machine) -> None:
         """Initialise OPP platform."""
         super().__init__(machine)
         self.opp_connection = {}            # type: Dict[str, OPPSerialCommunicator]
         self.serial_connections = set()     # type: Set[OPPSerialCommunicator]
-        self.opp_incands = []               # type: List[OPPIncandCard]
-        self.incand_dict = dict()           # type: Dict[str, OPPIncand]
+        self.opp_incands = dict()           # type: Dict[str, OPPIncandCard]
         self.opp_solenoid = []              # type: List[OPPSolenoidCard]
         self.sol_dict = dict()              # type: Dict[str, OPPSolenoid]
         self.opp_inputs = []                # type: List[Union[OPPInputCard, OPPMatrixCard]]
@@ -60,9 +61,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self.inp_addr_dict = dict()         # type: Dict[str, OPPInputCard]
         self.matrix_inp_addr_dict = dict()  # type: Dict[str, OPPMatrixCard]
         self.read_input_msg = {}            # type: Dict[str, bytes]
-        self.opp_neopixels = []             # type: List[OPPNeopixelCard]
         self.neo_card_dict = dict()         # type: Dict[str, OPPNeopixelCard]
-        self.neo_dict = dict()              # type: Dict[str, OPPLightChannel]
+        self.matrix_light_cards = dict()    # type: Dict[str, OPPModernMatrixLightsCard]
         self.num_gen2_brd = 0
         self.gen2_addr_arr = {}             # type: Dict[str, Dict[int, Optional[int]]]
         self.bad_crc = 0
@@ -109,9 +109,9 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self._light_system = PlatformBatchLightSystem(self.machine.clock, self._send_multiple_light_update,
                                                       self.machine.config['mpf']['default_light_hw_update_hz'],
                                                       128)
-        self._light_system.start()
 
-    async def _send_multiple_light_update(self, sequential_brightness_list: List[Tuple[OPPLightChannel, float, int]]):
+    async def _send_multiple_light_update(self, sequential_brightness_list: List[Tuple[OPPModernLightChannel,
+                                                                                       float, int]]):
         first_light, _, common_fade_ms = sequential_brightness_list[0]
         number_leds = len(sequential_brightness_list)
 
@@ -146,8 +146,12 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         for connection in self.serial_connections:
             await connection.start_read_loop()
 
-        self._incand_task = self.machine.clock.schedule_interval(self.update_incand,
-                                                                 1 / self.config['incand_update_hz'])
+        if [version for version in self.min_version.values() if version < 0x02010000]:
+            # if we run any CPUs with firmware prior to 2.1.0 start incands updater
+            self._incand_task = self.machine.clock.schedule_interval(self.update_incand,
+                                                                     1 / self.config['incand_update_hz'])
+
+        self._light_system.start()
 
     def stop(self):
         """Stop hardware and close connections."""
@@ -173,6 +177,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Send an incoming message from the OPP hardware to the proper method for servicing.
 
         Args:
+        ----
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
@@ -232,7 +237,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                     infos += " -> Board: 0x{:02x} Firmware: 0x{:02x}\n".format(board_id, board_firmware)
 
         infos += "\nIncand cards:\n"
-        for incand in self.opp_incands:
+        for incand in self.opp_incands.values():
             infos += " - Chain: {} Board: 0x{:02x} Card: {} Numbers: {}\n".format(incand.chain_serial, incand.addr,
                                                                                   incand.card_num,
                                                                                   self._get_numbers(incand.mask))
@@ -250,7 +255,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                                                                                   self._get_numbers(outputs.mask))
 
         infos += "\nLEDs:\n"
-        for leds in self.opp_neopixels:
+        for leds in self.neo_card_dict.values():
             infos += " - Chain: {} Board: 0x{:02x} Card: {}\n".format(leds.chain_serial, leds.addr, leds.card_num)
 
         return infos
@@ -293,6 +298,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Register the processors to the platform.
 
         Args:
+        ----
             serial_number: Serial number of chain.
             communicator: Instance of OPPSerialCommunicator
         """
@@ -302,6 +308,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Send message to processor with specific serial number.
 
         Args:
+        ----
             chain_serial: Serial of the processor.
             msg: Message to send.
         """
@@ -315,8 +322,12 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         It is currently assumed that the UART oversampling will guarantee proper
         communication with the boards.  If this does not end up being the case,
         this will be changed to update all the incandescents each loop.
+
+        This is used for board with firmware < 2.1.0
         """
-        for incand in self.opp_incands:
+        for incand in self.opp_incands.values():
+            if self.min_version[incand.chain_serial] >= 0x02010000:
+                continue
             whole_msg = bytearray()
             # Check if any changes have been made
             if incand.old_state is None or (incand.old_state ^ incand.new_state) != 0:
@@ -376,6 +387,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Parse inventory response.
 
         Args:
+        ----
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
@@ -392,11 +404,13 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             index += 1
         self.debug_log("Found %d Gen2 OPP boards on %s.", self.num_gen2_brd, chain_serial)
 
+    # pylint: disable-msg=too-many-statements
     @staticmethod
     def eom_resp(chain_serial, msg):
         """Process an EOM.
 
         Args:
+        ----
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
@@ -404,7 +418,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     def _parse_gen2_board(self, chain_serial, msg, read_input_msg):
         has_neo = False
-        has_matrix = False
+        has_sw_matrix = False
+        has_lamp_matrix = False
         wing_index = 0
         sol_mask = 0
         inp_mask = 0
@@ -417,8 +432,9 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                 inp_mask |= (0xff << (8 * wing_index))
             elif msg[2 + wing_index] == ord(OppRs232Intf.WING_INCAND):
                 incand_mask |= (0xff << (8 * wing_index))
-            elif msg[2 + wing_index] == ord(OppRs232Intf.WING_SW_MATRIX_OUT):
-                has_matrix = True
+            elif msg[2 + wing_index] in (ord(OppRs232Intf.WING_SW_MATRIX_OUT),
+                                         ord(OppRs232Intf.WING_SW_MATRIX_OUT_LOW_WING)):
+                has_sw_matrix = True
             elif msg[2 + wing_index] == ord(OppRs232Intf.WING_NEO):
                 has_neo = True
                 inp_mask |= (0xef << (8 * wing_index))
@@ -428,10 +444,14 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                 inp_mask |= (0x0e << (8 * wing_index))
                 sol_mask |= (0x0f << (4 * wing_index))
                 has_neo = True
+            elif msg[2 + wing_index] in (ord(OppRs232Intf.WING_LAMP_MATRIX_COL_WING),
+                                         ord(OppRs232Intf.WING_LAMP_MATRIX_ROW_WING)):
+                has_lamp_matrix = True
 
             wing_index += 1
         if incand_mask != 0:
-            self.opp_incands.append(OPPIncandCard(chain_serial, msg[0], incand_mask, self.incand_dict, self.machine))
+            card = OPPIncandCard(chain_serial, msg[0], incand_mask, self.machine)
+            self.opp_incands["{}-{}".format(chain_serial, card.card_num)] = card
         if sol_mask != 0:
             self.opp_solenoid.append(
                 OPPSolenoidCard(chain_serial, msg[0], sol_mask, self.sol_dict, self))
@@ -451,7 +471,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             inp_msg.extend(OppRs232Intf.calc_crc8_whole_msg(inp_msg))
             read_input_msg.extend(inp_msg)
 
-        if has_matrix:
+        if has_sw_matrix:
             # Create the matrix object, and add to the command to read all matrix inputs
             self.opp_inputs.append(OPPMatrixCard(chain_serial, msg[0], self.inp_dict,
                                                  self.matrix_inp_addr_dict))
@@ -471,12 +491,17 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             inp_msg.extend(OppRs232Intf.calc_crc8_whole_msg(inp_msg))
             read_input_msg.extend(inp_msg)
         if has_neo:
-            self.opp_neopixels.append(OPPNeopixelCard(chain_serial, msg[0], self.neo_card_dict, self))
+            card = OPPNeopixelCard(chain_serial, msg[0], self)
+            self.neo_card_dict[chain_serial + '-' + card.card_num] = card
+        if has_lamp_matrix:
+            card = OPPModernMatrixLightsCard(chain_serial, msg[0], self)
+            self.matrix_light_cards[chain_serial + '-' + card.card_num] = card
 
     def get_gen2_cfg_resp(self, chain_serial, msg):
         """Process cfg response.
 
         Args:
+        ----
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
@@ -517,6 +542,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Process version response.
 
         Args:
+        ----
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
@@ -568,6 +594,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Read initial switch states.
 
         Args:
+        ----
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
@@ -596,6 +623,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Read switch changes.
 
         Args:
+        ----
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
@@ -649,6 +677,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Read initial matrix switch states.
 
         Args:
+        ----
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
@@ -673,6 +702,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Read matrix switch changes.
 
         Args:
+        ----
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
@@ -746,6 +776,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Configure a driver.
 
         Args:
+        ----
             config: Config dict.
             number: Number of this driver.
             platform_settings: Platform specific settings.
@@ -779,6 +810,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Configure a switch.
 
         Args:
+        ----
             number: Number of this switch.
             config: Config dict.
             platform_config: Platform specific settings.
@@ -800,7 +832,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Parse number and subtype to channel."""
-        if subtype == "matrix":
+        if subtype in ("matrix", "incand"):
             return [
                 {
                     "number": self._get_dict_index(number)
@@ -824,26 +856,61 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self.raise_config_error("Unknown subtype {}".format(subtype), 8)
         return []
 
-    def configure_light(self, number, subtype, platform_settings):
+    def configure_light(self, number, subtype, config, platform_settings):
         """Configure a led or matrix light."""
+        del config
         if not self.opp_connection:
             self.raise_config_error("A request was made to configure an OPP light, "
                                     "but no OPP connection is available", 9)
+
+        chain_serial, card, light_num = number.split('-')
+        index = chain_serial + '-' + card
+
         if not subtype or subtype == "led":
-            chain_serial, card, pixel_num = number.split('-')
-            index = chain_serial + '-' + card
             if index not in self.neo_card_dict:
                 self.raise_config_error("A request was made to configure an OPP neopixel "
                                         "with card number {} which doesn't exist".format(card), 10)
 
-            return OPPLightChannel(chain_serial, int(card), int(pixel_num), self._light_system)
-        if subtype == "matrix":
-            if number not in self.incand_dict:
-                self.raise_config_error("A request was made to configure a OPP matrix "
-                                        "light (incand board), with number {} "
-                                        "which doesn't exist".format(number), 11)
+            if not self.neo_card_dict[index].is_valid_light_number(light_num):
+                self.raise_config_error("A request was made to configure an OPP neopixel "
+                                        "with card number {} but number '{}' is "
+                                        "invalid".format(card, light_num), 22)
 
-            return self.incand_dict[number]
+            light = OPPModernLightChannel(chain_serial, int(card), int(light_num), self._light_system)
+            self._light_system.mark_dirty(light)
+            return light
+
+        if subtype == "matrix" and self.min_version[chain_serial] >= 0x02010000:
+            # modern matrix lights
+            if index not in self.matrix_light_cards:
+                self.raise_config_error("A request was made to configure an OPP matrix light "
+                                        "with card number {} which doesn't exist".format(card), 18)
+
+            if not self.matrix_light_cards[index].is_valid_light_number(light_num):
+                self.raise_config_error("A request was made to configure an OPP matrix light "
+                                        "with card number {} but number '{}' is "
+                                        "invalid".format(card, light_num), 19)
+
+            light = OPPModernLightChannel(chain_serial, int(card), int(light_num) + 0x2000, self._light_system)
+            self._light_system.mark_dirty(light)
+            return light
+
+        if subtype in ("incand", "matrix"):
+            if index not in self.opp_incands:
+                self.raise_config_error("A request was made to configure an OPP incand light "
+                                        "with card number {} which doesn't exist".format(card), 20)
+
+            if not self.opp_incands[index].is_valid_light_number(light_num):
+                self.raise_config_error("A request was made to configure an OPP incand light "
+                                        "with card number {} but number '{}' is "
+                                        "invalid".format(card, light_num), 21)
+            if self.min_version[chain_serial] >= 0x02010000:
+                light = self.opp_incands[index].configure_modern_fade_incand(light_num, self._light_system)
+                self._light_system.mark_dirty(light)
+                return light
+
+            # legacy incands with new or old subtype
+            return self.opp_incands[index].configure_software_fade_incand(light_num)
 
         self.raise_config_error("Unknown subtype {}".format(subtype), 12)
         return None
@@ -872,7 +939,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
     def _verify_coil_and_switch_fit(self, switch, coil):
         chain_serial, card, solenoid = coil.hw_driver.number.split('-')
         sw_chain_serial, sw_card, sw_num = switch.hw_switch.number.split('-')
-        if self.min_version[chain_serial] >= 0x00020000:
+        if self.min_version[chain_serial] >= 0x02000000:
             if chain_serial != sw_chain_serial or card != sw_card:
                 self.raise_config_error('Invalid switch being configured for driver. Driver = {} '
                                         'Switch = {}. Driver and switch have to be on the same '
@@ -970,7 +1037,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     def _remove_switch_coil_mapping(self, switch_num, driver: "OPPSolenoid"):
         """Remove mapping between switch and coil."""
-        if self.min_version[driver.sol_card.chain_serial] < 0x00020000:
+        if self.min_version[driver.sol_card.chain_serial] < 0x02000000:
             return
 
         _, _, coil_num = driver.number.split('-')
@@ -989,7 +1056,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     def _add_switch_coil_mapping(self, switch_num, driver: "OPPSolenoid"):
         """Add mapping between switch and coil."""
-        if self.min_version[driver.sol_card.chain_serial] < 0x00020000:
+        if self.min_version[driver.sol_card.chain_serial] < 0x02000000:
             return
         _, _, coil_num = driver.number.split('-')
         msg = bytearray()

@@ -119,6 +119,7 @@ class YamlRoundtrip(YamlInterface):     # pragma: no cover
         Comments are retained for the renamed key. Order of keys is also maintained.
 
         Args:
+        ----
             old_key: The existing key name you want to change.
             new_key: The new key name.
             commented_map: The YAML data CommentMap class (from yaml.load) with

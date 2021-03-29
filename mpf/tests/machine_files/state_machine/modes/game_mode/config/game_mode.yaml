@@ -1,0 +1,17 @@
+#config_version=5
+mode:
+  start_events: ball_started
+
+state_machines:
+  game_mode_state_machine:
+    persist_state: true
+    states:
+      start:
+        label: Start state
+      done:
+        label: Done state
+        events_when_started: game_mode_state_machine_done
+    transitions:
+      - source: start
+        target: done
+        events: game_mode_state_machine_proceed

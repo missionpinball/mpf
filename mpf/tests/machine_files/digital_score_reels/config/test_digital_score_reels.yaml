@@ -1,0 +1,43 @@
+#config_version=5
+
+digital_score_reels:
+  player_score:
+    reel_count: 4
+    include_player_number: true
+    frames:
+      - character: 1
+        frame: 2
+      - character: 2
+        frame: 4
+      - character: 3
+        frame: 6
+      - character: 4
+        frame: 8
+      - character: 5
+        frame: 10
+      - character: 6
+        frame: 12
+      - character: 7
+        frame: 14
+      - character: 8
+        frame: 16
+      - character: 9
+        frame: 18
+      - character: 0
+        frame: 20
+  arbitrary_event:
+    reel_count: 3
+    start_value: X
+    frames:
+      - character: A
+        frame: 1
+      - character: B
+        frame: 2
+      - character: C
+        frame: 3
+      - character: D
+        frame: 4
+      - character: E
+        frame: 5
+      - character: X
+        frame: 6

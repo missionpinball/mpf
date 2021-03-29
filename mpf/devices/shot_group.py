@@ -142,6 +142,7 @@ class ShotGroup(ModeDevice):
         """One of the member shots in this shot group was hit.
 
         Args:
+        ----
             kwarg: {
                 profile: the current profile of the member shot that was hit
                 state: the current state of the member shot that was hit
@@ -208,6 +209,7 @@ class ShotGroup(ModeDevice):
         taret on the other end.
 
         Args:
+        ----
             direction: String that specifies whether the rotation direction is
                 to the left or right. Values are 'right' or 'left'. Default of
                 None will cause the shot group to rotate in the direction as

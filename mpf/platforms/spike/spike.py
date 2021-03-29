@@ -443,6 +443,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         self._send_key_task = None
         self._query_nodes_task = None
         self.dmd = None
+        self.features['has_lights'] = True
 
         self._nodes = None
         self._bus_read = asyncio.Lock()
@@ -698,7 +699,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         try:
             node, _ = number.split("-")
         except IndexError:
-            return self.raise_config_error("Coil number has to have the syntax node-index but is: {}".format(number),
+            return self.raise_config_error("Coil number has to have the syntax node-index but is:"
+                                           " {} for driver {}".format(number, config.name),
                                            4)
 
         if int(node) not in self._nodes:
@@ -714,7 +716,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             }
         ]
 
-    def configure_light(self, number, subtype, platform_settings) -> Union[SpikeLight, SpikeBacklight]:
+    def configure_light(self, number, subtype, config, platform_settings) -> Union[SpikeLight, SpikeBacklight]:
         """Configure a light on Stern Spike."""
         del platform_settings, subtype
         if number == "0-0":
@@ -723,7 +725,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         try:
             node, index = number.split("-")
         except IndexError:
-            return self.raise_config_error("Light number has to have the syntax node-index but is: {}".format(number),
+            return self.raise_config_error("Light number has to have the syntax node-index but is:"
+                                           " {} for light {}".format(number, config.name),
                                            7)
 
         if int(node) in self.config['node_config'] and \
@@ -742,7 +745,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         try:
             node, index = number.split("-")
         except IndexError:
-            return self.raise_config_error("Switch number has to have the syntax node-index but is: {}".format(number),
+            return self.raise_config_error("Switch number has to have the syntax node-index but is:"
+                                           " {} for switch {}".format(number, config.name),
                                            2)
 
         if int(node) not in self._nodes:

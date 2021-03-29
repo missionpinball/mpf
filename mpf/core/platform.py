@@ -2,6 +2,7 @@
 import abc
 import asyncio
 from collections import namedtuple
+from enum import Enum
 
 from typing import Optional, Dict, List
 
@@ -21,6 +22,7 @@ if MYPY:   # pragma: no cover
     from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.platforms.interfaces.accelerometer_platform_interface import AccelerometerPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
+    from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface  # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 
@@ -34,6 +36,7 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         """Create features and set default variables.
 
         Args:
+        ----
             machine(mpf.core.machine.MachineController): The machine.
         """
         self.machine = machine  # type: MachineController
@@ -56,6 +59,7 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         self.features['has_hardware_sound_systems'] = False
         self.features['has_steppers'] = False
         self.features['allow_empty_numbers'] = False
+        self.features['hardware_eos_repulse'] = False
 
     def assert_has_feature(self, feature_name):
         """Assert that this platform has a certain feature or raise an exception otherwise."""
@@ -136,7 +140,7 @@ class DmdPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_dmds'] = True
 
     @abc.abstractmethod
-    def configure_dmd(self):
+    def configure_dmd(self) -> "DmdPlatformInterface":
         """Subclass this method in a platform module to configure the DMD.
 
         This method should return a reference to the DMD's platform interface
@@ -175,7 +179,7 @@ class RgbDmdPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_rgb_dmds'] = True
 
     @abc.abstractmethod
-    def configure_rgb_dmd(self, name: str):
+    def configure_rgb_dmd(self, name: str) -> "DmdPlatformInterface":
         """Subclass this method in a platform module to configure the DMD.
 
         This method should return a reference to the DMD's platform interface
@@ -262,6 +266,7 @@ class AccelerometerPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Configure accelerometer.
 
         Args:
+        ----
             number: Number of this accelerometer
             config (dict): Configuration of this accelerometer
             callback (mpf.devices.accelerometer.Accelerometer): Callback device to send data to
@@ -301,6 +306,7 @@ class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Configure a servo device in platform.
 
         Args:
+        ----
             number: Number of the servo
         """
         raise NotImplementedError
@@ -326,6 +332,7 @@ class StepperPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Validate a stepper config for platform.
 
         Args:
+        ----
             stepper: Stepper to validate.
             config: Config to validate.
 
@@ -345,10 +352,25 @@ class StepperPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Configure a smart stepper (axis) device in platform.
 
         Args:
+        ----
             number: Number of the smart servo
             config: Config for this stepper.
         """
         raise NotImplementedError
+
+
+class LightConfigColors(Enum):
+
+    """Light color for LightConfig."""
+
+    RED = 1
+    GREEN = 2
+    BLUE = 3
+    WHITE = 4
+    NONE = 5
+
+
+LightConfig = namedtuple("LightConfig", ["name", "color"])
 
 
 class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
@@ -377,7 +399,8 @@ class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def configure_light(self, number: str, subtype: str, platform_settings: dict) -> "LightPlatformInterface":
+    def configure_light(self, number: str, subtype: str, config: LightConfig,
+                        platform_settings: dict) -> "LightPlatformInterface":
         """Subclass this method in a platform module to configure a light.
 
         This method should return a reference to the light
@@ -386,7 +409,7 @@ class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
-SwitchConfig = namedtuple("SwitchConfig", ["invert", "debounce"])
+SwitchConfig = namedtuple("SwitchConfig", ["name", "invert", "debounce"])
 
 
 class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
@@ -408,6 +431,7 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         object which will be called to access the hardware.
 
         Args:
+        ----
             number: Switch number.
             config : Config of switch.
             platform_config: Platform specific settings.
@@ -424,6 +448,7 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Validate a switch config for platform.
 
         Args:
+        ----
             switch: Switch to validate.
             config: Config to validate.
 
@@ -457,9 +482,9 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
 SwitchSettings = namedtuple("SwitchSettings", ["hw_switch", "invert", "debounce"])
 DriverSettings = namedtuple("DriverSettings", ["hw_driver", "pulse_settings", "hold_settings", "recycle"])
-DriverConfig = namedtuple("DriverConfig", ["default_pulse_ms", "default_pulse_power", "default_hold_power",
+DriverConfig = namedtuple("DriverConfig", ["name", "default_pulse_ms", "default_pulse_power", "default_hold_power",
                                            "default_recycle", "max_pulse_ms", "max_pulse_power", "max_hold_power"])
-RepulseSettings = namedtuple("RepulseSettings", ["enable_repulse"])
+RepulseSettings = namedtuple("RepulseSettings", ["enable_repulse", "debounce_ms"])
 
 
 class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):

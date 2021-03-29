@@ -1,20 +1,24 @@
 """VPE platform."""
-from typing import Optional
+from typing import Optional, List
 
-from grpc.experimental import aio
+try:
+    from grpc.experimental import aio   # pylint: disable-msg=import-error
+except ImportError:
+    aio = None
 
 from mpf.core.utility_functions import Util
+from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.core.platform import LightsPlatform, SwitchPlatform, DriverPlatform, SwitchSettings, DriverSettings, \
-    SwitchConfig, DriverConfig, RepulseSettings
+    SwitchConfig, DriverConfig, RepulseSettings, RgbDmdPlatform, DmdPlatform
 from mpf.platforms.visual_pinball_engine import platform_pb2_grpc
 from mpf.platforms.visual_pinball_engine import platform_pb2
 
 try:
     from mpf.platforms.visual_pinball_engine.service import MpfHardwareService
-except SyntaxError:
+except (SyntaxError, ImportError):
     # pylint: disable-msg=invalid-name
     MpfHardwareService = None
 
@@ -37,13 +41,14 @@ class VisualPinballEngineLight(LightPlatformInterface):
 
     """A light in VPE."""
 
-    __slots__ = ["platform", "clock"]
+    __slots__ = ["platform", "clock", "config"]
 
-    def __init__(self, number, platform):
+    def __init__(self, number, platform, config):
         """Initialise LED."""
         super().__init__(number)
         self.platform = platform    # type: VisualPinballEnginePlatform
         self.clock = self.platform.machine.clock
+        self.config = config
 
     def set_fade(self, start_brightness, start_time, target_brightness, target_time):
         """Set fade."""
@@ -117,12 +122,54 @@ class VisualPinballEngineDriver(DriverPlatformInterface):
         self.platform.send_command(command)
 
 
-class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
+class VisualPinballEngineDmd(DmdPlatformInterface):
+
+    """VPE DMD."""
+
+    __slots__ = ["data", "brightness", "platform", "name", "color_mapping", "width", "height"]
+
+    # pylint: disable-msg=too-many-arguments
+    def __init__(self, name, platform, color_mapping, width, height) -> None:
+        """Initialise virtual DMD."""
+        self.data = None        # type: Optional[bytes]
+        self.brightness = 1.0   # type: Optional[float]
+        self.name = name
+        self.platform = platform
+        self.width = width
+        self.height = height
+        self.color_mapping = color_mapping
+
+    def update(self, data: bytes):
+        """Update data on the DMD.
+
+        Args:
+        ----
+            data: bytes to send to DMD
+        """
+        if data != self.data:
+            self.data = data
+            self._send_frame()
+
+    def _send_frame(self):
+        command = platform_pb2.Commands()
+        command.dmd_frame_request.name = self.name
+        command.dmd_frame_request.frame = self.data
+        command.dmd_frame_request.brightness = self.brightness
+        self.platform.send_command(command)
+
+    def set_brightness(self, brightness: float):
+        """Set brightness."""
+        self.brightness = brightness
+        if self.data is not None:
+            self._send_frame()
+
+
+class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, RgbDmdPlatform, DmdPlatform):
 
     """VPE platform."""
 
-    __slots__ = ["config", "_known_switches", "_known_lights", "_known_coils", "_initial_switch_state",
-                 "_switch_poll_task", "platform_rpc", "platform_server"]
+    __slots__ = ["config", "_configured_switches", "_configured_lights", "_configured_coils", "_initial_switch_state",
+                 "_switch_poll_task", "platform_rpc", "platform_server", "_configured_dmds"]
 
     def __init__(self, machine):
         """Initialise VPE platform."""
@@ -130,12 +177,16 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
         self.config = self.machine.config_validator.validate_config("vpe", self.machine.config.get('vpe', {}))
         self._configure_device_logging_and_debug("VPE Platform", self.config)
         self._initial_switch_state = {}
-        self._known_switches = []
-        self._known_lights = []
-        self._known_coils = []
+        self._configured_coils = []     # type: List[VisualPinballEngineDriver]
+        self._configured_switches = []  # type: List[VisualPinballEngineSwitch]
+        self._configured_lights = []    # type: List[VisualPinballEngineLight]
+        self._configured_dmds = []      # type: List[VisualPinballEngineDmd]
         self._switch_poll_task = None
         self.platform_rpc = None        # type: Optional[MpfHardwareService]
         self.platform_server = None
+
+        if not aio:
+            raise AssertionError("Please install mpf with the VPE feature.")
 
         if not MpfHardwareService:
             raise AssertionError("Error loading MpfHardwareService. Is your python version older than 3.6?")
@@ -152,15 +203,28 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
 
     async def initialize(self):
         """Wait for incoming gRPC connect from VPE."""
-        self.platform_rpc = MpfHardwareService(self.machine)
+        self.platform_rpc = MpfHardwareService(self.machine, self)
         self.platform_server = await self.listen(self.platform_rpc, self.config['listen_port'])
         response = await self.platform_rpc.wait_for_vpe_connect()
         self.info_log("VPE connected")
         self.debug_log("Got response %s", response)
-        self._known_switches = list(response.known_switches_with_initial_state.keys())
-        self._initial_switch_state = response.known_switches_with_initial_state
-        self._known_coils = response.known_coils
-        self._known_lights = response.known_lights
+        self._initial_switch_state = response.initial_switch_states
+
+    def get_configured_switches(self):
+        """Return configured switches."""
+        return self._configured_switches
+
+    def get_configured_coils(self):
+        """Return configured coils."""
+        return self._configured_coils
+
+    def get_configured_lights(self):
+        """Return configured lights."""
+        return self._configured_lights
+
+    def get_configured_dmds(self):
+        """Return configured dmds."""
+        return self._configured_dmds
 
     def stop(self):
         """Stop VPE server."""
@@ -169,13 +233,14 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
             self._switch_poll_task = None
 
         if self.platform_server:
-            self.machine.clock.loop.run_until_complete(self.platform_server.stop())
+            self.machine.clock.loop.run_until_complete(self.platform_server.stop(1))
             self.machine.clock.loop.run_until_complete(self.platform_server.wait_for_termination())
             self.platform_server = None
 
     async def start(self):
         """Start listening for switch changes."""
         await super().start()
+        self.platform_rpc.set_ready()
         self._switch_poll_task = self.machine.clock.loop.create_task(self._switch_poll())
         self._switch_poll_task.add_done_callback(Util.raise_exceptions)
 
@@ -197,16 +262,16 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict) -> "SwitchPlatformInterface":
         """Configure VPE switch."""
         number = str(number)
-        if number not in self._known_switches:
-            self.raise_config_error("Switch {} is not known to VPE".format(number), 1)
-        return VisualPinballEngineSwitch(config, number)
+        switch = VisualPinballEngineSwitch(config, number)
+        self._configured_switches.append(switch)
+        return switch
 
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict) -> "DriverPlatformInterface":
         """Configure VPE driver."""
         number = str(number)
-        if number not in self._known_coils:
-            self.raise_config_error("Coil {} is not known to VPE".format(number), 2)
-        return VisualPinballEngineDriver(config, number, self)
+        coil = VisualPinballEngineDriver(config, number, self)
+        self._configured_coils.append(coil)
+        return coil
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Pulse on hit and hold."""
@@ -275,14 +340,14 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
         """Return initial switch state."""
         return self._initial_switch_state
 
-    def configure_light(self, number: str, subtype: str, platform_settings: dict) -> "LightPlatformInterface":
+    def configure_light(self, number: str, subtype: str, config, platform_settings: dict) -> "LightPlatformInterface":
         """Configure a VPE light."""
         if not subtype:
             subtype = "light"
         number = "{}-{}".format(subtype, number)
-        if number not in self._known_lights:
-            self.raise_config_error("Light {} is not known to VPE".format(number), 3)
-        return VisualPinballEngineLight(number, self)
+        light = VisualPinballEngineLight(number, self, config)
+        self._configured_lights.append(light)
+        return light
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Parse channel str to a list of channels."""
@@ -291,3 +356,15 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
                 "number": str(number)
             }
         ]
+
+    def configure_rgb_dmd(self, name: str):
+        """Configure RGB dmd."""
+        dmd = VisualPinballEngineDmd(platform=self, name=name, color_mapping="RGB", width=128, height=32)
+        self._configured_dmds.append(dmd)
+        return dmd
+
+    def configure_dmd(self):
+        """Configure dmd."""
+        dmd = VisualPinballEngineDmd(platform=self, name="default", color_mapping="BW", width=128, height=32)
+        self._configured_dmds.append(dmd)
+        return dmd

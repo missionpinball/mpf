@@ -12,6 +12,42 @@ if _MO:
 else:
     raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
 
+pin2dmd_requires = [
+    'pyusb==1.1.0'
+]
+
+linux_i2c_requires = [
+    'smbus2_asyncio==0.0.5'
+]
+
+rpi_requires = [
+    'apigpio-mpf==0.0.3'
+]
+
+cli_requires = [
+    'prompt_toolkit==3.0.8',
+    'asciimatics==1.12.0',
+    'terminaltables==3.1.0',
+]
+
+osc_requires = [
+    'python-osc==1.7.4'
+]
+
+irc_requires = [
+    'irc==19.0.1'
+]
+
+vpe_requires = [
+    'grpcio_tools==1.34.0',
+    'grpcio==1.34.0',
+    'protobuf==3.14.0',
+]
+
+
+all_requires = (pin2dmd_requires + cli_requires + linux_i2c_requires + rpi_requires + osc_requires + irc_requires +
+                vpe_requires)
+
 setup(
 
     name='mpf',
@@ -73,14 +109,19 @@ community.''',
                       'pyserial-asyncio==0.4;platform_system=="Windows"',
                       'pyserial-asyncio==0.5;platform_system!="Windows"',
                       'sortedcontainers==2.3.0',
-                      'asciimatics==1.12.0',
-                      'terminaltables==3.1.0',
                       'psutil==5.7.3',
-                      'grpcio_tools==1.34.0',
-                      'grpcio==1.34.0',
-                      'protobuf==3.14.0',
-                      'prompt_toolkit==3.0.8',
                       ],
+
+    extras_require={
+        'all': all_requires,
+        'pin2dmd': pin2dmd_requires,
+        'linux_i2c': linux_i2c_requires,
+        'rpi': rpi_requires,
+        'cli': cli_requires,
+        'osc': osc_requires,
+        'irc': irc_requires,
+        'vpe': vpe_requires,
+    },
 
     tests_require=[],
     test_suite="mpf.tests",

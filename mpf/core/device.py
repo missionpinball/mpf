@@ -34,6 +34,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         """Set up default attributes of every device.
 
         Args:
+        ----
             machine: The machine controller.
             name: Name of the device in config.
         """
@@ -59,6 +60,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         """Add a device to a running mode.
 
         Args:
+        ----
             mode: Mode which loaded the device
         """
         raise AssertionError("Cannot use device {} in mode {}.".format(self.name, mode.name))
@@ -72,6 +74,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         """Can be called in _initialize to load the platform section.
 
         Args:
+        ----
             platform_section: Name of the platform section.
         """
         self.platform = self.machine.get_platform_sections(platform_section, self.config['platform'])
@@ -81,6 +84,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         """Return the config prepared for validation.
 
         Args:
+        ----
             config: Config of device
             is_mode_config: Whether this device is loaded in a mode or system-wide
 
@@ -93,6 +97,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         """Return the parsed and validated config.
 
         Args:
+        ----
             config: Config of device
             is_mode_config: Whether this device is loaded in a mode or system-wide
             debug_prefix: Prefix to use when logging.
@@ -123,6 +128,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         """Load config.
 
         Args:
+        ----
             config: Config for device
         """
         self.config = config

@@ -171,6 +171,7 @@ class BallHold(EnableDisableMixin, SystemWideDevice, ModeDevice):
         """Release all balls and return the actual amount of balls released.
 
         Args:
+        ----
             balls_to_release: number of ball to release from hold
         """
         if not self.hold_queue:

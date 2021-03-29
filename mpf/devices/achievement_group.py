@@ -328,6 +328,7 @@ class AchievementGroup(ModeDevice):
         """Load device on mode start and restore state.
 
         Args:
+        ----
             mode: mode which was contains the device
             player: player which is currently active
         """
@@ -345,6 +346,7 @@ class AchievementGroup(ModeDevice):
         """Mode ended.
 
         Args:
+        ----
             mode: mode which stopped
         """
         super().device_removed_from_mode(mode)

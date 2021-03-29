@@ -64,6 +64,7 @@ mpf:
         - mpf.devices.servo.Servo
         - mpf.devices.achievement.Achievement
         - mpf.devices.achievement_group.AchievementGroup
+        - mpf.devices.digital_score_reel.DigitalScoreReel
         - mpf.devices.dmd.Dmd
         - mpf.devices.rgb_dmd.RgbDmd
         - mpf.devices.light_group.LightStrip
@@ -252,20 +253,20 @@ modes:
 
 auditor:
     save_events:
-        game_started
-        ball_ended
-        game_ended
+      -  game_started
+      -  ball_ended
+      -  game_ended
     num_player_top_records: 10
     audit:
-        shots
-        switches
-        events
-        player
+      -  shots
+      -  switches
+      -  events
+      -  player
     events:
-        game_started
-        game_ended
+      -  game_started
+      -  game_ended
     player:
-        score
+      -  score
 
 sound_system:
     tracks:

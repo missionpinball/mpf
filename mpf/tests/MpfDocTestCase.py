@@ -217,9 +217,6 @@ class MpfDocTestCaseBase(MockConfigPlayers, MpfGameTestCase):
             except AssertionError as e:
                 raise AssertionError("Error in assertion {} (Num: {}) of your tests.".format(command, line_no)) from e
 
-    def command_start_game(self, num_balls_known=3):
-        self.start_game(num_balls_known=int(num_balls_known))
-
     def command_add_player(self):
         self.add_player()
 
@@ -335,9 +332,15 @@ class MpfDocTestCaseBase(MockConfigPlayers, MpfGameTestCase):
 
 class MpfDocTestCaseNoFakeGame(MpfDocTestCaseBase):
 
-    pass
+    """Test case with real game."""
+
+    def command_start_game(self):
+        self.start_game()
 
 
 class MpfDocTestCase(MpfDocTestCaseBase, MpfFakeGameTestCase):
 
-    pass
+    """Test case with fake game."""
+
+    def command_start_game(self, num_balls_known=3):
+        self.start_game(num_balls_known=int(num_balls_known))

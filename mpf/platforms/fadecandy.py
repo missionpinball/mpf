@@ -24,6 +24,7 @@ class FadecandyHardwarePlatform(OpenpixelHardwarePlatform):
         """Initialise Fadecandy.
 
         Args:
+        ----
             machine: The main ``MachineController`` object.
         """
         super().__init__(machine)
@@ -56,6 +57,7 @@ class FadeCandyOPClient(OpenPixelClient):
         """Initialise Fadecandy client.
 
         Args:
+        ----
             machine: The main ``MachineController`` instance.
             config: Dictionary which contains configuration settings for the
                 OPC client.

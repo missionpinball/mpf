@@ -3,6 +3,16 @@
 game:
     balls_per_game: 1
 
+auditor:
+    events:
+        - test_event1
+        - test_event2
+    player:
+        - my_var
+
+modes:
+    - base
+
 switches:
     s_test:
         number:
@@ -11,18 +21,3 @@ switches:
         tags: start
     s_ball:
         number:
-
-coils:
-    c_eject:
-        number:
-
-playfields:
-    playfield:
-        default_source_device: s_trough
-        tags: default
-
-ball_devices:
-    s_trough:
-        ball_switches: s_ball
-        eject_coil: c_eject
-        tags: trough, drain, home

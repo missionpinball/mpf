@@ -76,6 +76,7 @@ assets:
         descriptor: ignore
     images: # no image-specific config items
         __allow_others__:
+        persist_frame: single|bool|false
     shows:  # no show-specific config items
         __allow_others__:
     sounds:
@@ -304,6 +305,16 @@ digital_outputs:
     platform_settings: single|dict|None
     type: single|enum(light,driver)|
     light_subtype: single|str|None
+digital_score_reels:
+    __valid_in__: machine
+    __type__: device
+    reel_count: single|num|0
+    start_value: single|str|0
+    frames: list|subconfig(digital_score_reel_frame)|None
+    include_player_number: single|bool|False
+digital_score_reel_frame:
+    character: single|str|None
+    frame: single|int|None
 dual_wound_coils:
     __valid_in__: machine
     __type__: device
@@ -622,6 +633,7 @@ flippers:
     ball_search_hold_time: single|ms|1s
     playfield: single|machine(playfields)|playfield
     repulse_on_eos_open: single|bool|false
+    eos_active_ms_before_repulse: single|ms|500
 game:
     __valid_in__: machine
     __type__: config
@@ -678,11 +690,21 @@ info_lights:
 image_pools:
     __valid_in__: machine, mode                      # todo add to validator
     __type__: config_dict
+image_templates:
+    __valid_in__: machine
+    __type: config
 images:
     __valid_in__: machine, mode
     __type__: config_dict
     file: single|str|None
+    frame_skips: list|subconfig(images_frame_skips)|None
+    image_template: single|subconfig(images,device)|None
     load: single|str|None
+images_frame_skips:
+    __valid_in__: machine, mode
+    __type__: config_dict
+    from: single|int|None
+    to: single|int|None
 keyboard:
     __valid_in__: machine                           # todo add to validator
     __type__: config_dict
@@ -729,7 +751,8 @@ light_segment_displays_device:
 light_stripes:
     __valid_in__: machine
     __type__: device
-    number_start: single|int|
+    number_start: single|int|0
+    start_channel: single|str|None
     number_template: single|str|None
     start_x: single|float|None
     start_y: single|float|None
@@ -740,7 +763,8 @@ light_stripes:
 light_rings:
     __valid_in__: machine
     __type__: device
-    number_start: single|int|
+    number_start: single|int|0
+    start_channel: single|str|None
     number_template: single|str|None
     center_x: single|float|None
     center_y: single|float|None
