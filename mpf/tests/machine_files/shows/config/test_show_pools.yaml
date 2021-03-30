@@ -166,6 +166,8 @@ show_player:
         color: blue
         color1: green
         color2: yellow
+  stop_pool_random:
+    pool_random: stop
   play_pool_sequence:
     pool_sequence:
       show_tokens:
