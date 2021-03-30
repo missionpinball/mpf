@@ -121,17 +121,17 @@ ball_devices:
     __type__: device
     exit_count_delay: ignore                    # deprecated: see ball_device_counter_ball_switches for new options
     entrance_count_delay: ignore                # deprecated: see ball_device_counter_ball_switches for new options
-    eject_coil: ignore                          # deprecated: see ball_devices_ejector_pulse for new options
-    eject_coil_jam_pulse: ignore                # deprecated: see ball_devices_ejector_pulse for new options
-    eject_coil_retry_pulse: ignore              # deprecated: see ball_devices_ejector_pulse for new options
-    eject_coil_reorder_pulse: ignore            # deprecated: see ball_devices_ejector_pulse for new options
-    eject_coil_max_wait_ms: ignore              # deprecated: see ball_devices_ejector_pulse for new options
-    eject_coil_enable_time: ignore              # deprecated: see ball_devices_ejector_enable for new options
-    retries_before_increasing_pulse: ignore     # deprecated: see ball_devices_ejector_pulse for new options
-    hold_coil: ignore                           # deprecated: see ball_devices_ejector_hold for new options
-    hold_coil_release_time: ignore              # deprecated: see ball_devices_ejector_hold for new options
-    hold_events: ignore                         # deprecated: see ball_devices_ejector_hold for new options
-    hold_switches: ignore                       # deprecated: see ball_devices_ejector_hold for new options
+    eject_coil: ignore                          # deprecated: see ball_device_ejector_pulse for new options
+    eject_coil_jam_pulse: ignore                # deprecated: see ball_device_ejector_pulse for new options
+    eject_coil_retry_pulse: ignore              # deprecated: see ball_device_ejector_pulse for new options
+    eject_coil_reorder_pulse: ignore            # deprecated: see ball_device_ejector_pulse for new options
+    eject_coil_max_wait_ms: ignore              # deprecated: see ball_device_ejector_pulse for new options
+    eject_coil_enable_time: ignore              # deprecated: see ball_device_ejector_enable for new options
+    retries_before_increasing_pulse: ignore     # deprecated: see ball_device_ejector_pulse for new options
+    hold_coil: ignore                           # deprecated: see ball_device_ejector_hold for new options
+    hold_coil_release_time: ignore              # deprecated: see ball_device_ejector_hold for new options
+    hold_events: ignore                         # deprecated: see ball_device_ejector_hold for new options
+    hold_switches: ignore                       # deprecated: see ball_device_ejector_hold for new options
     entrance_switch: ignore                     # deprecated: see ball_device_counter_entrance_switches for new options
     entrance_switch_ignore_window_ms: ignore    # deprecated: see ball_device_counter_entrance_switches for new options
     entrance_switch_full_timeout: ignore        # deprecated: see ball_device_counter_entrance_switches for new options
@@ -198,6 +198,7 @@ ball_device_ejector_enable:
     class: ignore
     eject_coil: single|machine(coils)|None
     eject_coil_enable_time: list|ms|None
+    eject_coil_max_wait_ms: single|ms|200ms
 ball_holds:
     __valid_in__: machine, mode
     __type__: device
