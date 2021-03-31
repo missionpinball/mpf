@@ -2,7 +2,7 @@
 from typing import Optional
 
 import asyncio
-from serial import SerialException
+from serial import SerialException, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
 
 from mpf.core.utility_functions import Util
 
@@ -49,7 +49,8 @@ class BaseSerialCommunicator:
         while True:
             try:
                 connector = self.machine.clock.open_serial_connection(
-                    url=port, baudrate=baud, limit=0, xonxoff=xonxoff)
+                    url=port, baudrate=baud, limit=0, xonxoff=xonxoff,
+                    bytesize=EIGHTBITS, parity=PARITY_NONE, stopbits=STOPBITS_ONE)
                 self.reader, self.writer = await connector
             except SerialException:
                 if not self.machine.options["production"]:
@@ -64,7 +65,10 @@ class BaseSerialCommunicator:
 
         serial = self.writer.transport.serial
         if hasattr(serial, "set_low_latency_mode"):
-            serial.set_low_latency_mode(True)
+            try:
+                serial.set_low_latency_mode(True)
+            except NotImplementedError:
+                self.log.debug("Could not set %s to low latency mode.", port)
 
         # defaults are slightly high for our usecase
         self.writer.transport.set_write_buffer_limits(2048, 1024)

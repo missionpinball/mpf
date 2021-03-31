@@ -584,7 +584,7 @@ fast:
     __type__: config
     driverboards: single|enum(fast,wpc,None)|None
     ports: list|str|
-    baud: single|int|921600
+    baud: list|int|921600
     watchdog: single|ms|1000
     default_quick_debounce_open: single|ms|
     default_quick_debounce_close: single|ms|
@@ -595,6 +595,7 @@ fast:
     net_buffer: single|int|10
     rgb_buffer: single|int|3
     dmd_buffer: single|int|3
+    segment_buffer: single|int|4
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
     firmware_updates: list|subconfig(fast_firmware_update)|None
@@ -1294,7 +1295,8 @@ segment_display_player:
     __type__: config_player
     priority: single|int_or_token|0
     text: single|str|None
-    action: single|enum(add,remove,flash,no_flash,flash_match)|add
+    color: list|color|ffffff
+    action: single|enum(add,remove,flash,no_flash,flash_match,set_color)|add
     key: single|str|None
     expire: single|ms_or_token|None
 servo_controllers:

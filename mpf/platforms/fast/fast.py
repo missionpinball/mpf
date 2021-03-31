@@ -19,26 +19,28 @@ from mpf.platforms.fast.fast_driver import FASTDriver
 from mpf.platforms.fast.fast_gi import FASTGIString
 from mpf.platforms.fast.fast_led import FASTDirectLED, FASTDirectLEDChannel
 from mpf.platforms.fast.fast_light import FASTMatrixLight
+from mpf.platforms.fast.fast_segment_display import FASTSegmentDisplay
 from mpf.platforms.fast.fast_serial_communicator import FastSerialCommunicator
 from mpf.platforms.fast.fast_switch import FASTSwitch
 
 from mpf.core.platform import ServoPlatform, DmdPlatform, SwitchPlatform, DriverPlatform, LightsPlatform, \
-    DriverSettings, SwitchSettings, DriverConfig, SwitchConfig, RepulseSettings
+    SegmentDisplayPlatform, DriverSettings, SwitchSettings, DriverConfig, SwitchConfig, RepulseSettings
 from mpf.core.utility_functions import Util
 
 
 # pylint: disable-msg=too-many-instance-attributes
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+from mpf.platforms.interfaces.segment_display_platform_interface import ColorSegmentDisplayPlatformInterface
 
 
 class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
-                           SwitchPlatform, DriverPlatform):
+                           SwitchPlatform, DriverPlatform, SegmentDisplayPlatform):
 
     """Platform class for the FAST hardware controller."""
 
-    __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "serial_connections", "fast_leds",
-                 "flag_led_tick_registered", "config", "machine_type", "hw_switch_data", "io_boards", "fast_commands",
-                 "_watchdog_task", "_led_task"]
+    __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "leg_connection", "seg_connection",
+                 "serial_connections", "fast_leds", "fast_commands", "config", "machine_type", "hw_switch_data",
+                 "io_boards", "flag_led_tick_registered", "_watchdog_task", "_led_task"]
 
     def __init__(self, machine):
         """Initialise fast hardware platform.
@@ -68,6 +70,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.dmd_connection = None
         self.net_connection = None
         self.rgb_connection = None
+        self.leg_connection = None
+        self.seg_connection = None
         self._watchdog_task = None
         self._led_task = None
         self.serial_connections = set()         # type: Set[FastSerialCommunicator]
@@ -119,6 +123,20 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 self.dmd_connection.remote_processor,
                 self.dmd_connection.remote_model,
                 self.dmd_connection.remote_firmware)
+        if not self.leg_connection:
+            infos += "No connection to the Legacy Controller.\n"
+        else:
+            infos += "Legacy Controller: {} {} {}\n".format(
+                self.leg_connection.remote_processor,
+                self.leg_connection.remote_model,
+                self.leg_connection.remote_firmware)
+        if not self.seg_connection:
+            infos += "No connection to the Segment Controller.\n"
+        else:
+            infos += "Segment Controller: {} {} {}\n".format(
+                self.seg_connection.remote_processor,
+                self.seg_connection.remote_model,
+                self.seg_connection.remote_firmware)
 
         infos += "\nBoards:\n"
         for board in self.io_boards.values():
@@ -177,6 +195,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.rgb_connection.writer.write(b'BL:AA55\r')  # reset CPU using bootloader
         if self.dmd_connection:
             self.dmd_connection.writer.write(b'BL:AA55\r')  # reset CPU using bootloader
+        if self.leg_connection:
+            self.leg_connection.writer.write(b'BL:AA55\r')  # reset CPU using bootloader
+        # if self.seg_connection:
+        #     self.seg_connection.writer.write(b'BL:AA55\r')  # reset CPU using bootloader
 
         # wait 100ms for the messages to be send
         self.machine.clock.loop.run_until_complete(asyncio.sleep(.1))
@@ -192,6 +214,14 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if self.dmd_connection:
             self.dmd_connection.stop()
             self.dmd_connection = None
+
+        if self.leg_connection:
+            self.leg_connection.stop()
+            self.leg_connection = None
+
+        if self.seg_connection:
+            self.seg_connection.stop()
+            self.seg_connection = None
 
         self.serial_connections = set()
 
@@ -220,7 +250,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     def _update_watchdog(self):
         """Send Watchdog command."""
-        self.net_connection.send('WD:' + str(hex(self.config['watchdog']))[2:])
+        if self.net_connection:
+            self.net_connection.send('WD:' + str(hex(self.config['watchdog']))[2:])
+        elif self.leg_connection:
+            self.leg_connection.send('WD:' + str(hex(self.config['watchdog']))[2:])
 
     def process_received_message(self, msg: str, remote_processor: str):
         """Send an incoming message from the FAST controller to the proper method for servicing.
@@ -279,9 +312,14 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         else:
             ports = self.config['ports']
 
-        for port in ports:
-            comm = FastSerialCommunicator(platform=self, port=port,
-                                          baud=self.config['baud'])
+        bauds = self.config['baud']
+        if len(bauds) == 1:
+            bauds = [bauds[0]] * len(ports)
+        elif len(bauds) != len(ports):
+            raise AssertionError("FAST configuration found {} ports and {} baud rates".format(len(ports), len(bauds)))
+
+        for index, port in enumerate(ports):
+            comm = FastSerialCommunicator(platform=self, port=port, baud=bauds[index])
             await comm.connect()
             self.serial_connections.add(comm)
 
@@ -304,6 +342,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.dmd_connection = communicator
         elif name == 'NET':
             self.net_connection = communicator
+        elif name == 'LEG':
+            self.leg_connection = communicator
+        elif name == 'SEG':
+            self.seg_connection = communicator
         elif name == 'RGB':
             self.rgb_connection = communicator
             self.rgb_connection.send('RF:0')
@@ -734,6 +776,18 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                  "available.")
 
         return FASTDMD(self.machine, self.dmd_connection.send)
+
+    async def configure_segment_display(self, number: str, platform_settings) -> ColorSegmentDisplayPlatformInterface:
+        """Configure a segment display."""
+        self.debug_log("Configuring FAST segment display.")
+        del platform_settings
+        if not self.seg_connection:
+            raise AssertionError("A request was made to configure a FAST "
+                                 "Segment Display but no connection is "
+                                 "available.")
+
+        display = FASTSegmentDisplay(int(number), self.seg_connection)
+        return display
 
     @classmethod
     def get_coil_config_section(cls):
