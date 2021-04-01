@@ -60,7 +60,7 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
         return (await element).decode()
 
     async def _identify_connection(self):
-        """Identify which processor this serial connection is talking to."""
+        """Identify which controller this serial connection is talking to."""
 
         count = 0
         while True:
@@ -114,12 +114,13 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
                                  'Please update your firmware.'.
                                  format(NANO_MIN_FW, self.remote_firmware))
 
-        # Reset the Nano controller
+        # Reset the Nano controller and connected boards
         await self.reset_controller()
 
         # Determine what additional boards are connected to the Nano controller
         await self.query_pkone_boards()
 
+        # Read the initial state of all switches
         await self.read_all_switches()
 
         self.platform.controller_connection = self
@@ -127,6 +128,8 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
     async def reset_controller(self):
         """Reset the controller."""
         self.platform.debug_log('Resetting controller.')
+
+        # this command returns several responses (one from each board, starting with the Nano controller)
         self.writer.write('PRSE'.encode())
         msg = ''
         while msg != 'PRSE' and not msg.startswith('PXX'):
@@ -196,14 +199,15 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
 
     async def read_all_switches(self):
         self.platform.debug_log('Reading all switches.')
-        self.writer.write('PSAE'.encode())
-        msg = ''
-        while not msg.startswith('PSA'):
-            msg = (await self.readuntil(b'E')).decode()
-            if not msg.startswith('PSA'):
-                self.platform.log.warning("Received unexpected message from PKONE: {}".format(msg))
+        for address_id in self.platform.pkone_extensions:
+            self.writer.write('PSA{}E'.format(address_id).encode())
+            msg = ''
+            while not msg.startswith('PSA'):
+                msg = (await self.readuntil(b'E')).decode()
+                if not msg.startswith('PSA'):
+                    self.platform.log.warning("Received unexpected message from PKONE: {}".format(msg))
 
-        self.platform.process_received_message(msg)
+            self.platform.process_received_message(msg)
 
     def _parse_msg(self, msg):
         self.received_msg += msg

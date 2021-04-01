@@ -42,7 +42,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
         self.pkone_lightshows = {}          # type: Dict[int, PKONELightshowBoard]
         self.leds = {}
         self._watchdog_task = None
-        self.hw_switch_data = None
+        self.hw_switch_data = dict()
 
         self.pkone_commands = {'PCN': lambda x, y: None,            # connected Nano processor
                                'PCB': lambda x, y: None,            # connected board
@@ -76,6 +76,8 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
     async def initialize(self):
         """Initialize connection to PKONE Nano hardware."""
         await self._connect_to_hardware()
+
+        self._configure_lightshow_rgbw_group_numbers()
 
     def stop(self):
         """Stop platform and close connections."""
@@ -166,6 +168,31 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
 
         self.pkone_lightshows[board.addr] = board
 
+    def _configure_lightshow_rgbw_group_numbers(self):
+        # send additional platform settings to the connected hardware
+        if self.config['lightshow_rgbw_groups']:
+            for number in self.config['lightshow_rgbw_groups']:
+                try:
+                    board_id_str, group_num_str = number.split("-")
+                except ValueError:
+                    raise AssertionError("Invalid Lightshow RGBW group number {}".format(number))
+
+                board_id = int(board_id_str)
+                group_num = int(group_num_str)
+
+                if board_id not in self.pkone_lightshows:
+                    raise AssertionError(
+                        "PKONE Lightshow {} does not exist for RGBW group number {}".format(board_id, number))
+
+                if group_num not in range(1, self.pkone_lightshows[board_id].led_groups + 1):
+                    raise AssertionError("PKONE Lightshow {} only has {} groups ({} - {}). RGBW group: {}".format(
+                        board_id, self.pkone_lightshows[board_id].led_groups, 1,
+                        self.pkone_lightshows[board_id].led_groups, number))
+
+                self.pkone_lightshows[board_id].rgbw_group_numbers.append(group_num)
+                cmd = "PLG{}{}4".format(board_id, group_num)
+                self.controller_connection.send(cmd)
+
     def process_received_message(self, msg: str):
         """Send an incoming message from the PKONE controller to the proper method for servicing.
 
@@ -197,6 +224,9 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
 
         if board_id not in self.pkone_extensions:
             raise AssertionError("PKONE Extension {} does not exist for coil {}".format(board_id, number))
+
+        if coil_num == 0:
+            raise AssertionError("PKONE coil numbering begins with 1. Coil: {}".format(number))
 
         coil_count = self.pkone_extensions[board_id].coil_count
         if coil_count < coil_num or coil_num < 1:
@@ -374,7 +404,10 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
         if board_id not in self.pkone_extensions:
             raise AssertionError("PKONE Extension {} does not exist for switch {}".format(board_id, number))
 
-        if self.pkone_extensions[board_id].switch_count <= switch_num:
+        if switch_num == 0:
+            raise AssertionError("PKONE switch numbering begins with 1. Switch: {}".format(number))
+
+        if self.pkone_extensions[board_id].switch_count < switch_num:
             raise AssertionError("PKONE Extension {} only has {} switches. Switch: {}".format(
                 board_id, self.pkone_extensions[board_id].switch_count, number))
 
@@ -417,36 +450,26 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
     def receive_all_switches(self, msg):
         """Process the all switch states message."""
         # The PSA message contains the following information:
-        # [PSA opcode] + [[board address id] + 0 or 1 for each switch on the board + X] (repeats for each
-        # connected Extension board) + E
+        # [PSA opcode] + [[board address id] + 0 or 1 for each switch on the board] + E
         self.debug_log("Received all switch states (PSA): %s", msg)
 
-        hw_states = dict()
-
         # the message payload is delimited with an 'X' character for the switches on each board
-        for board_switches in msg.split('X'):
-            if len(board_switches) == 0:
-                continue
+        # The first character is the board address ID
+        board_address_id = int(msg[0])
+        switch_states = msg[1:]
 
-            # The first character is the board address ID
-            board_address_id = int(board_switches[0])
-            switch_states = board_switches[1:]
-
-            # There is one character for each switch on the board (1 = active, 0 = inactive)
-            # Loop over each character and map the state to the appropriate switch number
-            for index in range(len(switch_states)):
-                hw_states[PKONESwitchNumber(board_address_id=board_address_id, switch_number=index + 1)] = int(
-                    switch_states[index])
-
-        self.hw_switch_data = hw_states
+        # There is one character for each switch on the board (1 = active, 0 = inactive)
+        # Loop over each character and map the state to the appropriate switch number
+        for index in range(len(switch_states)):
+            self.hw_switch_data[PKONESwitchNumber(board_address_id=board_address_id, switch_number=index + 1)] = int(
+                switch_states[index])
 
     def receive_switch(self, msg):
         """Process a single switch state change."""
         # The PSW message contains the following information:
         # [PSW opcode] + [board address id] + switch number + switch state (0 or 1) + E
         self.debug_log("Received switch state change (PSW): %s", msg)
-
-        switch_number = PKONESwitchNumber(int(msg[4]), int(msg[5:-2]))
+        switch_number = PKONESwitchNumber(int(msg[0]), int(msg[1:3]))
         switch_state = int(msg[-1])
         self.machine.switch_controller.process_switch_by_num(state=switch_state,
                                                              num=switch_number,
@@ -460,7 +483,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
                                  "connection to PKONE controller is available")
 
         if subtype == "simple":
-            return PKONESimpleLED(number, self.controller_connection.send, self.machine, self)
+            return PKONESimpleLED(number, self.controller_connection.send, self)
 
         if not subtype or subtype == "led":
             board_address_id, group, index  = number.split("-")
@@ -480,6 +503,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Parse light channels from number string."""
         if subtype == "simple":
+            # simple LEDs use the format <board_address_id> - <led> (simple LEDs only have 1 channel)
             board_address_id, index = number.split('-')
             return [
                 {
@@ -488,22 +512,18 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
             ]
 
         if not subtype or subtype == "led":
-            # if the LED number is in <board_address_id> - <group> - <channel> - <led> format, convert it to a
-            # FAST hardware number
-            if '-' in str(number):
-                board_address_id, group, number_str, channel = str(number).split('-')
-                index = 0  # TODO: implement me
-            else:
-                index = int(number)
+            # Normal LED number format: <board_address_id> - <group> - <led>
+            board_address_id, group, number_str = str(number).split('-')
+            index = int(number_str)
             return [
                 {
-                    "number": "{}-{}-{}-0".format(index)
+                    "number": "{}-{}-{}-0".format(board_address_id, group, index)
                 },
                 {
-                    "number": "{}-{}-{}-1".format(index)
+                    "number": "{}-{}-{}-1".format(board_address_id, group, index)
                 },
                 {
-                    "number": "{}-{}-{}-2".format(index)
+                    "number": "{}-{}-{}-2".format(board_address_id, group, index)
                 },
             ]
 

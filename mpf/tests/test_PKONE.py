@@ -96,7 +96,10 @@ class TestPKONE(MpfTestCase):
             'PCB6': 'PCB6N',
             'PCB7': 'PCB7N',
             'PRS': 'PRS',
-            'PSA': 'PSA011000000000000000000000000000000000X100000000000000000000000000000000000XE',
+            'PLG234': 'PLG',
+            'PLG244': 'PLG',
+            'PSA0': 'PSA011000000000000000000000000000000000E',
+            'PSA1': 'PSA100110000000000000000000000000000000E',
             'PCC1040000000000': None,
             'PCC1060000000000': None,
             'PCC0070000000000': None,
@@ -121,9 +124,16 @@ class TestPKONE(MpfTestCase):
         self.assertEqual(1, self.machine.default_platform.pkone_extensions[1].addr)
 
         self.assertEqual(1, len(self.machine.default_platform.pkone_lightshows))
-        self.assertEqual(45, self.machine.default_platform.pkone_lightshows[2].simple_led_count)
+        self.assertEqual(40, self.machine.default_platform.pkone_lightshows[2].simple_led_count)
         self.assertEqual(8, self.machine.default_platform.pkone_lightshows[2].led_groups)
-        self.assertEqual(64, self.machine.default_platform.pkone_lightshows[2].max_leds_per_group)
+        self.assertEqual(64, self.machine.default_platform.pkone_lightshows[2].get_max_leds_in_group(1))
+        self.assertEqual(64, self.machine.default_platform.pkone_lightshows[2].get_max_leds_in_group(2))
+        self.assertEqual(48, self.machine.default_platform.pkone_lightshows[2].get_max_leds_in_group(3))
+        self.assertEqual(48, self.machine.default_platform.pkone_lightshows[2].get_max_leds_in_group(4))
+        self.assertEqual(64, self.machine.default_platform.pkone_lightshows[2].get_max_leds_in_group(5))
+        self.assertEqual(64, self.machine.default_platform.pkone_lightshows[2].get_max_leds_in_group(6))
+        self.assertEqual(64, self.machine.default_platform.pkone_lightshows[2].get_max_leds_in_group(7))
+        self.assertEqual(64, self.machine.default_platform.pkone_lightshows[2].get_max_leds_in_group(8))
         self.assertEqual(2, self.machine.default_platform.pkone_lightshows[2].addr)
 
         self.assertEqual("1.1", self.machine.variables.get_machine_var("pkone_firmware"))
@@ -253,7 +263,7 @@ class TestPKONE(MpfTestCase):
 
         # switch and coil on board with address id 1. should work
         self.controller.expected_commands = {
-            "PHR10210100000000109900000": None
+            "PHR10210300000000109900000": None
         }
         self.machine.autofires["ac_board_3"].enable()
         self.advance_time_and_run(.1)
@@ -269,8 +279,8 @@ class TestPKONE(MpfTestCase):
 
     def _test_two_rules_one_switch(self):
         self.controller.expected_commands = {
-            "PHR10410400000000239900027": None,
-            "PHR10610400000000239900000": None
+            "PHR10410700000000239900027": None,
+            "PHR10610700000000239900000": None
         }
         self.post_event("ac_same_switch")
         self.hit_and_release_switch("s_flipper")
@@ -321,49 +331,47 @@ class TestPKONE(MpfTestCase):
         self.switch_hit = True
 
     def test_switches(self):
+        # test initial switch states (based on PSA command response)
+        self.assertSwitchState("s_test_1", 1)
+        self.assertSwitchState("s_test_2", 1)
+        self.assertSwitchState("s_test_3", 0)
+        self.assertSwitchState("s_test_4", 0)
+        self.assertSwitchState("s_test_11", 0)
+        self.assertSwitchState("s_test_12", 0)
+        self.assertSwitchState("s_test_13", 1)
+        self.assertSwitchState("s_test_14", 1)
+
         self._test_switch_changes()
         self._test_switch_changes_nc()
         self._test_switch_configure()
 
     def _test_switch_configure(self):
+        # configuring switches in PKONE does not generate any commands between the host and controller
+
         # last switch on first board
-        self.controller.expected_commands = {
-            "SN:1F,01,04,04": "SN:P"
-        }
-        self.machine.default_platform.configure_switch('0-31', SwitchConfig(name="", debounce='auto', invert=0), {})
+        self.machine.default_platform.configure_switch('0-35', SwitchConfig(name="", debounce='auto', invert=0), {})
         self.advance_time_and_run(.1)
-        self.assertFalse(self.controller.expected_commands)
 
         # next should not work
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch('0-32', SwitchConfig(name="", debounce='auto', invert=0), {})
-
-        self.controller.expected_commands = {
-            "SN:47,01,04,04": "SN:P"
-        }
-        self.machine.default_platform.configure_switch('3-15', SwitchConfig(name="", debounce='auto', invert=0), {})
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.controller.expected_commands)
+            self.machine.default_platform.configure_switch('0-36', SwitchConfig(name="", debounce='auto', invert=0), {})
 
         # invalid board
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch('4-0', SwitchConfig(name="", debounce='auto', invert=0), {})
+            self.machine.default_platform.configure_switch('4-1', SwitchConfig(name="", debounce='auto', invert=0), {})
 
-        # last switch is 0x47. 0x48 = 72
+        # invalid switch (switch number begin at 1 and not 0)
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch('72', SwitchConfig(name="", debounce='auto', invert=0), {})
+            self.machine.default_platform.configure_switch('0-0', SwitchConfig(name="", debounce='auto', invert=0), {})
 
     def _test_switch_changes(self):
-        self.assertSwitchState("s_flipper", 0)
-        self.assertSwitchState("s_flipper_eos", 1)
-
         self.switch_hit = False
         self.advance_time_and_run(1)
         self.assertSwitchState("s_test", 0)
         self.assertFalse(self.switch_hit)
 
         self.machine.events.add_handler("s_test_active", self._switch_hit_cb)
-        self.machine.default_platform.process_received_message("-N:07", "NET")
+        self.machine.default_platform.process_received_message("PSW0071E")
         self.advance_time_and_run(1)
 
         self.assertTrue(self.switch_hit)
@@ -374,7 +382,7 @@ class TestPKONE(MpfTestCase):
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test", 1)
 
-        self.machine.default_platform.process_received_message("/N:07", "NET")
+        self.machine.default_platform.process_received_message("PSW0070E")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test", 0)
@@ -389,13 +397,13 @@ class TestPKONE(MpfTestCase):
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test_nc", 1)
 
-        self.machine.default_platform.process_received_message("-N:1A", "NET")
+        self.machine.default_platform.process_received_message("PSW0261E")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test_nc", 0)
 
         self.machine.events.add_handler("s_test_nc_active", self._switch_hit_cb)
-        self.machine.default_platform.process_received_message("/N:1A", "NET")
+        self.machine.default_platform.process_received_message("PSW0260E")
         self.advance_time_and_run(1)
 
         self.assertSwitchState("s_test_nc", 1)
@@ -431,7 +439,7 @@ class TestPKONE(MpfTestCase):
 
         # flipper rule enable
         self.controller.expected_commands = {
-            "PHR10140200000000119912000": None
+            "PHR10140500000000119912000": None
         }
         self.machine.flippers["f_test_single"].enable()
         self.advance_time_and_run(.1)
@@ -515,8 +523,8 @@ class TestPKONE(MpfTestCase):
         # we pulse the main coil
         # hold coil is pulsed + enabled
         self.controller.expected_commands = {
-            "PHR10130200000000109900000": None,
-            "PHR10240200000000109912000": None,
+            "PHR10130500000000109900000": None,
+            "PHR10240500000000109912000": None,
         }
         self.machine.flippers["f_test_hold"].enable()
         self.advance_time_and_run(.1)

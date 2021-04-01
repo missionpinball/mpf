@@ -8,7 +8,7 @@ class PKONELightshowBoard:
     """PKONE Lightshow board."""
 
     __slots__ = ["log", "addr", "firmware_version", "hardware_rev", "simple_led_count", "led_groups",
-                 "max_leds_per_group"]
+                 "max_leds_per_rgb_group", "max_leds_per_rgbw_group", "rgbw_group_numbers"]
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, addr, firmware_version, hardware_rev):
@@ -17,21 +17,27 @@ class PKONELightshowBoard:
         self.addr = addr
         self.firmware_version = firmware_version
         self.hardware_rev = hardware_rev
-        self.simple_led_count = 45  # numbers 1 - 45
-        self.led_groups = 8  # letters A - H
-        self.max_leds_per_group = 64  # numbers 1 - 64
+        self.simple_led_count = 40  # numbers 1 - 40
+        self.led_groups = 8  # numbers 1 - 8
+        self.max_leds_per_rgb_group = 64  # numbers 1 - 64
+        self.max_leds_per_rgbw_group = 48  # numbers 1 - 48
+        self.rgbw_group_numbers = []
 
     def get_description_string(self) -> str:
         """Return description string."""
         return "PKONE Lightshow Board - Firmware: {}, Hardware Rev: {}, Simple LEDs: {}, " \
-               "RGB LED Groups: {} (max {} LEDs per group)".format(
+               "RGB LED Groups: {} (max {} LEDs per RGB group)".format(
             self.addr,
             self.firmware_version,
             self.hardware_rev,
             self.simple_led_count,
             self.led_groups,
-            self.max_leds_per_group
+            self.max_leds_per_rgb_group
         )
+
+    def get_max_leds_in_group(self, group):
+        """Returns the maximum number of leds permitted in the specified group."""
+        return self.max_leds_per_rgb_group if group not in self.rgbw_group_numbers else self.max_leds_per_rgbw_group
 
 
 class PKONELightChannel(PlatformBatchLight):
@@ -49,7 +55,7 @@ class PKONELightChannel(PlatformBatchLight):
 
     def get_max_fade_ms(self):
         """Return max fade (ms)."""
-        return 10240
+        return 40960
 
     def get_board_name(self):
         """Return OPP chain and addr."""
