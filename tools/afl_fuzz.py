@@ -2,6 +2,7 @@
 """AFL fuzzer."""
 import argparse
 import asyncio
+import gc
 import os
 import sys
 
@@ -330,9 +331,11 @@ if int(args.wait) > 0:
 if args.start_game and not runner.machine.game:
     raise AssertionError("Failed to start a game.")
 
+# run GC once to clean everything up
+gc.collect()
+
 # keep effort minimal after those two lines. everything before this will execute only once.
 # everything after this on every run
-
 import afl  # NOQA
 afl.init()
 
