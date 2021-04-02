@@ -1,4 +1,5 @@
 """Contains the base classes for drop targets and drop target banks."""
+from enum import Enum
 from typing import List, Optional
 from typing import Set
 
@@ -199,8 +200,7 @@ class DropTarget(SystemWideDevice):
         is_complete = self.machine.switch_controller.is_active(
             self.config['switch'])
 
-        if (self._in_ball_search or self._ignore_switch_hits or
-                is_complete == self.complete):
+        if self._in_ball_search or self._ignore_switch_hits:
             return
 
         if not reconcile:
@@ -286,7 +286,17 @@ class DropTarget(SystemWideDevice):
             self.reset_coil.pulse(max_wait_ms=self.config['reset_coil_max_wait_ms'])
 
 
-@DeviceMonitor("complete", "down", "up")
+class DropTargetBankState(Enum):
+
+    """States of the drop target bank."""
+
+    UNKNOWN = "unknown"
+    UP = "up"
+    DOWN = "down"
+    MIXED = "mixed"
+
+
+@DeviceMonitor("complete", "down", "up", "state")
 class DropTargetBank(SystemWideDevice, ModeDevice):
 
     """A bank of drop targets in a pinball machine by grouping together multiple `DropTarget` class devices."""
@@ -303,6 +313,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         self.reset_coil = None              # type: Optional[Driver]
         self.reset_coils = set()            # type: Set[Driver]
         self.complete = False
+        self.state = DropTargetBankState.UNKNOWN
         self.down = 0
         self.up = 0
         self.delay = DelayManager(machine)
@@ -390,7 +401,6 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
             coil.pulse(max_wait_ms=self.config['reset_coil_max_wait_ms'])
 
     def _restore_switch_hits(self):
-        self.machine.events.post('restore')
         self._ignore_switch_hits = False
         self.member_target_change()
 
@@ -425,6 +435,9 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
             self._bank_mixed()
 
     def _bank_down(self):
+        if self.state == DropTargetBankState.DOWN:
+            return
+        self.state = DropTargetBankState.DOWN
         self.complete = True
         self.debug_log('All targets are down')
 
@@ -439,6 +452,9 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         only posted once, when all the drop targets are down.'''
 
     def _bank_up(self):
+        if self.state == DropTargetBankState.UP:
+            return
+        self.state = DropTargetBankState.UP
         self.complete = False
         self.debug_log('All targets are up')
         self.machine.events.post('drop_target_bank_' + self.name + '_up')
@@ -448,6 +464,9 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         only posted once, when all the drop targets are up.'''
 
     def _bank_mixed(self):
+        if self.state == DropTargetBankState.MIXED:
+            return
+        self.state = DropTargetBankState.MIXED
         self.complete = False
         self.machine.events.post('drop_target_bank_' + self.name + '_mixed',
                                  down=self.down)
@@ -459,7 +478,5 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
 
     def device_removed_from_mode(self, mode):
         """Remove targets which were added in this mode."""
-        self.delay.remove('ignore_hits')
-
         for target in self.drop_targets:
             target.remove_from_bank(self)

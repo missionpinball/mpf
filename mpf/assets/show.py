@@ -601,14 +601,14 @@ class RunningShow:
     def update(self, **kwargs):
         """Update show.
 
-        Not implemented yet.
+        Updates the values of a show while it runs. Currently supports only speed
+        and manual_advance properties.
         """
-        # todo
-        raise NotImplementedError("Show update is not implemented yet. It's "
-                                  "coming though...")
+        updated_values = {k: v for k, v in kwargs.items() if v is not None and v != getattr(self.show_config, k)}
+        if updated_values:
+            self.show_config = self.show_config._replace(**updated_values)
 
-        # don't forget this when we implement this feature
-        # self._post_events(['updated'])
+        self._post_events(['updated'])
 
     def advance(self, steps=1, show_step=None):
         """Manually advance this show to the next step."""

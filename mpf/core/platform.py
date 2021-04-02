@@ -22,6 +22,7 @@ if MYPY:   # pragma: no cover
     from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.platforms.interfaces.accelerometer_platform_interface import AccelerometerPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
+    from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface  # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 
@@ -58,6 +59,7 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         self.features['has_hardware_sound_systems'] = False
         self.features['has_steppers'] = False
         self.features['allow_empty_numbers'] = False
+        self.features['hardware_eos_repulse'] = False
 
     def assert_has_feature(self, feature_name):
         """Assert that this platform has a certain feature or raise an exception otherwise."""
@@ -138,7 +140,7 @@ class DmdPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_dmds'] = True
 
     @abc.abstractmethod
-    def configure_dmd(self):
+    def configure_dmd(self) -> "DmdPlatformInterface":
         """Subclass this method in a platform module to configure the DMD.
 
         This method should return a reference to the DMD's platform interface
@@ -177,7 +179,7 @@ class RgbDmdPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_rgb_dmds'] = True
 
     @abc.abstractmethod
-    def configure_rgb_dmd(self, name: str):
+    def configure_rgb_dmd(self, name: str) -> "DmdPlatformInterface":
         """Subclass this method in a platform module to configure the DMD.
 
         This method should return a reference to the DMD's platform interface
@@ -482,7 +484,7 @@ SwitchSettings = namedtuple("SwitchSettings", ["hw_switch", "invert", "debounce"
 DriverSettings = namedtuple("DriverSettings", ["hw_driver", "pulse_settings", "hold_settings", "recycle"])
 DriverConfig = namedtuple("DriverConfig", ["name", "default_pulse_ms", "default_pulse_power", "default_hold_power",
                                            "default_recycle", "max_pulse_ms", "max_pulse_power", "max_hold_power"])
-RepulseSettings = namedtuple("RepulseSettings", ["enable_repulse"])
+RepulseSettings = namedtuple("RepulseSettings", ["enable_repulse", "debounce_ms"])
 
 
 class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):

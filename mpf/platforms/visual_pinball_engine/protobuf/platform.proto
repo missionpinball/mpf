@@ -34,10 +34,23 @@ message LightDescription {
   string hardware_channel_color = 3;
 }
 
+message DmdDescription {
+  enum ColorMapping {
+    BW = 0;
+    RGB = 1;
+  }
+
+  string name = 1;
+  ColorMapping color_mapping = 2;
+  uint32 width = 3;
+  uint32 height = 4;
+}
+
 message MachineDescription {
   repeated SwitchDescription switches = 1;
   repeated CoilDescription coils = 2;
   repeated LightDescription lights = 3;
+  repeated DmdDescription dmds = 4;
 }
 
 // Platform streams switch changes to MPF
@@ -45,6 +58,12 @@ message SwitchChanges {
   string switch_number = 1;
   bool switch_state = 2;
   uint64 change_time = 3;
+}
+
+message SetDmdFrameRequest {
+  string name = 1;
+  bytes frame = 2;
+  float brightness = 3;
 }
 
 message Commands {
@@ -55,6 +74,7 @@ message Commands {
     DisableCoilRequest disable_coil = 4;
     ConfigureHardwareRuleRequest configure_hardware_rule = 5;
     RemoveHardwareRuleRequest remove_hardware_rule = 6;
+    SetDmdFrameRequest dmd_frame_request = 7;
   }
 }
 

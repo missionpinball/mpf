@@ -1,0 +1,46 @@
+#config_version=5
+
+hardware:
+  platform: fast
+  driverboards: fast
+
+switches:
+    s_flipper_single:
+        number: 0-0
+    s_flipper_single_eos:
+        number: 0-1
+    s_flipper_dual_wound:
+        number: 0-2
+    s_flipper_dual_wound_eos:
+        number: 0-3
+
+coils:
+    c_flipper_single_main:
+        number: 0-0
+        default_pulse_ms: 30
+        default_hold_power: .3
+    c_flipper_dual_wound_hold:
+        number: 0-1
+        default_hold_power: 1.0
+    c_flipper_dual_wound_main:
+        number: 0-2
+        default_pulse_ms: 30
+
+flippers:
+    single_flipper:
+        main_coil: c_flipper_single_main
+        activation_switch: s_flipper_single
+        eos_switch: s_flipper_single_eos
+        use_eos: true
+        repulse_on_eos_open: true
+        enable_events: enable_flipper_single
+        disable_events: disable_flipper_single
+    dual_wound_flipper:
+        main_coil: c_flipper_dual_wound_main
+        hold_coil: c_flipper_dual_wound_hold
+        activation_switch: s_flipper_dual_wound
+        eos_switch: s_flipper_dual_wound_eos
+        use_eos: true
+        repulse_on_eos_open: true
+        enable_events: enable_flipper_dual_wound
+        disable_events: disable_flipper_dual_wound

@@ -59,7 +59,7 @@ class TestFlippers(MpfTestCase):
             DriverSettings(hw_driver=self.machine.coils["c_flipper_main"].hw_driver,
                            pulse_settings=PulseSettings(power=1.0, duration=10),
                            hold_settings=None, recycle=False),
-            RepulseSettings(enable_repulse=False)
+            RepulseSettings(enable_repulse=False, debounce_ms=500)
         )
 
         self.machine.default_platform.clear_hw_rule = MagicMock()

@@ -8,27 +8,49 @@ from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
 class OPPNeopixelCard:
 
-    """OPP Neopixel/WS2812 card."""
+    """OPP Neopixel/WS281x card."""
 
-    __slots__ = ["log", "chain_serial", "platform", "addr", "card_num", "num_pixels", "num_color_entries",
-                 "color_table_dict"]
+    __slots__ = ["log", "chain_serial", "platform", "addr", "card_num"]
 
-    def __init__(self, chain_serial, addr, neo_card_dict, platform):
+    def __init__(self, chain_serial, addr, platform):
         """Initialise OPP Neopixel/WS2812 card."""
         self.log = logging.getLogger('OPPNeopixel {} on {}'.format(addr, chain_serial))
         self.chain_serial = chain_serial
         self.addr = addr
         self.platform = platform
         self.card_num = str(addr - ord(OppRs232Intf.CARD_ID_GEN2_CARD))
-        self.num_pixels = 0
-        self.num_color_entries = 0
-        self.color_table_dict = dict()
-        neo_card_dict[chain_serial + '-' + self.card_num] = self
 
         self.log.debug("Creating OPP Neopixel card at hardware address: 0x%02x", addr)
 
+    @staticmethod
+    def is_valid_light_number(number):
+        """Check if neopixel number is possible in hardware."""
+        return 0 <= int(number) < 0x1000
 
-class OPPLightChannel(PlatformBatchLight):
+
+class OPPModernMatrixLightsCard:
+
+    """OPP Matrix Lights Card with firmware >= 2.1.0."""
+
+    __slots__ = ["log", "chain_serial", "platform", "addr", "card_num"]
+
+    def __init__(self, chain_serial, addr, platform):
+        """Initialise OPP Incand card."""
+        self.log = logging.getLogger('OPPMatrixLights {} on {}'.format(addr, chain_serial))
+        self.chain_serial = chain_serial
+        self.addr = addr
+        self.platform = platform
+        self.card_num = str(addr - ord(OppRs232Intf.CARD_ID_GEN2_CARD))
+
+        self.log.debug("Creating OPP Matrix Lights card at hardware address: 0x%02x", addr)
+
+    @staticmethod
+    def is_valid_light_number(number):
+        """Check if matrix light exists in hardware."""
+        return 0 <= int(number) < 64
+
+
+class OPPModernLightChannel(PlatformBatchLight):
 
     """A channel of a WS2812 LED."""
 
@@ -46,9 +68,20 @@ class OPPLightChannel(PlatformBatchLight):
         """Return largest number which fits two bytes."""
         return 65535
 
+    def get_type_string(self):
+        """Return string for the type."""
+        if self.pixel_num < 0x1000:
+            return "LED"
+
+        if self.pixel_num < 0x2000:
+            return "Incandescent Lamp"
+
+        return "Matrix Lamp"
+
     def get_board_name(self):
         """Return OPP chain and addr."""
-        return "OPP LED {} on Chain {} Board {}".format(self.pixel_num, self.chain_serial, self.addr)
+        return "OPP Light {} on Chain {} Board {} Type {}".format(
+            self.pixel_num, self.chain_serial, self.addr, self.get_type_string())
 
     def is_successor_of(self, other):
         """Return true if the other light has the previous pixel_num and is on the same chain and addr."""
@@ -65,4 +98,5 @@ class OPPLightChannel(PlatformBatchLight):
 
     def __repr__(self):
         """Return str representation."""
-        return "<OPPLightChannel chain={} addr={} pixel={}>".format(self.chain_serial, self.addr, self.pixel_num)
+        return "<OPPLightChannel type={} chain={} addr={} pixel={}>".format(
+            self.get_type_string(), self.chain_serial, self.addr, self.pixel_num)

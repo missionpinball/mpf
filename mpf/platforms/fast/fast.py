@@ -828,7 +828,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                                                  eos_switch: SwitchSettings, coil: DriverSettings,
                                                                  repulse_settings: Optional[RepulseSettings]):
         """Set pulse on hit and enable and release and disable rule on driver."""
-        raise AssertionError("Single-wound with EOS are not implemented in FAST firmware.")
+        self.warning_log("EOS cut-off rule will not work with FAST on single-wound coils. %s %s %s", enable_switch,
+                         eos_switch, coil)
+        self.set_pulse_on_hit_and_enable_and_release_rule(enable_switch, coil)
 
     def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit rule on driver."""

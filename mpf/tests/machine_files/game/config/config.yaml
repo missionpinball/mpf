@@ -5,6 +5,10 @@ game:
     start_game_event: start_my_game
     add_player_event: add_my_player
 
+machine:
+    min_balls: 2
+    balls_installed: 2
+
 coils:
     eject_coil1:
         number:
@@ -19,6 +23,8 @@ switches:
         number:
     s_ball_switch2:
         number:
+    s_ball_switch3:
+        number:
     s_ball_switch_launcher:
         number:
 
@@ -31,7 +37,7 @@ playfields:
 ball_devices:
     bd_trough:
         eject_coil: eject_coil1
-        ball_switches: s_ball_switch1, s_ball_switch2
+        ball_switches: s_ball_switch1, s_ball_switch2, s_ball_switch3
         debug: true
         confirm_eject_type: target
         eject_targets: bd_launcher

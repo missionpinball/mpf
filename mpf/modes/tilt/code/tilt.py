@@ -1,5 +1,5 @@
 """Contains the Tilt mode code."""
-from typing import Set, Any, Optional
+from typing import List, Any, Optional
 
 from mpf.core.events import EventHandlerKey
 from mpf.core.events import QueuedEvent
@@ -22,7 +22,7 @@ class Tilt(Mode):
         self._balls_to_collect = None           # type: Optional[int]
         self._last_warning = None               # type: Optional[int]
         self.ball_ending_tilted_queue = None    # type: Optional[QueuedEvent]
-        self.tilt_event_handlers = None         # type: Optional[Set[EventHandlerKey]]
+        self.tilt_event_handlers = []           # type: List[EventHandlerKey]
         self.last_tilt_warning_switch = None    # type: Optional[int]
         self.tilt_config = None                 # type: Any
         self._settle_time = None
@@ -35,7 +35,7 @@ class Tilt(Mode):
         self._balls_to_collect = 0
         self._last_warning = None
         self.ball_ending_tilted_queue = None
-        self.tilt_event_handlers = set()
+        self.tilt_event_handlers = []
         self.last_tilt_warning_switch = 0
 
         self.tilt_config = self.machine.config_validator.validate_config(
@@ -180,12 +180,12 @@ class Tilt(Mode):
         '''event: tilt
         desc: The player has tilted.'''
 
-        self.tilt_event_handlers.add(
+        self.tilt_event_handlers.append(
             self.machine.events.add_handler('player_turn_ending', self._ball_ending_tilted))
 
         for device in self.machine.ball_devices.values():
             if 'drain' in device.tags:
-                self.tilt_event_handlers.add(
+                self.tilt_event_handlers.append(
                     self.machine.events.add_handler(
                         'balldevice_{}_ball_enter'.format(device.name),
                         self._tilted_ball_drain))
@@ -224,8 +224,8 @@ class Tilt(Mode):
             self._tilt_done()
 
     def _tilt_done(self):
-        if self.tilt_settle_ms_remaining():
-            self.delay.reset(ms=self.tilt_settle_ms_remaining(),
+        if self.tilt_settle_ms_remaining:
+            self.delay.reset(ms=self.tilt_settle_ms_remaining,
                              callback=self._tilt_done,
                              name='tilt')
 
@@ -245,8 +245,9 @@ class Tilt(Mode):
 
             self.machine.events.remove_handlers_by_keys(
                 self.tilt_event_handlers)
-            self.tilt_event_handlers = set()
+            self.tilt_event_handlers = list()
 
+    @property
     def tilt_settle_ms_remaining(self):
         """Return the amount of milliseconds remaining until the tilt settle time has cleared.
 
@@ -262,6 +263,13 @@ class Tilt(Mode):
             return delta
 
         return 0
+
+    @property
+    def tilt_warnings_remaining(self):
+        """Return remaining warnings."""
+        if not self.machine.game or not self.machine.game.player:
+            return 0
+        return self._warnings_to_tilt - self.machine.game.player[self.tilt_config['tilt_warnings_player_var']]
 
     def slam_tilt(self, **kwargs):
         """Process a slam tilt.

@@ -599,6 +599,13 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         self._add_hw_rule(switch, coil,
                           self.pinproc.driver_state_disable(coil.hw_driver.state()))
 
+    def _add_hold_rule_to_switch(self, switch: SwitchSettings, coil: DriverSettings):
+        if coil.hold_settings.power < 1.0:
+            pwm_on, pwm_off = coil.hw_driver.get_pwm_on_off_ms(coil.hold_settings)
+            self._add_hw_rule(switch, coil,
+                              self.pinproc.driver_state_patter(
+                                  coil.hw_driver.state(), pwm_on, pwm_off, 0, True))
+
     def _write_rules_to_switch(self, switch, coil, drive_now):
         for event_type, driver_rules in switch.hw_switch.hw_rules.items():
             driver = []
@@ -660,8 +667,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
                        eos_switch.hw_switch.number, coil.hw_driver.number)
         self._add_pulse_and_hold_rule_to_switch(enable_switch, coil)
         self._add_release_disable_rule_to_switch(enable_switch, coil)
-        # TODO: this is incorrect. EOS should switch from pulse to hold only
-        self._add_disable_rule_to_switch(eos_switch, coil)
+        self._add_hold_rule_to_switch(eos_switch, coil)
 
         self._write_rules_to_switch(enable_switch, coil, False)
         self._write_rules_to_switch(eos_switch, coil, False)

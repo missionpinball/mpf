@@ -443,6 +443,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         self._send_key_task = None
         self._query_nodes_task = None
         self.dmd = None
+        self.features['has_lights'] = True
 
         self._nodes = None
         self._bus_read = asyncio.Lock()

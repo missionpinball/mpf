@@ -10,12 +10,82 @@ from mpf.devices.driver import Driver
 from mpf.devices.switch import Switch
 from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
 
+MYPY = False
+if MYPY:   # pragma: no cover
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
+
 SwitchRuleSettings = namedtuple("SwitchRuleSettings", ["switch", "invert", "debounce"])
 DriverRuleSettings = namedtuple("DriverRuleSettings", ["driver", "recycle"])
 PulseRuleSettings = namedtuple("PulseRuleSettings", ["power", "duration"])
-EosRuleSettings = namedtuple("RepulseRuleSettings", ["enable_repulse"])
+EosRuleSettings = namedtuple("RepulseRuleSettings", ["enable_repulse", "debounce_ms"])
 HoldRuleSettings = namedtuple("HoldRuleSettings", ["power"])
-HardwareRule = namedtuple("HardwareRule", ["platform", "switch_settings", "driver_settings", "switch_key"])
+HardwareRule = namedtuple("HardwareRule", ["platform", "switch_settings", "driver_settings", "switch_key",
+                                           "software_rule_handler"])
+
+
+class SoftwareEosRepulseManager:
+
+    """Manager to implement eos repulse in software."""
+
+    # pylint: disable-msg=too-many-arguments
+    def __init__(self, machine: "MachineController", enable_switch: SwitchRuleSettings, eos_switch: SwitchRuleSettings,
+                 driver: DriverSettings, repulse_settings: EosRuleSettings):
+        """Initialize software eos repulse manager."""
+        self.machine = machine
+        self.enable_switch = enable_switch
+        self.eos_switch = eos_switch
+        self.driver = driver
+        self.repulse_settings = repulse_settings
+        self._button_is_active = False
+        self._is_eos_closed_long_enough = False
+        self._handlers = []
+
+        self._handlers.append(self.machine.switch_controller.add_switch_handler_obj(
+            enable_switch.switch,
+            state=0 if enable_switch.invert else 1,
+            callback=self._button_active))
+        self._handlers.append(self.machine.switch_controller.add_switch_handler_obj(
+            enable_switch.switch,
+            state=1 if enable_switch.invert else 0,
+            callback=self._button_inactive))
+        self._handlers.append(self.machine.switch_controller.add_switch_handler_obj(
+            eos_switch.switch,
+            state=0 if eos_switch.invert else 1,
+            callback=self._eos_closed_long_enough,
+            ms=self.repulse_settings.debounce_ms))
+        self._handlers.append(self.machine.switch_controller.add_switch_handler_obj(
+            eos_switch.switch,
+            state=1 if eos_switch.invert else 0,
+            callback=self._repulse_on_eos_open))
+
+    def stop(self):
+        """Stop software repulse."""
+        self.machine.switch_controller.remove_switch_handler_by_keys(self._handlers)
+
+    def _button_active(self, **kwargs):
+        del kwargs
+        self._button_is_active = True
+
+    def _button_inactive(self, **kwargs):
+        del kwargs
+        self._button_is_active = False
+        self.driver.hw_driver.disable()
+
+    def _eos_closed_long_enough(self, **kwargs):
+        del kwargs
+        self._is_eos_closed_long_enough = True
+
+    def _repulse_on_eos_open(self, **kwargs):
+        del kwargs
+        if not self._button_is_active or not self._is_eos_closed_long_enough:
+            return
+
+        self._is_eos_closed_long_enough = False
+
+        if self.driver.hold_settings:
+            self.driver.hw_driver.enable(self.driver.pulse_settings, self.driver.hold_settings)
+        else:
+            self.driver.hw_driver.pulse(self.driver.pulse_settings)
 
 
 class PlatformController(MpfController):
@@ -53,13 +123,24 @@ class PlatformController(MpfController):
         """Notify PSU that a pulse via a rule happened."""
         driver.config['psu'].notify_about_instant_pulse(pulse_ms=pulse_ms)
 
-    @staticmethod
-    def _get_repulse_settings(eos_settings: Optional[EosRuleSettings]) -> Optional[RepulseSettings]:
+    # pylint: disable-msg=too-many-arguments
+    def _get_repulse_settings(self, eos_settings: Optional[EosRuleSettings], enable_switch, eos_switch,
+                              driver_settings, platform) -> Optional[RepulseSettings]:
         """Return repulse settings for rule."""
         if eos_settings:
-            return RepulseSettings(
-                enable_repulse=eos_settings.enable_repulse)
-        return None
+            repulse_settings = RepulseSettings(
+                enable_repulse=eos_settings.enable_repulse,
+                debounce_ms=eos_settings.debounce_ms
+            )
+            if repulse_settings and repulse_settings.enable_repulse and not platform.features["hardware_eos_repulse"]:
+                # Platform does not support EOS repulse in hardware -> emulate it in software
+                software_eos_handler = SoftwareEosRepulseManager(self.machine, enable_switch, eos_switch,
+                                                                 driver_settings, repulse_settings)
+                return None, software_eos_handler
+
+            return repulse_settings, None
+
+        return None, None
 
     @staticmethod
     def _get_configured_switch(switch: SwitchRuleSettings) -> SwitchSettings:
@@ -135,7 +216,7 @@ class PlatformController(MpfController):
             coil_recycle=driver_settings.recycle)
 
         return HardwareRule(platform=platform, switch_settings=[enable_settings], driver_settings=driver_settings,
-                            switch_key=switch_key)
+                            switch_key=switch_key, software_rule_handler=None)
 
     def set_delayed_pulse_on_hit_rule(self, enable_switch: SwitchRuleSettings,
                                       driver: DriverRuleSettings,
@@ -176,7 +257,7 @@ class PlatformController(MpfController):
             delay_ms=delay_ms)
 
         return HardwareRule(platform=platform, switch_settings=[enable_settings], driver_settings=driver_settings,
-                            switch_key=switch_key)
+                            switch_key=switch_key, software_rule_handler=None)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchRuleSettings,
                                           driver: DriverRuleSettings,
@@ -215,7 +296,7 @@ class PlatformController(MpfController):
             coil_recycle=driver_settings.recycle)
 
         return HardwareRule(platform=platform, switch_settings=[enable_settings], driver_settings=driver_settings,
-                            switch_key=switch_key)
+                            switch_key=switch_key, software_rule_handler=None)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchRuleSettings,
                                                      driver: DriverRuleSettings,
@@ -256,7 +337,7 @@ class PlatformController(MpfController):
             coil_recycle=driver_settings.recycle)
 
         return HardwareRule(platform=platform, switch_settings=[enable_settings], driver_settings=driver_settings,
-                            switch_key=switch_key)
+                            switch_key=switch_key, software_rule_handler=None)
 
     # pylint: disable-msg=too-many-arguments
     def set_pulse_on_hit_and_release_and_disable_rule(self, enable_switch: SwitchRuleSettings,
@@ -283,7 +364,8 @@ class PlatformController(MpfController):
         enable_settings = self._get_configured_switch(enable_switch)
         disable_settings = self._get_configured_switch(eos_switch)
         driver_settings = self._get_configured_driver_no_hold(driver, pulse_setting)
-        repulse_settings = self._get_repulse_settings(eos_settings)
+        repulse_settings, software_eos_handler = self._get_repulse_settings(
+            eos_settings, enable_switch, eos_switch, driver_settings, platform)
 
         platform.set_pulse_on_hit_and_release_and_disable_rule(
             enable_settings, disable_settings, driver_settings, repulse_settings)
@@ -309,7 +391,8 @@ class PlatformController(MpfController):
             coil_recycle=driver_settings.recycle)
 
         return HardwareRule(platform=platform, switch_settings=[enable_settings, disable_settings],
-                            driver_settings=driver_settings, switch_key=switch_key)
+                            driver_settings=driver_settings, switch_key=switch_key,
+                            software_rule_handler=software_eos_handler)
 
     # pylint: disable-msg=too-many-arguments
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchRuleSettings,
@@ -338,7 +421,8 @@ class PlatformController(MpfController):
         enable_settings = self._get_configured_switch(enable_switch)
         disable_settings = self._get_configured_switch(eos_switch)
         driver_settings = self._get_configured_driver_with_hold(driver, pulse_setting, hold_settings)
-        repulse_settings = self._get_repulse_settings(eos_settings)
+        repulse_settings, software_eos_handler = self._get_repulse_settings(
+            eos_settings, enable_switch, eos_switch, driver_settings, platform)
 
         platform.set_pulse_on_hit_and_enable_and_release_and_disable_rule(
             enable_settings, disable_settings, driver_settings, repulse_settings)
@@ -364,7 +448,8 @@ class PlatformController(MpfController):
             coil_recycle=driver_settings.recycle)
 
         return HardwareRule(platform=platform, switch_settings=[enable_settings, disable_settings],
-                            driver_settings=driver_settings, switch_key=switch_key)
+                            driver_settings=driver_settings, switch_key=switch_key,
+                            software_rule_handler=software_eos_handler)
 
     def clear_hw_rule(self, rule: HardwareRule):
         """Clear all rules for switch and this driver.
@@ -384,3 +469,6 @@ class PlatformController(MpfController):
 
         if rule.switch_key:
             self.machine.switch_controller.remove_switch_handler_by_key(rule.switch_key)
+
+        if rule.software_rule_handler:
+            rule.software_rule_handler.stop()

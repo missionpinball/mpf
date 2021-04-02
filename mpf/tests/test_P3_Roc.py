@@ -774,10 +774,10 @@ SW-16 boards found:
             call(2, 'open_nondebounced', {'reloadActive': False, 'notifyHost': False}, [], False),
             call(2, 'closed_debounced', {'reloadActive': False, 'notifyHost': True}, [], False),
             call(2, 'open_debounced', {'reloadActive': False, 'notifyHost': True}, [], False),
-            call(2, 'closed_nondebounced', {'reloadActive': False, 'notifyHost': False}, [
-                {'patterOnTime': 0, 'outputDriveTime': 0, 'timeslots': 0, 'patterOffTime': 0, 'polarity': True,
-                 'driverNum': coil_number, 'state': 0, 'futureEnable': False, 'patterEnable': False,
-                 'waitForFirstTimeSlot': False}], False),
+            call(2, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': False}, [
+                {'driverNum': coil_number, 'outputDriveTime': 0, 'polarity': True, 'state': True,
+                 'waitForFirstTimeSlot': False, 'timeslots': 0, 'patterOnTime': 3, 'patterOffTime': 5,
+                 'patterEnable': True, 'futureEnable': False}], False),
             call(1, 'open_nondebounced', {'reloadActive': False, 'notifyHost': False}, [
                 {'patterOnTime': 0, 'outputDriveTime': 0, 'timeslots': 0, 'patterOffTime': 0, 'polarity': True,
                  'driverNum': coil_number, 'state': 0, 'futureEnable': False, 'patterEnable': False,
@@ -787,7 +787,7 @@ SW-16 boards found:
             call(1, 'closed_nondebounced', {'reloadActive': False, 'notifyHost': False}, [
                 {'patterOnTime': 3, 'outputDriveTime': 10, 'timeslots': 0, 'patterOffTime': 5, 'polarity': True,
                  'driverNum': coil_number, 'state': True, 'futureEnable': False, 'patterEnable': True,
-                 'waitForFirstTimeSlot': False}], False)
+                 'waitForFirstTimeSlot': False}], False),
         ], any_order=True)
 
         # disable

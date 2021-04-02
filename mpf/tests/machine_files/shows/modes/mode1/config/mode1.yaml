@@ -16,8 +16,17 @@ show_player:
     test_show1:
       action: stop
   "{machine.test == 42}": show_from_mode
+  "{machine.test == 23}":
+    show_from_mode2:
+      key: test_key1
+    show_from_mode3:
+      key: test_key2
 
 shows:
+  show_from_mode2:
+    - duration: -1
+  show_from_mode3:
+    - duration: -1
   show_from_mode:
     - time: 0
       lights:

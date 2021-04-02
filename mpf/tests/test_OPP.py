@@ -90,16 +90,16 @@ class MockOppSocket(MockSerial):
             self.expected_commands = {"crashed": True}
             raise AssertionError("Unexpected command: " + "".join("\\x%02x" % b for b in msg) +
                                  " len: " + str(len(msg)) + " Remaining expected commands: " +
-                                 str(remaining_expected_commands))
+                                 str(remaining_expected_commands) + " on " + self.name)
 
         if self.expected_commands[msg] is not False:
             self.queue.append(self.expected_commands[msg])
 
         del self.expected_commands[msg]
 
-    def __init__(self):
+    def __init__(self, name):
         super().__init__()
-        self.name = "SerialMock"
+        self.name = name
         self.expected_commands = {}
         self.queue = []
         self.permanent_commands = {}
@@ -183,12 +183,12 @@ class TestOPPStm32(MpfTestCase):
         self.expected_duration = 1.5
         opp.serial_imported = True
         opp.serial = MagicMock()
-        self.serialMocks["com1"] = MockOppSocket()
-        self.serialMocks["com2"] = MockOppSocket()
+        self.serialMocks["com1"] = MockOppSocket("com1")
+        self.serialMocks["com2"] = MockOppSocket("com2")
         board1_config = b'\x20\x0d\x01\x02\x03\x08'      # wing1: solenoids, wing2: inputs, wing3: lamps, wing4: neo_sol
-        board2_config = b'\x20\x0d\x03\x03\x03\x03'      # wing1: lamps, wing2: lamps, wing3: lamps, wing4: lamps
-        board1_version = b'\x20\x02\x00\x02\x00\x02'     # 0.2.0.2
-        board2_version = b'\x20\x02\x00\x02\x00\x02'     # 0.2.0.2
+        board2_config = b'\x20\x0d\x0b\x0c\x03\x03'      # wing1: lamps, wing2: lamps, wing3: lamps, wing4: lamps
+        board1_version = b'\x20\x02\x02\x01\x00\x00'     # 2.1.0.0
+        board2_version = b'\x20\x02\x02\x01\x00\x00'     # 2.1.0.0
         inputs1_message = b"\x20\x08\x00\xff\x00\x0c"    # inputs 0+1 off, 2+3 on, 8 on
         inputs2_message = b"\x20\x08\x00\x00\x00\x00"
 
@@ -196,8 +196,8 @@ class TestOPPStm32(MpfTestCase):
             b'\xf0': b'\xf0\x20',     # boards 20 installed
             self._crc_message(b'\x20\x0d\x00\x00\x00\x00'): self._crc_message(board1_config), # get config
             self._crc_message(b'\x20\x02\x00\x00\x00\x00'): self._crc_message(board1_version),   # get version
-            self._crc_message(b'\x20\x13\x07\x00\x00\x00\x00', False): False,  # turn off all incands
-            self._crc_message(b'\x20\x00\x00\x00\x00\x00'): self._crc_message(b'\x20\x00\x01\x23\x45\x67')
+            self._crc_message(b'\x20\x00\x00\x00\x00\x00'): self._crc_message(b'\x20\x00\x01\x23\x45\x67'),
+            self._crc_message(b'\x20\x40\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00\x00'): False
         }
         self.serialMocks["com1"].permanent_commands = {
             b'\xff': b'\xff',
@@ -208,8 +208,11 @@ class TestOPPStm32(MpfTestCase):
             b'\xf0': b'\xf0\x20',     # boards 20 installed
             self._crc_message(b'\x20\x0d\x00\x00\x00\x00'): self._crc_message(board2_config), # get config
             self._crc_message(b'\x20\x02\x00\x00\x00\x00'): self._crc_message(board2_version),   # get version
-            self._crc_message(b'\x20\x13\x07\x00\x00\x00\x00', False): False,  # turn off all incands
-            self._crc_message(b'\x20\x00\x00\x00\x00\x00'): self._crc_message(b'\x20\x00\x00\x00\x00\x02')
+            self._crc_message(b'\x20\x00\x00\x00\x00\x00'): self._crc_message(b'\x20\x00\x00\x00\x00\x02'),
+            self._crc_message(b'\x20\x40\x10\x10\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'): False,
+            self._crc_message(b'\x20\x40\x10\x1f\x00\x01\x00\x00\x00'): False,
+            self._crc_message(b'\x20\x40\x20\x00\x00\x02\x00\x00\x00\x00'): False,
+            self._crc_message(b'\x20\x40\x20\x3f\x00\x01\x00\x00\x00'): False,
         }
         self.serialMocks["com2"].permanent_commands = {
             b'\xff': b'\xff',
@@ -220,22 +223,21 @@ class TestOPPStm32(MpfTestCase):
         assert isinstance(self.machine.default_platform, OppHardwarePlatform)
 
         self._wait_for_processing()
-        self.assertEqual(0x00020002, self.machine.default_platform.min_version["19088743"])
-        self.assertEqual(0x00020002, self.machine.default_platform.min_version["2"])
+        self.assertEqual(0x02010000, self.machine.default_platform.min_version["19088743"])
+        self.assertEqual(0x02010000, self.machine.default_platform.min_version["2"])
 
         self.maxDiff = 100000
 
         # test hardware scan
         info_str = """Connected CPUs:
  - Port: com1 at 115200 baud. Chain Serial: 19088743
- -> Board: 0x20 Firmware: 0x20002
+ -> Board: 0x20 Firmware: 0x2010000
  - Port: com2 at 115200 baud. Chain Serial: 2
- -> Board: 0x20 Firmware: 0x20002
+ -> Board: 0x20 Firmware: 0x2010000
 
 Incand cards:
  - Chain: 19088743 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23]
- - Chain: 2 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,\
- 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+ - Chain: 2 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
 
 Input cards:
  - Chain: 19088743 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15, 25, 26, 27]
@@ -280,6 +282,22 @@ LEDs:
         self.advance_time_and_run(.01)
         self._wait_for_processing()
 
+        self.serialMocks["com2"].expected_commands[
+            self._crc_message(b'\x20\x40\x10\x13\x00\x02\x00\x64\x99\xe5', False)] = False
+
+        self.machine.lights["l2-3"].color("white%60", fade_ms=100)
+        self.machine.lights["l2-4"].color("white%90", fade_ms=100)
+        self.advance_time_and_run(.02)
+        self._wait_for_processing()
+
+        self.serialMocks["com2"].expected_commands[
+            self._crc_message(b'\x20\x40\x20\x00\x00\x02\x00\x64\x99\xe5', False)] = False
+
+        self.machine.lights["m0-0"].color("white%60", fade_ms=100)
+        self.machine.lights["m0-1"].color("white%90", fade_ms=100)
+        self.advance_time_and_run(.02)
+        self._wait_for_processing()
+
 
 class TestOPPFirmware2(OPPCommon, MpfTestCase):
 
@@ -290,15 +308,15 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         self.expected_duration = 1.5
         opp.serial_imported = True
         opp.serial = MagicMock()
-        self.serialMock = MockOppSocket()
+        self.serialMock = MockOppSocket("com1")
         board1_config = b'\x20\x0d\x01\x02\x03\x03'     # wing1: solenoids, wing2: inputs, wing3: lamps, wing4: lamps
         board2_config = b'\x21\x0d\x06\x02\x02\x01'     # wing1: neo, wing2: inputs, wing3: inputs, wing4: solenoids
         board3_config = b'\x22\x0d\x03\x03\x03\x07'     # wing1: lamps, wing2: lamps, wing3: lamps, wing4: hi-side lamps
         board4_config = b'\x23\x0d\x01\x01\x04\x05'     # wing1: sol, wing2: sol, wing3: matrix_out, wing4: matrix_in
-        board1_version = b'\x20\x02\x00\x02\x00\x00'    # 0.2.0.0
-        board2_version = b'\x21\x02\x00\x02\x00\x00'    # 0.2.0.0
-        board3_version = b'\x22\x02\x00\x02\x00\x00'    # 0.2.0.0
-        board4_version = b'\x23\x02\x00\x02\x00\x00'    # 0.2.0.0
+        board1_version = b'\x20\x02\x02\x00\x00\x00'    # 2.0.0.0
+        board2_version = b'\x21\x02\x02\x00\x00\x00'    # 2.0.0.0
+        board3_version = b'\x22\x02\x02\x00\x00\x00'    # 2.0.0.0
+        board4_version = b'\x23\x02\x02\x00\x00\x00'    # 2.0.0.0
         inputs1_message = b"\x20\x08\x00\xff\x00\x0c"   # inputs 0+1 off, 2+3 on, 8 on
         inputs2_message = b"\x21\x08\x00\x00\x00\x00"
         inputs3a_message = b"\x23\x08\x00\x00\x00\x00"
@@ -322,6 +340,7 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
             self._crc_message(b'\x23\x14\x00\x02\x2a\x00'): False,  # configure coil 3-0
             self._crc_message(b'\x20\x13\x07\x00\x00\x00\x00', False): False,  # turn off all incands
             self._crc_message(b'\x22\x13\x07\x00\x00\x00\x00', False): False,  # turn off all incands
+            self._crc_message(b'\x21\x40\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00\x00'): False,  # turn off leds
         }
         self.serialMock.permanent_commands = {
             b'\xff': b'\xff',
@@ -335,7 +354,7 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         assert isinstance(self.machine.default_platform, OppHardwarePlatform)
 
         self._wait_for_processing()
-        self.assertEqual(0x00020000, self.machine.default_platform.min_version["com1"])
+        self.assertEqual(0x02000000, self.machine.default_platform.min_version["com1"])
 
         self.assertFalse(self.serialMock.expected_commands)
         self.maxDiff = 100000
@@ -343,10 +362,10 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         # test hardware scan
         info_str = """Connected CPUs:
  - Port: com1 at 115200 baud. Chain Serial: com1
- -> Board: 0x20 Firmware: 0x20000
- -> Board: 0x21 Firmware: 0x20000
- -> Board: 0x22 Firmware: 0x20000
- -> Board: 0x23 Firmware: 0x20000
+ -> Board: 0x20 Firmware: 0x2000000
+ -> Board: 0x21 Firmware: 0x2000000
+ -> Board: 0x22 Firmware: 0x2000000
+ -> Board: 0x23 Firmware: 0x2000000
 
 Incand cards:
  - Chain: com1 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
@@ -498,7 +517,7 @@ class TestOPP(OPPCommon, MpfTestCase):
         self.expected_duration = 1.5
         opp.serial_imported = True
         opp.serial = MagicMock()
-        self.serialMock = MockOppSocket()
+        self.serialMock = MockOppSocket("com1")
         board1_config = b'\x20\x0d\x01\x02\x03\x03'      # wing1: solenoids, wing2: inputs, wing3: lamps, wing4: lamps
         board2_config = b'\x21\x0d\x06\x02\x02\x01'      # wing1: neo, wing2: inputs, wing3: inputs, wing4: solenoids
         board1_version = b'\x20\x02\x00\x01\x01\x00'     # 0.1.1.0
@@ -518,6 +537,7 @@ class TestOPP(OPPCommon, MpfTestCase):
             self._crc_message(b'\x20\x14\x03\x00\x0a\x06'): False,  # configure coil 3
             self._crc_message(b'\x21\x14\x0c\x00\x0a\x01'): False,  # configure coil 1-12
             self._crc_message(b'\x20\x13\x07\x00\x00\x00\x00'): False,  # turn off all incands
+            self._crc_message(b'\x21\x40\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00\x00'): False   # turn off leds
         }
         self.serialMock.permanent_commands = {
             b'\xff': b'\xff',

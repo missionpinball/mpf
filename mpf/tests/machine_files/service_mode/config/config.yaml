@@ -1,5 +1,8 @@
 #config_version=5
 
+game:
+    balls_per_game: 1
+
 modes:
     - attract
     - game
@@ -69,3 +72,6 @@ keyboard:
         switch: s_service_up
     down:
         switch: s_service_down
+    enter:
+        switch: s_door_open
+        toggle: true

@@ -1,0 +1,18 @@
+#config_version=5
+mode:
+  start_events: machine_reset_phase_3
+  game_mode: false
+
+state_machines:
+  non_game_mode_state_machine:
+    persist_state: false
+    states:
+      start:
+        label: Start state
+      done:
+        label: Done state
+        events_when_started: non_game_mode_state_machine_done
+    transitions:
+      - source: start
+        target: done
+        events: non_game_mode_state_machine_proceed
