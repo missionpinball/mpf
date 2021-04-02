@@ -1,13 +1,9 @@
 """Contains the ModeController class for MPF."""
-import importlib
-import asyncio
-import os
 from collections import namedtuple
 
 from typing import Callable
 from typing import Dict
 from typing import List
-from typing import Tuple
 from typing import Optional
 
 from mpf.core.events import QueuedEvent
@@ -114,8 +110,6 @@ class ModeController(MpfController):
         """Load the modes from the modes: section of the machine configuration file."""
         del kwargs
 
-        self._build_mode_folder_dicts()
-
         for mode in set(self.machine.config['modes']):
 
             if mode in self.machine.modes.values():
@@ -124,123 +118,21 @@ class ModeController(MpfController):
             # load mode
             self.machine.modes[mode] = self._load_mode(mode)
 
-            # add a very very short yield to prevent hangs in platforms (e.g. watchdog timeouts during IO)
-            await asyncio.sleep(.0001)
             self.log.debug("Loaded mode %s", mode)
-
-    def _find_mode_path(self, mode_string):
-        asset_paths = []
-        mode_path = None
-
-        if mode_string in self._mpf_mode_folders:
-            path = os.path.join(self.machine.mpf_path,
-                                "modes",
-                                self._mpf_mode_folders[mode_string])
-            asset_paths.append(path)
-            mode_path = path
-
-        if mode_string in self._machine_mode_folders:
-            path = os.path.join(self.machine.machine_path,
-                                self.machine.config['mpf']['paths']['modes'],
-                                self._machine_mode_folders[mode_string])
-
-            asset_paths.append(path)
-            mode_path = path
-
-        if not mode_path:
-            raise ValueError("No folder found for mode '{}'. Is your mode "
-                             "folder in your machine's 'modes' folder?"
-                             .format(mode_string))
-
-        return mode_path, asset_paths
-
-    def _get_mpf_mode_config(self, mode_string):
-        try:
-            mpf_mode_config = os.path.join(
-                self.machine.mpf_path,
-                self.machine.config['mpf']['paths']['modes'],
-                self._mpf_mode_folders[mode_string],
-                'config',
-                self._mpf_mode_folders[mode_string] + '.yaml')
-            if not os.path.isfile(mpf_mode_config):
-                return False
-        except KeyError:
-            return False
-
-        return mpf_mode_config
-
-    def _get_mode_config_file(self, mode_string):
-        try:
-            mode_config_file = os.path.join(
-                self.machine.machine_path,
-                self.machine.config['mpf']['paths']['modes'],
-                self._machine_mode_folders[mode_string],
-                'config',
-                os.path.basename(self._machine_mode_folders[mode_string]) + '.yaml')
-            if not os.path.isfile(mode_config_file):
-                return False
-        except KeyError:
-            return False
-        return mode_config_file
 
     def _load_mode_config_spec(self, mode_string, mode_class):
         self.machine.config_validator.load_mode_config_spec(mode_string, mode_class.get_config_spec())
 
-    def _load_mode_from_machine_folder(self, mode_string: str, code_path: str) -> Optional[Callable[..., Mode]]:
-        """Load mode from machine folder and return it."""
-        # this will only work for file_name.class_name
-        try:
-            file_name, class_name = code_path.split('.')
-        except ValueError:
-            return None
-
-        # check if that mode name exist in machine folder
-        if mode_string not in self._machine_mode_folders:
-            return None
-
-        # try to import
-        try:
-            i = importlib.import_module(
-                self.machine.config['mpf']['paths']['modes'] + '.' +
-                self._machine_mode_folders[mode_string] + '.code.' +
-                file_name)
-        except ImportError as e:
-            # do not hide import error in mode
-            if e.name != file_name:
-                raise e
-            return None
-
-        return getattr(i, class_name, None)
-
     @staticmethod
-    def _load_mode_from_full_path(code_path: str) -> Optional[Callable[..., Mode]]:
-        """Load mode from full path.
+    def _load_mode_code(mode_string: str, code_path: str) -> Optional[Callable[..., Mode]]:
+        """Load mode code.
 
-        This is used for built-in modes like attract and game.
+        First try the full path and then prefix it with the mode name.
         """
         try:
             return Util.string_to_class(code_path)
-        except ImportError as e:
-            # do not hide import error in mode
-            if e.name != code_path.split('.')[-1]:
-                raise e
-            return None
-
-    def _load_mode_code(self, mode_string: str, code_path: str) -> Callable[..., Mode]:
-        """Load code for mode."""
-        # First check the machine folder
-        mode_class = self._load_mode_from_machine_folder(mode_string, code_path)
-        if mode_class:
-            self.debug_log("Loaded code for mode %s from machine_folder", mode_string)
-            return mode_class
-
-        # load from full path
-        mode_class = self._load_mode_from_full_path(code_path)
-        if mode_class:
-            self.debug_log("Loaded code for mode %s from full path", mode_string)
-            return mode_class
-
-        raise AssertionError("Could not load code for mode {} from {}".format(mode_string, code_path))
+        except ImportError:
+            return Util.string_to_class("modes.{}.code.{}".format(mode_string, code_path))
 
     def _load_mode(self, mode_string) -> Mode:
         """Load a mode, reads in its config, and creates the Mode object.
@@ -254,8 +146,6 @@ class ModeController(MpfController):
 
         # Find the folder for this mode. First check the machine list, and if
         # it's not there, see if there's a built-in mpf mode
-
-        mode_path, asset_paths = self._find_mode_path(mode_string)
 
         config = self.machine.mpf_config.get_mode_config(mode_string)
 
@@ -275,57 +165,7 @@ class ModeController(MpfController):
         config['mode_settings'] = self.machine.config_validator.validate_config(
             "_mode_settings:{}".format(mode_string), config.get('mode_settings', None))
 
-        return mode_class(self.machine, config, mode_string, mode_path, asset_paths)
-
-    def _build_mode_folder_dicts(self):
-        self._mpf_mode_folders = (
-            self._get_mode_folder(self.machine.mpf_path))
-        self.debug_log("Found MPF Mode folders: %s", self._mpf_mode_folders)
-
-        self._machine_mode_folders = (
-            self._get_mode_folder(self.machine.machine_path))
-        self.debug_log("Found Machine-specific Mode folders: %s",
-                       self._machine_mode_folders)
-
-    def _get_mode_folder(self, base_folder):
-        try:
-            mode_folders = os.listdir(os.path.join(
-                base_folder, self.machine.config['mpf']['paths']['modes']))
-        except FileNotFoundError:
-            return dict()
-
-        final_mode_folders = dict()
-
-        for folder in mode_folders:
-
-            this_mode_folder = os.path.join(
-                base_folder,
-                self.machine.config['mpf']['paths']['modes'],
-                folder)
-
-            if os.path.isdir(this_mode_folder) and not folder.startswith('_'):
-                if 'config' not in os.listdir(this_mode_folder):
-                    sub_folders = self._get_sub_folders(base_folder, this_mode_folder)
-                    final_mode_folders.update(sub_folders)
-                else:
-                    final_mode_folders[folder] = folder
-
-        return final_mode_folders
-
-    def _get_sub_folders(self, root_folder, base_folder):
-        final_sub_folders = dict()
-
-        for folder in os.listdir(base_folder):
-            this_mode_folder = os.path.join(base_folder, folder)
-
-            if os.path.isdir(this_mode_folder) and not folder.startswith('_'):
-                if 'config' not in os.listdir(this_mode_folder):
-                    final_sub_folders.update(self._get_sub_folders(root_folder, this_mode_folder))
-                else:
-                    final_sub_folders[folder] = os.path.relpath(this_mode_folder, os.path.join(
-                        root_folder, self.machine.config['mpf']['paths']['modes']))
-
-        return final_sub_folders
+        return mode_class(self.machine, config, mode_string, config['mode']['path'], config['mode']['asset_paths'])
 
     @classmethod
     def _player_added(cls, player, num, **kwargs):
