@@ -71,7 +71,7 @@ class AflRunner(object):
             'no_load_cache': False,
             'create_config_cache': True,
             'text_ui': False,
-            'production': False,
+            'production': True,
         }
 
     def advance_time_and_run(self, delta=1.0):
