@@ -1,5 +1,5 @@
 """Contains the Mode base class."""
-from typing import Any, Optional
+from typing import Any, Optional, Union
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -90,12 +90,9 @@ class Mode(LogMixin):
                                     "False also set game_mode to False.", 1)
 
     @staticmethod
-    def get_config_spec() -> str:
+    def get_config_spec() -> Union[str, dict]:
         """Return config spec for mode_settings."""
-        return '''
-                __valid_in__: mode
-                __allow_others__:
-                '''
+        return {'__valid_in__': 'mode', '__allow_others__': ''}
 
     def __repr__(self):
         """Return string representation."""
