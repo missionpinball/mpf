@@ -185,7 +185,7 @@ class Util:
         return final_list
 
     @staticmethod
-    def dict_merge(a, b, combine_lists=True) -> dict:
+    def dict_merge(a, b, combine_lists=True, deepcopy_both=True) -> dict:
         """Recursively merge dictionaries.
 
         Used to merge dictionaries of dictionaries, like when we're merging
@@ -233,7 +233,7 @@ class Util:
         # log.info("Dict Merge incoming B %s", b)
         if not isinstance(b, dict):
             return b
-        result = deepcopy(a)
+        result = deepcopy(a) if deepcopy_both else a
         for k, v in b.items():
             if v is None:
                 continue
@@ -251,9 +251,9 @@ class Util:
                 elif isinstance(v, list) and combine_lists:
                     result[k].extend(v)
                 else:
-                    result[k] = deepcopy(v)
+                    result[k] = deepcopy(v) if deepcopy_both else v
             else:
-                result[k] = deepcopy(v)
+                result[k] = deepcopy(v) if deepcopy_both else v
         # log.info("Dict Merge result: %s", result)
         return result
 
