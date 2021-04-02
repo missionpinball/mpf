@@ -554,7 +554,7 @@ class TestOPP(OPPCommon, MpfTestCase):
         self._test_coils()
         self._test_leds()
         self._test_matrix_lights()
-        self._test_autofires()
+        self._test_autofire_coils()
         self._test_switches()
         self._test_flippers()
 
@@ -708,34 +708,34 @@ LEDs:
 
         self.assertFalse(self.serialMock.expected_commands)
 
-    def _test_autofires(self):
+    def _test_autofire_coils(self):
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x00\x03\x17\x20')] = False
-        self.machine.autofires["ac_slingshot_test"].enable()
+        self.machine.autofire_coils["ac_slingshot_test"].enable()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x00\x02\x17\x20')] = False
-        self.machine.autofires["ac_slingshot_test"].disable()
+        self.machine.autofire_coils["ac_slingshot_test"].disable()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x01\x03\x17\x30')] = False
-        self.machine.autofires["ac_slingshot_test2"].enable()
+        self.machine.autofire_coils["ac_slingshot_test2"].enable()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x01\x00\x17\x3f')] = False
-        self.machine.autofires["ac_slingshot_test2"].disable()
+        self.machine.autofire_coils["ac_slingshot_test2"].disable()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x00\x0b\x17\x14')] = False
-        self.machine.autofires["ac_delayed_kickback"].enable()
+        self.machine.autofire_coils["ac_delayed_kickback"].enable()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x00\x02\x17\x20')] = False
-        self.machine.autofires["ac_delayed_kickback"].disable()
+        self.machine.autofire_coils["ac_delayed_kickback"].disable()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 

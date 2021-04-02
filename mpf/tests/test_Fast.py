@@ -365,7 +365,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
             "DN:21,01,07,10,0A,FF,00,00,14": "DN:P"
         }
         # coil and switch are on different boards but first 8 switches always work
-        self.machine.autofires["ac_different_boards"].enable()
+        self.machine.autofire_coils["ac_different_boards"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
@@ -374,7 +374,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
             "DN:21,01,39,10,0A,FF,00,00,14": "DN:P",
             "SN:39,01,02,02": "SN:P"
         }
-        self.machine.autofires["ac_board_3"].enable()
+        self.machine.autofire_coils["ac_board_3"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
@@ -383,7 +383,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
         }
         # coil and switch are on different boards
         with self.assertRaises(AssertionError):
-            self.machine.autofires["ac_broken_combination"].enable()
+            self.machine.autofire_coils["ac_broken_combination"].enable()
             self.advance_time_and_run(.1)
 
     def _test_enable_exception_hw_rule(self):
@@ -410,14 +410,14 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
             "DN:07,01,16,10,0A,FF,00,00,14": "DN:P",  # hw rule
             "SN:16,01,02,02": "SN:P"                  # debounce quick on switch
         }
-        self.machine.autofires["ac_slingshot_test"].enable()
+        self.machine.autofire_coils["ac_slingshot_test"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         self.net_cpu.expected_commands = {
             "DN:07,81": "DN:P"
         }
-        self.machine.autofires["ac_slingshot_test"].disable()
+        self.machine.autofire_coils["ac_slingshot_test"].disable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
@@ -442,7 +442,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
             "DN:07,11,1A,10,0A,FF,00,00,14": "DN:P",
             "SN:1A,01,02,02": "SN:P"
         }
-        self.machine.autofires["ac_inverted_switch"].enable()
+        self.machine.autofire_coils["ac_inverted_switch"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 

@@ -2,7 +2,7 @@
 from copy import deepcopy
 import re
 from fractions import Fraction
-from functools import reduce
+from functools import reduce, lru_cache
 
 from typing import Dict, Iterable, List, Tuple, Callable, Any, Union
 import asyncio
@@ -226,6 +226,7 @@ class Util:
             b (dict): The second dictionary
             combine_lists (bool): Controls whether lists should be combined (extended) or overwritten.
                 Default is `True` which combines them.
+            deepcopy_both (bool): If True deepcopy both a and b
 
         Returns the merged dictionaries.
         """
@@ -577,6 +578,7 @@ class Util:
         return Util.string_to_ms(time_string) / 1000.0
 
     @staticmethod
+    @lru_cache(1024)
     def string_to_class(class_string: str) -> Callable[..., Any]:
         """Convert a string like mpf.core.events.EventManager into a Python class.
 
