@@ -22,7 +22,7 @@ from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, Sw
 
 
 # pylint: disable-msg=too-many-instance-attributes
-class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
+class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform):
 
     """Platform class for the PKONE Nano hardware controller.
 
@@ -483,7 +483,10 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
                                  "connection to PKONE controller is available")
 
         if subtype == "simple":
-            return PKONESimpleLED(number, self.controller_connection.send, self)
+            # simple LEDs use the format <board_address_id> - <led> (simple LEDs only have 1 channel)
+            board_address_id, index = number.split('-')
+            return PKONESimpleLED(PKONESimpleLEDNumber(int(board_address_id), int(index)),
+                                  self.controller_connection.send, self)
 
         if not subtype or subtype == "led":
             board_address_id, group, index  = number.split("-")
@@ -507,7 +510,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform):
             board_address_id, index = number.split('-')
             return [
                 {
-                    "number": "{}-{}-0".format(board_address_id, index)
+                    "number": "{}-{}".format(board_address_id, index)
                 }
             ]
 

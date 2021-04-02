@@ -545,131 +545,37 @@ class TestPKONE(MpfTestCase):
     def _test_simple_led(self):
         # test enable of simple led
         self.controller.expected_commands = {
-            "L1:23,FF": "L1:P",
+            "PLS2171": None,
         }
         self.machine.lights["test_simple_led"].on()
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 
-        # test enable of matrix light with brightness
+        # test disable of simple led
         self.controller.expected_commands = {
-            "L1:23,80": "L1:P",
+            "PLS2170": None,
         }
-        self.machine.lights["test_pdb_light"].on(brightness=128)
+        self.machine.lights["test_simple_led"].off()
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 
-        # test disable of matrix light
+        # test turning on of simple led using color
         self.controller.expected_commands = {
-            "L1:23,00": "L1:P",
+            "PLS2171": None,
         }
-        self.machine.lights["test_pdb_light"].off()
+        self.machine.lights["test_simple_led"].color(RGBColor("FFFFFF"))
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 
-        # test disable of matrix light with brightness
+        # test turning off of simple led using color
         self.controller.expected_commands = {
-            "L1:23,00": "L1:P",
+            "PLS2170": None,
         }
-        self.machine.lights["test_pdb_light"].on(brightness=255, fade_ms=100)
-        self.advance_time_and_run(.02)
-        self.assertFalse(self.controller.expected_commands)
-
-        # step 1
-        self.controller.expected_commands = {
-            "L1:23,32": "L1:P",
-            "L1:23,33": "L1:P",
-        }
-        self.advance_time_and_run(.02)
-        self.assertEqual(1, len(self.controller.expected_commands))
-
-        # step 2
-        self.controller.expected_commands = {
-            "L1:23,65": "L1:P",
-            "L1:23,66": "L1:P",
-        }
-        self.advance_time_and_run(.02)
-        self.assertEqual(1, len(self.controller.expected_commands))
-
-        # step 3
-        self.controller.expected_commands = {
-            "L1:23,98": "L1:P",
-            "L1:23,99": "L1:P",
-        }
-        self.advance_time_and_run(.02)
-        self.assertEqual(1, len(self.controller.expected_commands))
-
-        # step 4
-        self.controller.expected_commands = {
-            "L1:23,CB": "L1:P",
-            "L1:23,CC": "L1:P",
-        }
-        self.advance_time_and_run(.02)
-        self.assertEqual(1, len(self.controller.expected_commands))
-
-        # step 5
-        self.controller.expected_commands = {
-            "L1:23,FE": "L1:P",
-            "L1:23,FF": "L1:P",
-        }
-        self.advance_time_and_run(.02)
-        self.assertEqual(1, len(self.controller.expected_commands))
-
-        # step 6 if step 5 did not send FF
-        if "L1:23,FE" not in self.controller.expected_commands:
-            self.controller.expected_commands = {
-                "L1:23,FF": "L1:P",
-            }
-            self.advance_time_and_run(.02)
-            self.assertFalse(self.controller.expected_commands)
-
-    def _test_pdb_gi_light(self):
-        # test gi on
-        device = self.machine.lights["test_gi"]
-        self.controller.expected_commands = {
-            "GI:2A,FF": "GI:P",
-        }
-        device.on()
+        self.machine.lights["test_simple_led"].color(RGBColor("000000"))
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 
-        self.controller.expected_commands = {
-            "GI:2A,80": "GI:P",
-        }
-        device.on(brightness=128)
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.controller.expected_commands)
-
-        self.controller.expected_commands = {
-            "GI:2A,F5": "GI:P",
-        }
-        device.on(brightness=245)
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.controller.expected_commands)
-
-        # test gi off
-        self.controller.expected_commands = {
-            "GI:2A,00": "GI:P",
-        }
-        device.off()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.controller.expected_commands)
-
-        self.controller.expected_commands = {
-            "GI:2A,F5": "GI:P",
-        }
-        device.on(brightness=245)
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.controller.expected_commands)
-
-        self.controller.expected_commands = {
-            "GI:2A,00": "GI:P",
-        }
-        device.on(brightness=0)
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.controller.expected_commands)
-
-    def _test_pdb_led(self):
+    def _test_ws281x_led(self):
         self.advance_time_and_run()
         device = self.machine.lights["test_led"]
         device2 = self.machine.lights["test_led2"]

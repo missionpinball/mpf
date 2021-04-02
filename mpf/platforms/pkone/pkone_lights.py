@@ -38,10 +38,6 @@ class PKONESimpleLED(LightPlatformSoftwareFade):
         self.log.debug("Sending Simple LED Control command: %s", cmd)
         self.send(cmd)
 
-    def set_fade(self, start_brightness, start_time, target_brightness, target_time):
-        """Perform a fade to a brightness. PKONE Simple LEDs do not support fading."""
-        raise AssertionError("Fading/brightness is not supported with Simple LEDs on PKONE Lightshow board.")
-
     def get_board_name(self):
         """Return PKONE Lightshow addr."""
         if self.number.board_address_id not in self.platform.pkone_extensions.keys():
