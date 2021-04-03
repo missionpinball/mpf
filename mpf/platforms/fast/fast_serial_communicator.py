@@ -118,11 +118,8 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         # ID:NET FP-CPU-002-2 00.85
         # ID:RGB FP-CPU-002-2 00.85
 
-        try:
-            self.remote_processor, self.remote_model, self.remote_firmware = (
-                msg[3:].split())
-        except ValueError:
-            self.remote_model, self.remote_firmware, = msg[3:].split()
+        self.remote_processor, self.remote_model, self.remote_firmware = (
+            msg[3:].split())
 
         self.platform.log.info("Connected! Processor: %s, "
                                "Board Type: %s, Firmware: %s",

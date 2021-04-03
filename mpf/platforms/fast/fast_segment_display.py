@@ -1,6 +1,5 @@
 """Segment display on the FAST platform."""
 
-from time import sleep
 from typing import List
 
 from mpf.core.utility_functions import Util
