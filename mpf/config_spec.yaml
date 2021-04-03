@@ -2010,7 +2010,7 @@ widgets:
         rotation: single|int_or_token|0
         scale: single|float_or_token|1.0
     segment_display_emulator:
-        number: single|int|None
+        number: single|str|None
         text: single|str|
         flash_mode: single|enum(off,all,match,mask)|off
         flash_frequency: single|float_or_token|1.0
