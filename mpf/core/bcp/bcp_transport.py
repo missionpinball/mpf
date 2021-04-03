@@ -90,17 +90,6 @@ class BcpTransportManager:
     def send_to_clients(self, clients, bcp_command, **kwargs):
         """Send command to a list of clients."""
         for client in set(clients):
-            # Since player variables are sent automatically for any client that's
-            # subscribed to the player_vars monitor, if we get a trigger for an
-            # event that starts with "player_", we need to only send it here if
-            # there's *not* a player variable with that name, since if there is
-            # a player variable then the player variable handler will send it.
-            if kwargs.get('name','').startswith('player_') and client in self.get_transports_for_handler('_player_vars'):
-                try:
-                    if self.machine.game.player.is_player_var(kwargs['name'].lstrip('player_')):
-                        return
-                except AttributeError:
-                    pass
             self.send_to_client(client, bcp_command, **kwargs)
 
     def send_to_clients_with_handler(self, handler, bcp_command, **kwargs):

@@ -704,6 +704,18 @@ class BcpInterface(MpfController):
         if "_from_bcp" in kwargs:
             return
 
+        # Since player variables are sent automatically, if we get a trigger
+        # for an event that starts with "player_", we need to only send it here
+        # if there's *not* a player variable with that name, since if there is
+        # a player variable then the player variable handler will send it.
+        if name.startswith('player_'):
+            try:
+                if self.machine.game.player.is_player_var(name.lstrip('player_')):
+                    return
+
+            except AttributeError:
+                pass
+
         self.machine.bcp.transport.send_to_clients_with_handler(
             handler=name, bcp_command='trigger', name=name, **kwargs)
 
