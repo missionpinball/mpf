@@ -5,7 +5,7 @@ hardware:
 
 fast:
     driverboards: fast
-    ports: com4, com5, com6
+    ports: com3, com4, com5, com6
     debug: true
     firmware_updates:
       - type: net

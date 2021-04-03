@@ -3,6 +3,7 @@ from collections import namedtuple
 from operator import attrgetter
 from typing import List, Optional
 
+from mpf.core.rgb_color import RGBColor
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.placeholder_manager import TextTemplate
 from mpf.core.system_wide_device import SystemWideDevice
@@ -34,6 +35,7 @@ class SegmentDisplay(SystemWideDevice):
         self._current_placeholder = None        # type: Optional[TextTemplate]
         self.text = ""                          # type: Optional[str]
         self.flashing = FlashingType.NO_FLASH   # type: FlashingType
+        self.color = None                       # type: Optional[RGBColor]
         self.platform_settings = None           # type: Optional[dict]
 
     async def _initialize(self):
@@ -89,6 +91,12 @@ class SegmentDisplay(SystemWideDevice):
         # invalidate text to force an update
         self.text = None
         self._update_display()
+
+    def set_color(self, color: RGBColor):
+        """Set display color."""
+        self.color = color
+        assert self.hw_display is not None
+        self.hw_display.set_color(color)
 
     def remove_text_by_key(self, key: str):
         """Remove entry from text stack."""

@@ -315,13 +315,14 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
 
     """Virtual segment display."""
 
-    __slots__ = ["text", "flashing", "platform_options"]
+    __slots__ = ["text", "flashing", "platform_options", "colors"]
 
     def __init__(self, number) -> None:
         """Initialise virtual segment display."""
         super().__init__(number)
         self.text = ''
         self.flashing = FlashingType.NO_FLASH
+        self.colors = 'FFFFFF'
         self.platform_options = None
 
     def set_text(self, text: str, flashing: FlashingType, platform_options: dict = None):
@@ -329,6 +330,10 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
         self.text = text
         self.flashing = flashing
         self.platform_options = platform_options
+
+    def set_color(self, colors: any) -> None:
+        """Set color(s)."""
+        self.colors = colors
 
 
 class VirtualSound(HardwareSoundPlatformInterface):

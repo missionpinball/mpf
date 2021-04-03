@@ -13,6 +13,7 @@ DMD_MIN_FW = '0.88'
 NET_MIN_FW = '0.88'
 RGB_MIN_FW = '0.87'
 IO_MIN_FW = '0.87'
+SEG_MIN_FW = '0.10'
 
 # DMD_LATEST_FW = '0.88'
 # NET_LATEST_FW = '0.90'
@@ -117,11 +118,8 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         # ID:NET FP-CPU-002-2 00.85
         # ID:RGB FP-CPU-002-2 00.85
 
-        try:
-            self.remote_processor, self.remote_model, self.remote_firmware = (
-                msg[3:].split())
-        except ValueError:
-            self.remote_processor, self.remote_model, = msg[3:].split()
+        self.remote_processor, self.remote_model, self.remote_firmware = (
+            msg[3:].split())
 
         self.platform.log.info("Connected! Processor: %s, "
                                "Board Type: %s, Firmware: %s",
@@ -164,6 +162,12 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             # latest_version = RGB_LATEST_FW
             self.max_messages_in_flight = self.platform.config['rgb_buffer']
             self.platform.debug_log("Setting RGB buffer size: %s",
+                                    self.max_messages_in_flight)
+        elif self.remote_processor == 'SEG':
+            min_version = SEG_MIN_FW
+            # latest_version = SEG_LATEST_FW
+            self.max_messages_in_flight = self.platform.config['segment_buffer']
+            self.platform.debug_log("Setting SEG buffer size: %s",
                                     self.max_messages_in_flight)
         else:
             raise AttributeError("Unrecognized FAST processor type: {}".format(self.remote_processor))
