@@ -16,6 +16,7 @@ RGB_MIN_FW = '0.87'
 IO_MIN_FW = '0.87'
 SEG_MIN_FW = '0.10'
 
+# TODO: [Retro] Standardize retro board id values
 RETRO_ID = 'FP-SBI-0095-3'
 RETRO_MIN_FW = '1.15'
 
@@ -253,7 +254,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             # TODO: [Retro] Move the config defines to the Retro's firmware and retrieve via serial query
             node_id, drivers, switches = RETRO_CONFIGS[self.remote_model].values()
             self.platform.register_io_board(FastIoBoard(
-                int(node_id,16),
+                int(node_id, 16),
                 self.remote_model,
                 self.remote_firmware,
                 int(switches, 16),

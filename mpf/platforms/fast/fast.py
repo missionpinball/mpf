@@ -305,7 +305,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if name == 'DMD':
             self.dmd_connection = communicator
         # TODO: [Retro] Standardize Retro board id string
-        elif name == 'NET' or name == 'FP-SBI-0095-3':
+        elif name == 'NET' or name == 'RET' or name == 'FP-SBI-0095-3':
             self.net_connection = communicator
         elif name == 'SEG':
             self.seg_connection = communicator
