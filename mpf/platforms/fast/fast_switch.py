@@ -29,8 +29,8 @@ class FASTSwitch(SwitchPlatformInterface):
 
     def get_board_name(self):
         """Return the board of this switch."""
-        if self.platform.machine_type == 'wpc':
-            return "FAST WPC"
+        if self.platform.machine_type == 'retro':
+            return "FAST Retro"
 
         switch_index = 0
         number = Util.hex_string_to_int(self.number)

@@ -1,7 +1,7 @@
 """FAST hardware platform.
 
 Contains the hardware interface and drivers for the FAST Pinball platform
-hardware, including the FAST Core and WPC controllers as well as FAST I/O
+hardware, including the FAST Nano and Retro controllers as well as FAST I/O
 boards.
 """
 import asyncio
@@ -490,15 +490,15 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         # If we have Retro driver boards, look up the driver number
         if self.machine_type == 'retro':
             try:
-                number = fast_defines.WPC_DRIVER_MAP[number.upper()]
+                number = fast_defines.RETRO_DRIVER_MAP[number.upper()]
             except KeyError:
-                self.raise_config_error("Could not find WPC driver {}".format(number), 1)
+                self.raise_config_error("Could not find Retro driver {}".format(number), 1)
 
             if ('connection' in platform_settings and
                     platform_settings['connection'].lower() == 'network'):
                 platform_settings['connection'] = 1
             else:
-                platform_settings['connection'] = 0  # local driver (default for WPC)
+                platform_settings['connection'] = 0  # local driver (default for Retro)
 
         # If we have FAST IO boards, we need to make sure we have hex strings
         elif self.machine_type == 'fast':
@@ -619,12 +619,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         if self.machine_type == 'retro':  # translate switch num to FAST switch
             try:
-                number = fast_defines.WPC_SWITCH_MAP[str(number).upper()]
+                number = fast_defines.RETRO_SWITCH_MAP[str(number).upper()]
             except KeyError:
                 self.raise_config_error("Could not find switch {}".format(number), 2)
 
             if 'connection' not in platform_config:
-                platform_config['connection'] = 0  # local switch (default for WPC)
+                platform_config['connection'] = 0  # local switch (default for Retro)
             else:
                 platform_config['connection'] = 1  # network switch
 
@@ -688,7 +688,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if subtype == "gi":
             if self.machine_type == 'retro':  # translate matrix/map number to FAST GI number
                 try:
-                    number = fast_defines.WPC_GI_MAP[str(number).upper()]
+                    number = fast_defines.RETRO_GI_MAP[str(number).upper()]
                 except KeyError:
                     self.raise_config_error("Could not find GI {}".format(number), 3)
             else:
@@ -702,7 +702,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if subtype == "matrix":
             if self.machine_type == 'retro':  # translate matrix number to FAST light num
                 try:
-                    number = fast_defines.WPC_LIGHT_MAP[str(number).upper()]
+                    number = fast_defines.RETRO_LIGHT_MAP[str(number).upper()]
                 except KeyError:
                     self.raise_config_error("Could not find light {}".format(number), 4)
             else:

@@ -1,4 +1,4 @@
-"""Defines for FAST WPC."""
+"""Defines for FAST Retro."""
 
 RETRO_CONFIGS = {
     'WPC89': {
@@ -9,9 +9,9 @@ RETRO_CONFIGS = {
     }
 }
 
-WPC_SWITCH_MAP = {
+RETRO_SWITCH_MAP = {
 
-    # WPC   HEX    DEC
+    # Name   HEX    DEC
     'S11': '00',  # 00
     'S12': '01',  # 01
     'S13': '02',  # 02
@@ -136,7 +136,7 @@ WPC_SWITCH_MAP = {
     'DIP8': '5F',  # 95
 }
 
-WPC_LIGHT_MAP = {
+RETRO_LIGHT_MAP = {
     'L11': '00', 'L12': '01', 'L13': '02', 'L14': '03',
     'L15': '04', 'L16': '05', 'L17': '06', 'L18': '07',
     'L21': '08', 'L22': '09', 'L23': '0A', 'L24': '0B',
@@ -155,7 +155,7 @@ WPC_LIGHT_MAP = {
     'L85': '3C', 'L86': '3D', 'L87': '3E', 'L88': '3F',
 }
 
-WPC_DRIVER_MAP = {
+RETRO_DRIVER_MAP = {
     'C01': '00', 'C02': '01', 'C03': '02', 'C04': '03',
     'C05': '04', 'C06': '05', 'C07': '06', 'C08': '07',
     'C09': '08', 'C10': '09', 'C11': '0A', 'C12': '0B',
@@ -171,7 +171,7 @@ WPC_DRIVER_MAP = {
     'C41': '2C', 'C42': '2D', 'C43': '2E', 'C44': '2F',
 }
 
-WPC_GI_MAP = {
+RETRO_GI_MAP = {
     'G01': '00', 'G02': '01', 'G03': '02', 'G04': '03',
     'G05': '04', 'G06': '05', 'G07': '06', 'G08': '07',
 }
