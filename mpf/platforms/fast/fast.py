@@ -58,8 +58,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         else:
             self.machine_type = self.machine.config['hardware']['driverboards'].lower()
 
-        if self.machine_type == 'wpc' or self.machine_type == 'retro':
-            self.debug_log("Configuring the FAST Controller for WPC driver "
+        if self.machine_type == 'retro':
+            self.debug_log("Configuring the FAST Controller for Retro driver "
                            "board")
         else:
             self.debug_log("Configuring FAST Controller for FAST IO boards.")
@@ -304,6 +304,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """
         if name == 'DMD':
             self.dmd_connection = communicator
+        # TODO: [Retro] Standardize Retro board id string
         elif name == 'NET' or name == 'FP-SBI-0095-3':
             self.net_connection = communicator
         elif name == 'SEG':
@@ -399,6 +400,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.debug_log("Received SA: %s", msg)
         hw_states = dict()
 
+        # TODO: [Retro] Standardize SA: return values, or deprecate SA: call
         try:
             _, local_states, _, nw_states = msg.split(',')
         except ValueError:
@@ -485,8 +487,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if not number:
             raise AssertionError("Driver needs a number")
 
-        # If we have WPC driver boards, look up the driver number
-        if self.machine_type == 'wpc' or self.machine_type == 'retro':
+        # If we have Retro driver boards, look up the driver number
+        if self.machine_type == 'retro':
             try:
                 number = fast_defines.WPC_DRIVER_MAP[number.upper()]
             except KeyError:
@@ -595,7 +597,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         intelligence to try to figure out which default should be used.
 
         If the DriverBoard type is ``fast``, then it assumes the default is
-        ``network``. If it's anything else (``wpc``, ``system11``, ``bally``,
+        ``network``. If it's anything else (``retro``, ``system11``, ``bally``,
         etc.) then it assumes the connection type is ``local``. Connection types
         can be mixed and matched in the same machine.
 
@@ -615,11 +617,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                  "switch, but no connection to a NET processor"
                                  "is available")
 
-        if self.machine_type == 'wpc' or self.machine_type == 'retro':  # translate switch num to FAST switch
+        if self.machine_type == 'retro':  # translate switch num to FAST switch
             try:
                 number = fast_defines.WPC_SWITCH_MAP[str(number).upper()]
             except KeyError:
-                self.raise_config_error("Could not find WPC switch {}".format(number), 2)
+                self.raise_config_error("Could not find switch {}".format(number), 2)
 
             if 'connection' not in platform_config:
                 platform_config['connection'] = 0  # local switch (default for WPC)
@@ -684,11 +686,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Parse light channels from number string."""
         if subtype == "gi":
-            if self.machine_type == 'wpc' or self.machine_type == 'retro':  # translate number to FAST GI number
+            if self.machine_type == 'retro':  # translate matrix/map number to FAST GI number
                 try:
                     number = fast_defines.WPC_GI_MAP[str(number).upper()]
                 except KeyError:
-                    self.raise_config_error("Could not find WPC GI {}".format(number), 3)
+                    self.raise_config_error("Could not find GI {}".format(number), 3)
             else:
                 number = self.convert_number_from_config(number)
 
@@ -698,11 +700,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 }
             ]
         if subtype == "matrix":
-            if self.machine_type == 'wpc' or self.machine_type == 'retro':  # translate number to FAST light num
+            if self.machine_type == 'retro':  # translate matrix number to FAST light num
                 try:
                     number = fast_defines.WPC_LIGHT_MAP[str(number).upper()]
                 except KeyError:
-                    self.raise_config_error("Could not find WPC light {}".format(number), 4)
+                    self.raise_config_error("Could not find light {}".format(number), 4)
             else:
                 number = self.convert_number_from_config(number)
 

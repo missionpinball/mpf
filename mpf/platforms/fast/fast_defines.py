@@ -112,26 +112,7 @@ WPC_SWITCH_MAP = {
     'SD7': '56',  # 86
     'SD8': '57',  # 87
 
-    # DIP switches
-    'DIP1': '58',  # 88
-    'DIP2': '59',  # 89
-    'DIP3': '5A',  # 90
-    'DIP4': '5B',  # 91
-    'DIP5': '5C',  # 92
-    'DIP6': '5D',  # 93
-    'DIP7': '5E',  # 94
-    'DIP8': '5F',  # 95
-
     # Fliptronics
-    # Temporarily offset by 8 to match firmware config
-    # 'SF1': '60',  # 96
-    # 'SF2': '61',  # 97
-    # 'SF3': '62',  # 98
-    # 'SF4': '63',  # 99
-    # 'SF5': '64',  # 100
-    # 'SF6': '65',  # 101
-    # 'SF7': '66',  # 102
-    # 'SF8': '67',  # 103
     'SF1': '58',  # 96
     'SF2': '59',  # 97
     'SF3': '5A',  # 98
@@ -140,6 +121,19 @@ WPC_SWITCH_MAP = {
     'SF6': '5D',  # 101
     'SF7': '5E',  # 102
     'SF8': '5F',  # 103
+
+    # DIP switches
+    # These addresses are also used by Fliptronics switches (above)
+    # because the FAST Retro does not support DIP switches. Kept here
+    # for forward/backward compatibility with other legacy drivers.
+    'DIP1': '58',  # 88
+    'DIP2': '59',  # 89
+    'DIP3': '5A',  # 90
+    'DIP4': '5B',  # 91
+    'DIP5': '5C',  # 92
+    'DIP6': '5D',  # 93
+    'DIP7': '5E',  # 94
+    'DIP8': '5F',  # 95
 }
 
 WPC_LIGHT_MAP = {

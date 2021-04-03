@@ -125,6 +125,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
         board_id = msg[3:].split()
         # FAST Retro doesn't provide a remote_processor value, but it behaves like a NET
+        # TODO: [Retro] Standardize Retro board ID: response to match other boards
         if board_id[0] == RETRO_ID:
             self.remote_processor = 'NET'
             self.remote_firmware = board_id[1]
@@ -177,6 +178,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             self.platform.debug_log("Setting DMD buffer size: %s",
                                     self.max_messages_in_flight)
         elif self.remote_processor == 'NET':
+            # TODO: [Retro] Choose a standardized approach to distinguishing NET from RET
             min_version = RETRO_MIN_FW if self.remote_config else NET_MIN_FW
             # latest_version = NET_LATEST_FW
             self.max_messages_in_flight = self.platform.config['net_buffer']
@@ -248,7 +250,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         firmware_ok = True
 
         if RETRO_CONFIGS.get(self.remote_model):
-            # TODO: Move the config defines to the firmware an extract via serial query
+            # TODO: [Retro] Move the config defines to the Retro's firmware and retrieve via serial query
             node_id, drivers, switches = RETRO_CONFIGS[self.remote_model].values()
             self.platform.register_io_board(FastIoBoard(
                 int(node_id,16),
