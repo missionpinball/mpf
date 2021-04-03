@@ -68,7 +68,7 @@ class BaseSerialCommunicator:
             try:
                 serial.set_low_latency_mode(True)
             except NotImplementedError:
-                self.log.debug("Could not set %s to low latency mode.", port)
+                self.log.info("Could not set %s to low latency mode.", port)
 
         # defaults are slightly high for our usecase
         self.writer.transport.set_write_buffer_limits(2048, 1024)

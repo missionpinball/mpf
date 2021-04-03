@@ -7,10 +7,10 @@ from mpf.core.utility_functions import Util
 from mpf.core.rgb_color import RGBColor
 
 from mpf.platforms.interfaces.segment_display_platform_interface \
-    import ColorSegmentDisplayPlatformInterface, FlashingType
+    import SegmentDisplayPlatformInterface, FlashingType
 
 
-class FASTSegmentDisplay(ColorSegmentDisplayPlatformInterface):
+class FASTSegmentDisplay(SegmentDisplayPlatformInterface):
 
     """FAST segment display."""
 
@@ -36,12 +36,3 @@ class FASTSegmentDisplay(ColorSegmentDisplayPlatformInterface):
             colors = ','.join([RGBColor(color).hex for color in colors])
         self.serial.send(('PC:{},{}').format(
             self.hex_id, colors))
-
-    def _delayed_write(self, text_cmd):
-        """Debugging method for reduced serial communication speed."""
-        self.serial.platform.debug_log(text_cmd)
-        while len(text_cmd) > 0:
-            self.serial.writer.write(text_cmd[0:1].encode())
-            text_cmd = text_cmd[1:]
-            sleep(0.001)
-        self.serial.writer.write("\r".encode())

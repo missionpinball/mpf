@@ -30,7 +30,6 @@ from mpf.core.utility_functions import Util
 
 # pylint: disable-msg=too-many-instance-attributes
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
-from mpf.platforms.interfaces.segment_display_platform_interface import ColorSegmentDisplayPlatformInterface
 
 
 class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
@@ -187,8 +186,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.rgb_connection.writer.write(b'BL:AA55\r')  # reset CPU using bootloader
         if self.dmd_connection:
             self.dmd_connection.writer.write(b'BL:AA55\r')  # reset CPU using bootloader
-        # if self.seg_connection:
-        #     self.seg_connection.writer.write(b'BL:AA55\r')  # reset CPU using bootloader
 
         # wait 100ms for the messages to be send
         self.machine.clock.loop.run_until_complete(asyncio.sleep(.1))
@@ -759,7 +756,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         return FASTDMD(self.machine, self.dmd_connection.send)
 
-    async def configure_segment_display(self, number: str, platform_settings) -> ColorSegmentDisplayPlatformInterface:
+    async def configure_segment_display(self, number: str, platform_settings) -> FASTSegmentDisplay:
         """Configure a segment display."""
         self.debug_log("Configuring FAST segment display.")
         del platform_settings
