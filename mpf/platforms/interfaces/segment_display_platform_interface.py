@@ -80,6 +80,7 @@ class SegmentDisplaySoftwareFlashPlatformInterface(SegmentDisplayPlatformInterfa
         """Set a text to the display."""
         raise NotImplementedError
 
+    @abc.abstractmethod
     def set_color(self, colors: Any) -> None:
         """Set the color(s) of the display."""
         raise NotImplementedError
