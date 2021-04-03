@@ -13,7 +13,6 @@ DMD_MIN_FW = '0.88'
 NET_MIN_FW = '0.88'
 RGB_MIN_FW = '0.87'
 IO_MIN_FW = '0.87'
-LEG_MIN_FW = '0.87'
 SEG_MIN_FW = '0.10'
 
 # DMD_LATEST_FW = '0.88'
@@ -124,7 +123,6 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                 msg[3:].split())
         except ValueError:
             self.remote_model, self.remote_firmware, = msg[3:].split()
-            self.remote_processor = 'LEG'
 
         self.platform.log.info("Connected! Processor: %s, "
                                "Board Type: %s, Firmware: %s",
@@ -167,12 +165,6 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             # latest_version = RGB_LATEST_FW
             self.max_messages_in_flight = self.platform.config['rgb_buffer']
             self.platform.debug_log("Setting RGB buffer size: %s",
-                                    self.max_messages_in_flight)
-        elif self.remote_processor == 'LEG':
-            min_version = LEG_MIN_FW
-            # latest_version = LEG_LATEST_FW
-            self.max_messages_in_flight = self.platform.config['legacy_buffer']
-            self.platform.debug_log("Setting LEG buffer size: %s",
                                     self.max_messages_in_flight)
         elif self.remote_processor == 'SEG':
             min_version = SEG_MIN_FW

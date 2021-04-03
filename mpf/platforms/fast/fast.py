@@ -38,7 +38,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     """Platform class for the FAST hardware controller."""
 
-    __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "leg_connection", "seg_connection",
+    __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "seg_connection",
                  "serial_connections", "fast_leds", "fast_commands", "config", "machine_type", "hw_switch_data",
                  "io_boards", "flag_led_tick_registered", "_watchdog_task", "_led_task"]
 
@@ -70,7 +70,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.dmd_connection = None
         self.net_connection = None
         self.rgb_connection = None
-        self.leg_connection = None
         self.seg_connection = None
         self._watchdog_task = None
         self._led_task = None
@@ -123,13 +122,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 self.dmd_connection.remote_processor,
                 self.dmd_connection.remote_model,
                 self.dmd_connection.remote_firmware)
-        if not self.leg_connection:
-            infos += "No connection to the Legacy Controller.\n"
-        else:
-            infos += "Legacy Controller: {} {} {}\n".format(
-                self.leg_connection.remote_processor,
-                self.leg_connection.remote_model,
-                self.leg_connection.remote_firmware)
         if not self.seg_connection:
             infos += "No connection to the Segment Controller.\n"
         else:
@@ -195,8 +187,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.rgb_connection.writer.write(b'BL:AA55\r')  # reset CPU using bootloader
         if self.dmd_connection:
             self.dmd_connection.writer.write(b'BL:AA55\r')  # reset CPU using bootloader
-        if self.leg_connection:
-            self.leg_connection.writer.write(b'BL:AA55\r')  # reset CPU using bootloader
         # if self.seg_connection:
         #     self.seg_connection.writer.write(b'BL:AA55\r')  # reset CPU using bootloader
 
@@ -214,10 +204,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if self.dmd_connection:
             self.dmd_connection.stop()
             self.dmd_connection = None
-
-        if self.leg_connection:
-            self.leg_connection.stop()
-            self.leg_connection = None
 
         if self.seg_connection:
             self.seg_connection.stop()
@@ -252,8 +238,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Send Watchdog command."""
         if self.net_connection:
             self.net_connection.send('WD:' + str(hex(self.config['watchdog']))[2:])
-        elif self.leg_connection:
-            self.leg_connection.send('WD:' + str(hex(self.config['watchdog']))[2:])
 
     def process_received_message(self, msg: str, remote_processor: str):
         """Send an incoming message from the FAST controller to the proper method for servicing.
@@ -342,8 +326,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.dmd_connection = communicator
         elif name == 'NET':
             self.net_connection = communicator
-        elif name == 'LEG':
-            self.leg_connection = communicator
         elif name == 'SEG':
             self.seg_connection = communicator
         elif name == 'RGB':
