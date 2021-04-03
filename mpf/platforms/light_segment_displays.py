@@ -1,8 +1,10 @@
 """Segment displays on light drivers."""
 import logging
+from typing import List
 from mpf.core.segment_mappings import SEVEN_SEGMENTS, BCD_SEGMENTS, FOURTEEN_SEGMENTS, SIXTEEN_SEGMENTS
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
 from mpf.core.platform import SegmentDisplaySoftwareFlashPlatform
+from mpf.core.rgb_color import RGBColor
 
 
 class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
@@ -45,6 +47,10 @@ class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
                     light.on(key=self._key)
                 else:
                     light.remove_from_stack_by_key(key=self._key)
+
+    def set_color(self, colors: List[RGBColor]) -> None:
+        """Set the color(s) of the display."""
+        raise NotImplementedError
 
 
 class LightSegmentDisplaysPlatform(SegmentDisplaySoftwareFlashPlatform):

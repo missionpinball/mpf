@@ -14,6 +14,7 @@ from mpf.platforms.interfaces.segment_display_platform_interface import SegmentD
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
 from mpf.core.logging import LogMixin
+from mpf.core.rgb_color import RGBColor
 from mpf.core.utility_functions import Util
 
 from mpf.platforms.lisy.defines import LisyDefines
@@ -232,6 +233,10 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
                                     bytearray([len(formatted_text)]) + formatted_text)
         else:
             self.platform.send_string(LisyDefines.DisplaysSetDisplay0To + self.number, text)
+
+    def set_color(self, colors: List[RGBColor]) -> None:
+        """Set the color(s) of the display."""
+        raise NotImplementedError
 
 
 class LisySound(HardwareSoundPlatformInterface):

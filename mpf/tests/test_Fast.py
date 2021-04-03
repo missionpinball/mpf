@@ -139,6 +139,10 @@ class MockFastNet(BaseMockFast):
         super().__init__()
         self.type = "NET"
 
+class MockFastSeg(BaseMockFast):
+    def __init__(self):
+        super().__init__()
+        self.type = "SEG"
 
 class TestFast(MpfTestCase):
     def get_config_file(self):
@@ -151,6 +155,7 @@ class TestFast(MpfTestCase):
         return False
 
     def _mock_loop(self):
+        self.clock.mock_serial("com3", self.seg_cpu)
         self.clock.mock_serial("com4", self.net_cpu)
         self.clock.mock_serial("com5", self.rgb_cpu)
         self.clock.mock_serial("com6", self.dmd_cpu)
@@ -175,6 +180,7 @@ class TestFast(MpfTestCase):
         self.net_cpu = MockFastNet()
         self.rgb_cpu = MockFastRgb()
         self.dmd_cpu = MockFastDmd()
+        self.seg_cpu = MockFastSeg()
 
         self.dmd_cpu.expected_commands = {
             b'ID:': 'ID:DMD FP-CPU-002-1 00.88',
@@ -218,11 +224,16 @@ class TestFast(MpfTestCase):
             "XO:14,7F": "XO:P"
         }
 
+        self.seg_cpu.expected_commands = {
+            'ID:': 'ID:SEG FP-CPU-002-1 00.10',
+        }
+
         super().setUp()
         self.advance_time_and_run()
         self.assertFalse(self.net_cpu.expected_commands)
         self.assertFalse(self.rgb_cpu.expected_commands)
         self.assertFalse(self.dmd_cpu.expected_commands)
+        self.assertFalse(self.seg_cpu.expected_commands)
 
         # test io board detection
         self.assertEqual(4, len(self.machine.default_platform.io_boards))
@@ -241,6 +252,8 @@ class TestFast(MpfTestCase):
         self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_rgb_model"))
         self.assertEqual("01.03", self.machine.variables.get_machine_var("fast_net_firmware"))
         self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_net_model"))
+        self.assertEqual("00.10", self.machine.variables.get_machine_var("fast_seg_firmware"))
+        self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_seg_model"))
 
     def test_coils(self):
         self._test_pulse()
@@ -254,6 +267,7 @@ class TestFast(MpfTestCase):
         info_str = """NET CPU: NET FP-CPU-002-1 01.03
 RGB CPU: RGB FP-CPU-002-1 00.89
 DMD CPU: DMD FP-CPU-002-1 00.88
+Segment Controller: SEG FP-CPU-002-1 00.10
 
 Boards:
 Board 0 - Model: FP-I/O-3208-2    Firmware: 01.00 Switches: 32 Drivers: 8
