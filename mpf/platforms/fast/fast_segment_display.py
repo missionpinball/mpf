@@ -26,9 +26,7 @@ class FASTSegmentDisplay(ColorSegmentDisplayPlatformInterface):
 
     def set_text(self, text: str, flashing: FlashingType=FlashingType.NO_FLASH) -> None:
         """Set digits to display."""
-        # self.serial.send(('PA:{},{}').format(
-        #     self.hex_id, text[0:7]))
-        self._delayed_write(('PA:{},{}').format(
+        self.serial.send(('PA:{},{}').format(
             self.hex_id, text[0:7]))
 
     def set_color(self, colors: RGBColor):
@@ -38,12 +36,11 @@ class FASTSegmentDisplay(ColorSegmentDisplayPlatformInterface):
             colors = (RGBColor(colors[0]).hex + ',') * 7
         else:
             colors = ','.join([RGBColor(color).hex for color in colors])
-        # self.serial.send(('PC:{},{}').format(
-        #     self.hex_id, colors))
-        self._delayed_write(('PC:{},{}').format(
+        self.serial.send(('PC:{},{}').format(
             self.hex_id, colors))
 
     def _delayed_write(self, text_cmd):
+        """Debugging method for reduced serial communication speed."""
         self.serial.platform.debug_log(text_cmd)
         while (len(text_cmd) > 0):
             self.serial.writer.write(text_cmd[0:1].encode())
