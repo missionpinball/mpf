@@ -1,0 +1,194 @@
+#config_version=5
+
+lights:
+    led_01:
+        number: 0
+        tags: tag1, row0
+    led_02:
+        number: 1
+        tags: tag1, row0
+    led_03:
+        number: 2
+        tags: row1
+    led_04:
+        number: 3
+        tags: row2
+    light_01:
+        number: 0
+        label: Test 0
+        tags: tag1
+        subtype: matrix
+        debug: True
+    light_02:
+        number: 1
+        label: Test 1
+        tags: tag1
+        subtype: matrix
+        debug: True
+    light_03:
+        number: 2
+        label: Test 1
+        fade_ms: 1s
+        subtype: matrix
+        debug: True
+    gi_01:
+        number: 0
+        subtype: gi
+    flasher_01:
+        platform: drivers
+        number: flasher_01
+
+coils:
+    coil_01:
+        number: 1
+        default_pulse_ms: 30
+    flasher_01:
+        number: 2
+        label: Test flasher
+        default_pulse_ms: 40
+        max_hold_power: 1.0
+
+shows:
+  leds_name_token:
+    - time: 0
+      lights:
+        (leds): red
+  leds_single_color:
+    - time: 0
+      lights:
+        led_01: (color)
+  leds_color_token:
+    - time: 0
+      lights:
+        led_01: (color1)
+    - time: +1
+      lights:
+        led_02: (color2)
+    - time: +1
+  leds_extended:
+    - time: 0
+      lights:
+        (leds):
+          color: red
+          fade: 1s
+  lights_basic:
+    - time: 0
+      lights:
+        (lights): ff
+  multiple_tokens:
+    - time: 0
+      lights:
+        (leds): blue
+        (lights): ff
+  show_assoc_tokens:
+    - time: 0
+      lights:
+        (line1num): (line1color)
+  show_with_time_and_duration:
+    - time: +1s
+    - time: 5s
+    - time: +1s
+      duration: 1s
+    - lights:
+        led_02: red
+    - time: 10s
+      duration: 3s
+  leds_color_token_and_fade:
+    - time: 0
+      lights:
+        led_01: (color1)
+    - time: +1
+      lights:
+        led_02: (color2)-f900ms
+    - time: +1
+  manual_advance:
+    - duration: -1
+      lights:
+        (leds): red
+    - duration: -1
+      lights:
+        (leds): lime
+    - duration: -1
+      lights:
+        (leds): blue
+  event_show:
+    - duration: 1
+      events:
+        - step1
+    - duration: 1
+      events:
+        - step2
+    - duration: 1
+      events:
+        - step3
+
+show_pools:
+  pool_random:
+    shows:
+      - leds_name_token
+      - leds_single_color
+      - leds_color_token
+      - leds_extended
+    type: random
+  pool_sequence:
+    shows:
+      - multiple_tokens
+      - show_assoc_tokens
+      - leds_color_token_and_fade
+    type: sequence
+  pool_rfn:
+    shows:
+      - lights_basic
+      - show_with_time_and_duration
+      - manual_advance
+      - event_show
+    type: random_force_next
+  pool_rfa:
+    shows:
+      - leds_name_token
+      - leds_single_color
+      - leds_color_token
+      - leds_extended
+      - multiple_tokens
+      - show_assoc_tokens
+      - leds_color_token_and_fade
+      - lights_basic
+      - show_with_time_and_duration
+      - manual_advance
+      - event_show
+    type: random_force_all
+
+show_player:
+  play_pool_random:
+    pool_random:
+      show_tokens:
+        leds: led_01
+        color: blue
+        color1: green
+        color2: yellow
+  stop_pool_random:
+    pool_random: stop
+  play_pool_sequence:
+    pool_sequence:
+      show_tokens:
+        leds: led_01
+        lights: light_01
+        line1num: led_01
+        line1color: red
+        color1: violet
+        color2: orange
+  play_pool_rfn:
+    pool_rfn:
+      show_tokens:
+        lights: light_01
+        leds: led_01
+  play_pool_rfa:
+    pool_rfa:
+      show_tokens:
+        leds: led_01
+        color: blue
+        color1: green
+        color2: yellow
+        lights: light_01
+        line1num: led_01
+        line1color: red

@@ -14,6 +14,7 @@ DMD_MIN_FW = '0.88'
 NET_MIN_FW = '0.88'
 RGB_MIN_FW = '0.87'
 IO_MIN_FW = '0.87'
+SEG_MIN_FW = '0.10'
 
 RETRO_ID = 'FP-SBI-0095-3'
 RETRO_MIN_FW = '1.15'
@@ -186,6 +187,12 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             # latest_version = RGB_LATEST_FW
             self.max_messages_in_flight = self.platform.config['rgb_buffer']
             self.platform.debug_log("Setting RGB buffer size: %s",
+                                    self.max_messages_in_flight)
+        elif self.remote_processor == 'SEG':
+            min_version = SEG_MIN_FW
+            # latest_version = SEG_LATEST_FW
+            self.max_messages_in_flight = self.platform.config['segment_buffer']
+            self.platform.debug_log("Setting SEG buffer size: %s",
                                     self.max_messages_in_flight)
         else:
             raise AttributeError("Unrecognized FAST processor type: {}".format(self.remote_processor))

@@ -111,7 +111,7 @@ class TestVPX(MpfTestCase):
         result = self.read_vpx_response_from_bcp()
         self.assertEqual(result, [['3', '1', True]])
 
-        self.machine.autofires["ac_slingshot_test"].enable()
+        self.machine.autofire_coils["ac_slingshot_test"].enable()
         self.advance_time_and_run(.001)
         self._encode_and_send("get_hardwarerules")
         result = self.read_vpx_response_from_bcp()
