@@ -2,7 +2,7 @@
 import asyncio
 from collections import OrderedDict
 
-from typing import Callable, Tuple, List, Generator
+from typing import Callable, Tuple, List, Generator, Dict
 
 from mpf.core.utility_functions import Util
 from mpf.core.mpf_controller import MpfController
@@ -18,7 +18,7 @@ class DeviceManager(MpfController):
 
     config_name = "device_manager"
 
-    __slots__ = ["_monitorable_devices", "collections", "device_classes"]
+    __slots__ = ["_monitorable_devices", "collections", "_device_classes"]
 
     def __init__(self, machine):
         """Initialize device manager."""
@@ -27,7 +27,7 @@ class DeviceManager(MpfController):
         self._monitorable_devices = {}
 
         self.collections = OrderedDict()
-        self.device_classes = OrderedDict()  # collection_name: device_class
+        self._device_classes = {}           # type: Dict[str, Device]
 
         # this has to happen after mode load
         self.machine.events.add_async_handler('init_phase_1',
@@ -69,32 +69,19 @@ class DeviceManager(MpfController):
         del kwargs
         # step 1: create devices in machine collection
         self.debug_log("Creating devices...")
-        for device_type in self.machine.config['mpf']['device_modules']:
-            device_cls = Util.string_to_class(device_type)      # type: Device
-
-            collection_name, config = device_cls.get_config_info()
-
-            self.device_classes[collection_name] = device_cls
-
+        for collection_name in self.machine.config['mpf']['device_modules'].keys():
             # create the collection
-            collection = DeviceCollection(self.machine, collection_name,
-                                          device_cls.config_section)
+            collection = DeviceCollection(self.machine, collection_name, collection_name)
 
             self.collections[collection_name] = collection
             setattr(self.machine, collection_name, collection)
 
             # Get the config section for these devices
-            config = self.machine.config.get(config, None)
+            config = self.machine.config.get(collection_name, None)
 
             # create the devices
             if config:
                 self.create_devices(collection_name, config)
-
-            # create the default control events
-            try:
-                self._create_default_control_events(collection)
-            except KeyError:
-                pass
 
         self.machine.mode_controller.create_mode_devices()
 
@@ -107,18 +94,18 @@ class DeviceManager(MpfController):
 
     def stop_devices(self):
         """Stop all devices in the machine."""
-        for device_type in self.machine.config['mpf']['device_modules']:
-            device_cls = Util.string_to_class(device_type)
-            collection_name, _ = device_cls.get_config_info()
-            if not hasattr(self.machine, collection_name):
-                continue
-            for device in getattr(self.machine, collection_name).values():
+        for collection in self.collections.values():
+            for device in collection.values():
                 if hasattr(device, "stop_device"):
                     device.stop_device()
 
     def create_devices(self, collection_name, config):
         """Create devices for a collection."""
-        cls = self.device_classes[collection_name]
+        if collection_name not in self._device_classes:
+            cls = self._device_classes[collection_name] = Util.string_to_class(
+                self.machine.config['mpf']['device_modules'][collection_name])
+        else:
+            cls = self._device_classes[collection_name]
 
         collection = getattr(self.machine, collection_name)
 
@@ -129,7 +116,6 @@ class DeviceManager(MpfController):
 
         # create the devices
         for device_name in config:
-
             if not config[device_name] and not cls.allow_empty_configs:
                 self.raise_config_error("Device {}:'{}' has an empty config.".format(collection_name, device_name), 2,
                                         context=collection_name + "." + device_name)
@@ -143,20 +129,15 @@ class DeviceManager(MpfController):
     def load_devices_config(self, validate=True):
         """Load all devices."""
         if validate:
-            for device_type in self.machine.config['mpf']['device_modules']:
-
-                device_cls = Util.string_to_class(device_type)
-
-                collection_name, config_name = device_cls.get_config_info()
-
-                if config_name not in self.machine.config:
+            for collection_name in self.machine.config['mpf']['device_modules'].keys():
+                if collection_name not in self.machine.config:
                     continue
 
                 # Get the config section for these devices
                 collection = getattr(self.machine, collection_name)
-                config = self.machine.config[config_name]
+                config = self.machine.config[collection_name]
                 if not config:
-                    self.machine.config[config_name] = config = {}
+                    self.machine.config[collection_name] = config = {}
                 if not isinstance(config, dict):
                     self.raise_config_error("Format of collection {} is invalid.".format(collection_name), 1)
 
@@ -165,18 +146,13 @@ class DeviceManager(MpfController):
                     config[device_name] = collection[device_name].prepare_config(config[device_name], False)
                     config[device_name] = collection[device_name].validate_and_parse_config(config[device_name], False)
 
-        for device_type in self.machine.config['mpf']['device_modules']:
-
-            device_cls = Util.string_to_class(device_type)
-
-            collection_name, config_name = device_cls.get_config_info()
-
-            if config_name not in self.machine.config:
+        for collection_name in self.machine.config['mpf']['device_modules'].keys():
+            if collection_name not in self.machine.config:
                 continue
 
             # Get the config section for these devices
             collection = getattr(self.machine, collection_name)
-            config = self.machine.config[config_name]
+            config = self.machine.config[collection_name]
 
             # load config
             for device_name in config:
@@ -185,18 +161,13 @@ class DeviceManager(MpfController):
     async def initialize_devices(self):
         """Initialise devices."""
         futures = []
-        for device_type in self.machine.config['mpf']['device_modules']:
-
-            device_cls = Util.string_to_class(device_type)
-
-            collection_name, config_name = device_cls.get_config_info()
-
-            if config_name not in self.machine.config:
+        for collection_name in self.machine.config['mpf']['device_modules'].keys():
+            if collection_name not in self.machine.config:
                 continue
 
             # Get the config section for these devices
             collection = getattr(self.machine, collection_name)
-            config = self.machine.config[config_name]
+            config = self.machine.config[collection_name]
 
             # add machine wide
             for device_name in config:
@@ -277,21 +248,6 @@ class DeviceManager(MpfController):
 
         self.debug_log("_control_event_handler: callback: %s,", callback)
         delay_mgr.add(ms=ms_delay, callback=callback)
-
-    def _create_default_control_events(self, device_list):
-        for device in device_list.values():
-
-            event_prefix = device.class_label + '_' + device.name + '_'
-            event_prefix2 = device.collection + '_'
-
-            for method in (self.machine.config['mpf']['device_events']
-                           [device.config_section]):
-                self.machine.events.add_handler(event=event_prefix + method,
-                                                handler=getattr(device,
-                                                                method))
-                self.machine.events.add_handler(event=event_prefix2 + method,
-                                                handler=getattr(device,
-                                                                method))
 
 
 class DeviceCollection(dict):

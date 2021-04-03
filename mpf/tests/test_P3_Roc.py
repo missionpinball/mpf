@@ -261,7 +261,7 @@ SW-16 boards found:
         coil_number = self.machine.coils["c_slingshot_test"].hw_driver.number
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
         self.wait_for_platform()
-        self.machine.autofires["ac_slingshot_test"].enable()
+        self.machine.autofire_coils["ac_slingshot_test"].enable()
         self.wait_for_platform()
         self.pinproc.switch_update_rule.assert_has_calls([
             call(40, 'open_nondebounced', {'notifyHost': False, 'reloadActive': True}, [], False),
@@ -276,7 +276,7 @@ SW-16 boards found:
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
 
         # test disable
-        self.machine.autofires["ac_slingshot_test"].disable()
+        self.machine.autofire_coils["ac_slingshot_test"].disable()
         self.wait_for_platform()
 
         self.pinproc.switch_update_rule.assert_has_calls([
@@ -292,7 +292,7 @@ SW-16 boards found:
         coil_number = self.machine.coils["c_sling_pulse_power"].hw_driver.number
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
         self.wait_for_platform()
-        self.machine.autofires["ac_sling_pulse_power"].enable()
+        self.machine.autofire_coils["ac_sling_pulse_power"].enable()
         self.wait_for_platform()
         self.pinproc.switch_update_rule.assert_has_calls([
             call(66, 'open_nondebounced', {'notifyHost': False, 'reloadActive': True}, [], False),
@@ -309,7 +309,7 @@ SW-16 boards found:
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
         self.wait_for_platform()
         self.pinproc.switch_update_rule = MagicMock(return_value=True)
-        self.machine.autofires["ac_switch_nc_test"].enable()
+        self.machine.autofire_coils["ac_switch_nc_test"].enable()
         self.wait_for_platform()
         self.pinproc.switch_update_rule.assert_has_calls([
             call(41, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': True}, [], False),
@@ -322,7 +322,7 @@ SW-16 boards found:
         ], any_order=True)
 
         # test disable
-        self.machine.autofires["ac_switch_nc_test"].disable()
+        self.machine.autofire_coils["ac_switch_nc_test"].disable()
         self.wait_for_platform()
         self.pinproc.driver_disable.assert_called_with(coil_number)
 

@@ -31,7 +31,7 @@ class AutofireCoil(SystemWideDevice):
     """
 
     config_section = 'autofire_coils'
-    collection = 'autofires'
+    collection = 'autofire_coils'
     class_label = 'autofire'
 
     __slots__ = ["_enabled", "_rule", "delay", "_ball_search_in_progress", "_timeout_watch_time", "_timeout_max_hits",

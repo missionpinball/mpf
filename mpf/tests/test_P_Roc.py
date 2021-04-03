@@ -420,7 +420,7 @@ class TestPRoc(MpfTestCase):
 
     def _test_hw_rule_pulse(self):
         self.pinproc.switch_update_rule = MagicMock()
-        self.machine.autofires["ac_slingshot_test"].enable()
+        self.machine.autofire_coils["ac_slingshot_test"].enable()
         self.wait_for_platform()
         coil_number = self.machine.coils["c_slingshot_test"].hw_driver.number
         self.pinproc.switch_update_rule.assert_has_calls([
@@ -432,7 +432,7 @@ class TestPRoc(MpfTestCase):
             call(40, 'open_debounced', {'notifyHost': True, 'reloadActive': True}, [], False),
             call(40, 'closed_debounced', {'notifyHost': True, 'reloadActive': True}, [], False),
         ], any_order=True)
-        self.machine.autofires["ac_slingshot_test"].disable()
+        self.machine.autofire_coils["ac_slingshot_test"].disable()
 
     def _test_initial_switches(self):
         self.assertMachineVarEqual(2, "p_roc_version")
@@ -636,7 +636,7 @@ class TestPRoc(MpfTestCase):
 
         # test polarity in rule
         self.pinproc.switch_update_rule = MagicMock()
-        self.machine.autofires["ac_slingshot_test"].enable()
+        self.machine.autofire_coils["ac_slingshot_test"].enable()
         self.wait_for_platform()
         coil_number = self.machine.coils["c_slingshot_test"].hw_driver.number
         self.pinproc.switch_update_rule.assert_has_calls([
@@ -648,7 +648,7 @@ class TestPRoc(MpfTestCase):
             call(47, 'open_debounced', {'notifyHost': True, 'reloadActive': True}, [], False),
             call(47, 'closed_debounced', {'notifyHost': True, 'reloadActive': True}, [], False),
         ], any_order=True)
-        self.machine.autofires["ac_slingshot_test"].disable()
+        self.machine.autofire_coils["ac_slingshot_test"].disable()
 
     @test_config("snux.yaml")
     def test_load_snux(self):
