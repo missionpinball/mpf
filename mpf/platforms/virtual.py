@@ -318,6 +318,7 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
         super().__init__(number)
         self.text = ''
         self.flashing = FlashingType.NO_FLASH
+        self.colors = 'FFFFFF'
 
     def set_text(self, text: str, flashing: FlashingType):
         """Set text."""

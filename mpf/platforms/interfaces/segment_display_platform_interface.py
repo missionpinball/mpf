@@ -89,6 +89,6 @@ class ColorSegmentDisplayPlatformInterface(SegmentDisplayPlatformInterface):
         super().__init__(number)
 
     @abc.abstractmethod
-    def set_color(self, color: Any) -> None:
-        """Set the color of the display."""
+    def set_color(self, colors: Any) -> None:
+        """Set the color(s) of the display."""
         raise NotImplementedError
