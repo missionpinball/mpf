@@ -99,8 +99,11 @@ class ConfigValidator:
         if '_mode_settings' not in self.config_spec:
             self.config_spec['_mode_settings'] = {}
         if mode_string not in self.config_spec['_mode_settings']:
-            config = YamlInterface.process(config_spec)
-            self.config_spec['_mode_settings'][mode_string] = self._process_config_spec(config, mode_string)
+            if isinstance(config_spec, dict):
+                self.config_spec['_mode_settings'][mode_string] = self._process_config_spec(config_spec, mode_string)
+            else:
+                config = YamlInterface.process(config_spec)
+                self.config_spec['_mode_settings'][mode_string] = self._process_config_spec(config, mode_string)
 
     def _process_config_spec(self, spec, path):
         if not isinstance(spec, dict):

@@ -336,7 +336,7 @@ class SpikePlatformTest(MpfTestCase):
             self._checksummed_cmd(b'\x88\x19\x41\x0a\x7f\x0c\x00\x00\x00\x00\x00\x00\x00'
                                   b'\x00\x00\x00\x00\x00\x00\x00\x44\x00\x00\x00\x00\x00'): b''
         }
-        self.machine.autofires["ac_pops"].enable()
+        self.machine.autofire_coils["ac_pops"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -344,7 +344,7 @@ class SpikePlatformTest(MpfTestCase):
             self._checksummed_cmd(b'\x88\x19\x41\x0a\x00\x00\x00\x00\x00\x00\x00\x00\x00'
                                   b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'): b''
         }
-        self.machine.autofires["ac_pops"].disable()
+        self.machine.autofire_coils["ac_pops"].disable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -353,7 +353,7 @@ class SpikePlatformTest(MpfTestCase):
             self._checksummed_cmd(b'\x88\x19\x41\x0a\x7f\x0c\x00\x00\x00\x00\x00\x00\x00'
                                   b'\x00\x00\x00\x00\x00\x00\x00\x05\x00\x00\x00\x00\x00'): b''
         }
-        self.machine.autofires["ac_pops2"].enable()
+        self.machine.autofire_coils["ac_pops2"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -361,7 +361,7 @@ class SpikePlatformTest(MpfTestCase):
             self._checksummed_cmd(b'\x88\x19\x41\x0a\x00\x00\x00\x00\x00\x00\x00\x00\x00'
                                   b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'): b''
         }
-        self.machine.autofires["ac_pops2"].disable()
+        self.machine.autofire_coils["ac_pops2"].disable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -900,7 +900,7 @@ class SpikePlatformFirmware0_49Test(MpfTestCase):
                                   b'\x00\x00\x00\x44\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'): b'',
             self._checksummed_cmd(b'\x88\x05\x70\x04\x02\x02'): b'',  # set debounce
         }
-        self.machine.autofires["ac_pops"].enable()
+        self.machine.autofire_coils["ac_pops"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -908,7 +908,7 @@ class SpikePlatformFirmware0_49Test(MpfTestCase):
             self._checksummed_cmd(b'\x88\x24\x41\x0a\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
                                   b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'): b''
         }
-        self.machine.autofires["ac_pops"].disable()
+        self.machine.autofire_coils["ac_pops"].disable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -918,7 +918,7 @@ class SpikePlatformFirmware0_49Test(MpfTestCase):
                                   b'\x00\x00\x00\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'): b'',
             self._checksummed_cmd(b'\x88\x05\x70\x05\x02\x02'): b'',  # set debounce
         }
-        self.machine.autofires["ac_pops2"].enable()
+        self.machine.autofire_coils["ac_pops2"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -926,7 +926,7 @@ class SpikePlatformFirmware0_49Test(MpfTestCase):
             self._checksummed_cmd(b'\x88\x24\x41\x0a\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
                                   b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'): b'',
         }
-        self.machine.autofires["ac_pops2"].disable()
+        self.machine.autofire_coils["ac_pops2"].disable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.serialMock.expected_commands)
 
