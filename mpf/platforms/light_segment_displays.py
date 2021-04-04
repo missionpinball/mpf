@@ -1,6 +1,7 @@
 """Segment displays on light drivers."""
 import logging
 from typing import List
+
 from mpf.core.segment_mappings import SEVEN_SEGMENTS, BCD_SEGMENTS, FOURTEEN_SEGMENTS, SIXTEEN_SEGMENTS
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
 from mpf.core.platform import SegmentDisplaySoftwareFlashPlatform
@@ -11,7 +12,7 @@ class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
 
     """Segment display which drives lights."""
 
-    __slots__ = ["_lights", "_key", "_segment_map"]
+    __slots__ = ["_lights", "_key", "_segment_map", "_current_text", "_current_colors"]
 
     def __init__(self, number, lights, segment_type):
         """Initialise segment display."""
@@ -29,14 +30,29 @@ class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
             raise AssertionError("Invalid segment type {}".format(segment_type))
 
         self._key = "segment_display_{}".format(number)
+        self._current_text = ""
+        self._current_colors = [RGBColor("white")] * len(self._lights)
+
+    def set_color(self, colors: List[RGBColor]):
+        """Set colors."""
+        colors = colors[-len(self._lights):]
+        colors += [colors[-1]] * (len(self._lights) - len(colors))
+        if colors != self._current_colors:
+            self._current_colors = colors
+            self._update_text()
 
     def _set_text(self, text: str) -> None:
         """Set text to lights."""
         # get the last chars for the number of chars we have
         text = text[-len(self._lights):]
         text = text.zfill(len(self._lights))
+        if text != self._current_text:
+            self._current_text = text
+            self._update_text()
+
+    def _update_text(self):
         # iterate lights and chars
-        for char, lights_for_char in zip(text, self._lights):
+        for char, lights_for_char, color in zip(self._current_text, self._lights, self._current_colors):
             try:
                 char_map = self._segment_map[ord(char)]
             except KeyError:
@@ -44,13 +60,9 @@ class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
                 char_map = self._segment_map[None]
             for name, light in lights_for_char.items():
                 if getattr(char_map, name):
-                    light.on(key=self._key)
+                    light.color(color=color, key=self._key)
                 else:
                     light.remove_from_stack_by_key(key=self._key)
-
-    def set_color(self, colors: List[RGBColor]) -> None:
-        """Set the color(s) of the display."""
-        raise NotImplementedError
 
 
 class LightSegmentDisplaysPlatform(SegmentDisplaySoftwareFlashPlatform):
