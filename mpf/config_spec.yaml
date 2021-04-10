@@ -280,7 +280,7 @@ coils:
     allow_enable: single|bool|false
     number: single|str|
     default_recycle: single|bool|None
-    default_pulse_ms: single|ms|None
+    default_pulse_ms: single|template_ms|None
     default_pulse_power: single|float(0,1)|None
     default_hold_power: single|float(0,1)|None
     max_pulse_ms: single|ms|None
