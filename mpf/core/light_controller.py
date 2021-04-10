@@ -83,7 +83,8 @@ class LightController(MpfController):
 
         # add setting for brightness
         self.machine.settings.add_setting(SettingEntry("brightness", "Brightness", 100, "brightness", 1.0,
-                                                       {0.25: "25%", 0.5: "50%", 0.75: "75%", 1.0: "100% (default)"}))
+                                                       {0.25: "25%", 0.5: "50%", 0.75: "75%", 1.0: "100% (default)"},
+                                                       "standard"))
 
     def monitor_lights(self):
         """Update the color of lights for the monitor."""

@@ -153,7 +153,8 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.hit_and_release_switch("s_service_esc")
         self.advance_time_and_run(.1)
         self.assertMachineVarEqual(2, "credit_units")
-        self.assertEqual({'service_credit': {'total_value': 2, 'count': 2}}, self.machine.modes["credits"].earnings)
+        self.assertEqual({'1 Total Coins service_credit': 2, '2 Total Earnings service_credit': 2},
+                         self.machine.modes["credits"].earnings)
 
         self.start_game()
         self.hit_and_release_switch("s_service_up")
@@ -510,9 +511,9 @@ class TestServiceMode(MpfFakeGameTestCase):
     def test_settings(self):
         self.machine.settings._settings = {}
         self.machine.settings.add_setting(SettingEntry("test1", "Test1", 1, "test1", "b",
-                                                       {"a": "A", "b": "B (default)", "c": "C"}))
+                                                       {"a": "A", "b": "B (default)", "c": "C"}, "standard"))
         self.machine.settings.add_setting(SettingEntry("test2", "Test2", 2, "test2", False,
-                                                       {True: "Yes", False: "No (default)"}))
+                                                       {True: "Yes", False: "No (default)"}, "standard"))
         self.mock_event("service_settings_start")
         self.mock_event("service_settings_edit")
         self.mock_event("service_settings_stop")

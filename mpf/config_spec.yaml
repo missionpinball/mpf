@@ -280,7 +280,7 @@ coils:
     allow_enable: single|bool|false
     number: single|str|
     default_recycle: single|bool|None
-    default_pulse_ms: single|ms|None
+    default_pulse_ms: single|template_ms|None
     default_pulse_power: single|float(0,1)|None
     default_hold_power: single|float(0,1)|None
     max_pulse_ms: single|ms|None
@@ -382,6 +382,7 @@ credits_switches:
     switch: single|machine(switches)|None
     value: single|template_float|0.25
     type: single|str|money
+    label: single|str|None
 credits_events:
     event: single|event_handler|None
     credits: single|template_float|0.25
@@ -1336,6 +1337,7 @@ settings:
     key_type: single|enum(str,float,int)|str
     default: single|str|
     machine_var: single|str|None
+    settingType: single|str|standard
 shots:
     __valid_in__: mode
     __type__: device
