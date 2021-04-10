@@ -959,6 +959,7 @@ mpf:
     plugins: ignore
     platforms: ignore
     paths: ignore
+    report_crashes: single|enum(ask,never,always)|ask
 mpf-mc:
     __valid_in__: machine                           # todo add to validator
     __type__: config
