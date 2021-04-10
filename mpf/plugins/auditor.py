@@ -134,7 +134,7 @@ class Auditor:
         self._set_machine_variables()
         self._save_audits()
 
-    def audit(self, audit_class, event, **kwargs):
+    def audit(self, audit_class, event, value=None, **kwargs):
         """Log an auditable event.
 
         Args:
@@ -142,6 +142,7 @@ class Auditor:
             audit_class: A string of the section we want this event to be
                 logged to.
             event: A string name of the event we're auditing.
+            value: If you specify a value the audit will be set to this value. Otherwise it will be incremented by one.
             **kwargs: Not used, but included since some of the audit events
                 might include random kwargs.
         """
@@ -153,10 +154,27 @@ class Auditor:
         if event not in self.current_audits[audit_class]:
             self.current_audits[audit_class][event] = 0
 
-        self.current_audits[audit_class][event] += 1
+        if value is None:
+            self.current_audits[audit_class][event] += 1
+        else:
+            self.current_audits[audit_class][event] = value
         self.machine.variables.set_machine_var("audits_{}_{}".format(audit_class, event),
                                                self.current_audits[audit_class][event])
         self._save_audits()
+
+    def get_audit(self, audit_class, event, **kwargs):
+        """Return an auditable event or create one if it does not exist.
+
+        Args:
+        ----
+            audit_class: A string of the section we want this event to be
+                logged to.
+            event: A string name of the event we're auditing.
+            **kwargs: Not used, but included since some of the audit events
+                might include random kwargs.
+        """
+        del kwargs
+        return self.current_audits.get(audit_class, {}).get(event, 0)
 
     def audit_switch(self, change: MonitoredSwitchChange):
         """Record switch change."""
@@ -179,7 +197,6 @@ class Auditor:
                 kwargs.
         """
         del kwargs
-
         self.current_audits['events'][eventname] += 1
         self._save_audits()
 

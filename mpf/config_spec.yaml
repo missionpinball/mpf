@@ -382,6 +382,7 @@ credits_switches:
     switch: single|machine(switches)|None
     value: single|template_float|0.25
     type: single|str|money
+    label: single|str|None
 credits_events:
     event: single|event_handler|None
     credits: single|template_float|0.25

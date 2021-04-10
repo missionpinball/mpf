@@ -57,7 +57,7 @@ class Credits(Mode):
         # add setting
         self.machine.settings.add_setting(SettingEntry("free_play", "Free Play", 500,
                                                        "free_play", self.credits_config['free_play'],
-                                                       {True: "Free Play", False: "Credit Play"}, "standard"))
+                                                       {True: "Free Play", False: "Credit Play"}, "coin"))
 
     def mode_start(self, **kwargs):
         """Start mode."""
@@ -333,16 +333,28 @@ class Credits(Mode):
 
     def _player_added(self, **kwargs):
         del kwargs
-        new_credit_units = (self._get_credit_units() -
-                            self.credit_units_per_game)
+        if self.machine.settings.get_setting_value('free_play'):
+            self._audit_increment_non_coin(1, audit_class='4 Total Free Games')
+        else:
+            self._audit_increment_non_coin(1, audit_class='3 Total Paid Games')
 
-        if new_credit_units < 0:
-            self.warning_log("Somehow credit units went below 0?!? Resetting "
-                             "to 0.")
-            new_credit_units = 0
+            new_credit_units = (self._get_credit_units() -
+                                self.credit_units_per_game)
 
-        self.machine.variables.set_machine_var('credit_units', new_credit_units)
-        self._update_credit_strings()
+            if new_credit_units < 0:
+                self.warning_log("Somehow credit units went below 0?!? Resetting "
+                                 "to 0.")
+                new_credit_units = 0
+
+            self.machine.variables.set_machine_var('credit_units', new_credit_units)
+            self._update_credit_strings()
+        total_paid = self._get_audit_non_coin('3 Total Paid Games')
+        total_free = self._get_audit_non_coin('4 Total Free Games')
+        total_all = total_paid + total_free
+        free_percentage = "{:.2%}".format(total_free / total_all)
+        paid_percentage = "{:.2%}".format(total_paid / total_all)
+        self._audit_set_non_coin(free_percentage, audit_class='5 Free Games Percentage')
+        self._audit_set_non_coin(paid_percentage, audit_class='6 Paid Games Percentage')
 
     def _enable_credit_handlers(self):
         for switch_settings in self.credits_config['switches']:
@@ -350,7 +362,8 @@ class Credits(Mode):
                 switch=switch_settings['switch'],
                 callback=self._credit_switch_callback,
                 callback_kwargs={'value': switch_settings['value'].evaluate([]),
-                                 'audit_class': switch_settings['type']})
+                                 'audit_class': switch_settings['type'],
+                                 'key_name': switch_settings['label']})
 
         for switch in self.credits_config['service_credits_switch']:
             self.machine.switch_controller.add_switch_handler_obj(
@@ -377,10 +390,10 @@ class Credits(Mode):
                 switch_name=switch.name,
                 callback=self._service_credit_callback)
 
-    def _credit_switch_callback(self, value, audit_class):
-        self.info_log("Credit switch hit. Credit Added. Value: %s. Type: %s", value, audit_class)
+    def _credit_switch_callback(self, value, audit_class, key_name):
+        self.info_log("Credit switch hit. Credit Added. Value: %s. Type: %s keyName: %s", value, audit_class, key_name)
         self._add_credit_units(credit_units=value / self.credit_unit)
-        self._audit(value, audit_class)
+        self._audit(value, audit_class, key_name)
         self._reset_timeouts()
 
     # credits is a built-in in python
@@ -494,14 +507,56 @@ class Credits(Mode):
         self.machine.variables.set_machine_var('credits_numerator', numerator)
         self.machine.variables.set_machine_var('credits_denominator', denominator)
 
-    def _audit(self, value, audit_class):
+    def _get_audit_non_coin(self, audit_class):
         if audit_class not in self.earnings:
             self.earnings[audit_class] = dict()
-            self.earnings[audit_class]['total_value'] = 0
-            self.earnings[audit_class]['count'] = 0
+            self.earnings[audit_class] = 0
+        return self.earnings[audit_class]
 
-        self.earnings[audit_class]['total_value'] += value
-        self.earnings[audit_class]['count'] += 1
+    def _audit_increment_non_coin(self, value, audit_class):
+        # create file if it does not exist
+        if audit_class not in self.earnings:
+            self.earnings[audit_class] = dict()
+            self.earnings[audit_class] = value
+        else:
+            self.earnings[audit_class] += value
+        self.data_manager.save_all(data=self.earnings)
+
+    def _audit_set_non_coin(self, value, audit_class):
+        # create file if it does not exist
+        if audit_class not in self.earnings:
+            self.earnings[audit_class] = dict()
+        self.earnings[audit_class] = value
+        self.data_manager.save_all(data=self.earnings)
+
+    def _audit(self, value, audit_class, key_name=None):
+        self.info_log("Credit audits. Value: %s. Type: %s keyName: %s", value, audit_class, key_name)
+        # increment default audits
+        one = '1 Total Coins ' + audit_class
+        if one not in self.earnings:
+            self.earnings[one] = 1
+        else:
+            self.earnings[one] += 1
+
+        two = '2 Total Earnings ' + audit_class
+        if two not in self.earnings:
+            self.earnings[two] = value
+        else:
+            self.earnings[two] += value
+
+        # increment keyed audits
+        if key_name is not None:
+            key_count = key_name + ' Coins ' + audit_class
+            if key_count not in self.earnings:
+                self.earnings[key_count] = 1
+            else:
+                self.earnings[key_count] += 1
+
+            key_val = key_name + ' Earnings ' + audit_class
+            if key_val not in self.earnings:
+                self.earnings[key_val] = value
+            else:
+                self.earnings[key_val] += value
 
         self.data_manager.save_all(data=self.earnings)
 
