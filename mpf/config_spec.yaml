@@ -1336,6 +1336,7 @@ settings:
     key_type: single|enum(str,float,int)|str
     default: single|str|
     machine_var: single|str|None
+    settingType: single|str|standard
 shots:
     __valid_in__: mode
     __type__: device

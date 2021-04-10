@@ -2,6 +2,7 @@
 import subprocess
 import os
 from collections import namedtuple
+from functools import partial
 
 from typing import List
 
@@ -158,7 +159,10 @@ software_update_script: single|str|None
     def _load_adjustments_menu_entries(self) -> List[ServiceMenuEntry]:
         """Return the adjustments menu items with label and callback."""
         return [
-            ServiceMenuEntry("Standard Adjustments", self._settings_menu),
+            ServiceMenuEntry("Standard Adjustments", partial(self._settings_menu, "standard")),
+            ServiceMenuEntry("Feature Adjustments", partial(self._settings_menu, "feature")),
+            ServiceMenuEntry("Game Adjustments", partial(self._settings_menu, "game")),
+            ServiceMenuEntry("Coin Adjustments", partial(self._settings_menu, "coin")),
         ]
 
     async def _adjustments_menu(self):
@@ -417,9 +421,9 @@ software_update_script: single|str|None
                                  settings_label=setting.label,
                                  value_label=label)
 
-    async def _settings_menu(self):
+    async def _settings_menu(self, settings_type):
         position = 0
-        items = self.machine.settings.get_settings()
+        items = self.machine.settings.get_settings(settings_type)
 
         # do not crash if no settings
         if not items:   # pragma: no cover

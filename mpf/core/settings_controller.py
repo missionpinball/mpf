@@ -7,7 +7,7 @@ from mpf.core.utility_functions import Util
 
 from mpf.core.mpf_controller import MpfController
 
-SettingEntry = namedtuple("SettingEntry", ["name", "label", "sort", "machine_var", "default", "values"])
+SettingEntry = namedtuple("SettingEntry", ["name", "label", "sort", "machine_var", "default", "values", "settingType"])
 
 
 class SettingsController(MpfController):
@@ -21,11 +21,9 @@ class SettingsController(MpfController):
     def __init__(self, machine):
         """Initialise settings controller."""
         super().__init__(machine)
-
         # start with default settings
         self._settings = {}     # type: Dict[str, SettingEntry]
         """Dictionary of available settings."""
-
         self._add_entries_from_config()
 
     def _add_entries_from_config(self):
@@ -43,16 +41,21 @@ class SettingsController(MpfController):
             # convert default key
             settings['default'] = Util.convert_to_type(settings['default'], settings['key_type'])
 
-            self.add_setting(SettingEntry(name, settings['label'], settings['sort'], settings['machine_var'],
-                                          settings['default'], values))
+            self.add_setting(SettingEntry(name,
+                                          settings['label'],
+                                          settings['sort'],
+                                          settings['machine_var'],
+                                          settings['default'],
+                                          values,
+                                          settings['settingType']))
 
     def add_setting(self, setting: SettingEntry):
         """Add a setting."""
         self._settings[setting.name] = setting
 
-    def get_settings(self) -> List[SettingEntry]:
+    def get_settings(self, setting_type="standard") -> List[SettingEntry]:
         """Return all available settings."""
-        sorted_list = list(self._settings.values())
+        sorted_list = list(filter(lambda x: x.settingType == setting_type, self._settings.values()))
         sorted_list.sort(key=lambda x: x.sort)
         return sorted_list
 
