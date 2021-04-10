@@ -1,0 +1,8 @@
+Running
+-------
+
+Inside your machine folder:
+
+py-afl-fuzz -i in/ -o out/ -m 4096 -- python3 /path/to/mpf/tools/afl_fuzz.py -b -G -v -w 5 machine
+
+
