@@ -62,8 +62,8 @@ class TestTwitchClient(MpfFakeGameTestCase):
         event = MockEvent("pubmsg", "some_user", "bot", ["Hello Bot"], tags)
         self.machine.plugins[0].client.on_pubmsg("some_channel", event)
         self.advance_time_and_run(.1)
-        self.assertEventCalledWith("twitch_chat_message", line_1='Hello Bot', line_2='', line_3='', line_4='',
-                                   line_5='', line_6='', line_count=1, message='Hello Bot', user='Some User')
+        self.assertEventCalledWith("twitch_chat_message", is_command=False, line_1='Hello Bot', line_2='', line_3='',
+                                   line_4='', line_5='', line_6='', line_count=1, message='Hello Bot', user='Some User')
         self.assertMachineVarEqual("Some User", "twitch_last_chat_user")
         self.assertMachineVarEqual("Hello Bot", "twitch_last_chat_message")
 
