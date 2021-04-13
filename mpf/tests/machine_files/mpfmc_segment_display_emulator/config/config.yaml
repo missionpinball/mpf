@@ -20,3 +20,8 @@ segment_displays:
     number: 6
     platform_settings:
       character_count: 7
+
+segment_display_player:
+  update_display2:
+    display2:
+      text: "NEW TEXT"
