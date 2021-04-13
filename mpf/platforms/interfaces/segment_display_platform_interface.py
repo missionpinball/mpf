@@ -23,22 +23,6 @@ class SegmentDisplayPlatformInterface(metaclass=abc.ABCMeta):
         """Remember the number."""
         self.number = number
 
-    @classmethod
-    def get_segment_display_config_section(cls) -> Optional[str]:
-        """Return addition config section for segment displays."""
-        return None
-
-    def validate_segment_display_section(self, segment_display, config) -> dict:
-        """Validate segment display config for platform."""
-        if self.get_segment_display_config_section():
-            spec = self.get_segment_display_config_section()   # pylint: disable-msg=assignment-from-none
-            config = segment_display.machine.config_validator.validate_config(spec, config, segment_display.name)
-        elif config:
-            raise AssertionError("No platform_config supported but not empty {} for segment display {}".
-                                 format(config, segment_display.name))
-
-        return config
-
     @abc.abstractmethod
     def set_text(self, text: str, flashing: FlashingType, platform_options: dict = None) -> None:
         """Set a text to the display.
@@ -48,9 +32,13 @@ class SegmentDisplayPlatformInterface(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def set_color(self, colors: Any) -> None:
+        """Set the color(s) of the display."""
+        raise NotImplementedError
+
 
 class SegmentDisplaySoftwareFlashPlatformInterface(SegmentDisplayPlatformInterface):
-
     """SegmentDisplayPlatformInterface with software emulation for flashing."""
 
     __slots__ = ["_flash_on", "_flashing", "_text"]
@@ -94,9 +82,4 @@ class SegmentDisplaySoftwareFlashPlatformInterface(SegmentDisplayPlatformInterfa
     @abc.abstractmethod
     def _set_text(self, text: str) -> None:
         """Set a text to the display."""
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def set_color(self, colors: Any) -> None:
-        """Set the color(s) of the display."""
         raise NotImplementedError

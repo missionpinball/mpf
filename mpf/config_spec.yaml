@@ -747,9 +747,6 @@ light_segment_displays:
     __valid_in__: machine
     __type__: config
     display_flash_frequency: single|float|1.0
-light_segment_displays_device:
-    lights: list|dict(str:machine(lights))|
-    type: single|enum(7segment,bcd,14segment,16segment)|
 light_stripes:
     __valid_in__: machine
     __type__: device
@@ -1298,6 +1295,11 @@ segment_displays:
     number: single|str|
     platform: single|str|None
     platform_settings: single|dict|None
+mpfmc_segment_displays:
+    character_count: single|int_or_token|
+light_segment_displays_device:
+    lights: list|dict(str:machine(lights))|
+    type: single|enum(7segment,bcd,14segment,16segment)|
 segment_display_player:
     __valid_in__: machine, mode, show
     __type__: config_player
@@ -1308,8 +1310,6 @@ segment_display_player:
     key: single|str|None
     expire: single|ms_or_token|None
     platform_options: single|dict|None
-mpfmc_segment_display:
-    character_count: single|int_or_token|
 servo_controllers:
     __valid_in__: machine
     __type__: config

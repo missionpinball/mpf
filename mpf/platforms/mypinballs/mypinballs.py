@@ -1,5 +1,6 @@
 """Mypinballs hardware platform."""
 import re
+from typing import Any
 
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface, FlashingType
 
@@ -39,6 +40,10 @@ class MyPinballsSegmentDisplay(SegmentDisplayPlatformInterface):
                 cmd = b'1:'
             cmd += bytes([ord(str(self.number))]) + b':' + text.encode() + b'\n'
         self.platform.send_cmd(cmd)
+
+    def set_color(self, colors: Any) -> None:
+        """Set the color(s) of the display."""
+        raise NotImplementedError
 
 
 class MyPinballsHardwarePlatform(SegmentDisplayPlatform):
