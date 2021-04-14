@@ -1295,8 +1295,8 @@ segment_displays:
     number: single|str|
     platform: single|str|None
     platform_settings: single|dict|None
-mpfmc_segment_displays:
-    character_count: single|int_or_token|
+virtual_segment_displays:
+    post_update_events: single|bool|false
 light_segment_displays_device:
     lights: list|dict(str:machine(lights))|
     type: single|enum(7segment,bcd,14segment,16segment)|

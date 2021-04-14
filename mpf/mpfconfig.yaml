@@ -126,7 +126,6 @@ mpf:
         light_segment_displays: mpf.platforms.light_segment_displays.LightSegmentDisplaysPlatform
         pin2dmd: mpf.platforms.pin2dmd.Pin2DmdHardwarePlatform
         visual_pinball_engine: mpf.platforms.visual_pinball_engine.visual_pinball_engine.VisualPinballEnginePlatform
-        mpfmc_segment_display_emulator: mpf.platforms.mpfmc_segment_display_emulator.MpfMcSegmentDisplayEmulatorPlatform
 
     paths:
         scriptlets: scriptlets

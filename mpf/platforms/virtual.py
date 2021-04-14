@@ -265,10 +265,14 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         del name
         return VirtualDmd()
 
+    @classmethod
+    def get_segment_display_config_section(cls) -> Optional[str]:
+        """Return addition config section for segment displays."""
+        return "virtual_segment_display"
+
     async def configure_segment_display(self, number: str, platform_settings) -> SegmentDisplayPlatformInterface:
         """Configure segment display."""
-        del platform_settings
-        return VirtualSegmentDisplay(number)
+        return VirtualSegmentDisplay(number, platform_settings, self.machine)
 
     async def configure_i2c(self, number: str) -> "I2cPlatformInterface":
         """Configure virtual i2c device."""
@@ -315,25 +319,41 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
 
     """Virtual segment display."""
 
-    __slots__ = ["text", "flashing", "platform_options", "colors"]
+    __slots__ = ["text", "flashing", "platform_options", "colors", "machine", "post_update_events"]
 
-    def __init__(self, number) -> None:
+    def __init__(self, number, platform_options, machine) -> None:
         """Initialise virtual segment display."""
         super().__init__(number)
+        self.machine = machine
         self.text = ''
         self.flashing = FlashingType.NO_FLASH
         self.colors = 'FFFFFF'
-        self.platform_options = None
+        self.platform_options = platform_options
+        if self.platform_options and 'post_update_events' in self.platform_options:
+            self.post_update_events = self.platform_options['post_update_events']
+        else:
+            self.post_update_events = False
 
     def set_text(self, text: str, flashing: FlashingType, platform_options: dict = None):
         """Set text."""
         self.text = text
         self.flashing = flashing
         self.platform_options = platform_options
+        self._post_update_event()
 
     def set_color(self, colors: any) -> None:
         """Set color(s)."""
         self.colors = colors
+        self._post_update_event()
+
+    def _post_update_event(self):
+        if self.post_update_events:
+            self.machine.events.post(event="update_segment_display",
+                                     callback=None,
+                                     number=self.number,
+                                     text=self.text,
+                                     flashing=self.flashing,
+                                     color=self.colors)
 
 
 class VirtualSound(HardwareSoundPlatformInterface):
