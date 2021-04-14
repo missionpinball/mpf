@@ -29,7 +29,7 @@ class Driver(SystemWideDevice):
     collection = 'coils'
     class_label = 'coil'
 
-    __slots__ = ["hw_driver", "delay", "platform", "__dict__"]
+    __slots__ = ["hw_driver", "delay", "platform", "__dict__", "_pulse_ms"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise driver."""
@@ -37,6 +37,7 @@ class Driver(SystemWideDevice):
         super().__init__(machine, name)
         self.delay = DelayManager(self.machine)
         self.platform = None                # type: Optional[DriverPlatform]
+        self._pulse_ms = None
 
     @classmethod
     def device_class_init(cls, machine: MachineController):
@@ -74,9 +75,19 @@ class Driver(SystemWideDevice):
         config['platform_settings'] = platform.validate_coil_section(self, config.get('platform_settings', None))
         return config
 
+    def _calculate_pulse_ms_placeholder(self, *args):
+        del args
+        if self.config['default_pulse_ms'] is not None:
+            self._pulse_ms, future = self.config['default_pulse_ms'].evaluate_and_subscribe({})
+            future.add_done_callback(self._calculate_pulse_ms_placeholder)
+        else:
+            self._pulse_ms = self.machine.config['mpf']['default_pulse_ms']
+
     async def _initialize(self):
         await super()._initialize()
         self.platform = self.machine.get_platform_sections('coils', self.config['platform'])
+
+        self._calculate_pulse_ms_placeholder()
 
         config = DriverConfig(
             name=self.name,
@@ -159,10 +170,7 @@ class Driver(SystemWideDevice):
         """
         assert self.platform is not None
         if pulse_ms is None:
-            if self.config['default_pulse_ms'] is not None:
-                pulse_ms = self.config['default_pulse_ms']
-            else:
-                pulse_ms = self.machine.config['mpf']['default_pulse_ms']
+            pulse_ms = self._pulse_ms
 
         if not isinstance(pulse_ms, int):
             raise AssertionError("Wrong type {}".format(pulse_ms))

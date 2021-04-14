@@ -94,7 +94,10 @@ class TestCreditsMode(MpfTestCase):
         self.machine_run()
 
         self.assertEqual("CREDITS 1/2", self.machine.variables.get_machine_var('credits_string'))
-        self.assertEqual(0.25, self.machine.modes["credits"].earnings["money"]["total_value"])
+        self.assertEqual(1, self.machine.modes["credits"].earnings["1 Total Coins money"])
+        self.assertEqual(0.25, self.machine.modes["credits"].earnings["2 Total Earnings money"])
+        self.assertEqual(1, self.machine.modes["credits"].earnings["Left Quarter Coins money"])
+        self.assertEqual(0.25, self.machine.modes["credits"].earnings["Left Quarter Earnings money"])
         self.assertMachineVarEqual(1.0, "credit_units")
 
         self.assertMachineVarEqual(0.5, "price_per_game_raw_0")
@@ -109,7 +112,7 @@ class TestCreditsMode(MpfTestCase):
         self.machine_run()
 
         self.assertEqual("CREDITS 1", self.machine.variables.get_machine_var('credits_string'))
-        self.assertEqual(0.5, self.machine.modes["credits"].earnings["money"]["total_value"])
+        self.assertEqual(0.5, self.machine.modes["credits"].earnings["2 Total Earnings money"])
 
         # one is enough for a game
         self.start_game(True)
@@ -123,14 +126,14 @@ class TestCreditsMode(MpfTestCase):
         self.hit_and_release_switch("s_right_coin")
         self.machine_run()
         self.assertEqual("CREDITS 2", self.machine.variables.get_machine_var('credits_string'))
-        self.assertEqual(1.5, self.machine.modes["credits"].earnings["money"]["total_value"])
+        self.assertEqual(1.5, self.machine.modes["credits"].earnings["2 Total Earnings money"])
 
         # no more price tier after game
         self.hit_and_release_switch("s_left_coin")
         self.hit_and_release_switch("s_left_coin")
         self.machine_run()
         self.assertEqual("CREDITS 3", self.machine.variables.get_machine_var('credits_string'))
-        self.assertEqual(2.0, self.machine.modes["credits"].earnings["money"]["total_value"])
+        self.assertEqual(2.0, self.machine.modes["credits"].earnings["2 Total Earnings money"])
 
         self.post_event("earnings_reset")
         self.advance_time_and_run(.1)

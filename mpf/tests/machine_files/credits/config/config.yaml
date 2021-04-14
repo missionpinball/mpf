@@ -82,12 +82,15 @@ credits:
     - switch: s_left_coin
       type: money
       value: .25
+      label: Left Quarter
     - switch: s_center_coin
       type: money
       value: .25
+      label: Center Quarter
     - switch: s_right_coin
       type: money
       value: 1
+      label: Right Dollar
   events:
     - event: game_ending{current_player.score > settings.replay_score}
       type: award

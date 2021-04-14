@@ -21,7 +21,7 @@ class Match(AsyncMode):
         self.machine.settings.add_setting(SettingEntry("match_percentage", "Match percentage", 500,
                                                        "match_percentage", 10,
                                                        {0: "off", 2: "2%", 5: "5%", 10: "10%", 15: "15%", 30: "30%",
-                                                        50: "50%"}))
+                                                        50: "50%"}, "standard"))
 
     def _get_match_numbers(self):
         """Calculate match numbers."""

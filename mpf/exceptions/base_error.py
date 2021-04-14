@@ -19,6 +19,18 @@ class BaseError(AssertionError):
             self._url_name = logger_name
         super().__init__(message)
 
+    def get_error_no(self):
+        """Return error no."""
+        return self._error_no
+
+    def get_context(self):
+        """Return error no."""
+        return self._context
+
+    def get_logger_name(self):
+        """Return error no."""
+        return self._logger_name
+
     def get_short_name(self):
         """Return short name."""
         raise NotImplementedError
