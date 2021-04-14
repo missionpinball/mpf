@@ -39,8 +39,8 @@ class SegmentDisplay(SystemWideDevice):
         self.platform_options = None           # type: Optional[dict]
 
     async def _initialize(self):
-        await super()._initialize()
         """Initialise display."""
+        await super()._initialize()
         # load platform
         self.platform = self.machine.get_platform_sections('segment_displays', self.config['platform'])
         self.platform.assert_has_feature("segment_displays")
