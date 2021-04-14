@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 
 from mpf.core.rgb_color import RGBColor
 from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
@@ -257,5 +257,7 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.machine.events.add_handler("update_segment_display", self.handler)
 
         self.post_event("test_update_events")
-        self.advance_time_and_run(.1)
-        self.handler.assert_called_with(number="3", text="UPDATE", color=[(255, 0, 0)], flashing=FlashingType.NO_FLASH)
+        self.advance_time_and_run()
+        self.assertEqual(2, self.handler.call_count)
+        self.handler.assert_has_calls([call(number="3", text="UPDATE", flashing=FlashingType.NO_FLASH),
+                                       call(number="3", color=["ff0000"])])

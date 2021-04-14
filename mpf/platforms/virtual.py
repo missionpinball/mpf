@@ -1,9 +1,10 @@
 """Contains code for a virtual hardware platform."""
-from typing import Dict, Tuple, Optional, Union
+from typing import Dict, Tuple, Optional, Union, List
 
 import asyncio
 import logging
 
+from mpf.core.rgb_color import RGBColor
 from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
 from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface, FlashingType
@@ -327,7 +328,7 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
         self.machine = machine
         self.text = ''
         self.flashing = FlashingType.NO_FLASH
-        self.colors = 'FFFFFF'
+        self.colors = [RGBColor('FFFFFF')]
         self.platform_options = platform_options
         if self.platform_options and 'post_update_events' in self.platform_options:
             self.post_update_events = self.platform_options['post_update_events']
@@ -339,21 +340,21 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
         self.text = text
         self.flashing = flashing
         self.platform_options = platform_options
-        self._post_update_event()
-
-    def set_color(self, colors: any) -> None:
-        """Set color(s)."""
-        self.colors = colors
-        self._post_update_event()
-
-    def _post_update_event(self):
         if self.post_update_events:
             self.machine.events.post(event="update_segment_display",
                                      callback=None,
                                      number=self.number,
                                      text=self.text,
-                                     flashing=self.flashing,
-                                     color=self.colors)
+                                     flashing=self.flashing)
+
+    def set_color(self, colors: List[RGBColor]) -> None:
+        """Set color(s)."""
+        self.colors = colors
+        if self.post_update_events:
+            self.machine.events.post(event="update_segment_display",
+                                     callback=None,
+                                     number=self.number,
+                                     color=[RGBColor(color).hex for color in self.colors])
 
 
 class VirtualSound(HardwareSoundPlatformInterface):
