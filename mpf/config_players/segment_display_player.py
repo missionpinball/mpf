@@ -91,5 +91,3 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
     def get_express_config(self, value):
         """Parse express config."""
         return dict(action="add", text=value)
-
-

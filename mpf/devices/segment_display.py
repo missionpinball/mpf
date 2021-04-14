@@ -36,7 +36,7 @@ class SegmentDisplay(SystemWideDevice):
         self.text = ""                          # type: Optional[str]
         self.flashing = FlashingType.NO_FLASH   # type: FlashingType
         self.color = None                       # type: Optional[RGBColor]
-        self.platform_settings = None           # type: Optional[dict]
+        self.platform_options = None           # type: Optional[dict]
 
     async def _initialize(self):
         await super()._initialize()
