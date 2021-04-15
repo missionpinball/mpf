@@ -320,9 +320,6 @@ open_pixel_control:
     host: localhost
     port: 7890
 
-mpfmc_segment_display_emulator:
-    bcp_connection: local_display
-
 shot_profiles:
     default:
         states:

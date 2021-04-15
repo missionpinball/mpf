@@ -951,11 +951,6 @@ mpf:
 mpf-mc:
     __valid_in__: machine                           # todo add to validator
     __type__: config
-mpfmc_segment_display_emulator:
-    __valid_in__: machine
-    __type__: config
-    bcp_connection: single|str|local_display
-    debug: single|bool|false
 multiballs:
     __valid_in__: machine, mode
     __type__: device
