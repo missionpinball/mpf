@@ -939,7 +939,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
     def _verify_coil_and_switch_fit(self, switch, coil):
         chain_serial, card, solenoid = coil.hw_driver.number.split('-')
         sw_chain_serial, sw_card, sw_num = switch.hw_switch.number.split('-')
-        if self.min_version[chain_serial] >= 0x02000000:
+        if self.min_version[chain_serial] >= 0x20000:
             if chain_serial != sw_chain_serial or card != sw_card:
                 self.raise_config_error('Invalid switch being configured for driver. Driver = {} '
                                         'Switch = {}. Driver and switch have to be on the same '
@@ -1037,7 +1037,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     def _remove_switch_coil_mapping(self, switch_num, driver: "OPPSolenoid"):
         """Remove mapping between switch and coil."""
-        if self.min_version[driver.sol_card.chain_serial] < 0x02000000:
+        if self.min_version[driver.sol_card.chain_serial] < 0x20000:
             return
 
         _, _, coil_num = driver.number.split('-')
@@ -1056,7 +1056,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     def _add_switch_coil_mapping(self, switch_num, driver: "OPPSolenoid"):
         """Add mapping between switch and coil."""
-        if self.min_version[driver.sol_card.chain_serial] < 0x02000000:
+        if self.min_version[driver.sol_card.chain_serial] < 0x20000:
             return
         _, _, coil_num = driver.number.split('-')
         msg = bytearray()
