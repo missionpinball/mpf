@@ -39,6 +39,7 @@ class SegmentDisplayPlatformInterface(metaclass=abc.ABCMeta):
 
 
 class SegmentDisplaySoftwareFlashPlatformInterface(SegmentDisplayPlatformInterface):
+
     """SegmentDisplayPlatformInterface with software emulation for flashing."""
 
     __slots__ = ["_flash_on", "_flashing", "_text"]
