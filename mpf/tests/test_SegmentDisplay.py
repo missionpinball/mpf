@@ -40,12 +40,10 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.assertEqual(FlashingType.NO_FLASH, display4.hw_display.flashing)
         self.assertEqual("1", display5.hw_display.text)
         self.assertEqual(FlashingType.NO_FLASH, display5.hw_display.flashing)
-        self.assertEqual({"test_property": "test_value_5"}, display5.hw_display.platform_options)
 
         self.add_player()
         self.assertEqual("0", display1.hw_display.text)
         self.assertEqual(FlashingType.FLASH_ALL, display1.hw_display.flashing)
-        self.assertEqual({"test_property": "player_added"}, display1.hw_display.platform_options)
         self.assertEqual("0", display2.hw_display.text)
         self.assertEqual(FlashingType.NO_FLASH, display2.hw_display.flashing)
         self.assertEqual("", display3.hw_display.text)
@@ -243,21 +241,3 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.advance_time_and_run(.01)
         self.assertEqual("42", display1.hw_display.text)
         self.assertEqual("0", display2.hw_display.text)
-
-    def test_post_update_events(self):
-        display1 = self.machine.segment_displays["display1"]
-        display2 = self.machine.segment_displays["display2"]
-        display3 = self.machine.segment_displays["display3"]
-
-        self.assertFalse(display1.hw_display.post_update_events)
-        self.assertFalse(display2.hw_display.post_update_events)
-        self.assertTrue(display3.hw_display.post_update_events)
-
-        handler = MagicMock()
-        self.machine.events.add_handler("update_segment_display", handler)
-
-        self.post_event("test_update_events")
-        self.advance_time_and_run()
-        self.assertEqual(2, handler.call_count)
-        handler.assert_has_calls([call(number="3", text="UPDATE", flashing=FlashingType.NO_FLASH),
-                                  call(number="3", color=["ff0000"])])

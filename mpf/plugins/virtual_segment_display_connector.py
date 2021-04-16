@@ -1,0 +1,58 @@
+"""MPF plugin which automatically plays back switch events from the config file."""
+
+import logging
+from typing import Any
+
+from mpf.core.rgb_color import RGBColor
+from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
+
+MYPY = False
+if MYPY:   # pragma: no cover
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
+
+
+class VirtualSegmentDisplayConnector:
+
+    def __init__(self, machine):
+        """Initialize virtual segment display connector plugin."""
+        self.log = logging.getLogger('virtual_segment_display_connector')
+        self.machine = machine      # type: MachineController
+        self.bcp_client = None
+
+        if 'virtual_segment_display_connector' not in machine.config:
+            self.log.debug('"virtual_segment_display_connector:" section not found in machine '
+                           'configuration, so the Virtual Segment Display Connector plugin '
+                           'will not be used.')
+            return
+
+        self.config = self.machine.config_validator.validate_config(
+            "virtual_segment_display_connector", self.machine.config['virtual_segment_display_connector'])
+
+        # All BCP clients should be connected (plugins are loaded after BCP is initialized).
+        # Determine which connection to use to communicate with MPF-MC
+        self.bcp_client = self.machine.bcp.transport.get_named_client(self.config['bcp_connection'])
+        if not self.bcp_client:
+            raise AssertionError("Could not establish BCP connection to MPF-MC via using client name {}.".format(
+                self.config['bcp_connection']))
+
+        # loop over all configured segment displays adding the connector to each one
+        if 'segment_displays' in self.config:
+            for display in self.config['segment_displays']:
+                display.add_virtual_connector(self)
+
+    def set_text(self, number: Any, text: str, flashing: FlashingType, flash_mask: str = None) -> None:
+        self.machine.bcp.interface.bcp_trigger_client(
+            client=self.bcp_client,
+            name='update_segment_display',
+            number=str(number),
+            text=text,
+            flashing=flashing)
+
+    def set_color(self, number: Any, colors: Any) -> None:
+        if type(colors) is not list:
+            colors = [colors]
+        self.machine.bcp.interface.bcp_trigger_client(
+            client=self.bcp_client,
+            name='update_segment_display',
+            number=str(number),
+            color=[RGBColor(color).hex for color in colors])

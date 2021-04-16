@@ -8,13 +8,14 @@ from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.placeholder_manager import TextTemplate
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
+from mpf.plugins.virtual_segment_display_connector import VirtualSegmentDisplayConnector
 
 MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface     # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.core.platform import SegmentDisplayPlatform    # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
-TextStack = namedtuple("TextStack", ["text", "platform_options", "priority", "key"])
+TextStack = namedtuple("TextStack", ["text", "priority", "key"])
 
 
 @DeviceMonitor("text")
@@ -36,7 +37,8 @@ class SegmentDisplay(SystemWideDevice):
         self.text = ""                          # type: Optional[str]
         self.flashing = FlashingType.NO_FLASH   # type: FlashingType
         self.color = None                       # type: Optional[RGBColor]
-        self.platform_options = None           # type: Optional[dict]
+        self.platform_options = None            # type: Optional[dict]
+        self.virtual_connector = None           # type: Optional[VirtualSegmentDisplayConnector]
 
     async def _initialize(self):
         """Initialise display."""
@@ -56,6 +58,14 @@ class SegmentDisplay(SystemWideDevice):
             raise AssertionError("Error in platform while configuring segment display {}. "
                                  "See error above.".format(self.name)) from e
 
+    def add_virtual_connector(self, virtual_connector):
+        """Adds a virtual connector instance to connect this segment display to the MPF-MC for virtual displays."""
+        self.virtual_connector = virtual_connector
+
+    def remove_virtual_connector(self):
+        """Removes the virtual connector instance from this segment display."""
+        self.virtual_connector = None
+
     def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Return the parsed and validated config.
 
@@ -74,7 +84,7 @@ class SegmentDisplay(SystemWideDevice):
                                                                                 config.get('platform_settings', None))
         return config
 
-    def add_text(self, text: str, platform_options: dict = None, priority: int = 0, key: str = None) -> None:
+    def add_text(self, text: str, priority: int = 0, key: str = None) -> None:
         """Add text to display stack.
 
         This will replace texts with the same key.
@@ -82,7 +92,7 @@ class SegmentDisplay(SystemWideDevice):
         # remove old text in case it has the same key
         self._text_stack[:] = [x for x in self._text_stack if x.key != key]
         # add new text
-        self._text_stack.append(TextStack(text, platform_options, priority, key))
+        self._text_stack.append(TextStack(text, priority, key))
         self._update_stack()
 
     def set_flashing(self, flashing: FlashingType):
@@ -97,6 +107,8 @@ class SegmentDisplay(SystemWideDevice):
         self.color = color
         assert self.hw_display is not None
         self.hw_display.set_color(color)
+        if self.virtual_connector:
+            self.virtual_connector.set_color(self.hw_display.number, self.color)
 
     def remove_text_by_key(self, key: str):
         """Remove entry from text stack."""
@@ -120,7 +132,6 @@ class SegmentDisplay(SystemWideDevice):
         top_entry = self._text_stack[0]
 
         self._current_placeholder = TextTemplate(self.machine, top_entry.text)
-        self.platform_options = top_entry.platform_options
         self._update_display()
 
     def _update_display(self, *args, **kwargs) -> None:
@@ -137,4 +148,6 @@ class SegmentDisplay(SystemWideDevice):
         # set text to display if it changed
         if new_text != self.text:
             self.text = new_text
-            self.hw_display.set_text(self.text, flashing=self.flashing, platform_options=self.platform_options)
+            self.hw_display.set_text(self.text, flashing=self.flashing)
+            if self.virtual_connector:
+                self.virtual_connector.set_text(self.hw_display.number, self.text, flashing=self.flashing)

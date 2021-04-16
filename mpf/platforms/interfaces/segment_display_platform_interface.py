@@ -11,6 +11,7 @@ class FlashingType(Enum):
     NO_FLASH = False
     FLASH_ALL = True
     FLASH_MATCH = "match"
+    FLASH_MASK = "mask"
 
 
 class SegmentDisplayPlatformInterface(metaclass=abc.ABCMeta):
@@ -24,7 +25,7 @@ class SegmentDisplayPlatformInterface(metaclass=abc.ABCMeta):
         self.number = number
 
     @abc.abstractmethod
-    def set_text(self, text: str, flashing: FlashingType, platform_options: dict = None) -> None:
+    def set_text(self, text: str, flashing: FlashingType) -> None:
         """Set a text to the display.
 
         This text will be right aligned in case the text is shorter than the display.
@@ -68,10 +69,11 @@ class SegmentDisplaySoftwareFlashPlatformInterface(SegmentDisplayPlatformInterfa
             if self._flashing == FlashingType.FLASH_MATCH:
                 # blank the last two chars
                 self._set_text(self._text[0:-2] + "  ")
+            # todo: handle FLASH_MASK flashing mode
             else:
                 self._set_text("")
 
-    def set_text(self, text: str, flashing: FlashingType, platform_options: dict = None) -> None:
+    def set_text(self, text: str, flashing: FlashingType) -> None:
         """Set a text to the display."""
         self._text = text
         self._flashing = flashing

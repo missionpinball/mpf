@@ -266,11 +266,6 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         del name
         return VirtualDmd()
 
-    @classmethod
-    def get_segment_display_config_section(cls) -> Optional[str]:
-        """Return addition config section for segment displays."""
-        return "virtual_segment_display"
-
     async def configure_segment_display(self, number: str, platform_settings) -> SegmentDisplayPlatformInterface:
         """Configure segment display."""
         return VirtualSegmentDisplay(number, platform_settings, self.machine)
@@ -324,37 +319,21 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
 
     def __init__(self, number, platform_options, machine) -> None:
         """Initialise virtual segment display."""
+        del platform_options
         super().__init__(number)
         self.machine = machine
         self.text = ''
         self.flashing = FlashingType.NO_FLASH
         self.colors = [RGBColor('FFFFFF')]
-        self.platform_options = platform_options
-        if self.platform_options and 'post_update_events' in self.platform_options:
-            self.post_update_events = self.platform_options['post_update_events']
-        else:
-            self.post_update_events = False
 
-    def set_text(self, text: str, flashing: FlashingType, platform_options: dict = None):
+    def set_text(self, text: str, flashing: FlashingType):
         """Set text."""
         self.text = text
         self.flashing = flashing
-        self.platform_options = platform_options
-        if self.post_update_events:
-            self.machine.events.post(event="update_segment_display",
-                                     callback=None,
-                                     number=self.number,
-                                     text=self.text,
-                                     flashing=self.flashing)
 
     def set_color(self, colors: List[RGBColor]) -> None:
         """Set color(s)."""
         self.colors = colors
-        if self.post_update_events:
-            self.machine.events.post(event="update_segment_display",
-                                     callback=None,
-                                     number=self.number,
-                                     color=[RGBColor(color).hex for color in self.colors])
 
 
 class VirtualSound(HardwareSoundPlatformInterface):

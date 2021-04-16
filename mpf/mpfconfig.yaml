@@ -94,6 +94,7 @@ mpf:
         - mpf.plugins.info_lights.InfoLights
         - mpf.plugins.switch_player.SwitchPlayer
         - mpf.plugins.twitch_bot.TwitchBot
+        - mpf.plugins.virtual_segment_display_connector.VirtualSegmentDisplayConnector
 
     platforms:
         fadecandy: mpf.platforms.fadecandy.FadecandyHardwarePlatform

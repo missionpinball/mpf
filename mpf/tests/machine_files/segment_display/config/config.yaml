@@ -10,8 +10,6 @@ segment_displays:
     number: 2
   display3:
     number: 3
-    platform_settings:
-      post_update_events: true
 
 segment_display_player:
   test_event1:

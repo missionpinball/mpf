@@ -1289,10 +1289,8 @@ segment_displays:
     __valid_in__: machine
     __type__: device
     number: single|str|
-    platform: single|str|None
     platform_settings: single|dict|None
-virtual_segment_displays:
-    post_update_events: single|bool|false
+    platform: single|str|None
 light_segment_displays_device:
     lights: list|dict(str:machine(lights))|
     type: single|enum(7segment,bcd,14segment,16segment)|
@@ -1897,6 +1895,12 @@ videos:         # not really used
 virtual_platform_start_active_switches:
     __valid_in__: machine                           # todo add to validator
     __type__: list
+virtual_segment_display_connector:
+    __valid_in__: machine
+    __type__: config
+    debug: single|bool|false
+    bcp_connection: single|str|local_display
+    segment_displays: list|machine(segment_displays)|None
 vpe:
     __valid_in__: machine
     __type__: config

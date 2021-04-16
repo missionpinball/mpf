@@ -19,9 +19,8 @@ class MyPinballsSegmentDisplay(SegmentDisplayPlatformInterface):
         # clear the display
         self.set_text("", FlashingType.NO_FLASH)
 
-    def set_text(self, text: str, flashing: FlashingType, platform_options: dict = None):
+    def set_text(self, text: str, flashing: FlashingType):
         """Set digits to display."""
-        del platform_options
         if not text:
             # blank display
             cmd = b'3:' + bytes([ord(str(self.number))]) + b'\n'
