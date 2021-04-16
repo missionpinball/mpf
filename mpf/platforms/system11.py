@@ -85,9 +85,16 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
 
     async def initialize(self):
         """Automatically called by the Platform class after all the core modules are loaded."""
+
+        # Some platforms (like Fast Retro) may be system11, or may not be.
+        # If no system11 config is present, do not initialize the System11 platform
+        system11_config = self.machine.config.get('system11')
+        if not system11_config:
+            return
+
         # load coil platform
         self.platform = self.machine.get_platform_sections(
-            "platform", getattr(self.machine.config.get('system11', {}), 'platform', None))
+            "platform", getattr(system11_config, 'platform', None))
 
         # we have to wait for coils to be initialized
         self.machine.events.add_handler("init_phase_1", self._initialize)

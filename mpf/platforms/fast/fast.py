@@ -27,13 +27,15 @@ from mpf.core.platform import ServoPlatform, DmdPlatform, SwitchPlatform, Driver
     SegmentDisplayPlatform, DriverSettings, SwitchSettings, DriverConfig, SwitchConfig, RepulseSettings
 from mpf.core.utility_functions import Util
 
+from mpf.platforms.system11 import System11OverlayPlatform, System11Driver
 
 # pylint: disable-msg=too-many-instance-attributes
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
 
 class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
-                           SwitchPlatform, DriverPlatform, SegmentDisplayPlatform):
+                           SegmentDisplayPlatform,
+                           System11OverlayPlatform):
 
     """Platform class for the FAST hardware controller."""
 
@@ -167,8 +169,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Upgrade the firmware of the CPUs."""
         return self._update_net()
 
-    async def initialize(self):
+    async def initialize(self, **kwargs):
         """Initialise platform."""
+        await super().initialize(**kwargs)
         await self._connect_to_hardware()
 
     def stop(self):
@@ -489,6 +492,21 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         # If we have Retro driver boards, look up the driver number
         if self.machine_type == 'retro':
+            # Look for a system11 A/C relay driver number ending in 'a' or 'c'
+            side = number[-1].upper()
+            if side == 'A' or side == 'C':
+                orig_number = number
+                number = number[:-1]
+
+                # only configure driver once
+                if number not in self.drivers:
+                    self.drivers[number] = self.platform.configure_driver(config, number, platform_settings)
+
+                system11_driver = System11Driver(orig_number, self.drivers[number], self, side)
+
+                return system11_driver
+
+            # If it's not a s11 A/C relay driver, look up the address in the retro map
             try:
                 number = fast_defines.RETRO_DRIVER_MAP[number.upper()]
             except KeyError:
@@ -760,6 +778,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def get_coil_config_section(cls):
         """Return coil config section."""
         return "fast_coils"
+
+    def validate_coil_section(self, driver, config):
+        """Validate coil sections."""
+        return config
 
     @classmethod
     def get_switch_config_section(cls):
