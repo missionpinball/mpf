@@ -21,10 +21,8 @@ class FASTSegmentDisplay(SegmentDisplayPlatformInterface):
         self.serial = communicator
         self.hex_id = Util.int_to_hex_string(index * 7)
 
-    def set_text(self, text: str, flashing: FlashingType = FlashingType.NO_FLASH,
-                 platform_options: dict = None) -> None:
+    def set_text(self, text: str, flashing: FlashingType = FlashingType.NO_FLASH) -> None:
         """Set digits to display."""
-        del platform_options
         self.serial.send(('PA:{},{}').format(
             self.hex_id, text[0:7]))
 

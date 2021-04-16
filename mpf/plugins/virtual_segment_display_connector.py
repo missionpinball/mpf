@@ -1,4 +1,4 @@
-"""MPF plugin which automatically plays back switch events from the config file."""
+"""MPF plugin which connects segment displays to MPF-MC to update segment display emulator widgets."""
 
 import logging
 from typing import Any
@@ -12,6 +12,8 @@ if MYPY:   # pragma: no cover
 
 
 class VirtualSegmentDisplayConnector:
+
+    """MPF plugin which connects segment displays to MPF-MC to update segment display emulator widgets."""
 
     def __init__(self, machine):
         """Initialize virtual segment display connector plugin."""
@@ -40,7 +42,8 @@ class VirtualSegmentDisplayConnector:
             for display in self.config['segment_displays']:
                 display.add_virtual_connector(self)
 
-    def set_text(self, number: Any, text: str, flashing: FlashingType, flash_mask: str = None) -> None:
+    def set_text(self, number: Any, text: str, flashing: FlashingType) -> None:
+        """Set the display text to send to MPF-MC via BCP."""
         self.machine.bcp.interface.bcp_trigger_client(
             client=self.bcp_client,
             name='update_segment_display',
@@ -49,7 +52,8 @@ class VirtualSegmentDisplayConnector:
             flashing=flashing)
 
     def set_color(self, number: Any, colors: Any) -> None:
-        if type(colors) is not list:
+        """Set the display colors to send to MPF-MC via BCP."""
+        if not isinstance(colors, list):
             colors = [colors]
         self.machine.bcp.interface.bcp_trigger_client(
             client=self.bcp_client,

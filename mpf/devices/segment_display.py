@@ -59,11 +59,11 @@ class SegmentDisplay(SystemWideDevice):
                                  "See error above.".format(self.name)) from e
 
     def add_virtual_connector(self, virtual_connector):
-        """Adds a virtual connector instance to connect this segment display to the MPF-MC for virtual displays."""
+        """Add a virtual connector instance to connect this segment display to the MPF-MC for virtual displays."""
         self.virtual_connector = virtual_connector
 
     def remove_virtual_connector(self):
-        """Removes the virtual connector instance from this segment display."""
+        """Remove the virtual connector instance from this segment display."""
         self.virtual_connector = None
 
     def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
