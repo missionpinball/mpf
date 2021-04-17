@@ -42,21 +42,21 @@ class VirtualSegmentDisplayConnector:
             for display in self.config['segment_displays']:
                 display.add_virtual_connector(self)
 
-    def set_text(self, number: Any, text: str, flashing: FlashingType) -> None:
+    def set_text(self, name: str, text: str, flashing: FlashingType) -> None:
         """Set the display text to send to MPF-MC via BCP."""
         self.machine.bcp.interface.bcp_trigger_client(
             client=self.bcp_client,
             name='update_segment_display',
-            number=str(number),
+            segment_display_name=name,
             text=text,
             flashing=flashing)
 
-    def set_color(self, number: Any, colors: Any) -> None:
+    def set_color(self, name: str, colors: Any) -> None:
         """Set the display colors to send to MPF-MC via BCP."""
         if not isinstance(colors, list):
             colors = [colors]
         self.machine.bcp.interface.bcp_trigger_client(
             client=self.bcp_client,
             name='update_segment_display',
-            number=str(number),
+            segment_display_name=name,
             color=[RGBColor(color).hex for color in colors])

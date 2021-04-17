@@ -108,7 +108,7 @@ class SegmentDisplay(SystemWideDevice):
         assert self.hw_display is not None
         self.hw_display.set_color(color)
         if self.virtual_connector:
-            self.virtual_connector.set_color(self.hw_display.number, self.color)
+            self.virtual_connector.set_color(self.name, self.color)
 
     def remove_text_by_key(self, key: str):
         """Remove entry from text stack."""
@@ -150,4 +150,4 @@ class SegmentDisplay(SystemWideDevice):
             self.text = new_text
             self.hw_display.set_text(self.text, flashing=self.flashing)
             if self.virtual_connector:
-                self.virtual_connector.set_text(self.hw_display.number, self.text, flashing=self.flashing)
+                self.virtual_connector.set_text(self.name, self.text, flashing=self.flashing)
