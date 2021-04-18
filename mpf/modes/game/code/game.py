@@ -384,7 +384,9 @@ class Game(AsyncMode):
             raise AssertionError("The game did not define default playfield. Did you add tags: default to one of your "
                                  "playfield?")
 
-        self.machine.playfield.add_ball(player_controlled=True)
+        # This relay event allows handlers to select a new target playfield for the ball
+        result = await self.machine.events.post_relay_async("ball_start_target", target=self.machine.playfield.name)
+        self.machine.playfields[result["target"]].add_ball(player_controlled=True)
 
     def ball_drained(self, balls=0, **kwargs):
         """One or more balls has drained.
