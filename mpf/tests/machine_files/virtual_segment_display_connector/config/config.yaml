@@ -1,0 +1,12 @@
+#config_version=5
+
+segment_displays:
+  display1:
+    number: 1
+  display2:
+    number: 2
+  display3:
+    number: 3
+
+virtual_segment_display_connector:
+    segment_displays: display1, display2

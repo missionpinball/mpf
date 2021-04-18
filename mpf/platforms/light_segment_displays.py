@@ -79,9 +79,15 @@ class LightSegmentDisplaysPlatform(SegmentDisplaySoftwareFlashPlatform):
         self.config = self.machine.config_validator.validate_config("light_segment_displays",
                                                                     self.machine.config.get("light_segment_displays"))
 
+    @classmethod
+    def get_segment_display_config_section(cls):
+        """Return addition config section for segment displays."""
+        return "light_segment_displays_device"
+
     async def configure_segment_display(self, number: str, platform_settings) -> LightSegmentDisplay:
         """Configure light segment display."""
-        settings = self.machine.config_validator.validate_config("light_segment_displays_device", platform_settings)
-        display = LightSegmentDisplay(number, lights=settings['lights'], segment_type=settings['type'])
+        display = LightSegmentDisplay(number,
+                                      lights=platform_settings['lights'],
+                                      segment_type=platform_settings['type'])
         self._handle_software_flash(display)
         return display
