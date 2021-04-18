@@ -1,7 +1,7 @@
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 from mpf.tests.MpfGameTestCase import MpfGameTestCase
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 
 class TestGame(MpfGameTestCase):
@@ -411,6 +411,23 @@ class TestGame(MpfGameTestCase):
         self.post_event("add_my_player")
         self.assertPlayerCount(4)
 
+    def event_handler_relay(self, **kwargs):
+        return {'target': 'second_playfield'}
+
+    def testPlayfieldRelayEvent(self):
+        self.machine.events.add_handler('ball_start_target', self.event_handler_relay)
+        second_playfield = self.machine.playfields['second_playfield']
+        with patch.object(second_playfield, 'add_ball', wraps=second_playfield.add_ball) as wrapped_add_ball:
+            self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+            self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+            self.advance_time_and_run(10)
+
+            self.start_game()
+            self.assertGameIsRunning()
+            self.assertPlayerNumber(1)
+            self.assertBallNumber(1)
+
+            wrapped_add_ball.assert_called_with(player_controlled=True)
 
 class TestGameLogic(MpfFakeGameTestCase):
 

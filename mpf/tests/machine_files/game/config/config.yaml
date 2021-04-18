@@ -33,6 +33,8 @@ playfields:
         default_source_device: bd_launcher
         tags: default
         enable_ball_search: True
+    second_playfield:
+        default_source_device: bd_launcher
 
 ball_devices:
     bd_trough:
@@ -47,4 +49,5 @@ ball_devices:
         ball_switches: s_ball_switch_launcher
         debug: true
         confirm_eject_type: target
+        eject_targets: playfield, second_playfield
         eject_timeouts: 2s
