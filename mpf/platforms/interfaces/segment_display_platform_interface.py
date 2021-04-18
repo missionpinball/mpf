@@ -1,6 +1,6 @@
 """Support for physical segment displays."""
 import abc
-from typing import Any, Optional
+from typing import Any
 from enum import Enum
 
 
@@ -11,7 +11,6 @@ class FlashingType(Enum):
     NO_FLASH = False
     FLASH_ALL = True
     FLASH_MATCH = "match"
-    FLASH_MASK = "mask"
 
 
 class SegmentDisplayPlatformInterface(metaclass=abc.ABCMeta):
@@ -69,7 +68,6 @@ class SegmentDisplaySoftwareFlashPlatformInterface(SegmentDisplayPlatformInterfa
             if self._flashing == FlashingType.FLASH_MATCH:
                 # blank the last two chars
                 self._set_text(self._text[0:-2] + "  ")
-            # todo: handle FLASH_MASK flashing mode
             else:
                 self._set_text("")
 

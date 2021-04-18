@@ -1303,7 +1303,6 @@ segment_display_player:
     action: single|enum(add,remove,flash,no_flash,flash_match,set_color)|add
     key: single|str|None
     expire: single|ms_or_token|None
-    platform_options: single|dict|None
 servo_controllers:
     __valid_in__: machine
     __type__: config

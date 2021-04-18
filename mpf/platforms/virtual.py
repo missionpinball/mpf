@@ -268,7 +268,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
     async def configure_segment_display(self, number: str, platform_settings) -> SegmentDisplayPlatformInterface:
         """Configure segment display."""
-        return VirtualSegmentDisplay(number, platform_settings, self.machine)
+        return VirtualSegmentDisplay(number, self.machine)
 
     async def configure_i2c(self, number: str) -> "I2cPlatformInterface":
         """Configure virtual i2c device."""
@@ -317,16 +317,15 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
 
     __slots__ = ["text", "flashing", "platform_options", "colors", "machine", "post_update_events"]
 
-    def __init__(self, number, platform_options, machine) -> None:
+    def __init__(self, number, machine) -> None:
         """Initialise virtual segment display."""
-        del platform_options
         super().__init__(number)
         self.machine = machine
         self.text = ''
         self.flashing = FlashingType.NO_FLASH
         self.colors = [RGBColor('FFFFFF')]
 
-    def set_text(self, text: str, flashing: FlashingType):
+    def set_text(self, text: str, flashing: FlashingType) -> None:
         """Set text."""
         self.text = text
         self.flashing = flashing

@@ -41,8 +41,8 @@ class MyPinballsSegmentDisplay(SegmentDisplayPlatformInterface):
         self.platform.send_cmd(cmd)
 
     def set_color(self, colors: Any) -> None:
-        """Set the color(s) of the display."""
-        raise NotImplementedError
+        """Set the color(s) of the display. Not supported in MyPinballs segment displays."""
+        pass
 
 
 class MyPinballsHardwarePlatform(SegmentDisplayPlatform):

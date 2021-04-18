@@ -73,8 +73,6 @@ segment_display_player:
   player_added.1{num==1}:
     display1:
       text: "{players[0].score:d}"
-      platform_options:
-        test_property: "player_added"
   player_added.2{num==2}:
     display2:
       text: "{players[1].score:d}"
@@ -84,4 +82,3 @@ segment_display_player:
   player_added.4{num==4}:
     display4:
       text: "{players[3].score:d}"
-
