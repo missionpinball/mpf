@@ -8,6 +8,8 @@ segment_displays:
     number: 1
   display2:
     number: 2
+  display3:
+    number: 3
 
 segment_display_player:
   test_event1:
@@ -46,3 +48,8 @@ segment_display_player:
       key: flash
       text: "TEST"
       expire: 2s
+
+  test_update_events:
+    display3:
+      text: "UPDATE"
+      color: "FF0000"

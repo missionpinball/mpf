@@ -26,7 +26,7 @@ class FASTSegmentDisplay(SegmentDisplayPlatformInterface):
         self.serial.send(('PA:{},{}').format(
             self.hex_id, text[0:7]))
 
-    def set_color(self, colors: List[RGBColor]):
+    def set_color(self, colors: List[RGBColor]) -> None:
         """Set display color."""
         self.serial.platform.info_log("Color: {}".format(colors))
         if len(colors) == 1:

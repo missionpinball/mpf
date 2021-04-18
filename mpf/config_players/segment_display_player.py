@@ -43,7 +43,7 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
 
             if action == "add":
                 # add text
-                display.add_text(s['text'], priority + s['priority'], key)
+                display.add_text(text=s['text'], priority=priority + s['priority'], key=key)
 
                 if s['expire']:
                     instance_dict[display][key] = self.delay.add(

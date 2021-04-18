@@ -280,7 +280,7 @@ coils:
     allow_enable: single|bool|false
     number: single|str|
     default_recycle: single|bool|None
-    default_pulse_ms: single|ms|None
+    default_pulse_ms: single|template_ms|None
     default_pulse_power: single|float(0,1)|None
     default_hold_power: single|float(0,1)|None
     max_pulse_ms: single|ms|None
@@ -382,6 +382,7 @@ credits_switches:
     switch: single|machine(switches)|None
     value: single|template_float|0.25
     type: single|str|money
+    label: single|str|None
 credits_events:
     event: single|event_handler|None
     credits: single|template_float|0.25
@@ -747,9 +748,6 @@ light_segment_displays:
     __valid_in__: machine
     __type__: config
     display_flash_frequency: single|float|1.0
-light_segment_displays_device:
-    lights: list|dict(str:machine(lights))|
-    type: single|enum(7segment,bcd,14segment,16segment)|
 light_stripes:
     __valid_in__: machine
     __type__: device
@@ -1291,14 +1289,17 @@ segment_displays:
     __valid_in__: machine
     __type__: device
     number: single|str|
-    platform: single|str|None
     platform_settings: single|dict|None
+    platform: single|str|None
+light_segment_displays_device:
+    lights: list|dict(str:machine(lights))|
+    type: single|enum(7segment,bcd,14segment,16segment)|
 segment_display_player:
     __valid_in__: machine, mode, show
     __type__: config_player
     priority: single|int_or_token|0
     text: single|str|None
-    color: list|color|ffffff
+    color: list|color|None
     action: single|enum(add,remove,flash,no_flash,flash_match,set_color)|add
     key: single|str|None
     expire: single|ms_or_token|None
@@ -1336,6 +1337,7 @@ settings:
     key_type: single|enum(str,float,int)|str
     default: single|str|
     machine_var: single|str|None
+    settingType: single|str|standard
 shots:
     __valid_in__: mode
     __type__: device
@@ -1892,6 +1894,12 @@ videos:         # not really used
 virtual_platform_start_active_switches:
     __valid_in__: machine                           # todo add to validator
     __type__: list
+virtual_segment_display_connector:
+    __valid_in__: machine
+    __type__: config
+    debug: single|bool|false
+    bcp_connection: single|str|local_display
+    segment_displays: list|machine(segment_displays)|None
 vpe:
     __valid_in__: machine
     __type__: config
@@ -2003,6 +2011,31 @@ widgets:
         height: single|float_or_token|
         corner_radius: single|int_or_token|0
         corner_segments: single|int_or_token|10
+        rotation: single|int_or_token|0
+        scale: single|float_or_token|1.0
+    segment_display_emulator:
+        name: single|str|None
+        text: single|str|
+        flash_mode: single|enum(off,all,match,mask)|off
+        flash_frequency: single|float_or_token|1.0
+        flash_mask: single|str|None
+        display_type: single|enum(7seg,14seg)|14seg
+        character_count: single|int_or_token|1
+        character_spacing: single|int_or_token|10
+        character_slant_angle: single|float_or_token|0.0
+        padding: single|int_or_token|20
+        background_color: single|kivycolor|000000ff
+        segment_off_color: single|kivycolor|4b4c4aff
+        segment_on_color: single|kivycolor|dd8217ff
+        segment_width: single|float_or_token|0.16
+        segment_interval: single|float_or_token|0.05
+        bevel_width: single|float_or_token|0.06
+        side_bevel_enabled: single|bool_or_token|true
+        dot_enabled: single|bool_or_token|false
+        comma_enabled: single|bool_or_token|false
+        character_map: dict|int:int|None
+        width: single|float_or_token|
+        height: single|float_or_token|
         rotation: single|int_or_token|0
         scale: single|float_or_token|1.0
     text:

@@ -67,8 +67,8 @@ class BaseSerialCommunicator:
         if hasattr(serial, "set_low_latency_mode"):
             try:
                 serial.set_low_latency_mode(True)
-            except NotImplementedError:
-                self.log.info("Could not set %s to low latency mode.", port)
+            except (NotImplementedError, ValueError) as e:
+                self.log.info("Could not set %s to low latency mode: %s", port, e)
 
         # defaults are slightly high for our usecase
         self.writer.transport.set_write_buffer_limits(2048, 1024)

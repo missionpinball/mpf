@@ -38,18 +38,12 @@ class TestDeviceDriver(MpfTestCase):
         self.machine.coils["coil_03"].hw_driver.enable = MagicMock()
         self.machine.coils["coil_03"].hw_driver.pulse = MagicMock()
 
-        # test default pulse_ms
-        self.machine.config['mpf']['default_pulse_ms'] = 23
-        self.machine.coils["coil_03"].pulse()
-        self.machine.coils["coil_03"].hw_driver.pulse.assert_called_with(PulseSettings(power=1.0, duration=23))
-
         # test power
-        self.machine.config['mpf']['default_pulse_ms'] = 40
         self.machine.coils["coil_03"].pulse(pulse_power=1.0)
-        self.machine.coils["coil_03"].hw_driver.pulse.assert_called_with(PulseSettings(power=1.0, duration=40))
+        self.machine.coils["coil_03"].hw_driver.pulse.assert_called_with(PulseSettings(power=1.0, duration=10))
 
         self.machine.coils["coil_03"].pulse(pulse_power=0.5)
-        self.machine.coils["coil_03"].hw_driver.pulse.assert_called_with(PulseSettings(power=0.5, duration=40))
+        self.machine.coils["coil_03"].hw_driver.pulse.assert_called_with(PulseSettings(power=0.5, duration=10))
 
         self.machine.coils["coil_01"].enable(pulse_power=0.7, hold_power=0.3)
         self.machine.coils["coil_01"].hw_driver.enable.assert_called_with(PulseSettings(power=0.7, duration=30),

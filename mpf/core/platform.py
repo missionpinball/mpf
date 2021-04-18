@@ -200,6 +200,22 @@ class SegmentDisplayPlatform(BasePlatform, metaclass=abc.ABCMeta):
         super().__init__(machine)
         self.features['has_segment_displays'] = True
 
+    @classmethod
+    def get_segment_display_config_section(cls) -> Optional[str]:
+        """Return addition config section for segment displays."""
+        return None
+
+    def validate_segment_display_section(self, segment_display, config) -> dict:
+        """Validate segment display config for platform."""
+        if self.get_segment_display_config_section():
+            spec = self.get_segment_display_config_section()   # pylint: disable-msg=assignment-from-none
+            config = segment_display.machine.config_validator.validate_config(spec, config, segment_display.name)
+        elif config:
+            raise AssertionError("No platform_config supported but not empty {} for segment display {}".
+                                 format(config, segment_display.name))
+
+        return config
+
     @abc.abstractmethod
     async def configure_segment_display(self, number: str, platform_settings) -> "SegmentDisplayPlatformInterface":
         """Subclass this method in a platform module to configure a segment display.

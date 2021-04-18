@@ -57,11 +57,13 @@ class TwitchClient(SingleServerIRCBot):
         """Framework will call when a public message is posted in chat."""
         del c
         # If a chat message starts with ! or ?, try to run it as a command
+        is_command = False
         if e.arguments[0][:1] == '!' or e.arguments[0][:1] == '?':
             cmd = e.arguments[0].split(' ')[0][1:]
             self.do_command(e, cmd.lower())
+            is_command = True
 
-        self.process_twitch_event(e)
+        self.process_twitch_event(e, is_command)
 
     def on_privmsg(self, c, e):
         """Framework will call when a private message is posted in chat."""
@@ -104,7 +106,7 @@ class TwitchClient(SingleServerIRCBot):
         """Return true if the server is connected."""
         return self.connection.is_connected()
 
-    def process_twitch_event(self, e):
+    def process_twitch_event(self, e, is_command=False):
         """Process the event and delegate to the proper handler."""
         tags = self.build_tag_dict(e.tags)
         message = next(iter(e.arguments or []), '')
@@ -125,7 +127,7 @@ class TwitchClient(SingleServerIRCBot):
         elif bits is not None:
             self.process_bits(user, message, bits)
         else:
-            self.process_chat(user, message)
+            self.process_chat(user, message, is_command)
 
     def process_subscription(self, user, message, tags, is_gift):
         """Send the subscription event to MPF."""
@@ -196,7 +198,7 @@ class TwitchClient(SingleServerIRCBot):
         user: The chat user name who subscribed
         '''
 
-    def process_chat(self, user, message):
+    def process_chat(self, user, message, is_command):
         """Send the chat event to MPF."""
         length, lines = self.split_message(message, 6)
         self.set_machine_variable_in_mpf('twitch_last_chat_user', user)
@@ -213,6 +215,7 @@ class TwitchClient(SingleServerIRCBot):
             user=user,
             message=message,
             line_count=length,
+            is_command=is_command,
             line_1=lines[0],
             line_2=lines[1],
             line_3=lines[2],
