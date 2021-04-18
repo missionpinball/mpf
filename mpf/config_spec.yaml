@@ -678,6 +678,14 @@ hardware_sound_player:
     value: single|str|None
     platform_options: single|dict|None
     sound_system: single|machine(hardware_sound_systems)|default
+hardware_benchmark:
+    __valid_in__: machine
+    __type__: config
+    switch1: single|machine(switches)|None
+    switch2: single|machine(switches)|None
+    coil1: single|machine(coils)|
+    coil2: single|machine(coils)|
+    flipper: single|machine(flippers)|
 high_score:
     __valid_in__: mode
     __type__: config
