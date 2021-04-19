@@ -82,4 +82,3 @@ segment_display_player:
   player_added.4{num==4}:
     display4:
       text: "{players[3].score:d}"
-

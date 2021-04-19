@@ -152,7 +152,7 @@ class YamlMultifileConfigLoader(ConfigLoader):
         config_spec = self._load_config_spec()
         machine_config = self._load_mpf_machine_config(config_spec)
         config_spec = self._load_additional_config_spec(config_spec, machine_config)
-        mode_config = self._load_modes(machine_config['mpf']['paths']['modes'], config_spec, machine_config)
+        mode_config = self._load_modes(config_spec, machine_config)
         show_config = self._load_shows(config_spec, machine_config, mode_config)
         return MpfConfig(config_spec, machine_config, mode_config, show_config, self.machine_path, self.mpf_path)
 
@@ -160,8 +160,7 @@ class YamlMultifileConfigLoader(ConfigLoader):
         """Load and return a MC config."""
         config_spec = self._load_config_spec()
         machine_config = self._load_mc_machine_config(config_spec)
-        mode_config = self._load_modes(machine_config['mpf-mc']['paths']['modes'], config_spec, machine_config,
-                                       ignore_unknown_sections=True)
+        mode_config = self._load_modes(config_spec, machine_config, ignore_unknown_sections=True)
         return MpfMcConfig(config_spec, machine_config, mode_config, self.machine_path)
 
     def _load_config_spec(self):
@@ -196,11 +195,11 @@ class YamlMultifileConfigLoader(ConfigLoader):
         sys.path.remove(self.machine_path)
         return config_spec
 
-    def _load_modes(self, mode_path, config_spec, machine_config, ignore_unknown_sections=False):
+    def _load_modes(self, config_spec, machine_config, ignore_unknown_sections=False):
         mode_config = {}
         for mode in machine_config.get("modes", {}):
             mpf_config_path = os.path.join(self.mpf_path, "modes", mode, 'config', mode + '.yaml')
-            machine_config_path = os.path.join(self.machine_path, mode_path, mode, 'config', mode + '.yaml')
+            machine_config_path = os.path.join(self.machine_path, "modes", mode, 'config', mode + '.yaml')
             mode_config_files = []
             if os.path.isfile(mpf_config_path):
                 self.log.debug("Loading mode %s from %s", mode, mpf_config_path)
@@ -221,8 +220,33 @@ class YamlMultifileConfigLoader(ConfigLoader):
             if "mode" not in config:
                 config["mode"] = dict()
 
+            mode_path, asset_paths = self._find_mode_path(mode)
+            config["mode"]["path"] = mode_path
+            config["mode"]["asset_paths"] = asset_paths
+
             mode_config[mode] = config
         return mode_config
+
+    def _find_mode_path(self, mode_string):
+        asset_paths = []
+        mode_path = None
+
+        mpf_mode_path = os.path.join(self.mpf_path, "modes", mode_string)
+        if os.path.exists(mpf_mode_path):
+            asset_paths.append(mpf_mode_path)
+            mode_path = mpf_mode_path
+
+        machine_mode_path = os.path.join(self.machine_path, "modes", mode_string)
+        if os.path.exists(machine_mode_path):
+            asset_paths.append(machine_mode_path)
+            mode_path = machine_mode_path
+
+        if not mode_path:
+            raise ValueError("No folder found for mode '{}'. Is your mode "
+                             "folder in your machine's 'modes' folder? Tried {} and {}."
+                             .format(mode_string, mpf_mode_path, machine_mode_path))
+
+        return mode_path, asset_paths
 
     def _load_shows_in_folder(self, folder, show_configs, config_spec):
         if not os.path.isdir(folder):
@@ -251,7 +275,6 @@ class YamlMultifileConfigLoader(ConfigLoader):
 
         show_configs = self._load_shows_in_folder(os.path.join(self.machine_path, "shows"), show_configs, config_spec)
 
-        mode_path = machine_config['mpf']['paths']['modes']
         for mode_name, config in mode_config.items():
             for show_name, show_config in config.get("shows", {}).items():
                 if show_name in show_configs:
@@ -260,7 +283,7 @@ class YamlMultifileConfigLoader(ConfigLoader):
 
             show_configs = self._load_shows_in_folder(os.path.join(self.mpf_path, "modes", mode_name, 'shows'),
                                                       show_configs, config_spec)
-            show_configs = self._load_shows_in_folder(os.path.join(self.machine_path, mode_path, mode_name, 'shows'),
+            show_configs = self._load_shows_in_folder(os.path.join(self.machine_path, "modes", mode_name, 'shows'),
                                                       show_configs, config_spec)
 
         return show_configs

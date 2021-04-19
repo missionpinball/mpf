@@ -6,7 +6,7 @@ from mpf.tests.MpfTestCase import MpfTestCase
 from unittest.mock import MagicMock, call
 
 
-class TestFlippers(MpfTestCase):
+class TestFlippersHoldNoEos(MpfTestCase):
 
     def get_config_file(self):
         return 'hold_no_eos.yaml'

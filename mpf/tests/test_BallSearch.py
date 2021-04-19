@@ -82,11 +82,9 @@ class TestBallSearch(MpfGameTestCase):
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.enabled)
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
 
+    @test_config("config_with_balls.yaml")
     def test_game_with_switches(self):
-        self.machine.ball_controller.num_balls_known = 0
-        self.machine.switch_controller.process_switch("s_ball_switch1", 1)
-        self.machine.switch_controller.process_switch("s_ball_switch2", 1)
-        self.machine.switch_controller.process_switch("s_ball_switch3", 1)
+        self.assertNumBallsKnown(2)
 
         # motor moves to reset position
         self.assertEqual("enabled", self.machine.digital_outputs["c_motor_run"].hw_driver.state)

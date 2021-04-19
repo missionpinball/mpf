@@ -29,7 +29,7 @@ class Driver(SystemWideDevice):
     collection = 'coils'
     class_label = 'coil'
 
-    __slots__ = ["hw_driver", "delay", "platform", "__dict__"]
+    __slots__ = ["hw_driver", "delay", "platform", "__dict__", "_pulse_ms"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise driver."""
@@ -37,6 +37,7 @@ class Driver(SystemWideDevice):
         super().__init__(machine, name)
         self.delay = DelayManager(self.machine)
         self.platform = None                # type: Optional[DriverPlatform]
+        self._pulse_ms = None
 
     @classmethod
     def device_class_init(cls, machine: MachineController):
@@ -74,9 +75,19 @@ class Driver(SystemWideDevice):
         config['platform_settings'] = platform.validate_coil_section(self, config.get('platform_settings', None))
         return config
 
+    def _calculate_pulse_ms_placeholder(self, *args):
+        del args
+        if self.config['default_pulse_ms'] is not None:
+            self._pulse_ms, future = self.config['default_pulse_ms'].evaluate_and_subscribe({})
+            future.add_done_callback(self._calculate_pulse_ms_placeholder)
+        else:
+            self._pulse_ms = self.machine.config['mpf']['default_pulse_ms']
+
     async def _initialize(self):
         await super()._initialize()
         self.platform = self.machine.get_platform_sections('coils', self.config['platform'])
+
+        self._calculate_pulse_ms_placeholder()
 
         config = DriverConfig(
             name=self.name,
@@ -159,10 +170,7 @@ class Driver(SystemWideDevice):
         """
         assert self.platform is not None
         if pulse_ms is None:
-            if self.config['default_pulse_ms'] is not None:
-                pulse_ms = self.config['default_pulse_ms']
-            else:
-                pulse_ms = self.machine.config['mpf']['default_pulse_ms']
+            pulse_ms = self._pulse_ms
 
         if not isinstance(pulse_ms, int):
             raise AssertionError("Wrong type {}".format(pulse_ms))
@@ -182,7 +190,8 @@ class Driver(SystemWideDevice):
         del kwargs
         self.enable(pulse_ms, pulse_power, hold_power)
 
-    def enable(self, pulse_ms: int = None, pulse_power: float = None, hold_power: float = None):
+    def enable(self, pulse_ms: int = None, pulse_power: float = None, hold_power: float = None,
+               max_wait_ms: int = None):
         """Enable a driver by holding it 'on'.
 
         Args:
@@ -192,6 +201,7 @@ class Driver(SystemWideDevice):
                 enabled for the value specified in the config dictionary.
             pulse_power: The pulse power. A float between 0.0 and 1.0.
             hold_power: The pulse power. A float between 0.0 and 1.0.
+            max_wait_ms: Maximum time this pulse may be delayed for PSU optimization.
 
         If this driver is configured with a holdpatter, then this method will use
         that holdpatter to pwm pulse the driver.
@@ -205,6 +215,7 @@ class Driver(SystemWideDevice):
         """
         assert self.hw_driver is not None
         pulse_ms = self.get_and_verify_pulse_ms(pulse_ms)
+        wait_ms = self._notify_psu_and_get_wait_ms(pulse_ms, max_wait_ms)
 
         pulse_power = self.get_and_verify_pulse_power(pulse_power)
         hold_power = self.get_and_verify_hold_power(hold_power)
@@ -212,6 +223,14 @@ class Driver(SystemWideDevice):
         if hold_power == 0.0:
             raise DriverLimitsError("Cannot enable driver with hold_power 0.0")
 
+        if wait_ms > 0:
+            self.debug_log("Delaying enable by %sms pulse_ms: %sms (%s pulse_power %s hold_power)",
+                           wait_ms, pulse_ms, pulse_power, hold_power)
+            self.delay.add(wait_ms, self._enable_now, pulse_ms=pulse_ms, pulse_power=pulse_power, hold_power=hold_power)
+        else:
+            self._enable_now(pulse_ms, pulse_power, hold_power)
+
+    def _enable_now(self, pulse_ms: int = None, pulse_power: float = None, hold_power: float = None):
         self.info_log("Enabling Driver with power %s (pulse_ms %sms and pulse_power %s)", hold_power, pulse_ms,
                       pulse_power)
         self.hw_driver.enable(PulseSettings(power=pulse_power, duration=pulse_ms),
@@ -245,7 +264,7 @@ class Driver(SystemWideDevice):
         # inform bcp clients
         self.machine.bcp.interface.send_driver_event(action="disable", name=self.name, number=self.config['number'])
 
-    def _get_wait_ms(self, pulse_ms: int, max_wait_ms: Optional[int]) -> int:
+    def _notify_psu_and_get_wait_ms(self, pulse_ms: int, max_wait_ms: Optional[int]) -> int:
         """Determine if this pulse should be delayed."""
         if max_wait_ms is None:
             self.config['psu'].notify_about_instant_pulse(pulse_ms=pulse_ms)
@@ -290,7 +309,7 @@ class Driver(SystemWideDevice):
         """
         pulse_ms = self.get_and_verify_pulse_ms(pulse_ms)
         pulse_power = self.get_and_verify_pulse_power(pulse_power)
-        wait_ms = self._get_wait_ms(pulse_ms, max_wait_ms)
+        wait_ms = self._notify_psu_and_get_wait_ms(pulse_ms, max_wait_ms)
 
         if wait_ms > 0:
             self.debug_log("Delaying pulse by %sms pulse_ms: %sms (%s pulse_power)", wait_ms, pulse_ms, pulse_power)

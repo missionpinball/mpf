@@ -37,7 +37,7 @@ class EnableCoilEjector(DefaultBallSearch, BallDeviceEjector):
                                    eject_time,
                                    self.ball_device.balls)
 
-        self.config['eject_coil'].enable()
+        self.config['eject_coil'].enable(max_wait_ms=self.config['eject_coil_max_wait_ms'])
         self.delay.reset(name="disable", callback=self._disable_coil,
                          ms=eject_time)
 

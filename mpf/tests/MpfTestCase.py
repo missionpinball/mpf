@@ -27,7 +27,6 @@ from mpf.core.utility_functions import Util
 from mpf.file_interfaces.yaml_interface import YamlInterface
 
 YamlInterface.cache = True
-UNITTEST_CONFIG_CACHE = {}      # type: ignore
 
 
 class UnitTestConfigLoader(YamlMultifileConfigLoader):
@@ -43,16 +42,18 @@ class UnitTestConfigLoader(YamlMultifileConfigLoader):
     def _load_config_spec(self):
         config_spec = super()._load_config_spec()
         if self.spec_patches:
-            config_spec = Util.dict_merge(config_spec, self.spec_patches)
+            config_spec = Util.dict_merge(config_spec, self.spec_patches, deepcopy_both=False)
         return config_spec
 
     def _load_mpf_machine_config(self, config_spec):
         config = super()._load_mpf_machine_config(config_spec)
+        # remove text-ui as it imports a lot of modules which we do not need in tests
+        del(config["mpf"]["core_modules"]["text_ui"])
 
         if self.config_defaults:
-            config = Util.dict_merge(self.config_defaults, config)
+            config = Util.dict_merge(self.config_defaults, config, deepcopy_both=False)
         if self.config_patches:
-            config = Util.dict_merge(config, self.config_patches, False)
+            config = Util.dict_merge(config, self.config_patches, False, deepcopy_both=False)
         return config
 
 
@@ -861,7 +862,8 @@ class MpfTestCase(unittest.TestCase):
 
         """
         self.machine.switch_controller.process_switch(name, state=1, logical=True)
-        self.advance_time_and_run(delta)
+        if delta:
+            self.advance_time_and_run(delta)
 
     def release_switch_and_run(self, name, delta):
         """Deactivates a switch and advances the time.
@@ -872,7 +874,8 @@ class MpfTestCase(unittest.TestCase):
 
         """
         self.machine.switch_controller.process_switch(name, state=0, logical=True)
-        self.advance_time_and_run(delta)
+        if delta:
+            self.advance_time_and_run(delta)
 
     def hit_and_release_switch(self, name):
         """Momentarily activates and then deactivates a switch.

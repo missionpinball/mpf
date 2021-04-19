@@ -188,6 +188,7 @@ class TestTilt(MpfGameTestCase):
         self.assertTrue(self.machine.mode_controller.is_active('tilt'))
 
         self.assertFalse(self._is_tilted)
+        self.assertPlaceholderEvaluates(3, "mode.tilt.tilt_warnings_remaining")
 
         # multiple hits in 300ms window
         self.machine.switch_controller.process_switch('s_tilt_warning', 1)
@@ -201,23 +202,27 @@ class TestTilt(MpfGameTestCase):
         self.advance_time_and_run(1)
         self.assertFalse(self._is_tilted)
         self.assertNotEqual(None, self.machine.game)
+        self.assertPlaceholderEvaluates(2, "mode.tilt.tilt_warnings_remaining")
 
         self.machine.switch_controller.process_switch('s_tilt_warning', 1)
         self.machine.switch_controller.process_switch('s_tilt_warning', 0)
         self.advance_time_and_run(1)
         self.assertFalse(self._is_tilted)
         self.assertNotEqual(None, self.machine.game)
+        self.assertPlaceholderEvaluates(1, "mode.tilt.tilt_warnings_remaining")
 
         self.machine.switch_controller.process_switch('s_tilt_warning', 1)
         self.machine.switch_controller.process_switch('s_tilt_warning', 0)
         self.advance_time_and_run(1)
         self.assertTrue(self._is_tilted)
+        self.assertPlaceholderEvaluates(0, "mode.tilt.tilt_warnings_remaining")
         self.assertNotEqual(None, self.machine.game)
         self.assertEqual(True, self.machine.game.tilted)
 
         self.machine.switch_controller.process_switch('s_ball_switch1', 1)
         self.advance_time_and_run(1)
         self.assertNotEqual(None, self.machine.game)
+        self.assertPlaceholderEvaluates(3000.0, "mode.tilt.tilt_settle_ms_remaining")
 
         # wait for settle time (5s) since last s_tilt_warning hit
         self.advance_time_and_run(3.5)

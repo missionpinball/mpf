@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 from mpf.core.settings_controller import SettingEntry
+from mpf.plugins.auditor import Auditor
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 
@@ -11,6 +12,10 @@ class TestServiceMode(MpfFakeGameTestCase):
 
     def get_machine_path(self):
         return 'tests/machine_files/service_mode/'
+
+    def setUp(self):
+        self.machine_config_patches['mpf']['plugins'] = ['mpf.plugins.auditor.Auditor']
+        super().setUp()
 
     def test_start_stop_service_in_attract(self):
         self.mock_event("service_door_opened")
@@ -90,7 +95,7 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.assertSwitchState("s_door_open", 0)
 
         # open door. game still running
-        self.hit_switch_and_run("s_door_open", 0)
+        self.hit_switch_and_run("s_door_open", .1)
         self.assertEventCalled('service_door_opened')
         self.assertEventNotCalled('service_door_closed')
         self.assertModeRunning("game")
@@ -141,6 +146,145 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.hit_and_release_switch("s_service_down")
         self.advance_time_and_run()
         self.assertEventCalledWith("service_menu_selected", label='Utilities Menu')
+
+    def test_utilities_reset(self):
+        self.hit_and_release_switch("s_service_esc")
+        self.advance_time_and_run(.1)
+        self.hit_and_release_switch("s_service_esc")
+        self.advance_time_and_run(.1)
+        self.assertMachineVarEqual(2, "credit_units")
+        self.assertEqual({'1 Total Coins service_credit': 2, '2 Total Earnings service_credit': 2},
+                         self.machine.modes["credits"].earnings)
+
+        self.start_game()
+        self.hit_and_release_switch("s_service_up")
+        self.machine.game.player.score = 1000
+        self.drain_all_balls()
+        self.assertGameIsNotRunning()
+
+        auditor = self.machine.plugins[0]
+        self.assertIsInstance(auditor, Auditor)
+        self.assertEqual(1, auditor.current_audits['switches']['s_service_up'])
+        self.assertTrue(1000, auditor.current_audits['player']['score']['average'])
+        self.assertTrue(1, auditor.current_audits['events']['game_ended'])
+
+        self.assertMachineVarEqual(1, "credit_units")
+
+        self.mock_event("service_menu_selected")
+        self.mock_event("service_options_slide_start")
+        # enter menu
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+
+        self.assertEventCalledWith("service_menu_selected", label='Diagnostics Menu')
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_menu_selected", label='Audits Menu')
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_menu_selected", label='Adjustments Menu')
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_menu_selected", label='Utilities Menu')
+
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_menu_selected", label='Reset Menu')
+
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_menu_selected", label='Reset Coin Audits')
+        self.assertEventNotCalled("service_options_slide_start")
+        self.mock_event("service_menu_selected")
+        self.mock_event("service_options_slide_start")
+
+        # RESET earning audits
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_options_slide_start", title="Reset earning audits",
+                                   question="Perform coin reset?", option="no", warning="THIS CANNOT BE UNDONE")
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_options_slide_start", title="Reset earning audits",
+                                   question="Perform coin reset?", option="yes", warning="THIS CANNOT BE UNDONE")
+        self.assertEventNotCalled("service_menu_selected")
+        self.mock_event("service_options_slide_start")
+
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_menu_selected", label='Reset Coin Audits')
+        self.assertEventNotCalled("service_options_slide_start")
+
+        # coins are still there
+        self.assertMachineVarEqual(1, "credit_units")
+        # but earning audits are reset
+        self.assertEqual({}, self.machine.modes["credits"].earnings)
+
+        # RESET game audits
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_menu_selected", label='Reset Game Audits')
+        self.mock_event("service_menu_selected")
+        self.mock_event("service_options_slide_start")
+
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_options_slide_start", title="Auditor Reset",
+                                   question="Reset Game Audits?", option="no", warning="THIS CANNOT BE UNDONE")
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_options_slide_start", title="Auditor Reset",
+                                   question="Reset Game Audits?", option="yes", warning="THIS CANNOT BE UNDONE")
+        self.assertEventNotCalled("service_menu_selected")
+        self.mock_event("service_options_slide_start")
+
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_menu_selected", label='Reset Game Audits')
+        self.assertEventNotCalled("service_options_slide_start")
+
+        self.assertEqual(0, auditor.current_audits['switches']['s_service_up'])
+        self.assertEqual(0, auditor.current_audits['player']['score']['average'])
+        self.assertEqual(0, auditor.current_audits['events']['game_ended'])
+
+        # RESET high scores (TEST NOT IMPLEMENTED YET - FEEL FREE)
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_menu_selected", label='Reset High Scores')
+        self.mock_event("service_menu_selected")
+        self.mock_event("service_options_slide_start")
+
+        # RESET credits
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_menu_selected", label='Reset Credits')
+        self.mock_event("service_menu_selected")
+        self.mock_event("service_options_slide_start")
+
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_options_slide_start", title="Reset credits",
+                                   question="Remove all credits?", option="no", warning="THIS CANNOT BE UNDONE")
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_options_slide_start", title="Reset credits",
+                                   question="Remove all credits?", option="yes", warning="THIS CANNOT BE UNDONE")
+        self.assertEventNotCalled("service_menu_selected")
+        self.mock_event("service_options_slide_start")
+
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_menu_selected", label='Reset Credits')
+        self.assertEventNotCalled("service_options_slide_start")
+
+        # credits should be gone
+        self.assertMachineVarEqual(0, "credit_units")
 
     def test_switch_test(self):
         self.mock_event("service_menu_selected")
@@ -367,9 +511,9 @@ class TestServiceMode(MpfFakeGameTestCase):
     def test_settings(self):
         self.machine.settings._settings = {}
         self.machine.settings.add_setting(SettingEntry("test1", "Test1", 1, "test1", "b",
-                                                       {"a": "A", "b": "B (default)", "c": "C"}))
+                                                       {"a": "A", "b": "B (default)", "c": "C"}, "standard"))
         self.machine.settings.add_setting(SettingEntry("test2", "Test2", 2, "test2", False,
-                                                       {True: "Yes", False: "No (default)"}))
+                                                       {True: "Yes", False: "No (default)"}, "standard"))
         self.mock_event("service_settings_start")
         self.mock_event("service_settings_edit")
         self.mock_event("service_settings_stop")

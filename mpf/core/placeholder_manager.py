@@ -67,7 +67,7 @@ class BaseTemplate(metaclass=abc.ABCMeta):
 
     def __init__(self, template, text, placeholder_manger, default_value):
         """Initialise template."""
-        self.text = text
+        self.text = str(text)
         self.template = template
         self.placeholder_manager = placeholder_manger
         self.default_value = default_value
@@ -251,7 +251,7 @@ class TextTemplate:
     def __init__(self, machine: "MachineController", text: str) -> None:
         """Initialise placeholder."""
         self.machine = machine
-        self.text = text
+        self.text = str(text)
         self._change_callback = None
 
     def evaluate(self, parameters) -> str:

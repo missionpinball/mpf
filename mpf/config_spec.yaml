@@ -121,17 +121,17 @@ ball_devices:
     __type__: device
     exit_count_delay: ignore                    # deprecated: see ball_device_counter_ball_switches for new options
     entrance_count_delay: ignore                # deprecated: see ball_device_counter_ball_switches for new options
-    eject_coil: ignore                          # deprecated: see ball_devices_ejector_pulse for new options
-    eject_coil_jam_pulse: ignore                # deprecated: see ball_devices_ejector_pulse for new options
-    eject_coil_retry_pulse: ignore              # deprecated: see ball_devices_ejector_pulse for new options
-    eject_coil_reorder_pulse: ignore            # deprecated: see ball_devices_ejector_pulse for new options
-    eject_coil_max_wait_ms: ignore              # deprecated: see ball_devices_ejector_pulse for new options
-    eject_coil_enable_time: ignore              # deprecated: see ball_devices_ejector_enable for new options
-    retries_before_increasing_pulse: ignore     # deprecated: see ball_devices_ejector_pulse for new options
-    hold_coil: ignore                           # deprecated: see ball_devices_ejector_hold for new options
-    hold_coil_release_time: ignore              # deprecated: see ball_devices_ejector_hold for new options
-    hold_events: ignore                         # deprecated: see ball_devices_ejector_hold for new options
-    hold_switches: ignore                       # deprecated: see ball_devices_ejector_hold for new options
+    eject_coil: ignore                          # deprecated: see ball_device_ejector_pulse for new options
+    eject_coil_jam_pulse: ignore                # deprecated: see ball_device_ejector_pulse for new options
+    eject_coil_retry_pulse: ignore              # deprecated: see ball_device_ejector_pulse for new options
+    eject_coil_reorder_pulse: ignore            # deprecated: see ball_device_ejector_pulse for new options
+    eject_coil_max_wait_ms: ignore              # deprecated: see ball_device_ejector_pulse for new options
+    eject_coil_enable_time: ignore              # deprecated: see ball_device_ejector_enable for new options
+    retries_before_increasing_pulse: ignore     # deprecated: see ball_device_ejector_pulse for new options
+    hold_coil: ignore                           # deprecated: see ball_device_ejector_hold for new options
+    hold_coil_release_time: ignore              # deprecated: see ball_device_ejector_hold for new options
+    hold_events: ignore                         # deprecated: see ball_device_ejector_hold for new options
+    hold_switches: ignore                       # deprecated: see ball_device_ejector_hold for new options
     entrance_switch: ignore                     # deprecated: see ball_device_counter_entrance_switches for new options
     entrance_switch_ignore_window_ms: ignore    # deprecated: see ball_device_counter_entrance_switches for new options
     entrance_switch_full_timeout: ignore        # deprecated: see ball_device_counter_entrance_switches for new options
@@ -198,6 +198,7 @@ ball_device_ejector_enable:
     class: ignore
     eject_coil: single|machine(coils)|None
     eject_coil_enable_time: list|ms|None
+    eject_coil_max_wait_ms: single|ms|200ms
 ball_holds:
     __valid_in__: machine, mode
     __type__: device
@@ -279,7 +280,7 @@ coils:
     allow_enable: single|bool|false
     number: single|str|
     default_recycle: single|bool|None
-    default_pulse_ms: single|ms|None
+    default_pulse_ms: single|template_ms|None
     default_pulse_power: single|float(0,1)|None
     default_hold_power: single|float(0,1)|None
     max_pulse_ms: single|ms|None
@@ -383,6 +384,7 @@ credits_switches:
     switch: single|machine(switches)|None
     value: single|template_float|0.25
     type: single|str|money
+    label: single|str|None
 credits_events:
     event: single|event_handler|None
     credits: single|template_float|0.25
@@ -586,7 +588,7 @@ fast:
     __type__: config
     driverboards: single|enum(fast,wpc,None)|None
     ports: list|str|
-    baud: single|int|921600
+    baud: list|int|921600
     watchdog: single|ms|1000
     default_quick_debounce_open: single|ms|
     default_quick_debounce_close: single|ms|
@@ -597,6 +599,7 @@ fast:
     net_buffer: single|int|10
     rgb_buffer: single|int|3
     dmd_buffer: single|int|3
+    segment_buffer: single|int|4
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
     firmware_updates: list|subconfig(fast_firmware_update)|None
@@ -635,6 +638,7 @@ flippers:
     ball_search_hold_time: single|ms|1s
     playfield: single|machine(playfields)|playfield
     repulse_on_eos_open: single|bool|false
+    eos_active_ms_before_repulse: single|ms|500
 game:
     __valid_in__: machine
     __type__: config
@@ -676,6 +680,14 @@ hardware_sound_player:
     value: single|str|None
     platform_options: single|dict|None
     sound_system: single|machine(hardware_sound_systems)|default
+hardware_benchmark:
+    __valid_in__: machine
+    __type__: config
+    switch1: single|machine(switches)|None
+    switch2: single|machine(switches)|None
+    coil1: single|machine(coils)|
+    coil2: single|machine(coils)|
+    flipper: single|machine(flippers)|
 high_score:
     __valid_in__: mode
     __type__: config
@@ -746,9 +758,6 @@ light_segment_displays:
     __valid_in__: machine
     __type__: config
     display_flash_frequency: single|float|1.0
-light_segment_displays_device:
-    lights: list|dict(str:machine(lights))|
-    type: single|enum(7segment,bcd,14segment,16segment)|
 light_stripes:
     __valid_in__: machine
     __type__: device
@@ -894,6 +903,8 @@ mode:
     restart_on_next_ball: single|bool|false
     console_log: single|enum(none,basic,full)|basic
     file_log: single|enum(none,basic,full)|basic
+    asset_paths: list|str|
+    path: single|str|
 mode_settings:
     __valid_in__: mode
     __type__: config
@@ -1297,14 +1308,18 @@ segment_displays:
     __valid_in__: machine
     __type__: device
     number: single|str|
-    platform: single|str|None
     platform_settings: single|dict|None
+    platform: single|str|None
+light_segment_displays_device:
+    lights: list|dict(str:machine(lights))|
+    type: single|enum(7segment,bcd,14segment,16segment)|
 segment_display_player:
     __valid_in__: machine, mode, show
     __type__: config_player
     priority: single|int_or_token|0
     text: single|str|None
-    action: single|enum(add,remove,flash,no_flash,flash_match)|add
+    color: list|color|None
+    action: single|enum(add,remove,flash,no_flash,flash_match,set_color)|add
     key: single|str|None
     expire: single|ms_or_token|None
 servo_controllers:
@@ -1341,6 +1356,7 @@ settings:
     key_type: single|enum(str,float,int)|str
     default: single|str|
     machine_var: single|str|None
+    settingType: single|str|standard
 shots:
     __valid_in__: mode
     __type__: device
@@ -1897,6 +1913,12 @@ videos:         # not really used
 virtual_platform_start_active_switches:
     __valid_in__: machine                           # todo add to validator
     __type__: list
+virtual_segment_display_connector:
+    __valid_in__: machine
+    __type__: config
+    debug: single|bool|false
+    bcp_connection: single|str|local_display
+    segment_displays: list|machine(segment_displays)|None
 vpe:
     __valid_in__: machine
     __type__: config
@@ -2008,6 +2030,31 @@ widgets:
         height: single|float_or_token|
         corner_radius: single|int_or_token|0
         corner_segments: single|int_or_token|10
+        rotation: single|int_or_token|0
+        scale: single|float_or_token|1.0
+    segment_display_emulator:
+        name: single|str|None
+        text: single|str|
+        flash_mode: single|enum(off,all,match,mask)|off
+        flash_frequency: single|float_or_token|1.0
+        flash_mask: single|str|None
+        display_type: single|enum(7seg,14seg)|14seg
+        character_count: single|int_or_token|1
+        character_spacing: single|int_or_token|10
+        character_slant_angle: single|float_or_token|0.0
+        padding: single|int_or_token|20
+        background_color: single|kivycolor|000000ff
+        segment_off_color: single|kivycolor|4b4c4aff
+        segment_on_color: single|kivycolor|dd8217ff
+        segment_width: single|float_or_token|0.16
+        segment_interval: single|float_or_token|0.05
+        bevel_width: single|float_or_token|0.06
+        side_bevel_enabled: single|bool_or_token|true
+        dot_enabled: single|bool_or_token|false
+        comma_enabled: single|bool_or_token|false
+        character_map: dict|int:int|None
+        width: single|float_or_token|
+        height: single|float_or_token|
         rotation: single|int_or_token|0
         scale: single|float_or_token|1.0
     text:

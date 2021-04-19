@@ -43,7 +43,7 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
 
             if action == "add":
                 # add text
-                display.add_text(s['text'], priority + s['priority'], key)
+                display.add_text(text=s['text'], priority=priority + s['priority'], key=key)
 
                 if s['expire']:
                     instance_dict[display][key] = self.delay.add(
@@ -61,8 +61,14 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
                 display.set_flashing(FlashingType.FLASH_MATCH)
             elif action == "no_flash":
                 display.set_flashing(FlashingType.NO_FLASH)
+            elif action == "set_color":
+                # Setting a color makes no other changes to the display
+                pass
             else:
                 raise AssertionError("Invalid action {}".format(action))
+
+            if s['color']:
+                display.set_color(s['color'])
 
     def _remove(self, instance_dict, key, display):
         if key in instance_dict[display]:

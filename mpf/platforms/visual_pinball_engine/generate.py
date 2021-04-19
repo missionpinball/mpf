@@ -2,7 +2,7 @@
 import glob
 import re
 
-from grpc_tools import protoc
+from grpc_tools import protoc   # pylint: disable-msg=import-error
 
 
 protoc.main([

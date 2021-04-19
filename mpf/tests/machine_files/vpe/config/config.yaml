@@ -11,6 +11,14 @@ playfields:
 vpe:
   debug: True
 
+rgb_dmds:
+  test_dmd:
+    source_display: rgb_dmd_display
+
+dmds:
+  default:
+    source_display: dmd_display
+
 switches:
     s_sling:
         number: 0

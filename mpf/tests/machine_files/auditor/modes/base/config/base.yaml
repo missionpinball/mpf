@@ -1,0 +1,11 @@
+#config_version=5
+mode:
+  start_events: ball_started
+
+variable_player:
+    add_score:
+      score: 100
+    add_custom:
+      my_var: 100
+    add_not_audited:
+      not_audited: 100

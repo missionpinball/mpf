@@ -2,6 +2,7 @@
 import subprocess
 import os
 from collections import namedtuple
+from functools import partial
 
 from typing import List
 
@@ -142,24 +143,14 @@ software_update_script: single|str|None
     async def _diagnostics_light_menu(self):
         await self._make_menu(self._load_diagnostic_light_menu_entries())
 
-    # Audits
-    @staticmethod
-    def _load_audit_menu_entries() -> List[ServiceMenuEntry]:
-        """Return the audit menu items with label and callback."""
-        return [
-            # ServiceMenuEntry("Earning Audits", None),
-            # ServiceMenuEntry("Standard Audits", None),
-            # ServiceMenuEntry("Feature Audits", None),
-        ]
-
-    async def _audits_menu(self):
-        await self._make_menu(self._load_audit_menu_entries())
-
     # Adjustments
     def _load_adjustments_menu_entries(self) -> List[ServiceMenuEntry]:
         """Return the adjustments menu items with label and callback."""
         return [
-            ServiceMenuEntry("Standard Adjustments", self._settings_menu),
+            ServiceMenuEntry("Standard Adjustments", partial(self._settings_menu, "standard")),
+            ServiceMenuEntry("Feature Adjustments", partial(self._settings_menu, "feature")),
+            ServiceMenuEntry("Game Adjustments", partial(self._settings_menu, "game")),
+            ServiceMenuEntry("Coin Adjustments", partial(self._settings_menu, "coin")),
         ]
 
     async def _adjustments_menu(self):
@@ -410,6 +401,96 @@ software_update_script: single|str|None
 
         self.machine.events.post("service_light_test_stop")
 
+    def _load_audit_menu_entries(self) -> List[ServiceMenuEntry]:
+        """Return the audit menu items with label and callback."""
+        return [
+            ServiceMenuEntry("Earning Audits", self._audit_earning_menu),
+            ServiceMenuEntry("Switch Audits", self._audit_switch_menu),
+            ServiceMenuEntry("Shot Audits", self._audit_shot_menu),
+            ServiceMenuEntry("Event Audits", self._audit_event_menu),
+            ServiceMenuEntry("Player Audits", self._audit_player_menu),
+        ]
+
+    async def _audits_menu(self):
+        await self._make_menu(self._load_audit_menu_entries())
+
+    def _update_audits_slide(self, items, position):
+        item = items[position][0]
+        value = items[position][1]
+        self.machine.events.post("service_audits_menu_show", audits_label=item, value_label=value)
+
+    async def _audits_submenu(self, items):
+        position = 0
+        if not items:   # pragma: no cover
+            return
+        self._update_audits_slide(items, position)
+        while True:
+            key = await self._get_key()
+            if key == 'ESC':
+                break
+            if key == 'UP':
+                position += 1
+                if position >= len(items):
+                    position = 0
+                self._update_audits_slide(items, position)
+            elif key == 'DOWN':
+                position -= 1
+                if position < 0:
+                    position = len(items) - 1
+                self._update_audits_slide(items, position)
+            if key == 'ENTER':
+                pass
+        self.machine.events.post("service_audits_menu_hide")
+
+    async def _audit_earning_menu(self):
+        try:
+            items = self.machine.modes['credits'].earnings
+        except (IndexError, KeyError):
+            items = {}
+
+        await self._audits_submenu(list(items.items()))
+
+    async def _audit_player_menu(self):
+        try:
+            audits = self.machine.auditor.current_audits['player']
+        except (IndexError, KeyError):
+            self.log.info("_make__audits_menu -- audits category not found - probably file is missing or corrupt")
+            audits = {}
+
+        items = []
+        for audit, audit_values in audits.items():
+            for key, value in audit_values.items():
+                items.append(("{} {}".format(audit, key), value))
+
+        await self._audits_submenu(items)
+
+    async def _audit_switch_menu(self):
+        try:
+            items = self.machine.auditor.current_audits['switches']
+        except (IndexError, KeyError):
+            self.log.info("_make__audits_menu -- audits category not found - probably file is missing or corrupt")
+            items = {}
+
+        await self._audits_submenu(list(items.items()))
+
+    async def _audit_shot_menu(self):
+        try:
+            items = self.machine.auditor.current_audits['shots']
+        except (IndexError, KeyError):
+            self.log.info("_make__audits_menu -- audits category not found - probably file is missing or corrupt")
+            items = {}
+
+        await self._audits_submenu(list(items.items()))
+
+    async def _audit_event_menu(self):
+        try:
+            items = self.machine.auditor.current_audits['events']
+        except (IndexError, KeyError):
+            self.log.info("_make__audits_menu -- audits category not found - probably file is missing or corrupt")
+            items = {}
+
+        await self._audits_submenu(list(items.items()))
+
     def _update_settings_slide(self, items, position, is_change=False):
         setting = items[position]
         label = self.machine.settings.get_setting_value_label(setting.name)
@@ -418,9 +499,9 @@ software_update_script: single|str|None
                                  settings_label=setting.label,
                                  value_label=label)
 
-    async def _settings_menu(self):
+    async def _settings_menu(self, settings_type):
         position = 0
-        items = self.machine.settings.get_settings()
+        items = self.machine.settings.get_settings(settings_type)
 
         # do not crash if no settings
         if not items:   # pragma: no cover

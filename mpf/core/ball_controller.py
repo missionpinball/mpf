@@ -177,6 +177,7 @@ class BallController(MpfController):
 
     def dump_ball_counts(self) -> None:
         """Dump ball count of all devices."""
+        self.info_log("Known balls: %s", self.num_balls_known)
         for device in self.machine.ball_devices.values():
             self.info_log("%s contains %s balls. Tags %s", device.name, device.balls, device.tags)
 
@@ -197,6 +198,11 @@ class BallController(MpfController):
             self.dump_ball_counts()
             self.warning_log("BallController denies game start. Not enough "
                              "balls. %s found. %s required", balls, self.machine.config['machine']['min_balls'])
+
+            self.info_log("Triggering ball search.")
+            for playfield in self.machine.playfields.values():
+                playfield.ball_search.enable()
+                playfield.ball_search.start()
             return False
 
         if self.machine.config['game']['allow_start_with_ball_in_drain']:

@@ -70,7 +70,11 @@ class Command(MpfCommandLineParser):
                         indent_len = len(indent.group(0))
                     test_case += line[indent_len:] + "\n"
                 if block.group("type") == "mpf-config":
-                    test = MpfDocTestCase(config_string=test_case, base_dir=base_dir, simulation=simulation)
+                    if "##! no_fake_game" in test_case:
+                        test = MpfDocTestCaseNoFakeGame(config_string=test_case, base_dir=base_dir,
+                                                        simulation=simulation)
+                    else:
+                        test = MpfDocTestCase(config_string=test_case, base_dir=base_dir, simulation=simulation)
                 else:
                     test = MpfIntegrationDocTestCase(config_string=test_case, base_dir=base_dir, simulation=simulation)
                 test._testMethodDoc = "Block {} (starting at 0)".format(num)

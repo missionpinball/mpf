@@ -1,7 +1,6 @@
 import sys
 
-from mpf.platforms.visual_pinball_engine import platform_pb2
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfTestCase import MpfTestCase, MagicMock, patch
 
 
 class MockServer:
@@ -33,10 +32,12 @@ class TestVPE(MpfTestCase):
         if sys.version_info < (3, 6):
             self.skipTest("Test requires Python 3.6+")
             return
+
         try:
             from mpf.tests.vpe_simulator import VpeSimulation
-        except SyntaxError:
-            self.skipTest("Cannot import VPE simulator.")
+            from mpf.platforms.visual_pinball_engine import platform_pb2
+        except (SyntaxError, ImportError) as e:
+            self.skipTest("Cannot import VPE simulator because {}".format(e))
             return
 
         self.simulator = VpeSimulation({"0": True, "3": False, "6": False})
@@ -48,6 +49,7 @@ class TestVPE(MpfTestCase):
         return False
 
     def test_vpe(self):
+        from mpf.platforms.visual_pinball_engine import platform_pb2
         description = self.loop.run_until_complete(
             self.service.GetMachineDescription(platform_pb2.EmptyRequest(), None))
         self.assertEqual(len(description.switches), 3)
@@ -70,6 +72,20 @@ class TestVPE(MpfTestCase):
             hardware_channel_number="light-0",
             hardware_channel_color="WHITE"
         ) in description.lights)
+
+        self.assertTrue(platform_pb2.DmdDescription(
+            name="default",
+            color_mapping=platform_pb2.DmdDescription.ColorMapping.BW,
+            width=128,
+            height=32
+        ) in description.dmds)
+
+        self.assertTrue(platform_pb2.DmdDescription(
+            name="test_dmd",
+            color_mapping=platform_pb2.DmdDescription.ColorMapping.RGB,
+            width=128,
+            height=32
+        ) in description.dmds)
 
         self.assertSwitchState("s_sling", True)
         self.assertSwitchState("s_flipper", False)
@@ -107,3 +123,22 @@ class TestVPE(MpfTestCase):
         self.machine.flippers["f_test"].disable()
         self.advance_time_and_run(.1)
         self.assertNotIn("1-3", self.simulator.rules)
+
+        # test set frame to buffer
+        frame = bytearray()
+        for i in range(4096):
+            frame.append(i % 256)
+
+        self.machine.dmds["default"].update(bytes(frame))
+        self.advance_time_and_run(.1)
+
+        self.assertEqual((frame, 1.0), self.simulator.dmd_frames["default"])
+
+        rgb_frame = bytearray()
+        for i in range(128 * 32 * 3):
+            rgb_frame.append(i % 256)
+
+        self.machine.rgb_dmds["test_dmd"].update(bytes(rgb_frame))
+        self.advance_time_and_run(.1)
+
+        self.assertEqual((rgb_frame, 1.0), self.simulator.dmd_frames["test_dmd"])

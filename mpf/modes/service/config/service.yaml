@@ -44,6 +44,14 @@ slide_player:
   service_door_closed:
     service_door_open:
       action: remove
+  master_volume_decrease:
+    service_volume_changed:
+      action: play
+      expire: 3s
+  master_volume_increase:
+    service_volume_changed:
+      action: play
+      expire: 3s
 
   # menu
   service_menu_show:
@@ -114,6 +122,15 @@ slide_player:
     service_settings:
       action: remove
 
+  # audits:
+  service_audits_menu_show:
+    service_audits_menu:
+      action: play
+      priority: 1
+  service_audits_menu_hide:
+    service_audits_menu:
+      action: remove
+
 widget_player:
   # power off
   service_power_off:
@@ -142,16 +159,26 @@ widget_player:
       slide: service_menu
 
 slides:
+  # volume changed
+  service_volume_changed:
+  - type: text
+    text: "Volume (machine|master_volume)"
+    style: medium
+    y: middle
   # door open
   service_door_open:
   - type: text
     text: Door Open
     style: medium
-    y: bottom + 75%
+    y: bottom + 80%
+  - type: text
+    text: "Volume (machine|master_volume)"
+    style: medium
+    y: bottom + 60%
   - type: text
     text: Press enter for service
     style: small
-    y: bottom + 50%
+    y: bottom + 40%
   # menu
   service_menu:
   - type: text
@@ -287,12 +314,27 @@ slides:
     style: small
     y: bottom + 40%
 
+  service_audits_menu:
+  - type: text
+    text: "Audits"
+    style: small
+    x: center
+    y: bottom + 80%
+  - type: text
+    text: "(audits_label)"
+    style: small
+    y: bottom + 60%
+  - type: text
+    text: "(value_label)"
+    style: small
+    y: bottom + 40%
+
 widgets:
   # power off on door open slide
   service_power_off_door_open:
     type: text
     text: Coil Power Off
-    y: bottom + 25%
+    y: bottom + 20%
     style: medium
     animations:
       add_to_slide:

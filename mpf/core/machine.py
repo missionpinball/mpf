@@ -99,7 +99,7 @@ class MachineController(LogMixin):
                  "stop_future", "events", "switch_controller", "mode_controller", "settings",
                  "bcp", "ball_controller", "show_controller", "placeholder_manager", "device_manager", "auditor",
                  "tui", "service", "switches", "shows", "coils", "ball_devices", "lights", "playfield", "playfields",
-                 "autofires", "_crash_handlers", "__dict__", "mpf_config", "is_shutting_down"]
+                 "autofire_coils", "_crash_handlers", "__dict__", "mpf_config", "is_shutting_down"]
 
     # pylint: disable-msg=too-many-statements
     def __init__(self, options: dict, config: MpfConfig) -> None:
@@ -158,7 +158,7 @@ class MachineController(LogMixin):
             self.platform_controller = self.platform_controller     # type: PlatformController
 
             # devices
-            self.autofires = {}                         # type: Dict[str, AutofireCoil]
+            self.autofire_coils = {}                    # type: Dict[str, AutofireCoil]
             self.motors = {}                            # type: Dict[str, Motor]
             self.digital_outputs = {}                   # type: Dict[str, DigitalOutput]
             self.shows = {}                             # type: Dict[str, Show]
