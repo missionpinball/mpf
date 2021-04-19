@@ -110,6 +110,13 @@ flippers:
         eos_switch: s_flipper_eos
         use_eos: true
 
+servos:
+    servo1:
+        number: 0-11
+        servo_min: 0.012
+        servo_max: 0.108
+        reset_position: 0
+
 lights:
   test_simple_led:
     number: 2-17

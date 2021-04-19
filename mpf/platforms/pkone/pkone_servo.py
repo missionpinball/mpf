@@ -23,9 +23,9 @@ class PKONEServo(ServoPlatformInterface):
             raise AssertionError("Position has to be between 0 and 1")
 
         # convert from [0,1] to [0, 250]
-        position_numeric = int(position * 255)
+        position_numeric = int(position * 250)
 
-        cmd = 'PSC{}{}{}'.format(
+        cmd = 'PSC{}{:02d}{:03d}'.format(
             self.number.board_address_id,
             self.number.servo_number,
             position_numeric)

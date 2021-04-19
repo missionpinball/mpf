@@ -62,6 +62,9 @@ class BaseMockPKONE(MockSerial):
 
 
 class TestPKONE(MpfTestCase):
+
+    """Test the Penny K Pinball PKONE hardware platform."""
+
     def get_config_file(self):
         return 'config.yaml'
 
@@ -106,6 +109,7 @@ class TestPKONE(MpfTestCase):
             'PCC1080000000000': None,
             'PCC1010000000000': None,
             'PCC1020000000000': None,
+            'PSC011003': None
         }
 
         super().setUp()
@@ -258,14 +262,14 @@ class TestPKONE(MpfTestCase):
     def _test_hw_rule_same_board(self):
         # coil and switch are on different boards
         with self.assertRaises(AssertionError):
-            self.machine.autofires["ac_different_boards"].enable()
+            self.machine.autofire_coils["ac_different_boards"].enable()
             self.advance_time_and_run(.1)
 
         # switch and coil on board with address id 1. should work
         self.controller.expected_commands = {
             "PHR10210300000000109900000": None
         }
-        self.machine.autofires["ac_board_3"].enable()
+        self.machine.autofire_coils["ac_board_3"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 
@@ -291,14 +295,14 @@ class TestPKONE(MpfTestCase):
         self.controller.expected_commands = {
             "PHR00712200000000109900000": None     # hw rule
         }
-        self.machine.autofires["ac_slingshot_test"].enable()
+        self.machine.autofire_coils["ac_slingshot_test"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 
         self.controller.expected_commands = {
             "PHD007": None
         }
-        self.machine.autofires["ac_slingshot_test"].disable()
+        self.machine.autofire_coils["ac_slingshot_test"].disable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 
@@ -306,14 +310,14 @@ class TestPKONE(MpfTestCase):
         self.controller.expected_commands = {
             "PHR00712610000000109900000": None
         }
-        self.machine.autofires["ac_inverted_switch"].enable()
+        self.machine.autofire_coils["ac_inverted_switch"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 
     def test_servo(self):
         # go to min position
         self.controller.expected_commands = {
-                "XO:03,00": "XO:P"
+                "PSC011003": None
         }
         self.machine.servos["servo1"].go_to_position(0)
         self.advance_time_and_run(.1)
@@ -321,7 +325,7 @@ class TestPKONE(MpfTestCase):
 
         # go to max position
         self.controller.expected_commands = {
-                "XO:03,FF": "XO:P"
+                "PSC011027": None
         }
         self.machine.servos["servo1"].go_to_position(1)
         self.advance_time_and_run(.1)
