@@ -334,8 +334,8 @@ class PRocAlphanumericDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
         self.display.set_text(text, self.number)
 
     def set_color(self, colors: List[RGBColor]) -> None:
-        """Set the color(s) of the display. Not currently supported in this platform."""
-        pass
+        """Set the color(s) of the display."""
+        # currently not supported
 
 
 class AuxAlphanumericDisplay:
