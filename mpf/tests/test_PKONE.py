@@ -1,7 +1,8 @@
 from mpf.core.platform import SwitchConfig
 from mpf.core.rgb_color import RGBColor
 from mpf.platforms.pkone.pkone_coil import PKONECoilNumber
-from mpf.tests.MpfTestCase import MpfTestCase, MagicMock
+from mpf.platforms.pkone.pkone_servo import PKONEServoNumber
+from mpf.tests.MpfTestCase import MpfTestCase
 
 from mpf.tests.loop import MockSerial
 

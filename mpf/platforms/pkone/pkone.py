@@ -18,11 +18,11 @@ from mpf.platforms.pkone.pkone_servo import PKONEServo, PKONEServoNumber
 from mpf.platforms.pkone.pkone_lights import PKONESimpleLED, PKONESimpleLEDNumber
 
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
-    DriverConfig, SwitchConfig, RepulseSettings
+    DriverConfig, SwitchConfig, RepulseSettings, ServoPlatform
 
 
-# pylint: disable-msg=too-many-instance-attributes
-class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform):
+# pylint: disable-msg=too-many-instance-attributes,too-many-public-methods
+class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, ServoPlatform):
 
     """Platform class for the PKONE Nano hardware controller.
 
@@ -211,7 +211,8 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform):
             self.log.warning("Received unknown serial command %s.", msg)
 
     def receive_error(self, msg):
-        self.log.error("Received an error message from the controller: {}".format(msg))
+        """An error message is received from the controller."""
+        self.log.error("Received an error message from the controller: %s", msg)
 
     def _parse_coil_number(self, number: str) -> PKONECoilNumber:
         try:
@@ -230,8 +231,10 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform):
 
         coil_count = self.pkone_extensions[board_id].coil_count
         if coil_count < coil_num or coil_num < 1:
-            raise AssertionError("PKONE Extension {} only has {} coils ({} - {}). Coil: {}".format(
-                board_id, coil_count, 1, coil_count, number))
+            raise AssertionError(
+                "PKONE Extension {board_id} only has {coil_count} coils "
+                "({first_coil} - {last_coil}). Coil: {number}".format(
+                    board_id=board_id, coil_count=coil_count, first_coil=1, last_coil=coil_count, number=number))
 
         return PKONECoilNumber(board_id, coil_num)
 
@@ -376,14 +379,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform):
         return PKONEServoNumber(board_id, servo_num)
 
     async def configure_servo(self, number: str) -> PKONEServo:
-        """Configure a servo.
-
-        Args:
-        ----
-            number: Number of servo
-
-        Returns: Servo object.
-        """
+        """Configure a servo."""
         servo_number = self._parse_servo_number(str(number))
         return PKONEServo(servo_number, self.controller_connection)
 
@@ -460,9 +456,9 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform):
 
         # There is one character for each switch on the board (1 = active, 0 = inactive)
         # Loop over each character and map the state to the appropriate switch number
-        for index in range(len(switch_states)):
-            self.hw_switch_data[PKONESwitchNumber(board_address_id=board_address_id, switch_number=index + 1)] = int(
-                switch_states[index])
+        for index, state in enumerate(switch_states):
+            self.hw_switch_data[PKONESwitchNumber(board_address_id=board_address_id,
+                                                  switch_number=index + 1)] = int(state)
 
     def receive_switch(self, msg):
         """Process a single switch state change."""
@@ -478,6 +474,8 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform):
     def configure_light(self, number, subtype, config, platform_settings) -> LightPlatformInterface:
         """Configure light in platform."""
         del config
+        del platform_settings
+
         if not self.controller_connection:
             raise AssertionError("A request was made to configure a PKONE switch, but no "
                                  "connection to PKONE controller is available")
@@ -489,7 +487,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform):
                                   self.controller_connection.send, self)
 
         if not subtype or subtype == "led":
-            board_address_id, group, index  = number.split("-")
+            board_address_id, group, index = number.split("-")
             """
             if number_str not in self.fast_leds:
                 self.fast_leds[number_str] = FASTDirectLED(
@@ -531,4 +529,3 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform):
             ]
 
         raise AssertionError("Unknown subtype {}".format(subtype))
-

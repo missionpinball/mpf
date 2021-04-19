@@ -1,7 +1,7 @@
 """A coil/driver in the PKONE platform."""
 import logging
 from collections import namedtuple
-from typing import Dict, Tuple, Optional
+from typing import Optional
 
 from mpf.core.platform import DriverConfig, SwitchSettings
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
@@ -93,6 +93,7 @@ class PKONECoil(DriverPlatformInterface):
         self.log.debug("Sending Release/Disable Coil command: %s", cmd)
         self.send(cmd)
 
+    # pylint: disable-msg=too-many-arguments
     def set_hardware_rule(self, mode: int, switch_settings: SwitchSettings,
                           eos_switch_settings: Optional[SwitchSettings], delay_time: int,
                           pulse_settings: PulseSettings, hold_settings: Optional[HoldSettings]) -> None:
@@ -105,7 +106,8 @@ class PKONECoil(DriverPlatformInterface):
                                                       mode,
                                                       switch_settings.hw_switch.number.switch_number,
                                                       1 if switch_settings.invert else 0,
-                                                      eos_switch_settings.hw_switch.number.switch_number if eos_switch_settings else 0,
+                                                      eos_switch_settings.hw_switch.number.switch_number
+                                                      if eos_switch_settings else 0,
                                                       1 if eos_switch_settings and eos_switch_settings.invert else 0,
                                                       delay_time,
                                                       pulse_settings.duration,
