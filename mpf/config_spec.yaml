@@ -835,6 +835,7 @@ logic_blocks_common:
     start_enabled: single|bool|None
     events_when_complete: list|event_posted|None
     events_when_hit: list|event_posted|None
+    logic_block_timeout: single|ms|0
 accruals:
     __valid_in__: machine, mode
     __type__: device
