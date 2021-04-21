@@ -758,3 +758,105 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.post_event("counter5_count")
 
         self.assertEqual(3, self.machine.counters["counter5"].value)
+
+    def test_counter_delay_timeout(self):
+        self.start_game()
+        self.mock_event("logicblock_counter9_complete")
+        self.mock_event("logicblock_counter9_hit")
+
+        self.post_event("counter9_enable")
+        for i in range(4):
+            self.post_event("counter9_count")
+            self.advance_time_and_run(.01)
+            self.assertEqual(0, self._events["logicblock_counter9_complete"])
+
+        # post final event to complete
+        self.post_event("counter9_count")
+        self.assertEqual(1, self._events["logicblock_counter9_complete"])
+        self.assertEqual(5, self._events["logicblock_counter9_hit"])
+
+        #restart (reset and enable)
+        self.post_event("counter9_restart")
+
+        # 10 more hits with delay causing timeout
+        for i in range(10):
+            self.post_event("counter9_count")
+            self.advance_time_and_run(1)
+        self.assertEqual(1, self._events["logicblock_counter9_complete"])
+        self.assertEqual(15, self._events["logicblock_counter9_hit"])
+
+    def test_sequence_delay_timeout(self):
+        self.start_game()
+        self.mock_event("sequence2_complete")
+        self.mock_event("logicblock_sequence2_hit")
+
+        self.post_event("sequence2_enable")
+
+        # no timer reset
+        self.post_event("sequence2_step1a")
+        self.post_event("sequence2_step2a")
+        self.post_event("sequence2_step3a")
+        self.assertEqual(1, self._events["sequence2_complete"])
+        self.assertEqual(3, self._events["logicblock_sequence2_hit"])
+
+        # enable and reset
+        self.post_event("sequence2_enable")
+        self.post_event("sequence2_reset")
+
+        # timer expired
+        self.post_event("sequence2_step1a")
+        self.assertEqual(4, self._events["logicblock_sequence2_hit"])
+        self.advance_time_and_run(1)
+        self.post_event("sequence2_step2a")
+        self.post_event("sequence2_step3a")
+        self.assertEqual(1, self._events["sequence2_complete"])
+        self.assertEqual(4, self._events["logicblock_sequence2_hit"])
+
+        #time expired and restart
+        self.post_event("sequence2_step1a")
+        self.advance_time_and_run(.1)
+        self.post_event("sequence2_step1a")
+        self.post_event("sequence2_step2a")
+        self.advance_time_and_run(.01)
+        self.post_event("sequence2_step3a")
+        self.assertEqual(2, self._events["sequence2_complete"])
+        self.assertEqual(8, self._events["logicblock_sequence2_hit"])
+
+    def test_accruals_delay_timeout(self):
+        self.start_game()
+        self.mock_event("accrual7_complete")
+        self.mock_event("accrual7_hit")
+
+        # enable accrual
+        self.post_event("accrual7_enable")
+
+        # no timer reset
+        self.post_event("accrual7_step1")
+        self.post_event("accrual7_step2")
+        self.post_event("accrual7_step3")
+        self.assertEqual(1, self._events["accrual7_complete"])
+        self.assertEqual(3, self._events["accrual7_hit"])
+
+        # time advance after each step but under timeout
+        self.post_event("accrual7_step1")
+        self.advance_time_and_run(.01)
+        self.post_event("accrual7_step2")
+        self.advance_time_and_run(.01)
+        self.post_event("accrual7_step3")
+        self.assertEqual(2, self._events["accrual7_complete"])
+        self.assertEqual(6, self._events["accrual7_hit"])
+
+        # timer advance after each step over timeout
+        self.post_event("accrual7_step1")
+        self.advance_time_and_run(1)
+        self.post_event("accrual7_step2")
+        self.advance_time_and_run(1)
+        self.post_event("accrual7_step3")
+        self.assertEqual(2, self._events["accrual7_complete"])
+        self.assertEqual(9, self._events["accrual7_hit"])
+
+        #final two steps without additional time passed
+        self.post_event("accrual7_step1")
+        self.post_event("accrual7_step2")
+        self.assertEqual(3, self._events["accrual7_complete"])
+        self.assertEqual(11, self._events["accrual7_hit"])
