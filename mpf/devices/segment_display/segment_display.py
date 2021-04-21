@@ -75,6 +75,7 @@ class SegmentDisplay(SystemWideDevice):
             raise AssertionError("Error in platform while configuring segment display {}. "
                                  "See error above.".format(self.name)) from e
 
+
     def add_virtual_connector(self, virtual_connector):
         """Add a virtual connector instance to connect this segment display to the MPF-MC for virtual displays."""
         self.virtual_connector = virtual_connector
@@ -135,7 +136,10 @@ class SegmentDisplay(SystemWideDevice):
         """Remove entry from text stack."""
         if key in self._text_stack:
             del self._text_stack[key]
-        self._update_stack()
+            if not self._text_stack:
+                self.add_text("", -10000, "empty")
+            else:
+                self._update_stack()
 
     def _start_transition(self, transition: TransitionBase, current_text: str, new_text: str, update_hz: float = 30.0):
         """Start the specified transition."""
@@ -158,7 +162,7 @@ class SegmentDisplay(SystemWideDevice):
 
         if self._current_transition:
             self._current_transition = None
-            if self._current_text_stack_entry:
+            if self._current_text_stack_entry and len(self._current_text_stack_entry.text) > 0:
                 self._current_placeholder = TextTemplate(self.machine, self._current_text_stack_entry.text)
                 self._current_placeholder_changed()
             else:
@@ -186,7 +190,7 @@ class SegmentDisplay(SystemWideDevice):
         # get top entry (highest priority)
         top_text_stack_entry = next(iter(self._text_stack.values()))
         previous_text_stack_entry = self._current_text_stack_entry
-        self._current_text_stack_entry_entry = top_text_stack_entry
+        self._current_text_stack_entry = top_text_stack_entry
 
         # determine if the new key is different than the previous key (out transitions are only applied
         # when changing keys)
