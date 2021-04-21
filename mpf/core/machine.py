@@ -50,7 +50,7 @@ if MYPY:   # pragma: no cover
     from mpf.devices.drop_target import DropTarget, DropTargetBank  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.logic_blocks import Accrual, Sequence, Counter     # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.devices.servo import Servo     # pylint: disable-msg=cyclic-import,unused-import
-    from mpf.devices.segment_display import SegmentDisplay      # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.segment_display.segment_display import SegmentDisplay      # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.shot_group import ShotGroup    # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.shot import Shot   # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.motor import Motor     # pylint: disable-msg=cyclic-import,unused-import

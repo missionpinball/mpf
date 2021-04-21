@@ -1308,9 +1308,28 @@ segment_display_player:
     priority: single|int_or_token|0
     text: single|str|None
     color: list|color|None
-    action: single|enum(add,remove,flash,no_flash,flash_match,set_color)|add
+    action: single|enum(add,remove,flash,no_flash,flash_match,flash_mask,set_color)|add
+    transition: ignore
+    transition_out: ignore
+    flashing: single|enum(off,all,match,mask,not_set)|not_set
+    flash_mask: single|str|None
     key: single|str|None
     expire: single|ms_or_token|None
+segment_display_transitions:
+    none:
+        type: single|str|
+    push:
+        type: single|str|
+        direction: single|enum(right,left,split_out,split_in)|right
+    cover:
+        type: single|str|
+        direction: single|enum(right,left)|right
+    uncover:
+        type: single|str|
+        direction: single|enum(right,left)|right
+    wipe:
+        type: single|str|
+        direction: single|enum(right,left,split)|right
 servo_controllers:
     __valid_in__: machine
     __type__: config

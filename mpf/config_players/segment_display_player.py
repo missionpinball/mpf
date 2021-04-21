@@ -2,12 +2,13 @@
 from mpf.core.delays import DelayManager
 
 from mpf.config_players.device_config_player import DeviceConfigPlayer
+from mpf.devices.segment_display.text_stack_entry import TextStackEntry
 from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
 
 MYPY = False
 if MYPY:   # pragma: no cover
     from typing import Dict     # pylint: disable-msg=cyclic-import,unused-import
-    from mpf.devices.segment_display import SegmentDisplay  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.segment_display.segment_display import SegmentDisplay  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class SegmentDisplayPlayer(DeviceConfigPlayer):
@@ -43,7 +44,16 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
 
             if action == "add":
                 # add text
-                display.add_text(text=s['text'], priority=priority + s['priority'], key=key)
+                s = display.transition_manager.validate_config(s)
+                display.add_text(TextStackEntry(text=s['text'],
+                                                color=s['color'],
+                                                flashing=self._get_flashing_type(s),
+                                                flash_mask=s['flash_mask'],
+                                                transition=display.transition_manager.get_transition(s['transition']),
+                                                transition_out=display.transition_manager.get_transition(
+                                                    s['transition_out']),
+                                                priority=priority + s['priority'],
+                                                key=key))
 
                 if s['expire']:
                     instance_dict[display][key] = self.delay.add(
@@ -59,16 +69,29 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
                 display.set_flashing(FlashingType.FLASH_ALL)
             elif action == "flash_match":
                 display.set_flashing(FlashingType.FLASH_MATCH)
+            elif action == "flash_mask":
+                display.set_flashing(FlashingType.FLASH_MASK, s.get('flash_mask', ""))
             elif action == "no_flash":
                 display.set_flashing(FlashingType.NO_FLASH)
             elif action == "set_color":
-                # Setting a color makes no other changes to the display
-                pass
+                if s['color']:
+                    display.set_color(s['color'])
             else:
                 raise AssertionError("Invalid action {}".format(action))
 
-            if s['color']:
-                display.set_color(s['color'])
+    @staticmethod
+    def _get_flashing_type(config: dict):
+        flashing = config.get('flashing', None)
+        if flashing == "off":
+            return FlashingType.NO_FLASH
+        elif flashing == "all":
+            return FlashingType.FLASH_ALL
+        elif flashing == "match":
+            return FlashingType.FLASH_MATCH
+        elif flashing == "mask":
+            return FlashingType.FLASH_MASK
+        else:
+            return None
 
     def _remove(self, instance_dict, key, display):
         if key in instance_dict[display]:

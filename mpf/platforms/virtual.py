@@ -315,7 +315,7 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
 
     """Virtual segment display."""
 
-    __slots__ = ["text", "flashing", "platform_options", "colors", "machine", "post_update_events"]
+    __slots__ = ["text", "flashing", "flash_mask", "colors", "machine", "post_update_events"]
 
     def __init__(self, number, machine) -> None:
         """Initialise virtual segment display."""
@@ -323,12 +323,14 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
         self.machine = machine
         self.text = ''
         self.flashing = FlashingType.NO_FLASH
+        self.flash_mask = ""
         self.colors = [RGBColor('FFFFFF')]
 
-    def set_text(self, text: str, flashing: FlashingType) -> None:
+    def set_text(self, text: str, flashing: FlashingType, flash_mask: str = "") -> None:
         """Set text."""
         self.text = text
         self.flashing = flashing
+        self.flash_mask = flash_mask
 
     def set_color(self, colors: List[RGBColor]) -> None:
         """Set color(s)."""
