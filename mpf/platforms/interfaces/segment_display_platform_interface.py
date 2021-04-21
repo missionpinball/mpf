@@ -81,12 +81,14 @@ class SegmentDisplaySoftwareFlashPlatformInterface(SegmentDisplayPlatformInterfa
         """Set a text to the display."""
         self._text = text
         self._flashing = flashing
+
         if flashing == FlashingType.NO_FLASH:
             self._flash_on = True
+        elif flashing == FlashingType.FLASH_MASK:
+            self._flash_mask = flash_mask.rjust(len(text))
+
         if flashing == FlashingType.NO_FLASH or self._flash_on or not text:
             self._set_text(text)
-        if flashing == FlashingType.FLASH_MASK:
-            self._flash_mask = flash_mask.rjust(len(text))
 
     @abc.abstractmethod
     def _set_text(self, text: str) -> None:

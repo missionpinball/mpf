@@ -45,15 +45,14 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
             if action == "add":
                 # add text
                 s = display.transition_manager.validate_config(s)
-                display.add_text(TextStackEntry(text=s['text'],
-                                                color=s['color'],
-                                                flashing=self._get_flashing_type(s),
-                                                flash_mask=s['flash_mask'],
-                                                transition=display.transition_manager.get_transition(s['transition']),
-                                                transition_out=display.transition_manager.get_transition(
-                                                    s['transition_out']),
-                                                priority=priority + s['priority'],
-                                                key=key))
+                display.add_text_entry(TextStackEntry(text=s['text'],
+                                                      color=s['color'],
+                                                      flashing=self._get_flashing_type(s),
+                                                      flash_mask=s['flash_mask'],
+                                                      transition=s['transition'],
+                                                      transition_out=s['transition_out'],
+                                                      priority=priority + s['priority'],
+                                                      key=key))
 
                 if s['expire']:
                     instance_dict[display][key] = self.delay.add(

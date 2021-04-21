@@ -1297,6 +1297,9 @@ segment_displays:
     __valid_in__: machine
     __type__: device
     number: single|str|
+    size: single|int|7
+    integrated_dots: single|bool|false
+    integrated_commas: single|bool|false
     platform_settings: single|dict|None
     platform: single|str|None
 light_segment_displays_device:

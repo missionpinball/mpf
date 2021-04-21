@@ -47,7 +47,7 @@ class TestVirtualSegmentDisplayConnector(MpfBcpTestCase):
         display1.add_text("NEW TEXT")
         display1.set_color(RGBColor("FF0000"))
         self.assertTrue(mock_bcp_trigger_client.called)
-        mock_bcp_trigger_client.assert_has_calls([call(client=ANY, flashing=FlashingType.NO_FLASH,
+        mock_bcp_trigger_client.assert_has_calls([call(client=ANY, flashing='False', flash_mask='',
                                                        name='update_segment_display', segment_display_name='display1',
                                                        text='NEW TEXT'),
                                                   call(client=ANY, name='update_segment_display',
@@ -57,10 +57,26 @@ class TestVirtualSegmentDisplayConnector(MpfBcpTestCase):
         display2.add_text("OTHER TEXT")
         display2.set_flashing(FlashingType.FLASH_ALL)
         self.assertTrue(mock_bcp_trigger_client.called)
-        mock_bcp_trigger_client.assert_has_calls([call(client=ANY, flashing=FlashingType.NO_FLASH,
+        mock_bcp_trigger_client.assert_has_calls([call(client=ANY, flashing='False', flash_mask='',
                                                        name='update_segment_display', segment_display_name='display2',
                                                        text='OTHER TEXT'),
-                                                  call(client=ANY, flashing=FlashingType.FLASH_ALL,
+                                                  call(client=ANY, flashing='True', flash_mask='',
+                                                       name='update_segment_display', segment_display_name='display2',
+                                                       text='OTHER TEXT')
+                                                  ])
+        mock_bcp_trigger_client.reset_mock()
+
+        display2.set_flashing(FlashingType.FLASH_MATCH)
+        self.assertTrue(mock_bcp_trigger_client.called)
+        mock_bcp_trigger_client.assert_has_calls([call(client=ANY, flashing='match', flash_mask='',
+                                                       name='update_segment_display', segment_display_name='display2',
+                                                       text='OTHER TEXT')
+                                                  ])
+        mock_bcp_trigger_client.reset_mock()
+
+        display2.set_flashing(FlashingType.FLASH_MASK, "______FFFF")
+        self.assertTrue(mock_bcp_trigger_client.called)
+        mock_bcp_trigger_client.assert_has_calls([call(client=ANY, flashing='mask', flash_mask='______FFFF',
                                                        name='update_segment_display', segment_display_name='display2',
                                                        text='OTHER TEXT')
                                                   ])

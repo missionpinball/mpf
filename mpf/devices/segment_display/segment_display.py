@@ -1,13 +1,16 @@
 """Physical segment displays."""
-from collections import namedtuple, OrderedDict
-from typing import Optional, Dict
+from collections import OrderedDict
+from typing import Optional, Dict, Iterator
 
+from mpf.core.clock import PeriodicTask
 from mpf.core.rgb_color import RGBColor
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.placeholder_manager import TextTemplate
 from mpf.core.system_wide_device import SystemWideDevice
+from mpf.devices.segment_display.segment_display_text import SegmentDisplayText
 from mpf.devices.segment_display.text_stack_entry import TextStackEntry
 from mpf.devices.segment_display.transition_manager import TransitionManager
+from mpf.devices.segment_display.transitions import TransitionRunner, TransitionBase
 from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
 from mpf.plugins.virtual_segment_display_connector import VirtualSegmentDisplayConnector
 
@@ -35,18 +38,20 @@ class SegmentDisplay(SystemWideDevice):
 
         self.hw_display = None                  # type: Optional[SegmentDisplayPlatformInterface]
         self.platform = None                    # type: Optional[SegmentDisplayPlatform]
-        self._text_stack = {}                   # type: Dict[str:TextStackEntry]
-        self._current_placeholder = None        # type: Optional[TextTemplate]
+        self.size = 7                           # type: int
+        self.integrated_dots = False            # type: bool
+        self.integrated_commas = False          # type: bool
         self.text = ""                          # type: Optional[str]
         self.color = None                       # type: Optional[RGBColor]
-        self._current_text_stack = None          # type: Optional[TextStackEntry]
         self.flashing = FlashingType.NO_FLASH   # type: FlashingType
         self.flash_mask = ""                    # type: Optional[str]
         self.platform_options = None            # type: Optional[dict]
         self.virtual_connector = None           # type: Optional[VirtualSegmentDisplayConnector]
-        self._transition_update_task = None
-        self._current_transition = None
-        self._current_transition_step = 0
+        self._text_stack = {}                   # type: Dict[str:TextStackEntry]
+        self._current_placeholder = None        # type: Optional[TextTemplate]
+        self._current_text_stack_entry = None   # type: Optional[TextStackEntry]
+        self._transition_update_task = None     # type: Optional[PeriodicTask]
+        self._current_transition = None         # type: Optional[Iterator]
 
     async def _initialize(self):
         """Initialise display."""
@@ -57,6 +62,10 @@ class SegmentDisplay(SystemWideDevice):
 
         if not self.platform.features['allow_empty_numbers'] and self.config['number'] is None:
             self.raise_config_error("Segment Display must have a number.", 1)
+
+        self.size = self.config['size']
+        self.integrated_dots = self.config['integrated_dots']
+        self.integrated_commas = self.config['integrated_commas']
 
         # configure hardware
         try:
@@ -92,7 +101,7 @@ class SegmentDisplay(SystemWideDevice):
                                                                                 config.get('platform_settings', None))
         return config
 
-    def add_text(self, text_stack_entry: TextStackEntry) -> None:
+    def add_text_entry(self, text_stack_entry: TextStackEntry):
         """Add text to display stack.
 
         This will replace texts with the same key.
@@ -101,13 +110,18 @@ class SegmentDisplay(SystemWideDevice):
         self._text_stack[text_stack_entry.key] = text_stack_entry
         self._update_stack()
 
+    def add_text(self, text: str, priority: int = 0, key: str = None) -> None:
+        """Add text to display stack.
+
+        This will replace texts with the same key.
+        """
+        self.add_text_entry(TextStackEntry(text, None, None, None, None, None, priority, key))
+
     def set_flashing(self, flashing: FlashingType, flash_mask: str = ""):
         """Enable/Disable flashing."""
         self.flashing = flashing
         self.flash_mask = flash_mask
-        # invalidate text to force an update
-        self.text = None
-        self._update_display()
+        self._update_display(self.text)
 
     def set_color(self, color: RGBColor):
         """Set display color."""
@@ -119,85 +133,103 @@ class SegmentDisplay(SystemWideDevice):
 
     def remove_text_by_key(self, key: str):
         """Remove entry from text stack."""
-        self._text_stack[:] = [x for x in self._text_stack if x.key != key]
+        if key in self._text_stack:
+            del self._text_stack[key]
         self._update_stack()
 
-    def _start_transition(self):
-        if self._transition_update_task:
+    def _start_transition(self, transition: TransitionBase, current_text: str, new_text: str, update_hz: float = 30.0):
+        """Start the specified transition."""
+        if self._current_transition:
             self._stop_transition()
-
-        self._current_transition_step = 0
-        self._transition_update_task = self.machine.clock.schedule_interval(self._update_transition, 1 / 30.0)
+        self._current_transition = iter(TransitionRunner(self.machine, transition, current_text, new_text))
+        self._update_display(SegmentDisplayText.convert_to_str(next(self._current_transition)))
+        self._transition_update_task = self.machine.clock.schedule_interval(self._update_transition, 1 / update_hz)
 
     def _update_transition(self):
-
-        self._current_transition_step += 1
+        try:
+            self._update_display(SegmentDisplayText.convert_to_str(next(self._current_transition)))
+        except StopIteration:
+            self._stop_transition()
 
     def _stop_transition(self):
         if self._transition_update_task:
             self._transition_update_task.cancel()
             self._transition_update_task = None
 
-        self._current_placeholder = TextTemplate(self.machine, self._.text)
-
+        if self._current_transition:
+            self._current_transition = None
+            if self._current_text_stack_entry:
+                self._current_placeholder = TextTemplate(self.machine, self._current_text_stack_entry.text)
+                self._current_placeholder_changed()
+            else:
+                self._current_placeholder = None
 
     def _update_stack(self) -> None:
         """Sort stack and show top entry on display."""
         # do nothing if stack is emtpy. set display empty
         assert self.hw_display is not None
         if not self._text_stack:
-            self.hw_display.set_text("", flashing=FlashingType.NO_FLASH)
+            self._current_text_stack_entry = None
+            self._stop_transition()
+
             if self._current_placeholder:
                 self.text = ""
                 self._current_placeholder = None
+
+            self.hw_display.set_text("", flashing=FlashingType.NO_FLASH)
             return
 
-        # sort stack by priority
+        # sort text stack by priority
         self._text_stack = OrderedDict(
-            sorted(self._text_stack.items(), key=lambda item: item[1].priority))
+            sorted(self._text_stack.items(), key=lambda item: item[1].priority, reverse=True))
 
         # get top entry (highest priority)
-        _, top_text_stack_entry = self._text_stack.popitem()
+        top_text_stack_entry = next(iter(self._text_stack.values()))
+        previous_text_stack_entry = self._current_text_stack_entry
+        self._current_text_stack_entry_entry = top_text_stack_entry
 
         # determine if the new key is different than the previous key (out transitions are only applied
         # when changing keys)
         transition_config = None
-        if self._previous_text_stack_entry and top_text_stack_entry.key != self._previous_text_stack_entry.key:
-            if self._previous_text_stack_entry.transition_out:
-                transition_config = self._previous_text_stack_entry.transition_out
+        if previous_text_stack_entry and top_text_stack_entry.key != previous_text_stack_entry.key:
+            if previous_text_stack_entry.transition_out:
+                transition_config = previous_text_stack_entry.transition_out
+
+        # determine if new text entry has a transition, if so, apply it (overrides any outgoing transition)
         if top_text_stack_entry.transition:
             transition_config = top_text_stack_entry.transition
 
-        self._previous_text_stack_entry = self._current_text_stack_entry
-
+        # start transition (if configured)
         if transition_config:
-            # start transition
-            transition = self.transition_manager.get_transition(self.text,
-                                                                self.machine.
+            transition = self.transition_manager.get_transition(self.size,
+                                                                self.integrated_dots,
+                                                                self.integrated_commas,
                                                                 transition_config)
-            if transition:
-                self._current_transition_steps = transition.transition_steps
-                self._start_transition()
+            if previous_text_stack_entry:
+                previous_text = previous_text_stack_entry.text
             else:
-                self._current_transition_steps = None
+                previous_text = ""
 
-        self._update_display()
+            self._start_transition(transition, previous_text, top_text_stack_entry.text)
+        else:
+            self._current_placeholder = TextTemplate(self.machine, top_text_stack_entry.text)
+            self._current_placeholder_changed()
 
-    def _update_display(self, *args, **kwargs) -> None:
-        """Update display to current text."""
+    def _current_placeholder_changed(self, *args, **kwargs) -> None:
+        """Current placeholder changed callback function."""
         del args
         del kwargs
-        assert self.hw_display is not None
-        if not self._current_placeholder:
-            new_text = ""
-        else:
-            new_text, future = self._current_placeholder.evaluate_and_subscribe({})
-            future.add_done_callback(self._update_display)
+        new_text, future = self._current_placeholder.evaluate_and_subscribe({})
+        future.add_done_callback(self._current_placeholder_changed)
+        self._update_display(new_text)
 
-        # set text to display if it changed
-        if new_text != self.text:
-            self.text = new_text
-            self.hw_display.set_text(self.text, flashing=self.flashing, flash_mask=self.flash_mask)
-            if self.virtual_connector:
-                self.virtual_connector.set_text(self.name, self.text, flashing=self.flashing,
-                                                flash_mask=self.flash_mask)
+    def _update_display(self, new_text: str) -> None:
+        """Update display to current text."""
+        assert self.hw_display is not None
+
+        # set text to display
+        self.text = new_text
+        self.hw_display.set_text(self.text, flashing=self.flashing, flash_mask=self.flash_mask)
+        if self.virtual_connector:
+            self.virtual_connector.set_text(self.name, self.text, flashing=self.flashing,
+                                            flash_mask=self.flash_mask)

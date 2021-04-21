@@ -39,10 +39,11 @@ class SegmentDisplayText(list):
             for index in range(display_size - current_length):
                 self.insert(0, DisplayCharacter(self.SPACE_CODE, False, False))
 
-    def to_str(self):
+    @staticmethod
+    def convert_to_str(display_character_list: list):
         """Convert back to normal text string"""
         text = ""
-        for display_character in self:
+        for display_character in display_character_list:
             text += chr(display_character.char_code)
             if display_character.dot:
                 text += "."

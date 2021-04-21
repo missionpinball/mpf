@@ -23,20 +23,18 @@ class TransitionManager:
         self.register_transition('uncover', UncoverTransition)
         self.register_transition('wipe', WipeTransition)
 
-    def get_transition(self, current_text: str, new_text: str, output_length: int,
-                       collapse_dots: bool, collapse_commas: bool, transition_config=None):
+    def get_transition(self, output_length: int, collapse_dots: bool, collapse_commas: bool, transition_config=None):
         if transition_config:
-            # The kivy shader transitions can't accept unexpected kwargs
             config = transition_config.copy()
             config.pop('type')
-            return self._transitions[transition_config['type']](current_text, new_text, output_length, collapse_dots,
-                                                                collapse_commas, config)
+            return self._transitions[transition_config['type']](output_length, collapse_dots, collapse_commas, config)
         else:
             return None
 
-    def validate_transitions(self, config):
+    def validate_config(self, config):
+        """Validate segment display transition config."""
 
-        if 'transition' in config:
+        if 'transition' in config and config['transition']:
             if not isinstance(config['transition'], dict):
                 config['transition'] = dict(type=config['transition'])
 
@@ -51,7 +49,7 @@ class TransitionManager:
         else:
             config['transition'] = None
 
-        if 'transition_out' in config:
+        if 'transition_out' in config and config['transition_out']:
             if not isinstance(config['transition_out'], dict):
                 config['transition_out'] = dict(type=config['transition_out'])
 
