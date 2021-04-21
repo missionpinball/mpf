@@ -6,6 +6,7 @@ modes:
 segment_displays:
   display1:
     number: 1
+    size: 10
   display2:
     number: 2
   display3:
@@ -53,3 +54,34 @@ segment_display_player:
     display3:
       text: "UPDATE"
       color: "FF0000"
+
+  test_transition:
+    display1:
+      priority: 15
+      key: transition
+      text: "  SCROLL  "
+      transition:
+        type: push
+        direction: right
+      transition_out:
+        type: push
+        direction: left
+      expire: 2s
+
+  test_transition_2:
+    display1:
+      priority: 15
+      key: transition
+      text: "0123456789"
+      transition:
+        type: wipe
+        direction: split
+
+  test_transition_3:
+    display1:
+      priority: 15
+      key: transition
+      text: "ABCDEFGHIJ"
+      transition:
+        type: uncover
+        direction: right

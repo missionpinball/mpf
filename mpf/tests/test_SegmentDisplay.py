@@ -622,3 +622,61 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
 
         with self.assertRaises(StopIteration):
             next(transition_iterator)
+
+    @patch("mpf.devices.segment_display.segment_display.SegmentDisplay._update_display")
+    def test_transitions_with_player(self, mock_update_display):
+        self.post_event("test_transition")
+        self.advance_time_and_run(3)
+        self.assertTrue(mock_update_display.called)
+        self.assertEqual(21, mock_update_display.call_count)
+        mock_update_display.assert_has_calls([call('          '),
+                                              call('          '),
+                                              call('L         '),
+                                              call('LL        '),
+                                              call('OLL       '),
+                                              call('ROLL      '),
+                                              call('CROLL     '),
+                                              call('SCROLL    '),
+                                              call(' SCROLL   '),
+                                              call('  SCROLL  '),
+                                              call('  SCROLL  '),
+                                              call(' SCROLL   '),
+                                              call('SCROLL    '),
+                                              call('CROLL     '),
+                                              call('ROLL      '),
+                                              call('OLL       '),
+                                              call('LL        '),
+                                              call('L         '),
+                                              call('          '),
+                                              call('          '),
+                                              call('          ')])
+        mock_update_display.reset_mock()
+
+        self.post_event("test_transition_2")
+        self.advance_time_and_run(1)
+        self.assertTrue(mock_update_display.called)
+        self.assertEqual(6, mock_update_display.call_count)
+        mock_update_display.assert_has_calls([call('    45    '),
+                                              call('   3456   '),
+                                              call('  234567  '),
+                                              call(' 12345678 '),
+                                              call('0123456789'),
+                                              call('0123456789')])
+        mock_update_display.reset_mock()
+
+        self.post_event("test_transition_3")
+        self.advance_time_and_run(1)
+        self.assertTrue(mock_update_display.called)
+        self.assertEqual(11, mock_update_display.call_count)
+        mock_update_display.assert_has_calls([call('A012345678'),
+                                              call('AB01234567'),
+                                              call('ABC0123456'),
+                                              call('ABCD012345'),
+                                              call('ABCDE01234'),
+                                              call('ABCDEF0123'),
+                                              call('ABCDEFG012'),
+                                              call('ABCDEFGH01'),
+                                              call('ABCDEFGHI0'),
+                                              call('ABCDEFGHIJ'),
+                                              call('ABCDEFGHIJ')])
+        mock_update_display.reset_mock()
