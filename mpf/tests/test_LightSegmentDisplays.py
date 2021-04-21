@@ -16,7 +16,7 @@ class TestLightSegmentDisplays(MpfTestCase):
         display1 = self.machine.segment_displays["display1"]
 
         # this should show the last two characters 37
-        display1.add_text("1337")
+        self.post_event("show_1337")
         self.advance_time_and_run()
 
         self.assertLightColor("segment1_a", "on")
@@ -34,8 +34,40 @@ class TestLightSegmentDisplays(MpfTestCase):
         self.assertLightColor("segment2_f", "off")
         self.assertLightColor("segment2_g", "off")
 
+        self.post_event("display1_color_red_green_blue_yellow")
+        self.assertLightColor("segment1_a", "blue")
+        self.assertLightColor("segment1_b", "blue")
+        self.assertLightColor("segment1_c", "blue")
+        self.assertLightColor("segment1_d", "blue")
+        self.assertLightColor("segment1_e", "off")
+        self.assertLightColor("segment1_f", "off")
+        self.assertLightColor("segment1_g", "blue")
+        self.assertLightColor("segment2_a", "yellow")
+        self.assertLightColor("segment2_b", "yellow")
+        self.assertLightColor("segment2_c", "yellow")
+        self.assertLightColor("segment2_d", "off")
+        self.assertLightColor("segment2_e", "off")
+        self.assertLightColor("segment2_f", "off")
+        self.assertLightColor("segment2_g", "off")
+
+        self.post_event("display1_color_white")
+        self.assertLightColor("segment1_a", "on")
+        self.assertLightColor("segment1_b", "on")
+        self.assertLightColor("segment1_c", "on")
+        self.assertLightColor("segment1_d", "on")
+        self.assertLightColor("segment1_e", "off")
+        self.assertLightColor("segment1_f", "off")
+        self.assertLightColor("segment1_g", "on")
+        self.assertLightColor("segment2_a", "on")
+        self.assertLightColor("segment2_b", "on")
+        self.assertLightColor("segment2_c", "on")
+        self.assertLightColor("segment2_d", "off")
+        self.assertLightColor("segment2_e", "off")
+        self.assertLightColor("segment2_f", "off")
+        self.assertLightColor("segment2_g", "off")
+
         # turn on all lights
-        display1.add_text("88")
+        self.post_event("show_88")
         self.advance_time_and_run()
 
         self.assertLightColor("segment1_a", "on")
@@ -54,7 +86,7 @@ class TestLightSegmentDisplays(MpfTestCase):
         self.assertLightColor("segment2_g", "on")
 
         # back to four lights only
-        display1.add_text("11")
+        self.post_event("show_11")
         self.advance_time_and_run()
 
         self.assertLightColor("segment1_a", "off")
@@ -71,6 +103,8 @@ class TestLightSegmentDisplays(MpfTestCase):
         self.assertLightColor("segment2_e", "off")
         self.assertLightColor("segment2_f", "off")
         self.assertLightColor("segment2_g", "off")
+
+        self.post_event("remove_text_display1")
 
         # set invalid chars (for 7segment). should be "1 "
         display1.add_text("1{}".format(chr(244)))

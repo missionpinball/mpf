@@ -12,12 +12,13 @@ More info on the P-ROC hardware platform: http://pinballcontrollers.com/
 Original code source on which this module was based:
 https://github.com/preble/pyprocgame
 """
-from typing import Dict
+from typing import Dict, List
 
 from mpf.core.platform import DmdPlatform, DriverConfig, SwitchConfig, SegmentDisplaySoftwareFlashPlatform
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
 from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
+from mpf.core.rgb_color import RGBColor
 from mpf.core.utility_functions import Util
 from mpf.platforms.p_roc_devices import PROCDriver
 
@@ -331,6 +332,10 @@ class PRocAlphanumericDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
     def _set_text(self, text: str):
         """Set digits to display."""
         self.display.set_text(text, self.number)
+
+    def set_color(self, colors: List[RGBColor]) -> None:
+        """Set the color(s) of the display."""
+        # currently not supported
 
 
 class AuxAlphanumericDisplay:

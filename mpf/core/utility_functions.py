@@ -2,7 +2,7 @@
 from copy import deepcopy
 import re
 from fractions import Fraction
-from functools import reduce
+from functools import reduce, lru_cache
 
 from typing import Dict, Iterable, List, Tuple, Callable, Any, Union
 import asyncio
@@ -185,7 +185,7 @@ class Util:
         return final_list
 
     @staticmethod
-    def dict_merge(a, b, combine_lists=True) -> dict:
+    def dict_merge(a, b, combine_lists=True, deepcopy_both=True) -> dict:
         """Recursively merge dictionaries.
 
         Used to merge dictionaries of dictionaries, like when we're merging
@@ -226,6 +226,7 @@ class Util:
             b (dict): The second dictionary
             combine_lists (bool): Controls whether lists should be combined (extended) or overwritten.
                 Default is `True` which combines them.
+            deepcopy_both (bool): If True deepcopy both a and b
 
         Returns the merged dictionaries.
         """
@@ -233,7 +234,7 @@ class Util:
         # log.info("Dict Merge incoming B %s", b)
         if not isinstance(b, dict):
             return b
-        result = deepcopy(a)
+        result = deepcopy(a) if deepcopy_both else a
         for k, v in b.items():
             if v is None:
                 continue
@@ -251,9 +252,9 @@ class Util:
                 elif isinstance(v, list) and combine_lists:
                     result[k].extend(v)
                 else:
-                    result[k] = deepcopy(v)
+                    result[k] = deepcopy(v) if deepcopy_both else v
             else:
-                result[k] = deepcopy(v)
+                result[k] = deepcopy(v) if deepcopy_both else v
         # log.info("Dict Merge result: %s", result)
         return result
 
@@ -577,6 +578,7 @@ class Util:
         return Util.string_to_ms(time_string) / 1000.0
 
     @staticmethod
+    @lru_cache(1024)
     def string_to_class(class_string: str) -> Callable[..., Any]:
         """Convert a string like mpf.core.events.EventManager into a Python class.
 

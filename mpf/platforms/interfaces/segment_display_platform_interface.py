@@ -32,6 +32,11 @@ class SegmentDisplayPlatformInterface(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def set_color(self, colors: Any) -> None:
+        """Set the color(s) of the display."""
+        raise NotImplementedError
+
 
 class SegmentDisplaySoftwareFlashPlatformInterface(SegmentDisplayPlatformInterface):
 

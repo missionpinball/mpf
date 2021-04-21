@@ -41,22 +41,23 @@ class NextTimers:
         heapq.heappush(self._timers_heap, when)
 
     def is_empty(self):
-        return (len(self._timers_set) == 0)
+        return not self._timers_set
 
     def pop_closest(self):
         """
         Get closest event timer. (The one that will happen the soonest).
         """
-        if self.is_empty():
+        try:
+            when = heapq.heappop(self._timers_heap)
+            self._timers_set.remove(when)
+        except IndexError:
             raise IndexError('NextTimers is empty')
-
-        when = heapq.heappop(self._timers_heap)
-        self._timers_set.remove(when)
 
         return when
 
     def __repr__(self):
         return str(self._timers_set)
+
 
 class _TestTransport:
 

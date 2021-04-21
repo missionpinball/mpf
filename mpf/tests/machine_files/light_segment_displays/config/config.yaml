@@ -82,3 +82,25 @@ segment_displays:
           x2: segment4_x2
           x3: segment4_x3
       type: bcd
+
+segment_display_player:
+  show_1337:
+    display1:
+      text: "1337"
+  display1_color_red_green_blue_yellow:
+    display1:
+      action: set_color
+      color: [red, green, blue, yellow]
+  display1_color_white:
+    display1:
+      action: set_color
+      color: [white]
+  show_88:
+    display1:
+      text: "88"
+  show_11:
+    display1:
+      text: "11"
+  remove_text_display1:
+    display1:
+      action: remove

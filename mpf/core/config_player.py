@@ -41,9 +41,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         self.configure_logging(self.config_file_section)
 
         self.mode_event_keys = dict()
-        self.instances = dict()
-        self.instances['_global'] = dict()
-        self.instances['_global'][self.config_file_section] = dict()
+        self.instances = {'_global': {self.config_file_section: {}}}
 
     def _add_handlers(self):
         self.machine.events.add_handler('init_phase_1', self._initialize_mode_handlers, priority=20)

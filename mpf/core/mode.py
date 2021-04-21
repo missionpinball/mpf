@@ -1,5 +1,5 @@
 """Contains the Mode base class."""
-from typing import Any, Optional
+from typing import Any, Optional, Union
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -90,12 +90,9 @@ class Mode(LogMixin):
                                     "False also set game_mode to False.", 1)
 
     @staticmethod
-    def get_config_spec() -> str:
+    def get_config_spec() -> Union[str, dict]:
         """Return config spec for mode_settings."""
-        return '''
-                __valid_in__: mode
-                __allow_others__:
-                '''
+        return {'__valid_in__': 'mode', '__allow_others__': ''}
 
     def __repr__(self):
         """Return string representation."""
@@ -384,48 +381,37 @@ class Mode(LogMixin):
         self.stop_callbacks = []
 
     def _add_mode_devices(self) -> None:
-        # adds and initializes mode devices which get removed at the end of the mode
+        """Add and initialize mode devices which get removed at the end of the mode."""
+        for config_key, config in self.config.items():
+            if config_key not in self.machine.config['mpf']['device_modules']:
+                continue
 
-        for collection_name, device_class in (
-                iter(self.machine.device_manager.device_classes.items())):
+            collection = getattr(self.machine, config_key)
+            for device_name in config.keys():
+                device = collection[device_name]
+                # Track that this device was added via this mode so we
+                # can remove it when the mode ends.
+                self.mode_devices.add(device)
+                if not self.config['mode']['game_mode'] and not device.can_exist_outside_of_game:
+                    raise AssertionError("Device {} cannot exist in non game-mode {}.".format(
+                        device, self.name
+                    ))
 
-            # check if there is config for the device type
-            if device_class.config_section in self.config:
-
-                for device_name in self.config[device_class.config_section]:
-
-                    collection = getattr(self.machine, collection_name)
-
-                    # get device
-                    device = collection[device_name]
-
-                    # Track that this device was added via this mode so we
-                    # can remove it when the mode ends.
-                    self.mode_devices.add(device)
-                    if not self.config['mode']['game_mode'] and not device.can_exist_outside_of_game:
-                        raise AssertionError("Device {} cannot exist in non game-mode {}.".format(
-                            device, self.name
-                        ))
-
-                    # This lets the device know it was added to a mode
-                    device.device_loaded_in_mode(mode=self, player=self.player)
+                # This lets the device know it was added to a mode
+                device.device_loaded_in_mode(mode=self, player=self.player)
 
     def create_mode_devices(self) -> None:
         """Create new devices that are specified in a mode config that haven't been created in the machine-wide."""
         self.debug_log("Scanning config for mode-based devices")
 
-        for collection_name, device_class in iter(self.machine.device_manager.device_classes.items()):
-
-            # check if there is config for the device type
-            if device_class.config_section not in self.config:
+        for config_key, config in self.config.items():
+            if config_key not in self.machine.config['mpf']['device_modules']:
                 continue
 
-            for device, settings in iter(self.config[device_class.config_section].items()):
-
-                collection = getattr(self.machine, collection_name)
-
-                if device not in collection:  # no existing device, create
-
+            collection = getattr(self.machine, config_key)
+            for device, settings in config.items():
+                if device not in collection:
+                    # no existing device, create
                     self.debug_log("Creating mode-based device: %s",
                                    device)
 
@@ -434,15 +420,12 @@ class Mode(LogMixin):
 
     async def load_mode_devices(self) -> None:
         """Load config of mode devices."""
-        for collection_name, device_class in iter(self.machine.device_manager.device_classes.items()):
-
-            # check if there is config for the device type
-            if device_class.config_section not in self.config:
+        for config_key, config in self.config.items():
+            if config_key not in self.machine.config['mpf']['device_modules']:
                 continue
 
-            for device, settings in iter(self.config[device_class.config_section].items()):
-
-                collection = getattr(self.machine, collection_name)
+            collection = getattr(self.machine, config_key)
+            for device, settings in config.items():
                 device = collection[device]
                 settings = device.prepare_config(settings, True)
                 settings = device.validate_and_parse_config(settings, True, "mode:" + self.name)
@@ -457,13 +440,12 @@ class Mode(LogMixin):
                     # load config
                     device.load_config(settings)
 
-        for collection_name, device_class in iter(self.machine.device_manager.device_classes.items()):
-            # check if there is config for the device type
-            if device_class.config_section not in self.config:
+        for config_key, config in self.config.items():
+            if config_key not in self.machine.config['mpf']['device_modules']:
                 continue
 
-            for device, settings in iter(self.config[device_class.config_section].items()):
-                collection = getattr(self.machine, collection_name)
+            collection = getattr(self.machine, config_key)
+            for device, settings in config.items():
                 device = collection[device]
                 await device.device_added_to_mode(mode=self)
 

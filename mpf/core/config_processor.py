@@ -236,7 +236,7 @@ class ConfigProcessor:
 
     def load_device_config_specs(self, config_spec, machine_config):
         """Load device config specs."""
-        for device_type in machine_config['mpf']['device_modules']:
+        for device_type in machine_config['mpf']['device_modules'].values():
             device_cls = Util.string_to_class(device_type)
             if device_cls.get_config_spec():
                 # add specific config spec if device has any

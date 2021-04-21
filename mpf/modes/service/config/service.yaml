@@ -122,6 +122,15 @@ slide_player:
     service_settings:
       action: remove
 
+  # audits:
+  service_audits_menu_show:
+    service_audits_menu:
+      action: play
+      priority: 1
+  service_audits_menu_hide:
+    service_audits_menu:
+      action: remove
+
 widget_player:
   # power off
   service_power_off:
@@ -300,6 +309,21 @@ slides:
     style: small
     y: bottom + 60%
     opacity: 0.5
+  - type: text
+    text: "(value_label)"
+    style: small
+    y: bottom + 40%
+
+  service_audits_menu:
+  - type: text
+    text: "Audits"
+    style: small
+    x: center
+    y: bottom + 80%
+  - type: text
+    text: "(audits_label)"
+    style: small
+    y: bottom + 60%
   - type: text
     text: "(value_label)"
     style: small

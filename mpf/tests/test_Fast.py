@@ -139,6 +139,10 @@ class MockFastNet(BaseMockFast):
         super().__init__()
         self.type = "NET"
 
+class MockFastSeg(BaseMockFast):
+    def __init__(self):
+        super().__init__()
+        self.type = "SEG"
 
 class TestFast(MpfTestCase):
     def get_config_file(self):
@@ -151,6 +155,7 @@ class TestFast(MpfTestCase):
         return False
 
     def _mock_loop(self):
+        self.clock.mock_serial("com3", self.seg_cpu)
         self.clock.mock_serial("com4", self.net_cpu)
         self.clock.mock_serial("com5", self.rgb_cpu)
         self.clock.mock_serial("com6", self.dmd_cpu)
@@ -175,6 +180,7 @@ class TestFast(MpfTestCase):
         self.net_cpu = MockFastNet()
         self.rgb_cpu = MockFastRgb()
         self.dmd_cpu = MockFastDmd()
+        self.seg_cpu = MockFastSeg()
 
         self.dmd_cpu.expected_commands = {
             b'ID:': 'ID:DMD FP-CPU-002-1 00.88',
@@ -218,11 +224,16 @@ class TestFast(MpfTestCase):
             "XO:14,7F": "XO:P"
         }
 
+        self.seg_cpu.expected_commands = {
+            'ID:': 'ID:SEG FP-CPU-002-1 00.10',
+        }
+
         super().setUp()
         self.advance_time_and_run()
         self.assertFalse(self.net_cpu.expected_commands)
         self.assertFalse(self.rgb_cpu.expected_commands)
         self.assertFalse(self.dmd_cpu.expected_commands)
+        self.assertFalse(self.seg_cpu.expected_commands)
 
         # test io board detection
         self.assertEqual(4, len(self.machine.default_platform.io_boards))
@@ -241,6 +252,8 @@ class TestFast(MpfTestCase):
         self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_rgb_model"))
         self.assertEqual("01.03", self.machine.variables.get_machine_var("fast_net_firmware"))
         self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_net_model"))
+        self.assertEqual("00.10", self.machine.variables.get_machine_var("fast_seg_firmware"))
+        self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_seg_model"))
 
     def test_coils(self):
         self._test_pulse()
@@ -254,6 +267,7 @@ class TestFast(MpfTestCase):
         info_str = """NET CPU: NET FP-CPU-002-1 01.03
 RGB CPU: RGB FP-CPU-002-1 00.89
 DMD CPU: DMD FP-CPU-002-1 00.88
+Segment Controller: SEG FP-CPU-002-1 00.10
 
 Boards:
 Board 0 - Model: FP-I/O-3208-2    Firmware: 01.00 Switches: 32 Drivers: 8
@@ -365,7 +379,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
             "DN:21,01,07,10,0A,FF,00,00,14": "DN:P"
         }
         # coil and switch are on different boards but first 8 switches always work
-        self.machine.autofires["ac_different_boards"].enable()
+        self.machine.autofire_coils["ac_different_boards"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
@@ -374,7 +388,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
             "DN:21,01,39,10,0A,FF,00,00,14": "DN:P",
             "SN:39,01,02,02": "SN:P"
         }
-        self.machine.autofires["ac_board_3"].enable()
+        self.machine.autofire_coils["ac_board_3"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
@@ -383,7 +397,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
         }
         # coil and switch are on different boards
         with self.assertRaises(AssertionError):
-            self.machine.autofires["ac_broken_combination"].enable()
+            self.machine.autofire_coils["ac_broken_combination"].enable()
             self.advance_time_and_run(.1)
 
     def _test_enable_exception_hw_rule(self):
@@ -410,14 +424,14 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
             "DN:07,01,16,10,0A,FF,00,00,14": "DN:P",  # hw rule
             "SN:16,01,02,02": "SN:P"                  # debounce quick on switch
         }
-        self.machine.autofires["ac_slingshot_test"].enable()
+        self.machine.autofire_coils["ac_slingshot_test"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         self.net_cpu.expected_commands = {
             "DN:07,81": "DN:P"
         }
-        self.machine.autofires["ac_slingshot_test"].disable()
+        self.machine.autofire_coils["ac_slingshot_test"].disable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
@@ -442,7 +456,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
             "DN:07,11,1A,10,0A,FF,00,00,14": "DN:P",
             "SN:1A,01,02,02": "SN:P"
         }
-        self.machine.autofires["ac_inverted_switch"].enable()
+        self.machine.autofire_coils["ac_inverted_switch"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 

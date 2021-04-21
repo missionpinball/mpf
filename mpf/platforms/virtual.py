@@ -1,9 +1,10 @@
 """Contains code for a virtual hardware platform."""
-from typing import Dict, Tuple, Optional, Union
+from typing import Dict, Tuple, Optional, Union, List
 
 import asyncio
 import logging
 
+from mpf.core.rgb_color import RGBColor
 from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
 from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface, FlashingType
@@ -147,6 +148,10 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         """Validate coil sections."""
         return config
 
+    def validate_segment_display_section(self, segment_display, config):
+        """Validate segment display sections."""
+        return config
+
     def configure_accelerometer(self, number, config, callback):
         """Configure accelerometer."""
 
@@ -263,8 +268,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
     async def configure_segment_display(self, number: str, platform_settings) -> SegmentDisplayPlatformInterface:
         """Configure segment display."""
-        del platform_settings
-        return VirtualSegmentDisplay(number)
+        return VirtualSegmentDisplay(number, self.machine)
 
     async def configure_i2c(self, number: str) -> "I2cPlatformInterface":
         """Configure virtual i2c device."""
@@ -311,18 +315,24 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
 
     """Virtual segment display."""
 
-    __slots__ = ["text", "flashing"]
+    __slots__ = ["text", "flashing", "platform_options", "colors", "machine", "post_update_events"]
 
-    def __init__(self, number) -> None:
+    def __init__(self, number, machine) -> None:
         """Initialise virtual segment display."""
         super().__init__(number)
+        self.machine = machine
         self.text = ''
         self.flashing = FlashingType.NO_FLASH
+        self.colors = [RGBColor('FFFFFF')]
 
-    def set_text(self, text: str, flashing: FlashingType):
+    def set_text(self, text: str, flashing: FlashingType) -> None:
         """Set text."""
         self.text = text
         self.flashing = flashing
+
+    def set_color(self, colors: List[RGBColor]) -> None:
+        """Set color(s)."""
+        self.colors = colors
 
 
 class VirtualSound(HardwareSoundPlatformInterface):
