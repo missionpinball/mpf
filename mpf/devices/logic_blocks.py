@@ -257,8 +257,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
                              lb_id=lb_id)
 
     def _logic_block_timeout(self, lb_id):
-        """Reset the progress towards completion of this logic block when
-        timer expires.
+        """Reset the progress towards completion of this logic block when timer expires.
 
         Automatically called when one of the logic_block_timer_complete
         events is called.
