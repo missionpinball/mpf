@@ -59,6 +59,19 @@ accruals:
         enable_events: accrual10_enable
         disable_events: accrual10_disable
         reset_events: accrual10_reset
+    accrual7:
+        events:
+          - accrual7_step1
+          - accrual7_step2
+          - accrual7_step3
+        events_when_complete: accrual7_complete
+        events_when_hit: accrual7_hit
+        reset_on_complete: True
+        disable_on_complete: False
+        enable_events: accrual7_enable
+        disable_events: accrual7_disable
+        reset_events: accrual7_reset
+        logic_block_timeout: 50
 counters:
     counter1:
         count_events: counter1_count
@@ -91,6 +104,16 @@ counters:
         reset_events: counter4_reset
     counter5:
         count_events: counter5_count
+    counter9:
+        count_events: counter9_count
+        starting_count: 5
+        count_complete_value: 0
+        direction: down
+        enable_events: counter9_enable
+        disable_events: counter9_disable
+        restart_events: counter9_restart
+        reset_events: counter9_reset
+        logic_block_timeout: 50
 sequences:
     sequence1:
         events:
@@ -101,6 +124,16 @@ sequences:
         enable_events: sequence1_enable
         disable_events: sequence1_disable
         reset_events: sequence1_reset
+    sequence2:
+        events:
+            - sequence2_step1a, sequence2_step1b
+            - sequence2_step2a, sequence2_step2b
+            - sequence2_step3a, sequence2_step3b
+        events_when_complete: sequence2_complete
+        enable_events: sequence2_enable
+        disable_events: sequence2_disable
+        reset_events: sequence2_reset
+        logic_block_timeout: 50
 
 # logic blocks in mode1
 modes:

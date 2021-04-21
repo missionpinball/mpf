@@ -32,11 +32,12 @@ class LogicBlock(SystemWideDevice, ModeDevice):
 
     """Parent class for each of the logic block classes."""
 
-    __slots__ = ["_state", "_start_enabled", "player_state_variable"]
+    __slots__ = ["delay", "_state", "_start_enabled", "player_state_variable"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialize logic block."""
         super().__init__(machine, name)
+        self.delay = DelayManager(self.machine)
         self._state = None          # type: Optional[LogicBlockState]
         self._start_enabled = None  # type: Optional[bool]
 
@@ -189,6 +190,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         self.debug_log("Enabling")
         self.enabled = True
         self.post_update_event()
+        self._logic_block_timer_start()
 
     def _post_hit_events(self, **kwargs):
         self.post_update_event()
@@ -221,6 +223,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         self.debug_log("Disabling")
         self.enabled = False
         self.post_update_event()
+        self.delay.remove("timeout")
 
     @event_handler(4)
     def event_reset(self, **kwargs):
@@ -238,6 +241,26 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         self.value = self.get_start_value()
         self.debug_log("Resetting")
         self.post_update_event()
+        self._logic_block_timer_start()
+
+    def _logic_block_timer_start(self):
+        if self.config['logic_block_timeout']:
+            self.debug_log("Setting up a logic block timer for %sms",
+                           self.config['logic_block_timeout'])
+
+            self.delay.reset(name="timeout",
+                             ms=self.config['logic_block_timeout'],
+                             callback=self._logic_block_timeout)
+
+    def _logic_block_timeout(self):
+        """Reset the progress towards completion of this logic block when timer expires.
+
+        Automatically called when one of the logic_block_timer_complete
+        events is called.
+        """
+        self.info_log("Logic Block timeouted")
+        self.machine.events.post("{}_timeout".format(self.name))
+        self.reset()
 
     @event_handler(5)
     def event_restart(self, **kwargs):
@@ -268,6 +291,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
 
         # otherwise mark as completed
         self.completed = True
+        self.delay.remove("timeout")
 
         self.debug_log("Complete")
         if self.config['events_when_complete']:
@@ -313,7 +337,6 @@ class Counter(LogicBlock):
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise counter."""
         super().__init__(machine, name)
-        self.delay = DelayManager(self.machine)
 
         self.ignore_hits = False
         self.hit_value = -1
