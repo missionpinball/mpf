@@ -223,6 +223,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         self.debug_log("Disabling")
         self.enabled = False
         self.post_update_event()
+        self.delay.remove("timeout")
 
     @event_handler(4)
     def event_reset(self, **kwargs):
@@ -290,6 +291,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
 
         # otherwise mark as completed
         self.completed = True
+        self.delay.remove("timeout")
 
         self.debug_log("Complete")
         if self.config['events_when_complete']:
