@@ -153,7 +153,7 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.hit_and_release_switch("s_service_esc")
         self.advance_time_and_run(.1)
         self.assertMachineVarEqual(2, "credit_units")
-        self.assertEqual({'1 Total Coins service_credit': 2, '2 Total Earnings service_credit': 2},
+        self.assertEqual({'service_credit Awards': 2},
                          self.machine.modes["credits"].earnings)
 
         self.start_game()
