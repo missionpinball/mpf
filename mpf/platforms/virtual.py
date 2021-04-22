@@ -326,11 +326,14 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
         self.flash_mask = ""
         self.colors = [RGBColor('FFFFFF')]
 
-    def set_text(self, text: str, flashing: FlashingType, flash_mask: str = "") -> None:
+    def set_text(self, text: str, flashing: FlashingType = FlashingType.NO_FLASH, flash_mask: str = "",
+                 colors: Optional[List[RGBColor]] = None) -> None:
         """Set text."""
         self.text = text
         self.flashing = flashing
         self.flash_mask = flash_mask
+        if colors:
+            self.colors = colors
 
     def set_color(self, colors: List[RGBColor]) -> None:
         """Set color(s)."""

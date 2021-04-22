@@ -1,7 +1,9 @@
 """Text transitions used for segment displays."""
 import abc
+from typing import Optional, List
 
 from mpf.core.placeholder_manager import TextTemplate
+from mpf.core.rgb_color import RGBColor
 from mpf.devices.segment_display.segment_display_text import SegmentDisplayText
 
 
@@ -26,7 +28,9 @@ class TransitionBase(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_transition_step(self, step: int, current_text: str, new_text: str) -> SegmentDisplayText:
+    def get_transition_step(self, step: int, current_text: str, new_text: str,
+                            current_colors: Optional[List[RGBColor]] = None,
+                            new_colors: Optional[List[RGBColor]] = None) -> SegmentDisplayText:
         """Calculate all the steps in the transition."""
         raise NotImplementedError
 
@@ -35,27 +39,32 @@ class TransitionRunner:
 
     """Class to run/execute transitions using an iterator."""
 
-    def __init__(self, machine, transition: TransitionBase, current_text: str, new_text: str):
+    def __init__(self, machine, transition: TransitionBase, current_text: str, new_text: str,
+                 current_colors: Optional[List[RGBColor]] = None,
+                 new_colors: Optional[List[RGBColor]] = None) -> None:
         """Class initializer."""
-        self.machine = machine
-        self.transition = transition
-        self.step = 0
-        self.current_placeholder = TextTemplate(self.machine, current_text)
-        self.new_placeholder = TextTemplate(self.machine, new_text)
+        self._transition = transition
+        self._step = 0
+        self._current_placeholder = TextTemplate(machine, current_text)
+        self._new_placeholder = TextTemplate(machine, new_text)
+        self._current_colors = current_colors
+        self._new_colors = new_colors
 
     def __iter__(self):
-        """Return an iterator."""
+        """Return the iterator."""
         return self
 
     def __next__(self):
         """Evaluate and return the next transition step."""
-        if self.step >= self.transition.get_step_count():
+        if self._step >= self._transition.get_step_count():
             raise StopIteration
 
-        transition_step = self.transition.get_transition_step(self.step,
-                                                              self.current_placeholder.evaluate({}),
-                                                              self.new_placeholder.evaluate({}))
-        self.step += 1
+        transition_step = self._transition.get_transition_step(self._step,
+                                                               self._current_placeholder.evaluate({}),
+                                                               self._new_placeholder.evaluate({}),
+                                                               self._current_colors,
+                                                               self._new_colors)
+        self._step += 1
         return transition_step
 
 
@@ -67,13 +76,14 @@ class NoTransition(TransitionBase):
         """Return the total number of steps required for the transition."""
         return 1
 
-    def get_transition_step(self, step: int, current_text: str,
-                            new_text: str) -> SegmentDisplayText:
+    def get_transition_step(self, step: int, current_text: str, new_text: str,
+                            current_colors: Optional[List[RGBColor]] = None,
+                            new_colors: Optional[List[RGBColor]] = None) -> SegmentDisplayText:
         """Calculate all the steps in the transition."""
         if step < 0 or step >= self.get_step_count():
             raise AssertionError("Step is out of range")
 
-        return SegmentDisplayText(new_text, self.output_length, self.collapse_dots, self.collapse_commas)
+        return SegmentDisplayText(new_text, self.output_length, self.collapse_dots, self.collapse_commas, new_colors)
 
 
 class PushTransition(TransitionBase):
@@ -92,14 +102,17 @@ class PushTransition(TransitionBase):
 
         return self.output_length
 
-    def get_transition_step(self, step: int, current_text: str, new_text: str) -> SegmentDisplayText:
+    def get_transition_step(self, step: int, current_text: str, new_text: str,
+                            current_colors: Optional[List[RGBColor]] = None,
+                            new_colors: Optional[List[RGBColor]] = None) -> SegmentDisplayText:
         """Calculate all the steps in the transition."""
         if step < 0 or step >= self.get_step_count():
             raise AssertionError("Step is out of range")
 
         current_display_text = SegmentDisplayText(current_text, self.output_length, self.collapse_dots,
-                                                  self.collapse_commas)
-        new_display_text = SegmentDisplayText(new_text, self.output_length, self.collapse_dots, self.collapse_commas)
+                                                  self.collapse_commas, current_colors)
+        new_display_text = SegmentDisplayText(new_text, self.output_length, self.collapse_dots,
+                                              self.collapse_commas, new_colors)
 
         if self.direction == 'right':
             temp_list = new_display_text
@@ -159,14 +172,17 @@ class CoverTransition(TransitionBase):
         """Return the total number of steps required for the transition."""
         return self.output_length
 
-    def get_transition_step(self, step: int, current_text: str, new_text: str) -> SegmentDisplayText:
+    def get_transition_step(self, step: int, current_text: str, new_text: str,
+                            current_colors: Optional[List[RGBColor]] = None,
+                            new_colors: Optional[List[RGBColor]] = None) -> SegmentDisplayText:
         """Calculate all the steps in the transition."""
         if step < 0 or step >= self.get_step_count():
             raise AssertionError("Step is out of range")
 
         current_display_text = SegmentDisplayText(current_text, self.output_length, self.collapse_dots,
-                                                  self.collapse_commas)
-        new_display_text = SegmentDisplayText(new_text, self.output_length, self.collapse_dots, self.collapse_commas)
+                                                  self.collapse_commas, current_colors)
+        new_display_text = SegmentDisplayText(new_text, self.output_length, self.collapse_dots,
+                                              self.collapse_commas, new_colors)
 
         if self.direction == 'right':
             temp_text = new_display_text[-(step + 1):]
@@ -194,14 +210,17 @@ class UncoverTransition(TransitionBase):
         """Return the total number of steps required for the transition."""
         return self.output_length
 
-    def get_transition_step(self, step: int, current_text: str, new_text: str) -> SegmentDisplayText:
+    def get_transition_step(self, step: int, current_text: str, new_text: str,
+                            current_colors: Optional[List[RGBColor]] = None,
+                            new_colors: Optional[List[RGBColor]] = None) -> SegmentDisplayText:
         """Calculate all the steps in the transition."""
         if step < 0 or step >= self.get_step_count():
             raise AssertionError("Step is out of range")
 
         current_display_text = SegmentDisplayText(current_text, self.output_length, self.collapse_dots,
-                                                  self.collapse_commas)
-        new_display_text = SegmentDisplayText(new_text, self.output_length, self.collapse_dots, self.collapse_commas)
+                                                  self.collapse_commas, current_colors)
+        new_display_text = SegmentDisplayText(new_text, self.output_length, self.collapse_dots,
+                                              self.collapse_commas, new_colors)
 
         if self.direction == 'right':
             temp_text = new_display_text[:step + 1]
@@ -232,14 +251,17 @@ class WipeTransition(TransitionBase):
 
         return self.output_length
 
-    def get_transition_step(self, step: int, current_text: str, new_text: str) -> SegmentDisplayText:
+    def get_transition_step(self, step: int, current_text: str, new_text: str,
+                            current_colors: Optional[List[RGBColor]] = None,
+                            new_colors: Optional[List[RGBColor]] = None) -> SegmentDisplayText:
         """Calculate all the steps in the transition."""
         if step < 0 or step >= self.get_step_count():
             raise AssertionError("Step is out of range")
 
         current_display_text = SegmentDisplayText(current_text, self.output_length, self.collapse_dots,
-                                                  self.collapse_commas)
-        new_display_text = SegmentDisplayText(new_text, self.output_length, self.collapse_dots, self.collapse_commas)
+                                                  self.collapse_commas, current_colors)
+        new_display_text = SegmentDisplayText(new_text, self.output_length, self.collapse_dots,
+                                              self.collapse_commas, new_colors)
 
         if self.direction == 'right':
             temp_text = new_display_text[:step + 1]

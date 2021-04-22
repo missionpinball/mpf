@@ -1,7 +1,7 @@
 """MPF plugin which connects segment displays to MPF-MC to update segment display emulator widgets."""
 
 import logging
-from typing import Any, Optional
+from typing import Any, Optional, List
 
 from mpf.core.rgb_color import RGBColor
 from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
@@ -42,7 +42,8 @@ class VirtualSegmentDisplayConnector:
             for display in self.config['segment_displays']:
                 display.add_virtual_connector(self)
 
-    def set_text(self, name: str, text: str, flashing: FlashingType, flash_mask: str = "") -> None:
+    def set_text(self, name: str, text: str, flashing: FlashingType, flash_mask: str = "",
+                 colors: Optional[List[RGBColor]] = None) -> None:
         """Set the display text to send to MPF-MC via BCP."""
         self.machine.bcp.interface.bcp_trigger_client(
             client=self.bcp_client,
@@ -50,14 +51,13 @@ class VirtualSegmentDisplayConnector:
             segment_display_name=name,
             text=text,
             flashing=str(flashing.value),
-            flash_mask=flash_mask)
+            flash_mask=flash_mask,
+            colors=colors)
 
-    def set_color(self, name: str, colors: Any) -> None:
+    def set_color(self, name: str, colors: List[RGBColor]) -> None:
         """Set the display colors to send to MPF-MC via BCP."""
-        if not isinstance(colors, list):
-            colors = [colors]
         self.machine.bcp.interface.bcp_trigger_client(
             client=self.bcp_client,
             name='update_segment_display',
             segment_display_name=name,
-            color=[RGBColor(color).hex for color in colors])
+            colors=[color.hex for color in colors])

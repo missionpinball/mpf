@@ -1,6 +1,6 @@
 """Physical segment displays."""
 from collections import OrderedDict
-from typing import Optional, Dict, Iterator
+from typing import Optional, Dict, Iterator, List
 
 from mpf.core.clock import PeriodicTask
 from mpf.core.rgb_color import RGBColor
@@ -44,7 +44,7 @@ class SegmentDisplay(SystemWideDevice):
         self.integrated_commas = False              # type: bool
         self.default_transition_update_hz = 30.0    # type: float
         self.text = ""                              # type: Optional[str]
-        self.color = None                           # type: Optional[RGBColor]
+        self.colors = [RGBColor("white")]           # type: List[RGBColor]
         self.flashing = FlashingType.NO_FLASH       # type: FlashingType
         self.flash_mask = ""                        # type: Optional[str]
         self.platform_options = None                # type: Optional[dict]
@@ -53,7 +53,7 @@ class SegmentDisplay(SystemWideDevice):
         self._current_placeholder = None            # type: Optional[TextTemplate]
         self._current_text_stack_entry = None       # type: Optional[TextStackEntry]
         self._transition_update_task = None         # type: Optional[PeriodicTask]
-        self._current_transition = None             # type: Optional[Iterator]
+        self._current_transition = None             # type: Optional[TransitionRunner]
 
     async def _initialize(self):
         """Initialise display."""
@@ -126,13 +126,15 @@ class SegmentDisplay(SystemWideDevice):
         self.flash_mask = flash_mask
         self._update_display(self.text)
 
-    def set_color(self, color: RGBColor):
-        """Set display color."""
-        self.color = color
+    def set_color(self, colors: List[RGBColor]):
+        """Set display colors."""
+        if not isinstance(colors, list):
+            colors = [colors]
+        self.colors = colors
         assert self.hw_display is not None
-        self.hw_display.set_color(color)
+        self.hw_display.set_color(colors)
         if self.virtual_connector:
-            self.virtual_connector.set_color(self.name, self.color)
+            self.virtual_connector.set_color(self.name, colors)
 
     def remove_text_by_key(self, key: str):
         """Remove entry from text stack."""
@@ -143,17 +145,25 @@ class SegmentDisplay(SystemWideDevice):
             else:
                 self._update_stack()
 
-    def _start_transition(self, transition: TransitionBase, current_text: str, new_text: str, update_hz: float = 30.0):
+    def _start_transition(self, transition: TransitionBase, current_text: str, new_text: str,
+                          current_colors: Optional[List[RGBColor]] = None, new_colors: Optional[List[RGBColor]] = None,
+                          update_hz: float = 30.0):
         """Start the specified transition."""
         if self._current_transition:
             self._stop_transition()
-        self._current_transition = iter(TransitionRunner(self.machine, transition, current_text, new_text))
-        self._update_display(SegmentDisplayText.convert_to_str(next(self._current_transition)))
+        self._current_transition = TransitionRunner(self.machine, transition, current_text, new_text,
+                                                    current_colors, new_colors)
+        transition_text = next(self._current_transition)
+        transition_colors = SegmentDisplayText.get_colors(transition_text)
+        self._update_display(SegmentDisplayText.convert_to_str(transition_text), transition_colors)
         self._transition_update_task = self.machine.clock.schedule_interval(self._update_transition, 1 / update_hz)
 
     def _update_transition(self):
         try:
-            self._update_display(SegmentDisplayText.convert_to_str(next(self._current_transition)))
+            transition_text = next(self._current_transition)
+            transition_colors = SegmentDisplayText.get_colors(transition_text)
+            self._update_display(SegmentDisplayText.convert_to_str(transition_text), transition_colors)
+
         except StopIteration:
             self._stop_transition()
 
@@ -217,10 +227,14 @@ class SegmentDisplay(SystemWideDevice):
                 previous_text = ""
 
             self._start_transition(transition, previous_text, top_text_stack_entry.text,
+                                   self.colors, top_text_stack_entry.colors,
                                    self.default_transition_update_hz)
         else:
+            # no transition - subscribe to text template changes and update display
             self._current_placeholder = TextTemplate(self.machine, top_text_stack_entry.text)
-            self._current_placeholder_changed()
+            new_text, future = self._current_placeholder.evaluate_and_subscribe({})
+            future.add_done_callback(self._current_placeholder_changed)
+            self._update_display(new_text, top_text_stack_entry.colors)
 
     def _current_placeholder_changed(self, *args, **kwargs) -> None:
         """Update display when a placeholder changes (callback function)."""
@@ -230,13 +244,13 @@ class SegmentDisplay(SystemWideDevice):
         future.add_done_callback(self._current_placeholder_changed)
         self._update_display(new_text)
 
-    def _update_display(self, new_text: str) -> None:
+    def _update_display(self, new_text: str, new_colors: Optional[List[RGBColor]] = None) -> None:
         """Update display to current text."""
         assert self.hw_display is not None
 
         # set text to display
         self.text = new_text
-        self.hw_display.set_text(self.text, flashing=self.flashing, flash_mask=self.flash_mask)
+        self.hw_display.set_text(self.text, flashing=self.flashing, flash_mask=self.flash_mask, colors=new_colors)
         if self.virtual_connector:
             self.virtual_connector.set_text(self.name, self.text, flashing=self.flashing,
-                                            flash_mask=self.flash_mask)
+                                            flash_mask=self.flash_mask, colors=new_colors)

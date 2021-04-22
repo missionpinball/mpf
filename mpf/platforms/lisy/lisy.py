@@ -236,7 +236,7 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
 
     def set_color(self, colors: List[RGBColor]) -> None:
         """Set the color(s) of the display."""
-        raise NotImplementedError
+        # not supported currently
 
 
 class LisySound(HardwareSoundPlatformInterface):

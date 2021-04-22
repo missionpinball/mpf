@@ -1,7 +1,9 @@
 """Support for physical segment displays."""
 import abc
-from typing import Any
+from typing import Any, List, Optional
 from enum import Enum
+
+from mpf.core.rgb_color import RGBColor
 
 
 class FlashingType(Enum):
@@ -25,7 +27,8 @@ class SegmentDisplayPlatformInterface(metaclass=abc.ABCMeta):
         self.number = number
 
     @abc.abstractmethod
-    def set_text(self, text: str, flashing: FlashingType, flash_mask: str = "") -> None:
+    def set_text(self, text: str, flashing: FlashingType = FlashingType.NO_FLASH, flash_mask: str = "",
+                 colors: Optional[List[RGBColor]] = None) -> None:
         """Set a text to the display.
 
         This text will be right aligned in case the text is shorter than the display.
@@ -34,7 +37,7 @@ class SegmentDisplayPlatformInterface(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def set_color(self, colors: Any) -> None:
+    def set_color(self, colors: List[RGBColor]) -> None:
         """Set the color(s) of the display."""
         raise NotImplementedError
 
@@ -77,7 +80,8 @@ class SegmentDisplaySoftwareFlashPlatformInterface(SegmentDisplayPlatformInterfa
             else:
                 self._set_text("")
 
-    def set_text(self, text: str, flashing: FlashingType, flash_mask: str = "") -> None:
+    def set_text(self, text: str, flashing: FlashingType = FlashingType.NO_FLASH, flash_mask: str = "",
+                 colors: Optional[List[RGBColor]] = None) -> None:
         """Set a text to the display."""
         self._text = text
         self._flashing = flashing
@@ -89,6 +93,9 @@ class SegmentDisplaySoftwareFlashPlatformInterface(SegmentDisplayPlatformInterfa
 
         if flashing == FlashingType.NO_FLASH or self._flash_on or not text:
             self._set_text(text)
+
+        if colors:
+            self.set_color(colors)
 
     @abc.abstractmethod
     def _set_text(self, text: str) -> None:

@@ -53,13 +53,14 @@ segment_display_player:
   test_update_events:
     display3:
       text: "UPDATE"
-      color: "FF0000"
+      color: FF0000
 
   test_transition:
     display1:
       priority: 15
       key: transition
       text: "  SCROLL  "
+      color: red
       transition:
         type: push
         direction: right
@@ -85,3 +86,8 @@ segment_display_player:
       transition:
         type: uncover
         direction: right
+
+  test_set_color_to_white:
+    display3:
+      action: set_color
+      color: white

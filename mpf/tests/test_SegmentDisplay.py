@@ -1,5 +1,6 @@
 from unittest.mock import patch, call, ANY, Mock
 
+from mpf.core.rgb_color import RGBColor
 from mpf.devices.segment_display.transitions import NoTransition, PushTransition, CoverTransition, UncoverTransition, \
     WipeTransition, TransitionRunner
 from mpf.devices.segment_display.segment_display_text import SegmentDisplayText
@@ -338,6 +339,52 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.assertEqual(ord("."), test_text[3].char_code)
         self.assertEqual(" 25.000", SegmentDisplayText.convert_to_str(test_text))
 
+        # no colors
+        test_text = SegmentDisplayText("COLOR", 5, False, False)
+        self.assertTrue(isinstance(test_text, list))
+        self.assertEqual(5, len(test_text))
+        colors = SegmentDisplayText.get_colors(test_text)
+        self.assertIsNone(colors)
+
+        # single color
+        test_text = SegmentDisplayText("COLOR", 5, False, False, [RGBColor("ffffff")])
+        self.assertTrue(isinstance(test_text, list))
+        self.assertEqual(5, len(test_text))
+        colors = SegmentDisplayText.get_colors(test_text)
+        self.assertEqual(5, len(colors))
+        self.assertEqual(5, colors.count(RGBColor("ffffff")))
+
+        # multiple colors
+        test_text = SegmentDisplayText("COLOR", 5, False, False,
+                                       [RGBColor("white"), RGBColor("red"), RGBColor("green"), RGBColor("blue"),
+                                        RGBColor("cyan")])
+        self.assertTrue(isinstance(test_text, list))
+        self.assertEqual(5, len(test_text))
+        colors = SegmentDisplayText.get_colors(test_text)
+        self.assertEqual(5, len(colors))
+        self.assertEqual([RGBColor("white"), RGBColor("red"), RGBColor("green"),
+                          RGBColor("blue"), RGBColor("cyan")], colors)
+
+        # multiple colors (fewer colors than letters)
+        test_text = SegmentDisplayText("COLOR", 5, False, False,
+                                       [RGBColor("white"), RGBColor("red")])
+        self.assertTrue(isinstance(test_text, list))
+        self.assertEqual(5, len(test_text))
+        colors = SegmentDisplayText.get_colors(test_text)
+        self.assertEqual(5, len(colors))
+        self.assertEqual([RGBColor("white"), RGBColor("red"), RGBColor("red"),
+                          RGBColor("red"), RGBColor("red")], colors)
+
+        # multiple colors (fewer colors than letters and fewer letters than characters)
+        test_text = SegmentDisplayText("COLOR", 8, False, False,
+                                       [RGBColor("white"), RGBColor("red")])
+        self.assertTrue(isinstance(test_text, list))
+        self.assertEqual(8, len(test_text))
+        colors = SegmentDisplayText.get_colors(test_text)
+        self.assertEqual(8, len(colors))
+        self.assertEqual([RGBColor("white"), RGBColor("white"), RGBColor("white"), RGBColor("white"),
+                          RGBColor("red"), RGBColor("red"), RGBColor("red"), RGBColor("red")], colors)
+
     def test_transitions(self):
         """Test segment display text transitions."""
         self._test_no_transition()
@@ -348,29 +395,59 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
 
     def _test_no_transition(self):
         """Test no transition."""
-        # no transition
+        # no transition (with colors)
         transition = NoTransition(5, False, False, {'direction': 'right'})
         self.assertEqual(1, transition.get_step_count())
         self.assertEqual("ABCDE",
                          SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+        self.assertEqual([RGBColor("green"), RGBColor("green"), RGBColor("green"),
+                          RGBColor("green"), RGBColor("green")],
+                         SegmentDisplayText.get_colors(transition.get_transition_step(0, "12345", "ABCDE",
+                                                                                      [RGBColor("red")],
+                                                                                      [RGBColor("green")])))
         with self.assertRaises(AssertionError):
             transition.get_transition_step(1, "12345", "ABCDE")
 
     def _test_push_transition(self):
         """Test push transition."""
-        # push right
+        # push right (with colors)
         transition = PushTransition(5, False, False, {'direction': 'right'})
         self.assertEqual(5, transition.get_step_count())
         self.assertEqual("E1234",
                          SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+        self.assertEqual([RGBColor("green"), RGBColor("red"), RGBColor("red"),
+                          RGBColor("red"), RGBColor("red")],
+                         SegmentDisplayText.get_colors(transition.get_transition_step(0, "12345", "ABCDE",
+                                                                                      [RGBColor("red")],
+                                                                                      [RGBColor("green")])))
         self.assertEqual("DE123",
                          SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+        self.assertEqual([RGBColor("green"), RGBColor("green"), RGBColor("red"),
+                          RGBColor("red"), RGBColor("red")],
+                         SegmentDisplayText.get_colors(transition.get_transition_step(1, "12345", "ABCDE",
+                                                                                      [RGBColor("red")],
+                                                                                      [RGBColor("green")])))
         self.assertEqual("CDE12",
                          SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+        self.assertEqual([RGBColor("green"), RGBColor("green"), RGBColor("green"),
+                          RGBColor("red"), RGBColor("red")],
+                         SegmentDisplayText.get_colors(transition.get_transition_step(2, "12345", "ABCDE",
+                                                                                      [RGBColor("red")],
+                                                                                      [RGBColor("green")])))
         self.assertEqual("BCDE1",
                          SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "12345", "ABCDE")))
+        self.assertEqual([RGBColor("green"), RGBColor("green"), RGBColor("green"),
+                          RGBColor("green"), RGBColor("red")],
+                         SegmentDisplayText.get_colors(transition.get_transition_step(3, "12345", "ABCDE",
+                                                                                      [RGBColor("red")],
+                                                                                      [RGBColor("green")])))
         self.assertEqual("ABCDE",
                          SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "12345", "ABCDE")))
+        self.assertEqual([RGBColor("green"), RGBColor("green"), RGBColor("green"),
+                          RGBColor("green"), RGBColor("green")],
+                         SegmentDisplayText.get_colors(transition.get_transition_step(4, "12345", "ABCDE",
+                                                                                      [RGBColor("red")],
+                                                                                      [RGBColor("green")])))
 
         # push left
         transition = PushTransition(5, False, False, {'direction': 'left'})
@@ -623,60 +700,70 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         with self.assertRaises(StopIteration):
             next(transition_iterator)
 
-    @patch("mpf.devices.segment_display.segment_display.SegmentDisplay._update_display")
-    def test_transitions_with_player(self, mock_update_display):
+    @patch("mpf.platforms.virtual.VirtualSegmentDisplay.set_color")
+    @patch("mpf.platforms.virtual.VirtualSegmentDisplay.set_text")
+    def test_transitions_with_player(self, mock_set_text, mock_set_color):
+        self.post_event("test_set_color_to_white")
+        self.advance_time_and_run(1)
+        self.assertTrue(mock_set_color.called)
+        self.assertEqual(1, mock_set_color.call_count)
+        mock_set_color.assert_has_calls([call([(255, 255, 255)])])
+        mock_set_color.reset_mock()
+
         self.post_event("test_transition")
         self.advance_time_and_run(3)
-        self.assertTrue(mock_update_display.called)
-        self.assertEqual(21, mock_update_display.call_count)
-        mock_update_display.assert_has_calls([call('          '),
-                                              call('          '),
-                                              call('L         '),
-                                              call('LL        '),
-                                              call('OLL       '),
-                                              call('ROLL      '),
-                                              call('CROLL     '),
-                                              call('SCROLL    '),
-                                              call(' SCROLL   '),
-                                              call('  SCROLL  '),
-                                              call('  SCROLL  '),
-                                              call(' SCROLL   '),
-                                              call('SCROLL    '),
-                                              call('CROLL     '),
-                                              call('ROLL      '),
-                                              call('OLL       '),
-                                              call('LL        '),
-                                              call('L         '),
-                                              call('          '),
-                                              call('          '),
-                                              call('          ')])
-        mock_update_display.reset_mock()
+        self.assertTrue(mock_set_text.called)
+        self.assertEqual(21, mock_set_text.call_count)
+        red = RGBColor("red")
+        wht = RGBColor("white")
+        mock_set_text.assert_has_calls([call('          ', colors=[red, wht, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('          ', colors=[red, red, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('L         ', colors=[red, red, red, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('LL        ', colors=[red, red, red, red, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('OLL       ', colors=[red, red, red, red, red, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('ROLL      ', colors=[red, red, red, red, red, red, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('CROLL     ', colors=[red, red, red, red, red, red, red, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('SCROLL    ', colors=[red, red, red, red, red, red, red, red, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call(' SCROLL   ', colors=[red, red, red, red, red, red, red, red, red, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('  SCROLL  ', colors=[red, red, red, red, red, red, red, red, red, red], flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('  SCROLL  ', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call(' SCROLL   ', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('SCROLL    ', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('CROLL     ', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('ROLL      ', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('OLL       ', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('LL        ', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('L         ', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('          ', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('          ', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('          ', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH)])
+        mock_set_text.reset_mock()
 
         self.post_event("test_transition_2")
         self.advance_time_and_run(1)
-        self.assertTrue(mock_update_display.called)
-        self.assertEqual(6, mock_update_display.call_count)
-        mock_update_display.assert_has_calls([call('    45    '),
-                                              call('   3456   '),
-                                              call('  234567  '),
-                                              call(' 12345678 '),
-                                              call('0123456789'),
-                                              call('0123456789')])
-        mock_update_display.reset_mock()
+        self.assertTrue(mock_set_text.called)
+        self.assertEqual(6, mock_set_text.call_count)
+        mock_set_text.assert_has_calls([call('    45    ', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('   3456   ', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('  234567  ', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call(' 12345678 ', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('0123456789', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('0123456789', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH)])
+        mock_set_text.reset_mock()
 
         self.post_event("test_transition_3")
         self.advance_time_and_run(1)
-        self.assertTrue(mock_update_display.called)
-        self.assertEqual(11, mock_update_display.call_count)
-        mock_update_display.assert_has_calls([call('A012345678'),
-                                              call('AB01234567'),
-                                              call('ABC0123456'),
-                                              call('ABCD012345'),
-                                              call('ABCDE01234'),
-                                              call('ABCDEF0123'),
-                                              call('ABCDEFG012'),
-                                              call('ABCDEFGH01'),
-                                              call('ABCDEFGHI0'),
-                                              call('ABCDEFGHIJ'),
-                                              call('ABCDEFGHIJ')])
-        mock_update_display.reset_mock()
+        self.assertTrue(mock_set_text.called)
+        self.assertEqual(11, mock_set_text.call_count)
+        mock_set_text.assert_has_calls([call('A012345678', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('AB01234567', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('ABC0123456', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('ABCD012345', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('ABCDE01234', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('ABCDEF0123', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('ABCDEFG012', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('ABCDEFGH01', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('ABCDEFGHI0', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('ABCDEFGHIJ', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
+                                        call('ABCDEFGHIJ', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH)])
+        mock_set_text.reset_mock()

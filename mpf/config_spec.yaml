@@ -2058,7 +2058,7 @@ widgets:
         padding: single|int_or_token|20
         background_color: single|kivycolor|000000ff
         segment_off_color: single|kivycolor|4b4c4aff
-        segment_on_color: single|kivycolor|dd8217ff
+        segment_on_color: list|kivycolor|dd8217ff
         segment_width: single|float_or_token|0.16
         segment_interval: single|float_or_token|0.05
         bevel_width: single|float_or_token|0.06
