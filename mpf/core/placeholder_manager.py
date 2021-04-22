@@ -12,6 +12,7 @@ from typing import Tuple, List, Any
 from mpf.core.utility_functions import Util
 
 from mpf.core.mpf_controller import MpfController
+from mpf.exceptions.config_file_error import ConfigFileError
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -82,7 +83,8 @@ class BaseTemplate(metaclass=abc.ABCMeta):
             return self.default_value
         except TemplateEvalError:
             return self.default_value
-
+        except ConfigFileError:     # pylint: disable-msg=try-except-raise
+            raise
         except Exception as e:
             raise AssertionError("Failed to evaluate {} template {} with parameters {}".format(
                 type(self), self.text, parameters)) from e
@@ -795,6 +797,8 @@ class BasePlaceholderManager(MpfController):
         except TemplateEvalError as e:
             value = e
             subscriptions = e.subscriptions
+        except ConfigFileError:     # pylint: disable-msg=try-except-raise
+            raise
         except ValueError as e:
             raise AssertionError("Failed to evaluate and subscribe template {} with parameters {}. "
                                  "See error above.".format(text, parameters)) from e
