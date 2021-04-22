@@ -1,6 +1,6 @@
 """Physical segment displays."""
 from collections import OrderedDict
-from typing import Optional, Dict, Iterator, List
+from typing import Optional, Dict, List
 
 from mpf.core.clock import PeriodicTask
 from mpf.core.rgb_color import RGBColor
@@ -145,6 +145,7 @@ class SegmentDisplay(SystemWideDevice):
             else:
                 self._update_stack()
 
+    # pylint: disable=too-many-arguments
     def _start_transition(self, transition: TransitionBase, current_text: str, new_text: str,
                           current_colors: Optional[List[RGBColor]] = None, new_colors: Optional[List[RGBColor]] = None,
                           update_hz: float = 30.0):
@@ -159,6 +160,7 @@ class SegmentDisplay(SystemWideDevice):
         self._transition_update_task = self.machine.clock.schedule_interval(self._update_transition, 1 / update_hz)
 
     def _update_transition(self):
+        """Update the current transition (callback function from transition interval clock)."""
         try:
             transition_text = next(self._current_transition)
             transition_colors = SegmentDisplayText.get_colors(transition_text)
@@ -168,6 +170,7 @@ class SegmentDisplay(SystemWideDevice):
             self._stop_transition()
 
     def _stop_transition(self):
+        """Stop the current transition."""
         if self._transition_update_task:
             self._transition_update_task.cancel()
             self._transition_update_task = None

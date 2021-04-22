@@ -27,6 +27,7 @@ class TransitionBase(metaclass=abc.ABCMeta):
         """Return the total number of steps required for the transition."""
         raise NotImplementedError
 
+    # pylint: disable=too-many-arguments
     @abc.abstractmethod
     def get_transition_step(self, step: int, current_text: str, new_text: str,
                             current_colors: Optional[List[RGBColor]] = None,
@@ -39,6 +40,7 @@ class TransitionRunner:
 
     """Class to run/execute transitions using an iterator."""
 
+    # pylint: disable=too-many-arguments
     def __init__(self, machine, transition: TransitionBase, current_text: str, new_text: str,
                  current_colors: Optional[List[RGBColor]] = None,
                  new_colors: Optional[List[RGBColor]] = None) -> None:
@@ -76,6 +78,7 @@ class NoTransition(TransitionBase):
         """Return the total number of steps required for the transition."""
         return 1
 
+    # pylint: disable=too-many-arguments
     def get_transition_step(self, step: int, current_text: str, new_text: str,
                             current_colors: Optional[List[RGBColor]] = None,
                             new_colors: Optional[List[RGBColor]] = None) -> SegmentDisplayText:
@@ -102,6 +105,7 @@ class PushTransition(TransitionBase):
 
         return self.output_length
 
+    # pylint: disable=too-many-arguments
     def get_transition_step(self, step: int, current_text: str, new_text: str,
                             current_colors: Optional[List[RGBColor]] = None,
                             new_colors: Optional[List[RGBColor]] = None) -> SegmentDisplayText:
@@ -172,6 +176,7 @@ class CoverTransition(TransitionBase):
         """Return the total number of steps required for the transition."""
         return self.output_length
 
+    # pylint: disable=too-many-arguments
     def get_transition_step(self, step: int, current_text: str, new_text: str,
                             current_colors: Optional[List[RGBColor]] = None,
                             new_colors: Optional[List[RGBColor]] = None) -> SegmentDisplayText:
@@ -210,6 +215,7 @@ class UncoverTransition(TransitionBase):
         """Return the total number of steps required for the transition."""
         return self.output_length
 
+    # pylint: disable=too-many-arguments
     def get_transition_step(self, step: int, current_text: str, new_text: str,
                             current_colors: Optional[List[RGBColor]] = None,
                             new_colors: Optional[List[RGBColor]] = None) -> SegmentDisplayText:
@@ -251,6 +257,7 @@ class WipeTransition(TransitionBase):
 
         return self.output_length
 
+    # pylint: disable=too-many-arguments
     def get_transition_step(self, step: int, current_text: str, new_text: str,
                             current_colors: Optional[List[RGBColor]] = None,
                             new_colors: Optional[List[RGBColor]] = None) -> SegmentDisplayText:

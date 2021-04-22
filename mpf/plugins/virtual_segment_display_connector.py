@@ -1,7 +1,7 @@
 """MPF plugin which connects segment displays to MPF-MC to update segment display emulator widgets."""
 
 import logging
-from typing import Any, Optional, List
+from typing import Optional, List
 
 from mpf.core.rgb_color import RGBColor
 from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
@@ -14,6 +14,8 @@ if MYPY:   # pragma: no cover
 class VirtualSegmentDisplayConnector:
 
     """MPF plugin which connects segment displays to MPF-MC to update segment display emulator widgets."""
+
+    __slots__ = ["log", "machine", "bcp_client", "config"]
 
     def __init__(self, machine):
         """Initialize virtual segment display connector plugin."""
@@ -42,6 +44,7 @@ class VirtualSegmentDisplayConnector:
             for display in self.config['segment_displays']:
                 display.add_virtual_connector(self)
 
+    # pylint: disable=too-many-arguments
     def set_text(self, name: str, text: str, flashing: FlashingType, flash_mask: str = "",
                  colors: Optional[List[RGBColor]] = None) -> None:
         """Set the display text to send to MPF-MC via BCP."""

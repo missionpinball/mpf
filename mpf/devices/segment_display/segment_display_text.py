@@ -16,6 +16,7 @@ class SegmentDisplayText(list):
     COMMA_CODE = ord(",")
     SPACE_CODE = ord(" ")
 
+    # pylint: disable=too-many-arguments
     def __init__(self, text: str, display_size: int, collapse_dots: bool, collapse_commas: bool,
                  colors: Optional[List[RGBColor]] = None) -> None:
         """Class initializer."""
