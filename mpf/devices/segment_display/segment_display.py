@@ -37,22 +37,23 @@ class SegmentDisplay(SystemWideDevice):
         if not self.transition_manager:
             self.transition_manager = TransitionManager(machine)
 
-        self.hw_display = None                  # type: Optional[SegmentDisplayPlatformInterface]
-        self.platform = None                    # type: Optional[SegmentDisplayPlatform]
-        self.size = 7                           # type: int
-        self.integrated_dots = False            # type: bool
-        self.integrated_commas = False          # type: bool
-        self.text = ""                          # type: Optional[str]
-        self.color = None                       # type: Optional[RGBColor]
-        self.flashing = FlashingType.NO_FLASH   # type: FlashingType
-        self.flash_mask = ""                    # type: Optional[str]
-        self.platform_options = None            # type: Optional[dict]
-        self.virtual_connector = None           # type: Optional[VirtualSegmentDisplayConnector]
-        self._text_stack = {}                   # type: Dict[str:TextStackEntry]
-        self._current_placeholder = None        # type: Optional[TextTemplate]
-        self._current_text_stack_entry = None   # type: Optional[TextStackEntry]
-        self._transition_update_task = None     # type: Optional[PeriodicTask]
-        self._current_transition = None         # type: Optional[Iterator]
+        self.hw_display = None                      # type: Optional[SegmentDisplayPlatformInterface]
+        self.platform = None                        # type: Optional[SegmentDisplayPlatform]
+        self.size = 7                               # type: int
+        self.integrated_dots = False                # type: bool
+        self.integrated_commas = False              # type: bool
+        self.default_transition_update_hz = 30.0    # type: float
+        self.text = ""                              # type: Optional[str]
+        self.color = None                           # type: Optional[RGBColor]
+        self.flashing = FlashingType.NO_FLASH       # type: FlashingType
+        self.flash_mask = ""                        # type: Optional[str]
+        self.platform_options = None                # type: Optional[dict]
+        self.virtual_connector = None               # type: Optional[VirtualSegmentDisplayConnector]
+        self._text_stack = {}                       # type: Dict[str:TextStackEntry]
+        self._current_placeholder = None            # type: Optional[TextTemplate]
+        self._current_text_stack_entry = None       # type: Optional[TextStackEntry]
+        self._transition_update_task = None         # type: Optional[PeriodicTask]
+        self._current_transition = None             # type: Optional[Iterator]
 
     async def _initialize(self):
         """Initialise display."""
@@ -67,6 +68,7 @@ class SegmentDisplay(SystemWideDevice):
         self.size = self.config['size']
         self.integrated_dots = self.config['integrated_dots']
         self.integrated_commas = self.config['integrated_commas']
+        self.default_transition_update_hz = self.config['default_transition_update_hz']
 
         # configure hardware
         try:
@@ -214,7 +216,8 @@ class SegmentDisplay(SystemWideDevice):
             else:
                 previous_text = ""
 
-            self._start_transition(transition, previous_text, top_text_stack_entry.text)
+            self._start_transition(transition, previous_text, top_text_stack_entry.text,
+                                   self.default_transition_update_hz)
         else:
             self._current_placeholder = TextTemplate(self.machine, top_text_stack_entry.text)
             self._current_placeholder_changed()
