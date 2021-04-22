@@ -26,6 +26,7 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
         super().__init__(machine)
         self.delay = DelayManager(self.machine)
 
+    # pylint: disable=too-many-branches
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Show text on display."""
         del kwargs
@@ -83,16 +84,17 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
         flashing = config.get('flashing', None)
         if flashing == "off":
             return FlashingType.NO_FLASH
-        elif flashing == "all":
+        if flashing == "all":
             return FlashingType.FLASH_ALL
-        elif flashing == "match":
+        if flashing == "match":
             return FlashingType.FLASH_MATCH
-        elif flashing == "mask":
+        if flashing == "mask":
             return FlashingType.FLASH_MASK
-        else:
-            return None
+
+        return None
 
     def _remove(self, instance_dict, key, display):
+        """Remove an instance by key."""
         if key in instance_dict[display]:
             display.remove_text_by_key(key)
             if instance_dict[display][key] is not True:
