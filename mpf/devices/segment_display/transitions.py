@@ -1,6 +1,5 @@
 """Text transitions used for segment displays."""
 import abc
-from typing import List
 
 from mpf.core.placeholder_manager import TextTemplate
 from mpf.devices.segment_display.segment_display_text import SegmentDisplayText
@@ -34,7 +33,10 @@ class TransitionBase(metaclass=abc.ABCMeta):
 
 class TransitionRunner:
 
+    """Class to run/execute transitions using an iterator."""
+
     def __init__(self, machine, transition: TransitionBase, current_text: str, new_text: str):
+        """Class initializer."""
         self.machine = machine
         self.transition = transition
         self.step = 0
@@ -42,9 +44,11 @@ class TransitionRunner:
         self.new_placeholder = TextTemplate(self.machine, new_text)
 
     def __iter__(self):
+        """Returns an iterator"""
         return self
 
     def __next__(self):
+        """Evaluate and return the next transition step."""
         if self.step >= self.transition.get_step_count():
             raise StopIteration
 
@@ -58,9 +62,6 @@ class TransitionRunner:
 class NoTransition(TransitionBase):
 
     """Segment display no transition effect."""
-
-    def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, config: dict) -> None:
-        super().__init__(output_length, collapse_dots, collapse_commas, config)
 
     def get_step_count(self):
         """Return the total number of steps required for the transition"""
@@ -104,15 +105,15 @@ class PushTransition(TransitionBase):
             temp_list.extend(current_display_text)
             return temp_list[self.output_length - (step + 1):2 * self.output_length - (step + 1)]
 
-        elif self.direction == 'left':
+        if self.direction == 'left':
             temp_list = current_display_text
             temp_list.extend(new_display_text)
             return temp_list[step + 1:step + 1 + self.output_length]
 
-        elif self.direction == 'split_out':
+        if self.direction == 'split_out':
             if step == self.get_step_count() - 1:
                 return new_display_text
-            
+
             characters = int(self.output_length / 2)
             split_point = characters
             if characters * 2 == self.output_length:
@@ -126,7 +127,7 @@ class PushTransition(TransitionBase):
             temp_text.extend(current_display_text[split_point:split_point + characters])
             return temp_text
 
-        elif self.direction == 'split_in':
+        if self.direction == 'split_in':
             if step == self.get_step_count() - 1:
                 return new_display_text
 
@@ -140,9 +141,8 @@ class PushTransition(TransitionBase):
             temp_text.extend(current_display_text[characters:characters + (self.output_length - 2 * characters)])
             temp_text.extend(new_display_text[split_point:split_point + characters])
             return temp_text
-        
-        else:
-            raise AssertionError("Transition uses an unknown direction value")
+
+        raise AssertionError("Transition uses an unknown direction value")
 
 
 class CoverTransition(TransitionBase):
@@ -171,13 +171,12 @@ class CoverTransition(TransitionBase):
             temp_text.extend(current_display_text[step + 1:])
             return temp_text
 
-        elif self.direction == 'left':
+        if self.direction == 'left':
             temp_text = current_display_text[:self.output_length - (step + 1)]
             temp_text.extend(new_display_text[:step + 1])
             return temp_text
 
-        else:
-            raise AssertionError("Transition uses an unknown direction value")
+        raise AssertionError("Transition uses an unknown direction value")
 
 
 class UncoverTransition(TransitionBase):
@@ -206,13 +205,12 @@ class UncoverTransition(TransitionBase):
             temp_text.extend(current_display_text[:self.output_length - (step + 1)])
             return temp_text
 
-        elif self.direction == 'left':
+        if self.direction == 'left':
             temp_text = current_display_text[step + 1:]
             temp_text.extend(new_display_text[-(step + 1):])
             return temp_text
 
-        else:
-            raise AssertionError("Transition uses an unknown direction value")
+        raise AssertionError("Transition uses an unknown direction value")
 
 
 class WipeTransition(TransitionBase):
@@ -244,12 +242,12 @@ class WipeTransition(TransitionBase):
             temp_text.extend(current_display_text[step + 1:])
             return temp_text
 
-        elif self.direction == 'left':
+        if self.direction == 'left':
             temp_text = current_display_text[:self.output_length - (step + 1)]
             temp_text.extend(new_display_text[-(step + 1):])
             return temp_text
 
-        elif self.direction == 'split':
+        if self.direction == 'split':
             if step == self.get_step_count() - 1:
                 return new_display_text
 
@@ -263,5 +261,4 @@ class WipeTransition(TransitionBase):
             temp_text.extend(current_display_text[-characters:])
             return temp_text
 
-        else:
-            raise AssertionError("Transition uses an unknown direction value")
+        raise AssertionError("Transition uses an unknown direction value")

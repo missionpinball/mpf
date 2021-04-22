@@ -20,6 +20,7 @@ if MYPY:   # pragma: no cover
     from mpf.core.platform import SegmentDisplayPlatform    # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 
+# pylint: disable=too-many-instance-attributes
 @DeviceMonitor("text")
 class SegmentDisplay(SystemWideDevice):
 
@@ -71,10 +72,9 @@ class SegmentDisplay(SystemWideDevice):
         try:
             self.hw_display = await self.platform.configure_segment_display(self.config['number'],
                                                                             self.config['platform_settings'])
-        except AssertionError as e:
+        except AssertionError as ex:
             raise AssertionError("Error in platform while configuring segment display {}. "
-                                 "See error above.".format(self.name)) from e
-
+                                 "See error above.".format(self.name)) from ex
 
     def add_virtual_connector(self, virtual_connector):
         """Add a virtual connector instance to connect this segment display to the MPF-MC for virtual displays."""

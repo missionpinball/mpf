@@ -15,21 +15,24 @@ class TransitionManager:
         self._register_transitions()
 
     def register_transition(self, name, transition_cls):
+        """Register a text transition."""
         self._transitions[name] = transition_cls
 
     def _register_transitions(self):
+        """Register the built-in text transitions."""
         self.register_transition('push', PushTransition)
         self.register_transition('cover', CoverTransition)
         self.register_transition('uncover', UncoverTransition)
         self.register_transition('wipe', WipeTransition)
 
     def get_transition(self, output_length: int, collapse_dots: bool, collapse_commas: bool, transition_config=None):
+        """Create a transition instance based on the specified configuration."""
         if transition_config:
             config = transition_config.copy()
             config.pop('type')
             return self._transitions[transition_config['type']](output_length, collapse_dots, collapse_commas, config)
-        else:
-            return None
+
+        return None
 
     def validate_config(self, config):
         """Validate segment display transition config."""

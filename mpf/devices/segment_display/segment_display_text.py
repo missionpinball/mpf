@@ -1,3 +1,5 @@
+"""Specialized text support classes for segment displays."""
+
 from collections import namedtuple
 
 DisplayCharacter = namedtuple("DisplayCharacter", ["char_code", "dot", "comma"])
@@ -33,10 +35,10 @@ class SegmentDisplayText(list):
         # ensure list is the same size as the segment display (cut off on left or right justify characters)
         current_length = len(self)
         if current_length > display_size:
-            for index in range(current_length - display_size):
+            for _ in range(current_length - display_size):
                 self.pop(0)
         elif current_length < display_size:
-            for index in range(display_size - current_length):
+            for _ in range(display_size - current_length):
                 self.insert(0, DisplayCharacter(self.SPACE_CODE, False, False))
 
     @staticmethod
@@ -51,4 +53,3 @@ class SegmentDisplayText(list):
                 text += ","
 
         return text
-
