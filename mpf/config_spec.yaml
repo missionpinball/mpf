@@ -1301,6 +1301,7 @@ segment_displays:
     size: single|int|7
     integrated_dots: single|bool|false
     integrated_commas: single|bool|false
+    initial_color: list|color|white
     default_transition_update_hz: single|float_or_token|30
     platform_settings: single|dict|None
     platform: single|str|None

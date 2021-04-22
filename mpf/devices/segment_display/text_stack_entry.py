@@ -12,8 +12,8 @@ class TextStackEntry:
     """An entry in the text stack for a segment display."""
 
     def __init__(self, text: str, color: Optional[List[RGBColor]],
-                 flashing: Optional[FlashingType], flash_mask: Optional[str],
-                 transition: Optional[dict], transition_out: Optional[dict],
+                 flashing: Optional[FlashingType] = None, flash_mask: Optional[str] = None,
+                 transition: Optional[dict] = None, transition_out: Optional[dict] = None,
                  priority: int = 0, key: str = None):
         """Class initializer."""
         self.text = text

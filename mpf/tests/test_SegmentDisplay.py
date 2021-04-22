@@ -1,6 +1,7 @@
 from unittest.mock import patch, call, ANY, Mock
 
 from mpf.core.rgb_color import RGBColor
+from mpf.devices.segment_display.text_stack_entry import TextStackEntry
 from mpf.devices.segment_display.transitions import NoTransition, PushTransition, CoverTransition, UncoverTransition, \
     WipeTransition, TransitionRunner
 from mpf.devices.segment_display.segment_display_text import SegmentDisplayText
@@ -767,3 +768,77 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
                                         call('ABCDEFGHIJ', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH),
                                         call('ABCDEFGHIJ', colors=None, flash_mask='', flashing=FlashingType.NO_FLASH)])
         mock_set_text.reset_mock()
+
+    def test_text_stack(self):
+        """Test the segment display text stack functionality."""
+        display1 = self.machine.segment_displays["display1"]
+        display1.add_text("FIRST")
+        self.assertEqual("FIRST", display1.text)
+        self.assertEqual([RGBColor("white")], display1.colors)
+        self.assertEqual(FlashingType.NO_FLASH, display1.flashing)
+
+        # higher priority and with colors, flashing
+        display1.add_text_entry(
+            TextStackEntry("SECOND", [RGBColor("red")], FlashingType.FLASH_ALL, "", None, None, 10, "2nd"))
+        self.assertEqual("SECOND", display1.text)
+        self.assertEqual([RGBColor("red")], display1.colors)
+        self.assertEqual(FlashingType.FLASH_ALL, display1.flashing)
+
+        # lower priority
+        display1.add_text_entry(
+            TextStackEntry("THIRD", [RGBColor("yellow")], FlashingType.FLASH_MASK, "F F F ", None, None, 5, "3rd"))
+        self.assertEqual("SECOND", display1.text)
+        self.assertEqual([RGBColor("red")], display1.colors)
+        self.assertEqual(FlashingType.FLASH_ALL, display1.flashing)
+
+        # remove highest priority item from stack
+        display1.remove_text_by_key("2nd")
+        self.assertEqual("THIRD", display1.text)
+        self.assertEqual([RGBColor("yellow")], display1.colors)
+        self.assertEqual(FlashingType.FLASH_MASK, display1.flashing)
+        self.assertEqual("F F F ", display1.flash_mask)
+
+        # replace current top text
+        display1.add_text("3rd", 5, "3rd")
+        self.assertEqual("3rd", display1.text)
+        self.assertEqual([RGBColor("yellow")], display1.colors)
+        self.assertEqual(FlashingType.FLASH_MASK, display1.flashing)
+        self.assertEqual("F F F ", display1.flash_mask)
+
+        # change text of lowest item
+        display1.add_text("1st")
+        self.assertEqual("3rd", display1.text)
+        self.assertEqual([RGBColor("yellow")], display1.colors)
+        self.assertEqual(FlashingType.FLASH_MASK, display1.flashing)
+        self.assertEqual("F F F ", display1.flash_mask)
+
+        # change text, color, and flashing of lowest item and raise its priority
+        display1.add_text_entry(
+            TextStackEntry("FIRST", [RGBColor("blue")], FlashingType.NO_FLASH, "", None, None, 20))
+        self.assertEqual("FIRST", display1.text)
+        self.assertEqual([RGBColor("blue")], display1.colors)
+
+        # remove "FIRST" entry
+        display1.remove_text_by_key()
+        self.assertEqual("3rd", display1.text)
+        self.assertEqual([RGBColor("blue")], display1.colors)
+        self.assertEqual(FlashingType.NO_FLASH, display1.flashing)
+
+        # set flashing
+        display1.set_flashing(FlashingType.FLASH_MASK, "FFF   ")
+        self.assertEqual([RGBColor("blue")], display1.colors)
+        self.assertEqual(FlashingType.FLASH_MASK, display1.flashing)
+        self.assertEqual("FFF   ", display1.flash_mask)
+
+        # set color
+        display1.set_color([RGBColor("cyan")])
+        self.assertEqual([RGBColor("cyan")], display1.colors)
+        self.assertEqual(FlashingType.FLASH_MASK, display1.flashing)
+        self.assertEqual("FFF   ", display1.flash_mask)
+
+        # remove last remaining entry
+        display1.remove_text_by_key("3rd")
+        self.assertEqual("", display1.text)
+        self.assertEqual([RGBColor("cyan")], display1.colors)
+        self.assertEqual(FlashingType.NO_FLASH, display1.flashing)
+        self.assertEqual("", display1.flash_mask)

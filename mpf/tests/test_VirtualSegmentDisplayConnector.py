@@ -2,6 +2,7 @@
 from unittest.mock import patch, call, ANY
 
 from mpf.core.rgb_color import RGBColor
+from mpf.devices.segment_display.text_stack_entry import TextStackEntry
 from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
 from mpf.tests.MpfBcpTestCase import MpfBcpTestCase
 
@@ -54,16 +55,11 @@ class TestVirtualSegmentDisplayConnector(MpfBcpTestCase):
                                                        segment_display_name='display1', colors=["ff0000", "00ff00"])])
         mock_bcp_trigger_client.reset_mock()
 
-        display2.add_text("OTHER TEXT")
-        display2.set_flashing(FlashingType.FLASH_ALL)
+        display2.add_text_entry(TextStackEntry("OTHER TEXT", [RGBColor("green")], FlashingType.FLASH_ALL, ""))
         self.assertTrue(mock_bcp_trigger_client.called)
-        mock_bcp_trigger_client.assert_has_calls([call(client=ANY, flashing='False', flash_mask='',
+        mock_bcp_trigger_client.assert_has_calls([call(client=ANY, flashing='True', flash_mask='',
                                                        name='update_segment_display', segment_display_name='display2',
-                                                       text='OTHER TEXT', colors=None),
-                                                  call(client=ANY, flashing='True', flash_mask='',
-                                                       name='update_segment_display', segment_display_name='display2',
-                                                       text='OTHER TEXT', colors=None)
-                                                  ])
+                                                       text='OTHER TEXT', colors=[RGBColor("green").hex])])
         mock_bcp_trigger_client.reset_mock()
 
         display2.set_flashing(FlashingType.FLASH_MATCH)

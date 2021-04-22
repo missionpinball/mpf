@@ -30,6 +30,8 @@ class SegmentDisplay(SystemWideDevice):
     collection = 'segment_displays'
     class_label = 'segment_display'
     transition_manager = None
+    empty_text_stack_entry = TextStackEntry("", None, FlashingType.NO_FLASH, "",
+                                            None, None, -999999, "__empty__")
 
     def __init__(self, machine, name: str) -> None:
         """Initialise segment display device."""
@@ -44,7 +46,7 @@ class SegmentDisplay(SystemWideDevice):
         self.integrated_commas = False              # type: bool
         self.default_transition_update_hz = 30.0    # type: float
         self.text = ""                              # type: Optional[str]
-        self.colors = [RGBColor("white")]           # type: List[RGBColor]
+        self.colors = []                            # type: List[RGBColor]
         self.flashing = FlashingType.NO_FLASH       # type: FlashingType
         self.flash_mask = ""                        # type: Optional[str]
         self.platform_options = None                # type: Optional[dict]
@@ -77,6 +79,9 @@ class SegmentDisplay(SystemWideDevice):
         except AssertionError as ex:
             raise AssertionError("Error in platform while configuring segment display {}. "
                                  "See error above.".format(self.name)) from ex
+
+        self.set_color(self.config['initial_color'])
+        self.add_text_entry(self.empty_text_stack_entry)
 
     def add_virtual_connector(self, virtual_connector):
         """Add a virtual connector instance to connect this segment display to the MPF-MC for virtual displays."""
@@ -136,12 +141,12 @@ class SegmentDisplay(SystemWideDevice):
         if self.virtual_connector:
             self.virtual_connector.set_color(self.name, colors)
 
-    def remove_text_by_key(self, key: str):
+    def remove_text_by_key(self, key: Optional[str] = None):
         """Remove entry from text stack."""
         if key in self._text_stack:
             del self._text_stack[key]
             if not self._text_stack:
-                self.add_text("", -10000, "empty")
+                self.add_text_entry(self.empty_text_stack_entry)
             else:
                 self._update_stack()
 
@@ -177,9 +182,16 @@ class SegmentDisplay(SystemWideDevice):
 
         if self._current_transition:
             self._current_transition = None
-            if self._current_text_stack_entry and len(self._current_text_stack_entry.text) > 0:
-                self._current_placeholder = TextTemplate(self.machine, self._current_text_stack_entry.text)
-                self._current_placeholder_changed()
+
+            if self._current_text_stack_entry:
+                # update colors
+                if self._current_text_stack_entry.colors:
+                    self.colors = self._current_text_stack_entry.colors
+
+                # update placeholder
+                if len(self._current_text_stack_entry.text) > 0:
+                    self._current_placeholder = TextTemplate(self.machine, self._current_text_stack_entry.text)
+                    self._current_placeholder_changed()
             else:
                 self._current_placeholder = None
 
@@ -237,6 +249,17 @@ class SegmentDisplay(SystemWideDevice):
             self._current_placeholder = TextTemplate(self.machine, top_text_stack_entry.text)
             new_text, future = self._current_placeholder.evaluate_and_subscribe({})
             future.add_done_callback(self._current_placeholder_changed)
+
+            # set any flashing state specified in the entry
+            if top_text_stack_entry.flashing is not None:
+                self.flashing = top_text_stack_entry.flashing
+                self.flash_mask = top_text_stack_entry.flash_mask
+
+            # update colors if specified
+            if top_text_stack_entry.colors:
+                self.colors = top_text_stack_entry.colors
+
+            # update the display
             self._update_display(new_text, top_text_stack_entry.colors)
 
     def _current_placeholder_changed(self, *args, **kwargs) -> None:
