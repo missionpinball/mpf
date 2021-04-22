@@ -10,7 +10,7 @@ class TransitionBase(metaclass=abc.ABCMeta):
     """Base class for text transitions in segment displays."""
 
     def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, config: dict) -> None:
-        """Initialize the transition"""
+        """Initialize the transition."""
         self.output_length = output_length
         self.config = config
         self.collapse_dots = collapse_dots
@@ -22,7 +22,7 @@ class TransitionBase(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_step_count(self):
-        """Return the total number of steps required for the transition"""
+        """Return the total number of steps required for the transition."""
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -44,7 +44,7 @@ class TransitionRunner:
         self.new_placeholder = TextTemplate(self.machine, new_text)
 
     def __iter__(self):
-        """Returns an iterator"""
+        """Return an iterator."""
         return self
 
     def __next__(self):
@@ -64,7 +64,7 @@ class NoTransition(TransitionBase):
     """Segment display no transition effect."""
 
     def get_step_count(self):
-        """Return the total number of steps required for the transition"""
+        """Return the total number of steps required for the transition."""
         return 1
 
     def get_transition_step(self, step: int, current_text: str,
@@ -81,11 +81,12 @@ class PushTransition(TransitionBase):
     """Segment display push transition effect."""
 
     def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, config: dict) -> None:
+        """Class initializer."""
         self.direction = 'right'
         super().__init__(output_length, collapse_dots, collapse_commas, config)
 
     def get_step_count(self):
-        """Return the total number of steps required for the transition"""
+        """Return the total number of steps required for the transition."""
         if self.direction in ['split_out', 'split_in']:
             return int((self.output_length + 1) / 2)
 
@@ -150,11 +151,12 @@ class CoverTransition(TransitionBase):
     """Segment display cover transition effect."""
 
     def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, config: dict) -> None:
+        """Class initializer."""
         self.direction = 'right'
         super().__init__(output_length, collapse_dots, collapse_commas, config)
 
     def get_step_count(self):
-        """Return the total number of steps required for the transition"""
+        """Return the total number of steps required for the transition."""
         return self.output_length
 
     def get_transition_step(self, step: int, current_text: str, new_text: str) -> SegmentDisplayText:
@@ -184,11 +186,12 @@ class UncoverTransition(TransitionBase):
     """Segment display uncover transition effect."""
 
     def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, config: dict) -> None:
+        """Class initializer."""
         self.direction = 'right'
         super().__init__(output_length, collapse_dots, collapse_commas, config)
 
     def get_step_count(self):
-        """Return the total number of steps required for the transition"""
+        """Return the total number of steps required for the transition."""
         return self.output_length
 
     def get_transition_step(self, step: int, current_text: str, new_text: str) -> SegmentDisplayText:
@@ -218,11 +221,12 @@ class WipeTransition(TransitionBase):
     """Segment display wipe transition effect."""
 
     def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, config: dict) -> None:
+        """Class initializer."""
         self.direction = 'right'
         super().__init__(output_length, collapse_dots, collapse_commas, config)
 
     def get_step_count(self):
-        """Return the total number of steps required for the transition"""
+        """Return the total number of steps required for the transition."""
         if self.direction == 'split':
             return int((self.output_length + 1) / 2)
 

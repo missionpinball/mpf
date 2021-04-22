@@ -14,6 +14,7 @@ class SegmentDisplayText(list):
     SPACE_CODE = ord(" ")
 
     def __init__(self, text: str, display_size: int, collapse_dots: bool, collapse_commas: bool) -> None:
+        """Class initializer."""
         super().__init__()
 
         char_has_dot = False
@@ -43,7 +44,7 @@ class SegmentDisplayText(list):
 
     @staticmethod
     def convert_to_str(display_character_list: list):
-        """Convert back to normal text string"""
+        """Convert back to normal text string."""
         text = ""
         for display_character in display_character_list:
             text += chr(display_character.char_code)

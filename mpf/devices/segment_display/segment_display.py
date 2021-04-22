@@ -220,7 +220,7 @@ class SegmentDisplay(SystemWideDevice):
             self._current_placeholder_changed()
 
     def _current_placeholder_changed(self, *args, **kwargs) -> None:
-        """Current placeholder changed callback function."""
+        """Placeholder changed callback function."""
         del args
         del kwargs
         new_text, future = self._current_placeholder.evaluate_and_subscribe({})

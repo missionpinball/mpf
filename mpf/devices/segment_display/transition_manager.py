@@ -36,7 +36,6 @@ class TransitionManager:
 
     def validate_config(self, config):
         """Validate segment display transition config."""
-
         if 'transition' in config and config['transition']:
             if not isinstance(config['transition'], dict):
                 config['transition'] = dict(type=config['transition'])

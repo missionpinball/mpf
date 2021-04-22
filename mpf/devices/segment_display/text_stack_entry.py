@@ -8,12 +8,14 @@ from mpf.platforms.interfaces.segment_display_platform_interface import Flashing
 
 # pylint: disable=too-many-instance-attributes,too-many-arguments,too-few-public-methods
 class TextStackEntry:
+
     """An entry in the text stack for a segment display."""
 
     def __init__(self, text: str, color: Optional[List[RGBColor]],
                  flashing: Optional[FlashingType], flash_mask: Optional[str],
                  transition: Optional[dict], transition_out: Optional[dict],
                  priority: int = 0, key: str = None):
+        """Class initializer."""
         self.text = text
         self.colors = color
         self.flashing = flashing

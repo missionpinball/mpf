@@ -8,7 +8,8 @@ from mpf.platforms.interfaces.segment_display_platform_interface import Flashing
 MYPY = False
 if MYPY:   # pragma: no cover
     from typing import Dict     # pylint: disable-msg=cyclic-import,unused-import
-    from mpf.devices.segment_display.segment_display import SegmentDisplay  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.segment_display.segment_display import \
+        SegmentDisplay  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class SegmentDisplayPlayer(DeviceConfigPlayer):
