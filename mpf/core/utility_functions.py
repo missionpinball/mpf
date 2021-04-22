@@ -185,6 +185,16 @@ class Util:
         return final_list
 
     @staticmethod
+    def flatten_list(incoming_list):
+        """Convert a list of nested lists and/or values into a single one-dimensional list."""
+        for item in incoming_list:
+            if isinstance(item, Iterable) and not isinstance(item, str):
+                for inner_item in Util.flatten_list(item):
+                    yield inner_item
+            else:
+                yield item
+
+    @staticmethod
     def dict_merge(a, b, combine_lists=True, deepcopy_both=True) -> dict:
         """Recursively merge dictionaries.
 

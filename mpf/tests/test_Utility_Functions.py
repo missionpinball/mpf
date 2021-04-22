@@ -64,6 +64,16 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(result[0][0], '1')
         self.assertEqual(result[1][4], 'e')
 
+    def test_flatten_list(self):
+        my_list = [0, 1, [2, 3, 4], [5, [6, 7], 8], "nine"]
+        result = list(Util.flatten_list(my_list))
+        self.assertEqual(type(result), list)
+        self.assertEqual(len(my_list), 5)
+        self.assertEqual(len(result), 10)
+        self.assertEqual(result[0], 0)
+        self.assertEqual(result[6], 6)
+        self.assertEqual(result[9], "nine")
+
     def test_dict_merge(self):
         dict_a = dict(key1='val1', key2='val2', list1=[1, 2, 3])
         dict_b = dict(key3='val3', key4='val4', list1=[4, 5, 6])
