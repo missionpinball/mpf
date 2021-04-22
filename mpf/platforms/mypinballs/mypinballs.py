@@ -1,6 +1,6 @@
 """Mypinballs hardware platform."""
 import re
-from typing import Any, List, Optional
+from typing import List, Optional
 
 from mpf.core.rgb_color import RGBColor
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface, FlashingType
