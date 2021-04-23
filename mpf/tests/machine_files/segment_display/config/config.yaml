@@ -75,8 +75,9 @@ segment_display_player:
       key: transition
       text: "0123456789"
       transition:
-        type: wipe
-        direction: split
+        type: split
+        mode: wipe
+        direction: out
 
   test_transition_3:
     display1:

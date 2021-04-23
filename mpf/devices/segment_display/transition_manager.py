@@ -1,7 +1,7 @@
 """Manager for segment display text transitions."""
 
 from mpf.devices.segment_display.transitions import (PushTransition, CoverTransition,
-                                                     UncoverTransition, WipeTransition)
+                                                     UncoverTransition, WipeTransition, SplitTransition)
 
 
 class TransitionManager:
@@ -24,6 +24,7 @@ class TransitionManager:
         self.register_transition('cover', CoverTransition)
         self.register_transition('uncover', UncoverTransition)
         self.register_transition('wipe', WipeTransition)
+        self.register_transition('split', SplitTransition)
 
     def get_transition(self, output_length: int, collapse_dots: bool, collapse_commas: bool, transition_config=None):
         """Create a transition instance based on the specified configuration."""

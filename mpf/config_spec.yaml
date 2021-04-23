@@ -1326,16 +1326,28 @@ segment_display_transitions:
         type: single|str|
     push:
         type: single|str|
-        direction: single|enum(right,left,split_out,split_in)|right
+        direction: single|enum(right,left)|right
+        text: single|str|None
+        text_color: list|color|None
     cover:
         type: single|str|
         direction: single|enum(right,left)|right
+        text: single|str|None
+        text_color: list|color|None
     uncover:
         type: single|str|
         direction: single|enum(right,left)|right
+        text: single|str|None
+        text_color: list|color|None
     wipe:
         type: single|str|
-        direction: single|enum(right,left,split)|right
+        direction: single|enum(right,left)|right
+        text: single|str|None
+        text_color: list|color|None
+    split:
+        type: single|str|
+        mode: single|enum(push,wipe)|push
+        direction: single|enum(in,out)|out
 servo_controllers:
     __valid_in__: machine
     __type__: config
