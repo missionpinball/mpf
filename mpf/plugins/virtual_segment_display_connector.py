@@ -55,7 +55,7 @@ class VirtualSegmentDisplayConnector:
             text=text,
             flashing=str(flashing.value),
             flash_mask=flash_mask,
-            colors=[color.hex for color in colors] if colors else None)
+            colors=[RGBColor(color).hex for color in colors] if colors else None)
 
     def set_color(self, name: str, colors: List[RGBColor]) -> None:
         """Set the display colors to send to MPF-MC via BCP."""
@@ -63,4 +63,4 @@ class VirtualSegmentDisplayConnector:
             client=self.bcp_client,
             name='update_segment_display',
             segment_display_name=name,
-            colors=[color.hex for color in colors])
+            colors=[RGBColor(color).hex for color in colors])
