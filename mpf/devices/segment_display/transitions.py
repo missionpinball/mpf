@@ -135,8 +135,8 @@ class PushTransition(TransitionBase):
             temp_list.extend(transition_text)
             temp_list.extend(current_display_text)
             return temp_list[
-                   self.output_length + len(self.text) - (step + 1):2 * self.output_length + len(self.text) - (
-                               step + 1)]
+                self.output_length + len(self.text) - (step + 1):2 * self.output_length + len(
+                    self.text) - (step + 1)]
 
         if self.direction == 'left':
             temp_list = current_display_text
@@ -262,7 +262,7 @@ class UncoverTransition(TransitionBase):
 
             if step < len(self.text):
                 temp_text = current_extended_display_text[
-                            len(self.text) - step - 1:len(self.text) - step - 1 + self.output_length]
+                    len(self.text) - step - 1:len(self.text) - step - 1 + self.output_length]
             else:
                 temp_text = new_display_text[:step - len(self.text) + 1]
                 temp_text.extend(current_extended_display_text[:self.output_length - len(temp_text)])
@@ -301,7 +301,7 @@ class WipeTransition(TransitionBase):
         """Return the total number of steps required for the transition."""
         return self.output_length + len(self.text)
 
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments,too-many-branches,too-many-return-statements
     def get_transition_step(self, step: int, current_text: str, new_text: str,
                             current_colors: Optional[List[RGBColor]] = None,
                             new_colors: Optional[List[RGBColor]] = None) -> SegmentDisplayText:
@@ -369,7 +369,7 @@ class SplitTransition(TransitionBase):
         """Return the total number of steps required for the transition."""
         return int((self.output_length + 1) / 2)
 
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments,too-many-branches,too-many-return-statements
     def get_transition_step(self, step: int, current_text: str, new_text: str,
                             current_colors: Optional[List[RGBColor]] = None,
                             new_colors: Optional[List[RGBColor]] = None) -> SegmentDisplayText:
