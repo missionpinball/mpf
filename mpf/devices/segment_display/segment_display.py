@@ -81,7 +81,6 @@ class SegmentDisplay(SystemWideDevice):
                                  "See error above.".format(self.name)) from ex
 
         self.set_color(self.config['initial_color'])
-        self.add_text_entry(self.empty_text_stack_entry)
 
     def add_virtual_connector(self, virtual_connector):
         """Add a virtual connector instance to connect this segment display to the MPF-MC for virtual displays."""
