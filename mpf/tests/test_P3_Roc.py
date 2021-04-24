@@ -158,6 +158,16 @@ class TestP3Roc(MpfTestCase):
 
         p_roc_common.pinproc.normalize_machine_type.assert_called_once_with("pdb")
 
+    def tearDown(self):
+        self.pinproc.write_data.reset_mock()
+        super().tearDown()
+
+        self.pinproc.write_data.assert_has_calls([
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | 72),              # low byte of address (72)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (6 << 8)),        # high byte of address (0)
+            call(3, 3072, 0x01000000 | (2 & 0x3F) << 16 | (1 << 8)),        # set servo position to 0
+            ], False)
+
     def test_platform(self):
         self._test_write_data_init()
         self._test_accelerometer()

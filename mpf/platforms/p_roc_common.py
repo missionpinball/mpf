@@ -313,6 +313,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         if self._light_system:
             self._light_system.stop()
         if self.proc_process and self.proc_process_instance:
+            self.run_proc_cmd_sync("_sync", -1)
             self.proc_process_instance.call_soon_threadsafe(self.proc_process.stop)
         if self.proc_thread:
             self.debug_log("Waiting for pinproc thread.")

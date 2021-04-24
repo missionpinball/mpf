@@ -448,6 +448,10 @@ class PdLedServo(ServoPlatformInterface):
 
         self.platform.write_pdled_color(self.board, 72 + self.number, value)
 
+    def stop(self):
+        """Disable output."""
+        self.platform.write_pdled_color(self.board, 72 + self.number, 0)
+
 
 class PdLedStepper(StepperPlatformInterface):
 
