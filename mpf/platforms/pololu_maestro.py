@@ -14,16 +14,17 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
     Works with Micro Maestro 6, and Mini Maestro 12, 18, and 24.
     """
 
-    __slots__ = ["config", "platform", "serial"]
+    __slots__ = ["config", "platform", "serial", "_servos"]
 
     def __init__(self, machine):
         """Initialise Pololu Servo Controller platform."""
         super().__init__(machine)
         self.config = self.machine.config_validator.validate_config("pololu_maestro",
-                                                                    self.machine.config['pololu_maestro'])
+                                                                    self.machine.config.get('pololu_maestro', {}))
         self.platform = None
         self.serial = None
         self.features['tickless'] = True
+        self._servos = []
         self._configure_device_logging_and_debug("Pololu Maestro", self.config)
 
     def __repr__(self):
@@ -37,6 +38,10 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
 
     def stop(self):
         """Close serial."""
+        for servo in self._servos:
+            servo.stop()
+
+        self._servos = []
         if self.serial:
             self.serial.close()
             self.serial = None
@@ -54,7 +59,9 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
             number_str = number
             controller_str = "12"
 
-        return PololuServo(int(controller_str), int(number_str), self.config, self.serial)
+        servo = PololuServo(int(controller_str), int(number_str), self.config, self.serial)
+        self._servos.append(servo)
+        return servo
 
 
 class PololuServo(ServoPlatformInterface):
@@ -72,6 +79,16 @@ class PololuServo(ServoPlatformInterface):
         self.serial = serial_port
         self.cmd_header = bytes([0xaa, self.controller_number])
 
+    def stop(self):
+        """Disable servo.
+
+        Send the Go Home command which will disable the servo.
+        """
+        cmd = self.cmd_header + bytes([0x22, self.number])
+        if self.config['debug']:
+            self.log.debug("Sending cmd: %s", "".join(" 0x%02x" % b for b in cmd))
+        self.serial.write(cmd)
+
     def go_to_position(self, position):
         """Set channel to a specified target value.
 
@@ -81,7 +98,7 @@ class PololuServo(ServoPlatformInterface):
         For servos, target represents the pulse width in of
         quarter-microseconds.
         Servo center is at 1500 microseconds, or 6000 quarter-microseconds
-        Typcially valid servo range is 3000 to 9000 quarter-microseconds
+        Typical valid servo range is 3000 to 9000 quarter-microseconds
         If channel is configured for digital output, values < 6000 = Low ouputco.
 
         Args:
