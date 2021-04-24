@@ -14,7 +14,7 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
     Works with Micro Maestro 6, and Mini Maestro 12, 18, and 24.
     """
 
-    __slots__ = ["config", "platform", "serial", "_servos"]
+    __slots__ = ["config", "platform", "serial"]
 
     def __init__(self, machine):
         """Initialise Pololu Servo Controller platform."""
@@ -24,7 +24,6 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
         self.platform = None
         self.serial = None
         self.features['tickless'] = True
-        self._servos = []
         self._configure_device_logging_and_debug("Pololu Maestro", self.config)
 
     def __repr__(self):
@@ -38,10 +37,6 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
 
     def stop(self):
         """Close serial."""
-        for servo in self._servos:
-            servo.stop()
-
-        self._servos = []
         if self.serial:
             self.serial.close()
             self.serial = None
@@ -59,9 +54,7 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
             number_str = number
             controller_str = "12"
 
-        servo = PololuServo(int(controller_str), int(number_str), self.config, self.serial)
-        self._servos.append(servo)
-        return servo
+        return PololuServo(int(controller_str), int(number_str), self.config, self.serial)
 
 
 class PololuServo(ServoPlatformInterface):
