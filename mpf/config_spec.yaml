@@ -1334,6 +1334,7 @@ servos:
     ball_search_wait: single|ms|5s
     include_in_ball_search: single|bool|true
     reset_position: single|float|0.5
+    stop_events: event_handler|event_handler:ms|None
     reset_events: event_handler|event_handler:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
     number: single|str|
     platform: single|str|None
