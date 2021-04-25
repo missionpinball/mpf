@@ -46,9 +46,49 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(4, self.machine.ball_devices["trough"].balls)
 
-    def test_eject_with_jam_switch(self):
-        # Tests the proper operation of a trough eject with a jam switch
+    @test_config("test_jam_and_ball_left.yaml")
+    def test_jam_and_ball_left(self):
+        """Test that we properly track an eject when balls are jammed.
 
+        This is a regression test for a bug we had.
+        """
+        # put a ball on the jam switch
+        self.machine.switch_controller.process_switch('s_trough1', 1)
+        self.advance_time_and_run(10)
+        self.assertNumBallsKnown(1)
+
+        self.machine.switch_controller.process_switch('s_start', 1)
+        self.machine.switch_controller.process_switch('s_start', 0)
+
+        self.advance_time_and_run(5)
+        self.machine.switch_controller.process_switch('s_trough1', 0)
+        self.advance_time_and_run(1)
+        self.machine.switch_controller.process_switch('s_trough_jam', 1)
+        self.advance_time_and_run(10)
+        self.machine.switch_controller.process_switch('s_trough_jam', 0)
+        self.advance_time_and_run(1)
+
+        # ball goes into plunger
+        self.machine.switch_controller.process_switch('s_plunger_lane', 1)
+        self.advance_time_and_run(1)
+        self.machine.switch_controller.process_switch('s_plunger_lane', 0)
+        self.advance_time_and_run(1)
+
+        # ball moves from plunger lane to playfield
+        self.machine.switch_controller.process_switch('s_playfield', 1)
+        self.machine.switch_controller.process_switch('s_playfield', 0)
+        self.advance_time_and_run(.1)
+        self.assertBallsOnPlayfield(1)
+        self.advance_time_and_run(10)
+        self.assertEqual("idle", self.machine.ball_devices["bd_trough"]._state)
+        self.assertEqual("idle", self.machine.ball_devices["bd_plunger"]._state)
+        self.assertNumBallsKnown(1)
+        self.assertBallsOnPlayfield(1)
+        self.assertEqual("idle", self.machine.ball_devices["bd_trough"]._state)
+        self.assertEqual("idle", self.machine.ball_devices["bd_plunger"]._state)
+
+    def test_eject_with_jam_switch(self):
+        """Test the proper operation of a trough eject with a jam switch."""
         self.put_four_balls_in_trough()
 
         self.machine.playfield.add_ball(player_controlled=True)
