@@ -1,5 +1,8 @@
 """Contains the MachineVariables class."""
 
+import asyncio
+from time import time, sleep
+import datetime
 import copy
 from platform import platform, python_version, system, release, version, system_alias, machine as platform_machine
 from typing import Any, Dict, Optional
@@ -93,6 +96,30 @@ class MachineVariables(LogMixin):
 
         desc: Architecture of your machine (32bit/64bit).
         '''
+
+        '''Call function to to set the following machine_var(s):
+            machine_var: year
+            machine_var: month
+            machine_var: day
+            machine_var: hour
+            machine_var: minute
+            machine_var: second
+        
+        desc: The current date and time of your machine.
+        '''
+        #This function updates every second to constantly update the date and time
+        asyncio.create_task(self.update_date_time())
+
+    async def update_date_time(self):
+        while True:
+            self.set_machine_var(name="year", value=datetime.datetime.now().year)
+            self.set_machine_var(name="month", value=datetime.datetime.now().month)
+            self.set_machine_var(name="day", value=datetime.datetime.now().day)
+            self.set_machine_var(name="hour", value=datetime.datetime.now().hour)
+            self.set_machine_var(name="minute", value=datetime.datetime.now().minute)
+            self.set_machine_var(name="second", value=datetime.datetime.now().second)
+            #Run function every second
+            await asyncio.sleep(1)
 
     def __getitem__(self, key):
         """Allow the user to access a machine variable with []. This would be used is machine.variables["var_name"]."""

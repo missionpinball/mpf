@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf._version import version, extended_version
 
+import datetime
 
 class TestMachineVariables(MpfTestCase):
 
@@ -34,6 +35,12 @@ class TestMachineVariables(MpfTestCase):
         self.assertTrue(self.machine.variables.is_machine_var("platform_machine"))
         self.assertEqual(version, self.machine.variables.get_machine_var("mpf_version"))
         self.assertEqual(extended_version, self.machine.variables.get_machine_var("mpf_extended_version"))
+        self.assertEqual(datetime.datetime.now().year, self.machine.variables.get_machine_var("year"))
+        self.assertEqual(datetime.datetime.now().month, self.machine.variables.get_machine_var("month"))
+        self.assertEqual(datetime.datetime.now().day, self.machine.variables.get_machine_var("day"))
+        self.assertEqual(datetime.datetime.now().hour, self.machine.variables.get_machine_var("hour"))
+        self.assertEqual(datetime.datetime.now().minute, self.machine.variables.get_machine_var("minute"))
+        self.assertEqual(datetime.datetime.now().second, self.machine.variables.get_machine_var("second"))
 
     def testVarLoadAndRemove(self):
         self.assertFalse(self.machine.variables.is_machine_var("expired_value"))
