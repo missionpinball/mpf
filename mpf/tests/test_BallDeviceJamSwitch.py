@@ -87,6 +87,38 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.assertEqual("idle", self.machine.ball_devices["bd_trough"]._state)
         self.assertEqual("idle", self.machine.ball_devices["bd_plunger"]._state)
 
+    @test_config("test_jam_and_ball_left.yaml")
+    def test_jam_and_ball_return(self):
+        """Test that we properly track an eject and return when balls are jammed.
+
+        This is a regression test for a bug we had.
+        """
+        # put a ball on the jam switch
+        self.machine.switch_controller.process_switch('s_trough1', 1)
+        self.advance_time_and_run(10)
+        self.assertNumBallsKnown(1)
+
+        self.machine.switch_controller.process_switch('s_start', 1)
+        self.machine.switch_controller.process_switch('s_start', 0)
+
+        self.advance_time_and_run(5)
+        self.machine.switch_controller.process_switch('s_trough1', 0)
+        self.advance_time_and_run(1)
+        self.machine.switch_controller.process_switch('s_trough_jam', 1)
+        self.machine.switch_controller.process_switch('s_trough1', 1)
+        self.advance_time_and_run(5.3)
+        # ball goes into plunger
+        self.machine.switch_controller.process_switch('s_plunger_lane', 1)
+        self.advance_time_and_run(1)
+        self.machine.switch_controller.process_switch('s_trough1', 0)
+        self.advance_time_and_run(2)
+        self.machine.switch_controller.process_switch('s_trough1', 1)
+        self.advance_time_and_run(5)
+        self.machine.switch_controller.process_switch('s_trough1', 0)
+        self.advance_time_and_run(10)
+
+        # the machine will be at an odd state here but it should not crash
+
     def test_eject_with_jam_switch(self):
         """Test the proper operation of a trough eject with a jam switch."""
         self.put_four_balls_in_trough()
