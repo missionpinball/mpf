@@ -1298,6 +1298,11 @@ segment_displays:
     __valid_in__: machine
     __type__: device
     number: single|str|
+    size: single|int|7
+    integrated_dots: single|bool|false
+    integrated_commas: single|bool|false
+    initial_color: list|color|white
+    default_transition_update_hz: single|float_or_token|30
     platform_settings: single|dict|None
     platform: single|str|None
 light_segment_displays_device:
@@ -1309,9 +1314,40 @@ segment_display_player:
     priority: single|int_or_token|0
     text: single|str|None
     color: list|color|None
-    action: single|enum(add,remove,flash,no_flash,flash_match,set_color)|add
+    action: single|enum(add,remove,flash,no_flash,flash_match,flash_mask,set_color)|add
+    transition: ignore
+    transition_out: ignore
+    flashing: single|enum(off,all,match,mask,not_set)|not_set
+    flash_mask: single|str|None
     key: single|str|None
     expire: single|ms_or_token|None
+segment_display_transitions:
+    none:
+        type: single|str|
+    push:
+        type: single|str|
+        direction: single|enum(right,left)|right
+        text: single|str|None
+        text_color: list|color|None
+    cover:
+        type: single|str|
+        direction: single|enum(right,left)|right
+        text: single|str|None
+        text_color: list|color|None
+    uncover:
+        type: single|str|
+        direction: single|enum(right,left)|right
+        text: single|str|None
+        text_color: list|color|None
+    wipe:
+        type: single|str|
+        direction: single|enum(right,left)|right
+        text: single|str|None
+        text_color: list|color|None
+    split:
+        type: single|str|
+        mode: single|enum(push,wipe)|push
+        direction: single|enum(in,out)|out
 servo_controllers:
     __valid_in__: machine
     __type__: config
@@ -2036,7 +2072,7 @@ widgets:
         padding: single|int_or_token|20
         background_color: single|kivycolor|000000ff
         segment_off_color: single|kivycolor|4b4c4aff
-        segment_on_color: single|kivycolor|dd8217ff
+        segment_on_color: list|kivycolor|dd8217ff
         segment_width: single|float_or_token|0.16
         segment_interval: single|float_or_token|0.05
         bevel_width: single|float_or_token|0.06

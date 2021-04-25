@@ -80,7 +80,7 @@ mpf:
         accruals: mpf.devices.logic_blocks.Accrual
         sequences: mpf.devices.logic_blocks.Sequence
         timers: mpf.devices.timer.Timer
-        segment_displays: mpf.devices.segment_display.SegmentDisplay
+        segment_displays: mpf.devices.segment_display.segment_display.SegmentDisplay
         sequence_shots: mpf.devices.sequence_shot.SequenceShot
         hardware_sound_systems: mpf.devices.hardware_sound_system.HardwareSoundSystem
         steppers: mpf.devices.stepper.Stepper
