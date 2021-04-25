@@ -97,8 +97,11 @@ class AflRunner(object):
                                              self.machine_config_patches, {})
 
         config = config_loader.load_mpf_config()
-        # remove virtual_platform_start_active_switches as it messes with out switch logic
-        config.get_machine_config().pop("virtual_platform_start_active_switches")
+        try:
+            # remove virtual_platform_start_active_switches as it messes with out switch logic
+            config.get_machine_config().pop("virtual_platform_start_active_switches")
+        except KeyError:
+            pass
 
         self.machine = TestMachineController(
             self.get_options(), config, self.machine_config_patches, self.machine_config_defaults, self.clock, dict(),
