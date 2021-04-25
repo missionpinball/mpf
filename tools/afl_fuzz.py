@@ -127,7 +127,7 @@ class AflRunner(object):
     def add_balls(self):
         """Add balls."""
         balls_to_add = 3
-        for device in self.machine.ball_devices.values():
+        for device in sorted(self.machine.ball_devices.values()):
             if "trough" in device.tags:
                 for switch in device.ball_count_handler.counter.config.get('ball_switches', []):
                     self.machine.switch_controller.process_switch_obj(switch, 1, True)
@@ -223,14 +223,24 @@ class AflRunner(object):
     def dump(self, wait, add_balls, start_game, actions):
         """Dump fuzzer input."""
         if add_balls:
-            for device in self.machine.ball_devices.values():
+            balls_to_add = 3
+            for device in sorted(self.machine.ball_devices.values()):
                 if "trough" in device.tags:
                     for switch in device.ball_count_handler.counter.config.get('ball_switches', []):
                         print("Enable switch {}".format(switch.name))
                         switch.hw_state = 1
+                        balls_to_add -= 1
+                        if balls_to_add == 0:
+                            break
+
+                    if balls_to_add == 0:
+                        break
                     if device.ball_count_handler.counter.config.get('entrance_switch'):
                         print("Enable switch {}".format(device.config['entrance_switch'].name))
                         device.config['entrance_switch'].switch.hw_state = 1
+                        balls_to_add -= 1
+                        if balls_to_add == 0:
+                            break
             print("Advance time 10s")
 
         if start_game:
