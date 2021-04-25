@@ -213,6 +213,14 @@ class PhysicalBallCounter:
         """Debug log."""
         self.ball_device.debug_log(*args, **kwargs)
 
+    def info_log(self, *args, **kwargs):
+        """Info log."""
+        self.ball_device.info_log(*args, **kwargs)
+
+    def warning_log(self, *args, **kwargs):
+        """Warning log."""
+        self.ball_device.warning_log(*args, **kwargs)
+
     def count_balls_sync(self) -> int:
         """Return the number of current active switches or raises ValueError when count is not stable."""
         raise NotImplementedError()
