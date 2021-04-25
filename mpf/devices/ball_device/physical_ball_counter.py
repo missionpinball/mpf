@@ -80,7 +80,10 @@ class EjectTracker:
     def track_ball_returned(self):
         """Track ball returned."""
         self._ball_count_handler.ball_device.debug_log("Got ball return during eject")
-        self._ball_returned.set_result(True)
+        if not self._ball_returned.done():
+            self._ball_returned.set_result(True)
+        else:
+            self.track_unknown_balls(1)
 
     async def track_ball_entrance(self):
         """Track ball entrance."""
