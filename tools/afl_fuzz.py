@@ -19,8 +19,8 @@ class AflRunner(object):
 
     """AFL fuzzer."""
 
-    # __slots__ = ["loop", "clock", "machine", "debug", "machine_config_patches", "machine_config_defaults",
-    #             "switch_list", "use_virtual", "_invalid_input", "_exception"]
+    __slots__ = ["loop", "clock", "machine", "debug", "machine_config_patches", "machine_config_defaults",
+                "switch_list", "use_virtual", "_invalid_input", "_exception"]
 
     def __init__(self, use_virtual, debug):
         """Initialize fuzzer."""
@@ -72,7 +72,7 @@ class AflRunner(object):
             'no_load_cache': False,
             'create_config_cache': True,
             'text_ui': False,
-            'production': True,
+            'production': not self.debug,
         }
 
     def advance_time_and_run(self, delta=1.0):
@@ -97,6 +97,8 @@ class AflRunner(object):
                                              self.machine_config_patches, {})
 
         config = config_loader.load_mpf_config()
+        # remove virtual_platform_start_active_switches as it messes with out switch logic
+        config.get_machine_config().pop("virtual_platform_start_active_switches")
 
         self.machine = TestMachineController(
             self.get_options(), config, self.machine_config_patches, self.machine_config_defaults, self.clock, dict(),
