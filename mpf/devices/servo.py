@@ -80,6 +80,7 @@ class Servo(SystemWideDevice):
 
         This should either home the servo or disable the output.
         """
+        self.debug_log("Stopping servo")
         self.hw_servo.stop()
 
     @event_handler(5)
