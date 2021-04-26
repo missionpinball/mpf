@@ -235,6 +235,8 @@ class TestSelector(selectors.BaseSelector):
 
     def select(self, timeout=None):
         del timeout
+        if not self.keys:
+            return []
         ready = []
         for sock, key in self.keys.items():
             if sock.read_ready():
