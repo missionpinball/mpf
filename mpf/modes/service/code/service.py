@@ -304,10 +304,12 @@ software_update_script: single|str|None
         else:
             state_string = "inactive"
 
+        label_string = "" if change.label == "%" else change.label
+
         self.machine.events.post("service_switch_test_start",
                                  switch_name=change.name,
                                  switch_num=change.num,
-                                 switch_label=change.label,
+                                 switch_label=label_string,
                                  switch_state=state_string)
 
     async def _switch_test_menu(self):

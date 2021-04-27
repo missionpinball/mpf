@@ -275,6 +275,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         ports = None
         if self.config['ports'][0] == "autodetect":
             ports = autodetect_fast_ports(self.machine_type)
+            if ports is None:
+                raise AssertionError("Unable to autodetect any FAST ports.")
             self.debug_log("Autodetect for machine type %s found ports! %s", self.machine_type, ports)
         else:
             ports = self.config['ports']
