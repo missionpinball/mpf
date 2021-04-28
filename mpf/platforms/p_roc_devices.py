@@ -432,17 +432,21 @@ class PdLedServo(ServoPlatformInterface):
 
     """A servo on a PD-LED board."""
 
-    def __init__(self, board, number, platform, debug):
+    __slots__ = ["board", "number", "debug", "log", "platform", "min_servo_value"]
+
+    # pylint: disable-msg=too-many-arguments
+    def __init__(self, board, number, platform, debug, min_servo_value):
         """Initialise PDB LED."""
         self.board = int(board)
         self.number = int(number)
         self.debug = debug
         self.log = logging.getLogger('PD-LED.Servo.{}-{}'.format(board, number))
         self.platform = platform    # type: PROCBasePlatform
+        self.min_servo_value = min_servo_value
 
     def go_to_position(self, position):
         """Move servo to a certain position."""
-        value = int(position * 128) + 127
+        value = int(position * (255 - self.min_servo_value)) + self.min_servo_value
         if self.debug:
             self.log.debug("Setting servo to position: %s value: %s", position, value)
 
