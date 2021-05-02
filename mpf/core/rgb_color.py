@@ -342,6 +342,8 @@ class RGBColor:
             colors
 
         """
+        fraction_clamped = max(0, min(fraction, 1))
+
         if isinstance(start_color, RGBColor):
             start_color = start_color.rgb
         else:
@@ -353,7 +355,7 @@ class RGBColor:
             end_color = RGBColor(start_color).rgb
 
         output_color = tuple(start_color[i] + int(
-            (end_color[i] - start_color[i]) * fraction) for i in range(3))
+            (end_color[i] - start_color[i]) * fraction_clamped) for i in range(3))
         return RGBColor(output_color)
 
     @staticmethod

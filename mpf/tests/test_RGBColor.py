@@ -95,6 +95,12 @@ class TestRGBColor(unittest.TestCase):
         color_blend = RGBColor.blend(color1, color2, 0.75)
         self.assertEqual((32, 40, 48), color_blend.rgb)
 
+        color_blend = RGBColor.blend(color1, color2, -0.5)
+        self.assertEqual(color1.rgb, color_blend.rgb)
+
+        color_blend = RGBColor.blend(color1, color2, 1.5)
+        self.assertEqual(color2.rgb, color_blend.rgb)
+
     def test_color_correction(self):
         color = RGBColor(RGBColor.name_to_rgb('DarkGray'))
         self.assertEqual((169, 169, 169), color.rgb)
