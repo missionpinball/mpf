@@ -10,6 +10,27 @@ class TestServo(MpfTestCase):
     def get_machine_path(self):
         return 'tests/machine_files/servo/'
 
+    def test_servo_with_timeout(self):
+        """Test timeout in servos."""
+        servo = self.machine.servos["test_servo_with_timeout"]
+        self.post_event("test_20")
+        self.advance_time_and_run(.1)
+        self.assertEqual(0.0, servo.hw_servo.current_position)
+        self.advance_time_and_run(2)
+        self.assertEqual("stop", servo.hw_servo.current_position)
+
+        self.post_event("test_25")
+        self.advance_time_and_run(1.5)
+        self.assertEqual(0.5, servo.hw_servo.current_position)
+        self.post_event("test_30")
+        self.advance_time_and_run(1.5)
+        self.assertEqual(1.0, servo.hw_servo.current_position)
+        self.post_event("test_20")
+        self.advance_time_and_run(1.5)
+        self.assertEqual(0.0, servo.hw_servo.current_position)
+        self.advance_time_and_run(1)
+        self.assertEqual("stop", servo.hw_servo.current_position)
+
     def test_servo_go_to_position(self):
         # full range servo
         servo = self.machine.servos["test_servo"]

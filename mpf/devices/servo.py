@@ -105,6 +105,9 @@ class Servo(SystemWideDevice):
         # call platform with calculated position
         self.hw_servo.go_to_position(corrected_position)
 
+        if self.config["stop_timeout_after_last_move"] is not None:
+            self.delay.reset(self.config["stop_timeout_after_last_move"], self.stop, "movement_timeout")
+
     def set_speed_limit(self, speed_limit):
         """Set speed parameter."""
         self.hw_servo.set_speed_limit(speed_limit)

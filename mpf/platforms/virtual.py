@@ -495,6 +495,10 @@ class VirtualServo(ServoPlatformInterface):
         """Set acceleration parameter."""
         self.acceleration_limit = acceleration_limit
 
+    def stop(self):
+        """Stop this servo."""
+        self.current_position = "stop"
+
 
 class VirtualStepper(StepperPlatformInterface):
 
