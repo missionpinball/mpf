@@ -22,6 +22,7 @@ from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 
+# pylint: disable=too-many-ancestors,too-many-public-methods
 class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, LightsPlatform, SwitchPlatform,
                               DriverPlatform, DmdPlatform, RgbDmdPlatform, SegmentDisplayPlatform, StepperPlatform,
                               HardwareSoundPlatform):
@@ -150,6 +151,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
     def validate_segment_display_section(self, segment_display, config):
         """Validate segment display sections."""
+        del segment_display
         return config
 
     def configure_accelerometer(self, number, config, callback):
@@ -268,6 +270,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
     async def configure_segment_display(self, number: str, platform_settings) -> SegmentDisplayPlatformInterface:
         """Configure segment display."""
+        del platform_settings
         return VirtualSegmentDisplay(number, self.machine)
 
     async def configure_i2c(self, number: str) -> "I2cPlatformInterface":
@@ -315,7 +318,7 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
 
     """Virtual segment display."""
 
-    __slots__ = ["text", "flashing", "platform_options", "colors", "machine", "post_update_events"]
+    __slots__ = ["text", "flashing", "flash_mask", "colors", "machine", "post_update_events"]
 
     def __init__(self, number, machine) -> None:
         """Initialise virtual segment display."""
@@ -323,12 +326,17 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
         self.machine = machine
         self.text = ''
         self.flashing = FlashingType.NO_FLASH
+        self.flash_mask = ""
         self.colors = [RGBColor('FFFFFF')]
 
-    def set_text(self, text: str, flashing: FlashingType) -> None:
+    def set_text(self, text: str, flashing: FlashingType = FlashingType.NO_FLASH, flash_mask: str = "",
+                 colors: Optional[List[RGBColor]] = None) -> None:
         """Set text."""
         self.text = text
         self.flashing = flashing
+        self.flash_mask = flash_mask
+        if colors:
+            self.colors = colors
 
     def set_color(self, colors: List[RGBColor]) -> None:
         """Set color(s)."""
@@ -486,6 +494,10 @@ class VirtualServo(ServoPlatformInterface):
     def set_acceleration_limit(self, acceleration_limit):
         """Set acceleration parameter."""
         self.acceleration_limit = acceleration_limit
+
+    def stop(self):
+        """Stop this servo."""
+        self.current_position = "stop"
 
 
 class VirtualStepper(StepperPlatformInterface):

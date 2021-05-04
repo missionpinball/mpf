@@ -70,15 +70,6 @@ class Shot(EnableDisableMixin, ModeDevice):
             if switch not in config['switches']:
                 config['switches'].append(switch)
 
-        for switch in config['switches'] + list(config['delay_switch'].keys()):
-            if '{}_active'.format(config['playfield'].name) in switch.tags:
-                self.raise_config_error(
-                    "Shot '{}' uses switch '{}' which has a "
-                    "'{}_active' tag. This is handled internally by the device. Remove the "
-                    "redundant '{}_active' tag from that switch.".format(
-                        self.name, switch.name, config['playfield'].name,
-                        config['playfield'].name), 1)
-
         return config
 
     def _register_switch_handlers(self):

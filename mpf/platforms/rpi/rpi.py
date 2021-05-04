@@ -88,6 +88,10 @@ class RpiServo(ServoPlatformInterface):
         position_translated = 1000 + position * 1000
         self.platform.send_command(self.platform.pi.set_servo_pulsewidth(self.gpio, position_translated))
 
+    def stop(self):
+        """Disable servo."""
+        self.platform.send_command(self.platform.pi.set_servo_pulsewidth(self.gpio, 0))
+
     def set_speed_limit(self, speed_limit):
         """Not implemented."""
 
@@ -190,9 +194,12 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
             # run command
             await cmd
 
+            self._cmd_queue.task_done()
+
     def stop(self):
         """Stop platform."""
         if self._cmd_task:
+            self.machine.clock.loop.run_until_complete(self._cmd_queue.join())
             self._cmd_task.cancel()
             self._cmd_task = None
 

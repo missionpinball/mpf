@@ -230,7 +230,8 @@ class Tilt(Mode):
                              name='tilt')
 
         else:
-            self.machine.game.tilted = False
+            if self.machine.game:
+                self.machine.game.tilted = False
 
             self.machine.events.post('tilt_clear')
             '''event: tilt_clear

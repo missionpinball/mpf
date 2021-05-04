@@ -74,6 +74,7 @@ class PulseCoilEjector(DefaultBallSearch, BallDeviceEjector):
 
         # wait for wait_ms + pulse_ms + 2s for sanity
         duration = wait_ms / 1000.0 + self.config['eject_coil_reorder_pulse'] / 1000.0 + 2.0
+        self.warning_log("Ejector: Will wait %s after repulse", duration)
         await asyncio.sleep(duration)
 
     def _fire_coil_for_search(self, full_power):

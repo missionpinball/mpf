@@ -374,7 +374,7 @@ class Credits(Mode):
             self.machine.events.add_handler(
                 event=event_settings['event'],
                 handler=self._credit_event_callback,
-                credits=event_settings['credits'],
+                credits_value=event_settings['credits'],
                 audit_class=event_settings['type'])
 
     def _disable_credit_handlers(self):
@@ -397,18 +397,17 @@ class Credits(Mode):
         self._reset_timeouts()
 
     # credits is a built-in in python
-    # pylint: disable-msg=redefined-builtin
-    def _credit_event_callback(self, credits, audit_class, **kwargs):
-        credits_value = credits.evaluate(kwargs)
+    def _credit_event_callback(self, credits_value, audit_class, **kwargs):
+        credits_value = credits_value.evaluate(kwargs)
         self.info_log("Credit event hit. Credit Added. Credits: %s. Type: %s", credits_value, audit_class)
         self._add_credit_units(credit_units=credits_value * self.credit_units_per_game, price_tiering=False)
-        self._audit(credits_value, audit_class)
+        self._audit_event(credits_value, audit_class)
         self._reset_timeouts()
 
     def _service_credit_callback(self):
         self.info_log("Service Credit Added. Value: 1.")
         self.add_credit(price_tiering=False)
-        self._audit(1, 'service_credit')
+        self._audit_event(1, 'service_credit')
 
     def _add_credit_units(self, credit_units, price_tiering=True):
         self.debug_log("Adding %s credit_units. Price tiering: %s",
@@ -557,6 +556,16 @@ class Credits(Mode):
                 self.earnings[key_val] = value
             else:
                 self.earnings[key_val] += value
+
+        self.data_manager.save_all(data=self.earnings)
+
+    def _audit_event(self, value, audit_class):
+        key_count = "{} Awards".format(audit_class)
+        value = int(value)
+        if key_count not in self.earnings:
+            self.earnings[key_count] = value
+        else:
+            self.earnings[key_count] += value
 
         self.data_manager.save_all(data=self.earnings)
 

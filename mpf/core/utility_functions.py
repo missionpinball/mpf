@@ -1,10 +1,11 @@
 """Contains the Util class which includes many utility functions."""
+from collections import Iterable as IterableCollection
 from copy import deepcopy
 import re
 from fractions import Fraction
 from functools import reduce, lru_cache
 
-from typing import Dict, Iterable, List, Tuple, Callable, Any, Union
+from typing import Dict, List, Tuple, Callable, Any, Union, Iterable
 import asyncio
 from ruamel.yaml.compat import ordereddict
 
@@ -183,6 +184,16 @@ class Util:
                 final_list.append(Util.string_to_event_list(item))
 
         return final_list
+
+    @staticmethod
+    def flatten_list(incoming_list):
+        """Convert a list of nested lists and/or values into a single one-dimensional list."""
+        for item in incoming_list:
+            if isinstance(item, IterableCollection) and not isinstance(item, str):
+                for inner_item in Util.flatten_list(item):
+                    yield inner_item
+            else:
+                yield item
 
     @staticmethod
     def dict_merge(a, b, combine_lists=True, deepcopy_both=True) -> dict:

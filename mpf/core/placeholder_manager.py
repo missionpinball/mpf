@@ -12,6 +12,7 @@ from typing import Tuple, List, Any
 from mpf.core.utility_functions import Util
 
 from mpf.core.mpf_controller import MpfController
+from mpf.exceptions.config_file_error import ConfigFileError
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -82,6 +83,12 @@ class BaseTemplate(metaclass=abc.ABCMeta):
             return self.default_value
         except TemplateEvalError:
             return self.default_value
+        except ConfigFileError:     # pylint: disable-msg=try-except-raise
+            raise
+        except Exception as e:
+            raise AssertionError("Failed to evaluate {} template {} with parameters {}".format(
+                type(self), self.text, parameters)) from e
+
         if result is None:
             return self.default_value
         return self.convert_result(result)
@@ -589,10 +596,14 @@ class BasePlaceholderManager(MpfController):
             ast.Attribute: self._eval_attribute,
             ast.Subscript: self._eval_subscript,
             ast.Name: self._eval_name,
-            ast.IfExp: self._eval_if
+            ast.IfExp: self._eval_if,
+            ast.Tuple: self._eval_tuple,
         }
         if hasattr(ast, "Constant"):
             self._eval_methods[ast.Constant] = self._eval_constant
+
+    def _eval_tuple(self, node, variables, subscribe):
+        return tuple([self._eval(x, variables, subscribe) for x in node.elts])
 
     @staticmethod
     def _parse_template(template_str):
@@ -786,6 +797,8 @@ class BasePlaceholderManager(MpfController):
         except TemplateEvalError as e:
             value = e
             subscriptions = e.subscriptions
+        except ConfigFileError:     # pylint: disable-msg=try-except-raise
+            raise
         except ValueError as e:
             raise AssertionError("Failed to evaluate and subscribe template {} with parameters {}. "
                                  "See error above.".format(text, parameters)) from e

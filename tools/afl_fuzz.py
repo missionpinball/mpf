@@ -19,8 +19,8 @@ class AflRunner(object):
 
     """AFL fuzzer."""
 
-    # __slots__ = ["loop", "clock", "machine", "debug", "machine_config_patches", "machine_config_defaults",
-    #             "switch_list", "use_virtual", "_invalid_input", "_exception"]
+    __slots__ = ["loop", "clock", "machine", "debug", "machine_config_patches", "machine_config_defaults",
+                "switch_list", "use_virtual", "_invalid_input", "_exception"]
 
     def __init__(self, use_virtual, debug):
         """Initialize fuzzer."""
@@ -72,7 +72,7 @@ class AflRunner(object):
             'no_load_cache': False,
             'create_config_cache': True,
             'text_ui': False,
-            'production': True,
+            'production': not self.debug,
         }
 
     def advance_time_and_run(self, delta=1.0):
@@ -97,6 +97,11 @@ class AflRunner(object):
                                              self.machine_config_patches, {})
 
         config = config_loader.load_mpf_config()
+        try:
+            # remove virtual_platform_start_active_switches as it messes with out switch logic
+            config.get_machine_config().pop("virtual_platform_start_active_switches")
+        except KeyError:
+            pass
 
         self.machine = TestMachineController(
             self.get_options(), config, self.machine_config_patches, self.machine_config_defaults, self.clock, dict(),
@@ -127,7 +132,7 @@ class AflRunner(object):
     def add_balls(self):
         """Add balls."""
         balls_to_add = 3
-        for device in self.machine.ball_devices.values():
+        for device in sorted(self.machine.ball_devices.values()):
             if "trough" in device.tags:
                 for switch in device.ball_count_handler.counter.config.get('ball_switches', []):
                     self.machine.switch_controller.process_switch_obj(switch, 1, True)
@@ -223,14 +228,24 @@ class AflRunner(object):
     def dump(self, wait, add_balls, start_game, actions):
         """Dump fuzzer input."""
         if add_balls:
-            for device in self.machine.ball_devices.values():
+            balls_to_add = 3
+            for device in sorted(self.machine.ball_devices.values()):
                 if "trough" in device.tags:
                     for switch in device.ball_count_handler.counter.config.get('ball_switches', []):
                         print("Enable switch {}".format(switch.name))
                         switch.hw_state = 1
+                        balls_to_add -= 1
+                        if balls_to_add == 0:
+                            break
+
+                    if balls_to_add == 0:
+                        break
                     if device.ball_count_handler.counter.config.get('entrance_switch'):
                         print("Enable switch {}".format(device.config['entrance_switch'].name))
                         device.config['entrance_switch'].switch.hw_state = 1
+                        balls_to_add -= 1
+                        if balls_to_add == 0:
+                            break
             print("Advance time 10s")
 
         if start_game:

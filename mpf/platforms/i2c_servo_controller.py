@@ -112,6 +112,13 @@ class I2cServo(ServoPlatformInterface):
         self.i2c_device.i2c_write8(0x08 + self.number * 4, value & 0xFF)
         self.i2c_device.i2c_write8(0x09 + self.number * 4, value >> 8)
 
+    def stop(self):
+        """Disable servo."""
+        self.i2c_device.i2c_write8(0x06 + self.number * 4, 0)
+        self.i2c_device.i2c_write8(0x07 + self.number * 4, 0)
+        self.i2c_device.i2c_write8(0x08 + self.number * 4, 0)
+        self.i2c_device.i2c_write8(0x09 + self.number * 4, 0)
+
     def set_speed_limit(self, speed_limit):
         """Not implemented."""
 

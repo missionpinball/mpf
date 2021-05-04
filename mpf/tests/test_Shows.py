@@ -930,3 +930,13 @@ class TestShows(MpfTestCase):
         self.assertEventNotCalled("step2_3")
         self.assertEventCalled("step1_2")
         self.assertEventNotCalled("step1_3")
+
+    def test_multiple_args(self):
+        self.assertLightColor("led_01", "black")
+        self.assertLightColor("led_02", "black")
+        self.assertLightColor("led_03", "black")
+        self.post_event("flash_multiple_leds")
+        self.advance_time_and_run()
+        self.assertLightFlashing("led_01", "red")
+        self.assertLightFlashing("led_02", "red")
+        self.assertLightFlashing("led_03", "red")

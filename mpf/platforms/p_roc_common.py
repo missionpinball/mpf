@@ -313,6 +313,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         if self._light_system:
             self._light_system.stop()
         if self.proc_process and self.proc_process_instance:
+            self.run_proc_cmd_sync("_sync", -1)
             self.proc_process_instance.call_soon_threadsafe(self.proc_process.stop)
         if self.proc_thread:
             self.debug_log("Waiting for pinproc thread.")
@@ -804,7 +805,9 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         if 0 > int(number) >= 12:
             self.raise_config_error("PD-LED only supports 12 servos {}".format(number), 5)
 
-        return PdLedServo(board, number, self, self.config.get("debug", False))
+        min_servo_value = self.config['pd_led_boards'].get(int(board), {}).get("min_servo_value", 127)
+
+        return PdLedServo(board, number, self, self.config.get("debug", False), min_servo_value)
 
     async def configure_stepper(self, number: str, config: dict) -> PdLedStepper:
         """Configure a stepper (axis) device in platform.

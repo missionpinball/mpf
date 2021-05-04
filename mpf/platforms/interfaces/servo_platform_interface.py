@@ -25,3 +25,9 @@ class ServoPlatformInterface(metaclass=abc.ABCMeta):
 
     def set_acceleration_limit(self, acceleration_limit):
         """Set acceleration limit."""
+
+    def stop(self):
+        """Stop this servo.
+
+        This should disable the output or home the servo.
+        """

@@ -57,6 +57,8 @@ class Servo(SystemWideDevice):
         self.set_speed_limit(self.speed_limit)
         self.set_acceleration_limit(self.acceleration_limit)
 
+        self.machine.events.add_handler("shutdown", self.event_stop)
+
     @event_handler(1)
     def event_reset(self, **kwargs):
         """Event handler for reset event."""
@@ -66,6 +68,20 @@ class Servo(SystemWideDevice):
     def reset(self):
         """Go to reset position."""
         self.go_to_position(self.config['reset_position'])
+
+    @event_handler(10)
+    def event_stop(self, **kwargs):
+        """Event handler for stop event."""
+        del kwargs
+        self.stop()
+
+    def stop(self):
+        """Stop this servo.
+
+        This should either home the servo or disable the output.
+        """
+        self.debug_log("Stopping servo")
+        self.hw_servo.stop()
 
     @event_handler(5)
     def _position_event(self, position, **kwargs):
@@ -88,6 +104,9 @@ class Servo(SystemWideDevice):
 
         # call platform with calculated position
         self.hw_servo.go_to_position(corrected_position)
+
+        if self.config["stop_timeout_after_last_move"] is not None:
+            self.delay.reset(self.config["stop_timeout_after_last_move"], self.stop, "movement_timeout")
 
     def set_speed_limit(self, speed_limit):
         """Set speed parameter."""

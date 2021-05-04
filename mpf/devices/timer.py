@@ -364,10 +364,12 @@ class Timer(ModeDevice):
 
     def _timer_tick(self):
         # Automatically called by the core clock each tick
-        self.debug_log("Timer Tick")
+        if self._debug:
+            self.debug_log("Timer Tick")
 
         if not self.running:
-            self.debug_log("Timer is not running. Will remove.")
+            if self._debug:
+                self.debug_log("Timer is not running. Will remove.")
 
             self._remove_system_timer()
             return
@@ -380,9 +382,8 @@ class Timer(ModeDevice):
         self._post_tick_events()
 
     def _post_tick_events(self):
-
         if not self._check_for_done():
-            self.machine.events.post('timer_' + self.name + '_tick',
+            self.machine.events.post('timer_{}_tick'.format(self.name),
                                      ticks=self.ticks,
                                      ticks_remaining=self.ticks_remaining)
             '''event: timer_(name)_tick
@@ -396,9 +397,10 @@ class Timer(ModeDevice):
                     remaining.
             '''
 
-            self.debug_log("Ticks: %s, Remaining: %s",
-                           self.ticks,
-                           self.ticks_remaining)
+            if self._debug:
+                self.debug_log("Ticks: %s, Remaining: %s",
+                               self.ticks,
+                               self.ticks_remaining)
 
     def add(self, timer_value, **kwargs):
         """Add ticks to this timer.
@@ -478,11 +480,11 @@ class Timer(ModeDevice):
     def _check_for_done(self):
         # Checks to see if this timer is done. Automatically called anytime the
         # timer's value changes.
-
-        self.debug_log("Checking to see if timer is done. Ticks: %s, End "
-                       "Value: %s, Direction: %s",
-                       self.ticks, self.end_value,
-                       self.direction)
+        if self._debug:
+            self.debug_log("Checking to see if timer is done. Ticks: %s, End "
+                           "Value: %s, Direction: %s",
+                           self.ticks, self.end_value,
+                           self.direction)
 
         if (self.direction == 'up' and self.end_value is not None and
                 self.ticks >= self.end_value):
@@ -498,7 +500,8 @@ class Timer(ModeDevice):
             self.ticks_remaining = abs(self.end_value -
                                        self.ticks)
 
-        self.debug_log("Timer is not done")
+        if self._debug:
+            self.debug_log("Timer is not done")
 
         return False
 
