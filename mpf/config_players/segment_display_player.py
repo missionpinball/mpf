@@ -4,6 +4,7 @@ from mpf.core.delays import DelayManager
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 from mpf.devices.segment_display.text_stack_entry import TextStackEntry
 from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
+from mpf.devices.segment_display.transition_manager import TransitionManager
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -46,7 +47,7 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
 
             if action == "add":
                 # add text
-                s = display.transition_manager.validate_config(s)
+                s = TransitionManager.validate_config(s, self.machine.config_validator)
                 display.add_text_entry(TextStackEntry(text=s['text'],
                                                       color=s['color'],
                                                       flashing=self._get_flashing_type(s),

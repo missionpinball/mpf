@@ -24,6 +24,8 @@ class SegmentDisplayState:
 
     """Current State."""
 
+    __slots__ = ["text", "colors", "flashing", "flash_mask"]
+
     def __init__(self, text: str, colors: List[RGBColor],
                  flashing: FlashingType, flash_mask: Optional[str] = None):
         """Class initializer."""
@@ -49,17 +51,17 @@ class SegmentDisplay(SystemWideDevice):
 
     """A physical segment display in a pinball machine."""
 
+    __slots__ = ["hw_display", "size", "virtual_connector", "_text_stack", "_current_placeholder",
+                 "_current_text_stack_entry", "_transition_update_task", "_current_transition", "_default_color",
+                 "_current_state"]
+
     config_section = 'segment_displays'
     collection = 'segment_displays'
     class_label = 'segment_display'
-    transition_manager = None
 
     def __init__(self, machine, name: str) -> None:
         """Initialise segment display device."""
         super().__init__(machine, name)
-        if not self.transition_manager:
-            self.transition_manager = TransitionManager(machine)
-
         self.hw_display = None                      # type: Optional[SegmentDisplayPlatformInterface]
         self.platform = None                        # type: Optional[SegmentDisplayPlatform]
         self.size = None                            # type: Optional[int]
@@ -241,10 +243,10 @@ class SegmentDisplay(SystemWideDevice):
 
         # start transition (if configured)
         if transition_config:
-            transition = self.transition_manager.get_transition(self.size,
-                                                                self.config['integrated_dots'],
-                                                                self.config['integrated_commas'],
-                                                                transition_config)
+            transition = TransitionManager.get_transition(self.size,
+                                                          self.config['integrated_dots'],
+                                                          self.config['integrated_commas'],
+                                                          transition_config)
             if previous_text_stack_entry:
                 previous_text = previous_text_stack_entry.text
             else:
