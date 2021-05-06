@@ -940,3 +940,41 @@ class TestShows(MpfTestCase):
         self.assertLightFlashing("led_01", "red")
         self.assertLightFlashing("led_02", "red")
         self.assertLightFlashing("led_03", "red")
+
+    def test_advance_resets_time(self):
+        # test flash
+        # initially on
+        show_flash = self.machine.shows['flash'].play(show_tokens=dict(leds='led_01', lights='light_01'))
+        self.advance_time_and_run(.1)
+        self.assertLightColor("led_01", [255, 255, 255])
+        self.assertLightChannel("light_01", 255)
+
+        # after advance, is off
+        show_flash.advance()
+        self.advance_time_and_run(.1)
+        self.assertLightColor("led_01", [0, 0, 0])
+        self.assertLightChannel("light_01", 0)
+
+        # after 1sec, back on
+        self.advance_time_and_run(1)
+        self.assertLightColor("led_01", [255, 255, 255])
+        self.assertLightChannel("light_01", 255)
+
+    def test_step_back_resets_time(self):
+        # test flash
+        # initially on
+        show_flash = self.machine.shows['flash'].play(show_tokens=dict(leds='led_01', lights='light_01'))
+        self.advance_time_and_run(.1)
+        self.assertLightColor("led_01", [255, 255, 255])
+        self.assertLightChannel("light_01", 255)
+
+        # after step_back, is off
+        show_flash.step_back()
+        self.advance_time_and_run(.1)
+        self.assertLightColor("led_01", [0, 0, 0])
+        self.assertLightChannel("light_01", 0)
+
+        # after 1sec, back on
+        self.advance_time_and_run(1)
+        self.assertLightColor("led_01", [255, 255, 255])
+        self.assertLightChannel("light_01", 255)
