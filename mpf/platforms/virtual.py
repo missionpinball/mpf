@@ -268,9 +268,11 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         del name
         return VirtualDmd()
 
-    async def configure_segment_display(self, number: str, platform_settings) -> SegmentDisplayPlatformInterface:
+    async def configure_segment_display(self, number: str, display_size: int,
+                                        platform_settings) -> SegmentDisplayPlatformInterface:
         """Configure segment display."""
         del platform_settings
+        del display_size
         return VirtualSegmentDisplay(number, self.machine)
 
     async def configure_i2c(self, number: str) -> "I2cPlatformInterface":
@@ -337,10 +339,6 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
         self.flash_mask = flash_mask
         if colors:
             self.colors = colors
-
-    def set_color(self, colors: List[RGBColor]) -> None:
-        """Set color(s)."""
-        self.colors = colors
 
 
 class VirtualSound(HardwareSoundPlatformInterface):

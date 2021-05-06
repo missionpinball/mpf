@@ -17,15 +17,12 @@ class MyPinballsSegmentDisplay(SegmentDisplayPlatformInterface):
         super().__init__(number)
         self.platform = platform        # type: MyPinballsHardwarePlatform
 
-        # clear the display
-        self.set_text("", FlashingType.NO_FLASH)
-
     def set_text(self, text: str, flashing: FlashingType = FlashingType.NO_FLASH, flash_mask: str = "",
                  colors: Optional[List[RGBColor]] = None) -> None:
         """Set digits to display."""
         del flash_mask
         del colors
-        if not text:
+        if not text.strip():
             # blank display
             cmd = b'3:' + bytes([ord(str(self.number))]) + b'\n'
         else:
@@ -43,10 +40,6 @@ class MyPinballsSegmentDisplay(SegmentDisplayPlatformInterface):
                 cmd = b'1:'
             cmd += bytes([ord(str(self.number))]) + b':' + text.encode() + b'\n'
         self.platform.send_cmd(cmd)
-
-    def set_color(self, colors: List[RGBColor]) -> None:
-        """Set the color(s) of the display."""
-        # currently not supported
 
 
 class MyPinballsHardwarePlatform(SegmentDisplayPlatform):
@@ -84,9 +77,11 @@ class MyPinballsHardwarePlatform(SegmentDisplayPlatform):
             self.log.debug("Sending cmd: %s", cmd)
         self._writer.write(cmd)
 
-    async def configure_segment_display(self, number: str, platform_settings) -> "SegmentDisplayPlatformInterface":
+    async def configure_segment_display(self, number: str, display_size: int,
+                                        platform_settings) -> "SegmentDisplayPlatformInterface":
         """Configure display."""
         del platform_settings
+        del display_size
         number_int = int(number)
         if 1 > number_int > 6:
             raise AssertionError("Number {} invalid for mypinballs display. 1-6 are valid.".format(number))

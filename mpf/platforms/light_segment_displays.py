@@ -33,21 +33,16 @@ class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
         self._current_text = ""
         self._current_colors = [RGBColor("white")] * len(self._lights)
 
-    def set_color(self, colors: List[RGBColor]):
-        """Set colors."""
-        colors = colors[-len(self._lights):]
-        colors += [colors[-1]] * (len(self._lights) - len(colors))
-        if colors != self._current_colors:
-            self._current_colors = colors
-            self._update_text()
-
-    def _set_text(self, text: str) -> None:
+    def _set_text(self, text: str, colors: List[RGBColor]) -> None:
         """Set text to lights."""
         # get the last chars for the number of chars we have
         text = text[-len(self._lights):]
         text = text.zfill(len(self._lights))
-        if text != self._current_text:
+        colors = colors[-len(self._lights):]
+        colors += [colors[-1]] * (len(self._lights) - len(colors))
+        if text != self._current_text or colors != self._current_colors:
             self._current_text = text
+            self._current_colors = colors
             self._update_text()
 
     def _update_text(self):
@@ -84,8 +79,9 @@ class LightSegmentDisplaysPlatform(SegmentDisplaySoftwareFlashPlatform):
         """Return addition config section for segment displays."""
         return "light_segment_displays_device"
 
-    async def configure_segment_display(self, number: str, platform_settings) -> LightSegmentDisplay:
+    async def configure_segment_display(self, number: str, display_size: int, platform_settings) -> LightSegmentDisplay:
         """Configure light segment display."""
+        del display_size
         display = LightSegmentDisplay(number,
                                       lights=platform_settings['lights'],
                                       segment_type=platform_settings['type'])

@@ -321,6 +321,14 @@ class FourteenSegments(Segment):
             (self.l << 7) | (self.dp << 6) | (self.n << 5) | (self.m << 4) | (self.k << 3) | (self.g2 << 2) |
             (self.h << 1) | self.j])
 
+    def get_vpe_encoding(self) -> bytes:
+        """Return segment in a, b, c, d, e, f, g1, h, j, k, g2, n, m, l, dp order."""
+        return bytes([
+            self.a | (self.b << 1) | (self.c << 2) | (self.d << 3) | (self.e << 4) | (self.f << 5) |
+            (self.g1 << 6) | (self.h << 7),
+            self.j | (self.k << 1) | (self.g2 << 2) | (self.n << 3) | (self.m << 4) |
+            (self.l << 5) | (self.dp << 6)])
+
 
 FOURTEEN_SEGMENTS = {
     None: FourteenSegments(dp=0, l=0, m=0, n=0, k=0, j=0, h=0, g2=0, g1=0, f=0, e=0, d=0, c=0, b=0, a=0,    # noqa: E741

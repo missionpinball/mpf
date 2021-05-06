@@ -107,7 +107,7 @@ class MyPinballsPlatformTest(MpfTestCase):
 
     def testPlatform(self):
         self.serialMock.expected_commands = {
-            b'1:1:1234': False,
+            b'1:1:???1234': False,
         }
         self.machine.segment_displays["display1"].add_text("1234", key="score")
         self._wait_for_processing()
@@ -115,7 +115,7 @@ class MyPinballsPlatformTest(MpfTestCase):
 
         # change text (with same key)
         self.serialMock.expected_commands = {
-            b'1:1:1337': False,
+            b'1:1:???1337': False,
         }
         self.machine.segment_displays["display1"].add_text("1337", key="score")
         self._wait_for_processing()
@@ -123,7 +123,7 @@ class MyPinballsPlatformTest(MpfTestCase):
 
         # change text (with same key)
         self.serialMock.expected_commands = {
-            b'1:1:42?23': False,
+            b'1:1:??42?23': False,
         }
         self.machine.segment_displays["display1"].add_text("42 23", key="score")
         self._wait_for_processing()
@@ -138,28 +138,28 @@ class MyPinballsPlatformTest(MpfTestCase):
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands = {
-            b'1:2:424242': False,
+            b'1:2:?424242': False,
         }
         self.machine.segment_displays["display2"].add_text("424242")
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands = {
-            b'2:2:424242': False,
+            b'2:2:?424242': False,
         }
         self.machine.segment_displays["display2"].set_flashing(FlashingType.FLASH_ALL)
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands = {
-            b'1:2:424242': False,
+            b'1:2:?424242': False,
         }
         self.machine.segment_displays["display2"].set_flashing(FlashingType.NO_FLASH)
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands = {
-            b'4:2:424242': False,
+            b'4:2:?424242': False,
         }
         self.machine.segment_displays["display2"].set_flashing(FlashingType.FLASH_MATCH)
         self._wait_for_processing()

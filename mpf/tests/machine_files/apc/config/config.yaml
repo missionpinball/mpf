@@ -69,14 +69,19 @@ lights:
 segment_displays:
   info_display:
     number: 0
+    size: 16
   player1_display:
     number: 1
+    size: 5
   player2_display:
     number: 2
+    size: 7
   player3_display:
     number: 3
+    size: 3
   player4_display:
     number: 4
+    size: 16
 
 hardware_sound_systems:
     default:

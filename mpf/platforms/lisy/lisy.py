@@ -175,12 +175,12 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
 
     __slots__ = ["platform", "_type_of_display", "_length_of_display"]
 
-    def __init__(self, number: int, platform: "LisyHardwarePlatform") -> None:
+    def __init__(self, number: int, platform: "LisyHardwarePlatform", display_size) -> None:
         """Initialise segment display."""
         super().__init__(number)
         self.platform = platform
         self._type_of_display = None
-        self._length_of_display = None
+        self._length_of_display = display_size
 
     async def initialize(self):
         """Initialize segment display."""
@@ -192,11 +192,12 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
                 raise AssertionError("Invalid display type {} reported by hardware for display {}".format(
                     self._type_of_display, self.number))
 
-            self._type_of_display = display_info[0]
-            self._length_of_display = int(display_info[1])
+            if int(display_info[1]) != self._length_of_display:
+                raise AssertionError("Display {} is configured as length {} but hardware reports as {}.".format(
+                    self.number, self._length_of_display, display_info[1]
+                ))
 
-        # clear display initially
-        self._set_text("")
+            self._type_of_display = display_info[0]
 
     def _format_text(self, text):
         if self._type_of_display == 1:
@@ -224,8 +225,9 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
 
         return b''.join(result)
 
-    def _set_text(self, text: str):
+    def _set_text(self, text: str, colors: List[RGBColor]):
         """Set text to display."""
+        del colors
         assert self.platform.api_version is not None
         if self.platform.api_version >= StrictVersion("0.9"):
             formatted_text = self._format_text(text)
@@ -233,10 +235,6 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
                                     bytearray([len(formatted_text)]) + formatted_text)
         else:
             self.platform.send_string(LisyDefines.DisplaysSetDisplay0To + self.number, text)
-
-    def set_color(self, colors: List[RGBColor]) -> None:
-        """Set the color(s) of the display."""
-        # not supported currently
 
 
 class LisySound(HardwareSoundPlatformInterface):
@@ -738,7 +736,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         driver.configure_recycle(recycle_time)
         return driver
 
-    async def configure_segment_display(self, number: str, platform_settings) \
+    async def configure_segment_display(self, number: str, display_size: int, platform_settings) \
             -> SegmentDisplaySoftwareFlashPlatformInterface:
         """Configure a segment display."""
         del platform_settings
@@ -748,7 +746,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             raise AssertionError("Invalid display number {}. Hardware only supports {} displays (indexed with 0)".
                                  format(number, self._number_of_displays))
 
-        display = LisyDisplay(int(number), self)
+        display = LisyDisplay(int(number), self, display_size)
         await display.initialize()
         self._handle_software_flash(display)
         return display
