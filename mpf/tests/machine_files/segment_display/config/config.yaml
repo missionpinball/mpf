@@ -92,3 +92,8 @@ segment_display_player:
     display3:
       action: set_color
       color: white
+
+  test_set_color_to_red:
+    display3:
+      action: set_color
+      color: red

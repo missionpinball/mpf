@@ -10,6 +10,7 @@ from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.segment_display.text_stack_entry import TextStackEntry
 from mpf.devices.segment_display.transition_manager import TransitionManager
 from mpf.devices.segment_display.transitions import TransitionRunner, TransitionBase
+from mpf.devices.segment_display.segment_display_text import SegmentDisplayText
 from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
 from mpf.plugins.virtual_segment_display_connector import VirtualSegmentDisplayConnector
 
@@ -23,24 +24,22 @@ class SegmentDisplayState:
 
     """Current State."""
 
-    __slots__ = ["text", "colors", "flashing", "flash_mask"]
+    __slots__ = ["text", "flashing", "flash_mask"]
 
-    def __init__(self, text: str, colors: List[RGBColor],
-                 flashing: FlashingType, flash_mask: Optional[str] = None):
+    def __init__(self, text: SegmentDisplayText, flashing: FlashingType, flash_mask: Optional[str] = None):
         """Class initializer."""
         self.text = text
-        self.colors = colors
         self.flashing = flashing
         self.flash_mask = flash_mask
 
     def __repr__(self):
         """Return str representation."""
-        return '<TextStackEntry: {} (colors: {}, flashing: {} flashing_mask: {}) >'.format(
-            self.text, self.colors, self.flashing, self.flash_mask)
+        return '<TextStackEntry: {} (flashing: {} flashing_mask: {}) >'.format(
+            self.text, self.flashing, self.flash_mask)
 
     def __eq__(self, other):
         """Compose two instances."""
-        return self.text == other.text and self.colors == other.colors and self.flashing == other.flashing and \
+        return self.text == other.text and self.flashing == other.flashing and \
             self.flash_mask == other.flash_mask
 
 
@@ -72,8 +71,7 @@ class SegmentDisplay(SystemWideDevice):
         self._transition_update_task = None         # type: Optional[PeriodicTask]
         self._current_transition = None             # type: Optional[TransitionRunner]
         self._default_color = None                  # type: Optional[RGBColor]
-
-        self._current_state = SegmentDisplayState("", [], FlashingType.NO_FLASH, '')  # type: SegmentDisplayState
+        self._current_state = None                  # type: Optional[SegmentDisplayState]
 
     async def _initialize(self):
         """Initialise display."""
@@ -99,7 +97,9 @@ class SegmentDisplay(SystemWideDevice):
             raise AssertionError("Error in platform while configuring segment display {}. "
                                  "See error above.".format(self.name)) from ex
 
-        self._update_display(SegmentDisplayState(" " * self.size, self._default_color, FlashingType.NO_FLASH, ''))
+        text = SegmentDisplayText.from_str("", self.size, self.config['integrated_dots'],
+                                           self.config['integrated_commas'], self._default_color)
+        self._update_display(SegmentDisplayState(text, FlashingType.NO_FLASH, ''))
 
     def add_virtual_connector(self, virtual_connector):
         """Add a virtual connector instance to connect this segment display to the MPF-MC for virtual displays."""
@@ -163,9 +163,7 @@ class SegmentDisplay(SystemWideDevice):
         self._current_transition = TransitionRunner(self.machine, transition, current_text, new_text,
                                                     current_colors, new_colors)
         transition_text = next(self._current_transition)
-        transition_colors = transition_text.get_colors()
-        self._update_display(SegmentDisplayState(transition_text.convert_to_str(),
-                                                 transition_colors, self._current_state.flashing,
+        self._update_display(SegmentDisplayState(transition_text, self._current_state.flashing,
                                                  self._current_state.flash_mask))
         self._transition_update_task = self.machine.clock.schedule_interval(self._update_transition, 1 / update_hz)
 
@@ -173,9 +171,7 @@ class SegmentDisplay(SystemWideDevice):
         """Update the current transition (callback function from transition interval clock)."""
         try:
             transition_text = next(self._current_transition)
-            transition_colors = transition_text.get_colors()
-            self._update_display(SegmentDisplayState(transition_text.convert_to_str(),
-                                                     transition_colors, self._current_state.flashing,
+            self._update_display(SegmentDisplayState(transition_text, self._current_state.flashing,
                                                      self._current_state.flash_mask))
 
         except StopIteration:
@@ -254,7 +250,7 @@ class SegmentDisplay(SystemWideDevice):
                 previous_text = " " * self.size
 
             self._start_transition(transition, previous_text, top_text_stack_entry.text,
-                                   self._current_state.colors, top_text_stack_entry.colors,
+                                   self._current_state.text.get_colors(), top_text_stack_entry.colors,
                                    self.config['default_transition_update_hz'])
         else:
             # no transition - subscribe to text template changes and update display
@@ -274,10 +270,12 @@ class SegmentDisplay(SystemWideDevice):
             if top_text_stack_entry.colors:
                 colors = top_text_stack_entry.colors
             else:
-                colors = self._current_state.colors
+                colors = self._current_state.text.get_colors()
 
             # update the display
-            self._update_display(SegmentDisplayState(new_text, colors, flashing, flash_mask))
+            text = SegmentDisplayText.from_str(new_text, self.size, self.config['integrated_dots'],
+                                               self.config['integrated_commas'], colors)
+            self._update_display(SegmentDisplayState(text, flashing, flash_mask))
 
     def _current_placeholder_changed(self, *args, **kwargs) -> None:
         """Update display when a placeholder changes (callback function)."""
@@ -285,32 +283,34 @@ class SegmentDisplay(SystemWideDevice):
         del kwargs
         new_text, future = self._current_placeholder.evaluate_and_subscribe({})
         future.add_done_callback(self._current_placeholder_changed)
-        self._update_display(SegmentDisplayState(new_text, self._current_state.colors, self._current_state.flashing,
+        text = SegmentDisplayText.from_str(new_text, self.size, self.config['integrated_dots'],
+                                           self.config['integrated_commas'], self._current_state.text.get_colors())
+        self._update_display(SegmentDisplayState(text, self._current_state.flashing,
                                                  self._current_state.flash_mask))
 
     def set_flashing(self, flashing: FlashingType, flash_mask: str = ""):
         """Enable/Disable flashing."""
-        self._update_display(SegmentDisplayState(self._current_state.text, self._current_state.colors, flashing,
-                                                 flash_mask))
+        self._update_display(SegmentDisplayState(self._current_state.text, flashing, flash_mask))
 
     def set_color(self, colors: List[RGBColor]):
         """Set display colors."""
         assert isinstance(colors, list)
         assert self.hw_display is not None
-        self._update_display(SegmentDisplayState(self._current_state.text,
-                                                 self._expand_colors(colors, len(self._current_state.text)),
+        text = SegmentDisplayText.from_str(self._current_state.text.convert_to_str(), self.size,
+                                           self.config['integrated_dots'], self.config['integrated_commas'], colors)
+        self._update_display(SegmentDisplayState(text,
                                                  self._current_state.flashing,
                                                  self._current_state.flash_mask))
 
     @property
     def text(self):
         """Return current text."""
-        return self._current_state.text
+        return self._current_state.text.convert_to_str()
 
     @property
     def colors(self):
         """Return current colors."""
-        return self._current_state.colors
+        return self._current_state.text.get_colors()
 
     @property
     def flashing(self):
@@ -325,32 +325,19 @@ class SegmentDisplay(SystemWideDevice):
     def _update_display(self, new_state: SegmentDisplayState) -> None:
         """Update display to current text."""
         assert self.hw_display is not None
-        if new_state == self._current_state:
+        if self._current_state and new_state == self._current_state:
             return
 
         self._current_state = new_state
         text = new_state.text
-        colors = new_state.colors
         flashing = new_state.flashing
         flash_mask = new_state.flash_mask
 
-        # make sure text is the same length as the display
-        if len(text) > self.size:
-            text = text[len(text) - self.size:]
-        elif len(text) < self.size:
-            # if not right align
-            text = text.rjust(self.size, ' ')
-
-        # make sure colors are the same length as the text (which is the same length as the display now)
-        if not colors:
-            colors = self._default_color
-        elif len(colors) < self.size:
-            colors = colors + self._default_color[len(colors) - self.size:]
-        else:
-            colors = colors[0:self.size]
+        assert len(text) == self.size
 
         # set text to display
-        self.hw_display.set_text(text, flashing=flashing, flash_mask=flash_mask, colors=colors)
+        self.hw_display.set_text(text.convert_to_str(), flashing=flashing, flash_mask=flash_mask,
+                                 colors=text.get_colors())
         if self.virtual_connector:
-            self.virtual_connector.set_text(self.name, text, flashing=flashing,
-                                            flash_mask=flash_mask, colors=colors)
+            self.virtual_connector.set_text(self.name, text.convert_to_str(), flashing=flashing,
+                                            flash_mask=flash_mask, colors=text.get_colors())

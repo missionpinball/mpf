@@ -63,8 +63,7 @@ class TestVirtualSegmentDisplayConnector(MpfBcpTestCase):
         mock_bcp_trigger_client.assert_has_calls([call(client=ANY, flashing='True', flash_mask='',
                                                        name='update_segment_display', segment_display_name='display2',
                                                        text='ER TEXT',
-                                                       colors=[RGBColor("green").hex, 'ffffff', 'ffffff', 'ffffff',
-                                                               'ffffff', 'ffffff', 'ffffff'])])
+                                                       colors=[RGBColor("green").hex] * 7)])
         mock_bcp_trigger_client.reset_mock()
 
         display2.set_flashing(FlashingType.FLASH_MATCH)
@@ -72,8 +71,7 @@ class TestVirtualSegmentDisplayConnector(MpfBcpTestCase):
         mock_bcp_trigger_client.assert_has_calls([call(client=ANY, flashing='match', flash_mask='',
                                                        name='update_segment_display', segment_display_name='display2',
                                                        text='ER TEXT',
-                                                       colors=['008000', 'ffffff', 'ffffff', 'ffffff', 'ffffff',
-                                                               'ffffff', 'ffffff'])
+                                                       colors=[RGBColor("green").hex] * 7)
                                                   ])
         mock_bcp_trigger_client.reset_mock()
 
@@ -82,8 +80,7 @@ class TestVirtualSegmentDisplayConnector(MpfBcpTestCase):
         mock_bcp_trigger_client.assert_has_calls([call(client=ANY, flashing='mask', flash_mask='______FFFF',
                                                        name='update_segment_display', segment_display_name='display2',
                                                        text='ER TEXT',
-                                                       colors=['008000', 'ffffff', 'ffffff', 'ffffff', 'ffffff',
-                                                               'ffffff', 'ffffff'])
+                                                       colors=[RGBColor("green").hex] * 7)
                                                   ])
         mock_bcp_trigger_client.reset_mock()
 

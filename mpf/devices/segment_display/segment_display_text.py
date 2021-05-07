@@ -96,6 +96,11 @@ class SegmentDisplayText:
 
         return self._text.__getitem__(item)
 
+    def __eq__(self, other):
+        """Return true if two texts and colors are the same."""
+        # pylint: disable-msg=protected-access
+        return self._text == other._text
+
     def extend(self, other_list):
         """Extend list."""
         # pylint: disable-msg=protected-access

@@ -1,5 +1,4 @@
 """Text stack entry support class for segment displays."""
-
 from typing import Optional, List
 
 from mpf.core.rgb_color import RGBColor
@@ -10,6 +9,8 @@ from mpf.platforms.interfaces.segment_display_platform_interface import Flashing
 class TextStackEntry:
 
     """An entry in the text stack for a segment display."""
+
+    __slots__ = ["text", "colors", "flashing", "flash_mask", "transition", "transition_out", "priority", "key"]
 
     def __init__(self, text: str, color: Optional[List[RGBColor]],
                  flashing: Optional[FlashingType] = None, flash_mask: Optional[str] = None,
