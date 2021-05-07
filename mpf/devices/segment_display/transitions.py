@@ -11,6 +11,8 @@ class TransitionBase(metaclass=abc.ABCMeta):
 
     """Base class for text transitions in segment displays."""
 
+    __slots__ = ["output_length", "config", "collapse_dots", "collapse_commas"]
+
     def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, config: dict) -> None:
         """Initialize the transition."""
         self.output_length = output_length
@@ -39,6 +41,8 @@ class TransitionBase(metaclass=abc.ABCMeta):
 class TransitionRunner:
 
     """Class to run/execute transitions using an iterator."""
+
+    __slots__ = ["_transition", "_step", "_current_placeholder", "_new_placeholder", "_current_colors", "_new_colors"]
 
     # pylint: disable=too-many-arguments
     def __init__(self, machine, transition: TransitionBase, current_text: str, new_text: str,
@@ -86,7 +90,8 @@ class NoTransition(TransitionBase):
         if step < 0 or step >= self.get_step_count():
             raise AssertionError("Step is out of range")
 
-        return SegmentDisplayText(new_text, self.output_length, self.collapse_dots, self.collapse_commas, new_colors)
+        return SegmentDisplayText.from_str(new_text, self.output_length, self.collapse_dots, self.collapse_commas,
+                                           new_colors)
 
 
 class PushTransition(TransitionBase):
@@ -115,20 +120,20 @@ class PushTransition(TransitionBase):
         if step < 0 or step >= self.get_step_count():
             raise AssertionError("Step is out of range")
 
-        current_display_text = SegmentDisplayText(current_text, self.output_length, self.collapse_dots,
-                                                  self.collapse_commas, current_colors)
-        new_display_text = SegmentDisplayText(new_text, self.output_length, self.collapse_dots,
-                                              self.collapse_commas, new_colors)
+        current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
+                                                           self.collapse_commas, current_colors)
+        new_display_text = SegmentDisplayText.from_str(new_text, self.output_length, self.collapse_dots,
+                                                       self.collapse_commas, new_colors)
 
         if self.text:
             if new_colors and not self.text_color:
                 text_color = [new_colors[0]]
             else:
                 text_color = self.text_color
-            transition_text = SegmentDisplayText(self.text, len(self.text), self.collapse_dots,
-                                                 self.collapse_commas, text_color)
+            transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
+                                                          self.collapse_commas, text_color)
         else:
-            transition_text = []
+            transition_text = SegmentDisplayText()
 
         if self.direction == 'right':
             temp_list = new_display_text
@@ -173,20 +178,20 @@ class CoverTransition(TransitionBase):
         if step < 0 or step >= self.get_step_count():
             raise AssertionError("Step is out of range")
 
-        current_display_text = SegmentDisplayText(current_text, self.output_length, self.collapse_dots,
-                                                  self.collapse_commas, current_colors)
-        new_display_text = SegmentDisplayText(new_text, self.output_length, self.collapse_dots,
-                                              self.collapse_commas, new_colors)
+        current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
+                                                           self.collapse_commas, current_colors)
+        new_display_text = SegmentDisplayText.from_str(new_text, self.output_length, self.collapse_dots,
+                                                       self.collapse_commas, new_colors)
 
         if self.text:
             if new_colors and not self.text_color:
                 text_color = [new_colors[0]]
             else:
                 text_color = self.text_color
-            transition_text = SegmentDisplayText(self.text, len(self.text), self.collapse_dots,
-                                                 self.collapse_commas, text_color)
+            transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
+                                                          self.collapse_commas, text_color)
         else:
-            transition_text = []
+            transition_text = SegmentDisplayText()
 
         if self.direction == 'right':
             new_extended_display_text = new_display_text
@@ -241,20 +246,20 @@ class UncoverTransition(TransitionBase):
         if step < 0 or step >= self.get_step_count():
             raise AssertionError("Step is out of range")
 
-        current_display_text = SegmentDisplayText(current_text, self.output_length, self.collapse_dots,
-                                                  self.collapse_commas, current_colors)
-        new_display_text = SegmentDisplayText(new_text, self.output_length, self.collapse_dots,
-                                              self.collapse_commas, new_colors)
+        current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
+                                                           self.collapse_commas, current_colors)
+        new_display_text = SegmentDisplayText.from_str(new_text, self.output_length, self.collapse_dots,
+                                                       self.collapse_commas, new_colors)
 
         if self.text:
             if new_colors and not self.text_color:
                 text_color = [new_colors[0]]
             else:
                 text_color = self.text_color
-            transition_text = SegmentDisplayText(self.text, len(self.text), self.collapse_dots,
-                                                 self.collapse_commas, text_color)
+            transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
+                                                          self.collapse_commas, text_color)
         else:
-            transition_text = []
+            transition_text = SegmentDisplayText()
 
         if self.direction == 'right':
             current_extended_display_text = transition_text
@@ -309,20 +314,20 @@ class WipeTransition(TransitionBase):
         if step < 0 or step >= self.get_step_count():
             raise AssertionError("Step is out of range")
 
-        current_display_text = SegmentDisplayText(current_text, self.output_length, self.collapse_dots,
-                                                  self.collapse_commas, current_colors)
-        new_display_text = SegmentDisplayText(new_text, self.output_length, self.collapse_dots,
-                                              self.collapse_commas, new_colors)
+        current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
+                                                           self.collapse_commas, current_colors)
+        new_display_text = SegmentDisplayText.from_str(new_text, self.output_length, self.collapse_dots,
+                                                       self.collapse_commas, new_colors)
 
         if self.text:
             if new_colors and not self.text_color:
                 text_color = [new_colors[0]]
             else:
                 text_color = self.text_color
-            transition_text = SegmentDisplayText(self.text, len(self.text), self.collapse_dots,
-                                                 self.collapse_commas, text_color)
+            transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
+                                                          self.collapse_commas, text_color)
         else:
-            transition_text = []
+            transition_text = SegmentDisplayText()
 
         if self.direction == 'right':
             if step < len(self.text):
@@ -377,10 +382,10 @@ class SplitTransition(TransitionBase):
         if step < 0 or step >= self.get_step_count():
             raise AssertionError("Step is out of range")
 
-        current_display_text = SegmentDisplayText(current_text, self.output_length, self.collapse_dots,
-                                                  self.collapse_commas, current_colors)
-        new_display_text = SegmentDisplayText(new_text, self.output_length, self.collapse_dots,
-                                              self.collapse_commas, new_colors)
+        current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
+                                                           self.collapse_commas, current_colors)
+        new_display_text = SegmentDisplayText.from_str(new_text, self.output_length, self.collapse_dots,
+                                                       self.collapse_commas, new_colors)
 
         if self.mode == 'push':
             if self.direction == 'out':

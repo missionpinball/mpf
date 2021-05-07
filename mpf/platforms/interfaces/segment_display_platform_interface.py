@@ -1,6 +1,6 @@
 """Support for physical segment displays."""
 import abc
-from typing import Any, List, Optional
+from typing import Any, List
 from enum import Enum
 
 from mpf.core.rgb_color import RGBColor

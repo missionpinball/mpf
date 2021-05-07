@@ -283,105 +283,105 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         """Test the SegmentDisplayText class."""
 
         # text equal to display length
-        test_text = SegmentDisplayText("test", 4, False, False)
-        self.assertTrue(isinstance(test_text, list))
+        test_text = SegmentDisplayText.from_str("test", 4, False, False)
+        self.assertTrue(isinstance(test_text, SegmentDisplayText))
         self.assertEqual(4, len(test_text))
-        self.assertEqual("test", SegmentDisplayText.convert_to_str(test_text))
+        self.assertEqual("test", test_text.convert_to_str())
 
         # text longer than display
-        test_text = SegmentDisplayText("testing", 4, False, False)
-        self.assertTrue(isinstance(test_text, list))
+        test_text = SegmentDisplayText.from_str("testing", 4, False, False)
+        self.assertTrue(isinstance(test_text, SegmentDisplayText))
         self.assertEqual(4, len(test_text))
-        self.assertEqual("ting", SegmentDisplayText.convert_to_str(test_text))
+        self.assertEqual("ting", test_text.convert_to_str())
 
         # text shorter than display
-        test_text = SegmentDisplayText("test", 7, False, False)
-        self.assertTrue(isinstance(test_text, list))
+        test_text = SegmentDisplayText.from_str("test", 7, False, False)
+        self.assertTrue(isinstance(test_text, SegmentDisplayText))
         self.assertEqual(7, len(test_text))
-        self.assertEqual("   test", SegmentDisplayText.convert_to_str(test_text))
+        self.assertEqual("   test", test_text.convert_to_str())
 
         # collapse commas
-        test_text = SegmentDisplayText("25,000", 7, False, True)
-        self.assertTrue(isinstance(test_text, list))
+        test_text = SegmentDisplayText.from_str("25,000", 7, False, True)
+        self.assertTrue(isinstance(test_text, SegmentDisplayText))
         self.assertEqual(7, len(test_text))
         self.assertTrue(test_text[3].comma)
         self.assertEqual(ord("5"), test_text[3].char_code)
         self.assertFalse(test_text[4].comma)
         self.assertEqual(ord("0"), test_text[4].char_code)
-        self.assertEqual("  25,000", SegmentDisplayText.convert_to_str(test_text))
+        self.assertEqual("  25,000", test_text.convert_to_str())
 
         # do not collapse commas
-        test_text = SegmentDisplayText("25,000", 7, False, False)
-        self.assertTrue(isinstance(test_text, list))
+        test_text = SegmentDisplayText.from_str("25,000", 7, False, False)
+        self.assertTrue(isinstance(test_text, SegmentDisplayText))
         self.assertEqual(7, len(test_text))
         self.assertFalse(test_text[2].comma)
         self.assertEqual(ord("5"), test_text[2].char_code)
         self.assertFalse(test_text[3].comma)
         self.assertEqual(ord(","), test_text[3].char_code)
-        self.assertEqual(" 25,000", SegmentDisplayText.convert_to_str(test_text))
+        self.assertEqual(" 25,000", test_text.convert_to_str())
 
         # collapse dots
-        test_text = SegmentDisplayText("25.000", 7, True, False)
-        self.assertTrue(isinstance(test_text, list))
+        test_text = SegmentDisplayText.from_str("25.000", 7, True, False)
+        self.assertTrue(isinstance(test_text, SegmentDisplayText))
         self.assertEqual(7, len(test_text))
         self.assertTrue(test_text[3].dot)
         self.assertEqual(ord("5"), test_text[3].char_code)
         self.assertFalse(test_text[4].dot)
         self.assertEqual(ord("0"), test_text[4].char_code)
-        self.assertEqual("  25.000", SegmentDisplayText.convert_to_str(test_text))
+        self.assertEqual("  25.000", test_text.convert_to_str())
 
         # do not collapse dots
-        test_text = SegmentDisplayText("25.000", 7, False, False)
-        self.assertTrue(isinstance(test_text, list))
+        test_text = SegmentDisplayText.from_str("25.000", 7, False, False)
+        self.assertTrue(isinstance(test_text, SegmentDisplayText))
         self.assertEqual(7, len(test_text))
         self.assertFalse(test_text[2].dot)
         self.assertEqual(ord("5"), test_text[2].char_code)
         self.assertFalse(test_text[3].dot)
         self.assertEqual(ord("."), test_text[3].char_code)
-        self.assertEqual(" 25.000", SegmentDisplayText.convert_to_str(test_text))
+        self.assertEqual(" 25.000", test_text.convert_to_str())
 
         # no colors
-        test_text = SegmentDisplayText("COLOR", 5, False, False)
-        self.assertTrue(isinstance(test_text, list))
+        test_text = SegmentDisplayText.from_str("COLOR", 5, False, False)
+        self.assertTrue(isinstance(test_text, SegmentDisplayText))
         self.assertEqual(5, len(test_text))
-        colors = SegmentDisplayText.get_colors(test_text)
+        colors = test_text.get_colors()
         self.assertIsNone(colors)
 
         # single color
-        test_text = SegmentDisplayText("COLOR", 5, False, False, [RGBColor("ffffff")])
-        self.assertTrue(isinstance(test_text, list))
+        test_text = SegmentDisplayText.from_str("COLOR", 5, False, False, [RGBColor("ffffff")])
+        self.assertTrue(isinstance(test_text, SegmentDisplayText))
         self.assertEqual(5, len(test_text))
-        colors = SegmentDisplayText.get_colors(test_text)
+        colors = test_text.get_colors()
         self.assertEqual(5, len(colors))
         self.assertEqual(5, colors.count(RGBColor("ffffff")))
 
         # multiple colors
-        test_text = SegmentDisplayText("COLOR", 5, False, False,
+        test_text = SegmentDisplayText.from_str("COLOR", 5, False, False,
                                        [RGBColor("white"), RGBColor("red"), RGBColor("green"), RGBColor("blue"),
                                         RGBColor("cyan")])
-        self.assertTrue(isinstance(test_text, list))
+        self.assertTrue(isinstance(test_text, SegmentDisplayText))
         self.assertEqual(5, len(test_text))
-        colors = SegmentDisplayText.get_colors(test_text)
+        colors = test_text.get_colors()
         self.assertEqual(5, len(colors))
         self.assertEqual([RGBColor("white"), RGBColor("red"), RGBColor("green"),
                           RGBColor("blue"), RGBColor("cyan")], colors)
 
         # multiple colors (fewer colors than letters)
-        test_text = SegmentDisplayText("COLOR", 5, False, False,
+        test_text = SegmentDisplayText.from_str("COLOR", 5, False, False,
                                        [RGBColor("white"), RGBColor("red")])
-        self.assertTrue(isinstance(test_text, list))
+        self.assertTrue(isinstance(test_text, SegmentDisplayText))
         self.assertEqual(5, len(test_text))
-        colors = SegmentDisplayText.get_colors(test_text)
+        colors = test_text.get_colors()
         self.assertEqual(5, len(colors))
         self.assertEqual([RGBColor("white"), RGBColor("red"), RGBColor("red"),
                           RGBColor("red"), RGBColor("red")], colors)
 
         # multiple colors (fewer colors than letters and fewer letters than characters)
-        test_text = SegmentDisplayText("COLOR", 8, False, False,
+        test_text = SegmentDisplayText.from_str("COLOR", 8, False, False,
                                        [RGBColor("white"), RGBColor("red")])
-        self.assertTrue(isinstance(test_text, list))
+        self.assertTrue(isinstance(test_text, SegmentDisplayText))
         self.assertEqual(8, len(test_text))
-        colors = SegmentDisplayText.get_colors(test_text)
+        colors = test_text.get_colors()
         self.assertEqual(8, len(colors))
         self.assertEqual([RGBColor("white"), RGBColor("white"), RGBColor("white"), RGBColor("white"),
                           RGBColor("red"), RGBColor("red"), RGBColor("red"), RGBColor("red")], colors)
@@ -401,12 +401,11 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         transition = NoTransition(5, False, False, {'direction': 'right'})
         self.assertEqual(1, transition.get_step_count())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("green"), RGBColor("green"), RGBColor("green"),
                           RGBColor("green"), RGBColor("green")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(0, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(0, "12345", "ABCDE",
+                                                        [RGBColor("red")], [RGBColor("green")]).get_colors())
         with self.assertRaises(AssertionError):
             transition.get_transition_step(1, "12345", "ABCDE")
 
@@ -416,264 +415,243 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         transition = PushTransition(5, False, False, {'direction': 'right'})
         self.assertEqual(5, transition.get_step_count())
         self.assertEqual("E1234",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("green"), RGBColor("red"), RGBColor("red"),
                           RGBColor("red"), RGBColor("red")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(0, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(0, "12345", "ABCDE", [RGBColor("red")],
+                                                        [RGBColor("green")]).get_colors())
         self.assertEqual("DE123",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("green"), RGBColor("green"), RGBColor("red"),
                           RGBColor("red"), RGBColor("red")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(1, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(1, "12345", "ABCDE", [RGBColor("red")],
+                                                        [RGBColor("green")]).get_colors())
         self.assertEqual("CDE12",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("green"), RGBColor("green"), RGBColor("green"),
                           RGBColor("red"), RGBColor("red")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(2, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(2, "12345", "ABCDE", [RGBColor("red")],
+                                                        [RGBColor("green")]).get_colors())
         self.assertEqual("BCDE1",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "12345", "ABCDE")))
+                         transition.get_transition_step(3, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("green"), RGBColor("green"), RGBColor("green"),
                           RGBColor("green"), RGBColor("red")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(3, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(3, "12345", "ABCDE", [RGBColor("red")],
+                                                        [RGBColor("green")]).get_colors())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "12345", "ABCDE")))
+                         transition.get_transition_step(4, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("green"), RGBColor("green"), RGBColor("green"),
                           RGBColor("green"), RGBColor("green")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(4, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(4, "12345", "ABCDE", [RGBColor("red")],
+                                                        [RGBColor("green")]).get_colors())
 
         # push left
         transition = PushTransition(5, False, False, {'direction': 'left'})
         self.assertEqual(5, transition.get_step_count())
         self.assertEqual("2345A",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual("345AB",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual("45ABC",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
         self.assertEqual("5ABCD",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "12345", "ABCDE")))
+                         transition.get_transition_step(3, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "12345", "ABCDE")))
+                         transition.get_transition_step(4, "12345", "ABCDE").convert_to_str())
 
         # push right (display larger than text)
         transition = PushTransition(8, False, False, {'direction': 'right'})
         self.assertEqual(8, transition.get_step_count())
         self.assertEqual("E   1234",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual("DE   123",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual("CDE   12",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
         self.assertEqual("BCDE   1",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "12345", "ABCDE")))
+                         transition.get_transition_step(3, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCDE   ",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "12345", "ABCDE")))
+                         transition.get_transition_step(4, "12345", "ABCDE").convert_to_str())
         self.assertEqual(" ABCDE  ",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(5, "12345", "ABCDE")))
+                         transition.get_transition_step(5, "12345", "ABCDE").convert_to_str())
         self.assertEqual("  ABCDE ",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(6, "12345", "ABCDE")))
+                         transition.get_transition_step(6, "12345", "ABCDE").convert_to_str())
         self.assertEqual("   ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(7, "12345", "ABCDE")))
+                         transition.get_transition_step(7, "12345", "ABCDE").convert_to_str())
 
         # push left (display larger than text)
         transition = PushTransition(8, False, False, {'direction': 'left'})
         self.assertEqual(8, transition.get_step_count())
         self.assertEqual("  12345 ",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual(" 12345  ",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual("12345   ",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
         self.assertEqual("2345   A",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "12345", "ABCDE")))
+                         transition.get_transition_step(3, "12345", "ABCDE").convert_to_str())
         self.assertEqual("345   AB",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "12345", "ABCDE")))
+                         transition.get_transition_step(4, "12345", "ABCDE").convert_to_str())
         self.assertEqual("45   ABC",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(5, "12345", "ABCDE")))
+                         transition.get_transition_step(5, "12345", "ABCDE").convert_to_str())
         self.assertEqual("5   ABCD",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(6, "12345", "ABCDE")))
+                         transition.get_transition_step(6, "12345", "ABCDE").convert_to_str())
         self.assertEqual("   ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(7, "12345", "ABCDE")))
+                         transition.get_transition_step(7, "12345", "ABCDE").convert_to_str())
 
         # push right (collapse commas)
         transition = PushTransition(5, False, True, {'direction': 'right'})
         self.assertEqual(5, transition.get_step_count())
         self.assertEqual("0 1,00",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "1,000", "25,000")))
+                         transition.get_transition_step(0, "1,000", "25,000").convert_to_str())
         self.assertEqual("00 1,0",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "1,000", "25,000")))
+                         transition.get_transition_step(1, "1,000", "25,000").convert_to_str())
         self.assertEqual("000 1,",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "1,000", "25,000")))
+                         transition.get_transition_step(2, "1,000", "25,000").convert_to_str())
         self.assertEqual("5,000 ",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "1,000", "25,000")))
+                         transition.get_transition_step(3, "1,000", "25,000").convert_to_str())
         self.assertEqual("25,000",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "1,000", "25,000")))
+                         transition.get_transition_step(4, "1,000", "25,000").convert_to_str())
 
         # push left (collapse commas)
         transition = PushTransition(5, False, True, {'direction': 'left'})
         self.assertEqual(5, transition.get_step_count())
         self.assertEqual("1,0002",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "1,000", "25,000")))
+                         transition.get_transition_step(0, "1,000", "25,000").convert_to_str())
         self.assertEqual("00025,",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "1,000", "25,000")))
+                         transition.get_transition_step(1, "1,000", "25,000").convert_to_str())
         self.assertEqual("0025,0",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "1,000", "25,000")))
+                         transition.get_transition_step(2, "1,000", "25,000").convert_to_str())
         self.assertEqual("025,00",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "1,000", "25,000")))
+                         transition.get_transition_step(3, "1,000", "25,000").convert_to_str())
         self.assertEqual("25,000",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "1,000", "25,000")))
+                         transition.get_transition_step(4, "1,000", "25,000").convert_to_str())
 
         # push right (with text and colors)
         transition = PushTransition(5, False, False,
                                     {'direction': 'right', 'text': '-->', 'text_color': [RGBColor("yellow")]})
         self.assertEqual(8, transition.get_step_count())
         self.assertEqual(">1234",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("yellow"), RGBColor("red"), RGBColor("red"),
                           RGBColor("red"), RGBColor("red")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(0, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(0, "12345", "ABCDE", [RGBColor("red")],
+                                                        [RGBColor("green")]).get_colors())
         self.assertEqual("->123",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("yellow"), RGBColor("yellow"), RGBColor("red"),
                           RGBColor("red"), RGBColor("red")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(1, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(1, "12345", "ABCDE", [RGBColor("red")],
+                                                        [RGBColor("green")]).get_colors())
         self.assertEqual("-->12",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("yellow"), RGBColor("yellow"), RGBColor("yellow"),
                           RGBColor("red"), RGBColor("red")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(2, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(2, "12345", "ABCDE", [RGBColor("red")],
+                                                        [RGBColor("green")]).get_colors())
         self.assertEqual("E-->1",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "12345", "ABCDE")))
+                         transition.get_transition_step(3, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("green"), RGBColor("yellow"), RGBColor("yellow"),
                           RGBColor("yellow"), RGBColor("red")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(3, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(3, "12345", "ABCDE", [RGBColor("red")],
+                                                        [RGBColor("green")]).get_colors())
         self.assertEqual("DE-->",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "12345", "ABCDE")))
+                         transition.get_transition_step(4, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("green"), RGBColor("green"), RGBColor("yellow"),
                           RGBColor("yellow"), RGBColor("yellow")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(4, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(4, "12345", "ABCDE", [RGBColor("red")],
+                                                        [RGBColor("green")]).get_colors())
         self.assertEqual("CDE--",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(5, "12345", "ABCDE")))
+                         transition.get_transition_step(5, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("green"), RGBColor("green"), RGBColor("green"),
                           RGBColor("yellow"), RGBColor("yellow")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(5, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(5, "12345", "ABCDE", [RGBColor("red")],
+                                                        [RGBColor("green")]).get_colors())
         self.assertEqual("BCDE-",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(6, "12345", "ABCDE")))
+                         transition.get_transition_step(6, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("green"), RGBColor("green"), RGBColor("green"),
                           RGBColor("green"), RGBColor("yellow")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(6, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(6, "12345", "ABCDE", [RGBColor("red")],
+                                                        [RGBColor("green")]).get_colors())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(7, "12345", "ABCDE")))
+                         transition.get_transition_step(7, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("green"), RGBColor("green"), RGBColor("green"),
                           RGBColor("green"), RGBColor("green")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(7, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(7, "12345", "ABCDE", [RGBColor("red")],
+                                                        [RGBColor("green")]).get_colors())
 
         # push right (with text that has color = None and colors)
         transition = PushTransition(5, False, False,
                                     {'direction': 'right', 'text': '-->', 'text_color': None})
         self.assertEqual(8, transition.get_step_count())
         self.assertEqual(">1234",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("green"), RGBColor("red"), RGBColor("red"),
                           RGBColor("red"), RGBColor("red")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(0, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(0, "12345", "ABCDE", [RGBColor("red")],
+                                                        [RGBColor("green")]).get_colors())
         self.assertEqual("->123",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("green"), RGBColor("green"), RGBColor("red"),
                           RGBColor("red"), RGBColor("red")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(1, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(1, "12345", "ABCDE", [RGBColor("red")],
+                                                        [RGBColor("green")]).get_colors())
         self.assertEqual("-->12",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("green"), RGBColor("green"), RGBColor("green"),
                           RGBColor("red"), RGBColor("red")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(2, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(2, "12345", "ABCDE", [RGBColor("red")],
+                                                        [RGBColor("green")]).get_colors())
         self.assertEqual("E-->1",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "12345", "ABCDE")))
+                         transition.get_transition_step(3, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("green"), RGBColor("green"), RGBColor("green"),
                           RGBColor("green"), RGBColor("red")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(3, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(3, "12345", "ABCDE", [RGBColor("red")],
+                                                        [RGBColor("green")]).get_colors())
         self.assertEqual("DE-->",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "12345", "ABCDE")))
+                         transition.get_transition_step(4, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("green"), RGBColor("green"), RGBColor("green"),
                           RGBColor("green"), RGBColor("green")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(4, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(4, "12345", "ABCDE", [RGBColor("red")],
+                                                        [RGBColor("green")]).get_colors())
         self.assertEqual("CDE--",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(5, "12345", "ABCDE")))
+                         transition.get_transition_step(5, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("green"), RGBColor("green"), RGBColor("green"),
                           RGBColor("green"), RGBColor("green")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(5, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(5, "12345", "ABCDE", [RGBColor("red")],
+                                                        [RGBColor("green")]).get_colors())
         self.assertEqual("BCDE-",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(6, "12345", "ABCDE")))
+                         transition.get_transition_step(6, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("green"), RGBColor("green"), RGBColor("green"),
                           RGBColor("green"), RGBColor("green")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(6, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(6, "12345", "ABCDE", [RGBColor("red")],
+                                                        [RGBColor("green")]).get_colors())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(7, "12345", "ABCDE")))
+                         transition.get_transition_step(7, "12345", "ABCDE").convert_to_str())
         self.assertEqual([RGBColor("green"), RGBColor("green"), RGBColor("green"),
                           RGBColor("green"), RGBColor("green")],
-                         SegmentDisplayText.get_colors(transition.get_transition_step(7, "12345", "ABCDE",
-                                                                                      [RGBColor("red")],
-                                                                                      [RGBColor("green")])))
+                         transition.get_transition_step(7, "12345", "ABCDE", [RGBColor("red")],
+                                                        [RGBColor("green")]).get_colors())
 
         # push left (with text)
         transition = PushTransition(5, False, False, {'direction': 'left', 'text': "<--"})
         self.assertEqual(8, transition.get_step_count())
         self.assertEqual("2345<",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual("345<-",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual("45<--",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
         self.assertEqual("5<--A",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "12345", "ABCDE")))
+                         transition.get_transition_step(3, "12345", "ABCDE").convert_to_str())
         self.assertEqual("<--AB",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "12345", "ABCDE")))
+                         transition.get_transition_step(4, "12345", "ABCDE").convert_to_str())
         self.assertEqual("--ABC",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(5, "12345", "ABCDE")))
+                         transition.get_transition_step(5, "12345", "ABCDE").convert_to_str())
         self.assertEqual("-ABCD",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(6, "12345", "ABCDE")))
+                         transition.get_transition_step(6, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(7, "12345", "ABCDE")))
+                         transition.get_transition_step(7, "12345", "ABCDE").convert_to_str())
 
     def _test_cover_transition(self):
         """Test cover transition."""
@@ -681,69 +659,69 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         transition = CoverTransition(5, False, False, {'direction': 'right'})
         self.assertEqual(5, transition.get_step_count())
         self.assertEqual("E2345",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual("DE345",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual("CDE45",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
         self.assertEqual("BCDE5",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "12345", "ABCDE")))
+                         transition.get_transition_step(3, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "12345", "ABCDE")))
+                         transition.get_transition_step(4, "12345", "ABCDE").convert_to_str())
 
         # cover right (with text)
         transition = CoverTransition(5, False, False, {'direction': 'right', 'text': '-->'})
         self.assertEqual(8, transition.get_step_count())
         self.assertEqual(">2345",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual("->345",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual("-->45",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
         self.assertEqual("E-->5",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "12345", "ABCDE")))
+                         transition.get_transition_step(3, "12345", "ABCDE").convert_to_str())
         self.assertEqual("DE-->",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "12345", "ABCDE")))
+                         transition.get_transition_step(4, "12345", "ABCDE").convert_to_str())
         self.assertEqual("CDE--",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(5, "12345", "ABCDE")))
+                         transition.get_transition_step(5, "12345", "ABCDE").convert_to_str())
         self.assertEqual("BCDE-",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(6, "12345", "ABCDE")))
+                         transition.get_transition_step(6, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(7, "12345", "ABCDE")))
+                         transition.get_transition_step(7, "12345", "ABCDE").convert_to_str())
 
         # cover left
         transition = CoverTransition(5, False, False, {'direction': 'left'})
         self.assertEqual(5, transition.get_step_count())
         self.assertEqual("1234A",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual("123AB",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual("12ABC",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
         self.assertEqual("1ABCD",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "12345", "ABCDE")))
+                         transition.get_transition_step(3, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "12345", "ABCDE")))
+                         transition.get_transition_step(4, "12345", "ABCDE").convert_to_str())
 
         # cover left (with text)
         transition = CoverTransition(5, False, False, {'direction': 'left', 'text': '<--'})
         self.assertEqual(8, transition.get_step_count())
         self.assertEqual("1234<",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual("123<-",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual("12<--",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
         self.assertEqual("1<--A",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "12345", "ABCDE")))
+                         transition.get_transition_step(3, "12345", "ABCDE").convert_to_str())
         self.assertEqual("<--AB",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "12345", "ABCDE")))
+                         transition.get_transition_step(4, "12345", "ABCDE").convert_to_str())
         self.assertEqual("--ABC",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(5, "12345", "ABCDE")))
+                         transition.get_transition_step(5, "12345", "ABCDE").convert_to_str())
         self.assertEqual("-ABCD",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(6, "12345", "ABCDE")))
+                         transition.get_transition_step(6, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(7, "12345", "ABCDE")))
+                         transition.get_transition_step(7, "12345", "ABCDE").convert_to_str())
 
     def _test_uncover_transition(self):
         """Test uncover transition."""
@@ -751,69 +729,69 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         transition = UncoverTransition(5, False, False, {'direction': 'right'})
         self.assertEqual(5, transition.get_step_count())
         self.assertEqual("A1234",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual("AB123",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABC12",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCD1",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "12345", "ABCDE")))
+                         transition.get_transition_step(3, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "12345", "ABCDE")))
+                         transition.get_transition_step(4, "12345", "ABCDE").convert_to_str())
 
         # uncover right (with text)
         transition = UncoverTransition(5, False, False, {'direction': 'right', 'text': '-->'})
         self.assertEqual(8, transition.get_step_count())
         self.assertEqual(">1234",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual("->123",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual("-->12",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
         self.assertEqual("A-->1",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "12345", "ABCDE")))
+                         transition.get_transition_step(3, "12345", "ABCDE").convert_to_str())
         self.assertEqual("AB-->",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "12345", "ABCDE")))
+                         transition.get_transition_step(4, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABC--",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(5, "12345", "ABCDE")))
+                         transition.get_transition_step(5, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCD-",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(6, "12345", "ABCDE")))
+                         transition.get_transition_step(6, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(7, "12345", "ABCDE")))
+                         transition.get_transition_step(7, "12345", "ABCDE").convert_to_str())
 
         # uncover left
         transition = UncoverTransition(5, False, False, {'direction': 'left'})
         self.assertEqual(5, transition.get_step_count())
         self.assertEqual("2345E",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual("345DE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual("45CDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
         self.assertEqual("5BCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "12345", "ABCDE")))
+                         transition.get_transition_step(3, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "12345", "ABCDE")))
+                         transition.get_transition_step(4, "12345", "ABCDE").convert_to_str())
 
         # uncover left (with text)
         transition = UncoverTransition(5, False, False, {'direction': 'left', 'text': '<--'})
         self.assertEqual(8, transition.get_step_count())
         self.assertEqual("2345<",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual("345<-",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual("45<--",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
         self.assertEqual("5<--E",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "12345", "ABCDE")))
+                         transition.get_transition_step(3, "12345", "ABCDE").convert_to_str())
         self.assertEqual("<--DE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "12345", "ABCDE")))
+                         transition.get_transition_step(4, "12345", "ABCDE").convert_to_str())
         self.assertEqual("--CDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(5, "12345", "ABCDE")))
+                         transition.get_transition_step(5, "12345", "ABCDE").convert_to_str())
         self.assertEqual("-BCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(6, "12345", "ABCDE")))
+                         transition.get_transition_step(6, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(7, "12345", "ABCDE")))
+                         transition.get_transition_step(7, "12345", "ABCDE").convert_to_str())
 
     def _test_wipe_transition(self):
         """Test wipe transition."""
@@ -821,150 +799,150 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         transition = WipeTransition(5, False, False, {'direction': 'right'})
         self.assertEqual(5, transition.get_step_count())
         self.assertEqual("A2345",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual("AB345",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABC45",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCD5",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "12345", "ABCDE")))
+                         transition.get_transition_step(3, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "12345", "ABCDE")))
+                         transition.get_transition_step(4, "12345", "ABCDE").convert_to_str())
 
         # wipe right (with text)
         transition = WipeTransition(5, False, False, {'direction': 'right', 'text': '-->'})
         self.assertEqual(8, transition.get_step_count())
         self.assertEqual(">2345",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual("->345",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual("-->45",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
         self.assertEqual("A-->5",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "12345", "ABCDE")))
+                         transition.get_transition_step(3, "12345", "ABCDE").convert_to_str())
         self.assertEqual("AB-->",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "12345", "ABCDE")))
+                         transition.get_transition_step(4, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABC--",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(5, "12345", "ABCDE")))
+                         transition.get_transition_step(5, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCD-",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(6, "12345", "ABCDE")))
+                         transition.get_transition_step(6, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(7, "12345", "ABCDE")))
+                         transition.get_transition_step(7, "12345", "ABCDE").convert_to_str())
 
         # wipe left
         transition = WipeTransition(5, False, False, {'direction': 'left'})
         self.assertEqual(5, transition.get_step_count())
         self.assertEqual("1234E",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual("123DE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual("12CDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
         self.assertEqual("1BCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "12345", "ABCDE")))
+                         transition.get_transition_step(3, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "12345", "ABCDE")))
+                         transition.get_transition_step(4, "12345", "ABCDE").convert_to_str())
 
         # wipe left (with text)
         transition = WipeTransition(5, False, False, {'direction': 'left', 'text': '<--'})
         self.assertEqual(8, transition.get_step_count())
         self.assertEqual("1234<",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual("123<-",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual("12<--",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
         self.assertEqual("1<--E",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(3, "12345", "ABCDE")))
+                         transition.get_transition_step(3, "12345", "ABCDE").convert_to_str())
         self.assertEqual("<--DE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(4, "12345", "ABCDE")))
+                         transition.get_transition_step(4, "12345", "ABCDE").convert_to_str())
         self.assertEqual("--CDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(5, "12345", "ABCDE")))
+                         transition.get_transition_step(5, "12345", "ABCDE").convert_to_str())
         self.assertEqual("-BCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(6, "12345", "ABCDE")))
+                         transition.get_transition_step(6, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(7, "12345", "ABCDE")))
+                         transition.get_transition_step(7, "12345", "ABCDE").convert_to_str())
 
     def _test_split_transition(self):
         # split push out (odd display length)
         transition = SplitTransition(5, False, False, {'direction': 'out', 'mode': 'push'})
         self.assertEqual(3, transition.get_step_count())
         self.assertEqual("23C45",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual("3BCD4",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
 
         # split push out (even display length)
         transition = SplitTransition(6, False, False, {'direction': 'out', 'mode': 'push'})
         self.assertEqual(3, transition.get_step_count())
         self.assertEqual("23CD45",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "123456", "ABCDEF")))
+                         transition.get_transition_step(0, "123456", "ABCDEF").convert_to_str())
         self.assertEqual("3BCDE4",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "123456", "ABCDEF")))
+                         transition.get_transition_step(1, "123456", "ABCDEF").convert_to_str())
         self.assertEqual("ABCDEF",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "123456", "ABCDEF")))
+                         transition.get_transition_step(2, "123456", "ABCDEF").convert_to_str())
 
         # split push in (odd display length)
         transition = SplitTransition(5, False, False, {'direction': 'in', 'mode': 'push'})
         self.assertEqual(3, transition.get_step_count())
         self.assertEqual("C234D",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual("BC3DE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
 
         # split push in (even display length)
         transition = SplitTransition(6, False, False, {'direction': 'in', 'mode': 'push'})
         self.assertEqual(3, transition.get_step_count())
         self.assertEqual("C2345D",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "123456", "ABCDEF")))
+                         transition.get_transition_step(0, "123456", "ABCDEF").convert_to_str())
         self.assertEqual("BC34DE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "123456", "ABCDEF")))
+                         transition.get_transition_step(1, "123456", "ABCDEF").convert_to_str())
         self.assertEqual("ABCDEF",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "123456", "ABCDEF")))
+                         transition.get_transition_step(2, "123456", "ABCDEF").convert_to_str())
 
         # split wipe out (odd output length)
         transition = SplitTransition(5, False, False, {'direction': 'out', 'mode': 'wipe'})
         self.assertEqual(3, transition.get_step_count())
         self.assertEqual("12C45",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual("1BCD5",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
 
         # split wipe out (even output length)
         transition = SplitTransition(6, False, False, {'direction': 'out', 'mode': 'wipe'})
         self.assertEqual(3, transition.get_step_count())
         self.assertEqual("12CD56",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "123456", "ABCDEF")))
+                         transition.get_transition_step(0, "123456", "ABCDEF").convert_to_str())
         self.assertEqual("1BCDE6",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "123456", "ABCDEF")))
+                         transition.get_transition_step(1, "123456", "ABCDEF").convert_to_str())
         self.assertEqual("ABCDEF",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "123456", "ABCDEF")))
+                         transition.get_transition_step(2, "123456", "ABCDEF").convert_to_str())
 
         # split wipe in (odd output length)
         transition = SplitTransition(5, False, False, {'direction': 'in', 'mode': 'wipe'})
         self.assertEqual(3, transition.get_step_count())
         self.assertEqual("A234E",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "12345", "ABCDE")))
+                         transition.get_transition_step(0, "12345", "ABCDE").convert_to_str())
         self.assertEqual("AB3DE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "12345", "ABCDE")))
+                         transition.get_transition_step(1, "12345", "ABCDE").convert_to_str())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "12345", "ABCDE")))
+                         transition.get_transition_step(2, "12345", "ABCDE").convert_to_str())
 
         # split wipe in (even output length)
         transition = SplitTransition(6, False, False, {'direction': 'in', 'mode': 'wipe'})
         self.assertEqual(3, transition.get_step_count())
         self.assertEqual("A2345F",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(0, "123456", "ABCDEF")))
+                         transition.get_transition_step(0, "123456", "ABCDEF").convert_to_str())
         self.assertEqual("AB34EF",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(1, "123456", "ABCDEF")))
+                         transition.get_transition_step(1, "123456", "ABCDEF").convert_to_str())
         self.assertEqual("ABCDEF",
-                         SegmentDisplayText.convert_to_str(transition.get_transition_step(2, "123456", "ABCDEF")))
+                         transition.get_transition_step(2, "123456", "ABCDEF").convert_to_str())
 
     def test_transition_runner(self):
         """Test the transition runner using an iterator."""
@@ -972,15 +950,15 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
                                                     PushTransition(5, False, False, {'direction': 'right'}),
                                                     "12345", "ABCDE"))
         self.assertEqual("E1234",
-                         SegmentDisplayText.convert_to_str(next(transition_iterator)))
+                         next(transition_iterator).convert_to_str())
         self.assertEqual("DE123",
-                         SegmentDisplayText.convert_to_str(next(transition_iterator)))
+                         next(transition_iterator).convert_to_str())
         self.assertEqual("CDE12",
-                         SegmentDisplayText.convert_to_str(next(transition_iterator)))
+                         next(transition_iterator).convert_to_str())
         self.assertEqual("BCDE1",
-                         SegmentDisplayText.convert_to_str(next(transition_iterator)))
+                         next(transition_iterator).convert_to_str())
         self.assertEqual("ABCDE",
-                         SegmentDisplayText.convert_to_str(next(transition_iterator)))
+                         next(transition_iterator).convert_to_str())
 
         with self.assertRaises(StopIteration):
             next(transition_iterator)
