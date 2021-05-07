@@ -93,15 +93,13 @@ class TestPKONE(MpfTestCase):
             'PCN': 'PCNF11H1',
             'PCB0': 'PCB0XF11H2PY',
             'PCB1': 'PCB1XF11H2PN',
-            'PCB2': 'PCB2LF10H1',
-            'PCB3': 'PCB3N',
+            'PCB2': 'PCB2LF10H1RGB',
+            'PCB3': 'PCB2LF10H1RGBW',
             'PCB4': 'PCB4N',
             'PCB5': 'PCB5N',
             'PCB6': 'PCB6N',
             'PCB7': 'PCB7N',
             'PRS': 'PRS',
-            'PLG234': 'PLG',
-            'PLG244': 'PLG',
             'PSA0': 'PSA011000000000000000000000000000000000E',
             'PSA1': 'PSA100110000000000000000000000000000000E',
             'PCC1040000000000': None,
@@ -123,23 +121,24 @@ class TestPKONE(MpfTestCase):
         self.assertEqual(10, self.machine.default_platform.pkone_extensions[0].coil_count)
         self.assertEqual(4, self.machine.default_platform.pkone_extensions[0].servo_count)
         self.assertEqual(0, self.machine.default_platform.pkone_extensions[0].addr)
+
         self.assertEqual(35, self.machine.default_platform.pkone_extensions[1].switch_count)
         self.assertEqual(10, self.machine.default_platform.pkone_extensions[1].coil_count)
         self.assertEqual(4, self.machine.default_platform.pkone_extensions[1].servo_count)
         self.assertEqual(1, self.machine.default_platform.pkone_extensions[1].addr)
 
-        self.assertEqual(1, len(self.machine.default_platform.pkone_lightshows))
+        self.assertEqual(2, len(self.machine.default_platform.pkone_lightshows))
+        self.assertFalse(self.machine.default_platform.pkone_lightshows[2].rgbw_firmware)
         self.assertEqual(40, self.machine.default_platform.pkone_lightshows[2].simple_led_count)
         self.assertEqual(8, self.machine.default_platform.pkone_lightshows[2].led_groups)
-        self.assertEqual(64, self.machine.default_platform.pkone_lightshows[2].get_max_leds_in_group(1))
-        self.assertEqual(64, self.machine.default_platform.pkone_lightshows[2].get_max_leds_in_group(2))
-        self.assertEqual(48, self.machine.default_platform.pkone_lightshows[2].get_max_leds_in_group(3))
-        self.assertEqual(48, self.machine.default_platform.pkone_lightshows[2].get_max_leds_in_group(4))
-        self.assertEqual(64, self.machine.default_platform.pkone_lightshows[2].get_max_leds_in_group(5))
-        self.assertEqual(64, self.machine.default_platform.pkone_lightshows[2].get_max_leds_in_group(6))
-        self.assertEqual(64, self.machine.default_platform.pkone_lightshows[2].get_max_leds_in_group(7))
-        self.assertEqual(64, self.machine.default_platform.pkone_lightshows[2].get_max_leds_in_group(8))
+        self.assertEqual(64, self.machine.default_platform.pkone_lightshows[2].max_leds_per_group)
         self.assertEqual(2, self.machine.default_platform.pkone_lightshows[2].addr)
+
+        self.assertTrue(self.machine.default_platform.pkone_lightshows[3].rgbw_firmware)
+        self.assertEqual(40, self.machine.default_platform.pkone_lightshows[3].simple_led_count)
+        self.assertEqual(8, self.machine.default_platform.pkone_lightshows[3].led_groups)
+        self.assertEqual(48, self.machine.default_platform.pkone_lightshows[3].max_leds_per_group)
+        self.assertEqual(3, self.machine.default_platform.pkone_lightshows[3].addr)
 
         self.assertEqual("1.1", self.machine.variables.get_machine_var("pkone_firmware"))
         self.assertEqual("PKONE Nano Controller (rev 1)", self.machine.variables.get_machine_var("pkone_hardware"))
@@ -162,7 +161,8 @@ class TestPKONE(MpfTestCase):
    -> Address ID: 1 (firmware v1.1, hardware rev 2)
 
  - Lightshow boards:
-   -> Address ID: 2 (firmware v1.0, hardware rev 1)
+   -> Address ID: 2 (RGB firmware v1.0, hardware rev 1)
+   -> Address ID: 3 (RGBW firmware v1.0, hardware rev 1)
 """
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 

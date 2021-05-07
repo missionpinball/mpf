@@ -6,7 +6,6 @@ hardware:
 pkone:
     port: com3
     debug: true
-    lightshow_rgbw_groups: 2-3, 2-4
 
 switches:
     s_test:

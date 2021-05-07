@@ -147,7 +147,7 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
         # Determine connected add-on boards (PCB command)
         # Responses:
         # Extension board - PCB01XF11H1 = PCB[board number 0-7]XP[Y:48V, N: no 48V]F[firmware rev]H[hardware rev]
-        # Lightshow board - PCB01LF10H1 = PCB[board number 0-3]LF[firmware rev]H[hardware rev]
+        # Lightshow board - PCB01LF10H1RGBW = PCB[board number 0-3]LF[firmware rev]H[hardware rev][firmware_type]
         # No board at the address: PCB[board number 0-7]N
         for address_id in range(8):
             self.writer.write('PCB{}E'.format(address_id).encode('ascii', 'replace'))
@@ -156,7 +156,7 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
                 self.platform.log.debug("No board at address ID {}".format(address_id))
                 continue
 
-            match = re.fullmatch('PCB([0-7])([XLN])F([0-9]+)H([0-9]+)(P[YN])*E', msg)
+            match = re.fullmatch('PCB([0-7])([XLN])F([0-9]+)H([0-9]+)(P[YN])?(RGB|RGBW)?E', msg)
             if not match:
                 self.platform.log.warning("Received unexpected message from PKONE: {}".format(msg))
 
@@ -181,6 +181,7 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
                 # Lightshow board
                 firmware = match.group(3)[:-1] + '.' + match.group(3)[-1]
                 hardware_rev = match.group(4)
+                rgbw_firmware = match.group(6) == 'RGBW'
 
                 if StrictVersion(LIGHTSHOW_MIN_FW) > StrictVersion(firmware):
                     raise AssertionError('Firmware version mismatch. MPF requires '
@@ -188,11 +189,16 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
                                          'Please update your firmware.'.
                                          format(LIGHTSHOW_MIN_FW, firmware))
 
-                self.platform.debug_log('PKONE Lightshow Board {0}: '
-                                        'Firmware: {1}, Hardware Rev: {2}'.format(address_id,
-                                                                                  firmware, hardware_rev))
+                self.platform.debug_log('PKONE Lightshow Board {0}: Firmware: {1} ({2}), '
+                                        'Hardware Rev: {3}'.format(address_id,
+                                                                   firmware,
+                                                                   'RGBW' if rgbw_firmware else 'RGB',
+                                                                   hardware_rev))
 
-                self.platform.register_lightshow_board(PKONELightshowBoard(address_id, firmware, hardware_rev))
+                self.platform.register_lightshow_board(PKONELightshowBoard(address_id,
+                                                                           firmware,
+                                                                           hardware_rev,
+                                                                           rgbw_firmware))
 
             else:
                 raise AttributeError("Unrecognized PKONE board type in message: {}".format(msg))

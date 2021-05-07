@@ -77,8 +77,6 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
         """Initialize connection to PKONE Nano hardware."""
         await self._connect_to_hardware()
 
-        self._configure_lightshow_rgbw_group_numbers()
-
     def stop(self):
         """Stop platform and close connections."""
         if self.controller_connection:
@@ -134,9 +132,11 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
 
         infos += "\n - Lightshow boards:\n"
         for lightshow in self.pkone_lightshows.values():
-            infos += "   -> Address ID: {} (firmware v{}, hardware rev {})\n".format(lightshow.addr,
-                                                                                     lightshow.firmware_version,
-                                                                                     lightshow.hardware_rev)
+            infos += "   -> Address ID: {} ({} firmware v{}, " \
+                     "hardware rev {})\n".format(lightshow.addr,
+                                                 'RGBW' if lightshow.rgbw_firmware else 'RGB',
+                                                 lightshow.firmware_version,
+                                                 lightshow.hardware_rev)
 
         return infos
 
@@ -167,31 +167,6 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
             raise AssertionError("Address out of range: Lightshow board address id must be between 0 and 3")
 
         self.pkone_lightshows[board.addr] = board
-
-    def _configure_lightshow_rgbw_group_numbers(self):
-        # send additional platform settings to the connected hardware
-        if self.config['lightshow_rgbw_groups']:
-            for number in self.config['lightshow_rgbw_groups']:
-                try:
-                    board_id_str, group_num_str = number.split("-")
-                except ValueError:
-                    raise AssertionError("Invalid Lightshow RGBW group number {}".format(number))
-
-                board_id = int(board_id_str)
-                group_num = int(group_num_str)
-
-                if board_id not in self.pkone_lightshows:
-                    raise AssertionError(
-                        "PKONE Lightshow {} does not exist for RGBW group number {}".format(board_id, number))
-
-                if group_num not in range(1, self.pkone_lightshows[board_id].led_groups + 1):
-                    raise AssertionError("PKONE Lightshow {} only has {} groups ({} - {}). RGBW group: {}".format(
-                        board_id, self.pkone_lightshows[board_id].led_groups, 1,
-                        self.pkone_lightshows[board_id].led_groups, number))
-
-                self.pkone_lightshows[board_id].rgbw_group_numbers.append(group_num)
-                cmd = "PLG{}{}4".format(board_id, group_num)
-                self.controller_connection.send(cmd)
 
     def process_received_message(self, msg: str):
         """Send an incoming message from the PKONE controller to the proper method for servicing.
