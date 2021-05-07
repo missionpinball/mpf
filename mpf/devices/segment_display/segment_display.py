@@ -7,7 +7,6 @@ from mpf.core.rgb_color import RGBColor
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.placeholder_manager import TextTemplate
 from mpf.core.system_wide_device import SystemWideDevice
-from mpf.devices.segment_display.segment_display_text import SegmentDisplayText
 from mpf.devices.segment_display.text_stack_entry import TextStackEntry
 from mpf.devices.segment_display.transition_manager import TransitionManager
 from mpf.devices.segment_display.transitions import TransitionRunner, TransitionBase
@@ -128,13 +127,15 @@ class SegmentDisplay(SystemWideDevice):
                                                                                 config.get('platform_settings', None))
         return config
 
-    def add_text_entry(self, text_stack_entry: TextStackEntry):
+    # pylint: disable-msg=too-many-arguments
+    def add_text_entry(self, text, color, flashing, flash_mask, transition, transition_out, priority, key):
         """Add text to display stack.
 
         This will replace texts with the same key.
         """
         # remove old text in case it has the same key
-        self._text_stack[text_stack_entry.key] = text_stack_entry
+        self._text_stack[key] = TextStackEntry(
+            text, color, flashing, flash_mask, transition, transition_out, priority, key)
         self._update_stack()
 
     def add_text(self, text: str, priority: int = 0, key: str = None) -> None:
@@ -142,7 +143,7 @@ class SegmentDisplay(SystemWideDevice):
 
         This will replace texts with the same key.
         """
-        self.add_text_entry(TextStackEntry(text, None, None, None, None, None, priority, key))
+        self.add_text_entry(text, None, None, None, None, None, priority, key)
 
     def remove_text_by_key(self, key: str):
         """Remove entry from text stack."""
@@ -162,8 +163,8 @@ class SegmentDisplay(SystemWideDevice):
         self._current_transition = TransitionRunner(self.machine, transition, current_text, new_text,
                                                     current_colors, new_colors)
         transition_text = next(self._current_transition)
-        transition_colors = SegmentDisplayText.get_colors(transition_text)
-        self._update_display(SegmentDisplayState(SegmentDisplayText.convert_to_str(transition_text),
+        transition_colors = transition_text.get_colors()
+        self._update_display(SegmentDisplayState(transition_text.convert_to_str(),
                                                  transition_colors, self._current_state.flashing,
                                                  self._current_state.flash_mask))
         self._transition_update_task = self.machine.clock.schedule_interval(self._update_transition, 1 / update_hz)
@@ -172,8 +173,8 @@ class SegmentDisplay(SystemWideDevice):
         """Update the current transition (callback function from transition interval clock)."""
         try:
             transition_text = next(self._current_transition)
-            transition_colors = SegmentDisplayText.get_colors(transition_text)
-            self._update_display(SegmentDisplayState(SegmentDisplayText.convert_to_str(transition_text),
+            transition_colors = transition_text.get_colors()
+            self._update_display(SegmentDisplayState(transition_text.convert_to_str(),
                                                      transition_colors, self._current_state.flashing,
                                                      self._current_state.flash_mask))
 
