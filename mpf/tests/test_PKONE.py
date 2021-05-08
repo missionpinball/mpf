@@ -44,6 +44,12 @@ class BaseMockPKONE(MockSerial):
     def _handle_msg(self, msg):
         msg_len = len(msg)
         cmd = msg.decode()
+
+        # handle watchdog message
+        if cmd == "PWD":
+            self.queue.append("PWD")
+            return msg_len
+
         if cmd in self.ignore_commands:
             return msg_len
 
@@ -100,6 +106,7 @@ class TestPKONE(MpfTestCase):
             'PCB6': 'PCB6N',
             'PCB7': 'PCB7N',
             'PRS': 'PRS',
+            'PWS1000': 'PWS',
             'PSA0': 'PSA011000000000000000000000000000000000E',
             'PSA1': 'PSA100110000000000000000000000000000000E',
             'PCC1040000000000': None,
@@ -108,7 +115,7 @@ class TestPKONE(MpfTestCase):
             'PCC1080000000000': None,
             'PCC1010000000000': None,
             'PCC1020000000000': None,
-            'PSC011003': None
+            'PSC011003': None,
         }
 
         super().setUp()

@@ -47,6 +47,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
         self.pkone_commands = {'PCN': lambda x, y: None,            # connected Nano processor
                                'PCB': lambda x, y: None,            # connected board
                                'PWD': lambda x, y: None,            # watchdog
+                               'PWF': lambda x, y: None,            # watchdog stop
                                'PSA': self.receive_all_switches,    # all switch states
                                'PSW': self.receive_switch,          # switch state change
                                'PXX': self.receive_error,           # error
@@ -80,7 +81,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
     def stop(self):
         """Stop platform and close connections."""
         if self.controller_connection:
-            # send reset message to turn off all lights, disable all drivers
+            # send reset message to turn off all lights, disable all drivers, stop the watchdog process, etc.
             self.controller_connection.send('PRS')
 
         if self._watchdog_task:
@@ -98,16 +99,20 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
 
     async def start(self):
         """Start listening for commands and schedule watchdog."""
-        # Schedule the watchdog task to send every 500ms (the watchdog timeout on the hardware is 1 sec)
-        self._watchdog_task = self.machine.clock.schedule_interval(self._update_watchdog, 500)
+        if self.config['watchdog']:
+            # Configure the watchdog timeout interval and start it
+            self.controller_connection.send('PWS{:04d}'.format(self.config['watchdog']))
+
+            # Schedule the watchdog task to send at half the configured interval
+            self._watchdog_task = self.machine.clock.schedule_interval(self._update_watchdog,
+                                                                       self.config['watchdog'] / 2000)
 
         for connection in self.serial_connections:
             await connection.start_read_loop()
 
     def _update_watchdog(self):
-        """Send Watchdog command."""
-        # PKONE watchdog timeout is 1 sec
-        self.controller_connection.send('PWDE')
+        """Send Watchdog ping command."""
+        self.controller_connection.send('PWD')
 
     def get_info_string(self):
         """Dump infos about boards."""
@@ -403,15 +408,13 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
                                  "connection to PKONE controller is available")
 
         try:
-            number_tuple = self._parse_switch_number(number)
+            switch_number = self._parse_switch_number(number)
         except ValueError:
             raise AssertionError("Could not parse switch number {}/{}. Seems "
                                  "to be not a valid switch number for the"
                                  "PKONE platform.".format(config.name, number))
 
         self.debug_log("PKONE Switch: %s (%s)", number, config.name)
-
-        switch_number = self._parse_switch_number(number)
         return PKONESwitch(config, switch_number, self)
 
     async def get_hw_switch_states(self) -> Dict[str, bool]:
