@@ -1,14 +1,19 @@
 """Pololu TIC controller platform."""
 import asyncio
 import logging
+from typing import Dict, List
 
+from mpf.core.utility_functions import Util
+from mpf.core.machine import MachineController
+from mpf.core.platform import SwitchConfig
 from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.platforms.pololu.pololu_ticcmd_wrapper import PololuTiccmdWrapper
 from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
-from mpf.core.platform import StepperPlatform
+from mpf.core.platform import StepperPlatform, SwitchPlatform
+from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
 
-class PololuTICHardwarePlatform(StepperPlatform):
+class PololuTICHardwarePlatform(StepperPlatform, SwitchPlatform):
 
     """Supports the Pololu TIC stepper drivers via ticcmd command line."""
 
@@ -19,7 +24,7 @@ class PololuTICHardwarePlatform(StepperPlatform):
                                                                     self.machine.config.get('pololu_tic', {}))
         self._configure_device_logging_and_debug("Pololu TIC", self.config)
         self.features['tickless'] = True
-        self._steppers = []
+        self._steppers = []                 # type: List[PololuTICStepper]
 
     def __repr__(self):
         """Return string representation."""
@@ -39,7 +44,7 @@ class PololuTICHardwarePlatform(StepperPlatform):
             number: Number of this stepper.
             config (dict): Configuration of device
         """
-        stepper = PololuTICStepper(number, config, self.machine)
+        stepper = PololuTICStepper(number, config, self)
         self._steppers.append(stepper)
         await stepper.initialize()
         return stepper
@@ -49,21 +54,52 @@ class PololuTICHardwarePlatform(StepperPlatform):
         """Return config validator name."""
         return "tic_stepper_settings"
 
+    def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict) -> "PololuTicSwitch":
+        """Configure switch on controller."""
+        return PololuTicSwitch(config, number)
+
+    async def get_hw_switch_states(self) -> Dict[str, bool]:
+        """Return initial switch state."""
+        switches = {}
+        for stepper in self._steppers:
+            status = await stepper.tic.get_status()
+            switches.update(stepper.get_switch_state(status))
+
+        return switches
+
+
+class PololuTicSwitch(SwitchPlatformInterface):
+
+    """A switch on a Pololu TIC."""
+
+    def __init__(self, config, name):
+        """Configure switch."""
+        super().__init__(config, name)
+        self.board, self.pin = name.split("-", 2)
+
+    def get_board_name(self):
+        """Return board name."""
+        return self.board
+
 
 class PololuTICStepper(StepperPlatformInterface):
 
-    """A stepper on a pololu TIC."""
+    """A stepper on a Pololu TIC."""
 
-    def __init__(self, number, config, machine):
+    def __init__(self, number, config, platform):
         """Initialise stepper."""
         self.config = config
         self.log = logging.getLogger('TIC Stepper')
         self.log.debug("Configuring Stepper Parameters.")
         self.serial_number = number
-        self.tic = PololuTiccmdWrapper(self.serial_number, machine, False)
-        self.machine = machine
+        self.tic = PololuTiccmdWrapper(self.serial_number, platform.machine, False)
+        self.machine = platform.machine          # type: MachineController
+        self.platform = platform
         self._position = None
         self._watchdog_task = None
+        self._poll_task = None
+        self._move_complete = asyncio.Event()
+        self._switch_state = {}
 
         if self.config['step_mode'] not in [1, 2, 4, 8, 16, 32]:
             raise ConfigFileError("step_mode must be one of (1, 2, 4, 8, 16, or 32)", 1, self.log.name)
@@ -97,7 +133,38 @@ class PololuTICStepper(StepperPlatformInterface):
         self.tic.exit_safe_start()
         self.tic.energize()
 
+        self._switch_state = self.get_switch_state(status)
+
         self._watchdog_task = self.machine.clock.schedule_interval(self._reset_command_timeout, .5)
+        self._poll_task = self.machine.clock.loop.create_task(self._poll_status(1 / self.config['poll_ms']))
+        self._poll_task.add_done_callback(Util.raise_exceptions)
+
+    async def _poll_status(self, wait_time):
+        while True:
+            await asyncio.sleep(wait_time)
+            status = await self.tic.get_status()
+            current_position = status['Current position']
+            if self._position != current_position:
+                self.log.debug("Target Position: %s Current Position: %s", self._position, current_position)
+            elif not self._move_complete.is_set():
+                self._move_complete.set()
+
+            switch_state = self.get_switch_state(status)
+            if switch_state != self._switch_state:
+                for switch, state in switch_state.items():
+                    if state != self._switch_state[switch]:
+                        self.machine.switch_controller.process_switch_by_num(num=switch, state=state,
+                                                                             platform=self.platform)
+                self._switch_state = switch_state
+
+    def get_switch_state(self, status):
+        """Return switch status based on status info."""
+        switches = {"{}-SCL".format(self.serial_number): not bool(status['SCL pin']['Digital reading']),
+                    "{}-SDA".format(self.serial_number): not bool(status['SDA pin']['Digital reading']),
+                    "{}-TX".format(self.serial_number): not bool(status['TX pin']['Digital reading']),
+                    "{}-RX".format(self.serial_number): not bool(status['RX pin']['Digital reading']),
+                    "{}-RC".format(self.serial_number): not bool(status['RC pin']['Digital reading'])}
+        return switches
 
     def _reset_command_timeout(self):
         """Reset the command timeout."""
@@ -107,6 +174,7 @@ class PololuTICStepper(StepperPlatformInterface):
         """Home an axis, resetting 0 position."""
         self.tic.halt_and_hold()    # stop the stepper in case its moving
         self._position = 0
+        self._move_complete.clear()
         if direction == 'clockwise':
             self.log.debug("Homing clockwise")
             self.tic.go_home(True)
@@ -118,11 +186,13 @@ class PololuTICStepper(StepperPlatformInterface):
         """Move axis to a certain absolute position."""
         self.log.debug("Moving To Absolute Position: %s", position)
         self._position = position
+        self._move_complete.clear()
         self.tic.rotate_to_position(self._position)
 
     def move_rel_pos(self, position):
         """Move axis to a relative position."""
         self._position += position
+        self._move_complete.clear()
         self.log.debug("Moving To Relative Position: %s (Absolute: %s)", position, self._position)
         self.tic.rotate_to_position(self._position)
 
@@ -149,6 +219,7 @@ class PololuTICStepper(StepperPlatformInterface):
         """
         self.log.debug("Setting Position To %s", position)
         self._position = position
+        self._move_complete.set()
         self.tic.halt_and_set_position(position)
 
     def stop(self) -> None:
@@ -161,17 +232,12 @@ class PololuTICStepper(StepperPlatformInterface):
         if self._watchdog_task:
             self._watchdog_task.cancel()
             self._watchdog_task = None
+        if self._poll_task:
+            self._poll_task.cancel()
+            self._poll_task = None
         self.tic.halt_and_hold()
         self.tic.stop()
 
     async def wait_for_move_completed(self):
         """Wait until move completed."""
-        while not await self.is_move_complete():
-            await asyncio.sleep(1 / self.config['poll_ms'])
-
-    async def is_move_complete(self) -> bool:
-        """Return true if move is complete."""
-        status = await self.tic.get_status()
-        current_position = status['Current position']
-        self.log.debug("Target Position: %s Current Position: %s", self._position, current_position)
-        return bool(self._position == current_position)
+        return await self._move_complete.wait()

@@ -131,9 +131,11 @@ class Stepper(SystemWideDevice):
         self._is_homed = False
         self._is_moving.set()
         if self.config['homing_mode'] == "hardware":
+            self.info_log("Homing stepper using hardware homing.")
             self.hw_stepper.home(self.config['homing_direction'])
             await self.hw_stepper.wait_for_move_completed()
         else:
+            self.info_log("Homing stepper using switch homing with switch %s.", self.config["homing_switch"])
             # move the stepper manually
             if self.config['homing_direction'] == "clockwise":
                 self.hw_stepper.move_vel_mode(1)
@@ -145,6 +147,8 @@ class Stepper(SystemWideDevice):
                                                                  only_on_change=False)
             self.hw_stepper.stop()
             self.hw_stepper.set_home_position()
+
+        self.info_log("Stepper reached home.")
 
         self._is_homed = True
         self._is_moving.clear()

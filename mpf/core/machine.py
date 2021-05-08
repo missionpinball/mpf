@@ -681,15 +681,22 @@ class MachineController(LogMixin):
         self.info_log("Starting the main run loop.")
         self._run_loop()
 
+    def stop_with_exception(self, exception) -> None:
+        """Stop MPF because of an exception.
+
+        This may be called from other threads.
+        """
+        self._exception = exception
+        self.clock.loop.call_soon_threadsafe(self._stop_loop, "Exception")
+
     def stop(self, reason=None, **kwargs) -> None:
         """Perform a graceful exit of MPF."""
         del kwargs
-        if self.stop_future.done():
-            return
-
         self.clock.loop.call_soon_threadsafe(self._stop_loop, reason)
 
     def _stop_loop(self, reason):
+        if self.stop_future.done():
+            return
         self.stop_future.set_result(reason)
 
     def _do_stop(self) -> None:
