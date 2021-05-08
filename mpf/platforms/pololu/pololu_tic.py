@@ -236,6 +236,7 @@ class PololuTICStepper(StepperPlatformInterface):
             self._poll_task.cancel()
             self._poll_task = None
         self.tic.halt_and_hold()
+        self.tic.deengerize()
         self.tic.stop()
 
     async def wait_for_move_completed(self):

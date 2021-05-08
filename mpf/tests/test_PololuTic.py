@@ -69,6 +69,13 @@ class TestPololuTic(MpfTestCase):
         super().setUp()
         self.assertFalse(self.expected_commands)
 
+    def tearDown(self):
+        self.expected_commands = {
+            ('--deenergize',): "",
+        }
+        super().tearDown()
+        self.assertFalse(self.expected_commands)
+
     def test_tic(self):
         """Test Tic stepper."""
         stepper = self.machine.steppers["stepper1"]

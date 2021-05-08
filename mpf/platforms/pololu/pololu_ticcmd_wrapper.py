@@ -130,6 +130,10 @@ class PololuTiccmdWrapper:
         """Tells the TIC to reset the internal command timeout."""
         self._ticcmd('--reset-command-timeout')
 
+    def deengerize(self):
+        """Deenergize stepper."""
+        self._ticcmd('--deenergize')
+
     def exit_safe_start(self):
         """Tells the TIC to exit the safe start mode."""
         self._ticcmd('--exit-safe-start')
