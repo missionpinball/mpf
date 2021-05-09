@@ -1,10 +1,10 @@
 """VPE platform."""
 from typing import Optional, List
 
-try:
-    from grpc.experimental import aio   # pylint: disable-msg=import-error
-except ImportError:
-    aio = None
+from mpf.core.segment_mappings import TextToSegmentMapper, FOURTEEN_SEGMENTS
+from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
+from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
+from mpf.platforms.visual_pinball_engine.platform_pb2 import SetSegmentDisplayFrameRequest
 
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
@@ -12,7 +12,7 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.core.platform import LightsPlatform, SwitchPlatform, DriverPlatform, SwitchSettings, DriverSettings, \
-    SwitchConfig, DriverConfig, RepulseSettings, RgbDmdPlatform, DmdPlatform
+    SwitchConfig, DriverConfig, RepulseSettings, RgbDmdPlatform, DmdPlatform, SegmentDisplayPlatform
 from mpf.platforms.visual_pinball_engine import platform_pb2_grpc
 from mpf.platforms.visual_pinball_engine import platform_pb2
 
@@ -21,6 +21,11 @@ try:
 except (SyntaxError, ImportError):
     # pylint: disable-msg=invalid-name
     MpfHardwareService = None
+
+try:
+    from grpc.experimental import aio   # pylint: disable-msg=import-error
+except ImportError:
+    aio = None
 
 
 class VisualPinballEngineSwitch(SwitchPlatformInterface):
@@ -164,12 +169,43 @@ class VisualPinballEngineDmd(DmdPlatformInterface):
             self._send_frame()
 
 
-class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, RgbDmdPlatform, DmdPlatform):
+class VisualPinballEngineSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
+
+    """VPE segment display."""
+
+    __slots__ = ["platform", "length_of_display"]
+
+    def __init__(self, number, display_size, platform):
+        """Initialise segment display."""
+        super().__init__(number)
+        self.platform = platform
+        self.length_of_display = display_size
+
+    def _set_text(self, text: ColoredSegmentDisplayText) -> None:
+        """Set text to VPE segment displays."""
+        assert not text.embed_commas
+        mapping = TextToSegmentMapper.map_segment_text_to_segments(text, self.length_of_display, FOURTEEN_SEGMENTS)
+        result = map(lambda x: x.get_vpe_encoding(), mapping)
+        command = platform_pb2.Commands()
+        command.segment_display_frame_request.name = self.number
+        command.segment_display_frame_request.frame = b''.join(result)
+        command.segment_display_frame_request.colors.extend(
+            [SetSegmentDisplayFrameRequest.SegmentDisplayColor(r=color.red / 255.0,
+                                                               b=color.blue / 255.0,
+                                                               g=color.green / 255.0)
+             for color in text.get_colors()])
+
+        self.platform.send_command(command)
+
+
+class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, RgbDmdPlatform, DmdPlatform,
+                                  SegmentDisplayPlatform):
 
     """VPE platform."""
 
     __slots__ = ["config", "_configured_switches", "_configured_lights", "_configured_coils", "_initial_switch_state",
-                 "_switch_poll_task", "platform_rpc", "platform_server", "_configured_dmds"]
+                 "_switch_poll_task", "platform_rpc", "platform_server", "_configured_dmds",
+                 "_configured_segment_displays"]
 
     def __init__(self, machine):
         """Initialise VPE platform."""
@@ -181,6 +217,7 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
         self._configured_switches = []  # type: List[VisualPinballEngineSwitch]
         self._configured_lights = []    # type: List[VisualPinballEngineLight]
         self._configured_dmds = []      # type: List[VisualPinballEngineDmd]
+        self._configured_segment_displays = []  # type: List[VisualPinballEngineSegmentDisplay]
         self._switch_poll_task = None
         self.platform_rpc = None        # type: Optional[MpfHardwareService]
         self.platform_server = None
@@ -226,6 +263,10 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
         """Return configured dmds."""
         return self._configured_dmds
 
+    def get_configured_segment_displays(self):
+        """Return configured segment displays."""
+        return self._configured_segment_displays
+
     def stop(self):
         """Stop VPE server."""
         if self._switch_poll_task:
@@ -259,14 +300,14 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
         """Send command to VPE."""
         self.platform_rpc.send_command(command)
 
-    def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict) -> "SwitchPlatformInterface":
+    def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict) -> VisualPinballEngineSwitch:
         """Configure VPE switch."""
         number = str(number)
         switch = VisualPinballEngineSwitch(config, number)
         self._configured_switches.append(switch)
         return switch
 
-    def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict) -> "DriverPlatformInterface":
+    def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict) -> VisualPinballEngineDriver:
         """Configure VPE driver."""
         number = str(number)
         coil = VisualPinballEngineDriver(config, number, self)
@@ -340,7 +381,7 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
         """Return initial switch state."""
         return self._initial_switch_state
 
-    def configure_light(self, number: str, subtype: str, config, platform_settings: dict) -> "LightPlatformInterface":
+    def configure_light(self, number: str, subtype: str, config, platform_settings: dict) -> VisualPinballEngineLight:
         """Configure a VPE light."""
         if not subtype:
             subtype = "light"
@@ -368,3 +409,10 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
         dmd = VisualPinballEngineDmd(platform=self, name="default", color_mapping="BW", width=128, height=32)
         self._configured_dmds.append(dmd)
         return dmd
+
+    async def configure_segment_display(self, number: str, display_size: int,
+                                        platform_settings) -> VisualPinballEngineSegmentDisplay:
+        """Configure segment display."""
+        segment_display = VisualPinballEngineSegmentDisplay(number, display_size, self)
+        self._configured_segment_displays.append(segment_display)
+        return segment_display

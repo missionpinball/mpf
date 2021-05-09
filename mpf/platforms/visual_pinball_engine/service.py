@@ -87,7 +87,15 @@ class MpfHardwareService(platform_pb2_grpc.MpfHardwareServiceServicer):
             dmd_description.width = dmd.width
             dmds.append(dmd_description)
 
-        machine_description = platform_pb2.MachineDescription(switches=switches, coils=coils, lights=lights, dmds=dmds)
+        segment_displays = []
+        for segment_display in self.platform.get_configured_segment_displays():
+            segment_display_description = platform_pb2.SegmentDisplayDescription()
+            segment_display_description.name = segment_display.number
+            segment_display_description.width = segment_display.length_of_display
+            segment_displays.append(segment_display_description)
+
+        machine_description = platform_pb2.MachineDescription(switches=switches, coils=coils, lights=lights, dmds=dmds,
+                                                              segment_displays=segment_displays)
 
         return machine_description
 

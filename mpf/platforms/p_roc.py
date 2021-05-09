@@ -15,10 +15,10 @@ https://github.com/preble/pyprocgame
 from typing import Dict, List
 
 from mpf.core.platform import DmdPlatform, DriverConfig, SwitchConfig, SegmentDisplaySoftwareFlashPlatform
+from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
 from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
-from mpf.core.rgb_color import RGBColor
 from mpf.core.utility_functions import Util
 from mpf.platforms.p_roc_devices import PROCDriver
 
@@ -192,10 +192,11 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplaySoftware
         self.dmd = PROCDMD(self, self.machine)
         return self.dmd
 
-    async def configure_segment_display(self, number: str, platform_settings) \
+    async def configure_segment_display(self, number: str, display_size: int, platform_settings) \
             -> "SegmentDisplaySoftwareFlashPlatformInterface":
         """Configure display."""
         del platform_settings
+        del display_size
         number_int = int(number)
         if 0 < number_int >= 4:
             raise AssertionError("Number must be between 0 and 3 for p_roc segment display.")
@@ -329,13 +330,10 @@ class PRocAlphanumericDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
         super().__init__(index)
         self.display = display
 
-    def _set_text(self, text: str):
+    def _set_text(self, text: ColoredSegmentDisplayText):
         """Set digits to display."""
-        self.display.set_text(text, self.number)
-
-    def set_color(self, colors: List[RGBColor]) -> None:
-        """Set the color(s) of the display."""
-        # currently not supported
+        # TODO: use DisplayCharacter and intern dots and commas
+        self.display.set_text(text.convert_to_str(), self.number)
 
 
 class AuxAlphanumericDisplay:
