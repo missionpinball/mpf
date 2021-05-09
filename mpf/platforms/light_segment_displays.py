@@ -12,7 +12,7 @@ class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
 
     """Segment display which drives lights."""
 
-    __slots__ = ["_lights", "_key", "_segment_map", "_current_text", "_current_colors"]
+    __slots__ = ["_lights", "_key", "_segment_map", "_current_text"]
 
     def __init__(self, number, lights, segment_type):
         """Initialise segment display."""
@@ -30,34 +30,28 @@ class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
             raise AssertionError("Invalid segment type {}".format(segment_type))
 
         self._key = "segment_display_{}".format(number)
-        self._current_text = ""
-        self._current_colors = [RGBColor("white")] * len(self._lights)
+        self._current_text = None
 
     def _set_text(self, text: ColoredSegmentDisplayText) -> None:
         """Set text to lights."""
         # get the last chars for the number of chars we have
-        colors = text.get_colors()
-        text = text.convert_to_str()
+        assert not text.embed_commas
         text = text[-len(self._lights):]
-        text = text.zfill(len(self._lights))
-        colors = colors[-len(self._lights):]
-        colors += [colors[-1]] * (len(self._lights) - len(colors))
-        if text != self._current_text or colors != self._current_colors:
+        if text != self._current_text:
             self._current_text = text
-            self._current_colors = colors
             self._update_text()
 
     def _update_text(self):
         # iterate lights and chars
-        for char, lights_for_char, color in zip(self._current_text, self._lights, self._current_colors):
+        for char, lights_for_char in zip(self._current_text, self._lights):
             try:
-                char_map = self._segment_map[ord(char)]
+                char_map = self._segment_map[char.char_code]
             except KeyError:
                 # if there is no
                 char_map = self._segment_map[None]
             for name, light in lights_for_char.items():
                 if getattr(char_map, name):
-                    light.color(color=color, key=self._key)
+                    light.color(color=char.color, key=self._key)
                 else:
                     light.remove_from_stack_by_key(key=self._key)
 

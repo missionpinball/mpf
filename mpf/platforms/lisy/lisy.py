@@ -199,26 +199,27 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
 
             self._type_of_display = display_info[0]
 
-    def _format_text(self, text):
+    def _format_text(self, text: SegmentDisplayText):
+        assert not text.embed_commas
         if self._type_of_display == 1:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, BCD_SEGMENTS,
-                                                               embed_dots=False)
+            assert not text.embed_dots
+            mapping = TextToSegmentMapper.map_segment_text_to_segments(text, self._length_of_display, BCD_SEGMENTS)
             result = map(lambda x: x.get_x4x3x2x1_encoding(), mapping)
         elif self._type_of_display == 2:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, BCD_SEGMENTS)
+            mapping = TextToSegmentMapper.map_segment_text_to_segments(text, self._length_of_display, BCD_SEGMENTS)
             result = map(lambda x: x.get_dpx4x3x2x1_encoding(), mapping)
         elif self._type_of_display == 3:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, SEVEN_SEGMENTS)
+            mapping = TextToSegmentMapper.map_segment_text_to_segments(text, self._length_of_display, SEVEN_SEGMENTS)
             result = map(lambda x: x.get_dpgfeabcd_encoding(), mapping)
         elif self._type_of_display == 4:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, FOURTEEN_SEGMENTS)
+            mapping = TextToSegmentMapper.map_segment_text_to_segments(text, self._length_of_display, FOURTEEN_SEGMENTS)
             result = map(lambda x: x.get_apc_encoding(), mapping)
         elif self._type_of_display == 5:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, ASCII_SEGMENTS,
-                                                               embed_dots=False)
+            assert not text.embed_dots
+            mapping = TextToSegmentMapper.map_segment_text_to_segments(text, self._length_of_display, ASCII_SEGMENTS)
             result = map(lambda x: x.get_ascii_encoding(), mapping)
         elif self._type_of_display == 6:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, ASCII_SEGMENTS)
+            mapping = TextToSegmentMapper.map_segment_text_to_segments(text, self._length_of_display, ASCII_SEGMENTS)
             result = map(lambda x: x.get_ascii_with_dp_encoding(), mapping)
         else:
             raise AssertionError("Invalid type {}".format(self._type_of_display))
@@ -229,7 +230,7 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
         """Set text to display."""
         assert self.platform.api_version is not None
         if self.platform.api_version >= StrictVersion("0.9"):
-            formatted_text = self._format_text(text.convert_to_str())
+            formatted_text = self._format_text(text)
             self.platform.send_byte(LisyDefines.DisplaysSetDisplay0To + self.number,
                                     bytearray([len(formatted_text)]) + formatted_text)
         else:

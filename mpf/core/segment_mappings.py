@@ -5,7 +5,9 @@ You can use convert_segments.py (based on https://github.com/dmadison/LED-Segmen
 
 BCD were created by us.
 """
-from typing import Dict, Union
+from typing import Dict, Union, List
+
+from mpf.devices.segment_display.segment_display_text import SegmentDisplayText
 
 
 class TextToSegmentMapper:
@@ -13,7 +15,27 @@ class TextToSegmentMapper:
     """Helper to map text to segments."""
 
     @classmethod
-    def map_text_to_segments(cls, text, display_width, segment_mapping, embed_dots=True):
+    def map_segment_text_to_segments(cls, text: SegmentDisplayText, display_width, segment_mapping) -> List["Segment"]:
+        """Map a segment display text to a certain display mapping."""
+        segments = []
+        for char in text:
+            mapping = segment_mapping.get(char.char_code, segment_mapping[None])
+            if char.dot:
+                mapping = mapping.copy_with_dp_on()
+            segments.append(mapping)
+
+        # remove leading segments if mapping is too long
+        if display_width < len(segments):
+            segments = segments[-display_width:]
+
+        while display_width > len(segments):
+            # prepend spaces to pad mapping
+            segments.insert(0, segment_mapping.get(ord(" "), segment_mapping[None]))
+
+        return segments
+
+    @classmethod
+    def map_text_to_segments(cls, text, display_width, segment_mapping, embed_dots=True) -> List["Segment"]:
         """Map text to a list of segments.
 
         Text is aligned to the right.
@@ -102,7 +124,7 @@ class BcdSegments(Segment):
 
     def get_x4x3x2x1_encoding(self) -> bytes:
         """Return segment in x3x2x1x0 order."""
-        return bytes([(self.x3 << 3) | (self.x2) << 2 | (self.x1) << 1 | self.x0])
+        return bytes([(self.x3 << 3) | (self.x2 << 2) | (self.x1 << 1) | self.x0])
 
 
 BCD_SEGMENTS = {

@@ -16,14 +16,13 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
 
     """A list of characters with specialized functions for segment displays. Use for display text effects."""
 
-    __slots__ = ["_text"]
+    __slots__ = ["_text", "embed_dots", "embed_commas"]
 
-    def __init__(self, char_list=None):
+    def __init__(self, char_list, embed_dots, embed_commas):
         """Initialize segment display text."""
-        if char_list is not None:
-            self._text = char_list
-        else:
-            self._text = []
+        self.embed_dots = embed_dots
+        self.embed_commas = embed_commas
+        self._text = char_list
 
     # pylint: disable=too-many-arguments
     @classmethod
@@ -35,7 +34,8 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
         if len(char_colors) < len(text):
             char_colors.extend([colors[-1]] * (len(text) - len(char_colors)))
         return ColoredSegmentDisplayText(
-            cls._create_characters(text, display_size, collapse_dots, collapse_commas, char_colors))
+            cls._create_characters(text, display_size, collapse_dots, collapse_commas, char_colors),
+            collapse_dots, collapse_commas)
 
     # pylint: disable=too-many-arguments
     @classmethod
@@ -48,7 +48,8 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
 
         char_colors = [None] * len(text)
         return UncoloredSegmentDisplayText(
-            cls._create_characters(text, display_size, collapse_dots, collapse_commas, char_colors))
+            cls._create_characters(text, display_size, collapse_dots, collapse_commas, char_colors),
+            collapse_dots, collapse_commas)
 
     @classmethod
     def _create_characters(cls, text: str, display_size: int, collapse_dots: bool, collapse_commas: bool,
@@ -86,7 +87,9 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
         """Return new SegmentDisplayText with chars blanked."""
         return ColoredSegmentDisplayText(
             [char if mask != "F" else DisplayCharacter(SPACE_CODE, False, False, char.color)
-             for char, mask in zip(self._text, flash_mask)])
+             for char, mask in zip(self._text, flash_mask)],
+            self.embed_dots, self.embed_commas
+        )
 
     def convert_to_str(self):
         """Convert back to normal text string."""
@@ -107,7 +110,7 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
     def __getitem__(self, item):
         """Return item or slice."""
         if isinstance(item, slice):
-            return self.__class__(self._text.__getitem__(item))
+            return self.__class__(self._text.__getitem__(item), self.embed_dots, self.embed_commas)
 
         return self._text.__getitem__(item)
 

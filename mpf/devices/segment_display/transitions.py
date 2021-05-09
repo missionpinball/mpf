@@ -133,7 +133,7 @@ class PushTransition(TransitionBase):
             transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
                                                           self.collapse_commas, text_color)
         else:
-            transition_text = UncoloredSegmentDisplayText()
+            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas)
 
         if self.direction == 'right':
             temp_list = new_display_text
@@ -191,7 +191,7 @@ class CoverTransition(TransitionBase):
             transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
                                                           self.collapse_commas, text_color)
         else:
-            transition_text = UncoloredSegmentDisplayText()
+            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas)
 
         if self.direction == 'right':
             new_extended_display_text = new_display_text
@@ -259,7 +259,7 @@ class UncoverTransition(TransitionBase):
             transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
                                                           self.collapse_commas, text_color)
         else:
-            transition_text = UncoloredSegmentDisplayText()
+            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas)
 
         if self.direction == 'right':
             current_extended_display_text = transition_text
@@ -327,7 +327,7 @@ class WipeTransition(TransitionBase):
             transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
                                                           self.collapse_commas, text_color)
         else:
-            transition_text = UncoloredSegmentDisplayText()
+            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas)
 
         if self.direction == 'right':
             if step < len(self.text):
