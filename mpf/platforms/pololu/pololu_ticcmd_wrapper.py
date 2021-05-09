@@ -32,20 +32,21 @@ class PololuTiccmdWrapper:
         self._serial_number = serial_number
         self._machine = machine
         self.loop = None
+        self.stop_future = None
 
         self._start_thread()
 
     def _start_thread(self):
         # Create a new loop
         self.loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.loop)
-        self.stop_future = asyncio.Future()
         # Assign the loop to another thread
         self.thread = Thread(target=self._run_loop)
         self.thread.start()
 
     def _run_loop(self):
         """Run the asyncio loop in this thread."""
+        asyncio.set_event_loop(self.loop)
+        self.stop_future = asyncio.Future()
         self.loop.run_until_complete(self.stop_future)
         self.loop.close()
 
@@ -90,6 +91,7 @@ class PololuTiccmdWrapper:
             return output
         except subprocess.CalledProcessError as e:
             self.log.debug("Exception: %s", str(e.output))
+            self._machine.stop_with_exception(e)
             raise TicError(e.output)
 
     async def get_status(self):
@@ -127,6 +129,10 @@ class PololuTiccmdWrapper:
     def reset_command_timeout(self):
         """Tells the TIC to reset the internal command timeout."""
         self._ticcmd('--reset-command-timeout')
+
+    def deengerize(self):
+        """Deenergize stepper."""
+        self._ticcmd('--deenergize')
 
     def exit_safe_start(self):
         """Tells the TIC to exit the safe start mode."""
@@ -196,4 +202,4 @@ class PololuTiccmdWrapper:
             direction = "fwd"
         else:
             direction = "rev"
-        self._ticcmd('--home {}'.format(direction))
+        self._ticcmd('--home', direction)

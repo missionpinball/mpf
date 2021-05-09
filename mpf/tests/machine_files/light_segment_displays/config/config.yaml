@@ -52,6 +52,7 @@ lights:
 segment_displays:
   display1:
     number: 1
+    size: 4
     platform_settings:
       lights:
         - a: segment1_a
@@ -71,6 +72,7 @@ segment_displays:
       type: 7segment
   display2:
     number: 2
+    size: 4
     platform_settings:
       lights:
         - x0: segment3_x0

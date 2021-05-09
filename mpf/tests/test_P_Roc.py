@@ -227,7 +227,7 @@ class TestPRoc(MpfTestCase):
         self.pinproc.aux_send_commands = MagicMock(return_value=True)
         super().setUp()
 
-        self.pinproc.aux_send_commands.assert_called_with(0, ["disable"] + ["jump0"] * 254)
+        self.pinproc.aux_send_commands.assert_has_calls([call(0, ["disable"] + ["jump0"] * 254)])
 
     def test_platform(self):
         self._test_initial_switches()

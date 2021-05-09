@@ -4,6 +4,7 @@ import logging
 from typing import Optional, List
 
 from mpf.core.rgb_color import RGBColor
+from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
 from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
 
 MYPY = False
@@ -45,22 +46,14 @@ class VirtualSegmentDisplayConnector:
                 display.add_virtual_connector(self)
 
     # pylint: disable=too-many-arguments
-    def set_text(self, name: str, text: str, flashing: FlashingType, flash_mask: str = "",
-                 colors: Optional[List[RGBColor]] = None) -> None:
+    def set_text(self, name: str, text: ColoredSegmentDisplayText, flashing: FlashingType, flash_mask: str) -> None:
         """Set the display text to send to MPF-MC via BCP."""
+        colors = text.get_colors()
         self.machine.bcp.interface.bcp_trigger_client(
             client=self.bcp_client,
             name='update_segment_display',
             segment_display_name=name,
-            text=text,
+            text=text.convert_to_str(),
             flashing=str(flashing.value),
             flash_mask=flash_mask,
             colors=[RGBColor(color).hex for color in colors] if colors else None)
-
-    def set_color(self, name: str, colors: List[RGBColor]) -> None:
-        """Set the display colors to send to MPF-MC via BCP."""
-        self.machine.bcp.interface.bcp_trigger_client(
-            client=self.bcp_client,
-            name='update_segment_display',
-            segment_display_name=name,
-            colors=[RGBColor(color).hex for color in colors])

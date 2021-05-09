@@ -155,9 +155,9 @@ class TestLisy(MpfTestCase):
             b'\x04': b'\x09',           # get number of solenoids -> 9
             b'\x06': b'\x05',           # get number of displays -> 5
             b'\x09': b'\x58',           # get number of switches -> 88
-            b'\x1e\x00': None,          # clear display
-            b'\x1f\x00': None,          # clear display
-            b'\x20\x00': None,          # clear display
+            b'\x1e\x20\x20\x20\x20\x20\x20\x20\x00': None,          # clear display
+            b'\x1f\x20\x20\x20\x20\x20\x20\x20\x00': None,          # clear display
+            b'\x20\x20\x20\x20\x20\x20\x20\x20\x00': None,          # clear display
         }
 
         for number in range(88):
@@ -295,7 +295,7 @@ Display count: 5
 
         # set info display to TEST
         self.serialMock.expected_commands = {
-            b'\x1ETEST\x00': None
+            b'\x1E   TEST\x00': None
         }
         self.machine.segment_displays["info_display"].add_text("TEST")
         self._wait_for_processing()
@@ -303,30 +303,34 @@ Display count: 5
 
         # set player 1 display to 42000
         self.serialMock.expected_commands = {
-            b'\x1F42000\x00': None
+            b'\x1F  42000\x00': None
         }
         self.machine.segment_displays["player1_display"].add_text("42000")
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         # set player 1 display to flashing
-        self.serialMock.expected_commands = {
-            b'\x1F42000\x00': None,
-        }
         self.machine.segment_displays["player1_display"].set_flashing(FlashingType.FLASH_ALL)
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands = {
-            b'\x1F42000\x00': None,
-            b'\x1F\x00': None
+            b'\x1F  42000\x00': None,
+            b'\x1F       \x00': None
         }
 
         self.advance_time_and_run(1)
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands = {
-            b'\x1F42000\x00': None,
+            b'\x1F       \x00': None
+        }
+
+        self.advance_time_and_run(.5)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands = {
+            b'\x1F  42000\x00': None,
         }
         self.machine.segment_displays["player1_display"].set_flashing(FlashingType.NO_FLASH)
         self._wait_for_processing()

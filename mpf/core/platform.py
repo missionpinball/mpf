@@ -217,7 +217,8 @@ class SegmentDisplayPlatform(BasePlatform, metaclass=abc.ABCMeta):
         return config
 
     @abc.abstractmethod
-    async def configure_segment_display(self, number: str, platform_settings) -> "SegmentDisplayPlatformInterface":
+    async def configure_segment_display(self, number: str, display_size: int,
+                                        platform_settings) -> "SegmentDisplayPlatformInterface":
         """Subclass this method in a platform module to configure a segment display.
 
         This method should return a reference to the segment display platform interface

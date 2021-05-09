@@ -1,6 +1,6 @@
 import sys
 
-from mpf.tests.MpfTestCase import MpfTestCase, MagicMock, patch
+from mpf.tests.MpfTestCase import MpfTestCase
 
 
 class MockServer:
@@ -87,6 +87,11 @@ class TestVPE(MpfTestCase):
             height=32
         ) in description.dmds)
 
+        self.assertTrue(platform_pb2.SegmentDisplayDescription(
+            name="0",
+            width=10,
+        ) in description.segment_displays)
+
         self.assertSwitchState("s_sling", True)
         self.assertSwitchState("s_flipper", False)
         self.assertSwitchState("s_test", False)
@@ -142,3 +147,16 @@ class TestVPE(MpfTestCase):
         self.advance_time_and_run(.1)
 
         self.assertEqual((rgb_frame, 1.0), self.simulator.dmd_frames["test_dmd"])
+
+        segment = self.machine.segment_displays["segment1"]
+        segment.add_text("TEST")
+        self.advance_time_and_run(.1)
+        display_state = self.simulator.segment_displays["0"]
+
+        # all digits are white
+        for color in display_state[1]:
+            self.assertEqual(platform_pb2.SetSegmentDisplayFrameRequest.SegmentDisplayColor(r=1.0, g=1.0, b=1.0),
+                             color)
+
+        # spell TEST
+        self.assertEqual(b'\x00' * 12 + b'\x01\x11\x79\x00\x6D\x04\x01\x11', display_state[0])

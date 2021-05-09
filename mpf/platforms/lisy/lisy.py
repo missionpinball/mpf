@@ -12,9 +12,9 @@ from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareS
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
 
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
+from mpf.devices.segment_display.segment_display_text import SegmentDisplayText
 
 from mpf.core.logging import LogMixin
-from mpf.core.rgb_color import RGBColor
 from mpf.core.utility_functions import Util
 
 from mpf.platforms.lisy.defines import LisyDefines
@@ -175,12 +175,12 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
 
     __slots__ = ["platform", "_type_of_display", "_length_of_display"]
 
-    def __init__(self, number: int, platform: "LisyHardwarePlatform") -> None:
+    def __init__(self, number: int, platform: "LisyHardwarePlatform", display_size) -> None:
         """Initialise segment display."""
         super().__init__(number)
         self.platform = platform
         self._type_of_display = None
-        self._length_of_display = None
+        self._length_of_display = display_size
 
     async def initialize(self):
         """Initialize segment display."""
@@ -192,39 +192,41 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
                 raise AssertionError("Invalid display type {} reported by hardware for display {}".format(
                     self._type_of_display, self.number))
 
+            if int(display_info[1]) != self._length_of_display:
+                raise AssertionError("Display {} is configured as length {} but hardware reports as {}.".format(
+                    self.number, self._length_of_display, display_info[1]
+                ))
+
             self._type_of_display = display_info[0]
-            self._length_of_display = int(display_info[1])
 
-        # clear display initially
-        self._set_text("")
-
-    def _format_text(self, text):
+    def _format_text(self, text: SegmentDisplayText):
+        assert not text.embed_commas
         if self._type_of_display == 1:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, BCD_SEGMENTS,
-                                                               embed_dots=False)
+            assert not text.embed_dots
+            mapping = TextToSegmentMapper.map_segment_text_to_segments(text, self._length_of_display, BCD_SEGMENTS)
             result = map(lambda x: x.get_x4x3x2x1_encoding(), mapping)
         elif self._type_of_display == 2:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, BCD_SEGMENTS)
+            mapping = TextToSegmentMapper.map_segment_text_to_segments(text, self._length_of_display, BCD_SEGMENTS)
             result = map(lambda x: x.get_dpx4x3x2x1_encoding(), mapping)
         elif self._type_of_display == 3:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, SEVEN_SEGMENTS)
+            mapping = TextToSegmentMapper.map_segment_text_to_segments(text, self._length_of_display, SEVEN_SEGMENTS)
             result = map(lambda x: x.get_dpgfeabcd_encoding(), mapping)
         elif self._type_of_display == 4:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, FOURTEEN_SEGMENTS)
+            mapping = TextToSegmentMapper.map_segment_text_to_segments(text, self._length_of_display, FOURTEEN_SEGMENTS)
             result = map(lambda x: x.get_apc_encoding(), mapping)
         elif self._type_of_display == 5:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, ASCII_SEGMENTS,
-                                                               embed_dots=False)
+            assert not text.embed_dots
+            mapping = TextToSegmentMapper.map_segment_text_to_segments(text, self._length_of_display, ASCII_SEGMENTS)
             result = map(lambda x: x.get_ascii_encoding(), mapping)
         elif self._type_of_display == 6:
-            mapping = TextToSegmentMapper.map_text_to_segments(text, self._length_of_display, ASCII_SEGMENTS)
+            mapping = TextToSegmentMapper.map_segment_text_to_segments(text, self._length_of_display, ASCII_SEGMENTS)
             result = map(lambda x: x.get_ascii_with_dp_encoding(), mapping)
         else:
             raise AssertionError("Invalid type {}".format(self._type_of_display))
 
         return b''.join(result)
 
-    def _set_text(self, text: str):
+    def _set_text(self, text: SegmentDisplayText):
         """Set text to display."""
         assert self.platform.api_version is not None
         if self.platform.api_version >= StrictVersion("0.9"):
@@ -232,11 +234,7 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
             self.platform.send_byte(LisyDefines.DisplaysSetDisplay0To + self.number,
                                     bytearray([len(formatted_text)]) + formatted_text)
         else:
-            self.platform.send_string(LisyDefines.DisplaysSetDisplay0To + self.number, text)
-
-    def set_color(self, colors: List[RGBColor]) -> None:
-        """Set the color(s) of the display."""
-        # not supported currently
+            self.platform.send_string(LisyDefines.DisplaysSetDisplay0To + self.number, text.convert_to_str())
 
 
 class LisySound(HardwareSoundPlatformInterface):
@@ -738,7 +736,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         driver.configure_recycle(recycle_time)
         return driver
 
-    async def configure_segment_display(self, number: str, platform_settings) \
+    async def configure_segment_display(self, number: str, display_size: int, platform_settings) \
             -> SegmentDisplaySoftwareFlashPlatformInterface:
         """Configure a segment display."""
         del platform_settings
@@ -748,7 +746,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             raise AssertionError("Invalid display number {}. Hardware only supports {} displays (indexed with 0)".
                                  format(number, self._number_of_displays))
 
-        display = LisyDisplay(int(number), self)
+        display = LisyDisplay(int(number), self, display_size)
         await display.initialize()
         self._handle_software_flash(display)
         return display

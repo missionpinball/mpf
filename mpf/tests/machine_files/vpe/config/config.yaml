@@ -19,6 +19,11 @@ dmds:
   default:
     source_display: dmd_display
 
+segment_displays:
+    segment1:
+        number: 0
+        size: 10
+
 switches:
     s_sling:
         number: 0
