@@ -11,6 +11,14 @@ segment_displays:
     number: 2
   display3:
     number: 3
+  display4:
+    number: 1
+    size: 10
+    integrated_commas: true
+  display5:
+    number: 1
+    size: 10
+    integrated_dots: true
 
 segment_display_player:
   test_event1:

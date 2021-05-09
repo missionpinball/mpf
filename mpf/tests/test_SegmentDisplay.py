@@ -20,6 +20,54 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
     def get_machine_path(self):
         return 'tests/machine_files/segment_display/'
 
+    def test_integrated_dots_and_commas(self):
+        display1 = self.machine.segment_displays["display1"]
+        display4 = self.machine.segment_displays["display4"]
+        display5 = self.machine.segment_displays["display5"]
+
+        # help the IDE with types and assert that our test works as expected
+        assert isinstance(display1.hw_display, VirtualSegmentDisplay)
+        self.assertEqual(10, display1.size)
+        self.assertFalse(display1.config['integrated_commas'])
+        self.assertFalse(display1.config['integrated_dots'])
+        self.assertEqual("          ", display1.hw_display.text)
+
+        assert isinstance(display4.hw_display, VirtualSegmentDisplay)
+        self.assertEqual(10, display4.size)
+        self.assertTrue(display4.config['integrated_commas'])
+        self.assertFalse(display4.config['integrated_dots'])
+        self.assertEqual("          ", display4.hw_display.text)
+
+        assert isinstance(display5.hw_display, VirtualSegmentDisplay)
+        self.assertEqual(10, display5.size)
+        self.assertFalse(display5.config['integrated_commas'])
+        self.assertTrue(display5.config['integrated_dots'])
+        self.assertEqual("          ", display5.hw_display.text)
+
+        # add a 10-digit number (no dots or commas)
+        display1.add_text("1234567890")
+        self.assertEqual("1234567890", display1.hw_display.text)
+        display4.add_text("1234567890")
+        self.assertEqual("1234567890", display4.hw_display.text)
+        display5.add_text("1234567890")
+        self.assertEqual("1234567890", display5.hw_display.text)
+
+        # add a 10-digit number with integrated commas (displays without integrated commas will be truncated)
+        display1.add_text("1,234,567,890")
+        self.assertEqual("34,567,890", display1.hw_display.text)
+        display4.add_text("1,234,567,890")
+        self.assertEqual("1,234,567,890", display4.hw_display.text)
+        display5.add_text("1,234,567,890")
+        self.assertEqual("34,567,890", display5.hw_display.text)
+
+        # add a 10-digit number with integrated dots (displays without integrated dots will be truncated)
+        display1.add_text("1.234.567.890")
+        self.assertEqual("34.567.890", display1.hw_display.text)
+        display4.add_text("1.234.567.890")
+        self.assertEqual("34.567.890", display4.hw_display.text)
+        display5.add_text("1.234.567.890")
+        self.assertEqual("1.234.567.890", display5.hw_display.text)
+
     @test_config("game.yaml")
     def test_game(self):
         """Test segment displays in a game for the documentation."""
@@ -376,8 +424,9 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
 
         # multiple colors
         test_text = SegmentDisplayText.from_str("COLOR", 5, False, False,
-                                       [RGBColor("white"), RGBColor("red"), RGBColor("green"), RGBColor("blue"),
-                                        RGBColor("cyan")])
+                                                [RGBColor("white"), RGBColor("red"), RGBColor("green"),
+                                                 RGBColor("blue"),
+                                                 RGBColor("cyan")])
         self.assertTrue(isinstance(test_text, SegmentDisplayText))
         self.assertEqual(5, len(test_text))
         colors = test_text.get_colors()
@@ -387,7 +436,7 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
 
         # multiple colors (fewer colors than letters)
         test_text = SegmentDisplayText.from_str("COLOR", 5, False, False,
-                                       [RGBColor("white"), RGBColor("red")])
+                                                [RGBColor("white"), RGBColor("red")])
         self.assertTrue(isinstance(test_text, SegmentDisplayText))
         self.assertEqual(5, len(test_text))
         colors = test_text.get_colors()
@@ -397,7 +446,7 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
 
         # multiple colors (fewer colors than letters and fewer letters than characters)
         test_text = SegmentDisplayText.from_str("COLOR", 8, False, False,
-                                       [RGBColor("white"), RGBColor("red")])
+                                                [RGBColor("white"), RGBColor("red")])
         self.assertTrue(isinstance(test_text, SegmentDisplayText))
         self.assertEqual(8, len(test_text))
         colors = test_text.get_colors()
@@ -982,6 +1031,35 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         with self.assertRaises(StopIteration):
             next(transition_iterator)
 
+        # test placeholder evaluation during transitions (includes integrated commas)
+        self.machine.variables.set_machine_var("segment_display_test_value", 0)
+
+        transition_iterator = iter(TransitionRunner(self.machine,
+                                                    PushTransition(5, False, True, {'direction': 'right'}),
+                                                    "ABCDE", "{machine.segment_display_test_value:,d}"))
+
+        self.assertEqual("0ABCD",
+                         next(transition_iterator).convert_to_str())
+
+        self.machine.variables.set_machine_var("segment_display_test_value", 5)
+        self.assertEqual(" 5ABC",
+                         next(transition_iterator).convert_to_str())
+
+        self.machine.variables.set_machine_var("segment_display_test_value", 74)
+        self.assertEqual(" 74AB",
+                         next(transition_iterator).convert_to_str())
+
+        self.machine.variables.set_machine_var("segment_display_test_value", 1234)
+        self.assertEqual("1,234A",
+                         next(transition_iterator).convert_to_str())
+
+        self.machine.variables.set_machine_var("segment_display_test_value", 54321)
+        self.assertEqual("54,321",
+                         next(transition_iterator).convert_to_str())
+
+        with self.assertRaises(StopIteration):
+            next(transition_iterator)
+
     @patch("mpf.platforms.virtual.VirtualSegmentDisplay.set_text")
     def test_transitions_with_player(self, mock_set_text):
         red = RGBColor("red")
@@ -1009,7 +1087,7 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.assertTrue(mock_set_text.called)
         self.assertEqual(20, mock_set_text.call_count)
 
-        # TODO: find out why red is off by two here
+        # incoming text is centered so has spaces before and after the new text)
         mock_set_text.assert_has_calls([
             call(
                 SegmentDisplayText.from_str_with_color('          ', 10, True, True, [red] * 1 + [wht] * 9),
