@@ -183,9 +183,8 @@ class VisualPinballEngineSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInter
 
     def _set_text(self, text: ColoredSegmentDisplayText) -> None:
         """Set text to VPE segment displays."""
-        # TODO: use DisplayCharacter and intern dots and commas
-        mapping = TextToSegmentMapper.map_text_to_segments(text.convert_to_str(), self.length_of_display,
-                                                           FOURTEEN_SEGMENTS)
+        assert not text.embed_commas
+        mapping = TextToSegmentMapper.map_segment_text_to_segments(text, self.length_of_display, FOURTEEN_SEGMENTS)
         result = map(lambda x: x.get_vpe_encoding(), mapping)
         command = platform_pb2.Commands()
         command.segment_display_frame_request.name = self.number
