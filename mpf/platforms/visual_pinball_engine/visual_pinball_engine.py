@@ -1,8 +1,8 @@
 """VPE platform."""
 from typing import Optional, List
 
-from mpf.core.rgb_color import RGBColor
 from mpf.core.segment_mappings import TextToSegmentMapper, FOURTEEN_SEGMENTS
+from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
 from mpf.platforms.visual_pinball_engine.platform_pb2 import SetSegmentDisplayFrameRequest
 
@@ -181,9 +181,11 @@ class VisualPinballEngineSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInter
         self.platform = platform
         self.length_of_display = display_size
 
-    def _set_text(self, text: str, colors: List[RGBColor]) -> None:
+    def _set_text(self, text: ColoredSegmentDisplayText) -> None:
         """Set text to VPE segment displays."""
-        mapping = TextToSegmentMapper.map_text_to_segments(text, self.length_of_display, FOURTEEN_SEGMENTS)
+        # TODO: use DisplayCharacter and intern dots and commas
+        mapping = TextToSegmentMapper.map_text_to_segments(text.convert_to_str(), self.length_of_display,
+                                                           FOURTEEN_SEGMENTS)
         result = map(lambda x: x.get_vpe_encoding(), mapping)
         command = platform_pb2.Commands()
         command.segment_display_frame_request.name = self.number
@@ -192,7 +194,7 @@ class VisualPinballEngineSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInter
             [SetSegmentDisplayFrameRequest.SegmentDisplayColor(r=color.red / 255.0,
                                                                b=color.blue / 255.0,
                                                                g=color.green / 255.0)
-             for color in colors])
+             for color in text.get_colors()])
 
         self.platform.send_command(command)
 

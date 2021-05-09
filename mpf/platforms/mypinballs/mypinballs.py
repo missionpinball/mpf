@@ -1,8 +1,7 @@
 """Mypinballs hardware platform."""
 import re
-from typing import List, Optional
 
-from mpf.core.rgb_color import RGBColor
+from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface, FlashingType
 
 from mpf.core.platform import SegmentDisplayPlatform
@@ -17,11 +16,10 @@ class MyPinballsSegmentDisplay(SegmentDisplayPlatformInterface):
         super().__init__(number)
         self.platform = platform        # type: MyPinballsHardwarePlatform
 
-    def set_text(self, text: str, flashing: FlashingType = FlashingType.NO_FLASH, flash_mask: str = "",
-                 colors: Optional[List[RGBColor]] = None) -> None:
+    def set_text(self, text: ColoredSegmentDisplayText, flashing: FlashingType, flash_mask: str) -> None:
         """Set digits to display."""
         del flash_mask
-        del colors
+        text = text.convert_to_str()
         if not text.strip():
             # blank display
             cmd = b'3:' + bytes([ord(str(self.number))]) + b'\n'

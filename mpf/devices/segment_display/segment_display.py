@@ -10,7 +10,7 @@ from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.segment_display.text_stack_entry import TextStackEntry
 from mpf.devices.segment_display.transition_manager import TransitionManager
 from mpf.devices.segment_display.transitions import TransitionRunner, TransitionBase
-from mpf.devices.segment_display.segment_display_text import SegmentDisplayText
+from mpf.devices.segment_display.segment_display_text import SegmentDisplayText, ColoredSegmentDisplayText
 from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
 from mpf.plugins.virtual_segment_display_connector import VirtualSegmentDisplayConnector
 
@@ -26,7 +26,7 @@ class SegmentDisplayState:
 
     __slots__ = ["text", "flashing", "flash_mask"]
 
-    def __init__(self, text: SegmentDisplayText, flashing: FlashingType, flash_mask: Optional[str] = None):
+    def __init__(self, text: ColoredSegmentDisplayText, flashing: FlashingType, flash_mask: Optional[str] = None):
         """Class initializer."""
         self.text = text
         self.flashing = flashing
@@ -65,7 +65,7 @@ class SegmentDisplay(SystemWideDevice):
         self.size = None                            # type: Optional[int]
 
         self.virtual_connector = None               # type: Optional[VirtualSegmentDisplayConnector]
-        self._text_stack = {}                       # type: Dict[str:TextStackEntry]
+        self._text_stack = {}                       # type: Dict[str, TextStackEntry]
         self._current_placeholder = None            # type: Optional[TextTemplate]
         self._current_text_stack_entry = None       # type: Optional[TextStackEntry]
         self._transition_update_task = None         # type: Optional[PeriodicTask]
@@ -145,7 +145,7 @@ class SegmentDisplay(SystemWideDevice):
         """
         self.add_text_entry(text, None, None, None, None, None, priority, key)
 
-    def remove_text_by_key(self, key: str):
+    def remove_text_by_key(self, key: Optional[str]):
         """Remove entry from text stack."""
         if key in self._text_stack:
             del self._text_stack[key]
@@ -336,8 +336,7 @@ class SegmentDisplay(SystemWideDevice):
         assert len(text) == self.size
 
         # set text to display
-        self.hw_display.set_text(text.convert_to_str(), flashing=flashing, flash_mask=flash_mask,
-                                 colors=text.get_colors())
+        self.hw_display.set_text(text, flashing=flashing, flash_mask=flash_mask)
         if self.virtual_connector:
             self.virtual_connector.set_text(self.name, text.convert_to_str(), flashing=flashing,
                                             flash_mask=flash_mask, colors=text.get_colors())

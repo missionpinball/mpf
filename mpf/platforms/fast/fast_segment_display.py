@@ -1,9 +1,10 @@
 """Segment display on the FAST platform."""
 
-from typing import List, Optional
+from typing import List
 
 from mpf.core.utility_functions import Util
 from mpf.core.rgb_color import RGBColor
+from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
 
 from mpf.platforms.interfaces.segment_display_platform_interface \
     import SegmentDisplayPlatformInterface, FlashingType
@@ -21,11 +22,11 @@ class FASTSegmentDisplay(SegmentDisplayPlatformInterface):
         self.serial = communicator
         self.hex_id = Util.int_to_hex_string(index * 7)
 
-    def set_text(self, text: str, flashing: FlashingType = FlashingType.NO_FLASH, flash_mask: str = "",
-                 colors: Optional[List[RGBColor]] = None) -> None:
+    def set_text(self, text: ColoredSegmentDisplayText, flashing: FlashingType, flash_mask: str) -> None:
         """Set digits to display."""
         del flashing
         del flash_mask
+        colors = text.get_colors()
         self.serial.send(('PA:{},{}').format(
             self.hex_id, text[0:7]))
         if colors:

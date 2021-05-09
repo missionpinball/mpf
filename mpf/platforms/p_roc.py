@@ -15,10 +15,10 @@ https://github.com/preble/pyprocgame
 from typing import Dict, List
 
 from mpf.core.platform import DmdPlatform, DriverConfig, SwitchConfig, SegmentDisplaySoftwareFlashPlatform
+from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
 from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
-from mpf.core.rgb_color import RGBColor
 from mpf.core.utility_functions import Util
 from mpf.platforms.p_roc_devices import PROCDriver
 
@@ -330,10 +330,10 @@ class PRocAlphanumericDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
         super().__init__(index)
         self.display = display
 
-    def _set_text(self, text: str, colors: List[RGBColor]):
+    def _set_text(self, text: ColoredSegmentDisplayText):
         """Set digits to display."""
-        del colors
-        self.display.set_text(text, self.number)
+        # TODO: use DisplayCharacter and intern dots and commas
+        self.display.set_text(text.convert_to_str(), self.number)
 
 
 class AuxAlphanumericDisplay:

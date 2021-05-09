@@ -4,7 +4,7 @@ from typing import Optional, List
 
 from mpf.core.placeholder_manager import TextTemplate
 from mpf.core.rgb_color import RGBColor
-from mpf.devices.segment_display.segment_display_text import SegmentDisplayText
+from mpf.devices.segment_display.segment_display_text import SegmentDisplayText, UncoloredSegmentDisplayText
 
 
 class TransitionBase(metaclass=abc.ABCMeta):
@@ -133,7 +133,7 @@ class PushTransition(TransitionBase):
             transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
                                                           self.collapse_commas, text_color)
         else:
-            transition_text = SegmentDisplayText()
+            transition_text = UncoloredSegmentDisplayText()
 
         if self.direction == 'right':
             temp_list = new_display_text
@@ -191,7 +191,7 @@ class CoverTransition(TransitionBase):
             transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
                                                           self.collapse_commas, text_color)
         else:
-            transition_text = SegmentDisplayText()
+            transition_text = UncoloredSegmentDisplayText()
 
         if self.direction == 'right':
             new_extended_display_text = new_display_text
@@ -259,7 +259,7 @@ class UncoverTransition(TransitionBase):
             transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
                                                           self.collapse_commas, text_color)
         else:
-            transition_text = SegmentDisplayText()
+            transition_text = UncoloredSegmentDisplayText()
 
         if self.direction == 'right':
             current_extended_display_text = transition_text
@@ -327,7 +327,7 @@ class WipeTransition(TransitionBase):
             transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
                                                           self.collapse_commas, text_color)
         else:
-            transition_text = SegmentDisplayText()
+            transition_text = UncoloredSegmentDisplayText()
 
         if self.direction == 'right':
             if step < len(self.text):

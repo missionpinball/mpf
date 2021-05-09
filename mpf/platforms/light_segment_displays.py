@@ -1,7 +1,7 @@
 """Segment displays on light drivers."""
 import logging
-from typing import List
 
+from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
 from mpf.core.segment_mappings import SEVEN_SEGMENTS, BCD_SEGMENTS, FOURTEEN_SEGMENTS, SIXTEEN_SEGMENTS
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
 from mpf.core.platform import SegmentDisplaySoftwareFlashPlatform
@@ -33,9 +33,11 @@ class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
         self._current_text = ""
         self._current_colors = [RGBColor("white")] * len(self._lights)
 
-    def _set_text(self, text: str, colors: List[RGBColor]) -> None:
+    def _set_text(self, text: ColoredSegmentDisplayText) -> None:
         """Set text to lights."""
         # get the last chars for the number of chars we have
+        colors = text.get_colors()
+        text = text.convert_to_str()
         text = text[-len(self._lights):]
         text = text.zfill(len(self._lights))
         colors = colors[-len(self._lights):]

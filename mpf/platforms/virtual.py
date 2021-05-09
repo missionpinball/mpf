@@ -1,10 +1,10 @@
 """Contains code for a virtual hardware platform."""
-from typing import Dict, Tuple, Optional, Union, List
+from typing import Dict, Tuple, Optional, Union
 
 import asyncio
 import logging
 
-from mpf.core.rgb_color import RGBColor
+from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
 from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
 from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface, FlashingType
@@ -320,25 +320,31 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
 
     """Virtual segment display."""
 
-    __slots__ = ["text", "flashing", "flash_mask", "colors", "machine", "post_update_events"]
+    __slots__ = ["_text", "flashing", "flash_mask", "machine", "post_update_events"]
 
     def __init__(self, number, machine) -> None:
         """Initialise virtual segment display."""
         super().__init__(number)
         self.machine = machine
-        self.text = ''
+        self._text = None
         self.flashing = FlashingType.NO_FLASH
         self.flash_mask = ""
-        self.colors = [RGBColor('FFFFFF')]
 
-    def set_text(self, text: str, flashing: FlashingType = FlashingType.NO_FLASH, flash_mask: str = "",
-                 colors: Optional[List[RGBColor]] = None) -> None:
+    def set_text(self, text: ColoredSegmentDisplayText, flashing: FlashingType, flash_mask: str) -> None:
         """Set text."""
-        self.text = text
+        self._text = text
         self.flashing = flashing
         self.flash_mask = flash_mask
-        if colors:
-            self.colors = colors
+
+    @property
+    def text(self):
+        """Return text."""
+        return self._text.convert_to_str()
+
+    @property
+    def colors(self):
+        """Return colors."""
+        return self._text.get_colors()
 
 
 class VirtualSound(HardwareSoundPlatformInterface):

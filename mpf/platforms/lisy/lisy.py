@@ -12,9 +12,9 @@ from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareS
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
 
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
+from mpf.devices.segment_display.segment_display_text import SegmentDisplayText
 
 from mpf.core.logging import LogMixin
-from mpf.core.rgb_color import RGBColor
 from mpf.core.utility_functions import Util
 
 from mpf.platforms.lisy.defines import LisyDefines
@@ -225,16 +225,15 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
 
         return b''.join(result)
 
-    def _set_text(self, text: str, colors: List[RGBColor]):
+    def _set_text(self, text: SegmentDisplayText):
         """Set text to display."""
-        del colors
         assert self.platform.api_version is not None
         if self.platform.api_version >= StrictVersion("0.9"):
-            formatted_text = self._format_text(text)
+            formatted_text = self._format_text(text.convert_to_str())
             self.platform.send_byte(LisyDefines.DisplaysSetDisplay0To + self.number,
                                     bytearray([len(formatted_text)]) + formatted_text)
         else:
-            self.platform.send_string(LisyDefines.DisplaysSetDisplay0To + self.number, text)
+            self.platform.send_string(LisyDefines.DisplaysSetDisplay0To + self.number, text.convert_to_str())
 
 
 class LisySound(HardwareSoundPlatformInterface):

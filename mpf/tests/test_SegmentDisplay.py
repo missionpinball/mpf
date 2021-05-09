@@ -1,13 +1,15 @@
-from unittest.mock import patch, call, ANY, Mock
+"""Test segment displays."""
+from unittest.mock import patch, call
 
 from mpf.core.rgb_color import RGBColor
 from mpf.devices.segment_display.transitions import NoTransition, PushTransition, CoverTransition, UncoverTransition, \
     WipeTransition, TransitionRunner, SplitTransition
-from mpf.devices.segment_display.segment_display_text import SegmentDisplayText
+from mpf.devices.segment_display.segment_display_text import SegmentDisplayText, ColoredSegmentDisplayText
 from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType, \
     SegmentDisplaySoftwareFlashPlatformInterface
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 from mpf.tests.MpfTestCase import test_config
+from mpf.platforms.virtual import VirtualSegmentDisplay
 
 
 class TestSegmentDisplay(MpfFakeGameTestCase):
@@ -26,6 +28,13 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         display3 = self.machine.segment_displays["display3"]
         display4 = self.machine.segment_displays["display4"]
         display5 = self.machine.segment_displays["display5"]
+
+        # help the IDE with types and assert that our test works as expected
+        assert isinstance(display1.hw_display, VirtualSegmentDisplay)
+        assert isinstance(display2.hw_display, VirtualSegmentDisplay)
+        assert isinstance(display3.hw_display, VirtualSegmentDisplay)
+        assert isinstance(display4.hw_display, VirtualSegmentDisplay)
+        assert isinstance(display5.hw_display, VirtualSegmentDisplay)
 
         self.assertEqual("       ", display1.hw_display.text)
         self.assertEqual("       ", display2.hw_display.text)
@@ -144,6 +153,10 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         display1 = self.machine.segment_displays["display1"]
         display2 = self.machine.segment_displays["display2"]
 
+        # help the IDE with types and assert that our test works as expected
+        assert isinstance(display1.hw_display, VirtualSegmentDisplay)
+        assert isinstance(display2.hw_display, VirtualSegmentDisplay)
+
         self.post_event("test_event1")
         self.advance_time_and_run()
 
@@ -224,6 +237,10 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         display1 = self.machine.segment_displays["display1"]
         display2 = self.machine.segment_displays["display2"]
 
+        # help the IDE with types and assert that our test works as expected
+        assert isinstance(display1.hw_display, VirtualSegmentDisplay)
+        assert isinstance(display2.hw_display, VirtualSegmentDisplay)
+
         # default scoring
         self.post_event("test_score_two_player")
 
@@ -246,35 +263,38 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.assertEqual("        42", display1.hw_display.text)
         self.assertEqual("      0", display2.hw_display.text)
 
-    @patch("mpf.platforms.interfaces.segment_display_platform_interface.SegmentDisplaySoftwareFlashPlatformInterface.__abstractmethods__", set())
-    @patch("mpf.platforms.interfaces.segment_display_platform_interface.SegmentDisplaySoftwareFlashPlatformInterface._set_text")
+    @patch("mpf.platforms.interfaces.segment_display_platform_interface.SegmentDisplaySoftwareFlashPlatformInterface"
+           ".__abstractmethods__", set())
+    @patch("mpf.platforms.interfaces.segment_display_platform_interface.SegmentDisplaySoftwareFlashPlatformInterface"
+           "._set_text")
     def test_software_flash_platform_interface(self, mock_set_text):
         display = SegmentDisplaySoftwareFlashPlatformInterface("1")
-        display.set_text("12345 ABCDE", FlashingType.NO_FLASH, '', [])
+        text = SegmentDisplayText.from_str("12345 ABCDE", 10, True, True)
+        display.set_text(text, FlashingType.NO_FLASH, '')
         display.set_software_flash(False)
         self.assertTrue(mock_set_text.called)
-        mock_set_text.assert_has_calls([call("12345 ABCDE", [])])
+        mock_set_text.assert_has_calls([call(text)])
         display.set_software_flash(True)
         mock_set_text.reset_mock()
 
-        display.set_text("12345 ABCDE", FlashingType.FLASH_ALL, '', [])
+        display.set_text(text, FlashingType.FLASH_ALL, '')
         display.set_software_flash(False)
         self.assertTrue(mock_set_text.called)
-        mock_set_text.assert_has_calls([call("", [])])
+        mock_set_text.assert_has_calls([call(SegmentDisplayText.from_str("", 10, True, True))])
         display.set_software_flash(True)
         mock_set_text.reset_mock()
 
-        display.set_text("12345 ABCDE", FlashingType.FLASH_MATCH, '', [])
+        display.set_text(text, FlashingType.FLASH_MATCH, '')
         display.set_software_flash(False)
         self.assertTrue(mock_set_text.called)
-        mock_set_text.assert_has_calls([call("12345 ABC  ", [])])
+        mock_set_text.assert_has_calls([call(SegmentDisplayText.from_str("12345 ABC  ", 10, True, True))])
         display.set_software_flash(True)
         mock_set_text.reset_mock()
 
-        display.set_text("12345 ABCDE", FlashingType.FLASH_MASK, "FFFFF______", [])
+        display.set_text(text, FlashingType.FLASH_MASK, "FFFFF______")
         display.set_software_flash(False)
         self.assertTrue(mock_set_text.called)
-        mock_set_text.assert_has_calls([call("      ABCDE", [])])
+        mock_set_text.assert_has_calls([call(SegmentDisplayText.from_str("      ABCDE", 10, True, True))])
         display.set_software_flash(True)
         mock_set_text.reset_mock()
 
@@ -969,15 +989,19 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.post_event("test_set_color_to_red")
         self.advance_time_and_run(1)
 
-        mock_set_text.assert_has_calls([call('       ', colors=[red, red, red, red, red, red, red], flash_mask='',
-                                             flashing=FlashingType.NO_FLASH)])
+        mock_set_text.assert_has_calls(
+            [call(
+                SegmentDisplayText.from_str_with_color('       ', 7, True, True, [red] * 7),
+                flash_mask='', flashing=FlashingType.NO_FLASH)])
         mock_set_text.reset_mock()
 
         self.post_event("test_set_color_to_white")
         self.advance_time_and_run(1)
 
-        mock_set_text.assert_has_calls([call('       ', colors=[wht, wht, wht, wht, wht, wht, wht], flash_mask='',
-                                             flashing=FlashingType.NO_FLASH)])
+        mock_set_text.assert_has_calls(
+            [call(
+                SegmentDisplayText.from_str_with_color('       ', 7, True, True, [wht] * 7),
+                flash_mask='', flashing=FlashingType.NO_FLASH)])
         mock_set_text.reset_mock()
 
         self.post_event("test_transition")
@@ -985,59 +1009,122 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.assertTrue(mock_set_text.called)
         self.assertEqual(20, mock_set_text.call_count)
 
-        mock_set_text.assert_has_calls([call('          ', colors=[red, wht, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('          ', colors=[red, red, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('L         ', colors=[red, red, red, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('LL        ', colors=[red, red, red, red, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('OLL       ', colors=[red, red, red, red, red, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('ROLL      ', colors=[red, red, red, red, red, red, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('CROLL     ', colors=[red, red, red, red, red, red, red, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('SCROLL    ', colors=[red, red, red, red, red, red, red, red, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call(' SCROLL   ', colors=[red, red, red, red, red, red, red, red, red, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('  SCROLL  ', colors=[red, red, red, red, red, red, red, red, red, red], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call(' SCROLL   ', colors=[red, red, red, red, red, red, red, red, red, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('SCROLL    ', colors=[red, red, red, red, red, red, red, red, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('CROLL     ', colors=[red, red, red, red, red, red, red, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('ROLL      ', colors=[red, red, red, red, red, red, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('OLL       ', colors=[red, red, red, red, red, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('LL        ', colors=[red, red, red, red, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('L         ', colors=[red, red, red, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('          ', colors=[red, red, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('          ', colors=[red, wht, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('          ', colors=[wht, wht, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH)
-                                        ])
+        # TODO: find out why red is off by two here
+        mock_set_text.assert_has_calls([
+            call(
+                SegmentDisplayText.from_str_with_color('          ', 10, True, True, [red] * 1 + [wht] * 9),
+                flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(
+                SegmentDisplayText.from_str_with_color('          ', 10, True, True, [red] * 2 + [wht] * 8),
+                flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(
+                SegmentDisplayText.from_str_with_color('L         ', 10, True, True, [red] * 3 + [wht] * 7),
+                flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(
+                SegmentDisplayText.from_str_with_color('LL        ', 10, True, True, [red] * 4 + [wht] * 6),
+                flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(
+                SegmentDisplayText.from_str_with_color('OLL       ', 10, True, True, [red] * 5 + [wht] * 5),
+                flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(
+                SegmentDisplayText.from_str_with_color('ROLL      ', 10, True, True, [red] * 6 + [wht] * 4),
+                flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(
+                SegmentDisplayText.from_str_with_color('CROLL     ', 10, True, True, [red] * 7 + [wht] * 3),
+                flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(
+                SegmentDisplayText.from_str_with_color('SCROLL    ', 10, True, True, [red] * 8 + [wht] * 2),
+                flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(
+                SegmentDisplayText.from_str_with_color(' SCROLL   ', 10, True, True, [red] * 9 + [wht] * 1),
+                flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(
+                SegmentDisplayText.from_str_with_color('  SCROLL  ', 10, True, True, [red] * 10 + [wht] * 0),
+                flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(
+                SegmentDisplayText.from_str_with_color(' SCROLL   ', 10, True, True, [red] * 9 + [wht] * 1),
+                flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(
+                SegmentDisplayText.from_str_with_color('SCROLL    ', 10, True, True, [red] * 8 + [wht] * 2),
+                flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(
+                SegmentDisplayText.from_str_with_color('CROLL     ', 10, True, True, [red] * 7 + [wht] * 3),
+                flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(
+                SegmentDisplayText.from_str_with_color('ROLL      ', 10, True, True, [red] * 6 + [wht] * 4),
+                flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(
+                SegmentDisplayText.from_str_with_color('OLL       ', 10, True, True, [red] * 5 + [wht] * 5),
+                flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(
+                SegmentDisplayText.from_str_with_color('LL        ', 10, True, True, [red] * 4 + [wht] * 6),
+                flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(
+                SegmentDisplayText.from_str_with_color('L         ', 10, True, True, [red] * 3 + [wht] * 7),
+                flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(
+                SegmentDisplayText.from_str_with_color('          ', 10, True, True, [red] * 2 + [wht] * 8),
+                flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(
+                SegmentDisplayText.from_str_with_color('          ', 10, True, True, [red] * 1 + [wht] * 9),
+                flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(
+                SegmentDisplayText.from_str_with_color('          ', 10, True, True, [red] * 0 + [wht] * 10),
+                flash_mask='', flashing=FlashingType.NO_FLASH),
+        ])
         mock_set_text.reset_mock()
 
         self.post_event("test_transition_2")
         self.advance_time_and_run(1)
         self.assertTrue(mock_set_text.called)
         self.assertEqual(5, mock_set_text.call_count)
-        mock_set_text.assert_has_calls([call('    45    ', colors=[wht, wht, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('   3456   ', colors=[wht, wht, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('  234567  ', colors=[wht, wht, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call(' 12345678 ', colors=[wht, wht, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('0123456789', colors=[wht, wht, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH)])
+        mock_set_text.assert_has_calls([
+            call(SegmentDisplayText.from_str_with_color('    45    ', 10, True, True, [wht] * 10),
+                 flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(SegmentDisplayText.from_str_with_color('   3456   ', 10, True, True, [wht] * 10),
+                 flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(SegmentDisplayText.from_str_with_color('  234567  ', 10, True, True, [wht] * 10),
+                 flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(SegmentDisplayText.from_str_with_color(' 12345678 ', 10, True, True, [wht] * 10),
+                 flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(SegmentDisplayText.from_str_with_color('0123456789', 10, True, True, [wht] * 10),
+                 flash_mask='', flashing=FlashingType.NO_FLASH),
+        ])
         mock_set_text.reset_mock()
 
         self.post_event("test_transition_3")
         self.advance_time_and_run(1)
         self.assertTrue(mock_set_text.called)
         self.assertEqual(10, mock_set_text.call_count)
-        mock_set_text.assert_has_calls([call('A012345678', colors=[wht, wht, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('AB01234567', colors=[wht, wht, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('ABC0123456', colors=[wht, wht, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('ABCD012345', colors=[wht, wht, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('ABCDE01234', colors=[wht, wht, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('ABCDEF0123', colors=[wht, wht, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('ABCDEFG012', colors=[wht, wht, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('ABCDEFGH01', colors=[wht, wht, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('ABCDEFGHI0', colors=[wht, wht, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH),
-                                        call('ABCDEFGHIJ', colors=[wht, wht, wht, wht, wht, wht, wht, wht, wht, wht], flash_mask='', flashing=FlashingType.NO_FLASH)])
+        mock_set_text.assert_has_calls([
+            call(SegmentDisplayText.from_str_with_color('A012345678', 10, True, True, [wht] * 10),
+                 flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(SegmentDisplayText.from_str_with_color('AB01234567', 10, True, True, [wht] * 10),
+                 flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(SegmentDisplayText.from_str_with_color('ABC0123456', 10, True, True, [wht] * 10),
+                 flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(SegmentDisplayText.from_str_with_color('ABCD012345', 10, True, True, [wht] * 10),
+                 flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(SegmentDisplayText.from_str_with_color('ABCDE01234', 10, True, True, [wht] * 10),
+                 flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(SegmentDisplayText.from_str_with_color('ABCDEF0123', 10, True, True, [wht] * 10),
+                 flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(SegmentDisplayText.from_str_with_color('ABCDEFG012', 10, True, True, [wht] * 10),
+                 flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(SegmentDisplayText.from_str_with_color('ABCDEFGH01', 10, True, True, [wht] * 10),
+                 flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(SegmentDisplayText.from_str_with_color('ABCDEFGHI0', 10, True, True, [wht] * 10),
+                 flash_mask='', flashing=FlashingType.NO_FLASH),
+            call(SegmentDisplayText.from_str_with_color('ABCDEFGHIJ', 10, True, True, [wht] * 10),
+                 flash_mask='', flashing=FlashingType.NO_FLASH),
+        ])
         mock_set_text.reset_mock()
 
     def test_text_stack(self):
         """Test the segment display text stack functionality."""
         display1 = self.machine.segment_displays["display1"]
+        assert isinstance(display1.hw_display, VirtualSegmentDisplay)
+
         display1.add_text("FIRST")
         self.assertEqual("     FIRST", display1.text)
         self.assertEqual([RGBColor("white")] * 10, display1.colors)
