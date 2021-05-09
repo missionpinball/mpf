@@ -338,5 +338,4 @@ class SegmentDisplay(SystemWideDevice):
         # set text to display
         self.hw_display.set_text(text, flashing=flashing, flash_mask=flash_mask)
         if self.virtual_connector:
-            self.virtual_connector.set_text(self.name, text.convert_to_str(), flashing=flashing,
-                                            flash_mask=flash_mask, colors=text.get_colors())
+            self.virtual_connector.set_text(self.name, text, flashing=flashing, flash_mask=flash_mask)
