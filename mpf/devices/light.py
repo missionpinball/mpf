@@ -42,7 +42,7 @@ class LightStackEntry:
 
     def __repr__(self):
         """Return string representation."""
-        return "<LightStackEntry {}: {} ({}) -> {} ({}) Prio: {}>".format(
+        return "<LightStackEntry {}: {} ({}) -> {} ({}) Priority: {}>".format(
             self.key, self.start_color, self.start_time, self.dest_color, self.dest_time, self.priority)
 
 
@@ -364,7 +364,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
                 used to identify these settings for later removal. If any
                 settings in the stack already have this key, those settings
                 will be replaced with these new settings.
-            start_time: Time this occured to synchronize lights.
+            start_time: Time this occurred to synchronize lights.
         """
         if self._debug:
             self.debug_log("Received color() command. color: %s, fade_ms: %s "
@@ -478,7 +478,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
             fade_ms: Time to fade out the light.
 
         This method triggers a light update, so if the highest priority settings
-        were removed, the light will be updated with whatever's below it. If no
+        were removed, the light will be updated with whatever is below it. If no
         settings remain after these are removed, the light will turn off.
         """
         if not self.stack:
@@ -511,7 +511,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
             fade_ms = None
 
         if fade_ms:
-            # fade to underlaying color
+            # fade to underlying color
             color_of_key = self._get_color_and_fade(stack, 0)[0]
 
             self._remove_from_stack_by_key(key)
@@ -737,6 +737,10 @@ class Light(SystemWideDevice, DevicePositionMixin):
         # check if fade will be done before max_fade_ms
         if target_time > color_settings.dest_time:
             return dest_color, int((color_settings.dest_time - current_time) * 1000), True
+
+        # check if we are calculating before the start_time
+        if target_time <= color_settings.start_time:
+            return color_settings.start_color, max_fade_ms, False
 
         # figure out the ratio of how far along we are
         try:
