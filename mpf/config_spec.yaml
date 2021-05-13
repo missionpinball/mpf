@@ -902,8 +902,8 @@ mode:
     restart_on_next_ball: single|bool|false
     console_log: single|enum(none,basic,full)|basic
     file_log: single|enum(none,basic,full)|basic
-    asset_paths: list|str|
-    path: single|str|
+    asset_paths: list|str|None
+    path: single|str|None
 mode_settings:
     __valid_in__: mode
     __type__: config
