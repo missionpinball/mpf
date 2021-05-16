@@ -151,3 +151,15 @@ class TestLightSegmentDisplays(MpfTestCase):
 
         display2.set_flashing(True)
         self.assertLightFlashing("segment3_x3", "white", secs=2)
+
+        display3 = self.machine.segment_displays["display3"]
+        display3.add_text("W")
+
+        self.assertLightColor("segment5_a", "off")
+        self.assertLightColor("segment5_b", "on")
+        self.assertLightColor("segment5_c", "on")
+        self.assertLightColor("segment5_d", "on")
+        self.assertLightColor("segment5_e", "on")
+        self.assertLightColor("segment5_f", "on")
+        self.assertLightColor("segment5_g", "off")
+        self.assertLightColor("segment5_h", "on")
