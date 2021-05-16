@@ -1,4 +1,5 @@
 #config_version=5
+# Hardware setup for tests: Extension boards at addresses 0 and 1, Lightshow boards at 2 (rgb) and 3 (rgbw)
 
 hardware:
     platform: pkone
@@ -117,6 +118,20 @@ servos:
         reset_position: 0
 
 lights:
+  test_rgb_led_1:
+    start_channel: 3-1-1-0
+    type: rgb
+    subtype: led
+
+  test_rgb_led_2:
+    previous: test_rgb_led_1
+    subtype: led
+
   test_simple_led:
     number: 2-17
     subtype: simple
+
+  test_other_simple_led:
+    number: 3-1
+    subtype: simple
+

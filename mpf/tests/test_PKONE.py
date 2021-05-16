@@ -96,11 +96,11 @@ class TestPKONE(MpfTestCase):
         self.controller = BaseMockPKONE()
 
         self.controller.expected_commands = {
-            'PCN': 'PCNF11H1',
-            'PCB0': 'PCB0XF11H2PY',
-            'PCB1': 'PCB1XF11H2PN',
-            'PCB2': 'PCB2LF10H1RGB',
-            'PCB3': 'PCB2LF10H1RGBW',
+            'PCN': 'PCNF11H1',          # Nano controller (firmware 1.1, hardware rev 1)
+            'PCB0': 'PCB0XF11H2PY',     # Extension board at ID 0 (firmware 1.1, hardware rev 2, high power on)
+            'PCB1': 'PCB1XF11H2PN',     # Extension board at ID 1 (firmware 1.1, hardware rev 2, high power off)
+            'PCB2': 'PCB2LF10H1RGB',    # Lightshow board at ID 2 (RGB firmware 1.0, hardware rev 1)
+            'PCB3': 'PCB2LF10H1RGBW',   # Lightshow board at ID 3 (RGBW firmware 1.0, hardware rev 1)
             'PCB4': 'PCB4N',
             'PCB5': 'PCB5N',
             'PCB6': 'PCB6N',
@@ -555,35 +555,46 @@ class TestPKONE(MpfTestCase):
         # self._test_ws281x_led()
 
     def _test_simple_led(self):
+        self.assertTrue("test_simple_led" in self.machine.lights)
+        self.assertTrue("test_other_simple_led" in self.machine.lights)
+
         # test enable of simple led
         self.controller.expected_commands = {
             "PLS2171": None,
+            "PLS3011": None,
         }
         self.machine.lights["test_simple_led"].on()
+        self.machine.lights["test_other_simple_led"].on()
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 
         # test disable of simple led
         self.controller.expected_commands = {
             "PLS2170": None,
+            "PLS3010": None,
         }
         self.machine.lights["test_simple_led"].off()
+        self.machine.lights["test_other_simple_led"].off()
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 
         # test turning on of simple led using color
         self.controller.expected_commands = {
             "PLS2171": None,
+            "PLS3011": None,
         }
         self.machine.lights["test_simple_led"].color(RGBColor("FFFFFF"))
+        self.machine.lights["test_other_simple_led"].color(RGBColor("FFFFFF"))
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 
         # test turning off of simple led using color
         self.controller.expected_commands = {
             "PLS2170": None,
+            "PLS3010": None,
         }
         self.machine.lights["test_simple_led"].color(RGBColor("000000"))
+        self.machine.lights["test_other_simple_led"].color(RGBColor("000000"))
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 

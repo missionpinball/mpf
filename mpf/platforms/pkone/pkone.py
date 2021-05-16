@@ -6,8 +6,10 @@ platform hardware.
 """
 import asyncio
 from copy import deepcopy
-from typing import Optional, Dict
+from typing import Optional, Dict, List, Tuple
 
+from build.lib.mpf.platforms.pkone.pkone_lights import PKONEDirectLEDChannel
+from mpf.core.platform_batch_light_system import PlatformBatchLightSystem
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.pkone.pkone_serial_communicator import PKONESerialCommunicator
 from mpf.platforms.pkone.pkone_extension import PKONEExtensionBoard
@@ -30,7 +32,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
         machine: The MachineController instance.
     """
 
-    __slots__ = ["config", "serial_connections", "pkone_extensions", "pkone_lightshows", "leds",
+    __slots__ = ["config", "serial_connections", "pkone_extensions", "pkone_lightshows", "leds", "_light_system",
                  "_watchdog_task", "hw_switch_data", "controller_connection", "pkone_commands"]
 
     def __init__(self, machine) -> None:
@@ -41,6 +43,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
         self.pkone_extensions = {}          # type: Dict[int, PKONEExtensionBoard]
         self.pkone_lightshows = {}          # type: Dict[int, PKONELightshowBoard]
         self.leds = {}
+        self._light_system = None           # type: Optional[PlatformBatchLightSystem]
         self._watchdog_task = None
         self.hw_switch_data = dict()
 
@@ -77,6 +80,9 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
     async def initialize(self):
         """Initialize connection to PKONE Nano hardware."""
         await self._connect_to_hardware()
+        self._light_system = PlatformBatchLightSystem(self.machine.clock, self._send_multiple_light_update,
+                                                      self.machine.config['mpf']['default_light_hw_update_hz'],
+                                                      128)
 
     def stop(self):
         """Stop platform and close connections."""
@@ -449,6 +455,21 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
                                                              num=switch_number,
                                                              platform=self)
 
+    async def _send_multiple_light_update(self, sequential_brightness_list: List[Tuple[PKONEDirectLEDChannel,
+                                                                                       float, int]]):
+        first_light, _, common_fade_ms = sequential_brightness_list[0]
+        number_leds = len(sequential_brightness_list)
+
+        # if fade > 0, determine if group of lights can be faded in hardware or need to be faded in
+        # software
+
+        for _, brightness, _ in sequential_brightness_list:
+            pass
+
+        if self.debug:
+            self.debug_log("Set color on %s: %s", first_light.chain_serial, "".join(" 0x%02x" % b for b in cmd))
+        self.send_to_processor(first_light.chain_serial, cmd)
+
     def configure_light(self, number, subtype, config, platform_settings) -> LightPlatformInterface:
         """Configure light in platform."""
         del config
@@ -494,6 +515,26 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
             # Normal LED number format: <board_address_id> - <group> - <led>
             board_address_id, group, number_str = str(number).split('-')
             index = int(number_str)
+
+            # Determine if there are 3 or 4 channels depending upon firmware on board
+            if self.pkone_lightshows[board_address_id].rgbw_firmware:
+                # rgbw uses 4 channels per led
+                return [
+                    {
+                        "number": "{}-{}-{}-0".format(board_address_id, group, index)
+                    },
+                    {
+                        "number": "{}-{}-{}-1".format(board_address_id, group, index)
+                    },
+                    {
+                        "number": "{}-{}-{}-2".format(board_address_id, group, index)
+                    },
+                    {
+                        "number": "{}-{}-{}-3".format(board_address_id, group, index)
+                    },
+                ]
+
+            # rgb uses 3 channels per led
             return [
                 {
                     "number": "{}-{}-{}-0".format(board_address_id, group, index)

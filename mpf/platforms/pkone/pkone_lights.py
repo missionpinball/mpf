@@ -1,6 +1,7 @@
 import logging
 from collections import namedtuple
 
+from mpf.core.platform_batch_light_system import PlatformBatchLight
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade, LightPlatformDirectFade
 
 MYPY = False
@@ -53,7 +54,7 @@ class PKONESimpleLED(LightPlatformSoftwareFade):
         raise AssertionError("Not possible using Simple LEDs on PKONE Lightshow board.")
 
     def __lt__(self, other):
-        """Order lights by string."""
+        """Order lights by board and led number."""
         return (self.number.board_address_id, self.number.led_number) < (
             other.number.board_address_id, other.number.led_number)
 
@@ -99,15 +100,14 @@ class PKONEDirectRGBLED:
         return result
 
 
-class PKONEDirectRGBLEDChannel(LightPlatformDirectFade):
-    """Represents a single RGB LED channel connected to a PKONE hardware platform Lightshow board (running
-    the RGB firmware)."""
+class PKONEDirectRGBLEDChannel(PlatformBatchLight):
+    """Represents a single RGB LED channel connected to a PKONE hardware platform Lightshow board."""
 
     __slots__ = ["led", "channel"]
 
-    def __init__(self, led: any, channel) -> None:
+    def __init__(self, led: any, channel, light_system) -> None:
         """Initialise LED."""
-        super().__init__("{}-{}".format(led.number, channel))
+        super().__init__("{}-{}".format(led.number, channel), light_system)
         self.led = led
         self.channel = int(channel)
 
