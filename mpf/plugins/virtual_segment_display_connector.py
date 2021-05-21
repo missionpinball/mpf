@@ -1,7 +1,6 @@
 """MPF plugin which connects segment displays to MPF-MC to update segment display emulator widgets."""
 
 import logging
-from typing import Optional, List
 
 from mpf.core.rgb_color import RGBColor
 from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
