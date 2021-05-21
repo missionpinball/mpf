@@ -536,7 +536,8 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         """Start reading switch changes."""
         self._poll_task = self.machine.clock.loop.create_task(self._poll())
         self._poll_task.add_done_callback(Util.raise_exceptions)
-        self._light_system.start()
+        if self._light_system:
+            self._light_system.start()
 
     def stop(self):
         """Stop platform."""
