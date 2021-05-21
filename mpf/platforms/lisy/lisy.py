@@ -81,6 +81,8 @@ class LisyDriver(DriverPlatformInterface):
 
     def pulse(self, pulse_settings: PulseSettings):
         """Pulse driver."""
+        if pulse_settings.power != 1.0:
+            raise AssertionError("Pulse power != 1.0 is not supported.")
         self._configure_pulse_ms(pulse_settings.duration)
         self.platform.send_byte(LisyDefines.SolenoidsPulseSolenioid, bytes([int(self.number)]))
 
@@ -492,7 +494,6 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                                                               self.machine.config['mpf'][
                                                                   'default_light_hw_update_hz'],
                                                               self.config['max_led_batch_size'])
-                self._light_system.start()
 
             self.debug_log("Number of lamps: %s. Number of coils: %s. Numbers of display: %s. Number of switches: %s "
                            "Number of modern lights: %s",
@@ -535,6 +536,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         """Start reading switch changes."""
         self._poll_task = self.machine.clock.loop.create_task(self._poll())
         self._poll_task.add_done_callback(Util.raise_exceptions)
+        self._light_system.start()
 
     def stop(self):
         """Stop platform."""
@@ -832,19 +834,19 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         return data
 
     def get_info_string(self):
-        """Dump infos about LISY platform."""
-        infos = ""
+        """Dump info about LISY platform."""
+        info = ""
         if self.config['connection'] == "serial":
-            infos += "LISY connected via serial on {} at {}bps\n".format(self.config['port'], self.config['baud'])
+            info += "LISY connected via serial on {} at {}bps\n".format(self.config['port'], self.config['baud'])
         else:
-            infos += "LISY connected via network at {}:{}\n".format(self.config['network_host'],
-                                                                    self.config['network_port'])
-        infos += "Hardware: {} Lisy Version: {} API Version: {}\n".format(self._hardware_name, self._lisy_version,
-                                                                          self.api_version)
-        infos += "Input count: {} Input map: {}\n".format(self._number_of_switches, sorted(list(self._inputs.keys()),
-                                                                                           key=int))
-        infos += "Coil count: {}\n".format(self._number_of_solenoids)
-        infos += "Modern lights count: {}\n".format(self._number_of_modern_lights)
-        infos += "Traditional lights count: {}\n".format(self._number_of_lamps)
-        infos += "Display count: {}\n".format(self._number_of_displays)
-        return infos
+            info += "LISY connected via network at {}:{}\n".format(self.config['network_host'],
+                                                                   self.config['network_port'])
+        info += "Hardware: {} Lisy Version: {} API Version: {}\n".format(self._hardware_name, self._lisy_version,
+                                                                         self.api_version)
+        info += "Input count: {} Input map: {}\n".format(self._number_of_switches, sorted(list(self._inputs.keys()),
+                                                                                          key=int))
+        info += "Coil count: {}\n".format(self._number_of_solenoids)
+        info += "Modern lights count: {}\n".format(self._number_of_modern_lights)
+        info += "Traditional lights count: {}\n".format(self._number_of_lamps)
+        info += "Display count: {}\n".format(self._number_of_displays)
+        return info
