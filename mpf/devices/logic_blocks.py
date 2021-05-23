@@ -43,6 +43,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
 
         self.player_state_variable = "{}_state".format(self.name)
         '''player_var: (logic_block)_state
+        config_section: counters, accruals, sequences
 
         desc: A dictionary that stores the internal state of the logic block
         with the name (logic_block). (In other words, a logic block called
@@ -170,6 +171,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         enabled = self._state.enabled
         self.machine.events.post("logicblock_{}_updated".format(self.name), value=value, enabled=enabled)
         '''event: logicblock_(name)_updated
+        config_section: counters, accruals, sequences
 
         desc: The logic block called "name" has changed.
 
@@ -197,8 +199,9 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         for event in self.config['events_when_hit']:
             self.machine.events.post(event, **kwargs)
             '''event: logicblock_(name)_hit
+            config_section: counters, accruals, sequences
 
-            desc: The logic block "name" was just hit.
+            desc: The logic block "name" was just hit.            
 
             Note that this is the default hit event for logic blocks,
             but this can be changed in a logic block's "events_when_hit:"
@@ -260,6 +263,15 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         """
         self.info_log("Logic Block timeouted")
         self.machine.events.post("{}_timeout".format(self.name))
+        '''event: (name)_timeout
+        config_section: counters, accruals, sequences
+
+        desc: The logic block called "name" has just timeouted.        
+
+        Timeouts are disabled by default but you can set logic_block_timeout to
+        enable them. They will run from start of your logic block until it is
+        stopped.
+        '''
         self.reset()
 
     @event_handler(5)
@@ -298,6 +310,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
             for event in self.config['events_when_complete']:
                 self.machine.events.post(event)
         '''event: logicblock_(name)_complete
+        config_section: counters, accruals, sequences
 
         desc: The logic block called "name" has just been completed.
 
