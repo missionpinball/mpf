@@ -50,7 +50,8 @@ if MYPY:   # pragma: no cover
     from mpf.devices.drop_target import DropTarget, DropTargetBank  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.logic_blocks import Accrual, Sequence, Counter     # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.devices.servo import Servo     # pylint: disable-msg=cyclic-import,unused-import
-    from mpf.devices.segment_display import SegmentDisplay      # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.segment_display.segment_display import \
+        SegmentDisplay  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.shot_group import ShotGroup    # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.shot import Shot   # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.motor import Motor     # pylint: disable-msg=cyclic-import,unused-import
@@ -680,15 +681,22 @@ class MachineController(LogMixin):
         self.info_log("Starting the main run loop.")
         self._run_loop()
 
+    def stop_with_exception(self, exception) -> None:
+        """Stop MPF because of an exception.
+
+        This may be called from other threads.
+        """
+        self._exception = exception
+        self.clock.loop.call_soon_threadsafe(self._stop_loop, "Exception")
+
     def stop(self, reason=None, **kwargs) -> None:
         """Perform a graceful exit of MPF."""
         del kwargs
-        if self.stop_future.done():
-            return
-
         self.clock.loop.call_soon_threadsafe(self._stop_loop, reason)
 
     def _stop_loop(self, reason):
+        if self.stop_future.done():
+            return
         self.stop_future.set_result(reason)
 
     def _do_stop(self) -> None:

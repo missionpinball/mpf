@@ -2,11 +2,14 @@
 
 hardware:
   platform: virtual
+  switches: pololu_tic
   stepper_controllers: pololu_tic
 
 switches:
   s_home:
-    number: 1
+    number: 1337-SDA
+  s_test:
+    number: 1337-RX
 
 steppers:
   stepper1:

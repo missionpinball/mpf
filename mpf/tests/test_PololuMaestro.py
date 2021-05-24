@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 from mpf.tests.MpfTestCase import MpfTestCase
 import mpf.platforms.pololu_maestro
 
@@ -19,6 +19,15 @@ class TestPololuMaestro(MpfTestCase):
         mpf.platforms.pololu_maestro.serial = MagicMock()
         mpf.platforms.pololu_maestro.serial.Serial.return_value = self.serial
         super().setUp()
+
+    def tearDown(self):
+        self.serial.write.reset_mock()
+        super().tearDown()
+        self.serial.write.assert_has_calls([
+            call(bytes([0xaa, 12, 0x22, 1])),
+            call(bytes([0xaa, 12, 0x22, 2])),
+            call(bytes([0xaa, 13, 0x22, 1]))
+        ], any_order=True)
 
     def _build_message(self, command, number, value, controller=12):
         lsb = value & 0x7f  # 7 bits for least significant byte

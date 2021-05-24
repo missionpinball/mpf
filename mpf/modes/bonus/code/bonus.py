@@ -30,6 +30,11 @@ class Bonus(Mode):
             raise ValueError(
                 "Bonus mode started, but `bonus_entries` is not configured.")
 
+        if not self.machine.game:
+            self.debug_log("Game is not running. Skipping bonus.")
+            self.stop()
+            return
+
         if self.machine.game.tilted:
             self.debug_log("Machine is tilted. Skipping bonus.")
             self._reset_all_scores()

@@ -1,10 +1,10 @@
 """Contains code for a virtual hardware platform."""
-from typing import Dict, Tuple, Optional, Union, List
+from typing import Dict, Tuple, Optional, Union
 
 import asyncio
 import logging
 
-from mpf.core.rgb_color import RGBColor
+from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
 from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
 from mpf.platforms.interfaces.i2c_platform_interface import I2cPlatformInterface
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface, FlashingType
@@ -22,6 +22,7 @@ from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 
+# pylint: disable=too-many-ancestors,too-many-public-methods
 class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, LightsPlatform, SwitchPlatform,
                               DriverPlatform, DmdPlatform, RgbDmdPlatform, SegmentDisplayPlatform, StepperPlatform,
                               HardwareSoundPlatform):
@@ -150,6 +151,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
     def validate_segment_display_section(self, segment_display, config):
         """Validate segment display sections."""
+        del segment_display
         return config
 
     def configure_accelerometer(self, number, config, callback):
@@ -266,8 +268,11 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         del name
         return VirtualDmd()
 
-    async def configure_segment_display(self, number: str, platform_settings) -> SegmentDisplayPlatformInterface:
+    async def configure_segment_display(self, number: str, display_size: int,
+                                        platform_settings) -> SegmentDisplayPlatformInterface:
         """Configure segment display."""
+        del platform_settings
+        del display_size
         return VirtualSegmentDisplay(number, self.machine)
 
     async def configure_i2c(self, number: str) -> "I2cPlatformInterface":
@@ -315,24 +320,31 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
 
     """Virtual segment display."""
 
-    __slots__ = ["text", "flashing", "platform_options", "colors", "machine", "post_update_events"]
+    __slots__ = ["_text", "flashing", "flash_mask", "machine", "post_update_events"]
 
     def __init__(self, number, machine) -> None:
         """Initialise virtual segment display."""
         super().__init__(number)
         self.machine = machine
-        self.text = ''
+        self._text = None
         self.flashing = FlashingType.NO_FLASH
-        self.colors = [RGBColor('FFFFFF')]
+        self.flash_mask = ""
 
-    def set_text(self, text: str, flashing: FlashingType) -> None:
+    def set_text(self, text: ColoredSegmentDisplayText, flashing: FlashingType, flash_mask: str) -> None:
         """Set text."""
-        self.text = text
+        self._text = text
         self.flashing = flashing
+        self.flash_mask = flash_mask
 
-    def set_color(self, colors: List[RGBColor]) -> None:
-        """Set color(s)."""
-        self.colors = colors
+    @property
+    def text(self):
+        """Return text."""
+        return self._text.convert_to_str()
+
+    @property
+    def colors(self):
+        """Return colors."""
+        return self._text.get_colors()
 
 
 class VirtualSound(HardwareSoundPlatformInterface):
@@ -486,6 +498,10 @@ class VirtualServo(ServoPlatformInterface):
     def set_acceleration_limit(self, acceleration_limit):
         """Set acceleration parameter."""
         self.acceleration_limit = acceleration_limit
+
+    def stop(self):
+        """Stop this servo."""
+        self.current_position = "stop"
 
 
 class VirtualStepper(StepperPlatformInterface):

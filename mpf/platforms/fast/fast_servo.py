@@ -33,3 +33,6 @@ class FastServo(ServoPlatformInterface):
 
     def set_acceleration_limit(self, acceleration_limit):
         """Not implemented."""
+
+    def stop(self):
+        """Not implemented."""

@@ -132,7 +132,8 @@ class Command(MpfCommandLineParser):
             raise AssertionError("Initialisation failed!")
 
         print(self.mpf.switches, self.mpf.coils)
-        config = self.mpf.config_validator.validate_config("hardware_test", self.mpf.config.get("hardware_test", {}))
+        config = self.mpf.config_validator.validate_config("hardware_benchmark",
+                                                           self.mpf.config.get("hardware_benchmark", {}))
         print("1. Please confirm that you connected driver \"{}\" to switch \"{}\" and "
               "driver \"{}\" to switch \"{}\"".format(
                   config["coil1"], config["switch1"], config["coil2"], config["switch2"]))
@@ -157,6 +158,7 @@ class Command(MpfCommandLineParser):
 
         print()
         print("This will take a few seconds. Please standby!")
+        print()
 
         if config["flipper"].config["main_coil"] != config["coil2"]:
             print("Main_coil on flipper {} should be {} but is {}.".format(

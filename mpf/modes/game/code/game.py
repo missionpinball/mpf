@@ -295,12 +295,12 @@ class Game(AsyncMode):
 
     def mode_stop(self, **kwargs):
         """Stop mode."""
-        del kwargs
-
-        for mode in self.machine.modes.values():
-            if mode.active and mode.is_game_mode:
-                raise AssertionError("Mode {} is not supposed to run outside of game."
-                                     .format(mode.name))
+        service = kwargs.get("service", False)
+        if not service:
+            for mode in self.machine.modes.values():
+                if mode.active and mode.is_game_mode:
+                    raise AssertionError("Mode {} is not supposed to run outside of game."
+                                         .format(mode.name))
         self.machine.game = None
 
     async def _start_ball(self, is_extra_ball=False):

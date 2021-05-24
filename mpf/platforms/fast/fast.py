@@ -764,10 +764,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         return FASTDMD(self.machine, self.dmd_connection.send)
 
-    async def configure_segment_display(self, number: str, platform_settings) -> FASTSegmentDisplay:
+    async def configure_segment_display(self, number: str, display_size: int, platform_settings) -> FASTSegmentDisplay:
         """Configure a segment display."""
         self.debug_log("Configuring FAST segment display.")
         del platform_settings
+        del display_size
         if not self.seg_connection:
             raise AssertionError("A request was made to configure a FAST "
                                  "Segment Display but no connection is "

@@ -94,10 +94,13 @@ class BallCountHandler(BallDeviceStateHandler):
         self._ball_count = await self.counter.count_balls()
         # on start try to reorder balls if count is unstable
         if self.counter.is_count_unreliable():
-            self.debug_log("BCH: Count is unstable. Trying to reorder balls.")
+            self.info_log("BCH: Count is unstable. Trying to reorder balls.")
             await self.ball_device.ejector.reorder_balls()
+            self.info_log("BCH: Repulse done. Waiting for balls to settle.")
             # recount
             self._ball_count = await self.counter.count_balls()
+
+        self.info_log("BCH: Initial count: %s", self._ball_count)
 
         if self._ball_count > 0:
             self._has_balls.set()
@@ -234,8 +237,9 @@ class BallCountHandler(BallDeviceStateHandler):
             if not self.counter:
                 raise asyncio.CancelledError
             if self.counter.is_count_unreliable():
-                self.debug_log("BCH: Count is unstable. Trying to reorder balls.")
+                self.info_log("BCH: Count is unstable. Trying to reorder balls.")
                 await self.ball_device.ejector.reorder_balls()
+                self.info_log("BCH: Repulse done. Waiting for balls to settle.")
                 new_balls = await self.counter.count_balls()
 
             self.debug_log("BCH: Counting. New count: %s Old count: %s", new_balls, self._ball_count)

@@ -1,18 +1,17 @@
 """Segment displays on light drivers."""
 import logging
-from typing import List
 
-from mpf.core.segment_mappings import SEVEN_SEGMENTS, BCD_SEGMENTS, FOURTEEN_SEGMENTS, SIXTEEN_SEGMENTS
+from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
+from mpf.core.segment_mappings import SEVEN_SEGMENTS, BCD_SEGMENTS, FOURTEEN_SEGMENTS, SIXTEEN_SEGMENTS, EIGHT_SEGMENTS
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
 from mpf.core.platform import SegmentDisplaySoftwareFlashPlatform
-from mpf.core.rgb_color import RGBColor
 
 
 class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
 
     """Segment display which drives lights."""
 
-    __slots__ = ["_lights", "_key", "_segment_map", "_current_text", "_current_colors"]
+    __slots__ = ["_lights", "_key", "_segment_map", "_current_text"]
 
     def __init__(self, number, lights, segment_type):
         """Initialise segment display."""
@@ -22,6 +21,8 @@ class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
             self._segment_map = SEVEN_SEGMENTS
         elif segment_type == "bcd":
             self._segment_map = BCD_SEGMENTS
+        elif segment_type == "8segment":
+            self._segment_map = EIGHT_SEGMENTS
         elif segment_type == "14segment":
             self._segment_map = FOURTEEN_SEGMENTS
         elif segment_type == "16segment":
@@ -30,37 +31,28 @@ class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
             raise AssertionError("Invalid segment type {}".format(segment_type))
 
         self._key = "segment_display_{}".format(number)
-        self._current_text = ""
-        self._current_colors = [RGBColor("white")] * len(self._lights)
+        self._current_text = None
 
-    def set_color(self, colors: List[RGBColor]):
-        """Set colors."""
-        colors = colors[-len(self._lights):]
-        colors += [colors[-1]] * (len(self._lights) - len(colors))
-        if colors != self._current_colors:
-            self._current_colors = colors
-            self._update_text()
-
-    def _set_text(self, text: str) -> None:
+    def _set_text(self, text: ColoredSegmentDisplayText) -> None:
         """Set text to lights."""
         # get the last chars for the number of chars we have
+        assert not text.embed_commas
         text = text[-len(self._lights):]
-        text = text.zfill(len(self._lights))
         if text != self._current_text:
             self._current_text = text
             self._update_text()
 
     def _update_text(self):
         # iterate lights and chars
-        for char, lights_for_char, color in zip(self._current_text, self._lights, self._current_colors):
+        for char, lights_for_char in zip(self._current_text, self._lights):
             try:
-                char_map = self._segment_map[ord(char)]
+                char_map = self._segment_map[char.char_code]
             except KeyError:
                 # if there is no
                 char_map = self._segment_map[None]
             for name, light in lights_for_char.items():
                 if getattr(char_map, name):
-                    light.color(color=color, key=self._key)
+                    light.color(color=char.color, key=self._key)
                 else:
                     light.remove_from_stack_by_key(key=self._key)
 
@@ -84,8 +76,9 @@ class LightSegmentDisplaysPlatform(SegmentDisplaySoftwareFlashPlatform):
         """Return addition config section for segment displays."""
         return "light_segment_displays_device"
 
-    async def configure_segment_display(self, number: str, platform_settings) -> LightSegmentDisplay:
+    async def configure_segment_display(self, number: str, display_size: int, platform_settings) -> LightSegmentDisplay:
         """Configure light segment display."""
+        del display_size
         display = LightSegmentDisplay(number,
                                       lights=platform_settings['lights'],
                                       segment_type=platform_settings['type'])

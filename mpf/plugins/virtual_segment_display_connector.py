@@ -1,9 +1,9 @@
 """MPF plugin which connects segment displays to MPF-MC to update segment display emulator widgets."""
 
 import logging
-from typing import Any
 
 from mpf.core.rgb_color import RGBColor
+from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
 from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
 
 MYPY = False
@@ -14,6 +14,8 @@ if MYPY:   # pragma: no cover
 class VirtualSegmentDisplayConnector:
 
     """MPF plugin which connects segment displays to MPF-MC to update segment display emulator widgets."""
+
+    __slots__ = ["log", "machine", "bcp_client", "config"]
 
     def __init__(self, machine):
         """Initialize virtual segment display connector plugin."""
@@ -42,21 +44,15 @@ class VirtualSegmentDisplayConnector:
             for display in self.config['segment_displays']:
                 display.add_virtual_connector(self)
 
-    def set_text(self, name: str, text: str, flashing: FlashingType) -> None:
+    # pylint: disable=too-many-arguments
+    def set_text(self, name: str, text: ColoredSegmentDisplayText, flashing: FlashingType, flash_mask: str) -> None:
         """Set the display text to send to MPF-MC via BCP."""
+        colors = text.get_colors()
         self.machine.bcp.interface.bcp_trigger_client(
             client=self.bcp_client,
             name='update_segment_display',
             segment_display_name=name,
-            text=text,
-            flashing=flashing)
-
-    def set_color(self, name: str, colors: Any) -> None:
-        """Set the display colors to send to MPF-MC via BCP."""
-        if not isinstance(colors, list):
-            colors = [colors]
-        self.machine.bcp.interface.bcp_trigger_client(
-            client=self.bcp_client,
-            name='update_segment_display',
-            segment_display_name=name,
-            color=[RGBColor(color).hex for color in colors])
+            text=text.convert_to_str(),
+            flashing=str(flashing.value),
+            flash_mask=flash_mask,
+            colors=[RGBColor(color).hex for color in colors] if colors else None)

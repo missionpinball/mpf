@@ -122,6 +122,9 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 await self._skipping_ball(self.ball_device.config['eject_targets'][0], True)
 
     async def _skipping_ball(self, target: "BallDevice", add_ball_to_target: bool):
+        if not self._incoming_ball_which_may_skip_obj:
+            self.info_log("No longer expecting incoming ball which may skip the device.")
+            return False
         incoming_skipping_ball = self._incoming_ball_which_may_skip_obj[0]
         self.info_log("Expecting incoming ball which may skip the device.")
         eject_request = OutgoingBall(target)

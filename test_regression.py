@@ -1,11 +1,11 @@
 """Run regression tests."""
-import os
-import sys
-import unittest
-
-from mpf.tests.MpfDocTestCase import MpfDocTestCase
 
 if __name__ == '__main__':
+    import os
+    import sys
+    import unittest
+
+    from mpf.tests.MpfDocTestCase import MpfDocTestCase
 
     tests = []
     for subdir, dirs, files in os.walk(os.path.join(os.path.dirname(__file__), "mpf", "tests", "regression_tests")):

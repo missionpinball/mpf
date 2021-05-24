@@ -20,7 +20,7 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
         """Initialise Pololu Servo Controller platform."""
         super().__init__(machine)
         self.config = self.machine.config_validator.validate_config("pololu_maestro",
-                                                                    self.machine.config['pololu_maestro'])
+                                                                    self.machine.config.get('pololu_maestro', {}))
         self.platform = None
         self.serial = None
         self.features['tickless'] = True
@@ -72,6 +72,16 @@ class PololuServo(ServoPlatformInterface):
         self.serial = serial_port
         self.cmd_header = bytes([0xaa, self.controller_number])
 
+    def stop(self):
+        """Disable servo.
+
+        Send the Go Home command which will disable the servo.
+        """
+        cmd = self.cmd_header + bytes([0x22, self.number])
+        if self.config['debug']:
+            self.log.debug("Sending cmd: %s", "".join(" 0x%02x" % b for b in cmd))
+        self.serial.write(cmd)
+
     def go_to_position(self, position):
         """Set channel to a specified target value.
 
@@ -81,7 +91,7 @@ class PololuServo(ServoPlatformInterface):
         For servos, target represents the pulse width in of
         quarter-microseconds.
         Servo center is at 1500 microseconds, or 6000 quarter-microseconds
-        Typcially valid servo range is 3000 to 9000 quarter-microseconds
+        Typical valid servo range is 3000 to 9000 quarter-microseconds
         If channel is configured for digital output, values < 6000 = Low ouputco.
 
         Args:

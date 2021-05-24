@@ -46,11 +46,17 @@ message DmdDescription {
   uint32 height = 4;
 }
 
+message SegmentDisplayDescription {
+  string name = 1;
+  uint32 width = 2;
+}
+
 message MachineDescription {
   repeated SwitchDescription switches = 1;
   repeated CoilDescription coils = 2;
   repeated LightDescription lights = 3;
   repeated DmdDescription dmds = 4;
+  repeated SegmentDisplayDescription segment_displays = 5;
 }
 
 // Platform streams switch changes to MPF
@@ -66,6 +72,17 @@ message SetDmdFrameRequest {
   float brightness = 3;
 }
 
+message SetSegmentDisplayFrameRequest {
+  message SegmentDisplayColor {
+    float r = 1;
+    float g = 2;
+    float b = 3;
+  }
+  string name = 1;
+  bytes frame = 2;
+  repeated SegmentDisplayColor colors = 3;
+}
+
 message Commands {
   oneof command {
     FadeLightRequest fade_light = 1;
@@ -75,6 +92,7 @@ message Commands {
     ConfigureHardwareRuleRequest configure_hardware_rule = 5;
     RemoveHardwareRuleRequest remove_hardware_rule = 6;
     SetDmdFrameRequest dmd_frame_request = 7;
+    SetSegmentDisplayFrameRequest segment_display_frame_request = 8;
   }
 }
 

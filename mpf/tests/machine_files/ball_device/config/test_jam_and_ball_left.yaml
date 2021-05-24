@@ -1,0 +1,50 @@
+#config_version=5
+playfields:
+    playfield:
+        tags: default
+        default_source_device: bd_plunger
+
+switches:
+    s_plunger_lane:
+        number: 1
+    s_trough1:
+        number: 2
+    s_trough2:
+        number: 3
+    s_trough3:
+        number: 4
+    s_trough4:
+        number: 5
+    s_trough_jam:
+        number: 6
+    s_playfield:
+        number: 7
+        tags: playfield_active
+    s_start:
+        number: 10
+        tags: start
+
+coils:
+    c_trough_eject:
+        number: A2-B0-7
+        default_pulse_ms: 10
+    c_plunger:
+        number: A2-B1-6
+        default_pulse_ms: 40
+ball_devices:
+    bd_plunger:
+        ball_switches: s_plunger_lane
+        mechanical_eject: true
+        eject_timeouts: 3s
+        eject_coil: c_plunger
+        debug: true
+        file_log: full
+    bd_trough:
+        ball_switches: s_trough1, s_trough2, s_trough3, s_trough4, s_trough_jam
+        eject_coil: c_trough_eject
+        tags: trough, home, drain
+        jam_switch: s_trough_jam
+        eject_coil_jam_pulse: 10ms
+        eject_targets: bd_plunger
+        eject_timeouts: 1500ms
+        debug: yes

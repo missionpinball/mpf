@@ -3,11 +3,13 @@ from mpf.core.delays import DelayManager
 
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
+from mpf.devices.segment_display.transition_manager import TransitionManager
 
 MYPY = False
 if MYPY:   # pragma: no cover
     from typing import Dict     # pylint: disable-msg=cyclic-import,unused-import
-    from mpf.devices.segment_display import SegmentDisplay  # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.segment_display.segment_display import \
+        SegmentDisplay  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class SegmentDisplayPlayer(DeviceConfigPlayer):
@@ -25,6 +27,7 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
         super().__init__(machine)
         self.delay = DelayManager(self.machine)
 
+    # pylint: disable=too-many-branches
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Show text on display."""
         del kwargs
@@ -43,7 +46,15 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
 
             if action == "add":
                 # add text
-                display.add_text(text=s['text'], priority=priority + s['priority'], key=key)
+                s = TransitionManager.validate_config(s, self.machine.config_validator)
+                display.add_text_entry(text=s['text'],
+                                       color=s['color'],
+                                       flashing=self._get_flashing_type(s),
+                                       flash_mask=s['flash_mask'],
+                                       transition=s['transition'],
+                                       transition_out=s['transition_out'],
+                                       priority=priority + s['priority'],
+                                       key=key)
 
                 if s['expire']:
                     instance_dict[display][key] = self.delay.add(
@@ -59,18 +70,32 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
                 display.set_flashing(FlashingType.FLASH_ALL)
             elif action == "flash_match":
                 display.set_flashing(FlashingType.FLASH_MATCH)
+            elif action == "flash_mask":
+                display.set_flashing(FlashingType.FLASH_MASK, s.get('flash_mask', ""))
             elif action == "no_flash":
                 display.set_flashing(FlashingType.NO_FLASH)
             elif action == "set_color":
-                # Setting a color makes no other changes to the display
-                pass
+                if s['color']:
+                    display.set_color(s['color'])
             else:
                 raise AssertionError("Invalid action {}".format(action))
 
-            if s['color']:
-                display.set_color(s['color'])
+    @staticmethod
+    def _get_flashing_type(config: dict):
+        flashing = config.get('flashing', None)
+        if flashing == "off":
+            return FlashingType.NO_FLASH
+        if flashing == "all":
+            return FlashingType.FLASH_ALL
+        if flashing == "match":
+            return FlashingType.FLASH_MATCH
+        if flashing == "mask":
+            return FlashingType.FLASH_MASK
+
+        return None
 
     def _remove(self, instance_dict, key, display):
+        """Remove an instance by key."""
         if key in instance_dict[display]:
             display.remove_text_by_key(key)
             if instance_dict[display][key] is not True:

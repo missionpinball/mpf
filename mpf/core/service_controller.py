@@ -52,11 +52,11 @@ class ServiceController(MpfController):
         for mode in self.machine.modes.values():
             if not mode.active or mode.name in ["service", "game"]:
                 continue
-            mode.stop()
+            mode.stop(service=True)
 
         # explicitly stop game last
         if self.machine.modes["game"].active:
-            self.machine.modes["game"].stop()
+            self.machine.modes["game"].stop(service=True)
 
         self.machine.events.post("service_mode_entered")
 

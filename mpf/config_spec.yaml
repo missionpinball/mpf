@@ -678,6 +678,14 @@ hardware_sound_player:
     value: single|str|None
     platform_options: single|dict|None
     sound_system: single|machine(hardware_sound_systems)|default
+hardware_benchmark:
+    __valid_in__: machine
+    __type__: config
+    switch1: single|machine(switches)|None
+    switch2: single|machine(switches)|None
+    coil1: single|machine(coils)|
+    coil2: single|machine(coils)|
+    flipper: single|machine(flippers)|
 high_score:
     __valid_in__: mode
     __type__: config
@@ -827,6 +835,7 @@ logic_blocks_common:
     start_enabled: single|bool|None
     events_when_complete: list|event_posted|None
     events_when_hit: list|event_posted|None
+    logic_block_timeout: single|ms|0
 accruals:
     __valid_in__: machine, mode
     __type__: device
@@ -893,8 +902,8 @@ mode:
     restart_on_next_ball: single|bool|false
     console_log: single|enum(none,basic,full)|basic
     file_log: single|enum(none,basic,full)|basic
-    asset_paths: list|str|
-    path: single|str|
+    asset_paths: list|str|None
+    path: single|str|None
 mode_settings:
     __valid_in__: mode
     __type__: config
@@ -1098,6 +1107,7 @@ pd_led_boards:
     use_servo_10: single|bool|false
     use_servo_11: single|bool|false
     max_servo_value: single|int|300
+    min_servo_value: single|int|127
     use_stepper_0: single|bool|false
     use_stepper_1: single|bool|false
     stepper_speed: single|int|13524
@@ -1289,20 +1299,56 @@ segment_displays:
     __valid_in__: machine
     __type__: device
     number: single|str|
+    size: single|int|7
+    integrated_dots: single|bool|false
+    integrated_commas: single|bool|false
+    default_color: list|color|white
+    default_transition_update_hz: single|float_or_token|30
     platform_settings: single|dict|None
     platform: single|str|None
 light_segment_displays_device:
     lights: list|dict(str:machine(lights))|
-    type: single|enum(7segment,bcd,14segment,16segment)|
+    type: single|enum(7segment,bcd,8segment,14segment,16segment)|
 segment_display_player:
     __valid_in__: machine, mode, show
     __type__: config_player
     priority: single|int_or_token|0
     text: single|str|None
     color: list|color|None
-    action: single|enum(add,remove,flash,no_flash,flash_match,set_color)|add
+    action: single|enum(add,remove,flash,no_flash,flash_match,flash_mask,set_color)|add
+    transition: ignore
+    transition_out: ignore
+    flashing: single|enum(off,all,match,mask,not_set)|not_set
+    flash_mask: single|str|None
     key: single|str|None
     expire: single|ms_or_token|None
+segment_display_transitions:
+    none:
+        type: single|str|
+    push:
+        type: single|str|
+        direction: single|enum(right,left)|right
+        text: single|str|None
+        text_color: list|color|None
+    cover:
+        type: single|str|
+        direction: single|enum(right,left)|right
+        text: single|str|None
+        text_color: list|color|None
+    uncover:
+        type: single|str|
+        direction: single|enum(right,left)|right
+        text: single|str|None
+        text_color: list|color|None
+    wipe:
+        type: single|str|
+        direction: single|enum(right,left)|right
+        text: single|str|None
+        text_color: list|color|None
+    split:
+        type: single|str|
+        mode: single|enum(push,wipe)|push
+        direction: single|enum(in,out)|out
 servo_controllers:
     __valid_in__: machine
     __type__: config
@@ -1325,6 +1371,8 @@ servos:
     ball_search_wait: single|ms|5s
     include_in_ball_search: single|bool|true
     reset_position: single|float|0.5
+    stop_events: event_handler|event_handler:ms|None
+    stop_timeout_after_last_move: single|ms|None
     reset_events: event_handler|event_handler:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
     number: single|str|
     platform: single|str|None
@@ -1559,6 +1607,7 @@ sound_loop_sets:
 sound_player:
     __valid_in__: machine, mode, show
     __type__: config_player
+    block: single|bool|false
     action: single|enum(play,stop,stop_looping,load,unload)|play
     delay: single|secs|None
     track: single|str|None
@@ -2026,7 +2075,7 @@ widgets:
         padding: single|int_or_token|20
         background_color: single|kivycolor|000000ff
         segment_off_color: single|kivycolor|4b4c4aff
-        segment_on_color: single|kivycolor|dd8217ff
+        segment_on_color: list|kivycolor|dd8217ff
         segment_width: single|float_or_token|0.16
         segment_interval: single|float_or_token|0.05
         bevel_width: single|float_or_token|0.06

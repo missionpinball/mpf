@@ -113,16 +113,17 @@ class SwitchCounter(PhysicalBallCounter):
         self._trigger_recount.set()
         while True:
             new_count = await self._recount()
+            self.debug_log("SC: New count %s last: %s", new_count, self._last_count)
             self._count_stable.set()
 
             if self._last_count is None:
                 self._last_count = new_count
             elif self._last_count < 0:
-                raise AssertionError("Count may never be negative")
+                raise AssertionError("Count may never be negative but it {}".format(self._last_count))
 
-            if self.is_jammed() and new_count == 1:
+            if self.is_jammed() and new_count == 1 and self._last_count != 0:
                 # only jam is active. keep previous count
-                self.debug_log("Counter is jammed. Only jam is active. Will no longer trust count.")
+                self.debug_log("SC: Counter is jammed. Only jam is active. Will no longer trust count.")
                 # ball potentially returned
                 if not self._is_unreliable:
                     self.trigger_activity()
@@ -154,6 +155,7 @@ class SwitchCounter(PhysicalBallCounter):
                     self.record_activity(BallLostActivity())
 
             # update count
+            self.debug_log("SC: Updating count to %s", new_count)
             self._last_count = new_count
             self.trigger_activity()
 
@@ -179,7 +181,7 @@ class SwitchCounter(PhysicalBallCounter):
 
             if not valid:
                 # one of our switches wasn't valid long enough
-                self.debug_log("Switch '%s' changed too recently. Aborting count!", switch.name)
+                self.debug_log("SC: Switch '%s' changed too recently. Aborting count!", switch.name)
                 raise ValueError('Count not stable yet. Run again!')
 
         return switches
@@ -189,7 +191,7 @@ class SwitchCounter(PhysicalBallCounter):
         switches = self._count_switches_sync()
         ball_count = len(switches)
 
-        self.debug_log("Counted %s balls. Active switches: %s. Old: %s", ball_count, switches, self._last_count)
+        self.debug_log("SC: Counted %s balls. Active switches: %s. Old: %s", ball_count, switches, self._last_count)
         return ball_count
 
     @property
@@ -252,7 +254,11 @@ class SwitchCounter(PhysicalBallCounter):
     def _ball_left(self, future):
         if future.cancelled():
             return
-        self._last_count -= 1
-        self.record_activity(BallLostActivity())
+
+        self.debug_log("SC: Ball left. Old count: %s", self._last_count)
+        if not self._is_unreliable:
+            # only do this is count it reliable
+            self._last_count -= 1
+            self.record_activity(BallLostActivity())
         self.trigger_recount()
         self.trigger_activity()

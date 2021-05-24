@@ -18,10 +18,12 @@ class TestPololuTic(MpfTestCase):
 
     def _ticcmd_async(self, *args):
         if args == ("-s", "--full"):
-            return ruamel.yaml.dump({
+            new_status = {
                 'Errors currently stopping the motor': [],
-                'Current position': self._position
-            })
+                'Current position': self._position,
+            }
+            new_status.update(self.status)
+            return ruamel.yaml.dump(new_status)
         elif args == ('--reset-command-timeout',):
             return ""
 
@@ -34,6 +36,14 @@ class TestPololuTic(MpfTestCase):
 
     def setUp(self):
         self._position = 0
+        self.status = {
+                'SCL pin': {'Digital reading': "1"},
+                'SDA pin': {'Digital reading': "1"},
+                'RX pin': {'Digital reading': "1"},
+                'TX pin': {'Digital reading': "1"},
+                'RC pin': {'Digital reading': "1"},
+            }
+
         self.expected_commands = {
             ('--energize',): "",
             ('--exit-safe-start',): "",
@@ -59,17 +69,29 @@ class TestPololuTic(MpfTestCase):
         super().setUp()
         self.assertFalse(self.expected_commands)
 
+    def tearDown(self):
+        self.expected_commands = {
+            ('--deenergize',): "",
+        }
+        super().tearDown()
+        self.assertFalse(self.expected_commands)
+
     def test_tic(self):
         """Test Tic stepper."""
         stepper = self.machine.steppers["stepper1"]
+
+        self.assertSwitchState("s_home", 0)
+        self.assertSwitchState("s_test", 0)
 
         # stepper arrives at home
         self.expected_commands = {
             ('--halt-and-hold',): "",
             ('--halt-and-set-position', '0'): ""
         }
-        self.hit_switch_and_run("s_home", 1)
+        self.status['SDA pin']['Digital reading'] = 0
+        self.advance_time_and_run(.1)
         self.assertFalse(self.expected_commands)
+        self.assertSwitchState("s_home", 1)
 
         # move stepper
         self.expected_commands = {
@@ -107,3 +129,9 @@ class TestPololuTic(MpfTestCase):
         self.expected_commands = {
             ('--halt-and-hold',): ""
         }
+        self.status['RX pin']['Digital reading'] = 0
+        self.advance_time_and_run(.1)
+        self.assertSwitchState("s_test", 1)
+        self.status['RX pin']['Digital reading'] = 1
+        self.advance_time_and_run(.1)
+        self.assertSwitchState("s_test", 0)

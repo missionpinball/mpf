@@ -3,6 +3,7 @@ import ast
 import os
 
 import re
+import time
 from collections import namedtuple
 
 from typing import List
@@ -15,6 +16,8 @@ class EventReferenceParser:
 
     """Parser to find all annotated events in MPF."""
 
+    __slots__ = []
+
     def _parse_file(self, file_name) -> List[EventReference]:
         """Parse one file and return all events from that file."""
         try:
@@ -24,7 +27,6 @@ class EventReferenceParser:
             raise AssertionError("Error while parsing {}".format(file_name))
 
         event_list = []
-
         for x in ast.walk(my_ast):
             if isinstance(x, ast.ClassDef):
                 class_label = None
@@ -35,7 +37,7 @@ class EventReferenceParser:
                         if statement.targets[0].id == "class_label":
                             class_label = str(statement.value.s)
                         elif statement.targets[0].id == "config_section":
-                            config_section = str(statement.value.s)
+                            config_section = [str(statement.value.s)]
 
                 for y in ast.walk(x):
                     if not (isinstance(y, ast.Str) and (y.s.strip().lower().startswith('event:'))):
@@ -52,7 +54,8 @@ class EventReferenceParser:
                         class_label=class_label if not event_dict["class_label"] else event_dict["class_label"],
                         desc=event_dict["desc"],
                         args=self._parse_args(event_dict["args"]),
-                        config_attribute=event_dict["config_attribute"]))
+                        config_attribute=event_dict["config_attribute"]
+                    ))
 
         return event_list
 
@@ -75,6 +78,9 @@ class EventReferenceParser:
         if not final_dict['desc']:
             # not an events docstring
             return None
+
+        if final_dict['config_section']:
+            final_dict['config_section'] = final_dict['config_section'].split(", ")
 
         return final_dict
 

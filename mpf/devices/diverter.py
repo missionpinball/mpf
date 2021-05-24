@@ -189,16 +189,20 @@ class Diverter(SystemWideDevice):
         """Activate the coil."""
         if self.config['activation_coil']:
             if self.config['type'] == 'pulse':
+                self.debug_log("Pulsing coil to activate diverter")
                 self.config['activation_coil'].pulse()
             elif self.config['type'] == 'hold':
+                self.debug_log("Enabling coil to activate diverter")
                 self.config['activation_coil'].enable()
 
     def _coil_deactivate(self):
         """Deactivate the coil."""
         if self.config['activation_coil']:
+            self.debug_log("Disabling coil to activate diverter")
             self.config['activation_coil'].disable()
 
         if self.config['deactivation_coil']:
+            self.debug_log("Pulsing coil to deactivate diverter")
             self.config['deactivation_coil'].pulse()
 
     @event_handler(9)
@@ -373,10 +377,20 @@ class Diverter(SystemWideDevice):
     def _ball_search(self, phase, iteration):
         del phase
         del iteration
-        self._coil_activate()
-        self.machine.delay.add(self.config['ball_search_hold_time'],
-                               self._coil_deactivate,
-                               'diverter_{}_ball_search'.format(self.name))
+        if self.active:
+            self.info_log("Temporarily deactivating diverter to search ball for %sms",
+                          self.config['ball_search_hold_time'])
+            self._coil_deactivate()
+            self.machine.delay.add(self.config['ball_search_hold_time'],
+                                   self._coil_activate,
+                                   'diverter_{}_ball_search'.format(self.name))
+        else:
+            self.info_log("Temporarily activating diverter to search ball for %sms",
+                          self.config['ball_search_hold_time'])
+            self._coil_activate()
+            self.machine.delay.add(self.config['ball_search_hold_time'],
+                                   self._coil_deactivate,
+                                   'diverter_{}_ball_search'.format(self.name))
         return True
 
     def _ball_search_restore(self):

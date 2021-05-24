@@ -96,6 +96,10 @@ class TestRpi(MpfTestCase):
 
         self.pi = self.machine.default_platform.pi  # type: MockApigpio.Pi
 
+    def tearDown(self):
+        super().tearDown()
+        self.assertEqual(0, self.pi.servos[10])
+
     def testPlatform(self):
         # check modes
         self.assertEqual({1: MockApigpio.INPUT,

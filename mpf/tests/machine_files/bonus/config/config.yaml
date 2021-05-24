@@ -3,6 +3,8 @@
 modes:
     - bonus
     - mode1
+    - service
+    - tilt
 
 machine:
     min_balls: 0
@@ -14,6 +16,21 @@ switches:
     s_start:
         number:
         tags: start
+    s_slam_tilt:
+        number:
+        tags: slam_tilt
+    s_door_open:
+        number: 1
+        tags: service_door_open, power_off
+    s_service_enter:
+        number: 17
+        tags: service_enter
+    s_service_esc:
+        number: 18
+        tags: service_esc
+    s_service_up:
+        number: 19
+        tags: service_up
 
 player_vars:
     bonus_multiplier:
