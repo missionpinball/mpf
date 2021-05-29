@@ -506,7 +506,7 @@ class TestBallSearch(MpfGameTestCase):
         self.advance_time_and_run(10)
         self.assertEqual(1, self.machine.ball_devices['playfield'].balls)
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
-        self.advance_time_and_run(21)
+        self.advance_time_and_run(17.1)
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
 
         # diverter disables during ball search

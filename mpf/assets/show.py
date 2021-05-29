@@ -614,6 +614,7 @@ class RunningShow:
     def advance(self, steps=1, show_step=None):
         """Manually advance this show to the next step."""
         self._remove_delay_handler()
+        self.next_step_time = self.machine.clock.get_time()
 
         if steps != 1:
             self.next_step_index += steps - 1
@@ -628,6 +629,7 @@ class RunningShow:
     def step_back(self, steps=1):
         """Manually step back this show to a previous step."""
         self._remove_delay_handler()
+        self.next_step_time = self.machine.clock.get_time()
 
         self.next_step_index -= steps + 1
 

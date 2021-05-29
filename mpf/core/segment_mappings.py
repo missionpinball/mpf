@@ -298,6 +298,135 @@ SEVEN_SEGMENTS = {
 }
 
 
+class EightSegments(Segment):
+
+    """Mapping for eight (or ten) segments.
+
+    Same as 7-segments but with an additional vertical h in the middle.
+    """
+
+    __slots__ = ["h", "g", "f", "e", "d", "c", "b", "a"]
+
+    # pylint: disable-msg=too-many-arguments
+    def __init__(self, dp, h, g, f, e, d, c, b, a, char):
+        """Create segment entry."""
+        super().__init__(dp, char)
+        self.a = a
+        self.b = b
+        self.c = c
+        self.d = d
+        self.e = e
+        self.f = f
+        self.g = g
+        self.h = h
+
+    def get_hgfedcba_encoding(self) -> bytes:
+        """Return segment in hgfedcba order."""
+        return bytes([(self.h << 7) | (self.g << 6) | (self.f << 5) | (self.e << 4) | (self.d << 3) | (self.c << 2) |
+                      (self.b << 1) | self.a])
+
+
+EIGHT_SEGMENTS = {
+    None: EightSegments(dp=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="not mappable char"),
+    32: EightSegments(dp=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="(space)"),
+    33: EightSegments(dp=1, h=0, g=0, f=0, e=0, d=0, c=1, b=1, a=0, char="!"),
+    34: EightSegments(dp=0, h=0, g=0, f=1, e=0, d=0, c=0, b=1, a=0, char="\""),
+    35: EightSegments(dp=0, h=0, g=1, f=1, e=1, d=1, c=1, b=1, a=0, char="#"),
+    36: EightSegments(dp=0, h=1, g=1, f=1, e=0, d=1, c=1, b=0, a=1, char="$"),
+    37: EightSegments(dp=1, h=0, g=1, f=0, e=1, d=0, c=0, b=1, a=0, char="%"),
+    38: EightSegments(dp=0, h=0, g=1, f=0, e=0, d=0, c=1, b=1, a=0, char="&"),
+    39: EightSegments(dp=0, h=0, g=0, f=1, e=0, d=0, c=0, b=0, a=0, char="'"),
+    40: EightSegments(dp=0, h=0, g=0, f=1, e=0, d=1, c=0, b=0, a=1, char="("),
+    41: EightSegments(dp=0, h=0, g=0, f=0, e=0, d=1, c=0, b=1, a=1, char=")"),
+    42: EightSegments(dp=0, h=0, g=0, f=1, e=0, d=0, c=0, b=0, a=1, char="*"),
+    43: EightSegments(dp=0, h=1, g=1, f=0, e=0, d=0, c=0, b=0, a=0, char="+"),
+    44: EightSegments(dp=0, h=0, g=0, f=0, e=1, d=0, c=0, b=0, a=0, char=","),
+    45: EightSegments(dp=0, h=0, g=1, f=0, e=0, d=0, c=0, b=0, a=0, char="-"),
+    46: EightSegments(dp=1, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="."),
+    47: EightSegments(dp=0, h=0, g=1, f=0, e=1, d=0, c=0, b=1, a=0, char="/"),
+    48: EightSegments(dp=0, h=0, g=0, f=1, e=1, d=1, c=1, b=1, a=1, char="0"),
+    49: EightSegments(dp=0, h=1, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="1"),
+    50: EightSegments(dp=0, h=0, g=1, f=0, e=1, d=1, c=0, b=1, a=1, char="2"),
+    51: EightSegments(dp=0, h=0, g=1, f=0, e=0, d=1, c=1, b=1, a=1, char="3"),
+    52: EightSegments(dp=0, h=0, g=1, f=1, e=0, d=0, c=1, b=1, a=0, char="4"),
+    53: EightSegments(dp=0, h=0, g=1, f=1, e=0, d=1, c=1, b=0, a=1, char="5"),
+    54: EightSegments(dp=0, h=0, g=1, f=1, e=1, d=1, c=1, b=0, a=1, char="6"),
+    55: EightSegments(dp=0, h=0, g=0, f=0, e=0, d=0, c=1, b=1, a=1, char="7"),
+    56: EightSegments(dp=0, h=0, g=1, f=1, e=1, d=1, c=1, b=1, a=1, char="8"),
+    57: EightSegments(dp=0, h=0, g=1, f=1, e=0, d=1, c=1, b=1, a=1, char="9"),
+    58: EightSegments(dp=0, h=0, g=0, f=0, e=0, d=1, c=0, b=0, a=1, char=":"),
+    59: EightSegments(dp=0, h=0, g=0, f=0, e=0, d=1, c=1, b=0, a=1, char=";"),
+    60: EightSegments(dp=0, h=0, g=1, f=1, e=0, d=0, c=0, b=0, a=1, char="<"),
+    61: EightSegments(dp=0, h=0, g=1, f=0, e=0, d=1, c=0, b=0, a=0, char="="),
+    62: EightSegments(dp=0, h=0, g=1, f=0, e=0, d=0, c=0, b=1, a=1, char=">"),
+    63: EightSegments(dp=1, h=0, g=1, f=0, e=1, d=0, c=0, b=1, a=1, char="?"),
+    64: EightSegments(dp=0, h=0, g=1, f=0, e=1, d=1, c=1, b=1, a=1, char="@"),
+    65: EightSegments(dp=0, h=0, g=1, f=1, e=1, d=0, c=1, b=1, a=1, char="A"),
+    66: EightSegments(dp=0, h=1, g=1, f=0, e=0, d=1, c=1, b=0, a=0, char="B"),
+    67: EightSegments(dp=0, h=0, g=0, f=1, e=1, d=1, c=0, b=0, a=1, char="C"),
+    68: EightSegments(dp=0, h=1, g=0, f=0, e=0, d=1, c=1, b=1, a=1, char="D"),
+    69: EightSegments(dp=0, h=0, g=1, f=1, e=1, d=1, c=0, b=0, a=1, char="E"),
+    70: EightSegments(dp=0, h=0, g=1, f=1, e=1, d=0, c=0, b=0, a=1, char="F"),
+    71: EightSegments(dp=0, h=0, g=0, f=1, e=1, d=1, c=1, b=0, a=1, char="G"),
+    72: EightSegments(dp=0, h=0, g=1, f=1, e=1, d=0, c=1, b=1, a=0, char="H"),
+    73: EightSegments(dp=0, h=1, g=0, f=0, e=0, d=1, c=0, b=0, a=1, char="I"),
+    74: EightSegments(dp=0, h=0, g=0, f=0, e=1, d=1, c=1, b=1, a=0, char="J"),
+    75: EightSegments(dp=0, h=1, g=1, f=1, e=1, d=0, c=0, b=0, a=0, char="K"),
+    76: EightSegments(dp=0, h=0, g=0, f=1, e=1, d=1, c=0, b=0, a=0, char="L"),
+    77: EightSegments(dp=0, h=1, g=0, f=1, e=1, d=0, c=1, b=1, a=1, char="M"),
+    78: EightSegments(dp=0, h=0, g=0, f=1, e=1, d=0, c=1, b=1, a=1, char="N"),
+    79: EightSegments(dp=0, h=0, g=0, f=1, e=1, d=1, c=1, b=1, a=1, char="O"),
+    80: EightSegments(dp=0, h=0, g=1, f=1, e=1, d=0, c=0, b=1, a=1, char="P"),
+    81: EightSegments(dp=0, h=0, g=1, f=1, e=0, d=1, c=0, b=1, a=1, char="Q"),
+    82: EightSegments(dp=0, h=0, g=0, f=1, e=1, d=0, c=0, b=1, a=1, char="R"),
+    83: EightSegments(dp=0, h=0, g=1, f=1, e=0, d=1, c=1, b=0, a=1, char="S"),
+    84: EightSegments(dp=0, h=1, g=0, f=0, e=0, d=0, c=0, b=0, a=1, char="T"),
+    85: EightSegments(dp=0, h=0, g=0, f=1, e=1, d=1, c=1, b=1, a=0, char="U"),
+    86: EightSegments(dp=0, h=0, g=0, f=1, e=1, d=1, c=1, b=1, a=0, char="V"),
+    87: EightSegments(dp=0, h=1, g=0, f=1, e=1, d=1, c=1, b=1, a=0, char="W"),
+    88: EightSegments(dp=0, h=1, g=1, f=1, e=0, d=0, c=1, b=0, a=0, char="X"),
+    89: EightSegments(dp=0, h=0, g=1, f=1, e=0, d=1, c=1, b=1, a=0, char="Y"),
+    90: EightSegments(dp=0, h=0, g=1, f=0, e=1, d=1, c=0, b=1, a=1, char="Z"),
+    91: EightSegments(dp=0, h=0, g=0, f=1, e=1, d=1, c=0, b=0, a=1, char="["),
+    92: EightSegments(dp=0, h=0, g=1, f=1, e=0, d=0, c=1, b=0, a=0, char="\""),
+    93: EightSegments(dp=0, h=0, g=0, f=0, e=0, d=1, c=1, b=1, a=1, char="]"),
+    94: EightSegments(dp=0, h=0, g=0, f=1, e=0, d=0, c=0, b=1, a=1, char="^"),
+    95: EightSegments(dp=0, h=0, g=0, f=0, e=0, d=1, c=0, b=0, a=0, char="_"),
+    96: EightSegments(dp=0, h=0, g=0, f=0, e=0, d=0, c=0, b=1, a=0, char="`"),
+    97: EightSegments(dp=0, h=0, g=1, f=0, e=1, d=1, c=1, b=1, a=1, char="a"),
+    98: EightSegments(dp=0, h=0, g=1, f=1, e=1, d=1, c=1, b=0, a=0, char="b"),
+    99: EightSegments(dp=0, h=0, g=1, f=0, e=1, d=1, c=0, b=0, a=0, char="c"),
+    100: EightSegments(dp=0, h=0, g=1, f=0, e=1, d=1, c=1, b=1, a=0, char="d"),
+    101: EightSegments(dp=0, h=0, g=1, f=1, e=1, d=1, c=0, b=1, a=1, char="e"),
+    102: EightSegments(dp=0, h=0, g=1, f=1, e=1, d=0, c=0, b=0, a=1, char="f"),
+    103: EightSegments(dp=0, h=0, g=1, f=1, e=0, d=1, c=1, b=1, a=1, char="g"),
+    104: EightSegments(dp=0, h=0, g=1, f=1, e=1, d=0, c=1, b=0, a=0, char="h"),
+    105: EightSegments(dp=0, h=0, g=0, f=0, e=1, d=0, c=0, b=0, a=0, char="i"),
+    106: EightSegments(dp=0, h=0, g=0, f=0, e=0, d=1, c=1, b=0, a=0, char="j"),
+    107: EightSegments(dp=0, h=0, g=1, f=1, e=1, d=0, c=1, b=0, a=1, char="k"),
+    108: EightSegments(dp=0, h=0, g=0, f=1, e=1, d=0, c=0, b=0, a=0, char="l"),
+    109: EightSegments(dp=0, h=0, g=0, f=0, e=1, d=0, c=1, b=0, a=0, char="m"),
+    110: EightSegments(dp=0, h=0, g=1, f=0, e=1, d=0, c=1, b=0, a=0, char="n"),
+    111: EightSegments(dp=0, h=0, g=1, f=0, e=1, d=1, c=1, b=0, a=0, char="o"),
+    112: EightSegments(dp=0, h=0, g=1, f=1, e=1, d=0, c=0, b=1, a=1, char="p"),
+    113: EightSegments(dp=0, h=0, g=1, f=1, e=0, d=0, c=1, b=1, a=1, char="q"),
+    114: EightSegments(dp=0, h=0, g=1, f=0, e=1, d=0, c=0, b=0, a=0, char="r"),
+    115: EightSegments(dp=0, h=0, g=1, f=1, e=0, d=1, c=1, b=0, a=1, char="s"),
+    116: EightSegments(dp=0, h=0, g=1, f=1, e=1, d=1, c=0, b=0, a=0, char="t"),
+    117: EightSegments(dp=0, h=0, g=0, f=0, e=1, d=1, c=1, b=0, a=0, char="u"),
+    118: EightSegments(dp=0, h=0, g=0, f=0, e=1, d=1, c=1, b=0, a=0, char="v"),
+    119: EightSegments(dp=0, h=0, g=0, f=0, e=1, d=0, c=1, b=0, a=0, char="w"),
+    120: EightSegments(dp=0, h=1, g=1, f=1, e=0, d=0, c=1, b=0, a=0, char="x"),
+    121: EightSegments(dp=0, h=0, g=1, f=1, e=0, d=1, c=1, b=1, a=0, char="y"),
+    122: EightSegments(dp=0, h=0, g=1, f=0, e=1, d=1, c=0, b=1, a=1, char="z"),
+    123: EightSegments(dp=0, h=0, g=1, f=0, e=0, d=0, c=1, b=1, a=0, char="{"),
+    124: EightSegments(dp=0, h=1, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="|"),
+    125: EightSegments(dp=0, h=0, g=1, f=1, e=1, d=0, c=0, b=0, a=0, char="}"),
+    126: EightSegments(dp=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=1, char="~"),
+    127: EightSegments(dp=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="(del)"),
+}
+
+
 # pylint: disable-msg=too-many-instance-attributes
 class FourteenSegments(Segment):
 

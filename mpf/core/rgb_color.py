@@ -342,6 +342,7 @@ class RGBColor:
             colors
 
         """
+        assert 0.0 <= fraction <= 1.0
         if isinstance(start_color, RGBColor):
             start_color = start_color.rgb
         else:

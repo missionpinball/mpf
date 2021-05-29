@@ -107,6 +107,19 @@ class TestDeviceLight(MpfTestCase):
         self.assertLightColor("led1", [0, 0, 255])
         self.assertEqual(1, len(led.stack))
 
+        led.color(RGBColor("blue"), key="lower", priority=1, fade_ms=1000)
+        led.color(RGBColor("red"), key="upper", priority=2)
+        self.advance_time_and_run(.1)
+        led.remove_from_stack_by_key("upper", fade_ms=4000)
+        self.advance_time_and_run(.4)
+        self.assertLightColor("led1", [230, 0, 25])
+        self.advance_time_and_run(1.5)
+        self.assertLightColor("led1", [134, 0, 121])
+        self.advance_time_and_run(1)
+        self.assertLightColor("led1", [71, 0, 184])
+        self.advance_time_and_run(1)
+        self.assertLightColor("led1", [7, 0, 248])
+
     def test_color_and_stack(self):
         led1 = self.machine.lights["led1"]
 

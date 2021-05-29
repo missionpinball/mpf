@@ -48,6 +48,22 @@ lights:
     number:
   segment4_x3:
     number:
+  segment5_a:
+    number:
+  segment5_b:
+    number:
+  segment5_c:
+    number:
+  segment5_d:
+    number:
+  segment5_e:
+    number:
+  segment5_f:
+    number:
+  segment5_g:
+    number:
+  segment5_h:
+    number:
 
 segment_displays:
   display1:
@@ -84,6 +100,20 @@ segment_displays:
           x2: segment4_x2
           x3: segment4_x3
       type: bcd
+  display3:
+    number: 4
+    size: 1
+    platform_settings:
+      lights:
+        - a: segment5_a
+          b: segment5_b
+          c: segment5_c
+          d: segment5_d
+          e: segment5_e
+          f: segment5_f
+          g: segment5_g
+          h: segment5_h
+      type: 8segment
 
 segment_display_player:
   show_1337:

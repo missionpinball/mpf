@@ -2,10 +2,9 @@
 import logging
 
 from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
-from mpf.core.segment_mappings import SEVEN_SEGMENTS, BCD_SEGMENTS, FOURTEEN_SEGMENTS, SIXTEEN_SEGMENTS
+from mpf.core.segment_mappings import SEVEN_SEGMENTS, BCD_SEGMENTS, FOURTEEN_SEGMENTS, SIXTEEN_SEGMENTS, EIGHT_SEGMENTS
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
 from mpf.core.platform import SegmentDisplaySoftwareFlashPlatform
-from mpf.core.rgb_color import RGBColor
 
 
 class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
@@ -22,6 +21,8 @@ class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
             self._segment_map = SEVEN_SEGMENTS
         elif segment_type == "bcd":
             self._segment_map = BCD_SEGMENTS
+        elif segment_type == "8segment":
+            self._segment_map = EIGHT_SEGMENTS
         elif segment_type == "14segment":
             self._segment_map = FOURTEEN_SEGMENTS
         elif segment_type == "16segment":
