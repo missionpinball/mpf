@@ -5,19 +5,18 @@ Contains the hardware interface and drivers for the Penny K Pinball PKONE
 platform hardware.
 """
 import asyncio
+import math
 from copy import deepcopy
 from typing import Optional, Dict, List, Tuple
 
-from build.lib.mpf.platforms.pkone.pkone_lights import PKONEDirectLEDChannel
 from mpf.core.platform_batch_light_system import PlatformBatchLightSystem
-from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.pkone.pkone_serial_communicator import PKONESerialCommunicator
 from mpf.platforms.pkone.pkone_extension import PKONEExtensionBoard
 from mpf.platforms.pkone.pkone_lightshow import PKONELightshowBoard
 from mpf.platforms.pkone.pkone_switch import PKONESwitch, PKONESwitchNumber
 from mpf.platforms.pkone.pkone_coil import PKONECoil, PKONECoilNumber
 from mpf.platforms.pkone.pkone_servo import PKONEServo, PKONEServoNumber
-from mpf.platforms.pkone.pkone_lights import PKONESimpleLED, PKONESimpleLEDNumber
+from mpf.platforms.pkone.pkone_lights import PKONESimpleLED, PKONESimpleLEDNumber, PKONELEDChannel
 
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
     DriverConfig, SwitchConfig, RepulseSettings, ServoPlatform
@@ -58,19 +57,8 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
 
         # Set platform features. Each platform interface can change
         # these to notify the framework of the specific features it supports.
-        self.features['has_dmds'] = False
-        self.features['has_rgb_dmds'] = False
-        self.features['has_accelerometers'] = False
-        self.features['has_i2c'] = False
-        self.features['has_servos'] = True
-        self.features['has_lights'] = True
-        self.features['has_switches'] = True
-        self.features['has_drivers'] = True
         self.features['max_pulse'] = 250
         self.features['tickless'] = True
-        self.features['has_segment_displays'] = False
-        self.features['has_hardware_sound_systems'] = False
-        self.features['has_steppers'] = False
         self.features['allow_empty_numbers'] = False
 
         self.config = self.machine.config_validator.validate_config("pkone", self.machine.config['pkone'])
@@ -80,9 +68,11 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
     async def initialize(self):
         """Initialize connection to PKONE Nano hardware."""
         await self._connect_to_hardware()
+
+        # Setup the batch light system
         self._light_system = PlatformBatchLightSystem(self.machine.clock, self._send_multiple_light_update,
                                                       self.machine.config['mpf']['default_light_hw_update_hz'],
-                                                      128)
+                                                      64)
 
     def stop(self):
         """Stop platform and close connections."""
@@ -455,28 +445,61 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
                                                              num=switch_number,
                                                              platform=self)
 
-    async def _send_multiple_light_update(self, sequential_brightness_list: List[Tuple[PKONEDirectLEDChannel,
+    async def _send_multiple_light_update(self, sequential_brightness_list: List[Tuple[PKONELEDChannel,
                                                                                        float, int]]):
-        first_light, _, common_fade_ms = sequential_brightness_list[0]
-        number_leds = len(sequential_brightness_list)
+        first_channel, _, common_fade_ms = sequential_brightness_list[0]
+        num_channels = len(sequential_brightness_list)
 
-        # if fade > 0, determine if group of lights can be faded in hardware or need to be faded in
-        # software
+        lightshow = self.pkone_lightshows[first_channel.board_address_id]
+        if lightshow.rgbw_firmware:
+            cmd_opcode = "PWB"
+            channel_grouping = 4
+        else:
+            cmd_opcode = "PLB"
+            channel_grouping = 3
 
-        for _, brightness, _ in sequential_brightness_list:
-            pass
+        # determine if batch channels are properly aligned to internal LED boundaries
+        first_channel_alignment_offset = first_channel.index % channel_grouping
+        last_channel_alignment_offset = (first_channel.index + num_channels) % channel_grouping
 
-        if self.debug:
-            self.debug_log("Set color on %s: %s", first_light.chain_serial, "".join(" 0x%02x" % b for b in cmd))
-        self.send_to_processor(first_light.chain_serial, cmd)
+        """
+        if first_channel_alignment_offset > 0:
+            # the first channel does not align with internal hardware boundary, need to retrieve other
+            # channels for the first light
+            first_light = self.machine.lights[first_channel.config.name]
+            first_light.get_hw_numbers()[0:first_channel_alignment_offset]
+            channel = first_channel
+            for index in range(first_channel_alignment_offset):
+                previous_channel = self._light_system.last_state[channel.get_predecessor_number()]
+                brightness_values = "{:03d}".format(previous_channel.get)
+        """
+        first_led_number = (first_channel.index // channel_grouping) + 1
+        num_leds = math.ceil(num_channels / channel_grouping)
 
-    def configure_light(self, number, subtype, config, platform_settings) -> LightPlatformInterface:
+        # generate list of brightness values (3 digit int values)
+        brightness_values = "".join("%03d" % (b[1] * 255) for b in sequential_brightness_list)
+
+        """
+        # if fade > 0, determine if group of lights can be faded in hardware or need to be faded in software
+        if common_fade_ms > 0 and (first_channel_alignment_offset > 0 or last_channel_alignment_offset > 0):
+            # fade will be handled in software, mark all lights dirty so they'll be recalculated next update
+            common_fade_ms = 0
+            for light, _, _ in sequential_brightness_list:
+                self._light_system.mark_dirty(light)
+        """
+
+        cmd = "{}{}{}{:02d}{:04d}{}".format(cmd_opcode, first_channel.board_address_id,
+                                            first_channel.group, first_led_number, num_leds,
+                                            common_fade_ms / 10,
+                                            brightness_values)
+        self.controller_connection.send(cmd)
+
+    def configure_light(self, number, subtype, config, platform_settings):
         """Configure light in platform."""
-        del config
         del platform_settings
 
         if not self.controller_connection:
-            raise AssertionError("A request was made to configure a PKONE switch, but no "
+            raise AssertionError("A request was made to configure a PKONE light, but no "
                                  "connection to PKONE controller is available")
 
         if subtype == "simple":
@@ -487,16 +510,9 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
 
         if not subtype or subtype == "led":
             board_address_id, group, index = number.split("-")
-            """
-            if number_str not in self.fast_leds:
-                self.fast_leds[number_str] = FASTDirectLED(
-                    number_str, int(self.config['hardware_led_fade_time']), self.machine)
-            fast_led_channel = FASTDirectLEDChannel(self.fast_leds[number_str], channel)
-            self.fast_leds[number_str].add_channel(int(channel), fast_led_channel)
-
-            return fast_led_channel
-            """
-            return None
+            led_channel = PKONELEDChannel(board_address_id, group, index, config, self._light_system)
+            self._light_system.mark_dirty(led_channel)
+            return led_channel
 
         raise AssertionError("Unknown subtype {}".format(subtype))
 
@@ -521,30 +537,30 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
                 # rgbw uses 4 channels per led
                 return [
                     {
-                        "number": "{}-{}-{}-0".format(board_address_id, group, index)
+                        "number": "{}-{}-{}".format(board_address_id, group, (index - 1) * 4)
                     },
                     {
-                        "number": "{}-{}-{}-1".format(board_address_id, group, index)
+                        "number": "{}-{}-{}".format(board_address_id, group, (index - 1) * 4 + 1)
                     },
                     {
-                        "number": "{}-{}-{}-2".format(board_address_id, group, index)
+                        "number": "{}-{}-{}".format(board_address_id, group, (index - 1) * 4 + 2)
                     },
                     {
-                        "number": "{}-{}-{}-3".format(board_address_id, group, index)
+                        "number": "{}-{}-{}".format(board_address_id, group, (index - 1) * 4 + 3)
                     },
                 ]
 
             # rgb uses 3 channels per led
             return [
                 {
-                    "number": "{}-{}-{}-0".format(board_address_id, group, index)
+                    "number": "{}-{}-{}".format(board_address_id, group, (index - 1) * 3)
                 },
                 {
-                    "number": "{}-{}-{}-1".format(board_address_id, group, index)
+                    "number": "{}-{}-{}".format(board_address_id, group, (index - 1) * 3 + 1)
                 },
                 {
-                    "number": "{}-{}-{}-2".format(board_address_id, group, index)
+                    "number": "{}-{}-{}".format(board_address_id, group, (index - 1) * 3 + 2)
                 },
             ]
 
-        raise AssertionError("Unknown subtype {}".format(subtype))
+        raise AssertionError("Unknown light subtype {}".format(subtype))

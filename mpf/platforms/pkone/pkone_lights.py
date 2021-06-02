@@ -1,7 +1,8 @@
 import logging
 from collections import namedtuple
 
-from mpf.core.platform_batch_light_system import PlatformBatchLight
+from mpf.core.platform import LightConfig
+from mpf.core.platform_batch_light_system import PlatformBatchLight, PlatformBatchLightSystem
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade, LightPlatformDirectFade
 
 MYPY = False
@@ -59,137 +60,50 @@ class PKONESimpleLED(LightPlatformSoftwareFade):
             other.number.board_address_id, other.number.led_number)
 
 
-class PKONEDirectRGBLED:
+class PKONELEDChannel(PlatformBatchLight):
+    """Represents a single LED channel connected to a PKONE hardware platform Lightshow board."""
 
-    """PKONE RGB LED."""
+    __slots__ = ["board_address_id", "group", "index", "config"]
 
-    __slots__ = ["number", "number_int", "dirty", "hardware_fade_ms", "log", "channels", "machine"]
-
-    def __init__(self, number: str, hardware_fade_ms: int, machine) -> None:
-        """Initialise FAST LED."""
-        self.number_int = int(number)
-        self.dirty = True
-        self.machine = machine
-        self.hardware_fade_ms = hardware_fade_ms
-        self.log = logging.getLogger('PKONERGBLED')
-        self.channels = [None, None, None]      # type: List[Optional[PKONEDirectRGBLEDChannel]]
-        # PKONE leds on Lightshow boards running the RGB firmware are 3 element RGB lights
-        self.log.debug("Creating PKONE RGB LED at hardware address: %s", self.number)
-
-    def add_channel(self, channel_num: int, channel_obj: "PKONEDirectRGBLEDChannel"):
-        """Add channel to LED."""
-        self.channels[channel_num] = channel_obj
-
-    @property
-    def current_color(self):
-        """Return current color."""
-        result = ""
-        self.dirty = False
-        current_time = self.machine.clock.get_time()
-        # send this as grb because the hardware will twist it again
-        for index in [1, 0, 2]:
-            channel = self.channels[index]
-            if channel:
-                brightness, _, done = channel.get_fade_and_brightness(current_time)
-                result += hex(int(brightness * 255))[2:].zfill(2)
-                if not done:
-                    self.dirty = True
-            else:
-                result += "00"
-
-        return result
-
-
-class PKONEDirectRGBLEDChannel(PlatformBatchLight):
-    """Represents a single RGB LED channel connected to a PKONE hardware platform Lightshow board."""
-
-    __slots__ = ["led", "channel"]
-
-    def __init__(self, led: any, channel, light_system) -> None:
+    def __init__(self, board_address_id, group, index,
+                 config: LightConfig, light_system: PlatformBatchLightSystem) -> None:
         """Initialise LED."""
-        super().__init__("{}-{}".format(led.number, channel), light_system)
-        self.led = led
-        self.channel = int(channel)
+        super().__init__("{}-{}-{}".format(board_address_id, group, index), light_system)
+        self.board_address_id = int(board_address_id)
+        self.group = int(group)
+        self.index = int(index)
+        self.config = config
 
     def get_max_fade_ms(self) -> int:
         """Return max fade time."""
         return 40960
 
-    def set_brightness_and_fade(self, brightness: float, fade_ms: int) -> None:
-        """Set the light to the specified brightness.
-
-        Args:
-        ----
-            brightness: float of the brightness
-            fade_ms: ms to fade the light
-
-        Does not return anything.
-        """
-        raise NotImplementedError
-
     def get_board_name(self):
         """Return the board of this light."""
-        return "FAST LED CPU"
+        return "PKONE LED Channel {} on Lightshow Board (Address ID {}, Group {})".format(self.index,
+                                                                                          self.board_address_id,
+                                                                                          self.group)
 
     def is_successor_of(self, other):
         """Return true if the other light has the previous number."""
-        return self.led.number_int * 3 + self.channel == other.led.number_int * 3 + other.channel + 1
+        return self.board_address_id == other.board_address_id and self.group == other.group and \
+            self.index == other.index - 1
 
     def get_successor_number(self):
         """Return next number."""
-        if self.channel == 2:
-            return "{}-0".format(self.led.number_int + 1)
+        return "{}-{}-{}".format(self.board_address_id, self.group, self.index + 1)
 
-        return "{}-{}".format(self.led.number_int, self.channel + 1)
-
-    def __lt__(self, other):
-        """Order lights by their order on the hardware."""
-        return (self.led.number_int, self.channel) < (other.led.number_int, other.channel)
-
-
-class PKONEDirectRGBWLEDChannel(LightPlatformDirectFade):
-    """Represents a single RGBW LED channel connected to a PKONE hardware platform Lightshow board (running
-    the RGBW firmware)."""
-
-    __slots__ = ["led", "channel"]
-
-    def __init__(self, led: any, channel) -> None:
-        """Initialise LED."""
-        super().__init__("{}-{}".format(led.number, channel))
-        self.led = led
-        self.channel = int(channel)
-
-    def get_max_fade_ms(self) -> int:
-        """Return max fade time."""
-        return 40960
-
-    def set_brightness_and_fade(self, brightness: float, fade_ms: int) -> None:
-        """Set the light to the specified brightness.
-
-        Args:
-        ----
-            brightness: float of the brightness
-            fade_ms: ms to fade the light
-
-        Does not return anything.
-        """
-        raise NotImplementedError
-
-    def get_board_name(self):
-        """Return the board of this light."""
-        return "FAST LED CPU"
-
-    def is_successor_of(self, other):
-        """Return true if the other light has the previous number."""
-        return self.led.number_int * 4 + self.channel == other.led.number_int * 4 + other.channel + 1
-
-    def get_successor_number(self):
-        """Return next number."""
-        if self.channel == 3:
-            return "{}-0".format(self.led.number_int + 1)
-
-        return "{}-{}".format(self.led.number_int, self.channel + 1)
+    def get_predecessor_number(self):
+        """Return previous number."""
+        if self.index > 0:
+            return "{}-{}-{}".format(self.board_address_id, self.group, self.index - 1)
+        raise AssertionError("There is no predecessor light in the group")
 
     def __lt__(self, other):
         """Order lights by their order on the hardware."""
-        return (self.led.number_int, self.channel) < (other.led.number_int, other.channel)
+        return (self.board_address_id, self.group, self.index) < (other.board_address_id, other.group, other.index)
+
+    def __repr__(self):
+        """Return str representation."""
+        return "<PKONELEDChannel board_address_id={} group={} index={}>".format(
+            self.board_address_id, self.group, self.index)

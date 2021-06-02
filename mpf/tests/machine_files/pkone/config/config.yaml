@@ -119,12 +119,16 @@ servos:
 
 lights:
   test_rgb_led_1:
-    start_channel: 3-1-1-0
+    start_channel: 3-1-0
     type: rgb
     subtype: led
 
   test_rgb_led_2:
     previous: test_rgb_led_1
+    subtype: led
+
+  test_rgb_led_3:
+    previous: test_rgb_led_3
     subtype: led
 
   test_simple_led:
