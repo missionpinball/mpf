@@ -116,7 +116,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
     def get_hw_numbers(self):
         """Return a list of all hardware driver numbers."""
         numbers = []
-        for _, drivers in sorted(self.hw_drivers.items()):
+        for _, drivers in sorted(self.hw_drivers.items(), key=lambda x: x[1]):
             for driver in sorted(drivers, key=lambda x: x.number):
                 numbers.append(driver.number)
 
