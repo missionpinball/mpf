@@ -222,7 +222,7 @@ class Credits(Mode):
         For example, if the machine has 4 1/2 credits, this value is "1".
         '''
         self.machine.variables.set_machine_var('credits_denominator', 0)
-        '''machine_var: credits_whole_num
+        '''machine_var: credits_denominator
 
         desc: The denominator portion of the total credits on the machine.
         For example, if the machine has 4 1/2 credits, this value is "2".

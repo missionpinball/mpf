@@ -42,11 +42,7 @@ services:
 
 before_install:
   - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
-        tmpdaemon=$(mktemp);
-        sudo jq '."registry-mirrors" += ["https://mirror.gcr.io"]' /etc/docker/daemon.json > $tmpdaemon;
-        sudo mv $tmpdaemon /etc/docker/daemon.json;
-        sudo systemctl daemon-reload;
-        sudo systemctl restart docker;
+        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin;
         docker system info;
     fi;
   - git clone --recursive --branch ${TRAVIS_BRANCH} https://github.com/missionpinball/mpf-mc.git _mpf-mc || git clone --recursive --branch `python3 get_version.py` https://github.com/missionpinball/mpf-mc.git _mpf-mc || git clone --recursive --branch dev https://github.com/missionpinball/mpf-mc.git _mpf-mc;
