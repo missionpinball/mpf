@@ -87,7 +87,7 @@ class PKONELEDChannel(PlatformBatchLight):
     def is_successor_of(self, other):
         """Return true if the other light has the previous number."""
         return self.board_address_id == other.board_address_id and self.group == other.group and \
-            self.index == other.index - 1
+            self.index == other.index + 1
 
     def get_successor_number(self):
         """Return next number."""
@@ -97,7 +97,7 @@ class PKONELEDChannel(PlatformBatchLight):
         """Return previous number."""
         if self.index > 0:
             return "{}-{}-{}".format(self.board_address_id, self.group, self.index - 1)
-        raise AssertionError("There is no predecessor light in the group")
+        return None
 
     def __lt__(self, other):
         """Order lights by their order on the hardware."""

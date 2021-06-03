@@ -116,6 +116,8 @@ class TestPKONE(MpfTestCase):
             'PCC1010000000000': None,
             'PCC1020000000000': None,
             'PSC011003': None,
+            'PLB2101050000000000000000000000000000000000000000000000000': None,
+            'PWB3101040000000000000000000000000000000000000000000000000000': None,
         }
 
         super().setUp()
@@ -144,7 +146,7 @@ class TestPKONE(MpfTestCase):
         self.assertTrue(self.machine.default_platform.pkone_lightshows[3].rgbw_firmware)
         self.assertEqual(40, self.machine.default_platform.pkone_lightshows[3].simple_led_count)
         self.assertEqual(8, self.machine.default_platform.pkone_lightshows[3].led_groups)
-        self.assertEqual(48, self.machine.default_platform.pkone_lightshows[3].max_leds_per_group)
+        self.assertEqual(64, self.machine.default_platform.pkone_lightshows[3].max_leds_per_group)
         self.assertEqual(3, self.machine.default_platform.pkone_lightshows[3].addr)
 
         self.assertEqual("1.1", self.machine.variables.get_machine_var("pkone_firmware"))
@@ -551,8 +553,8 @@ class TestPKONE(MpfTestCase):
         self.assertFalse(self.controller.expected_commands)
 
     def test_leds(self):
-        self._test_simple_led()
-        # self._test_ws281x_led()
+        # self._test_simple_led()
+        self._test_ws281x_led()
 
     def _test_simple_led(self):
         self.assertTrue("test_simple_led" in self.machine.lights)
@@ -600,25 +602,116 @@ class TestPKONE(MpfTestCase):
 
     def _test_ws281x_led(self):
         self.advance_time_and_run()
-        device = self.machine.lights["test_led"]
-        device2 = self.machine.lights["test_led2"]
-        self.assertEqual("000000", self.rgb_cpu.leds['97'])
-        self.assertEqual("000000", self.rgb_cpu.leds['98'])
-        # test led on
-        device.on()
-        self.advance_time_and_run(1)
-        self.assertEqual("ffffff", self.rgb_cpu.leds['97'])
-        self.assertEqual("000000", self.rgb_cpu.leds['98'])
+        device_rgb_1 = self.machine.lights["test_rgb_led_1"]
+        device_rgb_2 = self.machine.lights["test_rgb_led_2"]
+        device_rgb_3 = self.machine.lights["test_rgb_led_3"]
+        device_rgb_4 = self.machine.lights["test_rgb_led_4"]
 
-        device2.color("001122")
+        device_rgbw_1 = self.machine.lights["test_rgbw_led_1"]
+        device_rgbw_2 = self.machine.lights["test_rgbw_led_2"]
+        device_rgbw_3 = self.machine.lights["test_rgbw_led_3"]
+        device_rgbw_4 = self.machine.lights["test_rgbw_led_4"]
 
-        # test led off
-        device.off()
-        self.advance_time_and_run(1)
-        self.assertEqual("000000", self.rgb_cpu.leds['97'])
-        self.assertEqual("001122", self.rgb_cpu.leds['98'])
+        self.assertListEqual(["2-1-0", "2-1-1", "2-1-2"], device_rgb_1.get_hw_numbers())
+        self.assertListEqual(["2-1-3", "2-1-4", "2-1-5"], device_rgb_2.get_hw_numbers())
+        self.assertListEqual(["2-1-6", "2-1-7", "2-1-8", "2-1-9"], device_rgb_3.get_hw_numbers())
+        self.assertListEqual(["2-1-10", "2-1-11", "2-1-12"], device_rgb_4.get_hw_numbers())
 
-        # test led color
-        device.color(RGBColor((2, 23, 42)))
-        self.advance_time_and_run(1)
-        self.assertEqual("02172a", self.rgb_cpu.leds['97'])
+        self.assertListEqual(["3-1-0", "3-1-1", "3-1-2", "3-1-3"], device_rgbw_1.get_hw_numbers())
+        self.assertListEqual(["3-1-4", "3-1-5", "3-1-6", "3-1-7"], device_rgbw_2.get_hw_numbers())
+        self.assertListEqual(["3-1-8", "3-1-9", "3-1-10"], device_rgbw_3.get_hw_numbers())
+        self.assertListEqual(["3-1-11", "3-1-12", "3-1-13", "3-1-14"], device_rgbw_4.get_hw_numbers())
+
+        self.assertLightColor("test_rgb_led_1", RGBColor("off"))
+        self.assertLightColor("test_rgb_led_2", RGBColor("off"))
+        self.assertLightColor("test_rgb_led_3", RGBColor("off"))
+        self.assertLightColor("test_rgb_led_4", RGBColor("off"))
+
+        self.assertLightColor("test_rgbw_led_1", RGBColor("off"))
+        self.assertLightColor("test_rgbw_led_2", RGBColor("off"))
+        self.assertLightColor("test_rgbw_led_3", RGBColor("off"))
+        self.assertLightColor("test_rgbw_led_4", RGBColor("off"))
+
+        # test turning on rgb led using color
+        self.controller.expected_commands = {
+            "PLB2101020000255000000000000255": None,
+        }
+        self.machine.lights["test_rgb_led_1"].color(RGBColor("red"))
+        self.machine.lights["test_rgb_led_2"].color(RGBColor("blue"))
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.controller.expected_commands)
+
+        # test turning on rgb led using color with fade
+        self.controller.expected_commands = {
+            "PLB2101020012000128000255000000": None,
+        }
+        self.machine.lights["test_rgb_led_1"].color(RGBColor("green"), 123)
+        self.machine.lights["test_rgb_led_2"].color(RGBColor("red"), 123)
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.controller.expected_commands)
+
+        # test turning on rgb led out of hardware alignment using color
+        self.controller.expected_commands = {
+            "PLB2103020000255192203192000000": None,
+        }
+        self.machine.lights["test_rgb_led_3"].color(RGBColor("pink"))
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.controller.expected_commands)
+
+        # test turning off rgb led
+        self.controller.expected_commands = {
+            "PLB2101050000000000000000000000000000000000000000000000000": None,
+        }
+        self.machine.lights["test_rgb_led_1"].off()
+        self.machine.lights["test_rgb_led_2"].off()
+        self.machine.lights["test_rgb_led_3"].off()
+        self.machine.lights["test_rgb_led_4"].off()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.controller.expected_commands)
+
+        # test turning on rgbw led using color
+        self.controller.expected_commands = {
+            "PWB3101020000255000000000000000255000": None,
+        }
+        self.machine.lights["test_rgbw_led_1"].color(RGBColor("red"))
+        self.machine.lights["test_rgbw_led_2"].color(RGBColor("blue"))
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.controller.expected_commands)
+
+        # test turning on rgbw led using color with fade
+        self.controller.expected_commands = {
+            "PWB3101020012000128000000255000000000": None,
+        }
+        self.machine.lights["test_rgbw_led_1"].color(RGBColor("green"), 128)
+        self.machine.lights["test_rgbw_led_2"].color(RGBColor("red"), 128)
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.controller.expected_commands)
+
+        # test turning on rgbw led out of hardware alignment using color
+        self.controller.expected_commands = {
+            "PWB3103010000255192203000": None,
+        }
+        self.machine.lights["test_rgbw_led_3"].color(RGBColor("pink"))
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.controller.expected_commands)
+
+        # test turning off rgbw led
+        self.controller.expected_commands = {
+            "PWB3101040000000000000000000000000000000000000000000000000000": None,
+        }
+        self.machine.lights["test_rgbw_led_1"].off()
+        self.machine.lights["test_rgbw_led_2"].off()
+        self.machine.lights["test_rgbw_led_3"].off()
+        self.machine.lights["test_rgbw_led_4"].off()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.controller.expected_commands)
+
+        # test turning on rgbw led out of hardware alignment using color with fade
+        self.controller.expected_commands = {
+            "PWB3103010000255192203000": None,
+        }
+        self.machine.lights["test_rgbw_led_3"].color(RGBColor("pink"), 1000)
+        self.advance_time_and_run(.5)
+        self.assertFalse(self.controller.expected_commands)
+
+

@@ -31,7 +31,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
         machine: The MachineController instance.
     """
 
-    __slots__ = ["config", "serial_connections", "pkone_extensions", "pkone_lightshows", "leds", "_light_system",
+    __slots__ = ["config", "serial_connections", "pkone_extensions", "pkone_lightshows", "_light_system",
                  "_watchdog_task", "hw_switch_data", "controller_connection", "pkone_commands"]
 
     def __init__(self, machine) -> None:
@@ -41,7 +41,6 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
         self.serial_connections = set()     # type: Set[PKONESerialCommunicator]
         self.pkone_extensions = {}          # type: Dict[int, PKONEExtensionBoard]
         self.pkone_lightshows = {}          # type: Dict[int, PKONELightshowBoard]
-        self.leds = {}
         self._light_system = None           # type: Optional[PlatformBatchLightSystem]
         self._watchdog_task = None
         self.hw_switch_data = dict()
@@ -105,6 +104,8 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
 
         for connection in self.serial_connections:
             await connection.start_read_loop()
+
+        self._light_system.start()
 
     def _update_watchdog(self):
         """Send Watchdog ping command."""
@@ -447,9 +448,13 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
 
     async def _send_multiple_light_update(self, sequential_brightness_list: List[Tuple[PKONELEDChannel,
                                                                                        float, int]]):
+        # determine how many channels are to be updated and the common fade time
         first_channel, _, common_fade_ms = sequential_brightness_list[0]
         num_channels = len(sequential_brightness_list)
+        start_index = first_channel.index
+        current_time = self._light_system.clock.get_time()
 
+        # get the lightshow board that will be sent the command (need to know if rgb or rgbw board)
         lightshow = self.pkone_lightshows[first_channel.board_address_id]
         if lightshow.rgbw_firmware:
             cmd_opcode = "PWB"
@@ -462,36 +467,69 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
         first_channel_alignment_offset = first_channel.index % channel_grouping
         last_channel_alignment_offset = (first_channel.index + num_channels) % channel_grouping
 
-        """
+        # Note: software fading will be used when batch channels are not aligned to hardware LED boundaries
+        use_software_fade = False
+
         if first_channel_alignment_offset > 0:
             # the first channel does not align with internal hardware boundary, need to retrieve other
             # channels for the first light
-            first_light = self.machine.lights[first_channel.config.name]
-            first_light.get_hw_numbers()[0:first_channel_alignment_offset]
+            use_software_fade = True
             channel = first_channel
+            previous_channel = None
             for index in range(first_channel_alignment_offset):
-                previous_channel = self._light_system.last_state[channel.get_predecessor_number()]
-                brightness_values = "{:03d}".format(previous_channel.get)
-        """
-        first_led_number = (first_channel.index // channel_grouping) + 1
-        num_leds = math.ceil(num_channels / channel_grouping)
+                if channel:
+                    previous_channel = lightshow.get_channel_hw_driver(first_channel.group,
+                                                                       channel.get_predecessor_number())
+                if previous_channel:
+                    brightness, fade_ms, _ = previous_channel.get_fade_and_brightness(current_time)
+                    channel = previous_channel
+                else:
+                    brightness = 0.0
+                    fade_ms = 0
+                    channel = None
 
-        # generate list of brightness values (3 digit int values)
-        brightness_values = "".join("%03d" % (b[1] * 255) for b in sequential_brightness_list)
+                sequential_brightness_list.insert(0, (channel, brightness, fade_ms))
+                start_index = start_index - 1
 
-        """
+        if last_channel_alignment_offset > 0:
+            use_software_fade = True
+            current_time = self._light_system.clock.get_time()
+            channel = sequential_brightness_list[-1][0]
+            next_channel = None
+            for index in range(channel_grouping - last_channel_alignment_offset):
+                if channel:
+                    next_channel = lightshow.get_channel_hw_driver(first_channel.group,
+                                                                   channel.get_successor_number())
+                if next_channel:
+                    brightness, fade_ms, _ = next_channel.get_fade_and_brightness(current_time)
+                    channel = next_channel
+                else:
+                    brightness = 0.0
+                    fade_ms = 0
+                    channel = None
+
+                sequential_brightness_list.append((channel, brightness, fade_ms))
+
+        first_led_number = start_index // channel_grouping + 1
+        num_leds = len(sequential_brightness_list) // channel_grouping
+
+        assert start_index % channel_grouping == 0
+        assert len(sequential_brightness_list) % channel_grouping == 0
+
         # if fade > 0, determine if group of lights can be faded in hardware or need to be faded in software
-        if common_fade_ms > 0 and (first_channel_alignment_offset > 0 or last_channel_alignment_offset > 0):
+        if common_fade_ms > 0 and use_software_fade:
             # fade will be handled in software, mark all lights dirty so they'll be recalculated next update
             common_fade_ms = 0
             for light, _, _ in sequential_brightness_list:
-                self._light_system.mark_dirty(light)
-        """
-
-        cmd = "{}{}{}{:02d}{:04d}{}".format(cmd_opcode, first_channel.board_address_id,
-                                            first_channel.group, first_led_number, num_leds,
-                                            common_fade_ms / 10,
-                                            brightness_values)
+                if light:
+                    self._light_system.dirty_schedule.add((current_time + 1, light))
+            self._light_system.schedule_changed.set()
+        # generate batch update command using brightness values (3 digit int values)
+        # Note: fade time is in 10ms units
+        cmd = "{}{}{}{:02d}{:02d}{:04d}{}".format(cmd_opcode, first_channel.board_address_id,
+                                                  first_channel.group, first_led_number, num_leds,
+                                                  int(common_fade_ms / 10),
+                                                  "".join("%03d" % (b[1] * 255) for b in sequential_brightness_list))
         self.controller_connection.send(cmd)
 
     def configure_light(self, number, subtype, config, platform_settings):
@@ -511,6 +549,8 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
         if not subtype or subtype == "led":
             board_address_id, group, index = number.split("-")
             led_channel = PKONELEDChannel(board_address_id, group, index, config, self._light_system)
+            lightshow = self.pkone_lightshows[int(board_address_id)]
+            lightshow.add_channel_hw_driver(int(group), led_channel)
             self._light_system.mark_dirty(led_channel)
             return led_channel
 

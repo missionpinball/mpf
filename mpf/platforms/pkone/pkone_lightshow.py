@@ -1,14 +1,16 @@
 """PKONE Lightshow board."""
 import logging
+from typing import Optional
 
 from mpf.core.platform_batch_light_system import PlatformBatchLight
+from mpf.platforms.pkone.pkone_lights import PKONELEDChannel
 
 
 class PKONELightshowBoard:
     """PKONE Lightshow board."""
 
     __slots__ = ["log", "addr", "firmware_version", "hardware_rev", "rgbw_firmware", "simple_led_count", "led_groups",
-                 "max_leds_per_group"]
+                 "max_leds_per_group", "_channel_hw_drivers"]
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, addr, firmware_version, hardware_rev, rgbw_firmware=False):
@@ -21,6 +23,10 @@ class PKONELightshowBoard:
         self.simple_led_count = 40  # numbers 1 - 40
         self.led_groups = 8  # numbers 1 - 8
         self.max_leds_per_group = 64  # numbers 1 - 64 for both RGB and RGBW
+        self._channel_hw_drivers = {}
+
+        for group in range(1, self.led_groups + 1):
+            self._channel_hw_drivers[group] = {}
 
     def get_description_string(self) -> str:
         """Return description string."""
@@ -40,3 +46,11 @@ class PKONELightshowBoard:
                                                                        self.simple_led_count,
                                                                        self.led_groups,
                                                                        self.max_leds_per_group)
+
+    def add_channel_hw_driver(self, group: int, channel: PKONELEDChannel):
+        """Add a channel hardware driver."""
+        self._channel_hw_drivers[group][channel.number] = channel
+
+    def get_channel_hw_driver(self, group: int, number: str) -> Optional[PKONELEDChannel]:
+        """Get a channel hardware driver."""
+        return self._channel_hw_drivers[group].get(number, None)
