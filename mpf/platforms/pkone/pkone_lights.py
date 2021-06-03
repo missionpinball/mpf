@@ -1,9 +1,10 @@
+"""PKONE Lights"""
 import logging
 from collections import namedtuple
 
 from mpf.core.platform import LightConfig
 from mpf.core.platform_batch_light_system import PlatformBatchLight, PlatformBatchLightSystem
-from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade, LightPlatformDirectFade
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
 
 MYPY = False
 if MYPY:  # pragma: no cover
@@ -65,6 +66,7 @@ class PKONELEDChannel(PlatformBatchLight):
 
     __slots__ = ["board_address_id", "group", "index", "config", "_hardware_aligned"]
 
+    # pylint: disable-msg=too-many-arguments
     def __init__(self, board_address_id, group, index,
                  config: LightConfig, light_system: PlatformBatchLightSystem) -> None:
         """Initialise LED."""

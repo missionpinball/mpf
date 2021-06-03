@@ -47,10 +47,6 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
 
         super().__init__(platform, port, baud)
 
-    def stop(self):
-        """Stop and shut down this serial connection."""
-        super().stop()
-
     async def _read_with_timeout(self, timeout):
         msg_raw = await asyncio.wait([self.readuntil(b'E')], timeout=timeout)
         if not msg_raw[0]:
@@ -95,18 +91,14 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
         self.machine.variables.set_machine_var("pkone_firmware", self.remote_firmware)
         '''machine_var: pkone_firmware
 
-        desc: Holds the version number of the firmware for the Penny K Pinball PKONE 
-        controller that's connected.
-        '''
+        desc: Holds the version number of the firmware for the Penny K Pinball PKONE controller that's connected.'''
 
         self.machine.variables.set_machine_var("pkone_hardware",
                                                "PKONE Nano Controller (rev {})".format(self.remote_hardware_rev))
-
         '''machine_var: pkone_hardware
 
-        desc: Holds the model name and hardware revision number of the Penny K Pinball PKONE controller board 
-        that's connected.
-        '''
+        desc: Holds the model name and hardware revision number of the Penny K Pinball PKONE controller
+        board that's connected.'''
 
         if StrictVersion(NANO_MIN_FW) > StrictVersion(self.remote_firmware):
             raise AssertionError('Firmware version mismatch. MPF requires '
@@ -204,6 +196,7 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
                 raise AttributeError("Unrecognized PKONE board type in message: {}".format(msg))
 
     async def read_all_switches(self):
+        """Read the current state of all switches from the hardware."""
         self.platform.debug_log('Reading all switches.')
         for address_id in self.platform.pkone_extensions:
             self.writer.write('PSA{}E'.format(address_id).encode())

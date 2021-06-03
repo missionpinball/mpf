@@ -2,13 +2,13 @@
 import logging
 
 
+# pylint: disable-msg=too-few-public-methods
 class PKONEExtensionBoard:
     """PKONE Extension board."""
 
     __slots__ = ["log", "addr", "firmware_version", "hardware_rev", "switch_count",
                  "coil_count", "servo_count"]
 
-    # pylint: disable-msg=too-many-arguments
     def __init__(self, addr, firmware_version, hardware_rev):
         """Initialize PKONE Extension board."""
         self.log = logging.getLogger('PKONEExtensionBoard {}'.format(addr))
@@ -22,12 +22,10 @@ class PKONEExtensionBoard:
     def get_description_string(self) -> str:
         """Return description string."""
         return "PKONE Extension Board {} - Firmware: {}, Hardware Rev: {}, " \
-               "Switches: {}, Optos: {}, Coils: {}, Servos: {}".format(
-            self.addr,
-            self.firmware_version,
-            self.hardware_rev,
-            self.switch_count,
-            self.opto_count,
-            self.coil_count,
-            self.servo_count
-        )
+               "Switches: {}, Coils: {}, Servos: {}".format(
+                   self.addr,
+                   self.firmware_version,
+                   self.hardware_rev,
+                   self.switch_count,
+                   self.coil_count,
+                   self.servo_count)

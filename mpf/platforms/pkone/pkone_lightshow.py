@@ -2,10 +2,10 @@
 import logging
 from typing import Optional
 
-from mpf.core.platform_batch_light_system import PlatformBatchLight
 from mpf.platforms.pkone.pkone_lights import PKONELEDChannel
 
 
+# pylint: disable-msg=too-many-instance-attributes
 class PKONELightshowBoard:
     """PKONE Lightshow board."""
 
@@ -56,6 +56,7 @@ class PKONELightshowBoard:
         return self._channel_hw_drivers[group].get(number, None)
 
     def get_all_channel_hw_drivers(self):
+        """Retrieve list of all channel hardware drivers configured for use with the Lightshow board."""
         hw_drivers = []
         for group in range(1, self.led_groups + 1):
             hw_drivers.extend(list(self._channel_hw_drivers[group].values()))

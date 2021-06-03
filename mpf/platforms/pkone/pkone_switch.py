@@ -12,6 +12,7 @@ if MYPY:   # pragma: no cover
 PKONESwitchNumber = namedtuple("PKONESwitchNumber", ["board_address_id", "switch_number"])
 
 
+# pylint: disable-msg=too-few-public-methods
 class PKONESwitch(SwitchPlatformInterface):
     """An PKONE input on a PKONE Extension board."""
 

@@ -5,7 +5,6 @@ Contains the hardware interface and drivers for the Penny K Pinball PKONE
 platform hardware.
 """
 import asyncio
-import math
 from copy import deepcopy
 from typing import Optional, Dict, List, Tuple
 
@@ -318,6 +317,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
         the pulse is canceled and the driver gets disabled. When the eos_switch is hit the pulse is canceled
         and the driver becomes disabled. Typically used on the main coil for dual-wound coil flippers with eos switch.
         """
+        del repulse_settings
         self._check_coil_switch_combination(coil, enable_switch)
         self._check_coil_switch_combination(coil, eos_switch)
         driver = coil.hw_driver
@@ -398,6 +398,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
 
         Returns: Switch object.
         """
+        del platform_config
         if not number:
             raise AssertionError("Switch requires a number")
 
@@ -447,13 +448,12 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
                                                              num=switch_number,
                                                              platform=self)
 
+    # pylint: disable-msg=too-many-locals
     async def _send_multiple_light_update(self, sequential_brightness_list: List[Tuple[PKONELEDChannel,
                                                                                        float, int]]):
         # determine how many channels are to be updated and the common fade time
         first_channel, _, common_fade_ms = sequential_brightness_list[0]
-        num_channels = len(sequential_brightness_list)
         start_index = first_channel.index
-        current_time = self._light_system.clock.get_time()
 
         # get the lightshow board that will be sent the command (need to know if rgb or rgbw board)
         lightshow = self.pkone_lightshows[first_channel.board_address_id]
@@ -464,20 +464,20 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
             cmd_opcode = "PLB"
             channel_grouping = 3
 
-        # determine if batch channels are properly aligned to internal LED boundaries
+        # determine if first and last batch channels are properly aligned to internal LED boundaries
         first_channel_alignment_offset = first_channel.index % channel_grouping
-        last_channel_alignment_offset = (first_channel.index + num_channels) % channel_grouping
+        last_channel_alignment_offset = (first_channel.index + len(sequential_brightness_list)) % channel_grouping
 
-        # Note: software fading will be used when batch channels are not aligned to hardware LED boundaries
-        use_software_fade = False
+        # Note: software fading will automatically be used when batch channels
+        # are not aligned to hardware LED boundaries
 
         if first_channel_alignment_offset > 0:
             # the first channel does not align with internal hardware boundary, need to retrieve other
             # channels for the first light
-            use_software_fade = True
+            current_time = self._light_system.clock.get_time()
             channel = first_channel
             previous_channel = None
-            for index in range(first_channel_alignment_offset):
+            for _ in range(first_channel_alignment_offset):
                 if channel:
                     previous_channel = lightshow.get_channel_hw_driver(first_channel.group,
                                                                        channel.get_predecessor_number())
@@ -493,11 +493,10 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
                 start_index = start_index - 1
 
         if last_channel_alignment_offset > 0:
-            use_software_fade = True
             current_time = self._light_system.clock.get_time()
             channel = sequential_brightness_list[-1][0]
             next_channel = None
-            for index in range(channel_grouping - last_channel_alignment_offset):
+            for _ in range(channel_grouping - last_channel_alignment_offset):
                 if channel:
                     next_channel = lightshow.get_channel_hw_driver(first_channel.group,
                                                                    channel.get_successor_number())
@@ -511,26 +510,16 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
 
                 sequential_brightness_list.append((channel, brightness, fade_ms))
 
-        first_led_number = start_index // channel_grouping + 1
-        num_leds = len(sequential_brightness_list) // channel_grouping
-
         assert start_index % channel_grouping == 0
         assert len(sequential_brightness_list) % channel_grouping == 0
 
-        """
-        # if fade > 0, determine if group of lights can be faded in hardware or need to be faded in software
-        if common_fade_ms > 0 and use_software_fade:
-            # fade will be handled in software, mark all lights dirty so they'll be recalculated next update
-            common_fade_ms = 0
-            for light, _, _ in sequential_brightness_list:
-                if light:
-                    self._light_system.dirty_schedule.add((current_time + 1, light))
-            self._light_system.schedule_changed.set()
-        """
         # generate batch update command using brightness values (3 digit int values)
         # Note: fade time is in 10ms units
-        cmd = "{}{}{}{:02d}{:02d}{:04d}{}".format(cmd_opcode, first_channel.board_address_id,
-                                                  first_channel.group, first_led_number, num_leds,
+        cmd = "{}{}{}{:02d}{:02d}{:04d}{}".format(cmd_opcode,
+                                                  first_channel.board_address_id,
+                                                  first_channel.group,
+                                                  start_index // channel_grouping + 1,
+                                                  len(sequential_brightness_list) // channel_grouping,
                                                   int(common_fade_ms / 10),
                                                   "".join("%03d" % (b[1] * 255) for b in sequential_brightness_list))
         self.controller_connection.send(cmd)
@@ -563,7 +552,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
         """Determine whether the specified LED is hardware aligned."""
         light = self.machine.lights[led_name]
         hw_numbers = light.get_hw_numbers()
-        board_address_id, group, index = hw_numbers[0].split("-")
+        board_address_id, _, index = hw_numbers[0].split("-")
         lightshow = self.pkone_lightshows[int(board_address_id)]
         if lightshow.rgbw_firmware:
             channel_grouping = 4
