@@ -54,3 +54,9 @@ class PKONELightshowBoard:
     def get_channel_hw_driver(self, group: int, number: str) -> Optional[PKONELEDChannel]:
         """Get a channel hardware driver."""
         return self._channel_hw_drivers[group].get(number, None)
+
+    def get_all_channel_hw_drivers(self):
+        hw_drivers = []
+        for group in range(1, self.led_groups + 1):
+            hw_drivers.extend(list(self._channel_hw_drivers[group].values()))
+        return hw_drivers

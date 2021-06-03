@@ -1,5 +1,6 @@
 from mpf.core.platform import SwitchConfig
 from mpf.core.rgb_color import RGBColor
+from mpf.platforms.pkone.pkone import PKONEHardwarePlatform
 from mpf.platforms.pkone.pkone_coil import PKONECoilNumber
 from mpf.platforms.pkone.pkone_servo import PKONEServoNumber
 from mpf.tests.MpfTestCase import MpfTestCase
@@ -125,6 +126,7 @@ class TestPKONE(MpfTestCase):
         self.assertFalse(self.controller.expected_commands)
 
         # test add-on board detection
+        self.assertIsInstance(self.machine.default_platform, PKONEHardwarePlatform)
         self.assertEqual(2, len(self.machine.default_platform.pkone_extensions))
         self.assertEqual(35, self.machine.default_platform.pkone_extensions[0].switch_count)
         self.assertEqual(10, self.machine.default_platform.pkone_extensions[0].coil_count)
@@ -553,7 +555,8 @@ class TestPKONE(MpfTestCase):
         self.assertFalse(self.controller.expected_commands)
 
     def test_leds(self):
-        # self._test_simple_led()
+        self._test_simple_led()
+        self._test_led_hardware_alignment()
         self._test_ws281x_led()
 
     def _test_simple_led(self):
@@ -602,6 +605,8 @@ class TestPKONE(MpfTestCase):
 
     def _test_ws281x_led(self):
         self.advance_time_and_run()
+
+        # get light devices
         device_rgb_1 = self.machine.lights["test_rgb_led_1"]
         device_rgb_2 = self.machine.lights["test_rgb_led_2"]
         device_rgb_3 = self.machine.lights["test_rgb_led_3"]
@@ -612,6 +617,7 @@ class TestPKONE(MpfTestCase):
         device_rgbw_3 = self.machine.lights["test_rgbw_led_3"]
         device_rgbw_4 = self.machine.lights["test_rgbw_led_4"]
 
+        # ensure channel numbers (hardware drivers) have been assigned correctly
         self.assertListEqual(["2-1-0", "2-1-1", "2-1-2"], device_rgb_1.get_hw_numbers())
         self.assertListEqual(["2-1-3", "2-1-4", "2-1-5"], device_rgb_2.get_hw_numbers())
         self.assertListEqual(["2-1-6", "2-1-7", "2-1-8", "2-1-9"], device_rgb_3.get_hw_numbers())
@@ -622,6 +628,14 @@ class TestPKONE(MpfTestCase):
         self.assertListEqual(["3-1-8", "3-1-9", "3-1-10"], device_rgbw_3.get_hw_numbers())
         self.assertListEqual(["3-1-11", "3-1-12", "3-1-13", "3-1-14"], device_rgbw_4.get_hw_numbers())
 
+        # ensure channels were properly added to the Lightshow boards
+        self.assertIsInstance(self.machine.default_platform, PKONEHardwarePlatform)
+        rgb_hw_channels = self.machine.default_platform.pkone_lightshows[2].get_all_channel_hw_drivers()
+        rgbw_hw_channels = self.machine.default_platform.pkone_lightshows[3].get_all_channel_hw_drivers()
+        self.assertEqual(13, len(rgb_hw_channels))
+        self.assertEqual(15, len(rgbw_hw_channels))
+
+        # ensure all LEDs are initially off
         self.assertLightColor("test_rgb_led_1", RGBColor("off"))
         self.assertLightColor("test_rgb_led_2", RGBColor("off"))
         self.assertLightColor("test_rgb_led_3", RGBColor("off"))
@@ -669,6 +683,27 @@ class TestPKONE(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 
+        # test turning on rgb led out of hardware alignment using color with fade (uses software fade)
+        self.controller.expected_commands = {
+            "PLB2103020000000000000000000000": None,
+            "PLB2103020000020015016015000000": None,
+            "PLB2103020000040030032030000000": None,
+            "PLB2103020000061046048046000000": None,
+            "PLB2103020000081061064061000000": None,
+            "PLB2103020000102076081076000000": None,
+            "PLB2103020000122092097092000000": None,
+            "PLB2103020000142107113107000000": None,
+            "PLB2103020000163122129122000000": None,
+            "PLB2103020000183138146138000000": None,
+            "PLB2103020000204153162153000000": None,
+            "PLB2103020000224168178168000000": None,
+            "PLB2103020000244184194184000000": None,
+            "PLB2103020000255192203192000000": None,
+        }
+        self.machine.lights["test_rgb_led_3"].color(RGBColor("pink"), 250)
+        self.advance_time_and_run(.5)
+        self.assertFalse(self.controller.expected_commands)
+
         # test turning on rgbw led using color
         self.controller.expected_commands = {
             "PWB3101020000255000000000000000255000": None,
@@ -706,12 +741,35 @@ class TestPKONE(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
 
-        # test turning on rgbw led out of hardware alignment using color with fade
+        # test turning on rgbw led out of hardware alignment using color with fade (uses software fade)
         self.controller.expected_commands = {
+            "PWB3103010000000000000000": None,
+            "PWB3103010000020015016000": None,
+            "PWB3103010000040030032000": None,
+            "PWB3103010000061046048000": None,
+            "PWB3103010000081061064000": None,
+            "PWB3103010000102076081000": None,
+            "PWB3103010000122092097000": None,
+            "PWB3103010000142107113000": None,
+            "PWB3103010000163122129000": None,
+            "PWB3103010000183138146000": None,
+            "PWB3103010000204153162000": None,
+            "PWB3103010000224168178000": None,
+            "PWB3103010000244184194000": None,
             "PWB3103010000255192203000": None,
         }
-        self.machine.lights["test_rgbw_led_3"].color(RGBColor("pink"), 1000)
+        self.machine.lights["test_rgbw_led_3"].color(RGBColor("pink"), 250)
         self.advance_time_and_run(.5)
         self.assertFalse(self.controller.expected_commands)
 
+    def _test_led_hardware_alignment(self):
+        self.assertIsInstance(self.machine.default_platform, PKONEHardwarePlatform)
+        self.assertTrue(self.machine.default_platform._led_is_hardware_aligned("test_rgb_led_1"))
+        self.assertTrue(self.machine.default_platform._led_is_hardware_aligned("test_rgb_led_2"))
+        self.assertFalse(self.machine.default_platform._led_is_hardware_aligned("test_rgb_led_3"))
+        self.assertFalse(self.machine.default_platform._led_is_hardware_aligned("test_rgb_led_4"))
+        self.assertTrue(self.machine.default_platform._led_is_hardware_aligned("test_rgbw_led_1"))
+        self.assertTrue(self.machine.default_platform._led_is_hardware_aligned("test_rgbw_led_2"))
+        self.assertFalse(self.machine.default_platform._led_is_hardware_aligned("test_rgbw_led_3"))
+        self.assertFalse(self.machine.default_platform._led_is_hardware_aligned("test_rgbw_led_4"))
 

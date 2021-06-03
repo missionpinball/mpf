@@ -105,6 +105,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
         for connection in self.serial_connections:
             await connection.start_read_loop()
 
+        self._initialize_led_hw_driver_alignment()
         self._light_system.start()
 
     def _update_watchdog(self):
@@ -516,6 +517,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
         assert start_index % channel_grouping == 0
         assert len(sequential_brightness_list) % channel_grouping == 0
 
+        """
         # if fade > 0, determine if group of lights can be faded in hardware or need to be faded in software
         if common_fade_ms > 0 and use_software_fade:
             # fade will be handled in software, mark all lights dirty so they'll be recalculated next update
@@ -524,6 +526,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
                 if light:
                     self._light_system.dirty_schedule.add((current_time + 1, light))
             self._light_system.schedule_changed.set()
+        """
         # generate batch update command using brightness values (3 digit int values)
         # Note: fade time is in 10ms units
         cmd = "{}{}{}{:02d}{:02d}{:04d}{}".format(cmd_opcode, first_channel.board_address_id,
@@ -555,6 +558,26 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
             return led_channel
 
         raise AssertionError("Unknown subtype {}".format(subtype))
+
+    def _led_is_hardware_aligned(self, led_name) -> bool:
+        """Determine whether the specified LED is hardware aligned."""
+        light = self.machine.lights[led_name]
+        hw_numbers = light.get_hw_numbers()
+        board_address_id, group, index = hw_numbers[0].split("-")
+        lightshow = self.pkone_lightshows[int(board_address_id)]
+        if lightshow.rgbw_firmware:
+            channel_grouping = 4
+        else:
+            channel_grouping = 3
+        if len(hw_numbers) != channel_grouping:
+            return False
+        return int(index) % channel_grouping == 0
+
+    def _initialize_led_hw_driver_alignment(self):
+        """Set hardware aligned flag for all led hardware driver channels."""
+        for _, lightshow in self.pkone_lightshows.items():
+            for channel in lightshow.get_all_channel_hw_drivers():
+                channel.set_hardware_aligned(self._led_is_hardware_aligned(channel.config.name))
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Parse light channels from number string."""

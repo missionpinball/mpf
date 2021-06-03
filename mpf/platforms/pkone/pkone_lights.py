@@ -63,7 +63,7 @@ class PKONESimpleLED(LightPlatformSoftwareFade):
 class PKONELEDChannel(PlatformBatchLight):
     """Represents a single LED channel connected to a PKONE hardware platform Lightshow board."""
 
-    __slots__ = ["board_address_id", "group", "index", "config"]
+    __slots__ = ["board_address_id", "group", "index", "config", "_hardware_aligned"]
 
     def __init__(self, board_address_id, group, index,
                  config: LightConfig, light_system: PlatformBatchLightSystem) -> None:
@@ -73,16 +73,24 @@ class PKONELEDChannel(PlatformBatchLight):
         self.group = int(group)
         self.index = int(index)
         self.config = config
+        self._hardware_aligned = False
+
+    def set_hardware_aligned(self, hardware_aligned: bool = True):
+        """Set whether or not this channel is aligned to hardware boundaries."""
+        self._hardware_aligned = hardware_aligned
 
     def get_max_fade_ms(self) -> int:
         """Return max fade time."""
-        return 40960
+        return 40960 if self._hardware_aligned else 0
 
     def get_board_name(self):
         """Return the board of this light."""
-        return "PKONE LED Channel {} on Lightshow Board (Address ID {}, Group {})".format(self.index,
-                                                                                          self.board_address_id,
-                                                                                          self.group)
+        return "PKONE LED Channel {} on Lightshow Board (Address ID {}, Group {}, Light: {}, " \
+               "Hardware Aligned: {})".format(self.index,
+                                              self.board_address_id,
+                                              self.group,
+                                              self.config.name,
+                                              "Yes" if self._hardware_aligned else "No")
 
     def is_successor_of(self, other):
         """Return true if the other light has the previous number."""
