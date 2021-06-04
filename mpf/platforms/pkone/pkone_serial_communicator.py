@@ -17,6 +17,7 @@ LIGHTSHOW_MIN_FW = '1.0'
 
 
 class PKONESerialCommunicator(BaseSerialCommunicator):
+
     """Handles the serial communication to the PKONE platform."""
 
     ignored_messages = ['PWD',  # Watchdog
@@ -57,7 +58,6 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
 
     async def _identify_connection(self):
         """Identify which controller this serial connection is talking to."""
-
         count = 0
         while True:
             if (count % 10) == 0:
@@ -132,8 +132,7 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
             raise AssertionError('Received an error while resetting the controller: {}'.format(msg))
 
     async def query_pkone_boards(self):
-        """Query the NANO processor to discover which additional boards are connected.
-        """
+        """Query the NANO processor to discover which additional boards are connected."""
         self.platform.debug_log('Querying PKONE boards...')
 
         # Determine connected add-on boards (PCB command)

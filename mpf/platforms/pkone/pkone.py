@@ -6,7 +6,7 @@ platform hardware.
 """
 import asyncio
 from copy import deepcopy
-from typing import Optional, Dict, List, Tuple
+from typing import Optional, Dict, List, Tuple, Set
 
 from mpf.core.platform_batch_light_system import PlatformBatchLightSystem
 from mpf.platforms.pkone.pkone_serial_communicator import PKONESerialCommunicator
@@ -27,6 +27,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
     """Platform class for the PKONE Nano hardware controller.
 
     Args:
+    ----
         machine: The MachineController instance.
     """
 
@@ -188,7 +189,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
             self.log.warning("Received unknown serial command %s.", msg)
 
     def receive_error(self, msg):
-        """An error message is received from the controller."""
+        """Receive an error message from the controller."""
         self.log.error("Received an error message from the controller: %s", msg)
 
     def _parse_coil_number(self, number: str) -> PKONECoilNumber:
@@ -241,8 +242,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
 
     @staticmethod
     def _check_coil_switch_combination(coil: DriverSettings, switch: SwitchSettings):
-        """Checks to see if the coil/switch combination is legal for hardware rules"""
-
+        """Check to see if the coil/switch combination is legal for hardware rules."""
         # coil and switch must be on the same extension board (same board address id)
         if switch.hw_switch.number.board_address_id != coil.hw_driver.number.board_address_id:
             raise AssertionError("Coil {} and switch {} are on different boards. Cannot apply hardware rule!".format(

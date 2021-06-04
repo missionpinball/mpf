@@ -1,4 +1,4 @@
-"""PKONE Lights"""
+"""PKONE Lights."""
 import logging
 from collections import namedtuple
 
@@ -14,6 +14,7 @@ PKONESimpleLEDNumber = namedtuple("PKONESimpleLEDNumber", ["board_address_id", "
 
 
 class PKONESimpleLED(LightPlatformSoftwareFade):
+
     """A simple led (single emitter/color) on a PKONE Extension board. Simple leds are either on or off."""
 
     __slots__ = ["log", "number", "send", "platform"]
@@ -62,6 +63,7 @@ class PKONESimpleLED(LightPlatformSoftwareFade):
 
 
 class PKONELEDChannel(PlatformBatchLight):
+
     """Represents a single LED channel connected to a PKONE hardware platform Lightshow board."""
 
     __slots__ = ["board_address_id", "group", "index", "config", "_hardware_aligned"]

@@ -7,6 +7,7 @@ from mpf.platforms.pkone.pkone_lights import PKONELEDChannel
 
 # pylint: disable-msg=too-many-instance-attributes
 class PKONELightshowBoard:
+
     """PKONE Lightshow board."""
 
     __slots__ = ["log", "addr", "firmware_version", "hardware_rev", "rgbw_firmware", "simple_led_count", "led_groups",

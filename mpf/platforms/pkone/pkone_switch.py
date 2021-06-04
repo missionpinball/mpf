@@ -14,6 +14,7 @@ PKONESwitchNumber = namedtuple("PKONESwitchNumber", ["board_address_id", "switch
 
 # pylint: disable-msg=too-few-public-methods
 class PKONESwitch(SwitchPlatformInterface):
+
     """An PKONE input on a PKONE Extension board."""
 
     __slots__ = ["log", "platform"]

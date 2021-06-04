@@ -3,6 +3,10 @@ from collections import namedtuple
 
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 
+MYPY = False
+if MYPY:  # pragma: no cover
+    from mpf.platforms.pkone.pkone import PKONEHardwarePlatform  # pylint: disable-msg=cyclic-import,unused-import
+
 PKONEServoNumber = namedtuple("PKONEServoNumber", ["board_address_id", "servo_number"])
 
 

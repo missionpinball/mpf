@@ -15,6 +15,7 @@ PKONECoilConfiguration = namedtuple("PKONECoilConfiguration", ["pulse_settings",
 
 
 class PKONECoil(DriverPlatformInterface):
+
     """Base class for coils/drivers connected to a PKONE Controller/Extension."""
 
     __slots__ = ["log", "hardware_rule", "_config_state", "machine", "platform",

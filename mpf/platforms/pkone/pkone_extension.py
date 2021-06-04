@@ -4,6 +4,7 @@ import logging
 
 # pylint: disable-msg=too-few-public-methods
 class PKONEExtensionBoard:
+
     """PKONE Extension board."""
 
     __slots__ = ["log", "addr", "firmware_version", "hardware_rev", "switch_count",
