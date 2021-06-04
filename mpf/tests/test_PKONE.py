@@ -708,6 +708,18 @@ class TestPKONE(MpfTestCase):
         self.assertEqual("PLB2103020000255192203192000000", self.controller.sent_commands[-1])
         self.controller.reset()
 
+        # test turning off rgb led out of hardware alignment with fade (uses software fade) and turning on
+        # an rgb led in alignment with color simultaneously (uses hardware fade)
+        self.controller.validate_expected_commands_mode = False
+        self.machine.lights["test_rgb_led_1"].color(RGBColor("blue"), 250)
+        self.machine.lights["test_rgb_led_3"].off(250)
+        self.advance_time_and_run(.5)
+        self.assertEqual(15, len(self.controller.sent_commands))
+        self.assertEqual("PLB2101010025000000255", self.controller.sent_commands[0])
+        self.assertEqual("PLB2103020000255192203192000000", self.controller.sent_commands[1])
+        self.assertEqual("PLB2103020000000000000000000000", self.controller.sent_commands[-1])
+        self.controller.reset()
+
         # test turning on rgbw led using color
         self.controller.expected_commands = {
             "PWB3101020000255000000000000000255000": None,
@@ -756,6 +768,18 @@ class TestPKONE(MpfTestCase):
         self.assertEqual(14, len(self.controller.sent_commands))
         self.assertEqual("PWB3103010000000000000000", self.controller.sent_commands[0])
         self.assertEqual("PWB3103010000255192203000", self.controller.sent_commands[-1])
+        self.controller.reset()
+
+        # test turning off rgbw led out of hardware alignment with fade (uses software fade) and turning on
+        # an rgbw led in alignment with color simultaneously (uses hardware fade)
+        self.controller.validate_expected_commands_mode = False
+        self.machine.lights["test_rgbw_led_1"].color(RGBColor("blue"), 250)
+        self.machine.lights["test_rgbw_led_3"].off(250)
+        self.advance_time_and_run(.5)
+        self.assertEqual(15, len(self.controller.sent_commands))
+        self.assertEqual("PWB3101010025000000255000", self.controller.sent_commands[0])
+        self.assertEqual("PWB3103010000255192203000", self.controller.sent_commands[1])
+        self.assertEqual("PWB3103010000000000000000", self.controller.sent_commands[-1])
         self.controller.reset()
 
     def _test_led_hardware_alignment(self):
