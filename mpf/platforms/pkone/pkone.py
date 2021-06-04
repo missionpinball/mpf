@@ -350,9 +350,10 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
         # Servos are numbered in sequence immediately after the highest coil number
         driver_count = self.pkone_extensions[board_id].coil_count
         servo_count = self.pkone_extensions[board_id].servo_count
-        if servo_count <= servo_num - driver_count:
-            raise AssertionError("PKONE Extension {} only has {} servos ({} - {}). Servo: {}".format(
-                board_id, servo_count, driver_count + 1, driver_count + servo_count, number))
+        if servo_num <= driver_count or servo_num > driver_count + servo_count:
+            raise AssertionError("PKONE Extension {} supports {} servos ({} - {}). "
+                                 "Servo: {} is not a valid number.".format(
+                                     board_id, servo_count, driver_count + 1, driver_count + servo_count, number))
 
         return PKONEServoNumber(board_id, servo_num)
 

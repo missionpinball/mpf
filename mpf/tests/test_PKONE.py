@@ -129,6 +129,7 @@ class TestPKONE(MpfTestCase):
             'PCC1010000000000': 'PCC',
             'PCC1020000000000': 'PCC',
             'PSC011003': 'PSC',
+            'PSC014125': 'PSC',
             'PLB2101050000000000000000000000000000000000000000000000000': 'PLB',
             'PWB3101040000000000000000000000000000000000000000000000000000': 'PWB',
         }
@@ -339,6 +340,18 @@ class TestPKONE(MpfTestCase):
         self.assertFalse(self.controller.expected_commands)
 
     def test_servo(self):
+        # test servo numbers
+        self.assertIsInstance(self.machine.default_platform, PKONEHardwarePlatform)
+        servo_number = self.machine.default_platform._parse_servo_number("0-11")
+        self.assertEqual(11, servo_number.servo_number)
+        servo_number = self.machine.default_platform._parse_servo_number("0-14")
+        self.assertEqual(14, servo_number.servo_number)
+
+        with self.assertRaises(AssertionError) as e:
+            self.machine.default_platform._parse_servo_number("0-1")
+            self.machine.default_platform._parse_servo_number("0-9")
+            self.machine.default_platform._parse_servo_number("0-15")
+
         # go to min position
         self.controller.expected_commands = {
                 "PSC011003": None
@@ -393,6 +406,7 @@ class TestPKONE(MpfTestCase):
             self.machine.default_platform.configure_switch('0-0', SwitchConfig(name="", debounce='auto', invert=0), {})
 
     def _test_switch_changes(self):
+        self.assertIsInstance(self.machine.default_platform, PKONEHardwarePlatform)
         self.switch_hit = False
         self.advance_time_and_run(1)
         self.assertSwitchState("s_test", 0)
@@ -416,6 +430,7 @@ class TestPKONE(MpfTestCase):
         self.assertSwitchState("s_test", 0)
 
     def _test_switch_changes_nc(self):
+        self.assertIsInstance(self.machine.default_platform, PKONEHardwarePlatform)
         self.switch_hit = False
         self.advance_time_and_run(1)
         self.assertSwitchState("s_test_nc", 1)

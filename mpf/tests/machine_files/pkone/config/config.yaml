@@ -116,6 +116,8 @@ servos:
         servo_min: 0.012
         servo_max: 0.108
         reset_position: 0
+    servo2:
+        number: 0-14
 
 lights:
   test_rgb_led_1:
