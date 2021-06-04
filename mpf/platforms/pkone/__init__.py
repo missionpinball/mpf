@@ -1,1 +1,1 @@
-"""Penny K Pinball PKONE Hardware Platform"""
+"""Penny K Pinball PKONE Hardware Platform."""
