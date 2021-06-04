@@ -15,6 +15,13 @@ class BaseMockPKONE(MockSerial):
         self.queue = []
         self.expected_commands = {}
         self.ignore_commands = {}
+        self.sent_commands = []
+        self.validate_expected_commands_mode = True
+
+    def reset(self):
+        self.expected_commands = {}
+        self.sent_commands = []
+        self.validate_expected_commands_mode = True
 
     def read(self, length):
         del length
@@ -57,13 +64,18 @@ class BaseMockPKONE(MockSerial):
         if self._parse(cmd):
             return msg_len
 
-        if cmd in self.expected_commands:
-            if self.expected_commands[cmd]:
-                self.queue.append(self.expected_commands[cmd])
-            del self.expected_commands[cmd]
-            return msg_len
+        if self.validate_expected_commands_mode:
+            if cmd in self.expected_commands:
+                if self.expected_commands[cmd]:
+                    self.queue.append(self.expected_commands[cmd])
+                del self.expected_commands[cmd]
+                self.sent_commands.append(cmd)
+                return msg_len
+            else:
+                raise Exception(str(cmd))
         else:
-            raise Exception(str(cmd))
+            self.sent_commands.append(cmd)
+            return msg_len
 
     def stop(self):
         pass
@@ -654,6 +666,7 @@ class TestPKONE(MpfTestCase):
         self.machine.lights["test_rgb_led_2"].color(RGBColor("blue"))
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
+        self.controller.reset()
 
         # test turning on rgb led using color with fade
         self.controller.expected_commands = {
@@ -663,6 +676,7 @@ class TestPKONE(MpfTestCase):
         self.machine.lights["test_rgb_led_2"].color(RGBColor("red"), 123)
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
+        self.controller.reset()
 
         # test turning on rgb led out of hardware alignment using color
         self.controller.expected_commands = {
@@ -671,6 +685,7 @@ class TestPKONE(MpfTestCase):
         self.machine.lights["test_rgb_led_3"].color(RGBColor("pink"))
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
+        self.controller.reset()
 
         # test turning off rgb led
         self.controller.expected_commands = {
@@ -682,27 +697,16 @@ class TestPKONE(MpfTestCase):
         self.machine.lights["test_rgb_led_4"].off()
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
+        self.controller.reset()
 
         # test turning on rgb led out of hardware alignment using color with fade (uses software fade)
-        self.controller.expected_commands = {
-            "PLB2103020000000000000000000000": None,
-            "PLB2103020000020015016015000000": None,
-            "PLB2103020000040030032030000000": None,
-            "PLB2103020000061046048046000000": None,
-            "PLB2103020000081061064061000000": None,
-            "PLB2103020000102076081076000000": None,
-            "PLB2103020000122092097092000000": None,
-            "PLB2103020000142107113107000000": None,
-            "PLB2103020000163122129122000000": None,
-            "PLB2103020000183138146138000000": None,
-            "PLB2103020000204153162153000000": None,
-            "PLB2103020000224168178168000000": None,
-            "PLB2103020000244184194184000000": None,
-            "PLB2103020000255192203192000000": None,
-        }
+        self.controller.validate_expected_commands_mode = False
         self.machine.lights["test_rgb_led_3"].color(RGBColor("pink"), 250)
         self.advance_time_and_run(.5)
-        self.assertFalse(self.controller.expected_commands)
+        self.assertEqual(14, len(self.controller.sent_commands))
+        self.assertEqual("PLB2103020000000000000000000000", self.controller.sent_commands[0])
+        self.assertEqual("PLB2103020000255192203192000000", self.controller.sent_commands[-1])
+        self.controller.reset()
 
         # test turning on rgbw led using color
         self.controller.expected_commands = {
@@ -712,6 +716,7 @@ class TestPKONE(MpfTestCase):
         self.machine.lights["test_rgbw_led_2"].color(RGBColor("blue"))
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
+        self.controller.reset()
 
         # test turning on rgbw led using color with fade
         self.controller.expected_commands = {
@@ -721,6 +726,7 @@ class TestPKONE(MpfTestCase):
         self.machine.lights["test_rgbw_led_2"].color(RGBColor("red"), 128)
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
+        self.controller.reset()
 
         # test turning on rgbw led out of hardware alignment using color
         self.controller.expected_commands = {
@@ -729,6 +735,7 @@ class TestPKONE(MpfTestCase):
         self.machine.lights["test_rgbw_led_3"].color(RGBColor("pink"))
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
+        self.controller.reset()
 
         # test turning off rgbw led
         self.controller.expected_commands = {
@@ -740,27 +747,16 @@ class TestPKONE(MpfTestCase):
         self.machine.lights["test_rgbw_led_4"].off()
         self.advance_time_and_run(.1)
         self.assertFalse(self.controller.expected_commands)
+        self.controller.reset()
 
         # test turning on rgbw led out of hardware alignment using color with fade (uses software fade)
-        self.controller.expected_commands = {
-            "PWB3103010000000000000000": None,
-            "PWB3103010000020015016000": None,
-            "PWB3103010000040030032000": None,
-            "PWB3103010000061046048000": None,
-            "PWB3103010000081061064000": None,
-            "PWB3103010000102076081000": None,
-            "PWB3103010000122092097000": None,
-            "PWB3103010000142107113000": None,
-            "PWB3103010000163122129000": None,
-            "PWB3103010000183138146000": None,
-            "PWB3103010000204153162000": None,
-            "PWB3103010000224168178000": None,
-            "PWB3103010000244184194000": None,
-            "PWB3103010000255192203000": None,
-        }
+        self.controller.validate_expected_commands_mode = False
         self.machine.lights["test_rgbw_led_3"].color(RGBColor("pink"), 250)
         self.advance_time_and_run(.5)
-        self.assertFalse(self.controller.expected_commands)
+        self.assertEqual(14, len(self.controller.sent_commands))
+        self.assertEqual("PWB3103010000000000000000", self.controller.sent_commands[0])
+        self.assertEqual("PWB3103010000255192203000", self.controller.sent_commands[-1])
+        self.controller.reset()
 
     def _test_led_hardware_alignment(self):
         self.assertIsInstance(self.machine.default_platform, PKONEHardwarePlatform)
