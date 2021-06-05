@@ -1,0 +1,170 @@
+#config_version=5
+# Hardware setup for tests: Extension boards at addresses 0 and 1, Lightshow boards at 2 (rgb) and 3 (rgbw)
+
+hardware:
+    platform: pkone
+
+pkone:
+    port: com3
+    debug: true
+
+switches:
+    s_test:
+        number: 0-7
+    s_test_nc:
+        number: 0-26
+        type: 'NC'
+    s_slingshot_test:
+        number: 0-22
+    s_flipper:
+        number: 1-5
+    s_flipper_eos:
+        number: 1-6
+    s_autofire:
+        number: 1-7
+    s_up:
+        number: 1-11
+    s_down:
+        number: 1-12
+    s_test_1:
+        number: 0-1
+    s_test_2:
+        number: 0-2
+    s_test_3:
+        number: 0-3
+    s_test_4:
+        number: 0-4
+    s_test_11:
+        number: 1-1
+    s_test_12:
+        number: 1-2
+    s_test_13:
+        number: 1-3
+    s_test_14:
+        number: 1-4
+
+coils:
+    c_test:
+        number: 1-4
+        default_pulse_ms: 23
+        default_recycle: True
+        platform_settings:
+            recycle_ms: 27
+    c_test_allow_enable:
+        number: 1-6
+        default_pulse_ms: 23
+        max_hold_power: 1.0
+    c_slingshot_test:
+        number: 0-7
+    c_long_pulse:
+        number: 1-8
+        default_pulse_ms: 2000
+        max_hold_power: 1.0
+    c_flipper_main:
+        number: 1-1
+        default_pulse_ms: 10
+        default_hold_power: 0.125
+    c_flipper_hold:
+        number: 1-2
+        default_hold_power: 0.125
+
+autofire_coils:
+    ac_slingshot_test:
+        coil: c_slingshot_test
+        switch: s_slingshot_test
+    ac_inverted_switch:
+        coil: c_slingshot_test
+        switch: s_test_nc
+    ac_same_switch1:
+        coil: c_test
+        switch: s_autofire
+        enable_events: ac_same_switch
+    ac_same_switch2:
+        coil: c_test_allow_enable
+        switch: s_autofire
+        enable_events: ac_same_switch
+    ac_different_boards:
+        coil: c_flipper_hold
+        switch: s_test
+    ac_board_3:
+        coil: c_flipper_hold
+        switch: s_test_13
+
+flippers:
+    f_test_single:
+        debug: true
+        main_coil_overwrite:
+            pulse_ms: 11
+        main_coil: c_flipper_main
+        activation_switch: s_flipper
+    f_test_hold:
+        debug: true
+        main_coil: c_flipper_main
+        hold_coil: c_flipper_hold
+        activation_switch: s_flipper
+    f_test_hold_eos:
+        debug: true
+        main_coil: c_flipper_main
+        hold_coil: c_flipper_hold
+        activation_switch: s_flipper
+        eos_switch: s_flipper_eos
+        use_eos: true
+
+servos:
+    servo1:
+        number: 0-11
+        servo_min: 0.012
+        servo_max: 0.108
+        reset_position: 0
+    servo2:
+        number: 0-14
+
+lights:
+  test_rgb_led_1:
+    start_channel: 2-1-0
+    type: rgb
+    subtype: led
+
+  test_rgb_led_2:
+    previous: test_rgb_led_1
+    type: rgb
+    subtype: led
+
+  test_rgb_led_3:
+    previous: test_rgb_led_2
+    type: rgbw
+    subtype: led
+
+  test_rgb_led_4:
+    previous: test_rgb_led_3
+    type: rgb
+    subtype: led
+
+  test_rgbw_led_1:
+    start_channel: 3-1-0
+    type: rgbw
+    subtype: led
+
+  test_rgbw_led_2:
+    previous: test_rgbw_led_1
+    type: rgbw
+    subtype: led
+
+  test_rgbw_led_3:
+    previous: test_rgbw_led_2
+    type: rgb
+    subtype: led
+
+  test_rgbw_led_4:
+    previous: test_rgbw_led_3
+    type: rgbw
+    subtype: led
+
+  test_simple_led:
+    number: 2-17
+    subtype: simple
+
+  test_other_simple_led:
+    number: 3-1
+    subtype: simple
+

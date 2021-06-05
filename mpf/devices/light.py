@@ -116,7 +116,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
     def get_hw_numbers(self):
         """Return a list of all hardware driver numbers."""
         numbers = []
-        for _, drivers in sorted(self.hw_drivers.items()):
+        for _, drivers in sorted(self.hw_drivers.items(), key=lambda x: x[1]):
             for driver in sorted(drivers, key=lambda x: x.number):
                 numbers.append(driver.number)
 
@@ -289,6 +289,9 @@ class Light(SystemWideDevice, DevicePositionMixin):
     async def _initialize(self):
         await super()._initialize()
         if self.config['previous']:
+            if self.config['previous'].name == self.name:
+                raise AssertionError("Failed to configure light {} in platform. "
+                                     "'previous' value cannot refer to itself.".format(self.name))
             await self.config['previous'].wait_for_loaded()
             start_channel = self.config['previous'].get_successor_number()
             self._load_hw_driver_sequentially(start_channel)

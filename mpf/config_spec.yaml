@@ -328,6 +328,8 @@ fast_coils:
     connection: single|enum(network,local,auto)|auto
     recycle_ms: single|ms|None
     hold_pwm_patter: single|str|None
+pkone_coils:
+    recycle_ms: single|ms|None
 coil_player:
     __valid_in__: machine, mode, show
     __type__: config_player
@@ -1071,6 +1073,15 @@ pin2dmd:
     file_log: single|enum(none,basic,full)|basic
     resolution: single|enum(128x32,192x64)|128x32
     panel: single|enum(rgb,rbg)|rgb
+pkone:
+    __valid_in__: machine
+    __type__: config
+    port: single|str|
+    baud: single|int|115200
+    watchdog: single|ms|1000
+    debug: single|bool|false
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
 pd_led_boards:
     use_ws281x_0: single|bool|false
     use_ws281x_1: single|bool|false
