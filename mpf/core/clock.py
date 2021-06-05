@@ -1,5 +1,6 @@
 """MPF clock and main loop."""
 import asyncio
+import datetime
 from typing import Tuple
 from serial_asyncio import create_serial_connection
 from mpf.core.logging import LogMixin
@@ -87,6 +88,11 @@ class ClockBase(LogMixin):
     def get_time(self):
         """Get the last tick made by the clock."""
         return self.loop.time()
+
+    @staticmethod
+    def get_datetime():
+        """Get current datetime."""
+        return datetime.datetime.now()
 
     def start_server(self, client_connected_cb, host=None, port=None, **kwd):
         """Start a server."""

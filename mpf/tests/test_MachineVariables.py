@@ -35,6 +35,32 @@ class TestMachineVariables(MpfTestCase):
         self.assertEqual(version, self.machine.variables.get_machine_var("mpf_version"))
         self.assertEqual(extended_version, self.machine.variables.get_machine_var("mpf_extended_version"))
 
+    def testTime(self):
+        current_date = self.machine.clock.get_datetime()
+        self.assertPlaceholderEvaluates(current_date.second, "machine.time.second")
+        self.assertPlaceholderEvaluates(current_date.minute, "machine.time.minute")
+        self.assertPlaceholderEvaluates(current_date.hour, "machine.time.hour")
+        self.assertPlaceholderEvaluates(current_date.day, "machine.time.day")
+        self.assertPlaceholderEvaluates(current_date.month, "machine.time.month")
+        self.assertPlaceholderEvaluates(current_date.year, "machine.time.year")
+
+        placeholder = self.machine.placeholder_manager.build_int_template("machine.time.second")
+        value, future = placeholder.evaluate_and_subscribe({})
+        self.assertEqual(current_date.second, value)
+        self.assertFalse(future.done())
+
+        self.advance_time_and_run(1.1)
+        self.assertTrue(future.done())
+
+        self.mock_event("test_event3")
+        self.mock_event("test_event4")
+        self.advance_time_and_run(60)
+        self.assertEventCalled("test_event3", 1)
+        self.assertEventCalled("test_event4", 1)
+        self.advance_time_and_run(60)
+        self.assertEventCalled("test_event3", 2)
+        self.assertEventCalled("test_event4", 2)
+
     def testVarLoadAndRemove(self):
         self.assertFalse(self.machine.variables.is_machine_var("expired_value"))
         self.assertTrue(self.machine.variables.is_machine_var("not_expired_value"))

@@ -1,5 +1,4 @@
 """Contains the MachineVariables class."""
-
 import copy
 from platform import platform, python_version, system, release, version, system_alias, machine as platform_machine
 from typing import Any, Dict, Optional
