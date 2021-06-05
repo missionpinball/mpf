@@ -13,3 +13,7 @@ machine_vars:
     initial_value: 6
     value_type: int
     persist: False
+
+event_player:
+  "{machine.time.second >= 30}": test_event3
+  "{machine.time.second >= 40}": test_event4
