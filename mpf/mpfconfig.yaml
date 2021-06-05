@@ -246,10 +246,6 @@ fadecandy:
     keyframe_interpolation: True
     dithering: True
 
-pkone:
-    port: com3
-    baud: 115200
-
 modes:
     - attract
     - game
