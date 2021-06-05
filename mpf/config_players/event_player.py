@@ -38,6 +38,32 @@ class EventPlayer(FlatConfigPlayer):
             else:
                 self._post_event(event_dict.name, s, **kwargs)
 
+    # pylint: disable-msg=too-many-arguments
+    def handle_subscription_change(self, value, settings, priority, context, key):
+        """Handle subscriptions."""
+        instance_dict = self._get_instance_dict(context)
+        previous_value = instance_dict.get(key, None)
+        if previous_value == value:
+            return
+        instance_dict[key] = value
+
+        if not value:
+            return
+
+        for event, s in settings.items():
+            s = deepcopy(s)
+            event_dict = self.machine.placeholder_manager.parse_conditional_template(event)
+
+            if event_dict.condition and not event_dict.condition.evaluate({}):
+                continue
+
+            if event_dict.number:
+                delay = Util.string_to_ms(event_dict.number)
+                self.delay.add(callback=self._post_event, ms=delay,
+                               event=event_dict.name, s=s)
+            else:
+                self._post_event(event_dict.name, s)
+
     def _post_event(self, event, s, **kwargs):
         event_name_placeholder = TextTemplate(self.machine, event.replace("(", "{").replace(")", "}"))
         for key, param in s.items():
