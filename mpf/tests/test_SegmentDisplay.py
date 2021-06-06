@@ -1198,6 +1198,53 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         ])
         mock_set_text.reset_mock()
 
+    @test_config("config_transition.yaml")
+    def test_transition_stack(self):
+        """Test that lower priority entries do not run transitions on higher priority entries."""
+        self.post_event("test_event2")
+        self.advance_time_and_run(.5)
+        self.assertEqual("    EVENT2", self.machine.segment_displays["display1"].text)
+        self.advance_time_and_run(4)
+        self.assertEqual("    EVENT2", self.machine.segment_displays["display1"].text)
+        self.advance_time_and_run(1)
+        self.assertEqual("          ", self.machine.segment_displays["display1"].text)
+
+        self.post_event("test_event1")
+        self.post_event("test_event2")
+        self.advance_time_and_run(.5)
+        self.assertEqual("    EVENT2", self.machine.segment_displays["display1"].text)
+        self.advance_time_and_run(4)
+        self.assertEqual("    EVENT2", self.machine.segment_displays["display1"].text)
+        self.advance_time_and_run(1)
+        self.assertEqual("          ", self.machine.segment_displays["display1"].text)
+
+        self.post_event("test_event2")
+        self.post_event("test_event1")
+        self.advance_time_and_run(.5)
+        self.assertEqual("    EVENT1", self.machine.segment_displays["display1"].text)
+        self.advance_time_and_run(1)
+        self.assertEqual("    EVENT1", self.machine.segment_displays["display1"].text)
+        self.advance_time_and_run(1)
+        self.assertEqual("          ", self.machine.segment_displays["display1"].text)
+
+        self.post_event("test_event3")
+        self.post_event("test_event4")
+        self.advance_time_and_run(.5)
+        self.assertEqual("    EVENT4", self.machine.segment_displays["display1"].text)
+        self.advance_time_and_run(4)
+        self.assertEqual("    EVENT4", self.machine.segment_displays["display1"].text)
+        self.advance_time_and_run(1)
+        self.assertEqual("          ", self.machine.segment_displays["display1"].text)
+
+        self.post_event("test_event3")
+        self.post_event("test_event4")
+        self.advance_time_and_run(.5)
+        self.assertEqual("    EVENT4", self.machine.segment_displays["display1"].text)
+        self.advance_time_and_run(4)
+        self.assertEqual("    EVENT4", self.machine.segment_displays["display1"].text)
+        self.advance_time_and_run(1)
+        self.assertEqual("          ", self.machine.segment_displays["display1"].text)
+
     def test_text_stack(self):
         """Test the segment display text stack functionality."""
         display1 = self.machine.segment_displays["display1"]
