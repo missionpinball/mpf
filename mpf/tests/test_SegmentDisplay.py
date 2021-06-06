@@ -1198,6 +1198,14 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         ])
         mock_set_text.reset_mock()
 
+    @test_config("config_flashing.yaml")
+    def test_flashing_and_transition(self):
+        """Test that flashing workings with transitions."""
+        self.post_event("test_event1")
+        self.advance_time_and_run(.5)
+        self.assertEqual("    EVENT1", self.machine.segment_displays["display1"].text)
+        self.assertEqual(FlashingType.FLASH_ALL, self.machine.segment_displays["display1"].flashing)
+
     @test_config("config_transition.yaml")
     def test_transition_stack(self):
         """Test that lower priority entries do not run transitions on higher priority entries."""
