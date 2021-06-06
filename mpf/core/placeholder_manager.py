@@ -533,13 +533,14 @@ class TimePlaceholder(BasePlaceholder):
         return asyncio.Future()
 
     def subscribe_attribute(self, item):
-        """Invalidate placeholders every second."""
+        """Invalidate time placeholders when they are due."""
         current_time = self._machine.clock.get_datetime()
         if item == "second":
             return asyncio.sleep(1)
         if item == "minute":
             return asyncio.sleep(60 - current_time.second)
         if item in ("hour", "day", "month", "year"):
+            # we will reevaluate day, month and year every hour
             return asyncio.sleep(3600 - current_time.second - 60 * current_time.minute)
 
         raise AssertionError("Invalid time element {}".format(item))
@@ -727,14 +728,14 @@ class BasePlaceholderManager(MpfController):
 
     def _eval_attribute(self, node, variables, subscribe):
         slice_value, subscription = self._eval(node.value, variables, subscribe)
+        if slice_value is None or not slice_value:
+            if subscribe:  # pylint: disable-msg=no-else-raise
+                raise TemplateEvalError(subscription)
+            else:
+                raise AssertionError("Cannot access {} in path because the parent is None".format(node))
         if isinstance(slice_value, dict) and node.attr in slice_value:
             ret_value = slice_value[node.attr]
         else:
-            if slice_value is None:
-                if subscribe:   # pylint: disable-msg=no-else-raise
-                    raise TemplateEvalError(subscription)
-                else:
-                    raise AssertionError("Element {} in path is None".format(node))
             try:
                 ret_value = getattr(slice_value, node.attr)
             except (ValueError, AttributeError):
