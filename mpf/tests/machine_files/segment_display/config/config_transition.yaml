@@ -1,0 +1,53 @@
+#config_version=5
+segment_displays:
+  display1:
+    debug: true
+    number: 1
+    size: 10
+
+segment_display_player:
+  test_event1:
+    display1:
+      priority: 1
+      text: EVENT1
+      color: red
+      expire: 2s
+      transition:
+        type: push
+        direction: left
+      transition_out:
+        type: cover
+        direction: left
+  test_event2:
+    display1:
+      priority: 10
+      text: EVENT2
+      color: blue
+      expire: 5s
+      transition:
+        type: push
+        direction: right
+
+  test_event3:
+    display1:
+      key: test3
+      priority: 1
+      text: EVENT3
+      color: red
+      expire: 2s
+      transition:
+        type: push
+        direction: left
+      transition_out:
+        type: cover
+        direction: left
+  test_event4:
+    display1:
+      key: test4
+      priority: 10
+      text: EVENT4
+      color: blue
+      expire: 5s
+      transition:
+        type: push
+        direction: right
