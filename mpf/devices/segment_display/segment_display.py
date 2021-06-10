@@ -186,10 +186,6 @@ class SegmentDisplay(SystemWideDevice):
             self._current_transition = None
 
             if self._current_text_stack_entry:
-                # update colors
-                if self._current_text_stack_entry.colors:
-                    self.set_color(self._current_text_stack_entry.colors)
-
                 # update placeholder
                 if len(self._current_text_stack_entry.text) > 0:
                     self._current_placeholder = TextTemplate(self.machine, self._current_text_stack_entry.text)

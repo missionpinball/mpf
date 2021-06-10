@@ -1,0 +1,19 @@
+#config_version=5
+segment_displays:
+  display1:
+    debug: true
+    number: 1
+    size: 10
+
+segment_display_player:
+  test_event1:
+    display1:
+      text: EVENT1
+      color: [red, blue, yellow, green, white, purple]
+  test_event2:
+    display1:
+      text: EVENT2
+      color: [red, blue, yellow, green, white, purple]
+      transition:
+        type: uncover
+        direction: left
