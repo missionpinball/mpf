@@ -1407,6 +1407,7 @@ shots:
     delay_switch: dict|machine(switches):ms|None
     persist_enable: single|bool|true
     playfield: single|machine(playfields)|playfield
+    mark_playfield_active: single|bool|true
     enable_events: event_handler|event_handler:ms|None
     disable_events: event_handler|event_handler:ms|None
     reset_events: event_handler|event_handler:ms|None
