@@ -51,7 +51,8 @@ class Shot(EnableDisableMixin, ModeDevice):
     def _mark_active(self, **kwargs):
         """Mark playfield active."""
         del kwargs
-        self.config['playfield'].mark_playfield_active_from_device_action()
+        if self.config['mark_playfield_active']:
+            self.config['playfield'].mark_playfield_active_from_device_action()
 
     def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Add device to a mode that was already started.
