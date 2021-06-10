@@ -1198,6 +1198,25 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         ])
         mock_set_text.reset_mock()
 
+    @test_config("config_colors.yaml")
+    def test_colors_and_transitions(self):
+        """Test colors and transitions."""
+        self.post_event("test_event1")
+        self.advance_time_and_run(.5)
+        self.assertEqual("    EVENT1", self.machine.segment_displays["display1"].text)
+        self.assertEqual(
+            [RGBColor("red"), RGBColor("red"), RGBColor("red"), RGBColor("red"), RGBColor("red"), RGBColor("blue"),
+             RGBColor("yellow"), RGBColor("green"), RGBColor("white"), RGBColor("purple")],
+            self.machine.segment_displays["display1"].colors)
+
+        self.post_event("test_event2")
+        self.advance_time_and_run(2)
+        self.assertEqual("    EVENT2", self.machine.segment_displays["display1"].text)
+        self.assertEqual(
+            [RGBColor("red"), RGBColor("red"), RGBColor("red"), RGBColor("red"), RGBColor("red"), RGBColor("blue"),
+             RGBColor("yellow"), RGBColor("green"), RGBColor("white"), RGBColor("purple")],
+            self.machine.segment_displays["display1"].colors)
+
     @test_config("config_flashing.yaml")
     def test_flashing_and_transition(self):
         """Test that flashing workings with transitions."""
