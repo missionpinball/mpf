@@ -5,9 +5,14 @@ You can use convert_segments.py (based on https://github.com/dmadison/LED-Segmen
 
 BCD were created by us.
 """
-from typing import Dict, Union, List
+from typing import Dict, Union, List, Tuple
 
+from mpf.core.rgb_color import NAMED_RGB_COLORS
 from mpf.devices.segment_display.segment_display_text import SegmentDisplayText
+
+MYPY = False
+if MYPY:   # pragma: no cover
+    from mpf.core.rgb_color import RGBColor     # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 
 class TextToSegmentMapper:
@@ -31,6 +36,27 @@ class TextToSegmentMapper:
         while display_width > len(segments):
             # prepend spaces to pad mapping
             segments.insert(0, segment_mapping.get(ord(" "), segment_mapping[None]))
+
+        return segments
+
+    @classmethod
+    def map_segment_text_to_segments_with_color(cls, text: SegmentDisplayText, display_width, segment_mapping) ->\
+            List[Tuple["Segment", "RGBColor"]]:
+        """Map a segment display text to a certain display mapping."""
+        segments = []
+        for char in text:
+            mapping = segment_mapping.get(char.char_code, segment_mapping[None])
+            if char.dot:
+                mapping = mapping.copy_with_dp_on()
+            segments.append((mapping, char.color))
+
+        # remove leading segments if mapping is too long
+        if display_width < len(segments):
+            segments = segments[-display_width:]
+
+        while display_width > len(segments):
+            # prepend spaces to pad mapping
+            segments.insert(0, (segment_mapping.get(ord(" "), segment_mapping[None]), NAMED_RGB_COLORS["white"]))
 
         return segments
 

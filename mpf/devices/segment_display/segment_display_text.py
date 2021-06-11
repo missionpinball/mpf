@@ -29,12 +29,8 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
     def from_str_with_color(cls, text: str, display_size: int, collapse_dots: bool, collapse_commas: bool,
                             colors: List[RGBColor]) -> "ColoredSegmentDisplayText":
         """Create colored text."""
-        char_colors = colors[:]
-        # when fewer colors are supplied than text, extend the last color to the end of the text
-        if len(char_colors) < len(text):
-            char_colors.extend([colors[-1]] * (len(text) - len(char_colors)))
         return ColoredSegmentDisplayText(
-            cls._create_characters(text, display_size, collapse_dots, collapse_commas, char_colors),
+            cls._create_characters(text, display_size, collapse_dots, collapse_commas, colors[:]),
             collapse_dots, collapse_commas)
 
     # pylint: disable=too-many-arguments
@@ -44,7 +40,7 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
             Union["ColoredSegmentDisplayText", "UncoloredSegmentDisplayText"]:
         """Create from string."""
         if colors:
-            return cls.from_str_with_color(text, display_size, collapse_dots, collapse_commas, colors)
+            return cls.from_str_with_color(text, display_size, collapse_dots, collapse_commas, colors[:])
 
         char_colors = [None] * len(text)
         return UncoloredSegmentDisplayText(
@@ -52,13 +48,11 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
             collapse_dots, collapse_commas)
 
     @classmethod
-    def _create_characters(cls, text: str, display_size: int, collapse_dots: bool, collapse_commas: bool,
-                           colors: List[Optional[RGBColor]]) -> List[DisplayCharacter]:
+    def _embed_dots_and_commas(cls, text: str, collapse_dots: bool, collapse_commas: bool):
+        """Return text with embedded dots and commas."""
         char_has_dot = False
         char_has_comma = False
         char_list = []
-        default_color = colors[0] if colors else None
-        assert len(text) <= len(colors)
         for char in reversed(text):
             char_code = ord(char)
             if collapse_dots and char_code == DOT_CODE:
@@ -67,10 +61,32 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
             if collapse_commas and char_code == COMMA_CODE:
                 char_has_comma = True
                 continue
-
-            char_list.insert(0, DisplayCharacter(char_code, char_has_dot, char_has_comma, colors.pop()))
+            char_list.insert(0, (char_code, char_has_dot, char_has_comma))
             char_has_dot = False
             char_has_comma = False
+
+        return char_list
+
+    # pylint: disable-msg=too-many-locals
+    @classmethod
+    def _create_characters(cls, text: str, display_size: int, collapse_dots: bool, collapse_commas: bool,
+                           colors: List[Optional[RGBColor]]) -> List[DisplayCharacter]:
+        """Create characters from text and color them.
+
+        - Colors are used from the left to the right (starting with the first character).
+        - If colors are shorter than text the last color is repeated for text.
+        - The first color is used to pad the text to the left if text is shorter than the display - thus text is right
+          aligned.
+        - Dots and commas are embedded on the fly.
+        """
+        char_list = []
+        left_pad_color = colors[0] if colors else None
+        default_right_color = colors[len(colors) - 1] if colors else None
+        uncolored_chars = cls._embed_dots_and_commas(text, collapse_dots, collapse_commas)
+        colors = colors[-len(uncolored_chars):]
+        for char_code, char_has_dot, char_has_comma in uncolored_chars:
+            color = colors.pop(0) if colors else default_right_color
+            char_list.append(DisplayCharacter(char_code, char_has_dot, char_has_comma, color))
 
         # ensure list is the same size as the segment display (cut off on left or right justify characters)
         current_length = len(char_list)
@@ -79,7 +95,7 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
                 char_list.pop(0)
         elif current_length < display_size:
             for _ in range(display_size - current_length):
-                char_list.insert(0, DisplayCharacter(SPACE_CODE, False, False, default_color))
+                char_list.insert(0, DisplayCharacter(SPACE_CODE, False, False, left_pad_color))
 
         return char_list
 

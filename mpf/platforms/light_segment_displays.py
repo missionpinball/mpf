@@ -2,7 +2,8 @@
 import logging
 
 from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
-from mpf.core.segment_mappings import SEVEN_SEGMENTS, BCD_SEGMENTS, FOURTEEN_SEGMENTS, SIXTEEN_SEGMENTS, EIGHT_SEGMENTS
+from mpf.core.segment_mappings import SEVEN_SEGMENTS, BCD_SEGMENTS, FOURTEEN_SEGMENTS, SIXTEEN_SEGMENTS,\
+    EIGHT_SEGMENTS, TextToSegmentMapper
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
 from mpf.core.platform import SegmentDisplaySoftwareFlashPlatform
 
@@ -44,15 +45,13 @@ class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
 
     def _update_text(self):
         # iterate lights and chars
-        for char, lights_for_char in zip(self._current_text, self._lights):
-            try:
-                char_map = self._segment_map[char.char_code]
-            except KeyError:
-                # if there is no
-                char_map = self._segment_map[None]
+        mapped_text = TextToSegmentMapper.map_segment_text_to_segments_with_color(
+            self._current_text, len(self._lights), self._segment_map)
+
+        for char, lights_for_char in zip(mapped_text, self._lights):
             for name, light in lights_for_char.items():
-                if getattr(char_map, name):
-                    light.color(color=char.color, key=self._key)
+                if getattr(char[0], name):
+                    light.color(color=char[1], key=self._key)
                 else:
                     light.remove_from_stack_by_key(key=self._key)
 
