@@ -154,7 +154,7 @@ class SegmentDisplay(SystemWideDevice):
     # pylint: disable=too-many-arguments
     def _start_transition(self, transition: TransitionBase, current_text: str, new_text: str,
                           current_colors: List[RGBColor], new_colors: List[RGBColor],
-                          update_hz: float):
+                          update_hz: float, flashing, flash_mask):
         """Start the specified transition."""
         current_colors = self._expand_colors(current_colors, len(current_text))
         new_colors = self._expand_colors(new_colors, len(new_text))
@@ -163,8 +163,7 @@ class SegmentDisplay(SystemWideDevice):
         self._current_transition = TransitionRunner(self.machine, transition, current_text, new_text,
                                                     current_colors, new_colors)
         transition_text = next(self._current_transition)
-        self._update_display(SegmentDisplayState(transition_text, self._current_state.flashing,
-                                                 self._current_state.flash_mask))
+        self._update_display(SegmentDisplayState(transition_text, flashing, flash_mask))
         self._transition_update_task = self.machine.clock.schedule_interval(self._update_transition, 1 / update_hz)
 
     def _update_transition(self):
@@ -187,10 +186,6 @@ class SegmentDisplay(SystemWideDevice):
             self._current_transition = None
 
             if self._current_text_stack_entry:
-                # update colors
-                if self._current_text_stack_entry.colors:
-                    self.set_color(self._current_text_stack_entry.colors)
-
                 # update placeholder
                 if len(self._current_text_stack_entry.text) > 0:
                     self._current_placeholder = TextTemplate(self.machine, self._current_text_stack_entry.text)
@@ -249,9 +244,16 @@ class SegmentDisplay(SystemWideDevice):
             else:
                 previous_text = " " * self.size
 
+            if top_text_stack_entry.flashing is not None:
+                flashing = top_text_stack_entry.flashing
+                flash_mask = top_text_stack_entry.flash_mask
+            else:
+                flashing = self._current_state.flashing
+                flash_mask = self._current_state.flash_mask
+
             self._start_transition(transition, previous_text, top_text_stack_entry.text,
                                    self._current_state.text.get_colors(), top_text_stack_entry.colors,
-                                   self.config['default_transition_update_hz'])
+                                   self.config['default_transition_update_hz'], flashing, flash_mask)
         else:
             # no transition - subscribe to text template changes and update display
             self._current_placeholder = TextTemplate(self.machine, top_text_stack_entry.text)

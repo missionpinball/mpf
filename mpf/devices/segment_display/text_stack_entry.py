@@ -28,4 +28,5 @@ class TextStackEntry:
 
     def __repr__(self):
         """Return str representation."""
-        return '<TextStackEntry: {} (priority: {}, key: {}) >'.format(self.text, self.priority, self.key)
+        return '<TextStackEntry: {} (priority: {}, key: {} colors: {}) >'.format(
+            self.text, self.priority, self.key, self.colors)

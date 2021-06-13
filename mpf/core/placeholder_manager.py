@@ -515,6 +515,55 @@ class PlayersPlaceholder(BasePlaceholder):
         return PlayerPlaceholder(self._machine, item)
 
 
+class TimePlaceholder(BasePlaceholder):
+
+    """Return current time."""
+
+    __slots__ = ["_machine"]
+
+    def __init__(self, machine):
+        """Initialise placeholder."""
+        self._machine = machine     # type: MachineController
+
+    def subscribe(self):
+        """Subscribe to machine changes.
+
+        Will never return.
+        """
+        return asyncio.Future()
+
+    def subscribe_attribute(self, item):
+        """Invalidate time placeholders when they are due."""
+        current_time = self._machine.clock.get_datetime()
+        if item == "second":
+            return asyncio.sleep(1)
+        if item == "minute":
+            return asyncio.sleep(60 - current_time.second)
+        if item in ("hour", "day", "month", "year"):
+            # we will reevaluate day, month and year every hour
+            return asyncio.sleep(3600 - current_time.second - 60 * current_time.minute)
+
+        raise AssertionError("Invalid time element {}".format(item))
+
+    def __getattr__(self, item):
+        """Attribute access."""
+        current_time = self._machine.clock.get_datetime()
+        if item == "second":
+            return current_time.second
+        if item == "minute":
+            return current_time.minute
+        if item == "hour":
+            return current_time.hour
+        if item == "day":
+            return current_time.day
+        if item == "month":
+            return current_time.month
+        if item == "year":
+            return current_time.year
+
+        raise AssertionError("Invalid time element {}".format(item))
+
+
 class MachinePlaceholder(BasePlaceholder):
 
     """Wraps the machine."""
@@ -534,6 +583,8 @@ class MachinePlaceholder(BasePlaceholder):
 
     def subscribe_attribute(self, item):
         """Subscribe to machine variable."""
+        if item == "time":
+            return asyncio.Future()
         return self._machine.events.wait_for_event('machine_var_{}'.format(item))
 
     def __getitem__(self, item):
@@ -542,6 +593,8 @@ class MachinePlaceholder(BasePlaceholder):
 
     def __getattr__(self, item):
         """Attribute access."""
+        if item == "time":
+            return TimePlaceholder(self._machine)
         return self._machine.variables.get_machine_var(item)
 
 
@@ -675,6 +728,11 @@ class BasePlaceholderManager(MpfController):
 
     def _eval_attribute(self, node, variables, subscribe):
         slice_value, subscription = self._eval(node.value, variables, subscribe)
+        if slice_value is None or not slice_value:
+            if subscribe:  # pylint: disable-msg=no-else-raise
+                raise TemplateEvalError(subscription)
+            else:
+                raise AssertionError("Cannot access {} in path because the parent is None".format(node))
         if isinstance(slice_value, dict) and node.attr in slice_value:
             ret_value = slice_value[node.attr]
         else:

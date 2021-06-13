@@ -45,6 +45,10 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
                 key += s['key']
 
             if action == "add":
+                if key in instance_dict[display]:
+                    if instance_dict[display][key] is not True:
+                        self.delay.remove(instance_dict[display][key])
+
                 # add text
                 s = TransitionManager.validate_config(s, self.machine.config_validator)
                 display.add_text_entry(text=s['text'],

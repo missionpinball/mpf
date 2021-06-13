@@ -1,3 +1,4 @@
+import datetime
 import selectors
 import socket
 from asyncio import base_events, coroutine, events      # type: ignore
@@ -449,6 +450,10 @@ class TestClock(ClockBase):
         self._mock_sockets = {}
         self._mock_servers = {}
         self._mock_serials = {}
+
+    def get_datetime(self):
+        """Create datetime based on time travel loop."""
+        return datetime.datetime.fromtimestamp(self.get_time())
 
     def _create_event_loop(self):
         return self._test_loop

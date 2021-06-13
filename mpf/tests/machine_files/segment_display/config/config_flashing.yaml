@@ -1,0 +1,15 @@
+#config_version=5
+segment_displays:
+  display1:
+    debug: true
+    number: 1
+    size: 10
+
+segment_display_player:
+  test_event1:
+    display1:
+      flashing: all
+      text: EVENT1
+      transition:
+        type: push
+        direction: left

@@ -174,7 +174,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         if number is None:
             number = self._next_light
             self._next_light += 1
-        if subtype in ("gi", "matrix"):
+        if subtype in ("gi", "matrix", "simple"):
             return [
                 {
                     "number": str(number)

@@ -1,4 +1,4 @@
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfTestCase import MpfTestCase, test_config
 
 
 class TestLightSegmentDisplays(MpfTestCase):
@@ -163,3 +163,30 @@ class TestLightSegmentDisplays(MpfTestCase):
         self.assertLightColor("segment5_f", "on")
         self.assertLightColor("segment5_g", "off")
         self.assertLightColor("segment5_h", "on")
+
+    @test_config("config_dots.yaml")
+    def test_dots(self):
+        """Check that embedded dots work properly."""
+        display1 = self.machine.segment_displays["display1"]
+
+        # this should show the last two characters 37
+        self.post_event("show_37dot")
+        self.advance_time_and_run()
+
+        self.assertEqual("37.", display1.text)
+
+        self.assertLightColor("segment1_a", "red")
+        self.assertLightColor("segment1_b", "red")
+        self.assertLightColor("segment1_c", "red")
+        self.assertLightColor("segment1_d", "red")
+        self.assertLightColor("segment1_e", "off")
+        self.assertLightColor("segment1_f", "off")
+        self.assertLightColor("segment1_g", "red")
+        self.assertLightColor("segment2_a", "blue")
+        self.assertLightColor("segment2_b", "blue")
+        self.assertLightColor("segment2_c", "blue")
+        self.assertLightColor("segment2_d", "off")
+        self.assertLightColor("segment2_e", "off")
+        self.assertLightColor("segment2_f", "off")
+        self.assertLightColor("segment2_g", "off")
+        self.assertLightColor("segment2_dp", "blue")

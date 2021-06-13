@@ -201,7 +201,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
             '''event: logicblock_(name)_hit
             config_section: counters, accruals, sequences
 
-            desc: The logic block "name" was just hit.            
+            desc: The logic block "name" was just hit.
 
             Note that this is the default hit event for logic blocks,
             but this can be changed in a logic block's "events_when_hit:"
@@ -266,7 +266,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         '''event: (name)_timeout
         config_section: counters, accruals, sequences
 
-        desc: The logic block called "name" has just timeouted.        
+        desc: The logic block called "name" has just timeouted.
 
         Timeouts are disabled by default but you can set logic_block_timeout to
         enable them. They will run from start of your logic block until it is

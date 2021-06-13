@@ -106,6 +106,7 @@ mpf:
         opp: mpf.platforms.opp.opp.OppHardwarePlatform
         p_roc:  mpf.platforms.p_roc.PRocHardwarePlatform
         p3_roc:  mpf.platforms.p3_roc.P3RocHardwarePlatform
+        pkone: mpf.platforms.pkone.pkone.PKONEHardwarePlatform
         pololu_maestro: mpf.platforms.pololu_maestro.PololuMaestroHardwarePlatform
         rpi: mpf.platforms.rpi.rpi.RaspberryPiHardwarePlatform
         smart_virtual: mpf.platforms.smart_virtual.SmartVirtualHardwarePlatform
