@@ -642,3 +642,30 @@ class TestBallSearch(MpfGameTestCase):
         # make sure that all relevant phases have been run through
         for phase in range(1, 4):
             assert phase in phases
+
+    @test_config("config_ball_device.yaml")
+    def test_ball_search_cancel_by_ball_device(self):
+        """Test how ball devices stop ball search.
+
+        Short switch activations should not stop ball search.
+        Longer activations (when a ball is counted) they should stop ball search.
+        """
+        self.hit_switch_and_run("s_test", 1)
+        self.assertNumBallsKnown(1)
+        self.start_game()
+        self.advance_time_and_run(1)
+        self.assertBallsOnPlayfield(1)
+        self.assertFalse(self.machine.ball_devices['playfield'].ball_search.started)
+        self.advance_time_and_run(20)
+        self.assertTrue(self.machine.ball_devices['playfield'].ball_search.started)
+        self.assertEqual("pulsed_10", self.machine.coils["c_test"].hw_driver.state)
+
+        # short pulses should do nothing
+        self.hit_switch_and_run("s_test", .1)
+        self.release_switch_and_run("s_test", .4)
+        self.assertTrue(self.machine.ball_devices['playfield'].ball_search.started)
+
+        # longer activations should indeed stop ball search (because a ball entered)
+        self.hit_switch_and_run("s_test", 1)
+        self.release_switch_and_run("s_test", .4)
+        self.assertFalse(self.machine.ball_devices['playfield'].ball_search.started)

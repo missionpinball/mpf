@@ -1,0 +1,24 @@
+#config_version=5
+
+playfields:
+    playfield:
+        enable_ball_search: True
+        ball_search_timeout: 20s
+        ball_search_wait_after_iteration: 10s
+        ball_search_interval: 250ms
+        default_source_device: bd_test
+
+switches:
+  s_test:
+    number:
+
+coils:
+  c_test:
+    number:
+
+ball_devices:
+  bd_test:
+    ball_switches: s_test
+    eject_coil: c_test
+    tags: trough, home, drain
+    eject_timeouts: 1s
