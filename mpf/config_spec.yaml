@@ -1750,7 +1750,7 @@ spinners:
     switches: list|machine(switches)|None
     switch_tags: list|str|None
     active_ms: single|ms|1000ms
-    idle_ms: single|ms|
+    idle_ms: single|ms|None
     playfield: single|machine(playfields)|playfield
     enable_events: event_handler|event_handler:ms|None
     disable_events: event_handler|event_handler:ms|None
