@@ -56,6 +56,7 @@ mpf:
         diverters: mpf.devices.diverter.Diverter
         score_reels: mpf.devices.score_reel.ScoreReel
         score_reel_groups: mpf.devices.score_reel_group.ScoreReelGroup
+        spinners: mpf.devices.spinner.Spinner
         playfield_transfers: mpf.devices.playfield_transfer.PlayfieldTransfer
         multiballs: mpf.devices.multiball.Multiball
         motors: mpf.devices.motor.Motor

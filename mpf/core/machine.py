@@ -76,7 +76,7 @@ if MYPY:   # pragma: no cover
     from mpf.devices.achievement import Achievement     # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.combo_switch import ComboSwitch    # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.score_queue import ScoreQueue      # pylint: disable-msg=cyclic-import,unused-import
-
+    from mpf.devices.spinner import Spinner      # pylint: disable-msg=cyclic-import,unused-import
 
 # pylint: disable-msg=too-many-instance-attributes
 class MachineController(LogMixin):
@@ -196,6 +196,7 @@ class MachineController(LogMixin):
             self.achievement_groups = {}                # type: Dict[str, AchievementGroup]
             self.combo_switches = {}                    # type: Dict[str, ComboSwitch]
             self.score_queues = {}                      # type: Dict[str, ScoreQueue]
+            self.spinners = {}                          # type: Dict[str, Spinner]
 
         self._set_machine_path()
 
