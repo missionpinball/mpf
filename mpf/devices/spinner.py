@@ -57,12 +57,12 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
             return
         tag = kwargs.get('tag')
         if not self._active:
-            self.machine.events.post("spinner_{}_active".format(self.name))
+            self.machine.events.post("spinner_{}_active".format(self.name), tag=tag)
             if tag:
                 self.machine.events.post("spinner_{}_{}_active".format(self.name, tag))
             self._active = True
             self._idle = False
-        self.machine.events.post("spinner_{}_hit".format(self.name))
+        self.machine.events.post("spinner_{}_hit".format(self.name), tag=tag)
         if tag:
             self.machine.events.post("spinner_{}_{}_hit".format(self.name, tag))
         self.delay.clear()
