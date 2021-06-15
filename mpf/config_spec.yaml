@@ -1751,6 +1751,8 @@ spinners:
     active_ms: single|ms|1000ms
     idle_ms: single|ms|
     playfield: single|machine(playfields)|playfield
+    enable_events: event_handler|event_handler:ms|None
+    disable_events: event_handler|event_handler:ms|None
 steppers:
     __valid_in__: machine
     __type__: device

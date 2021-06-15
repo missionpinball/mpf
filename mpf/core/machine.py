@@ -78,6 +78,7 @@ if MYPY:   # pragma: no cover
     from mpf.devices.score_queue import ScoreQueue      # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.spinner import Spinner      # pylint: disable-msg=cyclic-import,unused-import
 
+
 # pylint: disable-msg=too-many-instance-attributes
 class MachineController(LogMixin):
 
