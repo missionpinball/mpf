@@ -10,7 +10,6 @@ from mpf.exceptions.config_file_error import ConfigFileError
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.devices.driver import Driver           # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
@@ -26,13 +25,14 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
     __slots__ = ["_active_ms", "_active", "_idle", "delay", "_tags"]
 
     def __init__(self, machine: "MachineController", name: str) -> None:
-        """Initialise drop target."""
+        """Initialise spinner device."""
+        super().__init__(machine, name)
         self._tags = None
         self._active = False
         self._idle = True
         self._active_ms = None
-        super().__init__(machine, name)
         self.delay = DelayManager(machine)
+        self.enabled = True  # Default to enabled
 
     async def _initialize(self):
         await super()._initialize()
@@ -59,7 +59,7 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
         if not self._active:
             self.machine.events.post("spinner_{}_active".format(self.name))
             if tag:
-                self.machine.events.post("spinner_{}_{}_hit".format(self.name, tag))
+                self.machine.events.post("spinner_{}_{}_active".format(self.name, tag))
             self._active = True
             self._idle = False
         self.machine.events.post("spinner_{}_hit".format(self.name))
