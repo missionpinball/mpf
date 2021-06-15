@@ -94,7 +94,7 @@ class Bonus(Mode):
         hits = self.player.vars.get(entry['player_score_entry'], 1)
         score = entry['score'].evaluate([]) * hits
 
-        if not score and entry['skip_if_zero']:
+        if (not score and entry['skip_if_zero']) or (score < 0 and entry['skip_if_negative']):
             self.debug_log("Skipping bonus entry '{}' because its value is 0".
                            format(entry['event']))
             self._bonus_next_item()
