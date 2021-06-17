@@ -1747,10 +1747,11 @@ spinners:
     __type__: device
     switch: list|machine(switches)|None
     switches: list|machine(switches)|None
-    switch_tags: list|str|None
+    labels: list|str|None
     active_ms: single|ms|1000ms
     idle_ms: single|ms|None
     playfield: single|machine(playfields)|playfield
+    reset_when_inactive: single|bool|true
     enable_events: event_handler|event_handler:ms|None
     disable_events: event_handler|event_handler:ms|None
 steppers:

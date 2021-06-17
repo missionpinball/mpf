@@ -1,0 +1,27 @@
+#config_version=5
+
+switches:
+  switch1:
+    number:
+  switch2:
+    number:
+  switch3:
+    number:
+  switch4:
+    number:
+
+spinners:
+  spin1:
+    switch: switch1
+    active_ms: 800
+    idle_ms: 0
+  spin2:
+    switches: switch2, switch3
+    labels: foo, bar
+    active_ms: 400
+    idle_ms: 800
+  spin3:
+    switches: switch4
+    active_ms: 400
+    idle_ms: 800
+    reset_when_inactive: false
