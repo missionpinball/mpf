@@ -22,20 +22,21 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
     collection = 'spinners'
     class_label = 'spinner'
 
-    __slots__ = ["_active_ms", "_active", "_idle", "delay", "_tags"]
+    __slots__ = ["hits", "_active_ms", "_active", "_idle", "delay"]
 
     def __init__(self, machine: "MachineController", name: str) -> None:
         """Initialise spinner device."""
         super().__init__(machine, name)
-        self._tags = None
         self._active = False
         self._idle = True
         self._active_ms = None
+        self.hits = None
         self.delay = DelayManager(machine)
         self.enabled = True  # Default to enabled
 
     async def _initialize(self):
         await super()._initialize()
+        self.hits = 0
         # Cache this value because it's used a lot in rapid succession
         self._active_ms = self.config['active_ms']
         # Can't read the switch until the switch controller is set up
@@ -45,8 +46,9 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
     def _register_switch_handlers(self, **kwargs):
         del kwargs
 
+        labels = dict(zip(self.config['switches'], self.config['labels'])) if self.config['labels'] else None
         for switch in self.config['switches']:
-            callback_kwargs = {"tag": self._tags[switch]} if self._tags else None
+            callback_kwargs = {"label": labels[switch]} if labels else None
             # register for notification of switch active state
             self.machine.switch_controller.add_switch_handler_obj(
                 switch,
@@ -55,33 +57,37 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
     def _update_state_from_switch(self, **kwargs):
         if not self.enabled:
             return
-        tag = kwargs.get('tag')
+        label = kwargs.get("label")
         if not self._active:
-            self.machine.events.post("spinner_{}_active".format(self.name), tag=tag)
-            if tag:
-                self.machine.events.post("spinner_{}_{}_active".format(self.name, tag))
+            self.machine.events.post("spinner_{}_active".format(self.name), label=label)
+            if label:
+                self.machine.events.post("spinner_{}_{}_active".format(self.name, label))
             self._active = True
             self._idle = False
-        self.machine.events.post("spinner_{}_hit".format(self.name), tag=tag)
-        if tag:
-            self.machine.events.post("spinner_{}_{}_hit".format(self.name, tag))
+        self.hits += 1
+        self.machine.events.post("spinner_{}_hit".format(self.name), hits=self.hits, label=label)
+        if label:
+            self.machine.events.post("spinner_{}_{}_hit".format(self.name, label))
         self.delay.clear()
         self.delay.add(self._active_ms, self._deactivate)
 
     def _deactivate(self, **kwargs):
         """Post an 'inactive' event after no switch hits for the active_ms duration."""
         del kwargs
-        self.machine.events.post("spinner_{}_inactive".format(self.name))
+        self.machine.events.post("spinner_{}_inactive".format(self.name), hits=self.hits)
         self._active = False
         if self.config['idle_ms']:
             self.delay.add(self.config['idle_ms'], self._on_idle)
+            if self.config['reset_when_inactive']:
+                self.hits = 0
         else:
             self._idle = True
 
     def _on_idle(self, **kwargs):
         """Post an 'idle' event if the spinner has been inactive for the idle_ms duration."""
         del kwargs
-        self.machine.events.post("spinner_{}_idle".format(self.name))
+        self.machine.events.post("spinner_{}_idle".format(self.name), hits=self.hits)
+        self.hits = 0
         self._idle = True
 
     def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None):
@@ -91,10 +97,9 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
             if switch not in config['switches']:
                 config['switches'].append(switch)
 
-        if config['switch_tags']:
-            if len(config['switch_tags']) != len(config['switches']):
-                raise ConfigFileError("Spinner switch_tags must be the same number as switches", 1, self.name)
-            self._tags = dict(zip(config['switches'], config['switch_tags']))
+        if config['labels']:
+            if len(config['labels']) != len(config['switches']):
+                raise ConfigFileError("Spinner labels must be the same number as switches", 1, self.name)
 
         return config
 
