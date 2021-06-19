@@ -14,7 +14,7 @@ import requests
 from mpf.exceptions.base_error import BaseError
 from mpf._version import __version__
 
-REPORTING_URL = "https://crashes.missionpinball.org/submit"
+REPORTING_URL = "https://crashes.missionpinball.org/submit/"
 
 
 def obr_repr(obj):
