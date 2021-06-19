@@ -217,7 +217,8 @@ def report_crash(e: BaseException, location, config):
             print("You can choose to anonymously report the above incident to the MPF team to "
                   "let us know for this particular issue.")
             print("Enter 'show' to see exactly what will be send.")
-            print("This information will be used to improve MPF (improve ergonomics and fix issues).")
+            print("This information will be used to improve MPF (improve ergonomics and fix issues) and "
+                  "may become public. You agree that we may store this data indefinitely.")
             print("You can set this permanently in your config using mpf:report_crashes: \"never\" or \"always\"")
             print("----------------------------------------------------\n")
             try:
