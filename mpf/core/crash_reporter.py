@@ -6,42 +6,41 @@ import inspect
 import logging
 import re
 import traceback
-import requests
 from datetime import datetime
 from pprint import pprint
 from types import FunctionType, MethodType, ModuleType, BuiltinMethodType, BuiltinFunctionType
+import requests
 
 from mpf.exceptions.base_error import BaseError
 from mpf._version import __version__
 
+REPORTING_URL = "https://crashes.missionpinball.org/submit"
 
-_repr = repr
 
-
-def repr(object):
+def obr_repr(obj):
     """Return obj representation if possible."""
     try:
-        return _repr(object)
+        return repr(obj)
+    # pylint: disable-msg=broad-except
     except Exception as e:
         logging.error(e)
         return 'String Representation not found'
 
 
 def string_variable_lookup(tb, s):
-    """
-    Look up the value of an object in a traceback by a dot-lookup string.
+    """Look up the value of an object in a traceback by a dot-lookup string.
+
     ie. "self.crash_reporter.application_name"
     Returns ValueError if value was not found in the scope of the traceback.
     :param tb: traceback
     :param s: lookup string
     :return: value of the
     """
-
     refs = []
     dot_refs = s.split('.')
     dot_lookup = 0
     dict_lookup = 1
-    for ii, ref in enumerate(dot_refs):
+    for _, ref in enumerate(dot_refs):
         dict_refs = re.findall(r'(?<=[)(?:[\'"])([^\'\"]*)(?:[\'"])(?=])', ref)
         if dict_refs:
             bracket = ref.index('[')
@@ -59,20 +58,21 @@ def string_variable_lookup(tb, s):
                 scope = getattr(scope, ref, ValueError)
             else:
                 scope = scope.get(ref, ValueError)
+        # pylint: disable-msg=broad-except
         except Exception as e:
             logging.error(e)
             scope = ValueError
 
         if scope is ValueError:
             return scope
-        elif isinstance(scope, (FunctionType, MethodType, ModuleType, BuiltinMethodType, BuiltinFunctionType)):
+        if isinstance(scope, (FunctionType, MethodType, ModuleType, BuiltinMethodType, BuiltinFunctionType)):
             return ValueError
     return scope
 
 
 def get_object_references(tb, source, max_string_length=1000):
-    """
-    Find the values of referenced attributes of objects within the traceback scope.
+    """Find the values of referenced attributes of objects within the traceback scope.
+
     :param tb: traceback
     :return: list of tuples containing (variable name, value)
     """
@@ -91,13 +91,13 @@ def get_object_references(tb, source, max_string_length=1000):
 
 
 def get_local_references(tb, max_string_length=1000):
-    """
-    Find the values of the local variables within the traceback scope.
+    """Find the values of the local variables within the traceback scope.
+
     :param tb: traceback
     :return: list of tuples containing (variable name, value)
     """
     if 'self' in tb.tb_frame.f_locals:
-        _locals = [('self', repr(tb.tb_frame.f_locals['self']))]
+        _locals = [('self', obr_repr(tb.tb_frame.f_locals['self']))]
     else:
         _locals = []
     for k, v in tb.tb_frame.f_locals.items():
@@ -112,15 +112,14 @@ def get_local_references(tb, max_string_length=1000):
 
 
 def format_reference(ref, max_string_length=1000):
-    """
-    Converts an object / value into a string representation to pass along in the payload
+    """Convert an object / value into a string representation to pass along in the payload.
+
     :param ref: object or value
     :param max_string_length: maximum number of characters to represent the object
     :return:
     """
     def _pass(*args):
-        return None
-    _numpy_info = ('dtype', 'shape', 'size', 'min', 'max')
+        del args
     additional_info = []
     if isinstance(ref, (list, tuple, set, dict)):
         # Check for length of reference
@@ -129,9 +128,9 @@ def format_reference(ref, max_string_length=1000):
             additional_info.append(('length', length))
 
     if additional_info:
-        v_str = ', '.join(['%s: %s' % a for a in additional_info] + [repr(ref)])
+        v_str = ', '.join(['%s: %s' % a for a in additional_info] + [obr_repr(ref)])
     else:
-        v_str = repr(ref)
+        v_str = obr_repr(ref)
 
     if len(v_str) > max_string_length:
         v_str = v_str[:max_string_length] + ' ...'
@@ -140,8 +139,8 @@ def format_reference(ref, max_string_length=1000):
 
 
 def analyze_traceback(tb, inspection_level=None, limit=None):
-    """
-    Extract trace back information into a list of dictionaries.
+    """Extract trace back information into a list of dictionaries.
+
     :param tb: traceback
     :return: list of dicts containing filepath, line, module, code, traceback level and source code for tracebacks
     """
@@ -169,8 +168,8 @@ def analyze_traceback(tb, inspection_level=None, limit=None):
     return info
 
 
-def _send_crash_report(report):
-    r = requests.post("http://localhost:8080/report", json=report)
+def _send_crash_report(report, reporting_url):
+    r = requests.post(reporting_url, json=report)
     if r.status_code != 200:
         print("Failed to send report. Got response code {}. Error: {}", r.status_code, r.content)
     else:
@@ -182,6 +181,7 @@ def report_crash(e: BaseException, location, config):
     log = logging.getLogger("crash_reporter")
     try:
         trace = analyze_traceback(e.__traceback__)
+    # pylint: disable-msg=broad-except
     except BaseException:
         log.exception(
             "Failed to generate crash report. Please report this in our forum!")
@@ -199,12 +199,16 @@ def report_crash(e: BaseException, location, config):
         report["error_no"] = e.get_error_no()
         report["error_context"] = e.get_context()
         report["error_logger_name"] = e.get_logger_name()
+    else:
+        report["error_no"] = None
+        report["error_context"] = None
+        report["error_logger_name"] = None
 
     reporting_mode = config.get("mpf", {}).get("report_crashes", "ask")
 
     if reporting_mode == "always":
         log.info("Will report crash as \"report_crashes\" mode is \"%s\"", reporting_mode)
-        _send_crash_report(report)
+        _send_crash_report(report, REPORTING_URL)
     elif reporting_mode == "ask":
         while True:
             print("\n----------------------------------------------------")
@@ -228,7 +232,7 @@ def report_crash(e: BaseException, location, config):
                 return
             elif response in ("y", "yes"):
                 print("Will send report.")
-                _send_crash_report(report)
+                _send_crash_report(report, REPORTING_URL)
                 return
             else:
                 print("Invalid input")
