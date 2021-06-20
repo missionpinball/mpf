@@ -9,7 +9,10 @@ import traceback
 from datetime import datetime
 from pprint import pprint
 from types import FunctionType, MethodType, ModuleType, BuiltinMethodType, BuiltinFunctionType
-import requests
+try:
+    import requests
+except ImportError:
+    requests = None
 
 from mpf.exceptions.base_error import BaseError
 from mpf._version import __version__
@@ -178,6 +181,10 @@ def _send_crash_report(report, reporting_url):
 
 def report_crash(e: BaseException, location, config):
     """Report crash."""
+    if not requests:
+        print("Please install the crash_reporter feature to use the MPF crash reporter.")
+        return
+
     log = logging.getLogger("crash_reporter")
     try:
         trace = analyze_traceback(e.__traceback__)
