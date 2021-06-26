@@ -346,22 +346,24 @@ def setup(app):
     if globals()['context']['github_version'] in branches_for_dev_warning:
 
         globals()['rst_prolog'] = '''
-        
+
         .. only:: html
-        
+
            .. warning::
-           
+
               **This documentation is for an unreleased version of MPF!**
-        
+
               This is the developer documentation for MPF |version|, which is
               the "dev" (next) release of MPF that is a work-in-progress. Use
               the "Read the Docs" link in the lower left corner to view the
               developer docs for the version of MPF you're using.
-        
+
         '''
 
 
 class RstBuilder(object):
+
+    """Builds Rst Config."""
 
     def __init__(self):
 

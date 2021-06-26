@@ -9,6 +9,9 @@ try:
 except ImportError:
     AsciiTable = None
 
+ERROR_OUTPUT = "Error: {}\n"
+SUCCESS_OUTPUT = "Success\n"
+
 
 class ServiceCli(cmd.Cmd):
 
@@ -207,9 +210,9 @@ class ServiceCli(cmd.Cmd):
         self.bcp_client.send("service", bcp_args)
         message = self.loop.run_until_complete(self.bcp_client.wait_for_response("coil_pulse"))
         if message[1]["error"]:
-            self.stdout.write("Error: {}\n".format(message[1]["error"]))
+            self.stdout.write(ERROR_OUTPUT.format(message[1]["error"]))
         else:
-            self.stdout.write("Success\n")
+            self.stdout.write(SUCCESS_OUTPUT)
 
     def do_coil_enable(self, args):
         """Enable a coil (if possible for coil)."""
@@ -224,18 +227,18 @@ class ServiceCli(cmd.Cmd):
         self.bcp_client.send("service", bcp_args)
         message = self.loop.run_until_complete(self.bcp_client.wait_for_response("coil_enable"))
         if message[1]["error"]:
-            self.stdout.write("Error: {}\n".format(message[1]["error"]))
+            self.stdout.write(ERROR_OUTPUT.format(message[1]["error"]))
         else:
-            self.stdout.write("Success\n")
+            self.stdout.write(SUCCESS_OUTPUT)
 
     def do_coil_disable(self, args):
         """Disable a coil."""
         self.bcp_client.send("service", {"subcommand": "coil_disable", "coil": args})
         message = self.loop.run_until_complete(self.bcp_client.wait_for_response("coil_disable"))
         if message[1]["error"]:
-            self.stdout.write("Error: {}\n".format(message[1]["error"]))
+            self.stdout.write(ERROR_OUTPUT.format(message[1]["error"]))
         else:
-            self.stdout.write("Success\n")
+            self.stdout.write(SUCCESS_OUTPUT)
 
     def do_show_play(self, args):
         """Play a show."""
@@ -254,18 +257,18 @@ class ServiceCli(cmd.Cmd):
         self.bcp_client.send("service", {"subcommand": "show_play", "show": show, "token": token})
         message = self.loop.run_until_complete(self.bcp_client.wait_for_response("show_play"))
         if message[1]["error"]:
-            self.stdout.write("Error: {}\n".format(message[1]["error"]))
+            self.stdout.write(ERROR_OUTPUT.format(message[1]["error"]))
         else:
-            self.stdout.write("Success\n")
+            self.stdout.write(SUCCESS_OUTPUT)
 
     def do_show_stop(self, args):
         """Stop a playing show."""
         self.bcp_client.send("service", {"subcommand": "show_stop", "show": args})
         message = self.loop.run_until_complete(self.bcp_client.wait_for_response("show_stop"))
         if message[1]["error"]:
-            self.stdout.write("Error: {}\n".format(message[1]["error"]))
+            self.stdout.write(ERROR_OUTPUT.format(message[1]["error"]))
         else:
-            self.stdout.write("Success\n")
+            self.stdout.write(SUCCESS_OUTPUT)
 
     def do_light_color(self, args):
         """Color a light."""
@@ -278,18 +281,18 @@ class ServiceCli(cmd.Cmd):
         self.bcp_client.send("service", {"subcommand": "light_color", "light": light_name, "color": color_name})
         message = self.loop.run_until_complete(self.bcp_client.wait_for_response("light_color"))
         if message[1]["error"]:
-            self.stdout.write("Error: {}\n".format(message[1]["error"]))
+            self.stdout.write(ERROR_OUTPUT.format(message[1]["error"]))
         else:
-            self.stdout.write("Success\n")
+            self.stdout.write(SUCCESS_OUTPUT)
 
     def do_light_off(self, args):
         """Turn off a light."""
         self.bcp_client.send("service", {"subcommand": "light_color", "light": args, "color": "off"})
         message = self.loop.run_until_complete(self.bcp_client.wait_for_response("light_color"))
         if message[1]["error"]:
-            self.stdout.write("Error: {}\n".format(message[1]["error"]))
+            self.stdout.write(ERROR_OUTPUT.format(message[1]["error"]))
         else:
-            self.stdout.write("Success\n")
+            self.stdout.write(SUCCESS_OUTPUT)
 
     def do_monitor_switches(self, args):
         """Monitor switches."""
@@ -300,7 +303,7 @@ class ServiceCli(cmd.Cmd):
         self.bcp_client.send("evaluate_placeholder", {"placeholder": args})
         message = self.loop.run_until_complete(self.bcp_client.wait_for_response("evaluate_placeholder"))
         if message[1]["error"]:
-            self.stdout.write("Error: {}\n".format(message[1]["error"]))
+            self.stdout.write(ERROR_OUTPUT.format(message[1]["error"]))
         else:
             self.stdout.write("Result: {}\n".format(message[1]["value"]))
 
@@ -312,15 +315,11 @@ class ServiceCli(cmd.Cmd):
 
     def do_quit(self, args):
         """Exit service mode."""
-        del args
-        self._exit()
-        return True
+        return self.do_exit(args)
 
     def do_EOF(self, args):   # noqa
         """Exit service mode."""
-        del args
-        self._exit()
-        return True
+        return self.do_exit(args)
 
     def _exit(self):
         # stop service mode
