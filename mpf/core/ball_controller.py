@@ -293,10 +293,9 @@ class BallController(MpfController):
                 target_devices.add(device)
 
         for device in self.machine.ball_devices.values():
-            if device not in target_devices:
-                if device.available_balls:
-                    source_devices.add(device)
-                    balls_to_collect = True
+            if device not in target_devices and device.available_balls:
+                source_devices.add(device)
+                balls_to_collect = True
 
         if balls_to_collect:
             self.debug_log("Ejecting all balls from: %s", source_devices)

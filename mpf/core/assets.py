@@ -175,24 +175,21 @@ class BaseAssetManager(MpfController, LogMixin):
         # class.
         default_config_dict = dict()
 
-        if 'assets' in config and config['assets']:
+        if 'assets' in config and config['assets'] and (disk_asset_section in config['assets'] and
+                                                        config['assets'][disk_asset_section]):
+            this_config = config['assets'][disk_asset_section]
 
-            if (disk_asset_section in config['assets'] and
-                    config['assets'][disk_asset_section]):
+            # set the default
+            default_config_dict['default'] = this_config['default']
 
-                this_config = config['assets'][disk_asset_section]
+            for default_section_name in this_config:
+                # first get a copy of the default for this section
+                default_config_dict[default_section_name] = (
+                    copy.deepcopy(default_config_dict['default']))
 
-                # set the default
-                default_config_dict['default'] = this_config['default']
-
-                for default_section_name in this_config:
-                    # first get a copy of the default for this section
-                    default_config_dict[default_section_name] = (
-                        copy.deepcopy(default_config_dict['default']))
-
-                    # then merge in this section's specific settings
-                    default_config_dict[default_section_name].update(
-                        this_config[default_section_name])
+                # then merge in this section's specific settings
+                default_config_dict[default_section_name].update(
+                    this_config[default_section_name])
 
         return default_config_dict
 
@@ -960,8 +957,8 @@ class Asset:
             return True
 
         if self.unloading:
-            pass
             # do something fancy here. Maybe just skip it and come back?
+            return False
 
         self.loading = True
         self.machine.asset_manager.load_asset(self)
