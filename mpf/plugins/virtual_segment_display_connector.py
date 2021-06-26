@@ -29,6 +29,10 @@ class VirtualSegmentDisplayConnector:
                            'will not be used.')
             return
 
+        if not self.machine.bcp.enabled:
+            self.log.debug('Disabling virtual_segment_display_connector because BCP is disabled.')
+            return
+
         self.config = self.machine.config_validator.validate_config(
             "virtual_segment_display_connector", self.machine.config['virtual_segment_display_connector'])
 
