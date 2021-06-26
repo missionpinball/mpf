@@ -7,7 +7,7 @@ import abc
 from functools import lru_cache
 
 import re
-from typing import Tuple, List, Any
+from typing import Tuple, List, Any, Union
 
 from mpf.core.utility_functions import Util
 
@@ -792,7 +792,7 @@ class BasePlaceholderManager(MpfController):
 
         raise TypeError(type(node))
 
-    def build_float_template(self, template_str, default_value=0.0) -> FloatTemplate:
+    def build_float_template(self, template_str, default_value=0.0) -> Union[FloatTemplate, NativeTypeTemplate]:
         """Build a float template from a string."""
         # try to convert to int
         try:
@@ -804,7 +804,7 @@ class BasePlaceholderManager(MpfController):
 
         return FloatTemplate(self._parse_template(template_str), template_str, self, default_value)
 
-    def build_int_template(self, template_str, default_value=0) -> IntTemplate:
+    def build_int_template(self, template_str, default_value=0) -> Union[IntTemplate, NativeTypeTemplate]:
         """Build a int template from a string."""
         # try to convert to int
         try:
@@ -816,7 +816,7 @@ class BasePlaceholderManager(MpfController):
 
         return IntTemplate(self._parse_template(template_str), template_str, self, default_value)
 
-    def build_bool_template(self, template_str, default_value=False) -> BoolTemplate:
+    def build_bool_template(self, template_str, default_value=False) -> Union[BoolTemplate, NativeTypeTemplate]:
         """Build a bool template from a string."""
         if isinstance(template_str, bool):
             return NativeTypeTemplate(template_str, self.machine)   # type: ignore
@@ -923,8 +923,7 @@ class PlaceholderManager(BasePlaceholderManager):
             return PlayerPlaceholder(self.machine)
         if name == "players":
             return PlayersPlaceholder(self.machine)
-        if self.machine.game:
-            if name == "game":
-                return self.machine.game
+        if name == "game" and self.machine.game:
+            return self.machine.game
 
         return False

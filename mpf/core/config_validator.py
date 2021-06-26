@@ -330,35 +330,33 @@ class ConfigValidator:
         # TODO: refactor this method
         try:
             for k in config:
-                if not isinstance(k, dict):
-                    if k not in spec and k[0] != '_':
+                if not isinstance(k, dict) and k not in spec and k[0] != '_':
+                    path_list = validation_failure_info.parent.item.split(':')
 
-                        path_list = validation_failure_info.parent.item.split(':')
+                    if len(path_list) > 1 and path_list[-1] == validation_failure_info[1]:
+                        path_list.append('[list_item]')
+                    elif path_list[0] == validation_failure_info[1]:
+                        path_list = list()
 
-                        if len(path_list) > 1 and path_list[-1] == validation_failure_info[1]:
-                            path_list.append('[list_item]')
-                        elif path_list[0] == validation_failure_info[1]:
-                            path_list = list()
+                    path_list.append(validation_failure_info[1])
+                    path_list.append(k)
 
-                        path_list.append(validation_failure_info[1])
-                        path_list.append(k)
+                    path_string = ':'.join(path_list)
 
-                        path_string = ':'.join(path_list)
+                    if "mpf" in self.machine.config and self.machine.config['mpf']['allow_invalid_config_sections']:
 
-                        if "mpf" in self.machine.config and self.machine.config['mpf']['allow_invalid_config_sections']:
+                        self.log.warning('Unrecognized config setting. "%s" is '
+                                         'not a valid setting name.',
+                                         path_string)
 
-                            self.log.warning('Unrecognized config setting. "%s" is '
-                                             'not a valid setting name.',
-                                             path_string)
+                    else:
+                        self.log.error('Your config contains a value for the '
+                                       'setting "%s", but this is not a valid '
+                                       'setting name.', path_string)
 
-                        else:
-                            self.log.error('Your config contains a value for the '
-                                           'setting "%s", but this is not a valid '
-                                           'setting name.', path_string)
-
-                            raise ConfigFileError('Your config contains a value for the '
-                                                  'setting "' + path_string + '", but this is not a valid '
-                                                                              'setting name.', 2, self.log.name)
+                        raise ConfigFileError('Your config contains a value for the '
+                                              'setting "' + path_string + '", but this is not a valid '
+                                                                          'setting name.', 2, self.log.name)
 
         except TypeError:
             raise ConfigFileError(

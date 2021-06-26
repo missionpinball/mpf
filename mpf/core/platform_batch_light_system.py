@@ -149,14 +149,14 @@ class PlatformBatchLightSystem:
             else:
                 # check if we realized this brightness earlier
                 last_state = self.last_state.get(light, None)
-                if last_state and last_state[0] == brightness and last_state[1] < schedule_time:
+                if last_state and last_state[0] == brightness and last_state[1] < schedule_time and \
+                        not sequential_brightness_list:
                     # we already set the light to that color earlier. skip it
-                    if not sequential_brightness_list:
-                        # we only skip this light if we are in the beginning of the list for now
-                        # the reason for that is that we do not want to break fade chains when one color channel
-                        # of an RGB light did not change
-                        # this could become an option in the future
-                        continue
+                    # we only skip this light if we are in the beginning of the list for now
+                    # the reason for that is that we do not want to break fade chains when one color channel
+                    # of an RGB light did not change
+                    # this could become an option in the future
+                    continue
 
             self.last_state[light] = (brightness, schedule_time)
 
