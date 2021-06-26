@@ -916,3 +916,24 @@ Update done.
         device.color(RGBColor((2, 23, 42)))
         self.advance_time_and_run(1)
         self.assertEqual("02172a", self.rgb_cpu.leds['97'])
+
+        # test led off
+        device.off()
+        self.advance_time_and_run(1)
+        self.assertEqual("000000", self.rgb_cpu.leds['97'])
+
+        self.advance_time_and_run(.02)
+
+        # fade led over 100ms
+        device.color(RGBColor((100, 100, 100)), fade_ms=100)
+        self.advance_time_and_run(.03)
+        self.assertTrue(10 < int(self.rgb_cpu.leds['97'][0:2], 16) < 40)
+        self.assertTrue(self.rgb_cpu.leds['97'][0:2] == self.rgb_cpu.leds['97'][2:4] == self.rgb_cpu.leds['97'][4:6])
+        self.advance_time_and_run(.03)
+        self.assertTrue(40 < int(self.rgb_cpu.leds['97'][0:2], 16) < 60)
+        self.assertTrue(self.rgb_cpu.leds['97'][0:2] == self.rgb_cpu.leds['97'][2:4] == self.rgb_cpu.leds['97'][4:6])
+        self.advance_time_and_run(.03)
+        self.assertTrue(60 < int(self.rgb_cpu.leds['97'][0:2], 16) < 90)
+        self.assertTrue(self.rgb_cpu.leds['97'][0:2] == self.rgb_cpu.leds['97'][2:4] == self.rgb_cpu.leds['97'][4:6])
+        self.advance_time_and_run(2)
+        self.assertEqual("646464", self.rgb_cpu.leds['97'])

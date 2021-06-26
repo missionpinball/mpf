@@ -77,7 +77,7 @@ class FASTDirectLEDChannel(LightPlatformInterface):
         max_fade_ms = self.led.hardware_fade_ms
         start_brightness, start_time, target_brightness, target_time = self._current_fade
         fade_ms = int((target_time - current_time) * 1000.0)
-        if fade_ms > max_fade_ms > 0:
+        if fade_ms > max_fade_ms >= 0:
             fade_ms = max_fade_ms
             ratio = ((current_time + (fade_ms / 1000.0) - start_time) /
                      (target_time - start_time))
