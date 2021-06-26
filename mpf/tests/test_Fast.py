@@ -83,7 +83,7 @@ class MockFastDmd(BaseMockFast):
 
         # remove last newline
         if parts[len(parts) - 1] == b'':
-            parts.pop() == b''
+            parts.pop()
 
         for part in parts:
             self._handle_msg(part)

@@ -641,7 +641,7 @@ class TMCLDevice(object):
         v = int(value)
         if not 0 <= bn <= 3:
             raise TMCLError("SGP: bank_number not in range(4)")
-        pn, v = self._pn_checkrange((bn, pn), v)
+        pn, v = self._pn_checkrange((bn, pn), v, "SGP: ")
         status, value = self._query((0x01, cn, pn, bn, v))
         if status != STAT_OK:
             raise TMCLError("SGP: got status "+STATUSCODES[status])

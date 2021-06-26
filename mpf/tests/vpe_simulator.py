@@ -45,8 +45,6 @@ class VpeSimulation:
                 self.handle_enable(command.enable_coil)
             elif variant == "disable_coil":
                 self.handle_disable(command.disable_coil)
-            elif variant == "disable_coil":
-                self.handle_disable(command.disable_coil)
             elif variant == "configure_hardware_rule":
                 self.handle_rule(command.configure_hardware_rule)
             elif variant == "remove_hardware_rule":

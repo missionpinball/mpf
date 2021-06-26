@@ -472,7 +472,6 @@ class AuxAlphanumericDisplay:
         # Make sure strings are at least 16 chars.
         # Then convert each string to a list of chars.
         for j in range(0, 2):
-            input_strings[j] = input_strings[j]
             if len(input_strings[j]) < 16:
                 input_strings[j] += ' ' * (16 - len(input_strings[j]))
             strings += [list(input_strings[j])]

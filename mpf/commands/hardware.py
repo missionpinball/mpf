@@ -69,6 +69,7 @@ class Command(MpfCommandLineParser):
 
         self.mpf.shutdown()
 
+    # pylint: disable-msg=too-many-locals
     def _test_repeated_pulses_with_rule(self, config, pulse_ms, pause_min, pause_max):
         latency = []
         rule_latency = []
