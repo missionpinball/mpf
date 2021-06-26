@@ -499,6 +499,7 @@ class TMCLDevice(object):
 
         TMCL-Mnemonic: GCO <coordinate number>, <motor number>
         """
+        pos = 0
         cn = NUMBER_COMMANDS['GCO']
         mn = int(motor_number)
         coord_n = int(coordinate_number)
@@ -607,11 +608,10 @@ class TMCLDevice(object):
         if not 0 <= mn <= 2:
             raise TMCLError("GAP: motor_number not in range(3)")
         if pn not in AXIS_PARAMETER.keys():
-            raise TMCLError(prefix+"parameter number not valid")
+            raise TMCLError("GAP: parameter number not valid")
         status, value = self._query((0x01, cn, pn, mn, 0x0000))
         if status != STAT_OK:
-            raise TMCLError("GAP: got status " + STATUSCODES[status]
-                                        + ", while querying "+str(pn))
+            raise TMCLError("GAP: got status " + STATUSCODES[status] + ", while querying "+str(pn))
         return value
 
     def sgp(self, bank_number, parameter_number, value):
