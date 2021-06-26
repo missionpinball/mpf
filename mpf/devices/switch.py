@@ -149,7 +149,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
                 self.config['number'], config, self.config['platform_settings'])
         except AssertionError as e:
             raise ConfigFileError("Failed to configure switch {} in platform. See error above".format(self.name), 2,
-                                  self.log.name) from e
+                                  self.class_label) from e
 
         if self.recycle_secs:
             self.add_handler(state=1, callback=self._post_events_with_recycle, callback_kwargs={"state": 1})
