@@ -74,6 +74,7 @@ class Command(MpfCommandLineParser):
         rule_latency = []
         pulse_duration = []
         rule_pulse_duration = []
+        timeouts = 0
 
         config["flipper"].enable()
 
@@ -82,19 +83,28 @@ class Command(MpfCommandLineParser):
             pulse_start = time.time()
             config["coil1"].pulse(pulse_ms=pulse_ms)
 
-            self.mpf.clock.loop.run_until_complete(
-                self.mpf.switch_controller.wait_for_switch(config["switch1"], state=1, only_on_change=False))
-            switch_active = time.time()
-            self.mpf.clock.loop.run_until_complete(
-                self.mpf.switch_controller.wait_for_switch(config["switch2"], state=1, only_on_change=False))
-            switch2_active = time.time()
+            try:
+                self.mpf.clock.loop.run_until_complete(asyncio.wait_for(
+                    self.mpf.switch_controller.wait_for_switch(config["switch1"], state=1, only_on_change=False),
+                    timeout=.5))
+                switch_active = time.time()
+                self.mpf.clock.loop.run_until_complete(asyncio.wait_for(
+                    self.mpf.switch_controller.wait_for_switch(config["switch2"], state=1, only_on_change=False),
+                    timeout=.5))
+                switch2_active = time.time()
 
-            self.mpf.clock.loop.run_until_complete(
-                self.mpf.switch_controller.wait_for_switch(config["switch1"], state=0, only_on_change=False))
-            switch_inactive = time.time()
-            self.mpf.clock.loop.run_until_complete(
-                self.mpf.switch_controller.wait_for_switch(config["switch2"], state=0, only_on_change=False))
-            switch2_inactive = time.time()
+                self.mpf.clock.loop.run_until_complete(asyncio.wait_for(
+                    self.mpf.switch_controller.wait_for_switch(config["switch1"], state=0, only_on_change=False),
+                    timeout=.5))
+                switch_inactive = time.time()
+                self.mpf.clock.loop.run_until_complete(asyncio.wait_for(
+                    self.mpf.switch_controller.wait_for_switch(config["switch2"], state=0, only_on_change=False),
+                    timeout=.5))
+                switch2_inactive = time.time()
+            except asyncio.exceptions.TimeoutError:
+                print("WARNING: Ran into timeout while waiting. Check your setup!")
+                timeouts += 1
+                continue
 
             self.mpf.clock.loop.run_until_complete(asyncio.sleep(random.uniform(pause_min * 0.001, pause_max * 0.001)))
 
@@ -120,6 +130,8 @@ class Command(MpfCommandLineParser):
                   statistics.mean(rule_pulse_duration), statistics.median(rule_pulse_duration),
                   min(rule_pulse_duration), max(rule_pulse_duration), statistics.stdev(rule_pulse_duration),
                   statistics.variance(rule_pulse_duration)))
+        if timeouts:
+            print("Warning: Experienced {} timeouts during benchmark. Check your setup!".format(timeouts))
         print("----------------------------------------------------------------------------------------")
         print()
 
