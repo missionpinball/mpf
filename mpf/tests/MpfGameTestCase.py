@@ -37,7 +37,7 @@ class MpfGameTestCase(MpfTestCase):
 
         self.advance_time_and_run()
 
-    def start_game(self, num_balls_known=None):
+    def start_game(self, num_balls_known=None, start_switch=None):
         """Start a game.
 
         This method checks to make sure a game is not running,
@@ -55,9 +55,12 @@ class MpfGameTestCase(MpfTestCase):
         if num_balls_known is not None:
             self.assertNumBallsKnown(num_balls_known)
 
+        if start_switch is None:
+            start_switch = "s_start"
+
         # game start should work
         self.assertGameIsNotRunning()
-        self.hit_and_release_switch("s_start")
+        self.hit_and_release_switch(start_switch)
         self.advance_time_and_run()
         self.assertGameIsRunning()
         self.assertEqual(1, self.machine.game.num_players)
