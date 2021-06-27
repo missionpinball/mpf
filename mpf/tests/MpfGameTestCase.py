@@ -24,9 +24,9 @@ class MpfGameTestCase(MpfTestCase):
         self.machine_config_patches['switches'] = dict()
         self.machine_config_patches['switches']['s_start'] = {"number": "", "tags": "start"}
 
-    def start_two_player_game(self):
+    def start_two_player_game(self, start_switch=None):
         """Start two player game."""
-        self.start_game()
+        self.start_game(start_switch=start_switch)
         self.add_player()
 
     def fill_troughs(self):
