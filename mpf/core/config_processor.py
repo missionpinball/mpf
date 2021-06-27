@@ -7,7 +7,7 @@ import os
 import pickle   # nosec
 import tempfile
 
-from typing import List, Tuple, Any, Optional
+from typing import List, Tuple, Any, Optional, Dict
 from difflib import SequenceMatcher
 from pkg_resources import iter_entry_points
 
@@ -17,6 +17,10 @@ from mpf.core.file_manager import FileManager
 from mpf.core.utility_functions import Util
 from mpf._version import __show_version__, __config_version__
 from mpf.exceptions.config_file_error import ConfigFileError
+
+MYPY = False
+if MYPY:   # pragma: no cover
+    from mpf.core.device import Device  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class ConfigProcessor:
@@ -45,19 +49,19 @@ class ConfigProcessor:
         path_hash = hashlib.md5(bytes(filestring, 'UTF-8')).hexdigest()     # nosec
         return os.path.join(cache_dir, path_hash + ".mpf_cache")
 
-    def _load_config_from_cache(self, cache_file) -> Tuple[Any, Optional[List[str]]]:     # nosec
+    def _load_config_from_cache(self, cache_file) -> Tuple[Any, Optional[Dict[str, Tuple[float, int]]]]:     # nosec
         """Return config from cache."""
         self.log.info("Loading config from cache: %s", cache_file)
         with open(cache_file, 'rb') as f:
             try:
-                data = pickle.load(f)   # type: Tuple[Any, List[str]]
+                data = pickle.load(f)   # type: Tuple[Any, Dict[str, Tuple[int, int]]]
             # unfortunately pickle can raise all kinds of exceptions and we dont want to crash on corrupted cache
             # pylint: disable-msg=broad-except
             except Exception:   # pragma: no cover
                 self.log.warning("Could not load cache file: %s", cache_file)
                 return None, None
 
-        if not isinstance(data, tuple) or len(data) != 2:
+        if not isinstance(data, tuple) or len(data) != 2 or not isinstance(data[1], dict):
             return None, None
         return data
 
@@ -97,12 +101,13 @@ class ConfigProcessor:
             if not config:
                 load_from_cache = False
         else:
-            loaded_files = []
+            loaded_files = {}
 
         # Step 3: Check timestamps of included files vs cache
         if loaded_files:
-            for configfile in loaded_files:
-                if not os.path.isfile(configfile) or os.path.getmtime(configfile) > cache_time:
+            for configfile, cache_hash in loaded_files.items():
+                if not os.path.isfile(configfile) or os.path.getmtime(configfile) != cache_hash[0] or \
+                        os.path.getsize(configfile) != cache_hash[1]:
                     load_from_cache = False
                     self.log.warning('Config file in cache changed: %s', configfile)
                     break
@@ -112,17 +117,19 @@ class ConfigProcessor:
             return config
 
         config = dict()
-        loaded_files = []
+        loaded_files = {}
         for configfile in filenames:
             self.log.info('Loading config from file %s.', configfile)
             file_config, file_subfiles = self._load_config_file_and_return_loaded_files(configfile, config_type,
                                                                                         ignore_unknown_sections,
                                                                                         config_spec=config_spec)
-            loaded_files.extend(file_subfiles)
+            loaded_files.update(file_subfiles)
             config = Util.dict_merge(config, file_config)
 
         # Step 5: Store to cache
         if self._store_cache:
+            config_spec_file = self._get_config_spec_file()
+            loaded_files[config_spec_file] = (os.path.getmtime(config_spec_file), os.path.getsize(config_spec_file))
             with open(cache_file, 'wb') as f:
                 pickle.dump((config, loaded_files), f, protocol=4)
                 self.log.info('Config file cache created: %s', cache_file)
@@ -165,17 +172,18 @@ class ConfigProcessor:
 
     def _load_config_file_and_return_loaded_files(
             self, filename, config_type: str,
-            ignore_unknown_sections=False, config_spec=None) -> Tuple[dict, List[str]]:   # pragma: no cover
+            ignore_unknown_sections=False, config_spec=None) -> \
+            Tuple[dict, Dict[str, Tuple[float, int]]]:   # pragma: no cover
         """Load a config file and return loaded files."""
         # config_type is str 'machine' or 'mode', which specifies whether this
         # file being loaded is a machine config or a mode config file
         expected_version_str = ConfigProcessor.get_expected_version(config_type)
 
         config = FileManager.load(filename, expected_version_str, True)
-        subfiles = []
+        subfiles = {}
 
         if not config:
-            return dict(), []
+            return {}, {}
 
         self.log.info('Loading config: %s', filename)
 
@@ -188,19 +196,24 @@ class ConfigProcessor:
 
                 for file in Util.string_to_event_list(config['config']):
                     full_file = os.path.join(path, file)
-                    subfiles.append(full_file)
+                    subfiles[str(full_file)] = (os.path.getmtime(full_file), os.path.getsize(full_file))
                     subconfig, subsubfiles = self._load_config_file_and_return_loaded_files(full_file, config_type,
                                                                                             config_spec=config_spec)
-                    subfiles.extend(subsubfiles)
+                    subfiles.update(subsubfiles)
                     config = Util.dict_merge(config, subconfig)
             return config, subfiles
         except TypeError:
-            return dict(), []
+            return {}, {}
+
+    @staticmethod
+    def _get_config_spec_file():
+        """Return path of config_spec.yaml."""
+        return os.path.abspath(os.path.join(mpf.core.__path__[0], os.pardir, "config_spec.yaml"))
 
     def load_config_spec(self):
         """Load config spec."""
         cache_file = os.path.join(self.get_cache_dir(), "config_spec.mpf_cache")
-        config_spec_file = os.path.abspath(os.path.join(mpf.core.__path__[0], os.pardir, "config_spec.yaml"))
+        config_spec_file = self._get_config_spec_file()
         stats_config_spec_file = os.stat(config_spec_file)
         if self._load_cache and os.path.isfile(cache_file) and \
                 os.path.getmtime(cache_file) == stats_config_spec_file.st_mtime:
@@ -237,7 +250,7 @@ class ConfigProcessor:
     def load_device_config_specs(self, config_spec, machine_config):
         """Load device config specs."""
         for device_type in machine_config['mpf']['device_modules'].values():
-            device_cls = Util.string_to_class(device_type)
+            device_cls = Util.string_to_class(device_type)      # type: Device
             if device_cls.get_config_spec():
                 # add specific config spec if device has any
                 config_spec[device_cls.config_section] = self._process_config_spec(
