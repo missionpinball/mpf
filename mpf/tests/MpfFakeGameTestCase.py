@@ -24,7 +24,7 @@ class MpfFakeGameTestCase(MpfGameTestCase):
         self.machine_config_patches['machine'] = dict()
         self.machine_config_patches['machine']['min_balls'] = 0
 
-    def start_game(self, num_balls_known=3):
+    def start_game(self, num_balls_known=3, start_switch=None):
         """Start a game.
         
         Does not require ball devices or a start button to be present in the
@@ -36,10 +36,13 @@ class MpfFakeGameTestCase(MpfGameTestCase):
             self.machine.playfield.balls += 1
             self.machine.playfield.available_balls += 1
 
+        if start_switch is None:
+            start_switch = "s_start"
+
         # game start should work
         self.machine.playfield.add_ball = _add_ball
         self.machine.ball_controller.num_balls_known = num_balls_known
-        super().start_game()
+        super().start_game(start_switch=start_switch)
 
     def drain_all_balls(self):
         """Drain all the balls in play.
