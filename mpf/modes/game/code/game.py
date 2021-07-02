@@ -386,6 +386,19 @@ class Game(AsyncMode):
 
         # This relay event allows handlers to select a new target playfield for the ball
         result = await self.machine.events.post_relay_async("ball_start_target", target=self.machine.playfield.name)
+        '''event: ball_start_target
+
+        desc: Posted when a new ball starts and is ready to be physically ejected
+            to the playfield.
+
+        This is a relay event.
+
+        args:
+        target: The name of the ball_device target where the ball will be ejected
+            to. Can be modified by a relay event handler to change the target
+            before the ball is ejected.
+
+        '''
         self.machine.playfields[result["target"]].add_ball(player_controlled=True)
 
     def ball_drained(self, balls=0, **kwargs):
