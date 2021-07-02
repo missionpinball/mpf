@@ -397,7 +397,6 @@ class Game(AsyncMode):
         target: The name of the ball_device target where the ball will be ejected
             to. Can be modified by a relay event handler to change the target
             before the ball is ejected.
-
         '''
         self.machine.playfields[result["target"]].add_ball(player_controlled=True)
 

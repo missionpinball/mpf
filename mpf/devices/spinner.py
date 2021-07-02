@@ -82,14 +82,14 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
         self.hits += 1
         self.machine.events.post("spinner_{}_hit".format(self.name), hits=self.hits, label=label)
         '''event: spinner_(name)_hit
-            desc: The spinner (name) was just hit.
+        desc: The spinner (name) was just hit.
 
-            This event will post whenever a spinner switch is hit.
+        This event will post whenever a spinner switch is hit.
 
-            args:
-            hits: The number of switch hits the spinner has had since it became active
-            label: The label of the switch that was hit
-            '''
+        args:
+        hits: The number of switch hits the spinner has had since it became active
+        label: The label of the switch that was hit
+        '''
         if label:
             self.machine.events.post("spinner_{}_{}_hit".format(self.name, label))
             '''event: spinner_(name)_(label)_hit
@@ -106,14 +106,14 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
         del kwargs
         self.machine.events.post("spinner_{}_inactive".format(self.name), hits=self.hits)
         '''event: spinner_(name)_inactive
-            desc: The spinner (name) is no longer receiving hits
+        desc: The spinner (name) is no longer receiving hits
 
-            This event will post whenever a spinner has not received hits and
-            its active_ms has timed out.
+        This event will post whenever a spinner has not received hits and
+        its active_ms has timed out.
 
-            args:
-            hits: The number of switch hits the spinner had while it was active
-            '''
+        args:
+        hits: The number of switch hits the spinner had while it was active
+        '''
         self._active = False
         if self.config['idle_ms']:
             self.delay.add(self.config['idle_ms'], self._on_idle)
@@ -127,15 +127,15 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
         del kwargs
         self.machine.events.post("spinner_{}_idle".format(self.name), hits=self.hits)
         '''event: spinner_(name)_idle
-            desc: The spinner (name) is now idle
+        desc: The spinner (name) is now idle
 
-            This event will post whenever a spinner has not received hits and
-            its idle_ms has timed out. If no idle_ms is defined, this event
-            will not post.
+        This event will post whenever a spinner has not received hits and
+        its idle_ms has timed out. If no idle_ms is defined, this event
+        will not post.
 
-            args:
-            hits: The number of switch hits the spinner had while it was active
-            '''
+        args:
+        hits: The number of switch hits the spinner had while it was active
+        '''
         self.hits = 0
         self._idle = True
 
