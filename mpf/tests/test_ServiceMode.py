@@ -314,7 +314,7 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.mock_event("service_switch_test_stop")
         self.hit_switch_and_run("s_start", 1)
 
-        self.assertEventCalledWith("service_switch_test_start", switch_label='%', switch_name='s_start',
+        self.assertEventCalledWith("service_switch_test_start", switch_label='', switch_name='s_start',
                                    switch_num='', switch_state='active')
 
         # leave switch test
@@ -364,7 +364,7 @@ class TestServiceMode(MpfFakeGameTestCase):
         for color in ["white", "red", "green", "blue", "yellow", "white"]:
             self.assertEventCalledWith("service_light_test_start",
                                        board_name='Virtual',
-                                       light_label='%',
+                                       light_label='',
                                        light_name='l_light1',
                                        light_num='1',
                                        test_color=color)
@@ -379,7 +379,7 @@ class TestServiceMode(MpfFakeGameTestCase):
 
         self.assertEventCalledWith("service_light_test_start",
                                    board_name='Virtual',
-                                   light_label='%',
+                                   light_label='Light Five',
                                    light_name='l_light5',
                                    light_num='5',
                                    test_color="red")
@@ -392,7 +392,7 @@ class TestServiceMode(MpfFakeGameTestCase):
 
         self.assertEventCalledWith("service_light_test_start",
                                    board_name='Virtual',
-                                   light_label='%',
+                                   light_label='',
                                    light_name='l_light1',
                                    light_num='1',
                                    test_color="red")

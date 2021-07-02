@@ -13,6 +13,7 @@ class CoilPlayer(DeviceConfigPlayer):
     config_file_section = 'coil_player'
     show_section = 'coils'
     machine_collection_name = 'coils'
+    allow_placeholders_in_keys = True
 
     __slots__ = []  # type: List[str]
 
