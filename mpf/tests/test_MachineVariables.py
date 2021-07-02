@@ -34,6 +34,7 @@ class TestMachineVariables(MpfTestCase):
         self.assertTrue(self.machine.variables.is_machine_var("platform_machine"))
         self.assertEqual(version, self.machine.variables.get_machine_var("mpf_version"))
         self.assertEqual(extended_version, self.machine.variables.get_machine_var("mpf_extended_version"))
+        self.assertEqual(0.5, self.machine.variables.get_machine_var("master_volume"))
 
     def testTime(self):
         current_date = self.machine.clock.get_datetime()
@@ -91,7 +92,10 @@ class TestMachineVariables(MpfTestCase):
         self.advance_time_and_run(10)
 
         self.machine.variables.machine_var_data_manager._trigger_save.assert_called_with()
-        self.assertEqual({'test1': {'value': 42, 'expire': None}, 'test2': {'value': '5', 'expire': None}},
+        self.assertEqual({
+                          'master_volume': {'value': 0.5, 'expire': None},
+                          'test1': {'value': 42, 'expire': None},
+                          'test2': {'value': '5', 'expire': None}},
                          self.machine.variables.machine_var_data_manager.data)
 
     def testVarSetAndGet(self):

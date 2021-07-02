@@ -419,6 +419,12 @@ settings:
     key_type: float
     default: 1.0
 
+machine_vars:
+  master_volume:
+    initial_value: 0.5
+    value_type: float
+    persist: true
+
 psus:
   default:
     voltage: 48
