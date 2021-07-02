@@ -76,7 +76,7 @@ class ConfigProcessor:
             self.log.debug('Cache file not found: %s', filename)
             return -1
 
-    # pylint: disable-msg=too-many-arguments
+    # pylint: disable-msg=too-many-arguments,too-many-locals
     def load_config_files_with_cache(self, filenames: List[str], config_type: str,
                                      ignore_unknown_sections=False, config_spec=None) -> dict:   # pragma: no cover
         """Load multiple configs with a combined cache."""
