@@ -1,6 +1,8 @@
 import serial.tools.list_ports
 import re
 
+from mpf.exceptions.runtime_error import MpfRuntimeError
+
 def autodetect_fast_ports(machine_type="fast"):
     if machine_type == "fast":
         return _find_fast_quad()
@@ -17,6 +19,8 @@ def _find_fast_retro():
     for d in devices:
         if re.search(r'\.usbmodem\d+$', d) or re.search(r'ACM\d$', d):
             return [d]
+    raise MpfRuntimeError("Unable to auto-detect FAST Retro from available devices: {}".format(
+                                      ", ".join(devices)), 1, "autodetect.find_fast_retro")
 
 def _find_fast_quad():
     ports = None
@@ -36,6 +40,6 @@ def _find_fast_quad():
         if ports:
             break
     if not ports:
-        raise RuntimeError("Unable to auto-detect FAST hardware from available devices: {}".format(
-                            ", ".join(devices)))
+        raise MpfRuntimeError("Unable to auto-detect FAST hardware from available devices: {}".format(
+                                      ", ".join(devices)), 1, "autodetect.find_fast_quad")
     return ports

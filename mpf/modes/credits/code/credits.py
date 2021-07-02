@@ -508,14 +508,12 @@ class Credits(Mode):
 
     def _get_audit_non_coin(self, audit_class):
         if audit_class not in self.earnings:
-            self.earnings[audit_class] = dict()
             self.earnings[audit_class] = 0
         return self.earnings[audit_class]
 
     def _audit_increment_non_coin(self, value, audit_class):
         # create file if it does not exist
         if audit_class not in self.earnings:
-            self.earnings[audit_class] = dict()
             self.earnings[audit_class] = value
         else:
             self.earnings[audit_class] += value
@@ -523,8 +521,6 @@ class Credits(Mode):
 
     def _audit_set_non_coin(self, value, audit_class):
         # create file if it does not exist
-        if audit_class not in self.earnings:
-            self.earnings[audit_class] = dict()
         self.earnings[audit_class] = value
         self.data_manager.save_all(data=self.earnings)
 

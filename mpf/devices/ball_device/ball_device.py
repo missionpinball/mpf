@@ -421,7 +421,7 @@ class BallDevice(SystemWideDevice):
                 if not trough:
                     raise AssertionError("Could not find path to trough")
 
-                for dummy_iterator in range(unclaimed_balls):
+                for _ in range(unclaimed_balls):
                     self._setup_or_queue_eject_to_target(trough)
             else:
                 target = self._target_on_unexpected_ball
@@ -434,7 +434,7 @@ class BallDevice(SystemWideDevice):
 
                 self.info_log("Ejecting %s unexpected balls using path %s", unclaimed_balls, path)
 
-                for dummy_iterator in range(unclaimed_balls):
+                for _ in range(unclaimed_balls):
                     self.setup_eject_chain(path, not self.config['auto_fire_on_unexpected_ball'])
 
         # we might have ball requests locally. serve them first
@@ -442,7 +442,7 @@ class BallDevice(SystemWideDevice):
             self._source_device_balls_available()
 
         # tell targets that we have balls available
-        for dummy_iterator in range(new_balls):
+        for _ in range(new_balls):
             self.machine.events.post_boolean('balldevice_balls_available')
 
         self.machine.events.post('balldevice_{}_ball_entered'.format(self.name), new_balls=new_balls, device=self)
@@ -527,7 +527,7 @@ class BallDevice(SystemWideDevice):
         """
         self.debug_log("Requesting Ball(s). Balls=%s", balls)
 
-        for dummy_iterator in range(balls):
+        for _ in range(balls):
             self._setup_or_queue_eject_to_target(self)
 
         return balls
@@ -668,7 +668,7 @@ class BallDevice(SystemWideDevice):
 
         balls_found = 0
         # add request to queue
-        for dummy_iterator in range(balls):
+        for _ in range(balls):
             if self._setup_or_queue_eject_to_target(target):
                 balls_found += 1
 

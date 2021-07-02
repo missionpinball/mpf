@@ -99,7 +99,6 @@ mode:
             self._create_show(arguments[0])
         else:
             self.stdout.write("Error: Unknown {}\n".format(what))
-            return
 
     def do_exit(self, args):    # noqa
         """Exit scaffolding mode."""
@@ -108,13 +107,11 @@ mode:
 
     def do_quit(self, args):    # noqa
         """Exit scaffolding mode."""
-        del args
-        return True
+        return self.do_exit(args)
 
     def do_EOF(self, args):     # noqa
         """Exit scaffolding mode."""
-        del args
-        return True
+        return self.do_exit(args)
 
 
 class Command:

@@ -334,7 +334,7 @@ class VersionMigrator:
                     continue
 
                 # key found, key is nested
-                for dummy_iterator in range(20):
+                for _ in range(20):
 
                     if self._remove_key(first_key, key):
                         continue

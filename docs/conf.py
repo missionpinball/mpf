@@ -44,12 +44,12 @@ def setup_mpf_examples_link():
     # See if symlink already exists, and goes to the right place.
     exists = True
     bad = True
-    try:    
+    try:
         linkinfo = os.stat(mpf_examples_link_name, follow_symlinks=False)
         if (stat.S_ISLNK(linkinfo.st_mode)):
-            linkPath = os.readlink(mpf_examples_link_name)
+            link_path = os.readlink(mpf_examples_link_name)
             # This sometimes has trouble on Windows because realpath doesn't canonise case of the drive letter
-            if os.path.realpath(linkPath) == os.path.realpath(examples_root):
+            if os.path.realpath(link_path) == os.path.realpath(examples_root):
                 bad = False
     except FileNotFoundError:
         exists = False
@@ -331,7 +331,7 @@ context = dict()
 
 try:
     context['github_version'] = git.Repo('..').active_branch.name
-except:
+except Exception:       # noqa
     context['github_version'] = None
 
 
@@ -346,22 +346,24 @@ def setup(app):
     if globals()['context']['github_version'] in branches_for_dev_warning:
 
         globals()['rst_prolog'] = '''
-        
+
         .. only:: html
-        
+
            .. warning::
-           
+
               **This documentation is for an unreleased version of MPF!**
-        
+
               This is the developer documentation for MPF |version|, which is
               the "dev" (next) release of MPF that is a work-in-progress. Use
               the "Read the Docs" link in the lower left corner to view the
               developer docs for the version of MPF you're using.
-        
+
         '''
 
 
 class RstBuilder(object):
+
+    """Builds Rst Config."""
 
     def __init__(self):
 

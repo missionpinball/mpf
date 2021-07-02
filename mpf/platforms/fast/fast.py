@@ -10,7 +10,9 @@ from copy import deepcopy
 from distutils.version import StrictVersion
 from typing import Dict, Set, Optional
 import serial.tools.list_ports
+from serial import SerialException
 
+from mpf.exceptions.runtime_error import MpfRuntimeError
 from mpf.platforms.fast.fast_io_board import FastIoBoard
 from mpf.platforms.fast.fast_servo import FastServo
 from mpf.platforms.fast import fast_defines
@@ -57,14 +59,18 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         if self.config["driverboards"]:
             self.machine_type = self.config["driverboards"]
-        else:
+        elif self.machine.config['hardware']['driverboards']:
             self.machine_type = self.machine.config['hardware']['driverboards'].lower()
+        else:
+            self.raise_config_error("Please configure driverboards for fast.", 5)
 
         if self.machine_type == 'retro':
             self.debug_log("Configuring the FAST Controller for Retro driver "
                            "board")
-        else:
+        elif self.machine_type == 'fast':
             self.debug_log("Configuring FAST Controller for FAST IO boards.")
+        else:
+            self.raise_config_error('Invalid machine_type "{}" configured fast.'.format(self.machine_type), 6)
 
         self.features['tickless'] = True
 
@@ -275,8 +281,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         ports = None
         if self.config['ports'][0] == "autodetect":
             ports = autodetect_fast_ports(self.machine_type)
-            if ports is None:
-                raise AssertionError("Unable to autodetect any FAST ports.")
             self.debug_log("Autodetect for machine type %s found ports! %s", self.machine_type, ports)
         else:
             ports = self.config['ports']
@@ -289,7 +293,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         for index, port in enumerate(ports):
             comm = FastSerialCommunicator(platform=self, port=port, baud=bauds[index])
-            await comm.connect()
+            try:
+                await comm.connect()
+            except SerialException as e:
+                raise MpfRuntimeError("Could not open serial port {}. Check if you configured the correct port in the "
+                                      "fast config section and if you got sufficient permissions to that "
+                                      "port".format(port), 1, self.log.name) from e
             self.serial_connections.add(comm)
 
     def register_processor_connection(self, name: str, communicator):
@@ -444,7 +453,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             total_drivers = 0
             for board_obj in self.io_boards.values():
                 total_drivers += board_obj.driver_count
-            index = self.convert_number_from_config(number)
+            try:
+                index = self.convert_number_from_config(number)
+            except ValueError:
+                self.raise_config_error("Could not parse driver number {}. Please verify the number format is either "
+                                        "board-driver or driver. Driver should be an integer here.".format(number), 7)
 
             if int(index, 16) >= total_drivers:
                 raise AssertionError("Driver {} does not exist. Only {} drivers found. Driver number: {}".format(
@@ -657,9 +670,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             try:
                 number = self._parse_switch_number(number)
             except ValueError:
-                raise AssertionError("Could not parse switch number {}/{}. Seems "
-                                     "to be not a valid switch number for the"
-                                     "FAST platform.".format(config.name, number))
+                self.raise_config_error("Could not parse switch number {}/{}. Seems "
+                                        "to be not a valid switch number for the "
+                                        "FAST platform.".format(config.name, number), 8)
 
         # convert the switch number into a tuple which is:
         # (switch number, connection)

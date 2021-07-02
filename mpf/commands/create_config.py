@@ -137,7 +137,7 @@ class Command(MpfCommandLineParser):
                     \nPlease pick another one')'''),
                 style=self.example_style
             ).run()
-            self._create_machine_config()
+            self.create_machine_config()
 
     def create_show(self):
         """Create a show."""
@@ -169,7 +169,7 @@ class Command(MpfCommandLineParser):
                     '<style fg="red">Error:</style> A show with this name already exists\nPlease pick another one!'),
                 style=self.example_style
             ).run()
-            self._create_machine_config()
+            self.create_machine_config()
 
     def in_machine_folder(self):
         """Check if current directory is a machine folder."""

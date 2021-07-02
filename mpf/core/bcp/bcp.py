@@ -23,7 +23,7 @@ class Bcp(MpfController):
 
     config_name = "bcp"
 
-    __slots__ = ["interface", "transport", "servers"]
+    __slots__ = ["interface", "transport", "servers", "enabled"]
 
     def __init__(self, machine: "MachineController") -> None:
         """Initialise BCP module."""
@@ -33,8 +33,11 @@ class Bcp(MpfController):
         self.servers = []       # type: List[BcpServer]
 
         if self.machine.options['bcp']:
+            self.enabled = True
             self.machine.events.add_handler('init_phase_2',
                                             self._setup_bcp_connections)
+        else:
+            self.enabled = False
 
         self.machine.events.add_handler('init_phase_4',
                                         self._setup_bcp_servers)

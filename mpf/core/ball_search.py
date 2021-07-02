@@ -323,7 +323,7 @@ class BallSearch(MpfController):
             if self.machine.ball_controller.num_balls_known > 0:
                 # we have at least one ball remaining
                 self.info_log("Adding %s replacement ball", lost_balls)
-                for dummy_iterator in range(lost_balls):
+                for _ in range(lost_balls):
                     self.playfield.add_ball()
             else:
                 self.info_log("No more balls left. Ending game!")

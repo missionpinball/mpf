@@ -24,9 +24,9 @@ class MpfGameTestCase(MpfTestCase):
         self.machine_config_patches['switches'] = dict()
         self.machine_config_patches['switches']['s_start'] = {"number": "", "tags": "start"}
 
-    def start_two_player_game(self):
+    def start_two_player_game(self, start_switch=None):
         """Start two player game."""
-        self.start_game()
+        self.start_game(start_switch=start_switch)
         self.add_player()
 
     def fill_troughs(self):
@@ -37,7 +37,7 @@ class MpfGameTestCase(MpfTestCase):
 
         self.advance_time_and_run()
 
-    def start_game(self, num_balls_known=None):
+    def start_game(self, num_balls_known=None, start_switch=None):
         """Start a game.
 
         This method checks to make sure a game is not running,
@@ -55,9 +55,12 @@ class MpfGameTestCase(MpfTestCase):
         if num_balls_known is not None:
             self.assertNumBallsKnown(num_balls_known)
 
+        if start_switch is None:
+            start_switch = "s_start"
+
         # game start should work
         self.assertGameIsNotRunning()
-        self.hit_and_release_switch("s_start")
+        self.hit_and_release_switch(start_switch)
         self.advance_time_and_run()
         self.assertGameIsRunning()
         self.assertEqual(1, self.machine.game.num_players)

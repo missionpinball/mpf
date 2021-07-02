@@ -51,15 +51,13 @@ class PluginPlayer(DeviceConfigPlayer):
         """
         events = super().register_player_events(config, mode, priority)
         # when bcp is disabled do not register plugin_player
-        if not self.machine.options['bcp']:
-            return events
+        if self.machine.options['bcp']:
+            self.bcp_client = self._get_bcp_client(config)
 
-        self.bcp_client = self._get_bcp_client(config)
-
-        self.machine.bcp.interface.add_registered_trigger_event_for_client(
-            self.bcp_client, '{}_play'.format(self.show_section))
-        self.machine.bcp.interface.add_registered_trigger_event_for_client(
-            self.bcp_client, '{}_clear'.format(self.show_section))
+            self.machine.bcp.interface.add_registered_trigger_event_for_client(
+                self.bcp_client, '{}_play'.format(self.show_section))
+            self.machine.bcp.interface.add_registered_trigger_event_for_client(
+                self.bcp_client, '{}_clear'.format(self.show_section))
 
         return events
 

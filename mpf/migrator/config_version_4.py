@@ -343,7 +343,6 @@ class V4Migrator(VersionMigrator):
                            "the old window: config", slide_name, len(elements))
 
             self.log.debug("Adding '%s' slide", slide_name)
-            self.fc['slides'][slide_name] = CommentedMap()
             self.fc['slides'][slide_name] = (
                 self._migrate_elements(elements, 'window'))
 

@@ -24,6 +24,17 @@ class TestBonusMode(MpfTestCase):
         self.advance_time_and_run()
         self.assertIsNone(self.machine.game)
 
+    def test_slam_tilt_in_service(self):
+        """Test that bonus does not crash on slam tilt during service mode."""
+        self._start_game()
+        # todo add handler to game_ending to delay it a bit
+
+        self.advance_time_and_run(5)
+        # enter menu
+        self.machine.switch_controller.process_switch("s_service_enter", state=1, logical=True)
+        self.machine.switch_controller.process_switch("s_slam_tilt", state=1, logical=True)
+        self.advance_time_and_run()
+
     def testBonus(self):
         self.mock_event("bonus_ramps")
         self.mock_event("bonus_modes")
