@@ -360,10 +360,11 @@ software_update_script: single|str|None
 
     def _update_light_slide(self, items, position, color):
         board, light = items[position]
+        label_string = "" if light.config['label'] == "%" else light.config['label']
         self.machine.events.post("service_light_test_start",
                                  board_name=board,
                                  light_name=light.name,
-                                 light_label=light.config['label'],
+                                 light_label=label_string,
                                  light_num=light.config['number'],
                                  test_color=color)
 

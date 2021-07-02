@@ -57,6 +57,7 @@ lights:
       number: 1
     l_light5:
       number: 5
+      label: Light Five
 
 sound_system:
   tracks:
