@@ -274,6 +274,7 @@ bonus_entries:
     reset_player_score_entry: single|bool|false
     player_score_entry: single|str|None
     skip_if_zero: single|bool|true
+    skip_if_negative: single|bool|false
 coils:
     __valid_in__: machine
     __type__: device

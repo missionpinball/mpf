@@ -59,7 +59,7 @@ class FASTDriver(DriverPlatformInterface):
 
     def get_hold_pwm_for_cmd(self, power):
         """Return a hex string for a float power setting for hold."""
-        if self.platform_settings['hold_pwm_patter']:
+        if self.platform_settings.get('hold_pwm_patter'):
             return self.platform_settings['hold_pwm_patter']
 
         return self.get_pwm_for_cmd(power)
@@ -77,7 +77,7 @@ class FASTDriver(DriverPlatformInterface):
         """Return recycle ms."""
         if not recycle:
             return "00"
-        if self.platform_settings['recycle_ms'] is not None:
+        if self.platform_settings.get('recycle_ms') is not None:
             return Util.int_to_hex_string(self.platform_settings['recycle_ms'])
 
         # default recycle_ms to pulse_ms * 2
