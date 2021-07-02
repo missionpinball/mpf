@@ -264,6 +264,8 @@ class BcpInterface(MpfController):
             self._monitor_modes(client)
         elif category == "core_events":
             self._monitor_core_events(client)
+        elif category == "service_events":
+            self._monitor_service_events(client)
         elif category == "status_request":
             self._monitor_status_request(client)
         else:
@@ -292,6 +294,8 @@ class BcpInterface(MpfController):
             self._monitor_modes_stop(client)
         elif category == "core_events":
             self._monitor_core_events_stop(client)
+        elif category == "service_events":
+            self._monitor_service_events_stop(client)
         elif category == "status_request":
             self._monitor_status_request_stop(client)
         else:
@@ -519,6 +523,21 @@ class BcpInterface(MpfController):
             self.machine.events.remove_handler_by_event('ball_ended', self._ball_ended)
             self.machine.events.remove_handler_by_event('player_turn_started', self._player_turn_start)
             self.machine.events.remove_handler_by_event('player_added', self._player_added)
+
+    def _monitor_service_events(self, client):
+        """Begin monitoring all service events via the specified client."""
+        if not self.machine.bcp.transport.get_transports_for_handler("_service_events"):
+            for event in ["service_mode_entered", "service_main_menu", "service_menu_selected"]:
+                self.add_registered_trigger_event_for_client(client, event)
+        self.machine.bcp.transport.add_handler_to_transport("_service_events", client)
+
+    def _monitor_service_events_stop(self, client):
+        """Stop monitoring all service events via the specified client."""
+        self.machine.bcp.transport.add_handler_to_transport("_service_events", client)
+
+        if not self.machine.bcp.transport.get_transports_for_handler("_service_events"):
+            for event in ["service_mode_entered", "service_main_menu", "service_menu_selected"]:
+                self.remove_registered_trigger_event_for_client(client, event)
 
     def _monitor_status_request(self, client):
         """Begin monitoring status_request messages via the specified client."""
