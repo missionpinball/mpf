@@ -44,9 +44,13 @@ vpe_requires = [
     'protobuf==3.14.0',
 ]
 
+crash_reporter_requires = [
+    'requests==2.22.0'
+]
+
 
 all_requires = (pin2dmd_requires + cli_requires + linux_i2c_requires + rpi_requires + osc_requires + irc_requires +
-                vpe_requires)
+                vpe_requires + crash_reporter_requires)
 
 setup(
 
@@ -121,6 +125,7 @@ community.''',
         'osc': osc_requires,
         'irc': irc_requires,
         'vpe': vpe_requires,
+        'crash_reporter': crash_reporter_requires,
     },
 
     tests_require=[],

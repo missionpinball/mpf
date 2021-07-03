@@ -12,10 +12,12 @@ from logging.handlers import QueueHandler, SysLogHandler
 
 from queue import Queue
 
+from mpf.core.crash_reporter import report_crash
 from mpf.core.machine import MachineController
 from mpf.core.utility_functions import Util
 from mpf.core.config_loader import YamlMultifileConfigLoader, ProductionConfigLoader
 from mpf.commands.logging_formatters import JSONFormatter
+from mpf.exceptions.config_file_error import ConfigFileError
 
 
 class Command:
@@ -224,7 +226,12 @@ class Command:
         else:
             config_loader = ProductionConfigLoader(machine_path)
 
-        config = config_loader.load_mpf_config()
+        try:
+            config = config_loader.load_mpf_config()
+        except ConfigFileError as e:
+            print("Error while parsing config: {}", e)
+            report_crash(e, "config_parsing", {})
+            self.exit()
 
         try:
             self.machine = MachineController(vars(self.args), config)
