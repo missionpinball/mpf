@@ -60,18 +60,44 @@ software_update_script: single|str|None
                 # start main menu
                 await self._start_main_menu()
             elif key == "UP":
-                # post event for mc to increase volume
-                self.machine.events.post("master_volume_increase")
+                volume = self.machine.variables.get_machine_var("master_volume")
+                if not isinstance(volume, float):
+                    volume = .5
+                volume += .1
+                if volume >= 1.0:
+                    volume = 1.0
+                else:
+                    volume = round(volume, 1)
+                self.machine.variables.set_machine_var("master_volume", volume)
+                # post event for increased volume
+                self.machine.events.post("master_volume_increase", volume=volume)
                 '''event: master_volume_increase
 
                 desc: Increase the master volume of the audio system.
+
+                args:
+
+                volume: New volume as float between 0.0 an 1.0
                 '''
             elif key == "DOWN":
-                # post event for mc to decrease volume
-                self.machine.events.post("master_volume_decrease")
+                volume = self.machine.variables.get_machine_var("master_volume")
+                if not isinstance(volume, float):
+                    volume = .5
+                volume -= .1
+                if volume <= 0.0:
+                    volume = 0.0
+                else:
+                    volume = round(volume, 1)
+                self.machine.variables.set_machine_var("master_volume", volume)
+                # post event for decreased volume
+                self.machine.events.post("master_volume_decrease", volume=volume)
                 '''event: master_volume_decrease
 
                 desc: Decrease the master volume of the audio system.
+
+                args:
+
+                volume: New volume as float between 0.0 an 1.0
                 '''
 
     async def _start_main_menu(self):
