@@ -216,7 +216,7 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
         hw_states = dict()
         curr_bit = 1
         for index in range(32):
-            hw_states[str(index)] = bool(curr_bit & self._switches)
+            hw_states[str(index)] = not bool(curr_bit & self._switches)
             curr_bit <<= 1
         return hw_states
 
@@ -227,12 +227,12 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
         # configure pull up
         self.send_command(self.pi.set_pull_up_down(int(number), apigpio.PUD_UP))
 
-        # if config.debounce:
-        #     # configure debounce to 2ms
-        #     self.send_command(self.pi.set_glitch_filter(int(number), 2000))
-        # else:
-        #     # configure debounce to 100us
-        #     self.send_command(self.pi.set_glitch_filter(int(number), 100))
+        if config.debounce:
+            # configure debounce to 2ms
+            self.send_command(self.pi.set_glitch_filter(int(number), 2000))
+        else:
+            # configure debounce to 100us
+            self.send_command(self.pi.set_glitch_filter(int(number), 100))
 
         # add callback
         self.send_command(self.pi.add_callback(int(number), apigpio.EITHER_EDGE, self._switch_changed))
@@ -242,7 +242,7 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
     def _switch_changed(self, gpio, level, tick):
         """Process switch change."""
         del tick
-        self.machine.switch_controller.process_switch_by_num(str(gpio), level, self)
+        self.machine.switch_controller.process_switch_by_num(str(gpio), not level, self)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Raise exception."""
