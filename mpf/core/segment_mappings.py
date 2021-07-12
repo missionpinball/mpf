@@ -780,7 +780,7 @@ SIXTEEN_SEGMENTS = {
                          char="¡"),
     162: SixteenSegments(dp=0, u=1, t=0, s=0, r=0, p=1, n=0, m=1, k=0, h=1, g=0, f=0, e=0, d=0, c=0, b=1, a=1,
                          char="¢"),
-    163: SixteenSegments(dp=0, u=1, t=1, s=0, r=0, p=1, n=0, m=1, k=0, h=0, g=0, f=1, e=1, d=0, c=0, b=1, a=0, 
+    163: SixteenSegments(dp=0, u=1, t=1, s=0, r=0, p=1, n=0, m=1, k=0, h=0, g=0, f=1, e=1, d=0, c=0, b=1, a=0,
                          char="£"),
     164: SixteenSegments(dp=0, u=1, t=0, s=0, r=0, p=1, n=0, m=0, k=0, h=1, g=0, f=0, e=0, d=0, c=1, b=1, a=1,
                          char="¤"),
