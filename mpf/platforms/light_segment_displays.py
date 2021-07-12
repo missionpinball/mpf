@@ -2,7 +2,7 @@
 import logging
 
 from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
-from mpf.core.segment_mappings import SEVEN_SEGMENTS, BCD_SEGMENTS, FOURTEEN_SEGMENTS, SIXTEEN_SEGMENTS, SIXTEEN_SEGMENTS_NEOSEG,\
+from mpf.core.segment_mappings import SEVEN_SEGMENTS, BCD_SEGMENTS, FOURTEEN_SEGMENTS, SIXTEEN_SEGMENTS,\
     EIGHT_SEGMENTS, TextToSegmentMapper
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
 from mpf.core.platform import SegmentDisplaySoftwareFlashPlatform
@@ -28,8 +28,6 @@ class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
             self._segment_map = FOURTEEN_SEGMENTS
         elif segment_type == "16segment":
             self._segment_map = SIXTEEN_SEGMENTS
-        elif segment_type == "16segment_neoseg":
-            self._segment_map = SIXTEEN_SEGMENTS_NEOSEG
         else:
             raise AssertionError("Invalid segment type {}".format(segment_type))
 
