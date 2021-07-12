@@ -1321,7 +1321,7 @@ segment_displays:
     platform: single|str|None
 light_segment_displays_device:
     lights: list|dict(str:machine(lights))|
-    type: single|enum(7segment,bcd,8segment,14segment,16segment)|
+    type: single|enum(7segment,bcd,8segment,14segment,16segment,16segment_neoseg)|
 segment_display_player:
     __valid_in__: machine, mode, show
     __type__: config_player
