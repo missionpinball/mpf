@@ -121,7 +121,7 @@ class SegmentDisplay(SystemWideDevice):
         Returns: Validated config
         """
         config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
-        platform = self.machine.get_platform_sections('segment_displays', getattr(config, "platform", None))
+        platform = self.machine.get_platform_sections('segment_displays', config.get("platform", None))
         platform.assert_has_feature("segment_displays")
         config['platform_settings'] = platform.validate_segment_display_section(self,
                                                                                 config.get('platform_settings', None))

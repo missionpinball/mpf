@@ -1,5 +1,3 @@
-import asyncio
-
 from mpf.platforms.rpi import rpi
 from mpf.tests.MpfTestCase import MpfTestCase
 
@@ -77,6 +75,10 @@ class MockApigpio():
             """Write byte to i2c register on handle."""
             return self.i2c_read.pop(0)
 
+        async def set_glitch_filter(self, pin, value):
+            """Set glitch filter value."""
+            pass
+
 
 class TestRpi(MpfTestCase):
 
@@ -118,27 +120,27 @@ class TestRpi(MpfTestCase):
                          self.pi.pull_ups)
 
         # test switches
-        self.assertSwitchState("s_test", True)
-        self.assertSwitchState("s_test2", False)
+        self.assertSwitchState("s_test", False)
+        self.assertSwitchState("s_test2", True)
 
         self.pi.callbacks[1](gpio=1, level=0, tick=123)
         self.machine_run()
 
-        self.assertSwitchState("s_test", False)
-        self.assertSwitchState("s_test2", False)
+        self.assertSwitchState("s_test", True)
+        self.assertSwitchState("s_test2", True)
 
         self.pi.callbacks[1](gpio=1, level=1, tick=123)
         self.machine_run()
 
-        self.assertSwitchState("s_test", True)
-        self.assertSwitchState("s_test2", False)
+        self.assertSwitchState("s_test", False)
+        self.assertSwitchState("s_test2", True)
 
         self.pi.callbacks[1](gpio=1, level=0, tick=127)
         self.pi.callbacks[1](gpio=7, level=1, tick=127)
         self.machine_run()
 
-        self.assertSwitchState("s_test", False)
-        self.assertSwitchState("s_test2", True)
+        self.assertSwitchState("s_test", True)
+        self.assertSwitchState("s_test2", False)
 
         # pulse coil
         self.machine.coils["c_test"].pulse()

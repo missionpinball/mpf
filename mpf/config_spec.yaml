@@ -960,6 +960,7 @@ mpf:
     plugins: ignore
     platforms: ignore
     paths: ignore
+    report_crashes: single|enum(ask,never,always)|ask
 mpf-mc:
     __valid_in__: machine                           # todo add to validator
     __type__: config
@@ -1650,7 +1651,7 @@ sound_system:
     buffer: single|int|2048
     frequency: single|int|44100
     channels: single|int|1
-    master_volume: single|gain|0.5
+    master_volume: ignore
     tracks: dict|str:subconfig(sound_system_tracks)|
 sound_system_tracks:
     type: single|enum(standard,sound_loop,playlist)|standard
