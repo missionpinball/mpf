@@ -292,6 +292,18 @@ class Light(SystemWideDevice, DevicePositionMixin):
             if self.config['previous'].name == self.name:
                 raise AssertionError("Failed to configure light {} in platform. "
                                      "'previous' value cannot refer to itself.".format(self.name))
+
+            # If we are in development mode, do a robust tree traversal to catch infinite light loops
+            if not self.machine.options['production']:
+                tree = [self.name]
+                prev = self.config['previous']
+                while prev:
+                    tree.append(prev.name)
+                    prev = prev.config.get('previous')
+                    if prev is not None and prev.name in tree:
+                        tree.append(prev.name)
+                        raise AssertionError("Cyclical light chain found: {}".format(" -> ".join(tree)))
+
             await self.config['previous'].wait_for_loaded()
             start_channel = self.config['previous'].get_successor_number()
             self._load_hw_driver_sequentially(start_channel)
