@@ -464,11 +464,11 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         only posted once, when all the drop targets are up.'''
 
     def _bank_mixed(self):
-        if self.state == DropTargetBankState.MIXED:
-            return
+        prev_state = self.state
         self.state = DropTargetBankState.MIXED
         self.complete = False
         self.machine.events.post('drop_target_bank_' + self.name + '_mixed',
+                                 prev_value=prev_state,
                                  down=self.down)
         '''event: drop_target_bank_(name)_mixed
         desc: The drop targets in the drop target bank
