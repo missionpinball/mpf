@@ -151,7 +151,11 @@ def analyze_traceback(tb, inspection_level=None, limit=None):
     tb_level = tb
     extracted_tb = traceback.extract_tb(tb, limit=limit)
     for ii, (filepath, line, module, code) in enumerate(extracted_tb):
-        func_source, func_lineno = inspect.getsourcelines(tb_level.tb_frame)
+        try:
+            func_source, func_lineno = inspect.getsourcelines(tb_level.tb_frame)
+        except OSError:
+            func_source = []
+            func_lineno = 0
 
         d = {"file": filepath,
              "error_line_number": line,

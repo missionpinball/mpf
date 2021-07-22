@@ -188,9 +188,12 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
                        source.name, target.name, mechanical_eject)
         del kwargs
         driver = None
-        if isinstance(source.ejector, (EnableCoilEjector, PulseCoilEjector)) and source.ejector.config['eject_coil']:
+        if isinstance(source.ejector, (EnableCoilEjector, PulseCoilEjector)) and \
+                source.ejector.config['eject_coil'] and \
+                isinstance(source.ejector.config['eject_coil'].hw_driver, VirtualDriver):
             driver = source.ejector.config['eject_coil'].hw_driver
-        elif isinstance(source.ejector, HoldCoilEjector) and source.ejector.config['hold_coil']:
+        elif isinstance(source.ejector, HoldCoilEjector) and source.ejector.config['hold_coil'] and \
+                isinstance(source.ejector.config['hold_coil'].hw_driver, VirtualDriver):
             driver = source.ejector.config['hold_coil'].hw_driver
         if driver and driver.action:
             driver.action.target_device = target
@@ -277,7 +280,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
 
     def _initialise_score_reels(self):
         for device in self.machine.score_reels.values():
-            if device.config['coil_inc']:
+            if device.config['coil_inc'] and isinstance(device.config['coil_inc'].hw_driver, VirtualDriver):
                 device.config['coil_inc'].hw_driver.action = ScoreReelAdvanceAction(
                     ["pulse"], self.machine,
                     {
@@ -302,22 +305,23 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
 
     def _initialise_drop_targets(self):
         for device in self.machine.drop_targets.values():
-            if device.config['reset_coil']:
+            if device.config['reset_coil'] and isinstance(device.config['reset_coil'].hw_driver, VirtualDriver):
                 device.config['reset_coil'].hw_driver.action = SwitchDisableAction(
                     ["pulse"], self.machine, [device.config['switch']])
-            if device.config['knockdown_coil']:
+            if device.config['knockdown_coil'] and isinstance(device.config['knockdown_coil'].hw_driver, VirtualDriver):
                 device.config['knockdown_coil'].hw_driver.action = SwitchEnableAction(
                     ["pulse"], self.machine, [device.config['switch']])
 
     def _initialise_drop_target_banks(self):
         for device in self.machine.drop_target_banks.values():
-            if device.config['reset_coil']:
+            if device.config['reset_coil'] and isinstance(device.config['reset_coil'].hw_driver, VirtualDriver):
                 device.config['reset_coil'].hw_driver.action = ResetDropTargetAction(
                     ["pulse"], self.machine, device)
 
             for coil in device.config['reset_coils']:
-                coil.hw_driver.action = ResetDropTargetAction(
-                    ["pulse"], self.machine, device)
+                if isinstance(coil.hw_driver, VirtualDriver):
+                    coil.hw_driver.action = ResetDropTargetAction(
+                        ["pulse"], self.machine, device)
 
     def _initialise_ball_devices(self):
         for device in self.machine.ball_devices.values():
@@ -326,11 +330,14 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
 
             action = None
             if isinstance(device.ejector, (EnableCoilEjector, PulseCoilEjector)) and \
-                    device.ejector.config['eject_coil']:
+                    device.ejector.config['eject_coil'] and \
+                    isinstance(device.ejector.config['eject_coil'].hw_driver, VirtualDriver):
                 action = device.ejector.config['eject_coil'].hw_driver.action = AddBallToTargetAction(
                     ["pulse", "enable"], self.machine, self, device)
 
-            elif isinstance(device.ejector, HoldCoilEjector) and device.ejector.config['hold_coil']:
+            elif isinstance(device.ejector, HoldCoilEjector) and \
+                    device.ejector.config['hold_coil'] and \
+                    isinstance(device.ejector.config['hold_coil'].hw_driver, VirtualDriver):
                 action = device.ejector.config['hold_coil'].hw_driver.action = AddBallToTargetAction(
                     ["disable"], self.machine, self, device)
             elif device.config['mechanical_eject']:

@@ -1945,7 +1945,7 @@ twitch_client:
     password_var: single|str|None
     channel_var: single|str|None
 variable_player:
-    __valid_in__: mode
+    __valid_in__: machine, mode
     __type__: config_player
     int: single|template_int|None
     float: single|template_float|None
