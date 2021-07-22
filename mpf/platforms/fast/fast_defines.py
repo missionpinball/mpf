@@ -1,20 +1,5 @@
 """Defines for FAST Retro."""
 
-RETRO_CONFIGS = {
-    'WPC89': {
-        # Setting    HEX     DEC
-        "node_id":  '00',   # 0
-        "drivers":  '40',   # 64
-        "switches": '80',   # 128
-    },
-    'SYS95': {
-        # Setting    HEX     DEC
-        "node_id":  '00',   # 0
-        "drivers":  '40',   # 64
-        "switches": '80',   # 128
-    }
-}
-
 RETRO_SWITCH_MAP = {
 
     # Name   HEX    DEC

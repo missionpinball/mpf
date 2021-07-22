@@ -5,20 +5,19 @@ from distutils.version import StrictVersion
 from mpf.core.utility_functions import Util
 
 from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
-from mpf.platforms.fast.fast_defines import RETRO_CONFIGS
 
 # Minimum firmware versions needed for this module
 from mpf.platforms.fast.fast_io_board import FastIoBoard
 
 DMD_MIN_FW = '0.88'
-NET_MIN_FW = '0.88'
+NANO_MIN_FW = '0.88'
+NET_MIN_FW = '2.0'
 RGB_MIN_FW = '0.87'
 IO_MIN_FW = '0.87'
 SEG_MIN_FW = '0.10'
 
-# TODO: [Retro] Standardize retro board id values
-RETRO_ID = 'FP-SBI-0095-3'
-RETRO_MIN_FW = '1.15'
+NANO_ID = 'FP-CPU-0'
+RETRO_ID = 'FP-SBI'
 
 # DMD_LATEST_FW = '0.88'
 # NET_LATEST_FW = '0.90'
@@ -65,8 +64,8 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
         self.remote_processor = None
         self.remote_model = None
-        self.remote_config = None
         self.remote_firmware = 0.0
+        self.is_retro = False
         self.max_messages_in_flight = 10
         self.messages_in_flight = 0
         self.ignored_messages_in_flight = {b'-N', b'/N', b'/L', b'-L'}
@@ -123,30 +122,21 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         # ID:DMD FP-CPU-002-1 00.87
         # ID:NET FP-CPU-002-2 00.85
         # ID:RGB FP-CPU-002-2 00.85
+        # ID:NET FP-CPU-2000-2 2.05
+        # ID:RET FP-CPU-0095-3 2.01
 
         board_id = msg[3:].split()
         # FAST Retro doesn't provide a remote_processor value, but it behaves like a NET
         # TODO: [Retro] Standardize Retro board ID: response to match other boards
-        if board_id[0] == RETRO_ID:
-            self.remote_processor = 'NET'
-            self.remote_firmware = board_id[1]
+        # -- MOCK CODE BEGIN --
+        if board_id[0] in ['FP-SBI-0095-3', 'FP-CPU-2000-3']:
+            board_id.insert(0, 'NET')
+        # -- MOCK CODE END --
 
-            # Query the board for its build configuration
-            while True:
-                self.writer.write('IF:\r'.encode())
-                msg = await self._read_with_timeout(0.5)
-                 # ignore XX replies here.
-                while msg.startswith('XX:'):
-                    msg = await self._read_with_timeout(.5)
+        self.remote_processor, self.remote_model, self.remote_firmware = board_id
 
-                if msg.startswith('IF:'):
-                    break
-
-                await asyncio.sleep(.5, loop=self.machine.clock.loop)
-            self.platform.log.debug("Found retro board configuration: %s", msg)
-            self.remote_model, self.remote_config = msg[3:].split(' Config:')
-        else:
-            self.remote_processor, self.remote_model, self.remote_firmware = board_id
+        if self.remote_processor.startswith(RETRO_ID):
+            self.is_retro = True
 
         self.platform.log.info("Connected! Processor: %s, "
                                "Board Type: %s, Firmware: %s",
@@ -179,8 +169,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             self.platform.debug_log("Setting DMD buffer size: %s",
                                     self.max_messages_in_flight)
         elif self.remote_processor == 'NET':
-            # TODO: [Retro] Choose a standardized approach to distinguishing NET from RET
-            min_version = RETRO_MIN_FW if self.remote_config else NET_MIN_FW
+            min_version = NANO_MIN_FW if self.remote_model.startswith(NANO_ID) else NET_MIN_FW
             # latest_version = NET_LATEST_FW
             self.max_messages_in_flight = self.platform.config['net_buffer']
             self.platform.debug_log("Setting NET buffer size: %s",
@@ -205,7 +194,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                                  ' the {} processor to be firmware {}, but yours is {}'.
                                  format(self.remote_processor, min_version, self.remote_firmware))
 
-        if self.remote_processor == 'NET' and (self.platform.machine_type == 'fast' or self.platform.machine_type == 'retro'):
+        if self.remote_processor == 'NET':
             await self.query_fast_io_boards()
 
         self.platform.register_processor_connection(self.remote_processor, self)
@@ -250,9 +239,10 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
         firmware_ok = True
 
-        if RETRO_CONFIGS.get(self.remote_model):
+        if self.is_retro:
             # TODO: [Retro] Move the config defines to the Retro's firmware and retrieve via serial query
-            node_id, drivers, switches = RETRO_CONFIGS[self.remote_model].values()
+            # In the meantime, hard-code values large enough to account for the biggest machines
+            node_id, drivers, switches = ['00', '40', '80']  # in HEX, aka DEC values 0, 64, 128
             self.platform.register_io_board(FastIoBoard(
                 int(node_id, 16),
                 self.remote_model,

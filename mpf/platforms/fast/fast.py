@@ -1,8 +1,8 @@
 """FAST hardware platform.
 
 Contains the hardware interface and drivers for the FAST Pinball platform
-hardware, including the FAST Nano and Retro controllers as well as FAST I/O
-boards.
+hardware, including the FAST Neuron, Nano, and Retro controllers as well
+as FAST I/O boards.
 """
 import asyncio
 import os
@@ -65,8 +65,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.raise_config_error("Please configure driverboards for fast.", 5)
 
         if self.machine_type == 'retro':
-            self.debug_log("Configuring the FAST Controller for Retro driver "
-                           "board")
+            self.debug_log("Configuring the FAST Controller for Retro driver board")
         elif self.machine_type == 'fast':
             self.debug_log("Configuring FAST Controller for FAST IO boards.")
         else:
@@ -316,10 +315,16 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             communicator: communicator object
             name: name of processor
         """
+
+        # TODO: Get new firmware with proper id string and 2.0+ versioning
+        # -- MOCK CODE BEGIN --
+        if communicator.remote_model in ['FP-SBI-0095-3', 'FP-CPU-2000-2']:
+            communicator.firmware_version = 2.0
+        # -- MOCK CODE END --
+
         if name == 'DMD':
             self.dmd_connection = communicator
-        # TODO: [Retro] Standardize Retro board id string
-        elif name == 'NET' or name == 'RET' or name == 'FP-SBI-0095-3':
+        elif name == 'NET':
             self.net_connection = communicator
         elif name == 'SEG':
             self.seg_connection = communicator
@@ -414,20 +419,19 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.debug_log("Received SA: %s", msg)
         hw_states = dict()
 
-        # TODO: [Retro] Standardize SA: return values, or deprecate SA: call
-        try:
+        # Support for v1 firmware which uses network + local switches
+        if remote_processor.firmware_version < 2.0:
             _, local_states, _, nw_states = msg.split(',')
-        except ValueError:
+            for offset, byte in enumerate(bytearray.fromhex(nw_states)):
+                for i in range(8):
+                    num = Util.int_to_hex_string((offset * 8) + i)
+                    if byte & (2**i):
+                        hw_states[(num, 1)] = 1
+                    else:
+                        hw_states[(num, 1)] = 0
+        # Support for v2 firmware which uses only local switches
+        else:
             _, local_states = msg.split(',')
-            nw_states = ''
-
-        for offset, byte in enumerate(bytearray.fromhex(nw_states)):
-            for i in range(8):
-                num = Util.int_to_hex_string((offset * 8) + i)
-                if byte & (2**i):
-                    hw_states[(num, 1)] = 1
-                else:
-                    hw_states[(num, 1)] = 0
 
         for offset, byte in enumerate(bytearray.fromhex(local_states)):
             for i in range(8):
@@ -505,6 +509,17 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if not number:
             raise AssertionError("Driver needs a number")
 
+        # Figure out the connection type for v1 hardware: local or network (default)
+        if self.net_connection.firmware_version < 2.0:
+            if ('connection' in platform_settings and
+                    platform_settings['connection'].lower() == 'local'):
+                platform_settings['connection'] = 0
+            else:
+                platform_settings['connection'] = 1
+        # V2 hardware uses only local drivers
+        else:
+            platform_settings['connection'] = 0
+
         # If we have Retro driver boards, look up the driver number
         if self.machine_type == 'retro':
             # Look for a system11 A/C relay driver number ending in 'a' or 'c'
@@ -527,23 +542,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             except KeyError:
                 self.raise_config_error("Could not find Retro driver {}".format(number), 1)
 
-            if ('connection' in platform_settings and
-                    platform_settings['connection'].lower() == 'network'):
-                platform_settings['connection'] = 1
-            else:
-                platform_settings['connection'] = 0  # local driver (default for Retro)
-
         # If we have FAST IO boards, we need to make sure we have hex strings
         elif self.machine_type == 'fast':
-
             number = self._parse_driver_number(number)
-
-            # Now figure out the connection type
-            if ('connection' in platform_settings and
-                    platform_settings['connection'].lower() == 'local'):
-                platform_settings['connection'] = 0
-            else:
-                platform_settings['connection'] = 1  # network driver (default for FAST)
 
         else:
             raise AssertionError("Invalid machine type: {}".format(
@@ -650,29 +651,31 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                  "switch, but no connection to a NET processor"
                                  "is available")
 
-        if self.machine_type == 'retro':  # translate switch num to FAST switch
+        if self.machine_type == 'retro':
+            # translate switch num to FAST switch
             try:
                 number = fast_defines.RETRO_SWITCH_MAP[str(number).upper()]
             except KeyError:
                 self.raise_config_error("Could not find switch {}".format(number), 2)
-
-            if 'connection' not in platform_config:
-                platform_config['connection'] = 0  # local switch (default for Retro)
-            else:
-                platform_config['connection'] = 1  # network switch
-
-        elif self.machine_type == 'fast':
-            if 'connection' not in platform_config:
-                platform_config['connection'] = 1  # network switch (default for FAST)
-            else:
-                platform_config['connection'] = 0  # local switch
-
+        else:
             try:
                 number = self._parse_switch_number(number)
             except ValueError:
                 self.raise_config_error("Could not parse switch number {}/{}. Seems "
                                         "to be not a valid switch number for the "
                                         "FAST platform.".format(config.name, number), 8)
+
+        if self.net_connection.firmware_version < 2.0:
+            # V1 devices can explicitly define switches to be local, or default to network
+            if ('connection' in platform_config and
+                    platform_config['connection'].lower() == 'local'):
+                platform_config['connection'] = 0
+            else:
+                platform_config['connection'] = 1
+        else:
+            # V2 devices are only local switches
+            platform_config['connection'] = 0
+
 
         # convert the switch number into a tuple which is:
         # (switch number, connection)
