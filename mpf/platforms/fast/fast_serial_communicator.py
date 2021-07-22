@@ -49,7 +49,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
     __slots__ = ["dmd", "remote_processor", "remote_model", "remote_firmware", "remote_config", "max_messages_in_flight",
                  "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
-                 "send_queue"]
+                 "send_queue", "is_retro", "is_legacy"]
 
     def __init__(self, platform, port, baud):
         """Initialise communicator.
@@ -66,6 +66,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         self.remote_model = None
         self.remote_firmware = 0.0
         self.is_retro = False
+        self.is_legacy = False
         self.max_messages_in_flight = 10
         self.messages_in_flight = 0
         self.ignored_messages_in_flight = {b'-N', b'/N', b'/L', b'-L'}
@@ -126,17 +127,26 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         # ID:RET FP-CPU-0095-3 2.01
 
         board_id = msg[3:].split()
-        # FAST Retro doesn't provide a remote_processor value, but it behaves like a NET
         # TODO: [Retro] Standardize Retro board ID: response to match other boards
         # -- MOCK CODE BEGIN --
         if board_id[0] in ['FP-SBI-0095-3', 'FP-CPU-2000-3']:
+            self.machine.log.warning("FAST: Detected invalid ID response, adding 'NET' type.")
             board_id.insert(0, 'NET')
         # -- MOCK CODE END --
 
         self.remote_processor, self.remote_model, self.remote_firmware = board_id
 
+        # TODO: Get new firmware with 2.0+ versioning for Neuron/Retro
+        # -- MOCK CODE BEGIN --
+        if self.remote_model in ['FP-SBI-0095-3', 'FP-CPU-2000-X']:
+            self.machine.log.warning("FAST: Detected v2 hardware, forcing firmware version.")
+            self.remote_firmware = '2.0'
+        # -- MOCK CODE END --
+
         if self.remote_processor.startswith(RETRO_ID):
             self.is_retro = True
+        elif StrictVersion(self.remote_firmware) < StrictVersion('2.0'):
+            self.is_legacy = True
 
         self.platform.log.info("Connected! Processor: %s, "
                                "Board Type: %s, Firmware: %s",

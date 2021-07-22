@@ -316,12 +316,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             name: name of processor
         """
 
-        # TODO: Get new firmware with proper id string and 2.0+ versioning
-        # -- MOCK CODE BEGIN --
-        if communicator.remote_model in ['FP-SBI-0095-3', 'FP-CPU-2000-2']:
-            communicator.firmware_version = 2.0
-        # -- MOCK CODE END --
-
         if name == 'DMD':
             self.dmd_connection = communicator
         elif name == 'NET':
@@ -420,7 +414,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         hw_states = dict()
 
         # Support for v1 firmware which uses network + local switches
-        if remote_processor.firmware_version < 2.0:
+        if self.net_connection.is_legacy:
             _, local_states, _, nw_states = msg.split(',')
             for offset, byte in enumerate(bytearray.fromhex(nw_states)):
                 for i in range(8):
@@ -510,7 +504,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             raise AssertionError("Driver needs a number")
 
         # Figure out the connection type for v1 hardware: local or network (default)
-        if self.net_connection.firmware_version < 2.0:
+        if self.net_connection.is_legacy:
             if ('connection' in platform_settings and
                     platform_settings['connection'].lower() == 'local'):
                 platform_settings['connection'] = 0
@@ -665,7 +659,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                         "to be not a valid switch number for the "
                                         "FAST platform.".format(config.name, number), 8)
 
-        if self.net_connection.firmware_version < 2.0:
+        if self.net_connection.is_legacy:
             # V1 devices can explicitly define switches to be local, or default to network
             if ('connection' in platform_config and
                     platform_config['connection'].lower() == 'local'):

@@ -4,27 +4,25 @@ import re
 from mpf.exceptions.runtime_error import MpfRuntimeError
 
 def autodetect_fast_ports(machine_type="fast"):
-    if machine_type == "retro":
-        # Retro boards are always v2
-        return _find_fast_v2()
-    elif machine_type == "fast":
-        # Look for a V1 machine first, since V1 ports are a superset of V2 ports
-        return _find_fast_v1() or _find_fast_v2()
-    else:
-        raise KeyError("Unknown machine type '{}' for autodetecting FAST ports.".format(machine_type))
+    if machine_type == "fast":
+        return _find_fast_quad()
+    elif machine_type == "retro":
+        return _find_fast_retro()
+
+    raise KeyError("Unknown machine type '{}' for autodetecting ports.".format(machine_type))
 
 def autodetect_smartmatrix_dmd_port():
-    return _find_fast_v1()[0]
+    return _find_fast_quad()[0]
 
-def _find_fast_v2():
+def _find_fast_retro():
     devices = [port.device for port in serial.tools.list_ports.comports()]
     for d in devices:
         if re.search(r'\.usbmodem\d+$', d) or re.search(r'ACM\d$', d):
             return [d]
-    raise MpfRuntimeError("Unable to auto-detect FAST hardware from available devices: {}".format(
-                                      ", ".join(devices)), 1, "autodetect.find_fast_v2")
+    raise MpfRuntimeError("Unable to auto-detect FAST Retro from available devices: {}".format(
+                                      ", ".join(devices)), 1, "autodetect.find_fast_retro")
 
-def _find_fast_v1():
+def _find_fast_quad():
     ports = None
     devices = [port.device for port in serial.tools.list_ports.comports()]
     # Look for four devices with sequential tails of 0-3 or A-D
@@ -41,5 +39,7 @@ def _find_fast_v1():
         # If ports were found, skip the rest of the devices
         if ports:
             break
-    # Do not throw if no ports or found, we'll try looking for v2
+    if not ports:
+        raise MpfRuntimeError("Unable to auto-detect FAST hardware from available devices: {}".format(
+                                      ", ".join(devices)), 1, "autodetect.find_fast_quad")
     return ports
