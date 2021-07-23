@@ -9,7 +9,6 @@ import os
 from copy import deepcopy
 from distutils.version import StrictVersion
 from typing import Dict, Set, Optional
-import serial.tools.list_ports
 from serial import SerialException
 
 from mpf.exceptions.runtime_error import MpfRuntimeError
@@ -25,8 +24,8 @@ from mpf.platforms.fast.fast_segment_display import FASTSegmentDisplay
 from mpf.platforms.fast.fast_serial_communicator import FastSerialCommunicator
 from mpf.platforms.fast.fast_switch import FASTSwitch
 from mpf.platforms.autodetect import autodetect_fast_ports
-from mpf.core.platform import ServoPlatform, DmdPlatform, SwitchPlatform, DriverPlatform, LightsPlatform, \
-    SegmentDisplayPlatform, DriverSettings, SwitchSettings, DriverConfig, SwitchConfig, RepulseSettings
+from mpf.core.platform import ServoPlatform, DmdPlatform, LightsPlatform, SegmentDisplayPlatform, \
+    DriverSettings, SwitchSettings, DriverConfig, SwitchConfig, RepulseSettings
 from mpf.core.utility_functions import Util
 
 from mpf.platforms.system11 import System11OverlayPlatform, System11Driver
@@ -69,6 +68,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.is_retro = True
         elif self.machine_type == 'fast':
             self.debug_log("Configuring FAST Controller for FAST IO boards.")
+            self.is_retro = False
         else:
             self.raise_config_error('Unknown machine_type "{}" configured fast.'.format(self.machine_type), 6)
 
@@ -280,7 +280,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """
         ports = None
         if self.config['ports'][0] == "autodetect":
-            auto_ports = autodetect_fast_ports(self.machine_type)
+            auto_ports = autodetect_fast_ports(self.is_retro)
             if self.is_retro:
                 # Retro only returns one port
                 ports = auto_ports
@@ -624,10 +624,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict) -> FASTSwitch:
         """Configure the switch object for a FAST Pinball controller.
 
-        FAST Controllers support two types of switches: `local` and `network`.
+        V1 FAST Controllers support two types of switches: `local` and `network`.
         Local switches are switches that are connected to the FAST controller
         board itself, and network switches are those connected to a FAST I/O
-        board.
+        board. V2 FAST Controllers consider all switches to be local, even those
+        connected to I/O boards.
 
         MPF needs to know which type of switch is this is. You can specify the
         switch's connection type in the config file via the ``connection:``
@@ -636,10 +637,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         If a connection type is not specified, this method will use some
         intelligence to try to figure out which default should be used.
 
-        If the DriverBoard type is ``fast``, then it assumes the default is
-        ``network``. If it's anything else (``retro``, ``system11``, ``bally``,
-        etc.) then it assumes the connection type is ``local``. Connection types
-        can be mixed and matched in the same machine.
+        If the DriverBoard type is ``fast`` and the firmware is legacy (v1),
+        then mpf assumes the default is ``network``. If it's a v2 firmware or
+        any other type of board (``sys11``, ``wpc95``, ``wpc89``) then mpf
+        assumes the connection type is ``local``. Connection types can be mixed
+        and matched in the same machine.
 
         Args:
         ----
@@ -682,7 +684,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             # V2 devices are only local switches
             platform_config['connection'] = 0
 
-
         # convert the switch number into a tuple which is:
         # (switch number, connection)
         number_tuple = (number, platform_config['connection'])
@@ -708,7 +709,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             return FASTMatrixLight(number, self.net_connection.send, self.machine,
                                    int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000), self)
         if not subtype or subtype == "led":
-            if not self.flag_led_tick_registered:
+            if self.rgb_connection and not self.flag_led_tick_registered:
                 # Update leds every frame
                 self._led_task = self.machine.clock.schedule_interval(
                     self.update_leds, 1 / self.machine.config['mpf']['default_light_hw_update_hz'])

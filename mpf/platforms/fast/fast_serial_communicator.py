@@ -10,14 +10,16 @@ from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
 from mpf.platforms.fast.fast_io_board import FastIoBoard
 
 DMD_MIN_FW = '0.88'
-NANO_MIN_FW = '0.88'
 NET_MIN_FW = '2.0'
+NET_LEGACY_MIN_FW = '0.88'
 RGB_MIN_FW = '0.87'
-IO_MIN_FW = '0.87'
+IO_MIN_FW = '1.09'
+IO_LEGACY_MIN_FW = '0.87'
 SEG_MIN_FW = '0.10'
 
-NANO_ID = 'FP-CPU-0'
-RETRO_ID = 'FP-SBI'
+LEGACY_ID = 'FP-CPU-0'  # Start of an id for legacy (v1) network boards
+RETRO_ID = 'FP-SBI'     # Start of an id for retro boards
+V2_FW = '1.30'          # Firmware cutoff for v2 network boards
 
 # DMD_LATEST_FW = '0.88'
 # NET_LATEST_FW = '0.90'
@@ -47,7 +49,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                         'XX:N'
                         ]
 
-    __slots__ = ["dmd", "remote_processor", "remote_model", "remote_firmware", "remote_config", "max_messages_in_flight",
+    __slots__ = ["dmd", "remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
                  "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
                  "send_queue", "is_retro", "is_legacy"]
 
@@ -124,28 +126,13 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         # ID:NET FP-CPU-002-2 00.85
         # ID:RGB FP-CPU-002-2 00.85
         # ID:NET FP-CPU-2000-2 2.05
-        # ID:RET FP-CPU-0095-3 2.01
+        # ID:NET FP-SBI-0095-3 2.01
 
-        board_id = msg[3:].split()
-        # TODO: [Retro] Standardize Retro board ID: response to match other boards
-        # -- MOCK CODE BEGIN --
-        if board_id[0] in ['FP-SBI-0095-3', 'FP-CPU-2000-X']:
-            self.machine.log.warning("FAST: Detected invalid ID response, adding 'NET' type.")
-            board_id.insert(0, 'NET')
-        # -- MOCK CODE END --
-
-        self.remote_processor, self.remote_model, self.remote_firmware = board_id
-
-        # TODO: Get new firmware with 2.0+ versioning for Neuron/Retro
-        # -- MOCK CODE BEGIN --
-        if self.remote_model in ['FP-SBI-0095-3', 'FP-CPU-2000-X']:
-            self.machine.log.warning("FAST: Detected v2 hardware, forcing firmware version.")
-            self.remote_firmware = '2.0'
-        # -- MOCK CODE END --
+        self.remote_processor, self.remote_model, self.remote_firmware = msg[3:].split()
 
         if self.remote_model.startswith(RETRO_ID):
             self.is_retro = True
-        elif StrictVersion(self.remote_firmware) < StrictVersion('2.0'):
+        elif StrictVersion(self.remote_firmware) < StrictVersion(V2_FW):
             self.is_legacy = True
 
         self.platform.log.info("Connected! Processor: %s, "
@@ -179,7 +166,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             self.platform.debug_log("Setting DMD buffer size: %s",
                                     self.max_messages_in_flight)
         elif self.remote_processor == 'NET':
-            min_version = NANO_MIN_FW if self.remote_model.startswith(NANO_ID) else NET_MIN_FW
+            min_version = NET_LEGACY_MIN_FW if self.remote_model.startswith(LEGACY_ID) else NET_MIN_FW
             # latest_version = NET_LATEST_FW
             self.max_messages_in_flight = self.platform.config['net_buffer']
             self.platform.debug_log("Setting NET buffer size: %s",
@@ -243,7 +230,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         while not msg.startswith('SA:'):
             msg = (await self.readuntil(b'\r')).decode()
             if not msg.startswith('SA:'):
-                self.platform.log.warning("Parsing SA, Got unexpected message from FAST: {}".format(msg))
+                self.platform.log.warning("Got unexpected message from FAST when awaiting SA: {}".format(msg))
 
         self.platform.process_received_message(msg, "NET")
         self.platform.debug_log('Querying FAST IO boards (legacy %s, retro %s)...', self.is_legacy, self.is_retro)
@@ -278,7 +265,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             while not msg.startswith('NN:'):
                 msg = (await self.readuntil(b'\r')).decode()
                 if not msg.startswith('NN:'):
-                    self.platform.debug_log("Querying IO Boards, Got unexpected message from FAST: {}".format(msg))
+                    self.platform.debug_log("Got unexpected message from FAST while querying IO Boards: {}".format(msg))
 
             if msg == 'NN:F\r':
                 break
@@ -301,10 +288,11 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                                                           int(sw, 16),
                                                           int(dr, 16)))
 
-            if StrictVersion(IO_MIN_FW) > str(fw):
+            min_fw = IO_LEGACY_MIN_FW if self.is_legacy else IO_MIN_FW
+            if StrictVersion(min_fw) > str(fw):
                 self.platform.log.critical("Firmware version mismatch. MPF "
                                            "requires the IO boards to be firmware {0}, but "
-                                           "your Board {1} ({2}) is v{3}".format(IO_MIN_FW, node_id, model, fw))
+                                           "your Board {1} ({2}) is v{3}".format(min_fw, node_id, model, fw))
                 firmware_ok = False
 
         if not firmware_ok:

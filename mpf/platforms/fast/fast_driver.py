@@ -45,7 +45,7 @@ class FASTDriver(DriverPlatformInterface):
     def get_board_name(self):
         """Return the board of this driver."""
         if self.platform.is_retro:
-            return "FAST Retro"
+            return "FAST Retro ({})".format(self.platform.machine_type.upper())
 
         coil_index = 0
         number = Util.hex_string_to_int(self.number)

@@ -527,8 +527,7 @@ class BcpInterface(MpfController):
     def _monitor_service_events(self, client):
         """Begin monitoring all service events via the specified client."""
         if not self.machine.bcp.transport.get_transports_for_handler("_service_events"):
-            for event in ["service_mode_entered", "service_main_menu", "service_menu_selected",
-                          "service_switch_test_start"]:
+            for event in ["service_mode_entered", "service_main_menu", "service_menu_selected"]:
                 self.add_registered_trigger_event_for_client(client, event)
         self.machine.bcp.transport.add_handler_to_transport("_service_events", client)
 
@@ -537,8 +536,7 @@ class BcpInterface(MpfController):
         self.machine.bcp.transport.add_handler_to_transport("_service_events", client)
 
         if not self.machine.bcp.transport.get_transports_for_handler("_service_events"):
-            for event in ["service_mode_entered", "service_main_menu", "service_menu_selected",
-                          "service_switch_test_start"]:
+            for event in ["service_mode_entered", "service_main_menu", "service_menu_selected"]:
                 self.remove_registered_trigger_event_for_client(client, event)
 
     def _monitor_status_request(self, client):

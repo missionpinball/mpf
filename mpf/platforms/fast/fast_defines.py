@@ -111,19 +111,18 @@ RETRO_SWITCH_MAP = {
     'SD8': '57',  # 87
 
     # Fliptronics
-    'SF1': '58',  # 96
-    'SF2': '59',  # 97
-    'SF3': '5A',  # 98
-    'SF4': '5B',  # 99
-    'SF5': '5C',  # 100
-    'SF6': '5D',  # 101
-    'SF7': '5E',  # 102
-    'SF8': '5F',  # 103
+    'SF1': '58',  # 88
+    'SF2': '59',  # 89
+    'SF3': '5A',  # 90
+    'SF4': '5B',  # 91
+    'SF5': '5C',  # 92
+    'SF6': '5D',  # 93
+    'SF7': '5E',  # 94
+    'SF8': '5F',  # 95
 
     # DIP switches
-    # These addresses are also used by Fliptronics switches (above)
-    # because the FAST Retro does not support DIP switches. Kept here
-    # for forward/backward compatibility with other legacy drivers.
+    # These addresses are also used by Fliptronics switches (above) but can be
+    # used in non-Fliptronics machines (e.g. System11) as regular switches.
     'DIP1': '58',  # 88
     'DIP2': '59',  # 89
     'DIP3': '5A',  # 90
@@ -163,10 +162,10 @@ RETRO_DRIVER_MAP = {
     'C25': '18', 'C26': '19', 'C27': '1A', 'C28': '1B',
     'C29': '1C', 'C30': '1D', 'C31': '1E', 'C32': '1F',
     'C33': '24', 'C34': '25', 'C35': '26', 'C36': '27',
-    'FLRM': '20', 'FLRH': '21', 'FLLM': '22', 'FLLH': '23',
-    'FURM': '24', 'FURH': '25', 'FULM': '26', 'FULH': '27',
     'C37': '28', 'C38': '29', 'C39': '2A', 'C40': '2B',
     'C41': '2C', 'C42': '2D', 'C43': '2E', 'C44': '2F',
+    'FLRM': '20', 'FLRH': '21', 'FLLM': '22', 'FLLH': '23',
+    'FURM': '24', 'FURH': '25', 'FULM': '26', 'FULH': '27',
 }
 
 RETRO_GI_MAP = {
