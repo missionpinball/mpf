@@ -281,6 +281,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if self.config['ports'][0] == "autodetect":
             ports = autodetect_fast_ports(self.machine_type)
             self.debug_log("Autodetect for machine type %s found ports! %s", self.machine_type, ports)
+            # TODO: Peruse configs to determine which elements to look for.
+            # In the meantime, use only the 2nd/3rd ports, which are be NET/RGB
+            if self.machine_type == "fast":
+                ports = ports[1:3]
         else:
             ports = self.config['ports']
 

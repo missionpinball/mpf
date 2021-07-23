@@ -129,7 +129,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         board_id = msg[3:].split()
         # TODO: [Retro] Standardize Retro board ID: response to match other boards
         # -- MOCK CODE BEGIN --
-        if board_id[0] in ['FP-SBI-0095-3', 'FP-CPU-2000-3']:
+        if board_id[0] in ['FP-SBI-0095-3', 'FP-CPU-2000-X']:
             self.machine.log.warning("FAST: Detected invalid ID response, adding 'NET' type.")
             board_id.insert(0, 'NET')
         # -- MOCK CODE END --
@@ -143,7 +143,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             self.remote_firmware = '2.0'
         # -- MOCK CODE END --
 
-        if self.remote_processor.startswith(RETRO_ID):
+        if self.remote_model.startswith(RETRO_ID):
             self.is_retro = True
         elif StrictVersion(self.remote_firmware) < StrictVersion('2.0'):
             self.is_legacy = True
@@ -204,10 +204,11 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                                  ' the {} processor to be firmware {}, but yours is {}'.
                                  format(self.remote_processor, min_version, self.remote_firmware))
 
+        # Register the connection so when we query the boards we know what responses to expect
+        self.platform.register_processor_connection(self.remote_processor, self)
+
         if self.remote_processor == 'NET':
             await self.query_fast_io_boards()
-
-        self.platform.register_processor_connection(self.remote_processor, self)
 
         self.write_task = self.machine.clock.loop.create_task(self._socket_writer())
         self.write_task.add_done_callback(Util.raise_exceptions)
@@ -245,7 +246,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                 self.platform.log.warning("Parsing SA, Got unexpected message from FAST: {}".format(msg))
 
         self.platform.process_received_message(msg, "NET")
-        self.platform.debug_log('Querying FAST IO boards...')
+        self.platform.debug_log('Querying FAST IO boards (legacy %s, retro %s)...', self.is_legacy, self.is_retro)
 
         firmware_ok = True
 
