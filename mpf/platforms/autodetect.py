@@ -3,13 +3,10 @@ import re
 
 from mpf.exceptions.runtime_error import MpfRuntimeError
 
-def autodetect_fast_ports(machine_type="fast"):
-    if machine_type == "fast":
-        return _find_fast_quad()
-    elif machine_type == "retro":
+def autodetect_fast_ports(is_retro=False):
+    if is_retro:
         return _find_fast_retro()
-
-    raise KeyError("Unknown machine type '{}' for autodetecting ports.".format(machine_type))
+    return _find_fast_quad()
 
 def autodetect_smartmatrix_dmd_port():
     return _find_fast_quad()[0]

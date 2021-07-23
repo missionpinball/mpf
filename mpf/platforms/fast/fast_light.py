@@ -25,7 +25,7 @@ class FASTMatrixLight(LightPlatformSoftwareFade):
 
     def get_board_name(self):
         """Return the board of this light."""
-        if self.platform.machine_type == 'retro':
+        if self.platform.is_retro:
             return "FAST Retro"
 
         coil_index = 0

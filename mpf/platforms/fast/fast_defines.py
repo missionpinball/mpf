@@ -1,4 +1,11 @@
-"""Defines for FAST Retro."""
+"""Defines for FAST Boards."""
+
+HARDWARE_KEY = {
+    "FP-CPU-2000": 0x2000,
+    "sys11": 0x1100,
+    "wpc89": 0x8900,
+    "wpc95": 0x9500
+}
 
 RETRO_SWITCH_MAP = {
 

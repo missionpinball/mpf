@@ -41,7 +41,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     """Platform class for the FAST hardware controller."""
 
-    __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "seg_connection",
+    __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "seg_connection", "is_retro",
                  "serial_connections", "fast_leds", "fast_commands", "config", "machine_type", "hw_switch_data",
                  "io_boards", "flag_led_tick_registered", "_watchdog_task", "_led_task"]
 
@@ -64,12 +64,13 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         else:
             self.raise_config_error("Please configure driverboards for fast.", 5)
 
-        if self.machine_type == 'retro':
+        if self.machine_type in ['sys11', 'wpc89', 'wpc95']:
             self.debug_log("Configuring the FAST Controller for Retro driver board")
+            self.is_retro = True
         elif self.machine_type == 'fast':
             self.debug_log("Configuring FAST Controller for FAST IO boards.")
         else:
-            self.raise_config_error('Invalid machine_type "{}" configured fast.'.format(self.machine_type), 6)
+            self.raise_config_error('Unknown machine_type "{}" configured fast.'.format(self.machine_type), 6)
 
         self.features['tickless'] = True
 
@@ -280,7 +281,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         ports = None
         if self.config['ports'][0] == "autodetect":
             auto_ports = autodetect_fast_ports(self.machine_type)
-            if self.machine_type == "retro":
+            if self.is_retro:
                 # Retro only returns one port
                 ports = auto_ports
             else:
@@ -526,7 +527,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             platform_settings['connection'] = 0
 
         # If we have Retro driver boards, look up the driver number
-        if self.machine_type == 'retro':
+        if self.is_retro:
             # Look for a system11 A/C relay driver number ending in 'a' or 'c'
             side = number[-1].upper()
             if side == 'A' or side == 'C':
@@ -656,7 +657,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                  "switch, but no connection to a NET processor"
                                  "is available")
 
-        if self.machine_type == 'retro':
+        if self.is_retro:
             # translate switch num to FAST switch
             try:
                 number = fast_defines.RETRO_SWITCH_MAP[str(number).upper()]
@@ -727,7 +728,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Parse light channels from number string."""
         if subtype == "gi":
-            if self.machine_type == 'retro':  # translate matrix/map number to FAST GI number
+            if self.is_retro:  # translate matrix/map number to FAST GI number
                 try:
                     number = fast_defines.RETRO_GI_MAP[str(number).upper()]
                 except KeyError:
@@ -741,7 +742,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 }
             ]
         if subtype == "matrix":
-            if self.machine_type == 'retro':  # translate matrix number to FAST light num
+            if self.is_retro:  # translate matrix number to FAST light num
                 try:
                     number = fast_defines.RETRO_LIGHT_MAP[str(number).upper()]
                 except KeyError:
