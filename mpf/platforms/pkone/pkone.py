@@ -425,6 +425,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
 
     def receive_all_switches(self, msg):
         """Process the all switch states message."""
+        # TODO: move this to the init part
         # The PSA message contains the following information:
         # [PSA opcode] + [[board address id] + 0 or 1 for each switch on the board] + E
         self.debug_log("Received all switch states (PSA): %s", msg)
@@ -444,9 +445,9 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
         """Process a single switch state change."""
         # The PSW message contains the following information:
         # [PSW opcode] + [board address id] + switch number + switch state (0 or 1) + E
-        self.debug_log("Received switch state change (PSW): %s", msg)
         switch_number = PKONESwitchNumber(int(msg[0]), int(msg[1:3]))
         switch_state = int(msg[-1])
+        self.debug_log("Received switch %s state change to %s", switch_number, switch_state)
         self.machine.switch_controller.process_switch_by_num(state=switch_state,
                                                              num=switch_number,
                                                              platform=self)
@@ -588,7 +589,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
             index = int(number_str)
 
             # Determine if there are 3 or 4 channels depending upon firmware on board
-            if self.pkone_lightshows[board_address_id].rgbw_firmware:
+            if self.pkone_lightshows[int(board_address_id)].rgbw_firmware:
                 # rgbw uses 4 channels per led
                 return [
                     {

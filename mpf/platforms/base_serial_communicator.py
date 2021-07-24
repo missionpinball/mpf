@@ -83,6 +83,12 @@ class BaseSerialCommunicator:
 
         await self._identify_connection()
 
+    def reset_input_buffer(self):
+        """Clear buffer."""
+        assert self.reader
+        # pylint: disable-msg=protected-access
+        self.reader._buffer = bytearray()
+
     async def start_read_loop(self):
         """Start the read loop."""
         self.read_task = self.machine.clock.loop.create_task(self._socket_reader())
