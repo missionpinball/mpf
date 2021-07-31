@@ -369,6 +369,7 @@ credits:
     __type__: config
     max_credits: single|template_int|0
     free_play: single|bool|yes
+    coin_inhibit_disable_output: single|machine(digital_outputs)|None
     price_tier_template: single|str|{credits} CREDITS ${price}
     service_credits_switch: list|machine(switches)|None
     fractional_credit_expiration_time: single|ms|0

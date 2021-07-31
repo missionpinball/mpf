@@ -234,7 +234,62 @@ class TestCreditsMode(MpfTestCase):
         self.machine_run()
         self.assertEqual("CREDITS 12", self.machine.variables.get_machine_var('credits_string'))
 
-    def testPricingTiers(self):
+    @test_config("config_credit_tiers.yaml")
+    def testPricingTiersWithGameInBetween(self):
+        """Test that you cannot repeatedly trigger pricing tiers."""
+        self.hit_and_release_switch("s_right_coin")
+        self.hit_and_release_switch("s_right_coin")
+        self.machine_run()
+        self.assertEqual("CREDITS 5", self.machine.variables.get_machine_var('credits_string'))
+        self.start_two_player_game()
+        self.advance_time_and_run(60 * 15)
+        self.stop_game()
+        self.assertEqual("CREDITS 3", self.machine.variables.get_machine_var('credits_string'))
+
+        # this should not trigger the pricing tier again
+        self.hit_and_release_switch("s_left_coin")
+        self.hit_and_release_switch("s_left_coin")
+        self.machine_run()
+        self.assertEqual("CREDITS 4", self.machine.variables.get_machine_var('credits_string'))
+
+    @test_config("config_inhibit.yaml")
+    def test_inhibit(self):
+        """Test coin inhibit."""
+        # coin inserts allowed
+        self.assertEqual("CREDITS 0", self.machine.variables.get_machine_var('credits_string'))
+        self.assertEqual("enabled", self.machine.digital_outputs["c_coin_inhibit"].hw_driver.state)
+
+        self.post_event("toggle_credit_play")
+        self.assertEqual("FREE PLAY", self.machine.variables.get_machine_var('credits_string'))
+        self.assertEqual("disabled", self.machine.digital_outputs["c_coin_inhibit"].hw_driver.state)
+
+        self.post_event("toggle_credit_play")
+        self.assertEqual("CREDITS 0", self.machine.variables.get_machine_var('credits_string'))
+        self.assertEqual("enabled", self.machine.digital_outputs["c_coin_inhibit"].hw_driver.state)
+
+        self.hit_and_release_switch("s_left_coin")
+        self.hit_and_release_switch("s_left_coin")
+        self.hit_and_release_switch("s_left_coin")
+        self.machine_run()
+        self.assertEqual("CREDITS 3", self.machine.variables.get_machine_var('credits_string'))
+        self.assertEqual("enabled", self.machine.digital_outputs["c_coin_inhibit"].hw_driver.state)
+
+        self.hit_and_release_switch("s_left_coin")
+        self.machine_run()
+        self.assertEqual("CREDITS 4", self.machine.variables.get_machine_var('credits_string'))
+        self.assertEqual("disabled", self.machine.digital_outputs["c_coin_inhibit"].hw_driver.state)
+
+        self.start_game(True)
+        self.advance_time_and_run()
+        self.stop_game()
+
+        self.machine_run()
+        self.assertEqual("CREDITS 3", self.machine.variables.get_machine_var('credits_string'))
+        self.assertEqual("enabled", self.machine.digital_outputs["c_coin_inhibit"].hw_driver.state)
+
+    @test_config("config_credit_tiers.yaml")
+    def testPricingTiersWrapAround(self):
+        """Test discounts."""
         self.hit_and_release_switch("s_right_coin")
         self.machine_run()
         self.assertEqual("CREDITS 2", self.machine.variables.get_machine_var('credits_string'))
@@ -242,6 +297,61 @@ class TestCreditsMode(MpfTestCase):
         self.hit_and_release_switch("s_right_coin")
         self.machine_run()
         self.assertEqual("CREDITS 5", self.machine.variables.get_machine_var('credits_string'))
+
+        self.hit_and_release_switch("s_right_coin")
+        self.machine_run()
+        self.assertEqual("CREDITS 7", self.machine.variables.get_machine_var('credits_string'))
+
+        self.hit_and_release_switch("s_right_coin")
+        self.machine_run()
+        self.assertEqual("CREDITS 10", self.machine.variables.get_machine_var('credits_string'))
+
+        self.hit_and_release_switch("s_right_coin")
+        self.machine_run()
+        self.assertEqual("CREDITS 15", self.machine.variables.get_machine_var('credits_string'))
+
+        self.hit_and_release_switch("s_right_coin")
+        self.machine_run()
+        self.assertEqual("CREDITS 17", self.machine.variables.get_machine_var('credits_string'))
+
+        self.hit_and_release_switch("s_right_coin")
+        self.machine_run()
+        self.assertEqual("CREDITS 20", self.machine.variables.get_machine_var('credits_string'))
+
+        self.hit_and_release_switch("s_right_coin")
+        self.machine_run()
+        self.assertEqual("CREDITS 22", self.machine.variables.get_machine_var('credits_string'))
+
+        self.hit_and_release_switch("s_right_coin")
+        self.machine_run()
+        self.assertEqual("CREDITS 25", self.machine.variables.get_machine_var('credits_string'))
+
+        self.hit_and_release_switch("s_right_coin")
+        self.machine_run()
+        self.assertEqual("CREDITS 30", self.machine.variables.get_machine_var('credits_string'))
+
+    @test_config("config_credit_tiers.yaml")
+    def testPricingTiersImprecise(self):
+        """Test that we can add 2.5 and get the tier for 2 anyway."""
+        self.hit_and_release_switch("s_right_coin")
+        self.machine_run()
+        self.assertEqual("CREDITS 2", self.machine.variables.get_machine_var('credits_string'))
+
+        for _ in range(4):
+            self.hit_and_release_switch("s_left_coin")
+        self.machine_run()
+        self.assertEqual("CREDITS 5", self.machine.variables.get_machine_var('credits_string'))
+
+        # make sure we get the tier also when we add a quarter first
+        self.hit_and_release_switch("s_left_coin")
+        self.machine_run()
+        self.assertEqual("CREDITS 5 1/2", self.machine.variables.get_machine_var('credits_string'))
+        self.hit_and_release_switch("s_right_coin")
+        self.machine_run()
+        self.assertEqual("CREDITS 7 1/2", self.machine.variables.get_machine_var('credits_string'))
+        self.hit_and_release_switch("s_right_coin")
+        self.machine_run()
+        self.assertEqual("CREDITS 10 1/2", self.machine.variables.get_machine_var('credits_string'))
 
     def testFractionalTimeout(self):
         self.hit_and_release_switch("s_right_coin")
