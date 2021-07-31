@@ -411,7 +411,7 @@ class MachineController(LogMixin):
     def _load_machine_vars(self) -> None:
         """Load machine vars from data manager."""
         machine_var_data_manager = self.create_data_manager('machine_vars')
-        current_time = self.clock.get_time()
+        current_time = self.clock.get_datetime().timestamp()
 
         self.variables.load_machine_vars(machine_var_data_manager, current_time)
 

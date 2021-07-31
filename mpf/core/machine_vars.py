@@ -126,7 +126,7 @@ class MachineVariables(LogMixin):
     def _write_machine_vars_to_disk(self):
         """Update machine vars on disk."""
         self.machine_var_data_manager.save_all(
-            {name: {"value": var["value"], "expire": var['expire_secs']}
+            {name: {"value": var["value"], "expire": var['timeout'], "expire_secs": var["expire_secs"]}
              for name, var in self.machine_vars.items() if var["persist"]})
 
     def get_machine_var(self, name: str) -> Any:
@@ -160,11 +160,14 @@ class MachineVariables(LogMixin):
                 the machine to disk to persist even during power off, but you
                 could set it so that those only stay persisted for an hour.
         """
+        timeout = expire_secs + self.machine.clock.get_datetime().timestamp() if expire_secs else None
         if name not in self.machine_vars:
-            self.machine_vars[name] = {'value': None, 'persist': persist, 'expire_secs': expire_secs}
+            self.machine_vars[name] = {'value': None, 'persist': persist, 'expire_secs': expire_secs,
+                                       'timeout': timeout}
         else:
             self.machine_vars[name]['persist'] = persist
             self.machine_vars[name]['expire_secs'] = expire_secs
+            self.machine_vars[name]['timeout'] = timeout
 
     def set_machine_var(self, name: str, value: Any) -> None:
         """Set the value of a machine variable.
@@ -184,6 +187,10 @@ class MachineVariables(LogMixin):
                 change = value - prev_value
             except TypeError:
                 change = prev_value != value
+
+        if self.machine_vars[name]["expire_secs"]:
+            self.machine_vars[name]["timeout"] = \
+                self.machine.clock.get_datetime().timestamp() + self.machine_vars[name]["expire_secs"]
 
         # set value
         self.machine_vars[name]['value'] = value
@@ -223,6 +230,8 @@ class MachineVariables(LogMixin):
                 for callback in self.machine.monitors['machine_vars']:
                     callback(name=name, value=value,
                              prev_value=prev_value, change=change)
+        elif self.machine_vars[name]["expire_secs"]:
+            self._write_machine_var_to_disk(name)
 
     def remove_machine_var(self, name: str) -> None:
         """Remove a machine variable by name.
