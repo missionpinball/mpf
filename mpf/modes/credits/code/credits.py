@@ -463,6 +463,7 @@ class Credits(Mode):
                 self.credit_units_for_pricing_tiers += 1
                 bonus_credit_units = self.pricing_table[self.credit_units_for_pricing_tiers]
                 total_credit_units += bonus_credit_units
+                self.credit_units_for_pricing_tiers %= self.pricing_tiers_wrap_around
 
         max_credit_units = (self.credits_config['max_credits'].evaluate([]) *
                             self.credit_units_per_game)
