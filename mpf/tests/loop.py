@@ -453,7 +453,7 @@ class TestClock(ClockBase):
 
     def get_datetime(self):
         """Create datetime based on time travel loop."""
-        return datetime.datetime.fromtimestamp(self.get_time())
+        return datetime.datetime.fromtimestamp(0) + datetime.timedelta(seconds=self.get_time())
 
     def _create_event_loop(self):
         return self._test_loop
