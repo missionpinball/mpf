@@ -453,7 +453,8 @@ class TestClock(ClockBase):
 
     def get_datetime(self):
         """Create datetime based on time travel loop."""
-        return datetime.datetime.fromtimestamp(0) + datetime.timedelta(seconds=self.get_time())
+        # for some weird reason windows does not like timestamps below 86400 so add a little bit to it
+        return datetime.datetime.fromtimestamp(self.get_time() + 100000)
 
     def _create_event_loop(self):
         return self._test_loop
