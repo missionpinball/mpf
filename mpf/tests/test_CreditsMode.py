@@ -306,11 +306,14 @@ class TestCreditsMode(MpfTestCase):
         self.machine_run()
         self.assertEqual("CREDITS 10", self.machine.variables.get_machine_var('credits_string'))
 
+        self.hit_and_release_switch("s_left_coin")
         self.hit_and_release_switch("s_right_coin")
         self.machine_run()
-        self.assertEqual("CREDITS 15", self.machine.variables.get_machine_var('credits_string'))
+        self.assertEqual("CREDITS 15 1/2", self.machine.variables.get_machine_var('credits_string'))
 
-        self.hit_and_release_switch("s_right_coin")
+        self.hit_and_release_switch("s_left_coin")
+        self.hit_and_release_switch("s_left_coin")
+        self.hit_and_release_switch("s_left_coin")
         self.machine_run()
         self.assertEqual("CREDITS 17", self.machine.variables.get_machine_var('credits_string'))
 
