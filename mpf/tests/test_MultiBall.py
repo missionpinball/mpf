@@ -1032,3 +1032,55 @@ class TestMultiBall(MpfGameTestCase):
         self.assertAvailableBallsOnPlayfield(1)
         # mb should end
         self.assertEventCalled("multiball_mb_placeholder_ended")
+
+    def testShootAgainHurryUpAndGracePeriod(self):
+        self.fill_troughs()
+        self.start_game()
+        self.assertAvailableBallsOnPlayfield(1)
+        self.mock_event("multiball_mb_alltimers_ended")
+        self.mock_event("multiball_mb_alltimers_shoot_again_ended")
+        self.mock_event("ball_save_mb_alltimers_grace_period")
+        self.mock_event("ball_save_mb_alltimers_hurry_up")
+
+        # start mb 30s shoot again, 10s hurry up, 5s grace
+        self.post_event("mb_alltimers_start")
+        self.advance_time_and_run(5)
+        self.assertAvailableBallsOnPlayfield(2)
+
+        # drain one ball
+        self.drain_one_ball()
+        self.advance_time_and_run(5)
+        # shoot again should bring it back
+        self.assertAvailableBallsOnPlayfield(2)
+        self.assertEventNotCalled("multiball_mb_alltimers_ended")
+        self.assertEventNotCalled("multiball_mb_alltimers_shoot_again_ended")
+        self.assertEventNotCalled("ball_save_mb_alltimers_grace_period")
+        self.assertEventNotCalled("ball_save_mb_alltimers_hurry_up")
+
+        #advance time to hurry up
+        self.advance_time_and_run(10)
+        self.assertEventCalled("ball_save_mb_alltimers_hurry_up")
+        self.assertAvailableBallsOnPlayfield(2)
+        self.assertEventNotCalled("multiball_mb_alltimers_ended")
+        self.assertEventNotCalled("multiball_mb_alltimers_shoot_again_ended")
+        self.assertEventNotCalled("ball_save_mb_alltimers_grace_period")
+
+        # drain one ball
+        self.drain_one_ball()
+        self.advance_time_and_run(5)
+        # shoot again should bring it back
+        self.assertAvailableBallsOnPlayfield(2)
+
+        # wait 7s for shoot again to end, but within grace period
+        self.advance_time_and_run(7)
+        self.assertEventCalled("ball_save_mb_alltimers_grace_period")
+        self.assertEventNotCalled("multiball_mb_alltimers_ended")
+        self.assertEventNotCalled("multiball_mb_alltimers_shoot_again_ended")
+
+        # drain one ball after grace period has ended
+        self.advance_time_and_run(5)
+        self.drain_one_ball()
+        self.advance_time_and_run(5)
+        self.assertAvailableBallsOnPlayfield(1)
+        # mb should end
+        self.assertEventCalled("multiball_mb_alltimers_ended")

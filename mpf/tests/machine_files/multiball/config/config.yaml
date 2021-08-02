@@ -106,6 +106,13 @@ multiballs:
         add_a_ball_events: add_ball
     mb_placeholder:
         ball_count: 2
-        shoot_again: machine.shoot_again_sec * 1000
+        shoot_again: machine.shoot_again_sec
         start_events: mb_placeholder_start
         stop_events: mb_placeholder_stop
+    mb_alltimers:
+        ball_count: 2
+        shoot_again: 30s
+        hurry_up_time: 10s
+        grace_period: 5s
+        start_events: mb_alltimers_start
+        stop_events: mb_alltimers_stop

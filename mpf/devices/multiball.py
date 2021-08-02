@@ -124,7 +124,7 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
         if self.balls_added_live - balls_added > 0:
             self.source_playfield.add_ball(balls=self.balls_added_live - balls_added)
 
-        shoot_again_ms = self.config['shoot_again'].evaluate([])
+        shoot_again_ms = self.config['shoot_again'].evaluate([]) * 1000
         if not shoot_again_ms:
             # No shoot again. Just stop multiball right away
             self.stop()
@@ -133,11 +133,7 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
             self.machine.events.add_handler('ball_drain',
                                             self._ball_drain_shoot_again,
                                             priority=1000)
-            # Register stop handler
-            if shoot_again_ms > 0:
-                self.delay.add(name='disable_shoot_again',
-                               ms=shoot_again_ms,
-                               callback=self.stop)
+            self.timer_start()
 
         self.machine.events.post("multiball_" + self.name + "_started",
                                  balls=self.balls_live_target)
@@ -145,6 +141,53 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
         desc: The multiball called (name) has just started.
         args:
             balls: The number of balls in this multiball
+        '''
+
+    def timer_start(self) -> None:
+        """Start the timer.
+
+        This is started when multiball starts if configured.
+        """
+
+        self.machine.events.post('ball_save_{}_timer_start'.format(self.name))
+        '''event: ball_save_(name)_timer_start
+        desc: The multiball ball save called (name) has just start its countdown timer.
+        '''
+
+        shoot_again_ms = self.config['shoot_again'].evaluate([]) * 1000
+        grace_period_ms = self.config['grace_period'].evaluate([]) * 1000
+        hurry_up_time_ms = self.config['hurry_up_time'].evaluate([]) * 1000
+        if shoot_again_ms > 0:
+            self.debug_log('Starting ball save timer: %ss',
+                           shoot_again_ms)
+            # Register stop handler
+            self.delay.add(name='disable_shoot_again',
+                           ms=(shoot_again_ms +
+                           grace_period_ms),
+                           callback=self.stop)
+            self.delay.add(name='grace_period',
+                           ms=shoot_again_ms,
+                           callback=self._grace_period)
+            self.delay.add(name='hurry_up',
+                           ms=(shoot_again_ms -
+                               hurry_up_time_ms),
+                           callback=self._hurry_up)
+
+    def _hurry_up(self) -> None:
+        self.debug_log("Starting Hurry Up")
+
+        self.machine.events.post('ball_save_{}_hurry_up'.format(self.name))
+        '''event: ball_save_(name)_hurry_up
+        desc: The ball save called (name) has just entered its hurry up mode.
+        '''
+
+    def _grace_period(self) -> None:
+        self.debug_log("Starting Grace Period")
+
+        self.machine.events.post('ball_save_{}_grace_period'.format(self.name))
+        '''event: ball_save_(name)_grace_period
+        desc: The ball save called (name) has just entered its grace period
+            time.
         '''
 
     def _ball_drain_shoot_again(self, balls, **kwargs):
@@ -158,8 +201,8 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
         if balls_to_safe > balls:
             balls_to_safe = balls
 
-        self.machine.events.post("multiball_" + self.name + "_shoot_again", balls=balls_to_safe)
-        '''event: multiball_(name)_shoot_again
+        self.machine.events.post("multiball_" + self.name + "_saving_ball", balls=balls_to_safe)
+        '''event: multiball_(name)_saving_ball
         desc: A ball has drained during the multiball called (name) while the
         ball save timer for that multiball was running, so a ball (or balls)
         will be saved and re-added into play.
