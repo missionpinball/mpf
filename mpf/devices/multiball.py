@@ -148,7 +148,6 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
 
         This is started when multiball starts if configured.
         """
-
         self.machine.events.post('ball_save_{}_timer_start'.format(self.name))
         '''event: ball_save_(name)_timer_start
         desc: The multiball ball save called (name) has just start its countdown timer.
@@ -163,7 +162,7 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
             # Register stop handler
             self.delay.add(name='disable_shoot_again',
                            ms=(shoot_again_ms +
-                           grace_period_ms),
+                               grace_period_ms),
                            callback=self.stop)
             self.delay.add(name='grace_period',
                            ms=shoot_again_ms,
