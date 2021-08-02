@@ -971,9 +971,9 @@ multiballs:
     ball_count_type: single|enum(add,total)|total
     replace_balls_in_play: single|bool|false
     source_playfield: single|machine(ball_devices)|playfield
-    shoot_again: single|template_secs|10s
-    hurry_up_time: single|template_secs|0
-    grace_period: single|template_secs|0
+    shoot_again: single|template_ms|10s
+    hurry_up_time: single|template_ms|0
+    grace_period: single|template_ms|0
     ball_locks: list|machine(ball_devices)|None
     enable_events: event_handler|event_handler:ms|None
     disable_events: event_handler|event_handler:ms|None
@@ -981,9 +981,6 @@ multiballs:
     start_events: event_handler|event_handler:ms|None
     stop_events: event_handler|event_handler:ms|None
     add_a_ball_events: event_handler|event_handler:ms|None
-    add_a_ball_shoot_again: single|template_secs|3s
-    add_a_ball_hurry_up_time: single|ms|0
-    add_a_ball_grace_period: single|ms|0
     start_or_add_a_ball_events: event_handler|event_handler:ms|None
 multiball_locks:
     __valid_in__: mode

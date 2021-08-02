@@ -124,7 +124,7 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
         if self.balls_added_live - balls_added > 0:
             self.source_playfield.add_ball(balls=self.balls_added_live - balls_added)
 
-        shoot_again_ms = self.config['shoot_again'].evaluate([]) * 1000
+        shoot_again_ms = self.config['shoot_again'].evaluate([])
         if not shoot_again_ms:
             # No shoot again. Just stop multiball right away
             self.stop()
@@ -154,9 +154,9 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
         desc: The multiball ball save called (name) has just start its countdown timer.
         '''
 
-        shoot_again_ms = self.config['shoot_again'].evaluate([]) * 1000
-        grace_period_ms = self.config['grace_period'].evaluate([]) * 1000
-        hurry_up_time_ms = self.config['hurry_up_time'].evaluate([]) * 1000
+        shoot_again_ms = self.config['shoot_again'].evaluate([])
+        grace_period_ms = self.config['grace_period'].evaluate([])
+        hurry_up_time_ms = self.config['hurry_up_time'].evaluate([])
         if shoot_again_ms > 0:
             self.debug_log('Starting ball save timer: %ss',
                            shoot_again_ms)
