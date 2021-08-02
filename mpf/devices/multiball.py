@@ -176,17 +176,17 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
     def _hurry_up(self) -> None:
         self.debug_log("Starting Hurry Up")
 
-        self.machine.events.post('ball_save_{}_hurry_up'.format(self.name))
-        '''event: ball_save_(name)_hurry_up
-        desc: The ball save called (name) has just entered its hurry up mode.
+        self.machine.events.post('multiball_{}_hurry_up'.format(self.name))
+        '''event: multiball_(name)_hurry_up
+        desc: The multiball ball save called (name) has just entered its hurry up mode.
         '''
 
     def _grace_period(self) -> None:
         self.debug_log("Starting Grace Period")
 
-        self.machine.events.post('ball_save_{}_grace_period'.format(self.name))
-        '''event: ball_save_(name)_grace_period
-        desc: The ball save called (name) has just entered its grace period
+        self.machine.events.post('multiball_{}_grace_period'.format(self.name))
+        '''event: multiball_(name)_grace_period
+        desc: The multiball ball save called (name) has just entered its grace period
             time.
         '''
 
