@@ -1,0 +1,33 @@
+#config_version=5
+
+modes:
+   - mode1
+
+lights:
+    l_light1:
+        channels:
+            red:
+                number: 1
+            green:
+                number: 2
+            blue:
+                number: 3
+    l_light2:
+        channels:
+            red:
+                number: 4
+            green:
+                number: 5
+            blue:
+                number: 6
+
+blinkenlights:
+  my_blinkenlight1:
+    each_duration: 1
+    off_duration: 2
+    off_when_multiple: true
+    light: l_light1
+  my_blinkenlight2:
+    each_duration: 2
+    off_when_multiple: false
+    light: l_light2
