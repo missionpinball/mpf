@@ -1120,3 +1120,4 @@ class TestMultiBall(MpfGameTestCase):
         # shoot again should not bring it back
         self.assertAvailableBallsOnPlayfield(1)
         self.assertEventCalled("multiball_mb_mode5_ended")
+        
