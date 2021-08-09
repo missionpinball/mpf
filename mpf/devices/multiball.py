@@ -242,9 +242,19 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
         self.debug_log("Stopping shoot again of multiball")
         self.shoot_again = False
 
-        # disable shoot again
+        # disable shoot again, grace period, and hurry up
+        self.machine.events.remove_handler(self._grace_period)
+        self.machine.events.remove_handler(self._hurry_up)
         self.machine.events.remove_handler(self._ball_drain_shoot_again)
 
+        self.machine.events.post("multiball_" + self.name + "_grace_period")
+        '''event: multiball_(name)_grace_period
+        desc: Grace period for multiball (name) has occurred due to mode stop.
+        '''
+        self.machine.events.post("multiball_" + self.name + "_hurry_up")
+        '''event: multiball_(name)_hurry_up
+        desc: Hurry Up for multiball (name) has occurred due to mode stop.
+        '''
         self.machine.events.post("multiball_" + self.name + "_shoot_again_ended")
         '''event: multiball_(name)_shoot_again_ended
         desc: Shoot again for multiball (name) has ended.
