@@ -1120,3 +1120,41 @@ class TestMultiBall(MpfGameTestCase):
         # shoot again should not bring it back
         self.assertAvailableBallsOnPlayfield(1)
         self.assertEventCalled("multiball_mb_mode5_ended")
+
+    def testShootAgainModeEndNoGracePeriodOrHurryUp(self):
+        self.fill_troughs()
+        self.start_game()
+        self.assertAvailableBallsOnPlayfield(1)
+        self.mock_event("multiball_mb_mode5_lean_ended")
+        self.mock_event("multiball_mb_mode5_lean_shoot_again_ended")
+        self.mock_event("multiball_mb_mode5_lean_grace_period")
+        self.mock_event("multiball_mb_mode5_lean_hurry_up")
+
+        #start Mode5
+        self.post_event("start_mode5")
+
+        # start mb 30s shoot again
+        self.post_event("mb_mode5_lean_start")
+        self.advance_time_and_run(5)
+        self.assertAvailableBallsOnPlayfield(2)
+        self.assertEventNotCalled("multiball_mb_mode5_lean_ended")
+        self.assertEventNotCalled("multiball_mb_mode5_lean_shoot_again_ended")
+        self.assertEventNotCalled("multiball_mb_mode5_lean_grace_period")
+        self.assertEventNotCalled("multiball_mb_mode5_lean_hurry_up")
+
+        #stop Mode5
+        self.post_event("stop_mode5")
+        self.advance_time_and_run(5)
+        self.assertEventNotCalled("multiball_mb_mode5_lean_ended")
+        self.assertEventCalled("multiball_mb_mode5_lean_shoot_again_ended")
+        self.assertEventNotCalled("multiball_mb_mode5_lean_grace_period")
+        self.assertEventNotCalled("multiball_mb_mode5_lean_hurry_up")
+
+        # drain one ball
+        self.drain_one_ball()
+        self.advance_time_and_run(5)
+        # shoot again should not bring it back
+        self.assertAvailableBallsOnPlayfield(1)
+        self.assertEventCalled("multiball_mb_mode5_lean_ended")
+        self.assertEventNotCalled("multiball_mb_mode5_lean_grace_period")
+        self.assertEventNotCalled("multiball_mb_mode5_lean_hurry_up")
