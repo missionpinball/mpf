@@ -9,7 +9,7 @@ from mpf.core.placeholder_manager import NativeTypeTemplate
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor("shoot_again", "balls_added_live", "balls_live_target")
+@DeviceMonitor("shoot_again", "grace_period", "hurry_up", "balls_added_live", "balls_live_target")
 class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
 
     """Multiball device for MPF."""
@@ -18,7 +18,8 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
     collection = 'multiballs'
     class_label = 'multiball'
 
-    __slots__ = ["ball_locks", "source_playfield", "delay", "balls_added_live", "balls_live_target", "shoot_again"]
+    __slots__ = ["ball_locks", "source_playfield", "delay", "balls_added_live", "balls_live_target", "shoot_again",
+                 "grace_period", "hurry_up"]
 
     def __init__(self, machine, name):
         """Initialise multiball."""
@@ -30,6 +31,8 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
         self.balls_added_live = 0
         self.balls_live_target = 0
         self.shoot_again = False
+        self.grace_period = False
+        self.hurry_up = False
 
     @property
     def can_exist_outside_of_game(self):
@@ -164,9 +167,13 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
                            ms=(shoot_again_ms +
                                grace_period_ms),
                            callback=self.stop)
+        if grace_period_ms > 0:
+            self.grace_period = True
             self.delay.add(name='grace_period',
                            ms=shoot_again_ms,
                            callback=self._grace_period)
+        if hurry_up_time_ms > 0:
+            self.hurry_up = True
             self.delay.add(name='hurry_up',
                            ms=(shoot_again_ms -
                                hurry_up_time_ms),
@@ -175,6 +182,7 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
     def _hurry_up(self) -> None:
         self.debug_log("Starting Hurry Up")
 
+        self.hurry_up = False
         self.machine.events.post('multiball_{}_hurry_up'.format(self.name))
         '''event: multiball_(name)_hurry_up
         desc: The multiball ball save called (name) has just entered its hurry up mode.
@@ -183,6 +191,7 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
     def _grace_period(self) -> None:
         self.debug_log("Starting Grace Period")
 
+        self.grace_period = False
         self.machine.events.post('multiball_{}_grace_period'.format(self.name))
         '''event: multiball_(name)_grace_period
         desc: The multiball ball save called (name) has just entered its grace period
@@ -242,19 +251,23 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
         self.debug_log("Stopping shoot again of multiball")
         self.shoot_again = False
 
-        # disable shoot again, grace period, and hurry up
-        self.machine.events.remove_handler(self._grace_period)
-        self.machine.events.remove_handler(self._hurry_up)
+        # disable shoot again
         self.machine.events.remove_handler(self._ball_drain_shoot_again)
 
-        self.machine.events.post("multiball_" + self.name + "_grace_period")
-        '''event: multiball_(name)_grace_period
-        desc: Grace period for multiball (name) has occurred due to mode stop.
-        '''
-        self.machine.events.post("multiball_" + self.name + "_hurry_up")
-        '''event: multiball_(name)_hurry_up
-        desc: Hurry Up for multiball (name) has occurred due to mode stop.
-        '''
+        if self.grace_period:
+            self.machine.events.remove_handler(self._grace_period)
+            self.grace_period = False
+            self.machine.events.post("multiball_" + self.name + "_grace_period")
+            '''event: multiball_(name)_grace_period
+            desc: Grace period for multiball (name) has occurred due to mode stop.
+            '''
+        if self.hurry_up:
+            self.machine.events.remove_handler(self._hurry_up)
+            self.hurry_up = False
+            self.machine.events.post("multiball_" + self.name + "_hurry_up")
+            '''event: multiball_(name)_hurry_up
+            desc: Hurry Up for multiball (name) has occurred due to mode stop.
+            '''
         self.machine.events.post("multiball_" + self.name + "_shoot_again_ended")
         '''event: multiball_(name)_shoot_again_ended
         desc: Shoot again for multiball (name) has ended.
