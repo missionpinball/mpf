@@ -6,7 +6,7 @@ mode:
   game_mode: False
 
 blinkenlight_player:
-  add_color_to_both_blinkenlights:
+  add_color_to_all_blinkenlights:
     my_blinkenlight1:
       action: add
       key: mykey1
@@ -15,6 +15,10 @@ blinkenlight_player:
       action: add
       key: mykey1
       color: green
+    my_blinkenlight3:
+      action: add
+      key: mykey1
+      color: cyan
   add_color_to_first_blinkenlight:
     my_blinkenlight1:
       action: add
@@ -25,6 +29,11 @@ blinkenlight_player:
       action: add
       key: mykey3
       color: yellow
+  add_color_to_third_blinkenlight:
+    my_blinkenlight3:
+      action: add
+      key: mykey2
+      color: purple
   remove_color_from_first_blinkenlight:
     my_blinkenlight1:
       action: remove
@@ -33,8 +42,10 @@ blinkenlight_player:
     my_blinkenlight2:
       action: remove
       key: mykey3
-  remove_all_colors_from_both_blinkenlights:
+  remove_all_colors_from_all_blinkenlights:
     my_blinkenlight1:
       action: removeall
     my_blinkenlight2:
+      action: removeall
+    my_blinkenlight3:
       action: removeall

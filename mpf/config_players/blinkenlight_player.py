@@ -14,11 +14,6 @@ class BlinkenlightPlayer(DeviceConfigPlayer):
     machine_collection_name = 'blinkenlights'
     allow_placeholders_in_keys = True
 
-    def __init__(self, machine):
-        """Initialise blinklight_player."""
-
-        super().__init__(machine)
-
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Adds/removes colors to blink."""
         del kwargs
@@ -31,30 +26,22 @@ class BlinkenlightPlayer(DeviceConfigPlayer):
                 self._remove_color(blinkenlight, s['key'])
             elif action == 'removeall':
                 self._remove_all_colors(blinkenlight)
-            blinkenlight.num_colors = len(blinkenlight.colors)
             blinkenlight._restart()
 
     def _add_color(self, blinkenlight, color, key):
         if blinkenlight is None:
             return
-        # only add this color if the key does not already exist
-        if len([x for x in blinkenlight.colors if x[1] == key]) < 1:
-            blinkenlight.colors.append((color, key))
-            self.info_log('Color {} with key {} added to {}'.format(color, key, blinkenlight))
+        blinkenlight.add_color(color, key)
 
     def _remove_all_colors(self, blinkenlight):
         if blinkenlight is None:
             return
-        blinkenlight.colors.clear()
-        self.info_log('All colors removed from {}'.format(blinkenlight))
+        blinkenlight.remove_all_colors()
 
     def _remove_color(self, blinkenlight, key):
         if blinkenlight is None:
             return
-        color = [x for x in blinkenlight.colors if x[1] == key]
-        if len(color) == 1:
-            blinkenlight.colors.remove(color[0])
-            self.info_log('Color removed with key {} from {}'.format(key, blinkenlight))
+        blinkenlight.remove_color_with_key(key)
 
     def get_express_config(self, value):
         """Parse express config."""

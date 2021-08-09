@@ -260,8 +260,9 @@ bitmap_fonts:
 blinkenlights:
     __valid_in__: machine, mode
     __type__: device
-    each_duration: single|float|1.0
-    off_duration: single|float|1.0
+    color_duration: single|ms|None
+    cycle_duration: single|ms|None
+    sync_ms: single|ms|0
     off_when_multiple: single|bool|false
     light: single|machine(lights)|None
 blocking:
