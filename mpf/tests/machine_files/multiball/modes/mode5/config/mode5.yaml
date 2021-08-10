@@ -1,0 +1,19 @@
+#config_version=5
+mode:
+  start_events: start_mode5
+  stop_events: stop_mode5
+
+multiballs:
+    mb_mode5:
+        ball_count: 2
+        shoot_again: 30s
+        hurry_up_time: 10s
+        grace_period: 5s
+        start_events: mb_mode5_start
+        stop_events: mb_mode5_stop
+
+    mb_mode5_lean:
+        ball_count: 2
+        shoot_again: 30s
+        start_events: mb_mode5_lean_start
+        stop_events: mb_mode5_lean_stop

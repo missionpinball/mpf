@@ -973,6 +973,8 @@ multiballs:
     replace_balls_in_play: single|bool|false
     source_playfield: single|machine(ball_devices)|playfield
     shoot_again: single|template_ms|10s
+    hurry_up_time: single|template_ms|0
+    grace_period: single|template_ms|0
     ball_locks: list|machine(ball_devices)|None
     enable_events: event_handler|event_handler:ms|None
     disable_events: event_handler|event_handler:ms|None
