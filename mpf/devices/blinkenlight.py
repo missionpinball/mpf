@@ -60,6 +60,15 @@ class Blinkenlight(SystemWideDevice):
     def light(self):
         return self.config['light']
 
+    @property
+    def _blinkenlight_key(self):
+        # this is the key that's passed to the light as the color's key
+        # so that we can remove this blinkenlight's color from the light stack
+        # when all the blinkenlight's colors are removed.
+        # This prevents the light from staying in the off state if the blinkenlight
+        # was on top of the priority list.
+        return 'blinkenlight_{}'.format(self.name)
+
     def add_color(self, color, key):
         # only add this color if the key does not already exist
         if len([x for x in self._colors if x[1] == key]) < 1:
@@ -70,6 +79,7 @@ class Blinkenlight(SystemWideDevice):
     def remove_all_colors(self):
         self._colors.clear()
         self.num_colors = 0
+        self.light.remove_from_stack_by_key(self._blinkenlight_key)
         self.info_log('All colors removed')
 
     def remove_color_with_key(self, key):
@@ -77,12 +87,14 @@ class Blinkenlight(SystemWideDevice):
         if len(color) == 1:
             self._colors.remove(color[0])
             self.num_colors -= 1
+            # if this was the last color, tell the light to remove us from the stack
+            if self.num_colors == 0:
+                self.light.remove_from_stack_by_key(self._blinkenlight_key)
             self.info_log('Color removed with key {}'.format(key))
 
     def _restart(self):
         self._color_i = 0
         self.delay.clear()
-        self.config['light'].color(RGBColor("off"))
         self._perform_step()
 
     def _off_between_cycles(self):
@@ -109,5 +121,5 @@ class Blinkenlight(SystemWideDevice):
         if light_color is None:
             light_color = self.current_color
             self._color_i += 1
-        light.color(light_color)
+        light.color(light_color, priority=self.config['priority'], key=self._blinkenlight_key)
         self.delay.add(self._get_delay_ms(), self._perform_step)

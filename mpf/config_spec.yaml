@@ -265,6 +265,7 @@ blinkenlights:
     sync_ms: single|ms|0
     off_when_multiple: single|bool|false
     light: single|machine(lights)|None
+    priority: single|int|0
 blocking:
     __valid_in__: mode
     __type__: config_player
