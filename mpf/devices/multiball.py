@@ -302,8 +302,7 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
         if self.shoot_again:
             # if main ball save timer is running, don't run this timer
             return
-        else:
-            self.shoot_again = True
+        self.shoot_again = True
 
         shoot_again_ms = self.config['add_a_ball_shoot_again'].evaluate([])
         if not shoot_again_ms:
