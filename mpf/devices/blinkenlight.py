@@ -10,7 +10,7 @@ from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.exceptions.config_file_error import ConfigFileError
 
-@DeviceMonitor("num_colors", "current_color", "light")
+@DeviceMonitor("num_colors", "light")
 class Blinkenlight(SystemWideDevice):
 
     """A light that alternates between several different colors."""
@@ -25,7 +25,6 @@ class Blinkenlight(SystemWideDevice):
 
         self._colors = []
         self.delay = DelayManager(machine)
-        self._color_i = 0
         self._num_colors = 0
 
     def load_config(self, config: dict):
@@ -50,14 +49,6 @@ class Blinkenlight(SystemWideDevice):
         # if the number of colors is 0, remove us from the light stack
         if self._num_colors == 0:
             self.light.remove_from_stack_by_key(self._blinkenlight_key)
-
-    @property
-    def current_color(self):
-        if self._color_i >= len(self._colors):
-            return None
-        if self._color_i < 0:
-            return None
-        return self._colors[self._color_i][0]
 
     @property
     def light(self):
@@ -98,7 +89,6 @@ class Blinkenlight(SystemWideDevice):
             self.info_log('Color removed with key {}'.format(key))
 
     def _restart(self):
-        self._color_i = 0
         self.delay.clear()
         self._perform_step()
 
