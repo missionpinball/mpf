@@ -982,6 +982,9 @@ multiballs:
     start_events: event_handler|event_handler:ms|None
     stop_events: event_handler|event_handler:ms|None
     add_a_ball_events: event_handler|event_handler:ms|None
+    add_a_ball_shoot_again: single|template_ms|5s
+    add_a_ball_hurry_up_time: single|template_ms|0
+    add_a_ball_grace_period: single|template_ms|0
     start_or_add_a_ball_events: event_handler|event_handler:ms|None
 multiball_locks:
     __valid_in__: mode
