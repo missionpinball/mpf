@@ -47,6 +47,9 @@ class Blinkenlight(SystemWideDevice):
     @num_colors.setter
     def num_colors(self, newValue):
         self._num_colors = newValue
+        # if the number of colors is 0, remove us from the light stack
+        if self._num_colors == 0:
+            self.light.remove_from_stack_by_key(self._blinkenlight_key)
 
     @property
     def current_color(self):
@@ -59,6 +62,12 @@ class Blinkenlight(SystemWideDevice):
     @property
     def light(self):
         return self.config['light']
+
+    @property
+    def num_colors_in_cycle(self):
+        # similar to num_colors, but adds 1 for the "off" color if there is one between cycles
+        return self.num_colors + (1 if self._off_between_cycles() else 0)
+
 
     @property
     def _blinkenlight_key(self):
@@ -79,7 +88,6 @@ class Blinkenlight(SystemWideDevice):
     def remove_all_colors(self):
         self._colors.clear()
         self.num_colors = 0
-        self.light.remove_from_stack_by_key(self._blinkenlight_key)
         self.info_log('All colors removed')
 
     def remove_color_with_key(self, key):
@@ -87,9 +95,6 @@ class Blinkenlight(SystemWideDevice):
         if len(color) == 1:
             self._colors.remove(color[0])
             self.num_colors -= 1
-            # if this was the last color, tell the light to remove us from the stack
-            if self.num_colors == 0:
-                self.light.remove_from_stack_by_key(self._blinkenlight_key)
             self.info_log('Color removed with key {}'.format(key))
 
     def _restart(self):
@@ -100,26 +105,37 @@ class Blinkenlight(SystemWideDevice):
     def _off_between_cycles(self):
         return (self.config['off_when_multiple'] and len(self._colors) > 1) or (len(self._colors) == 1)
 
-    def _get_delay_ms(self):
+    def _get_time_between_colors_ms(self):
         if self._cycle_duration:
-            delay = self._cycle_duration / (self.num_colors + (1 if self._off_between_cycles() else 0))
+            delay = self._cycle_duration / self.num_colors_in_cycle
         else:
             delay = self._color_duration
         if delay < 1:
             delay = 1
         return delay
 
+    def _get_total_cycle_ms(self):
+        if self._cycle_duration:
+            return self._cycle_duration
+        return self._color_duration * self.num_colors_in_cycle
+
+    def _get_current_color(self):
+        now = self.machine.clock.get_time()
+        offset_ms = (now * 1000) % self._get_total_cycle_ms()
+        color_i = int(offset_ms / self._get_time_between_colors_ms() + 0.5)
+        if color_i >= self.num_colors:
+            return RGBColor("off")
+        return self._colors[color_i][0]
+
     def _perform_step(self):
         if len(self._colors) == 0:
             return
         light = self.config['light']
-        light_color = None
-        if self._color_i >= len(self._colors):
-            self._color_i = 0
-            if self._off_between_cycles():
-                light_color = RGBColor("off")
-        if light_color is None:
-            light_color = self.current_color
-            self._color_i += 1
-        light.color(light_color, priority=self.config['priority'], key=self._blinkenlight_key)
-        self.delay.add(self._get_delay_ms(), self._perform_step)
+        current_color = self._get_current_color()
+        color_duration_ms = self._get_time_between_colors_ms()
+        cycle_ms = self._get_total_cycle_ms()
+        if current_color is None:
+            return
+        light.color(current_color, priority=self.config['priority'], key=self._blinkenlight_key)
+        delay_ms = color_duration_ms - ((self.machine.clock.get_time() * 1000) % cycle_ms) % color_duration_ms
+        self.delay.add(delay_ms, self._perform_step)
