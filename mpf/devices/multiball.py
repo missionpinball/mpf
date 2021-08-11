@@ -136,7 +136,7 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
             self.machine.events.add_handler('ball_drain',
                                             self._ball_drain_shoot_again,
                                             priority=1000)
-            self.timer_start()
+            self._timer_start()
 
         self.machine.events.post("multiball_" + self.name + "_started",
                                  balls=self.balls_live_target)
@@ -146,7 +146,7 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
             balls: The number of balls in this multiball
         '''
 
-    def timer_start(self) -> None:
+    def _timer_start(self) -> None:
         """Start the timer.
 
         This is started when multiball starts if configured.
@@ -291,9 +291,9 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
             self.balls_added_live += 1
             self.machine.game.balls_in_play += 1
             self.source_playfield.add_ball(balls=1)
-            self.add_a_ball_timer_start()
+            self._add_a_ball_timer_start()
 
-    def add_a_ball_timer_start(self) -> None:
+    def _add_a_ball_timer_start(self) -> None:
         """Start the timer for add a ball ball save.
 
         This is started when multiball add a ball is triggered if configured,
@@ -308,11 +308,11 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
         if not shoot_again_ms:
             # No shoot again. Just stop multiball right away
             self.stop()
-        else:
-            # Enable shoot again
-            self.machine.events.add_handler('ball_drain',
-                                            self._ball_drain_shoot_again,
-                                            priority=1000)
+            return
+        # Enable shoot again
+        self.machine.events.add_handler('ball_drain',
+                                        self._ball_drain_shoot_again,
+                                        priority=1000)
 
         self.machine.events.post('ball_save_{}_add_a_ball_timer_start'.format(self.name))
         '''event: ball_save_(name)_add_a_ball_timer_start
