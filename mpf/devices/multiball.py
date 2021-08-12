@@ -163,8 +163,7 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
         self._start_shoot_again(shoot_again_ms, grace_period_ms, hurry_up_time_ms)
 
     def _start_shoot_again(self, shoot_again_ms, grace_period_ms, hurry_up_time_ms):
-        """Sets the event callbacks for shoot again, grace period, and hurry up,
-           if values above 0 are provided
+        """Set callbacks for shoot again, grace period, and hurry up, if values above 0 are provided.
 
         This is started for both beginning multiball ball save and add a ball ball save
         """
