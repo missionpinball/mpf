@@ -159,10 +159,18 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
         shoot_again_ms = self.config['shoot_again'].evaluate([])
         grace_period_ms = self.config['grace_period'].evaluate([])
         hurry_up_time_ms = self.config['hurry_up_time'].evaluate([])
+
+        self._start_shoot_again(shoot_again_ms, grace_period_ms, hurry_up_time_ms)
+
+    def _start_shoot_again(self, shoot_again_ms, grace_period_ms, hurry_up_time_ms):
+        """Sets the event callbacks for shoot again, grace period, and hurry up,
+           if values above 0 are provided
+
+        This is started for both beginning multiball ball save and add a ball ball save
+        """
         if shoot_again_ms > 0:
             self.debug_log('Starting ball save timer: %ss',
                            shoot_again_ms)
-            # Register stop handler
             self.delay.add(name='disable_shoot_again',
                            ms=(shoot_again_ms +
                                grace_period_ms),
@@ -321,24 +329,7 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
 
         grace_period_ms = self.config['add_a_ball_grace_period'].evaluate([])
         hurry_up_time_ms = self.config['add_a_ball_hurry_up_time'].evaluate([])
-        if shoot_again_ms > 0:
-            self.debug_log('Starting add a ball ball save timer: %ss',
-                           shoot_again_ms)
-            self.delay.add(name='disable_shoot_again',
-                           ms=(shoot_again_ms +
-                               grace_period_ms),
-                           callback=self.stop)
-        if grace_period_ms > 0:
-            self.grace_period = True
-            self.delay.add(name='grace_period',
-                           ms=shoot_again_ms,
-                           callback=self._grace_period)
-        if hurry_up_time_ms > 0:
-            self.hurry_up = True
-            self.delay.add(name='hurry_up',
-                           ms=(shoot_again_ms -
-                               hurry_up_time_ms),
-                           callback=self._hurry_up)
+        self._start_shoot_again(shoot_again_ms, grace_period_ms, hurry_up_time_ms)
 
     @event_handler(9)
     def event_start_or_add_a_ball(self, **kwargs):
