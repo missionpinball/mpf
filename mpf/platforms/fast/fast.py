@@ -681,7 +681,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     def configure_light(self, number, subtype, config, platform_settings) -> LightPlatformInterface:
         """Configure light in platform."""
-        del config
         if not self.net_connection:
             raise AssertionError('A request was made to configure a FAST Light, '
                                  'but no connection to a NET processor is '
@@ -699,7 +698,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                     self.update_leds, 1 / self.machine.config['mpf']['default_light_hw_update_hz'])
                 self.flag_led_tick_registered = True
 
-            number_str, channel = number.split("-")
+            try:
+                number_str, channel = number.split("-")
+            except ValueError as e:
+                self.raise_config_error("Light syntax is number-channel (but was \"{}\") for light {}.".format(
+                    number, config.name), 9, source_exception=e)
+                raise
             if number_str not in self.fast_leds:
                 self.fast_leds[number_str] = FASTDirectLED(
                     number_str, int(self.config['hardware_led_fade_time']), self.machine)
