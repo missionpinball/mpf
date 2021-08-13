@@ -14,6 +14,7 @@ from mpf.core.machine import MachineController
 from mpf.core.rgb_color import RGBColor, ColorException
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.device_mixins import DevicePositionMixin
+from mpf.exceptions.config_file_error import ConfigFileError
 
 MYPY = False
 if MYPY:
@@ -131,9 +132,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
                 for driver in drivers:
                     key = (light.config['platform'], driver.number, type(driver))
                     if key in check_set:
-                        raise AssertionError(
-                            "Duplicate light number {} {} for light {}".format(
-                                type(driver), driver.number, light))
+                        raise ConfigFileError("Duplicate light number {} {} for light {}".format(
+                            type(driver), driver.number, light), 10, "light", key, "light")
 
                     check_set.add(key)
 
@@ -148,13 +148,12 @@ class Light(SystemWideDevice, DevicePositionMixin):
                 # for three channels default to RGB
                 color_channels = "rgb"
             else:
-                raise AssertionError("Please provide a type for light {}. No default for channels {}.".
-                                     format(self.name, channel_list))
+                self.raise_config_error("Please provide a type for light {}. No default for channels {}.".
+                                        format(self.name, channel_list), 11)
 
         if len(channel_list) != len(color_channels):
-            raise AssertionError("Type {} does not match channels {} for light {}".format(
-                color_channels, channel_list, self.name
-            ))
+            self.raise_config_error("Type {} does not match channels {} for light {}".format(
+                color_channels, channel_list, self.name), 12)
 
         channels = {}   # type: Dict[str, List[Any]]
         for color_name in color_channels:
@@ -171,8 +170,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
             elif color_name == 'w':
                 full_color_name = "white"
             else:
-                raise AssertionError("Invalid element {} in type {} of light {}".format(
-                    color_name, self.config['type'], self.name))
+                self.raise_config_error("Invalid element {} in type {} of light {}".format(
+                    color_name, self.config['type'], self.name), 13)
 
             if full_color_name not in channels:
                 channels[full_color_name] = []
@@ -216,8 +215,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
             elif color_name == 'w':
                 full_color_name = "white"
             else:
-                raise AssertionError("Invalid element {} in type {} of light {}".format(
-                    color_name, self.config['type'], self.name))
+                self.raise_config_error("Invalid element {} in type {} of light {}".format(
+                    color_name, self.config['type'], self.name), 14)
 
             if full_color_name not in self.hw_drivers:
                 self.hw_drivers[full_color_name] = []
@@ -236,8 +235,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
             try:
                 channel_list = platform.parse_light_number_to_channels(self.config['number'], self.config['subtype'])
             except AssertionError as e:
-                raise AssertionError("Failed to parse light number {} in platform. See error above".
-                                     format(self.name)) from e
+                self.raise_config_error("Failed to parse light number {} in platform. See error above".
+                                        format(self.name), 4, source_exception=e)
 
             # copy platform and platform_settings to all channels
             for channel, _ in enumerate(channel_list):
@@ -248,8 +247,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
             channels = self._map_channels_to_colors(channel_list)
         else:
             if self.config['number'] or self.config['platform'] or self.config['platform_settings']:
-                raise AssertionError("Light {} cannot contain platform/platform_settings/number and channels".
-                                     format(self.name))
+                self.raise_config_error("Light {} cannot contain platform/platform_settings/number and channels".
+                                        format(self.name), 5)
             # alternatively use channels from config
             channels = self.config['channels']
             # ensure that we got lists
@@ -258,7 +257,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
                     channels[channel] = [channels[channel]]
 
         if not channels:
-            raise AssertionError("Light {} has no channels.".format(self.name))
+            self.raise_config_error("Light {} has no channels.".format(self.name), 6)
 
         for color, channel_list in channels.items():
             self.hw_drivers[color] = []
@@ -283,68 +282,73 @@ class Light(SystemWideDevice, DevicePositionMixin):
         try:
             return platform.configure_light(channel['number'], channel['subtype'], config, channel['platform_settings'])
         except AssertionError as e:
-            raise AssertionError("Failed to configure light {} in platform. See error above".
-                                 format(self.name)) from e
+            self.raise_config_error("Failed to configure light {} in platform. See error above".format(self.name), 7,
+                                    source_exception=e)
 
     async def _initialize(self):
         await super()._initialize()
-        if self.config['previous']:
-            if self.config['previous'].name == self.name:
-                raise AssertionError("Failed to configure light {} in platform. "
-                                     "'previous' value cannot refer to itself.".format(self.name))
+        try:
+            if self.config['previous']:
+                if self.config['previous'].name == self.name:
+                    self.raise_config_error(
+                        "Failed to configure light {} in platform. 'previous' value cannot refer to itself.".
+                        format(self.name), 8)
 
-            # If we are in development mode, do a robust tree traversal to catch infinite light loops
-            if not self.machine.options['production']:
-                tree = [self.name]
-                prev = self.config['previous']
-                while prev:
-                    tree.append(prev.name)
-                    prev = prev.config.get('previous')
-                    if prev is not None and prev.name in tree:
+                # If we are in development mode, do a robust tree traversal to catch infinite light loops
+                if not self.machine.options['production']:
+                    tree = [self.name]
+                    prev = self.config['previous']
+                    while prev:
                         tree.append(prev.name)
-                        raise AssertionError("Cyclical light chain found: {}".format(" -> ".join(tree)))
+                        prev = prev.config.get('previous')
+                        if prev is not None and prev.name in tree:
+                            tree.append(prev.name)
+                            self.raise_config_error("Cyclical light chain found: {}".format(" -> ".join(tree)), 9)
 
-            await self.config['previous'].wait_for_loaded()
-            start_channel = self.config['previous'].get_successor_number()
-            self._load_hw_driver_sequentially(start_channel)
-        elif self.config['start_channel']:
-            self._load_hw_driver_sequentially(self.config['start_channel'])
-        else:
-            self._load_hw_drivers()
-        self._drivers_loaded.set_result(True)
+                await self.config['previous'].wait_for_loaded()
+                start_channel = self.config['previous'].get_successor_number()
+                self._load_hw_driver_sequentially(start_channel)
+            elif self.config['start_channel']:
+                self._load_hw_driver_sequentially(self.config['start_channel'])
+            else:
+                self._load_hw_drivers()
+            self._drivers_loaded.set_result(True)
 
-        self.config['default_on_color'] = RGBColor(self.config['default_on_color'])
+            self.config['default_on_color'] = RGBColor(self.config['default_on_color'])
 
-        if self.config['color_correction_profile'] is not None:
-            profile_name = self.config['color_correction_profile']
-        elif 'light_settings' in self.machine.config and \
-                self.machine.config['light_settings']['default_color_correction_profile'] is not None:
-            profile_name = self.machine.config['light_settings']['default_color_correction_profile']
-        else:
-            profile_name = None
+            if self.config['color_correction_profile'] is not None:
+                profile_name = self.config['color_correction_profile']
+            elif 'light_settings' in self.machine.config and \
+                    self.machine.config['light_settings']['default_color_correction_profile'] is not None:
+                profile_name = self.machine.config['light_settings']['default_color_correction_profile']
+            else:
+                profile_name = None
 
-        if profile_name:
-            if profile_name in self.machine.light_controller.light_color_correction_profiles:
-                profile = self.machine.light_controller.light_color_correction_profiles[profile_name]
+            if profile_name:
+                if profile_name in self.machine.light_controller.light_color_correction_profiles:
+                    profile = self.machine.light_controller.light_color_correction_profiles[profile_name]
 
-                if profile is not None:
-                    self._set_color_correction_profile(profile)
-            else:   # pragma: no cover
-                error = "Color correction profile '{}' was specified for light '{}'"\
-                        " but the color correction profile does not exist."\
-                        .format(profile_name, self.name)
-                self.error_log(error)
-                raise ValueError(error)
+                    if profile is not None:
+                        self._set_color_correction_profile(profile)
+                else:   # pragma: no cover
+                    error = "Color correction profile '{}' was specified for light '{}'"\
+                            " but the color correction profile does not exist."\
+                            .format(profile_name, self.name)
+                    self.error_log(error)
+                    raise ValueError(error)
 
-        if self.config['fade_ms'] is not None:
-            self.default_fade_ms = self.config['fade_ms']
-        else:
-            self.default_fade_ms = (self.machine.config['light_settings']
-                                    ['default_fade_ms'])
+            if self.config['fade_ms'] is not None:
+                self.default_fade_ms = self.config['fade_ms']
+            else:
+                self.default_fade_ms = (self.machine.config['light_settings']
+                                        ['default_fade_ms'])
 
-        self.debug_log("Initializing Light. CC Profile: %s, "
-                       "Default fade: %sms", self._color_correction_profile,
-                       self.default_fade_ms)
+            self.debug_log("Initializing Light. CC Profile: %s, "
+                           "Default fade: %sms", self._color_correction_profile,
+                           self.default_fade_ms)
+        except Exception:
+            self._drivers_loaded.cancel()
+            raise
 
     def _set_color_correction_profile(self, profile):
         """Apply a color correction profile to this light.
