@@ -1,0 +1,17 @@
+#config_version=5
+
+hardware:
+    platform: fast
+
+fast:
+    driverboards: fast
+    ports: com3, com4, com5, com6
+    debug: true
+
+lights:
+  test_led:
+    start_channel: 3
+    type: rgb
+  test_led1:
+    previous: test_led
+    type: rgb
