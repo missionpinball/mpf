@@ -25,7 +25,7 @@ class ShotGroup(ModeDevice):
     collection = 'shot_groups'
     class_label = 'shot_group'
 
-    __slots__ = ["rotation_enabled", "profile", "rotation_pattern"]
+    __slots__ = ["rotation_enabled", "profile", "rotation_pattern", "common_state"]
 
     def __init__(self, machine, name):
         """Initialise shot group."""
@@ -34,6 +34,7 @@ class ShotGroup(ModeDevice):
         self.rotation_enabled = None
         self.profile = None
         self.rotation_pattern = None
+        self.common_state = None
 
     def add_control_events_in_mode(self, mode) -> None:
         """Remove enable here."""
@@ -53,8 +54,7 @@ class ShotGroup(ModeDevice):
         super().device_removed_from_mode(mode)
         self.machine.events.remove_handler(self._hit)
 
-    @property
-    def common_state(self):
+    def get_common_state(self):
         """Return common state if all shots in this group are in the same state.
 
         Will return None otherwise.
@@ -69,7 +69,7 @@ class ShotGroup(ModeDevice):
 
     def _check_for_complete(self):
         """Check if all shots in this group are in the same state."""
-        state = self.common_state
+        state = self.common_state = self.get_common_state()
         if not state:
             # shots do not have a common state
             return
