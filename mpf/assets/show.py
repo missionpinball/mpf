@@ -187,9 +187,8 @@ class Show:
         if not isinstance(step, dict):
             raise AssertionError('Steps in show "{}" need to be dicts.'.format(self.name))
         for key, value in step.items():
-
             # key: the section of the show, like 'leds'
-            # value: dic of express settings or dic of dics w full settings
+            # value: dict of express settings or dict of dicts w full settings
 
             # check to see if we know how to process this kind of entry
             if key in self.machine.show_controller.show_players.keys():
