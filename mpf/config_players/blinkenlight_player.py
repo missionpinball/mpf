@@ -1,8 +1,5 @@
 """Light config player."""
-from copy import deepcopy
 from mpf.config_players.device_config_player import DeviceConfigPlayer
-from mpf.core.rgb_color import RGBColor
-from mpf.core.utility_functions import Util
 
 
 class BlinkenlightPlayer(DeviceConfigPlayer):
@@ -21,24 +18,26 @@ class BlinkenlightPlayer(DeviceConfigPlayer):
         for blinkenlight, s in settings.items():
             action = s['action']
             if action == 'add':
-                self._add_color(blinkenlight, s['color'], s['key'])
+                self.add_color(blinkenlight, s['color'], s['key'], priority + s['priority'])
             elif action == 'remove':
-                self._remove_color(blinkenlight, s['key'])
+                self.remove_color(blinkenlight, s['key'])
             elif action == 'removeall':
-                self._remove_all_colors(blinkenlight)
-            blinkenlight._restart()
+                self.remove_all_colors(blinkenlight)
 
-    def _add_color(self, blinkenlight, color, key):
+    @staticmethod
+    def add_color(blinkenlight, color, key, priority):
         if blinkenlight is None:
             return
-        blinkenlight.add_color(color, key)
+        blinkenlight.add_color(color, key, priority)
 
-    def _remove_all_colors(self, blinkenlight):
+    @staticmethod
+    def remove_all_colors(blinkenlight):
         if blinkenlight is None:
             return
         blinkenlight.remove_all_colors()
 
-    def _remove_color(self, blinkenlight, key):
+    @staticmethod
+    def remove_color(blinkenlight, key):
         if blinkenlight is None:
             return
         blinkenlight.remove_color_with_key(key)

@@ -2,6 +2,7 @@
 
 modes:
    - mode1
+   - mode2
 
 lights:
     l_light1:

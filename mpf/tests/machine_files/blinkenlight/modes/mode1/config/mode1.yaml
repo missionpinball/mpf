@@ -4,6 +4,7 @@ mode:
   start_events: start_mode1
   stop_events: stop_mode1
   game_mode: False
+  priority: 100
 
 blinkenlight_player:
   add_color_to_all_blinkenlights:

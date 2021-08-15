@@ -116,3 +116,32 @@ class TestBlinkenlight(MpfGameTestCase):
         self.assertEqual(blue,   blinkenlight1.light._color)
         self.assertEqual(green,  blinkenlight2.light._color)
         self.assertEqual(purple, blinkenlight3.light._color)
+
+    def test_priority_order(self):
+        self.post_event('start_mode1')
+        self.post_event('start_mode2')
+
+        blinkenlight1 = self.machine.blinkenlights['my_blinkenlight1']
+
+        red = RGBColor('red')
+        orange = RGBColor('orange')
+        off = RGBColor('off')
+
+        self.post_event('add_color_to_first_blinkenlight')
+        self.post_event('mode2_add_color_to_first_blinkenlight')
+        self.assertEqual(orange, blinkenlight1.light._color)
+        self.advance_time_and_run(1)
+        self.assertEqual(red,    blinkenlight1.light._color)
+        self.advance_time_and_run(1)
+        self.assertEqual(off,    blinkenlight1.light._color)
+
+        self.post_event('remove_all_colors_from_all_blinkenlights')
+        self.advance_time_and_run(1)
+
+        self.post_event('mode2_add_color_to_first_blinkenlight')
+        self.post_event('add_color_to_first_blinkenlight')
+        self.assertEqual(orange, blinkenlight1.light._color)
+        self.advance_time_and_run(1)
+        self.assertEqual(red,    blinkenlight1.light._color)
+        self.advance_time_and_run(1)
+        self.assertEqual(off,    blinkenlight1.light._color)
