@@ -1,7 +1,7 @@
 """Contains the Blinkenlight class."""
 import asyncio
 
-from typing import Set, Dict, List, Tuple, Any, NoReturn
+from typing import Set, Dict, List, Tuple, Any
 from operator import itemgetter
 
 from mpf.core.rgb_color import RGBColor
