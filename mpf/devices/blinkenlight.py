@@ -1,7 +1,7 @@
 """Contains the Blinkenlight class."""
 import asyncio
 
-from typing import Set, Dict, List, Tuple, Any
+from typing import Set, Dict, List, Tuple, Any, NoReturn
 from operator import itemgetter
 
 from mpf.core.rgb_color import RGBColor
@@ -9,10 +9,6 @@ from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.exceptions.config_file_error import ConfigFileError
-
-MYPY = False
-if MYPY:   # pragma: no cover
-    from typing import NoReturn     # pylint: disable-msg=cyclic-import,unused-import
 
 
 @DeviceMonitor("num_colors", "light")
@@ -42,7 +38,7 @@ class Blinkenlight(SystemWideDevice):
         self._cycle_duration = self.config['cycle_duration']
         if (self._color_duration is None and self._cycle_duration is None) or \
            (self._color_duration is not None and self._cycle_duration is not None):
-            self._blinkenlight_validation_error( \
+            self._blinkenlight_validation_error(
                 "Either color_duration or cycle_duration must be specified, but not both.", 1)
 
     def _blinkenlight_validation_error(self, msg, error_code) -> "NoReturn":  # pragma: no cover
@@ -50,7 +46,7 @@ class Blinkenlight(SystemWideDevice):
 
     @property
     def num_colors(self):
-        """Number of colors (excluding "off") for this blinkenlight."""
+        """Return the number of colors (excluding "off") for this blinkenlight."""
         return self._num_colors
 
     @num_colors.setter
@@ -62,7 +58,7 @@ class Blinkenlight(SystemWideDevice):
 
     @property
     def light(self):
-        """The light this blinkenlight controls."""
+        """Return the light this blinkenlight controls."""
         return self.config['light']
 
     @property
@@ -94,14 +90,14 @@ class Blinkenlight(SystemWideDevice):
             self.add_color(color, key, priority)
 
     def remove_all_colors(self):
-        "Remove all colors from the blinkenlight."
+        """Remove all colors from the blinkenlight."""
         self._colors.clear()
         self.num_colors = 0
         self.info_log('All colors removed')
         self._restart()
 
     def remove_color_with_key(self, key):
-        """Removes a color with a given key from the blinkenlight."""
+        """Remove a color with a given key from the blinkenlight."""
         color = [x for x in self._colors if x[1] == key]
         if len(color) == 1:
             self._colors.remove(color[0])
