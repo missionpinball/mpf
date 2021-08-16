@@ -1,7 +1,6 @@
 """Contains the Blinkenlight class."""
 import asyncio
 
-from typing import Set, Dict, List, Tuple, Any
 from operator import itemgetter
 
 from mpf.core.rgb_color import RGBColor
@@ -12,7 +11,7 @@ from mpf.exceptions.config_file_error import ConfigFileError
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from typing import NoReturn     # pylint: disable-msg=cyclic-import,unused-import,ungrouped-imports
+    from typing import NoReturn     # pylint: disable-msg=cyclic-import,unused-import
 
 
 @DeviceMonitor("num_colors", "light")
