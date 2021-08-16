@@ -258,7 +258,7 @@ bitmap_fonts:
     load: single|str|None
     descriptor: ignore
 blinkenlights:
-    __valid_in__: machine, mode
+    __valid_in__: machine
     __type__: device
     color_duration: single|ms|None
     cycle_duration: single|ms|None
