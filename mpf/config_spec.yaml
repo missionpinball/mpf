@@ -262,7 +262,6 @@ blinkenlights:
     __type__: device
     color_duration: single|ms|None
     cycle_duration: single|ms|None
-    sync_ms: single|ms|0
     off_when_multiple: single|bool|false
     light: single|machine(lights)|None
     priority: single|int|0
