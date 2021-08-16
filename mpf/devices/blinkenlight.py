@@ -10,6 +10,10 @@ from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.exceptions.config_file_error import ConfigFileError
 
+MYPY = False
+if MYPY:   # pragma: no cover
+    from typing import NoReturn     # pylint: disable-msg=cyclic-import,unused-import,ungrouped-imports
+
 
 @DeviceMonitor("num_colors", "light")
 class Blinkenlight(SystemWideDevice):
