@@ -12,3 +12,16 @@ blinkenlight_player:
       action: add
       key: mode2_key
       color: orange
+  mode2_add_color2_to_first_blinkenlight:
+    my_blinkenlight1:
+      action: add
+      key: mode2_key2
+      color: turquoise
+  mode2_remove_mode_colors_from_first_blinkenlight:
+    my_blinkenlight1:
+      action: remove_mode
+  mode2_add_color_to_second_blinkenlight:
+    my_blinkenlight2:
+      action: add
+      key: mode2_key3
+      color: magenta

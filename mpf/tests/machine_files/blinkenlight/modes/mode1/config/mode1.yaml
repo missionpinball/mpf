@@ -45,8 +45,8 @@ blinkenlight_player:
       key: mykey3
   remove_all_colors_from_all_blinkenlights:
     my_blinkenlight1:
-      action: removeall
+      action: remove_all
     my_blinkenlight2:
-      action: removeall
+      action: remove_all
     my_blinkenlight3:
-      action: removeall
+      action: remove_all

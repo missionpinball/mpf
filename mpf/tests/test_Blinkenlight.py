@@ -42,17 +42,43 @@ class TestBlinkenlight(MpfGameTestCase):
 
     def test_remove_all_colors_from_all_blinkenlights(self):
         self.post_event('start_mode1')
+        self.post_event('start_mode2')
         self.post_event('add_color_to_first_blinkenlight')
         self.post_event('add_color_to_second_blinkenlight')
         self.post_event('add_color_to_third_blinkenlight')
         self.post_event('add_color_to_all_blinkenlights')
-        self.assertPlaceholderEvaluates(2, 'device.blinkenlights.my_blinkenlight1.num_colors')
+        self.post_event('mode2_add_color_to_first_blinkenlight')
+        self.assertPlaceholderEvaluates(3, 'device.blinkenlights.my_blinkenlight1.num_colors')
         self.assertPlaceholderEvaluates(2, 'device.blinkenlights.my_blinkenlight2.num_colors')
         self.assertPlaceholderEvaluates(2, 'device.blinkenlights.my_blinkenlight3.num_colors')
         self.post_event('remove_all_colors_from_all_blinkenlights')
         self.assertPlaceholderEvaluates(0, 'device.blinkenlights.my_blinkenlight1.num_colors')
         self.assertPlaceholderEvaluates(0, 'device.blinkenlights.my_blinkenlight2.num_colors')
         self.assertPlaceholderEvaluates(0, 'device.blinkenlights.my_blinkenlight3.num_colors')
+
+    def test_remove_mode_colors_from_one_blinkenlight(self):
+        self.post_event('start_mode1')
+        self.post_event('start_mode2')
+        self.post_event('add_color_to_first_blinkenlight')
+        self.post_event('mode2_add_color_to_first_blinkenlight')
+        self.post_event('mode2_add_color2_to_first_blinkenlight')
+        self.assertPlaceholderEvaluates(3, 'device.blinkenlights.my_blinkenlight1.num_colors')
+        self.post_event('mode2_remove_mode_colors_from_first_blinkenlight')
+        self.assertPlaceholderEvaluates(1, 'device.blinkenlights.my_blinkenlight1.num_colors')
+
+    def test_remove_mode_colors_when_mode_ends(self):
+        self.post_event('start_mode1')
+        self.post_event('start_mode2')
+        self.post_event('add_color_to_first_blinkenlight')
+        self.post_event('add_color_to_second_blinkenlight')
+        self.post_event('mode2_add_color_to_first_blinkenlight')
+        self.post_event('mode2_add_color2_to_first_blinkenlight')
+        self.post_event('mode2_add_color_to_second_blinkenlight')
+        self.assertPlaceholderEvaluates(3, 'device.blinkenlights.my_blinkenlight1.num_colors')
+        self.assertPlaceholderEvaluates(2, 'device.blinkenlights.my_blinkenlight2.num_colors')
+        self.post_event('stop_mode2')
+        self.assertPlaceholderEvaluates(1, 'device.blinkenlights.my_blinkenlight1.num_colors')
+        self.assertPlaceholderEvaluates(1, 'device.blinkenlights.my_blinkenlight2.num_colors')
 
     def test_flashing_cycle(self):
         self.post_event('start_mode1')

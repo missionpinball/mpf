@@ -342,7 +342,7 @@ pkone_coils:
 blinkenlight_player:
     __valid_in__: machine, mode, show
     __type__: config_player
-    action: single|enum(add,remove,removeall)|add
+    action: single|enum(add,remove,remove_mode,remove_all)|add
     key: single|str|None
     color: single|color|ffffff
 coil_player:

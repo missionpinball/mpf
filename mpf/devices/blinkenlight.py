@@ -78,19 +78,19 @@ class Blinkenlight(SystemWideDevice):
         # was on top of the priority list.
         return 'blinkenlight_{}'.format(self.name)
 
-    def add_color(self, color, key, priority):
+    def add_color(self, color, key, priority, context):
         """Add a color to the blinkenlight."""
         # check if this key already exists. If it does, replace it with the incoming color/priority
         existing_color_with_key = [x for x in self._colors if x[1] == key]
         if len(existing_color_with_key) == 0:
-            self._colors.append((color, key, priority))
+            self._colors.append((color, key, priority, context))
             self.num_colors += 1
             self.info_log('Color {} with key {} added'.format(color, key))
             self._restart()
         elif len(existing_color_with_key) == 1:
             # color with this key already exists. Just update it with this new color and priority
             self._remove_color_with_key(key)
-            self.add_color(color, key, priority)
+            self.add_color(color, key, priority, context)
 
     def remove_all_colors(self):
         """Remove all colors from the blinkenlight."""
@@ -106,6 +106,15 @@ class Blinkenlight(SystemWideDevice):
             self._colors.remove(color[0])
             self.num_colors -= 1
             self.info_log('Color removed with key {}'.format(key))
+            self._restart()
+
+    def remove_color_with_mode(self, mode):
+        """Remove all colors added by a given mode from the blinkenlight."""
+        colors = [x for x in self._colors if x[3] == mode]
+        for color in colors:
+            self._colors.remove(color)
+            self.num_colors -= 1
+            self.info_log('Color {} from mode {} removed'.format(color[0], mode))
             self._restart()
 
     def _restart(self):
