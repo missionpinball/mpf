@@ -1,6 +1,8 @@
+import uuid
+
 """Light config player."""
 from mpf.config_players.device_config_player import DeviceConfigPlayer
-import uuid
+
 
 class BlinkenlightPlayer(DeviceConfigPlayer):
 
@@ -61,10 +63,10 @@ class BlinkenlightPlayer(DeviceConfigPlayer):
             return
         blinkenlight.remove_color_with_mode(mode)
 
-    def clear_context(self, mode):
+    def clear_context(self, context):
         """Clear the context. In our case, this means remove the mode colors from all blinkenlights."""
         for blinkenlight in self.blinkenlights:
-            self.remove_mode_colors(blinkenlight, mode)
+            self.remove_mode_colors(blinkenlight, context)
         self.blinkenlights.clear()
 
     def get_express_config(self, value):
