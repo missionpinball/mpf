@@ -417,7 +417,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 self.send_byte(LisyDefines.InfoGetConnectedLisyHardware)
                 hardware_name = await self._read_string()
 
-                self._coils_start_at_one = bool(hardware_name == b'LISY80')
+                self._coils_start_at_one = hardware_name in (b'LISY80', b'LISY1')
 
                 self.send_byte(LisyDefines.InfoLisyVersion)
                 lisy_version = await self._read_string()
