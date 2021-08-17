@@ -41,7 +41,7 @@ class OPPMatrixCard:
     # pylint: disable-msg=too-many-arguments
     def __init__(self, chain_serial, addr, inp_dict, inp_addr_dict):
         """Initialise OPP matrix input card."""
-        self.log = logging.getLogger('OPPMatrixCard')
+        self.log = logging.getLogger('OPPMatrixCard {} on {}'.format(addr, chain_serial))
         self.chain_serial = chain_serial
         self.addr = addr
         self.mask = 0xFFFFFFFFFFFFFFFF << 32  # create fake mask
