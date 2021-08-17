@@ -13,10 +13,6 @@ class BlinkenlightPlayer(DeviceConfigPlayer):
     machine_collection_name = 'blinkenlights'
     allow_placeholders_in_keys = True
 
-    # A set of all the blinkenlights this player has added a color for.
-    # We will use this list to remove context colors when a context ends.
-    blinkenlights = set()
-
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Adds/removes colors to blink."""
         del kwargs
@@ -26,14 +22,12 @@ class BlinkenlightPlayer(DeviceConfigPlayer):
             if action == 'add':
                 label = s['label'] or uuid.uuid4()
                 self.add_color(blinkenlight, s['color'], label, priority + s['priority'], context)
-                self.blinkenlights.add(blinkenlight)
             elif action == 'remove':
                 self.remove_color(blinkenlight, s['label'])
             elif action == 'remove_mode':
                 self.remove_context_colors(blinkenlight, context)
             elif action == 'remove_all':
                 self.remove_all_colors(blinkenlight)
-                self.blinkenlights.clear()
 
     @staticmethod
     def add_color(blinkenlight, color, label, priority, context):
@@ -65,9 +59,8 @@ class BlinkenlightPlayer(DeviceConfigPlayer):
 
     def clear_context(self, context):
         """Clear the context. In our case, this means remove the mode colors from all blinkenlights."""
-        for blinkenlight in self.blinkenlights:
+        for blinkenlight in self.machine.blinkenlights:
             self.remove_context_colors(blinkenlight, context)
-        self.blinkenlights.clear()
 
     def get_express_config(self, value):
         """Parse express config."""
