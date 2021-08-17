@@ -108,13 +108,13 @@ class Blinkenlight(SystemWideDevice):
             self.info_log('Color removed with label {}'.format(label))
             self._restart()
 
-    def remove_color_with_mode(self, mode):
-        """Remove all colors added by a given mode from the blinkenlight."""
-        colors = [x for x in self._colors if x[3] == mode]
+    def remove_color_with_context(self, context):
+        """Remove all colors added by a given context from the blinkenlight."""
+        colors = [x for x in self._colors if x[3] == context]
         for color in colors:
             self._colors.remove(color)
             self.num_colors -= 1
-            self.info_log('Color {} from mode {} removed'.format(color[0], mode))
+            self.info_log('Color {} from context {} removed'.format(color[0], context))
             self._restart()
 
     def _restart(self):
