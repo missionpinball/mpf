@@ -1,6 +1,6 @@
+"""Blinkenlight config player."""
 import uuid
 
-"""Light config player."""
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 
 
