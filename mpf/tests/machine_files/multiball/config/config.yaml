@@ -117,3 +117,15 @@ multiballs:
         grace_period: 5s
         start_events: mb_alltimers_start
         stop_events: mb_alltimers_stop
+    mb_add_a_ball_timers:
+        ball_count: 2
+        shoot_again: 30s
+        hurry_up_time: 10s
+        grace_period: 5s
+        add_a_ball_events: add_ball
+        add_a_ball_shoot_again: 20s
+        add_a_ball_hurry_up_time: 5s
+        add_a_ball_grace_period: 10s
+        start_events: mb_add_a_ball_timers_start
+        stop_events: mb_add_a_ball_timers_stop
+

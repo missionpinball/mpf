@@ -136,7 +136,7 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
             self.machine.events.add_handler('ball_drain',
                                             self._ball_drain_shoot_again,
                                             priority=1000)
-            self.timer_start()
+            self._timer_start()
 
         self.machine.events.post("multiball_" + self.name + "_started",
                                  balls=self.balls_live_target)
@@ -146,7 +146,7 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
             balls: The number of balls in this multiball
         '''
 
-    def timer_start(self) -> None:
+    def _timer_start(self) -> None:
         """Start the timer.
 
         This is started when multiball starts if configured.
@@ -159,10 +159,17 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
         shoot_again_ms = self.config['shoot_again'].evaluate([])
         grace_period_ms = self.config['grace_period'].evaluate([])
         hurry_up_time_ms = self.config['hurry_up_time'].evaluate([])
+
+        self._start_shoot_again(shoot_again_ms, grace_period_ms, hurry_up_time_ms)
+
+    def _start_shoot_again(self, shoot_again_ms, grace_period_ms, hurry_up_time_ms):
+        """Set callbacks for shoot again, grace period, and hurry up, if values above 0 are provided.
+
+        This is started for both beginning multiball ball save and add a ball ball save
+        """
         if shoot_again_ms > 0:
             self.debug_log('Starting ball save timer: %ss',
                            shoot_again_ms)
-            # Register stop handler
             self.delay.add(name='disable_shoot_again',
                            ms=(shoot_again_ms +
                                grace_period_ms),
@@ -291,6 +298,37 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
             self.balls_added_live += 1
             self.machine.game.balls_in_play += 1
             self.source_playfield.add_ball(balls=1)
+            self._add_a_ball_timer_start()
+
+    def _add_a_ball_timer_start(self) -> None:
+        """Start the timer for add a ball ball save.
+
+        This is started when multiball add a ball is triggered if configured,
+        and the default timer is not still running.
+        """
+        if self.shoot_again:
+            # if main ball save timer is running, don't run this timer
+            return
+        self.shoot_again = True
+
+        shoot_again_ms = self.config['add_a_ball_shoot_again'].evaluate([])
+        if not shoot_again_ms:
+            # No shoot again. Just stop multiball right away
+            self.stop()
+            return
+        # Enable shoot again
+        self.machine.events.add_handler('ball_drain',
+                                        self._ball_drain_shoot_again,
+                                        priority=1000)
+
+        self.machine.events.post('ball_save_{}_add_a_ball_timer_start'.format(self.name))
+        '''event: ball_save_(name)_add_a_ball_timer_start
+        desc: The multiball add a ball ball save called (name) has just start its countdown timer.
+        '''
+
+        grace_period_ms = self.config['add_a_ball_grace_period'].evaluate([])
+        hurry_up_time_ms = self.config['add_a_ball_hurry_up_time'].evaluate([])
+        self._start_shoot_again(shoot_again_ms, grace_period_ms, hurry_up_time_ms)
 
     @event_handler(9)
     def event_start_or_add_a_ball(self, **kwargs):
