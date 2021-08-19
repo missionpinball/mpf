@@ -429,6 +429,7 @@ class TestGame(MpfGameTestCase):
 
             wrapped_add_ball.assert_called_with(player_controlled=True)
 
+
 class TestGameLogic(MpfFakeGameTestCase):
 
     def testLastGameScore(self):
@@ -467,6 +468,8 @@ class TestGameLogic(MpfFakeGameTestCase):
         self.assertMachineVarEqual(200, "player2_score")
         self.assertMachineVarEqual(0, "player3_score")
         self.assertMachineVarEqual(42, "player4_score")
+
+        self.assertEqual(0, self.machine.playfield.available_balls)
 
         # two players
         self.start_game()

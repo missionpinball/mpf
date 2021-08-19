@@ -181,6 +181,23 @@ class BallController(MpfController):
         for device in self.machine.ball_devices.values():
             self.info_log("%s contains %s balls. Tags %s", device.name, device.balls, device.tags)
 
+    async def wait_until_playfields_are_empty(self):
+        """Wait until balls reached their home positions."""
+        playfields = self.machine.playfields.values()
+
+        while True:
+            found_balls = False
+            for playfield in playfields:
+                if playfield.available_balls > 0:
+                    self.info_log('Found %s ball(s) on %s.', playfield.available_balls, playfield.name)
+                    found_balls = True
+
+            if not found_balls:
+                return
+
+            self.warning_log("Playfields still contain balls. Waiting for those to drain.")
+            await asyncio.sleep(1)
+
     def request_to_start_game(self, **kwargs) -> bool:
         """Handle result of the *request_to_start_game* event.
 
@@ -253,8 +270,9 @@ class BallController(MpfController):
 
         for device in devices:
             count += device.balls
-            self.debug_log('Found %s ball(s) in %s. Found %s total',
-                           device.balls, device.name, count)
+            self.debug_log('Found %s ball(s) in %s.', device.balls, device.name)
+
+        self.debug_log('Found %s total', count)
 
         if count == self.machine.ball_controller.num_balls_known:
             self.debug_log("Yes, all balls are collected")

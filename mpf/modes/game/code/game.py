@@ -340,6 +340,9 @@ class Game(AsyncMode):
         is_extra_ball: True if this ball is an extra ball (default False)
         player: The player number'''
 
+        if self.machine.config['game']['wait_for_empty_playfields_on_ball_start']:
+            await self.machine.ball_controller.wait_until_playfields_are_empty()
+
         await self.machine.events.post_queue_async('ball_starting', **event_args)
         '''event: ball_starting
         desc: A ball is starting. This is a queue event, so the ball won't

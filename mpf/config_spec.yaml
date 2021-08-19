@@ -654,6 +654,7 @@ game:
     allow_start_with_ball_in_drain: single|bool|false
     end_game_event: single|event_handler|end_game
     end_ball_event: single|event_handler|end_ball
+    wait_for_empty_playfields_on_ball_start: single|bool|true
 hardware:
     __valid_in__: machine
     __type__: config

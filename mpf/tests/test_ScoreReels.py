@@ -282,7 +282,7 @@ class TestScoreReels(MpfFakeGameTestCase):
         self.assertEqual(1, player1_10.pulse.call_count)
 
         # drain ball
-        self.machine.game.balls_in_play = 0
+        self.drain_all_balls()
         self.advance_time_and_run(.1)
         self.assertEqual(2, self.machine.game.player.number)
 
@@ -313,18 +313,18 @@ class TestScoreReels(MpfFakeGameTestCase):
         self.assertEqual(2, player2_10.pulse.call_count)
 
         # drain ball
-        self.machine.game.balls_in_play = 0
+        self.drain_all_balls()
         self.advance_time_and_run(.15)
         self.assertEqual(3, self.machine.game.player.number)
 
         # player3 reuses the reels from player 1. machine resets them
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)
-        self.assertEqual(2, player1_100.pulse.call_count)
-        self.assertEqual(2, player1_10.pulse.call_count)
+        self.assertEqual(7, player1_100.pulse.call_count)
+        self.assertEqual(7, player1_10.pulse.call_count)
         self.assertEqual(2, player2_10.pulse.call_count)
 
-        for i in range(7):
+        for i in range(2):
             self.advance_time_and_run(.2)
 
         self.assertEqual(0, player1_10k.pulse.call_count)
