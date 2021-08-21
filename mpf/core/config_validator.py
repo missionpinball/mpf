@@ -78,6 +78,7 @@ class ConfigValidator:
             "omap": self._validate_type_omap,
             "kivycolor": self._validate_type_kivycolor,
             "color": self._validate_type_color,
+            "color_or_token": self._validate_type_or_token(self._validate_type_color),
             "bool_int": self._validate_type_bool_int,
             "pow2": self._validate_type_pow2,
             "gain": self._validate_type_gain,
@@ -664,11 +665,16 @@ class ConfigValidator:
 
         return color
 
-    def _validate_type_color(self, item, validation_failure_info):
-        if isinstance(item, tuple):
-            if len(item) != 3:
-                self.validation_error(item, validation_failure_info, "Color needs three components")
-            return item
+    def _validate_type_color(self, item, validation_failure_info, param=None):
+        assert not param
+        if item is not None:
+            try:
+                if isinstance(item, tuple):
+                    if len(item) != 3:
+                        self.validation_error(item, validation_failure_info, "Color needs three components")
+                    return item
+            except ValueError:
+                self.validation_error(item, validation_failure_info, "Cannot convert value to color.", 11)
 
         # Validates colors by name, hex, or list, into a 3-item list, RGB,
         # with individual values from 0-255

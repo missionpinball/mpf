@@ -99,7 +99,7 @@ class Blinkenlight(SystemWideDevice):
         self.info_log('All colors removed')
         self._restart()
 
-    def remove_color_with_label(self, label):
+    def _remove_color_with_label(self, label):
         """Remove a color with a given label from the blinkenlight."""
         color = [x for x in self._colors if x[1] == label]
         if len(color) == 1:

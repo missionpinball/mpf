@@ -48,7 +48,7 @@ class BlinkenlightPlayer(DeviceConfigPlayer):
         """Instructs a blinkenlight to remove a color with a given label from its list of colors."""
         if blinkenlight is None:
             return
-        blinkenlight.remove_color_with_label(label)
+        blinkenlight._remove_color_with_label(label)
 
     @staticmethod
     def remove_context_colors(blinkenlight, context):
