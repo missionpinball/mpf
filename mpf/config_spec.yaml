@@ -344,7 +344,7 @@ blinkenlight_player:
     __type__: config_player
     action: single|enum(add,remove,remove_mode,remove_all)|add
     label: single|str|None
-    color: single|color|ffffff
+    color: single|color_or_token|ffffff
 coil_player:
     __valid_in__: machine, mode, show
     __type__: config_player
