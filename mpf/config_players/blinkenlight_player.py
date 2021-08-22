@@ -60,6 +60,7 @@ class BlinkenlightPlayer(DeviceConfigPlayer):
         """Clear the context. In our case, this means remove the mode colors from all blinkenlights."""
         for (key, _), blinkenlight in self._get_instance_dict(context).items():
             blinkenlight.remove_color_with_key(key)
+        self._reset_instance_dict(context)
 
     def get_express_config(self, value):
         """Parse express config."""
