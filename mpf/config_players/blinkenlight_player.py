@@ -20,21 +20,21 @@ class BlinkenlightPlayer(DeviceConfigPlayer):
         for blinkenlight, s in settings.items():
             action = s['action']
             if action == 'add':
-                label = s['label'] or uuid.uuid4()
-                self.add_color(blinkenlight, s['color'], label, priority + s['priority'], context)
+                key = s['key'] or uuid.uuid4()
+                self.add_color(blinkenlight, s['color'], key, priority + s['priority'], context)
             elif action == 'remove':
-                self.remove_color(blinkenlight, s['label'])
+                self.remove_color(blinkenlight, s['key'])
             elif action == 'remove_mode':
                 self.remove_context_colors(blinkenlight, context)
             elif action == 'remove_all':
                 self.remove_all_colors(blinkenlight)
 
     @staticmethod
-    def add_color(blinkenlight, color, label, priority, context):
+    def add_color(blinkenlight, color, key, priority, context):
         """Instructs a blinkenlight to add a color to its list of colors."""
         if blinkenlight is None:
             return
-        blinkenlight.add_color(color, label, priority, context)
+        blinkenlight.add_color(color, key, priority, context)
 
     @staticmethod
     def remove_all_colors(blinkenlight):
@@ -44,11 +44,11 @@ class BlinkenlightPlayer(DeviceConfigPlayer):
         blinkenlight.remove_all_colors()
 
     @staticmethod
-    def remove_color(blinkenlight, label):
-        """Instructs a blinkenlight to remove a color with a given label from its list of colors."""
+    def remove_color(blinkenlight, key):
+        """Instructs a blinkenlight to remove a color with a given key from its list of colors."""
         if blinkenlight is None:
             return
-        blinkenlight.remove_color_with_label(label)
+        blinkenlight.remove_color_with_key(key)
 
     @staticmethod
     def remove_context_colors(blinkenlight, context):

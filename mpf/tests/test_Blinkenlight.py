@@ -192,7 +192,7 @@ class TestBlinkenlight(MpfGameTestCase):
         self.assertEqual(off, blinkenlight1.light._color)
         self.advance_time_and_run(1.5)
 
-        self.post_event('add_color_to_first_blinkenlight_with_duplicate_label')
+        self.post_event('add_color_to_first_blinkenlight_with_duplicate_key')
         self.assertPlaceholderEvaluates(1, 'device.blinkenlights.my_blinkenlight1.num_colors')
         self.assertEqual(darkred, blinkenlight1.light._color)
         self.advance_time_and_run(1.5)
