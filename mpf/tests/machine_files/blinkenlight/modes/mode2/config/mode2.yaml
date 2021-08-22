@@ -10,7 +10,9 @@ blinkenlight_player:
   mode2_add_color_to_first_blinkenlight:
     my_blinkenlight1: orange
   mode2_add_color2_to_first_blinkenlight:
-    my_blinkenlight1: turquoise
+    my_blinkenlight1:
+      color: turquoise
+      key: second
   mode2_remove_mode_colors_from_first_blinkenlight:
     my_blinkenlight1:
       action: remove_mode

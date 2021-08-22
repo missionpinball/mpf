@@ -1,20 +1,17 @@
 """Contains the Blinkenlight class."""
-import asyncio
-
 from operator import itemgetter
 
 from mpf.core.rgb_color import RGBColor
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
-from mpf.exceptions.config_file_error import ConfigFileError
 
 MYPY = False
 if MYPY:   # pragma: no cover
     from typing import NoReturn     # pylint: disable-msg=cyclic-import,unused-import
 
 
-@DeviceMonitor("num_colors", "light")
+@DeviceMonitor("num_colors")
 class Blinkenlight(SystemWideDevice):
 
     """A light that alternates between several different colors."""
@@ -29,9 +26,10 @@ class Blinkenlight(SystemWideDevice):
 
         self._colors = []
         self.delay = DelayManager(machine)
-        self._num_colors = 0
         self._color_duration = None
         self._cycle_duration = None
+        self.num_colors = 0
+        self._light_key = 'blinkenlight_{}'.format(self.name)     # cache the key as string operations as expensive
 
     def load_config(self, config: dict):
         """Load config."""
@@ -41,23 +39,7 @@ class Blinkenlight(SystemWideDevice):
         self._cycle_duration = self.config['cycle_duration']
         if (self._color_duration is None and self._cycle_duration is None) or \
            (self._color_duration is not None and self._cycle_duration is not None):
-            self._blinkenlight_validation_error(
-                "Either color_duration or cycle_duration must be specified, but not both.", 1)
-
-    def _blinkenlight_validation_error(self, msg, error_code) -> "NoReturn":  # pragma: no cover
-        raise ConfigFileError('"{}" >> {}'.format(self.name, msg), error_code, "blinkenlight", self.name)
-
-    @property
-    def num_colors(self):
-        """Return the number of colors (excluding "off") for this blinkenlight."""
-        return self._num_colors
-
-    @num_colors.setter
-    def num_colors(self, newvalue):
-        self._num_colors = newvalue
-        # if the number of colors is 0, remove us from the light stack
-        if self._num_colors == 0:
-            self.light.remove_from_stack_by_key(self._blinkenlight_key)
+            self.raise_config_error("Either color_duration or cycle_duration must be specified, but not both.", 1)
 
     @property
     def light(self):
@@ -69,57 +51,34 @@ class Blinkenlight(SystemWideDevice):
         """Similar to num_colors, but adds 1 for the "off" color if there is one between cycles."""
         return self.num_colors + (1 if self._off_between_cycles() else 0)
 
-    @property
-    def _blinkenlight_key(self):
-        # this is the key that's passed to the light as the color's key
-        # so that we can remove this blinkenlight's color from the light stack
-        # when all the blinkenlight's colors are removed.
-        # This prevents the light from staying in the off state if the blinkenlight
-        # was on top of the priority list.
-        return 'blinkenlight_{}'.format(self.name)
-
-    def add_color(self, color, key, priority, context):
+    def add_color(self, color, key, priority):
         """Add a color to the blinkenlight."""
         # check if this key already exists. If it does, replace it with the incoming color/priority
-        existing_color = [x for x in self._colors if x[1] == key]
-        if len(existing_color) == 0:
-            self._colors.append((color, key, priority, context))
-            self.num_colors += 1
-            self.info_log('Color {} with key {} added'.format(color, key))
-            self._restart()
-        elif len(existing_color) == 1:
-            # color with this key already exists. Just update it with this new color and priority
-            self.remove_color_with_key(key)
-            self.add_color(color, key, priority, context)
+        self._colors = [x for x in self._colors if x[1] != key]
+        self._colors.append((color, key, priority))
+        self.info_log('Color {} with key {} added'.format(color, key))
+        self._update_light()
 
     def remove_all_colors(self):
         """Remove all colors from the blinkenlight."""
         self._colors.clear()
-        self.num_colors = 0
         self.info_log('All colors removed')
-        self._restart()
+        self._update_light()
 
     def remove_color_with_key(self, key):
         """Remove a color with a given key from the blinkenlight."""
-        color = [x for x in self._colors if x[1] == key]
-        if len(color) == 1:
-            self._colors.remove(color[0])
-            self.num_colors -= 1
+        old_len = len(self._colors)
+        self._colors = [x for x in self._colors if x[1] != key]
+        if len(self._colors) != old_len:
             self.info_log('Color removed with key {}'.format(key))
-            self._restart()
+            self._update_light()
 
-    def remove_color_with_context(self, context):
-        """Remove all colors added by a given context from the blinkenlight."""
-        colors = [x for x in self._colors if x[3] == context]
-        for color in colors:
-            self._colors.remove(color)
-            self.num_colors -= 1
-            self.info_log('Color {} from context {} removed'.format(color[0], context))
-            self._restart()
-
-    def _restart(self):
+    def _update_light(self):
+        """Update the underlying light."""
         self.delay.clear()
-        self._sort_colors()
+        self.num_colors = len(self._colors)
+        if self._colors:
+            self._sort_colors()
         self._perform_step()
 
     def _sort_colors(self):
@@ -153,12 +112,11 @@ class Blinkenlight(SystemWideDevice):
 
     def _perform_step(self):
         if self.num_colors == 0:
+            self.light.remove_from_stack_by_key(self._light_key)
             return
         current_color = self._get_current_color()
         color_duration_ms = self._get_time_between_colors_ms()
         cycle_ms = self._get_total_cycle_ms()
-        if current_color is None:
-            return
-        self.light.color(current_color, priority=self.config['priority'], key=self._blinkenlight_key)
+        self.light.color(current_color, priority=self.config['priority'], key=self._light_key)
         delay_ms = color_duration_ms - ((self.machine.clock.get_time() * 1000) % cycle_ms) % color_duration_ms
-        self.delay.add(delay_ms, self._perform_step, name=self._blinkenlight_key)
+        self.delay.add(delay_ms, self._perform_step, name="perform_step")

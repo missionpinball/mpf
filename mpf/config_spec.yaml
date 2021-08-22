@@ -257,6 +257,12 @@ bitmap_fonts:
     file: single|str|None
     load: single|str|None
     descriptor: ignore
+blinkenlight_player:
+    __valid_in__: machine, mode, show
+    __type__: config_player
+    action: single|enum(add,remove,remove_mode,remove_all)|add
+    key: single|str|None
+    color: single|color_or_token|white
 blinkenlights:
     __valid_in__: machine
     __type__: device
@@ -339,12 +345,6 @@ fast_coils:
     hold_pwm_patter: single|str|None
 pkone_coils:
     recycle_ms: single|ms|None
-blinkenlight_player:
-    __valid_in__: machine, mode, show
-    __type__: config_player
-    action: single|enum(add,remove,remove_mode,remove_all)|add
-    key: single|str|None
-    color: single|color_or_token|white
 coil_player:
     __valid_in__: machine, mode, show
     __type__: config_player

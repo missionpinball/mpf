@@ -1,6 +1,7 @@
 from mpf.tests.MpfGameTestCase import MpfGameTestCase
 from mpf.core.rgb_color import RGBColor
 
+
 class TestBlinkenlight(MpfGameTestCase):
 
     def get_config_file(self):
@@ -50,7 +51,7 @@ class TestBlinkenlight(MpfGameTestCase):
         self.post_event('mode2_add_color_to_first_blinkenlight')
         self.assertPlaceholderEvaluates(3, 'device.blinkenlights.my_blinkenlight1.num_colors')
         self.assertPlaceholderEvaluates(2, 'device.blinkenlights.my_blinkenlight2.num_colors')
-        self.assertPlaceholderEvaluates(2, 'device.blinkenlights.my_blinkenlight3.num_colors')
+        self.assertPlaceholderEvaluates(1, 'device.blinkenlights.my_blinkenlight3.num_colors')
         self.post_event('remove_all_colors_from_all_blinkenlights')
         self.assertPlaceholderEvaluates(0, 'device.blinkenlights.my_blinkenlight1.num_colors')
         self.assertPlaceholderEvaluates(0, 'device.blinkenlights.my_blinkenlight2.num_colors')
@@ -89,7 +90,7 @@ class TestBlinkenlight(MpfGameTestCase):
 
         self.assertPlaceholderEvaluates(2, 'device.blinkenlights.my_blinkenlight1.num_colors')
         self.assertPlaceholderEvaluates(2, 'device.blinkenlights.my_blinkenlight2.num_colors')
-        self.assertPlaceholderEvaluates(2, 'device.blinkenlights.my_blinkenlight3.num_colors')
+        self.assertPlaceholderEvaluates(1, 'device.blinkenlights.my_blinkenlight3.num_colors')
 
         blinkenlight1 = self.machine.blinkenlights['my_blinkenlight1']
         blinkenlight2 = self.machine.blinkenlights['my_blinkenlight2']
@@ -105,43 +106,44 @@ class TestBlinkenlight(MpfGameTestCase):
 
         self.assertEqual(blue,   blinkenlight1.light._color)
         self.assertEqual(green,  blinkenlight2.light._color)
-        self.assertEqual(cyan,   blinkenlight3.light._color)
+        self.assertEqual(purple, blinkenlight3.light._color)
+        self.advance_time_and_run(1)
+        self.assertEqual(red,    blinkenlight1.light._color)
+        self.assertEqual(green,  blinkenlight2.light._color)
+        self.assertEqual(off,    blinkenlight3.light._color)
+        self.advance_time_and_run(1)
+        self.assertEqual(off,    blinkenlight1.light._color)
+        self.assertEqual(yellow, blinkenlight2.light._color)
+        self.assertEqual(purple, blinkenlight3.light._color)
+        self.advance_time_and_run(1)
+        self.assertEqual(blue,   blinkenlight1.light._color)
+        self.assertEqual(yellow, blinkenlight2.light._color)
+        self.assertEqual(off,    blinkenlight3.light._color)
         self.advance_time_and_run(1)
         self.assertEqual(red,    blinkenlight1.light._color)
         self.assertEqual(green,  blinkenlight2.light._color)
         self.assertEqual(purple, blinkenlight3.light._color)
         self.advance_time_and_run(1)
         self.assertEqual(off,    blinkenlight1.light._color)
-        self.assertEqual(yellow, blinkenlight2.light._color)
-        self.assertEqual(cyan,   blinkenlight3.light._color)
+        self.assertEqual(green,  blinkenlight2.light._color)
+        self.assertEqual(off,    blinkenlight3.light._color)
         self.advance_time_and_run(1)
         self.assertEqual(blue,   blinkenlight1.light._color)
         self.assertEqual(yellow, blinkenlight2.light._color)
         self.assertEqual(purple, blinkenlight3.light._color)
-        self.advance_time_and_run(1)
-        self.assertEqual(red,    blinkenlight1.light._color)
-        self.assertEqual(green,  blinkenlight2.light._color)
-        self.assertEqual(cyan,   blinkenlight3.light._color)
-        self.advance_time_and_run(1)
-        self.assertEqual(off,    blinkenlight1.light._color)
-        self.assertEqual(green,  blinkenlight2.light._color)
-        self.assertEqual(purple, blinkenlight3.light._color)
-        self.advance_time_and_run(1)
-        self.assertEqual(blue,   blinkenlight1.light._color)
-        self.assertEqual(yellow, blinkenlight2.light._color)
-        self.assertEqual(cyan,   blinkenlight3.light._color)
+        self.post_event("remove_color_from_third_blinkenlight")
         self.advance_time_and_run(1)
         self.assertEqual(red,    blinkenlight1.light._color)
         self.assertEqual(yellow, blinkenlight2.light._color)
-        self.assertEqual(purple, blinkenlight3.light._color)
+        self.assertEqual(off,    blinkenlight3.light._color)
         self.advance_time_and_run(1)
         self.assertEqual(off,    blinkenlight1.light._color)
         self.assertEqual(green,  blinkenlight2.light._color)
-        self.assertEqual(cyan,   blinkenlight3.light._color)
+        self.assertEqual(off,    blinkenlight3.light._color)
         self.advance_time_and_run(1)
         self.assertEqual(blue,   blinkenlight1.light._color)
         self.assertEqual(green,  blinkenlight2.light._color)
-        self.assertEqual(purple, blinkenlight3.light._color)
+        self.assertEqual(off,    blinkenlight3.light._color)
 
     def test_priority_order(self):
         self.post_event('start_mode1')

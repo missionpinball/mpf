@@ -1,7 +1,6 @@
 """Blinkenlight config player."""
-import uuid
-
 from mpf.config_players.device_config_player import DeviceConfigPlayer
+from mpf.devices.blinkenlight import Blinkenlight
 
 
 class BlinkenlightPlayer(DeviceConfigPlayer):
@@ -19,49 +18,51 @@ class BlinkenlightPlayer(DeviceConfigPlayer):
 
         for blinkenlight, s in settings.items():
             action = s['action']
+            key = context + s['key'] if s["key"] else context
             if action == 'add':
-                key = s['key'] or uuid.uuid4()
-                self.add_color(blinkenlight, s['color'], key, priority + s['priority'], context)
+                self._add_color(blinkenlight, s['color'], key, priority + s['priority'])
+                self._get_instance_dict(context)[(key, blinkenlight)] = blinkenlight
             elif action == 'remove':
-                self.remove_color(blinkenlight, s['key'])
+                self._remove_color(blinkenlight, key)
+                try:
+                    del self._get_instance_dict(context)[(key, blinkenlight)]
+                except KeyError:
+                    pass
             elif action == 'remove_mode':
-                self.remove_context_colors(blinkenlight, context)
+                self.clear_context(context)
             elif action == 'remove_all':
-                self.remove_all_colors(blinkenlight)
+                self._remove_all_colors(blinkenlight)
+            else:
+                raise AssertionError("Unknown action {}".format(action))
 
     @staticmethod
-    def add_color(blinkenlight, color, key, priority, context):
+    def _add_color(blinkenlight: Blinkenlight, color, key, priority):
         """Instructs a blinkenlight to add a color to its list of colors."""
         if blinkenlight is None:
             return
-        blinkenlight.add_color(color, key, priority, context)
+        blinkenlight.add_color(color, key, priority)
 
     @staticmethod
-    def remove_all_colors(blinkenlight):
+    def _remove_all_colors(blinkenlight):
         """Instructs a blinkenlight to remove all of its colors."""
         if blinkenlight is None:
             return
         blinkenlight.remove_all_colors()
 
     @staticmethod
-    def remove_color(blinkenlight, key):
+    def _remove_color(blinkenlight, key):
         """Instructs a blinkenlight to remove a color with a given key from its list of colors."""
         if blinkenlight is None:
             return
         blinkenlight.remove_color_with_key(key)
 
-    @staticmethod
-    def remove_context_colors(blinkenlight, context):
-        """Instructs a blinkenlight to remove all colors that were added by a given context from its list of colors."""
-        if blinkenlight is None:
-            return
-        blinkenlight.remove_color_with_context(context)
-
     def clear_context(self, context):
         """Clear the context. In our case, this means remove the mode colors from all blinkenlights."""
-        for blinkenlight in self.machine.blinkenlights:
-            self.remove_context_colors(blinkenlight, context)
+        for (key, _), blinkenlight in self._get_instance_dict(context).items():
+            blinkenlight.remove_color_with_key(key)
 
     def get_express_config(self, value):
         """Parse express config."""
+        if value in ("stop", "remove"):
+            return dict(action="remove")
         return dict(color=value)
