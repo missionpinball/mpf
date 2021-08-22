@@ -78,6 +78,7 @@ class ConfigValidator:
             "omap": self._validate_type_omap,
             "kivycolor": self._validate_type_kivycolor,
             "color": self._validate_type_color,
+            "color_or_token": self._validate_type_or_token(self._validate_type_color),
             "bool_int": self._validate_type_bool_int,
             "pow2": self._validate_type_pow2,
             "gain": self._validate_type_gain,
@@ -664,7 +665,9 @@ class ConfigValidator:
 
         return color
 
-    def _validate_type_color(self, item, validation_failure_info):
+    def _validate_type_color(self, item, validation_failure_info, param=None):
+        assert not param
+
         if isinstance(item, tuple):
             if len(item) != 3:
                 self.validation_error(item, validation_failure_info, "Color needs three components")

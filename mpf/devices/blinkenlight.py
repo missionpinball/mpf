@@ -89,7 +89,7 @@ class Blinkenlight(SystemWideDevice):
             self._restart()
         elif len(existing_color) == 1:
             # color with this label already exists. Just update it with this new color and priority
-            self._remove_color_with_label(label)
+            self.remove_color_with_label(label)
             self.add_color(color, label, priority, context)
 
     def remove_all_colors(self):

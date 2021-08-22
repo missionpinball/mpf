@@ -171,3 +171,52 @@ class TestBlinkenlight(MpfGameTestCase):
         self.assertEqual(red,    blinkenlight1.light._color)
         self.advance_time_and_run(1)
         self.assertEqual(off,    blinkenlight1.light._color)
+
+    def test_replace_existing_color(self):
+        self.post_event('start_mode1')
+
+        blinkenlight1 = self.machine.blinkenlights['my_blinkenlight1']
+
+        blue = RGBColor('blue')
+        darkred = RGBColor('darkred')
+        off = RGBColor('off')
+
+        self.post_event('add_color_to_all_blinkenlights')
+        self.assertPlaceholderEvaluates(1, 'device.blinkenlights.my_blinkenlight1.num_colors')
+        self.assertEqual(blue, blinkenlight1.light._color)
+        self.advance_time_and_run(1.5)
+        self.assertEqual(off, blinkenlight1.light._color)
+        self.advance_time_and_run(1.5)
+        self.assertEqual(blue, blinkenlight1.light._color)
+        self.advance_time_and_run(1.5)
+        self.assertEqual(off, blinkenlight1.light._color)
+        self.advance_time_and_run(1.5)
+
+        self.post_event('add_color_to_first_blinkenlight_with_duplicate_label')
+        self.assertPlaceholderEvaluates(1, 'device.blinkenlights.my_blinkenlight1.num_colors')
+        self.assertEqual(darkred, blinkenlight1.light._color)
+        self.advance_time_and_run(1.5)
+        self.assertEqual(off, blinkenlight1.light._color)
+        self.advance_time_and_run(1.5)
+        self.assertEqual(darkred, blinkenlight1.light._color)
+        self.advance_time_and_run(1.5)
+        self.assertEqual(off, blinkenlight1.light._color)
+
+    def test_show_with_tokens(self):
+        self.post_event('start_mode2')
+
+        blinkenlight = self.machine.blinkenlights['my_blinkenlight2']
+
+        gray = RGBColor('gray')
+        off = RGBColor('off')
+
+        self.assertPlaceholderEvaluates(0, 'device.blinkenlights.my_blinkenlight2.num_colors')
+        self.post_event('play_blinkenlight_token_show')
+        self.assertPlaceholderEvaluates(1, 'device.blinkenlights.my_blinkenlight2.num_colors')
+        self.assertEqual(gray, blinkenlight.light._color)
+        self.advance_time_and_run(2)
+        self.assertEqual(off, blinkenlight.light._color)
+        self.advance_time_and_run(2)
+        self.assertEqual(gray, blinkenlight.light._color)
+        self.advance_time_and_run(2)
+        self.assertEqual(off, blinkenlight.light._color)

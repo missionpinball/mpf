@@ -38,3 +38,8 @@ blinkenlight_player:
       action: remove_all
     my_blinkenlight3:
       action: remove_all
+  add_color_to_first_blinkenlight_with_duplicate_label:
+    my_blinkenlight1:
+      action: add
+      color: darkred
+      label: mykey1

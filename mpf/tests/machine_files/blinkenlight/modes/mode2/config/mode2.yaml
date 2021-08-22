@@ -16,3 +16,17 @@ blinkenlight_player:
       action: remove_mode
   mode2_add_color_to_second_blinkenlight:
     my_blinkenlight2: magenta
+
+shows:
+  blinkenlight_token_show:
+    - time: 0
+      blinkenlights:
+        (blinkenlight_token): (color_token)
+    - time: 10
+
+show_player:
+  play_blinkenlight_token_show:
+    blinkenlight_token_show:
+      show_tokens:
+        blinkenlight_token: my_blinkenlight2
+        color_token: gray
