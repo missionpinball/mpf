@@ -48,6 +48,7 @@ class ShotGroup(ModeDevice):
         self.rotation_enabled = not self.config['enable_rotation_events']
         for shot in self.config['shots']:
             self.machine.events.add_handler("{}_hit".format(shot.name), self._hit)
+            self.machine.events.add_handler("player_shot_{}".format(shot.name), self._check_for_complete)
 
     def device_removed_from_mode(self, mode):
         """Disable device when mode stops."""
@@ -67,15 +68,20 @@ class ShotGroup(ModeDevice):
 
         return state
 
-    def _check_for_complete(self):
+    def _check_for_complete(self, **kwargs):
         """Check if all shots in this group are in the same state."""
-        state = self.common_state = self.get_common_state()
+        del kwargs
+        state = self.get_common_state()
+        if state == self.common_state:
+            return
+
+        self.common_state = state
+
         if not state:
             # shots do not have a common state
             return
 
         # if we reached this point we got a common state
-
         self.debug_log(
             "Shot group is complete with state: %s", state)
 
@@ -149,9 +155,7 @@ class ShotGroup(ModeDevice):
                 advancing: boolean of whether the state is advancing
             }
         """
-        if advancing:
-            self._check_for_complete()
-
+        del advancing
         self.machine.events.post(self.name + '_hit')
         '''event: (name)_hit
         desc: A member shots in the shot group called (name)
