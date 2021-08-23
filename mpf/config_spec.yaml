@@ -257,6 +257,20 @@ bitmap_fonts:
     file: single|str|None
     load: single|str|None
     descriptor: ignore
+blinkenlight_player:
+    __valid_in__: machine, mode, show
+    __type__: config_player
+    action: single|enum(add,remove,remove_mode,remove_all)|add
+    key: single|str|None
+    color: single|color_or_token|white
+blinkenlights:
+    __valid_in__: machine
+    __type__: device
+    color_duration: single|ms|None
+    cycle_duration: single|ms|None
+    off_when_multiple: single|bool|false
+    light: single|machine(lights)|None
+    priority: single|int|0
 blocking:
     __valid_in__: mode
     __type__: config_player

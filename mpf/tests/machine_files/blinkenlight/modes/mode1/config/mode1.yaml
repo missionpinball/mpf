@@ -1,0 +1,47 @@
+#config_version=5
+
+mode:
+  start_events: start_mode1
+  stop_events: stop_mode1
+  game_mode: False
+  priority: 100
+
+blinkenlight_player:
+  add_color_to_all_blinkenlights:
+    my_blinkenlight1:
+      action: add
+      key: mykey1
+      color: blue
+    my_blinkenlight2: green
+    my_blinkenlight3: cyan
+  add_color_to_first_blinkenlight:
+    my_blinkenlight1: red
+  add_color_to_second_blinkenlight:
+    my_blinkenlight2:
+      action: add
+      key: mykey3
+      color: yellow
+  add_color_to_third_blinkenlight:
+    my_blinkenlight3: purple
+  remove_color_from_first_blinkenlight:
+    my_blinkenlight1:
+      action: remove
+      key: mykey1
+  remove_color_from_second_blinkenlight:
+    my_blinkenlight2:
+      action: remove
+      key: mykey3
+  remove_color_from_third_blinkenlight:
+    my_blinkenlight3: stop
+  remove_all_colors_from_all_blinkenlights:
+    my_blinkenlight1:
+      action: remove_all
+    my_blinkenlight2:
+      action: remove_all
+    my_blinkenlight3:
+      action: remove_all
+  add_color_to_first_blinkenlight_with_duplicate_key:
+    my_blinkenlight1:
+      action: add
+      color: darkred
+      key: mykey1
