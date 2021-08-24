@@ -108,6 +108,7 @@ Virtual;1000;c_test3;
 
         cli.onecmd("list_shows")
         expected = """Name;Token;
+bl_color;['blinkenlight', 'blinkenlights', 'color', 'led', 'leds', 'light', 'lights'];
 flash;['led', 'leds', 'light', 'lights'];
 flash_color;['color', 'led', 'leds', 'light', 'lights'];
 led_color;['color', 'led', 'leds', 'light', 'lights'];

@@ -38,7 +38,7 @@ class BlinkenlightPlayer(DeviceConfigPlayer):
     @staticmethod
     def _add_color(blinkenlight: Blinkenlight, color, key, priority):
         """Instructs a blinkenlight to add a color to its list of colors."""
-        if blinkenlight is None:
+        if blinkenlight is None or isinstance(blinkenlight, str):
             return
         blinkenlight.add_color(color, key, priority)
 
@@ -59,7 +59,8 @@ class BlinkenlightPlayer(DeviceConfigPlayer):
     def clear_context(self, context):
         """Clear the context. In our case, this means remove the mode colors from all blinkenlights."""
         for (key, _), blinkenlight in self._get_instance_dict(context).items():
-            blinkenlight.remove_color_with_key(key)
+            if not isinstance(blinkenlight, str):
+                blinkenlight.remove_color_with_key(key)
         self._reset_instance_dict(context)
 
     def get_express_config(self, value):
