@@ -1,7 +1,7 @@
 """Blinkenlight config player."""
+from typing import Union
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 from mpf.devices.blinkenlight import Blinkenlight
-from typing import Union
 
 
 class BlinkenlightPlayer(DeviceConfigPlayer):
@@ -38,24 +38,18 @@ class BlinkenlightPlayer(DeviceConfigPlayer):
                     raise AssertionError("Unknown action {}".format(action))
 
     @staticmethod
-    def _add_color(blinkenlight: Union[Blinkenlight,str], color, key, priority):
+    def _add_color(blinkenlight: Union[Blinkenlight, str], color, key, priority):
         """Instructs a blinkenlight to add a color to its list of colors."""
-        if blinkenlight is None:
-            return
         blinkenlight.add_color(color, key, priority)
 
     @staticmethod
     def _remove_all_colors(blinkenlight):
         """Instructs a blinkenlight to remove all of its colors."""
-        if blinkenlight is None:
-            return
         blinkenlight.remove_all_colors()
 
     @staticmethod
     def _remove_color(blinkenlight, key):
         """Instructs a blinkenlight to remove a color with a given key from its list of colors."""
-        if blinkenlight is None:
-            return
         blinkenlight.remove_color_with_key(key)
 
     def clear_context(self, context):
