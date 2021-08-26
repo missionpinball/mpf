@@ -1,6 +1,7 @@
 """Blinkenlight config player."""
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 from mpf.devices.blinkenlight import Blinkenlight
+from typing import Union
 
 
 class BlinkenlightPlayer(DeviceConfigPlayer):
@@ -17,28 +18,29 @@ class BlinkenlightPlayer(DeviceConfigPlayer):
         del kwargs
 
         for blinkenlight, s in settings.items():
-            action = s['action']
-            key = context + s['key'] if s["key"] else context
-            if action == 'add':
-                self._add_color(blinkenlight, s['color'], key, priority + s['priority'])
-                self._get_instance_dict(context)[(key, blinkenlight)] = blinkenlight
-            elif action == 'remove':
-                self._remove_color(blinkenlight, key)
-                try:
-                    del self._get_instance_dict(context)[(key, blinkenlight)]
-                except KeyError:
-                    pass
-            elif action == 'remove_mode':
-                self.clear_context(context)
-            elif action == 'remove_all':
-                self._remove_all_colors(blinkenlight)
-            else:
-                raise AssertionError("Unknown action {}".format(action))
+            if not isinstance(blinkenlight, str):
+                action = s['action']
+                key = context + s['key'] if s["key"] else context
+                if action == 'add':
+                    self._add_color(blinkenlight, s['color'], key, priority + s['priority'])
+                    self._get_instance_dict(context)[(key, blinkenlight)] = blinkenlight
+                elif action == 'remove':
+                    self._remove_color(blinkenlight, key)
+                    try:
+                        del self._get_instance_dict(context)[(key, blinkenlight)]
+                    except KeyError:
+                        pass
+                elif action == 'remove_mode':
+                    self.clear_context(context)
+                elif action == 'remove_all':
+                    self._remove_all_colors(blinkenlight)
+                else:
+                    raise AssertionError("Unknown action {}".format(action))
 
     @staticmethod
-    def _add_color(blinkenlight: Blinkenlight, color, key, priority):
+    def _add_color(blinkenlight: Union[Blinkenlight,str], color, key, priority):
         """Instructs a blinkenlight to add a color to its list of colors."""
-        if blinkenlight is None or isinstance(blinkenlight, str):
+        if blinkenlight is None:
             return
         blinkenlight.add_color(color, key, priority)
 
@@ -59,8 +61,7 @@ class BlinkenlightPlayer(DeviceConfigPlayer):
     def clear_context(self, context):
         """Clear the context. In our case, this means remove the mode colors from all blinkenlights."""
         for (key, _), blinkenlight in self._get_instance_dict(context).items():
-            if not isinstance(blinkenlight, str):
-                blinkenlight.remove_color_with_key(key)
+            blinkenlight.remove_color_with_key(key)
         self._reset_instance_dict(context)
 
     def get_express_config(self, value):
