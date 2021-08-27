@@ -1,5 +1,4 @@
 """Blinkenlight config player."""
-from typing import Union
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 from mpf.devices.blinkenlight import Blinkenlight
 
@@ -38,7 +37,7 @@ class BlinkenlightPlayer(DeviceConfigPlayer):
                     raise AssertionError("Unknown action {}".format(action))
 
     @staticmethod
-    def _add_color(blinkenlight: Union[Blinkenlight, str], color, key, priority):
+    def _add_color(blinkenlight: Blinkenlight, color, key, priority):
         """Instructs a blinkenlight to add a color to its list of colors."""
         blinkenlight.add_color(color, key, priority)
 
