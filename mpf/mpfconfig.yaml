@@ -388,6 +388,16 @@ shows:
             (leds): (color)
             (light): (color)
             (lights): (color)
+    bl_color:
+        - time: 0
+          duration: -1
+          blinkenlights:
+            (led): (color)
+            (leds): (color)
+            (light): (color)
+            (lights): (color)
+            (blinkenlight): (color)
+            (blinkenlights): (color)
     flash_color:
         - duration: 1
           lights:

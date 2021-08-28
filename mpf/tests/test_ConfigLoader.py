@@ -28,5 +28,5 @@ class TestConfigLoader(TestCase):
         self.assertTrue(config.get_show_config("mode1_show"))
         self.assertTrue(config.get_show_config("show1"))
         self.assertCountEqual(
-            ['flash', 'on', 'off', 'led_color', 'flash_color', 'test_show', 'show1', 'game_show', 'mode1_show'],
+            ['flash', 'on', 'off', 'led_color', 'bl_color', 'flash_color', 'test_show', 'show1', 'game_show', 'mode1_show'],
             config.get_shows())
