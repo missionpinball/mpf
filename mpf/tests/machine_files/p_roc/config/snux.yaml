@@ -2,6 +2,7 @@
 
 hardware:
     coils: snux
+    switches: snux
     platform: p_roc
 
 p_roc:
