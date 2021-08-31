@@ -153,6 +153,10 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
         """Configure switch on system11 overlay."""
         return self.platform.configure_switch(number, config, platform_config)
 
+    def validate_switch_section(self, switch, config: dict) -> dict:
+        """Validate switch config for overlayed platform."""
+        return self.platform.validate_switch_section(switch, config)
+
     async def get_hw_switch_states(self):
         """Get initial hardware state."""
         return await self.platform.get_hw_switch_states()
