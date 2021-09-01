@@ -96,7 +96,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         # to inactive, so we have to check the config.
         self.hw_switches[number] = config.invert
 
-        return VirtualSwitch(config, number)
+        return VirtualSwitch(config, number, self)
 
     async def get_hw_switch_states(self):
         """Return hw switch states."""
@@ -410,9 +410,9 @@ class VirtualSwitch(SwitchPlatformInterface):
 
     __slots__ = ["log"]
 
-    def __init__(self, config, number) -> None:
+    def __init__(self, config, number, platform) -> None:
         """Initialise switch."""
-        super().__init__(config, number)
+        super().__init__(config, number, platform)
         self.log = logging.getLogger('VirtualSwitch')
 
     def get_board_name(self):

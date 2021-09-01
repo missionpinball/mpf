@@ -83,7 +83,7 @@ class SwitchController(MpfController):
 
         for switch in self.machine.switches.values():
             # build lookup table
-            self._switch_lookup[(switch.hw_switch.number, switch.platform)] = switch
+            self._switch_lookup[(switch.hw_switch.number, switch.hw_switch.platform)] = switch
 
         self._initialised = True
 

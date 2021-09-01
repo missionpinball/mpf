@@ -213,7 +213,7 @@ class TestPRoc(MpfTestCase):
 
         p_roc_common.pinproc.driver_state_patter = self._driver_state_patter
 
-        self.pinproc.switch_get_states = MagicMock(return_value=[0, 1] + [0] * 100)
+        self.pinproc.switch_get_states = MagicMock(return_value=[0, 1, 0, 0, 0, 0, 0, 0, 1] + [0] * 100)
         self.pinproc.read_data = self.read_data
 
         self._memory = {
@@ -653,6 +653,19 @@ class TestPRoc(MpfTestCase):
     @test_config("snux.yaml")
     def test_load_snux(self):
         """Test snux."""
+        self.assertSwitchState("s_test_fliptronics", 0)
+        self.assertSwitchState("s_test_direct", 1)
+        self.assertSwitchState("s_test_matrix", 0)
+
+        # closed debounced -> switch active
+        self.pinproc.get_events = MagicMock(return_value=[
+            {'type': 2, 'value': 8}])
+        self.wait_for_platform()
+        self.advance_time_and_run(.1)
+        self.wait_for_platform()
+        self.advance_time_and_run(.1)
+        self.assertSwitchState("s_test_direct", 0)
+
         # test enable
         self.machine.coils["c_flipper_enable_driver"].enable()
         self.wait_for_platform()

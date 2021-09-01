@@ -30,7 +30,7 @@ class SpiBitBangPlatform(SwitchPlatform):
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict) -> "SwitchPlatformInterface":
         """Configure switch."""
         self._switch_states[number] = False
-        return SpiBitBangSwitch(config, number)
+        return SpiBitBangSwitch(config, number, self)
 
     async def get_hw_switch_states(self):
         """Read initial hardware state.

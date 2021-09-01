@@ -31,9 +31,9 @@ class LisySwitch(SwitchPlatformInterface):
 
     __slots__ = ["index"]  # type: List[str]
 
-    def __init__(self, config, number):
+    def __init__(self, config, number, platform):
         """Initialise switch."""
-        super().__init__(config, number)
+        super().__init__(config, number, platform)
         self.index = int(number)
 
     def get_board_name(self):
@@ -711,7 +711,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             raise AssertionError("Invalid switch number {}. Platform reports the following switches as "
                                  "valid: {}".format(number, list(self._inputs.keys())))
 
-        return LisySwitch(config=config, number=number)
+        return LisySwitch(config=config, number=number, platform=self)
 
     async def get_hw_switch_states(self):
         """Return current switch states."""

@@ -56,7 +56,7 @@ class PololuTICHardwarePlatform(StepperPlatform, SwitchPlatform):
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict) -> "PololuTicSwitch":
         """Configure switch on controller."""
-        return PololuTicSwitch(config, number)
+        return PololuTicSwitch(config, number, self)
 
     async def get_hw_switch_states(self) -> Dict[str, bool]:
         """Return initial switch state."""
@@ -72,9 +72,9 @@ class PololuTicSwitch(SwitchPlatformInterface):
 
     """A switch on a Pololu TIC."""
 
-    def __init__(self, config, name):
+    def __init__(self, config, name, platform):
         """Configure switch."""
-        super().__init__(config, name)
+        super().__init__(config, name, platform)
         self.board, self.pin = name.split("-", 2)
 
     def get_board_name(self):

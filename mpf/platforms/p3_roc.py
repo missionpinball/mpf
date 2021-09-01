@@ -36,9 +36,9 @@ class P3RocGpioSwitch(SwitchPlatformInterface):
 
     __slots__ = ["index"]
 
-    def __init__(self, config, number, index):
+    def __init__(self, config, number, index, platform):
         """Initialise P-ROC switch."""
-        super().__init__(config, number)
+        super().__init__(config, number, platform)
         self.index = index
 
     def get_board_name(self):
@@ -384,7 +384,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         if self.config["gpio_map"].get(index, None) != "input":
             self.raise_config_error("GPIO {} is not configured as input in gpio_map.".format(number), 1)
 
-        return P3RocGpioSwitch(config, number, index)
+        return P3RocGpioSwitch(config, number, index, self)
 
     def _configure_gpio_driver(self, config, number):
         _, driver_number_str = number.split("-", 2)
@@ -501,7 +501,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         self.debug_log("Setting 0x02 %s to %s", addr_81, rx_to_check_for_this_transmitter)
         self.run_proc_cmd_no_wait("write_data", 0x02, addr_81, rx_to_check_for_this_transmitter)
 
-        burst_switch = P3RocBurstOpto(config, number, input_switch, driver)
+        burst_switch = P3RocBurstOpto(config, number, input_switch, driver, self)
         self._burst_switches.append(burst_switch)
 
         return burst_switch
@@ -667,9 +667,10 @@ class P3RocBurstOpto(SwitchPlatformInterface):
 
     __slots__ = ["input_switch", "driver", "log"]
 
-    def __init__(self, config, number, input_switch, driver):
+    # pylint: disable-msg=too-many-arguments
+    def __init__(self, config, number, input_switch, driver, platform):
         """Initialise burst opto."""
-        super().__init__(config, number)
+        super().__init__(config, number, platform)
         self.input_switch = input_switch
         self.driver = driver
         self.log = logging.getLogger('P3RocBurstOpto')
