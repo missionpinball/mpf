@@ -44,3 +44,8 @@ coils:
     c_ac_relay:
         number: c25
         default_hold_power: 1.0
+
+autofire_coils:
+    ac_slingshot_test:
+        coil: c_test_direct
+        switch: s_test_direct
