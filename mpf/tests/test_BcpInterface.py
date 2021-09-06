@@ -436,3 +436,32 @@ class TestBcpInterface(MpfBcpTestCase):
         self.advance_time_and_run()
         queue = self._bcp_external_client.reset_and_return_queue()
         self.assertFalse(queue)
+
+    def test_list_coils(self):
+        self.assertIn('mode1', self.machine.modes)
+        self.assertIn('mode2', self.machine.modes)
+
+        self._bcp_external_client.reset_and_return_queue()
+
+        # register monitor
+        self._bcp_external_client.send('service', { 'subcommand': 'list_coils'}) #, {'category': 'modes'})
+        self.advance_time_and_run()
+
+        queue = self._bcp_external_client.reset_and_return_queue()
+        self.assertEqual(1, len(queue))
+        self.assertListEqual(
+            [
+                ('list_coils', {'coils': [('Virtual', '1000', 'eject_coil2'), ('Virtual', '1001', 'eject_coil1')]})
+            ],
+            queue)
+
+        self._bcp_external_client.send('service', { 'subcommand': 'list_coils', 'values': 'name,number'})
+        self.advance_time_and_run()
+
+        queue = self._bcp_external_client.reset_and_return_queue()
+        self.assertEqual(1, len(queue))
+        self.assertListEqual(
+            [
+                ('list_coils', {'coils': [('eject_coil2', '1000'),('eject_coil1', '1001')]})
+            ],
+            queue)
