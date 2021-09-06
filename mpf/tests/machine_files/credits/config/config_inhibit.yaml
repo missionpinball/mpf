@@ -1,0 +1,27 @@
+#config_version=5
+
+modes:
+    - credits
+
+machine:
+    min_balls: 0
+
+switches:
+    s_left_coin:
+        number:
+    s_start:
+        number:
+        tags: start
+
+digital_outputs:
+  c_coin_inhibit:
+    type: driver
+    number:
+
+credits:
+  max_credits: 4
+  free_play: no
+  switches:
+    - switch: s_left_coin
+      value: 1
+  coin_inhibit_disable_output: c_coin_inhibit

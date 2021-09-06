@@ -236,7 +236,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                 else:
                     infos += " -> Board: 0x{:02x} Firmware: 0x{:02x}\n".format(board_id, board_firmware)
 
-        infos += "\nIncand cards:\n"
+        infos += "\nIncand cards:\n" if self.opp_incands else ""
         for incand in self.opp_incands.values():
             infos += " - Chain: {} Board: 0x{:02x} Card: {} Numbers: {}\n".format(incand.chain_serial, incand.addr,
                                                                                   incand.card_num,
@@ -254,9 +254,14 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                                                                                   outputs.card_num,
                                                                                   self._get_numbers(outputs.mask))
 
-        infos += "\nLEDs:\n"
+        infos += "\nLEDs:\n" if self.neo_card_dict else ""
         for leds in self.neo_card_dict.values():
             infos += " - Chain: {} Board: 0x{:02x} Card: {}\n".format(leds.chain_serial, leds.addr, leds.card_num)
+
+        infos += "\nMatrix lights:\n" if self.matrix_light_cards else ''
+        for matrix_light in self.matrix_light_cards.values():
+            infos += " - Chain: {} Board: 0x{:02x} Card: {} Numbers: 0 - 63\n".format(
+                matrix_light.chain_serial, matrix_light.addr, matrix_light.card_num)
 
         return infos
 
@@ -458,7 +463,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         if inp_mask != 0:
             # Create the input object, and add to the command to read all inputs
             self.opp_inputs.append(OPPInputCard(chain_serial, msg[0], inp_mask, self.inp_dict,
-                                                self.inp_addr_dict))
+                                                self.inp_addr_dict, self))
 
             # Add command to read all inputs to read input message
             inp_msg = bytearray()
@@ -474,7 +479,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         if has_sw_matrix:
             # Create the matrix object, and add to the command to read all matrix inputs
             self.opp_inputs.append(OPPMatrixCard(chain_serial, msg[0], self.inp_dict,
-                                                 self.matrix_inp_addr_dict))
+                                                 self.matrix_inp_addr_dict, self))
 
             # Add command to read all matrix inputs to read input message
             inp_msg = bytearray()

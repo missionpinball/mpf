@@ -1,7 +1,7 @@
 """Interface for switches."""
 import abc
 from typing import Any
-from mpf.core.platform import SwitchConfig
+from mpf.core.platform import SwitchConfig, SwitchPlatform
 
 
 class SwitchPlatformInterface(metaclass=abc.ABCMeta):
@@ -13,12 +13,13 @@ class SwitchPlatformInterface(metaclass=abc.ABCMeta):
     methods are implemented to support switch operations in MPF.
     """
 
-    __slots__ = ["config", "number"]
+    __slots__ = ["config", "number", "platform"]
 
-    def __init__(self, config: SwitchConfig, number: Any) -> None:
+    def __init__(self, config: SwitchConfig, number: Any, platform: SwitchPlatform) -> None:
         """Initialise default attributes for switches."""
-        self.config = config    # type: SwitchConfig
-        self.number = number    # type: Any
+        self.config = config        # type: SwitchConfig
+        self.number = number        # type: Any
+        self.platform = platform    # type: SwitchPlatform
 
     @abc.abstractmethod
     def get_board_name(self):

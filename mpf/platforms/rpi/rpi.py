@@ -237,7 +237,7 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
         # add callback
         self.send_command(self.pi.add_callback(int(number), apigpio.EITHER_EDGE, self._switch_changed))
 
-        return RpiSwitch(config, number)
+        return RpiSwitch(config, number, self)
 
     def _switch_changed(self, gpio, level, tick):
         """Process switch change."""

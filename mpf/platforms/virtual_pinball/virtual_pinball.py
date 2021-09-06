@@ -17,9 +17,9 @@ class VirtualPinballSwitch(SwitchPlatformInterface):
 
     __slots__ = ["state"]
 
-    def __init__(self, config, number):
+    def __init__(self, config, number, platform):
         """Initialise switch."""
-        super().__init__(config, number)
+        super().__init__(config, number, platform)
         self.state = self.config.invert
 
     def get_board_name(self):
@@ -257,7 +257,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict) -> "SwitchPlatformInterface":
         """Configure VPX switch."""
         number = str(number)
-        switch = VirtualPinballSwitch(config, number)
+        switch = VirtualPinballSwitch(config, number, self)
         self._switches[number] = switch
         return switch
 

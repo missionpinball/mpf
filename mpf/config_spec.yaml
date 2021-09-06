@@ -257,6 +257,20 @@ bitmap_fonts:
     file: single|str|None
     load: single|str|None
     descriptor: ignore
+blinkenlight_player:
+    __valid_in__: machine, mode, show
+    __type__: config_player
+    action: single|enum(add,remove,remove_mode,remove_all)|add
+    key: single|str|None
+    color: single|color_or_token|white
+blinkenlights:
+    __valid_in__: machine
+    __type__: device
+    color_duration: single|ms|None
+    cycle_duration: single|ms|None
+    off_when_multiple: single|bool|false
+    light: single|machine(lights)|None
+    priority: single|int|0
 blocking:
     __valid_in__: mode
     __type__: config_player
@@ -369,6 +383,7 @@ credits:
     __type__: config
     max_credits: single|template_int|0
     free_play: single|bool|yes
+    coin_inhibit_disable_output: single|machine(digital_outputs)|None
     price_tier_template: single|str|{credits} CREDITS ${price}
     service_credits_switch: list|machine(switches)|None
     fractional_credit_expiration_time: single|ms|0
@@ -653,6 +668,7 @@ game:
     allow_start_with_ball_in_drain: single|bool|false
     end_game_event: single|event_handler|end_game
     end_ball_event: single|event_handler|end_ball
+    wait_for_empty_playfields_on_ball_start: single|bool|true
 hardware:
     __valid_in__: machine
     __type__: config
@@ -972,6 +988,8 @@ multiballs:
     replace_balls_in_play: single|bool|false
     source_playfield: single|machine(ball_devices)|playfield
     shoot_again: single|template_ms|10s
+    hurry_up_time: single|template_ms|0
+    grace_period: single|template_ms|0
     ball_locks: list|machine(ball_devices)|None
     enable_events: event_handler|event_handler:ms|None
     disable_events: event_handler|event_handler:ms|None
@@ -979,6 +997,9 @@ multiballs:
     start_events: event_handler|event_handler:ms|None
     stop_events: event_handler|event_handler:ms|None
     add_a_ball_events: event_handler|event_handler:ms|None
+    add_a_ball_shoot_again: single|template_ms|5s
+    add_a_ball_hurry_up_time: single|template_ms|0
+    add_a_ball_grace_period: single|template_ms|0
     start_or_add_a_ball_events: event_handler|event_handler:ms|None
 multiball_locks:
     __valid_in__: mode

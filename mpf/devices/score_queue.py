@@ -27,10 +27,10 @@ class ScoreQueue(SystemWideDevice):
         self._score_queue_empty.set()
         self._score_task = None
 
-        self.machine.events.add_async_handler("player_turn_ending", self._block_player_end_if_scoring)
+        self.machine.events.add_async_handler("ball_ending", self._block_ball_end_if_scoring)
 
-    async def _block_player_end_if_scoring(self, **kwargs):
-        """Block player ending until scoring is done."""
+    async def _block_ball_end_if_scoring(self, **kwargs):
+        """Block ball ending until scoring is done."""
         del kwargs
         await self._score_queue_empty.wait()
 

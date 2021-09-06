@@ -34,21 +34,31 @@ class TestShotGroups(MpfFakeGameTestCase):
         self.mock_event("test_group_complete")
         self.mock_event("test_group_hit")
         self.assertPlaceholderEvaluates("unlit", "device.shot_groups.test_group.common_state")
+        value, placeholder = self.machine.placeholder_manager.\
+            build_raw_template("device.shot_groups.test_group.common_state").evaluate_and_subscribe({})
+        self.assertEqual('unlit', value)
 
         self.hit_and_release_switch("switch_1")
+        self.assertPlaceholderEvaluates(None, "device.shot_groups.test_group.common_state")
+        self.assertTrue(placeholder.done())
 
         # it posts nothing because the the there is no common state
         self.assertEventCalled("test_group_hit")
         self.assertEventNotCalled("test_group_complete")
 
         self.hit_and_release_switch("switch_2")
+        value, placeholder = self.machine.placeholder_manager.\
+            build_raw_template("device.shot_groups.test_group.common_state").evaluate_and_subscribe({})
+        self.assertEqual(None, value)
         self.assertPlaceholderEvaluates(None, "device.shot_groups.test_group.common_state")
+        self.assertFalse(placeholder.done())
         self.hit_and_release_switch("switch_3")
         self.hit_and_release_switch("switch_4")
 
         self.assertEventCalled("test_group_hit")
         self.assertEventCalledWith("test_group_complete", state="lit")
         self.assertPlaceholderEvaluates("lit", "device.shot_groups.test_group.common_state")
+        self.assertTrue(placeholder.done())
 
         self.stop_game()
 

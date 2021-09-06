@@ -22,15 +22,14 @@ class SpikeSwitch(SwitchPlatformInterface):
 
     """A switch on a Stern Spike node board."""
 
-    __slots__ = ["node", "index", "platform", "platform_config", "_last_debounce"]
+    __slots__ = ["node", "index", "platform_config", "_last_debounce"]
 
     def __init__(self, config, number, platform, platform_config):
         """Initialise switch."""
-        super().__init__(config, number)
+        super().__init__(config, number, platform)
         self.node, self.index = self.number.split("-")
         self.node = int(self.node)
         self.index = int(self.index)
-        self.platform = platform
         self.platform_config = platform_config
         self._last_debounce = None
 

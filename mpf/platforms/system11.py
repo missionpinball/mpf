@@ -160,6 +160,10 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
         """Configure switch on system11 overlay."""
         return self.platform.configure_switch(number, config, platform_config)
 
+    def validate_switch_section(self, switch, config: dict) -> dict:
+        """Validate switch config for overlayed platform."""
+        return self.platform.validate_switch_section(switch, config)
+
     async def get_hw_switch_states(self):
         """Get initial hardware state."""
         return await self.platform.get_hw_switch_states()
@@ -174,28 +178,27 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
             platform_settings: Platform specific config.
         """
         assert self.platform is not None
-        orig_number = number
+        number_str = str(number)
 
-        if number and (number.lower().endswith('a') or number.lower().endswith('c')):
+        if number_str and (number_str.lower().endswith('a') or number_str.lower().endswith('c')):
 
-            side = number[-1:].upper()
-            number = number[:-1]
+            side = number_str[-1:].upper()
+            number_str = number_str[:-1]
 
             # only configure driver once
-            if number not in self.drivers:
-                self.drivers[number] = self.platform.configure_driver(config, number, platform_settings)
+            if number_str not in self.drivers:
+                self.drivers[number_str] = self.platform.configure_driver(config, number_str, platform_settings)
 
-            system11_driver = System11Driver(orig_number, self.drivers[number], self, side)
+            system11_driver = System11Driver(number, self.drivers[number_str], self, side)
 
             return system11_driver
 
-        return self.platform.configure_driver(config, number, platform_settings)
+        return self.platform.configure_driver(config, number_str, platform_settings)
 
     @staticmethod
     def _check_if_driver_is_capable_for_rule(driver: DriverPlatformInterface):
         """Check if driver is capable for rule and bail out with an exception if not."""
-        number = driver.number
-        if number and (number.lower().endswith('a') or number.lower().endswith('c')):
+        if isinstance(driver, System11Driver):
             raise AssertionError("Received a request to set a hardware rule for a System11 driver {}. "
                                  "This is not supported.".format(driver))
 
@@ -481,10 +484,11 @@ class System11Driver(DriverPlatformInterface):
     Two of those drivers may be created for one real driver. One for the A and one for the C side.
     """
 
+    __slots__ = ["platform_driver", "overlay", "side"]
+
     def __init__(self, number, platform_driver: DriverPlatformInterface, overlay, side) -> None:
         """Initialize driver."""
         super().__init__(platform_driver.config, number)
-        self.number = number
         self.platform_driver = platform_driver
         self.overlay = overlay
         self.side = side

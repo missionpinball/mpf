@@ -247,6 +247,9 @@ Solenoid cards:
 
 LEDs:
  - Chain: 19088743 Board: 0x20 Card: 0
+
+Matrix lights:
+ - Chain: 2 Board: 0x20 Card: 0 Numbers: 0 - 63
 """
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 

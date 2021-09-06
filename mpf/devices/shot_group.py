@@ -25,7 +25,7 @@ class ShotGroup(ModeDevice):
     collection = 'shot_groups'
     class_label = 'shot_group'
 
-    __slots__ = ["rotation_enabled", "profile", "rotation_pattern"]
+    __slots__ = ["rotation_enabled", "profile", "rotation_pattern", "common_state"]
 
     def __init__(self, machine, name):
         """Initialise shot group."""
@@ -34,6 +34,7 @@ class ShotGroup(ModeDevice):
         self.rotation_enabled = None
         self.profile = None
         self.rotation_pattern = None
+        self.common_state = None
 
     def add_control_events_in_mode(self, mode) -> None:
         """Remove enable here."""
@@ -47,14 +48,14 @@ class ShotGroup(ModeDevice):
         self.rotation_enabled = not self.config['enable_rotation_events']
         for shot in self.config['shots']:
             self.machine.events.add_handler("{}_hit".format(shot.name), self._hit)
+            self.machine.events.add_handler("player_shot_{}".format(shot.name), self._check_for_complete)
 
     def device_removed_from_mode(self, mode):
         """Disable device when mode stops."""
         super().device_removed_from_mode(mode)
         self.machine.events.remove_handler(self._hit)
 
-    @property
-    def common_state(self):
+    def get_common_state(self):
         """Return common state if all shots in this group are in the same state.
 
         Will return None otherwise.
@@ -67,15 +68,20 @@ class ShotGroup(ModeDevice):
 
         return state
 
-    def _check_for_complete(self):
+    def _check_for_complete(self, **kwargs):
         """Check if all shots in this group are in the same state."""
-        state = self.common_state
+        del kwargs
+        state = self.get_common_state()
+        if state == self.common_state:
+            return
+
+        self.common_state = state
+
         if not state:
             # shots do not have a common state
             return
 
         # if we reached this point we got a common state
-
         self.debug_log(
             "Shot group is complete with state: %s", state)
 
@@ -149,9 +155,7 @@ class ShotGroup(ModeDevice):
                 advancing: boolean of whether the state is advancing
             }
         """
-        if advancing:
-            self._check_for_complete()
-
+        del advancing
         self.machine.events.post(self.name + '_hit')
         '''event: (name)_hit
         desc: A member shots in the shot group called (name)

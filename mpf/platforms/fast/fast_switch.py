@@ -14,15 +14,14 @@ class FASTSwitch(SwitchPlatformInterface):
 
     """A switch conntected to a fast controller."""
 
-    __slots__ = ["log", "connection", "send", "platform", "platform_settings", "_configured_debounce"]
+    __slots__ = ["log", "connection", "send", "platform_settings", "_configured_debounce"]
 
     def __init__(self, config: SwitchConfig, number_tuple, platform: "FastHardwarePlatform", platform_settings) -> None:
         """Initialise switch."""
-        super().__init__(config, number_tuple)
+        super().__init__(config, number_tuple, platform)
         self.log = logging.getLogger('FASTSwitch')
         self.connection = number_tuple[1]
         self.send = platform.net_connection.send
-        self.platform = platform
         self.platform_settings = platform_settings
         self._configured_debounce = False
         self.configure_debounce(config.debounce in ("normal", "auto"))

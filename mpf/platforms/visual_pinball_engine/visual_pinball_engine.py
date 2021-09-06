@@ -32,9 +32,9 @@ class VisualPinballEngineSwitch(SwitchPlatformInterface):
 
     """A switch in VPE."""
 
-    def __init__(self, config, number):
+    def __init__(self, config, number, platform):
         """Initialise switch."""
-        super().__init__(config, number)
+        super().__init__(config, number, platform)
         self.state = self.config.invert
 
     def get_board_name(self):
@@ -303,7 +303,7 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict) -> VisualPinballEngineSwitch:
         """Configure VPE switch."""
         number = str(number)
-        switch = VisualPinballEngineSwitch(config, number)
+        switch = VisualPinballEngineSwitch(config, number, self)
         self._configured_switches.append(switch)
         return switch
 

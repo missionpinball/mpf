@@ -246,7 +246,10 @@ class MpfFormatter(string.Formatter):
         # don't crash on None for int. the format type is always the last element in a format spec
         if value is None and format_spec[-1:] == "d":
             value = 0
-        return super().format_field(value, format_spec)
+        try:
+            return super().format_field(value, format_spec)
+        except Exception as e:
+            raise AssertionError("Could not format {} with {}".format(format_spec, value)) from e
 
 
 class TextTemplate:
@@ -263,8 +266,11 @@ class TextTemplate:
 
     def evaluate(self, parameters) -> str:
         """Evaluate placeholder to string."""
-        f = MpfFormatter(self.machine, parameters, False)
-        return f.format(self.text)
+        try:
+            f = MpfFormatter(self.machine, parameters, False)
+            return f.format(self.text)
+        except Exception as e:
+            raise AssertionError("Failed to format {} with {}".format(self.text, parameters)) from e
 
     def evaluate_and_subscribe(self, parameters) -> Tuple[str, asyncio.Future]:
         """Evaluate placeholder to string and subscribe to changes."""

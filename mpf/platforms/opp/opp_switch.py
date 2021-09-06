@@ -13,7 +13,7 @@ class OPPInputCard:
     __slots__ = ["log", "chain_serial", "addr", "is_matrix", "old_state", "mask", "card_num"]
 
     # pylint: disable-msg=too-many-arguments
-    def __init__(self, chain_serial, addr, mask, inp_dict, inp_addr_dict):
+    def __init__(self, chain_serial, addr, mask, inp_dict, inp_addr_dict, platform):
         """Initialise OPP input card."""
         self.log = logging.getLogger('OPPInputCard {} on {}'.format(addr, chain_serial))
         self.chain_serial = chain_serial
@@ -29,7 +29,7 @@ class OPPInputCard:
         for index in range(0, 32):
             if ((1 << index) & mask) != 0:
                 inp_dict[self.chain_serial + "-" + self.card_num + '-' + str(index)] =\
-                    OPPSwitch(self, self.chain_serial + "-" + self.card_num + '-' + str(index))
+                    OPPSwitch(self, self.chain_serial + "-" + self.card_num + '-' + str(index), platform)
 
 
 class OPPMatrixCard:
@@ -39,9 +39,9 @@ class OPPMatrixCard:
     __slots__ = ["log", "chain_serial", "addr", "mask", "is_matrix", "old_state", "card_num"]
 
     # pylint: disable-msg=too-many-arguments
-    def __init__(self, chain_serial, addr, inp_dict, inp_addr_dict):
+    def __init__(self, chain_serial, addr, inp_dict, inp_addr_dict, platform):
         """Initialise OPP matrix input card."""
-        self.log = logging.getLogger('OPPMatrixCard')
+        self.log = logging.getLogger('OPPMatrixCard {} on {}'.format(addr, chain_serial))
         self.chain_serial = chain_serial
         self.addr = addr
         self.mask = 0xFFFFFFFFFFFFFFFF << 32  # create fake mask
@@ -56,7 +56,7 @@ class OPPMatrixCard:
         # Matrix inputs are inputs 32 - 95 (OPP only supports 8x8 input switch matrices)
         for index in range(32, 96):
             inp_dict[self.chain_serial + "-" + self.card_num + '-' + str(index)] =\
-                OPPSwitch(self, self.chain_serial + "-" + self.card_num + '-' + str(index))
+                OPPSwitch(self, self.chain_serial + "-" + self.card_num + '-' + str(index), platform)
 
 
 class OPPSwitch(SwitchPlatformInterface):
@@ -65,9 +65,9 @@ class OPPSwitch(SwitchPlatformInterface):
 
     __slots__ = ["card"]
 
-    def __init__(self, card, number):
+    def __init__(self, card, number, platform):
         """Initialise input."""
-        super().__init__({}, number)
+        super().__init__({}, number, platform)
         self.card = card
 
     def get_board_name(self):

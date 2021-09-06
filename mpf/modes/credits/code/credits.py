@@ -12,8 +12,9 @@ class Credits(Mode):
 
     """Mode which manages the credits and prevents the game from starting without credits."""
 
-    __slots__ = ["data_manager", "earnings", "credit_units_per_game", "credit_unit", "pricing_tiers",
-                 "credit_units_for_pricing_tiers", "reset_pricing_tier_count_this_game", "credits_config"]
+    __slots__ = ["data_manager", "earnings", "credit_units_per_game", "credit_unit", "pricing_table",
+                 "credit_units_for_pricing_tiers", "reset_pricing_tier_count_this_game", "credits_config",
+                 "pricing_tiers_wrap_around", "_switch_handlers"]
 
     def __init__(self, *args, **kwargs):
         """Initialise credits mode."""
@@ -22,10 +23,12 @@ class Credits(Mode):
 
         self.credit_units_per_game = None
         self.credit_unit = None
-        self.pricing_tiers = None
+        self.pricing_table = {}
+        self.pricing_tiers_wrap_around = 1
         self.credit_units_for_pricing_tiers = None
         self.reset_pricing_tier_count_this_game = None
         self.credits_config = None
+        self._switch_handlers = []
         super().__init__(*args, **kwargs)
 
     def mode_init(self):
@@ -39,7 +42,6 @@ class Credits(Mode):
 
         self.credit_units_per_game = 0
         self.credit_unit = 0
-        self.pricing_tiers = set()
         self.credit_units_for_pricing_tiers = 0
         self.reset_pricing_tier_count_this_game = False
 
@@ -144,18 +146,40 @@ class Credits(Mode):
 
         self.info_log("Credit units per game: %s", self.credit_units_per_game)
 
+    def _control_coin_inhibit(self):
+        """Physically prevent or allow a player to insert coins depending on our state."""
+        if self.credits_config['coin_inhibit_disable_output']:
+            if not self.machine.settings.get_setting_value('free_play') and \
+                    self._get_credit_units() < self.credits_config['max_credits'].evaluate([]):
+                self.credits_config['coin_inhibit_disable_output'].enable()
+            else:
+                self.credits_config['coin_inhibit_disable_output'].disable()
+
     def _calculate_pricing_tiers(self):
         # pricing tiers are calculated with a set of tuples which indicate the
         # credit units for the price break as well as the "bump" in credit
         # units that should be added once that break is passed.
+        if not self.credits_config['pricing_tiers']:
+            self.pricing_tiers_wrap_around = 1
+            self.pricing_table = {1: 0}
+            return
 
-        index = 0
-        for pricing_tier in self.credits_config['pricing_tiers']:
+        self.pricing_tiers_wrap_around = 0
+        pricing_tiers = []
+        self.pricing_table = {}
+
+        for index, pricing_tier in enumerate(self.credits_config['pricing_tiers']):
             price = pricing_tier['price'].evaluate([])
             credit_units = price / self.credit_unit
             credits_in_tier = pricing_tier['credits'].evaluate([])
             actual_credit_units = self.credit_units_per_game * credits_in_tier
             bonus = actual_credit_units - credit_units
+
+            if self.pricing_tiers_wrap_around > credit_units:
+                self.warning_log("Pricing tier %s needs to be higher then the previous one. Skipping it!")
+                continue
+
+            self.pricing_tiers_wrap_around = int(credit_units)
 
             self.machine.variables.set_machine_var("price_per_game_raw_{}".format(index), price)
             self.machine.variables.set_machine_var("price_per_game_string_{}".format(index),
@@ -168,8 +192,18 @@ class Credits(Mode):
                            price, credits_in_tier,
                            credit_units, actual_credit_units, bonus)
 
-            self.pricing_tiers.add((credit_units, bonus))
-            index += 1
+            pricing_tiers.append((int(credit_units), int(bonus)))
+
+        old_bonus = 0
+        for units in range(self.pricing_tiers_wrap_around + 1):
+            accounted_units = 0
+            bonus = 0
+            for tier_credit_units, tier_bonus in reversed(pricing_tiers):
+                while units - accounted_units >= tier_credit_units:
+                    accounted_units += tier_credit_units
+                    bonus += tier_bonus
+            self.pricing_table[units] = bonus - old_bonus
+            old_bonus = bonus
 
     def enable_credit_play(self, post_event=True, **kwargs):
         """Enable credits play."""
@@ -256,6 +290,8 @@ class Credits(Mode):
          is enabled and the game is not set to free play.
         '''
 
+        self._control_coin_inhibit()
+
     def _remove_event_handlers(self):
         """Remove event handlers."""
         self.machine.events.remove_handler(self._player_add_request)
@@ -273,6 +309,8 @@ class Credits(Mode):
         for index in range(len(self.credits_config['pricing_tiers'])):
             self.machine.variables.remove_machine_var("price_per_game_raw_{}".format(index))
             self.machine.variables.remove_machine_var("price_per_game_string_{}".format(index))
+
+        self._control_coin_inhibit()
 
         self._remove_event_handlers()
 
@@ -356,19 +394,21 @@ class Credits(Mode):
         self._audit_set_non_coin(free_percentage, audit_class='5 Free Games Percentage')
         self._audit_set_non_coin(paid_percentage, audit_class='6 Paid Games Percentage')
 
+        self._control_coin_inhibit()
+
     def _enable_credit_handlers(self):
         for switch_settings in self.credits_config['switches']:
-            self.machine.switch_controller.add_switch_handler_obj(
+            self._switch_handlers.append(self.machine.switch_controller.add_switch_handler_obj(
                 switch=switch_settings['switch'],
                 callback=self._credit_switch_callback,
                 callback_kwargs={'value': switch_settings['value'].evaluate([]),
                                  'audit_class': switch_settings['type'],
-                                 'key_name': switch_settings['label']})
+                                 'key_name': switch_settings['label']}))
 
         for switch in self.credits_config['service_credits_switch']:
-            self.machine.switch_controller.add_switch_handler_obj(
+            self._switch_handlers.append(self.machine.switch_controller.add_switch_handler_obj(
                 switch=switch,
-                callback=self._service_credit_callback)
+                callback=self._service_credit_callback))
 
         for event_settings in self.credits_config['events']:
             self.machine.events.add_handler(
@@ -378,17 +418,10 @@ class Credits(Mode):
                 audit_class=event_settings['type'])
 
     def _disable_credit_handlers(self):
-        for switch_settings in self.credits_config['switches']:
-            self.machine.switch_controller.remove_switch_handler(
-                switch_name=switch_settings['switch'].name,
-                callback=self._credit_switch_callback)
+        self.machine.switch_controller.remove_switch_handler_by_keys(self._switch_handlers)
+        self._switch_handlers = []
 
         self.machine.events.remove_handler(self._credit_event_callback)
-
-        for switch in self.credits_config['service_credits_switch']:
-            self.machine.switch_controller.remove_switch_handler(
-                switch_name=switch.name,
-                callback=self._service_credit_callback)
 
     def _credit_switch_callback(self, value, audit_class, key_name):
         self.info_log("Credit switch hit. Credit Added. Value: %s. Type: %s keyName: %s", value, audit_class, key_name)
@@ -413,18 +446,24 @@ class Credits(Mode):
         self.debug_log("Adding %s credit_units. Price tiering: %s",
                        credit_units, price_tiering)
 
+        if int(credit_units) != credit_units:
+            raise AssertionError("Credits units need to be ints.")
+
+        credit_units = int(credit_units)
+
         previous_credit_units = self._get_credit_units()
         total_credit_units = credit_units + previous_credit_units
 
         # check for pricing tier
-        if price_tiering:
-            self.credit_units_for_pricing_tiers += credit_units
-            bonus_credit_units = 0
-            for tier_credit_units, bonus in self.pricing_tiers:
-                if self.credit_units_for_pricing_tiers % tier_credit_units == 0:
-                    bonus_credit_units += bonus
+        self.credit_units_for_pricing_tiers %= self.pricing_tiers_wrap_around
 
-            total_credit_units += bonus_credit_units
+        if price_tiering:
+            # add credits one by one to get all pricing tiers
+            for _ in range(credit_units):
+                self.credit_units_for_pricing_tiers += 1
+                bonus_credit_units = self.pricing_table[self.credit_units_for_pricing_tiers]
+                total_credit_units += bonus_credit_units
+                self.credit_units_for_pricing_tiers %= self.pricing_tiers_wrap_around
 
         max_credit_units = (self.credits_config['max_credits'].evaluate([]) *
                             self.credit_units_per_game)
@@ -446,6 +485,8 @@ class Credits(Mode):
             '''event: credits_added
             desc: Credits (or partial credits) have just been added to the
             machine.'''
+
+        self._control_coin_inhibit()
 
     def add_credit(self, price_tiering=True):
         """Add a single credit to the machine.
@@ -570,6 +611,8 @@ class Credits(Mode):
         self.debug_log("Removing credit clearing delays.")
         self.delay.remove('clear_fractional_credits')
         self.delay.remove('clear_all_credits')
+        # pricing tiers will restart when the game starts
+        self.credit_units_for_pricing_tiers = 0
 
     def _reset_timeouts(self):
         if self.credits_config['fractional_credit_expiration_time']:
@@ -606,4 +649,5 @@ class Credits(Mode):
         del kwargs
         self.info_log("Clearing all credits.")
         self.machine.variables.set_machine_var('credit_units', 0)
+        self.credit_units_for_pricing_tiers = 0
         self._update_credit_strings()

@@ -27,7 +27,7 @@ class PROCSwitch(SwitchPlatformInterface):
 
     def __init__(self, config, number, notify_on_nondebounce, platform):
         """Initialise P-ROC switch."""
-        super().__init__(config, number)
+        super().__init__(config, number, platform)
         self.string_number = number
         self.log = logging.getLogger('PROCSwitch {}'.format(self.string_number))
         self.notify_on_nondebounce = notify_on_nondebounce

@@ -74,3 +74,4 @@ audits.yaml
 build_scripts/wheels
 
 .DS_Store
+.vscode

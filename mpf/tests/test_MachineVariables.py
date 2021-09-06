@@ -14,13 +14,17 @@ class TestMachineVariables(MpfTestCase):
         return 'tests/machine_files/machine_vars/'
 
     def _get_mock_data(self):
-        return {"machine_vars": {"player2_score": {"value": 118208660},
-                                 "player3_score": {"value": 17789290},
-                                 "player4_score": {"value": 3006600},
-                                 "another_score": {"value": 123},
-                                 "expired_value": {"value": 23, "expire": self.clock.get_time() - 100},
-                                 "not_expired_value": {"value": 24, "expire": self.clock.get_time() + 100},
-                                 "test1": {"value": 42}},
+        return {"machine_vars": {"player2_score": {"value": 118208660, 'expire': None, 'expire_secs': None},
+                                 "player3_score": {"value": 17789290, 'expire': None, 'expire_secs': None},
+                                 "player4_score": {"value": 3006600, 'expire': None, 'expire_secs': None},
+                                 "another_score": {"value": 123, 'expire': None, 'expire_secs': None},
+                                 "expired_value": {"value": 23,
+                                                   "expire": self.clock.get_datetime().timestamp() - 100,
+                                                   'expire_secs': 3600},
+                                 "not_expired_value": {"value": 24,
+                                                       "expire": self.clock.get_datetime().timestamp() + 100,
+                                                       'expire_secs': 3600},
+                                 "test1": {"value": 42, 'expire': None, 'expire_secs': None}},
                 }
 
     def testSystemInfoVariables(self):
@@ -89,13 +93,18 @@ class TestMachineVariables(MpfTestCase):
 
         self.assertEqual(123, self.machine.variables.get_machine_var("another_score"))
 
+        self.machine.variables.configure_machine_var("test3", expire_secs=100, persist=True)
+        self.machine.variables.set_machine_var("test3", "Hello")
+        ts = self.machine.clock.get_datetime().timestamp()
+
         self.advance_time_and_run(10)
 
         self.machine.variables.machine_var_data_manager._trigger_save.assert_called_with()
         self.assertEqual({
-                          'master_volume': {'value': 0.5, 'expire': None},
-                          'test1': {'value': 42, 'expire': None},
-                          'test2': {'value': '5', 'expire': None}},
+                          'master_volume': {'value': 0.5, 'expire': None, 'expire_secs': None},
+                          'test1': {'value': 42, 'expire': None, 'expire_secs': None},
+                          'test2': {'value': '5', 'expire': None, 'expire_secs': None},
+                          'test3': {'expire': ts + 100, 'expire_secs': 100, 'value': 'Hello'}},
                          self.machine.variables.machine_var_data_manager.data)
 
     def testVarSetAndGet(self):
@@ -111,11 +120,11 @@ class TestMachineVariables(MpfTestCase):
 class TestMalformedMachineVariables(MpfTestCase):
 
     def _get_mock_data(self):
-        return {"machine_vars": {"player2_score": {"value": 118208660},
-                                 "player3_score": {"value": 17789290},
+        return {"machine_vars": {"player2_score": {"value": 118208660, 'expire': None, 'expire_secs': None},
+                                 "player3_score": {"value": 17789290, 'expire': None, 'expire_secs': None},
                                  "player4_score": {"value": 3006600},
                                  "player5_score": 123,
-                                 "player6_score": {"asd": 3006600},
+                                 "player6_score": {"asd": 3006600, 'expire': None, 'expire_secs': None},
                                  "value": 0}}
 
     def testVarLoads(self):

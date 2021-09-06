@@ -78,6 +78,7 @@ if MYPY:   # pragma: no cover
     from mpf.devices.combo_switch import ComboSwitch    # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.score_queue import ScoreQueue      # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.spinner import Spinner      # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.blinkenlight import Blinkenlight   # pylint: disable-msg=cyclic-import,unused-import
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -199,6 +200,7 @@ class MachineController(LogMixin):
             self.combo_switches = {}                    # type: Dict[str, ComboSwitch]
             self.score_queues = {}                      # type: Dict[str, ScoreQueue]
             self.spinners = {}                          # type: Dict[str, Spinner]
+            self.blinkenlights = {}                     # type: Dict[str, Blinkenlight]
 
         self._set_machine_path()
 
@@ -411,7 +413,7 @@ class MachineController(LogMixin):
     def _load_machine_vars(self) -> None:
         """Load machine vars from data manager."""
         machine_var_data_manager = self.create_data_manager('machine_vars')
-        current_time = self.clock.get_time()
+        current_time = self.clock.get_datetime().timestamp()
 
         self.variables.load_machine_vars(machine_var_data_manager, current_time)
 

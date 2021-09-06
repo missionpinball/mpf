@@ -17,13 +17,12 @@ class PKONESwitch(SwitchPlatformInterface):
 
     """An PKONE input on a PKONE Extension board."""
 
-    __slots__ = ["log", "platform"]
+    __slots__ = ["log"]
 
     def __init__(self, config: SwitchConfig, number: PKONESwitchNumber, platform: "PKONEHardwarePlatform") -> None:
         """Initialise switch."""
-        super().__init__(config, number)
+        super().__init__(config, number, platform)
         self.log = logging.getLogger('PKONESwitch')
-        self.platform = platform
 
     def get_board_name(self):
         """Return PKONE Extension addr."""

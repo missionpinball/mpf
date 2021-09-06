@@ -1032,3 +1032,199 @@ class TestMultiBall(MpfGameTestCase):
         self.assertAvailableBallsOnPlayfield(1)
         # mb should end
         self.assertEventCalled("multiball_mb_placeholder_ended")
+
+    def testShootAgainHurryUpAndGracePeriod(self):
+        self.fill_troughs()
+        self.start_game()
+        self.assertAvailableBallsOnPlayfield(1)
+        self.mock_event("multiball_mb_alltimers_ended")
+        self.mock_event("multiball_mb_alltimers_shoot_again_ended")
+        self.mock_event("multiball_mb_alltimers_grace_period")
+        self.mock_event("multiball_mb_alltimers_hurry_up")
+
+        # start mb 30s shoot again, 10s hurry up, 5s grace
+        self.post_event("mb_alltimers_start")
+        self.advance_time_and_run(5)
+        self.assertAvailableBallsOnPlayfield(2)
+
+        # drain one ball
+        self.drain_one_ball()
+        self.advance_time_and_run(5)
+        # shoot again should bring it back
+        self.assertAvailableBallsOnPlayfield(2)
+        self.assertEventNotCalled("multiball_mb_alltimers_ended")
+        self.assertEventNotCalled("multiball_mb_alltimers_shoot_again_ended")
+        self.assertEventNotCalled("multiball_mb_alltimers_grace_period")
+        self.assertEventNotCalled("multiball_mb_alltimers_hurry_up")
+
+        #advance time to hurry up
+        self.advance_time_and_run(10)
+        self.assertEventCalled("multiball_mb_alltimers_hurry_up")
+        self.assertAvailableBallsOnPlayfield(2)
+        self.assertEventNotCalled("multiball_mb_alltimers_ended")
+        self.assertEventNotCalled("multiball_mb_alltimers_shoot_again_ended")
+        self.assertEventNotCalled("multiball_mb_alltimers_grace_period")
+
+        # drain one ball
+        self.drain_one_ball()
+        self.advance_time_and_run(5)
+        # shoot again should bring it back
+        self.assertAvailableBallsOnPlayfield(2)
+
+        # wait 7s for shoot again to end, but within grace period
+        self.advance_time_and_run(7)
+        self.assertEventCalled("multiball_mb_alltimers_grace_period")
+        self.assertEventNotCalled("multiball_mb_alltimers_ended")
+        self.assertEventNotCalled("multiball_mb_alltimers_shoot_again_ended")
+
+        # drain one ball after grace period has ended
+        self.advance_time_and_run(5)
+        self.drain_one_ball()
+        self.advance_time_and_run(5)
+        self.assertAvailableBallsOnPlayfield(1)
+        # mb should end
+        self.assertEventCalled("multiball_mb_alltimers_ended")
+
+    def testShootAgainModeEnd(self):
+        self.fill_troughs()
+        self.start_game()
+        self.assertAvailableBallsOnPlayfield(1)
+        self.mock_event("multiball_mb_mode5_ended")
+        self.mock_event("multiball_mb_mode5_shoot_again_ended")
+        self.mock_event("multiball_mb_mode5_grace_period")
+        self.mock_event("multiball_mb_mode5_hurry_up")
+
+        #start Mode5
+        self.post_event("start_mode5")
+
+        # start mb 30s shoot again, 10s hurry up, 5s grace
+        self.post_event("mb_mode5_start")
+        self.advance_time_and_run(5)
+        self.assertAvailableBallsOnPlayfield(2)
+        self.assertEventNotCalled("multiball_mb_mode5_ended")
+        self.assertEventNotCalled("multiball_mb_mode5_shoot_again_ended")
+        self.assertEventNotCalled("multiball_mb_mode5_grace_period")
+        self.assertEventNotCalled("multiball_mb_mode5_hurry_up")
+
+        #stop Mode5
+        self.post_event("stop_mode5")
+        self.advance_time_and_run(5)
+        self.assertEventNotCalled("multiball_mb_mode5_ended")
+        self.assertEventCalled("multiball_mb_mode5_shoot_again_ended")
+        self.assertEventCalled("multiball_mb_mode5_grace_period")
+        self.assertEventCalled("multiball_mb_mode5_hurry_up")
+
+        # drain one ball
+        self.drain_one_ball()
+        self.advance_time_and_run(5)
+        # shoot again should not bring it back
+        self.assertAvailableBallsOnPlayfield(1)
+        self.assertEventCalled("multiball_mb_mode5_ended")
+
+    def testShootAgainModeEndNoGracePeriodOrHurryUp(self):
+        self.fill_troughs()
+        self.start_game()
+        self.assertAvailableBallsOnPlayfield(1)
+        self.mock_event("multiball_mb_mode5_lean_ended")
+        self.mock_event("multiball_mb_mode5_lean_shoot_again_ended")
+        self.mock_event("multiball_mb_mode5_lean_grace_period")
+        self.mock_event("multiball_mb_mode5_lean_hurry_up")
+
+        #start Mode5
+        self.post_event("start_mode5")
+
+        # start mb 30s shoot again
+        self.post_event("mb_mode5_lean_start")
+        self.advance_time_and_run(5)
+        self.assertAvailableBallsOnPlayfield(2)
+        self.assertEventNotCalled("multiball_mb_mode5_lean_ended")
+        self.assertEventNotCalled("multiball_mb_mode5_lean_shoot_again_ended")
+        self.assertEventNotCalled("multiball_mb_mode5_lean_grace_period")
+        self.assertEventNotCalled("multiball_mb_mode5_lean_hurry_up")
+
+        #stop Mode5
+        self.post_event("stop_mode5")
+        self.advance_time_and_run(5)
+        self.assertEventNotCalled("multiball_mb_mode5_lean_ended")
+        self.assertEventCalled("multiball_mb_mode5_lean_shoot_again_ended")
+        self.assertEventNotCalled("multiball_mb_mode5_lean_grace_period")
+        self.assertEventNotCalled("multiball_mb_mode5_lean_hurry_up")
+
+        # drain one ball
+        self.drain_one_ball()
+        self.advance_time_and_run(5)
+        # shoot again should not bring it back
+        self.assertAvailableBallsOnPlayfield(1)
+        self.assertEventCalled("multiball_mb_mode5_lean_ended")
+        self.assertEventNotCalled("multiball_mb_mode5_lean_grace_period")
+        self.assertEventNotCalled("multiball_mb_mode5_lean_hurry_up")
+
+    def testAddABallSaver(self):
+        self.fill_troughs()
+        self.start_game()
+        self.assertAvailableBallsOnPlayfield(1)
+        self.mock_event("multiball_mb_add_a_ball_timers_ended")
+        self.mock_event("multiball_mb_add_a_ball_timers_shoot_again_ended")
+        self.mock_event("multiball_mb_add_a_ball_timers_grace_period")
+        self.mock_event("multiball_mb_add_a_ball_timers_hurry_up")
+        self.mock_event("ball_save_mb_add_a_ball_timers_timer_start")
+        self.mock_event("ball_save_mb_add_a_ball_timers_add_a_ball_timer_start")
+
+        # start mb 30s shoot again, 10s hurry up, 5s grace
+        self.post_event("mb_add_a_ball_timers_start")
+        self.advance_time_and_run(5)
+        self.assertAvailableBallsOnPlayfield(2)
+        self.assertEventCalled("ball_save_mb_add_a_ball_timers_timer_start")
+
+        # end ball save
+        self.advance_time_and_run(35)
+        self.assertEventCalled("multiball_mb_add_a_ball_timers_shoot_again_ended")
+
+        #add a ball - ball save 20, hurry up 5, grace 10
+        self.post_event("add_ball")
+        self.advance_time_and_run(5)
+        self.assertAvailableBallsOnPlayfield(3)
+        self.assertEventCalled("ball_save_mb_add_a_ball_timers_timer_start",1)
+        self.assertEventCalled("ball_save_mb_add_a_ball_timers_add_a_ball_timer_start")
+        self.assertEventNotCalled("multiball_mb_add_a_ball_timers_ended")
+        self.drain_one_ball()
+        self.advance_time_and_run(5)
+        self.assertAvailableBallsOnPlayfield(3)
+
+        #hurry up
+        self.advance_time_and_run(7)
+        self.assertEventCalled("multiball_mb_add_a_ball_timers_hurry_up")
+        self.drain_one_ball()
+        self.advance_time_and_run(5)
+        self.assertAvailableBallsOnPlayfield(3)
+        #grace period
+        self.assertEventCalled("multiball_mb_add_a_ball_timers_grace_period")
+        self.drain_one_ball()
+        self.advance_time_and_run(10)
+        self.assertAvailableBallsOnPlayfield(3)
+        self.assertEventCalled("multiball_mb_add_a_ball_timers_shoot_again_ended")
+
+        #drain out and mb should end
+        self.drain_one_ball()
+        self.drain_one_ball()
+        self.advance_time_and_run(5)
+        self.assertEventCalled("multiball_mb_add_a_ball_timers_ended")
+
+    def testAddABallSaverDuringShootAgain(self):
+        self.fill_troughs()
+        self.start_game()
+        self.assertAvailableBallsOnPlayfield(1)
+        self.mock_event("ball_save_mb_add_a_ball_timers_timer_start")
+        self.mock_event("ball_save_mb_add_a_ball_timers_add_a_ball_timer_start")
+
+        # start mb 30s shoot again, 10s hurry up, 5s grace
+        self.post_event("mb_add_a_ball_timers_start")
+        self.advance_time_and_run(5)
+        self.assertAvailableBallsOnPlayfield(2)
+        self.assertEventCalled("ball_save_mb_add_a_ball_timers_timer_start")
+        # add a ball
+        self.post_event("add_ball")
+        self.advance_time_and_run(5)
+        self.assertAvailableBallsOnPlayfield(3)
+        self.assertEventCalled("ball_save_mb_add_a_ball_timers_timer_start", 1)
+        self.assertEventNotCalled("ball_save_mb_add_a_ball_timers_add_a_ball_timer_start")

@@ -66,6 +66,17 @@ class MpfUnitTestFormatter(logging.Formatter):
         return "{} : {:.3f}".format(super().formatTime(record, datefmt), record.created_clock)
 
 
+def expect_startup_error():
+
+    """Tell MPF to expect an error."""
+
+    def catch_error_decorator(fn):
+        """Decorate function."""
+        fn.expect_startup_error = True
+        return fn
+    return catch_error_decorator
+
+
 def test_config(config_file):
 
     """Decorator to overwrite config file for one test."""
@@ -138,6 +149,7 @@ class MpfTestCase(unittest.TestCase):
 
         super().__init__(methodName)
         self.machine = None     # type: TestMachineController
+        self.startup_error = None
         self.machine_config_patches = dict()
         self.machine_config_patches['mpf'] = dict()
         self.machine_config_patches['mpf']['default_platform_hz'] = 100
@@ -554,10 +566,15 @@ class MpfTestCase(unittest.TestCase):
             except AttributeError:
                 pass
             if self._exception and 'exception' in self._exception:
-                raise self._exception['exception']
+                self.startup_error = self._exception['exception']
             elif self._exception:
-                raise Exception(self._exception, e)
-            raise e
+                self.startup_error = Exception(self._exception, e)
+            else:
+                self.startup_error = e
+            self._exception = None
+
+            if not getattr(getattr(self, self._testMethodName), "expect_startup_error", False):
+                raise self.startup_error
 
     def _initialise_machine(self):
         init = asyncio.ensure_future(self.machine.initialise())
@@ -910,11 +927,15 @@ class MpfTestCase(unittest.TestCase):
 
     def tearDown(self):
         """Tear down test."""
+        if self.startup_error:
+            self.restore_sys_path()
+            return
         if self._exception:
             try:
                 self.machine.shutdown()
             except:
                 pass
+            self.restore_sys_path()
 
             if self._exception and 'exception' in self._exception:
                 raise self._exception['exception']

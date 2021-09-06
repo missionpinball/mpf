@@ -1,6 +1,7 @@
 from mpf.core.platform import SwitchConfig
 from mpf.core.rgb_color import RGBColor
-from mpf.tests.MpfTestCase import MpfTestCase, MagicMock
+from mpf.exceptions.config_file_error import ConfigFileError
+from mpf.tests.MpfTestCase import MpfTestCase, MagicMock, test_config, expect_startup_error
 
 from mpf.tests.loop import MockSerial
 
@@ -134,15 +135,18 @@ class MockFastRgb(BaseMockFast):
             self.queue.append("RX:P")
             return True
 
+
 class MockFastNet(BaseMockFast):
     def __init__(self):
         super().__init__()
         self.type = "NET"
 
+
 class MockFastSeg(BaseMockFast):
     def __init__(self):
         super().__init__()
         self.type = "SEG"
+
 
 class TestFast(MpfTestCase):
     def get_config_file(self):
@@ -171,9 +175,10 @@ class TestFast(MpfTestCase):
             "WD:1": "WD:P"
         }
         super().tearDown()
-        self.assertFalse(self.net_cpu.expected_commands)
-        self.assertFalse(self.rgb_cpu.expected_commands)
-        self.assertFalse(self.dmd_cpu.expected_commands)
+        if not self.startup_error:
+            self.assertFalse(self.net_cpu.expected_commands)
+            self.assertFalse(self.rgb_cpu.expected_commands)
+            self.assertFalse(self.dmd_cpu.expected_commands)
 
     def setUp(self):
         self.expected_duration = 2
@@ -229,31 +234,32 @@ class TestFast(MpfTestCase):
         }
 
         super().setUp()
-        self.advance_time_and_run()
-        self.assertFalse(self.net_cpu.expected_commands)
-        self.assertFalse(self.rgb_cpu.expected_commands)
-        self.assertFalse(self.dmd_cpu.expected_commands)
-        self.assertFalse(self.seg_cpu.expected_commands)
+        if not self.startup_error:
+            self.advance_time_and_run()
+            self.assertFalse(self.net_cpu.expected_commands)
+            self.assertFalse(self.rgb_cpu.expected_commands)
+            self.assertFalse(self.dmd_cpu.expected_commands)
+            self.assertFalse(self.seg_cpu.expected_commands)
 
-        # test io board detection
-        self.assertEqual(4, len(self.machine.default_platform.io_boards))
-        self.assertEqual(32, self.machine.default_platform.io_boards[0].switch_count)
-        self.assertEqual(8, self.machine.default_platform.io_boards[0].driver_count)
-        self.assertEqual(8, self.machine.default_platform.io_boards[1].switch_count)
-        self.assertEqual(4, self.machine.default_platform.io_boards[1].driver_count)
-        self.assertEqual(16, self.machine.default_platform.io_boards[2].switch_count)
-        self.assertEqual(16, self.machine.default_platform.io_boards[2].driver_count)
-        self.assertEqual(16, self.machine.default_platform.io_boards[3].switch_count)
-        self.assertEqual(16, self.machine.default_platform.io_boards[3].driver_count)
+            # test io board detection
+            self.assertEqual(4, len(self.machine.default_platform.io_boards))
+            self.assertEqual(32, self.machine.default_platform.io_boards[0].switch_count)
+            self.assertEqual(8, self.machine.default_platform.io_boards[0].driver_count)
+            self.assertEqual(8, self.machine.default_platform.io_boards[1].switch_count)
+            self.assertEqual(4, self.machine.default_platform.io_boards[1].driver_count)
+            self.assertEqual(16, self.machine.default_platform.io_boards[2].switch_count)
+            self.assertEqual(16, self.machine.default_platform.io_boards[2].driver_count)
+            self.assertEqual(16, self.machine.default_platform.io_boards[3].switch_count)
+            self.assertEqual(16, self.machine.default_platform.io_boards[3].driver_count)
 
-        self.assertEqual("00.88", self.machine.variables.get_machine_var("fast_dmd_firmware"))
-        self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_dmd_model"))
-        self.assertEqual("00.89", self.machine.variables.get_machine_var("fast_rgb_firmware"))
-        self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_rgb_model"))
-        self.assertEqual("01.03", self.machine.variables.get_machine_var("fast_net_firmware"))
-        self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_net_model"))
-        self.assertEqual("00.10", self.machine.variables.get_machine_var("fast_seg_firmware"))
-        self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_seg_model"))
+            self.assertEqual("00.88", self.machine.variables.get_machine_var("fast_dmd_firmware"))
+            self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_dmd_model"))
+            self.assertEqual("00.89", self.machine.variables.get_machine_var("fast_rgb_firmware"))
+            self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_rgb_model"))
+            self.assertEqual("01.03", self.machine.variables.get_machine_var("fast_net_firmware"))
+            self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_net_model"))
+            self.assertEqual("00.10", self.machine.variables.get_machine_var("fast_seg_firmware"))
+            self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_seg_model"))
 
     def test_coils(self):
         self._test_pulse()
@@ -937,3 +943,15 @@ Update done.
         self.assertTrue(self.rgb_cpu.leds['97'][0:2] == self.rgb_cpu.leds['97'][2:4] == self.rgb_cpu.leds['97'][4:6])
         self.advance_time_and_run(2)
         self.assertEqual("646464", self.rgb_cpu.leds['97'])
+
+    @expect_startup_error()
+    @test_config("error_lights.yaml")
+    def test_light_errors(self):
+        self.assertIsInstance(self.startup_error, ConfigFileError)
+        self.assertEqual(7, self.startup_error.get_error_no())
+        self.assertEqual("light.test_led", self.startup_error.get_logger_name())
+        self.assertIsInstance(self.startup_error.__cause__, ConfigFileError)
+        self.assertEqual(9, self.startup_error.__cause__.get_error_no())
+        self.assertEqual("FAST", self.startup_error.__cause__.get_logger_name())
+        self.assertEqual("Light syntax is number-channel (but was \"3\") for light test_led.",
+                         self.startup_error.__cause__._message)

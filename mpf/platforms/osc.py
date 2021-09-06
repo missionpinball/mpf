@@ -116,7 +116,7 @@ class OscPlatform(LightsPlatform, SwitchPlatform):
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict) -> "SwitchPlatformInterface":
         """Config an OSC switch."""
-        switch = OscSwitch(config, str(number))
+        switch = OscSwitch(config, str(number), self)
         self.switches[str(number)] = switch
         return switch
 
