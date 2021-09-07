@@ -793,18 +793,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Return coil config section."""
         return "fast_coils"
 
-    def validate_coil_section(self, driver, config):
-        """Validate coil sections."""
-        return config
-
     @classmethod
     def get_switch_config_section(cls):
         """Return switch config section."""
         return "fast_switches"
-
-    def validate_switch_section(self, switch, config):
-        """Validate switch sections."""
-        return config
 
     def _check_switch_coil_combincation(self, switch, coil):
         switch_number = int(switch.hw_switch.number[0], 16)
