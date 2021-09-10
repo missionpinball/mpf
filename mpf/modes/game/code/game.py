@@ -517,7 +517,7 @@ class Game(AsyncMode):
         self.player.extra_balls -= 1
         '''player_var: extra_balls
 
-        desc: The number of extra balls which the player will be awarded after draining his ball.
+        desc: The number of remaining extra balls which the player will be awarded after draining his current ball.
         '''
         await self._run_ball(is_extra_ball=True)
 
