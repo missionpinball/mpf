@@ -131,10 +131,10 @@ class BcpInterface(MpfController):
         elif subcommand == "stop":
             await self._service_stop(client)
         elif subcommand == "list_switches":
+            values = kwargs.get("values") and kwargs["values"].split(",")
             self.machine.bcp.transport.send_to_client(client, "list_switches",
-                                                      switches=[(s[0], str(s[1].hw_switch.number), s[1].name,
-                                                                 s[1].state)
-                                                                for s in self.machine.service.get_switch_map()])
+                                                      switches=[self._switch_body(s[0], s[1], values) for s in
+                                                                self.machine.service.get_switch_map()])
         elif subcommand == "list_coils":
             values = kwargs.get("values") and kwargs["values"].split(",")
             self.machine.bcp.transport.send_to_client(client, "list_coils",
@@ -258,6 +258,20 @@ class BcpInterface(MpfController):
             "number": light.get_hw_numbers(),
         }
         return tuple(l[value] for value in values)
+
+    @staticmethod
+    def _switch_body(board, switch, values):
+        if not values:
+            return (board, str(switch.hw_switch.number), switch.name, switch.state)
+
+        s = {
+            "board": board,
+            "label": switch.label,
+            "name": switch.name,
+            "number": str(switch.hw_switch.number),
+            "state": switch.state
+        }
+        return tuple([s[value] for value in values])
 
     def _light_color(self, client, light_name, color_name):
         try:
