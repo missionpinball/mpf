@@ -481,10 +481,8 @@ class TestBcpInterface(MpfBcpTestCase):
         self.assertListEqual(
             [
                 ('list_lights', {'lights': [
-                    ('Virtual', ['led-1000-b', 'led-1000-g', 'led-1000-r'], 'l_test',
-                        "000000", 'Light One'),
-                    ('Virtual', ['led-1001-b', 'led-1001-g', 'led-1001-r'], 'l_test2',
-                        "000000", 'Other Light'),
+                    ('Virtual', ['led-1000-b', 'led-1000-g', 'led-1000-r'], 'l_test', '000000'),
+                    ('Virtual', ['led-1001-b', 'led-1001-g', 'led-1001-r'], 'l_test2', '000000'),
                 ]}),
             ],
             queue)

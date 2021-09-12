@@ -248,7 +248,7 @@ class BcpInterface(MpfController):
     @staticmethod
     def _light_body(board, light, values):
         if not values:
-            return (board, light.get_hw_numbers(), light.name, light.get_color(), light.label)
+            return (board, light.get_hw_numbers(), light.name, light.get_color())
 
         light_values = {
             "board": board,
