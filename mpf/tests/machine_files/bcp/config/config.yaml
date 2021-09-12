@@ -6,27 +6,38 @@ modes:
 
 switches:
     s_test:
-        number:
+        number: 1000
     s_test2:
-        number:
+        number: 1001
     s_start:
-        number:
+        number: 1002
         tags: start
     s_ball_switch1:
-        number:
+        number: 1003
+        label: Ball One
     s_ball_switch2:
-        number:
+        number: 1004
+        label: Ball Two
     s_ball_switch_launcher:
-        number:
+        number: 1005
+        label: Launcher
 
 game:
     balls_per_game: 3
 
 coils:
     eject_coil1:
-        number:
+        number: 1000
     eject_coil2:
-        number:
+        number: 1001
+
+lights:
+    l_test:
+        number: 1000
+        label: Light One
+    l_test2:
+        number: 1001
+        label: Other Light
 
 playfields:
     playfield:

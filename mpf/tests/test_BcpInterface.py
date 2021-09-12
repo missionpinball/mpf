@@ -451,7 +451,7 @@ class TestBcpInterface(MpfBcpTestCase):
         self.assertEqual(1, len(queue))
         self.assertListEqual(
             [
-                ('list_coils', {'coils': [('Virtual', '1000', 'eject_coil2'), ('Virtual', '1001', 'eject_coil1')]})
+                ('list_coils', {'coils': [('Virtual', '1000', 'eject_coil1'), ('Virtual', '1001', 'eject_coil2')]})
             ],
             queue)
 
@@ -462,6 +462,81 @@ class TestBcpInterface(MpfBcpTestCase):
         self.assertEqual(1, len(queue))
         self.assertListEqual(
             [
-                ('list_coils', {'coils': [('eject_coil2', '1000'),('eject_coil1', '1001')]})
+                ('list_coils', {'coils': [('eject_coil1', '1000'),('eject_coil2', '1001')]})
+            ],
+            queue)
+
+    def test_list_lights(self):
+        self.assertIn('mode1', self.machine.modes)
+        self.assertIn('mode2', self.machine.modes)
+
+        self._bcp_external_client.reset_and_return_queue()
+
+        # register monitor
+        self._bcp_external_client.send('service', { 'subcommand': 'list_lights'}) #, {'category': 'modes'})
+        self.advance_time_and_run()
+
+        queue = self._bcp_external_client.reset_and_return_queue()
+        self.assertEqual(1, len(queue))
+        self.assertListEqual(
+            [
+                ('list_lights', {'lights': [
+                    ('Virtual', ['led-1000-b', 'led-1000-g', 'led-1000-r'], 'l_test',
+                        "000000", 'Light One'),
+                    ('Virtual', ['led-1001-b', 'led-1001-g', 'led-1001-r'], 'l_test2',
+                        "000000", 'Other Light'),
+                ]}),
+            ],
+            queue)
+
+        self._bcp_external_client.send('service', { 'subcommand': 'list_lights', 'values': 'name,label'})
+        self.advance_time_and_run()
+
+        queue = self._bcp_external_client.reset_and_return_queue()
+        self.assertEqual(1, len(queue))
+        self.assertListEqual(
+            [
+                ('list_lights', {'lights': [('l_test', 'Light One'), ('l_test2', 'Other Light')]})
+            ],
+            queue)
+
+
+    def test_list_switches(self):
+        self.assertIn('mode1', self.machine.modes)
+        self.assertIn('mode2', self.machine.modes)
+
+        self._bcp_external_client.reset_and_return_queue()
+
+        # register monitor
+        self._bcp_external_client.send('service', { 'subcommand': 'list_switches'}) #, {'category': 'modes'})
+        self.advance_time_and_run()
+
+        queue = self._bcp_external_client.reset_and_return_queue()
+        self.assertEqual(1, len(queue))
+        self.assertListEqual(
+            [
+                ('list_switches', {'switches': [
+                    ('Virtual', '1000', 's_test', 0),
+                    ('Virtual', '1001', 's_test2', 0),
+                    ('Virtual', '1002', 's_start', 0),
+                    ('Virtual', '1003', 's_ball_switch1', 0),
+                    ('Virtual', '1004', 's_ball_switch2', 0),
+                    ('Virtual', '1005', 's_ball_switch_launcher', 0),
+                ]}),
+            ],
+            queue)
+
+        self._bcp_external_client.send('service', { 'subcommand': 'list_switches', 'values': 'number,label'})
+        self.advance_time_and_run()
+
+        queue = self._bcp_external_client.reset_and_return_queue()
+        self.assertEqual(1, len(queue))
+        self.assertListEqual(
+            [
+                ('list_switches', {'switches': [
+                    ('1000','%'),('1001','%'),('1002','%'),
+                    ('1003','Ball One'), ('1004', 'Ball Two'),
+                    ('1005', 'Launcher')
+                ]})
             ],
             queue)
