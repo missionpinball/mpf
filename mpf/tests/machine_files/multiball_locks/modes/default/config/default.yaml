@@ -19,3 +19,8 @@ multiball_locks:
     lock_devices: bd_lock_triple
     balls_to_lock: 3
     locked_ball_counting_strategy: virtual_only
+  lock_with_block:
+    lock_devices: bd_lock_block
+    balls_to_lock: 2
+    locked_ball_counting_strategy: virtual_only
+    blocking_facility: foo

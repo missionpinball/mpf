@@ -1,0 +1,8 @@
+#config_version=5
+mode:
+  start_events: start_blocking
+  priority: 1000
+
+blocking:
+  balldevice_bd_lock_block_ball_enter:
+    foo: 102
