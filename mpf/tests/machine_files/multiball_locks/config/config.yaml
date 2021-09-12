@@ -10,6 +10,8 @@ coils:
         number:
     eject_coil3:
         number:
+    eject_coil4:
+        number:
 
 switches:
     s_ball_switch1:
@@ -34,6 +36,10 @@ switches:
         number:
     s_lockt3:
         number:
+    s_lockb1:
+        number:
+    s_lockb2:
+        number:
 
 playfields:
     playfield:
@@ -53,6 +59,10 @@ ball_devices:
     bd_lock_triple:
         eject_coil: eject_coil3
         ball_switches: s_lockt1, s_lockt2, s_lockt3
+        eject_timeouts: 2s
+    bd_lock_block:
+        eject_coil: eject_coil4
+        ball_switches: s_lockb1, s_lockb2
         eject_timeouts: 2s
 
 multiballs:

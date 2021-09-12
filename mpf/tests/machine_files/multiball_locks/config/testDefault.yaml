@@ -3,3 +3,4 @@ config: config.yaml
 
 modes:
     - default
+    - blocking
