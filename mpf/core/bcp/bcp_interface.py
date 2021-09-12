@@ -237,41 +237,41 @@ class BcpInterface(MpfController):
         if not values:
             return (board, str(coil.hw_driver.number), coil.name)
 
-        c = {
+        coil_values = {
             "board": board,
             "name": coil.name,
             "label": coil.label,
             "number": coil.hw_driver.number
         }
-        return tuple(c[value] for value in values)
+        return tuple(coil_values[value] for value in values)
 
     @staticmethod
     def _light_body(board, light, values):
         if not values:
-            return (board, light.get_hw_numbers(), light.name, light.get_color(), light.label)
+            return (board, light.get_hw_numbers(), light.name, light.get_color())
 
-        l = {
+        light_values = {
             "board": board,
             "color": light.get_color(),
             "label": light.label,
             "name": light.name,
             "number": light.get_hw_numbers(),
         }
-        return tuple(l[value] for value in values)
+        return tuple(light_values[value] for value in values)
 
     @staticmethod
     def _switch_body(board, switch, values):
         if not values:
             return (board, str(switch.hw_switch.number), switch.name, switch.state)
 
-        s = {
+        switch_values = {
             "board": board,
             "label": switch.label,
             "name": switch.name,
             "number": str(switch.hw_switch.number),
             "state": switch.state
         }
-        return tuple([s[value] for value in values])
+        return tuple([switch_values[value] for value in values])
 
     def _light_color(self, client, light_name, color_name):
         try:
