@@ -35,7 +35,7 @@ class SpikeSwitch(SwitchPlatformInterface):
 
     def configure_debounce_and_recycle(self, enable_debounce, invert_switch, enable_recycle):
         """Configure debounce time."""
-        if self.platform.node_firmware_version[self.node] < 0x3100:
+        if self.platform.node_firmware_version[self.node] < 0x2800:
             return
 
         # the logic here is a bit tricky because we use debounce to implement recycle as well
@@ -497,8 +497,73 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         """
         pulse_value = int(pulse_settings.duration * self.ticks_per_sec[node] / 1000)
 
-        if self.node_firmware_version[node] >= 0x2800:
-            # length: 0x24
+        if self.node_firmware_version[node] >= 0x4100:
+            # firmware 0.65.0+ length: 0x2d = 45
+            # flippers (deadpool 0.65.0):
+            # \x88\x2d\x41\x05\xff\x33\x00\x1e\x28\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x59\x00
+            # \x00\x50\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x05\x06\x00\xd9\x00", 48
+            # \x88\x2d\x41\x00\xff\x33\x00\x1e\x28\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x58\x00
+            # \x00\x5f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x05\x06\x00\xd0\x00", 48
+            # pops:
+            # \x89\x2d\x41\x02\xff\x28\x00\x00\x00\x00\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00\x00\x00\x5c\x00
+            # \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x70\x00", 48
+            # \x89\x2d\x41\x03\xff\x28\x00\x00\x00\x00\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00\x00\x00\x5d\x00
+            # \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x6e\x00", 48
+            # \x89\x2d\x41\x04\xff\x28\x00\x00\x00\x00\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00\x00\x00\x5e\x00
+            # \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x6c\x00", 48
+            # slings:
+            # \x88\x2d\x41\x03\xff\x17\x00\x00\x00\x00\x00\x00\x00\x00\xf5\x00\x00\x00\x00\x00\x00\x00\x00\x00\x5e\x00
+            # \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x9e\x00", 48
+            # \x88\x2d\x41\x02\xff\x17\x00\x00\x00\x00\x00\x00\x00\x00\xf5\x00\x00\x00\x00\x00\x00\x00\x00\x00\x5d\x00
+            # \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xa0\x00", 48
+            self.send_cmd_async(node, SpikeNodebus.CoilSetReflex, bytearray(
+                [coil_index,                                                # coil [3]
+                 int(pulse_settings.power * 255),                           # pulse power (coil1)[4]
+                 pulse_value & 0xFF,                                        # pulse time lower (coil1) [5]
+                 (pulse_value & 0xFF00) >> 8,                               # pulse time upper (coil2) [6]
+                 int(hold_settings.power * 255) if hold_settings else 0,    # hold power (coil1) [7]
+                 hold_param1,                                               # some time lower (probably pulse coil2) [8]
+                 0x00,                                                      # some time upper (probably pulse coil2) [9]
+                 0x00,                                                      # some time lower (unknown) [10]
+                 0x00,                                                      # some time upper (unknown) [11]
+                 0,                                                         # a unknown time lower (1) [12]
+                 0,                                                         # a unknown time upper (1) [13]
+                 0,                                                         # a unknown time lower (2) [14]
+                 0,                                                         # a unknown time upper (2) [15]
+                 0,                                                         # a unknown time lower (3) [16]
+                 0,                                                         # a unknown time upper (3) [17]
+                 0,                                                         # a unknown time lower (4) [18]
+                 0,                                                         # a unknown time upper (4) [19]
+                 0,                                                         # a unknown time lower (5) [20]
+                 0,                                                         # a unknown time upper (5) [21]
+                 0,
+                 0,
+                 0x40 ^ enable_switch_index,                                # enable switch [22]
+                 0,                                                         # another switch? [23]
+                 0,                                                         # another switch? [24]
+                 0x40 ^ disable_switch_index if disable_switch_index is not None else 0,  # disable switch [25]
+                 0,                                                         # another switch? [26]
+                 0,                                                         # another switch? [27]
+                 0,                                                         # another switch? [28]
+                 0,                                                         # another switch? [29]
+                 0,                                                         # param5 [30]
+                 0,                                                         # param5 [31]
+                 0,                                                         # param5 [32]
+                 0,                                                         # param5 [33]
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 param1,                                                    # some time (param6) [34]
+                 param2,                                                    # param7 [35]
+                 param3                                                     # param8 [36]
+                 ]))
+
+        elif self.node_firmware_version[node] >= 0x2800:
+            # firmware 0.40.0+ length: 0x24 = 36
             self.send_cmd_async(node, SpikeNodebus.CoilSetReflex, bytearray(
                 [coil_index,                                                # coil [3]
                  int(pulse_settings.power * 255),                           # pulse power (coil1)[4]
@@ -1225,8 +1290,17 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         self.debug_log("Bridge version: %s", "".join("0x%02x " % b for b in bridge_version))
 
         # get bridge status
-        await self.send_cmd_raw([SpikeNodebus.GetBridgeStatus, 0, 1], 0)
-        bridge_status = await self._read_raw(1)
+        # spike seems to check if bridge_version is > 0.3.0 but that does not work for us as we saw
+        # 1.0.5 in older spike machines (i.e. GoT) which used the the old version
+        # we use 1.0.0 > version > 0.3.0 instead
+        version = bridge_version[0] << 16 + bridge_version[1] << 8 + bridge_version[2]
+        use_new_version = 0x010000 > version > 0x300
+        if use_new_version:
+            await self.send_cmd_raw([SpikeNodebus.GetBridgeStatus, 0, 4], 0)
+            bridge_status = await self._read_raw(4)
+        else:
+            await self.send_cmd_raw([SpikeNodebus.GetBridgeStatus, 0, 1], 0)
+            bridge_status = await self._read_raw(1)
         self.debug_log("Bridge status: %s", "".join("0x%02x " % b for b in bridge_status))
 
         for node in self._nodes:
@@ -1296,7 +1370,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             else:
                 self.warning_log("Did not get status for node %s", node)
 
-            if self.node_firmware_version[node] >= 0x3100:
+            if self.node_firmware_version[node] >= 0x2800:
                 self.debug_log("SetLEDMask, CoilSetMask, CoilSetOCTime, CoilSetOCBehavior, and SetNumLEDsInputs "
                                "on node %s", node)
 
@@ -1355,7 +1429,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetCoilCurrent, bytearray([0]), 12)
 
         for node, config in self.config['node_config'].items():
-            if self.node_firmware_version[node] >= 0x3100 and config['coil_priorities']:
+            if self.node_firmware_version[node] >= 0x2800 and config['coil_priorities']:
                 # configure coil priorities
                 priority_response = await self.send_cmd_and_wait_for_response(
                     node, SpikeNodebus.CoilSetPriority,
