@@ -683,7 +683,10 @@ class ConfigValidator:
             return RGBColor.hex_to_rgb(color_string)
 
         color = Util.string_to_list(color_string)
-        return int(color[0]), int(color[1]), int(color[2])
+        try:
+            return int(color[0]), int(color[1]), int(color[2])
+        except (IndexError, ValueError) as e:
+            self.validation_error(item, validation_failure_info, "Could not parse color: {}".format(e))
 
     def _validate_type_bool_int(self, item, validation_failure_info):
         if self._validate_type_bool(item, validation_failure_info):
