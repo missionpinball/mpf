@@ -472,12 +472,23 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             common_fade_ms = 0
         fade_time = int(common_fade_ms * self.ticks_per_sec[sequential_brightness_list[0][0].node] / 1000)
 
-        data = bytearray([fade_time])
-        for _, brightness, _ in sequential_brightness_list:
-            data.append(int(255 * brightness))
-
-        self.send_cmd_async(sequential_brightness_list[0][0].node,
-                            SpikeNodebus.SetLed + sequential_brightness_list[0][0].index, data)
+        if self.node_firmware_version[sequential_brightness_list[0][0].node] >= 0x4100:
+            # firmware 0.65.0+ changed the data format for SpikeNodebus.SetLed we use another command until we
+            # understand what happened there
+            # advantage of SpikeNodebus.SetRGBMulti: it supports LED index > 0x20
+            data = bytearray([sequential_brightness_list[0][0].index & 0xFF,
+                              (sequential_brightness_list[0][0].index & 0xFF00) >> 8,
+                              fade_time])
+            for _, brightness, _ in sequential_brightness_list:
+                data.append(int(255 * brightness))
+            self.send_cmd_async(sequential_brightness_list[0][0].node,
+                                SpikeNodebus.SetRGBMulti, data)
+        else:
+            data = bytearray([fade_time])
+            for _, brightness, _ in sequential_brightness_list:
+                data.append(int(255 * brightness))
+            self.send_cmd_async(sequential_brightness_list[0][0].node,
+                                SpikeNodebus.SetLed + sequential_brightness_list[0][0].index, data)
 
     # pylint: disable-msg=too-many-arguments
     def _write_rule(self, node, enable_switch_index, disable_switch_index, coil_index, pulse_settings: PulseSettings,
