@@ -67,6 +67,12 @@ class SpiBitBangPlatform(SwitchPlatform):
         self._read_task = self.machine.clock.loop.create_task(self._run())
         self._read_task.add_done_callback(Util.raise_exceptions)
 
+    def stop(self):
+        """Stop platform."""
+        if self._read_task:
+            self._read_task.cancel()
+            self._read_task = None
+
     async def read_spi(self, bits):
         """Read from SPI."""
         self.config['clock_pin'].disable()

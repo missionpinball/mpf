@@ -171,13 +171,17 @@ class SpikeDMD(DmdPlatformInterface):
         self.platform = platform
         self.data = None
         self.new_frame_event = asyncio.Event()
-        self.dmd_task = platform.machine.clock.loop.create_task(self._dmd_send())
+        self.dmd_task = platform.machine.clock.loop.create_task(self._dmd_send(), name="Spike DMD")
         self.dmd_task.add_done_callback(Util.raise_exceptions)
 
     def stop(self):
         """Stop dmd task."""
         if self.dmd_task:
             self.dmd_task.cancel()
+            try:
+                self.platform.machine.clock.loop.run_until_complete(self.dmd_task)
+            except asyncio.exceptions.CancelledError:
+                pass
             self.dmd_task = None
 
     def update(self, data: bytes):
@@ -278,7 +282,8 @@ class SpikeDriver(DriverPlatformInterface):
 
         self.trigger(power1, duration1, power2, duration2)
 
-        self._enable_task = self.platform.machine.clock.loop.create_task(self._enable(power2))
+        self._enable_task = self.platform.machine.clock.loop.create_task(self._enable(power2),
+                                                                         name="Spike Driver Enable")
         self._enable_task.add_done_callback(Util.raise_exceptions)
 
     async def _enable(self, power):
@@ -868,18 +873,19 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
         await self._connect_to_hardware(port, baud, flow_control=flow_control)
 
-        self._poll_task = self.machine.clock.loop.create_task(self._poll())
+        self._poll_task = self.machine.clock.loop.create_task(self._poll(), name="Spike Poll")
         self._poll_task.add_done_callback(Util.raise_exceptions)
 
-        self._sender_task = self.machine.clock.loop.create_task(self._sender())
+        self._sender_task = self.machine.clock.loop.create_task(self._sender(), name="Spike Sender")
         self._sender_task.add_done_callback(Util.raise_exceptions)
 
         if self.config['use_send_key']:
-            self._send_key_task = self.machine.clock.loop.create_task(self._send_key())
+            self._send_key_task = self.machine.clock.loop.create_task(self._send_key(), name="Spike Send Key")
             self._send_key_task.add_done_callback(Util.raise_exceptions)
 
         if self.config['periodically_query_nodes']:
-            self._query_nodes_task = self.machine.clock.loop.create_task(self._query_status_and_coil_current())
+            self._query_nodes_task = self.machine.clock.loop.create_task(self._query_status_and_coil_current(),
+                                                                         name="Spike Node Query")
             self._query_nodes_task.add_done_callback(Util.raise_exceptions)
 
         self._light_system = PlatformBatchLightSystem(self.machine.clock, self._send_multiple_light_update,
