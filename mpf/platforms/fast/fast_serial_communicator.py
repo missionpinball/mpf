@@ -77,16 +77,17 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
     def stop(self):
         """Stop and shut down this serial connection."""
-        self.write_task.cancel()
         super().stop()
+        if self.write_task:
+            self.write_task.cancel()
+            self.write_task = None
 
     async def _read_with_timeout(self, timeout):
-        msg_raw = await asyncio.wait([self.readuntil(b'\r')], timeout=timeout)
-        if not msg_raw[0]:
-            msg_raw[1].pop().cancel()
+        try:
+            msg_raw = await asyncio.wait_for(self.readuntil(b'\r'), timeout=timeout)
+        except asyncio.exceptions.TimeoutError:
             return ""
-        element = msg_raw[0].pop()
-        return (await element).decode()
+        return msg_raw.decode()
 
     async def _identify_connection(self):
         """Identify which processor this serial connection is talking to."""
