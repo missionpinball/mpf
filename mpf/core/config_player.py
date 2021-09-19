@@ -1,6 +1,7 @@
 """Base class used for things that "play" from the config files, such as WidgetPlayer, SlidePlayer, etc."""
 import abc
 import asyncio
+import re
 from functools import partial
 from typing import List
 
@@ -8,6 +9,7 @@ from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.core.logging import LogMixin
 from mpf.exceptions.config_file_error import ConfigFileError
+from mpf.core.placeholder_manager import ConditionalEvent
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -104,6 +106,15 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
             validated_config[event] = self.validate_config_entry(settings, event)
 
         return validated_config
+
+    def _parse_and_validate_conditional(self, key, name, *, allow_brackets=False) -> ConditionalEvent:
+        """Parse and validate conditional variable."""
+        var_conditional_event = self.machine.placeholder_manager.parse_conditional_template(key)
+        regex_condition = r'^[()\.0-9a-zA-Z_-]+$' if allow_brackets else r'^[0-9a-zA-Z_-]+$'
+        if not bool(re.match(regex_condition, var_conditional_event.name)):
+            self.raise_config_error("Variable may only contain letters, numbers, dashes and underscores. "
+                                    "Var: {} Name: {}".format(key, var_conditional_event.name), 4, context=name)
+        return var_conditional_event
 
     def validate_config_entry(self, settings, name):
         """Validate one entry of this player."""
