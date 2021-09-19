@@ -289,7 +289,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         if self._late_init_futures:
             await asyncio.wait(self._late_init_futures)
 
-        self.event_task = self.machine.clock.loop.create_task(self._poll_events())
+        self.event_task = self.machine.clock.loop.create_task(self._poll_events(), name="P-Roc Poll")
         self.event_task.add_done_callback(Util.raise_exceptions)
         self._light_system.start()
 
@@ -310,8 +310,12 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
     def stop(self):
         """Stop proc."""
+        super().stop()
         if self._light_system:
             self._light_system.stop()
+        if self.event_task:
+            self.event_task.cancel()
+            self.event_task = None
         if self.proc_process and self.proc_process_instance:
             self.run_proc_cmd_sync("_sync", -1)
             self.proc_process_instance.call_soon_threadsafe(self.proc_process.stop)

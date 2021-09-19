@@ -155,6 +155,9 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     def stop(self):
         """Stop hardware and close connections."""
+        if self._light_system:
+            self._light_system.stop()
+
         for task in self._poll_task.values():
             task.cancel()
 
