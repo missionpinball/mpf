@@ -174,6 +174,12 @@ class SpikeDMD(DmdPlatformInterface):
         self.dmd_task = platform.machine.clock.loop.create_task(self._dmd_send())
         self.dmd_task.add_done_callback(Util.raise_exceptions)
 
+    def stop(self):
+        """Stop dmd task."""
+        if self.dmd_task:
+            self.dmd_task.cancel()
+            self.dmd_task = None
+
     def update(self, data: bytes):
         """Remember the last frame data."""
         self.data = data
@@ -1013,6 +1019,9 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
     def stop(self):
         """Stop hardware and close connections."""
+        if self.dmd:
+            self.dmd.stop()
+
         if self._light_system:
             self._light_system.stop()
         if self._poll_task:
