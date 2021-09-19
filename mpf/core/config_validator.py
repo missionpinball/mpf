@@ -9,6 +9,7 @@ from copy import deepcopy
 from typing import Any
 from typing import Dict
 
+from mpf.core.config_spec_loader import ConfigSpecLoader
 from mpf.core.rgb_color import NAMED_RGB_COLORS, RGBColor
 from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.file_interfaces.yaml_interface import YamlInterface
@@ -101,29 +102,12 @@ class ConfigValidator:
             self.config_spec['_mode_settings'] = {}
         if mode_string not in self.config_spec['_mode_settings']:
             if isinstance(config_spec, dict):
-                self.config_spec['_mode_settings'][mode_string] = self._process_config_spec(config_spec, mode_string)
+                self.config_spec['_mode_settings'][mode_string] = \
+                    ConfigSpecLoader.process_config_spec(config_spec, mode_string)
             else:
                 config = YamlInterface.process(config_spec)
-                self.config_spec['_mode_settings'][mode_string] = self._process_config_spec(config, mode_string)
-
-    def _process_config_spec(self, spec, path):
-        if not isinstance(spec, dict):
-            raise AssertionError("Expected a dict at: {} {}".format(path, spec))
-
-        for element, value in spec.items():
-            if element.startswith("__"):
-                spec[element] = value
-            elif isinstance(value, str):
-                if value == "ignore":
-                    spec[element] = value
-                else:
-                    spec[element] = value.split('|')
-                    if len(spec[element]) != 3:
-                        raise AssertionError("Format incorrect: {}".format(value))
-            else:
-                spec[element] = self._process_config_spec(value, path + ":" + element)
-
-        return spec
+                self.config_spec['_mode_settings'][mode_string] = \
+                    ConfigSpecLoader.process_config_spec(config, mode_string)
 
     def get_config_spec(self):
         """Return config spec."""
