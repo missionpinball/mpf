@@ -24,6 +24,7 @@ class LightController(MpfController):
     def __init__(self, machine: MachineController) -> None:
         """Initialise lights controller."""
         super().__init__(machine)
+        self.brightness_factor = 1.0
 
         # Generate and add color correction profiles to the machine
         self.light_color_correction_profiles = dict()       # type: Dict[str, RGBColorCorrectionProfile]
@@ -41,6 +42,8 @@ class LightController(MpfController):
     def _update_brightness(self, *args):
         """Update brightness factor."""
         del args
+        if self.machine.stop_future.done():
+            return
         self.brightness_factor, future = self._brightness_template.evaluate_and_subscribe([])
         future.add_done_callback(self._update_brightness)
 
