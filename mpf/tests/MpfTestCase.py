@@ -499,8 +499,8 @@ class MpfTestCase(unittest.TestCase):
             loop.stop()
         except RuntimeError:
             pass
-
-        self._exception = context
+        if not self._exception:
+            self._exception = context
 
     def setUp(self):
         """Setup test."""
@@ -960,6 +960,12 @@ class MpfTestCase(unittest.TestCase):
 
         self.restore_sys_path()
         events.set_event_loop(None)
+
+        if self._exception:
+            if self._exception and 'exception' in self._exception:
+                raise self._exception['exception']
+            elif self._exception:
+                raise Exception(self._exception)
 
     @staticmethod
     def add_to_config_validator(machine, key, new_dict):
