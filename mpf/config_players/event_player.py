@@ -25,18 +25,14 @@ class EventPlayer(FlatConfigPlayer):
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Post (delayed) events."""
         for event, s in settings.items():
-            s = deepcopy(s)
-            event_dict = self.machine.placeholder_manager.parse_conditional_template(event)
-
-            if event_dict.condition and not event_dict.condition.evaluate(kwargs):
+            if s["condition"] and not s["condition"].evaluate(kwargs):
                 continue
 
-            if event_dict.number:
-                delay = Util.string_to_ms(event_dict.number)
-                self.delay.add(callback=self._post_event, ms=delay,
-                               event=event_dict.name, s=s, **kwargs)
+            if s["number"] is not None:
+                self.delay.add(callback=self._post_event, ms=s["number"],
+                               event=event, priority=s["priority"], params=s["params"], **kwargs)
             else:
-                self._post_event(event_dict.name, s, **kwargs)
+                self._post_event(event, s["priority"], s["params"], **kwargs)
 
     # pylint: disable-msg=too-many-arguments
     def handle_subscription_change(self, value, settings, priority, context, key):
@@ -51,25 +47,41 @@ class EventPlayer(FlatConfigPlayer):
             return
 
         for event, s in settings.items():
-            s = deepcopy(s)
-            event_dict = self.machine.placeholder_manager.parse_conditional_template(event)
-
-            if event_dict.condition and not event_dict.condition.evaluate({}):
+            if s["condition"] and not s["condition"].evaluate({}):
                 continue
 
-            if event_dict.number:
-                delay = Util.string_to_ms(event_dict.number)
-                self.delay.add(callback=self._post_event, ms=delay,
-                               event=event_dict.name, s=s)
+            if s["number"] is not None:
+                self.delay.add(callback=self._post_event, ms=s["number"],
+                               event=event, priority=s["priority"], params=s["params"])
             else:
-                self._post_event(event_dict.name, s)
+                self._post_event(event, s["priority"], s["params"])
 
-    def _post_event(self, event, s, **kwargs):
-        event_name_placeholder = TextTemplate(self.machine, event.replace("(", "{").replace(")", "}"))
-        for key, param in s.items():
+    def _post_event(self, event, priority, params, **kwargs):
+        if "(" in event:
+            # TODO: move this to parsing time
+            event_name_placeholder = TextTemplate(self.machine, event.replace("(", "{").replace(")", "}"))
+            event = event_name_placeholder.evaluate(kwargs)
+        for key, param in params.items():
             if isinstance(param, dict):
-                s[key] = self._evaluate_event_param(param, kwargs)
-        self.machine.events.post(event_name_placeholder.evaluate(kwargs), **s)
+                params = deepcopy(params)
+                # TODO: move this to parsing time
+                params[key] = self._evaluate_event_param(param, kwargs)
+        self.machine.events.post(event, priority=priority, **params)
+
+    def validate_config_entry(self, settings, name):
+        """Validate player and expand placeholders."""
+        config = super().validate_config_entry(settings, name)
+        final_config = {}
+        for event, s in config.items():
+            var = self._parse_and_validate_conditional(event, name, allow_brackets=True)
+            final_config[var.name] = {
+                "condition": var.condition,
+                "number": Util.string_to_ms(var.number) if var.number else None,
+                "priority": s["priority"],
+                "params": {k: v for k, v in s.items() if k != "priority"}
+            }
+
+        return final_config
 
     def _evaluate_event_param(self, param, kwargs):
         if param.get("type") == "float":
