@@ -253,6 +253,9 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
             except asyncio.CancelledError:
                 return
 
+        if self.machine.stop_future.done():
+            return
+
         value, subscription = template.evaluate_and_subscribe([])
         subscription_list[template] = subscription
         subscription.add_done_callback(
