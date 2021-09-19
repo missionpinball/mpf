@@ -37,7 +37,7 @@ class TestModesConfigValidation(MpfTestCase):
         with self.assertRaises(AssertionError) as context:
             super(TestModesConfigValidation, self).setUp()
 
-        self.loop.close()
+        self.loop.close(ignore_running_tasks=True)
 
         self.maxDiff = None
         self.assertEqual('Config File Error in ConfigValidator: Your config contains a value for the setting '
@@ -58,7 +58,7 @@ class TestModesConfigValidation(MpfTestCase):
         with self.assertRaises(AssertionError) as context:
             super(TestModesConfigValidation, self).setUp()
 
-        self.loop.close()
+        self.loop.close(ignore_running_tasks=True)
 
         self.assertEqual("No config found for mode 'mode_without_config'. MPF expects the config at "
                          "'modes/mode_without_config/config/mode_without_config.yaml' inside your machine folder.",

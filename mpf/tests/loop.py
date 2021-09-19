@@ -276,6 +276,14 @@ class TimeTravelLoop(base_events.BaseEventLoop):
         self.reset_counters()
         self._wait_for_external_executor = False
 
+    def close(self, ignore_running_tasks=False) -> None:
+        if not ignore_running_tasks:
+            open_tasks = [t for t in asyncio.all_tasks(loop=self)
+                          if (not t.done() and not isinstance(t.get_coro(), asyncio.Lock))]
+            if open_tasks:
+                raise AssertionError("There are still open tasks: {}".format(open_tasks))
+        super().close()
+
     def time(self):
         return self._time
 
