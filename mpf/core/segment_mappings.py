@@ -154,7 +154,7 @@ class BcdSegments(Segment):
 
 
 BCD_SEGMENTS = {
-    None: BcdSegments(dp=0, x3=0, x2=0, x1=0, x0=0, char="not mappable char"),
+    None: BcdSegments(dp=0, x3=0, x2=0, x1=0, x0=0, char="?"),
     33: BcdSegments(dp=1, x3=0, x2=0, x1=0, x0=1, char="!"),    # 1 with dot
 
     48: BcdSegments(dp=0, x3=0, x2=0, x1=0, x0=0, char="0"),
@@ -224,8 +224,8 @@ class SevenSegments(Segment):
 
 
 SEVEN_SEGMENTS = {
-    None: SevenSegments(dp=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="not mappable char"),
-    32: SevenSegments(dp=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="(space)"),
+    None: SevenSegments(dp=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="?"),
+    32: SevenSegments(dp=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char=" "),
     33: SevenSegments(dp=1, g=0, f=0, e=0, d=0, c=1, b=1, a=0, char="!"),
     34: SevenSegments(dp=0, g=0, f=1, e=0, d=0, c=0, b=1, a=0, char="\""),
     35: SevenSegments(dp=0, g=1, f=1, e=1, d=1, c=1, b=1, a=0, char="#"),
@@ -353,8 +353,8 @@ class EightSegments(Segment):
 
 
 EIGHT_SEGMENTS = {
-    None: EightSegments(dp=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="not mappable char"),
-    32: EightSegments(dp=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="(space)"),
+    None: EightSegments(dp=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="?"),
+    32: EightSegments(dp=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char=" "),
     33: EightSegments(dp=1, h=0, g=0, f=0, e=0, d=0, c=1, b=1, a=0, char="!"),
     34: EightSegments(dp=0, h=0, g=0, f=1, e=0, d=0, c=0, b=1, a=0, char="\""),
     35: EightSegments(dp=0, h=0, g=1, f=1, e=1, d=1, c=1, b=1, a=0, char="#"),
@@ -509,8 +509,8 @@ class FourteenSegments(Segment):
 
 FOURTEEN_SEGMENTS = {
     None: FourteenSegments(dp=0, l=0, m=0, n=0, k=0, j=0, h=0, g2=0, g1=0, f=0, e=0, d=0, c=0, b=0, a=0,    # noqa: E741
-                           char="not mappable char"),
-    32: FourteenSegments(dp=0, l=0, m=0, n=0, k=0, j=0, h=0, g2=0, g1=0, f=0, e=0, d=0, c=0, b=0, a=0, char="(space)"), # noqa: E741
+                           char="?"),
+    32: FourteenSegments(dp=0, l=0, m=0, n=0, k=0, j=0, h=0, g2=0, g1=0, f=0, e=0, d=0, c=0, b=0, a=0, char=" "),   # noqa: E741
     33: FourteenSegments(dp=1, l=0, m=0, n=0, k=0, j=0, h=0, g2=0, g1=0, f=0, e=0, d=0, c=1, b=1, a=0, char="!"),   # noqa: E741
     34: FourteenSegments(dp=0, l=0, m=0, n=0, k=0, j=1, h=0, g2=0, g1=0, f=0, e=0, d=0, c=0, b=1, a=0, char="\""),  # noqa: E741
     35: FourteenSegments(dp=0, l=0, m=1, n=0, k=0, j=1, h=0, g2=1, g1=1, f=0, e=0, d=1, c=1, b=1, a=0, char="#"),   # noqa: E741
@@ -644,9 +644,8 @@ class SixteenSegments(Segment):
 
 SIXTEEN_SEGMENTS = {
     None: SixteenSegments(dp=0, u=0, t=0, s=0, r=0, p=0, n=0, m=0, k=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0,
-                          char="not mappable char"),
-    32: SixteenSegments(dp=0, u=0, t=0, s=0, r=0, p=0, n=0, m=0, k=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0,
-                        char="(space)"),
+                          char="?"),
+    32: SixteenSegments(dp=0, u=0, t=0, s=0, r=0, p=0, n=0, m=0, k=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char=" "),
     33: SixteenSegments(dp=1, u=0, t=0, s=0, r=0, p=0, n=0, m=0, k=0, h=0, g=0, f=0, e=0, d=1, c=1, b=0, a=0, char="!"),
     34: SixteenSegments(dp=0, u=0, t=0, s=0, r=0, p=0, n=0, m=1, k=0, h=0, g=0, f=0, e=0, d=0, c=1, b=0, a=0,
                         char="\""),
