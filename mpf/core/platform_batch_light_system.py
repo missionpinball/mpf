@@ -79,9 +79,10 @@ class PlatformBatchLightSystem:
 
     def start(self):
         """Start light system."""
-        self.update_task = self.clock.loop.create_task(self._send_updates())
+        self.update_task = self.clock.loop.create_task(self._send_updates(), name="Batch Light System Updater")
         self.update_task.add_done_callback(Util.raise_exceptions)
-        self.scheduler_task = self.clock.loop.create_task(self._schedule_updates())
+        self.scheduler_task = self.clock.loop.create_task(self._schedule_updates(),
+                                                          name="Batch Light System Scheduler")
         self.scheduler_task.add_done_callback(Util.raise_exceptions)
 
     def stop(self):
@@ -103,8 +104,10 @@ class PlatformBatchLightSystem:
             self.dirty_lights_changed.set()
 
             if self.dirty_schedule:
-                await asyncio.wait([self.schedule_changed.wait()],
-                                   timeout=self.dirty_schedule[0][0] - run_time, return_when=asyncio.FIRST_COMPLETED)
+                try:
+                    await asyncio.wait_for(self.schedule_changed.wait(), self.dirty_schedule[0][0] - run_time)
+                except asyncio.exceptions.TimeoutError:
+                    pass
             else:
                 await self.schedule_changed.wait()
 
