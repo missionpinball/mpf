@@ -25,7 +25,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
     show_section = None                 # type: str
     machine_collection_name = None      # type: str
 
-    __slots__ = ["device_collection", "machine", "mode_event_keys", "instances"]
+    __slots__ = ["device_collection", "machine", "mode_event_keys", "instances", "_global_keys"]
 
     def __init__(self, machine):
         """Initialise config player."""
@@ -33,10 +33,13 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         self.device_collection = None
 
         self.machine = machine      # type: MachineController
+        self._global_keys = ({}, {})
 
         # MPF only
         if hasattr(self.machine, "show_controller") and self.show_section:
             self.machine.show_controller.show_players[self.show_section] = self
+
+        self.machine.events.add_handler("shutdown", self._shutdown)
 
         self._add_handlers()
 
@@ -44,6 +47,11 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
 
         self.mode_event_keys = dict()
         self.instances = {'_global': {self.config_file_section: {}}}
+
+    def _shutdown(self, **kwargs):
+        """Remove global players."""
+        del kwargs
+        self.unload_player_events(self._global_keys)
 
     def _add_handlers(self):
         self.machine.events.add_handler('init_phase_1', self._initialize_mode_handlers, priority=20)
@@ -82,8 +90,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
                 self.validate_config(
                     self.machine.config[self.config_file_section]))
 
-            self.register_player_events(
-                self.machine.config[self.config_file_section])
+            self._global_keys = self.register_player_events(self.machine.config[self.config_file_section])
 
     def validate_config(self, config):
         """Validate this player's section of a config file (either a machine-wide config or a mode config).
