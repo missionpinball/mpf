@@ -97,7 +97,7 @@ class LightController(MpfController):
 
     async def _monitor_update_lights(self):
         colors = {}
-        while True:
+        while not self.machine.is_shutting_down:
             for light in self.machine.lights.values():
                 color = light.get_color()
                 old = colors.get(light, None)
