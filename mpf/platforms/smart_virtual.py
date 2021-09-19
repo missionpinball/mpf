@@ -211,6 +211,9 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
         self.result = result
 
     def _perform_action(self):
+        if self.machine.is_shutting_down:
+            self.log.debug("Not doing anything during shutdown")
+            return
         self.log.debug("Removing ball from device %s", self.device.name)
 
         if not self.device.balls:
