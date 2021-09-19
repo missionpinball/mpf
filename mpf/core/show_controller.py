@@ -104,6 +104,7 @@ class ShowController(MpfController):
                 # would break things which rely on this. could be implemented here
                 pass
             elif old_instance.show_config != config:
+                # show_config changed so show needs to be replaced
                 pass
             elif start_step is None and not config.manual_advance:
                 return old_instance
