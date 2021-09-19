@@ -320,7 +320,6 @@ SEVEN_SEGMENTS = {
     124: SevenSegments(dp=0, g=0, f=1, e=1, d=0, c=0, b=0, a=0, char="|"),
     125: SevenSegments(dp=0, g=1, f=1, e=1, d=0, c=0, b=0, a=0, char="}"),
     126: SevenSegments(dp=0, g=0, f=0, e=0, d=0, c=0, b=0, a=1, char="~"),
-    127: SevenSegments(dp=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="(del)"),
 }
 
 
@@ -449,7 +448,6 @@ EIGHT_SEGMENTS = {
     124: EightSegments(dp=0, h=1, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="|"),
     125: EightSegments(dp=0, h=0, g=1, f=1, e=1, d=0, c=0, b=0, a=0, char="}"),
     126: EightSegments(dp=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=1, char="~"),
-    127: EightSegments(dp=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0, char="(del)"),
 }
 
 
@@ -605,7 +603,6 @@ FOURTEEN_SEGMENTS = {
     124: FourteenSegments(dp=0, l=0, m=1, n=0, k=0, j=1, h=0, g2=0, g1=0, f=0, e=0, d=0, c=0, b=0, a=0, char="|"),  # noqa: E741
     125: FourteenSegments(dp=0, l=1, m=0, n=0, k=1, j=0, h=0, g2=1, g1=0, f=0, e=0, d=1, c=0, b=0, a=1, char="}"),  # noqa: E741
     126: FourteenSegments(dp=0, l=0, m=0, n=1, k=1, j=0, h=0, g2=1, g1=1, f=0, e=0, d=0, c=0, b=0, a=0, char="~"),  # noqa: E741
-    127: FourteenSegments(dp=0, l=0, m=0, n=0, k=0, j=0, h=0, g2=0, g1=0, f=0, e=0, d=0, c=0, b=0, a=0, char="(del)"),  # noqa: E741
 }
 
 
@@ -769,12 +766,6 @@ SIXTEEN_SEGMENTS = {
                          char="}"),
     126: SixteenSegments(dp=0, u=1, t=1, s=0, r=0, p=1, n=1, m=0, k=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0,
                          char="~"),
-    127: SixteenSegments(dp=0, u=0, t=0, s=0, r=0, p=0, n=0, m=0, k=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0,
-                         char="(del)"),
-
-
-    160: SixteenSegments(dp=0, u=0, t=0, s=0, r=0, p=0, n=0, m=0, k=0, h=0, g=0, f=0, e=0, d=0, c=0, b=0, a=0,
-                         char="(nbsp)"),
     161: SixteenSegments(dp=0, u=0, t=0, s=0, r=0, p=0, n=0, m=0, k=0, h=1, g=1, f=0, e=0, d=0, c=0, b=1, a=0,
                          char="¡"),
     162: SixteenSegments(dp=0, u=1, t=0, s=0, r=0, p=1, n=0, m=1, k=0, h=1, g=0, f=0, e=0, d=0, c=0, b=1, a=1,
