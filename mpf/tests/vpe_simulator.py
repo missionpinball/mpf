@@ -27,8 +27,8 @@ class VpeSimulation:
         configuration = platform_pb2.MachineState(
             initial_switch_states=self.switches)
         command_stream = service.Start(configuration, None)
-        self._command_task = asyncio.create_task(self.read_commands(command_stream))
-        self._switch_task = asyncio.create_task(service.SendSwitchChanges(self.switch_changes(), None))
+        self._command_task = asyncio.ensure_future(self.read_commands(command_stream))
+        self._switch_task = asyncio.ensure_future(service.SendSwitchChanges(self.switch_changes(), None))
 
     def stop(self):
         self._command_task.cancel()
