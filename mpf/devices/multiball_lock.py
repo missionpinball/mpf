@@ -151,14 +151,17 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
     def _register_handlers(self):
         priority = (self.mode.priority if self.mode else 0) + \
             self.config['priority']
+        blocking_facility = self.config['blocking_facility']
         # register on ball_enter of lock_devices
         for device in self.lock_devices:
             self.machine.events.add_handler(
                 'balldevice_' + device.name + '_ball_enter',
-                self._lock_ball, device=device, priority=priority)
+                self._lock_ball, device=device, priority=priority,
+                blocking_facility=blocking_facility)
             self.machine.events.add_handler(
                 'balldevice_' + device.name + '_ball_entered',
-                self._post_events, device=device, priority=priority)
+                self._post_events, device=device, priority=priority,
+                blocking_facility=blocking_facility)
 
     def _unregister_handlers(self):
         # unregister ball_enter handlers
