@@ -180,7 +180,7 @@ class SpikeDMD(DmdPlatformInterface):
             self.dmd_task.cancel()
             try:
                 self.platform.machine.clock.loop.run_until_complete(self.dmd_task)
-            except asyncio.exceptions.CancelledError:
+            except asyncio.CancelledError:
                 pass
             self.dmd_task = None
 
