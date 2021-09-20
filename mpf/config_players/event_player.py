@@ -73,13 +73,21 @@ class EventPlayer(FlatConfigPlayer):
         config = super().validate_config_entry(settings, name)
         final_config = {}
         for event, s in config.items():
-            var = self._parse_and_validate_conditional(event, name, allow_brackets=True)
-            final_config[var.name] = {
-                "condition": var.condition,
-                "number": Util.string_to_ms(var.number) if var.number else None,
-                "priority": s["priority"],
-                "params": {k: v for k, v in s.items() if k != "priority"}
-            }
+            if "(" in event:
+                final_config[event] = {
+                    "condition": None,
+                    "number": None,
+                    "priority": s["priority"],
+                    "params": {k: v for k, v in s.items() if k != "priority"}
+                }
+            else:
+                var = self._parse_and_validate_conditional(event, name)
+                final_config[var.name] = {
+                    "condition": var.condition,
+                    "number": Util.string_to_ms(var.number) if var.number else None,
+                    "priority": s["priority"],
+                    "params": {k: v for k, v in s.items() if k != "priority"}
+                }
 
         return final_config
 
