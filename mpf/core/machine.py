@@ -758,7 +758,7 @@ class MachineController(LogMixin):
 
         # this is needed to properly close all sockets
         try:
-            self.clock.loop.run_until_complete(self._stop_tasks(asyncio.tasks.all_tasks(loop=self.clock.loop)))
+            self.clock.loop.run_until_complete(self._stop_tasks(asyncio.Task.all_tasks(loop=self.clock.loop)))
         except RuntimeError:
             print("Failed to stop all tasks")
         self.clock.loop.stop()

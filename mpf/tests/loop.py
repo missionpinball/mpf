@@ -278,7 +278,7 @@ class TimeTravelLoop(base_events.BaseEventLoop):
 
     def close(self, ignore_running_tasks=False) -> None:
         if not ignore_running_tasks:
-            open_tasks = [t for t in asyncio.tasks.all_tasks(loop=self)
+            open_tasks = [t for t in asyncio.Task.all_tasks(loop=self)
                           if (not t.done() and not isinstance(t.get_coro(), asyncio.Lock))]
             if open_tasks:
                 raise AssertionError("There are still open tasks: {}".format(open_tasks))
