@@ -49,12 +49,11 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
         super().__init__(platform, port, baud)
 
     async def _read_with_timeout(self, timeout):
-        msg_raw = await asyncio.wait([self.readuntil(b'E')], timeout=timeout)
-        if not msg_raw[0]:
-            msg_raw[1].pop().cancel()
+        try:
+            msg_raw = await asyncio.wait_for(self.readuntil(b'E'), timeout=timeout)
+        except asyncio.TimeoutError:
             return ""
-        element = msg_raw[0].pop()
-        return (await element).decode()
+        return msg_raw.decode()
 
     async def _identify_connection(self):
         """Identify which controller this serial connection is talking to."""

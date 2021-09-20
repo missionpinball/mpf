@@ -85,7 +85,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
     async def _read_with_timeout(self, timeout):
         try:
             msg_raw = await asyncio.wait_for(self.readuntil(b'\r'), timeout=timeout)
-        except asyncio.exceptions.TimeoutError:
+        except asyncio.TimeoutError:
             return ""
         return msg_raw.decode()
 

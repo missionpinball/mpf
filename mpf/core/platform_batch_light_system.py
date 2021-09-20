@@ -105,7 +105,7 @@ class PlatformBatchLightSystem:
             if self.dirty_schedule:
                 try:
                     await asyncio.wait_for(self.schedule_changed.wait(), self.dirty_schedule[0][0] - run_time)
-                except asyncio.exceptions.TimeoutError:
+                except asyncio.TimeoutError:
                     pass
             else:
                 await self.schedule_changed.wait()
