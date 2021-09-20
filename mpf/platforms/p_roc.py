@@ -214,17 +214,14 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplaySoftware
             event_type = event['type']
             event_value = event['value']
             if event_type == self.pinproc.EventTypeDMDFrameDisplayed:
+                # ignore this for now
                 pass
-            elif event_type == self.pinproc.EventTypeSwitchClosedDebounced:
+            elif event_type in (self.pinproc.EventTypeSwitchClosedDebounced,
+                                self.pinproc.EventTypeSwitchClosedNondebounced):
                 self.machine.switch_controller.process_switch_by_num(
                     state=1, num=event_value, platform=self)
-            elif event_type == self.pinproc.EventTypeSwitchOpenDebounced:
-                self.machine.switch_controller.process_switch_by_num(
-                    state=0, num=event_value, platform=self)
-            elif event_type == self.pinproc.EventTypeSwitchClosedNondebounced:
-                self.machine.switch_controller.process_switch_by_num(
-                    state=1, num=event_value, platform=self)
-            elif event_type == self.pinproc.EventTypeSwitchOpenNondebounced:
+            elif event_type in (self.pinproc.EventTypeSwitchOpenDebounced,
+                                self.pinproc.EventTypeSwitchOpenNondebounced):
                 self.machine.switch_controller.process_switch_by_num(
                     state=0, num=event_value, platform=self)
             else:

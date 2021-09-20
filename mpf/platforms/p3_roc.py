@@ -541,22 +541,14 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         for event in events:
             event_type = event['type']
             event_value = event['value']
-            if event_type == self.pinproc.EventTypeSwitchClosedDebounced:
-                self.machine.switch_controller.process_switch_by_num(state=1,
-                                                                     num=event_value,
-                                                                     platform=self)
-            elif event_type == self.pinproc.EventTypeSwitchOpenDebounced:
-                self.machine.switch_controller.process_switch_by_num(state=0,
-                                                                     num=event_value,
-                                                                     platform=self)
-            elif event_type == self.pinproc.EventTypeSwitchClosedNondebounced:
-                self.machine.switch_controller.process_switch_by_num(state=1,
-                                                                     num=event_value,
-                                                                     platform=self)
-            elif event_type == self.pinproc.EventTypeSwitchOpenNondebounced:
-                self.machine.switch_controller.process_switch_by_num(state=0,
-                                                                     num=event_value,
-                                                                     platform=self)
+            if event_type in (self.pinproc.EventTypeSwitchClosedDebounced,
+                              self.pinproc.EventTypeSwitchClosedNondebounced):
+                self.machine.switch_controller.process_switch_by_num(
+                    state=1, num=event_value, platform=self)
+            elif event_type in (self.pinproc.EventTypeSwitchOpenDebounced,
+                                self.pinproc.EventTypeSwitchOpenNondebounced):
+                self.machine.switch_controller.process_switch_by_num(
+                    state=0, num=event_value, platform=self)
 
             # The P3-ROC will always send all three values sequentially.
             # Therefore, we will trigger after the Z value

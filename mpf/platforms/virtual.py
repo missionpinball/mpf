@@ -202,36 +202,29 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         else:
             self.log.debug("Tried to clear a non-existing rules %s <-> %s", switch, coil)
 
+    def _assert_rule_does_not_exist(self, switch, driver):
+        if (switch, driver) in self.rules:
+            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
+                switch, driver))
+
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
         """Set rule."""
-        if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
-            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
-                enable_switch.hw_switch, coil.hw_driver))
-
+        self._assert_rule_does_not_exist(enable_switch.hw_switch, coil.hw_driver)
         self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_enable_and_release"
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         """Set rule."""
-        if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
-            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
-                enable_switch.hw_switch, coil.hw_driver))
-
+        self._assert_rule_does_not_exist(enable_switch.hw_switch, coil.hw_driver)
         self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_release"
 
     def set_pulse_on_hit_and_release_and_disable_rule(self, enable_switch: SwitchSettings, eos_switch: SwitchSettings,
                                                       coil: DriverSettings,
                                                       repulse_settings: Optional[RepulseSettings]):
         """Set rule."""
-        if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
-            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
-                enable_switch.hw_switch, coil.hw_driver))
-
+        self._assert_rule_does_not_exist(enable_switch.hw_switch, coil.hw_driver)
         self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_release_and_disable"
 
-        if (eos_switch.hw_switch, coil.hw_driver) in self.rules:
-            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
-                eos_switch.hw_switch, coil.hw_driver))
-
+        self._assert_rule_does_not_exist(eos_switch.hw_switch, coil.hw_driver)
         self.rules[(eos_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_release_and_disable"
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
@@ -239,24 +232,15 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
                                                                  coil: DriverSettings,
                                                                  repulse_settings: Optional[RepulseSettings]):
         """Set rule."""
-        if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
-            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
-                enable_switch.hw_switch, coil.hw_driver))
-
+        self._assert_rule_does_not_exist(enable_switch.hw_switch, coil.hw_driver)
         self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_enable_and_release_and_disable"
 
-        if (eos_switch.hw_switch, coil.hw_driver) in self.rules:
-            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
-                eos_switch.hw_switch, coil.hw_driver))
-
+        self._assert_rule_does_not_exist(eos_switch.hw_switch, coil.hw_driver)
         self.rules[(eos_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit_and_enable_and_release_and_disable"
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
         """Set rule."""
-        if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
-            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
-                enable_switch.hw_switch, coil.hw_driver))
-
+        self._assert_rule_does_not_exist(enable_switch.hw_switch, coil.hw_driver)
         self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit"
 
     def configure_dmd(self):

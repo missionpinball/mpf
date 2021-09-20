@@ -1063,6 +1063,7 @@ class PDBConfig:
                 # Dedicated lamps don't use PDB banks. They use P-ROC direct
                 # driver pins (not available on P3-ROC).
                 if lamp.lamp_type == 'dedicated':
+                    # ignore dedicated lamps
                     pass
 
                 elif lamp.lamp_type == 'pdb':
