@@ -24,7 +24,7 @@ class Shot(EnableDisableMixin, ModeDevice):
     to track shots.
     """
 
-    __slots__ = ["delay", "active_sequences", "active_delays", "running_show", "_handlers"]
+    __slots__ = ["delay", "active_sequences", "active_delays", "running_show", "_handlers", "_player_var_name"]
 
     def __init__(self, machine, name):
         """Initialise shot."""
@@ -39,6 +39,7 @@ class Shot(EnableDisableMixin, ModeDevice):
         self.active_delays = set()
         self.running_show = None
         self._handlers = []
+        self._player_var_name = "shot_{}".format(name)
 
     async def _initialize(self) -> None:
         """Register playfield active handlers."""
@@ -172,10 +173,10 @@ class Shot(EnableDisableMixin, ModeDevice):
     def _get_state(self):
         if not self.player:
             return 0
-        return self.player["shot_{}".format(self.name)]
+        return self.player[self._player_var_name]
 
     def _set_state(self, state):
-        old = self.player["shot_{}".format(self.name)]
+        old = self.player[self._player_var_name]
         try:
             old_name = self.state_name
         except IndexError:
@@ -183,7 +184,7 @@ class Shot(EnableDisableMixin, ModeDevice):
             # doesn't exist in the new profile. That's okay, but we can't include
             # the old state name in our event.
             old_name = "unknown"
-        self.player["shot_{}".format(self.name)] = state
+        self.player[self._player_var_name] = state
         self.notify_virtual_change("state", old, state)
         self.notify_virtual_change("state_name", old_name, self.state_name)
 

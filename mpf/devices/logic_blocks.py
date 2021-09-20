@@ -7,7 +7,7 @@ from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
 from mpf.core.machine import MachineController
-from mpf.core.mode import Mode
+from mpf.core.mode import Mode, MODE_STARTING_EVENT_TEMPLATE
 from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
 from mpf.core.system_wide_device import SystemWideDevice
@@ -110,7 +110,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
                 player[self.player_state_variable] = LogicBlockState()
                 # enable device ONLY when we create a new entry in the player
                 if self._start_enabled:
-                    mode.add_mode_event_handler("mode_{}_starting".format(mode.name),
+                    mode.add_mode_event_handler(MODE_STARTING_EVENT_TEMPLATE.format(mode.name),
                                                 self.event_enable, priority=mode.priority + 1)
 
                 self._state = player[self.player_state_variable]
@@ -121,7 +121,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
             self._state = LogicBlockState()
             self.value = self.get_start_value()
             if self._start_enabled:
-                mode.add_mode_event_handler("mode_{}_starting".format(mode.name),
+                mode.add_mode_event_handler(MODE_STARTING_EVENT_TEMPLATE.format(mode.name),
                                             self.event_enable, priority=mode.priority + 1)
 
         mode.add_mode_event_handler("mode_{}_starting".format(mode.name), self.post_update_event)
@@ -359,10 +359,10 @@ class Counter(LogicBlock):
         self.debug_log("Creating Counter LogicBlock")
         self.hit_value = self.config['count_interval']
 
-        if self.config['direction'] == 'down' and self.hit_value > 0:
+        if (self.config['direction'] == 'down' and self.hit_value > 0) or \
+                (self.config['direction'] == 'up' and self.hit_value < 0):
             self.hit_value *= -1
-        elif self.config['direction'] == 'up' and self.hit_value < 0:
-            self.hit_value *= -1
+
         # Add control events if included in the config
         if self.config['control_events']:
             self._setup_control_events(self.config['control_events'])

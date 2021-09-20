@@ -127,9 +127,8 @@ class MpfConstructor(Constructor):
             # keys can be list -> deep
             key = self.construct_object(key_node, deep=True)
             # lists are not hashable, but tuples are
-            if not isinstance(key, Hashable):   # pragma: no cover
-                if isinstance(key, list):
-                    key = tuple(key)
+            if not isinstance(key, Hashable) and isinstance(key, list):     # pragma: no cover
+                key = tuple(key)
             if not isinstance(key, Hashable):   # pragma: no cover
                 raise ConstructorError(
                     "while constructing a mapping", node.start_mark,
