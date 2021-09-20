@@ -289,7 +289,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         if self._late_init_futures:
             await asyncio.wait(self._late_init_futures)
 
-        self.event_task = self.machine.clock.loop.create_task(self._poll_events(), name="P-Roc Poll")
+        self.event_task = self.machine.clock.loop.create_task(self._poll_events())
         self.event_task.add_done_callback(Util.raise_exceptions)
         self._light_system.start()
 

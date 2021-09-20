@@ -79,7 +79,7 @@ class PlatformBatchLightSystem:
 
     def start(self):
         """Start light system."""
-        self.update_task = self.clock.loop.create_task(self._send_updates(), name="Batch Light System Updater")
+        self.update_task = self.clock.loop.create_task(self._send_updates())
         self.update_task.add_done_callback(Util.raise_exceptions)
         self.scheduler_task = self.clock.loop.create_task(self._schedule_updates(),
                                                           name="Batch Light System Scheduler")
