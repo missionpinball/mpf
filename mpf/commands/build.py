@@ -36,6 +36,10 @@ class Command(MpfCommandLineParser):
                                  "via a comma-"
                                  "separated list (no spaces between)")
 
+        parser.add_argument("-b",
+                            action="store_false", dest="mc", default=True,
+                            help="Builds a production config for MPF only, without MC.")
+
         self.args = parser.parse_args(remaining_args)
         self.args.configfile = Util.string_to_event_list(self.args.configfile)
 
@@ -46,8 +50,10 @@ class Command(MpfCommandLineParser):
         """Create a production bundle."""
         config_loader = YamlMultifileConfigLoader(self.machine_path, self.args.configfile, False, False)
         mpf_config = config_loader.load_mpf_config()
-        mc_config = config_loader.load_mc_config()
+        if self.args.mc:
+            mc_config = config_loader.load_mc_config()
 
         pickle.dump(mpf_config, open(ProductionConfigLoader.get_mpf_bundle_path(self.machine_path), "wb"))
-        pickle.dump(mc_config, open(ProductionConfigLoader.get_mpf_mc_bundle_path(self.machine_path), "wb"))
+        if self.args.mc:
+            pickle.dump(mc_config, open(ProductionConfigLoader.get_mpf_mc_bundle_path(self.machine_path), "wb"))
         print("Success.")
