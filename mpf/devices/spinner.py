@@ -146,9 +146,8 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
             if switch not in config['switches']:
                 config['switches'].append(switch)
 
-        if config['labels']:
-            if len(config['labels']) != len(config['switches']):
-                raise ConfigFileError("Spinner labels must be the same number as switches", 1, self.name)
+        if config['labels'] and len(config['labels']) != len(config['switches']):
+            raise ConfigFileError("Spinner labels must be the same number as switches", 1, self.name)
 
         return config
 

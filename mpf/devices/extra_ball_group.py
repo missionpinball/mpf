@@ -17,7 +17,7 @@ class ExtraBallGroup(SystemWideDevice):
     collection = 'extra_ball_groups'
     class_label = 'extra_ball_group'
 
-    __slots__ = ["player"]
+    __slots__ = ["player", "_player_var_per_game", "_player_var_per_ball", "_player_var_num_lit"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialize ExtraBallGroup."""
@@ -33,6 +33,10 @@ class ExtraBallGroup(SystemWideDevice):
         self.machine.events.add_handler('ball_started',
                                         self._ball_started)
 
+        self._player_var_per_game = 'extra_ball_group_{}_num_awarded_game'.format(name)
+        self._player_var_per_ball = 'extra_ball_group_{}_num_awarded_ball'.format(name)
+        self._player_var_num_lit = 'extra_ball_group_{}_num_lit'.format(name)
+
     @property
     def enabled(self):
         """Return whether this extra ball group is enabled.
@@ -44,13 +48,11 @@ class ExtraBallGroup(SystemWideDevice):
             return False
 
         if (self.config['max_per_game'] and self.config['max_per_game'] <=
-                self.player['extra_ball_group_{}_num_awarded_game'.format(
-                    self.name)]):
+                self.player[self._player_var_per_game]):
             return False
 
         if (self.config['max_per_ball'] and self.config['max_per_ball'] <=
-                self.player['extra_ball_group_{}_num_awarded_ball'.format(
-                    self.name)]):
+                self.player[self._player_var_per_ball]):
             return False
 
         return True
@@ -59,9 +61,9 @@ class ExtraBallGroup(SystemWideDevice):
         # called once per player to setup their vars for this group
         del kwargs
 
-        player['extra_ball_group_{}_num_awarded_game'.format(self.name)] = 0
-        player['extra_ball_group_{}_num_lit'.format(self.name)] = 0
-        player['extra_ball_group_{}_num_awarded_ball'.format(self.name)] = 0
+        player[self._player_var_per_game] = 0
+        player[self._player_var_num_lit] = 0
+        player[self._player_var_per_ball] = 0
 
     def _player_turn_starting(self, player, number, **kwargs):
         # reset the num of EBs awarded per ball. We do this on turn start
@@ -70,12 +72,12 @@ class ExtraBallGroup(SystemWideDevice):
         del number, kwargs
 
         self.player = player
-        player['extra_ball_group_{}_num_awarded_ball'.format(self.name)] = 0
+        player[self._player_var_per_ball] = 0
 
     def _ball_started(self, ball, player, **kwargs):
         # check if we need to relight the group
         del ball, player, kwargs
-        if self.player['extra_ball_group_{}_num_lit'.format(self.name)]:
+        if self.player[self._player_var_num_lit]:
             self._post_lit_events()
 
     def _player_turn_ending(self, player, number, **kwargs):
@@ -83,7 +85,7 @@ class ExtraBallGroup(SystemWideDevice):
         del number, kwargs
 
         if not self.config['lit_memory']:
-            player['extra_ball_group_{}_num_lit'.format(self.name)] = 0
+            player[self._player_var_num_lit] = 0
 
         self.player = None
 
@@ -100,7 +102,7 @@ class ExtraBallGroup(SystemWideDevice):
 
         return not (
             self.config['max_lit'] and self.config['max_lit'] <=
-            self.player['extra_ball_group_{}_num_lit'.format(self.name)])
+            self.player[self._player_var_num_lit])
 
     @event_handler(2)
     def event_award_lit(self, **kwargs):
@@ -121,12 +123,12 @@ class ExtraBallGroup(SystemWideDevice):
             self.award_disabled()
             return
 
-        if self.player['extra_ball_group_{}_num_lit'.format(self.name)] < 1:
+        if self.player[self._player_var_num_lit] < 1:
             return
 
-        self.player['extra_ball_group_{}_num_lit'.format(self.name)] -= 1
+        self.player[self._player_var_num_lit] -= 1
 
-        if not self.player['extra_ball_group_{}_num_lit'.format(self.name)]:
+        if not self.player[self._player_var_num_lit]:
             self._post_unlit_events()
             posted_unlit_events = True
         else:
@@ -160,8 +162,8 @@ class ExtraBallGroup(SystemWideDevice):
         desc: An extra ball from this group was just awarded. This is a
         good event to use to trigger award shows, sounds, etc.
         '''
-        self.player['extra_ball_group_{}_num_awarded_game'.format(self.name)] += 1
-        self.player['extra_ball_group_{}_num_awarded_ball'.format(self.name)] += 1
+        self.player[self._player_var_per_game] += 1
+        self.player[self._player_var_per_ball] += 1
         self.player.extra_balls += 1
         self.machine.events.post('extra_ball_awarded')
 
@@ -185,7 +187,7 @@ class ExtraBallGroup(SystemWideDevice):
         ball disabled events.
         """
         if self.is_ok_to_light():
-            self.player['extra_ball_group_{}_num_lit'.format(self.name)] += 1
+            self.player[self._player_var_num_lit] += 1
 
             self.machine.events.post(
                 'extra_ball_group_{}_lit_awarded'.format(self.name))

@@ -166,11 +166,11 @@ class OPPSolenoid(DriverPlatformInterface):
         # CFG_SOL_USE_SWITCH was used to enable/disable a solenoid.  This
         # will work as long as switches are added using _add_switch_coil_mapping
         if self.switch_rule:
-            if self.sol_card.platform.min_version[self.sol_card.chain_serial] < 0x00020000:
-                cmd += ord(OppRs232Intf.CFG_SOL_USE_SWITCH)
-            elif str(((int(solenoid) & 0x0c) << 1) | (int(solenoid) & 0x03)) in\
+            if self.sol_card.platform.min_version[self.sol_card.chain_serial] < 0x00020000 or \
+               str(((int(solenoid) & 0x0c) << 1) | (int(solenoid) & 0x03)) in \
                     [switch.split('-')[2] for switch in self.switches]:
-                # If driver is using matching switch set CFG_SOL_USE_SWITCH
+                # Either old firmware or
+                # ff driver is using matching switch set CFG_SOL_USE_SWITCH
                 # in case config happens after set switch command
                 cmd += ord(OppRs232Intf.CFG_SOL_USE_SWITCH)
 

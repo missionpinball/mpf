@@ -21,6 +21,7 @@ class SnuxHardwarePlatform(System11OverlayPlatform):
         self.snux_config = None         # type: Any
 
     def _null_log_handler(self, *args, **kwargs):
+        # used to disable logging on A/C relay because it would spam the log heavily
         pass
 
     def _initialize(self, **kwargs):

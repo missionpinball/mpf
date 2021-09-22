@@ -542,6 +542,8 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
     def stop(self):
         """Stop platform."""
         super().stop()
+        if self._light_system:
+            self._light_system.stop()
         if self._poll_task:
             self._poll_task.cancel()
             self._poll_task = None

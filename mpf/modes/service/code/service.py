@@ -284,12 +284,11 @@ software_update_script: single|str|None
             if key in ('UP', 'DOWN'):
                 run_update = not run_update
                 self._update_software_update_slide(run_update)
-            elif key == 'ENTER':
+            elif key == 'ENTER' and run_update:
                 # perform update
-                if run_update:
-                    self.machine.events.post("service_software_update_start")
-                    subprocess.Popen([self._update_script])
-                    self.machine.stop("Software Update")
+                self.machine.events.post("service_software_update_start")
+                subprocess.Popen([self._update_script])
+                self.machine.stop("Software Update")
 
         self.machine.events.post("service_software_update_stop")
 
@@ -468,6 +467,7 @@ software_update_script: single|str|None
                     position = len(items) - 1
                 self._update_audits_slide(items, position)
             if key == 'ENTER':
+                # fallthrough
                 pass
         self.machine.events.post("service_audits_menu_hide")
 
@@ -480,11 +480,7 @@ software_update_script: single|str|None
         await self._audits_submenu(list(items.items()))
 
     async def _audit_player_menu(self):
-        try:
-            audits = self.machine.auditor.current_audits['player']
-        except (IndexError, KeyError):
-            self.log.info("_make__audits_menu -- audits category not found - probably file is missing or corrupt")
-            audits = {}
+        audits = self.machine.auditor.current_audits.get('player', {})
 
         items = []
         for audit, audit_values in audits.items():
@@ -494,30 +490,15 @@ software_update_script: single|str|None
         await self._audits_submenu(items)
 
     async def _audit_switch_menu(self):
-        try:
-            items = self.machine.auditor.current_audits['switches']
-        except (IndexError, KeyError):
-            self.log.info("_make__audits_menu -- audits category not found - probably file is missing or corrupt")
-            items = {}
-
+        items = self.machine.auditor.current_audits.get('switches', {})
         await self._audits_submenu(list(items.items()))
 
     async def _audit_shot_menu(self):
-        try:
-            items = self.machine.auditor.current_audits['shots']
-        except (IndexError, KeyError):
-            self.log.info("_make__audits_menu -- audits category not found - probably file is missing or corrupt")
-            items = {}
-
+        items = self.machine.auditor.current_audits.get('shots', {})
         await self._audits_submenu(list(items.items()))
 
     async def _audit_event_menu(self):
-        try:
-            items = self.machine.auditor.current_audits['events']
-        except (IndexError, KeyError):
-            self.log.info("_make__audits_menu -- audits category not found - probably file is missing or corrupt")
-            items = {}
-
+        items = self.machine.auditor.current_audits.get('events', {})
         await self._audits_submenu(list(items.items()))
 
     def _update_settings_slide(self, items, position, is_change=False):

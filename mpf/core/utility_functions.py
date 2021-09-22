@@ -719,12 +719,12 @@ class Util:
     @staticmethod
     async def first(futures: Iterable[asyncio.Future], timeout=None, cancel_others=True):
         """Return first future and cancel others."""
+        fs = {asyncio.ensure_future(f) for f in futures}
         # wait for first
         try:
-            done, pending = await asyncio.wait(iter(futures), timeout=timeout,
-                                               return_when=asyncio.FIRST_COMPLETED)
+            done, pending = await asyncio.wait(fs, timeout=timeout, return_when=asyncio.FIRST_COMPLETED)
         except asyncio.CancelledError:
-            Util.cancel_futures(futures)
+            Util.cancel_futures(fs)
             raise
 
         if cancel_others:

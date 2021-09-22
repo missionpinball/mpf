@@ -9,6 +9,8 @@ from typing import Tuple
 from mpf._version import __version__, __bcp_version__
 from mpf.core.bcp.bcp_client import BaseBcpClient
 
+BYTE_MARKER = b'&bytes='
+
 
 class MpfJSONEncoder(json.JSONEncoder):
 
@@ -147,13 +149,13 @@ class AsyncioBcpClientSocket():
             # strip newline
             message = message[0:-1]
 
-            if b'&bytes=' in message:
-                message, bytes_needed = message.split(b'&bytes=')
+            if BYTE_MARKER in message:
+                message, bytes_needed = message.split(BYTE_MARKER)
                 bytes_needed = int(bytes_needed)
 
-                rawbytes = await self._receiver.readexactly(bytes_needed)
+                raw_bytes = await self._receiver.readexactly(bytes_needed)
 
-                message_obj = self._process_command(message, rawbytes)
+                message_obj = self._process_command(message, raw_bytes)
 
             else:  # no bytes in the message
                 message_obj = self._process_command(message)
@@ -237,7 +239,7 @@ class BCPClientSocket(BaseBcpClient):
             connector = self.machine.clock.open_connection(client_host, client_port)
             try:
                 self._receiver, self._sender = await connector
-            except (ConnectionRefusedError, OSError):
+            except OSError:
                 if required:
                     await asyncio.sleep(.1)
                     continue
@@ -305,7 +307,7 @@ class BCPClientSocket(BaseBcpClient):
             # strip newline
             message = message[0:-1]
 
-            if b'&bytes=' in message:
+            if BYTE_MARKER in message:
                 message, bytes_needed = message.split(b'&bytes=')
                 bytes_needed = int(bytes_needed)
 

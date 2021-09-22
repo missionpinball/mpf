@@ -90,6 +90,7 @@ extensions = [
     'sphinx.ext.todo',
     'sphinxcontrib.napoleon',
     'sphinx.ext.autosummary',
+    'sphinxcontrib.youtube',
 ]
 
 templates_path = ['_templates']

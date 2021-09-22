@@ -80,9 +80,6 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
         """Return if A side cannot be switches off right away."""
         return self.drivers_holding_a_side or self.a_side_done_time > self.machine.clock.get_time()
 
-    def _null_log_handler(self, *args, **kwargs):
-        pass
-
     async def initialize(self):
         """Automatically called by the Platform class after all the core modules are loaded."""
 

@@ -21,4 +21,4 @@ class TestConfigErrors(MpfTestCase):
                          'Config File Error in show: "broken_show" >> Invalid section "light_player:" '
                          'found. Did you mean "lights:" instead? Context: broken_show '
                          'Error Code: CFE-show-3 ({})'.format(log_url.format("CFE-show-3")))
-        self.loop.close()
+        self.loop.close(ignore_running_tasks=True)

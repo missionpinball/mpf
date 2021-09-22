@@ -16,7 +16,7 @@ class StateMachine(SystemWideDevice, ModeDevice):
     collection = 'state_machines'
     class_label = 'state_machine'
 
-    __slots__ = ["player", "_state", "_handlers", "_show"]
+    __slots__ = ["player", "_state", "_handlers", "_show", "_player_var_name"]
 
     def __init__(self, machine, name):
         """Initialise state machine."""
@@ -25,6 +25,7 @@ class StateMachine(SystemWideDevice, ModeDevice):
         self._state = None
         self._handlers = []
         self._show = None
+        self._player_var_name = "state_machine_{}".format(name)
 
     async def device_added_system_wide(self):
         """Initialise internal state."""
@@ -58,7 +59,7 @@ class StateMachine(SystemWideDevice, ModeDevice):
     def state(self):
         """Return the current state."""
         if self.config['persist_state'] and self.player:
-            return self.player["state_machine_{}".format(self.name)]
+            return self.player[self._player_var_name]
 
         return self._state
 
@@ -67,8 +68,8 @@ class StateMachine(SystemWideDevice, ModeDevice):
         """Set the current state."""
         old = self.state
         if self.config['persist_state']:
-            old = self.player["state_machine_{}".format(self.name)]
-            self.player["state_machine_{}".format(self.name)] = value
+            old = self.player[self._player_var_name]
+            self.player[self._player_var_name] = value
             self.notify_virtual_change(self, old, value)
         else:
             self._state = value

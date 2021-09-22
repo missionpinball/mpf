@@ -22,6 +22,14 @@ class AsyncMode(Mode, metaclass=abc.ABCMeta):
         super().__init__(machine, *args, **kwargs)
 
         self._task = None   # type: Optional[asyncio.Task]
+        machine.stop_future.add_done_callback(self._stop_mode_on_machine_stop)
+
+    def _stop_mode_on_machine_stop(self, future):
+        """Stop mode because machine stopped."""
+        del future
+        if self._task:
+            self._task.cancel()
+            self._task = None
 
     def _started(self, **kwargs) -> None:
         """Start main task."""

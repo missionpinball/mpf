@@ -31,8 +31,14 @@ class TestPololuTic(MpfTestCase):
             raise AssertionError("Unexpected command {}. Expected: {}".format(args, self.expected_commands))
 
         return_value = self.expected_commands[args]
-        del self.expected_commands[args]
-        return return_value
+        if isinstance(return_value, int):
+            self.expected_commands[args] -= 1
+            if self.expected_commands[args] <= 0:
+                del self.expected_commands[args]
+            return ""
+        else:
+            del self.expected_commands[args]
+            return return_value
 
     def setUp(self):
         self._position = 0
@@ -72,6 +78,7 @@ class TestPololuTic(MpfTestCase):
     def tearDown(self):
         self.expected_commands = {
             ('--deenergize',): "",
+            ('--halt-and-hold',): 2,
         }
         super().tearDown()
         self.assertFalse(self.expected_commands)

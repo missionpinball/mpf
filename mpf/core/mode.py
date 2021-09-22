@@ -18,6 +18,8 @@ if MYPY:   # pragma: no cover
     from mpf.core.player import Player  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
+MODE_STARTING_EVENT_TEMPLATE = 'mode_{}_starting'
+
 
 # pylint: disable-msg=too-many-instance-attributes
 class Mode(LogMixin):
@@ -217,7 +219,7 @@ class Mode(LogMixin):
 
         self._setup_device_control_events()
 
-        self.machine.events.post_queue(event='mode_{}_starting'.format(self.name),
+        self.machine.events.post_queue(event=MODE_STARTING_EVENT_TEMPLATE.format(self.name),
                                        callback=self._started, **kwargs)
         '''event: mode_(name)_starting
 

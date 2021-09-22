@@ -276,11 +276,14 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             hardware_rules.append((rswitchandcoil[0].number, rswitchandcoil[1].number, hold))
         return hardware_rules
 
+    def _assert_rule_does_not_exist(self, switch, driver):
+        if (switch, driver) in self.rules:
+            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
+                switch, driver))
+
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Pulse on hit and hold."""
-        if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
-            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
-                enable_switch.hw_switch, coil.hw_driver))
+        self._assert_rule_does_not_exist(enable_switch.hw_switch, coil.hw_driver)
 
         self.rules[(enable_switch.hw_switch, coil.hw_driver)] = True
 
@@ -289,10 +292,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                                                       repulse_settings: Optional[RepulseSettings]):
         """Pulse on hit, disable on disable_switch hit."""
         del eos_switch
-        if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
-            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
-                enable_switch.hw_switch, coil.hw_driver))
-
+        self._assert_rule_does_not_exist(enable_switch.hw_switch, coil.hw_driver)
         # eos_switch is missing here intentionally
         self.rules[(enable_switch.hw_switch, coil.hw_driver)] = False
 
@@ -301,28 +301,19 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                                                                  repulse_settings: Optional[RepulseSettings]):
         """Pulse on hit and hold, disable on disable_switch hit."""
         del eos_switch
-        if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
-            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
-                enable_switch.hw_switch, coil.hw_driver))
-
+        self._assert_rule_does_not_exist(enable_switch.hw_switch, coil.hw_driver)
         # eos_switch is missing here intentionally
         self.rules[(enable_switch.hw_switch, coil.hw_driver)] = True
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Pulse on hit and hold."""
-        if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
-            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
-                enable_switch.hw_switch, coil.hw_driver))
-
+        self._assert_rule_does_not_exist(enable_switch.hw_switch, coil.hw_driver)
         self.rules[(enable_switch.hw_switch, coil.hw_driver)] = True
 
     def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings,
                               coil: DriverSettings):
         """Pulse on hit and release."""
-        if (enable_switch.hw_switch, coil.hw_driver) in self.rules:
-            raise AssertionError("Overwrote a rule without clearing it first {} <-> {}".format(
-                enable_switch.hw_switch, coil.hw_driver))
-
+        self._assert_rule_does_not_exist(enable_switch.hw_switch, coil.hw_driver)
         self.rules[(enable_switch.hw_switch, coil.hw_driver)] = False
 
     def clear_hw_rule(self, switch: SwitchSettings, coil: DriverSettings):

@@ -45,6 +45,10 @@ class TestVPE(MpfTestCase):
         mpf.platforms.visual_pinball_engine.visual_pinball_engine.VisualPinballEnginePlatform.listen = self._connect_to_mock_client
         super().setUp()
 
+    def tearDown(self):
+        self.simulator.stop()
+        super().tearDown()
+
     def get_platform(self):
         return False
 

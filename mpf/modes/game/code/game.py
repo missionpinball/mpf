@@ -11,6 +11,8 @@ from mpf.core.events import QueuedEvent
 from mpf.core.async_mode import AsyncMode
 from mpf.core.player import Player
 
+PLAYER_VAR_SCORE_TEMPLATE = 'player{}_score'
+
 
 # pylint: disable-msg=too-many-instance-attributes
 class Game(AsyncMode):
@@ -319,15 +321,11 @@ class Game(AsyncMode):
             "balls_remaining": self.balls_per_game - self.player.ball,
             "is_extra_ball": is_extra_ball}
 
-        self.debug_log("***************************************************")
         self.debug_log("****************** BALL STARTING ******************")
-        self.debug_log("**                                               **")
         self.debug_log("**    Player: {}    Ball: {}   Score: {}".format(self.player.number,
                                                                          self.player.ball,
                                                                          self.player.score
                                                                          ).ljust(49) + '**')
-        self.debug_log("**                                               **")
-        self.debug_log("***************************************************")
         self.debug_log("***************************************************")
 
         await self.machine.events.post_async('ball_will_start', **event_args)
@@ -439,9 +437,10 @@ class Game(AsyncMode):
         # set playerX_score variables
         if self.player_list:
             for player in self.player_list:
-                self.machine.variables.configure_machine_var(name='player{}_score'.format(player.number), persist=True)
+                self.machine.variables.configure_machine_var(name=PLAYER_VAR_SCORE_TEMPLATE.format(player.number),
+                                                             persist=True)
                 self.machine.variables.set_machine_var(
-                    name='player{}_score'.format(player.number),
+                    name=PLAYER_VAR_SCORE_TEMPLATE.format(player.number),
                     value=player.score)
                 '''machine_var: player(x)_score
 
@@ -461,7 +460,7 @@ class Game(AsyncMode):
 
             # remove all other vars
             for i in range(len(self.player_list) + 1, self.max_players + 1):
-                self.machine.variables.remove_machine_var('player{}_score'.format(i))
+                self.machine.variables.remove_machine_var(PLAYER_VAR_SCORE_TEMPLATE.format(i))
 
         await self.machine.events.post_async('game_ended')
         '''event: game_ended

@@ -94,7 +94,7 @@ class MMA8451Platform(AccelerometerPlatform):
         super().__init__(machine)
         self.log = logging.getLogger('mma8451')
         self.log.debug("Configuring MMA8451 based accelerometers.")
-        self.accelerometers = {}
+        self.accelerometers = []
 
     async def initialize(self):
         """Initialise MMA8451 platform."""
@@ -105,11 +105,13 @@ class MMA8451Platform(AccelerometerPlatform):
             if accelerometer.task:
                 accelerometer.task.cancel()
                 accelerometer.task = None
-        self.accelerometers = {}
+        self.accelerometers = []
 
     def configure_accelerometer(self, number, config, callback) -> MMA8451Device:
         """Configure MMA8451 accelerometer."""
         config = self.machine.config_validator.validate_config("mma8451_accelerometer", config)
         i2c_platform = self.machine.get_platform_sections("i2c", config['i2c_platform'])
         i2c_platform.assert_has_feature("i2c")
-        return MMA8451Device(number, callback, i2c_platform, self)
+        accelerometer = MMA8451Device(number, callback, i2c_platform, self)
+        self.accelerometers.append(accelerometer)
+        return accelerometer

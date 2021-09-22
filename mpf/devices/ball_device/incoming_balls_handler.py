@@ -56,15 +56,17 @@ class IncomingBall:
         self._external_confirm_future.add_done_callback(self._external_confirm)
 
     def _external_confirm(self, future):
-        """Handle exteral confirm done."""
+        """Handle external confirm done."""
         # do not handle canceled external confirm
         if future.cancelled():
             return
         # cancel current timeout
         self._timeout_future.cancel()
-        # set up a timeout for ball missing at target
-        timeout = self._source.config['ball_missing_timeouts'][self._target] / 1000
-        self._timeout_future = asyncio.ensure_future(asyncio.sleep(timeout))
+
+        if not self._target.is_playfield():
+            # set up a timeout for ball missing at target
+            timeout = self._source.config['ball_missing_timeouts'][self._target] / 1000
+            self._timeout_future = asyncio.ensure_future(asyncio.sleep(timeout))
         # set confirmed for source
         self._confirm_future.set_result(True)
 
@@ -85,6 +87,8 @@ class IncomingBall:
         self._state = "lost"
 
         self._timeout_future.cancel()
+        if self._external_confirm_future:
+            self._external_confirm_future.cancel()
         self._target.remove_incoming_ball(self)
 
     def ball_arrived(self):

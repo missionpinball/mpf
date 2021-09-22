@@ -81,7 +81,8 @@ class DigitalOutput(SystemWideDevice):
             platform.assert_has_feature("drivers")
             config['platform_settings'] = platform.validate_coil_section(self, config.get('platform_settings', None))
         elif config['type'] == "light":
-            pass
+            platform = self.machine.get_platform_sections('coils', getattr(config, "platform", None))
+            platform.assert_has_feature("lights")
         else:
             raise AssertionError("Invalid type {}".format(config['type']))
         return config

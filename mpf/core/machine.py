@@ -359,6 +359,10 @@ class MachineController(LogMixin):
         section of the machine config file.
         '''
 
+    def wait_for_stop(self):
+        """Wait until machine stops."""
+        return asyncio.shield(self.stop_future)
+
     def _validate_config(self) -> None:
         """Validate game and machine config."""
         self.validate_machine_config_section('machine')
@@ -702,7 +706,7 @@ class MachineController(LogMixin):
         if self.stop_future.done():
             return
 
-        if self.clock and self.clock.loop and self.clock.loop.is_running():
+        if self.clock and self.clock.loop and not self.clock.loop.is_closed():
             self.clock.loop.call_soon_threadsafe(self._stop_loop, reason)
 
     def _stop_loop(self, reason):
@@ -735,15 +739,32 @@ class MachineController(LogMixin):
             # otherwise just shutdown
             self.shutdown()
 
+    @staticmethod
+    async def _stop_tasks(tasks):
+        open_tasks = [t for t in tasks if not t.done()]
+        if not open_tasks:
+            return
+
+        await asyncio.wait(open_tasks, timeout=.1)
+
     def shutdown(self) -> None:
         """Shutdown the machine."""
+        if not self.stop_future.done():
+            self.stop_future.set_result("Graceful shutdown")
         self.thread_stopper.set()
         if hasattr(self, "device_manager"):
             self.device_manager.stop_devices()
         self._platform_stop()
 
-        self.clock.loop.stop()
         # this is needed to properly close all sockets
+        try:
+            if hasattr(asyncio, "all_tasks"):
+                self.clock.loop.run_until_complete(self._stop_tasks(asyncio.all_tasks(loop=self.clock.loop)))
+            else:
+                self.clock.loop.run_until_complete(self._stop_tasks(asyncio.Task.all_tasks(loop=self.clock.loop)))
+        except RuntimeError:
+            print("Failed to stop all tasks")
+        self.clock.loop.stop()
         self.clock.loop.run_forever()
         self.clock.loop.close()
 

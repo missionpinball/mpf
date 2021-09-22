@@ -103,8 +103,10 @@ class PlatformBatchLightSystem:
             self.dirty_lights_changed.set()
 
             if self.dirty_schedule:
-                await asyncio.wait([self.schedule_changed.wait()],
-                                   timeout=self.dirty_schedule[0][0] - run_time, return_when=asyncio.FIRST_COMPLETED)
+                try:
+                    await asyncio.wait_for(self.schedule_changed.wait(), self.dirty_schedule[0][0] - run_time)
+                except asyncio.TimeoutError:
+                    pass
             else:
                 await self.schedule_changed.wait()
 

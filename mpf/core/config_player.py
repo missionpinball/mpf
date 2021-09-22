@@ -1,6 +1,7 @@
 """Base class used for things that "play" from the config files, such as WidgetPlayer, SlidePlayer, etc."""
 import abc
 import asyncio
+import re
 from functools import partial
 from typing import List
 
@@ -8,6 +9,7 @@ from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.core.logging import LogMixin
 from mpf.exceptions.config_file_error import ConfigFileError
+from mpf.core.placeholder_manager import ConditionalEvent
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -23,7 +25,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
     show_section = None                 # type: str
     machine_collection_name = None      # type: str
 
-    __slots__ = ["device_collection", "machine", "mode_event_keys", "instances"]
+    __slots__ = ["device_collection", "machine", "mode_event_keys", "instances", "_global_keys"]
 
     def __init__(self, machine):
         """Initialise config player."""
@@ -31,10 +33,13 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         self.device_collection = None
 
         self.machine = machine      # type: MachineController
+        self._global_keys = ({}, {})
 
         # MPF only
         if hasattr(self.machine, "show_controller") and self.show_section:
             self.machine.show_controller.show_players[self.show_section] = self
+
+        self.machine.events.add_handler("shutdown", self._shutdown)
 
         self._add_handlers()
 
@@ -42,6 +47,11 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
 
         self.mode_event_keys = dict()
         self.instances = {'_global': {self.config_file_section: {}}}
+
+    def _shutdown(self, **kwargs):
+        """Remove global players."""
+        del kwargs
+        self.unload_player_events(self._global_keys)
 
     def _add_handlers(self):
         self.machine.events.add_handler('init_phase_1', self._initialize_mode_handlers, priority=20)
@@ -80,8 +90,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
                 self.validate_config(
                     self.machine.config[self.config_file_section]))
 
-            self.register_player_events(
-                self.machine.config[self.config_file_section])
+            self._global_keys = self.register_player_events(self.machine.config[self.config_file_section])
 
     def validate_config(self, config):
         """Validate this player's section of a config file (either a machine-wide config or a mode config).
@@ -104,6 +113,15 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
             validated_config[event] = self.validate_config_entry(settings, event)
 
         return validated_config
+
+    def _parse_and_validate_conditional(self, key, name, *, allow_brackets=False) -> ConditionalEvent:
+        """Parse and validate conditional variable."""
+        var_conditional_event = self.machine.placeholder_manager.parse_conditional_template(key)
+        regex_condition = r'^[()\.0-9a-zA-Z_-]+$' if allow_brackets else r'^[0-9a-zA-Z_-]+$'
+        if not bool(re.match(regex_condition, var_conditional_event.name)):
+            self.raise_config_error("Variable may only contain letters, numbers, dashes and underscores. "
+                                    "Var: {} Name: {}".format(key, var_conditional_event.name), 4, context=name)
+        return var_conditional_event
 
     def validate_config_entry(self, settings, name):
         """Validate one entry of this player."""
@@ -241,6 +259,9 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
                 future.result()
             except asyncio.CancelledError:
                 return
+
+        if self.machine.stop_future.done():
+            return
 
         value, subscription = template.evaluate_and_subscribe([])
         subscription_list[template] = subscription

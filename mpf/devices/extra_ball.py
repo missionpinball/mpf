@@ -19,7 +19,7 @@ class ExtraBall(ModeDevice):
     collection = 'extra_balls'
     class_label = 'extra_ball'
 
-    __slots__ = ["player", "group"]
+    __slots__ = ["player", "group", "_player_var_name"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise extra ball."""
@@ -28,6 +28,7 @@ class ExtraBall(ModeDevice):
         """The current player"""
         self.group = None   # type: Optional[ExtraBallGroup]
         """The ExtraBallGroup this ExtraBall belongs to, or None."""
+        self._player_var_name = 'extra_ball_{}_num_awarded'.format(name)
 
     @property
     def enabled(self):
@@ -79,7 +80,7 @@ class ExtraBall(ModeDevice):
     def award(self):
         """Award extra ball to player (if enabled)."""
         if self.is_ok_to_award():
-            self.player['extra_ball_{}_num_awarded'.format(self.name)] += 1
+            self.player[self._player_var_name] += 1
             self.machine.events.post('extra_ball_{}_awarded'.format(self.name))
             '''event: extra_ball_(name)_awarded
             desc: The extra ball called (name) has just been awarded.
@@ -134,7 +135,7 @@ class ExtraBall(ModeDevice):
 
         if self.config['max_per_game'] and (
                 self.config['max_per_game'] <=
-                self.player['extra_ball_{}_num_awarded'.format(self.name)]):
+                self.player[self._player_var_name]):
             return False
 
         return True
@@ -167,10 +168,8 @@ class ExtraBall(ModeDevice):
         del mode
         self.player = player
 
-        if not player.is_player_var(
-                'extra_ball_{}_num_awarded'.format(self.name)):
-            player['extra_ball_{}_num_awarded'.format(self.name)] = 0
-
+        if not player.is_player_var(self._player_var_name):
+            player[self._player_var_name] = 0
         '''player_var: extra_ball_(name)_awarded
 
         desc: The number of times this extra ball has been awarded to the

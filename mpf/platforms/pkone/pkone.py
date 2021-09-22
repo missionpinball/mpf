@@ -75,6 +75,8 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
 
     def stop(self):
         """Stop platform and close connections."""
+        if self._light_system:
+            self._light_system.stop()
         if self.controller_connection:
             # send reset message to turn off all lights, disable all drivers, stop the watchdog process, etc.
             self.controller_connection.send('PRS')

@@ -17,6 +17,8 @@ class VpeSimulation:
         self.rules = {}
         self.dmd_frames = {}
         self.segment_displays = {}
+        self._command_task = None
+        self._switch_task = None
 
     def init_async(self):
         self.change_queue = asyncio.Queue()
@@ -25,9 +27,12 @@ class VpeSimulation:
         configuration = platform_pb2.MachineState(
             initial_switch_states=self.switches)
         command_stream = service.Start(configuration, None)
-        asyncio.ensure_future(self.read_commands(command_stream))
+        self._command_task = asyncio.ensure_future(self.read_commands(command_stream))
+        self._switch_task = asyncio.ensure_future(service.SendSwitchChanges(self.switch_changes(), None))
 
-        asyncio.ensure_future(service.SendSwitchChanges(self.switch_changes(), None))
+    def stop(self):
+        self._command_task.cancel()
+        self._switch_task.cancel()
 
     async def switch_changes(self):
         while True:

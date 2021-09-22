@@ -211,6 +211,9 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
         self.result = result
 
     def _perform_action(self):
+        if self.machine.is_shutting_down:
+            self.log.debug("Not doing anything during shutdown")
+            return
         self.log.debug("Removing ball from device %s", self.device.name)
 
         if not self.device.balls:
@@ -374,20 +377,19 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
             # if there's an entrance_switch_full_timeout, that means the ball
             # will sit on this switch if the device is full, otherwise, it
             # will pass over it, hitting during the process
-            if device.ball_count_handler.counter.config.get('entrance_switch_full_timeout'):
-                if device.balls == device.capacity - 1:
+            if (device.ball_count_handler.counter.config.get('entrance_switch_full_timeout') and
+                    device.balls == device.capacity - 1):
+                if LogMixin.unit_test and self.machine.switch_controller.is_active(entrance_switch):
+                    raise AssertionError(
+                        "KABOOM! We just added a ball to {} which already "
+                        "had an active entrance switch {}".format(
+                            device.name, entrance_switch))
 
-                    if LogMixin.unit_test and self.machine.switch_controller.is_active(entrance_switch):
-                        raise AssertionError(
-                            "KABOOM! We just added a ball to {} which already "
-                            "had an active entrance switch {}".format(
-                                device.name, entrance_switch))
+                self.debug_log('Enabling switch %s due to ball being added to %s',
+                               entrance_switch.name, device.name)
 
-                    self.debug_log('Enabling switch %s due to ball being added to %s',
-                                   entrance_switch.name, device.name)
-
-                    self.machine.switch_controller.process_switch_obj(entrance_switch, 1, True)
-                    return
+                self.machine.switch_controller.process_switch_obj(entrance_switch, 1, True)
+                return
 
             self.debug_log('Hitting switch %s due to ball being added to %s', entrance_switch.name, device.name)
             self.machine.switch_controller.process_switch_obj(entrance_switch, 1, True)

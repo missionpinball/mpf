@@ -9,6 +9,7 @@ import sys
 from pathlib import PurePath
 
 from mpf.core.config_processor import ConfigProcessor
+from mpf.core.config_spec_loader import ConfigSpecLoader
 
 
 class MpfConfig:
@@ -191,7 +192,7 @@ class YamlMultifileConfigLoader(ConfigLoader):
     def _load_additional_config_spec(self, config_spec, machine_config):
         """Load additional config specs from devices."""
         sys.path.insert(0, self.machine_path)
-        config_spec = self.config_processor.load_device_config_specs(config_spec, machine_config)
+        config_spec = ConfigSpecLoader.load_device_config_specs(config_spec, machine_config)
         sys.path.remove(self.machine_path)
         return config_spec
 

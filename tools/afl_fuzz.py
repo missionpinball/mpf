@@ -87,7 +87,7 @@ class AflRunner(object):
                 raise Exception(self._exception, e)
             raise e
 
-    def setUp(self, machine_path):
+    def setup(self, machine_path):
         """Set up fuzzer."""
         self.loop = TimeTravelLoop()
         self.loop.set_exception_handler(self._exception_handler)
@@ -325,7 +325,7 @@ if args.unit_test:
     LogMixin.unit_test = True
 
 runner = AflRunner(use_virtual=args.use_virtual, debug=args.debug)
-runner.setUp(args.machine_path)
+runner.setup(args.machine_path)
 
 if args.dump:
     action_str = sys.stdin.buffer.read(-1)
