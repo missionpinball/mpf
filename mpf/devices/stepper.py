@@ -160,7 +160,7 @@ class Stepper(SystemWideDevice):
             self.machine.events.post('stepper_' + self.name + "_ready", position=self._current_position)
             '''event: stepper_(name)_ready'''
 
-    def stop(self):
+    def stop_device(self):
         """Stop motor."""
         self.hw_stepper.stop()
         self._is_moving.clear()

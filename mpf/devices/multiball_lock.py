@@ -22,10 +22,11 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
     collection = 'multiball_locks'
     class_label = 'multiball_lock'
 
-    __slots__ = ["lock_devices", "source_playfield", "_events", "_locked_balls", "_source_devices"]
+    __slots__ = ["lock_devices", "source_playfield", "_events", "_locked_balls", "_source_devices", "_player_var_name"]
 
     def __init__(self, machine, name):
         """Initialise ball lock."""
+        super().__init__(machine, name)
         self.lock_devices = []
         self.source_playfield = None    # type: Optional[Playfield]
         self._source_devices = None     # type: Optional[List[BallDevice]]
@@ -35,8 +36,7 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
 
         self._locked_balls = 0
         # Locked balls in case we are keep_virtual_ball_count_per_player is false
-
-        super().__init__(machine, name)
+        self._player_var_name = '{}_locked_balls'.format(name)
 
     async def _initialize(self):
         # load lock_devices
@@ -105,7 +105,7 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
         if self.config['locked_ball_counting_strategy'] not in ("virtual_only", "min_virtual_physical"):
             raise AssertionError("Count is only tracked per player")
         for player in self.machine.game.player_list:
-            player['{}_locked_balls'.format(self.name)] = 0
+            player[self._player_var_name] = 0
 
     @event_handler(2)
     def event_reset_count_for_current_player(self, **kwargs):
@@ -129,9 +129,9 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
             return None
 
         if self.config['locked_ball_counting_strategy'] == "virtual_only":
-            return self.machine.game.player['{}_locked_balls'.format(self.name)]
+            return self.machine.game.player[self._player_var_name]
         if self.config['locked_ball_counting_strategy'] == "min_virtual_physical":
-            return min(self.machine.game.player['{}_locked_balls'.format(self.name)], self._physically_locked_balls)
+            return min(self.machine.game.player[self._player_var_name], self._physically_locked_balls)
         if self.config['locked_ball_counting_strategy'] == "physical_only":
             return self._physically_locked_balls
 
@@ -141,7 +141,7 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
     def locked_balls(self, value):
         """Set the number of locked balls for the current player."""
         if self.config['locked_ball_counting_strategy'] in ("virtual_only", "min_virtual_physical"):
-            self.machine.game.player['{}_locked_balls'.format(self.name)] = value
+            self.machine.game.player[self._player_var_name] = value
         elif self.config['locked_ball_counting_strategy'] in "no_virtual":
             self._locked_balls = value
         else:
@@ -151,14 +151,17 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
     def _register_handlers(self):
         priority = (self.mode.priority if self.mode else 0) + \
             self.config['priority']
+        blocking_facility = self.config['blocking_facility']
         # register on ball_enter of lock_devices
         for device in self.lock_devices:
             self.machine.events.add_handler(
                 'balldevice_' + device.name + '_ball_enter',
-                self._lock_ball, device=device, priority=priority)
+                self._lock_ball, device=device, priority=priority,
+                blocking_facility=blocking_facility)
             self.machine.events.add_handler(
                 'balldevice_' + device.name + '_ball_entered',
-                self._post_events, device=device, priority=priority)
+                self._post_events, device=device, priority=priority,
+                blocking_facility=blocking_facility)
 
     def _unregister_handlers(self):
         # unregister ball_enter handlers
@@ -183,8 +186,8 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
         """Return the highest number of balls locked for all players."""
         max_balls = 0
         for player in self.machine.game.player_list:
-            if max_balls < player['{}_locked_balls'.format(self.name)]:
-                max_balls = player['{}_locked_balls'.format(self.name)]
+            if max_balls < player[self._player_var_name]:
+                max_balls = player[self._player_var_name]
 
         return max_balls
 
@@ -267,7 +270,7 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
         if self.config['locked_ball_counting_strategy'] == "min_virtual_physical":
             # do not lock if the lock would be physically full but not virtually
             if (self._physically_remaining_space <= new_available_balls and
-                    self.config['balls_to_lock'] - self.machine.game.player['{}_locked_balls'.format(self.name)] > 0):
+                    self.config['balls_to_lock'] - self.machine.game.player[self._player_var_name] > 0):
                 self.debug_log("Will not keep ball because the lock would be physically full but virtually still "
                                "has space for this player.")
                 balls_to_lock_physically = 0

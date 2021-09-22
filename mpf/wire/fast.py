@@ -416,10 +416,10 @@ def identify_fast_board(switches: int, drivers: int) -> Optional[FastIOBoard]:
         if drivers > 8:
             return None
         return FastIO3208()
+    if drivers <= 4:
+        return FastIO0804()
     if switches <= 8:
-        if drivers <= 4:
-            return FastIO0804()
-    return FastIO1616()
+        return FastIO1616()
 
 
 # pylint: disable=too-many-locals

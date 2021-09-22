@@ -137,6 +137,36 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEventCalled("should_post_when_disabled")
         self.assertEventNotCalled("should_not_post_when_disabled")
 
+    def test_blocking_facility(self):
+        self.fill_troughs()
+        self.start_game()
+
+        self.post_event("start_default")
+
+        # takes roughly 4s to get ball confirmed
+        self.advance_time_and_run(4)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(1, self.machine.playfield.balls)
+
+        self.advance_time_and_run(4)
+        self.assertEqual(1, self.machine.playfield.available_balls)
+
+        lock_device = self.machine.ball_devices["bd_lock_block"]
+        mb_lock = self.machine.multiball_locks["lock_with_block"]
+        self.assertEqual(lock_device.balls, 0)
+        self.machine.default_platform.add_ball_to_device(lock_device)
+        self.advance_time_and_run(10)
+        self.assertEqual(1, lock_device.balls)
+        self.assertEqual(1, mb_lock.locked_balls)
+
+        self.post_event("start_blocking")
+        self.advance_time_and_run(2)
+
+        self.machine.default_platform.add_ball_to_device(lock_device)
+        self.advance_time_and_run(10)
+        self.assertEqual(1, lock_device.balls)
+        self.assertEqual(1, mb_lock.locked_balls)
+
 
 class TestMultiballLockCountingStrategies(MpfGameTestCase):
 

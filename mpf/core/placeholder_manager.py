@@ -856,6 +856,12 @@ class BasePlaceholderManager(MpfController):
 
     def evaluate_and_subscribe_template(self, template, parameters, text=None):
         """Evaluate and subscribe template."""
+        if self.machine.stop_future.done():
+            # return a canceled future if machine is already stopping
+            future = asyncio.Future()
+            future.cancel()
+            return None, future
+
         try:
             value, subscriptions = self._eval(template, parameters, True)
         except TemplateEvalError as e:
@@ -868,10 +874,9 @@ class BasePlaceholderManager(MpfController):
                                  "See error above.".format(text, parameters)) from e
 
         if not subscriptions:
-            future = asyncio.Future()
-        elif len(subscriptions) == 1:
-            future = subscriptions[0]
+            future = self.machine.wait_for_stop()
         else:
+            subscriptions.append(self.machine.wait_for_stop())
             future = Util.any(subscriptions)
         future = asyncio.ensure_future(future)
         return value, future

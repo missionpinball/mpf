@@ -8,4 +8,5 @@ autoapi
 graphviz
 sphinx
 docutils
+sphinxcontrib-youtube
 -e git+https://github.com/missionpinball/mpf-examples.git@dev#egg=mpf-examples

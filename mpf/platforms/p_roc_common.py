@@ -310,8 +310,12 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
 
     def stop(self):
         """Stop proc."""
+        super().stop()
         if self._light_system:
             self._light_system.stop()
+        if self.event_task:
+            self.event_task.cancel()
+            self.event_task = None
         if self.proc_process and self.proc_process_instance:
             self.run_proc_cmd_sync("_sync", -1)
             self.proc_process_instance.call_soon_threadsafe(self.proc_process.stop)
@@ -1059,6 +1063,7 @@ class PDBConfig:
                 # Dedicated lamps don't use PDB banks. They use P-ROC direct
                 # driver pins (not available on P3-ROC).
                 if lamp.lamp_type == 'dedicated':
+                    # ignore dedicated lamps
                     pass
 
                 elif lamp.lamp_type == 'pdb':

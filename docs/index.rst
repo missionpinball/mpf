@@ -14,6 +14,10 @@ people who want to contribute to MPF itself.
    This documentation is for people writing custom Python code for MPF.
    If you're a general *user* of MPF, read the `MPF User Documentation <http://docs.missionpinball.org>`_ instead.
 
+Video about custom code in MPF:
+
+.. youtube:: _BmvuCK5bV8
+
 This developer documentation is broken into several sections:
 
 Understanding the MPF codebase

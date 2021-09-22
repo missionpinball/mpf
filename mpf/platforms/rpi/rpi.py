@@ -20,6 +20,8 @@ try:
 except ImportError:
     apigpio = None
 
+BOARD_NAME = "Raspberry Pi"
+
 
 class RpiSwitch(SwitchPlatformInterface):
 
@@ -27,7 +29,7 @@ class RpiSwitch(SwitchPlatformInterface):
 
     def get_board_name(self):
         """Return name."""
-        return "Raspberry Pi"
+        return BOARD_NAME
 
 
 class RpiDriver(DriverPlatformInterface):
@@ -43,7 +45,7 @@ class RpiDriver(DriverPlatformInterface):
 
     def get_board_name(self):
         """Return name."""
-        return "Raspberry Pi"
+        return BOARD_NAME
 
     def pulse(self, pulse_settings: PulseSettings):
         """Pulse output."""

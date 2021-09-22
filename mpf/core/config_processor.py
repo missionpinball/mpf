@@ -9,18 +9,13 @@ import tempfile
 
 from typing import List, Tuple, Any, Optional, Dict
 from difflib import SequenceMatcher
-from pkg_resources import iter_entry_points
 
-from mpf.file_interfaces.yaml_interface import YamlInterface
+from mpf.core.config_spec_loader import ConfigSpecLoader
 import mpf
 from mpf.core.file_manager import FileManager
 from mpf.core.utility_functions import Util
 from mpf._version import __show_version__, __config_version__
 from mpf.exceptions.config_file_error import ConfigFileError
-
-MYPY = False
-if MYPY:   # pragma: no cover
-    from mpf.core.device import Device  # pylint: disable-msg=cyclic-import,unused-import
 
 
 class ConfigProcessor:
@@ -224,9 +219,9 @@ class ConfigProcessor:
                 pass
 
         config = FileManager.load(config_spec_file, False, True)
-        config = self._process_config_spec(config, "root")
+        config = ConfigSpecLoader.process_config_spec(config, "root")
 
-        config = self.load_external_platform_config_specs(config)
+        config = ConfigSpecLoader.load_external_platform_config_specs(config)
 
         if self._store_cache:
             with open(cache_file, 'wb') as f:
@@ -235,48 +230,6 @@ class ConfigProcessor:
                 self.log.info('Config spec file cache created: %s', cache_file)
 
         return config
-
-    def load_external_platform_config_specs(self, config):
-        """Load config spec for external platforms."""
-        for platform_entry in iter_entry_points(group='mpf.platforms'):
-            config_spec = platform_entry.load().get_config_spec()
-
-            if config_spec:
-                # add specific config spec if platform has any
-                config[config_spec[1]] = self._process_config_spec(YamlInterface.process(config_spec[0]),
-                                                                   config_spec[1])
-        return config
-
-    def load_device_config_specs(self, config_spec, machine_config):
-        """Load device config specs."""
-        for device_type in machine_config['mpf']['device_modules'].values():
-            device_cls = Util.string_to_class(device_type)      # type: Device
-            if device_cls.get_config_spec():
-                # add specific config spec if device has any
-                config_spec[device_cls.config_section] = self._process_config_spec(
-                    YamlInterface.process(device_cls.get_config_spec()),
-                    device_cls.config_section)
-
-        return config_spec
-
-    def _process_config_spec(self, spec, path):
-        if not isinstance(spec, dict):
-            raise AssertionError("Expected a dict at: {} {}".format(path, spec))
-
-        for element, value in spec.items():
-            if element.startswith("__"):
-                spec[element] = value
-            elif isinstance(value, str):
-                if value == "ignore":
-                    spec[element] = value
-                else:
-                    spec[element] = value.split('|')
-                    if len(spec[element]) != 3:
-                        raise AssertionError("Format incorrect: {}".format(value))
-            else:
-                spec[element] = self._process_config_spec(value, path + ":" + element)
-
-        return spec
 
     @staticmethod
     def get_expected_version(config_type: str) -> str:

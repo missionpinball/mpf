@@ -65,7 +65,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self.matrix_light_cards = dict()    # type: Dict[str, OPPModernMatrixLightsCard]
         self.num_gen2_brd = 0
         self.gen2_addr_arr = {}             # type: Dict[str, Dict[int, Optional[int]]]
-        self.bad_crc = 0
+        self.bad_crc = defaultdict(lambda: 0)
         self.min_version = defaultdict(lambda: 0xffffffff)      # type: Dict[str, int]
         self._poll_task = {}                # type: Dict[str, asyncio.Task]
         self._incand_task = None            # type: Optional[asyncio.Task]
@@ -155,6 +155,9 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     def stop(self):
         """Stop hardware and close connections."""
+        if self._light_system:
+            self._light_system.stop()
+
         for task in self._poll_task.values():
             task.cancel()
 
@@ -502,6 +505,11 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             card = OPPModernMatrixLightsCard(chain_serial, msg[0], self)
             self.matrix_light_cards[chain_serial + '-' + card.card_num] = card
 
+    def _bad_crc(self, chain_serial, msg):
+        """Show warning and increase counter."""
+        self.bad_crc[chain_serial] += 1
+        self.log.warning("Chain: %sMsg contains bad CRC: %s.", chain_serial, "".join(" 0x%02x" % b for b in msg))
+
     def get_gen2_cfg_resp(self, chain_serial, msg):
         """Process cfg response.
 
@@ -523,8 +531,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             # Verify the CRC8 is correct
             crc8 = OppRs232Intf.calc_crc8_part_msg(msg, curr_index, 6)
             if msg[curr_index + 6] != ord(crc8):
-                self.bad_crc += 1
-                self.log.warning("Msg contains bad CRC:%s.", "".join(" 0x%02x" % b for b in msg))
+                self._bad_crc(chain_serial, msg)
                 break
             self._parse_gen2_board(chain_serial, msg[curr_index:curr_index + 6], read_input_msg)
 
@@ -563,9 +570,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             # Verify the CRC8 is correct
             crc8 = OppRs232Intf.calc_crc8_part_msg(msg, curr_index, 6)
             if msg[curr_index + 6] != ord(crc8):
-                self.bad_crc += 1
-                self.log.warning("Msg contains bad CRC (Chain: %s):%s.", chain_serial,
-                                 "".join(" 0x%02x" % b for b in msg))
+                self._bad_crc(chain_serial, msg)
                 break
             version = (msg[curr_index + 2] << 24) | \
                 (msg[curr_index + 3] << 16) | \
@@ -608,8 +613,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             raise AssertionError("Received too short initial input response: " + "".join(" 0x%02x" % b for b in msg))
         crc8 = OppRs232Intf.calc_crc8_part_msg(msg, 0, 6)
         if msg[6] != ord(crc8):
-            self.bad_crc += 1
-            self.log.warning("Msg contains bad CRC:%s.", "".join(" 0x%02x" % b for b in msg))
+            self._bad_crc(chain_serial, msg)
         else:
             if chain_serial + '-' + str(msg[0]) not in self.inp_addr_dict:
                 self.log.warning("Got input response for invalid card at initial request: %s. Msg: %s.", msg[0],
@@ -642,8 +646,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         crc8 = OppRs232Intf.calc_crc8_part_msg(msg, 0, 6)
         if msg[6] != ord(crc8):
-            self.bad_crc += 1
-            self.log.warning("Msg contains bad CRC:%s.", "".join(" 0x%02x" % b for b in msg))
+            self._bad_crc(chain_serial, msg)
         else:
             if chain_serial + '-' + str(msg[0]) not in self.inp_addr_dict:
                 self.log.warning("Got input response for invalid card: %s. Msg: %s.", msg[0],
@@ -691,8 +694,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             raise AssertionError("Received too short initial input response: " + "".join(" 0x%02x" % b for b in msg))
         crc8 = OppRs232Intf.calc_crc8_part_msg(msg, 0, 10)
         if msg[10] != ord(crc8):
-            self.bad_crc += 1
-            self.log.warning("Msg contains bad CRC:%s.", "".join(" 0x%02x" % b for b in msg))
+            self._bad_crc(chain_serial, msg)
         else:
             if chain_serial + '-' + str(msg[0]) not in self.matrix_inp_addr_dict:
                 self.log.warning("Got input response for invalid matrix card at initial request: %s. Msg: %s.", msg[0],
@@ -721,8 +723,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         crc8 = OppRs232Intf.calc_crc8_part_msg(msg, 0, 10)
         if msg[10] != ord(crc8):
-            self.bad_crc += 1
-            self.log.warning("Msg contains bad CRC:%s.", "".join(" 0x%02x" % b for b in msg))
+            self._bad_crc(chain_serial, msg)
         else:
             if chain_serial + '-' + str(msg[0]) not in self.matrix_inp_addr_dict:
                 self.log.warning("Got input response for invalid matrix card: %s. Msg: %s.", msg[0],

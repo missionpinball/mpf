@@ -153,8 +153,11 @@ class SpikePlatformTest(MpfTestCase):
         self.clock.mock_serial("/dev/ttyUSB0", self.serialMock)
 
     def tearDown(self):
-        self.assertFalse(self.serialMock.crashed)
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x8a\x08\x32\x00\xc8\x00\x00\x4a\xff'): b'',    # stop stepper
+        }
         super().tearDown()
+        self.assertFalse(self.serialMock.crashed)
 
     def get_platform(self):
         return 'spike'
@@ -670,8 +673,11 @@ class SpikePlatformFirmware0_49Test(MpfTestCase):
         self.clock.mock_serial("/dev/ttyUSB0", self.serialMock)
 
     def tearDown(self):
-        self.assertFalse(self.serialMock.crashed)
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x8a\x08\x32\x00\xc8\x00\x00\x4a\xff'): b'',    # stop stepper
+        }
         super().tearDown()
+        self.assertFalse(self.serialMock.crashed)
 
     def get_platform(self):
         return 'spike'

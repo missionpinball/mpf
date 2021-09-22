@@ -35,7 +35,7 @@ class BcpPickleClient(BaseBcpClient):
             connector = self.machine.clock.open_connection(config['host'], config['port'])
             try:
                 self._receiver, self._sender = await connector
-            except (ConnectionRefusedError, OSError):
+            except OSError:
                 if config.get('required'):
                     await asyncio.sleep(.1)
                     continue

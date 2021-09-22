@@ -280,9 +280,9 @@ class System:
         # Calculate list of all pairs of connectors (NB not pins) connected by wires
         pairs: List[Tuple[Connector, Connector]] = []
         for wire in self.wires:
-            if (wire.src.connector, wire.dest.connector) not in pairs:
-                if (wire.dest.connector, wire.src.connector) not in pairs:
-                    pairs.append((wire.src.connector, wire.dest.connector))
+            if (wire.src.connector, wire.dest.connector) not in pairs and \
+                    (wire.dest.connector, wire.src.connector) not in pairs:
+                pairs.append((wire.src.connector, wire.dest.connector))
 
         wire_dict = dict()              # Wires dictionary for YAML
         connection_list: list = []      # Connections list for YAML

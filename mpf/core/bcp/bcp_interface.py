@@ -131,17 +131,19 @@ class BcpInterface(MpfController):
         elif subcommand == "stop":
             await self._service_stop(client)
         elif subcommand == "list_switches":
+            values = kwargs.get("values") and kwargs["values"].split(",")
             self.machine.bcp.transport.send_to_client(client, "list_switches",
-                                                      switches=[(s[0], str(s[1].hw_switch.number), s[1].name,
-                                                                 s[1].state)
-                                                                for s in self.machine.service.get_switch_map()])
+                                                      switches=[self._switch_body(s[0], s[1], values) for s in
+                                                                self.machine.service.get_switch_map()])
         elif subcommand == "list_coils":
+            values = kwargs.get("values") and kwargs["values"].split(",")
             self.machine.bcp.transport.send_to_client(client, "list_coils",
-                                                      coils=[(s[0], str(s[1].hw_driver.number), s[1].name) for s in
+                                                      coils=[self._coil_body(s[0], s[1], values) for s in
                                                              self.machine.service.get_coil_map()])
         elif subcommand == "list_lights":
+            values = kwargs.get("values") and kwargs["values"].split(",")
             self.machine.bcp.transport.send_to_client(client, "list_lights",
-                                                      lights=[(s[0], s[1].get_hw_numbers(), s[1].name, s[1].get_color())
+                                                      lights=[self._light_body(s[0], s[1], values)
                                                               for s in self.machine.service.get_light_map()])
         elif subcommand == "list_shows":
             self.machine.bcp.transport.send_to_client(client, "list_shows",
@@ -229,6 +231,47 @@ class BcpInterface(MpfController):
             return
 
         self.machine.bcp.transport.send_to_client(client, "coil_enable", error=False)
+
+    @staticmethod
+    def _coil_body(board, coil, values):
+        if not values:
+            return (board, str(coil.hw_driver.number), coil.name)
+
+        coil_values = {
+            "board": board,
+            "name": coil.name,
+            "label": coil.label,
+            "number": coil.hw_driver.number
+        }
+        return tuple(coil_values[value] for value in values)
+
+    @staticmethod
+    def _light_body(board, light, values):
+        if not values:
+            return (board, light.get_hw_numbers(), light.name, light.get_color())
+
+        light_values = {
+            "board": board,
+            "color": light.get_color(),
+            "label": light.label,
+            "name": light.name,
+            "number": light.get_hw_numbers(),
+        }
+        return tuple(light_values[value] for value in values)
+
+    @staticmethod
+    def _switch_body(board, switch, values):
+        if not values:
+            return (board, str(switch.hw_switch.number), switch.name, switch.state)
+
+        switch_values = {
+            "board": board,
+            "label": switch.label,
+            "name": switch.name,
+            "number": str(switch.hw_switch.number),
+            "state": switch.state
+        }
+        return tuple([switch_values[value] for value in values])
 
     def _light_color(self, client, light_name, color_name):
         try:
