@@ -277,15 +277,27 @@ class TimeTravelLoop(base_events.BaseEventLoop):
         self._wait_for_external_executor = False
 
     def close(self, ignore_running_tasks=False) -> None:
+        if hasattr(asyncio, "all_tasks"):
+            tasks = asyncio.all_tasks(loop=self)
+        else:
+            tasks = asyncio.Task.all_tasks(loop=self)
+
         if not ignore_running_tasks:
-            open_tasks = [t for t in asyncio.Task.all_tasks(loop=self)
-                          if (not t.done() and not isinstance(t.get_coro(), asyncio.Lock))]
+            open_tasks = [t for t in tasks if (not t.done() and not isinstance(t.get_coro(), asyncio.Lock))]
             if open_tasks:
                 raise AssertionError("There are still open tasks: {}".format(open_tasks))
         super().close()
 
     def time(self):
         return self._time
+
+    # def create_task(self, coro, *, name=None):
+    #     import sys
+    #     import traceback
+    #     traceback.print_stack(file=sys.stdout)
+    #     task = super().create_task(coro, name=name)
+    #     print(task.get_name())
+    #     return task
 
     def set_time(self, time):
         """Set time in loop."""
@@ -545,8 +557,7 @@ class TestClock(ClockBase):
 
     @coroutine
     def open_serial_connection(self, limit=None, **kwargs):     # type: ignore
-        """A wrapper for create_serial_connection() returning a (reader,
-        writer) pair.
+        """A wrapper for create_serial_connection() returning a (reader, writer) pair.
 
         The reader returned is a StreamReader instance; the writer is a
         StreamWriter instance.
