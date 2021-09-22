@@ -7,6 +7,7 @@ from pkg_resources import iter_entry_points
 
 
 import mpf.core
+from mpf.core.config_loader import ProductionConfigLoader
 from mpf._version import version
 
 EXAMPLES_FOLDER = 'examples'
@@ -24,13 +25,14 @@ class MpfCommandLineParser:
         self.mpf_path = os.path.abspath(os.path.join(mpf.core.__path__[0],
                                                      os.pardir))
 
-    def get_machine_path(self, machine_path_hint=None) -> str:
+    def get_machine_path(self, machine_path_hint=None, is_production=False) -> str:
         """Find the full machine path based on the current directory and option hint.
 
         Args:
         ----
             machine_path_hint: Helps MPF locate the machine path. If None,
                 the 'config' folder in the current working directory is used.
+            is_production: True when the game is run from a production bundle.
 
         Returns a string of full path of the machine folder that was located.
         """
@@ -59,6 +61,12 @@ class MpfCommandLineParser:
             if os.path.isdir(os.path.join(self.path, CONFIG_FOLDER)):
                 machine_path = self.path
 
+            # If in production mode, look for a production bundle in our current folder
+            elif is_production:
+                bundle_path = ProductionConfigLoader.get_mpf_bundle_path(self.path)
+                if os.path.exists(bundle_path):
+                    machine_path = self.path
+
         if machine_path:
             return machine_path
 
@@ -77,6 +85,11 @@ class MpfCommandLineParser:
 
         parser.add_argument("machine_path", help="Path of the machine folder.",
                             default=None, nargs='?')
+
+        parser.add_argument("-P",
+                            action="store_true", dest="production", default=False,
+                            help="Production mode. Will suppress errors, wait for hardware on start and "
+                                 "try to exit when startup fails. Run this inside a loop.")
 
         parser.add_argument("--version",
                             action="version", version=version,
@@ -98,9 +111,13 @@ class MpfCommandLineParser:
 
         if len(self.argv) > 1 and self.argv[1].startswith('-'):
             self.argv.insert(1, None)
-
         args, remaining_args = parser.parse_known_args(self.argv[1:])
-        machine_path = self.get_machine_path(args.machine_path)
+
+        # If the production arg was pulled here, re-insert it to the remaining args
+        # so that the game parser also knows to run in production mode.
+        if args.production:
+            remaining_args.append("-P")
+        machine_path = self.get_machine_path(args.machine_path, args.production)
 
         return machine_path, remaining_args
 
