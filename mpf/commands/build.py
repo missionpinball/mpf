@@ -43,7 +43,7 @@ class Command(MpfCommandLineParser):
         parser.add_argument("--dest-path",
                             action="store", dest="dest_path", default=False,
                             help="Path to set as machine_path on the production bundle. May "
-                                "be different than the machine_path on the current machine.")
+                                 "be different than the machine_path on the current machine.")
 
         self.args = parser.parse_args(remaining_args)
         self.args.configfile = Util.string_to_event_list(self.args.configfile)
