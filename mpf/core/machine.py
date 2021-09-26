@@ -708,6 +708,7 @@ class MachineController(LogMixin):
 
         if self.clock and self.clock.loop and not self.clock.loop.is_closed():
             self.clock.loop.call_soon_threadsafe(self._stop_loop, reason)
+        self.is_shutting_down = True
 
     def _stop_loop(self, reason):
         if self.stop_future.done():
@@ -745,10 +746,11 @@ class MachineController(LogMixin):
         if not open_tasks:
             return
 
-        await asyncio.wait(open_tasks, timeout=.1)
+        await asyncio.wait(open_tasks, timeout=1.0)
 
     def shutdown(self) -> None:
         """Shutdown the machine."""
+        self.is_shutting_down = True
         if not self.stop_future.done():
             self.stop_future.set_result("Graceful shutdown")
         self.thread_stopper.set()
