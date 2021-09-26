@@ -42,7 +42,7 @@ class LightController(MpfController):
     def _update_brightness(self, *args):
         """Update brightness factor."""
         del args
-        if self.machine.stop_future.done():
+        if self.machine.is_shutting_down:
             return
         self.brightness_factor, future = self._brightness_template.evaluate_and_subscribe([])
         future.add_done_callback(self._update_brightness)

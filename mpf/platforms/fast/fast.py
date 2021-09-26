@@ -976,7 +976,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     def receive_bootloader(self, msg, remote_processor):
         """Process bootloader message."""
-        self.debug_log("Got Bootloader message: %s from", msg, remote_processor)
+        self.debug_log("Got Bootloader message: %s from %s", msg, remote_processor)
         ignore_rgb = self.config['ignore_rgb_crash'] and \
             remote_processor == self.rgb_connection.remote_processor
         if msg in ('00', '02'):
