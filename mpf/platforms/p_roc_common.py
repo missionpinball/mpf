@@ -803,15 +803,20 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
             number: Number of the servo
         """
         try:
-            board, number = number.split("-")
+            board, index = number.split("-")
         except ValueError:
             self.raise_config_error("Servo number should be board-number but is {}".format(number), 1)
-        if 0 > int(number) >= 12:
+        if 0 > int(index) >= 12:
             self.raise_config_error("PD-LED only supports 12 servos {}".format(number), 5)
+
+        pd_led_obj = self.config['pd_led_boards'].get(int(board), {})
+        if not pd_led_obj.get("use_servo_{}".format(index), False):
+            self.raise_config_error('Set "use_servo_{}: True" in the config of pd_led_board "{}" to '
+                                    'configure servo "{}"'.format(index, board, number), 7)
 
         min_servo_value = self.config['pd_led_boards'].get(int(board), {}).get("min_servo_value", 127)
 
-        return PdLedServo(board, number, self, self.config.get("debug", False), min_servo_value)
+        return PdLedServo(board, index, self, self.config.get("debug", False), min_servo_value)
 
     async def configure_stepper(self, number: str, config: dict) -> PdLedStepper:
         """Configure a stepper (axis) device in platform.
