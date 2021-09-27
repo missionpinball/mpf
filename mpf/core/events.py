@@ -29,7 +29,7 @@ class EventManager(MpfController):
 
     config_name = "event_manager"
 
-    __slots__ = ["registered_handlers", "event_queue", "callback_queue", "monitor_events", "_queue_tasks"]
+    __slots__ = ["registered_handlers", "event_queue", "callback_queue", "monitor_events", "_queue_tasks", "_stopped"]
 
     def __init__(self, machine: "MachineController") -> None:
         """Initialize EventManager."""
@@ -40,6 +40,7 @@ class EventManager(MpfController):
         self.callback_queue = deque([])     # type: Deque[Tuple[Any, dict]]
         self.monitor_events = False
         self._queue_tasks = []              # type: List[asyncio.Task]
+        self._stopped = False
 
         self.add_handler("debug_dump_stats", self._debug_dump_events)
 
@@ -576,6 +577,10 @@ class EventManager(MpfController):
         self._post(event, 'relay', callback, **kwargs)
 
     def _post(self, event: str, ev_type: Optional[str], callback, **kwargs: dict) -> None:
+        if self._stopped:
+            self.warning_log("Event after stop: ===='%s'==== Type: %s, Callback: %s, "
+                             "Args: %s", event, ev_type, callback, kwargs)
+            return
         if self._debug:
             self.debug_log("Event: ===='%s'==== Type: %s, Callback: %s, "
                            "Args: %s", event, ev_type, callback, kwargs)
@@ -722,6 +727,12 @@ class EventManager(MpfController):
             task = self.machine.clock.loop.create_task(self._run_handlers_sequential(event, callback, kwargs))
             task.add_done_callback(self._queue_task_done)
             self._queue_tasks.append(task)
+
+    def stop(self):
+        """Stop all ongoing event handlers."""
+        self._stopped = True
+        for handler in self._queue_tasks:
+            handler.cancel()
 
     def _queue_task_done(self, future):
         """Remove queue task from list and evaluate result."""

@@ -766,6 +766,8 @@ class MachineController(LogMixin):
                 self.clock.loop.run_until_complete(self._stop_tasks(asyncio.Task.all_tasks(loop=self.clock.loop)))
         except RuntimeError:
             print("Failed to stop all tasks")
+
+        self.events.stop()
         self.clock.loop.stop()
         self.clock.loop.run_forever()
         self.clock.loop.close()
