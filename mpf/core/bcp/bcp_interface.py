@@ -150,8 +150,6 @@ class BcpInterface(MpfController):
                                                       shows=[(s.name, sorted(s.tokens))
                                                              for s in sorted(self.machine.shows.values(),
                                                                              key=lambda x: x.name)])
-        elif subcommand == "monitor_switches":
-            pass
         elif subcommand == "coil_pulse":
             self._coil_pulse(client, kwargs.get("coil"), kwargs.get("pulse_ms"), kwargs.get("pulse_power"))
         elif subcommand == "coil_enable":
