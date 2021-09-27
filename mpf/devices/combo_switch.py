@@ -8,6 +8,8 @@ from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
 from mpf.core.system_wide_device import SystemWideDevice
 
+EVENTS_WHEN_TEMPLATE = 'events_when_{}'
+
 
 @DeviceMonitor("state")
 class ComboSwitch(SystemWideDevice, ModeDevice):
@@ -36,9 +38,9 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
         config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
 
         for state in self.states + ["switches_1", "switches_2"]:
-            if not config['events_when_{}'.format(state)]:
-                config['events_when_{}'.format(state)] = [
-                    "{}_{}".format(self.name, state)]
+            event_name = EVENTS_WHEN_TEMPLATE.format(state)
+            if not config[event_name]:
+                config[event_name] = ["{}_{}".format(self.name, state)]
 
         return config
 
@@ -245,7 +247,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
         self._state = state
         self.debug_log("New State: %s", state)
 
-        for event in self.config['events_when_{}'.format(state)]:
+        for event in self.config[EVENTS_WHEN_TEMPLATE.format(state)]:
             self.machine.events.post(event, triggering_group=group, triggering_switch=switch)
             '''event: (name)_one
             config_attribute: events_when_one

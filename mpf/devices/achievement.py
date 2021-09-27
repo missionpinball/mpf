@@ -7,6 +7,8 @@ from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
 
+EVENTS_WHEN_TEMPLATE = 'events_when_{}'
+
 
 @DeviceMonitor("state", "selected")
 class Achievement(ModeDevice):
@@ -74,9 +76,9 @@ class Achievement(ModeDevice):
         states = ['disabled', 'enabled', 'started', 'stopped', 'selected', 'completed']
 
         for state in states:
-            if not config['events_when_{}'.format(state)]:
-                config['events_when_{}'.format(state)] = [
-                    "achievement_{}_state_{}".format(self.name, state)]
+            event_name = EVENTS_WHEN_TEMPLATE.format(state)
+            if not config[event_name]:
+                config[event_name] = ["achievement_{}_state_{}".format(self.name, state)]
 
         return config
 
@@ -224,7 +226,7 @@ class Achievement(ModeDevice):
             selected: Whatever this achievement is selected currently
 
         '''
-        for event in self.config['events_when_{}'.format(self.state)]:
+        for event in self.config[EVENTS_WHEN_TEMPLATE.format(self.state)]:
             self.machine.events.post(event, restore=restore, state=self.state, selected=self.selected)
             '''event: achievement_(name)_state_(state)
             desc: Achievement (name) changed to state (state).

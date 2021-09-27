@@ -22,7 +22,8 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
     collection = 'multiball_locks'
     class_label = 'multiball_lock'
 
-    __slots__ = ["lock_devices", "source_playfield", "_events", "_locked_balls", "_source_devices", "_player_var_name"]
+    __slots__ = ["lock_devices", "source_playfield", "_events", "_locked_balls", "_source_devices",
+                 "_player_var_name"]
 
     def __init__(self, machine, name):
         """Initialise ball lock."""
