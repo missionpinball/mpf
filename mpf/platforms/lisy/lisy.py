@@ -554,6 +554,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
         if self._reader:
             self._writer.close()
+            self.machine.clock.loop.run_until_complete(self._writer.wait_closed())
             self._reader = None
             self._writer = None
 

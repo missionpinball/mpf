@@ -125,7 +125,7 @@ class BaseSerialCommunicator:
             self.machine.stop("Serial {} closed.".format(self.port))
             return None
 
-        if self.debug:
+        if self.debug and resp != b'PWDE':
             self.log.debug("%s received: %s (%s)", self, resp, "".join(" 0x%02x" % b for b in resp))
         return resp
 
@@ -141,6 +141,7 @@ class BaseSerialCommunicator:
             self.read_task = None
         if self.writer:
             self.writer.close()
+            self.machine.clock.loop.run_until_complete(self.writer.wait_closed())
             self.writer = None
 
     def send(self, msg):
