@@ -557,6 +557,9 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             self._reader = None
             self._writer = None
 
+        # wait for connections to close
+        self.machine.clock.loop.run_until_complete(asyncio.sleep(.1))
+
     async def _poll(self):
         sleep_time = 1.0 / self.config['poll_hz']
         while True:

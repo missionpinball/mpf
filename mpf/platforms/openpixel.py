@@ -56,6 +56,7 @@ class OpenpixelHardwarePlatform(LightsPlatform):
             if self.opc_client.socket_sender:
                 self.opc_client.socket_sender.close()
                 self.opc_client.socket_sender = None
+            self.opc_client.stop()
             self.opc_client = None
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
@@ -146,7 +147,7 @@ class OpenPixelClient:
     """
 
     __slots__ = ["machine", "log", "update_every_tick", "socket_sender", "max_fade_ms", "channels", "dirty_leds",
-                 "msg", "openpixel_config"]
+                 "msg", "openpixel_config", "_update_task"]
 
     def __init__(self, machine, config):
         """Initialise openpixel client."""
@@ -160,6 +161,7 @@ class OpenPixelClient:
         self.dirty_leds = []
         self.msg = []
         self.openpixel_config = config
+        self._update_task = None
 
     async def connect(self):
         """Connect to the hardware."""
@@ -174,13 +176,20 @@ class OpenPixelClient:
 
         self.machine.events.add_handler("init_phase_3", self._start_loop)
 
+    def stop(self):
+        """Stop openpixel client."""
+        if self._update_task:
+            self.machine.clock.unschedule(self._update_task)
+            self._update_task = None
+
     def _start_loop(self, **kwargs):
         del kwargs
         # blank all channels
         self.blank_all()
 
         # Update at a regular interval
-        self.machine.clock.schedule_interval(self.tick, 1 / self.machine.config['mpf']['default_light_hw_update_hz'])
+        self._update_task = self.machine.clock.schedule_interval(
+            self.tick, 1 / self.machine.config['mpf']['default_light_hw_update_hz'])
 
     def add_pixel(self, channel, led):
         """Add a pixel to the list that will be sent to the OPC server.
