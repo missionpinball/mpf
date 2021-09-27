@@ -73,7 +73,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         self.features['tickless'] = True
 
-        self.config = self.machine.config_validator.validate_config("opp", self.machine.config['opp'])
+        self.config = self.machine.config_validator.validate_config("opp", self.machine.config.get('opp', {}))
         self._configure_device_logging_and_debug("OPP", self.config)
         self._poll_response_received = {}   # type: Dict[str, asyncio.Event]
         assert self.log is not None
