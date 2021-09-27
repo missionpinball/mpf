@@ -55,7 +55,9 @@ class OpenpixelHardwarePlatform(LightsPlatform):
             self.opc_client.blank_all()
             if self.opc_client.socket_sender:
                 self.opc_client.socket_sender.close()
-                self.machine.clock.loop.run_until_complete(self.opc_client.socket_sender.wait_closed())
+                if hasattr(self.opc_client.socket_sender, "wait_closed"):
+                    # Python 3.7+ only
+                    self.machine.clock.loop.run_until_complete(self.opc_client.socket_sender.wait_closed())
                 self.opc_client.socket_sender = None
             self.opc_client.stop()
             self.opc_client = None
