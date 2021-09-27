@@ -462,11 +462,15 @@ class ConfigValidator:
 
         return self.machine.placeholder_manager.build_float_template(item)
 
+    def _assert_int_float_template(self, item, validation_failure_info):
+        """Assert that templates are sting or int."""
+        if not isinstance(item, (str, int)):
+            self.validation_error(item, validation_failure_info, "Template has to be string/int.")
+
     def _validate_type_template_secs(self, item, validation_failure_info):
         if item is None:
             return None
-        if not isinstance(item, (str, int)):
-            self.validation_error(item, validation_failure_info, "Template has to be string/int.")
+        self._assert_int_float_template(item, validation_failure_info)
 
         # try to convert to float. if we fail it will be a template
         try:
@@ -479,8 +483,7 @@ class ConfigValidator:
     def _validate_type_template_ms(self, item, validation_failure_info):
         if item is None:
             return None
-        if not isinstance(item, (str, int)):
-            self.validation_error(item, validation_failure_info, "Template has to be string/int.")
+        self._assert_int_float_template(item, validation_failure_info)
 
         # try to convert to int. if we fail it will be a template
         try:
@@ -493,8 +496,8 @@ class ConfigValidator:
     def _validate_type_template_int(self, item, validation_failure_info):
         if item is None:
             return None
-        if not isinstance(item, (str, int)):
-            self.validation_error(item, validation_failure_info, "Template has to be string/int.")
+        self._assert_int_float_template(item, validation_failure_info)
+
         return self.machine.placeholder_manager.build_int_template(item)
 
     def _validate_type_template_bool(self, item, validation_failure_info):
@@ -505,6 +508,15 @@ class ConfigValidator:
 
         return self.machine.placeholder_manager.build_bool_template(item)
 
+    def _validate_range_min_smaller_max(self, item, value, param, validation_failure_info):
+        """Assert that value is within boundaries for numeric template."""
+        if param:
+            param = param.split(",")
+            if param[0] != "NONE" and value < float(param[0]):
+                self.validation_error(item, validation_failure_info, "{} is smaller then {}".format(value, param[0]))
+            elif param[1] != "NONE" and value > float(param[1]):
+                self.validation_error(item, validation_failure_info, "{} is larger then {}".format(value, param[1]))
+
     def _validate_type_float(self, item, validation_failure_info, param=None):
         if item is None:
             return None
@@ -513,12 +525,7 @@ class ConfigValidator:
         except (TypeError, ValueError):
             self.validation_error(item, validation_failure_info, "Could not convert to float")
 
-        if param:
-            param = param.split(",")
-            if param[0] != "NONE" and value < float(param[0]):
-                self.validation_error(item, validation_failure_info, "{} is smaller then {}".format(item, param[0]))
-            elif param[1] != "NONE" and value > float(param[1]):
-                self.validation_error(item, validation_failure_info, "{} is larger then {}".format(item, param[1]))
+        self._validate_range_min_smaller_max(item, value, param, validation_failure_info)
 
         return value
 
@@ -531,12 +538,7 @@ class ConfigValidator:
         except (TypeError, ValueError):
             return self.validation_error(item, validation_failure_info, "Could not convert {} to int".format(item))
 
-        if param:
-            param = param.split(",")
-            if param[0] != "NONE" and value < int(param[0]):
-                self.validation_error(item, validation_failure_info, "{} is smaller then {}".format(item, param[0]))
-            elif param[1] != "NONE" and value > int(param[1]):
-                self.validation_error(item, validation_failure_info, "{} is larger then {}".format(item, param[1]))
+        self._validate_range_min_smaller_max(item, value, param, validation_failure_info)
 
         return value
 
@@ -556,12 +558,7 @@ class ConfigValidator:
             except (TypeError, ValueError):
                 return self.validation_error(item, validation_failure_info, "Could not convert {} to num".format(item))
 
-        if param:
-            param = param.split(",")
-            if param[0] != "NONE" and value < int(param[0]):
-                self.validation_error(item, validation_failure_info, "{} is smaller then {}".format(item, param[0]))
-            elif param[1] != "NONE" and value > int(param[1]):
-                self.validation_error(item, validation_failure_info, "{} is larger then {}".format(item, param[1]))
+        self._validate_range_min_smaller_max(item, value, param, validation_failure_info)
 
         return value
 
