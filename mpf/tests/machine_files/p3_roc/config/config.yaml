@@ -10,6 +10,8 @@ p_roc:
     trace_bus: True
     debug: true
     pd_led_boards:
+      2:
+        use_servo_0: True
       4:
         use_stepper_0: True
         use_stepper_1: True

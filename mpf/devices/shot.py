@@ -24,12 +24,14 @@ class Shot(EnableDisableMixin, ModeDevice):
     to track shots.
     """
 
-    __slots__ = ["delay", "active_sequences", "active_delays", "running_show", "_handlers", "_player_var_name"]
+    __slots__ = ["delay", "active_sequences", "active_delays", "running_show", "_handlers",
+                 "_player_var_name"]
 
     def __init__(self, machine, name):
         """Initialise shot."""
         # If this device is setup in a machine-wide config, make sure it has
         # a default enable event.
+        self._player_var_name = "shot_{}".format(name)
         super(Shot, self).__init__(machine, name)
 
         self.delay = mpf.core.delays.DelayManager(self.machine)
@@ -39,7 +41,6 @@ class Shot(EnableDisableMixin, ModeDevice):
         self.active_delays = set()
         self.running_show = None
         self._handlers = []
-        self._player_var_name = "shot_{}".format(name)
 
     async def _initialize(self) -> None:
         """Register playfield active handlers."""

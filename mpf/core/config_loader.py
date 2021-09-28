@@ -1,5 +1,5 @@
 """Loads MPF configs."""
-from typing import List
+from typing import List, NoReturn
 
 import logging
 import os
@@ -10,6 +10,12 @@ from pathlib import PurePath
 
 from mpf.core.config_processor import ConfigProcessor
 from mpf.core.config_spec_loader import ConfigSpecLoader
+
+
+def _raise_mode_not_found_exception(mode_name) -> NoReturn:
+    raise AssertionError("No config found for mode '{mode_name}'. MPF expects the config at "
+                         "'modes/{mode_name}/config/{mode_name}.yaml' inside your machine "
+                         "folder.".format(mode_name=mode_name))
 
 
 class MpfConfig:
@@ -53,9 +59,7 @@ class MpfConfig:
         try:
             return self._mode_config[mode_name]
         except KeyError:
-            raise AssertionError("No config found for mode '{mode_name}'. MPF expects the config at "
-                                 "'modes/{mode_name}/config/{mode_name}.yaml' inside your machine "
-                                 "folder.".format(mode_name=mode_name))
+            _raise_mode_not_found_exception(mode_name)
 
     def get_modes(self):
         """Return a list of mode names."""
@@ -104,9 +108,7 @@ class MpfMcConfig:
         try:
             return self._mode_config[mode_name]
         except KeyError:
-            raise AssertionError("No config found for mode '{mode_name}'. MPF expects the config at "
-                                 "'modes/{mode_name}/config/{mode_name}.yaml' inside your machine "
-                                 "folder.".format(mode_name=mode_name))
+            _raise_mode_not_found_exception(mode_name)
 
     def get_modes(self):
         """Return a list of mode names."""
@@ -214,9 +216,7 @@ class YamlMultifileConfigLoader(ConfigLoader):
                 mode_config_files.append(machine_config_path)
 
             if not mode_config_files:
-                raise AssertionError("No config found for mode '{mode_name}'. MPF expects the config at "
-                                     "'modes/{mode_name}/config/{mode_name}.yaml' inside your machine "
-                                     "folder.".format(mode_name=mode))
+                _raise_mode_not_found_exception(mode)
 
             config = self.config_processor.load_config_files_with_cache(mode_config_files, "mode",
                                                                         config_spec=config_spec,

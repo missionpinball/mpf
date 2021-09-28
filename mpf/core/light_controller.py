@@ -39,9 +39,13 @@ class LightController(MpfController):
         if 'named_colors' in self.machine.config:
             self._load_named_colors()
 
-    def _update_brightness(self, *args):
+    def _update_brightness(self, future=None):
         """Update brightness factor."""
-        del args
+        if future:
+            try:
+                future.result()
+            except asyncio.CancelledError:
+                return
         if self.machine.is_shutting_down:
             return
         self.brightness_factor, future = self._brightness_template.evaluate_and_subscribe([])

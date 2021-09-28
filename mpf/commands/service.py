@@ -294,10 +294,6 @@ class ServiceCli(cmd.Cmd):
         else:
             self.stdout.write(SUCCESS_OUTPUT)
 
-    def do_monitor_switches(self, args):
-        """Monitor switches."""
-        # TODO: implement
-
     def do_placeholder_evaluate(self, args):
         """Evaluate a placeholder."""
         self.bcp_client.send("evaluate_placeholder", {"placeholder": args})

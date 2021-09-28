@@ -23,12 +23,13 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
 
     """Implements enable and disable_events."""
 
-    __slots__ = ["_enabled", "player"]
+    __slots__ = ["_enabled", "player", "_player_var_name_for_enable"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Remember the enable state."""
         self._enabled = None    # type: Optional[bool]
         self.player = None      # type: Optional[Player]
+        self._player_var_name_for_enable = "{}_{}_enabled".format(self.class_label, name)
         super().__init__(machine, name)
 
     def _enable(self):
@@ -99,7 +100,7 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
             # in case the mode is not running the device is disabled
             if not self.player:
                 return False
-            return self.player["{}_{}_enabled".format(self.class_label, self.name)]
+            return self.player[self._player_var_name_for_enable]
 
         return self._enabled
 
@@ -107,7 +108,7 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
     def enabled(self, value):
         """Set enabled enabled."""
         if 'persist_enable' in self.config and self.config['persist_enable']:
-            self.player["{}_{}_enabled".format(self.class_label, self.name)] = value
+            self.player[self._player_var_name_for_enable] = value
         else:
             self._enabled = value
 
@@ -121,7 +122,7 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
         super().device_loaded_in_mode(mode, player)
         self.player = player
         if self.persist_enabled:
-            if not player.is_player_var("{}_{}_enabled".format(self.class_label, self.name)):
+            if not player.is_player_var(self._player_var_name_for_enable):
                 self._load_enable_based_on_config_default()
             elif self.enabled:
                 self._enable()

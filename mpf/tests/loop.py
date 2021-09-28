@@ -285,6 +285,7 @@ class TimeTravelLoop(base_events.BaseEventLoop):
         if not ignore_running_tasks:
             open_tasks = [t for t in tasks if (not t.done() and not isinstance(t.get_coro(), asyncio.Lock))]
             if open_tasks:
+                super().close()
                 raise AssertionError("There are still open tasks: {}".format(open_tasks))
         super().close()
 

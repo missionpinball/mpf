@@ -87,10 +87,10 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
     def stop(self):
         """Stop and shut down this serial connection."""
-        super().stop()
         if self.write_task:
             self.write_task.cancel()
             self.write_task = None
+        super().stop()
 
     async def _read_with_timeout(self, timeout):
         try:

@@ -141,6 +141,9 @@ class BaseSerialCommunicator:
             self.read_task = None
         if self.writer:
             self.writer.close()
+            if hasattr(self.writer, "wait_closed"):
+                # Python 3.7+ only
+                self.machine.clock.loop.run_until_complete(self.writer.wait_closed())
             self.writer = None
 
     def send(self, msg):
