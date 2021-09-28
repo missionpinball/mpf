@@ -1,6 +1,7 @@
 """Fast serial communicator."""
 import asyncio
 from distutils.version import StrictVersion
+from mpf.platforms.fast import fast_defines
 
 from mpf.core.utility_functions import Util
 
@@ -27,6 +28,7 @@ V2_FW = '1.30'          # Firmware cutoff for v2 network boards
 # IO_LATEST_FW = '0.89'
 
 
+# pylint: disable-msg=too-many-instance-attributes
 class FastSerialCommunicator(BaseSerialCommunicator):
 
     """Handles the serial communication to the FAST platform."""
@@ -208,7 +210,20 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         msg = ''
         while msg != 'BR:P\r' and not msg.endswith('!B:02\r'):
             msg = (await self.readuntil(b'\r')).decode()
-            self.platform.debug_log("Got: {}".format(msg))
+            self.platform.debug_log("Got: %s", msg)
+
+    async def configure_retro_hardware(self):
+        """Verify Retro board type."""
+        # For Retro boards, send the CPU configuration
+        hardware_key = fast_defines.HARDWARE_KEY[self.platform.machine_type]
+        self.platform.debug_log("Writing Retro hardware key %s from machine type %s",
+                                hardware_key, self.platform.machine_type)
+        self.writer.write(f'CH:{hardware_key},0\r'.encode())
+
+        msg = ''
+        while msg != 'CH:P\r':
+            msg = (await self.readuntil(b'\r')).decode()
+            self.platform.debug_log("Got: %s", msg)
 
     async def query_fast_io_boards(self):
         """Query the NET processor to see if any FAST IO boards are connected.
@@ -217,11 +232,22 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         """
         # reset CPU early
         try:
-            await asyncio.wait_for(self.reset_net_cpu(), 5)
+            # Wait a moment for any previous message cache to clear
+            await asyncio.sleep(.2)
+            await asyncio.wait_for(self.reset_net_cpu(), 10)
         except asyncio.TimeoutError:
             self.platform.warning_log("Reset of NET CPU failed. This might be a firmware bug in your version.")
         else:
             self.platform.debug_log("Reset successful")
+
+        if self.is_retro:
+            await asyncio.sleep(.2)
+            try:
+                await asyncio.wait_for(self.configure_retro_hardware(), 15)
+            except asyncio.TimeoutError:
+                self.platform.warning_log("Configuring Retro hardware timed out.")
+            else:
+                self.platform.debug_log("Retro hardware configuration accepted.")
 
         await asyncio.sleep(.5)
 
