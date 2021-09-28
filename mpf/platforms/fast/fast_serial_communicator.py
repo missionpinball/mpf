@@ -10,7 +10,7 @@ from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
 from mpf.platforms.fast.fast_io_board import FastIoBoard
 
 DMD_MIN_FW = '0.88'
-NET_MIN_FW = '2.0'
+NET_MIN_FW = '1.99'
 NET_LEGACY_MIN_FW = '0.88'
 RGB_MIN_FW = '0.87'
 IO_MIN_FW = '1.09'

@@ -25,7 +25,8 @@ from mpf.platforms.fast.fast_serial_communicator import FastSerialCommunicator
 from mpf.platforms.fast.fast_switch import FASTSwitch
 from mpf.platforms.autodetect import autodetect_fast_ports
 from mpf.core.platform import ServoPlatform, DmdPlatform, LightsPlatform, SegmentDisplayPlatform, \
-    DriverSettings, SwitchSettings, DriverConfig, SwitchConfig, RepulseSettings
+    DriverPlatform, DriverSettings, SwitchPlatform, SwitchSettings, DriverConfig, SwitchConfig, \
+    RepulseSettings
 from mpf.core.utility_functions import Util
 
 from mpf.platforms.system11 import System11OverlayPlatform, System11Driver
@@ -811,7 +812,19 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     def validate_coil_section(self, driver, config):
         """Validate coil sections."""
-        return config
+        # Fast inherits from System11OverlayPlatform, which inherits from DriverPlatform.
+        # System11 will attempt to call back to this class, creating an infinite loop.
+        # Instead, call validation on DriverPlatform directly.
+        return DriverPlatform.validate_coil_section(self, driver, config)
+
+
+    def validate_switch_section(self, switch, config: dict) -> dict:
+        """Validate switch config for overlayed platform."""
+        # Fast inherits from System11OverlayPlatform, which inherits from SwitchPlatform.
+        # System11 will attempt to call back to this class, creating an infinite loop.
+        # Instead, call validation on SwitchPlatform directly.
+        return SwitchPlatform.validate_switch_section(self, switch, config)
+
 
     @classmethod
     def get_switch_config_section(cls):
