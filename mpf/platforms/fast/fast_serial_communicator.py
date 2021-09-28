@@ -218,7 +218,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         hardware_key = fast_defines.HARDWARE_KEY[self.platform.machine_type]
         self.platform.debug_log("Writing Retro hardware key %s from machine type %s",
                                 hardware_key, self.platform.machine_type)
-        self.writer.write(f'CH:{hardware_key},0\r'.encode())
+        self.writer.write(f'CH:{hardware_key},1\r'.encode())
 
         msg = ''
         while msg != 'CH:P\r':
