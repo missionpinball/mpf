@@ -157,9 +157,13 @@ class Timer(ModeDevice):
                 handler = self.change_tick_interval
                 kwargs = {'change': entry['value']}
 
+            elif entry['action'] == 'set_tick_interval':
+                handler = self.set_tick_interval
+                kwargs = {'timer_value': entry['value']}
+
             elif entry['action'] == 'reset_tick_interval':
                 handler = self.set_tick_interval
-                kwargs = {'timer_value': self.config['tick_interval'].evaluate([])}
+                kwargs = {'timer_value': self.config['tick_interval']}
 
             else:
                 raise AssertionError("Invalid control_event action {} in mode".
@@ -557,9 +561,8 @@ class Timer(ModeDevice):
                 often registered as an event handler which may contain
                 additional keyword arguments.
         """
-        del kwargs
 
-        self.tick_secs = abs(self._get_timer_value(timer_value))
+        self.tick_secs = abs(self._get_timer_value(timer_value.evaluate(kwargs)))
         self._create_system_timer()
 
     def jump(self, timer_value, **kwargs):

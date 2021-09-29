@@ -153,6 +153,38 @@ class TestTimer(MpfFakeGameTestCase):
         self.advance_time_and_run(1)
         self.assertEventCalled("timer_timer_change_tick_tick", 12)
 
+    def test_set_tick_fixed(self):
+        self.start_mode("mode_with_timers")
+        self.mock_event("timer_timer_change_tick_tick")
+        self.advance_time_and_run()
+        self.post_event("timer_change_tick_start")
+        self.advance_time_and_run(.1)
+        self.assertEventCalled("timer_timer_change_tick_tick", 1)
+        self.advance_time_and_run(1)
+        self.assertEventCalled("timer_timer_change_tick_tick", 2)
+        self.post_event("timer_set_tick_event_fixed")
+        self.assertEventCalled("timer_timer_change_tick_tick", 2)
+        self.advance_time_and_run(1)
+        self.assertEventCalled("timer_timer_change_tick_tick", 7)
+
+    def test_set_tick_kwarg(self):
+        self.start_mode("mode_with_timers")
+        self.mock_event("timer_timer_change_tick_tick")
+        self.advance_time_and_run()
+        self.post_event("timer_change_tick_start")
+        self.advance_time_and_run(.1)
+        self.assertEventCalled("timer_timer_change_tick_tick", 1)
+        self.advance_time_and_run(1)
+        self.assertEventCalled("timer_timer_change_tick_tick", 2)
+        self.post_event_with_params("timer_set_tick_event_kwarg", event_value=0.1)
+        self.assertEventCalled("timer_timer_change_tick_tick", 2)
+        self.advance_time_and_run(1)
+        self.assertEventCalled("timer_timer_change_tick_tick", 12)
+        self.post_event_with_params("timer_set_tick_event_kwarg", event_value=0.2)
+        self.assertEventCalled("timer_timer_change_tick_tick", 12)
+        self.advance_time_and_run(1)
+        self.assertEventCalled("timer_timer_change_tick_tick", 17)
+
     def test_start_running(self):
         # add a fake player
         self.start_game()
