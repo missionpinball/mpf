@@ -561,7 +561,6 @@ class Timer(ModeDevice):
                 often registered as an event handler which may contain
                 additional keyword arguments.
         """
-
         self.tick_secs = abs(self._get_timer_value(timer_value.evaluate(kwargs)))
         self._create_system_timer()
 
