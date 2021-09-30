@@ -241,22 +241,24 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                     infos += " -> Board: 0x{:02x} Firmware: 0x{:02x}\n".format(board_id, board_firmware)
 
         infos += "\nIncand cards:\n" if self.opp_incands else ""
+        card_format_string = " - Chain: {} Board: 0x{:02x} Card: {} Numbers: {}\n"
+
         for incand in self.opp_incands.values():
-            infos += " - Chain: {} Board: 0x{:02x} Card: {} Numbers: {}\n".format(incand.chain_serial, incand.addr,
-                                                                                  incand.card_num,
-                                                                                  self._get_numbers(incand.mask))
+            infos += card_format_string.format(incand.chain_serial, incand.addr,
+                                               incand.card_num,
+                                               self._get_numbers(incand.mask))
 
         infos += "\nInput cards:\n"
         for inputs in self.opp_inputs:
-            infos += " - Chain: {} Board: 0x{:02x} Card: {} Numbers: {}\n".format(inputs.chain_serial, inputs.addr,
-                                                                                  inputs.card_num,
-                                                                                  self._get_numbers(inputs.mask))
+            infos += card_format_string.format(inputs.chain_serial, inputs.addr,
+                                               inputs.card_num,
+                                               self._get_numbers(inputs.mask))
 
         infos += "\nSolenoid cards:\n"
         for outputs in self.opp_solenoid:
-            infos += " - Chain: {} Board: 0x{:02x} Card: {} Numbers: {}\n".format(outputs.chain_serial, outputs.addr,
-                                                                                  outputs.card_num,
-                                                                                  self._get_numbers(outputs.mask))
+            infos += card_format_string.format(outputs.chain_serial, outputs.addr,
+                                               outputs.card_num,
+                                               self._get_numbers(outputs.mask))
 
         infos += "\nLEDs:\n" if self.neo_card_dict else ""
         for leds in self.neo_card_dict.values():
@@ -849,15 +851,16 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         if not subtype or subtype == "led":
             full_index = self._get_dict_index(number)
             chain_serial, card, index = full_index.split('-')
+            number_format = "{}-{}-{}"
             return [
                 {
-                    "number": "{}-{}-{}".format(chain_serial, card, int(index) * 3)
+                    "number": number_format.format(chain_serial, card, int(index) * 3)
                 },
                 {
-                    "number": "{}-{}-{}".format(chain_serial, card, int(index) * 3 + 1)
+                    "number": number_format.format(chain_serial, card, int(index) * 3 + 1)
                 },
                 {
-                    "number": "{}-{}-{}".format(chain_serial, card, int(index) * 3 + 2)
+                    "number": number_format.format(chain_serial, card, int(index) * 3 + 2)
                 },
             ]
 
