@@ -15,6 +15,8 @@ if MYPY:    # pragma: no cover
     from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface  # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
+INVALID_TYPE_ERROR = "Invalid type {}"
+
 
 class DigitalOutput(SystemWideDevice):
 
@@ -42,7 +44,7 @@ class DigitalOutput(SystemWideDevice):
         elif self.config['type'] == "light":
             self._initialize_light()
         else:
-            raise AssertionError("Invalid type {}".format(self.config['type']))
+            raise AssertionError(INVALID_TYPE_ERROR.format(self.config['type']))
 
     def _initialize_light(self):
         """Configure a light as digital output."""
@@ -84,7 +86,7 @@ class DigitalOutput(SystemWideDevice):
             platform = self.machine.get_platform_sections('coils', getattr(config, "platform", None))
             platform.assert_has_feature("lights")
         else:
-            raise AssertionError("Invalid type {}".format(config['type']))
+            raise AssertionError(INVALID_TYPE_ERROR.format(config['type']))
         return config
 
     def _initialize_driver(self):
@@ -129,7 +131,7 @@ class DigitalOutput(SystemWideDevice):
                              ms=pulse_ms,
                              callback=self.disable)
         else:
-            raise AssertionError("Invalid type {}".format(self.type))
+            raise AssertionError(INVALID_TYPE_ERROR.format(self.type))
 
     @event_handler(2)
     def event_enable(self, **kwargs):
@@ -147,7 +149,7 @@ class DigitalOutput(SystemWideDevice):
             self.platform.light_sync()
             self.delay.remove(name='timed_disable')
         else:
-            raise AssertionError("Invalid type {}".format(self.type))
+            raise AssertionError(INVALID_TYPE_ERROR.format(self.type))
 
     @event_handler(1)
     def event_disable(self, **kwargs):
@@ -164,4 +166,4 @@ class DigitalOutput(SystemWideDevice):
             self.platform.light_sync()
             self.delay.remove(name='timed_disable')
         else:
-            raise AssertionError("Invalid type {}".format(self.type))
+            raise AssertionError(INVALID_TYPE_ERROR.format(self.type))
