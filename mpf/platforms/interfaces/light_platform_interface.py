@@ -51,7 +51,7 @@ class LightPlatformInterface(metaclass=abc.ABCMeta):
 
     def __lt__(self, other):
         """Order lights by their position on the hardware."""
-        raise NotImplementedError
+        return NotImplemented
 
     def __repr__(self):
         """Return string representation."""
