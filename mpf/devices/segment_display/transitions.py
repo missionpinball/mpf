@@ -6,6 +6,9 @@ from mpf.core.placeholder_manager import TextTemplate
 from mpf.core.rgb_color import RGBColor
 from mpf.devices.segment_display.segment_display_text import SegmentDisplayText, UncoloredSegmentDisplayText
 
+STEP_OUT_OF_RANGE_ERROR = "Step is out of range"
+TRANSITION_DIRECTION_UNKNOWN_ERROR = "Transition uses an unknown direction value"
+
 
 class TransitionBase(metaclass=abc.ABCMeta):
 
@@ -88,7 +91,7 @@ class NoTransition(TransitionBase):
                             new_colors: Optional[List[RGBColor]] = None) -> SegmentDisplayText:
         """Calculate all the steps in the transition."""
         if step < 0 or step >= self.get_step_count():
-            raise AssertionError("Step is out of range")
+            raise AssertionError(STEP_OUT_OF_RANGE_ERROR)
 
         return SegmentDisplayText.from_str(new_text, self.output_length, self.collapse_dots, self.collapse_commas,
                                            new_colors)
@@ -118,7 +121,7 @@ class PushTransition(TransitionBase):
                             new_colors: Optional[List[RGBColor]] = None) -> SegmentDisplayText:
         """Calculate all the steps in the transition."""
         if step < 0 or step >= self.get_step_count():
-            raise AssertionError("Step is out of range")
+            raise AssertionError(STEP_OUT_OF_RANGE_ERROR)
 
         current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
                                                            self.collapse_commas, current_colors)
@@ -149,7 +152,7 @@ class PushTransition(TransitionBase):
             temp_list.extend(new_display_text)
             return temp_list[step + 1:step + 1 + self.output_length]
 
-        raise AssertionError("Transition uses an unknown direction value")
+        raise AssertionError(TRANSITION_DIRECTION_UNKNOWN_ERROR)
 
 
 class CoverTransition(TransitionBase):
@@ -176,7 +179,7 @@ class CoverTransition(TransitionBase):
                             new_colors: Optional[List[RGBColor]] = None) -> SegmentDisplayText:
         """Calculate all the steps in the transition."""
         if step < 0 or step >= self.get_step_count():
-            raise AssertionError("Step is out of range")
+            raise AssertionError(STEP_OUT_OF_RANGE_ERROR)
 
         current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
                                                            self.collapse_commas, current_colors)
@@ -217,7 +220,7 @@ class CoverTransition(TransitionBase):
 
             return temp_text
 
-        raise AssertionError("Transition uses an unknown direction value")
+        raise AssertionError(TRANSITION_DIRECTION_UNKNOWN_ERROR)
 
 
 class UncoverTransition(TransitionBase):
@@ -244,7 +247,7 @@ class UncoverTransition(TransitionBase):
                             new_colors: Optional[List[RGBColor]] = None) -> SegmentDisplayText:
         """Calculate all the steps in the transition."""
         if step < 0 or step >= self.get_step_count():
-            raise AssertionError("Step is out of range")
+            raise AssertionError(STEP_OUT_OF_RANGE_ERROR)
 
         current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
                                                            self.collapse_commas, current_colors)
@@ -285,7 +288,7 @@ class UncoverTransition(TransitionBase):
                 temp_text.extend(new_display_text[-(self.output_length - len(temp_text)):])
             return temp_text
 
-        raise AssertionError("Transition uses an unknown direction value")
+        raise AssertionError(TRANSITION_DIRECTION_UNKNOWN_ERROR)
 
 
 class WipeTransition(TransitionBase):
@@ -312,7 +315,7 @@ class WipeTransition(TransitionBase):
                             new_colors: Optional[List[RGBColor]] = None) -> SegmentDisplayText:
         """Calculate all the steps in the transition."""
         if step < 0 or step >= self.get_step_count():
-            raise AssertionError("Step is out of range")
+            raise AssertionError(STEP_OUT_OF_RANGE_ERROR)
 
         current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
                                                            self.collapse_commas, current_colors)
@@ -357,7 +360,7 @@ class WipeTransition(TransitionBase):
                 temp_text = new_display_text
             return temp_text
 
-        raise AssertionError("Transition uses an unknown direction value")
+        raise AssertionError(TRANSITION_DIRECTION_UNKNOWN_ERROR)
 
 
 class SplitTransition(TransitionBase):
@@ -380,7 +383,7 @@ class SplitTransition(TransitionBase):
                             new_colors: Optional[List[RGBColor]] = None) -> SegmentDisplayText:
         """Calculate all the steps in the transition."""
         if step < 0 or step >= self.get_step_count():
-            raise AssertionError("Step is out of range")
+            raise AssertionError(STEP_OUT_OF_RANGE_ERROR)
 
         current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
                                                            self.collapse_commas, current_colors)
@@ -420,7 +423,7 @@ class SplitTransition(TransitionBase):
                 temp_text.extend(new_display_text[split_point:split_point + characters])
                 return temp_text
 
-            raise AssertionError("Transition uses an unknown direction value")
+            raise AssertionError(TRANSITION_DIRECTION_UNKNOWN_ERROR)
 
         if self.mode == 'wipe':
             if self.direction == 'out':
@@ -446,6 +449,6 @@ class SplitTransition(TransitionBase):
                 temp_text.extend(new_display_text[-(step + 1):])
                 return temp_text
 
-            raise AssertionError("Transition uses an unknown direction value")
+            raise AssertionError(TRANSITION_DIRECTION_UNKNOWN_ERROR)
 
         raise AssertionError("Transition uses an unknown mode value")
