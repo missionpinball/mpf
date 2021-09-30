@@ -609,9 +609,14 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         coil.hw_driver.configure_recycle(coil.pulse_settings.duration * 2 if coil.recycle else
                                          coil.pulse_settings.duration)
 
+        if switch2:
+            switch2_value = switch2.hw_switch.index + (0x80 if switch2.invert else 0)
+        else:
+            switch2_value = 0
+
         data = bytearray([coil.hw_driver.index,
                           switch1.hw_switch.index + (0x80 if switch1.invert else 0),
-                          switch2.hw_switch.index if switch2 else 0 + 0x80 if switch2 and switch2.invert else 0,
+                          switch2_value,
                           0,
                           int(coil.pulse_settings.duration),
                           int(coil.pulse_settings.power * 255),
