@@ -7,6 +7,7 @@ from typing import Dict, Optional, List
 from mpf.core.segment_mappings import SEVEN_SEGMENTS, BCD_SEGMENTS, FOURTEEN_SEGMENTS, TextToSegmentMapper, \
     ASCII_SEGMENTS
 from mpf.core.platform_batch_light_system import PlatformBatchLight, PlatformBatchLightSystem
+from mpf.platforms.base_serial_communicator import HEX_FORMAT
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
@@ -779,7 +780,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
         cmd_str = bytes([cmd])
         cmd_str += byte
-        self.debug_log("Sending 0x%02x%s (Cmd: %s)", cmd, "".join(" 0x%02x" % b for b in byte), cmd)
+        self.debug_log("Sending 0x%02x%s (Cmd: %s)", cmd, "".join(HEX_FORMAT % b for b in byte), cmd)
         self._writer.write(cmd_str)
 
     async def send_byte_and_read_response(self, cmd: int, byte: bytes = None, read_bytes=0):
@@ -793,7 +794,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         """Send a command with null terminated string."""
         assert self._writer is not None
 
-        self.debug_log("Sending %s (0x%02x) %s (%s)", cmd, cmd, string, "".join(" 0x%02x" % ord(b) for b in string))
+        self.debug_log("Sending %s (0x%02x) %s (%s)", cmd, cmd, string, "".join(HEX_FORMAT % ord(b) for b in string))
         self._writer.write(bytes([cmd]) + string.encode() + bytes([0]))
 
     async def _read_byte(self) -> int:

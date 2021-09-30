@@ -5,6 +5,7 @@ import asyncio
 import random
 from typing import Optional, Union
 
+from mpf.platforms.base_serial_communicator import HEX_FORMAT
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
 from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
 from mpf.core.platform_batch_light_system import PlatformBatchLight, PlatformBatchLightSystem
@@ -1311,7 +1312,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         # get bridge version
         await self.send_cmd_raw([SpikeNodebus.GetBridgeVersion, 0, 3], 0)
         bridge_version = await self._read_raw(3)
-        self.debug_log("Bridge version: %s", "".join("0x%02x " % b for b in bridge_version))
+        self.debug_log("Bridge version: %s", "".join(HEX_FORMAT % b for b in bridge_version))
 
         # get bridge status
         # spike seems to check if bridge_version is > 0.3.0 but that does not work for us as we saw
@@ -1325,7 +1326,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         else:
             await self.send_cmd_raw([SpikeNodebus.GetBridgeStatus, 0, 1], 0)
             bridge_status = await self._read_raw(1)
-        self.debug_log("Bridge status: %s", "".join("0x%02x " % b for b in bridge_status))
+        self.debug_log("Bridge status: %s", "".join(HEX_FORMAT % b for b in bridge_status))
 
         for node in self._nodes:
             if node == 0:
@@ -1338,7 +1339,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             self.info_log("Node: %s Firmware: %s.%s.%s", node, fw_version[1], fw_version[2], fw_version[3])
             if fw_version[0] != node:
                 self.warning_log("Node: %s Version Response looks bogus (node ID does not match): %s",
-                                 node, "".join("0x%02x " % b for b in fw_version))
+                                 node, "".join(HEX_FORMAT % b for b in fw_version))
 
             # we need this to calculate the right times for this node
             self.ticks_per_sec[node] = (fw_version[9] << 8) + fw_version[8]
@@ -1359,8 +1360,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
             if full_board_id_0 and full_board_id_1:
                 self.info_log("Node %s: Full Board ID: %s %s",
-                              node, "".join("0x%02x " % b for b in full_board_id_0),
-                              "".join("0x%02x " % b for b in full_board_id_1))
+                              node, "".join(HEX_FORMAT % b for b in full_board_id_0),
+                              "".join(HEX_FORMAT % b for b in full_board_id_1))
 
             # Set response time (redundant but send multiple times)
             # wait time based on the baud rate of the bus: (460800 * 0x98852841 * 200) >> 0x30 = 0x345
@@ -1375,7 +1376,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                 self.info_log("Checksum good for node %s", node)
             elif checksum:
                 self.warning_log("Checksum %s for node %s is != 0000. This might indicate a broken firmware.",
-                                 "".join("0x%02x " % b for b in checksum), node)
+                                 "".join(HEX_FORMAT % b for b in checksum), node)
             else:
                 self.warning_log("Did not get checksum for node %s", node)
 
