@@ -1054,7 +1054,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         _, _, coil_num = driver.number.split('-')
 
         # mirror switch matrix columns to handle the fact that OPP matrix is in reverse column order
-        switch_num = 8 * (15 - (switch_num // 8)) + switch_num % 8
+        if switch_num >= 32:
+            switch_num = 8 * (15 - (switch_num // 8)) + switch_num % 8
 
         msg = bytearray()
         msg.append(driver.sol_card.addr)
@@ -1076,7 +1077,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         _, _, coil_num = driver.number.split('-')
 
         # mirror switch matrix columns to handle the fact that OPP matrix is in reverse column order
-        switch_num = 8 * (15 - (switch_num // 8)) + switch_num % 8
+        if switch_num >= 32:
+            switch_num = 8 * (15 - (switch_num // 8)) + switch_num % 8
 
         msg = bytearray()
         msg.append(driver.sol_card.addr)
