@@ -1052,10 +1052,10 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             return
 
         _, _, coil_num = driver.number.split('-')
-        
+
         # mirror switch matrix columns to handle the fact that OPP matrix is in reverse column order
         switch_num = 8 * (15 - (switch_num // 8)) + switch_num % 8
-        
+
         msg = bytearray()
         msg.append(driver.sol_card.addr)
         msg.extend(OppRs232Intf.SET_SOL_INP_CMD)
@@ -1074,10 +1074,10 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         if self.min_version[driver.sol_card.chain_serial] < 0x20000:
             return
         _, _, coil_num = driver.number.split('-')
-        
+
         # mirror switch matrix columns to handle the fact that OPP matrix is in reverse column order
         switch_num = 8 * (15 - (switch_num // 8)) + switch_num % 8
-        
+
         msg = bytearray()
         msg.append(driver.sol_card.addr)
         msg.extend(OppRs232Intf.SET_SOL_INP_CMD)
