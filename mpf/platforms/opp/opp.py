@@ -11,6 +11,7 @@ from typing import Dict, List, Set, Union, Tuple, Optional  # pylint: disable-ms
 
 from mpf.core.platform_batch_light_system import PlatformBatchLightSystem
 from mpf.core.utility_functions import Util
+from mpf.platforms.base_serial_communicator import HEX_FORMAT
 
 from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
 
@@ -132,7 +133,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         cmd = bytes(msg)
 
         if self.debug:
-            self.debug_log("Set color on %s: %s", first_light.chain_serial, "".join(" 0x%02x" % b for b in cmd))
+            self.debug_log("Set color on %s: %s", first_light.chain_serial, "".join(HEX_FORMAT % b for b in cmd))
         self.send_to_processor(first_light.chain_serial, cmd)
 
     async def start(self):
@@ -205,7 +206,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             self.opp_commands[cmd](chain_serial, msg)
         else:
             self.log.warning("Received unknown serial command?%s. (This is "
-                             "very worrisome.)", "".join(" 0x%02x" % b for b in msg))
+                             "very worrisome.)", "".join(HEX_FORMAT % b for b in msg))
 
             # TODO: This means synchronization is lost.  Send EOM characters
             #  until they come back
@@ -240,22 +241,24 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                     infos += " -> Board: 0x{:02x} Firmware: 0x{:02x}\n".format(board_id, board_firmware)
 
         infos += "\nIncand cards:\n" if self.opp_incands else ""
+        card_format_string = " - Chain: {} Board: 0x{:02x} Card: {} Numbers: {}\n"
+
         for incand in self.opp_incands.values():
-            infos += " - Chain: {} Board: 0x{:02x} Card: {} Numbers: {}\n".format(incand.chain_serial, incand.addr,
-                                                                                  incand.card_num,
-                                                                                  self._get_numbers(incand.mask))
+            infos += card_format_string.format(incand.chain_serial, incand.addr,
+                                               incand.card_num,
+                                               self._get_numbers(incand.mask))
 
         infos += "\nInput cards:\n"
         for inputs in self.opp_inputs:
-            infos += " - Chain: {} Board: 0x{:02x} Card: {} Numbers: {}\n".format(inputs.chain_serial, inputs.addr,
-                                                                                  inputs.card_num,
-                                                                                  self._get_numbers(inputs.mask))
+            infos += card_format_string.format(inputs.chain_serial, inputs.addr,
+                                               inputs.card_num,
+                                               self._get_numbers(inputs.mask))
 
         infos += "\nSolenoid cards:\n"
         for outputs in self.opp_solenoid:
-            infos += " - Chain: {} Board: 0x{:02x} Card: {} Numbers: {}\n".format(outputs.chain_serial, outputs.addr,
-                                                                                  outputs.card_num,
-                                                                                  self._get_numbers(outputs.mask))
+            infos += card_format_string.format(outputs.chain_serial, outputs.addr,
+                                               outputs.card_num,
+                                               self._get_numbers(outputs.mask))
 
         infos += "\nLEDs:\n" if self.neo_card_dict else ""
         for leds in self.neo_card_dict.values():
@@ -358,7 +361,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
                 if self.debug:
                     self.debug_log("Update incand on %s cmd:%s", incand.chain_serial,
-                                   "".join(" 0x%02x" % b for b in send_cmd))
+                                   "".join(HEX_FORMAT % b for b in send_cmd))
                 self.send_to_processor(incand.chain_serial, send_cmd)
 
     @classmethod
@@ -399,7 +402,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
-        self.debug_log("Received Inventory Response: %s for %s", "".join(" 0x%02x" % b for b in msg), chain_serial)
+        self.debug_log("Received Inventory Response: %s for %s", "".join(HEX_FORMAT % b for b in msg), chain_serial)
 
         index = 1
         self.gen2_addr_arr[chain_serial] = {}
@@ -508,7 +511,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
     def _bad_crc(self, chain_serial, msg):
         """Show warning and increase counter."""
         self.bad_crc[chain_serial] += 1
-        self.log.warning("Chain: %sMsg contains bad CRC: %s.", chain_serial, "".join(" 0x%02x" % b for b in msg))
+        self.log.warning("Chain: %sMsg contains bad CRC: %s.", chain_serial, "".join(HEX_FORMAT % b for b in msg))
 
     def get_gen2_cfg_resp(self, chain_serial, msg):
         """Process cfg response.
@@ -519,13 +522,13 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             msg: Message to parse.
         """
         # Multiple get gen2 cfg responses can be received at once
-        self.debug_log("Received Gen2 Cfg Response:%s", "".join(" 0x%02x" % b for b in msg))
+        self.debug_log("Received Gen2 Cfg Response:%s", "".join(HEX_FORMAT % b for b in msg))
         curr_index = 0
         read_input_msg = bytearray()
         while True:
             # check that message is long enough, must include crc8
             if len(msg) < curr_index + 7:
-                self.log.warning("Msg is too short: %s.", "".join(" 0x%02x" % b for b in msg))
+                self.log.warning("Msg is too short: %s.", "".join(HEX_FORMAT % b for b in msg))
                 self.opp_connection[chain_serial].lost_synch()
                 break
             # Verify the CRC8 is correct
@@ -541,7 +544,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                 curr_index += 7
             else:
                 self.log.warning("Malformed GET_GEN2_CFG response:%s.",
-                                 "".join(" 0x%02x" % b for b in msg))
+                                 "".join(HEX_FORMAT % b for b in msg))
                 self.opp_connection[chain_serial].lost_synch()
                 break
 
@@ -559,12 +562,13 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             msg: Message to parse.
         """
         # Multiple get version responses can be received at once
-        self.debug_log("Received Version Response (Chain: %s): %s", chain_serial, "".join(" 0x%02x" % b for b in msg))
+        self.debug_log("Received Version Response (Chain: %s): %s", chain_serial, "".join(HEX_FORMAT % b for b in msg))
         curr_index = 0
         while True:
             # check that message is long enough, must include crc8
             if len(msg) < curr_index + 7:
-                self.log.warning("Msg is too short (Chain: %s): %s.", chain_serial, "".join(" 0x%02x" % b for b in msg))
+                self.log.warning("Msg is too short (Chain: %s): %s.", chain_serial,
+                                 "".join(HEX_FORMAT % b for b in msg))
                 self.opp_connection[chain_serial].lost_synch()
                 break
             # Verify the CRC8 is correct
@@ -596,7 +600,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                 curr_index += 7
             else:
                 self.log.warning("Malformed GET_VERS_CMD response (Chain %s): %s.", chain_serial,
-                                 "".join(" 0x%02x" % b for b in msg))
+                                 "".join(HEX_FORMAT % b for b in msg))
                 self.opp_connection[chain_serial].lost_synch()
                 break
 
@@ -610,14 +614,14 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """
         # Verify the CRC8 is correct
         if len(msg) < 7:
-            raise AssertionError("Received too short initial input response: " + "".join(" 0x%02x" % b for b in msg))
+            raise AssertionError("Received too short initial input response: " + "".join(HEX_FORMAT % b for b in msg))
         crc8 = OppRs232Intf.calc_crc8_part_msg(msg, 0, 6)
         if msg[6] != ord(crc8):
             self._bad_crc(chain_serial, msg)
         else:
             if chain_serial + '-' + str(msg[0]) not in self.inp_addr_dict:
                 self.log.warning("Got input response for invalid card at initial request: %s. Msg: %s.", msg[0],
-                                 "".join(" 0x%02x" % b for b in msg))
+                                 "".join(HEX_FORMAT % b for b in msg))
                 return
 
             opp_inp = self.inp_addr_dict[chain_serial + '-' + str(msg[0])]
@@ -640,7 +644,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         # Verify the CRC8 is correct
         if len(msg) < 7:
-            self.log.warning("Msg too short: %s.", "".join(" 0x%02x" % b for b in msg))
+            self.log.warning("Msg too short: %s.", "".join(HEX_FORMAT % b for b in msg))
             self.opp_connection[chain_serial].lost_synch()
             return
 
@@ -650,7 +654,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         else:
             if chain_serial + '-' + str(msg[0]) not in self.inp_addr_dict:
                 self.log.warning("Got input response for invalid card: %s. Msg: %s.", msg[0],
-                                 "".join(" 0x%02x" % b for b in msg))
+                                 "".join(HEX_FORMAT % b for b in msg))
                 return
 
             opp_inp = self.inp_addr_dict[chain_serial + '-' + str(msg[0])]
@@ -691,14 +695,14 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """
         # Verify the CRC8 is correct
         if len(msg) < 11:
-            raise AssertionError("Received too short initial input response: " + "".join(" 0x%02x" % b for b in msg))
+            raise AssertionError("Received too short initial input response: " + "".join(HEX_FORMAT % b for b in msg))
         crc8 = OppRs232Intf.calc_crc8_part_msg(msg, 0, 10)
         if msg[10] != ord(crc8):
             self._bad_crc(chain_serial, msg)
         else:
             if chain_serial + '-' + str(msg[0]) not in self.matrix_inp_addr_dict:
                 self.log.warning("Got input response for invalid matrix card at initial request: %s. Msg: %s.", msg[0],
-                                 "".join(" 0x%02x" % b for b in msg))
+                                 "".join(HEX_FORMAT % b for b in msg))
                 return
             opp_inp = self.matrix_inp_addr_dict[chain_serial + '-' + str(msg[0])]
             opp_inp.old_state = ((msg[2] << 56) | (msg[3] << 48) | (msg[4] << 40) | (msg[5] << 32) |
@@ -717,7 +721,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         # Verify the CRC8 is correct
         if len(msg) < 11:
-            self.log.warning("Msg too short: %s.", "".join(" 0x%02x" % b for b in msg))
+            self.log.warning("Msg too short: %s.", "".join(HEX_FORMAT % b for b in msg))
             self.opp_connection[chain_serial].lost_synch()
             return
 
@@ -727,7 +731,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         else:
             if chain_serial + '-' + str(msg[0]) not in self.matrix_inp_addr_dict:
                 self.log.warning("Got input response for invalid matrix card: %s. Msg: %s.", msg[0],
-                                 "".join(" 0x%02x" % b for b in msg))
+                                 "".join(HEX_FORMAT % b for b in msg))
                 return
             opp_inp = self.matrix_inp_addr_dict[chain_serial + '-' + str(msg[0])]
             new_state = ((msg[2] << 56) | (msg[3] << 48) | (msg[4] << 40) | (msg[5] << 32) |
@@ -847,15 +851,16 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         if not subtype or subtype == "led":
             full_index = self._get_dict_index(number)
             chain_serial, card, index = full_index.split('-')
+            number_format = "{}-{}-{}"
             return [
                 {
-                    "number": "{}-{}-{}".format(chain_serial, card, int(index) * 3)
+                    "number": number_format.format(chain_serial, card, int(index) * 3)
                 },
                 {
-                    "number": "{}-{}-{}".format(chain_serial, card, int(index) * 3 + 1)
+                    "number": number_format.format(chain_serial, card, int(index) * 3 + 1)
                 },
                 {
-                    "number": "{}-{}-{}".format(chain_serial, card, int(index) * 3 + 2)
+                    "number": number_format.format(chain_serial, card, int(index) * 3 + 2)
                 },
             ]
 
@@ -1047,6 +1052,11 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             return
 
         _, _, coil_num = driver.number.split('-')
+
+        # mirror switch matrix columns to handle the fact that OPP matrix is in reverse column order
+        if switch_num >= 32:
+            switch_num = 8 * (15 - (switch_num // 8)) + switch_num % 8
+
         msg = bytearray()
         msg.append(driver.sol_card.addr)
         msg.extend(OppRs232Intf.SET_SOL_INP_CMD)
@@ -1065,6 +1075,11 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         if self.min_version[driver.sol_card.chain_serial] < 0x20000:
             return
         _, _, coil_num = driver.number.split('-')
+
+        # mirror switch matrix columns to handle the fact that OPP matrix is in reverse column order
+        if switch_num >= 32:
+            switch_num = 8 * (15 - (switch_num // 8)) + switch_num % 8
+
         msg = bytearray()
         msg.append(driver.sol_card.addr)
         msg.extend(OppRs232Intf.SET_SOL_INP_CMD)

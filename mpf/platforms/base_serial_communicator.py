@@ -11,6 +11,8 @@ MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
+HEX_FORMAT = " 0x%02x"
+
 
 class BaseSerialCommunicator:
 
@@ -103,7 +105,7 @@ class BaseSerialCommunicator:
             buffer += char
             if char == separator and len(buffer) > min_chars:
                 if self.debug:
-                    self.log.debug("%s received: %s (%s)", self, buffer, "".join(" 0x%02x" % b for b in buffer))
+                    self.log.debug("%s received: %s (%s)", self, buffer, "".join(HEX_FORMAT % b for b in buffer))
                 return buffer
 
     async def read(self, n=-1):
@@ -126,7 +128,7 @@ class BaseSerialCommunicator:
             return None
 
         if self.debug:
-            self.log.debug("%s received: %s (%s)", self, resp, "".join(" 0x%02x" % b for b in resp))
+            self.log.debug("%s received: %s (%s)", self, resp, "".join(HEX_FORMAT % b for b in resp))
         return resp
 
     async def _identify_connection(self):
@@ -154,7 +156,7 @@ class BaseSerialCommunicator:
             msg: Byes of the message you want to send.
         """
         if self.debug:
-            self.log.debug("%s sending: %s (%s)", self, msg, "".join(" 0x%02x" % b for b in msg))
+            self.log.debug("%s sending: %s (%s)", self, msg, "".join(HEX_FORMAT % b for b in msg))
         self.writer.write(msg)
 
     def _parse_msg(self, msg):

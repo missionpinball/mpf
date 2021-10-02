@@ -225,9 +225,9 @@ class SegmentDisplay(SystemWideDevice):
         # determine if the new key is different than the previous key (out transitions are only applied
         # when changing keys)
         transition_config = None
-        if previous_text_stack_entry and top_text_stack_entry.key != previous_text_stack_entry.key:
-            if previous_text_stack_entry.transition_out:
-                transition_config = previous_text_stack_entry.transition_out
+        if previous_text_stack_entry and top_text_stack_entry.key != previous_text_stack_entry.key and \
+                previous_text_stack_entry.transition_out:
+            transition_config = previous_text_stack_entry.transition_out
 
         # determine if new text entry has a transition, if so, apply it (overrides any outgoing transition)
         if top_text_stack_entry.transition:

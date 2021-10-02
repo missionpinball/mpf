@@ -18,6 +18,8 @@ MonitoredSwitchChange = namedtuple("MonitoredSwitchChange", ["name", "label", "p
 SwitchHandler = namedtuple("SwitchHandler", ["switch_name", "callback", "state", "ms"])
 TimedSwitchHandler = namedtuple("TimedSwitchHandler", ["callback", 'state', 'ms'])
 
+CANNOT_READ_SWITCHES_EARLY_ERROR = "Cannot read switch state before init_phase_3"
+
 
 class RegisteredSwitch:
 
@@ -168,7 +170,7 @@ class SwitchController(MpfController):
             is in the state regardless of how long it's been in that state.
         """
         if not self._initialised:
-            raise AssertionError("Cannot read switch state before init_phase_3")
+            raise AssertionError(CANNOT_READ_SWITCHES_EARLY_ERROR)
         if not ms:
             ms = 0.0
 
@@ -193,7 +195,7 @@ class SwitchController(MpfController):
             is in the state regardless of how long it's been in that state.
         """
         if not self._initialised:
-            raise AssertionError("Cannot read switch state before init_phase_3")
+            raise AssertionError(CANNOT_READ_SWITCHES_EARLY_ERROR)
         if not ms:
             ms = 0.0
 
@@ -218,7 +220,7 @@ class SwitchController(MpfController):
             is in the state regardless of how long it's been in that state.
         """
         if not self._initialised:
-            raise AssertionError("Cannot read switch state before init_phase_3")
+            raise AssertionError(CANNOT_READ_SWITCHES_EARLY_ERROR)
         if not ms:
             ms = 0.0
 

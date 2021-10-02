@@ -3,7 +3,7 @@ import asyncio
 
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
-from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
+from mpf.platforms.base_serial_communicator import BaseSerialCommunicator, HEX_FORMAT
 
 MYPY = False
 if MYPY:    # pragma: no cover
@@ -72,7 +72,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
             if count == 100:
                 raise AssertionError('No response from OPP hardware: {}'.format(self.port))
 
-        self.log.debug("Got ID response: %s", "".join(" 0x%02x" % b for b in resp))
+        self.log.debug("Got ID response: %s", "".join(HEX_FORMAT % b for b in resp))
         if self.chain_serial is None:
             # get ID from hardware if it is not overwritten
             self.chain_serial = str(await self._read_id())
@@ -89,7 +89,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         msg.extend(OppRs232Intf.EOM_CMD)
         cmd = bytes(msg)
 
-        self.log.debug("Sending inventory command: %s", "".join(" 0x%02x" % b for b in cmd))
+        self.log.debug("Sending inventory command: %s", "".join(HEX_FORMAT % b for b in cmd))
         self.send(cmd)
 
         resp = await self.readuntil(b'\xff')
@@ -147,7 +147,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
 
         whole_msg.extend(OppRs232Intf.EOM_CMD)
         cmd = bytes(whole_msg)
-        self.log.debug("Sending get Gen2 Cfg command: %s", "".join(" 0x%02x" % b for b in cmd))
+        self.log.debug("Sending get Gen2 Cfg command: %s", "".join(HEX_FORMAT % b for b in cmd))
         self.send(cmd)
 
     def send_vers_cmd(self):
@@ -166,7 +166,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
 
         whole_msg.extend(OppRs232Intf.EOM_CMD)
         cmd = bytes(whole_msg)
-        self.log.debug("Sending get version command: %s", "".join(" 0x%02x" % b for b in cmd))
+        self.log.debug("Sending get version command: %s", "".join(HEX_FORMAT % b for b in cmd))
         self.send(cmd)
 
     @classmethod

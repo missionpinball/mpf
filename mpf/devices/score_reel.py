@@ -103,18 +103,17 @@ class ScoreReel(SystemWideDevice):
         self.log.debug("Checking hw switches to determine reel value with hw_confirm_time %sms",
                        self.config['hw_confirm_time'])
         for i in range(len(self.value_switches)):
-            if self.value_switches[i]:  # not all values have a switch
-                if self.machine.switch_controller.is_active(self.value_switches[i],
-                                                            ms=self.config['hw_confirm_time']):
-                    if self.assumed_value != i:
-                        self.log.info("Setting value to %s because that switch is active.", i)
-                        if self.assumed_value != -999:
-                            self.log.warning("Reel desynced. Assumed: %s. Real: %s", self.assumed_value, i)
+            if self.value_switches[i] and self.machine.switch_controller.is_active(self.value_switches[i],
+                                                                                   ms=self.config['hw_confirm_time']):
+                if self.assumed_value != i:
+                    self.log.info("Setting value to %s because that switch is active.", i)
+                    if self.assumed_value != -999:
+                        self.log.warning("Reel de-synced. Assumed: %s. Real: %s", self.assumed_value, i)
 
-                        self.assumed_value = i
-                        self._busy.set()
-                        self._ready.clear()
-                    return
+                    self.assumed_value = i
+                    self._busy.set()
+                    self._ready.clear()
+                return
 
         # check if there is a switch for the current assumed_value
         if (self.assumed_value >= 0 and self.value_switches[self.assumed_value] and

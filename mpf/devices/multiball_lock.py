@@ -260,13 +260,13 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
             self.debug_log("Will not keep the ball. Device is full. Remaining space: %s. Balls to lock: %s",
                            self._physically_remaining_space, balls_to_lock)
 
-        if self.config['locked_ball_counting_strategy'] in ("virtual_only", "min_virtual_physical"):
+        if (self.config['locked_ball_counting_strategy'] in ("virtual_only", "min_virtual_physical") and
+                self._max_balls_locked_by_any_player < self._physically_locked_balls + new_available_balls):
             # only keep ball if any player could use it
-            if self._max_balls_locked_by_any_player < self._physically_locked_balls + new_available_balls:
-                self.debug_log("Will not keep ball because no player could use it. Max locked balls by any player "
-                               "is %s and we physically got %s", self._max_balls_locked_by_any_player,
-                               self._physically_locked_balls)
-                balls_to_lock_physically = 0
+            self.debug_log("Will not keep ball because no player could use it. Max locked balls by any player "
+                           "is %s and we physically got %s", self._max_balls_locked_by_any_player,
+                           self._physically_locked_balls)
+            balls_to_lock_physically = 0
 
         if self.config['locked_ball_counting_strategy'] == "min_virtual_physical":
             # do not lock if the lock would be physically full but not virtually
@@ -275,12 +275,12 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
                 self.debug_log("Will not keep ball because the lock would be physically full but virtually still "
                                "has space for this player.")
                 balls_to_lock_physically = 0
-        elif self.config['locked_ball_counting_strategy'] != "physical_only":
+        elif (self.config['locked_ball_counting_strategy'] != "physical_only" and
+                not self.is_virtually_full and self._physically_remaining_space <= new_available_balls):
             # do not lock if the lock would be physically full but not virtually
-            if not self.is_virtually_full and self._physically_remaining_space <= new_available_balls:
-                balls_to_lock_physically = 0
-                self.debug_log("Will not keep ball because the lock would be physically full but virtually still "
-                               "has space for this player.")
+            balls_to_lock_physically = 0
+            self.debug_log("Will not keep ball because the lock would be physically full but virtually still "
+                           "has space for this player.")
 
         # check if we are full now and post event if yes
         if (self.config['locked_ball_counting_strategy'] == "physical_only" and

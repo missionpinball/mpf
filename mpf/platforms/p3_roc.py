@@ -29,6 +29,8 @@ MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.devices.accelerometer import Accelerometer     # pylint: disable-msg=cyclic-import,unused-import
 
+WRITE_DATA_FORMAT = "Setting 0x02 %s to %s"
+
 
 class P3RocGpioSwitch(SwitchPlatformInterface):
 
@@ -468,9 +470,9 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
             # enable receiver 63 for all of the optos (works around bug in fpga)
             for driver_num in range(0, 64):
                 self.run_proc_cmd_no_wait("write_data", 0x02, 0x80 + (driver_num * 2), 1)
-                self.debug_log("Setting 0x02 %s to %s", 0x80 + (driver_num * 2), 1)
+                self.debug_log(WRITE_DATA_FORMAT, 0x80 + (driver_num * 2), 1)
                 self.run_proc_cmd_no_wait("write_data", 0x02, 0x81 + (driver_num * 2), 63)
-                self.debug_log("Setting 0x02 %s to %s", 0x81 + (driver_num * 2), 63)
+                self.debug_log(WRITE_DATA_FORMAT, 0x81 + (driver_num * 2), 63)
 
         # configure driver for receiver
         if driver not in self._burst_opto_drivers_to_switch_map:
@@ -494,11 +496,11 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
 
         addr_80 = 0x80 + (driver * 2)
         data_80 = len(self._burst_opto_drivers_to_switch_map[driver])
-        self.debug_log("Setting 0x02 %s to %s", addr_80, data_80)
+        self.debug_log(WRITE_DATA_FORMAT, addr_80, data_80)
         self.run_proc_cmd_no_wait("write_data", 0x02, addr_80, data_80)
 
         addr_81 = 0x81 + (driver * 2)
-        self.debug_log("Setting 0x02 %s to %s", addr_81, rx_to_check_for_this_transmitter)
+        self.debug_log(WRITE_DATA_FORMAT, addr_81, rx_to_check_for_this_transmitter)
         self.run_proc_cmd_no_wait("write_data", 0x02, addr_81, rx_to_check_for_this_transmitter)
 
         burst_switch = P3RocBurstOpto(config, number, input_switch, driver, self)

@@ -23,6 +23,11 @@ RegisteredHandler = namedtuple("RegisteredHandler", ["callback", "priority", "kw
 PostedEvent = namedtuple("PostedEvent", ["event", "type", "callback", "kwargs"])
 
 
+class EventHandlerException(Exception):
+
+    """Exception from within an event handler."""
+
+
 class EventManager(MpfController):
 
     """Handles all the events and manages the handlers in MPF."""
@@ -190,14 +195,9 @@ class EventManager(MpfController):
                                                                  blocking_facility))
 
         if self._debug:
-            try:
-                self.debug_log("Registered %s as a handler for '%s', priority: %s, "
-                               "kwargs: %s",
-                               (str(handler).split(' '))[2], event, priority, kwargs)
-            except IndexError:
-                self.debug_log("Registered %s as a handler for '%s', priority: %s, "
-                               "kwargs: %s",
-                               str(handler), event, priority, kwargs)
+            self.debug_log("Registered %s as a handler for '%s', priority: %s, "
+                           "kwargs: %s",
+                           self._pretty_format_handler(handler), event, priority, kwargs)
 
         # Sort the handlers for this event based on priority. We do it now
         # so the list is pre-sorted so we don't have to do that with each
@@ -297,6 +297,16 @@ class EventManager(MpfController):
         if event in self.registered_handlers:
             del self.registered_handlers[event]
 
+    @staticmethod
+    def _pretty_format_handler(handler):
+        """Pretty format handler."""
+        parts = str(handler).split(' ')
+        return parts[2] if len(parts) >= 3 else parts[0]
+
+    def _pretty_log_removed_handler(self, handler, event):
+        """Pretty log removed handler."""
+        self.debug_log("Removing method %s from event %s", self._pretty_format_handler(handler), event)
+
     def remove_handler(self, method: Any) -> None:
         """Remove an event handler from all events a method is registered to handle.
 
@@ -310,7 +320,7 @@ class EventManager(MpfController):
                 if handler_tup[0] == method:
                     handler_list.remove(handler_tup)
                     if self._debug:
-                        self.debug_log("Removing method %s from event %s", (str(method).split(' '))[2], event)
+                        self._pretty_log_removed_handler(method, event)
                     events_to_delete_if_empty.append(event)
 
         for event in events_to_delete_if_empty:
@@ -335,7 +345,7 @@ class EventManager(MpfController):
                 if handler_tup[0] == handler:
                     self.registered_handlers[event].remove(handler_tup)
                     if self._debug:
-                        self.debug_log("Removing method %s from event %s", (str(handler).split(' '))[2], event)
+                        self._pretty_log_removed_handler(handler, event)
                     events_to_delete_if_empty.append(event)
 
         for this_event in events_to_delete_if_empty:
@@ -355,7 +365,7 @@ class EventManager(MpfController):
             if handler_tup.key == key.key:
                 self.registered_handlers[key.event].remove(handler_tup)
                 if self._debug:
-                    self.debug_log("Removing method %s from event %s", (str(handler_tup[0]).split(' '))[2], key.event)
+                    self._pretty_log_removed_handler(handler_tup[0], key.event)
                 events_to_delete_if_empty.append(key.event)
         for event in events_to_delete_if_empty:
             self._remove_event_if_empty(event)
@@ -632,13 +642,10 @@ class EventManager(MpfController):
 
             # log if debug is enabled and this event is not the timer tick
             if self._debug:
-                try:
-                    self.debug_log("%s (priority: %s) responding to event '%s'"
-                                   " with args %s",
-                                   (str(handler.callback).split(' ')), handler.priority,
-                                   event, merged_kwargs)
-                except IndexError:
-                    pass
+                self.debug_log("%s (priority: %s) responding to event '%s'"
+                               " with args %s",
+                               self._pretty_format_handler(handler.callback), handler.priority,
+                               event, merged_kwargs)
 
             # call the handler and save the results
 
@@ -687,19 +694,17 @@ class EventManager(MpfController):
                 continue
 
             if self._debug:
-                try:
-                    self.debug_log("%s (priority: %s) responding to event '%s'"
-                                   " with args %s",
-                                   (str(handler.callback).split(' ')), handler.priority,
-                                   event, merged_kwargs)
-                except IndexError:
-                    pass
+                self.debug_log("%s (priority: %s) responding to event '%s'"
+                               " with args %s",
+                               self._pretty_format_handler(handler.callback), handler.priority,
+                               event, merged_kwargs)
 
             # call the handler and save the results
             try:
                 result = handler.callback(**merged_kwargs)
             except Exception as e:
-                raise Exception("Exception while processing {} for event {}. {}".format(handler, event, e)) from e
+                raise EventHandlerException(
+                    "Exception while processing {} for event {}. {}".format(handler, event, e)) from e
 
             # If whatever handler we called returns False, we stop
             # processing the remaining handlers for boolean or queue events
