@@ -132,19 +132,22 @@ class BcpInterface(MpfController):
             await self._service_stop(client)
         elif subcommand == "list_switches":
             values = kwargs.get("values") and kwargs["values"].split(",")
+            do_sort = kwargs.get("sort")
             self.machine.bcp.transport.send_to_client(client, "list_switches",
                                                       switches=[self._switch_body(s[0], s[1], values) for s in
-                                                                self.machine.service.get_switch_map()])
+                                                                self.machine.service.get_switch_map(do_sort)])
         elif subcommand == "list_coils":
             values = kwargs.get("values") and kwargs["values"].split(",")
+            do_sort = kwargs.get("sort")
             self.machine.bcp.transport.send_to_client(client, "list_coils",
                                                       coils=[self._coil_body(s[0], s[1], values) for s in
-                                                             self.machine.service.get_coil_map()])
+                                                             self.machine.service.get_coil_map(do_sort)])
         elif subcommand == "list_lights":
             values = kwargs.get("values") and kwargs["values"].split(",")
+            do_sort = kwargs.get("sort")
             self.machine.bcp.transport.send_to_client(client, "list_lights",
                                                       lights=[self._light_body(s[0], s[1], values)
-                                                              for s in self.machine.service.get_light_map()])
+                                                              for s in self.machine.service.get_light_map(do_sort)])
         elif subcommand == "list_shows":
             self.machine.bcp.transport.send_to_client(client, "list_shows",
                                                       shows=[(s.name, sorted(s.tokens))
