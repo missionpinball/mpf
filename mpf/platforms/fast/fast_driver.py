@@ -180,16 +180,28 @@ class FASTDriver(DriverPlatformInterface):
             self.config_state = config_state
             self._autofire_cleared = True
 
-            cmd = '{}{},81,00,10,{},{},00,00,00'.format(
+            # Some coils need an initial pulse + a hold in order to effectively "pulse"
+            if self.platform_settings.get("pulse_hold_power"):
+                hold_power = self.get_hold_pwm_for_cmd(self.platform_settings['pulse_hold_power'])
+                hold_ms = Util.int_to_hex_string(self.platform_settings['pulse_hold_ms'])
+            else:
+                hold_power = '00'
+                hold_ms = '00'
+
+            # The 89 command will write this rule to the driver and pulse it immediately after
+            cmd = '{}{},89,00,10,{},{},{},{},00'.format(
                 self.get_config_cmd(),
                 self.number,
                 hex_ms_string,
-                self.get_pwm_for_cmd(pulse_settings.power))
+                self.get_pwm_for_cmd(pulse_settings.power),
+                hold_power,
+                hold_ms
+            )
             self.send(cmd)
-
-        # trigger driver
-        cmd = '{}{},01'.format(self.get_trigger_cmd(), self.number)
-        self.send(cmd)
+        else:
+            # Trigger the driver directly using the existing configuration
+            cmd = '{}{},01'.format(self.get_trigger_cmd(), self.number)
+            self.send(cmd)
 
         # restore autofire
         self._reenable_autofire_if_configured()

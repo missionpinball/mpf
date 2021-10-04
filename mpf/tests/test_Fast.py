@@ -67,7 +67,7 @@ class BaseMockFast(MockSerial):
             del self.expected_commands[cmd]
             return msg_len
         else:
-            raise Exception(self.type + ": " + str(cmd))
+            raise Exception("Unexpected command for " + self.type + ": " + str(cmd))
 
     def stop(self):
         pass
@@ -222,6 +222,7 @@ class TestFast(MpfTestCase):
             "DN:11,00,00,00": "DN:P",
             "DN:12,00,00,00": "DN:P",
             "DN:13,00,00,00": "DN:P",
+            "DN:16,00,00,00": "DN:P",
             "DN:20,00,00,00": "DN:P",
             "DN:21,00,00,00": "DN:P",
             "DN:01,C1,00,18,00,FF,FF,00": "DN:P",   # configure digital output
@@ -264,6 +265,7 @@ class TestFast(MpfTestCase):
     def test_coils(self):
         self._test_pulse()
         self._test_long_pulse()
+        self._test_pulse_with_hold()
         self._test_enable_exception()
         self._test_allow_enable()
         self._test_pwm_ssm()
@@ -313,8 +315,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
 
     def _test_pulse(self):
         self.net_cpu.expected_commands = {
-            "DN:04,81,00,10,17,FF,00,00,00": "DN:P",
-            "TN:04,01": "TN:P"
+            "DN:04,89,00,10,17,FF,00,00,00": "DN:P"
         }
         # pulse coil 4
         self.machine.coils["c_test"].pulse()
@@ -341,6 +342,15 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
 
         self.advance_time_and_run(1)
         # but after 2s, it should be
+        self.assertFalse(self.net_cpu.expected_commands)
+
+    def _test_pulse_with_hold(self):
+        # enable command
+        self.net_cpu.expected_commands = {
+            "DN:16,89,00,10,14,FF,88,C8,00": "DN:P"
+        }
+        self.machine.coils["c_pulse_and_hold"].pulse()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
     def _test_enable_exception(self):
@@ -443,8 +453,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
 
     def _test_hw_rule_pulse_pwm32(self):
         self.net_cpu.expected_commands = {
-            "DN:11,81,00,10,0A,AAAAAAAA,00,00,00": "DN:P",
-            "TN:11,01": "TN:P"
+            "DN:11,89,00,10,0A,AAAAAAAA,00,00,00": "DN:P"
         }
         self.machine.coils["c_pulse_pwm32_mask"].pulse()
         self.advance_time_and_run(.1)
@@ -597,8 +606,7 @@ Update done.
     def test_flipper_single_coil(self):
         # manual flip no hw rule
         self.net_cpu.expected_commands = {
-            "DN:20,81,00,10,0A,FF,00,00,00": "DN:P",
-            "TN:20,01": "TN:P",
+            "DN:20,89,00,10,0A,FF,00,00,00": "DN:P",
         }
         self.machine.coils["c_flipper_main"].pulse()
         self.advance_time_and_run(.1)
@@ -631,8 +639,7 @@ Update done.
 
         # manual flip with hw rule in action
         self.net_cpu.expected_commands = {
-            "DN:20,81,00,10,0A,FF,00,00,00": "DN:P",    # configure pulse
-            "TN:20,01": "TN:P",                         # pulse
+            "DN:20,89,00,10,0A,FF,00,00,00": "DN:P",    # configure and pulse
             "DN:20,01,01,18,0B,FF,01,00,00": "DN:P",    # restore rule
         }
         self.machine.coils["c_flipper_main"].pulse()
@@ -692,8 +699,7 @@ Update done.
 
         # manual flip no hw rule
         self.net_cpu.expected_commands = {
-            "DN:20,81,00,10,0A,FF,00,00,00": "DN:P",
-            "TN:20,01": "TN:P",
+            "DN:20,89,00,10,0A,FF,00,00,00": "DN:P"
         }
         self.machine.coils["c_flipper_main"].pulse()
         self.advance_time_and_run(.1)
