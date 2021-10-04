@@ -532,14 +532,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             # Look for a system11 A/C relay driver number ending in 'a' or 'c'
             side = number[-1].upper()
             if side == 'A' or side == 'C':
-                orig_number = number
-                number = number[:-1]
-
-                # only configure driver once
-                if number not in self.drivers:
-                    self.drivers[number] = self.platform.configure_driver(config, number, platform_settings)
-
-                system11_driver = System11Driver(orig_number, self.drivers[number], self, side)
+                address = fast_defines.RETRO_DRIVER_MAP[number[:-1].upper()]
+                # Configure a FASTDriver at the retro map address
+                hw_driver = FASTDriver(config, self, address, platform_settings)
+                system11_driver = System11Driver(number, hw_driver, self, side)
 
                 return system11_driver
 
@@ -695,6 +691,14 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                             platform=self, platform_settings=platform_config)
 
         return switch
+
+
+    def validate_switch_section(self, switch, config: dict) -> dict:
+        """Validate switch config for overlayed platform."""
+        # Fast inherits from System11OverlayPlatform, which inherits from SwitchPlatform.
+        # System11 will attempt to call back to this class, creating an infinite loop.
+        # Instead, call validation on SwitchPlatform directly.
+        return SwitchPlatform.validate_switch_section(self, switch, config)
 
     def configure_light(self, number, subtype, config, platform_settings) -> LightPlatformInterface:
         """Configure light in platform."""
