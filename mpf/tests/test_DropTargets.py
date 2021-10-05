@@ -220,6 +220,72 @@ class TestDropTargets(MpfTestCase):
         assert not self.machine.coils["coil2"].pulse.called
         assert not self.machine.coils["coil3"].pulse.called
 
+    def test_drop_target_reset_retry_success(self):
+        target = self.machine.drop_targets["left7"]
+        coil = self.machine.coils["coil4"]
+        coil.pulse = MagicMock()
+        self.assertSwitchState("switch7", 0)
+
+        # target up. it should not reset
+        target.reset()
+        self.advance_time_and_run()
+
+        assert not coil.pulse.called
+
+        # hit target down
+        self.hit_switch_and_run("switch7", 1)
+        self.assertTrue(target.complete)
+        assert not coil.pulse.called
+
+        # it should attempt to reset
+        target.reset()
+        self.assertEqual(coil.pulse.call_count, 1)
+
+        # after 90ms, should not have pulsed
+        self.advance_time_and_run(0.09)
+        self.assertEqual(coil.pulse.call_count, 1)
+        # after 100ms, should be called
+        self.advance_time_and_run(0.02)
+        self.assertEqual(coil.pulse.call_count, 2)
+        # after switch is up, should not be called again
+        self.release_switch_and_run("switch7", 1)
+        self.assertFalse(target.complete)
+        self.assertEqual(coil.pulse.call_count, 2)
+
+    def test_drop_target_reset_retry_max_attempts(self):
+        target = self.machine.drop_targets["left7"]
+        coil = self.machine.coils["coil4"]
+        coil.pulse = MagicMock()
+        self.assertSwitchState("switch7", 0)
+
+        # target up. it should not reset
+        target.reset()
+        self.advance_time_and_run()
+
+        assert not coil.pulse.called
+
+        # hit target down
+        self.hit_switch_and_run("switch7", 1)
+        self.assertTrue(target.complete)
+        assert not coil.pulse.called
+
+        # it should attempt to reset
+        target.reset()
+        self.assertEqual(coil.pulse.call_count, 1)
+
+        # after 90ms, should not have pulsed
+        self.advance_time_and_run(0.09)
+        self.assertEqual(coil.pulse.call_count, 1)
+        # after 100ms, should be called
+        self.advance_time_and_run(0.02)
+        self.assertEqual(coil.pulse.call_count, 2)
+        # after 100ms, should be called
+        self.advance_time_and_run(0.1)
+        self.assertEqual(coil.pulse.call_count, 3)
+        # after 100ms, max retries achieved
+        self.advance_time_and_run(0.1)
+        self.assertEqual(coil.pulse.call_count, 3)
+
     def test_drop_target_ignore_ms(self):
 
         self.mock_event('drop_target_center1_down')
