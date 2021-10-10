@@ -65,11 +65,31 @@ class TestStateMachine(MpfFakeGameTestCase):
         self.assertEventNotCalled("non_game_mode_state_machine_done")
         self.assertEventNotCalled("game_mode_state_machine_done")
 
+        placeholder = self.machine.placeholder_manager.build_string_template(
+            "device.state_machines.game_mode_state_machine.state", "")
+        value, future = placeholder.evaluate_and_subscribe({})
+        self.assertEqual(value, "")
+
         self.start_game()
+
+        self.assertTrue(future.done())
+        value, future = placeholder.evaluate_and_subscribe({})
+        self.assertEqual(value, "start")
+        self.assertFalse(future.done())
 
         self.post_event("game_mode_state_machine_proceed")
         self.assertEventNotCalled("non_game_mode_state_machine_done")
         self.assertEventCalled("game_mode_state_machine_done")
+        self.assertTrue(future.done())
+        value, future = placeholder.evaluate_and_subscribe({})
+        self.assertEqual(value, "done")
+        self.assertFalse(future.done())
+
+        self.stop_game()
+        self.assertTrue(future.done())
+        value, future = placeholder.evaluate_and_subscribe({})
+        self.assertEqual(value, "")
+        self.assertFalse(future.done())
 
     def test_starting_state(self):
         self.assertEqual("foo", self.machine.state_machines["second_state"].state)

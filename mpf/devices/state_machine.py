@@ -70,7 +70,6 @@ class StateMachine(SystemWideDevice, ModeDevice):
         if self.config['persist_state']:
             old = self.player[self._player_var_name]
             self.player[self._player_var_name] = value
-            self.notify_virtual_change(self, old, value)
         else:
             self._state = value
 
@@ -86,11 +85,13 @@ class StateMachine(SystemWideDevice, ModeDevice):
         else:
             self._add_handlers_for_current_state()
             self._run_show_for_current_state()
+            self.notify_virtual_change("state", None, self.state)
 
     def device_removed_from_mode(self, mode: Mode):
         """Unset internal state to prevent leakage."""
         super().device_removed_from_mode(mode)
         self._remove_handlers()
+        self.notify_virtual_change("state", self.state, None)
         self._state = None
         self.player = None
 
