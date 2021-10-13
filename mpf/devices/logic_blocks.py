@@ -416,6 +416,7 @@ class Counter(LogicBlock):
             return
         # Add to the counter the specified value
         self.value += evaluated_value
+        self.post_update_event()
         # Check if count is complete given the updated value
         if self.check_complete():
             self.complete()
@@ -434,6 +435,7 @@ class Counter(LogicBlock):
             return
         # Subtract from the counter the specified value
         self.value -= evaluated_value
+        self.post_update_event()
         # Check if count is complete given the updated value
         if self.check_complete():
             self.complete()
@@ -452,6 +454,7 @@ class Counter(LogicBlock):
             return
         # Set the internal value of the counter to the specified value
         self.value = evaluated_value
+        self.post_update_event()
         # Check if count is complete given the updated value
         if self.check_complete():
             self.complete()
