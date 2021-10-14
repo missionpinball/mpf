@@ -317,7 +317,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         # request remaining balls
         if balls_to_save - balls_added > 0:
             self.source_playfield.add_ball(balls=balls_to_save - balls_added,
-                                            player_controlled=self.config['auto_launch'] ^ 1)
+                                           player_controlled=self.config['auto_launch'] ^ 1)
 
     def device_removed_from_mode(self, mode: Mode) -> None:
         """Disable ball save when mode ends."""
