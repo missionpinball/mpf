@@ -311,7 +311,8 @@ class BallSave(SystemWideDevice, ModeDevice):
         # eject balls from locks
         for device in self.ball_locks:
             balls_to_release = max(min(device.available_balls, balls_to_save - balls_added), 0)
-            device.eject(balls_to_release)
+            self.source_playfield.add_ball(balls=balls_to_release, source_device=device,
+                                           player_controlled=self.config['auto_launch'] ^ 1)
             balls_added += balls_to_release
 
         # request remaining balls
