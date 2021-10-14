@@ -23,8 +23,8 @@ class BallSave(SystemWideDevice, ModeDevice):
     collection = 'ball_saves'
     class_label = 'ball_save'
 
-    __slots__ = ["ball_locks", "active_time", "unlimited_saves", "source_playfield", "delay", "enabled", "timer_started",
-                 "saves_remaining", "early_saved", "state", "_scheduled_balls"]
+    __slots__ = ["ball_locks", "active_time", "unlimited_saves", "source_playfield", "delay", "enabled",
+                 "timer_started", "saves_remaining", "early_saved", "state", "_scheduled_balls"]
 
     def __init__(self, machine: "MachineController", name: str) -> None:
         """Initialise ball save."""
@@ -313,11 +313,11 @@ class BallSave(SystemWideDevice, ModeDevice):
             balls_to_release = max(min(device.available_balls, balls_to_save - balls_added), 0)
             device.eject(balls_to_release)
             balls_added += balls_to_release
-        
+
         # request remaining balls
         if balls_to_save - balls_added > 0:
             self.source_playfield.add_ball(balls=balls_to_save - balls_added,
-                                       player_controlled=self.config['auto_launch'] ^ 1)
+                                            player_controlled=self.config['auto_launch'] ^ 1)
 
     def device_removed_from_mode(self, mode: Mode) -> None:
         """Disable ball save when mode ends."""
