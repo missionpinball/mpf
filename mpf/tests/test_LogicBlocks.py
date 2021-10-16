@@ -376,6 +376,8 @@ class TestLogicBlocks(MpfFakeGameTestCase):
             self.mock_event("counter6_hit")
             self.mock_event("counter7_complete")
             self.mock_event("counter7_hit")
+            self.mock_event("logicblock_counter6_updated")
+            self.mock_event("logicblock_counter7_updated")
         self.start_game()
         reset_event_mocks()
         # Start mode with control events and counter6
@@ -385,22 +387,30 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         # Adds zero to the counter 10 times, counter should not reach completion
         for i in range(10):
             self.post_event("increase_counter6_0")
+            self.assertEventCalled("logicblock_counter6_updated")
             self.assertEqual(0, self._events["counter6_complete"])
+            reset_event_mocks()
         # Counts the counter once, and then adds 3 to it 3 times,
         # The last adding of three should cause the counter to complete once
         for i in range(0, 2):
             self.post_event("increase_counter6_3")
+            self.assertEventCalled("logicblock_counter6_updated")
             self.assertEqual(0, self._events["counter6_complete"])
+            reset_event_mocks()
         self.post_event("counter6_count")
         self.assertEventCalledWith("counter6_hit", count=7, hits=7, remaining=3)
         self.post_event("increase_counter6_3")
+        self.assertEventCalled("logicblock_counter6_updated")
         self.assertEqual(1, self._events["counter6_complete"])
 
         # Test the adding of five to the counter
         reset_event_mocks()
         self.post_event("increase_counter6_5")
+        self.assertEventCalled("logicblock_counter6_updated")
         self.assertEqual(0, self._events["counter6_complete"])
+        reset_event_mocks()
         self.post_event("increase_counter6_5")
+        self.assertEventCalled("logicblock_counter6_updated")
         self.assertEqual(1, self._events["counter6_complete"])
 
         # Test subtraction
@@ -408,12 +418,17 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.post_event("counter6_count")
         self.assertEventCalledWith("counter6_hit", count=1, hits=1, remaining=9)
         self.post_event("reduce_counter6_5")
+        self.assertEventCalled("logicblock_counter6_updated")
+        reset_event_mocks()
         self.post_event("counter6_count")
         self.assertEventCalledWith("counter6_hit", count=-3, hits=-3, remaining=13)
         self.post_event("reduce_counter6_3")
+        self.assertEventCalled("logicblock_counter6_updated")
+        reset_event_mocks()
         self.post_event("counter6_count")
         self.assertEventCalledWith("counter6_hit", count=-5, hits=-5, remaining=15)
         self.post_event("reduce_counter6_0")
+        self.assertEventCalled("logicblock_counter6_updated")
         self.post_event("counter6_count")
         self.assertEventCalledWith("counter6_hit", count=-4, hits=-4, remaining=14)
 
@@ -423,11 +438,14 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.post_event("counter6_count")
         self.assertEventCalledWith("counter6_hit", count=-3, hits=-3, remaining=13)
         self.post_event("set_counter6_0")
+        self.assertEventCalled("logicblock_counter6_updated")
+        reset_event_mocks()
         self.post_event("counter6_count")
         self.assertEventCalledWith("counter6_hit", count=1, hits=1, remaining=9)
         # Set the counter to a value above the completion value
         self.assertEqual(0, self._events["counter6_complete"])
         self.post_event("set_counter6_25")
+        self.assertEventCalled("logicblock_counter6_updated")
         self.assertEqual(1, self._events["counter6_complete"])
 
         # Test using counter with direction down
@@ -436,48 +454,67 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.post_event("counter7_count")
         self.assertEventCalledWith("counter7_hit", count=4, hits=1, remaining=4)
         self.post_event("increase_counter7_5")
+        self.assertEventCalled("logicblock_counter7_updated")
+        reset_event_mocks()
         self.post_event("counter7_count")
         self.assertEventCalledWith("counter7_hit", count=8, hits=-3, remaining=8)
         self.post_event("reduce_counter7_5")
+        self.assertEventCalled("logicblock_counter7_updated")
+        reset_event_mocks()
         self.post_event("counter7_count")
         self.assertEventCalledWith("counter7_hit", count=2, hits=3, remaining=2)
         self.assertEqual(0, self._events["counter7_complete"])
         self.post_event("reduce_counter7_3")
+        self.assertEventCalled("logicblock_counter7_updated")
         self.assertEqual(1, self._events["counter7_complete"])
 
         # Test setting the value with direction down counter
         reset_event_mocks()
         self.assertEqual(0, self._events["counter7_complete"])
         self.post_event("set_counter7_negative25")
+        self.assertEventCalled("logicblock_counter7_updated")
         self.assertEqual(1, self._events["counter7_complete"])
         self.post_event("set_counter7_0")
         self.assertEqual(2, self._events["counter7_complete"])
+        reset_event_mocks()
         self.post_event("set_counter7_3")
+        self.assertEventCalled("logicblock_counter7_updated")
         self.post_event("counter7_count")
         self.assertEventCalledWith("counter7_hit", count=2, hits=3, remaining=2)
+        reset_event_mocks()
 
         self.assertPlaceholderEvaluates(2, "device.counters.counter7.value")
 
         # nothing happens because machine.test2 is undefined
         self.post_event("set_counter_placeholder")
+        self.assertEventNotCalled("logicblock_counter7_updated")
         self.assertPlaceholderEvaluates(2, "device.counters.counter7.value")
 
         self.machine.variables.set_machine_var("test2", 4)
         self.post_event("set_counter_placeholder")
+        self.assertEventCalled("logicblock_counter7_updated")
         self.assertPlaceholderEvaluates(4, "device.counters.counter7.value")
+        reset_event_mocks()
 
         self.post_event("subtract_counter_placeholder")
+        self.assertEventNotCalled("logicblock_counter7_updated")
         self.assertPlaceholderEvaluates(4, "device.counters.counter7.value")
+        reset_event_mocks()
 
         self.machine.variables.set_machine_var("test3", 3)
         self.post_event("subtract_counter_placeholder")
+        self.assertEventCalled("logicblock_counter7_updated")
         self.assertPlaceholderEvaluates(1, "device.counters.counter7.value")
+        reset_event_mocks()
 
         self.post_event("add_counter_placeholder")
+        self.assertEventNotCalled("logicblock_counter7_updated")
         self.assertPlaceholderEvaluates(1, "device.counters.counter7.value")
+        reset_event_mocks()
 
         self.machine.variables.set_machine_var("test4", 1)
         self.post_event("add_counter_placeholder")
+        self.assertEventCalled("logicblock_counter7_updated")
         self.assertPlaceholderEvaluates(2, "device.counters.counter7.value")
 
     def test_logic_block_outside_game(self):
