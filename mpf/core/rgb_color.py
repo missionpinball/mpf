@@ -175,6 +175,8 @@ class RGBColor:
             self._color = color.rgb
         elif isinstance(color, str):
             self._color = RGBColor.string_to_rgb(color)
+        elif isinstance(color, int):
+            self._color = RGBColor.string_to_rgb(str(color))
         elif color:
             self._color = (color[0], color[1], color[2])
         else:
