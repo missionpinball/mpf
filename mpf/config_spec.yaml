@@ -776,6 +776,7 @@ light_segment_displays:
     __valid_in__: machine
     __type__: config
     display_flash_frequency: single|float|1.0
+    display_flash_duty: single|float|0.5
 light_stripes:
     __valid_in__: machine
     __type__: device
@@ -834,6 +835,7 @@ lisy:
     baud: single|int|None
     debug: single|bool|false
     display_flash_frequency: single|float|1.0
+    display_flash_duty: single|float|0.5
     disable_dtr: single|bool|true
     connection: single|enum(network,serial)|network
     console_log: single|enum(none,basic,full)|none
@@ -1064,6 +1066,7 @@ p_roc:
     dmd_timing_cycles: list|int|None
     dmd_update_interval: single|ms|33ms
     display_flash_frequency: single|float|1.0
+    display_flash_duty: single|float|0.5
     debug: single|bool|false
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
