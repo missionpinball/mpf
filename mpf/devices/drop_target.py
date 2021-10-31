@@ -68,14 +68,24 @@ class DropTarget(SystemWideDevice):
                     self.name, self.config['switch'].name, self.config['playfield'].name,
                     self.config['playfield'].name), 1)
 
-    def _ignore_switch_hits_for(self, ms):
+    def _ignore_switch_hits_for(self, ms, reset_attempt=None):
         """Ignore switch hits for ms."""
         self._ignore_switch_hits = True
-        self.delay.reset(name="ignore_switch", callback=self._restore_switch_hits, ms=ms)
+        self.delay.reset(name="ignore_switch", callback=self._restore_switch_hits, ms=ms, reset_attempt=reset_attempt)
 
-    def _restore_switch_hits(self):
+    def _restore_switch_hits(self, reset_attempt=None):
         self._ignore_switch_hits = False
         self._update_state_from_switch(reconcile=True)
+
+        if self.complete and reset_attempt:
+            if reset_attempt < self.config['max_reset_attempts']:
+                self.debug_log("Reset failed after attempt %s, trying again", reset_attempt)
+                reset_attempt += 1
+                self.reset(attempt=reset_attempt)
+            else:
+                self.info_log("Failed to reset after %s attempts. Giving up.", reset_attempt)
+        elif reset_attempt:
+            self.debug_log("Reset confirmed!")
 
     def _ball_search_phase1(self):
         if not self.complete and self.reset_coil:
@@ -273,7 +283,7 @@ class DropTarget(SystemWideDevice):
         del kwargs
         self.reset()
 
-    def reset(self):
+    def reset(self, attempt=None):
         """Reset this drop target.
 
         If this drop target is configured with a reset coil, then this method
@@ -285,8 +295,10 @@ class DropTarget(SystemWideDevice):
         handler should reset the target profile on its own when the drop target
         physically moves back to the up position.
         """
-        if self.reset_coil and self.machine.switch_controller.is_active(self.config['switch']):
-            self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
+        if self.reset_coil and self.complete:
+            if self.config['max_reset_attempts'] and attempt is None:
+                attempt = 1
+            self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'], reset_attempt=attempt)
             self.reset_coil.pulse(max_wait_ms=self.config['reset_coil_max_wait_ms'])
 
 
@@ -358,7 +370,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         del kwargs
         self.reset()
 
-    def reset(self):
+    def reset(self, attempt=None):
         """Reset this bank of drop targets.
 
         This method has some intelligence to figure out what coil(s) it should
@@ -394,19 +406,32 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
             coils.add(self.reset_coil)
 
         if self.config['ignore_switch_ms']:
+            if self.config['max_reset_attempts'] and attempt is None:
+                attempt = 1
             self._ignore_switch_hits = True
             self.delay.add(ms=self.config['ignore_switch_ms'],
                            callback=self._restore_switch_hits,
-                           name='ignore_hits')
+                           name='ignore_hits',
+                           reset_attempt=attempt)
 
-        # now pulse them
+        # now pulse the coils
+        self.debug_log('Pulsing reset coils: %s', coils)
         for coil in coils:
-            self.debug_log('Pulsing reset coils: %s', coils)
             coil.pulse(max_wait_ms=self.config['reset_coil_max_wait_ms'])
 
-    def _restore_switch_hits(self):
+    def _restore_switch_hits(self, reset_attempt=None):
         self._ignore_switch_hits = False
         self.member_target_change()
+
+        if self.down != 0 and reset_attempt is not None:
+            if reset_attempt < self.config['max_reset_attempts']:
+                self.debug_log("Reset failed after attempt %s, trying again.", reset_attempt)
+                reset_attempt += 1
+                self.reset(attempt=reset_attempt)
+            else:
+                self.info_log("Failed to reset after %s attempts. Giving up.", reset_attempt)
+        else:
+            self.debug_log("Reset confirmed!")
 
     def member_target_change(self):
         """Handle that a member drop target has changed state.

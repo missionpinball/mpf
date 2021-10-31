@@ -479,6 +479,7 @@ drop_targets:
     enable_keep_up_events: event_handler|event_handler:ms|None
     disable_keep_up_events: event_handler|event_handler:ms|None
     ball_search_order: single|int|100
+    max_reset_attempts: single|int|None
     reset_coil_max_wait_ms: single|ms|100ms
     knockdown_coil_max_wait_ms: single|ms|100ms
     ignore_switch_ms: single|ms|500ms
@@ -487,6 +488,7 @@ drop_target_banks:
     __valid_in__: machine, mode
     __type__: device
     drop_targets: list|machine(drop_targets)|
+    max_reset_attempts: single|int|None
     reset_on_complete: single|ms|None
     reset_coil: single|machine(coils)|None
     reset_coils: list|machine(coils)|None
