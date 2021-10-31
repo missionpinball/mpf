@@ -120,7 +120,7 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
         # eject balls from locks
         for device in self.ball_locks:
             balls_to_release = max(min(device.available_balls, self.balls_added_live - balls_added), 0)
-            device.eject(balls_to_release)
+            self.source_playfield.add_ball(balls=balls_to_release, source_device=device)
             balls_added += balls_to_release
 
         # request remaining balls

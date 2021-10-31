@@ -223,6 +223,7 @@ ball_saves:
     __valid_in__: machine, mode
     __type__: device
     source_playfield: single|machine(ball_devices)|playfield
+    ball_locks: list|machine(ball_devices)|None
     active_time: single|template_secs|0
     eject_delay: single|ms|0
     only_last_ball: single|bool|false

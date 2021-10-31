@@ -79,6 +79,7 @@ class DropTarget(SystemWideDevice):
 
     def _ball_search_phase1(self):
         if not self.complete and self.reset_coil:
+            self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
             self.reset_coil.pulse()
             return True
         # if down. knock down again
@@ -91,6 +92,7 @@ class DropTarget(SystemWideDevice):
         if self.reset_coil and self.knockdown_coil:
             self._in_ball_search = True
             if self.complete:
+                self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
                 self.reset_coil.pulse()
                 self.delay.add(100, self._ball_search_knockdown)
             else:
@@ -104,6 +106,7 @@ class DropTarget(SystemWideDevice):
     def _ball_search_phase3(self):
         if self.complete:
             if self.reset_coil:
+                self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
                 self.reset_coil.pulse()
                 if self.knockdown_coil:
                     self._in_ball_search = True
@@ -131,6 +134,7 @@ class DropTarget(SystemWideDevice):
         self.delay.add(100, self._ball_search_iteration_finish)
 
     def _ball_search_reset(self):
+        self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
         self.reset_coil.pulse()
         self.delay.add(100, self._ball_search_iteration_finish)
 
