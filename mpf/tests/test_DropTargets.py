@@ -321,6 +321,69 @@ class TestDropTargets(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEventCalled('drop_target_center1_down')
 
+    def test_drop_target_ignore_ms_ball_search(self):
+
+        self.machine.playfields["playfield"].config['enable_ball_search'] = True
+        self.machine.playfields["playfield"].balls += 1
+
+        self.mock_event('drop_target_center1_down')
+        self.mock_event('drop_target_center1_up')
+
+        #self.hit_switch_and_run('switch10', 1)
+        self.assertSwitchState('switch10', False)  # ###############
+
+        # wait until ball search phase 1
+        event_future = self.machine.events.wait_for_event("ball_search_phase_1")
+        self.machine.clock.loop.run_until_complete(event_future)
+        
+        self.advance_time_and_run(.25)
+
+        self.hit_switch_and_run('switch10', .1)
+        self.release_switch_and_run('switch10', .1)
+        self.assertSwitchState('switch10', False)
+
+        self.advance_time_and_run(.5)
+
+        # reset happened in the ignore window so this event should not be
+        # called
+        self.assertEventNotCalled('drop_target_center1_down')
+        self.assertEventNotCalled('drop_target_center1_up')
+
+        # wait until ball search phase 2
+        event_future = self.machine.events.wait_for_event("ball_search_phase_2")
+        self.machine.clock.loop.run_until_complete(event_future)
+        
+        self.advance_time_and_run(.25)
+
+        self.hit_switch_and_run('switch10', .1)
+        self.release_switch_and_run('switch10', .1)
+        self.assertSwitchState('switch10', False)
+
+        self.advance_time_and_run(.5)
+
+        # reset happened in the ignore window so this event should not be
+        # called
+        self.assertEventNotCalled('drop_target_center1_down')
+        self.assertEventNotCalled('drop_target_center1_up')
+
+        # wait until ball search phase 3
+        event_future = self.machine.events.wait_for_event("ball_search_phase_3")
+        self.machine.clock.loop.run_until_complete(event_future)
+        
+        self.advance_time_and_run(.25)
+
+        self.hit_switch_and_run('switch10', .1)
+        self.release_switch_and_run('switch10', .1)
+        self.assertSwitchState('switch10', False)
+
+        self.advance_time_and_run(.5)
+
+        # reset happened in the ignore window so this event should not be
+        # called
+        self.assertEventNotCalled('drop_target_center1_down')
+        self.assertEventNotCalled('drop_target_center1_up')
+
+
     def test_drop_target_bank_ignore_ms(self):
         self.mock_event('drop_target_bank_right_bank_down')
         self.mock_event('drop_target_bank_right_bank_mixed')

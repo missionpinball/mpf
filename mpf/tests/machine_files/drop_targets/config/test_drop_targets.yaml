@@ -81,6 +81,7 @@ drop_targets:
     switch: switch9
    center1:
     switch: switch10
+    ball_search_order: 1
     ignore_switch_ms: 1000
     reset_events: reset_center1
     reset_coil: coil6

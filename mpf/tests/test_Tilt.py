@@ -101,7 +101,7 @@ class TestTilt(MpfGameTestCase):
         self._prepare_trough()
         self.start_game(2)
 
-        # flipper actived
+        # flipper activated
         self.assertTrue(self.machine.flippers["f_test"]._enabled)
 
         self.assertTrue(self.machine.mode_controller.is_active('tilt'))
@@ -119,7 +119,7 @@ class TestTilt(MpfGameTestCase):
         self.assertNotEqual(None, self.machine.game)
         self.assertEqual(True, self.machine.game.tilted)
 
-        # flipper deactived
+        # flipper deactivated
         self.assertFalse(self.machine.flippers["f_test"]._enabled)
 
         # scoring should no longer work
@@ -131,6 +131,48 @@ class TestTilt(MpfGameTestCase):
         self.advance_time_and_run(1)
 
         self.assertEqual(False, self.machine.game.tilted)
+
+    def test_tilt_with_extra_ball(self):
+        """Make sure that we properly tilt even when the player has an extra ball."""
+        self._add_tilt_handler()
+
+        self._prepare_trough()
+        self.start_game(2)
+        # add an extra ball for the player
+        self.machine.game.player.extra_balls = 1
+        self.assertAvailableBallsOnPlayfield(1)
+
+        # flipper activated
+        self.assertTrue(self.machine.flippers["f_test"]._enabled)
+
+        self.assertTrue(self.machine.mode_controller.is_active('tilt'))
+        self.assertNotEqual(None, self.machine.game)
+
+        # scoring should work
+        self.post_event("test_scoring")
+        self.assertPlayerVarEqual(100, "score")
+
+        self.assertFalse(self._is_tilted)
+        self.machine.switch_controller.process_switch('s_tilt', 1)
+        self.machine.switch_controller.process_switch('s_tilt', 0)
+        self.advance_time_and_run(1)
+        self.assertTrue(self._is_tilted)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(True, self.machine.game.tilted)
+
+        # flipper deactivated
+        self.assertFalse(self.machine.flippers["f_test"]._enabled)
+
+        # scoring should no longer work
+        self.assertPlayerVarEqual(100, "score")
+        self.post_event("test_scoring")
+        self.assertPlayerVarEqual(100, "score")
+
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.advance_time_and_run(1)
+
+        self.assertEqual(False, self.machine.game.tilted)
+        self.assertAvailableBallsOnPlayfield(1)
 
     def test_tilt_event(self):
         self._add_tilt_handler()
@@ -240,7 +282,7 @@ class TestTilt(MpfGameTestCase):
         self.machine.switch_controller.process_switch('s_start', 0)
         self.advance_time_and_run(10)
 
-        # flipper actived
+        # flipper activated
         self.assertTrue(self.machine.flippers["f_test"]._enabled)
 
         self.assertTrue(self.machine.mode_controller.is_active('tilt'))
@@ -252,7 +294,7 @@ class TestTilt(MpfGameTestCase):
         self.advance_time_and_run(1)
         self.assertNotEqual(None, self.machine.game)
 
-        # flipper deactived
+        # flipper deactivated
         self.assertFalse(self.machine.flippers["f_test"]._enabled)
 
         self.machine.switch_controller.process_switch('s_ball_switch1', 1)

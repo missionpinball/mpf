@@ -181,7 +181,7 @@ class Tilt(Mode):
         desc: The player has tilted.'''
 
         self.tilt_event_handlers.append(
-            self.machine.events.add_handler('player_turn_ending', self._ball_ending_tilted))
+            self.machine.events.add_handler('ball_ending', self._ball_ending_tilted, priority=-1))
 
         for device in self.machine.ball_devices.values():
             if 'drain' in device.tags:

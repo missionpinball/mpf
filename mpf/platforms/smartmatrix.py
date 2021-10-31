@@ -7,9 +7,7 @@ from typing import Dict
 import serial
 
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
-
 from mpf.platforms.autodetect import autodetect_smartmatrix_dmd_port
-from mpf.exceptions.config_file_error import ConfigFileError
 
 from mpf.core.platform import RgbDmdPlatform
 from mpf.core.utility_functions import Util
@@ -32,7 +30,7 @@ class SmartMatrixHardwarePlatform(RgbDmdPlatform):
         self.devices = dict()       # type: Dict[str, SmartMatrixDevice]
 
         if not isinstance(self.machine.config['smartmatrix'], dict):
-            raise ConfigFileError("Smartmatrix config needs to be a dict.", 1, self.log.name)
+            self.raise_config_error("Smartmatrix config needs to be a dict.", 1)
 
         for name, config in self.machine.config['smartmatrix'].items():
             config = self.machine.config_validator.validate_config(
@@ -58,7 +56,11 @@ class SmartMatrixHardwarePlatform(RgbDmdPlatform):
 
     def configure_rgb_dmd(self, name: str):
         """Configure rgb dmd."""
-        return self.devices[name]
+        try:
+            return self.devices[name]
+        except KeyError:
+            self.raise_config_error("Could not find smartmatrix config for rgb_dmd {}. "
+                                    "Add it to your smartmatrix section.".format(name), 2)
 
 
 class SmartMatrixDevice(DmdPlatformInterface):
