@@ -103,7 +103,9 @@ class DigitalOutput(SystemWideDevice):
             default_recycle=False,
             max_pulse_ms=255,
             max_pulse_power=1.0,
-            max_hold_power=1.0)
+            max_hold_power=1.0,
+            pulse_hold_power=None,
+            pulse_hold_ms=None)
 
         if not self.platform.features['allow_empty_numbers'] and self.config['number'] is None:
             self.raise_config_error("Digital Output must have a number.", 2)

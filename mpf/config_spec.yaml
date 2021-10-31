@@ -298,6 +298,8 @@ coils:
     default_pulse_ms: single|template_ms|None
     default_pulse_power: single|float(0,1)|None
     default_hold_power: single|float(0,1)|None
+    pulse_hold_power: single|float|None
+    pulse_hold_ms: single|ms|None
     max_pulse_ms: single|ms|None
     max_pulse_power: single|float(0,1)|1.0
     max_hold_power: single|float(0,1)|None
@@ -342,8 +344,6 @@ opp_coils:
 fast_coils:
     connection: single|enum(network,local,auto)|auto
     recycle_ms: single|ms|None
-    pulse_hold_power: single|float|None
-    pulse_hold_ms: single|ms|None
     hold_pwm_patter: single|str|None
 pkone_coils:
     recycle_ms: single|ms|None

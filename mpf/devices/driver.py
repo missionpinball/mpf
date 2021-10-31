@@ -97,7 +97,9 @@ class Driver(SystemWideDevice):
             default_recycle=self.config['default_recycle'],
             max_pulse_ms=self.config['max_pulse_ms'],
             max_pulse_power=self.config['max_pulse_power'],
-            max_hold_power=self.config['max_hold_power'])
+            max_hold_power=self.config['max_hold_power'],
+            pulse_hold_power=self.config['pulse_hold_power'],
+            pulse_hold_ms=self.config['pulse_hold_ms'])
         platform_settings = dict(self.config['platform_settings']) if self.config['platform_settings'] else dict()
 
         if not self.platform.features['allow_empty_numbers'] and self.config['number'] is None:

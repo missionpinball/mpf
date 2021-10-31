@@ -181,9 +181,9 @@ class FASTDriver(DriverPlatformInterface):
             self._autofire_cleared = True
 
             # Some coils need an initial pulse + a hold in order to effectively "pulse"
-            if self.platform_settings.get("pulse_hold_power"):
-                hold_power = self.get_hold_pwm_for_cmd(self.platform_settings['pulse_hold_power'])
-                hold_ms = Util.int_to_hex_string(self.platform_settings['pulse_hold_ms'])
+            if self.config.pulse_hold_power is not None:
+                hold_power = self.get_hold_pwm_for_cmd(self.config.pulse_hold_power)
+                hold_ms = Util.int_to_hex_string(self.config.pulse_hold_ms)
             else:
                 hold_power = '00'
                 hold_ms = '00'

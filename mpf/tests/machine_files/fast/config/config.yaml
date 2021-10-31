@@ -81,9 +81,8 @@ coils:
     c_pulse_and_hold:
         number: 22
         default_pulse_ms: 20
-        platform_settings:
-            pulse_hold_power: 0.25
-            pulse_hold_ms: 200
+        pulse_hold_power: 0.25
+        pulse_hold_ms: 200
     c_flipper_main:
         number: 32
         default_pulse_ms: 10
