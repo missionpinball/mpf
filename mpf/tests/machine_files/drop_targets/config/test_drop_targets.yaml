@@ -67,12 +67,14 @@ drop_targets:
      knockdown_coil: coil3
      knockdown_events: knock_knock
      reset_events: reset_target
-   drop_target_lock:
+   left7:
      debug: True
      reset_coil: coil4
      switch: switch7
      enable_keep_up_events: keep_up
      disable_keep_up_events: no_more_keep_up
+     ignore_switch_ms: 100
+     max_reset_attempts: 3
    right1:
     switch: switch8
    right2:
