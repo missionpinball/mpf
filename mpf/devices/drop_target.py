@@ -83,7 +83,7 @@ class DropTarget(SystemWideDevice):
                 reset_attempt += 1
                 self.reset(attempt=reset_attempt)
             else:
-                self.debug_log("Failed to reset after %s attempts. Giving up.", reset_attempt)
+                self.info_log("Failed to reset after %s attempts. Giving up.", reset_attempt)
         elif reset_attempt:
             self.debug_log("Reset confirmed!")
 
@@ -429,11 +429,11 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
 
         if self.down != 0 and reset_attempt is not None:
             if reset_attempt < self.config['max_reset_attempts']:
-                self.debug_log("Reset failed after attempt %s, trying again", reset_attempt)
+                self.debug_log("Reset failed after attempt %s, trying again.", reset_attempt)
                 reset_attempt += 1
                 self.reset(attempt=reset_attempt)
             else:
-                self.debug_log("Failed to reset after %s attempts. Giving up.", reset_attempt)
+                self.info_log("Failed to reset after %s attempts. Giving up.", reset_attempt)
         else:
             self.debug_log("Reset confirmed!")
 
