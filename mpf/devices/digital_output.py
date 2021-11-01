@@ -99,6 +99,7 @@ class DigitalOutput(SystemWideDevice):
             name=self.name,
             default_pulse_ms=255,
             default_pulse_power=1.0,
+            default_hold_ms=None,
             default_hold_power=1.0,
             default_recycle=False,
             max_pulse_ms=255,

@@ -38,6 +38,7 @@ class Driver(SystemWideDevice):
         self.delay = DelayManager(self.machine)
         self.platform = None                # type: Optional[DriverPlatform]
         self._pulse_ms = None
+        self._hold_ms = None
 
     @classmethod
     def device_class_init(cls, machine: MachineController):
@@ -83,17 +84,27 @@ class Driver(SystemWideDevice):
         else:
             self._pulse_ms = self.machine.config['mpf']['default_pulse_ms']
 
+    def _calculate_hold_ms_placeholder(self, *args):
+        del args
+        if self.config['default_hold_ms'] is not None:
+            self._hold_ms, future = self.config['default_hold_ms'].evaluate_and_subscribe({})
+            future.add_done_callback(self._calculate_hold_ms_placeholder)
+        else:
+            self._hold_ms = self.machine.config['mpf']['default_hold_ms']
+
     async def _initialize(self):
         await super()._initialize()
         self.platform = self.machine.get_platform_sections('coils', self.config['platform'])
 
         self._calculate_pulse_ms_placeholder()
+        self._calculate_hold_ms_placeholder()
 
         config = DriverConfig(
             name=self.name,
             default_pulse_ms=self.get_and_verify_pulse_ms(None),
             default_pulse_power=self.get_and_verify_pulse_power(None),
             default_hold_power=self.get_and_verify_hold_power(None),
+            default_hold_ms=self.get_and_verify_hold_ms(None),
             default_recycle=self.config['default_recycle'],
             max_pulse_ms=self.config['max_pulse_ms'],
             max_pulse_power=self.config['max_pulse_power'],
@@ -183,6 +194,24 @@ class Driver(SystemWideDevice):
                                     format(self.name, pulse_ms, self.config['max_pulse_ms']))
 
         return pulse_ms
+
+    def get_and_verify_hold_ms(self, hold_ms: Optional[int]) -> int:
+        """Return and verify hold_ms to use.
+
+        If hold_ms is None return the default.
+        """
+        assert self.platform is not None
+        if hold_ms is None:
+            hold_ms = self._hold_ms
+
+        if not isinstance(hold_ms, int):
+            raise AssertionError("Wrong type {}".format(hold_ms))
+
+        if self.config['max_hold_duration'] and hold_ms > self.config['max_hold_duration']:
+            raise DriverLimitsError("Driver {} may not be held with hold_ms {} because max_hold_duration is {}".
+                                    format(self.name, hold_ms, self.config['max_hold_duration']))
+
+        return hold_ms
 
     @event_handler(2)
     def event_enable(self, pulse_ms: int = None, pulse_power: float = None, hold_power: float = None, **kwargs):
@@ -316,5 +345,35 @@ class Driver(SystemWideDevice):
             self.delay.add(wait_ms, self._pulse_now, pulse_ms=pulse_ms, pulse_power=pulse_power)
         else:
             self._pulse_now(pulse_ms, pulse_power)
+
+        return wait_ms
+
+    @event_handler(4)
+    def event_timed_enable(self, hold_ms: int = None, hold_power: float = None, pulse_ms: int = None, pulse_power: float = None,  max_wait_ms: int = None, **kwargs):
+        """Event handler for timed enable events."""
+        del kwargs
+        self.timed_enable(hold_ms, hold_power, pulse_ms, pulse_power, max_wait_ms)
+
+    def timed_enable(self, hold_ms: int = None, hold_power: float = None, pulse_ms: int = None, pulse_power: float = None, max_wait_ms: int = None):
+        """Pulse and enable this driver.
+
+        Args:
+        ----
+            enable_duration_ms: The number of milliseconds the driver should be
+                enabled for. If no value is provided, the driver will be enabled
+                for the value specified in the config dictionary (default_hold_ms).
+            pulse_ms: The number of seconds the driver should be enabled at pulse_power
+            pulse_power: The pulse power for the initial pulse. A float between 0.0 and 1.0
+            hold_power: The hold power for the enable duration. A float between 0.0. and 1.0
+            max_wait_ms: Maximum time this pulse may be delayed for PSU optimization
+        """
+        pulse_duration = self.get_and_verify_pulse_ms(pulse_ms)
+        pulse_power = self.get_and_verify_pulse_power(pulse_power)
+        hold_duration = self.get_and_verify_hold_ms(hold_ms)
+        hold_power = self.get_and_verify_hold_power(hold_power)
+        wait_ms = self._notify_psu_and_get_wait_ms(pulse_duration, max_wait_ms)
+
+        self.hw_driver.timed_enable(PulseSettings(pulse_power, pulse_duration),
+                                    HoldSettings(hold_power, hold_duration))
 
         return wait_ms

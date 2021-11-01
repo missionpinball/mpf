@@ -78,6 +78,11 @@ coils:
         number: 18
         default_pulse_ms: 2000
         max_hold_power: 1.0
+    c_pulse_and_hold:
+        number: 22
+        default_pulse_ms: 20
+        default_hold_ms: 200
+        default_hold_power: 0.25
     c_flipper_main:
         number: 32
         default_pulse_ms: 10
