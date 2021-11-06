@@ -1019,6 +1019,7 @@ multiball_locks:
     priority: single|int|1
     reset_all_counts_events: event_handler|event_handler:ms|None
     reset_count_for_current_player_events: event_handler|event_handler:ms|None
+    empty_lock_devices_on_ball_end: single|bool|false
 mypinballs:
     __valid_in__: machine
     __type__: config
