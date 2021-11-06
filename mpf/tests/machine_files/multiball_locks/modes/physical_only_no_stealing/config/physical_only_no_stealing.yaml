@@ -1,0 +1,11 @@
+#config_version=5
+mode:
+  start_events: start_physical_only
+
+multiball_locks:
+    lock_physical_only:
+        lock_devices: bd_lock
+        balls_to_lock: 2
+        locked_ball_counting_strategy: physical_only
+        empty_lock_devices_on_ball_end: true
+        debug: True
