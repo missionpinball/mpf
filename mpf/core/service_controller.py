@@ -48,9 +48,9 @@ class ServiceController(MpfController):
         self._enabled = True
 
         self.info_log("Entered service mode. Resetting game if running. Resetting hardware interface now.")
-        # this will stop attact and game mode
+        # this will stop attract and game mode
         for mode in self.machine.modes.values():
-            if not mode.active or mode.name in ["service", "game"]:
+            if not mode.active or mode.name in ["service", "service_segment_display", "service_dmd", "game"]:
                 continue
             mode.stop(service=True)
 

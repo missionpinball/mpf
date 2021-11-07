@@ -228,6 +228,7 @@ sort_devices_by_number: single|bool|True
                                      option=options[position], warning=warning)
             key = await self._get_key()
             if key == 'ESC':
+                self.machine.events.post("service_options_slide_stop")
                 return None
             if key == 'UP':
                 position += 1
@@ -321,6 +322,7 @@ sort_devices_by_number: single|bool|True
                 self._update_main_menu(items, position)
             elif key == 'ENTER':
                 # call submenu
+                self.machine.events.post("service_menu_deselected")
                 await items[position].callback()
                 self._update_main_menu(items, position)
 
@@ -447,7 +449,7 @@ sort_devices_by_number: single|bool|True
     def _update_audits_slide(self, items, position):
         item = items[position][0]
         value = items[position][1]
-        self.machine.events.post("service_audits_menu_show", audits_label=item, value_label=value)
+        self.machine.events.post("service_audits_menu_show", audits_label=str(item), value_label=str(value))
 
     async def _audits_submenu(self, items):
         position = 0
