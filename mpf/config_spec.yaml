@@ -2120,7 +2120,7 @@ widgets:
         flash_mode: single|enum(off,all,match,mask)|off
         flash_frequency: single|float_or_token|1.0
         flash_mask: single|str|None
-        display_type: single|enum(7seg,14seg)|14seg
+        display_type: single|enum(7seg,8seg,14seg)|14seg
         character_count: single|int_or_token|1
         character_spacing: single|int_or_token|10
         character_slant_angle: single|float_or_token|0.0
