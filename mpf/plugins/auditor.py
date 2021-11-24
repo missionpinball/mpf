@@ -77,8 +77,9 @@ class Auditor:
         self.switchnames_to_audit = {x.name for x in self.machine.switches.values()
                                      if 'no_audit' not in x.tags}
 
-        for event in self.config["events"]:
-            self.current_audits["events"][event] = 0
+        for event in self.config['events']:
+            if event not in self.current_audits['events']:
+                self.current_audits['events'][event] = 0
 
         # Make sure we have all the player stuff in our audit dict
         if 'player' in self.config['audit']:
