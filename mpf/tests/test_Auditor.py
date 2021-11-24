@@ -64,7 +64,7 @@ class TestAuditor(MpfFakeGameTestCase):
                           'my_var': {'top': [200, 0], 'average': 100.0, 'total': 2}},
                          auditor.data_manager.written_data["player"])
 
-    def test_auditor_switches(self):
+    def test_auditor_switches_events(self):
         auditor = self.machine.plugins[0]
         self.assertIsInstance(auditor, Auditor)
         data_manager = auditor.data_manager
@@ -149,3 +149,5 @@ class TestAuditor(MpfFakeGameTestCase):
 
         self.assertEqual(0, auditor.current_audits['switches']['s_test'])
         self.assertEqual(0, data_manager.written_data['switches']['s_test'])
+        self.assertEqual(0, auditor.current_audits['events']['game_started'])
+        self.assertEqual(0, data_manager.written_data['events']['game_started'])
