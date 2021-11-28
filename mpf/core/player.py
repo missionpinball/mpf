@@ -157,9 +157,21 @@ class Player:
                     self._send_variable_event(name, value, value, 0, self.vars['number'])
 
     def add_with_kwargs(self, name: str, value, **kwargs):
+        """Add a value to a player variable and include kwargs in the update event.
+
+        :param name: The player variable name
+        :param value: The value to add to the existing value
+        :param kwargs: Arguments to include in the posted player_<name> event
+        """
         self.__setattr__(name, self[name] + value, **kwargs)
 
     def set_with_kwargs(self, name: str, value, **kwargs):
+        """Set a value to a player variable and include kwargs in the update event.
+
+        :param name: The player variable name
+        :param value: The value to set
+        :param kwargs: Arguments to include in the posted player_<name> event
+        """
         self.__setattr__(name, value, **kwargs)
 
     # pylint: disable-msg=too-many-arguments
@@ -221,6 +233,8 @@ class Player:
         player_num: The player number this variable just changed for,
         starting with 1. (e.g. Player 1 will have *player_num=1*, Player 4
         will have *player_num=4*, etc.)
+
+        kwargs: Additional keyword arguments to include in the event args.
 
         '''
 
