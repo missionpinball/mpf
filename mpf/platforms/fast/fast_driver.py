@@ -172,10 +172,18 @@ class FASTDriver(DriverPlatformInterface):
 
     def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Pulse and hold this driver for a specified duration."""
-        self.pulse(pulse_settings, hold_settings)
+        self._pulse(pulse_settings, hold_settings)
 
-    def pulse(self, pulse_settings: PulseSettings, hold_settings: HoldSettings = None):
+    def pulse(self, pulse_settings: PulseSettings):
         """Pulse this driver."""
+        self._pulse(pulse_settings)
+
+    def _pulse(self, pulse_settings: PulseSettings, hold_settings: HoldSettings = None):
+        """Pulse this driver, with an optional hold setting.
+
+        The FAST platform supports pulse and hold configuration in the same command, so
+        this method can be used for both pulse() and timed_enable() behavior.
+        """
         hex_ms_string = Util.int_to_hex_string(pulse_settings.duration)
         if hold_settings is not None:
             hold_power = self.get_hold_pwm_for_cmd(hold_settings.power)

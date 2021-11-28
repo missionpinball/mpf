@@ -130,6 +130,7 @@ class VisualPinballEngineDriver(DriverPlatformInterface):
         """Pulse and enable the coil for an explicit duration."""
         raise NotImplementedError
 
+
 class VisualPinballEngineDmd(DmdPlatformInterface):
 
     """VPE DMD."""

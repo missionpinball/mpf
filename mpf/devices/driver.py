@@ -352,18 +352,22 @@ class Driver(SystemWideDevice):
 
         return wait_ms
 
+    # pylint: disable-msg=too-many-arguments
     @event_handler(4)
-    def event_timed_enable(self, timed_enable_ms: int = None, hold_power: float = None, pulse_ms: int = None, pulse_power: float = None,  max_wait_ms: int = None, **kwargs):
+    def event_timed_enable(self, timed_enable_ms: int = None, hold_power: float = None, pulse_ms: int = None,
+                           pulse_power: float = None, max_wait_ms: int = None, **kwargs):
         """Event handler for timed enable events."""
         del kwargs
         self.timed_enable(timed_enable_ms, hold_power, pulse_ms, pulse_power, max_wait_ms)
 
-    def timed_enable(self, timed_enable_ms: int = None, hold_power: float = None, pulse_ms: int = None, pulse_power: float = None, max_wait_ms: int = None):
-        """Pulse and enable this driver.
+    # pylint: disable-msg=too-many-arguments
+    def timed_enable(self, timed_enable_ms: int = None, hold_power: float = None, pulse_ms: int = None,
+                     pulse_power: float = None, max_wait_ms: int = None):
+        """Pulse and enable this driver for an explicit amount of time.
 
         Args:
         ----
-            enable_duration_ms: The number of milliseconds the driver should be
+            timed_enable_ms: The number of milliseconds the driver should be
                 enabled for. If no value is provided, the driver will be enabled
                 for the value specified in the config dictionary (default_timed_enable_ms).
             pulse_ms: The number of seconds the driver should be enabled at pulse_power

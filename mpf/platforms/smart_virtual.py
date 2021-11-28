@@ -451,7 +451,7 @@ class SmartVirtualDriver(VirtualDriver):
             self.action.pulse(self, pulse_settings.duration)
 
     def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
-        """Timed enable the driver with pulse and hold and release."""
+        """Enable the driver with pulse and timed hold and release."""
         super().timed_enable(pulse_settings, hold_settings)
         if self.action:
             self.action.timed_enable(self)

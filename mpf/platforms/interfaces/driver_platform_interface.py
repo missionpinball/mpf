@@ -10,6 +10,7 @@ HoldSettings = namedtuple("HoldSettings", ["power", "duration"])
 # Python 3.7 supports a defaults arg in namedtuple, but 3.6 does not
 HoldSettings.__new__.__defaults__ = (None, None)
 
+
 class DriverPlatformInterface(metaclass=abc.ABCMeta):
 
     """Interface for drivers in hardware platforms.
@@ -48,7 +49,7 @@ class DriverPlatformInterface(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def timed_enable(self):
+    def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable the driver for a pre-specified duration."""
         raise NotImplementedError
 
