@@ -30,6 +30,10 @@ class TestRGBColor(unittest.TestCase):
         self.assertEqual(128, color.opacity)
         self.assertEqual("red", color.name)
 
+    def test_int_color(self):
+        with self.assertRaises(TypeError):
+            RGBColor(990000)
+
     def test_off_color(self):
         # Tests the 'Off' color (nicely readable in LED show files)
         color = RGBColor('Off')

@@ -1,0 +1,217 @@
+#config_version=5
+mode:
+  priority: 100001
+  game_mode: False
+  start_events: reset_complete
+  stop_events: shutdown
+  stop_on_ball_end: False
+
+shows:
+  service_door_open_segment_display:
+    - duration: -1
+      segment_displays:
+        display1:
+          text: DOOR
+        display2:
+          text: OPEN
+        display3:
+          text: PRESS
+        display4:
+          text: ENTER
+  service_volume_segment_display:
+    - duration: 3
+      segment_displays:
+        display1:
+          text: VOLUME
+        display2:
+          text: "(volume)"
+  service_menu_segment_display:
+    - duration: -1
+      segment_displays:
+        display1:
+          text: SERVICE
+          color: white
+        display2:
+          text: "(label1)"
+          color: white
+        display3:
+          text: "(label2)"
+          color: white
+        display4:
+          text: "(label3)"
+          color: white
+  service_switch_edge_test_segment_display:
+    - duration: -1
+      segment_displays:
+        display1:
+          text: "(switch_name1)"
+        display2:
+          text: "(switch_name2)"
+        display3:
+          text: "(switch_state)"
+        display4:
+          text: "(switch_num)"
+  service_coil_test_segment_display:
+    - duration: -1
+      segment_displays:
+        display1:
+          text: "(board_name)"
+        display2:
+          text: "(coil_name1)"
+        display3:
+          text: "(coil_name2)"
+        display4:
+          text: "(coil_num)"
+  service_light_test_segment_display:
+    - duration: -1
+      segment_displays:
+        display1:
+          text: "(board_name)"
+        display2:
+          text: "(light_name1)"
+        display3:
+          text: "(light_name2)"
+        display4:
+          text: "(test_color)"
+  service_menu_options_segment_display:
+    - duration: -1
+      segment_displays:
+        display1:
+          text: "(question1)"
+        display2:
+          text: "(question2)"
+        display3:
+          text: "(question3)"
+        display4:
+          text: "(option)"
+  service_audit_menu_segment_display:
+    - duration: -1
+      segment_displays:
+        display1:
+          text: "(audits_label1)"
+        display2:
+          text: "(audits_label2)"
+        display3:
+          text: "(value_label1)"
+        display4:
+          text: "(value_label2)"
+  service_settings_segment_display:
+    - duration: -1
+      segment_displays:
+        display1:
+          text: "(settings_label1)"
+          color: white
+        display2:
+          text: "(settings_label2)"
+          color: white
+        display3:
+          text: "(value_label1)"
+          color: 808080
+        display4:
+          text: "(value_label2)"
+          color: 808080
+  service_settings_segment_select_display:
+    - duration: -1
+      segment_displays:
+        display1:
+          text: "(settings_label1)"
+          color: 808080
+        display2:
+          text: "(settings_label2)"
+          color: 808080
+        display3:
+          text: "(value_label1)"
+          color: white
+        display4:
+          text: "(value_label2)"
+          color: white
+
+show_player:
+  service_door_opened:
+    service_door_open_segment_display: play
+  service_door_closed:
+    service_door_open_segment_display: stop
+  master_volume_decrease:
+    service_volume_segment_display:
+      loops: 0
+      show_tokens:
+        volume: "{machine.master_volume}"
+  master_volume_increase:
+    service_volume_segment_display:
+      loops: 0
+      show_tokens:
+        volume: "{machine.master_volume}"
+  service_menu_selected:
+    service_menu_segment_display:
+      show_tokens:
+        label1: "{label[:7]}"
+        label2: "{label[7:14]}"
+        label3: "{label[14:]}"
+  service_menu_deselected:
+    service_menu_segment_display: stop
+  service_menu_hide:
+    service_menu_segment_display: stop
+  service_switch_test_start:
+    service_switch_edge_test_segment_display:
+      show_tokens:
+        switch_name1: "{switch_name[:7]}"
+        switch_name2: "{switch_name[7:14]}"
+        switch_state: "{switch_state}"
+        switch_num: "{switch_num}"
+  service_switch_test_stop:
+    service_switch_edge_test_segment_display: stop
+  service_coil_test_start:
+    service_coil_test_segment_display:
+      show_tokens:
+        board_name: "{board_name}"
+        coil_name1: "{coil_name[:7]}"
+        coil_name2: "{coil_name[7:14]}"
+        coil_num: "{coil_num}"
+  service_coil_test_stop:
+    service_coil_test_segment_display: stop
+  service_light_test_start:
+    service_light_test_segment_display:
+      show_tokens:
+        board_name: "{board_name} {light_num}"
+        light_name1: "{light_name[:7]}"
+        light_name2: "{light_name[7:14]}"
+        test_color: "{test_color}"
+  service_light_test_stop:
+    service_light_test_segment_display: stop
+  service_options_slide_start:
+    service_menu_options_segment_display:
+      show_tokens:
+        question1: "{question[:7]}"
+        question2: "{question[7:14]}"
+        question3: "{question[14:21]}"
+        option: "{option}"
+  service_options_slide_stop:
+    service_menu_options_segment_display: stop
+  service_audits_menu_show:
+    service_audit_menu_segment_display:
+      show_tokens:
+        audits_label1: "{audits_label[:7]}"
+        audits_label2: "{audits_label[7:14]}"
+        value_label1: "{value_label[:7]}"
+        value_label2: "{value_label[7:14]}"
+  service_audits_menu_hide:
+    service_audit_menu_segment_display: stop
+  service_settings_start:
+    service_settings_segment_display:
+      show_tokens:
+        settings_label1: "{settings_label[:7]}"
+        settings_label2: "{settings_label[7:14]}"
+        value_label1: "{value_label[:7]}"
+        value_label2: "{value_label[7:14]}"
+    service_settings_segment_select_display: stop
+  service_settings_edit:
+    service_settings_segment_select_display:
+      show_tokens:
+        settings_label1: "{settings_label[:7]}"
+        settings_label2: "{settings_label[7:14]}"
+        value_label1: "{value_label[:7]}"
+        value_label2: "{value_label[7:14]}"
+    service_settings_segment_display: stop
+  service_settings_stop:
+    service_settings_segment_display: stop
+    service_settings_segment_select_display: stop

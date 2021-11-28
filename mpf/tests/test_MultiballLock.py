@@ -562,6 +562,90 @@ class TestMultiballLockCountingStrategies(MpfGameTestCase):
         # game should start again
         self.start_game()
 
+    def testPhysicalOnlyNoStealing(self):
+        self.mock_event("multiball_lock_lock_physical_only_locked_ball")
+        self.mock_event("multiball_lock_lock_physical_only_full")
+        # prepare game
+        self.fill_troughs()
+
+        # start game
+        self.start_two_player_game()
+
+        # takes roughly 4s to get ball confirmed
+        self.advance_time_and_run(4)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(1, self.machine.playfield.balls)
+
+        self.advance_time_and_run(4)
+        self.assertEqual(1, self.machine.playfield.available_balls)
+
+        # start mode
+        self.post_event("start_physical_only")
+        lock = self.machine.multiball_locks["lock_physical_only"]
+
+        self.advance_time_and_run(4)
+        self.assertEqual(0, lock.locked_balls)
+
+        # lock one ball and another one should go to pf
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices["bd_lock"])
+        self.advance_time_and_run(10)
+        self.assertEqual(1, self.machine.ball_devices["bd_lock"].balls)
+        self.assertEqual(1, self.machine.playfield.balls)
+        self.assertEqual(1, lock.locked_balls)
+        self.assertEventCalledWith("multiball_lock_lock_physical_only_locked_ball", total_balls_locked=1)
+        self.assertEventNotCalled("multiball_lock_lock_physical_only_full")
+
+        # player change
+        self.drain_one_ball()
+        self.advance_time_and_run(10)
+        self.assertPlayerNumber(1)
+        self.drain_one_ball()
+        self.advance_time_and_run(10)
+
+        # start mode
+        self.mock_event("multiball_lock_lock_physical_only_locked_ball")
+        self.post_event("start_physical_only")
+
+        self.assertPlayerNumber(2)
+        self.assertEqual(0, self.machine.ball_devices["bd_lock"].balls)
+        self.assertEqual(1, self.machine.playfield.balls)
+        self.assertEqual(0, lock.locked_balls)
+
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices["bd_lock"])
+        self.advance_time_and_run(10)
+        self.assertEqual(1, self.machine.ball_devices["bd_lock"].balls)
+        self.assertEqual(1, self.machine.playfield.balls)
+        self.assertEqual(1, lock.locked_balls)
+        self.assertEventCalledWith("multiball_lock_lock_physical_only_locked_ball", total_balls_locked=1)
+        self.assertEventNotCalled("multiball_lock_lock_physical_only_full")
+
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices["bd_lock"])
+        self.advance_time_and_run(10)
+        self.assertEqual(2, self.machine.ball_devices["bd_lock"].balls)
+        self.assertEqual(1, self.machine.playfield.balls)
+        self.assertEqual(2, lock.locked_balls)
+        self.assertEventCalledWith("multiball_lock_lock_physical_only_locked_ball", total_balls_locked=2)
+        self.assertEventCalledWith("multiball_lock_lock_physical_only_full", balls=2)
+
+        # player change
+        self.drain_one_ball()
+        self.advance_time_and_run(10)
+        self.assertPlayerNumber(2)
+        self.drain_one_ball()
+        self.advance_time_and_run(10)
+        self.assertPlayerNumber(2)
+        self.drain_one_ball()
+        self.advance_time_and_run(10)
+
+        # start mode
+        self.post_event("start_physical_only")
+        self.assertPlayerNumber(1)
+
+        # look is empty again
+        self.assertEqual(0, self.machine.ball_devices["bd_lock"].balls)
+        self.assertEqual(1, self.machine.playfield.balls)
+        self.assertEqual(0, lock.locked_balls)
+
     def testMinVirtualPhysical(self):
         # prepare game
         self.fill_troughs()

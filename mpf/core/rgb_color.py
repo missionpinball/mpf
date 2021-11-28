@@ -175,6 +175,12 @@ class RGBColor:
             self._color = color.rgb
         elif isinstance(color, str):
             self._color = RGBColor.string_to_rgb(color)
+        elif isinstance(color, int):
+            raise TypeError("Invalid integer RGB color value provided: " +
+                            "{}".format(color) + ". If you are trying " +
+                            "to specify an RGB hex value then it must be " +
+                            "wrapped in quotation marks in your config: " +
+                            '"{}"'.format(color))
         elif color:
             self._color = (color[0], color[1], color[2])
         else:
