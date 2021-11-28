@@ -223,6 +223,7 @@ class TestFast(MpfTestCase):
             "DN:12,00,00,00": "DN:P",
             "DN:13,00,00,00": "DN:P",
             "DN:16,00,00,00": "DN:P",
+            "DN:17,00,00,00": "DN:P",
             "DN:20,00,00,00": "DN:P",
             "DN:21,00,00,00": "DN:P",
             "DN:01,C1,00,18,00,FF,FF,00": "DN:P",   # configure digital output
@@ -265,7 +266,8 @@ class TestFast(MpfTestCase):
     def test_coils(self):
         self._test_pulse()
         self._test_long_pulse()
-        self._test_pulse_with_hold()
+        self._test_timed_enable()
+        self._test_default_timed_enable()
         self._test_enable_exception()
         self._test_allow_enable()
         self._test_pwm_ssm()
@@ -344,12 +346,21 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
         # but after 2s, it should be
         self.assertFalse(self.net_cpu.expected_commands)
 
-    def _test_pulse_with_hold(self):
+    def _test_timed_enable(self):
         # enable command
         self.net_cpu.expected_commands = {
             "DN:16,89,00,10,14,FF,88,C8,00": "DN:P"
         }
-        self.machine.coils["c_pulse_and_hold"].timed_enable()
+        self.machine.coils["c_timed_enable"].timed_enable()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.net_cpu.expected_commands)
+
+    def _test_default_timed_enable(self):
+        # enable command
+        self.net_cpu.expected_commands = {
+            "DN:17,89,00,10,14,FF,88,C8,00": "DN:P"
+        }
+        self.machine.coils["c_default_timed_enable"].pulse()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 

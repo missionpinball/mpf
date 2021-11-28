@@ -13,3 +13,10 @@ coils:
         number: 4
         default_hold_power: 0.5
         max_hold_duration: 5s
+    coil_pulse_with_timed_enable:
+        number: 5
+        default_pulse_ms: 60
+        default_pulse_power: 0.25
+        default_hold_power: 0.5
+        default_timed_enable_ms: 200
+        pulse_with_timed_enable: true

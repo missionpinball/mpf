@@ -303,6 +303,10 @@ class SpikeDriver(DriverPlatformInterface):
 
         self.trigger(power1, duration1, power2, duration2)
 
+    def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
+        """Pulse and enable the coil for an explicit duration."""
+        raise NotImplementedError
+
     def disable(self):
         """Disable coil."""
         # cancel enable task

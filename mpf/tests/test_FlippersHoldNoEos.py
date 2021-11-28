@@ -45,7 +45,7 @@ class TestFlippersHoldNoEos(MpfTestCase):
             SwitchSettings(hw_switch=self.machine.switches["s_left_flipper"].hw_switch, invert=False, debounce=False),
             DriverSettings(hw_driver=self.machine.coils["c_flipper_left_hold"].hw_driver,
                            pulse_settings=PulseSettings(power=1.0, duration=10),
-                           hold_settings=HoldSettings(power=1.0), recycle=False)
+                           hold_settings=HoldSettings(power=1.0, duration=None), recycle=False)
         )
 
         self.machine.default_platform.clear_hw_rule = MagicMock()
@@ -63,7 +63,7 @@ class TestFlippersHoldNoEos(MpfTestCase):
                  SwitchSettings(hw_switch=self.machine.switches["s_left_flipper"].hw_switch, invert=False, debounce=False),
                  DriverSettings(hw_driver=self.machine.coils["c_flipper_left_hold"].hw_driver,
                                 pulse_settings=PulseSettings(power=1.0, duration=10),
-                                hold_settings=HoldSettings(power=1.0), recycle=False)
+                                hold_settings=HoldSettings(power=1.0, duration=None), recycle=False)
             )
         ], any_order=True)
 
@@ -82,5 +82,5 @@ class TestFlippersHoldNoEos(MpfTestCase):
             SwitchSettings(hw_switch=self.machine.switches["s_left_flipper"].hw_switch, invert=False, debounce=False),
             DriverSettings(hw_driver=self.machine.coils["c_flipper_left_hold"].hw_driver,
                            pulse_settings=PulseSettings(power=1.0, duration=10),
-                           hold_settings=HoldSettings(power=1.0), recycle=False)
+                           hold_settings=HoldSettings(power=1.0, duration=None), recycle=False)
         )
