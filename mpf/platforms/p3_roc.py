@@ -86,6 +86,10 @@ class P3RocGpioDriver(DriverPlatformInterface):
         """Pulse GPIO."""
         raise AssertionError("Not currently implemented. Let us know in the forum if you need pulses on GPIOs.")
 
+    def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
+        """Pulse and enable the coil for an explicit duration."""
+        raise AssertionError("Not currently implemented. Let us know in the forum if you need timed_enable on GPIOs.")
+
     @property
     def has_rules(self):
         """Return false as we do not support rules."""

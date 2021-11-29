@@ -138,6 +138,10 @@ class PROCDriver(DriverPlatformInterface):
         else:
             self.platform.run_proc_cmd_no_wait("driver_pulse", self.number, pulse_settings.duration)
 
+    def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
+        """Pulse and enable the coil for an explicit duration."""
+        raise NotImplementedError
+
     def state(self):
         """Return a dictionary representing this driver's current configuration state."""
         return {
