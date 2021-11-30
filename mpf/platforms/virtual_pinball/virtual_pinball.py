@@ -103,6 +103,10 @@ class VirtualPinballDriver(DriverPlatformInterface):
         """Pulse virtual coil."""
         self._state = self.clock.get_time() + (pulse_settings.duration / 1000.0)
 
+    def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
+        """Pulse and enable the coil for an explicit duration."""
+        raise NotImplementedError
+
     @property
     def state(self) -> bool:
         """Return current state."""

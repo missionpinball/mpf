@@ -563,3 +563,9 @@ class VirtualDriver(DriverPlatformInterface):
         """Pulse virtual coil."""
         self.log.debug("Pulsing driver for %sms", pulse_settings.duration)
         self.state = "pulsed_" + str(pulse_settings.duration)
+
+    def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
+        """Pulse and hold virtual coil for an explicit duration."""
+        self.log.debug("Timed enabling driver: pulse for %sms, hold for %sms",
+                       pulse_settings.duration, hold_settings.duration)
+        self.state = "timed_enabled_" + str(pulse_settings.duration) + "_" + str(hold_settings.duration)

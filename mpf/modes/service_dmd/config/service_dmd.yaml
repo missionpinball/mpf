@@ -1,0 +1,341 @@
+#config_version=5
+mode:
+  priority: 100002
+  game_mode: False
+  start_events: reset_complete
+  stop_events: shutdown
+  stop_on_ball_end: False
+
+
+slide_player:
+  # door open
+  service_door_opened:
+    service_door_open:
+      action: play
+  service_door_closed:
+    service_door_open:
+      action: remove
+  master_volume_decrease:
+    service_volume_changed:
+      action: play
+      expire: 3s
+  master_volume_increase:
+    service_volume_changed:
+      action: play
+      expire: 3s
+
+  # menu
+  service_menu_show:
+    service_menu:
+      action: play
+      priority: 1
+  service_menu_hide:
+    service_menu:
+      action: remove
+
+  # switch test
+  service_switch_test_start:
+    service_switch_test:
+      action: play
+      priority: 2
+  service_switch_test_stop:
+    service_switch_test:
+      action: remove
+
+  # coil test:
+  service_coil_test_start:
+    service_coil_test:
+      action: play
+      priority: 2
+  service_coil_test_stop:
+    service_coil_test:
+      action: remove
+
+  # light test:
+  service_light_test_start:
+    service_light_test:
+      action: play
+      priority: 2
+  service_light_test_stop:
+    service_light_test:
+      action: remove
+
+  # confirm slides
+  service_options_slide_start:
+    service_options_slide:
+      action: play
+      priority: 2
+  service_options_slide_stop:
+    service_options_slide:
+      action: remove
+
+  # software update
+  service_software_update_choice:
+    software_update:
+      action: play
+      priority: 2
+  service_software_update_stop:
+    software_update:
+      action: remove
+
+  # settings:
+  service_settings_start:
+    service_settings:
+      action: play
+      priority: 2
+    service_settings_edit:
+      action: remove
+  service_settings_edit:
+    service_settings_edit:
+      action: play
+      priority: 3
+  service_settings_stop:
+    service_settings:
+      action: remove
+
+  # audits:
+  service_audits_menu_show:
+    service_audits_menu:
+      action: play
+      priority: 1
+  service_audits_menu_hide:
+    service_audits_menu:
+      action: remove
+
+widget_player:
+  # power off
+  service_power_off:
+    service_power_off_door_open:
+      action: add
+      slide: service_door_open
+    service_power_off_coil_test:
+      action: add
+      slide: service_coil_test
+  service_power_on:
+    service_power_off_door_open:
+      action: remove
+      slide: service_door_open
+    service_power_off_coil_test:
+      action: remove
+      slide: service_coil_test
+
+  # menu items
+  service_menu_selected:
+    service_menu_item:
+      action: add
+      slide: service_menu
+  service_menu_deselected:
+    service_menu_item:
+      action: remove
+      slide: service_menu
+
+slides:
+  # volume changed
+  service_volume_changed:
+  - type: text
+    text: "Volume (machine|master_volume)"
+    style: medium
+    y: middle
+  # door open
+  service_door_open:
+  - type: text
+    text: Door Open
+    style: medium
+    y: bottom + 80%
+  - type: text
+    text: "Volume (machine|master_volume)"
+    style: medium
+    y: bottom + 60%
+  - type: text
+    text: Press enter for service
+    style: small
+    y: bottom + 40%
+  # menu
+  service_menu:
+  - type: text
+    text: Service Menu
+    style: small
+    x: center
+    y: bottom + 80%
+  # confirm slide
+  service_options_slide:
+  - type: text
+    text: "(title)"
+    style: small
+    x: center
+    y: bottom + 80%
+  - type: text
+    text: "(question)"
+    style: small
+    y: bottom + 60%
+  - type: text
+    text: "(option)"
+    style: small
+    y: bottom + 40%
+  - type: text
+    text: "(warning)"
+    style: small
+    y: bottom + 20%
+  # switch test
+  service_switch_test:
+  - type: text
+    text: Switch Test
+    style: small
+    x: center
+    y: bottom + 85%
+  - type: text
+    text: "Last: (switch_num)"
+    style: small
+    y: bottom + 67%
+  - type: text
+    text: "(switch_name)"
+    style: small
+    y: bottom + 50%
+  - type: text
+    text: "(switch_label)"
+    style: small
+    y: bottom + 31%
+  - type: text
+    text: (switch_state)
+    style: small
+    y: bottom + 10%
+  # coil test
+  service_coil_test:
+  - type: text
+    text: "Coil Test - (board_name)"
+    style: small
+    x: center
+    y: bottom + 85%
+  - type: text
+    text: "(coil_name)"
+    style: small
+    y: bottom + 67%
+  - type: text
+    text: "(coil_label)"
+    style: small
+    y: bottom + 50%
+  - type: text
+    text: "(coil_num)"
+    style: small
+    y: bottom + 31%
+  # coil test
+  service_light_test:
+  - type: text
+    text: "Light Test - (board_name)"
+    style: small
+    x: center
+    y: bottom + 80%
+  - type: text
+    text: "(light_name)"
+    style: small
+    y: bottom + 60%
+  - type: text
+    text: "(light_label)"
+    style: small
+    y: bottom + 40%
+  - type: text
+    text: "(light_num)/(test_color)"
+    style: small
+    y: bottom + 20%
+  # software update
+  software_update:
+  - type: text
+    text: "Perform software update?"
+    style: small
+    x: center
+    y: bottom + 80%
+  - type: text
+    text: "(run_update)"
+    style: small
+    y: bottom + 60%
+  - type: text
+    text: "DO NOT TURN OFF POWER DURING UPDATE"
+    style: small
+    y: bottom + 40%
+    opacity: 0.5
+  # settings
+  service_settings:
+  - type: text
+    text: "Settings"
+    style: small
+    x: center
+    y: bottom + 80%
+  - type: text
+    text: "(settings_label)"
+    style: small
+    y: bottom + 60%
+  - type: text
+    text: "(value_label)"
+    style: small
+    y: bottom + 40%
+    opacity: 0.5
+  service_settings_edit:
+  - type: text
+    text: "Settings"
+    style: small
+    x: center
+    y: bottom + 80%
+  - type: text
+    text: "(settings_label)"
+    style: small
+    y: bottom + 60%
+    opacity: 0.5
+  - type: text
+    text: "(value_label)"
+    style: small
+    y: bottom + 40%
+
+  service_audits_menu:
+  - type: text
+    text: "Audits"
+    style: small
+    x: center
+    y: bottom + 80%
+  - type: text
+    text: "(audits_label)"
+    style: small
+    y: bottom + 60%
+  - type: text
+    text: "(value_label)"
+    style: small
+    y: bottom + 40%
+
+widgets:
+  # power off on door open slide
+  service_power_off_door_open:
+    type: text
+    text: Coil Power Off
+    y: bottom + 20%
+    style: medium
+    animations:
+      add_to_slide:
+      - property: opacity
+        value: 1
+        duration: 0.5s
+      - property: opacity
+        value: 0
+        duration: 0.5s
+        repeat: true
+  # power off on coil test slide
+  service_power_off_coil_test:
+    type: text
+    text: Coil Power Off
+    style: small
+    y: bottom + 10%
+    animations:
+      add_to_slide:
+      - property: opacity
+        value: 1
+        duration: 0.5s
+      - property: opacity
+        value: 0
+        duration: 0.5s
+        repeat: true
+
+  # menu items
+  service_menu_item:
+    type: text
+    text: (label)
+    style: medium
+    valign: top
+    halign: left

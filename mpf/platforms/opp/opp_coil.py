@@ -104,6 +104,10 @@ class OPPSolenoid(DriverPlatformInterface):
         # restore rule if there was one
         self.apply_switch_rule()
 
+    def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
+        """Pulse and enable the coil for an explicit duration."""
+        raise NotImplementedError
+
     def remove_switch_rule(self):
         """Remove switch rule."""
         self.switch_rule = None

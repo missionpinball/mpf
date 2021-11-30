@@ -149,3 +149,7 @@ class PKONECoil(DriverPlatformInterface):
         cmd = "PCP{}{:02}".format(self.number.board_address_id, self.number.coil_number)
         self.log.debug("Sending Pulse coil command: %s", cmd)
         self.send(cmd)
+
+    def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
+        """Pulse and enable the coil for an explicit duration."""
+        raise NotImplementedError

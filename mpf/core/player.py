@@ -156,8 +156,26 @@ class Player:
                 else:
                     self._send_variable_event(name, value, value, 0, self.vars['number'])
 
+    def add_with_kwargs(self, name: str, value, **kwargs):
+        """Add a value to a player variable and include kwargs in the update event.
+
+        :param name: The player variable name
+        :param value: The value to add to the existing value
+        :param kwargs: Arguments to include in the posted player_<name> event
+        """
+        self.__setattr__(name, self[name] + value, **kwargs)
+
+    def set_with_kwargs(self, name: str, value, **kwargs):
+        """Set a value to a player variable and include kwargs in the update event.
+
+        :param name: The player variable name
+        :param value: The value to set
+        :param kwargs: Arguments to include in the posted player_<name> event
+        """
+        self.__setattr__(name, value, **kwargs)
+
     # pylint: disable-msg=too-many-arguments
-    def _send_variable_event(self, name: str, value, prev_value, change, player_num: int):
+    def _send_variable_event(self, name: str, value, prev_value, change, player_num: int, **kwargs):
         """Send a player variable event performs any monitor callbacks if configured.
 
         :param name: The player variable name
@@ -170,7 +188,8 @@ class Player:
                                  value=value,
                                  prev_value=prev_value,
                                  change=change,
-                                 player_num=player_num)
+                                 player_num=player_num,
+                                 **kwargs)
         '''event: player_(name)
         config_section: player_vars
         class_label: player_var
@@ -215,6 +234,8 @@ class Player:
         starting with 1. (e.g. Player 1 will have *player_num=1*, Player 4
         will have *player_num=4*, etc.)
 
+        kwargs: Additional keyword arguments to include in the event args.
+
         '''
 
         # note the monitor is only called for simpler var changes
@@ -238,7 +259,7 @@ class Player:
 
         return 0
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name, value, **kwargs):
         """Set value and post event to inform about the change."""
         # prevent events for internal variables
         if name in self.__dict__:
@@ -264,7 +285,7 @@ class Player:
                            name, self.vars[name], prev_value, change)
 
             if self._events_enabled:
-                self._send_variable_event(name, self.vars[name], prev_value, change, self.vars['number'])
+                self._send_variable_event(name, self.vars[name], prev_value, change, self.vars['number'], **kwargs)
 
     def __getitem__(self, name):
         """Allow array get access."""

@@ -1,7 +1,7 @@
 """Interface for config file loaders."""
 import logging
 import os
-from typing import Union, Tuple, Optional
+from typing import Tuple, Optional
 
 MYPY = False
 if MYPY:    # pragma: no cover
@@ -24,7 +24,7 @@ class FileInterface:
     def find_file(self, filename) -> Tuple[Optional[str], Optional[str]]:
         """Test whether the passed file is valid.
 
-        If the file does not have an externsion, this method will test for files with that base name with
+        If the file does not have an extension, this method will test for files with that base name with
         all the extensions it can read.
 
         Args:

@@ -62,6 +62,15 @@ class BaseSmartVirtualCoilAction(metaclass=abc.ABCMeta):
 
         return False
 
+    def timed_enable(self, coil):
+        """Pulse and enable the coil for an explicit duration."""
+        del coil
+        if "timed_enable" in self.actions:
+            self._perform_action()
+            return True
+
+        return False
+
     @abc.abstractmethod
     def _perform_action(self):
         """Implement your action here."""
@@ -440,3 +449,9 @@ class SmartVirtualDriver(VirtualDriver):
         super().pulse(pulse_settings)
         if self.action:
             self.action.pulse(self, pulse_settings.duration)
+
+    def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
+        """Enable the driver with pulse and timed hold and release."""
+        super().timed_enable(pulse_settings, hold_settings)
+        if self.action:
+            self.action.timed_enable(self)

@@ -109,29 +109,29 @@ class VariablePlayer(ConfigPlayer):
         if entry['action'] == "add":
             assert self.machine.game is not None
             assert self.machine.game.player is not None
+            # default to current player
+            player = self.machine.game.player
             if entry['player']:
                 # specific player
                 try:
-                    self.machine.game.player_list[entry['player'] - 1][var] += value
+                    player = self.machine.game.player_list[entry['player'] - 1]
                 except IndexError:
                     self.warning_log("Failed to set player var %s for player %s. There are only %s players.",
                                      var, entry['player'] - 1, self.machine.game.num_players)
-            else:
-                # default to current player
-                self.machine.game.player[var] += value
+            player.add_with_kwargs(var, value, source=context)
         elif entry['action'] == "set":
             assert self.machine.game is not None
             assert self.machine.game.player is not None
+            # default to current player
+            player = self.machine.game.player
             if entry['player']:
                 # specific player
                 try:
-                    self.machine.game.player_list[entry['player'] - 1][var] = value
+                    player = self.machine.game.player_list[entry['player'] - 1]
                 except IndexError:
                     self.warning_log("Failed to set player var %s for player %s. There are only %s players.",
                                      var, entry['player'] - 1, self.machine.game.num_players)
-            else:
-                # default to current player
-                self.machine.game.player[var] = value
+            player.set_with_kwargs(var, value, source=context)
         elif entry['action'] == "add_machine":
             old_value = self.machine.variables.get_machine_var(var)
             if old_value is None:

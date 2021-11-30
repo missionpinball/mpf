@@ -87,6 +87,10 @@ class LisyDriver(DriverPlatformInterface):
         self._configure_pulse_ms(pulse_settings.duration)
         self.platform.send_byte(LisyDefines.SolenoidsPulseSolenioid, bytes([int(self.number)]))
 
+    def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
+        """Pulse and enable the coil for an explicit duration."""
+        raise NotImplementedError
+
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable driver."""
         del hold_settings

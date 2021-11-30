@@ -28,7 +28,7 @@ class TestDualWoundCoil(MpfTestCase):
         c_power.pulse.assert_called_with(PulseSettings(power=1.0, duration=20))
         c_power.pulse = MagicMock()
         assert not c_power.enable.called
-        c_hold.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=1.0))
+        c_hold.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=1.0, duration=None))
         c_hold.enable = MagicMock()
         assert not c_hold.pulse.called
 

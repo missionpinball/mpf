@@ -275,7 +275,11 @@ class YamlMultifileConfigLoader(ConfigLoader):
 
     def _load_shows(self, config_spec, machine_config, mode_config):
         show_configs = {}
-        for show_name, show_config in machine_config.get("shows", {}).items():
+        shows = machine_config.get("shows", {})
+        if not isinstance(shows, dict):
+            raise AssertionError("Show section needs to be a dictionary but it {}.".format(shows.__class__))
+
+        for show_name, show_config in shows.items():
             show_configs[show_name] = show_config
 
         show_configs = self._load_shows_in_folder(os.path.join(self.machine_path, "shows"), show_configs, config_spec)
