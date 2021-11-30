@@ -298,7 +298,9 @@ coils:
     default_recycle: single|bool|None
     default_pulse_ms: single|template_ms|None
     default_pulse_power: single|float(0,1)|None
+    default_timed_enable_ms: single|template_ms|None
     default_hold_power: single|float(0,1)|None
+    pulse_with_timed_enable: single|bool|false
     max_pulse_ms: single|ms|None
     max_pulse_power: single|float(0,1)|1.0
     max_hold_power: single|float(0,1)|None
@@ -963,6 +965,7 @@ mpf:
     __valid_in__: machine                           # todo add to validator
     __type__: config
     default_pulse_ms: single|int|10
+    default_timed_enable_ms: single|int|0
     default_ball_search: single|bool|false
     default_light_hw_update_hz: single|int|50
     auto_create_switch_events: single|bool|true

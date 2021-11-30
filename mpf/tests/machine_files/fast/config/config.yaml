@@ -78,6 +78,17 @@ coils:
         number: 18
         default_pulse_ms: 2000
         max_hold_power: 1.0
+    c_timed_enable:
+        number: 22
+        default_pulse_ms: 20
+        default_timed_enable_ms: 200
+        default_hold_power: 0.25
+    c_default_timed_enable:
+        number: 23
+        default_pulse_ms: 20
+        default_timed_enable_ms: 200
+        default_hold_power: 0.25
+        pulse_with_timed_enable: true
     c_flipper_main:
         number: 32
         default_pulse_ms: 10

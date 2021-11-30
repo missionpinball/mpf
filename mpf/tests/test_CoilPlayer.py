@@ -44,7 +44,7 @@ class TestCoilPlayer(MpfTestCase):
 
         self.post_event("event7")
         self.advance_time_and_run()
-        coil.hw_driver.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=0.5))
+        coil.hw_driver.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=0.5, duration=None))
         assert not coil.hw_driver.disable.called
         assert not coil.hw_driver.pulse.called
         coil.hw_driver.pulse = MagicMock()
@@ -119,7 +119,7 @@ class TestCoilPlayer(MpfTestCase):
         self.machine.events.post('event4')
         self.advance_time_and_run()
 
-        coil.hw_driver.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=1.0))
+        coil.hw_driver.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=1.0, duration=None))
         assert not coil.hw_driver.pulse.called
 
         self.machine.events.post('event5')
@@ -135,7 +135,7 @@ class TestCoilPlayer(MpfTestCase):
         self.machine.events.post('event10')
         self.advance_time_and_run()
 
-        coil.hw_driver.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=1.0))
+        coil.hw_driver.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=1.0, duration=None))
         assert not coil.hw_driver.pulse.called
 
         self.machine.events.post('event11')
@@ -155,7 +155,7 @@ class TestCoilPlayer(MpfTestCase):
 
         # enable coil
         self.post_event("event1_mode", 1)
-        coil.hw_driver.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=1.0))
+        coil.hw_driver.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=1.0, duration=None))
         coil.hw_driver.enable = MagicMock()
         self.assertFalse(coil.hw_driver.disable.called)
 

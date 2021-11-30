@@ -499,8 +499,9 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
 SwitchSettings = namedtuple("SwitchSettings", ["hw_switch", "invert", "debounce"])
 DriverSettings = namedtuple("DriverSettings", ["hw_driver", "pulse_settings", "hold_settings", "recycle"])
-DriverConfig = namedtuple("DriverConfig", ["name", "default_pulse_ms", "default_pulse_power", "default_hold_power",
-                                           "default_recycle", "max_pulse_ms", "max_pulse_power", "max_hold_power"])
+DriverConfig = namedtuple("DriverConfig", ["name", "default_pulse_ms", "default_pulse_power",
+                                           "default_hold_power", "default_timed_enable_ms", "default_recycle",
+                                           "max_pulse_ms", "max_pulse_power", "max_hold_power"])
 RepulseSettings = namedtuple("RepulseSettings", ["enable_repulse", "debounce_ms"])
 
 

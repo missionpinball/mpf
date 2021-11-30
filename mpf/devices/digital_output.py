@@ -99,6 +99,7 @@ class DigitalOutput(SystemWideDevice):
             name=self.name,
             default_pulse_ms=255,
             default_pulse_power=1.0,
+            default_timed_enable_ms=None,
             default_hold_power=1.0,
             default_recycle=False,
             max_pulse_ms=255,
@@ -143,7 +144,7 @@ class DigitalOutput(SystemWideDevice):
         """Enable digital output."""
         if self.type == "driver":
             self.hw_driver.enable(PulseSettings(power=1.0, duration=0),
-                                  HoldSettings(power=1.0))
+                                  HoldSettings(power=1.0, duration=None))
         elif self.type == "light":
             self.hw_driver.set_fade(1.0, -1, 1.0, -1)
             self.platform.light_sync()

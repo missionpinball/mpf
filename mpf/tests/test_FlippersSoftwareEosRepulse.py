@@ -74,7 +74,7 @@ class TestFlippersSoftwareEosRepulse(MpfTestCase):
                            debounce=False),
             DriverSettings(hw_driver=self.machine.coils["c_flipper_single_main"].hw_driver,
                            pulse_settings=PulseSettings(power=1.0, duration=30),
-                           hold_settings=HoldSettings(power=0.3), recycle=False),
+                           hold_settings=HoldSettings(power=0.3, duration=None), recycle=False),
             None    # this is not passed as we implement it in software
         )
 
@@ -106,7 +106,7 @@ class TestFlippersSoftwareEosRepulse(MpfTestCase):
         self.release_switch_and_run("s_flipper_single_eos", 1)
         self.machine.coils["c_flipper_single_main"].hw_driver.pulse.assert_not_called()
         self.machine.coils["c_flipper_single_main"].hw_driver.enable.assert_called_with(
-            PulseSettings(power=1.0, duration=30), HoldSettings(power=0.3))
+            PulseSettings(power=1.0, duration=30), HoldSettings(power=0.3, duration=None))
         self.machine.coils["c_flipper_single_main"].hw_driver.enable = MagicMock()
         self.machine.coils["c_flipper_single_main"].hw_driver.disable.assert_not_called()
 
@@ -132,7 +132,7 @@ class TestFlippersSoftwareEosRepulse(MpfTestCase):
         self.release_switch_and_run("s_flipper_single_eos", 1)
         self.machine.coils["c_flipper_single_main"].hw_driver.pulse.assert_not_called()
         self.machine.coils["c_flipper_single_main"].hw_driver.enable.assert_called_with(
-            PulseSettings(power=1.0, duration=30), HoldSettings(power=0.3))
+            PulseSettings(power=1.0, duration=30), HoldSettings(power=0.3, duration=None))
         self.machine.coils["c_flipper_single_main"].hw_driver.enable = MagicMock()
         self.machine.coils["c_flipper_single_main"].hw_driver.disable.assert_not_called()
 
@@ -254,7 +254,7 @@ class TestFlippersSoftwareEosRepulse(MpfTestCase):
                            debounce=False),
             DriverSettings(hw_driver=self.machine.coils["c_flipper_dual_wound_hold"].hw_driver,
                            pulse_settings=PulseSettings(power=1.0, duration=10),
-                           hold_settings=HoldSettings(power=1.0), recycle=False)
+                           hold_settings=HoldSettings(power=1.0, duration=None), recycle=False)
         )
 
         # nothing should happen on EOS close without flipper button active

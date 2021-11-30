@@ -98,11 +98,11 @@ class TestSnux(MpfFakeGameTestCase):
         # test enable on c side
         self.machine.coils["c_side_c2"].enable()
         self.machine_run()
-        c_ac_relay.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=1.0))
+        c_ac_relay.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=1.0, duration=None))
         c_ac_relay.enable = MagicMock()
         assert not driver_12.enable.called
         self.advance_time_and_run(0.1)
-        driver_12.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=0.5))
+        driver_12.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=0.5, duration=None))
         driver_12.enable = MagicMock()
 
         # a side has preference. it should transition
@@ -115,7 +115,7 @@ class TestSnux(MpfFakeGameTestCase):
 
         # it should enable a side coils now
         self.advance_time_and_run(0.075)
-        driver_12.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=0.5))
+        driver_12.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=0.5, duration=None))
 
         # disable driver on a side.
         self.machine.coils["c_side_a2"].disable()

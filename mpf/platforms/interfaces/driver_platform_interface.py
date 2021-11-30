@@ -6,7 +6,9 @@ from mpf.core.platform import DriverConfig
 
 
 PulseSettings = namedtuple("PulseSettings", ["power", "duration"])
-HoldSettings = namedtuple("HoldSettings", ["power"])
+HoldSettings = namedtuple("HoldSettings", ["power", "duration"])
+# Python 3.7 supports a defaults arg in namedtuple, but 3.6 does not
+HoldSettings.__new__.__defaults__ = (None, None)
 
 
 class DriverPlatformInterface(metaclass=abc.ABCMeta):
@@ -44,6 +46,11 @@ class DriverPlatformInterface(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def disable(self):
         """Disable the driver."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
+        """Enable the driver for a pre-specified duration."""
         raise NotImplementedError
 
     @abc.abstractmethod
