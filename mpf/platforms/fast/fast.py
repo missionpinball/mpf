@@ -692,7 +692,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         return switch
 
-
     def validate_switch_section(self, switch, config: dict) -> dict:
         """Validate switch config for overlayed platform."""
         # Fast inherits from System11OverlayPlatform, which inherits from SwitchPlatform.
@@ -821,14 +820,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         # Instead, call validation on DriverPlatform directly.
         return DriverPlatform.validate_coil_section(self, driver, config)
 
-
     def validate_switch_section(self, switch, config: dict) -> dict:
         """Validate switch config for overlayed platform."""
         # Fast inherits from System11OverlayPlatform, which inherits from SwitchPlatform.
         # System11 will attempt to call back to this class, creating an infinite loop.
         # Instead, call validation on SwitchPlatform directly.
         return SwitchPlatform.validate_switch_section(self, switch, config)
-
 
     @classmethod
     def get_switch_config_section(cls):

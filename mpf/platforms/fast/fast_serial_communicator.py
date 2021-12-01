@@ -276,13 +276,9 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                 int(drivers, 16))
             )
 
-            self.platform.debug_log('Fast Retro Board {0}: Model: {1}, '
-                                    'Firmware: {2}, Switches: {3}, '
-                                    'Drivers: {4}'.format(node_id,
-                                                          self.remote_model,
-                                                          self.remote_firmware,
-                                                          int(switches, 16),
-                                                          int(drivers, 16)))
+            self.platform.debug_log('Fast Retro Board %s: Model: %s, Firmware: %s, Switches: %s, Drivers: %s',
+                                    node_id, self.remote_model, self.remote_firmware,
+                                    int(switches, 16), int(drivers, 16))
 
             return
 
@@ -292,7 +288,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             while not msg.startswith('NN:'):
                 msg = (await self.readuntil(b'\r')).decode()
                 if not msg.startswith('NN:'):
-                    self.platform.debug_log("Got unexpected message from FAST while querying IO Boards: {}".format(msg))
+                    self.platform.debug_log("Got unexpected message from FAST while querying IO Boards: %s", msg)
 
             if msg == 'NN:F\r':
                 break
@@ -308,12 +304,8 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
             self.platform.register_io_board(FastIoBoard(int(node_id, 16), model, fw, int(sw, 16), int(dr, 16)))
 
-            self.platform.debug_log('Fast IO Board {0}: Model: {1}, '
-                                    'Firmware: {2}, Switches: {3}, '
-                                    'Drivers: {4}'.format(node_id,
-                                                          model, fw,
-                                                          int(sw, 16),
-                                                          int(dr, 16)))
+            self.platform.debug_log('Fast IO Board %s: Model: %s, Firmware: %s, Switches: %s, Drivers: %s',
+                                    node_id, model, fw, int(sw, 16), int(dr, 16))
 
             min_fw = IO_LEGACY_MIN_FW if self.is_legacy else IO_MIN_FW
             if StrictVersion(min_fw) > str(fw):
