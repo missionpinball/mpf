@@ -52,7 +52,7 @@ class DropTarget(SystemWideDevice):
 
         # can't read the switch until the switch controller is set up
         self.machine.events.add_handler('init_phase_4',
-                                        self._update_state_from_switch, priority=2)
+                                        self._update_state_from_switch, priority=2, reconcile=True)
         self.machine.events.add_handler('init_phase_4',
                                         self._register_switch_handlers, priority=1)
 
