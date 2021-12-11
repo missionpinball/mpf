@@ -414,7 +414,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
             restore_delay_ms += wait_ms
 
         if self.config['ignore_switch_ms']:
-            restore_delay_ms  += self.config['ignore_switch_ms']
+            restore_delay_ms += self.config['ignore_switch_ms']
             if self.config['max_reset_attempts'] and attempt is None:
                 attempt = 1
             self._ignore_switch_hits = True
