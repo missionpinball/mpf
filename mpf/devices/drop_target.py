@@ -52,7 +52,7 @@ class DropTarget(SystemWideDevice):
 
         # can't read the switch until the switch controller is set up
         self.machine.events.add_handler('init_phase_4',
-                                        self._update_state_from_switch, priority=2)
+                                        self._update_state_from_switch, priority=2, reconcile=True)
         self.machine.events.add_handler('init_phase_4',
                                         self._register_switch_handlers, priority=1)
 
@@ -405,19 +405,23 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         if self.reset_coil:
             coils.add(self.reset_coil)
 
+        # now pulse the coils
+        self.debug_log('Pulsing reset coils: %s', coils)
+        restore_delay_ms = 0
+        for coil in coils:
+            wait_ms = coil.pulse(max_wait_ms=self.config['reset_coil_max_wait_ms'])
+            self.debug_log("Coil %s firing has a wait of %s!", coil, wait_ms)
+            restore_delay_ms += wait_ms
+
         if self.config['ignore_switch_ms']:
+            restore_delay_ms += self.config['ignore_switch_ms']
             if self.config['max_reset_attempts'] and attempt is None:
                 attempt = 1
             self._ignore_switch_hits = True
-            self.delay.add(ms=self.config['ignore_switch_ms'],
+            self.delay.add(ms=restore_delay_ms,
                            callback=self._restore_switch_hits,
                            name='ignore_hits',
                            reset_attempt=attempt)
-
-        # now pulse the coils
-        self.debug_log('Pulsing reset coils: %s', coils)
-        for coil in coils:
-            coil.pulse(max_wait_ms=self.config['reset_coil_max_wait_ms'])
 
     def _restore_switch_hits(self, reset_attempt=None):
         self._ignore_switch_hits = False

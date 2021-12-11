@@ -1,5 +1,5 @@
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from mpf.tests.MpfTestCase import MpfTestCase
 
@@ -43,7 +43,7 @@ class TestDropTargets(MpfTestCase):
         self.assertIn('left3', self.machine.drop_targets)
         self.assertIn('left_bank', self.machine.drop_target_banks)
 
-        self.machine.coils["coil1"].pulse = MagicMock()
+        self.machine.coils["coil1"].pulse = MagicMock(return_value=200)
 
         self.assertFalse(self.machine.drop_targets["left1"].complete)
         self.assertFalse(self.machine.drop_targets["left2"].complete)
@@ -82,7 +82,7 @@ class TestDropTargets(MpfTestCase):
         self.assertFalse(self.machine.drop_target_banks["left_bank"].complete)
 
         # check that the bank does not reset if already down
-        self.machine.coils["coil1"].pulse = MagicMock()
+        self.machine.coils["coil1"].pulse = MagicMock(return_value=100)
         self.machine.drop_target_banks['left_bank'].reset()
         assert not self.machine.coils["coil1"].pulse.called
 
@@ -132,7 +132,7 @@ class TestDropTargets(MpfTestCase):
         self.machine.modes['mode1'].start()
         self.advance_time_and_run()
 
-        self.machine.coils["coil2"].pulse = MagicMock()
+        self.machine.coils["coil2"].pulse = MagicMock(return_value=30)
 
         self.assertFalse(self.machine.drop_targets["left4"].complete)
         self.assertFalse(self.machine.drop_targets["left5"].complete)
@@ -335,7 +335,7 @@ class TestDropTargets(MpfTestCase):
         # wait until ball search phase 1
         event_future = self.machine.events.wait_for_event("ball_search_phase_1")
         self.machine.clock.loop.run_until_complete(event_future)
-        
+
         self.advance_time_and_run(.25)
 
         self.hit_switch_and_run('switch10', .1)
@@ -352,7 +352,7 @@ class TestDropTargets(MpfTestCase):
         # wait until ball search phase 2
         event_future = self.machine.events.wait_for_event("ball_search_phase_2")
         self.machine.clock.loop.run_until_complete(event_future)
-        
+
         self.advance_time_and_run(.25)
 
         self.hit_switch_and_run('switch10', .1)
@@ -369,7 +369,7 @@ class TestDropTargets(MpfTestCase):
         # wait until ball search phase 3
         event_future = self.machine.events.wait_for_event("ball_search_phase_3")
         self.machine.clock.loop.run_until_complete(event_future)
-        
+
         self.advance_time_and_run(.25)
 
         self.hit_switch_and_run('switch10', .1)
@@ -414,6 +414,20 @@ class TestDropTargets(MpfTestCase):
 
         # up should have been called by now
         self.assertEventCalled('drop_target_bank_right_bank_up')
+
+    def test_drop_target_bank_restore_delay_ms(self):
+        # Set a specific ms that the pulse will wait before firing
+        self.machine.coils['coil5'].pulse = MagicMock(return_value=27)
+        with patch('mpf.core.delays.DelayManager.add') as add:
+            self.hit_switch_and_run('switch8', 1)
+            self.hit_switch_and_run('switch9', 1)
+
+            self.post_event('reset_right_bank', 1.5)
+            bank = self.machine.drop_target_banks['right_bank']
+            # Verify that the ignore_ms is the config value (1000) plus the wait
+            add.assert_called_with(ms=1027, name='ignore_hits',
+                                   callback=bank._restore_switch_hits,
+                                   reset_attempt=None)
 
 
 class TestDropTargetsInGame(MpfFakeGameTestCase):
