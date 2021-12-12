@@ -21,18 +21,18 @@ class FASTMatrixLight(LightPlatformSoftwareFade):
 
     def set_brightness(self, brightness: float):
         """Set matrix light brightness."""
-        self.send('L1:{},{}'.format(self.number, Util.int_to_hex_string(int(brightness * 255))))
+        self.send(f'L1:{self.number},{Util.int_to_hex_string(int(brightness * 255))}')
 
     def get_board_name(self):
         """Return the board of this light."""
         if self.platform.is_retro:
-            return "FAST Retro ({})".format(self.platform.machine_type.upper())
+            return f"FAST Retro ({self.platform.machine_type.upper()})"
 
         coil_index = 0
         number = Util.hex_string_to_int(self.number)
         for board_obj in self.platform.io_boards.values():
             if coil_index <= number < coil_index + board_obj.driver_count:
-                return "FAST Board {}".format(str(board_obj.node_id))
+                return f"FAST Board {str(board_obj.node_id)}"
             coil_index += board_obj.driver_count
 
         # fall back if not found

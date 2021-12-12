@@ -10,17 +10,19 @@ from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
 # Minimum firmware versions needed for this module
 from mpf.platforms.fast.fast_io_board import FastIoBoard
 
-DMD_MIN_FW = '0.88'
-NET_MIN_FW = '1.99'
-NET_LEGACY_MIN_FW = '0.88'
-RGB_MIN_FW = '0.87'
-IO_MIN_FW = '1.09'
-IO_LEGACY_MIN_FW = '0.87'
-SEG_MIN_FW = '0.10'
+# The following minimum firmware versions are to prevent breaking changes
+# in MPF from running on boards that have not been updated. 
+DMD_MIN_FW = '0.88'         # Minimum FW for a DMD
+NET_MIN_FW = '1.99'         # Minimum FW for a V2 controller
+NET_LEGACY_MIN_FW = '0.88'  # Minimum FW for a V1 controller
+RGB_MIN_FW = '0.87'         # Minimum FW for an RGB LED controller
+IO_MIN_FW = '1.09'          # Minimum FW for an IO board linked to a V2 controller
+IO_LEGACY_MIN_FW = '0.87'   # Minimum FW for an IO board linked to a V1 controller
+SEG_MIN_FW = '0.10'         # Minimum FW for a Segment Display
 
-LEGACY_ID = 'FP-CPU-0'  # Start of an id for legacy (v1) network boards
-RETRO_ID = 'FP-SBI'     # Start of an id for retro boards
-V2_FW = '1.30'          # Firmware cutoff for v2 network boards
+LEGACY_ID = 'FP-CPU-0'      # Start of an id for V1 controller
+RETRO_ID = 'FP-SBI'         # Start of an id for a Retro controller
+V2_FW = '1.30'              # Firmware cutoff from V1 to V2 controllers
 
 # DMD_LATEST_FW = '0.88'
 # NET_LATEST_FW = '0.90'
@@ -187,12 +189,11 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             self.platform.debug_log("Setting SEG buffer size: %s",
                                     self.max_messages_in_flight)
         else:
-            raise AttributeError("Unrecognized FAST processor type: {}".format(self.remote_processor))
+            raise AttributeError(f"Unrecognized FAST processor type: {self.remote_processor}")
 
         if StrictVersion(min_version) > StrictVersion(self.remote_firmware):
-            raise AssertionError('Firmware version mismatch. MPF requires'
-                                 ' the {} processor to be firmware {}, but yours is {}'.
-                                 format(self.remote_processor, min_version, self.remote_firmware))
+            raise AssertionError(f'Firmware version mismatch. MPF requires the {self.remote_processor} processor '
+                                 f'to be firmware {min_version}, but yours is {self.remote_firmware}')
 
         # Register the connection so when we query the boards we know what responses to expect
         self.platform.register_processor_connection(self.remote_processor, self)
@@ -257,7 +258,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         while not msg.startswith('SA:'):
             msg = (await self.readuntil(b'\r')).decode()
             if not msg.startswith('SA:'):
-                self.platform.log.warning("Got unexpected message from FAST when awaiting SA: {}".format(msg))
+                self.platform.log.warning("Got unexpected message from FAST when awaiting SA: %s", msg)
 
         self.platform.process_received_message(msg, "NET")
         self.platform.debug_log('Querying FAST IO boards (legacy %s, retro %s)...', self.is_legacy, self.is_retro)
@@ -309,9 +310,9 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
             min_fw = IO_LEGACY_MIN_FW if self.is_legacy else IO_MIN_FW
             if StrictVersion(min_fw) > str(fw):
-                self.platform.log.critical("Firmware version mismatch. MPF "
-                                           "requires the IO boards to be firmware {0}, but "
-                                           "your Board {1} ({2}) is v{3}".format(min_fw, node_id, model, fw))
+                self.platform.log.critical("Firmware version mismatch. MPF requires the IO boards "
+                                           "to be firmware %s, but your Board %s (%s) is firmware %s",
+                                           min_fw, node_id, model, fw)
                 firmware_ok = False
 
         if not firmware_ok:

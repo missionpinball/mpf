@@ -82,7 +82,6 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
 
     async def initialize(self):
         """Automatically called by the Platform class after all the core modules are loaded."""
-
         # Some platforms (like Fast Retro) may be system11, or may not be.
         # If no system11 config is present, do not initialize the System11 platform
         system11_config = self.machine.config.get('system11')

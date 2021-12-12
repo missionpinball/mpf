@@ -1,23 +1,31 @@
-import serial.tools.list_ports
+"""Methods for auto-detecting platform hardware from available serial devices."""
+
 import re
+import serial.tools.list_ports
 
 from mpf.exceptions.runtime_error import MpfRuntimeError
 
+
 def autodetect_fast_ports(is_retro=False):
+    """Search the serial devices for a FAST platform."""
     if is_retro:
         return _find_fast_retro()
     return _find_fast_quad()
 
+
 def autodetect_smartmatrix_dmd_port():
+    """Search the serial devices for a FAST SmartMatrix DMD."""
     return _find_fast_quad()[0]
+
 
 def _find_fast_retro():
     devices = [port.device for port in serial.tools.list_ports.comports()]
     for d in devices:
-        if re.search(r'\.usbmodem\d+$', d) or re.search(r'ACM\d$', d):
+        if re.search(r'\.usbmodem\d+$', d) or re.search(r'ACM\d$', d) or re.search(r'COM\d$', d):
             return [d]
-    raise MpfRuntimeError("Unable to auto-detect FAST Retro from available devices: {}".format(
-                                      ", ".join(devices)), 1, "autodetect.find_fast_retro")
+    raise MpfRuntimeError(f"Unable to auto-detect FAST Retro from available devices: {', '.join(devices)}",
+                          1, "autodetect.find_fast_retro")
+
 
 def _find_fast_quad():
     ports = None
@@ -28,15 +36,13 @@ def _find_fast_quad():
         for seq in seqs:
             if d[-1] == seq[0]:
                 root = d[:-1]
-                if "{}{}".format(root, seq[1]) in devices and \
-                    "{}{}".format(root, seq[2]) in devices and \
-                    "{}{}".format(root, seq[3]) in devices:
-                    ports = ["{}{}".format(root, i) for i in seq]
+                if f"{root}{seq[1]}" in devices and f"{root}{seq[2]}" in devices and f"{root}{seq[3]}" in devices:
+                    ports = [f"{root}{i}" for i in seq]
                     break
         # If ports were found, skip the rest of the devices
         if ports:
             break
     if not ports:
-        raise MpfRuntimeError("Unable to auto-detect FAST hardware from available devices: {}".format(
-                                      ", ".join(devices)), 1, "autodetect.find_fast_quad")
+        raise MpfRuntimeError(f"Unable to auto-detect FAST hardware from available devices: {', '.join(devices)}",
+                              1, "autodetect.find_fast_quad")
     return ports

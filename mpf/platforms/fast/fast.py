@@ -71,7 +71,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.debug_log("Configuring FAST Controller for FAST IO boards.")
             self.is_retro = False
         else:
-            self.raise_config_error('Unknown machine_type "{}" configured fast.'.format(self.machine_type), 6)
+            self.raise_config_error(f'Unknown machine_type "{self.machine_type}" configured fast.', 6)
 
         self.features['tickless'] = True
 
@@ -328,7 +328,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             communicator: communicator object
             name: name of processor
         """
-
         if name == 'DMD':
             self.dmd_connection = communicator
         elif name == 'NET':
@@ -424,7 +423,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """
         assert remote_processor == "NET"
         self.debug_log("Received SA: %s", msg)
-        hw_states = dict()
+        hw_states = {}
 
         # Support for v1 firmware which uses network + local switches
         if self.net_connection.is_legacy:
@@ -460,19 +459,20 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def _parse_driver_number(self, number):
         try:
             board_str, driver_str = number.split("-")
-        except ValueError:
+        except ValueError as e:
             total_drivers = 0
             for board_obj in self.io_boards.values():
                 total_drivers += board_obj.driver_count
             try:
                 index = self.convert_number_from_config(number)
             except ValueError:
-                self.raise_config_error("Could not parse driver number {}. Please verify the number format is either "
-                                        "board-driver or driver. Driver should be an integer here.".format(number), 7)
+                self.raise_config_error(
+                    f"Could not parse driver number {number}. Please verify the number format is either " +
+                    "board-driver or driver. Driver should be an integer here.", 7)
 
             if int(index, 16) >= total_drivers:
-                raise AssertionError("Driver {} does not exist. Only {} drivers found. Driver number: {}".format(
-                    int(index, 16), total_drivers, number))
+                raise AssertionError(f"Driver {int(index, 16)} does not exist. "
+                                     f"Only {total_drivers} drivers found. Driver number: {number}") from e
 
             return index
 
@@ -480,11 +480,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         driver = int(driver_str)
 
         if board not in self.io_boards:
-            raise AssertionError("Board {} does not exist for driver {}".format(board, number))
+            raise AssertionError(f"Board {board} does not exist for driver {number}")
 
         if self.io_boards[board].driver_count <= driver:
-            raise AssertionError("Board {} only has {} drivers. Driver: {}".format(
-                board, self.io_boards[board].driver_count, number))
+            raise AssertionError(f"Board {board} only has {self.io_boards[board].driver_count} drivers. "
+                                 "Driver: {number}")
 
         index = 0
         for board_number, board_obj in self.io_boards.items():
@@ -531,7 +531,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if self.is_retro:
             # Look for a system11 A/C relay driver number ending in 'a' or 'c'
             side = number[-1].upper()
-            if side == 'A' or side == 'C':
+            if side in ('A', 'C'):
                 address = fast_defines.RETRO_DRIVER_MAP[number[:-1].upper()]
                 # Configure a FASTDriver at the retro map address
                 hw_driver = FASTDriver(config, self, address, platform_settings)
@@ -543,15 +543,14 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             try:
                 number = fast_defines.RETRO_DRIVER_MAP[number.upper()]
             except KeyError:
-                self.raise_config_error("Could not find Retro driver {}".format(number), 1)
+                self.raise_config_error(f"Could not find Retro driver {number}", 1)
 
         # If we have FAST IO boards, we need to make sure we have hex strings
         elif self.machine_type == 'fast':
             number = self._parse_driver_number(number)
 
         else:
-            raise AssertionError("Invalid machine type: {}".format(
-                self.machine_type))
+            raise AssertionError("Invalid machine type: {self.machine_type}")
 
         return FASTDriver(config, self, number, platform_settings)
 
@@ -588,15 +587,15 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def _parse_switch_number(self, number):
         try:
             board_str, switch_str = number.split("-")
-        except ValueError:
+        except ValueError as e:
             total_switches = 0
             for board_obj in self.io_boards.values():
                 total_switches += board_obj.switch_count
             index = self.convert_number_from_config(number)
 
             if int(index, 16) >= total_switches:
-                raise AssertionError("Switch {} does not exist. Only {} switches found. Switch number: {}".format(
-                    int(index, 16), total_switches, number))
+                raise AssertionError(f"Switch {int(index, 16)} does not exist. Only "
+                                     f"{total_switches} switches found. Switch number: {number}") from e
 
             return index
 
@@ -661,14 +660,13 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             try:
                 number = fast_defines.RETRO_SWITCH_MAP[str(number).upper()]
             except KeyError:
-                self.raise_config_error("Could not find switch {}".format(number), 2)
+                self.raise_config_error(f"Could not find switch {number}", 2)
         else:
             try:
                 number = self._parse_switch_number(number)
             except ValueError:
-                self.raise_config_error("Could not parse switch number {}/{}. Seems "
-                                        "to be not a valid switch number for the "
-                                        "FAST platform.".format(config.name, number), 8)
+                self.raise_config_error(f"Could not parse switch number {config.name}/{number}. Seems "
+                                        "to be not a valid switch number for the FAST platform.", 8)
 
         if self.net_connection.is_legacy:
             # V1 devices can explicitly define switches to be local, or default to network
@@ -691,13 +689,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                             platform=self, platform_settings=platform_config)
 
         return switch
-
-    def validate_switch_section(self, switch, config: dict) -> dict:
-        """Validate switch config for overlayed platform."""
-        # Fast inherits from System11OverlayPlatform, which inherits from SwitchPlatform.
-        # System11 will attempt to call back to this class, creating an infinite loop.
-        # Instead, call validation on SwitchPlatform directly.
-        return SwitchPlatform.validate_switch_section(self, switch, config)
 
     def configure_light(self, number, subtype, config, platform_settings) -> LightPlatformInterface:
         """Configure light in platform."""
@@ -741,7 +732,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 try:
                     number = fast_defines.RETRO_GI_MAP[str(number).upper()]
                 except KeyError:
-                    self.raise_config_error("Could not find GI {}".format(number), 3)
+                    self.raise_config_error(f"Could not find GI {number}", 3)
             else:
                 number = self.convert_number_from_config(number)
 
@@ -755,7 +746,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 try:
                     number = fast_defines.RETRO_LIGHT_MAP[str(number).upper()]
                 except KeyError:
-                    self.raise_config_error("Could not find light {}".format(number), 4)
+                    self.raise_config_error(f"Could not find light {number}", 4)
             else:
                 number = self.convert_number_from_config(number)
 
@@ -773,18 +764,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             else:
                 index = int(number)
             return [
-                {
-                    "number": "{}-0".format(index)
-                },
-                {
-                    "number": "{}-1".format(index)
-                },
-                {
-                    "number": "{}-2".format(index)
-                },
+                {"number": f"{index}-0"},
+                {"number": f"{index}-1"},
+                {"number": f"{index}-2"},
             ]
 
-        raise AssertionError("Unknown subtype {}".format(subtype))
+        raise AssertionError(f"Unknown subtype {subtype}")
 
     def configure_dmd(self):
         """Configure a hardware DMD connected to a FAST controller."""
@@ -850,8 +835,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             coil_index += board_obj.driver_count
             switch_index += board_obj.switch_count
 
-        raise AssertionError("Driver {} and switch {} are on different boards. Cannot apply rule!".format(
-            coil.hw_driver.number, switch.hw_switch.number))
+        raise AssertionError(f"Driver {coil.hw_driver.number} and switch {switch.hw_switch.number} "
+                             "are on different boards. Cannot apply rule!")
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         """Set pulse on hit and release rule to driver."""
