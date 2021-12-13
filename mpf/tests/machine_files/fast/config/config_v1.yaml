@@ -9,7 +9,7 @@ fast:
     debug: true
     firmware_updates:
       - type: net
-        version: "2.04"
+        version: "1.04"
         file: "firmware/FAST_NET_01_04_00.txt"
 
 switches:

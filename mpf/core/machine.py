@@ -767,7 +767,8 @@ class MachineController(LogMixin):
         except RuntimeError:
             print("Failed to stop all tasks")
 
-        self.events.stop()
+        if hasattr(self, "events"):
+            self.events.stop()
         self.clock.loop.stop()
         self.clock.loop.run_forever()
         self.clock.loop.close()

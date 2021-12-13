@@ -11,7 +11,7 @@ from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
 from mpf.platforms.fast.fast_io_board import FastIoBoard
 
 # The following minimum firmware versions are to prevent breaking changes
-# in MPF from running on boards that have not been updated. 
+# in MPF from running on boards that have not been updated.
 DMD_MIN_FW = '0.88'         # Minimum FW for a DMD
 NET_MIN_FW = '1.99'         # Minimum FW for a V2 controller
 NET_LEGACY_MIN_FW = '0.88'  # Minimum FW for a V1 controller
@@ -130,10 +130,15 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         # ID:DMD FP-CPU-002-1 00.87
         # ID:NET FP-CPU-002-2 00.85
         # ID:RGB FP-CPU-002-2 00.85
-        # ID:NET FP-CPU-2000-2 2.05
+        # ID:FP-CPU-2000-2     2.05
         # ID:NET FP-SBI-0095-3 2.01
 
-        self.remote_processor, self.remote_model, self.remote_firmware = msg[3:].split()
+        try:
+            self.remote_processor, self.remote_model, self.remote_firmware = msg[3:].split()
+        except ValueError:
+            # FP-CPU-2000 does not include a processor type, but is always NET
+            self.remote_model, self.remote_firmware = msg[3:].split()
+            self.remote_processor = 'NET'
 
         if self.remote_model.startswith(RETRO_ID):
             self.is_retro = True

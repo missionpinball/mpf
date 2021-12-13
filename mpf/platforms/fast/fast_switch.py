@@ -35,7 +35,7 @@ class FASTSwitch(SwitchPlatformInterface):
         number = Util.hex_string_to_int(self.number)
         for board_obj in self.platform.io_boards.values():
             if switch_index <= number < switch_index + board_obj.switch_count:
-                return f"FAST Board {str(board_obj.node_id}"
+                return f"FAST Board {str(board_obj.node_id)}"
             switch_index += board_obj.switch_count
 
         # fall back if not found

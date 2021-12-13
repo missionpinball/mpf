@@ -1,228 +1,47 @@
 from mpf.core.platform import SwitchConfig
 from mpf.core.rgb_color import RGBColor
 from mpf.exceptions.config_file_error import ConfigFileError
-from mpf.tests.MpfTestCase import MpfTestCase, MagicMock, test_config, expect_startup_error
 
-from mpf.tests.loop import MockSerial
+from mpf.tests.MpfTestCase import MagicMock, test_config, expect_startup_error
+from mpf.tests.test_Fast import TestFastBase
 
-
-class BaseMockFast(MockSerial):
-
-    def __init__(self):
-        super().__init__()
-        self.type = None
-        self.queue = []
-        self.expected_commands = {}
-        self.ignore_commands = {}
-
-    def read(self, length):
-        del length
-        if not self.queue:
-            return
-        msg = (self.queue.pop() + '\r').encode()
-        return msg
-
-    def read_ready(self):
-        return bool(len(self.queue) > 0)
-
-    def write_ready(self):
-        return True
-
-    def _parse(self, msg):
-        return False
-
-    def write(self, msg):
-        """Write message."""
-        parts = msg.split(b'\r')
-        # remove last newline
-        assert parts.pop() == b''
-
-        for part in parts:
-            self._handle_msg(part)
-
-        return len(msg)
-
-    def _handle_msg(self, msg):
-        msg_len = len(msg)
-        cmd = msg.decode()
-        # strip newline
-        # ignore init garbage
-        if cmd == (' ' * 256 * 4):
-            return msg_len
-
-        if cmd[:3] == "WD:" and cmd != "WD:1":
-            self.queue.append("WD:P")
-            return msg_len
-
-        if cmd in self.ignore_commands:
-            self.queue.append(cmd[:3] + "P")
-            return msg_len
-
-        if self._parse(cmd):
-            return msg_len
-
-        if cmd in self.expected_commands:
-            if self.expected_commands[cmd]:
-                self.queue.append(self.expected_commands[cmd])
-            del self.expected_commands[cmd]
-            return msg_len
-        else:
-            raise Exception("Unexpected command for " + self.type + ": " + str(cmd))
-
-    def stop(self):
-        pass
-
-
-class MockFastDmd(BaseMockFast):
-    def __init__(self):
-        super().__init__()
-        self.type = "DMD"
-
-    def write(self, msg):
-        """Write message."""
-        parts = msg.split(b'\r')
-
-        # remove last newline
-        if parts[len(parts) - 1] == b'':
-            parts.pop()
-
-        for part in parts:
-            self._handle_msg(part)
-
-        return len(msg)
-
-    def _handle_msg(self, msg):
-        msg_len = len(msg)
-        if msg == (b' ' * 256 * 4):
-            return msg_len
-
-        cmd = msg
-
-        if cmd[:3] == "WD:":
-            self.queue.append("WD:P")
-            return msg_len
-
-        if cmd in self.ignore_commands:
-            self.queue.append(cmd[:3] + "P")
-            return msg_len
-
-        if cmd in self.expected_commands:
-            if self.expected_commands[cmd]:
-                self.queue.append(self.expected_commands[cmd])
-            del self.expected_commands[cmd]
-            return msg_len
-        else:
-            raise Exception(self.type + ": " + str(cmd))
-
-
-class MockFastRgb(BaseMockFast):
-    def __init__(self):
-        super().__init__()
-        self.type = "RGB"
-        self.ignore_commands["L1:23,FF"] = True
-        self.leds = {}
-
-    def _parse(self, cmd):
-        if cmd[:3] == "RS:":
-            remaining = cmd[3:]
-            while True:
-                self.leds[remaining[0:2]] = remaining[2:8]
-                remaining = remaining[9:]
-
-                if not remaining:
-                    break
-
-            self.queue.append("RX:P")
-            return True
-
-
-class MockFastNet(BaseMockFast):
-    def __init__(self):
-        super().__init__()
-        self.type = "NET"
-        self.id = "FP-CPU-2000-1 2.00"
-        self.sa = "09,050000000000000000"
-        self.ch = None
-        self.expected_commands = None
-
-        self.attached_boards = {
-            'NN:00': 'NN:00,FP-I/O-3208-2   ,02.00,08,20,04,06,00,00,00,00',     # 3208 board
-            'NN:01': 'NN:01,FP-I/O-0804-1   ,02.00,04,08,04,06,00,00,00,00',     # 0804 board
-            'NN:02': 'NN:02,FP-I/O-1616-2   ,02.00,10,10,04,06,00,00,00,00',     # 1616 board
-            'NN:03': 'NN:03,FP-I/O-1616-2   ,02.00,10,10,04,06,00,00,00,00',     # 1616 board
-            'NN:04': 'NN:04,,,,,,,,,,',     # no board
-        }
-
-
-class MockFastSeg(BaseMockFast):
-    def __init__(self):
-        super().__init__()
-        self.type = "SEG"
-
-
-class TestFastBase(MpfTestCase):
-    """Base class for FAST platform tests, using a default V2 network."""
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.net_cpu = None
-        self.seg_cpu = None
-        self.rgb_cpu = None
-        self.dmd_cpu = None
-
+class TestFastV1(TestFastBase):
+    """FAST Platform class for a networked V1 platform."""
     def get_config_file(self):
-        return 'config.yaml'
-
-    def get_machine_path(self):
-        return 'tests/machine_files/fast/'
-
-    def get_platform(self):
-        return False
-
-    def _mock_loop(self):
-        if self.net_cpu:
-            self.clock.mock_serial("com4", self.net_cpu)
-        if self.seg_cpu:
-            self.clock.mock_serial("com3", self.seg_cpu)
-        if self.rgb_cpu:
-            self.clock.mock_serial("com5", self.rgb_cpu)
-        if self.dmd_cpu:
-            self.clock.mock_serial("com6", self.dmd_cpu)
-
-    def create_connections(self):
-        self.net_cpu = MockFastNet()
-        self.rgb_cpu = MockFastRgb()
-        self.dmd_cpu = MockFastDmd()
-        self.seg_cpu = MockFastSeg()
+        return 'config_v1.yaml'
 
     def create_expected_commands(self):
+        # V1 firmware uses network switches (SN/DN) and no CH
         self.net_cpu.expected_commands = {
-            'BR:': '#!B:02',    # there might be some garbage in front of the command
-            'ID:': f'ID:{self.net_cpu.id}',
-            f'CH:{self.net_cpu.ch},1': 'CH:P',
-            **self.net_cpu.attached_boards,
-            "SA:": f"SA:{self.net_cpu.sa}",
-            "SL:01,01,04,04": "SL:P",
-            "SL:02,01,04,04": "SL:P",
-            "SL:03,01,04,04": "SL:P",
-            "SL:0B,01,04,04": "SL:P",
-            "SL:0C,01,04,04": "SL:P",
-            "SL:16,01,04,04": "SL:P",
-            "SL:07,01,1A,05": "SL:P",
-            "SL:1A,01,04,04": "SL:P",
-            "SL:39,01,04,04": "SL:P",
-            "DL:00,00,00,00": "DL:P",
-            "DL:01,00,00,00": "DL:P",
-            "DL:04,00,00,00": "DL:P",
-            "DL:06,00,00,00": "DL:P",
-            "DL:07,00,00,00": "DL:P",
-            "DL:11,00,00,00": "DL:P",
-            "DL:12,00,00,00": "DL:P",
-            "DL:13,00,00,00": "DL:P",
-            "DL:16,00,00,00": "DL:P",
-            "DL:17,00,00,00": "DL:P",
-            "DL:20,00,00,00": "DL:P",
-            "DL:21,00,00,00": "DL:P",
-            "DL:01,C1,00,18,00,FF,FF,00": "DL:P",   # configure digital output
+            'BR:': '\rFOO\r#!B:02',    # there might be some garbage in front of the command
+            'ID:': 'ID:NET FP-CPU-002-1 01.03',
+            'NN:00': 'NN:00,FP-I/O-3208-2   ,01.00,08,20,04,06,00,00,00,00',     # 3208 board
+            'NN:01': 'NN:01,FP-I/O-0804-1   ,01.00,04,08,04,06,00,00,00,00',     # 0804 board
+            'NN:02': 'NN:02,FP-I/O-1616-2   ,01.00,10,10,04,06,00,00,00,00',     # 1616 board
+            'NN:03': 'NN:03,FP-I/O-1616-2   ,01.00,10,10,04,06,00,00,00,00',     # 1616 board
+            'NN:04': 'NN:04,,,,,,,,,,',     # no board
+            "SA:": "SA:01,00,09,050000000000000000",
+            "SN:01,01,04,04": "SN:P",
+            "SN:02,01,04,04": "SN:P",
+            "SN:03,01,04,04": "SN:P",
+            "SN:0B,01,04,04": "SN:P",
+            "SN:0C,01,04,04": "SN:P",
+            "SN:16,01,04,04": "SN:P",
+            "SN:07,01,1A,05": "SN:P",
+            "SN:1A,01,04,04": "SN:P",
+            "SN:39,01,04,04": "SN:P",
+            "DN:01,00,00,00": "DN:P",
+            "DN:04,00,00,00": "DN:P",
+            "DN:06,00,00,00": "DN:P",
+            "DN:07,00,00,00": "DN:P",
+            "DN:11,00,00,00": "DN:P",
+            "DN:12,00,00,00": "DN:P",
+            "DN:13,00,00,00": "DN:P",
+            "DN:16,00,00,00": "DN:P",
+            "DN:17,00,00,00": "DN:P",
+            "DN:20,00,00,00": "DN:P",
+            "DN:21,00,00,00": "DN:P",
+            "DN:01,C1,00,18,00,FF,FF,00": "DN:P",   # configure digital output
             "XO:03,7F": "XO:P",
             "XO:14,7F": "XO:P"
         }
@@ -239,30 +58,34 @@ class TestFastBase(MpfTestCase):
             'ID:': 'ID:SEG FP-CPU-002-1 00.10',
         }
 
-    def tearDown(self):
-        if self.dmd_cpu:
-            self.dmd_cpu.expected_commands = {
-                b'BL:AA55': "!SRE"
-            }
-        if self.rgb_cpu:
-            self.rgb_cpu.expected_commands = {
-                "BL:AA55": "!SRE"
-            }
-        if self.net_cpu:
-            self.net_cpu.expected_commands = {
-                "WD:1": "WD:P"
-            }
-        super().tearDown()
-        if not self.startup_error:
-            self.assertFalse(self.net_cpu and self.net_cpu.expected_commands)
-            self.assertFalse(self.rgb_cpu and self.rgb_cpu.expected_commands)
-            self.assertFalse(self.dmd_cpu and self.dmd_cpu.expected_commands)
-
     def setUp(self):
-        self.expected_duration = 2
-        self.create_connections()
-        self.create_expected_commands()
         super().setUp()
+        if not self.startup_error:
+            self.advance_time_and_run()
+            self.assertFalse(self.net_cpu.expected_commands)
+            self.assertFalse(self.rgb_cpu.expected_commands)
+            self.assertFalse(self.dmd_cpu.expected_commands)
+            self.assertFalse(self.seg_cpu.expected_commands)
+
+            # test io board detection
+            self.assertEqual(4, len(self.machine.default_platform.io_boards))
+            self.assertEqual(32, self.machine.default_platform.io_boards[0].switch_count)
+            self.assertEqual(8, self.machine.default_platform.io_boards[0].driver_count)
+            self.assertEqual(8, self.machine.default_platform.io_boards[1].switch_count)
+            self.assertEqual(4, self.machine.default_platform.io_boards[1].driver_count)
+            self.assertEqual(16, self.machine.default_platform.io_boards[2].switch_count)
+            self.assertEqual(16, self.machine.default_platform.io_boards[2].driver_count)
+            self.assertEqual(16, self.machine.default_platform.io_boards[3].switch_count)
+            self.assertEqual(16, self.machine.default_platform.io_boards[3].driver_count)
+
+            self.assertEqual("00.88", self.machine.variables.get_machine_var("fast_dmd_firmware"))
+            self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_dmd_model"))
+            self.assertEqual("00.89", self.machine.variables.get_machine_var("fast_rgb_firmware"))
+            self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_rgb_model"))
+            self.assertEqual("01.03", self.machine.variables.get_machine_var("fast_net_firmware"))
+            self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_net_model"))
+            self.assertEqual("00.10", self.machine.variables.get_machine_var("fast_seg_firmware"))
+            self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_seg_model"))
 
     def test_coils(self):
         self._test_pulse()
@@ -275,16 +98,16 @@ class TestFastBase(MpfTestCase):
         self._test_coil_configure()
 
         # test hardware scan
-        info_str = """NET CPU: NET FP-CPU-2000-1 2.00
+        info_str = """NET CPU: NET FP-CPU-002-1 01.03
 RGB CPU: RGB FP-CPU-002-1 00.89
 DMD CPU: DMD FP-CPU-002-1 00.88
 Segment Controller: SEG FP-CPU-002-1 00.10
 
 Boards:
-Board 0 - Model: FP-I/O-3208-2    Firmware: 02.00 Switches: 32 Drivers: 8
-Board 1 - Model: FP-I/O-0804-1    Firmware: 02.00 Switches: 8 Drivers: 4
-Board 2 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
-Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
+Board 0 - Model: FP-I/O-3208-2    Firmware: 01.00 Switches: 32 Drivers: 8
+Board 1 - Model: FP-I/O-0804-1    Firmware: 01.00 Switches: 8 Drivers: 4
+Board 2 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
+Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
 """
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
@@ -293,7 +116,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
         self.assertEqual("FAST Board 3", self.machine.coils["c_flipper_hold"].hw_driver.get_board_name())
         # last driver on board
         self.net_cpu.expected_commands = {
-            "DL:2B,00,00,00": "DL:P"
+            "DN:2B,00,00,00": "DN:P"
         }
         coil = self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '3-15',
                                                               {"connection": "network", "recycle_ms": 10})
@@ -318,7 +141,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
 
     def _test_pulse(self):
         self.net_cpu.expected_commands = {
-            "DL:04,89,00,10,17,FF,00,00,00": "DL:P"
+            "DN:04,89,00,10,17,FF,00,00,00": "DN:P"
         }
         # pulse coil 4
         self.machine.coils["c_test"].pulse()
@@ -328,7 +151,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
     def _test_long_pulse(self):
         # enable command
         self.net_cpu.expected_commands = {
-            "DL:12,C1,00,18,00,FF,FF,00": "DL:P"
+            "DN:12,C1,00,18,00,FF,FF,00": "DN:P"
         }
         self.machine.coils["c_long_pulse"].pulse()
         self.advance_time_and_run(.1)
@@ -336,7 +159,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
 
         # disable command
         self.net_cpu.expected_commands = {
-            "TL:12,02": "TL:P"
+            "TN:12,02": "TN:P"
         }
 
         self.advance_time_and_run(1)
@@ -350,7 +173,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
     def _test_timed_enable(self):
         # enable command
         self.net_cpu.expected_commands = {
-            "DL:16,89,00,10,14,FF,88,C8,00": "DL:P"
+            "DN:16,89,00,10,14,FF,88,C8,00": "DN:P"
         }
         self.machine.coils["c_timed_enable"].timed_enable()
         self.advance_time_and_run(.1)
@@ -359,7 +182,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
     def _test_default_timed_enable(self):
         # enable command
         self.net_cpu.expected_commands = {
-            "DL:17,89,00,10,14,FF,88,C8,00": "DL:P"
+            "DN:17,89,00,10,14,FF,88,C8,00": "DN:P"
         }
         self.machine.coils["c_default_timed_enable"].pulse()
         self.advance_time_and_run(.1)
@@ -373,7 +196,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
 
     def _test_allow_enable(self):
         self.net_cpu.expected_commands = {
-            "DL:06,C1,00,18,17,FF,FF,00": "DL:P"
+            "DN:06,C1,00,18,17,FF,FF,00": "DN:P"
         }
         self.machine.coils["c_test_allow_enable"].enable()
         self.advance_time_and_run(.1)
@@ -381,7 +204,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
 
     def _test_pwm_ssm(self):
         self.net_cpu.expected_commands = {
-            "DL:13,C1,00,18,0A,FF,84224244,00": "DL:P"
+            "DN:13,C1,00,18,0A,FF,84224244,00": "DN:P"
         }
         self.machine.coils["c_hold_ssm"].enable()
         self.advance_time_and_run(.1)
@@ -404,7 +227,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
 
     def _test_hw_rule_same_board(self):
         self.net_cpu.expected_commands = {
-            "DL:21,01,07,10,0A,FF,00,00,14": "DL:P"
+            "DN:21,01,07,10,0A,FF,00,00,14": "DN:P"
         }
         # coil and switch are on different boards but first 8 switches always work
         self.machine.autofire_coils["ac_different_boards"].enable()
@@ -413,15 +236,15 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
 
         # switch and coil on board 3. should work
         self.net_cpu.expected_commands = {
-            "DL:21,01,39,10,0A,FF,00,00,14": "DL:P",
-            "SL:39,01,02,02": "SL:P"
+            "DN:21,01,39,10,0A,FF,00,00,14": "DN:P",
+            "SN:39,01,02,02": "SN:P"
         }
         self.machine.autofire_coils["ac_board_3"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         self.net_cpu.expected_commands = {
-            "DL:10,01,03,10,0A,89,00,00,14": "DL:P",
+            "DN:10,01,03,10,0A,89,00,00,14": "DN:P",
         }
         # coil and switch are on different boards
         with self.assertRaises(AssertionError):
@@ -438,9 +261,9 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
 
     def _test_two_rules_one_switch(self):
         self.net_cpu.expected_commands = {
-            "SL:03,01,02,02": "SL:P",
-            "DL:04,01,03,10,17,FF,00,00,1B": "DL:P",
-            "DL:06,01,03,10,17,FF,00,00,2E": "DL:P"
+            "SN:03,01,02,02": "SN:P",
+            "DN:04,01,03,10,17,FF,00,00,1B": "DN:P",
+            "DN:06,01,03,10,17,FF,00,00,2E": "DN:P"
         }
         self.post_event("ac_same_switch")
         self.hit_and_release_switch("s_flipper")
@@ -449,15 +272,15 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
 
     def _test_hw_rule_pulse(self):
         self.net_cpu.expected_commands = {
-            "DL:07,01,16,10,0A,FF,00,00,14": "DL:P",  # hw rule
-            "SL:16,01,02,02": "SL:P"                  # debounce quick on switch
+            "DN:07,01,16,10,0A,FF,00,00,14": "DN:P",  # hw rule
+            "SN:16,01,02,02": "SN:P"                  # debounce quick on switch
         }
         self.machine.autofire_coils["ac_slingshot_test"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         self.net_cpu.expected_commands = {
-            "DL:07,81": "DL:P"
+            "DN:07,81": "DN:P"
         }
         self.machine.autofire_coils["ac_slingshot_test"].disable()
         self.advance_time_and_run(.1)
@@ -465,14 +288,14 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
 
     def _test_hw_rule_pulse_pwm32(self):
         self.net_cpu.expected_commands = {
-            "DL:11,89,00,10,0A,AAAAAAAA,00,00,00": "DL:P"
+            "DN:11,89,00,10,0A,AAAAAAAA,00,00,00": "DN:P"
         }
         self.machine.coils["c_pulse_pwm32_mask"].pulse()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         self.net_cpu.expected_commands = {
-            "DL:11,C1,00,18,0A,AAAAAAAA,4A4A4A4A,00": "DL:P"
+            "DN:11,C1,00,18,0A,AAAAAAAA,4A4A4A4A,00": "DN:P"
         }
         self.machine.coils["c_pulse_pwm32_mask"].enable()
         self.advance_time_and_run(.1)
@@ -480,15 +303,14 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
 
     def _test_hw_rule_pulse_inverted_switch(self):
         self.net_cpu.expected_commands = {
-            "DL:07,11,1A,10,0A,FF,00,00,14": "DL:P",
-            "SL:1A,01,02,02": "SL:P"
+            "DN:07,11,1A,10,0A,FF,00,00,14": "DN:P",
+            "SN:1A,01,02,02": "SN:P"
         }
         self.machine.autofire_coils["ac_inverted_switch"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
     def test_firmware_update(self):
-        self.maxDiff = None
         commands = []
 
         def _catch_update(cmd):
@@ -508,8 +330,8 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
                           b'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
                           b'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\rDUMMY UPDAT'
                           b'E\r', b'WD:3e8\r', b'WD:3e8\r'], commands)
-        expected_output = """NET CPU is version 2.00
-Found an update to version 2.04 for the NET CPU. Will flash file firmware/FAST_NET_01_04_00.txt
+        expected_output = """NET CPU is version 01.03
+Found an update to version 1.04 for the NET CPU. Will flash file firmware/FAST_NET_01_04_00.txt
 Update done.
 """
         self.assertEqual(expected_output, output)
@@ -542,7 +364,7 @@ Update done.
     def _test_switch_configure(self):
         # last switch on first board
         self.net_cpu.expected_commands = {
-            "SL:1F,01,04,04": "SL:P"
+            "SN:1F,01,04,04": "SN:P"
         }
         self.machine.default_platform.configure_switch('0-31', SwitchConfig(name="", debounce='auto', invert=0), {})
         self.advance_time_and_run(.1)
@@ -553,7 +375,7 @@ Update done.
             self.machine.default_platform.configure_switch('0-32', SwitchConfig(name="", debounce='auto', invert=0), {})
 
         self.net_cpu.expected_commands = {
-            "SL:47,01,04,04": "SL:P"
+            "SN:47,01,04,04": "SN:P"
         }
         self.machine.default_platform.configure_switch('3-15', SwitchConfig(name="", debounce='auto', invert=0), {})
         self.advance_time_and_run(.1)
@@ -577,7 +399,7 @@ Update done.
         self.assertFalse(self.switch_hit)
 
         self.machine.events.add_handler("s_test_active", self._switch_hit_cb)
-        self.machine.default_platform.process_received_message("-L:07", "NET")
+        self.machine.default_platform.process_received_message("-N:07", "NET")
         self.advance_time_and_run(1)
 
         self.assertTrue(self.switch_hit)
@@ -588,7 +410,7 @@ Update done.
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test", 1)
 
-        self.machine.default_platform.process_received_message("/L:07", "NET")
+        self.machine.default_platform.process_received_message("/N:07", "NET")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test", 0)
@@ -603,13 +425,13 @@ Update done.
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test_nc", 1)
 
-        self.machine.default_platform.process_received_message("-L:1A", "NET")
+        self.machine.default_platform.process_received_message("-N:1A", "NET")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test_nc", 0)
 
         self.machine.events.add_handler("s_test_nc_active", self._switch_hit_cb)
-        self.machine.default_platform.process_received_message("/L:1A", "NET")
+        self.machine.default_platform.process_received_message("/N:1A", "NET")
         self.advance_time_and_run(1)
 
         self.assertSwitchState("s_test_nc", 1)
@@ -619,7 +441,7 @@ Update done.
     def test_flipper_single_coil(self):
         # manual flip no hw rule
         self.net_cpu.expected_commands = {
-            "DL:20,89,00,10,0A,FF,00,00,00": "DL:P",
+            "DN:20,89,00,10,0A,FF,00,00,00": "DN:P",
         }
         self.machine.coils["c_flipper_main"].pulse()
         self.advance_time_and_run(.1)
@@ -627,7 +449,7 @@ Update done.
 
         # manual enable no hw rule
         self.net_cpu.expected_commands = {
-            "DL:20,C1,00,18,0A,FF,01,00": "DL:P"
+            "DN:20,C1,00,18,0A,FF,01,00": "DN:P"
         }
         self.machine.coils["c_flipper_main"].enable()
         self.advance_time_and_run(.1)
@@ -635,7 +457,7 @@ Update done.
 
         # manual disable no hw rule
         self.net_cpu.expected_commands = {
-            "TL:20,02": "TL:P"
+            "TN:20,02": "TN:P"
         }
         self.machine.coils["c_flipper_main"].disable()
         self.advance_time_and_run(.1)
@@ -643,8 +465,8 @@ Update done.
 
         # flipper rule enable
         self.net_cpu.expected_commands = {
-            "DL:20,01,01,18,0B,FF,01,00,00": "DL:P",
-            "SL:01,01,02,02": "SL:P"
+            "DN:20,01,01,18,0B,FF,01,00,00": "DN:P",
+            "SN:01,01,02,02": "SN:P"
         }
         self.machine.flippers["f_test_single"].enable()
         self.advance_time_and_run(.1)
@@ -652,8 +474,8 @@ Update done.
 
         # manual flip with hw rule in action
         self.net_cpu.expected_commands = {
-            "DL:20,89,00,10,0A,FF,00,00,00": "DL:P",    # configure and pulse
-            "DL:20,01,01,18,0B,FF,01,00,00": "DL:P",    # restore rule
+            "DN:20,89,00,10,0A,FF,00,00,00": "DN:P",    # configure and pulse
+            "DN:20,01,01,18,0B,FF,01,00,00": "DN:P",    # restore rule
         }
         self.machine.coils["c_flipper_main"].pulse()
         self.advance_time_and_run(.1)
@@ -661,7 +483,7 @@ Update done.
 
         # manual flip with hw rule in action without reconfigure (same pulse)
         self.net_cpu.expected_commands = {
-            "TL:20,01": "TL:P",                         # pulse
+            "TN:20,01": "TN:P",                         # pulse
         }
         self.machine.coils["c_flipper_main"].pulse(11)
         self.advance_time_and_run(.1)
@@ -669,7 +491,7 @@ Update done.
 
         # manual enable with hw rule (same pulse)
         self.net_cpu.expected_commands = {
-            "TL:20,03": "TL:P"
+            "TN:20,03": "TN:P"
         }
         self.machine.coils["c_flipper_main"].enable(pulse_ms=11)
         self.advance_time_and_run(.1)
@@ -677,8 +499,8 @@ Update done.
 
         # manual disable with hw rule
         self.net_cpu.expected_commands = {
-            "TL:20,02": "TL:P",
-            "TL:20,00": "TL:P"   # reenable autofire rule
+            "TN:20,02": "TN:P",
+            "TN:20,00": "TN:P"   # reenable autofire rule
         }
         self.machine.coils["c_flipper_main"].disable()
         self.advance_time_and_run(.1)
@@ -686,7 +508,7 @@ Update done.
 
         # manual enable with hw rule (different pulse)
         self.net_cpu.expected_commands = {
-            "DL:20,C1,00,18,0A,FF,01,00": "DL:P",       # configure pwm + enable
+            "DN:20,C1,00,18,0A,FF,01,00": "DN:P",       # configure pwm + enable
         }
         self.machine.coils["c_flipper_main"].enable()
         self.advance_time_and_run(.1)
@@ -694,9 +516,9 @@ Update done.
 
         # manual disable with hw rule
         self.net_cpu.expected_commands = {
-            "TL:20,02": "TL:P",
-            "DL:20,01,01,18,0B,FF,01,00,00": "DN_P",    # configure rules
-            "TL:20,00": "TL:P"                          # reenable autofire rule
+            "TN:20,02": "TN:P",
+            "DN:20,01,01,18,0B,FF,01,00,00": "DN_P",    # configure rules
+            "TN:20,00": "TN:P"                          # reenable autofire rule
         }
         self.machine.coils["c_flipper_main"].disable()
         self.advance_time_and_run(.1)
@@ -704,7 +526,7 @@ Update done.
 
         # disable rule
         self.net_cpu.expected_commands = {
-            "DL:20,81": "DL:P"
+            "DN:20,81": "DN:P"
         }
         self.machine.flippers["f_test_single"].disable()
         self.advance_time_and_run(.1)
@@ -712,7 +534,7 @@ Update done.
 
         # manual flip no hw rule
         self.net_cpu.expected_commands = {
-            "DL:20,89,00,10,0A,FF,00,00,00": "DL:P"
+            "DN:20,89,00,10,0A,FF,00,00,00": "DN:P"
         }
         self.machine.coils["c_flipper_main"].pulse()
         self.advance_time_and_run(.1)
@@ -720,7 +542,7 @@ Update done.
 
         # manual flip again with cached config
         self.net_cpu.expected_commands = {
-            "TL:20,01": "TL:P",
+            "TN:20,01": "TN:P",
         }
         self.machine.coils["c_flipper_main"].pulse()
         self.advance_time_and_run(.1)
@@ -730,17 +552,17 @@ Update done.
         # we pulse the main coil (20)
         # hold coil (21) is pulsed + enabled
         self.net_cpu.expected_commands = {
-            "DL:20,01,01,18,0A,FF,00,00,00": "DL:P",
-            "DL:21,01,01,18,0A,FF,01,00,00": "DL:P",
-            "SL:01,01,02,02": "SL:P",
+            "DN:20,01,01,18,0A,FF,00,00,00": "DN:P",
+            "DN:21,01,01,18,0A,FF,01,00,00": "DN:P",
+            "SN:01,01,02,02": "SN:P",
         }
         self.machine.flippers["f_test_hold"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         self.net_cpu.expected_commands = {
-            "DL:20,81": "DL:P",
-            "DL:21,81": "DL:P"
+            "DN:20,81": "DN:P",
+            "DN:21,81": "DN:P"
         }
         self.machine.flippers["f_test_hold"].disable()
         self.advance_time_and_run(.1)
@@ -974,4 +796,3 @@ Update done.
         self.assertEqual("FAST", self.startup_error.__cause__.get_logger_name())
         self.assertEqual("Light syntax is number-channel (but was \"3\") for light test_led.",
                          self.startup_error.__cause__._message)
-
