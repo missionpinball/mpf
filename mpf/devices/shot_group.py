@@ -54,6 +54,7 @@ class ShotGroup(ModeDevice):
         """Disable device when mode stops."""
         super().device_removed_from_mode(mode)
         self.machine.events.remove_handler(self._hit)
+        self.machine.events.remove_handler(self._check_for_complete)
 
     def get_common_state(self):
         """Return common state if all shots in this group are in the same state.
