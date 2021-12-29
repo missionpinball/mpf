@@ -440,10 +440,6 @@ class TestShotGroups(MpfFakeGameTestCase):
         self.assertLightChannel("l_special_left", 0)
 
     def test_shot_handlers(self):
-        self.mock_event("test_group_complete")
-        self.mock_event("test_group_hit")
-
-        shot_group = self.machine.shot_groups['test_group']
         self.assertFalse(self.machine.events.does_event_exist('shot_1_hit'))
         self.assertFalse(self.machine.events.does_event_exist('player_shot_shot_1'))
 
