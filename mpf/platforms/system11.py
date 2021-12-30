@@ -256,7 +256,7 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
         self.platform.clear_hw_rule(switch, coil)
 
     def driver_action(self, driver, pulse_settings: Optional[PulseSettings], hold_settings: Optional[HoldSettings],
-                      side: str):
+                      side: str, timed_enable: bool = False):
         """Add a driver action for a switched driver to the queue (for either the A-side or C-side queue).
 
         Args:
@@ -270,20 +270,20 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
         """
         if self.prefer_a_side:
             if side == "A":
-                self.a_side_queue.add((driver, pulse_settings, hold_settings))
+                self.a_side_queue.add((driver, pulse_settings, hold_settings, timed_enable))
                 self._service_a_side()
             elif side == "C":
-                self.c_side_queue.add((driver, pulse_settings, hold_settings))
+                self.c_side_queue.add((driver, pulse_settings, hold_settings, timed_enable))
                 if not self.ac_relay_in_transition and not self.a_side_busy:
                     self._service_c_side()
             else:
                 raise AssertionError("Invalid side {}".format(side))
         else:
             if side == "C":
-                self.c_side_queue.add((driver, pulse_settings, hold_settings))
+                self.c_side_queue.add((driver, pulse_settings, hold_settings, timed_enable))
                 self._service_c_side()
             elif side == "A":
-                self.a_side_queue.add((driver, pulse_settings, hold_settings))
+                self.a_side_queue.add((driver, pulse_settings, hold_settings, timed_enable))
                 if not self.ac_relay_in_transition and not self.c_side_busy:
                     self._service_a_side()
             else:
@@ -360,9 +360,14 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
             return
 
         while self.a_side_queue:
-            driver, pulse_settings, hold_settings = self.a_side_queue.pop()
+            driver, pulse_settings, hold_settings, timed_enable = self.a_side_queue.pop()
 
-            if hold_settings is None and pulse_settings:
+            if timed_enable:
+                driver.timed_enable(pulse_settings, hold_settings)
+                self.a_side_done_time = max(self.a_side_done_time,
+                                            self.machine.clock.get_time() + (pulse_settings.duration / 1000.0))
+
+            elif hold_settings is None and pulse_settings:
                 driver.pulse(pulse_settings)
                 self.a_side_done_time = max(self.a_side_done_time,
                                             self.machine.clock.get_time() + (pulse_settings.duration / 1000.0))
@@ -435,9 +440,14 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
             return
 
         while self.c_side_queue:
-            driver, pulse_settings, hold_settings = self.c_side_queue.pop()
+            driver, pulse_settings, hold_settings, timed_enable = self.c_side_queue.pop()
 
-            if hold_settings is None and pulse_settings:
+            if timed_enable:
+                driver.timed_enable(pulse_settings, hold_settings)
+                self.c_side_done_time = max(self.c_side_done_time,
+                                            self.machine.clock.get_time() + (pulse_settings.duration / 1000.0))
+
+            elif hold_settings is None and pulse_settings:
                 driver.pulse(pulse_settings)
                 self.c_side_done_time = max(self.c_side_done_time,
                                             self.machine.clock.get_time() + (pulse_settings.duration / 1000.0))
@@ -516,4 +526,4 @@ class System11Driver(DriverPlatformInterface):
 
     def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Pulse and enable the coil for an explicit duration."""
-        self.overlay.driver_action(self.platform_driver, pulse_settings, hold_settings, self.side)
+        self.overlay.driver_action(self.platform_driver, pulse_settings, hold_settings, self.side, True)
