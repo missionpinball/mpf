@@ -516,4 +516,4 @@ class System11Driver(DriverPlatformInterface):
 
     def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Pulse and enable the coil for an explicit duration."""
-        self.overlay.driver_action(self.platform.driver, pulse_settings, hold_settings, self.side)
+        self.overlay.driver_action(self.platform_driver, pulse_settings, hold_settings, self.side)
