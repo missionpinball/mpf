@@ -3,7 +3,6 @@ from mpf.config_players.device_config_player import DeviceConfigPlayer
 
 
 class PluginPlayer(DeviceConfigPlayer):
-
     """Base class for a remote ConfigPlayer that is registered as a plug-in to MPF.
 
     This class is created on the MPF side of things.
@@ -52,7 +51,8 @@ class PluginPlayer(DeviceConfigPlayer):
         events = super().register_player_events(config, mode, priority)
         # when bcp is disabled do not register plugin_player
         if self.machine.options['bcp']:
-            if self.machine.is_shutting_down:
+            # hasattr check is for IMC to work
+            if hasattr(self.machine, 'is_shutting_down') and self.machine.is_shutting_down:
                 return events
             self.bcp_client = self._get_bcp_client(config)
 
