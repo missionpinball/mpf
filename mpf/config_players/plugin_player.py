@@ -3,6 +3,7 @@ from mpf.config_players.device_config_player import DeviceConfigPlayer
 
 
 class PluginPlayer(DeviceConfigPlayer):
+
     """Base class for a remote ConfigPlayer that is registered as a plug-in to MPF.
 
     This class is created on the MPF side of things.
