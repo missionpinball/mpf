@@ -271,7 +271,8 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
         if self.prefer_a_side:
             if side == "A":
                 self.a_side_queue.add((driver, pulse_settings, hold_settings, timed_enable))
-                self._service_a_side()
+                if not self.ac_relay_in_transition:
+                    self._service_a_side()
             elif side == "C":
                 self.c_side_queue.add((driver, pulse_settings, hold_settings, timed_enable))
                 if not self.ac_relay_in_transition and not self.a_side_busy:
@@ -280,8 +281,13 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
                 raise AssertionError("Invalid side {}".format(side))
         else:
             if side == "C":
+                # Sometimes it doesn't make sense to queue the C side (flashers) and play them after
+                # switching to the A side (coils) and back. In which case, just ignore this driver action.
+                if not self.c_side_enabled and not self.system11_config['queue_c_side_while_preferred']:
+                    return
                 self.c_side_queue.add((driver, pulse_settings, hold_settings, timed_enable))
-                self._service_c_side()
+                if not self.ac_relay_in_transition:
+                    self._service_c_side()
             elif side == "A":
                 self.a_side_queue.add((driver, pulse_settings, hold_settings, timed_enable))
                 if not self.ac_relay_in_transition and not self.c_side_busy:
@@ -303,6 +309,9 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
         self.ac_relay_in_transition = True
         self.a_side_enabled = False
         self.c_side_enabled = False
+        # Clear out the C side queue if we don't want to hold onto it for later
+        if not self.system11_config['queue_c_side_while_preferred']:
+            self.c_side_queue.clear()
         self.delay.add(ms=self.system11_config['ac_relay_delay_ms'],
                        callback=self._a_side_enabled,
                        name='disable_ac_relay')
@@ -363,14 +372,14 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
             driver, pulse_settings, hold_settings, timed_enable = self.a_side_queue.pop()
 
             if timed_enable:
-                driver.timed_enable(pulse_settings, hold_settings)
-                self.a_side_done_time = max(self.a_side_done_time,
-                                            self.machine.clock.get_time() + (pulse_settings.duration / 1000.0))
+                wait_ms = driver.timed_enable(pulse_settings, hold_settings) or 0
+                wait_secs = (pulse_settings.duration + wait_ms) / 1000.0
+                self.a_side_done_time = max(self.a_side_done_time, self.machine.clock.get_time() + wait_secs)
 
             elif hold_settings is None and pulse_settings:
-                driver.pulse(pulse_settings)
-                self.a_side_done_time = max(self.a_side_done_time,
-                                            self.machine.clock.get_time() + (pulse_settings.duration / 1000.0))
+                wait_ms = driver.pulse(pulse_settings) or 0
+                wait_secs = (pulse_settings.duration + wait_ms) / 1000.0
+                self.a_side_done_time = max(self.a_side_done_time, self.machine.clock.get_time() + wait_secs)
 
             elif hold_settings and pulse_settings:
                 driver.enable(pulse_settings, hold_settings)

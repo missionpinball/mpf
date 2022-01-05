@@ -73,7 +73,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         else:
             self.raise_config_error(f'Unknown machine_type "{self.machine_type}" configured fast.', 6)
 
-        self.features['tickless'] = True
+        # Most FAST platforms don't use ticks, but System11 does
+        self.features['tickless'] = self.machine_type != 'sys11'
 
         self.dmd_connection = None
         self.net_connection = None
