@@ -252,7 +252,12 @@ class Timer(ModeDevice):
         """
         del kwargs
         self.reset()
-        self.start()
+        # If the timer is not running, start it
+        if not self.running:
+            self.start()
+        # If the timer is running, post an updated tick event
+        else:
+            self._post_tick_events()
 
     def stop(self, **kwargs):
         """Stop the timer and posts the 'timer_<name>_stopped' event.
@@ -363,8 +368,7 @@ class Timer(ModeDevice):
 
             self.debug_log("Restart on complete: True")
 
-            self.reset()
-            self.start()
+            self.restart()
 
     def _timer_tick(self):
         # Automatically called by the core clock each tick
