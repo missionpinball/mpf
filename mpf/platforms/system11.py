@@ -23,9 +23,10 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
 
     """Overlay platform to drive system11 machines using a WPC controller."""
 
-    __slots__ = ["delay", "platform", "system11_config", "a_side_queue", "c_side_queue",
+    __slots__ = ["delay", "platform", "system11_config", "a_side_queue", "c_side_queue", "debounce_secs",
                  "a_side_done_time", "c_side_done_time", "drivers_holding_a_side", "drivers_holding_c_side",
-                 "a_side_enabled", "c_side_enabled", "ac_relay_in_transition", "prefer_a_side", "drivers"]
+                 "a_side_enabled", "c_side_enabled", "ac_relay_in_transition", "prefer_a_side", "drivers",
+                 "relay_switch"]
 
     def __init__(self, machine: MachineController) -> None:
         """Initialise the board."""
@@ -44,6 +45,7 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
 
         self.a_side_done_time = 0
         self.c_side_done_time = 0
+        self.debounce_secs = 0
         self.drivers_holding_a_side = set()     # type: Set[DriverPlatformInterface]
         self.drivers_holding_c_side = set()     # type: Set[DriverPlatformInterface]
         self.a_side_enabled = True
@@ -61,24 +63,25 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
         """Stop the overlay. Nothing to do here because stop is also called on parent platform."""
 
     @property
+    def a_side_active(self):
+        """Return if A side cannot be switched off right away."""
+        return self.drivers_holding_a_side or self.a_side_done_time + self.debounce_secs > self.machine.clock.get_time()
+
+    @property
     def a_side_busy(self):
-        """Return if A side cannot be switches off right away."""
-        return self.drivers_holding_a_side or self.a_side_done_time > self.machine.clock.get_time() or self.a_side_queue
+        """Return if A side cannot be switched off right away."""
+        return self.a_side_active or self.a_side_queue
 
     @property
     def c_side_active(self):
-        """Return if C side cannot be switches off right away."""
-        return self.drivers_holding_c_side or self.c_side_done_time > self.machine.clock.get_time()
+        """Return if C side cannot be switched off right away."""
+        return self.drivers_holding_c_side or self.c_side_done_time + self.debounce_secs > self.machine.clock.get_time()
 
     @property
     def c_side_busy(self):
-        """Return if C side cannot be switches off right away."""
-        return self.drivers_holding_c_side or self.c_side_done_time > self.machine.clock.get_time() or self.c_side_queue
+        """Return if C side cannot be switched off right away."""
+        return self.c_side_active or self.c_side_queue
 
-    @property
-    def a_side_active(self):
-        """Return if A side cannot be switches off right away."""
-        return self.drivers_holding_a_side or self.a_side_done_time > self.machine.clock.get_time()
 
     async def initialize(self):
         """Automatically called by the Platform class after all the core modules are loaded."""
@@ -101,8 +104,15 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
 
         self.system11_config['ac_relay_driver'].get_and_verify_hold_power(1.0)
 
-        self.log.debug("Configuring A/C Select Relay transition delay for "
-                       "%sms", self.system11_config['ac_relay_delay_ms'])
+        if self.system11_config['ac_relay_switch']:
+            self.log.debug("Configuring A/C Select Relay switch %s", self.system11_config['ac_relay_switch'])
+            self.system11_config['ac_relay_switch'].add_handler(state=0, callback=self._a_side_enabled)
+            self.system11_config['ac_relay_switch'].add_handler(state=1, callback=self._c_side_enabled)
+
+        self.debounce_secs = self.system11_config['ac_relay_debounce_ms'] / 1000.0
+        self.log.debug("Configuring A/C Select Relay transition delay for %sms and debounce for %s",
+                       self.system11_config['ac_relay_delay_ms'],
+                       self.system11_config['ac_relay_debounce_ms'])
 
         self.machine.events.add_handler(self.system11_config['prefer_a_side_event'], self._prefer_a_side)
         self.log.info("Configuring System11 driver to prefer A side on event %s",
@@ -294,9 +304,11 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
         self.ac_relay_in_transition = True
         self.a_side_enabled = False
         self.c_side_enabled = False
-        self.delay.add(ms=self.system11_config['ac_relay_delay_ms'],
-                       callback=self._c_side_enabled,
-                       name='enable_ac_relay')
+        # Without a relay switch, use a delay to wait for the relay to enable
+        if not self.system11_config['ac_relay_switch']:
+            self.delay.add(ms=self.system11_config['ac_relay_delay_ms'],
+                        callback=self._c_side_enabled,
+                        name='enable_ac_relay')
 
     def _disable_ac_relay(self):
         self.system11_config['ac_relay_driver'].disable()
@@ -306,9 +318,10 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
         # Clear out the C side queue if we don't want to hold onto it for later
         if not self.system11_config['queue_c_side_while_preferred']:
             self.c_side_queue.clear()
-        self.delay.add(ms=self.system11_config['ac_relay_delay_ms'],
-                       callback=self._a_side_enabled,
-                       name='disable_ac_relay')
+        if not self.system11_config['ac_relay_switch']:
+            self.delay.add(ms=self.system11_config['ac_relay_delay_ms'],
+                        callback=self._a_side_enabled,
+                        name='disable_ac_relay')
 
     # -------------------------------- A SIDE ---------------------------------
 
@@ -319,9 +332,6 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
                 if self.c_side_active:
                     self._disable_all_c_side_drivers()
                     self._disable_ac_relay()
-                    self.delay.add(ms=self.system11_config['ac_relay_delay_ms'],
-                                   callback=self._enable_a_side,
-                                   name='enable_a_side')
                     return
 
                 if self.c_side_enabled:
@@ -367,7 +377,7 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
 
             if timed_enable:
                 wait_ms = driver.timed_enable(pulse_settings, hold_settings) or 0
-                wait_secs = (pulse_settings.duration + wait_ms) / 1000.0
+                wait_secs = (pulse_settings.duration + hold_settings.duration + wait_ms) / 1000.0
                 self.a_side_done_time = max(self.a_side_done_time, self.machine.clock.get_time() + wait_secs)
 
             elif hold_settings is None and pulse_settings:
@@ -395,9 +405,6 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
                 if self.a_side_active:
                     self._disable_all_a_side_drivers()
                     self._enable_ac_relay()
-                    self.delay.add(ms=self.system11_config['ac_relay_delay_ms'],
-                                   callback=self._enable_c_side,
-                                   name='enable_c_side')
                     return
 
                 if self.a_side_enabled:
