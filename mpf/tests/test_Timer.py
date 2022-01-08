@@ -337,6 +337,13 @@ class TestTimer(MpfFakeGameTestCase):
         self.advance_time_and_run()
         self.assertEqual(5, timer.ticks)
 
+        # Ensure that we get the 0 tick when it restarts
+        self.mock_event("timer_timer_up_tick")
+        self.post_event('restart_timer_up')
+        self.assertEqual(0, timer.ticks)
+        self.assertEventCalledWith("timer_timer_up_tick",
+                                   ticks=0, ticks_remaining=10)
+
     def test_interrupt_timer_by_mode_stop_with_player(self):
         self.machine.events.add_handler("timer_timer_down_tick", self._timer_tick)
         self.machine.events.add_handler("timer_timer_down_started", self._timer_start)
