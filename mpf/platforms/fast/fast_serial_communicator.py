@@ -338,7 +338,8 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         debug = self.platform.config['debug']
         if self.dmd:
             self.writer.write(b'BM:' + msg)
-            if debug:
+            # Don't log W(atchdog), they are noisy
+            if debug and msg[0] != "W":
                 self.platform.log.debug("Send: %s", "".join(" 0x%02x" % b for b in msg))
 
         else:
@@ -353,8 +354,21 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                                self.max_messages_in_flight)
 
             self.writer.write(msg.encode() + b'\r')
-            if debug and msg[0:2] != "WD":
+            # Don't log W(atchdog) or L(ight) messages, they are noisy
+            if debug and msg[0] != "W" and msg[0] != "L":
                 self.platform.log.debug("Send: %s", msg)
+
+            # MOCK AC Relay switch until it's supported by the platform
+            if msg[0:8] == "DL:13,C1":
+                self.machine.clock.schedule_once(
+                    lambda: self.machine.switch_controller.process_switch('s_ac_relay', 1, logical=True),
+                    self.platform.system11_config['ac_relay_delay_ms'] / 1000
+                )
+            elif msg[0:5] == "TL:13":
+                self.machine.clock.schedule_once(
+                    lambda: self.machine.switch_controller.process_switch('s_ac_relay', 0, logical=True),
+                    self.platform.system11_config['ac_relay_delay_ms'] / 1000
+                )
 
     async def _socket_writer(self):
         while True:
