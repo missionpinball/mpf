@@ -136,7 +136,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         try:
             self.remote_processor, self.remote_model, self.remote_firmware = msg[3:].split()
         except ValueError:
-            # FP-CPU-2000 does not include a processor type, but is always NET
+            # Some boards (e.g. FP-CPU-2000) do not include a processor type, default to NET
             self.remote_model, self.remote_firmware = msg[3:].split()
             self.remote_processor = 'NET'
 
@@ -357,18 +357,6 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             # Don't log W(atchdog) or L(ight) messages, they are noisy
             if debug and msg[0] != "W" and msg[0] != "L":
                 self.platform.log.debug("Send: %s", msg)
-
-            # MOCK AC Relay switch until it's supported by the platform
-            if msg[0:8] == "DL:13,C1":
-                self.machine.clock.schedule_once(
-                    lambda: self.machine.switch_controller.process_switch('s_ac_relay', 1, logical=True),
-                    self.platform.system11_config['ac_relay_delay_ms'] / 1000
-                )
-            elif msg[0:5] == "TL:13":
-                self.machine.clock.schedule_once(
-                    lambda: self.machine.switch_controller.process_switch('s_ac_relay', 0, logical=True),
-                    self.platform.system11_config['ac_relay_delay_ms'] / 1000
-                )
 
     async def _socket_writer(self):
         while True:
