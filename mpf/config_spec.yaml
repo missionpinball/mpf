@@ -1857,10 +1857,14 @@ system11:
     __valid_in__: machine
     __type__: config
     ac_relay_delay_ms: single|ms|75ms
+    ac_relay_debounce_ms: single|ms|0
     ac_relay_driver: single|machine(coils)|
+    ac_relay_switch: single|machine(switches)|None
     prefer_a_side_event: single|event_handler|game_ended
     prefer_c_side_event: single|event_handler|game_will_start
+    queue_c_side_while_preferred: single|bool|true
     platform: single|str|None
+    debug: single|bool|false
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
 text_strings:
