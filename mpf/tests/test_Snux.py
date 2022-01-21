@@ -52,10 +52,10 @@ class TestSnux(MpfFakeGameTestCase):
         c_ac_relay.enable = MagicMock()
         c_ac_relay.disable = MagicMock()
 
-        driver_11.pulse = MagicMock()
+        driver_11.pulse = MagicMock(return_value=0)
         driver_11.enable = MagicMock()
         driver_11.disable = MagicMock()
-        driver_12.pulse = MagicMock()
+        driver_12.pulse = MagicMock(return_value=0)
         driver_12.enable = MagicMock()
         driver_12.disable = MagicMock()
 
