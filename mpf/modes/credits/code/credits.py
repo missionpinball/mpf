@@ -51,10 +51,10 @@ class Credits(Mode):
             section_name='credits')
 
         for event in self.credits_config['reset_earnings_events']:
-            self.machine.events.add_handler(event, self._reset_earnings)
+            self.machine.events.add_handler(event, self._reset_earnings, priority=1)
 
         for event in self.credits_config['reset_credits_events']:
-            self.machine.events.add_handler(event, self._reset_credits)
+            self.machine.events.add_handler(event, self._reset_credits, priority=2)
 
         # add setting
         self.machine.settings.add_setting(SettingEntry("free_play", "Free Play", 500,

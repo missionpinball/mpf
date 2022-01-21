@@ -52,7 +52,8 @@ class PluginPlayer(DeviceConfigPlayer):
         events = super().register_player_events(config, mode, priority)
         # when bcp is disabled do not register plugin_player
         if self.machine.options['bcp']:
-            if self.machine.is_shutting_down:
+            # hasattr check is for IMC to work
+            if hasattr(self.machine, 'is_shutting_down') and self.machine.is_shutting_down:
                 return events
             self.bcp_client = self._get_bcp_client(config)
 
