@@ -264,6 +264,16 @@ class TestFastBase(MpfTestCase):
         self.create_expected_commands()
         super().setUp()
 
+        # If a test is testing a bad config file and causes a startup exception,
+        # the machine will shut down. Safety check before we add futures to the loop.
+        if not self.machine.is_shutting_down:
+            # There are startup calls that keep the serial traffic busy. Many tests define
+            # self.net_cpu.expected_commands assuming that the serial bus is quiet. Add a
+            # tiny delay here to let the startup traffic clear out so that tests don't get
+            # slammed with unexpected network traffic.
+            # Note that the above scenario only causes tests to fail on Windows machines!
+            self.advance_time_and_run(0.1)
+
     def test_coils(self):
         self._test_pulse()
         self._test_long_pulse()
