@@ -56,7 +56,7 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         self.features['has_drivers'] = False
         self.features['tickless'] = False
         self.features['has_segment_displays'] = False
-        self.features['has_hardware_sound_systems'] = False
+        self.features['has_hardware_sound_systems'] = True
         self.features['has_steppers'] = False
         self.features['allow_empty_numbers'] = False
         self.features['hardware_eos_repulse'] = False
@@ -162,7 +162,7 @@ class HardwareSoundPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_hardware_sound_systems'] = True
 
     @abc.abstractmethod
-    def configure_hardware_sound_system(self) -> "HardwareSoundPlatformInterface":
+    def configure_hardware_sound_system(self, platform_settings: dict) -> "HardwareSoundPlatformInterface":
         """Return a reference to the hardware sound interface."""
         raise NotImplementedError
 

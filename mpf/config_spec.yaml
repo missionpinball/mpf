@@ -622,6 +622,7 @@ fast:
     hardware_led_fade_time: single|ms|0
     debug: single|bool|false
     net_buffer: single|int|10
+    aud_buffer: single|int|3
     rgb_buffer: single|int|3
     dmd_buffer: single|int|3
     console_log: single|enum(none,basic,full)|none
@@ -698,6 +699,7 @@ hardware_sound_systems:
     __valid_in__: machine
     __type__: device
     platform: single|str|None
+    platform_settings: single|dict|None
 hardware_sound_player:
     __valid_in__: machine, mode, show
     __type__: config_player

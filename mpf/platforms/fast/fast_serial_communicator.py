@@ -54,7 +54,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                         'XX:N'
                         ]
 
-    __slots__ = ["dmd", "remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
+    __slots__ = ["aud", "dmd", "remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
                  "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
                  "send_queue", "is_retro", "is_legacy"]
 
@@ -67,6 +67,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             port: serial port
             baud: baud rate
         """
+        self.aud = None
         self.dmd = False
 
         self.remote_processor = None
@@ -169,7 +170,13 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         either "dmd", "net", or "rgb", one for each processor that's attached.
         '''
 
-        if self.remote_processor == 'DMD':
+        if self.remote_processor == "AUD":
+            min_version = AUD_MIN_FW
+            self.aud = True
+            self.max_messages_in_flight = self.platform.config['aud_buffer']
+            self.platform.debug_log("Setting AUD buffer size: %s",
+                                    self.max_messages_in_flight)
+        elif self.remote_processor == 'DMD':
             min_version = DMD_MIN_FW
             # latest_version = DMD_LATEST_FW
             self.dmd = True
