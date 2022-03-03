@@ -218,13 +218,13 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             msg = (await self.readuntil(b'\r')).decode()
             self.platform.debug_log("Got: %s", msg)
 
-    async def configure_retro_hardware(self):
+    async def configure_hardware(self):
         """Verify Retro board type."""
         # For Retro boards, send the CPU configuration
         hardware_key = fast_defines.HARDWARE_KEY[self.platform.machine_type]
-        self.platform.debug_log("Writing Retro hardware key %s from machine type %s",
+        self.platform.debug_log("Writing FAST hardware key %s from machine type %s",
                                 hardware_key, self.platform.machine_type)
-        self.writer.write(f'CH:{hardware_key},1\r'.encode())
+        self.writer.write(f'CH:{hardware_key},FF\r'.encode())
 
         msg = ''
         while msg != 'CH:P\r':
@@ -246,14 +246,14 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         else:
             self.platform.debug_log("Reset successful")
 
-        if self.is_retro:
+        if not self.is_legacy:
             await asyncio.sleep(.2)
             try:
-                await asyncio.wait_for(self.configure_retro_hardware(), 15)
+                await asyncio.wait_for(self.configure_hardware(), 15)
             except asyncio.TimeoutError:
-                self.platform.warning_log("Configuring Retro hardware timed out.")
+                self.platform.warning_log("Configuring FAST hardware timed out.")
             else:
-                self.platform.debug_log("Retro hardware configuration accepted.")
+                self.platform.debug_log("FAST hardware configuration accepted.")
 
         await asyncio.sleep(.5)
 

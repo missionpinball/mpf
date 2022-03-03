@@ -1,7 +1,7 @@
 """Defines for FAST Boards."""
 
 HARDWARE_KEY = {
-    "FP-CPU-2000": '2000',
+    "fast":  '2000',
     "sys11": '1100',
     "wpc89": '8900',
     "wpc95": '9500'
