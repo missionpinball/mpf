@@ -358,18 +358,6 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             if debug and msg[0] != "W" and msg[0] != "L":
                 self.platform.log.debug("Send: %s", msg)
 
-            # MOCK AC Relay switch until it's supported by the platform
-            if msg[0:8] == "DL:13,C1":
-                self.machine.clock.schedule_once(
-                    lambda: self.machine.switch_controller.process_switch('s_ac_relay', 1, logical=True),
-                    self.platform.system11_config['ac_relay_delay_ms'] / 1000
-                )
-            elif msg[0:5] == "TL:13":
-                self.machine.clock.schedule_once(
-                    lambda: self.machine.switch_controller.process_switch('s_ac_relay', 0, logical=True),
-                    self.platform.system11_config['ac_relay_delay_ms'] / 1000
-                )
-
     async def _socket_writer(self):
         while True:
             msg = await self.send_queue.get()

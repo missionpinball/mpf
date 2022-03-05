@@ -142,7 +142,7 @@ class MockFastNet(BaseMockFast):
         self.type = "NET"
         self.id = "FP-CPU-2000-1 2.00"
         self.sa = "09,050000000000000000"
-        self.ch = None
+        self.ch = "2000"
         self.expected_commands = None
 
         self.attached_boards = {
@@ -198,7 +198,7 @@ class TestFastBase(MpfTestCase):
         self.net_cpu.expected_commands = {
             'BR:': '#!B:02',    # there might be some garbage in front of the command
             'ID:': f'ID:{self.net_cpu.id}',
-            f'CH:{self.net_cpu.ch},1': 'CH:P',
+            f'CH:{self.net_cpu.ch},FF': 'CH:P',
             **self.net_cpu.attached_boards,
             "SA:": f"SA:{self.net_cpu.sa}",
             "SL:01,01,04,04": "SL:P",
