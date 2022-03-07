@@ -93,6 +93,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                               'NI': lambda x, y: None,  # node ID
                               'RX': lambda x, y: None,  # RGB cmd received
                               'RA': lambda x, y: None,  # RGB all cmd received
+                              'RS': lambda x, y: None,  # RGB single cmd received
                               'RF': lambda x, y: None,  # RGB fade cmd received
                               'DX': lambda x, y: None,  # DMD cmd received
                               'SX': lambda x, y: None,  # sw config received
