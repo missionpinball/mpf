@@ -13,16 +13,17 @@ from mpf.platforms.fast.fast_io_board import FastIoBoard
 # The following minimum firmware versions are to prevent breaking changes
 # in MPF from running on boards that have not been updated.
 DMD_MIN_FW = '0.88'         # Minimum FW for a DMD
-NET_MIN_FW = '1.99'         # Minimum FW for a V2 controller
+NET_MIN_FW = '2.0'         # Minimum FW for a V2 controller
 NET_LEGACY_MIN_FW = '0.88'  # Minimum FW for a V1 controller
-RGB_MIN_FW = '0.87'         # Minimum FW for an RGB LED controller
+RGB_MIN_FW = '2.0'         # Minimum FW for an RGB LED controller
+RGB_LEGACY_MIN_FW = '0.87'
 IO_MIN_FW = '1.09'          # Minimum FW for an IO board linked to a V2 controller
 IO_LEGACY_MIN_FW = '0.87'   # Minimum FW for an IO board linked to a V1 controller
 SEG_MIN_FW = '0.10'         # Minimum FW for a Segment Display
 
 LEGACY_ID = 'FP-CPU-0'      # Start of an id for V1 controller
 RETRO_ID = 'FP-SBI'         # Start of an id for a Retro controller
-V2_FW = '1.30'              # Firmware cutoff from V1 to V2 controllers
+V2_FW = '1.80'              # Firmware cutoff from V1 to V2 controllers
 
 # DMD_LATEST_FW = '0.88'
 # NET_LATEST_FW = '0.90'
@@ -182,7 +183,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             self.platform.debug_log("Setting NET buffer size: %s",
                                     self.max_messages_in_flight)
         elif self.remote_processor == 'RGB':
-            min_version = RGB_MIN_FW
+            min_version = RGB_LEGACY_MIN_FW if self.remote_model.startswith(LEGACY_ID) else RGB_MIN_FW
             # latest_version = RGB_LATEST_FW
             self.max_messages_in_flight = self.platform.config['rgb_buffer']
             self.platform.debug_log("Setting RGB buffer size: %s",
