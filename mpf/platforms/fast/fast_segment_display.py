@@ -27,8 +27,7 @@ class FASTSegmentDisplay(SegmentDisplayPlatformInterface):
         del flashing
         del flash_mask
         colors = text.get_colors()
-        self.serial.send(('PA:{},{}').format(
-            self.hex_id, text[0:7]))
+        self.serial.send(f'PA:{self.hex_id},{text.convert_to_str()[0:7]}')
         if colors:
             self._set_color(colors)
 

@@ -820,6 +820,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         return "fast_switches"
 
     def _check_switch_coil_combincation(self, switch, coil):
+        # V2 hardware can write rules across node boards
+        if not self.net_connection.is_legacy:
+            return
+
         switch_number = int(switch.hw_switch.number[0], 16)
         coil_number = int(coil.hw_driver.number, 16)
 
