@@ -106,7 +106,7 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
                                self.system11_config['file_log'])
 
         self.log.debug("Configuring A/C Select Relay for driver %s",
-                       self.system11_config['ac_relay_driver'].name)
+                       self.system11_config['ac_relay_driver'])
 
         self.system11_config['ac_relay_driver'].get_and_verify_hold_power(1.0)
 
@@ -168,7 +168,11 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
 
     def validate_switch_section(self, switch, config: dict) -> dict:
         """Validate switch config for overlayed platform."""
-        return self.platform.validate_switch_section(switch, config)
+        # Check for a platform to have a custom switch validation method, but avoid recursion
+        # since the platform will (most likely) inherit from System11OverlayPlatform
+        if self.platform is not None:
+            return self.platform.validate_switch_section(switch, config)
+        return SwitchPlatform.validate_switch_section(self, switch, config)
 
     async def get_hw_switch_states(self):
         """Get initial hardware state."""
@@ -496,7 +500,11 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
 
     def validate_coil_section(self, driver, config):
         """Validate coil config for platform."""
-        return self.platform.validate_coil_section(driver, config)
+        # Check for a platform to have a custom coil validation method, but avoid recursion
+        # since the platform will (most likely) inherit from System11OverlayPlatform
+        if self.platform is not None:
+            return self.platform.validate_coil_section(driver, config)
+        return DriverPlatform.validate_coil_section(self, driver, config)
 
 
 class System11Driver(DriverPlatformInterface):

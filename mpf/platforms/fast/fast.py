@@ -177,9 +177,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Upgrade the firmware of the CPUs."""
         return self._update_net()
 
-    async def initialize(self, **kwargs):
+    async def initialize(self):
         """Initialise platform."""
-        await super().initialize(**kwargs)
         await self._connect_to_hardware()
 
     def stop(self):
@@ -530,17 +529,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         # If we have Retro driver boards, look up the driver number
         if self.is_retro:
-            # Look for a system11 A/C relay driver number ending in 'a' or 'c'
-            side = number[-1].upper()
-            if side in ('A', 'C'):
-                address = fast_defines.RETRO_DRIVER_MAP[number[:-1].upper()]
-                # Configure a FASTDriver at the retro map address
-                hw_driver = FASTDriver(config, self, address, platform_settings)
-                system11_driver = System11Driver(number, hw_driver, self, side)
-
-                return system11_driver
-
-            # If it's not a s11 A/C relay driver, look up the address in the retro map
             try:
                 number = fast_defines.RETRO_DRIVER_MAP[number.upper()]
             except KeyError:
@@ -798,20 +786,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def get_coil_config_section(cls):
         """Return coil config section."""
         return "fast_coils"
-
-    def validate_coil_section(self, driver, config):
-        """Validate coil sections."""
-        # Fast inherits from System11OverlayPlatform, which inherits from DriverPlatform.
-        # System11 will attempt to call back to this class, creating an infinite loop.
-        # Instead, call validation on DriverPlatform directly.
-        return DriverPlatform.validate_coil_section(self, driver, config)
-
-    def validate_switch_section(self, switch, config: dict) -> dict:
-        """Validate switch config for overlayed platform."""
-        # Fast inherits from System11OverlayPlatform, which inherits from SwitchPlatform.
-        # System11 will attempt to call back to this class, creating an infinite loop.
-        # Instead, call validation on SwitchPlatform directly.
-        return SwitchPlatform.validate_switch_section(self, switch, config)
 
     @classmethod
     def get_switch_config_section(cls):
