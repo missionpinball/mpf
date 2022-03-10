@@ -431,12 +431,11 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
         self.assertFalse(self.net_cpu.expected_commands)
 
         self.net_cpu.expected_commands = {
-            "DL:10,01,03,10,0A,89,00,00,14": "DL:P",
+            "DL:21,01,16,10,0A,FF,00,00,14": "DL:P",
         }
         # coil and switch are on different boards
-        with self.assertRaises(AssertionError):
-            self.machine.autofire_coils["ac_broken_combination"].enable()
-            self.advance_time_and_run(.1)
+        self.machine.autofire_coils["ac_broken_combination"].enable()
+        self.advance_time_and_run(.1)
 
     def _test_enable_exception_hw_rule(self):
         # enable coil which does not have allow_enable
