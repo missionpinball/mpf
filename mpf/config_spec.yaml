@@ -620,7 +620,6 @@ fast:
     net_buffer: single|int|10
     rgb_buffer: single|int|3
     dmd_buffer: single|int|3
-    segment_buffer: single|int|4
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
     firmware_updates: list|subconfig(fast_firmware_update)|None

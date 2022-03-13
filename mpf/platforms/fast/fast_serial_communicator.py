@@ -191,9 +191,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         elif self.remote_processor == 'SEG':
             min_version = SEG_MIN_FW
             # latest_version = SEG_LATEST_FW
-            self.max_messages_in_flight = self.platform.config['segment_buffer']
-            self.platform.debug_log("Setting SEG buffer size: %s",
-                                    self.max_messages_in_flight)
+            self.max_messages_in_flight = 0  # SEG doesn't have ACK messages
         else:
             raise AttributeError(f"Unrecognized FAST processor type: {self.remote_processor}")
 
@@ -343,6 +341,9 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             if debug and msg[0] != "W":
                 self.platform.log.debug("Send: %s", "".join(" 0x%02x" % b for b in msg))
 
+        elif not self.max_messages_in_flight:  # For processors that don't use this
+            self.writer.write(msg.encode() + b'\r')
+            self.platform.log.debug("Sending without message flight tracking: %s", msg)
         else:
             self.messages_in_flight += 1
             if self.messages_in_flight > self.max_messages_in_flight:
