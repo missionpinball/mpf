@@ -348,9 +348,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         This is done once per game loop for efficiency (i.e. all LEDs are sent as a single
         update rather than lots of individual ones).
 
-        Also, every LED is updated every loop, even if it doesn't change. This
-        is in case some interference causes a LED to change color. Since we
-        update every loop, it will only be the wrong color for one tick.
         """
         dirty_leds = [led for led in self.fast_leds.values() if led.dirty]
 
