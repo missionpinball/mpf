@@ -12,8 +12,8 @@ shots:
     profile: state_toggle
     advance_events: advance_event1
     reset_events: reset_event1
-    jump_states:
-      - events: state_event1
+    control_events:
+      - events: state_event1, state_event10
         state: 1
   shot_state_2:
     switch: switch_2
@@ -24,7 +24,7 @@ shots:
     reset_events: reset_event2
     enable_events: enable_event2
     disable_events: disable_event2
-    jump_states:
+    control_events:
       - events: state_event2
         state: 0
         force: false

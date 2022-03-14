@@ -954,9 +954,10 @@ class TestShots(MpfTestCase):
         self.mock_event("state_event1")
         self.mock_event("advance_event1")
         self.mock_event("reset_event1")
+        self.mock_event("reset_event10")
         # Shot 1 tests
         self.assertEqual("unlit", shot1.state_name)
-        self.post_event("state_event1")
+        self.post_event("state_event10")
         self.assertEqual("lit", shot1.state_name)
         self.post_event("reset_event1")
         self.assertEqual("unlit", shot1.state_name)
