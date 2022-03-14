@@ -1445,7 +1445,13 @@ shots:
     restart_events: event_handler|event_handler:ms|None
     advance_events: event_handler|event_handler:ms|None
     hit_events: event_handler|event_handler:ms|None
+    jump_states: list|subconfig(shot_jump_states)|None
     show_tokens: dict|str:template_str|None
+shot_jump_states:
+    events: list|event_handler|
+    state: single|int|0
+    force: single|bool|true
+    force_show: single|bool|false
 shot_groups:
     __valid_in__: mode
     __type__: device

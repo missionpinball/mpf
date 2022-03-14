@@ -49,6 +49,7 @@ class Shot(EnableDisableMixin, ModeDevice):
         for switch in self.config['switches'] + list(self.config['delay_switch'].keys()):
             # mark the playfield active no matter what
             switch.add_handler(self._mark_active)
+        self._register_jump_state_handlers()
 
     def _mark_active(self, **kwargs):
         """Mark playfield active."""
@@ -266,6 +267,7 @@ class Shot(EnableDisableMixin, ModeDevice):
         """
         super().device_removed_from_mode(mode)
         self._remove_switch_handlers()
+        self._remove_jump_state_handlers()
         if self.running_show:
             self.running_show.stop()
             self.running_show = None
@@ -411,6 +413,23 @@ class Shot(EnableDisableMixin, ModeDevice):
 
     def _release_delay(self, switch):
         self.active_delays.remove(switch)
+
+    def _register_jump_state_handlers(self):
+        for jump_state in self.config['jump_states']:
+            for event in jump_state['events']:
+                self._handlers.append(self.machine.events.add_handler(event, self._jump_states,
+                                                                      jump_state_config=jump_state))
+
+    def _remove_jump_state_handlers(self):
+        self.machine.events.remove_handlers_by_keys(self._handlers)
+
+    @event_handler(7)
+    def _jump_states(self, jump_state_config, **kwargs):
+        """Takes in a jump_state event to move the state of the given shot to a specific state. (Default = State 0)"""
+        del kwargs
+        self.jump(jump_state_config['state'],
+                  jump_state_config['force'],
+                  jump_state_config['force_show'])
 
     def jump(self, state, force=True, force_show=False):
         """Jump to a certain state in the active shot profile.
