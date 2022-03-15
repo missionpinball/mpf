@@ -335,12 +335,34 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.net_connection = communicator
         elif name == 'SEG':
             self.seg_connection = communicator
+
+            # Dirty patch to batch segment updates
+            self.machine.events.add_handler('machine_reset_phase_3', self._start_seg_updates)
+
         elif name == 'RGB':
             self.rgb_connection = communicator
             self.rgb_connection.send('RF:0')
             self.rgb_connection.send('RA:000000')  # turn off all LEDs
             self.rgb_connection.send('RF:{}'.format(
                 Util.int_to_hex_string(self.config['hardware_led_fade_time'])))
+
+    def _start_seg_updates(self, **kwargs):        
+        self.machine.clock.schedule_interval(self._update_segs, 0.03)  # Adjust this last value for udpate interval, in seconds.
+    
+    def _update_segs(self, **kwargs):
+        combined_text = ''
+        combined_colors = ''
+        
+        for s in self.machine.segment_displays:
+            combined_text += s.hw_display.next_text
+            combined_colors += s.hw_display.next_color
+            s.hw_display.next_text = ''
+            s.hw_display.next_color = ''
+        
+        self.seg_connection.send(f'PA:00,{combined_text}')
+
+        if combined_colors:
+            self.seg_connection.send(f'PC:00,{combined_colors}')
 
     def update_leds(self):
         """Update all the LEDs connected to a FAST controller.

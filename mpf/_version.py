@@ -10,7 +10,7 @@ PyPI.
 
 """
 
-__version__ = '0.56.0-dev.21bsm'
+__version__ = '0.56.0-dev.23bsm-fast-segment-throttling'
 '''The full version of MPF.'''
 
 __short_version__ = '0.56'

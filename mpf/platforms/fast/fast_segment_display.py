@@ -14,20 +14,23 @@ class FASTSegmentDisplay(SegmentDisplayPlatformInterface):
 
     """FAST segment display."""
 
-    __slots__ = ["serial", "hex_id"]
+    __slots__ = ["serial", "hex_id", "next_color", "next_text"]
 
     def __init__(self, index, communicator):
         """Initialise alpha numeric display."""
         super().__init__(index)
         self.serial = communicator
         self.hex_id = Util.int_to_hex_string(index * 7)
+        self.next_color = None
+        self.next_text = None
 
     def set_text(self, text: ColoredSegmentDisplayText, flashing: FlashingType, flash_mask: str) -> None:
         """Set digits to display."""
         del flashing
         del flash_mask
         colors = text.get_colors()
-        self.serial.send(f'PA:{self.hex_id},{text.convert_to_str()[0:7]}')
+        # self.serial.send(f'PA:{self.hex_id},{text.convert_to_str()[0:7]}')
+        self.next_text = text.convert_to_str()[0:7]
         if colors:
             self._set_color(colors)
 
@@ -38,5 +41,7 @@ class FASTSegmentDisplay(SegmentDisplayPlatformInterface):
             colors = (RGBColor(colors[0]).hex + ',') * 7
         else:
             colors = ','.join([RGBColor(color).hex for color in colors])
-        self.serial.send(('PC:{},{}').format(
-            self.hex_id, colors))
+        #self.serial.send(('PC:{},{}').format(
+        #    self.hex_id, colors))
+
+        self.next_color = colors
