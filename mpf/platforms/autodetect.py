@@ -19,7 +19,7 @@ def autodetect_smartmatrix_dmd_port():
 
 
 def _find_fast_retro():
-    devices = [port.device for port in serial.tools.list_ports.comports()]
+    devices = [port.device for port in _get_sorted_ports()]
     for d in devices:
         if re.search(r'\.usbmodem\d+$', d) or re.search(r'ACM\d$', d) or re.search(r'COM\d$', d):
             return [d]
@@ -29,7 +29,7 @@ def _find_fast_retro():
 
 def _find_fast_quad():
     ports = None
-    devices = [port.device for port in serial.tools.list_ports.comports()]
+    devices = [port.device for port in _get_sorted_ports()]
     # Look for four devices with sequential tails of 0-3 or A-D
     seqs = (("0", "1", "2", "3"), ("A", "B", "C", "D"))
     for d in devices:
@@ -45,4 +45,10 @@ def _find_fast_quad():
     if not ports:
         raise MpfRuntimeError(f"Unable to auto-detect FAST hardware from available devices: {', '.join(devices)}",
                               1, "autodetect.find_fast_quad")
+    return ports
+
+
+def _get_sorted_ports():
+    ports = serial.tools.list_ports.comports()
+    ports.sort()
     return ports
