@@ -40,7 +40,7 @@ class FASTSegmentDisplay(SegmentDisplayPlatformInterface):
         if len(colors) == 1:
             colors = (RGBColor(colors[0]).hex + ',') * 7
         else:
-            colors = ','.join([RGBColor(color).hex for color in colors])
+            colors = ','.join([RGBColor(color).hex for color in colors]) + ','
         #self.serial.send(('PC:{},{}').format(
         #    self.hex_id, colors))
 
