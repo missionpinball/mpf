@@ -29,8 +29,7 @@ class FASTSegmentDisplay(SegmentDisplayPlatformInterface):
         del flashing
         del flash_mask
         colors = text.get_colors()
-        # self.serial.send(f'PA:{self.hex_id},{text.convert_to_str()[0:7]}')
-        self.next_text = text.convert_to_str()[0:7]
+        self.next_text = text
         if colors:
             self._set_color(colors)
 
@@ -38,10 +37,6 @@ class FASTSegmentDisplay(SegmentDisplayPlatformInterface):
         """Set display color."""
         self.serial.platform.info_log("Color: {}".format(colors))
         if len(colors) == 1:
-            colors = (RGBColor(colors[0]).hex + ',') * 7
+            self.next_color = (RGBColor(colors[0]).hex + ',') * 7
         else:
-            colors = ','.join([RGBColor(color).hex for color in colors]) + ','
-        #self.serial.send(('PC:{},{}').format(
-        #    self.hex_id, colors))
-
-        self.next_color = colors
+            self.next_color = ','.join([RGBColor(color).hex for color in colors]) + ','

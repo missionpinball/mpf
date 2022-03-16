@@ -624,6 +624,7 @@ fast:
     file_log: single|enum(none,basic,full)|basic
     firmware_updates: list|subconfig(fast_firmware_update)|None
     ignore_rgb_crash: single|bool|false
+    segment_display_update_hz: single|int|20
 fast_firmware_update:
     type: single|enum(net,rgb)|
     file: single|str|

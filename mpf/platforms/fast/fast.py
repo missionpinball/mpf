@@ -43,7 +43,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "seg_connection", "is_retro",
                  "serial_connections", "fast_leds", "fast_commands", "config", "machine_type", "hw_switch_data",
-                 "io_boards", "flag_led_tick_registered", "_watchdog_task", "_led_task"]
+                 "io_boards", "flag_led_tick_registered", "_watchdog_task", "_led_task", "flag_seg_tick_registered",
+                 "fast_segs"]
 
     def __init__(self, machine):
         """Initialise fast hardware platform.
@@ -84,7 +85,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self._led_task = None
         self.serial_connections = set()         # type: Set[FastSerialCommunicator]
         self.fast_leds = {}
+        self.fast_segs = list()
         self.flag_led_tick_registered = False
+        self.flag_seg_tick_registered = False
         self.hw_switch_data = None
         self.io_boards = {}     # type: Dict[int, FastIoBoard]
 
@@ -336,9 +339,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         elif name == 'SEG':
             self.seg_connection = communicator
 
-            # Dirty patch to batch segment updates
-            self.machine.events.add_handler('machine_reset_phase_3', self._start_seg_updates)
-
+            if not self.flag_seg_tick_registered:
+                # Need to wait until the segs are all set up
+                self.machine.events.add_handler('machine_reset_phase_3', self._start_seg_updates)
+                
         elif name == 'RGB':
             self.rgb_connection = communicator
             self.rgb_connection.send('RF:0')
@@ -347,22 +351,29 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 Util.int_to_hex_string(self.config['hardware_led_fade_time'])))
 
     def _start_seg_updates(self, **kwargs):        
-        self.machine.clock.schedule_interval(self._update_segs, 0.03)  # Adjust this last value for udpate interval, in seconds.
+
+        for s in self.machine.device_manager.collections["segment_displays"]:
+            self.fast_segs.append(s.hw_display)
+        
+        self.fast_segs.sort(key=lambda x: x.number)
+
+        if self.fast_segs:
+            self.machine.clock.schedule_interval(self._update_segs,
+                                                1 / self.machine.config['fast'][
+                                                    'segment_display_update_hz'])
+            self.flag_seg_tick_registered = True
     
     def _update_segs(self, **kwargs):
-        combined_text = ''
-        combined_colors = ''
         
-        for s in self.machine.segment_displays:
-            combined_text += s.hw_display.next_text
-            combined_colors += s.hw_display.next_color
-            s.hw_display.next_text = ''
-            s.hw_display.next_color = ''
-        
-        self.seg_connection.send(f'PA:00,{combined_text}')
+        for s in self.fast_segs:
 
-        if combined_colors:
-            self.seg_connection.send(f'PC:00,{combined_colors}')
+            if s.next_text:
+                self.seg_connection.send(f'PA:{s.hex_id},{s.next_text.convert_to_str()[0:7]}')
+                s.next_text = None
+            
+            if s.next_color:
+                self.seg_connection.send(('PC:{},{}').format(s.hex_id, s.next_color))
+                s.next_color = None
 
     def update_leds(self):
         """Update all the LEDs connected to a FAST controller.
@@ -793,7 +804,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Configure a segment display."""
         self.debug_log("Configuring FAST segment display.")
         del platform_settings
-        del display_size
         if not self.seg_connection:
             raise AssertionError("A request was made to configure a FAST "
                                  "Segment Display but no connection is "
