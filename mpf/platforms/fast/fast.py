@@ -43,7 +43,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "seg_connection", "is_retro",
                  "serial_connections", "fast_leds", "fast_commands", "config", "machine_type", "hw_switch_data",
-                 "io_boards", "flag_led_tick_registered", "_watchdog_task", "_led_task", "flag_seg_tick_registered",
+                 "io_boards", "flag_led_tick_registered", "_watchdog_task", "_led_task", "_seg_task",
                  "fast_segs"]
 
     def __init__(self, machine):
@@ -87,7 +87,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.fast_leds = {}
         self.fast_segs = list()
         self.flag_led_tick_registered = False
-        self.flag_seg_tick_registered = False
+        self._seg_task = None
         self.hw_switch_data = None
         self.io_boards = {}     # type: Dict[int, FastIoBoard]
 
@@ -190,6 +190,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if self._led_task:
             self._led_task.cancel()
             self._led_task = None
+        if self._seg_task:
+            self._seg_task.cancel()
+            self._seg_task = None
         if self._watchdog_task:
             self._watchdog_task.cancel()
             self._watchdog_task = None
@@ -339,7 +342,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         elif name == 'SEG':
             self.seg_connection = communicator
 
-            if not self.flag_seg_tick_registered:
+            if not self._seg_task:
                 # Need to wait until the segs are all set up
                 self.machine.events.add_handler('machine_reset_phase_3', self._start_seg_updates)
                 
@@ -358,10 +361,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.fast_segs.sort(key=lambda x: x.number)
 
         if self.fast_segs:
-            self.machine.clock.schedule_interval(self._update_segs,
+            self._seg_task = self.machine.clock.schedule_interval(self._update_segs,
                                                 1 / self.machine.config['fast'][
                                                     'segment_display_update_hz'])
-            self.flag_seg_tick_registered = True
     
     def _update_segs(self, **kwargs):
         
