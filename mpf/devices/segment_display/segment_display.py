@@ -1,4 +1,5 @@
 """Physical segment displays."""
+from asyncio import Future
 from collections import OrderedDict
 from typing import Optional, Dict, List
 
@@ -51,7 +52,7 @@ class SegmentDisplay(SystemWideDevice):
 
     __slots__ = ["hw_display", "size", "virtual_connector", "_text_stack", "_current_placeholder",
                  "_current_text_stack_entry", "_transition_update_task", "_current_transition", "_default_color",
-                 "_current_state"]
+                 "_current_state", "_current_placeholder_future"]
 
     config_section = 'segment_displays'
     collection = 'segment_displays'
@@ -67,6 +68,7 @@ class SegmentDisplay(SystemWideDevice):
         self.virtual_connector = None               # type: Optional[VirtualSegmentDisplayConnector]
         self._text_stack = {}                       # type: Dict[str, TextStackEntry]
         self._current_placeholder = None            # type: Optional[TextTemplate]
+        self._current_placeholder_future = None     # type: Optional[Future]
         self._current_text_stack_entry = None       # type: Optional[TextStackEntry]
         self._transition_update_task = None         # type: Optional[PeriodicTask]
         self._current_transition = None             # type: Optional[TransitionRunner]
@@ -279,12 +281,15 @@ class SegmentDisplay(SystemWideDevice):
                                                self.config['integrated_commas'], colors)
             self._update_display(SegmentDisplayState(text, flashing, flash_mask))
 
-    def _current_placeholder_changed(self, *args, **kwargs) -> None:
+    def _current_placeholder_changed(self, future=None, **kwargs) -> None:
         """Update display when a placeholder changes (callback function)."""
-        del args
         del kwargs
-        new_text, future = self._current_placeholder.evaluate_and_subscribe({})
-        future.add_done_callback(self._current_placeholder_changed)
+        if future and future.cancelled():
+            return
+        if self._current_placeholder_future and not self._current_placeholder_future.done():
+            self._current_placeholder_future.cancel()
+        new_text, self._current_placeholder_future = self._current_placeholder.evaluate_and_subscribe({})
+        self._current_placeholder_future.add_done_callback(self._current_placeholder_changed)
         text = SegmentDisplayText.from_str(new_text, self.size, self.config['integrated_dots'],
                                            self.config['integrated_commas'], self._current_state.text.get_colors())
         self._update_display(SegmentDisplayState(text, self._current_state.flashing,
