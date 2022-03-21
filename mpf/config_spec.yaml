@@ -1449,7 +1449,7 @@ shots:
     show_tokens: dict|str:template_str|None
 shot_control_events:
     events: list|event_handler|
-    state: single|int|0
+    state: single|int|
     force: single|bool|true
     force_show: single|bool|false
 shot_groups:
