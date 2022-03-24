@@ -942,3 +942,57 @@ class TestShots(MpfTestCase):
         shot.jump(0, True, True)
         # Should see the color of the new profile at the same state
         self.assertLightColor("led_20", "purple")
+
+    def test_jump_states(self):
+        """Test jump_states config"""
+        self.start_game()
+        self.machine.modes["base3"].start()
+        shot1 = self.machine.device_manager.collections["shots"]["shot_state_1"]
+        shot2 = self.machine.device_manager.collections["shots"]["shot_state_2"]
+
+        # Shot 1 - setup events
+        self.mock_event("state_event1")
+        self.mock_event("advance_event1")
+        self.mock_event("reset_event1")
+        self.mock_event("reset_event10")
+        # Shot 1 tests
+        self.assertEqual("unlit", shot1.state_name)
+        self.post_event("state_event10")
+        self.assertEqual("lit", shot1.state_name)
+        self.post_event("reset_event1")
+        self.assertEqual("unlit", shot1.state_name)
+        self.post_event("advance_event1")
+        self.assertEqual("lit", shot1.state_name)
+        self.post_event("state_event1")
+        self.assertEqual("lit", shot1.state_name)
+
+        # Shot 2 - setup events
+        self.mock_event("state_event2")
+        self.mock_event("state_event3")
+        self.mock_event("state_event4")
+        self.mock_event("advance_event2")
+        self.mock_event("reset_event2")
+        self.mock_event("enable_event2")
+        self.mock_event("disable_event2")
+        # Shot 2 tests
+        self.assertEqual("one", shot2.state_name)
+        self.post_event("enable_event2")
+        self.post_event("advance_event2")
+        self.assertEqual("two", shot2.state_name)
+        self.post_event("disable_event2")
+        self.post_event("state_event2")
+        self.assertEqual("two", shot2.state_name)
+        self.post_event("state_event3")
+        self.assertEqual("one", shot2.state_name)
+        self.post_event("state_event4")
+        self.assertEqual("three", shot2.state_name)
+        self.post_event("enable_event2")
+        self.post_event("advance_event2")
+        self.assertEqual("one", shot2.state_name)
+        self.post_event("state_event4")
+        self.assertEqual("three", shot2.state_name)
+        # Disable mode and verify jump doesn't process
+        self.machine.modes["base3"].stop()
+        self.advance_time_and_run()
+        self.post_event("state_event2")
+        self.assertEqual("None", shot2.state_name)
