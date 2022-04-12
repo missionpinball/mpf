@@ -144,8 +144,13 @@ class TextUi(MpfController):
             self.machine.events.add_handler("mode_{}_started".format(mode.name), self._mode_change)
             self.machine.events.add_handler("mode_{}_stopped".format(mode.name), self._mode_change)
 
-        for player_var in self.machine.config['player_vars']:
-            self.machine.events.add_handler("player_{}".format(player_var), self._update_player)
+        if 'player_vars' in self.machine.config:
+            for player_var in self.machine.config['player_vars']:
+                self.machine.events.add_handler("player_{}".format(player_var), self._update_player)
+        else:
+            self.machine.events.add_handler('player_number', self._update_player)
+            self.machine.events.add_handler('player_ball', self._update_player)
+            self.machine.events.add_handler('player_score', self._update_player)
 
         self.machine.switch_controller.add_monitor(self._update_switches)
         self.machine.register_monitor("machine_vars", self._update_machine_vars)
