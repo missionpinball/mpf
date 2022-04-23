@@ -193,7 +193,7 @@ class OPPSolenoid(DriverPlatformInterface):
         msg.append(cmd)
         msg.append(pulse_len)
         if self.switch_rule and self.switch_rule.delay_ms:
-            msg.append(int(self.switch_rule.delay_ms / 2))
+            msg.append(self.switch_rule.delay_ms)
         else:
             msg.append(hold + (minimum_off << 4))
         msg.extend(OppRs232Intf.calc_crc8_whole_msg(msg))
