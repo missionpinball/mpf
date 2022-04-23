@@ -981,8 +981,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         if delay_ms <= 0:
             raise AssertionError("set_delayed_pulse_on_hit_rule should be used with a positive delay "
                                  "not {}".format(delay_ms))
-        if delay_ms > 255:
-            raise AssertionError("set_delayed_pulse_on_hit_rule is limited to max 255ms "
+        if delay_ms > 30:
+            raise AssertionError("set_delayed_pulse_on_hit_rule is limited to max 30ms "
                                  "(was {})".format(delay_ms))
 
         self._write_hw_rule(enable_switch, coil, use_hold=False, can_cancel=False, delay_ms=int(delay_ms))
