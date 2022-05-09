@@ -2,6 +2,7 @@
 
 modes:
   - base2
+  - base3
   - mode1
   - mode2
 
