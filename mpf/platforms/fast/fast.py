@@ -7,7 +7,7 @@ as FAST I/O boards.
 import asyncio
 import os
 from copy import deepcopy
-from distutils.version import StrictVersion
+from packaging import version
 from typing import Dict, Set, Optional
 from serial import SerialException
 
@@ -158,7 +158,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         max_firmware = self.net_connection.remote_firmware
         update_config = None
         for update in self.config['firmware_updates']:
-            if StrictVersion(update['version']) > StrictVersion(max_firmware) and update['type'] == "net":
+            if version.parse(update['version']) > version.parse(max_firmware) and update['type'] == "net":
                 update_config = update
 
         if not update_config:
@@ -250,8 +250,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     def _update_watchdog(self):
         """Send Watchdog command."""
-        if self.net_connection:
+        try:
             self.net_connection.send('WD:' + str(hex(self.config['watchdog']))[2:])
+        except:
+            pass
 
     def process_received_message(self, msg: str, remote_processor: str):
         """Send an incoming message from the FAST controller to the proper method for servicing.
@@ -274,7 +276,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.log.warning("Received malformed message: %s from %s", msg, remote_processor)
             return
 
-        # Can't use try since it swallows too many errors for now
+        # Can't use try since it swallows too many errors for now #TODO
         if cmd in self.fast_commands:
             self.fast_commands[cmd](payload, remote_processor)
         else:   # pragma: no cover
@@ -824,7 +826,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Return switch config section."""
         return "fast_switches"
 
-    def _check_switch_coil_combincation(self, switch, coil):
+    def _check_switch_coil_combination(self, switch, coil):
         # V2 hardware can write rules across node boards
         if not self.net_connection.is_legacy:
             return
@@ -855,7 +857,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                        "Driver: %s", enable_switch.hw_switch.number,
                        coil.hw_driver.number)
 
-        self._check_switch_coil_combincation(enable_switch, coil)
+        self._check_switch_coil_combination(enable_switch, coil)
 
         driver = coil.hw_driver
 
@@ -888,8 +890,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                        "%s, Driver: %s", enable_switch.hw_switch.number,
                        coil.hw_driver.number)
 
-        self._check_switch_coil_combincation(enable_switch, coil)
-        self._check_switch_coil_combincation(eos_switch, coil)
+        self._check_switch_coil_combination(enable_switch, coil)
+        self._check_switch_coil_combination(eos_switch, coil)
 
         driver = coil.hw_driver
 
@@ -921,7 +923,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                        "Driver: %s", enable_switch.hw_switch.number,
                        coil.hw_driver.number)
 
-        self._check_switch_coil_combincation(enable_switch, coil)
+        self._check_switch_coil_combination(enable_switch, coil)
 
         driver = coil.hw_driver
 
@@ -943,7 +945,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                        "Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
 
-        self._check_switch_coil_combincation(enable_switch, coil)
+        self._check_switch_coil_combination(enable_switch, coil)
 
         driver = coil.hw_driver
 
