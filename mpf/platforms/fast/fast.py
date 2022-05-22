@@ -1,15 +1,14 @@
 """FAST hardware platform.
 
 Contains the hardware interface and drivers for the FAST Pinball platform
-hardware, including the FAST Core and WPC controllers as well as FAST I/O
-boards.
+hardware, including the FAST Neuron, Nano, and Retro controllers as well
+as FAST I/O boards.
 """
 import asyncio
 import os
 from copy import deepcopy
 from distutils.version import StrictVersion
 from typing import Dict, Set, Optional
-import serial.tools.list_ports
 from serial import SerialException
 
 from mpf.exceptions.runtime_error import MpfRuntimeError
@@ -24,22 +23,25 @@ from mpf.platforms.fast.fast_light import FASTMatrixLight
 from mpf.platforms.fast.fast_segment_display import FASTSegmentDisplay
 from mpf.platforms.fast.fast_serial_communicator import FastSerialCommunicator
 from mpf.platforms.fast.fast_switch import FASTSwitch
-
-from mpf.core.platform import ServoPlatform, DmdPlatform, SwitchPlatform, DriverPlatform, LightsPlatform, \
-    SegmentDisplayPlatform, DriverSettings, SwitchSettings, DriverConfig, SwitchConfig, RepulseSettings
+from mpf.platforms.autodetect import autodetect_fast_ports
+from mpf.core.platform import ServoPlatform, DmdPlatform, LightsPlatform, SegmentDisplayPlatform, \
+    DriverPlatform, DriverSettings, SwitchPlatform, SwitchSettings, DriverConfig, SwitchConfig, \
+    RepulseSettings
 from mpf.core.utility_functions import Util
 
+from mpf.platforms.system11 import System11OverlayPlatform, System11Driver
 
 # pylint: disable-msg=too-many-instance-attributes
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
 
 class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
-                           SwitchPlatform, DriverPlatform, SegmentDisplayPlatform):
+                           SegmentDisplayPlatform,
+                           System11OverlayPlatform):
 
     """Platform class for the FAST hardware controller."""
 
-    __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "seg_connection",
+    __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "seg_connection", "is_retro",
                  "serial_connections", "fast_leds", "fast_commands", "config", "machine_type", "hw_switch_data",
                  "io_boards", "flag_led_tick_registered", "_watchdog_task", "_led_task"]
 
@@ -62,15 +64,17 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         else:
             self.raise_config_error("Please configure driverboards for fast.", 5)
 
-        if self.machine_type == 'wpc':
-            self.debug_log("Configuring the FAST Controller for WPC driver "
-                           "board")
+        if self.machine_type in ['sys11', 'wpc89', 'wpc95']:
+            self.debug_log("Configuring the FAST Controller for Retro driver board")
+            self.is_retro = True
         elif self.machine_type == 'fast':
             self.debug_log("Configuring FAST Controller for FAST IO boards.")
+            self.is_retro = False
         else:
-            self.raise_config_error('Invalid machine_type "{}" configured fast.'.format(self.machine_type), 6)
+            self.raise_config_error(f'Unknown machine_type "{self.machine_type}" configured fast.', 6)
 
-        self.features['tickless'] = True
+        # Most FAST platforms don't use ticks, but System11 does
+        self.features['tickless'] = self.machine_type != 'sys11'
 
         self.dmd_connection = None
         self.net_connection = None
@@ -89,6 +93,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                               'NI': lambda x, y: None,  # node ID
                               'RX': lambda x, y: None,  # RGB cmd received
                               'RA': lambda x, y: None,  # RGB all cmd received
+                              'RS': lambda x, y: None,  # RGB single cmd received
                               'RF': lambda x, y: None,  # RGB fade cmd received
                               'DX': lambda x, y: None,  # DMD cmd received
                               'SX': lambda x, y: None,  # sw config received
@@ -277,25 +282,19 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """
         ports = None
         if self.config['ports'][0] == "autodetect":
-            devices = [port.device for port in serial.tools.list_ports.comports()]
-            # Look for four devices with sequential tails of 0-3 or A-D
-            seqs = (("0", "1", "2", "3"), ("A", "B", "C", "D"))
-            for d in devices:
-                for seq in seqs:
-                    if d[-1] == seq[0]:
-                        root = d[:-1]
-                        if "{}{}".format(root, seq[1]) in devices and \
-                           "{}{}".format(root, seq[2]) in devices and \
-                           "{}{}".format(root, seq[3]) in devices:
-                            ports = ("{}{}".format(root, seq[1]), "{}{}".format(root, seq[2]))
-                            self.debug_log("Autodetect found ports! {}".format(ports))
-                            break
-                # If ports were found, skip the rest of the devices
-                if ports:
-                    break
-            if not ports:
-                raise MpfRuntimeError("Unable to auto-detect FAST hardware from available devices: {}".format(
-                                      ", ".join(devices)), 2, self.log.name)
+            auto_ports = autodetect_fast_ports(self.is_retro)
+            if self.is_retro:
+                # Retro only returns one port
+                ports = auto_ports
+            else:
+                # Net returns four ports, the second is the CPU
+                ports = [auto_ports[1]]
+                if 'dmd' in self.config['ports']:
+                    ports.insert(0, auto_ports[0])
+                if 'rgb' in self.config['ports']:
+                    ports.append(auto_ports[2])
+                if 'exp' in self.config['ports']:
+                    ports.append(auto_ports[3])
         else:
             ports = self.config['ports']
 
@@ -425,18 +424,21 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """
         assert remote_processor == "NET"
         self.debug_log("Received SA: %s", msg)
+        hw_states = {}
 
-        hw_states = dict()
-
-        _, local_states, _, nw_states = msg.split(',')
-
-        for offset, byte in enumerate(bytearray.fromhex(nw_states)):
-            for i in range(8):
-                num = Util.int_to_hex_string((offset * 8) + i)
-                if byte & (2**i):
-                    hw_states[(num, 1)] = 1
-                else:
-                    hw_states[(num, 1)] = 0
+        # Support for v1 firmware which uses network + local switches
+        if self.net_connection.is_legacy:
+            _, local_states, _, nw_states = msg.split(',')
+            for offset, byte in enumerate(bytearray.fromhex(nw_states)):
+                for i in range(8):
+                    num = Util.int_to_hex_string((offset * 8) + i)
+                    if byte & (2**i):
+                        hw_states[(num, 1)] = 1
+                    else:
+                        hw_states[(num, 1)] = 0
+        # Support for v2 firmware which uses only local switches
+        else:
+            _, local_states = msg.split(',')
 
         for offset, byte in enumerate(bytearray.fromhex(local_states)):
             for i in range(8):
@@ -458,19 +460,20 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def _parse_driver_number(self, number):
         try:
             board_str, driver_str = number.split("-")
-        except ValueError:
+        except ValueError as e:
             total_drivers = 0
             for board_obj in self.io_boards.values():
                 total_drivers += board_obj.driver_count
             try:
                 index = self.convert_number_from_config(number)
             except ValueError:
-                self.raise_config_error("Could not parse driver number {}. Please verify the number format is either "
-                                        "board-driver or driver. Driver should be an integer here.".format(number), 7)
+                self.raise_config_error(
+                    f"Could not parse driver number {number}. Please verify the number format is either " +
+                    "board-driver or driver. Driver should be an integer here.", 7)
 
             if int(index, 16) >= total_drivers:
-                raise AssertionError("Driver {} does not exist. Only {} drivers found. Driver number: {}".format(
-                    int(index, 16), total_drivers, number))
+                raise AssertionError(f"Driver {int(index, 16)} does not exist. "
+                                     f"Only {total_drivers} drivers found. Driver number: {number}") from e
 
             return index
 
@@ -478,11 +481,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         driver = int(driver_str)
 
         if board not in self.io_boards:
-            raise AssertionError("Board {} does not exist for driver {}".format(board, number))
+            raise AssertionError(f"Board {board} does not exist for driver {number}")
 
         if self.io_boards[board].driver_count <= driver:
-            raise AssertionError("Board {} only has {} drivers. Driver: {}".format(
-                board, self.io_boards[board].driver_count, number))
+            raise AssertionError(f"Board {board} only has {self.io_boards[board].driver_count} drivers. "
+                                 "Driver: {number}")
 
         index = 0
         for board_number, board_obj in self.io_boards.items():
@@ -514,34 +517,30 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if not number:
             raise AssertionError("Driver needs a number")
 
-        # If we have WPC driver boards, look up the driver number
-        if self.machine_type == 'wpc':
-            try:
-                number = fast_defines.WPC_DRIVER_MAP[number.upper()]
-            except KeyError:
-                self.raise_config_error("Could not find WPC driver {}".format(number), 1)
-
-            if ('connection' in platform_settings and
-                    platform_settings['connection'].lower() == 'network'):
-                platform_settings['connection'] = 1
-            else:
-                platform_settings['connection'] = 0  # local driver (default for WPC)
-
-        # If we have FAST IO boards, we need to make sure we have hex strings
-        elif self.machine_type == 'fast':
-
-            number = self._parse_driver_number(number)
-
-            # Now figure out the connection type
+        # Figure out the connection type for v1 hardware: local or network (default)
+        if self.net_connection.is_legacy:
             if ('connection' in platform_settings and
                     platform_settings['connection'].lower() == 'local'):
                 platform_settings['connection'] = 0
             else:
-                platform_settings['connection'] = 1  # network driver (default for FAST)
+                platform_settings['connection'] = 1
+        # V2 hardware uses only local drivers
+        else:
+            platform_settings['connection'] = 0
+
+        # If we have Retro driver boards, look up the driver number
+        if self.is_retro:
+            try:
+                number = fast_defines.RETRO_DRIVER_MAP[number.upper()]
+            except KeyError:
+                self.raise_config_error(f"Could not find Retro driver {number}", 1)
+
+        # If we have FAST IO boards, we need to make sure we have hex strings
+        elif self.machine_type == 'fast':
+            number = self._parse_driver_number(number)
 
         else:
-            raise AssertionError("Invalid machine type: {}".format(
-                self.machine_type))
+            raise AssertionError("Invalid machine type: {self.machine_type}")
 
         return FASTDriver(config, self, number, platform_settings)
 
@@ -578,15 +577,15 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def _parse_switch_number(self, number):
         try:
             board_str, switch_str = number.split("-")
-        except ValueError:
+        except ValueError as e:
             total_switches = 0
             for board_obj in self.io_boards.values():
                 total_switches += board_obj.switch_count
             index = self.convert_number_from_config(number)
 
             if int(index, 16) >= total_switches:
-                raise AssertionError("Switch {} does not exist. Only {} switches found. Switch number: {}".format(
-                    int(index, 16), total_switches, number))
+                raise AssertionError(f"Switch {int(index, 16)} does not exist. Only "
+                                     f"{total_switches} switches found. Switch number: {number}") from e
 
             return index
 
@@ -611,10 +610,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict) -> FASTSwitch:
         """Configure the switch object for a FAST Pinball controller.
 
-        FAST Controllers support two types of switches: `local` and `network`.
+        V1 FAST Controllers support two types of switches: `local` and `network`.
         Local switches are switches that are connected to the FAST controller
         board itself, and network switches are those connected to a FAST I/O
-        board.
+        board. V2 FAST Controllers consider all switches to be local, even those
+        connected to I/O boards.
 
         MPF needs to know which type of switch is this is. You can specify the
         switch's connection type in the config file via the ``connection:``
@@ -623,10 +623,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         If a connection type is not specified, this method will use some
         intelligence to try to figure out which default should be used.
 
-        If the DriverBoard type is ``fast``, then it assumes the default is
-        ``network``. If it's anything else (``wpc``, ``system11``, ``bally``,
-        etc.) then it assumes the connection type is ``local``. Connection types
-        can be mixed and matched in the same machine.
+        If the DriverBoard type is ``fast`` and the firmware is legacy (v1),
+        then mpf assumes the default is ``network``. If it's a v2 firmware or
+        any other type of board (``sys11``, ``wpc95``, ``wpc89``) then mpf
+        assumes the connection type is ``local``. Connection types can be mixed
+        and matched in the same machine.
 
         Args:
         ----
@@ -644,29 +645,29 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                  "switch, but no connection to a NET processor"
                                  "is available")
 
-        if self.machine_type == 'wpc':  # translate switch num to FAST switch
+        if self.is_retro:
+            # translate switch num to FAST switch
             try:
-                number = fast_defines.WPC_SWITCH_MAP[str(number).upper()]
+                number = fast_defines.RETRO_SWITCH_MAP[str(number).upper()]
             except KeyError:
-                self.raise_config_error("Could not find WPC switch {}".format(number), 2)
-
-            if 'connection' not in platform_config:
-                platform_config['connection'] = 0  # local switch (default for WPC)
-            else:
-                platform_config['connection'] = 1  # network switch
-
-        elif self.machine_type == 'fast':
-            if 'connection' not in platform_config:
-                platform_config['connection'] = 1  # network switch (default for FAST)
-            else:
-                platform_config['connection'] = 0  # local switch
-
+                self.raise_config_error(f"Could not find switch {number}", 2)
+        else:
             try:
                 number = self._parse_switch_number(number)
             except ValueError:
-                self.raise_config_error("Could not parse switch number {}/{}. Seems "
-                                        "to be not a valid switch number for the "
-                                        "FAST platform.".format(config.name, number), 8)
+                self.raise_config_error(f"Could not parse switch number {config.name}/{number}. Seems "
+                                        "to be not a valid switch number for the FAST platform.", 8)
+
+        if self.net_connection.is_legacy:
+            # V1 devices can explicitly define switches to be local, or default to network
+            if ('connection' in platform_config and
+                    platform_config['connection'].lower() == 'local'):
+                platform_config['connection'] = 0
+            else:
+                platform_config['connection'] = 1
+        else:
+            # V2 devices are only local switches
+            platform_config['connection'] = 0
 
         # convert the switch number into a tuple which is:
         # (switch number, connection)
@@ -692,7 +693,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             return FASTMatrixLight(number, self.net_connection.send, self.machine,
                                    int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000), self)
         if not subtype or subtype == "led":
-            if not self.flag_led_tick_registered:
+            if self.rgb_connection and not self.flag_led_tick_registered:
                 # Update leds every frame
                 self._led_task = self.machine.clock.schedule_interval(
                     self.update_leds, 1 / self.machine.config['mpf']['default_light_hw_update_hz'])
@@ -717,11 +718,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Parse light channels from number string."""
         if subtype == "gi":
-            if self.machine_type == 'wpc':  # translate number to FAST GI number
+            if self.is_retro:  # translate matrix/map number to FAST GI number
                 try:
-                    number = fast_defines.WPC_GI_MAP[str(number).upper()]
+                    number = fast_defines.RETRO_GI_MAP[str(number).upper()]
                 except KeyError:
-                    self.raise_config_error("Could not find WPC GI {}".format(number), 3)
+                    self.raise_config_error(f"Could not find GI {number}", 3)
             else:
                 number = self.convert_number_from_config(number)
 
@@ -731,11 +732,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 }
             ]
         if subtype == "matrix":
-            if self.machine_type == 'wpc':  # translate number to FAST light num
+            if self.is_retro:  # translate matrix number to FAST light num
                 try:
-                    number = fast_defines.WPC_LIGHT_MAP[str(number).upper()]
+                    number = fast_defines.RETRO_LIGHT_MAP[str(number).upper()]
                 except KeyError:
-                    self.raise_config_error("Could not find WPC light {}".format(number), 4)
+                    self.raise_config_error(f"Could not find light {number}", 4)
             else:
                 number = self.convert_number_from_config(number)
 
@@ -753,18 +754,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             else:
                 index = int(number)
             return [
-                {
-                    "number": "{}-0".format(index)
-                },
-                {
-                    "number": "{}-1".format(index)
-                },
-                {
-                    "number": "{}-2".format(index)
-                },
+                {"number": f"{index}-0"},
+                {"number": f"{index}-1"},
+                {"number": f"{index}-2"},
             ]
 
-        raise AssertionError("Unknown subtype {}".format(subtype))
+        raise AssertionError(f"Unknown subtype {subtype}")
 
     def configure_dmd(self):
         """Configure a hardware DMD connected to a FAST controller."""
@@ -799,6 +794,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         return "fast_switches"
 
     def _check_switch_coil_combincation(self, switch, coil):
+        # V2 hardware can write rules across node boards
+        if not self.net_connection.is_legacy:
+            return
+
         switch_number = int(switch.hw_switch.number[0], 16)
         coil_number = int(coil.hw_driver.number, 16)
 
@@ -816,8 +815,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             coil_index += board_obj.driver_count
             switch_index += board_obj.switch_count
 
-        raise AssertionError("Driver {} and switch {} are on different boards. Cannot apply rule!".format(
-            coil.hw_driver.number, switch.hw_switch.number))
+        raise AssertionError(f"Driver {coil.hw_driver.number} and switch {switch.hw_switch.number} "
+                             "are on different boards. Cannot apply rule!")
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         """Set pulse on hit and release rule to driver."""

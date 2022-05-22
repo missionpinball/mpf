@@ -7,7 +7,7 @@ from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftw
 
 class FASTGIString(LightPlatformSoftwareFade):
 
-    """A FAST GI string in a WPC machine."""
+    """A FAST GI string in a Retro machine."""
 
     __slots__ = ["log", "send"]
 
@@ -31,7 +31,7 @@ class FASTGIString(LightPlatformSoftwareFade):
 
     def get_board_name(self):
         """Return the board of this light."""
-        return "FAST WPC"
+        return "FAST Retro"
 
     def is_successor_of(self, other):
         """Return true if the other light has the previous number."""

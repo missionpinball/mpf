@@ -85,9 +85,15 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
 
     async def initialize(self):
         """Automatically called by the Platform class after all the core modules are loaded."""
+        # Some platforms (like Fast Retro) may be system11, or may not be.
+        # If no system11 config is present, do not initialize the System11 platform
+        system11_config = self.machine.config.get('system11')
+        if not system11_config:
+            return
+
         # load coil platform
         self.platform = self.machine.get_platform_sections(
-            "platform", getattr(self.machine.config.get('system11', {}), 'platform', None))
+            "platform", getattr(system11_config, 'platform', None))
 
         # we have to wait for coils to be initialized
         self.machine.events.add_handler("init_phase_1", self._initialize)
@@ -100,7 +106,7 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
                                self.system11_config['file_log'])
 
         self.log.debug("Configuring A/C Select Relay for driver %s",
-                       self.system11_config['ac_relay_driver'].name)
+                       self.system11_config['ac_relay_driver'])
 
         self.system11_config['ac_relay_driver'].get_and_verify_hold_power(1.0)
 
@@ -162,7 +168,11 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
 
     def validate_switch_section(self, switch, config: dict) -> dict:
         """Validate switch config for overlayed platform."""
-        return self.platform.validate_switch_section(switch, config)
+        # Check for a platform to have a custom switch validation method, but avoid recursion
+        # since the platform will (most likely) inherit from System11OverlayPlatform
+        if self.platform is not None:
+            return self.platform.validate_switch_section(switch, config)
+        return SwitchPlatform.validate_switch_section(self, switch, config)
 
     async def get_hw_switch_states(self):
         """Get initial hardware state."""
@@ -490,7 +500,11 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
 
     def validate_coil_section(self, driver, config):
         """Validate coil config for platform."""
-        return self.platform.validate_coil_section(driver, config)
+        # Check for a platform to have a custom coil validation method, but avoid recursion
+        # since the platform will (most likely) inherit from System11OverlayPlatform
+        if self.platform is not None:
+            return self.platform.validate_coil_section(driver, config)
+        return DriverPlatform.validate_coil_section(self, driver, config)
 
 
 class System11Driver(DriverPlatformInterface):

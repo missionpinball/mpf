@@ -607,7 +607,7 @@ fadecandy:
 fast:
     __valid_in__: machine
     __type__: config
-    driverboards: single|enum(fast,wpc,None)|None
+    driverboards: single|enum(fast,sys11,wpc89,wpc95,None)|None
     ports: list|str|
     baud: list|int|921600
     watchdog: single|ms|1000

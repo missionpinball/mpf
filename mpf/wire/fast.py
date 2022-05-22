@@ -408,18 +408,15 @@ def add_devices_with_board_numbers(devices: Dict[Any, T], s: FastSystem, constru
 
 def identify_fast_board(switches: int, drivers: int) -> Optional[FastIOBoard]:
     """Instantiate and return a FAST board capable of accommodating the given number of switches and drivers."""
-    if switches > 32:
-        return None
-    if drivers > 16:
+    if switches > 32 or drivers > 16:
         return None
     if switches > 16:
-        if drivers > 8:
-            return None
-        return FastIO3208()
+        return None if drivers > 8 else FastIO3208()
     if drivers <= 4:
         return FastIO0804()
     if switches <= 8:
         return FastIO1616()
+    return None
 
 
 # pylint: disable=too-many-locals
