@@ -48,9 +48,9 @@ class ServiceController(MpfController):
         self._enabled = True
 
         self.info_log("Entered service mode. Resetting game if running. Resetting hardware interface now.")
-        # this will stop attact and game mode
+        # this will stop attract and game mode
         for mode in self.machine.modes.values():
-            if not mode.active or mode.name in ["service", "game"]:
+            if not mode.active or mode.name in ["service", "service_segment_display", "service_dmd", "game"]:
                 continue
             mode.stop(service=True)
 
@@ -77,18 +77,19 @@ class ServiceController(MpfController):
         del issue
         # this is prepared but not yet implemented in service mode
 
-    def get_switch_map(self):
+    def get_switch_map(self, do_sort=True):
         """Return a map of all switches in the machine."""
         switch_map = []
         for switch in self.machine.switches.values():
             switch_map.append(SwitchMap(switch.hw_switch.get_board_name(), switch))
 
         # sort by board + driver number
-        switch_map.sort(key=lambda x: (self._natural_key_sort(x[0]),
-                                       self._natural_key_sort(str(x[1].hw_switch.number))))
+        if do_sort:
+            switch_map.sort(key=lambda x: (self._natural_key_sort(x[0]),
+                                           self._natural_key_sort(str(x[1].hw_switch.number))))
         return switch_map
 
-    def get_coil_map(self) -> List[CoilMap]:
+    def get_coil_map(self, do_sort=True) -> List[CoilMap]:
         """Return a map of all coils in the machine."""
         coil_map = []
         for coil in self.machine.coils.values():
@@ -96,15 +97,19 @@ class ServiceController(MpfController):
             coil_map.append(CoilMap(coil.hw_driver.get_board_name(), coil))
 
         # sort by board + driver number
-        coil_map.sort(key=lambda x: (self._natural_key_sort(x[0]), self._natural_key_sort(str(x[1].hw_driver.number))))
+        if do_sort:
+            coil_map.sort(key=lambda x: (self._natural_key_sort(x[0]),
+                                         self._natural_key_sort(str(x[1].hw_driver.number))))
         return coil_map
 
-    def get_light_map(self) -> List[LightMap]:
+    def get_light_map(self, do_sort=True) -> List[LightMap]:
         """Return a map of all lights in the machine."""
         light_map = []
         for light in self.machine.lights.values():
             light_map.append(LightMap(next(iter(light.hw_drivers.values()))[0].get_board_name(), light))
 
         # sort by board + driver number
-        light_map.sort(key=lambda x: (self._natural_key_sort(x[0]), self._natural_key_sort(str(x[1].config['number']))))
+        if do_sort:
+            light_map.sort(key=lambda x: (self._natural_key_sort(x[0]),
+                                          self._natural_key_sort(str(x[1].config['number']))))
         return light_map

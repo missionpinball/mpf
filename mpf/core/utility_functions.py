@@ -335,11 +335,18 @@ class Util:
         return return_dict
 
     @staticmethod
-    def int_to_hex_string(source_int: int) -> str:
-        """Convert an int from 0-255 to a one-byte (2 chars) hex string, with uppercase characters."""
+    def int_to_hex_string(source_int: int, allow_overflow: bool = False) -> str:
+        """Convert an int from 0-255 to a one-byte (2 chars) hex string, with uppercase characters.
+
+        Args:
+        ----
+            source_int: The integer to convert to a hex string
+            allow_overflow: If true, allow an integer of any size to be converted.
+                If false (default), only integers 0-255 are allowed.
+        """
         source_int = int(source_int)
 
-        if 0 <= source_int <= 255:
+        if 0 <= source_int <= 255 or allow_overflow:
             return format(source_int, 'x').upper().zfill(2)
 
         raise ValueError("invalid source int: %s" % source_int)

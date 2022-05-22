@@ -126,6 +126,10 @@ class VisualPinballEngineDriver(DriverPlatformInterface):
         command.pulse_coil.pulse_power = pulse_settings.power
         self.platform.send_command(command)
 
+    def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
+        """Pulse and enable the coil for an explicit duration."""
+        raise NotImplementedError
+
 
 class VisualPinballEngineDmd(DmdPlatformInterface):
 

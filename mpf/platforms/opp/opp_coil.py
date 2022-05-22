@@ -104,6 +104,10 @@ class OPPSolenoid(DriverPlatformInterface):
         # restore rule if there was one
         self.apply_switch_rule()
 
+    def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
+        """Pulse and enable the coil for an explicit duration."""
+        raise NotImplementedError
+
     def remove_switch_rule(self):
         """Remove switch rule."""
         self.switch_rule = None
@@ -189,7 +193,7 @@ class OPPSolenoid(DriverPlatformInterface):
         msg.append(cmd)
         msg.append(pulse_len)
         if self.switch_rule and self.switch_rule.delay_ms:
-            msg.append(self.switch_rule.delay_ms)
+            msg.append(int(self.switch_rule.delay_ms / 2))
         else:
             msg.append(hold + (minimum_off << 4))
         msg.extend(OppRs232Intf.calc_crc8_whole_msg(msg))

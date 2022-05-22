@@ -251,3 +251,29 @@ class TestVariablePlayer(MpfFakeGameTestCase):
         self.machine.variables.set_machine_var("test5", "123")
         self.advance_time_and_run(.1)
         self.assertMachineVarEqual("123-suffix", "test6")
+
+    def test_event_kwargs(self):
+        self.start_game()
+        self.post_event('start_mode1')
+        self.assertTrue(self.machine.mode_controller.is_active('mode1'))
+        self.post_event('start_mode3')
+        self.assertTrue(self.machine.mode_controller.is_active('mode3'))
+
+        self.mock_event('player_score')
+        self.post_event('test_event1')
+        self.advance_time_and_run()
+        self.assertEventCalledWith('player_score',
+                                    value=100,
+                                    prev_value=0,
+                                    change=100,
+                                    player_num=1,
+                                    source='mode1')
+
+        self.post_event('score_player1')
+        self.advance_time_and_run()
+        self.assertEventCalledWith('player_score',
+                                    value=142,
+                                    prev_value=100,
+                                    change=42,
+                                    player_num=1,
+                                    source='mode3')

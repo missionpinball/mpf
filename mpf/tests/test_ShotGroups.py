@@ -438,3 +438,16 @@ class TestShotGroups(MpfFakeGameTestCase):
 
         # shot should turn off after game
         self.assertLightChannel("l_special_left", 0)
+
+    def test_shot_handlers(self):
+        self.assertFalse(self.machine.events.does_event_exist('shot_1_hit'))
+        self.assertFalse(self.machine.events.does_event_exist('player_shot_shot_1'))
+
+        self.start_game()
+        self.assertTrue(self.machine.events.does_event_exist('shot_1_hit'))
+        self.assertTrue(self.machine.events.does_event_exist('player_shot_shot_1'))
+
+        self.machine.events.post('player_turn_stopped')
+        self.advance_time_and_run()
+        self.assertFalse(self.machine.events.does_event_exist('shot_1_hit'))
+        self.assertFalse(self.machine.events.does_event_exist('player_shot_shot_1'))

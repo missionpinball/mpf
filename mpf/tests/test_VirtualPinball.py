@@ -102,7 +102,7 @@ class TestVirtualPinball(MpfTestCase):
         self.assertEqual({'enable_switch_invert': False,
                           'coil_name': 'c_flipper_main',
                           'coil_pulse_power': 1.0,
-                          'coil_hold_power': 'HoldSettings(power=0.375)',
+                          'coil_hold_power': 'HoldSettings(power=0.375, duration=None)',
                           'enable_switch_name': 's_flipper',
                           'enable_switch_number': '0-3',
                           'coil_pulse_ms': 10,

@@ -1,5 +1,5 @@
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from mpf.tests.MpfTestCase import MpfTestCase
 
@@ -43,7 +43,7 @@ class TestDropTargets(MpfTestCase):
         self.assertIn('left3', self.machine.drop_targets)
         self.assertIn('left_bank', self.machine.drop_target_banks)
 
-        self.machine.coils["coil1"].pulse = MagicMock()
+        self.machine.coils["coil1"].pulse = MagicMock(return_value=200)
 
         self.assertFalse(self.machine.drop_targets["left1"].complete)
         self.assertFalse(self.machine.drop_targets["left2"].complete)
@@ -82,7 +82,7 @@ class TestDropTargets(MpfTestCase):
         self.assertFalse(self.machine.drop_target_banks["left_bank"].complete)
 
         # check that the bank does not reset if already down
-        self.machine.coils["coil1"].pulse = MagicMock()
+        self.machine.coils["coil1"].pulse = MagicMock(return_value=100)
         self.machine.drop_target_banks['left_bank'].reset()
         assert not self.machine.coils["coil1"].pulse.called
 
@@ -132,7 +132,7 @@ class TestDropTargets(MpfTestCase):
         self.machine.modes['mode1'].start()
         self.advance_time_and_run()
 
-        self.machine.coils["coil2"].pulse = MagicMock()
+        self.machine.coils["coil2"].pulse = MagicMock(return_value=30)
 
         self.assertFalse(self.machine.drop_targets["left4"].complete)
         self.assertFalse(self.machine.drop_targets["left5"].complete)
@@ -220,6 +220,72 @@ class TestDropTargets(MpfTestCase):
         assert not self.machine.coils["coil2"].pulse.called
         assert not self.machine.coils["coil3"].pulse.called
 
+    def test_drop_target_reset_retry_success(self):
+        target = self.machine.drop_targets["left7"]
+        coil = self.machine.coils["coil4"]
+        coil.pulse = MagicMock()
+        self.assertSwitchState("switch7", 0)
+
+        # target up. it should not reset
+        target.reset()
+        self.advance_time_and_run()
+
+        assert not coil.pulse.called
+
+        # hit target down
+        self.hit_switch_and_run("switch7", 1)
+        self.assertTrue(target.complete)
+        assert not coil.pulse.called
+
+        # it should attempt to reset
+        target.reset()
+        self.assertEqual(coil.pulse.call_count, 1)
+
+        # after 90ms, should not have pulsed
+        self.advance_time_and_run(0.09)
+        self.assertEqual(coil.pulse.call_count, 1)
+        # after 100ms, should be called
+        self.advance_time_and_run(0.02)
+        self.assertEqual(coil.pulse.call_count, 2)
+        # after switch is up, should not be called again
+        self.release_switch_and_run("switch7", 1)
+        self.assertFalse(target.complete)
+        self.assertEqual(coil.pulse.call_count, 2)
+
+    def test_drop_target_reset_retry_max_attempts(self):
+        target = self.machine.drop_targets["left7"]
+        coil = self.machine.coils["coil4"]
+        coil.pulse = MagicMock()
+        self.assertSwitchState("switch7", 0)
+
+        # target up. it should not reset
+        target.reset()
+        self.advance_time_and_run()
+
+        assert not coil.pulse.called
+
+        # hit target down
+        self.hit_switch_and_run("switch7", 1)
+        self.assertTrue(target.complete)
+        assert not coil.pulse.called
+
+        # it should attempt to reset
+        target.reset()
+        self.assertEqual(coil.pulse.call_count, 1)
+
+        # after 90ms, should not have pulsed
+        self.advance_time_and_run(0.09)
+        self.assertEqual(coil.pulse.call_count, 1)
+        # after 100ms, should be called
+        self.advance_time_and_run(0.02)
+        self.assertEqual(coil.pulse.call_count, 2)
+        # after 100ms, should be called
+        self.advance_time_and_run(0.1)
+        self.assertEqual(coil.pulse.call_count, 3)
+        # after 100ms, max retries achieved
+        self.advance_time_and_run(0.1)
+        self.assertEqual(coil.pulse.call_count, 3)
+
     def test_drop_target_ignore_ms(self):
 
         self.mock_event('drop_target_center1_down')
@@ -255,6 +321,69 @@ class TestDropTargets(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEventCalled('drop_target_center1_down')
 
+    def test_drop_target_ignore_ms_ball_search(self):
+
+        self.machine.playfields["playfield"].config['enable_ball_search'] = True
+        self.machine.playfields["playfield"].balls += 1
+
+        self.mock_event('drop_target_center1_down')
+        self.mock_event('drop_target_center1_up')
+
+        #self.hit_switch_and_run('switch10', 1)
+        self.assertSwitchState('switch10', False)  # ###############
+
+        # wait until ball search phase 1
+        event_future = self.machine.events.wait_for_event("ball_search_phase_1")
+        self.machine.clock.loop.run_until_complete(event_future)
+
+        self.advance_time_and_run(.25)
+
+        self.hit_switch_and_run('switch10', .1)
+        self.release_switch_and_run('switch10', .1)
+        self.assertSwitchState('switch10', False)
+
+        self.advance_time_and_run(.5)
+
+        # reset happened in the ignore window so this event should not be
+        # called
+        self.assertEventNotCalled('drop_target_center1_down')
+        self.assertEventNotCalled('drop_target_center1_up')
+
+        # wait until ball search phase 2
+        event_future = self.machine.events.wait_for_event("ball_search_phase_2")
+        self.machine.clock.loop.run_until_complete(event_future)
+
+        self.advance_time_and_run(.25)
+
+        self.hit_switch_and_run('switch10', .1)
+        self.release_switch_and_run('switch10', .1)
+        self.assertSwitchState('switch10', False)
+
+        self.advance_time_and_run(.5)
+
+        # reset happened in the ignore window so this event should not be
+        # called
+        self.assertEventNotCalled('drop_target_center1_down')
+        self.assertEventNotCalled('drop_target_center1_up')
+
+        # wait until ball search phase 3
+        event_future = self.machine.events.wait_for_event("ball_search_phase_3")
+        self.machine.clock.loop.run_until_complete(event_future)
+
+        self.advance_time_and_run(.25)
+
+        self.hit_switch_and_run('switch10', .1)
+        self.release_switch_and_run('switch10', .1)
+        self.assertSwitchState('switch10', False)
+
+        self.advance_time_and_run(.5)
+
+        # reset happened in the ignore window so this event should not be
+        # called
+        self.assertEventNotCalled('drop_target_center1_down')
+        self.assertEventNotCalled('drop_target_center1_up')
+
+
     def test_drop_target_bank_ignore_ms(self):
         self.mock_event('drop_target_bank_right_bank_down')
         self.mock_event('drop_target_bank_right_bank_mixed')
@@ -285,6 +414,20 @@ class TestDropTargets(MpfTestCase):
 
         # up should have been called by now
         self.assertEventCalled('drop_target_bank_right_bank_up')
+
+    def test_drop_target_bank_restore_delay_ms(self):
+        # Set a specific ms that the pulse will wait before firing
+        self.machine.coils['coil5'].pulse = MagicMock(return_value=27)
+        with patch('mpf.core.delays.DelayManager.add') as add:
+            self.hit_switch_and_run('switch8', 1)
+            self.hit_switch_and_run('switch9', 1)
+
+            self.post_event('reset_right_bank', 1.5)
+            bank = self.machine.drop_target_banks['right_bank']
+            # Verify that the ignore_ms is the config value (1000) plus the wait
+            add.assert_called_with(ms=1027, name='ignore_hits',
+                                   callback=bank._restore_switch_hits,
+                                   reset_attempt=None)
 
 
 class TestDropTargetsInGame(MpfFakeGameTestCase):

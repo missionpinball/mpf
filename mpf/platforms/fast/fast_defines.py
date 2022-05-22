@@ -1,7 +1,15 @@
-"""Defines for FAST WPC."""
-WPC_SWITCH_MAP = {
+"""Defines for FAST Boards."""
 
-    # WPC   HEX    DEC
+HARDWARE_KEY = {
+    "fast":  '2000',
+    "sys11": '1100',
+    "wpc89": '8900',
+    "wpc95": '9500'
+}
+
+RETRO_SWITCH_MAP = {
+
+    # Name   HEX    DEC
     'S11': '00',  # 00
     'S12': '01',  # 01
     'S13': '02',  # 02
@@ -102,7 +110,19 @@ WPC_SWITCH_MAP = {
     'SD7': '56',  # 86
     'SD8': '57',  # 87
 
+    # Fliptronics
+    'SF1': '58',  # 88
+    'SF2': '59',  # 89
+    'SF3': '5A',  # 90
+    'SF4': '5B',  # 91
+    'SF5': '5C',  # 92
+    'SF6': '5D',  # 93
+    'SF7': '5E',  # 94
+    'SF8': '5F',  # 95
+
     # DIP switches
+    # These addresses are also used by Fliptronics switches (above) but can be
+    # used in non-Fliptronics machines (e.g. System11) as regular switches.
     'DIP1': '58',  # 88
     'DIP2': '59',  # 89
     'DIP3': '5A',  # 90
@@ -111,19 +131,9 @@ WPC_SWITCH_MAP = {
     'DIP6': '5D',  # 93
     'DIP7': '5E',  # 94
     'DIP8': '5F',  # 95
-
-    # Fliptronics
-    'SF1': '60',  # 96
-    'SF2': '61',  # 97
-    'SF3': '62',  # 98
-    'SF4': '63',  # 99
-    'SF5': '64',  # 100
-    'SF6': '65',  # 101
-    'SF7': '66',  # 102
-    'SF8': '67',  # 103
 }
 
-WPC_LIGHT_MAP = {
+RETRO_LIGHT_MAP = {
     'L11': '00', 'L12': '01', 'L13': '02', 'L14': '03',
     'L15': '04', 'L16': '05', 'L17': '06', 'L18': '07',
     'L21': '08', 'L22': '09', 'L23': '0A', 'L24': '0B',
@@ -142,7 +152,7 @@ WPC_LIGHT_MAP = {
     'L85': '3C', 'L86': '3D', 'L87': '3E', 'L88': '3F',
 }
 
-WPC_DRIVER_MAP = {
+RETRO_DRIVER_MAP = {
     'C01': '00', 'C02': '01', 'C03': '02', 'C04': '03',
     'C05': '04', 'C06': '05', 'C07': '06', 'C08': '07',
     'C09': '08', 'C10': '09', 'C11': '0A', 'C12': '0B',
@@ -152,13 +162,13 @@ WPC_DRIVER_MAP = {
     'C25': '18', 'C26': '19', 'C27': '1A', 'C28': '1B',
     'C29': '1C', 'C30': '1D', 'C31': '1E', 'C32': '1F',
     'C33': '24', 'C34': '25', 'C35': '26', 'C36': '27',
-    'FLRM': '20', 'FLRH': '21', 'FLLM': '22', 'FLLH': '23',
-    'FURM': '24', 'FURH': '25', 'FULM': '26', 'FULH': '27',
     'C37': '28', 'C38': '29', 'C39': '2A', 'C40': '2B',
     'C41': '2C', 'C42': '2D', 'C43': '2E', 'C44': '2F',
+    'FLRM': '20', 'FLRH': '21', 'FLLM': '22', 'FLLH': '23',
+    'FURM': '24', 'FURH': '25', 'FULM': '26', 'FULH': '27',
 }
 
-WPC_GI_MAP = {
+RETRO_GI_MAP = {
     'G01': '00', 'G02': '01', 'G03': '02', 'G04': '03',
     'G05': '04', 'G06': '05', 'G07': '06', 'G08': '07',
 }

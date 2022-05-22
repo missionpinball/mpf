@@ -86,6 +86,10 @@ class P3RocGpioDriver(DriverPlatformInterface):
         """Pulse GPIO."""
         raise AssertionError("Not currently implemented. Let us know in the forum if you need pulses on GPIOs.")
 
+    def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
+        """Pulse and enable the coil for an explicit duration."""
+        raise AssertionError("Not currently implemented. Let us know in the forum if you need timed_enable on GPIOs.")
+
     @property
     def has_rules(self):
         """Return false as we do not support rules."""
@@ -459,7 +463,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
             burst_config0 |= (self.config['burst_number_of_idle_pulses_before_next'] & 0x3F) << 12
             burst_config0 |= (self.config['burst_number_of_burst_pulses_before_check'] & 0x3F) << 18
             burst_config0 |= ((self.config['burst_ms_between_scans'] - 1) & 0x1F) << 24
-            self.proc.write_data(0x02, 0x00, burst_config0)
+            self.run_proc_cmd_no_wait("write_data", 0x02, 0x00, burst_config0)
             self.debug_log("Setting 0x02 0x00 to %s", burst_config0)
 
             burst_config1 = (1 << 31) | 0x1F

@@ -7,6 +7,7 @@ from typing import Dict
 import serial
 
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
+from mpf.platforms.autodetect import autodetect_smartmatrix_dmd_port
 
 from mpf.core.platform import RgbDmdPlatform
 from mpf.core.utility_functions import Util
@@ -111,7 +112,11 @@ class SmartMatrixDevice(DmdPlatformInterface):
     async def connect(self):
         """Connect to SmartMatrix device."""
         self.log.info("Connecting to SmartMatrix RGB DMD on %s baud %s", self.config['port'], self.config['baud'])
-        self.port = serial.Serial(self.config['port'], self.config['baud'])
+        if self.config['port'] == 'autodetect':
+            port = autodetect_smartmatrix_dmd_port()
+        else:
+            port = self.config['port']
+        self.port = serial.Serial(port, self.config['baud'])
         self.new_frame_event = threading.Event()
         self.control_data_queue = []
         self.writer = self.machine.clock.loop.run_in_executor(None, self._feed_hardware)

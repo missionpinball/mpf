@@ -1,0 +1,168 @@
+#config_version=5
+
+hardware:
+    platform: fast
+
+fast:
+    driverboards: fast
+    ports: com3, com4, com5, com6
+    debug: true
+    firmware_updates:
+      - type: net
+        version: "1.04"
+        file: "firmware/FAST_NET_01_04_00.txt"
+
+switches:
+    s_test:
+        number: 7
+        platform_settings:
+            debounce_open: 26
+            debounce_close: 5
+    s_test_nc:
+        number: 26
+        type: 'NC'
+    s_slingshot_test:
+        number: 22
+    s_flipper:
+        number: 1
+    s_flipper_eos:
+        number: 2
+    s_autofire:
+        number: 3
+    s_test3:
+        number: 3-1
+    s_nux_up:
+        number: 0-11
+    s_nux_down:
+        number: 0-12
+
+digital_outputs:
+  c_nux_motor:
+    number: 0-1
+    type: driver
+
+motors:
+  motorized_drop_target_bank:
+    motor_left_output: c_nux_motor
+    position_switches: !!omap
+      - up: s_nux_up
+      - down: s_nux_down
+    reset_position: up
+    go_to_position:
+      go_up: up
+      go_down: down
+
+coils:
+    c_test:
+        number: 4
+        default_pulse_ms: 23
+        default_recycle: True
+        platform_settings:
+            recycle_ms: 27
+    c_test_allow_enable:
+        number: 6
+        default_pulse_ms: 23
+        max_hold_power: 1.0
+    c_slingshot_test:
+        number: 7
+    c_pulse_pwm32_mask:
+        number: 17
+        default_pulse_power: 0.53
+        default_hold_power: 0.40
+    c_hold_ssm:
+        number: 19
+        default_hold_power: 0.25    # approximately
+        platform_settings:
+            hold_pwm_patter: "84224244"
+    c_long_pulse:
+        number: 18
+        default_pulse_ms: 2000
+        max_hold_power: 1.0
+    c_timed_enable:
+        number: 22
+        default_pulse_ms: 20
+        default_timed_enable_ms: 200
+        default_hold_power: 0.25
+    c_default_timed_enable:
+        number: 23
+        default_pulse_ms: 20
+        default_timed_enable_ms: 200
+        default_hold_power: 0.25
+        pulse_with_timed_enable: true
+    c_flipper_main:
+        number: 32
+        default_pulse_ms: 10
+        default_hold_power: 0.125
+    c_flipper_hold:
+        number: 3-5
+        default_hold_power: 0.125
+
+autofire_coils:
+    ac_slingshot_test:
+        coil: c_slingshot_test
+        switch: s_slingshot_test
+    ac_inverted_switch:
+        coil: c_slingshot_test
+        switch: s_test_nc
+    ac_same_switch1:
+        coil: c_test
+        switch: s_autofire
+        enable_events: ac_same_switch
+    ac_same_switch2:
+        coil: c_test_allow_enable
+        switch: s_autofire
+        enable_events: ac_same_switch
+    ac_broken_combination:
+        coil: c_flipper_hold
+        switch: s_slingshot_test
+    ac_different_boards:
+        coil: c_flipper_hold
+        switch: s_test
+    ac_board_3:
+        coil: c_flipper_hold
+        switch: s_test3
+
+servos:
+    servo1:
+        number: 3
+    servo20:
+        number: 3-2
+
+flippers:
+    f_test_single:
+        debug: true
+        main_coil_overwrite:
+            pulse_ms: 11
+        main_coil: c_flipper_main
+        activation_switch: s_flipper
+
+    f_test_hold:
+        debug: true
+        main_coil: c_flipper_main
+        hold_coil: c_flipper_hold
+        activation_switch: s_flipper
+
+    f_test_hold_eos:
+        debug: true
+        main_coil: c_flipper_main
+        hold_coil: c_flipper_hold
+        activation_switch: s_flipper
+        eos_switch: s_flipper_eos
+        use_eos: true
+
+lights:
+  test_pdb_light:
+    number: 35
+    subtype: matrix
+  test_gi:
+    number: 42
+    subtype: gi
+  test_led:
+    number: 2-23
+    type: grb
+  test_led2:
+    previous: test_led
+    type: grb
+  l_o_circle:
+    number: 0-10
+    type: grb

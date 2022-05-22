@@ -466,6 +466,17 @@ class TestBcpInterface(MpfBcpTestCase):
             ],
             queue)
 
+        self._bcp_external_client.send('service', { 'subcommand': 'list_coils', 'sort': False })
+        self.advance_time_and_run()
+
+        queue = self._bcp_external_client.reset_and_return_queue()
+        self.assertEqual(1, len(queue))
+        self.assertListEqual(
+            [
+                ('list_coils', {'coils': [('Virtual', '1001', 'eject_coil2'), ('Virtual', '1000', 'eject_coil1')]})
+            ],
+            queue)
+
     def test_list_lights(self):
         self.assertIn('mode1', self.machine.modes)
         self.assertIn('mode2', self.machine.modes)
@@ -495,6 +506,20 @@ class TestBcpInterface(MpfBcpTestCase):
         self.assertListEqual(
             [
                 ('list_lights', {'lights': [('l_test', 'Light One'), ('l_test2', 'Other Light')]})
+            ],
+            queue)
+
+        self._bcp_external_client.send('service', { 'subcommand': 'list_lights', 'sort': False })
+        self.advance_time_and_run()
+
+        queue = self._bcp_external_client.reset_and_return_queue()
+        self.assertEqual(1, len(queue))
+        self.assertListEqual(
+            [
+                ('list_lights', {'lights': [
+                    ('Virtual', ['led-1001-b', 'led-1001-g', 'led-1001-r'], 'l_test2', '000000'),
+                    ('Virtual', ['led-1000-b', 'led-1000-g', 'led-1000-r'], 'l_test', '000000'),
+                ]}),
             ],
             queue)
 
@@ -536,5 +561,23 @@ class TestBcpInterface(MpfBcpTestCase):
                     ('1003','Ball One'), ('1004', 'Ball Two'),
                     ('1005', 'Launcher')
                 ]})
+            ],
+            queue)
+
+        self._bcp_external_client.send('service', { 'subcommand': 'list_switches', 'sort': False})
+        self.advance_time_and_run()
+
+        queue = self._bcp_external_client.reset_and_return_queue()
+        self.assertEqual(1, len(queue))
+        self.assertListEqual(
+            [
+                ('list_switches', {'switches': [
+                    ('Virtual', '1002', 's_start', 0),
+                    ('Virtual', '1000', 's_test', 0),
+                    ('Virtual', '1001', 's_test2', 0),
+                    ('Virtual', '1005', 's_ball_switch_launcher', 0),
+                    ('Virtual', '1003', 's_ball_switch1', 0),
+                    ('Virtual', '1004', 's_ball_switch2', 0),
+                ]}),
             ],
             queue)

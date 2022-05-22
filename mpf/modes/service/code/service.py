@@ -17,12 +17,13 @@ class Service(AsyncMode):
 
     """The service mode."""
 
-    __slots__ = ["_update_script"]
+    __slots__ = ["_update_script", "_do_sort"]
 
     def __init__(self, *args, **kwargs):
         """Initialize service mode."""
         super().__init__(*args, **kwargs)
         self._update_script = None
+        self._do_sort = self.config.get('mode_settings', {}).get('sort_devices_by_number', True)
 
     @staticmethod
     def get_config_spec():
@@ -38,6 +39,7 @@ up_events: list|str|sw_service_up_active
 down_events: list|str|sw_service_down_active
 software_update: single|bool|False
 software_update_script: single|str|None
+sort_devices_by_number: single|bool|True
 '''
 
     async def _service_mode_exit(self):
@@ -226,6 +228,7 @@ software_update_script: single|str|None
                                      option=options[position], warning=warning)
             key = await self._get_key()
             if key == 'ESC':
+                self.machine.events.post("service_options_slide_stop")
                 return None
             if key == 'UP':
                 position += 1
@@ -319,6 +322,7 @@ software_update_script: single|str|None
                 self._update_main_menu(items, position)
             elif key == 'ENTER':
                 # call submenu
+                self.machine.events.post("service_menu_deselected")
                 await items[position].callback()
                 self._update_main_menu(items, position)
 
@@ -355,7 +359,7 @@ software_update_script: single|str|None
 
     async def _coil_test_menu(self):
         position = 0
-        items = self.machine.service.get_coil_map()
+        items = self.machine.service.get_coil_map(do_sort=self._do_sort)
 
         # do not crash if no coils are configured
         if not items:   # pragma: no cover
@@ -397,7 +401,7 @@ software_update_script: single|str|None
         position = 0
         color_position = 0
         colors = ["white", "red", "green", "blue", "yellow"]
-        items = self.machine.service.get_light_map()
+        items = self.machine.service.get_light_map(do_sort=self._do_sort)
 
         # do not crash if no lights are configured
         if not items:   # pragma: no cover
@@ -445,7 +449,7 @@ software_update_script: single|str|None
     def _update_audits_slide(self, items, position):
         item = items[position][0]
         value = items[position][1]
-        self.machine.events.post("service_audits_menu_show", audits_label=item, value_label=value)
+        self.machine.events.post("service_audits_menu_show", audits_label=str(item), value_label=str(value))
 
     async def _audits_submenu(self, items):
         position = 0

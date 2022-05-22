@@ -52,6 +52,7 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
         self._source_devices = self.config['source_devices']
 
         self.machine.events.add_handler("player_turn_starting", self._player_turn_starting)
+        self.machine.events.add_handler("ball_ending", self._ball_ending)
 
     def _enable(self):
         """Enable the lock.
@@ -60,6 +61,21 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
         """
         self.debug_log("Enabling...")
         self._register_handlers()
+
+    def _ball_ending(self, queue, **kwargs):
+        del kwargs
+        if self.config["empty_lock_devices_on_ball_end"]:
+            total_ball_to_drain = 0
+            for device in self.lock_devices:
+                total_ball_to_drain += device.available_balls
+                device.eject(device.available_balls)
+
+            if total_ball_to_drain > 0:
+                self.log.info("Ejected %s balls to empty lock devices. "
+                              "Waiting for them to drain!", total_ball_to_drain)
+                queue.wait()
+                self.machine.events.add_handler("ball_drain", self._wait_for_drain, queue=queue,
+                                                ball_counter={"remaining": total_ball_to_drain})
 
     def _player_turn_starting(self, queue, **kwargs):
         del kwargs
@@ -72,20 +88,24 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
             # TODO: eject to next playfield
             self.lock_devices[0].eject()
             queue.wait()
-            self.machine.events.add_handler("ball_drain", self._wait_for_drain, queue=queue)
+            self.machine.events.add_handler("ball_drain", self._wait_for_drain, queue=queue,
+                                            ball_counter={"remaining": 1})
 
-    def _wait_for_drain(self, queue, balls, **kwargs):
+    def _wait_for_drain(self, queue, ball_counter, balls, **kwargs):
         del kwargs
         if balls <= 0:
             return {'balls': balls}
 
-        self.debug_log("Ball of lock drained.")
+        balls_to_ignore = min(ball_counter["remaining"], balls)
+        ball_counter["remaining"] -= balls_to_ignore
+        self.info_log("Ignoring %s drained balls", balls_to_ignore)
 
-        queue.clear()
+        if ball_counter["remaining"] == 0:
+            self.debug_log("Ball of lock drained.")
+            queue.clear()
+            self.machine.events.remove_handler_by_event('ball_drain', self._wait_for_drain)
 
-        self.machine.events.remove_handler_by_event('ball_drain', self._wait_for_drain)
-
-        return {'balls': balls - 1}
+        return {'balls': balls - balls_to_ignore}
 
     def _disable(self):
         """Disable the lock.

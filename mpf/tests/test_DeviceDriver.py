@@ -28,7 +28,7 @@ class TestDeviceDriver(MpfTestCase):
 
         self.machine.coils["coil_01"].enable()
         self.machine.coils["coil_01"].hw_driver.enable.assert_called_with(PulseSettings(power=1.0, duration=30),
-                                                                       HoldSettings(power=1.0))
+                                                                       HoldSettings(power=1.0, duration=None))
         self.machine.coils["coil_01"].pulse(100)
         self.machine.coils["coil_01"].hw_driver.pulse.assert_called_with(PulseSettings(power=1.0, duration=100))
         self.machine.coils["coil_01"].disable()
@@ -47,7 +47,7 @@ class TestDeviceDriver(MpfTestCase):
 
         self.machine.coils["coil_01"].enable(pulse_power=0.7, hold_power=0.3)
         self.machine.coils["coil_01"].hw_driver.enable.assert_called_with(PulseSettings(power=0.7, duration=30),
-                                                                       HoldSettings(power=0.3))
+                                                                       HoldSettings(power=0.3, duration=None))
 
         # test long pulse with delay
         self.machine.coils["coil_03"].hw_driver.pulse = MagicMock()
@@ -55,7 +55,7 @@ class TestDeviceDriver(MpfTestCase):
         self.machine.coils["coil_03"].hw_driver.disable = MagicMock()
         self.machine.coils["coil_03"].pulse(pulse_ms=500)
         self.machine.coils["coil_03"].hw_driver.enable.assert_called_with(PulseSettings(power=1.0, duration=0),
-                                                                       HoldSettings(power=1.0))
+                                                                       HoldSettings(power=1.0, duration=None))
         self.machine.coils["coil_03"].hw_driver.pulse.assert_not_called()
         self.advance_time_and_run(.5)
 
@@ -83,3 +83,11 @@ class TestDeviceDriver(MpfTestCase):
         coil.enable()
         self.advance_time_and_run(3.0)
         self.assertEqual("enabled", coil.hw_driver.state)
+
+    def testPulseWithTimedEnable(self):
+        coil = self.machine.coils["coil_pulse_with_timed_enable"]
+        coil.hw_driver.timed_enable = MagicMock()
+        coil.pulse()
+        coil.hw_driver.timed_enable.assert_called_with(
+            PulseSettings(power=0.25, duration=60),
+            HoldSettings(power=0.5, duration=200))

@@ -28,7 +28,7 @@ class FASTDriver(DriverPlatformInterface):
         self.config_state = None                    # type: Optional[Tuple[float, float, float]]
         self.machine = platform.machine
         self.platform = platform
-        self.driver_settings = dict()               # type: Dict[str, str]
+        self.driver_settings = {}                   # type: Dict[str, str]
         self.send = platform.net_connection.send
         self.platform_settings = platform_settings
 
@@ -44,14 +44,14 @@ class FASTDriver(DriverPlatformInterface):
 
     def get_board_name(self):
         """Return the board of this driver."""
-        if self.platform.machine_type == 'wpc':
-            return "FAST WPC"
+        if self.platform.is_retro:
+            return f"FAST Retro ({self.platform.machine_type.upper()})"
 
         coil_index = 0
         number = Util.hex_string_to_int(self.number)
         for board_obj in self.platform.io_boards.values():
             if coil_index <= number < coil_index + board_obj.driver_count:
-                return "FAST Board {}".format(str(board_obj.node_id))
+                return f"FAST Board {str(board_obj.node_id)}"
             coil_index += board_obj.driver_count
 
         # fall back if not found
@@ -170,26 +170,50 @@ class FASTDriver(DriverPlatformInterface):
         self.log.debug("Sending Enable Command: %s", cmd)
         self.send(cmd)
 
+    def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
+        """Pulse and hold this driver for a specified duration."""
+        self._pulse(pulse_settings, hold_settings)
+
     def pulse(self, pulse_settings: PulseSettings):
         """Pulse this driver."""
+        self._pulse(pulse_settings)
+
+    def _pulse(self, pulse_settings: PulseSettings, hold_settings: HoldSettings = None):
+        """Pulse this driver, with an optional hold setting.
+
+        The FAST platform supports pulse and hold configuration in the same command, so
+        this method can be used for both pulse() and timed_enable() behavior.
+        """
         hex_ms_string = Util.int_to_hex_string(pulse_settings.duration)
-        config_state = (pulse_settings.duration, pulse_settings.power, 0)
+        if hold_settings is not None:
+            hold_power = self.get_hold_pwm_for_cmd(hold_settings.power)
+            hold_ms = Util.int_to_hex_string(hold_settings.duration, True)
+            config_state = (pulse_settings.duration, pulse_settings.power, hold_settings.power)
+        else:
+            hold_power = '00'
+            hold_ms = '00'
+            config_state = (pulse_settings.duration, pulse_settings.power, 0)
 
         # reconfigure if we have to
         if not self.config_state or self.config_state[0] != config_state[0] or self.config_state[1] != config_state[1]:
+
             self.config_state = config_state
             self._autofire_cleared = True
 
-            cmd = '{}{},81,00,10,{},{},00,00,00'.format(
+            # The 89 command will write this rule to the driver and pulse it immediately after
+            cmd = '{}{},89,00,10,{},{},{},{},00'.format(
                 self.get_config_cmd(),
                 self.number,
                 hex_ms_string,
-                self.get_pwm_for_cmd(pulse_settings.power))
+                self.get_pwm_for_cmd(pulse_settings.power),
+                hold_power,
+                hold_ms
+            )
             self.send(cmd)
-
-        # trigger driver
-        cmd = '{}{},01'.format(self.get_trigger_cmd(), self.number)
-        self.send(cmd)
+        else:
+            # Trigger the driver directly using the existing configuration
+            cmd = '{}{},01'.format(self.get_trigger_cmd(), self.number)
+            self.send(cmd)
 
         # restore autofire
         self._reenable_autofire_if_configured()
