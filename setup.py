@@ -114,6 +114,7 @@ community.''',
                       'pyserial-asyncio==0.5;platform_system!="Windows"',
                       'sortedcontainers==2.3.0',
                       'psutil==5.7.3',
+                      'packaging',
                       ],
 
     extras_require={

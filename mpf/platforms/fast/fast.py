@@ -7,7 +7,7 @@ as FAST I/O boards.
 import asyncio
 import os
 from copy import deepcopy
-from distutils.version import StrictVersion
+from packaging import version
 from typing import Dict, Set, Optional
 from serial import SerialException
 
@@ -43,7 +43,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "seg_connection", "is_retro",
                  "serial_connections", "fast_leds", "fast_commands", "config", "machine_type", "hw_switch_data",
-                 "io_boards", "flag_led_tick_registered", "_watchdog_task", "_led_task"]
+                 "io_boards", "flag_led_tick_registered", "_watchdog_task", "_led_task", "_seg_task",
+                 "fast_segs"]
 
     def __init__(self, machine):
         """Initialise fast hardware platform.
@@ -84,7 +85,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self._led_task = None
         self.serial_connections = set()         # type: Set[FastSerialCommunicator]
         self.fast_leds = {}
+        self.fast_segs = list()
         self.flag_led_tick_registered = False
+        self._seg_task = None
         self.hw_switch_data = None
         self.io_boards = {}     # type: Dict[int, FastIoBoard]
 
@@ -155,7 +158,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         max_firmware = self.net_connection.remote_firmware
         update_config = None
         for update in self.config['firmware_updates']:
-            if StrictVersion(update['version']) > StrictVersion(max_firmware) and update['type'] == "net":
+            if version.parse(update['version']) > version.parse(max_firmware) and update['type'] == "net":
                 update_config = update
 
         if not update_config:
@@ -187,6 +190,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if self._led_task:
             self._led_task.cancel()
             self._led_task = None
+        if self._seg_task:
+            self._seg_task.cancel()
+            self._seg_task = None
         if self._watchdog_task:
             self._watchdog_task.cancel()
             self._watchdog_task = None
@@ -244,8 +250,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     def _update_watchdog(self):
         """Send Watchdog command."""
-        if self.net_connection:
+        try:
             self.net_connection.send('WD:' + str(hex(self.config['watchdog']))[2:])
+        except:
+            pass
 
     def process_received_message(self, msg: str, remote_processor: str):
         """Send an incoming message from the FAST controller to the proper method for servicing.
@@ -268,7 +276,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.log.warning("Received malformed message: %s from %s", msg, remote_processor)
             return
 
-        # Can't use try since it swallows too many errors for now
+        # Can't use try since it swallows too many errors for now #TODO
         if cmd in self.fast_commands:
             self.fast_commands[cmd](payload, remote_processor)
         else:   # pragma: no cover
@@ -335,6 +343,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.net_connection = communicator
         elif name == 'SEG':
             self.seg_connection = communicator
+
+            if not self._seg_task:
+                # Need to wait until the segs are all set up
+                self.machine.events.add_handler('machine_reset_phase_3', self._start_seg_updates)
+                
         elif name == 'RGB':
             self.rgb_connection = communicator
             self.rgb_connection.send('RF:0')
@@ -342,15 +355,36 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.rgb_connection.send('RF:{}'.format(
                 Util.int_to_hex_string(self.config['hardware_led_fade_time'])))
 
+    def _start_seg_updates(self, **kwargs):        
+
+        for s in self.machine.device_manager.collections["segment_displays"]:
+            self.fast_segs.append(s.hw_display)
+        
+        self.fast_segs.sort(key=lambda x: x.number)
+
+        if self.fast_segs:
+            self._seg_task = self.machine.clock.schedule_interval(self._update_segs,
+                                                1 / self.machine.config['fast'][
+                                                    'segment_display_update_hz'])
+    
+    def _update_segs(self, **kwargs):
+        
+        for s in self.fast_segs:
+
+            if s.next_text:
+                self.seg_connection.send(f'PA:{s.hex_id},{s.next_text.convert_to_str()[0:7]}')
+                s.next_text = None
+            
+            if s.next_color:
+                self.seg_connection.send(('PC:{},{}').format(s.hex_id, s.next_color))
+                s.next_color = None
+
     def update_leds(self):
         """Update all the LEDs connected to a FAST controller.
 
         This is done once per game loop for efficiency (i.e. all LEDs are sent as a single
         update rather than lots of individual ones).
 
-        Also, every LED is updated every loop, even if it doesn't change. This
-        is in case some interference causes a LED to change color. Since we
-        update every loop, it will only be the wrong color for one tick.
         """
         dirty_leds = [led for led in self.fast_leds.values() if led.dirty]
 
@@ -774,7 +808,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Configure a segment display."""
         self.debug_log("Configuring FAST segment display.")
         del platform_settings
-        del display_size
         if not self.seg_connection:
             raise AssertionError("A request was made to configure a FAST "
                                  "Segment Display but no connection is "
@@ -793,7 +826,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Return switch config section."""
         return "fast_switches"
 
-    def _check_switch_coil_combincation(self, switch, coil):
+    def _check_switch_coil_combination(self, switch, coil):
         # V2 hardware can write rules across node boards
         if not self.net_connection.is_legacy:
             return
@@ -824,7 +857,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                        "Driver: %s", enable_switch.hw_switch.number,
                        coil.hw_driver.number)
 
-        self._check_switch_coil_combincation(enable_switch, coil)
+        self._check_switch_coil_combination(enable_switch, coil)
 
         driver = coil.hw_driver
 
@@ -857,8 +890,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                        "%s, Driver: %s", enable_switch.hw_switch.number,
                        coil.hw_driver.number)
 
-        self._check_switch_coil_combincation(enable_switch, coil)
-        self._check_switch_coil_combincation(eos_switch, coil)
+        self._check_switch_coil_combination(enable_switch, coil)
+        self._check_switch_coil_combination(eos_switch, coil)
 
         driver = coil.hw_driver
 
@@ -890,7 +923,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                        "Driver: %s", enable_switch.hw_switch.number,
                        coil.hw_driver.number)
 
-        self._check_switch_coil_combincation(enable_switch, coil)
+        self._check_switch_coil_combination(enable_switch, coil)
 
         driver = coil.hw_driver
 
@@ -912,7 +945,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                        "Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
 
-        self._check_switch_coil_combincation(enable_switch, coil)
+        self._check_switch_coil_combination(enable_switch, coil)
 
         driver = coil.hw_driver
 
