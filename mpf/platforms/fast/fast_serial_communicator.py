@@ -1,6 +1,6 @@
 """Fast serial communicator."""
 import asyncio
-from distutils.version import StrictVersion
+from packaging import version
 from mpf.platforms.fast import fast_defines
 
 from mpf.core.utility_functions import Util
@@ -12,14 +12,14 @@ from mpf.platforms.fast.fast_io_board import FastIoBoard
 
 # The following minimum firmware versions are to prevent breaking changes
 # in MPF from running on boards that have not been updated.
-DMD_MIN_FW = '0.88'         # Minimum FW for a DMD
-NET_MIN_FW = '2.0'         # Minimum FW for a V2 controller
-NET_LEGACY_MIN_FW = '0.88'  # Minimum FW for a V1 controller
-RGB_MIN_FW = '2.0'         # Minimum FW for an RGB LED controller
-RGB_LEGACY_MIN_FW = '0.87'
-IO_MIN_FW = '1.09'          # Minimum FW for an IO board linked to a V2 controller
-IO_LEGACY_MIN_FW = '0.87'   # Minimum FW for an IO board linked to a V1 controller
-SEG_MIN_FW = '0.10'         # Minimum FW for a Segment Display
+DMD_MIN_FW = version.parse('0.88')         # Minimum FW for a DMD
+NET_MIN_FW = version.parse('2.0')          # Minimum FW for a V2 controller
+NET_LEGACY_MIN_FW = version.parse('0.88')  # Minimum FW for a V1 controller
+RGB_MIN_FW = version.parse('2.0')          # Minimum FW for an RGB LED controller
+RGB_LEGACY_MIN_FW = version.parse('0.87')
+IO_MIN_FW = version.parse('1.09')          # Minimum FW for an IO board linked to a V2 controller
+IO_LEGACY_MIN_FW = version.parse('0.87')   # Minimum FW for an IO board linked to a V1 controller
+SEG_MIN_FW = version.parse('0.10')         # Minimum FW for a Segment Display
 
 LEGACY_ID = 'FP-CPU-0'      # Start of an id for V1 controller
 RETRO_ID = 'FP-SBI'         # Start of an id for a Retro controller
@@ -143,7 +143,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
         if self.remote_model.startswith(RETRO_ID):
             self.is_retro = True
-        elif StrictVersion(self.remote_firmware) < StrictVersion(V2_FW):
+        elif self.remote_firmware < V2_FW:
             self.is_legacy = True
 
         self.platform.log.info("Connected! Processor: %s, "
@@ -191,13 +191,11 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         elif self.remote_processor == 'SEG':
             min_version = SEG_MIN_FW
             # latest_version = SEG_LATEST_FW
-            self.max_messages_in_flight = self.platform.config['segment_buffer']
-            self.platform.debug_log("Setting SEG buffer size: %s",
-                                    self.max_messages_in_flight)
+            self.max_messages_in_flight = 0  # SEG doesn't have ACK messages
         else:
             raise AttributeError(f"Unrecognized FAST processor type: {self.remote_processor}")
 
-        if StrictVersion(min_version) > StrictVersion(self.remote_firmware):
+        if version.parse(self.remote_firmware) < min_version:
             raise AssertionError(f'Firmware version mismatch. MPF requires the {self.remote_processor} processor '
                                  f'to be firmware {min_version}, but yours is {self.remote_firmware}')
 
@@ -315,7 +313,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                                     node_id, model, fw, int(sw, 16), int(dr, 16))
 
             min_fw = IO_LEGACY_MIN_FW if self.is_legacy else IO_MIN_FW
-            if StrictVersion(min_fw) > str(fw):
+            if min_fw > version.parse(fw):
                 self.platform.log.critical("Firmware version mismatch. MPF requires the IO boards "
                                            "to be firmware %s, but your Board %s (%s) is firmware %s",
                                            min_fw, node_id, model, fw)
@@ -343,6 +341,9 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             if debug and msg[0] != "W":
                 self.platform.log.debug("Send: %s", "".join(" 0x%02x" % b for b in msg))
 
+        elif not self.max_messages_in_flight:  # For processors that don't use this
+            self.writer.write(msg.encode() + b'\r')
+            self.platform.log.debug("Sending without message flight tracking: %s", msg)
         else:
             self.messages_in_flight += 1
             if self.messages_in_flight > self.max_messages_in_flight:
