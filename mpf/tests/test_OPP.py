@@ -732,7 +732,7 @@ LEDs:
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
-        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x00\x0b\x17\x14')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x00\x0b\x17\x0a')] = False
         self.machine.autofire_coils["ac_delayed_kickback"].enable()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)

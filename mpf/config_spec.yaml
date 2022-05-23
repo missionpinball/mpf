@@ -607,7 +607,7 @@ fadecandy:
 fast:
     __valid_in__: machine
     __type__: config
-    driverboards: single|enum(fast,wpc,None)|None
+    driverboards: single|enum(fast,sys11,wpc89,wpc95,None)|None
     ports: list|str|
     baud: list|int|921600
     watchdog: single|ms|1000
@@ -780,6 +780,7 @@ light_segment_displays:
     __valid_in__: machine
     __type__: config
     display_flash_frequency: single|float|1.0
+    display_flash_duty: single|float|0.5
 light_stripes:
     __valid_in__: machine
     __type__: device
@@ -838,6 +839,7 @@ lisy:
     baud: single|int|None
     debug: single|bool|false
     display_flash_frequency: single|float|1.0
+    display_flash_duty: single|float|0.5
     disable_dtr: single|bool|true
     connection: single|enum(network,serial)|network
     console_log: single|enum(none,basic,full)|none
@@ -1070,6 +1072,7 @@ p_roc:
     dmd_timing_cycles: list|int|None
     dmd_update_interval: single|ms|33ms
     display_flash_frequency: single|float|1.0
+    display_flash_duty: single|float|0.5
     debug: single|bool|false
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
@@ -1445,7 +1448,13 @@ shots:
     restart_events: event_handler|event_handler:ms|None
     advance_events: event_handler|event_handler:ms|None
     hit_events: event_handler|event_handler:ms|None
+    control_events: list|subconfig(shot_control_events)|None
     show_tokens: dict|str:template_str|None
+shot_control_events:
+    events: list|event_handler|
+    state: single|int|
+    force: single|bool|true
+    force_show: single|bool|false
 shot_groups:
     __valid_in__: mode
     __type__: device

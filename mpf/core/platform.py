@@ -245,14 +245,15 @@ class SegmentDisplaySoftwareFlashPlatform(SegmentDisplayPlatform, metaclass=abc.
         self._display_flash_task.add_done_callback(Util.raise_exceptions)
 
     async def _display_flash(self):
-        wait_time = 1 / (self.config['display_flash_frequency'] * 2)
+        wait_time_on = self.config['display_flash_duty'] / self.config['display_flash_frequency']
+        wait_time_off = (1 - self.config['display_flash_duty']) / self.config['display_flash_frequency']
         while True:
             # set on
-            await asyncio.sleep(wait_time)
+            await asyncio.sleep(wait_time_on)
             for display in self._displays:
                 display.set_software_flash(True)
             # set off
-            await asyncio.sleep(wait_time)
+            await asyncio.sleep(wait_time_off)
             for display in self._displays:
                 display.set_software_flash(False)
 

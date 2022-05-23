@@ -28,7 +28,7 @@ class FASTDriver(DriverPlatformInterface):
         self.config_state = None                    # type: Optional[Tuple[float, float, float]]
         self.machine = platform.machine
         self.platform = platform
-        self.driver_settings = dict()               # type: Dict[str, str]
+        self.driver_settings = {}                   # type: Dict[str, str]
         self.send = platform.net_connection.send
         self.platform_settings = platform_settings
 
@@ -44,14 +44,14 @@ class FASTDriver(DriverPlatformInterface):
 
     def get_board_name(self):
         """Return the board of this driver."""
-        if self.platform.machine_type == 'wpc':
-            return "FAST WPC"
+        if self.platform.is_retro:
+            return f"FAST Retro ({self.platform.machine_type.upper()})"
 
         coil_index = 0
         number = Util.hex_string_to_int(self.number)
         for board_obj in self.platform.io_boards.values():
             if coil_index <= number < coil_index + board_obj.driver_count:
-                return "FAST Board {}".format(str(board_obj.node_id))
+                return f"FAST Board {str(board_obj.node_id)}"
             coil_index += board_obj.driver_count
 
         # fall back if not found
