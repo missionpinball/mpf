@@ -21,6 +21,7 @@ COMMAND_LENGTH = {
     0x14: 7,
     0x17: 5,
     0x19: 11,
+    0x1b: 5,
 }
 
 class MockOppSocket(MockSerial):
@@ -335,11 +336,17 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
             self._crc_message(b'\x21\x02\x00\x00\x00\x00'): self._crc_message(board2_version),
             self._crc_message(b'\x22\x02\x00\x00\x00\x00'): self._crc_message(board3_version),
             self._crc_message(b'\x23\x02\x00\x00\x00\x00'): self._crc_message(board4_version),   # get version
+            self._crc_message(b'\x20\x1b\x1f\x00'): False,  # configure pulse power coil 0
             self._crc_message(b'\x20\x14\x00\x02\x17\x00'): False,  # configure coil 0
+            self._crc_message(b'\x20\x1b\x1f\x01'): False,  # configure pulse power coil 1
             self._crc_message(b'\x20\x14\x01\x04\x17\x00'): False,  # configure coil 1
+            self._crc_message(b'\x20\x1b\x1f\x02'): False,  # configure pulse power coil 2
             self._crc_message(b'\x20\x14\x02\x04\x0a\x00'): False,  # configure coil 2
+            self._crc_message(b'\x20\x1b\x1f\x03'): False,  # configure pulse power coil 3
             self._crc_message(b'\x20\x14\x03\x00\x0a\x06'): False,  # configure coil 3
+            self._crc_message(b'\x21\x1b\x1f\x0c'): False,  # configure pulse power coil 1-12
             self._crc_message(b'\x21\x14\x0c\x00\x0a\x01'): False,  # configure coil 1-12
+            self._crc_message(b'\x23\x1b\x1f\x00'): False,  # configure pulse power coil 3-0
             self._crc_message(b'\x23\x14\x00\x02\x2a\x00'): False,  # configure coil 3-0
             self._crc_message(b'\x20\x13\x07\x00\x00\x00\x00', False): False,  # turn off all incands
             self._crc_message(b'\x22\x13\x07\x00\x00\x00\x00', False): False,  # turn off all incands
