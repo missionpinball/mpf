@@ -33,6 +33,7 @@ class OppRs232Intf:
     SET_SOL_INP_CMD = b'\x17'
     UPGRADE_OTHER_BRD = b'\x18'
     READ_MATRIX_INP = b'\x19'
+    CFG_SOL_KICK_PWM = b'\x1b'
 
     INV_CMD = b'\xf0'
     ILLEGAL_CMD = b'\xfe'
