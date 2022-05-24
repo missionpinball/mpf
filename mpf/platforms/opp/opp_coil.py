@@ -143,6 +143,13 @@ class OPPSolenoid(DriverPlatformInterface):
         # if config would not change do nothing
         if new_config_state == self._config_state:
             return
+        
+        if self.sol_card.platform.min_version[self.sol_card.chain_serial] >= 0x00020305:
+            if self._config_state is None:
+                self.reconfigure_pulse_pwm(pulse_settings)
+            else:
+                if self._config_state[0].power != pulse_settings.power:
+                    self.reconfigure_pulse_pwm(pulse_settings)
 
         self._config_state = new_config_state
 
@@ -202,6 +209,27 @@ class OPPSolenoid(DriverPlatformInterface):
 
         if self.sol_card.platform.debug:
             self.log.debug("Writing individual config: %s on %s", "".join(" 0x%02x" % b for b in final_cmd),
+                           self.sol_card.chain_serial)
+        self.sol_card.platform.send_to_processor(self.sol_card.chain_serial, final_cmd)
+    
+    def reconfigure_pulse_pwm(self, pulse_settings: PulseSettings):
+        pwm_val = int((pulse_settings.power * 32) - 1)
+        if pwm_val < 0:
+            pwm_val = 0
+        
+        _, _, solenoid = self.number.split('-')
+
+        msg = bytearray()
+        msg.append(self.sol_card.addr)
+        msg.extend(OppRs232Intf.CFG_SOL_KICK_PWM)
+        msg.append(pwm_val)
+        msg.append(int(solenoid))
+        msg.extend(OppRs232Intf.calc_crc8_whole_msg(msg))
+        msg.extend(OppRs232Intf.EOM_CMD)
+        final_cmd = bytes(msg)
+
+        if self.sol_card.platform.debug:
+            self.log.debug("Writing pulse power config: %s on %s", "".join(" 0x%02x" % b for b in final_cmd),
                            self.sol_card.chain_serial)
         self.sol_card.platform.send_to_processor(self.sol_card.chain_serial, final_cmd)
 
