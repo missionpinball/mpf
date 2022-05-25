@@ -317,10 +317,10 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         board2_config = b'\x21\x0d\x06\x02\x02\x01'     # wing1: neo, wing2: inputs, wing3: inputs, wing4: solenoids
         board3_config = b'\x22\x0d\x03\x03\x03\x07'     # wing1: lamps, wing2: lamps, wing3: lamps, wing4: hi-side lamps
         board4_config = b'\x23\x0d\x01\x01\x04\x05'     # wing1: sol, wing2: sol, wing3: matrix_out, wing4: matrix_in
-        board1_version = b'\x20\x02\x02\x00\x00\x00'    # 2.0.0.0
-        board2_version = b'\x21\x02\x02\x00\x00\x00'    # 2.0.0.0
-        board3_version = b'\x22\x02\x02\x00\x00\x00'    # 2.0.0.0
-        board4_version = b'\x23\x02\x02\x00\x00\x00'    # 2.0.0.0
+        board1_version = b'\x20\x02\x02\x03\x00\x05'    # 2.3.0.5
+        board2_version = b'\x21\x02\x02\x03\x00\x05'    # 2.3.0.5
+        board3_version = b'\x22\x02\x02\x03\x00\x05'    # 2.3.0.5
+        board4_version = b'\x23\x02\x02\x03\x00\x05'    # 2.3.0.5
         inputs1_message = b"\x20\x08\x00\xff\x00\x0c"   # inputs 0+1 off, 2+3 on, 8 on
         inputs2_message = b"\x21\x08\x00\x00\x00\x00"
         inputs3a_message = b"\x23\x08\x00\x00\x00\x00"
@@ -364,7 +364,7 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         assert isinstance(self.machine.default_platform, OppHardwarePlatform)
 
         self._wait_for_processing()
-        self.assertEqual(0x02000000, self.machine.default_platform.min_version["com1"])
+        self.assertEqual(0x02030005, self.machine.default_platform.min_version["com1"])
 
         self.assertFalse(self.serialMock.expected_commands)
         self.maxDiff = 100000
@@ -372,10 +372,10 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         # test hardware scan
         info_str = """Connected CPUs:
  - Port: com1 at 115200 baud. Chain Serial: com1
- -> Board: 0x20 Firmware: 0x2000000
- -> Board: 0x21 Firmware: 0x2000000
- -> Board: 0x22 Firmware: 0x2000000
- -> Board: 0x23 Firmware: 0x2000000
+ -> Board: 0x20 Firmware: 0x2030005
+ -> Board: 0x21 Firmware: 0x2030005
+ -> Board: 0x22 Firmware: 0x2030005
+ -> Board: 0x23 Firmware: 0x2030005
 
 Incand cards:
  - Chain: com1 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
