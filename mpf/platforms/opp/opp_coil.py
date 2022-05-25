@@ -144,7 +144,7 @@ class OPPSolenoid(DriverPlatformInterface):
         if new_config_state == self._config_state:
             return
         
-        if self.sol_card.platform.min_version[self.sol_card.chain_serial] >= 0x00020305:
+        if self.sol_card.platform.min_version[self.sol_card.chain_serial] >= 0x02030005:
             if self._config_state is None:
                 self.reconfigure_pulse_pwm(pulse_settings)
             else:
