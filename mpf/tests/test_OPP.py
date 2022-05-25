@@ -21,7 +21,6 @@ COMMAND_LENGTH = {
     0x14: 7,
     0x17: 5,
     0x19: 11,
-    0x1b: 5,
 }
 
 class MockOppSocket(MockSerial):
@@ -317,10 +316,10 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         board2_config = b'\x21\x0d\x06\x02\x02\x01'     # wing1: neo, wing2: inputs, wing3: inputs, wing4: solenoids
         board3_config = b'\x22\x0d\x03\x03\x03\x07'     # wing1: lamps, wing2: lamps, wing3: lamps, wing4: hi-side lamps
         board4_config = b'\x23\x0d\x01\x01\x04\x05'     # wing1: sol, wing2: sol, wing3: matrix_out, wing4: matrix_in
-        board1_version = b'\x20\x02\x02\x03\x00\x05'    # 2.3.0.5
-        board2_version = b'\x21\x02\x02\x03\x00\x05'    # 2.3.0.5
-        board3_version = b'\x22\x02\x02\x03\x00\x05'    # 2.3.0.5
-        board4_version = b'\x23\x02\x02\x03\x00\x05'    # 2.3.0.5
+        board1_version = b'\x20\x02\x02\x00\x00\x00'    # 2.0.0.0
+        board2_version = b'\x21\x02\x02\x00\x00\x00'    # 2.0.0.0
+        board3_version = b'\x22\x02\x02\x00\x00\x00'    # 2.0.0.0
+        board4_version = b'\x23\x02\x02\x00\x00\x00'    # 2.0.0.0
         inputs1_message = b"\x20\x08\x00\xff\x00\x0c"   # inputs 0+1 off, 2+3 on, 8 on
         inputs2_message = b"\x21\x08\x00\x00\x00\x00"
         inputs3a_message = b"\x23\x08\x00\x00\x00\x00"
@@ -336,17 +335,11 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
             self._crc_message(b'\x21\x02\x00\x00\x00\x00'): self._crc_message(board2_version),
             self._crc_message(b'\x22\x02\x00\x00\x00\x00'): self._crc_message(board3_version),
             self._crc_message(b'\x23\x02\x00\x00\x00\x00'): self._crc_message(board4_version),   # get version
-            self._crc_message(b'\x20\x1b\x1f\x00'): False,  # configure pulse power coil 0
             self._crc_message(b'\x20\x14\x00\x02\x17\x00'): False,  # configure coil 0
-            self._crc_message(b'\x20\x1b\x1f\x01'): False,  # configure pulse power coil 1
             self._crc_message(b'\x20\x14\x01\x04\x17\x00'): False,  # configure coil 1
-            self._crc_message(b'\x20\x1b\x1f\x02'): False,  # configure pulse power coil 2
             self._crc_message(b'\x20\x14\x02\x04\x0a\x00'): False,  # configure coil 2
-            self._crc_message(b'\x20\x1b\x1f\x03'): False,  # configure pulse power coil 3
             self._crc_message(b'\x20\x14\x03\x00\x0a\x06'): False,  # configure coil 3
-            self._crc_message(b'\x21\x1b\x1f\x0c'): False,  # configure pulse power coil 1-12
             self._crc_message(b'\x21\x14\x0c\x00\x0a\x01'): False,  # configure coil 1-12
-            self._crc_message(b'\x23\x1b\x1f\x00'): False,  # configure pulse power coil 3-0
             self._crc_message(b'\x23\x14\x00\x02\x2a\x00'): False,  # configure coil 3-0
             self._crc_message(b'\x20\x13\x07\x00\x00\x00\x00', False): False,  # turn off all incands
             self._crc_message(b'\x22\x13\x07\x00\x00\x00\x00', False): False,  # turn off all incands
@@ -364,7 +357,7 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         assert isinstance(self.machine.default_platform, OppHardwarePlatform)
 
         self._wait_for_processing()
-        self.assertEqual(0x02030005, self.machine.default_platform.min_version["com1"])
+        self.assertEqual(0x02000000, self.machine.default_platform.min_version["com1"])
 
         self.assertFalse(self.serialMock.expected_commands)
         self.maxDiff = 100000
@@ -372,10 +365,10 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         # test hardware scan
         info_str = """Connected CPUs:
  - Port: com1 at 115200 baud. Chain Serial: com1
- -> Board: 0x20 Firmware: 0x2030005
- -> Board: 0x21 Firmware: 0x2030005
- -> Board: 0x22 Firmware: 0x2030005
- -> Board: 0x23 Firmware: 0x2030005
+ -> Board: 0x20 Firmware: 0x2000000
+ -> Board: 0x21 Firmware: 0x2000000
+ -> Board: 0x22 Firmware: 0x2000000
+ -> Board: 0x23 Firmware: 0x2000000
 
 Incand cards:
  - Chain: com1 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
