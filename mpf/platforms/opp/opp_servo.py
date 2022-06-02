@@ -1,7 +1,6 @@
 """OPP servo implementation."""
 
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
-from mpf.platforms.opp.opp_modern_lights import OPPModernLightChannel
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 import logging
 
