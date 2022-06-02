@@ -14,7 +14,6 @@ from mpf.core.utility_functions import Util
 from mpf.platforms.base_serial_communicator import HEX_FORMAT
 
 from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
-#from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 
 from mpf.platforms.opp.opp_coil import OPPSolenoidCard
 from mpf.platforms.opp.opp_incand import OPPIncandCard
