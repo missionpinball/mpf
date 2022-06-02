@@ -46,6 +46,8 @@ class OPPServo(ServoPlatformInterface):
             fade_ms = 0
         else:
             fade_ms = 600 * abs(position_numeric - self.current_position) / self.speed
+            if fade_ms > 65535:
+                fade_ms = 65535
 
         msg = bytearray()
         msg.append(0x20 + int(self.chain_serial))
