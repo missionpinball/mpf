@@ -35,6 +35,13 @@ event_player:
         - event_always
         - event_if_modeactive{mode.mode1.active}
         - event_if_modestopping{mode.mode1.stopping}
+    test_conditional_multiples:
+      conditional_response{value==0}:
+        amount: zero
+      conditional_response{value==1}:
+        amount: one
+      conditional_response{value>1}:
+        amount: greater
     play_placeholder_event:
       - my_event_(machine.test)_123
     play_placeholder_args:
