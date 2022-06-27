@@ -144,6 +144,19 @@ class TestEventPlayer(MpfTestCase):
         self.assertEqual(1, self._events["event_if_modeactive"])
         self.assertEqual(1, self._events["event_if_modestopping"])
 
+    def test_conditional_multiples(self):
+        self.mock_event("conditional_response")
+        self.post_event_with_params("test_conditional_multiples", value=-8)
+        self.assertEqual(0, self._events["conditional_response"])
+        self.post_event_with_params("test_conditional_multiples", value=1)
+        self.assertEqual(1, self._events["conditional_response"])
+        self.assertEqual({"amount": "one", "priority": 0}, self._last_event_kwargs['conditional_response'])
+
+        self.post_event_with_params("test_conditional_multiples", value=20)
+        self.assertEqual({"amount": "greater", "priority": 0}, self._last_event_kwargs['conditional_response'])
+        self.post_event_with_params("test_conditional_multiples", value=0)
+        self.assertEqual({"amount": "zero", "priority": 0}, self._last_event_kwargs['conditional_response'])
+
     def test_event_time_delays(self):
         self.mock_event('td1')
         self.mock_event('td2')

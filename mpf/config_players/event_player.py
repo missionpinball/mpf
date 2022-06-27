@@ -24,15 +24,16 @@ class EventPlayer(FlatConfigPlayer):
 
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Post (delayed) events."""
-        for event, s in settings.items():
-            if s["condition"] and not s["condition"].evaluate(kwargs):
-                continue
+        for event, event_configs in settings.items():
+            for s in event_configs:
+                if s["condition"] and not s["condition"].evaluate(kwargs):
+                    continue
 
-            if s["number"] is not None:
-                self.delay.add(callback=self._post_event, ms=s["number"],
-                               event=event, priority=s["priority"], params=s["params"], **kwargs)
-            else:
-                self._post_event(event, s["priority"], s["params"], **kwargs)
+                if s["number"] is not None:
+                    self.delay.add(callback=self._post_event, ms=s["number"],
+                                   event=event, priority=s["priority"], params=s["params"], **kwargs)
+                else:
+                    self._post_event(event, s["priority"], s["params"], **kwargs)
 
     # pylint: disable-msg=too-many-arguments
     def handle_subscription_change(self, value, settings, priority, context, key):
@@ -46,15 +47,16 @@ class EventPlayer(FlatConfigPlayer):
         if not value:
             return
 
-        for event, s in settings.items():
-            if s["condition"] and not s["condition"].evaluate({}):
-                continue
+        for event, event_configs in settings.items():
+            for s in event_configs:
+                if s["condition"] and not s["condition"].evaluate({}):
+                    continue
 
-            if s["number"] is not None:
-                self.delay.add(callback=self._post_event, ms=s["number"],
-                               event=event, priority=s["priority"], params=s["params"])
-            else:
-                self._post_event(event, s["priority"], s["params"])
+                if s["number"] is not None:
+                    self.delay.add(callback=self._post_event, ms=s["number"],
+                                event=event, priority=s["priority"], params=s["params"])
+                else:
+                    self._post_event(event, s["priority"], s["params"])
 
     def _post_event(self, event, priority, params, **kwargs):
         if "(" in event:
@@ -74,21 +76,24 @@ class EventPlayer(FlatConfigPlayer):
         final_config = {}
         for event, s in config.items():
             if "(" in event:
-                final_config[event] = {
+                if event not in final_config:
+                    final_config[event] = []
+                final_config[event].append({
                     "condition": None,
                     "number": None,
                     "priority": s["priority"],
                     "params": {k: v for k, v in s.items() if k != "priority"}
-                }
+                })
             else:
                 var = self._parse_and_validate_conditional(event, name)
-                final_config[var.name] = {
+                if var.name not in final_config:
+                    final_config[var.name] = []
+                final_config[var.name].append({
                     "condition": var.condition,
                     "number": Util.string_to_ms(var.number) if var.number else None,
                     "priority": s["priority"],
                     "params": {k: v for k, v in s.items() if k != "priority"}
-                }
-
+                })
         return final_config
 
     def _evaluate_event_param(self, param, kwargs):
