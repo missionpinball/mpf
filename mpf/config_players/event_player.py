@@ -47,15 +47,16 @@ class EventPlayer(FlatConfigPlayer):
         if not value:
             return
 
-        for event, s in settings.items():
-            if s["condition"] and not s["condition"].evaluate({}):
-                continue
+        for event, event_configs in settings.items():
+            for s in event_configs:
+                if s["condition"] and not s["condition"].evaluate({}):
+                    continue
 
-            if s["number"] is not None:
-                self.delay.add(callback=self._post_event, ms=s["number"],
-                               event=event, priority=s["priority"], params=s["params"])
-            else:
-                self._post_event(event, s["priority"], s["params"])
+                if s["number"] is not None:
+                    self.delay.add(callback=self._post_event, ms=s["number"],
+                                event=event, priority=s["priority"], params=s["params"])
+                else:
+                    self._post_event(event, s["priority"], s["params"])
 
     def _post_event(self, event, priority, params, **kwargs):
         if "(" in event:
