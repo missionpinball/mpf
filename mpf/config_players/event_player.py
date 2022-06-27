@@ -31,7 +31,7 @@ class EventPlayer(FlatConfigPlayer):
 
                 if s["number"] is not None:
                     self.delay.add(callback=self._post_event, ms=s["number"],
-                                event=event, priority=s["priority"], params=s["params"], **kwargs)
+                                   event=event, priority=s["priority"], params=s["params"], **kwargs)
                 else:
                     self._post_event(event, s["priority"], s["params"], **kwargs)
 
@@ -75,7 +75,7 @@ class EventPlayer(FlatConfigPlayer):
         final_config = {}
         for event, s in config.items():
             if "(" in event:
-                if not event in final_config:
+                if event not in final_config:
                     final_config[event] = []
                 final_config[event].append({
                     "condition": None,
@@ -85,7 +85,7 @@ class EventPlayer(FlatConfigPlayer):
                 })
             else:
                 var = self._parse_and_validate_conditional(event, name)
-                if not var.name in final_config:
+                if var.name not in final_config:
                     final_config[var.name] = []
                 final_config[var.name].append({
                     "condition": var.condition,
