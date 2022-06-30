@@ -61,6 +61,7 @@ achievements:
     show_when_disabled: single|machine(shows)|None
     show_when_selected: single|machine(shows)|None
     sync_ms: single|int|None
+    speed: single|float|1
 
 animations:
     __valid_in__: machine, mode                 # todo add to validator
