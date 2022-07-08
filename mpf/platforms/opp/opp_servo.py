@@ -50,7 +50,7 @@ class OPPServo(ServoPlatformInterface):
                 fade_ms = 65535
 
         msg = bytearray()
-        msg.append(0x20 + int(self.chain_serial))
+        msg.append(0x20)
         msg.append(OppRs232Intf.SERIAL_LED_CMD_FADE)
         msg.append(int(servo_offset / 256))
         msg.append(int(servo_offset % 256))
