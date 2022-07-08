@@ -259,12 +259,13 @@ class Achievement(ModeDevice):
 
         if show:
             self.debug_log('Playing show: %s. Priority: %s. Loops: -1. '
-                           'Show tokens: %s', show.name, self._mode.priority,
-                           self.config['show_tokens'])
+                           'Show tokens: %s', 'Speed: %s', show.name, self._mode.priority,
+                           self.config['show_tokens'], self.config['speed'])
 
             self._show = show.play(
                 priority=self._mode.priority,
                 loops=-1, sync_ms=self.config['sync_ms'],
+                speed=self.config['speed'],
                 show_tokens=self.config['show_tokens'])
 
     def device_loaded_in_mode(self, mode: Mode, player: Player):

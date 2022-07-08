@@ -441,3 +441,40 @@ class TestTimer(MpfFakeGameTestCase):
         self.assertEqual(7, timer.ticks)
         self.advance_time_and_run(1)
         self.assertEqual(8, timer.ticks)
+
+    def test_timer_player_vars_with_multiplayer(self):
+        # add a fake player
+        self.start_two_player_game()
+
+        self.assertPlayerNumber(1)
+        self.assertBallNumber(1)
+        self.advance_time_and_run(.1)
+
+        timer = self.machine.timers['timer_start_with_game']
+        # In this test scenario, the timer is at 2 ticks by the time we get here
+        self.assertEqual(2, timer.ticks)
+
+        self.advance_time_and_run(1)
+        self.assertEqual(self.machine.game.player_list[0].mode_with_timers2_timer_start_with_game_tick, 3)
+        self.advance_time_and_run(1)
+        self.assertEqual(self.machine.game.player_list[0].mode_with_timers2_timer_start_with_game_tick, 4)
+
+        self.machine.events.post('stop_mode_with_timers2')
+        self.drain_all_balls()
+        self.advance_time_and_run()
+        self.assertPlayerNumber(2)
+        self.assertBallNumber(1)
+        self.machine.events.post('start_mode_with_timers')
+        self.advance_time_and_run(.1)
+
+        self.assertEqual(self.machine.game.player_list[0].mode_with_timers2_timer_start_with_game_tick, 4)
+        self.assertEqual(self.machine.game.player_list[1].mode_with_timers2_timer_start_with_game_tick, 2)
+        self.advance_time_and_run(1)
+        self.assertEqual(self.machine.game.player_list[0].mode_with_timers2_timer_start_with_game_tick, 4)
+        self.assertEqual(self.machine.game.player_list[1].mode_with_timers2_timer_start_with_game_tick, 3)
+        self.advance_time_and_run(1)
+        self.assertEqual(self.machine.game.player_list[0].mode_with_timers2_timer_start_with_game_tick, 4)
+        self.assertEqual(self.machine.game.player_list[1].mode_with_timers2_timer_start_with_game_tick, 4)
+        self.advance_time_and_run(1)
+        self.assertEqual(self.machine.game.player_list[0].mode_with_timers2_timer_start_with_game_tick, 4)
+        self.assertEqual(self.machine.game.player_list[1].mode_with_timers2_timer_start_with_game_tick, 5)

@@ -94,6 +94,7 @@ class Timer(ModeDevice):
     def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Set up control events when mode is loaded."""
         del mode
+        self.player = player
         self.tick_secs = self.config['tick_interval'].evaluate([])
 
         try:
@@ -107,7 +108,6 @@ class Timer(ModeDevice):
         self.start_value = self.config['start_value'].evaluate([])
         self.ticks = self.start_value
 
-        self.player = player
         if self.config['control_events']:
             self._setup_control_events(self.config['control_events'])
 
