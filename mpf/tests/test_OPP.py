@@ -187,7 +187,7 @@ class TestOPPStm32(MpfTestCase):
         self.serialMocks["com2"] = MockOppSocket("com2")
         board1_config = b'\x20\x0d\x01\x02\x03\x08'      # wing1: solenoids, wing2: inputs, wing3: lamps, wing4: neo_sol
         board2_config = b'\x20\x0d\x0b\x0c\x03\x03'      # wing1: lamps, wing2: lamps, wing3: lamps, wing4: lamps
-        board1_version = b'\x20\x02\x02\x01\x00\x00'     # 2.1.0.0
+        board1_version = b'\x20\x02\x02\x02\x00\x02'     # 2.2.0.2
         board2_version = b'\x20\x02\x02\x01\x00\x00'     # 2.1.0.0
         inputs1_message = b"\x20\x08\x00\xff\x00\x0c"    # inputs 0+1 off, 2+3 on, 8 on
         inputs2_message = b"\x20\x08\x00\x00\x00\x00"
@@ -223,7 +223,7 @@ class TestOPPStm32(MpfTestCase):
         assert isinstance(self.machine.default_platform, OppHardwarePlatform)
 
         self._wait_for_processing()
-        self.assertEqual(0x02010000, self.machine.default_platform.min_version["19088743"])
+        self.assertEqual(0x02020002, self.machine.default_platform.min_version["19088743"])
         self.assertEqual(0x02010000, self.machine.default_platform.min_version["2"])
 
         self.maxDiff = 100000
@@ -231,7 +231,7 @@ class TestOPPStm32(MpfTestCase):
         # test hardware scan
         info_str = """Connected CPUs:
  - Port: com1 at 115200 baud. Chain Serial: 19088743
- -> Board: 0x20 Firmware: 0x2010000
+ -> Board: 0x20 Firmware: 0x2020002
  - Port: com2 at 115200 baud. Chain Serial: 2
  -> Board: 0x20 Firmware: 0x2010000
 
@@ -299,6 +299,27 @@ Matrix lights:
         self.machine.lights["m0-0"].color("white%60", fade_ms=100)
         self.machine.lights["m0-1"].color("white%90", fade_ms=100)
         self.advance_time_and_run(.02)
+        self._wait_for_processing()
+
+        self.serialMocks["com1"].expected_commands[
+            self._crc_message(b'\x20\x40\x30\x00\x00\x01\x00\x00\x95', False)] = False
+        
+        self.post_event("reset_servo")
+        self.advance_time_and_run(.1)
+        self._wait_for_processing()
+
+        self.serialMocks["com1"].expected_commands[
+            self._crc_message(b'\x20\x40\x30\x00\x00\x01\x05\xdc\x63', False)] = False
+        
+        self.post_event("servo_up")
+        self.advance_time_and_run(.1)
+        self._wait_for_processing()
+
+        self.serialMocks["com1"].expected_commands[
+            self._crc_message(b'\x20\x40\x30\x00\x00\x01\x0b\xb8\xc7', False)] = False
+        
+        self.post_event("servo_down")
+        self.advance_time_and_run(.1)
         self._wait_for_processing()
 
 
