@@ -21,9 +21,10 @@ from mpf.platforms.opp.opp_modern_lights import OPPModernLightChannel, OPPNeopix
 from mpf.platforms.opp.opp_serial_communicator import OPPSerialCommunicator, BAD_FW_VERSION
 from mpf.platforms.opp.opp_switch import OPPInputCard
 from mpf.platforms.opp.opp_switch import OPPMatrixCard
+from mpf.platforms.opp.opp_servo import OPPServo
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
-from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
-    DriverConfig, SwitchConfig, RepulseSettings
+from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, ServoPlatform, \
+    SwitchSettings, DriverSettings, DriverConfig, SwitchConfig, RepulseSettings
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -33,7 +34,7 @@ if MYPY:   # pragma: no cover
 
 
 # pylint: disable-msg=too-many-instance-attributes
-class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
+class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlatform):
 
     """Platform class for the OPP hardware.
 
@@ -1118,3 +1119,21 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         # are changed, so this might need to be called each time.
         if not coil.hw_driver.switches:
             coil.hw_driver.remove_switch_rule()
+
+    async def configure_servo(self, number) -> OPPServo:
+        chain_serial, card, pin_number = number.split('-')
+
+        if self.min_version[chain_serial] < 0x02020002:
+            self.raise_config_error("Servos not supported on this OPP FW version: {}.".format(
+                self.min_version[chain_serial]), 23)
+        
+        for inputs in self.opp_inputs:
+            if inputs.chain_serial == chain_serial:
+                possible_inputs = self._get_numbers(inputs.mask)
+
+        if 8 <= int(pin_number) < 16 and int(pin_number) in possible_inputs:
+            servo_number = int(pin_number) - 8
+        else:
+            self.raise_config_error("Servo unavailable at this number: {}.".format(number), 24)
+            
+        return OPPServo(chain_serial, servo_number, self)
