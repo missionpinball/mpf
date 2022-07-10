@@ -161,6 +161,9 @@ class TestOPPStm32(MpfTestCase):
         self.clock.mock_serial("com2", self.serialMocks["com2"])
 
     def tearDown(self):
+        self.serialMocks["com1"].expected_commands[
+            self._crc_message(b'\x20\x40\x30\x00\x00\x01\x00\x00\x00', False)] = False
+
         for port, mock in self.serialMocks.items():
             self.assertFalse(mock.crashed, "Mock {} crashed".format(port))
         super().tearDown()
