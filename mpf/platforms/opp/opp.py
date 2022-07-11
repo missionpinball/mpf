@@ -152,6 +152,24 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoP
             # if we run any CPUs with firmware prior to 2.1.0 start incands updater
             self._incand_task = self.machine.clock.schedule_interval(self.update_incand,
                                                                      1 / self.config['incand_update_hz'])
+        else:
+            #turn off incands for firmware 2.1.0.0 or newer
+            msg = bytearray()
+            msg.append(0x20)
+            msg.extend(OppRs232Intf.INCAND_CMD)
+            msg.extend(OppRs232Intf.INCAND_SET_ON_OFF)
+            msg.append(0x00)
+            msg.append(0x00)
+            msg.append(0x00)
+            msg.append(0x00)
+            msg.extend(OppRs232Intf.calc_crc8_whole_msg(msg))
+            send_cmd = bytes(msg)
+
+            if self.debug:
+                self.debug_log("Ensure incands are OFF on %s:%s", chain_serial,
+                            "".join(HEX_FORMAT % b for b in send_cmd))
+
+            self.send_to_processor(chain_serial, send_cmd)
 
         self._light_system.start()
 

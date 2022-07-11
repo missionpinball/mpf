@@ -216,6 +216,7 @@ class TestOPPStm32(MpfTestCase):
             self._crc_message(b'\x20\x40\x10\x1f\x00\x01\x00\x00\x00'): False,
             self._crc_message(b'\x20\x40\x20\x00\x00\x02\x00\x00\x00\x00'): False,
             self._crc_message(b'\x20\x40\x20\x3f\x00\x01\x00\x00\x00'): False,
+            self._crc_message(b'\x20\x13\x07\x00\x00\x00\x00'): False,
         }
         self.serialMocks["com2"].permanent_commands = {
             b'\xff': b'\xff',
