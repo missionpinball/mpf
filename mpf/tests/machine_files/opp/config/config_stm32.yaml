@@ -60,3 +60,15 @@ lights:
   m0-63:
     number: 2-0-63
     subtype: matrix
+
+servos:
+  servo1:
+    servo_min: 0
+    servo_max: 1
+    speed_limit: 20
+    positions:
+      0.392: servo_up
+      0.784: servo_down
+    reset_position: 0.588
+    reset_events: reset_servo
+    number: 19088743-0-8
