@@ -143,7 +143,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
         if self.remote_model.startswith(RETRO_ID):
             self.is_retro = True
-        elif self.remote_firmware < V2_FW:
+        elif version.parse(self.remote_firmware) < version.parse(V2_FW):
             self.is_legacy = True
 
         self.platform.log.info("Connected! Processor: %s, "
