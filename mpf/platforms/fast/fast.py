@@ -44,7 +44,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "seg_connection", "is_retro",
                  "serial_connections", "fast_leds", "fast_commands", "config", "machine_type", "hw_switch_data",
                  "io_boards", "flag_led_tick_registered", "_watchdog_task", "_led_task", "_seg_task",
-                 "fast_segs"]
+                 "fast_segs", "_update_seg_colors_next", "dirty_segment_colors"]
 
     def __init__(self, machine):
         """Initialise fast hardware platform.
@@ -86,6 +86,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.serial_connections = set()         # type: Set[FastSerialCommunicator]
         self.fast_leds = {}
         self.fast_segs = list()
+        self._update_seg_colors_next = False
+        self.dirty_segment_colors = set()
         self.flag_led_tick_registered = False
         self._seg_task = None
         self.hw_switch_data = None
@@ -369,15 +371,17 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     
     def _update_segs(self, **kwargs):
         
-        for s in self.fast_segs:
-
-            if s.next_text:
-                self.seg_connection.send(f'PA:{s.hex_id},{s.next_text.convert_to_str()[0:7]}')
-                s.next_text = None
+        if self._update_seg_colors_next and self.dirty_segment_colors:
+            for s in self.dirty_segment_colors:
+                self.seg_connection.send(f'PC:{s.hex_id},{s.next_color}')
             
-            if s.next_color:
-                self.seg_connection.send(('PC:{},{}').format(s.hex_id, s.next_color))
-                s.next_color = None
+            self.dirty_segment_colors = set()
+        
+        else:
+            for s in self.fast_segs:
+                self.seg_connection.send(f'PA:{s.hex_id},{s.next_text.convert_to_str()[0:7]}') 
+
+        self._update_seg_colors_next = not self._update_seg_colors_next
 
     def update_leds(self):
         """Update all the LEDs connected to a FAST controller.

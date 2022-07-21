@@ -40,3 +40,5 @@ class FASTSegmentDisplay(SegmentDisplayPlatformInterface):
             self.next_color = (RGBColor(colors[0]).hex + ',') * 7
         else:
             self.next_color = ','.join([RGBColor(color).hex for color in colors]) + ','
+        
+        self.serial.platform.dirty_segment_colors.add(self)
