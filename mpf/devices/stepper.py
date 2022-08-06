@@ -1,4 +1,4 @@
-"""Implements a servo in MPF."""
+"""Implements a stepper in MPF."""
 import asyncio
 
 from typing import Optional
@@ -54,6 +54,12 @@ class Stepper(SystemWideDevice):
             self.machine.events.add_handler(self.config['named_positions'][position],
                                             self.event_move_to_position,
                                             position=position)
+
+        for position in self.config['relative_positions']:
+            self.machine.events.add_handler(self.config['relative_positions'][position],
+                                            self.event_move_to_position,
+                                            position=position,
+                                            is_relative=True)
 
         if not self.platform.features['allow_empty_numbers'] and self.config['number'] is None:
             self.raise_config_error("Stepper must have a number.", 2)
@@ -122,7 +128,10 @@ class Stepper(SystemWideDevice):
             self.debug_log("Move completed")
 
     def _move_to_absolute_position(self, position):
-        """Move servo to position."""
+        """Move stepper to position."""
+        if self.config['rollover_position'] and position > self.config['rollover_position']:
+            self.debug_log("Position %s exceeds %s, rolling over", position, self.config['rollover_position'])
+            position = position % self.config['rollover_position']
         self.debug_log("Moving to position %s", position)
         if self.config['pos_min'] <= position <= self.config['pos_max']:
             self._target_position = position
@@ -191,17 +200,17 @@ class Stepper(SystemWideDevice):
         self._move_to_absolute_position(self.config['reset_position'])
 
     @event_handler(5)
-    def event_move_to_position(self, position=None, **kwargs):
+    def event_move_to_position(self, position=None, is_relative=False, **kwargs):
         """Event handler for move_to_position event."""
         del kwargs
         if position is None:
             raise AssertionError("move_to_position event is missing a position.")
 
-        self.move_to_position(position)
+        self.move_to_position(position, is_relative)
 
-    def move_to_position(self, position):
+    def move_to_position(self, position, is_relative=False):
         """Move stepper to a position."""
-        self._target_position = position
+        self._target_position = (self._current_position + position) if is_relative else position
         if self._ball_search_started:
             return
         self._move_to_absolute_position(position)

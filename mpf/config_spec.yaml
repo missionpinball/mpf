@@ -1931,8 +1931,10 @@ steppers:
     ball_search_max: single|int|1
     ball_search_wait: single|ms|5s
     include_in_ball_search: single|bool|true
+    relative_positions: dict|float:str|None
     reset_position: single|int|0
     reset_events: event_handler|event_handler:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
+    rollover_position: single|int|0
     number: single|str|
     platform: single|str|None
     platform_settings: single|dict|None
