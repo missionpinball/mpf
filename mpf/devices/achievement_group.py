@@ -76,7 +76,7 @@ class AchievementGroup(ModeDevice):
         if show:
             self._show = show.play(
                 priority=self.mode.priority,
-                loops=-1,
+                loops=-1, sync_ms=self.config['sync_ms'],
                 show_tokens=self.config['show_tokens'])
 
         for e in self.config['events_when_enabled']:

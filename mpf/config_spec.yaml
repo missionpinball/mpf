@@ -28,6 +28,7 @@ achievement_groups:
     events_when_no_more_enabled: list|event_posted|None
     events_when_enabled: list|event_posted|None
     show_tokens: dict|str:str|None
+    sync_ms: single|int|None
     show_when_enabled: single|machine(shows)|None
 achievements:
     __valid_in__: mode
