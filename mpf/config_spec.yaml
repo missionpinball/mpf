@@ -18,6 +18,7 @@ achievement_groups:
     disable_events: event_handler|event_handler:ms|None
     start_selected_events: event_handler|event_handler:ms|None
     select_random_achievement_events: event_handler|event_handler:ms|None
+    disable_random: single|bool|false
     allow_selection_change_while_disabled: single|bool|false
     auto_select: single|bool|false
     disable_while_achievement_started: single|bool|true
