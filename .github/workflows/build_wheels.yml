@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   build_wheels:
-    name: Build wheels for ${{ matrix.cibw-build }}
+    name: Build wheels for Python ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:  
       fail-fast: false
@@ -44,7 +44,7 @@ jobs:
           pip install -e .
       
       - name: Run tests
-        run: python -m unittest discover -s mpfmc
+        run: python -m unittest discover -s mpf
       
       - name: Build wheel
         run: python -m build
