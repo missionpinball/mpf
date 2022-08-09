@@ -44,7 +44,7 @@ jobs:
           pip install -e .
       
       - name: Run tests
-        run: python -m unittest discover -s mpf
+        run: python -m unittest discover -s mpf/tests
       
       - name: Build wheel
         run: python -m build
