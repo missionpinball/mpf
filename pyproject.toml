@@ -62,13 +62,5 @@ include = ["mpf*"]
 requires = [
     "setuptools >= 63",
     "setuptools_scm[toml] >= 6.2",
-    "cython >= 0.29, <3.0",
-    "pkgconfig",
-    "kivy_deps.sdl2 >= 0.3.1; platform_system=='Windows'",
-    "kivy_deps.sdl2-dev >= 0.3.1; platform_system=='Windows'",
-    "kivy_deps.glew >= 0.3.0; platform_system=='Windows'",
-    "kivy_deps.glew-dev >= 0.3.0; platform_system=='Windows'",
-    "kivy_deps.gstreamer >= 0.3.1; platform_system=='Windows'",
-    "kivy_deps.gstreamer-dev >= 0.3.1; platform_system=='Windows'",
     ]
 build-backend = "setuptools.build_meta"
