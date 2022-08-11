@@ -360,7 +360,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
     def _test_timed_enable(self):
         # enable command
         self.net_cpu.expected_commands = {
-            "DL:16,89,00,10,14,FF,88,C8,00": "DL:P"
+            "DL:16,89,00,10,14,FF,C8,88,00": "DL:P"
         }
         self.machine.coils["c_timed_enable"].timed_enable()
         self.advance_time_and_run(.1)
@@ -369,7 +369,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
     def _test_default_timed_enable(self):
         # enable command
         self.net_cpu.expected_commands = {
-            "DL:17,89,00,10,14,FF,88,C8,00": "DL:P"
+            "DL:17,89,00,10,14,FF,C8,88,00": "DL:P"
         }
         self.machine.coils["c_default_timed_enable"].pulse()
         self.advance_time_and_run(.1)
