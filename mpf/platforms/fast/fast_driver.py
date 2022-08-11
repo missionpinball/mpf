@@ -15,8 +15,8 @@ class FASTDriver(DriverPlatformInterface):
 
     """Base class for drivers connected to a FAST Controller."""
 
-    __slots__ = ["log", "autofire", "_autofire_cleared", "config_state", "machine", "platform", "driver_settings",
-                 "send", "platform_settings"]
+    __slots__ = ["log", "autofire", "_autofire_cleared", "config_state", "driver_settings", "_is_relay",
+                 "machine", "platform", "send", "platform_settings"]
 
     def __init__(self, config: DriverConfig, platform: "FastHardwarePlatform", number: str,
                  platform_settings: dict) -> None:
@@ -26,6 +26,7 @@ class FASTDriver(DriverPlatformInterface):
         self.autofire = None                        # type: Optional[Tuple[str, Dict[str, float]]]
         self._autofire_cleared = False
         self.config_state = None                    # type: Optional[Tuple[float, float, float]]
+        self._is_relay = False
         self.machine = platform.machine
         self.platform = platform
         self.driver_settings = {}                   # type: Dict[str, str]
@@ -120,6 +121,9 @@ class FASTDriver(DriverPlatformInterface):
         self.log.debug("Sending Disable Command: %s", cmd)
         self.send(cmd)
 
+        if self._is_relay:
+            return
+
         self._reenable_autofire_if_configured()
 
         # reenable the autofire
@@ -145,12 +149,25 @@ class FASTDriver(DriverPlatformInterface):
         self.autofire = None
         self.config_state = None
 
+    def set_relay(self, relay_switch, debounce_closed_ms, debounce_open_ms):
+        """Set an AC Relay rule with virtual switch."""
+        cmd = '{}{},81,{},25,{},{}'.format(
+            self.get_config_cmd(),
+            self.number,
+            relay_switch.number[0], # FAST switch numbers are tuples
+            hex(debounce_closed_ms)[2:],
+            hex(debounce_open_ms)[2:]
+        )
+        self.log.debug("Setting AC Relay command: %s", cmd)
+        self.send(cmd)
+        self._is_relay = True
+
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable (turn on) this driver."""
         config_state = pulse_settings.duration, pulse_settings.power, hold_settings.power
-        if self.autofire and self.config_state == config_state:
-            # If this driver is also configured for an autofire rule, we just
-            # manually trigger it with the trigger_cmd and manual on ('03')
+        if (self.autofire and self.config_state == config_state) or self._is_relay:
+            # If this driver is also configured for an autofire rule or relay,
+            # we just manually trigger it with the trigger_cmd and manual on ('03')
             cmd = '{}{},03'.format(self.get_trigger_cmd(), self.number)
         else:
             # Otherwise we send a full config command, trigger C1 (logic triggered

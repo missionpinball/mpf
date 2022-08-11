@@ -115,6 +115,14 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
             self.system11_config['ac_relay_switch'].add_handler(state=0, callback=self._a_side_enabled)
             self.system11_config['ac_relay_switch'].add_handler(state=1, callback=self._c_side_enabled)
 
+            # If the platform does not have a physical switch for the AC Relay, a virtual
+            # switch may be implemented with a special driver configuration.
+            if hasattr(self.system11_config['ac_relay_driver'].hw_driver, 'set_relay'):
+                self.system11_config['ac_relay_driver'].hw_driver.set_relay(
+                    self.system11_config['ac_relay_switch'].hw_switch,
+                    20, # Ms to delay before reporting closed
+                    20 # Ms to delay before reporting open
+                )
         self.debounce_secs = self.system11_config['ac_relay_debounce_ms'] / 1000.0
         self.log.debug("Configuring A/C Select Relay transition delay for %sms and debounce for %s",
                        self.system11_config['ac_relay_delay_ms'],
