@@ -223,8 +223,8 @@ class FASTDriver(DriverPlatformInterface):
                 self.number,
                 hex_ms_string,
                 self.get_pwm_for_cmd(pulse_settings.power),
-                hold_power,
-                hold_ms
+                hold_ms,
+                hold_power
             )
             self.send(cmd)
         else:
