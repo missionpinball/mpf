@@ -16,46 +16,48 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
 
     """A list of characters with specialized functions for segment displays. Use for display text effects."""
 
-    __slots__ = ["_text", "embed_dots", "embed_commas"]
+    __slots__ = ["_text", "embed_dots", "embed_commas", "use_dots_for_commas"]
 
-    def __init__(self, char_list, embed_dots, embed_commas):
+    def __init__(self, char_list, embed_dots, embed_commas, use_dots_for_commas):
         """Initialize segment display text."""
         self.embed_dots = embed_dots
         self.embed_commas = embed_commas
+        self.use_dots_for_commas = use_dots_for_commas
         self._text = char_list
 
     # pylint: disable=too-many-arguments
     @classmethod
     def from_str_with_color(cls, text: str, display_size: int, collapse_dots: bool, collapse_commas: bool,
-                            colors: List[RGBColor]) -> "ColoredSegmentDisplayText":
+                            use_dots_for_commas: bool, colors: List[RGBColor]) -> "ColoredSegmentDisplayText":
         """Create colored text."""
         return ColoredSegmentDisplayText(
-            cls._create_characters(text, display_size, collapse_dots, collapse_commas, colors[:]),
-            collapse_dots, collapse_commas)
+            cls._create_characters(text, display_size, collapse_dots, collapse_commas, use_dots_for_commas, colors[:]),
+            collapse_dots, collapse_commas, use_dots_for_commas)
 
     # pylint: disable=too-many-arguments
     @classmethod
-    def from_str(cls, text: str, display_size: int, collapse_dots: bool, collapse_commas: bool,
-                 colors: Optional[List[RGBColor]] = None) -> \
+    def from_str(cls, text: str, display_size: int, collapse_dots: bool, collapse_commas: bool, 
+                 use_dots_for_commas: bool, colors: Optional[List[RGBColor]] = None) -> \
             Union["ColoredSegmentDisplayText", "UncoloredSegmentDisplayText"]:
         """Create from string."""
         if colors:
-            return cls.from_str_with_color(text, display_size, collapse_dots, collapse_commas, colors[:])
+            return cls.from_str_with_color(text, display_size, collapse_dots, collapse_commas, 
+                                           use_dots_for_commas, colors[:])
 
         char_colors = [None] * len(text)
         return UncoloredSegmentDisplayText(
-            cls._create_characters(text, display_size, collapse_dots, collapse_commas, char_colors),
-            collapse_dots, collapse_commas)
+            cls._create_characters(text, display_size, collapse_dots, collapse_commas, use_dots_for_commas, 
+            char_colors), collapse_dots, collapse_commas, use_dots_for_commas)
 
     @classmethod
-    def _embed_dots_and_commas(cls, text: str, collapse_dots: bool, collapse_commas: bool):
+    def _embed_dots_and_commas(cls, text: str, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool):
         """Return text with embedded dots and commas."""
         char_has_dot = False
         char_has_comma = False
         char_list = []
         for char in reversed(text):
-            char_code = ord(char)
-            if collapse_dots and char_code == DOT_CODE:
+            char_code = ord(char)                
+            if collapse_dots and char_code == DOT_CODE or use_dots_for_commas and char_code == COMMA_CODE:
                 char_has_dot = True
                 continue
             if collapse_commas and char_code == COMMA_CODE:
@@ -69,8 +71,8 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
 
     # pylint: disable-msg=too-many-locals
     @classmethod
-    def _create_characters(cls, text: str, display_size: int, collapse_dots: bool, collapse_commas: bool,
-                           colors: List[Optional[RGBColor]]) -> List[DisplayCharacter]:
+    def _create_characters(cls, text: str, display_size: int, collapse_dots: bool, collapse_commas: bool, 
+                           use_dots_for_commas: bool, colors: List[Optional[RGBColor]]) -> List[DisplayCharacter]:
         """Create characters from text and color them.
 
         - Colors are used from the left to the right (starting with the first character).
@@ -82,7 +84,7 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
         char_list = []
         left_pad_color = colors[0] if colors else None
         default_right_color = colors[len(colors) - 1] if colors else None
-        uncolored_chars = cls._embed_dots_and_commas(text, collapse_dots, collapse_commas)
+        uncolored_chars = cls._embed_dots_and_commas(text, collapse_dots, collapse_commas, use_dots_for_commas)
         colors = colors[-len(uncolored_chars):]
         for char_code, char_has_dot, char_has_comma in uncolored_chars:
             color = colors.pop(0) if colors else default_right_color
@@ -104,7 +106,7 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
         return ColoredSegmentDisplayText(
             [char if mask != "F" else DisplayCharacter(SPACE_CODE, False, False, char.color)
              for char, mask in zip(self._text, flash_mask)],
-            self.embed_dots, self.embed_commas
+            self.embed_dots, self.embed_commas, self.use_dots_for_commas
         )
 
     def convert_to_str(self):
@@ -126,7 +128,8 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
     def __getitem__(self, item):
         """Return item or slice."""
         if isinstance(item, slice):
-            return self.__class__(self._text.__getitem__(item), self.embed_dots, self.embed_commas)
+            return self.__class__(self._text.__getitem__(item), self.embed_dots, self.embed_commas, 
+                                  self.use_dots_for_commas)
 
         return self._text.__getitem__(item)
 

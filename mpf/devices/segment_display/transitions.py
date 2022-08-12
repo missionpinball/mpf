@@ -14,14 +14,15 @@ class TransitionBase(metaclass=abc.ABCMeta):
 
     """Base class for text transitions in segment displays."""
 
-    __slots__ = ["output_length", "config", "collapse_dots", "collapse_commas"]
+    __slots__ = ["output_length", "config", "collapse_dots", "collapse_commas", "use_dots_for_commas"]
 
-    def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, config: dict) -> None:
+    def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool, config: dict) -> None:
         """Initialize the transition."""
         self.output_length = output_length
         self.config = config
         self.collapse_dots = collapse_dots
         self.collapse_commas = collapse_commas
+        self.use_dots_for_commas = use_dots_for_commas
 
         for key, value in config.items():
             if hasattr(self, key):
@@ -94,19 +95,20 @@ class NoTransition(TransitionBase):
             raise AssertionError(STEP_OUT_OF_RANGE_ERROR)
 
         return SegmentDisplayText.from_str(new_text, self.output_length, self.collapse_dots, self.collapse_commas,
-                                           new_colors)
+                                           self.use_dots_for_commas, new_colors)
 
 
 class PushTransition(TransitionBase):
 
     """Segment display push transition effect."""
 
-    def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, config: dict) -> None:
+    def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool, 
+                 config: dict) -> None:
         """Class initializer."""
         self.direction = 'right'
         self.text = None
         self.text_color = None
-        super().__init__(output_length, collapse_dots, collapse_commas, config)
+        super().__init__(output_length, collapse_dots, collapse_commas, use_dots_for_commas, config)
 
         if self.text is None:
             self.text = ''
@@ -124,9 +126,10 @@ class PushTransition(TransitionBase):
             raise AssertionError(STEP_OUT_OF_RANGE_ERROR)
 
         current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
-                                                           self.collapse_commas, current_colors)
+                                                           self.collapse_commas, self.use_dots_for_commas, 
+                                                           current_colors)
         new_display_text = SegmentDisplayText.from_str(new_text, self.output_length, self.collapse_dots,
-                                                       self.collapse_commas, new_colors)
+                                                       self.collapse_commas, self.use_dots_for_commas, new_colors)
 
         if self.text:
             if new_colors and not self.text_color:
@@ -134,9 +137,10 @@ class PushTransition(TransitionBase):
             else:
                 text_color = self.text_color
             transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
-                                                          self.collapse_commas, text_color)
+                                                          self.collapse_commas, self.use_dots_for_commas, text_color)
         else:
-            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas)
+            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas, 
+                                                          self.use_dots_for_commas)
 
         if self.direction == 'right':
             temp_list = new_display_text
@@ -159,12 +163,13 @@ class CoverTransition(TransitionBase):
 
     """Segment display cover transition effect."""
 
-    def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, config: dict) -> None:
+    def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool,
+                 config: dict) -> None:
         """Class initializer."""
         self.direction = 'right'
         self.text = None
         self.text_color = None
-        super().__init__(output_length, collapse_dots, collapse_commas, config)
+        super().__init__(output_length, collapse_dots, collapse_commas, use_dots_for_commas, config)
 
         if self.text is None:
             self.text = ''
@@ -182,9 +187,10 @@ class CoverTransition(TransitionBase):
             raise AssertionError(STEP_OUT_OF_RANGE_ERROR)
 
         current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
-                                                           self.collapse_commas, current_colors)
+                                                           self.collapse_commas, self.use_dots_for_commas, 
+                                                           current_colors)
         new_display_text = SegmentDisplayText.from_str(new_text, self.output_length, self.collapse_dots,
-                                                       self.collapse_commas, new_colors)
+                                                       self.collapse_commas, self.use_dots_for_commas, new_colors)
 
         if self.text:
             if new_colors and not self.text_color:
@@ -192,9 +198,10 @@ class CoverTransition(TransitionBase):
             else:
                 text_color = self.text_color
             transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
-                                                          self.collapse_commas, text_color)
+                                                          self.collapse_commas, self.use_dots_for_commas, text_color)
         else:
-            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas)
+            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas, 
+                                                          self.use_dots_for_commas,)
 
         if self.direction == 'right':
             new_extended_display_text = new_display_text
@@ -227,12 +234,13 @@ class UncoverTransition(TransitionBase):
 
     """Segment display uncover transition effect."""
 
-    def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, config: dict) -> None:
+    def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool,
+                 config: dict) -> None:
         """Class initializer."""
         self.direction = 'right'
         self.text = None
         self.text_color = None
-        super().__init__(output_length, collapse_dots, collapse_commas, config)
+        super().__init__(output_length, collapse_dots, collapse_commas, use_dots_for_commas, config)
 
         if self.text is None:
             self.text = ''
@@ -250,9 +258,10 @@ class UncoverTransition(TransitionBase):
             raise AssertionError(STEP_OUT_OF_RANGE_ERROR)
 
         current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
-                                                           self.collapse_commas, current_colors)
+                                                           self.collapse_commas, self.use_dots_for_commas, 
+                                                           current_colors)
         new_display_text = SegmentDisplayText.from_str(new_text, self.output_length, self.collapse_dots,
-                                                       self.collapse_commas, new_colors)
+                                                       self.collapse_commas, self.use_dots_for_commas, new_colors)
 
         if self.text:
             if new_colors and not self.text_color:
@@ -260,9 +269,10 @@ class UncoverTransition(TransitionBase):
             else:
                 text_color = self.text_color
             transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
-                                                          self.collapse_commas, text_color)
+                                                          self.collapse_commas, self.use_dots_for_commas, text_color)
         else:
-            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas)
+            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas, 
+                                                          self.use_dots_for_commas)
 
         if self.direction == 'right':
             current_extended_display_text = transition_text
@@ -295,12 +305,13 @@ class WipeTransition(TransitionBase):
 
     """Segment display wipe transition effect."""
 
-    def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, config: dict) -> None:
+    def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool,
+                 config: dict) -> None:
         """Class initializer."""
         self.direction = 'right'
         self.text = None
         self.text_color = None
-        super().__init__(output_length, collapse_dots, collapse_commas, config)
+        super().__init__(output_length, collapse_dots, collapse_commas, use_dots_for_commas, config)
 
         if self.text is None:
             self.text = ''
@@ -318,9 +329,10 @@ class WipeTransition(TransitionBase):
             raise AssertionError(STEP_OUT_OF_RANGE_ERROR)
 
         current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
-                                                           self.collapse_commas, current_colors)
+                                                           self.collapse_commas, self.use_dots_for_commas,
+                                                           current_colors)
         new_display_text = SegmentDisplayText.from_str(new_text, self.output_length, self.collapse_dots,
-                                                       self.collapse_commas, new_colors)
+                                                       self.collapse_commas, self.use_dots_for_commas, new_colors)
 
         if self.text:
             if new_colors and not self.text_color:
@@ -328,9 +340,10 @@ class WipeTransition(TransitionBase):
             else:
                 text_color = self.text_color
             transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
-                                                          self.collapse_commas, text_color)
+                                                          self.collapse_commas, self.use_dots_for_commas, text_color)
         else:
-            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas)
+            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas, 
+                                                          self.use_dots_for_commas)
 
         if self.direction == 'right':
             if step < len(self.text):
@@ -367,11 +380,12 @@ class SplitTransition(TransitionBase):
 
     """Segment display split transition effect."""
 
-    def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, config: dict) -> None:
+    def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool,
+                 config: dict) -> None:
         """Class initializer."""
         self.direction = 'out'
         self.mode = 'push'
-        super().__init__(output_length, collapse_dots, collapse_commas, config)
+        super().__init__(output_length, collapse_dots, collapse_commas, use_dots_for_commas, config)
 
     def get_step_count(self):
         """Return the total number of steps required for the transition."""
@@ -386,9 +400,10 @@ class SplitTransition(TransitionBase):
             raise AssertionError(STEP_OUT_OF_RANGE_ERROR)
 
         current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
-                                                           self.collapse_commas, current_colors)
+                                                           self.collapse_commas, self.use_dots_for_commas,
+                                                           current_colors)
         new_display_text = SegmentDisplayText.from_str(new_text, self.output_length, self.collapse_dots,
-                                                       self.collapse_commas, new_colors)
+                                                       self.collapse_commas, self.use_dots_for_commas, new_colors)
 
         if self.mode == 'push':
             if self.direction == 'out':
