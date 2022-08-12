@@ -74,8 +74,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         else:
             self.raise_config_error(f'Unknown machine_type "{self.machine_type}" configured fast.', 6)
 
-        # Most FAST platforms don't use ticks, but System11 does
-        self.features['tickless'] = self.machine_type != 'sys11'
+        # Even though System11 uses ticks, that's handled on the Overlay and not needed here.
+        self.features['tickless'] = True
 
         self.dmd_connection = None
         self.net_connection = None
@@ -347,7 +347,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             if not self._seg_task:
                 # Need to wait until the segs are all set up
                 self.machine.events.add_handler('machine_reset_phase_3', self._start_seg_updates)
-                
+
         elif name == 'RGB':
             self.rgb_connection = communicator
             self.rgb_connection.send('RF:0')
@@ -355,26 +355,26 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.rgb_connection.send('RF:{}'.format(
                 Util.int_to_hex_string(self.config['hardware_led_fade_time'])))
 
-    def _start_seg_updates(self, **kwargs):        
+    def _start_seg_updates(self, **kwargs):
 
         for s in self.machine.device_manager.collections["segment_displays"]:
             self.fast_segs.append(s.hw_display)
-        
+
         self.fast_segs.sort(key=lambda x: x.number)
 
         if self.fast_segs:
             self._seg_task = self.machine.clock.schedule_interval(self._update_segs,
                                                 1 / self.machine.config['fast'][
                                                     'segment_display_update_hz'])
-    
+
     def _update_segs(self, **kwargs):
-        
+
         for s in self.fast_segs:
 
             if s.next_text:
                 self.seg_connection.send(f'PA:{s.hex_id},{s.next_text.convert_to_str()[0:7]}')
                 s.next_text = None
-            
+
             if s.next_color:
                 self.seg_connection.send(('PC:{},{}').format(s.hex_id, s.next_color))
                 s.next_color = None
