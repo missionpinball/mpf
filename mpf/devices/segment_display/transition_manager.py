@@ -19,12 +19,14 @@ class TransitionManager:
     __slots__ = []
 
     @staticmethod
-    def get_transition(output_length: int, collapse_dots: bool, collapse_commas: bool, transition_config=None):
+    def get_transition(output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool,
+                       transition_config=None):
         """Create a transition instance based on the specified configuration."""
         if transition_config:
             config = transition_config.copy()
             config.pop('type')
-            return TRANSITIONS[transition_config['type']](output_length, collapse_dots, collapse_commas, config)
+            return TRANSITIONS[transition_config['type']](output_length, collapse_dots, collapse_commas, 
+                               use_dots_for_commas, config)
 
         return None
 
