@@ -100,7 +100,8 @@ class SegmentDisplay(SystemWideDevice):
                                  "See error above.".format(self.name)) from ex
 
         text = SegmentDisplayText.from_str("", self.size, self.config['integrated_dots'],
-                                           self.config['integrated_commas'], self._default_color)
+                                           self.config['integrated_commas'], self.config['use_dots_for_commas'],
+                                           self._default_color)
         self._update_display(SegmentDisplayState(text, FlashingType.NO_FLASH, ''))
 
     def add_virtual_connector(self, virtual_connector):
@@ -240,6 +241,7 @@ class SegmentDisplay(SystemWideDevice):
             transition = TransitionManager.get_transition(self.size,
                                                           self.config['integrated_dots'],
                                                           self.config['integrated_commas'],
+                                                          self.config['use_dots_for_commas'],
                                                           transition_config)
             if previous_text_stack_entry:
                 previous_text = previous_text_stack_entry.text
@@ -278,7 +280,8 @@ class SegmentDisplay(SystemWideDevice):
 
             # update the display
             text = SegmentDisplayText.from_str(new_text, self.size, self.config['integrated_dots'],
-                                               self.config['integrated_commas'], colors)
+                                               self.config['integrated_commas'], self.config['use_dots_for_commas'],
+                                               colors)
             self._update_display(SegmentDisplayState(text, flashing, flash_mask))
 
     def _current_placeholder_changed(self, future=None, **kwargs) -> None:
@@ -291,7 +294,8 @@ class SegmentDisplay(SystemWideDevice):
         new_text, self._current_placeholder_future = self._current_placeholder.evaluate_and_subscribe({})
         self._current_placeholder_future.add_done_callback(self._current_placeholder_changed)
         text = SegmentDisplayText.from_str(new_text, self.size, self.config['integrated_dots'],
-                                           self.config['integrated_commas'], self._current_state.text.get_colors())
+                                           self.config['integrated_commas'], self.config['use_dots_for_commas'],
+                                           self._current_state.text.get_colors())
         self._update_display(SegmentDisplayState(text, self._current_state.flashing,
                                                  self._current_state.flash_mask))
 
@@ -304,7 +308,8 @@ class SegmentDisplay(SystemWideDevice):
         assert isinstance(colors, list)
         assert self.hw_display is not None
         text = SegmentDisplayText.from_str(self._current_state.text.convert_to_str(), self.size,
-                                           self.config['integrated_dots'], self.config['integrated_commas'], colors)
+                                           self.config['integrated_dots'], self.config['integrated_commas'],
+                                           self.config['use_dots_for_commas'], colors)
         self._update_display(SegmentDisplayState(text,
                                                  self._current_state.flashing,
                                                  self._current_state.flash_mask))
