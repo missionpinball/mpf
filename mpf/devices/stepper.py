@@ -103,15 +103,18 @@ class Stepper(SystemWideDevice):
 
         while True:
             # wait until we should be moving
+            self.debug_log("Waiting for stepper to move...")
             await self._is_moving.wait()
             if not self._is_homed:
                 await self._home()
                 self._post_ready_event()
                 continue
+            self.debug_log("Moving the stepper!")
             self._is_moving.clear()
             # store target position in local variable since it may change in the meantime
             target_position = self._target_position
             delta = target_position - self._current_position
+            self.debug_log("Stepper moving relative %s to hit target %s from %s", delta, target_position, self._current_position)
             if delta != 0:
                 self.debug_log("Got move command. Current position: %s Target position: %s Delta: %s",
                                self._current_position, target_position, delta)
@@ -129,10 +132,7 @@ class Stepper(SystemWideDevice):
 
     def _move_to_absolute_position(self, position):
         """Move stepper to position."""
-        if self.config['rollover_position'] and position > self.config['rollover_position']:
-            self.debug_log("Position %s exceeds %s, rolling over", position, self.config['rollover_position'])
-            position = position % self.config['rollover_position']
-        self.debug_log("Moving to position %s", position)
+        self.debug_log("Moving stepper %s to absolute position %s", self.hw_stepper, position)
         if self.config['pos_min'] <= position <= self.config['pos_max']:
             self._target_position = position
             self._is_moving.set()
@@ -210,10 +210,11 @@ class Stepper(SystemWideDevice):
 
     def move_to_position(self, position, is_relative=False):
         """Move stepper to a position."""
+        self.debug_log("Stepper at %s moving to %s position %s", self._current_position, "relative" if is_relative else "absolute", position)
         self._target_position = (self._current_position + position) if is_relative else position
         if self._ball_search_started:
             return
-        self._move_to_absolute_position(position)
+        self._move_to_absolute_position(self._target_position)
 
     def _ball_search_start(self, **kwargs):
         del kwargs
