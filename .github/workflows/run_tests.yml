@@ -6,7 +6,7 @@ jobs:
   build_wheels:
     name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    strategy:  
+    strategy:
       fail-fast: false
       matrix:
         include:
@@ -40,8 +40,10 @@ jobs:
 
       - name: Install MPF
         run: |
-          pip install --upgrade pip setuptools wheel build
+          pip install --upgrade pip setuptools wheel build coveralls
           pip install -e .
-      
+
       - name: Run tests
-        run: python -m unittest discover -s mpf/tests
+        run: |
+          coverage run -m unittest discover -s mpf/tests
+          coveralls

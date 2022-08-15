@@ -13,7 +13,6 @@ machines in restaurants, bars, arcades, and elsewhere. MPF is developed by fun p
 
 [![Coverage Status](https://coveralls.io/repos/missionpinball/mpf/badge.svg?branch=dev&service=github)](https://coveralls.io/github/missionpinball/mpf?branch=dev)
 [![Test Status](https://github.com/missionpinball/mpf/actions/workflows/run_tests.yml/badge.svg)](https://github.com/missionpinball/mpf/actions/workflows/run_tests.yml)
-[![Code Health](https://landscape.io/github/missionpinball/mpf/dev/landscape.svg?style=flat)](https://landscape.io/github/missionpinball/mpf/dev)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1687/badge)](https://bestpractices.coreinfrastructure.org/projects/1687)
 
 
