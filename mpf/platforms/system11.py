@@ -321,14 +321,18 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
         else:
             if side == "C":
                 # Sometimes it doesn't make sense to queue the C side (flashers) and play them after
-                # switching to the A side (coils) and back. In which case, just ignore this driver action.
-                if not self.c_side_enabled and not self.system11_config['queue_c_side_while_preferred']:
+                # switching to the A side (coils) and back. If we are on A side or have a queue on
+                # the A side, ignore this C side request.
+                if (self.a_side_queue or not self.c_side_enabled) and not self.system11_config['queue_c_side_while_preferred']:
                     return
                 self.c_side_queue.add((driver, pulse_settings, hold_settings, timed_enable))
                 if not self.ac_relay_in_transition:
                     self._service_c_side()
             elif side == "A":
                 self.a_side_queue.add((driver, pulse_settings, hold_settings, timed_enable))
+                # Clear the C-side queue to prioritize A-side and get it switched over faster
+                if not self.system11_config['queue_c_side_while_preferred']:
+                    self.c_side_queue.clear()
                 if not self.ac_relay_in_transition and not self.c_side_busy:
                     self._service_a_side()
             else:
