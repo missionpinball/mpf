@@ -3,7 +3,7 @@ name: Test on all platforms
 on: [push, pull_request]
 
 jobs:
-  build_wheels:
+  tests:
     name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -22,6 +22,7 @@ jobs:
           python-version: 3.8
         - os: ubuntu-latest
           python-version: 3.9
+          coverage: true
         - os: macos-latest
           python-version: 3.7
         - os: macos-latest
@@ -44,22 +45,24 @@ jobs:
           pip install -e .
 
       - name: Run tests
-        run: |
-          coverage run -m unittest discover -s mpf/tests
+        run: coverage run -m unittest discover -s mpf/tests
 
-      - name: Coveralls Parallel
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          flag-name: run-${{ matrix.python-version }}-${{ matrix.os }}
-          parallel: true
+      - name: Upload coverage data to coveralls.io
+        run: coveralls --service=github
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_FLAG_NAME: ${{ matrix.python-version }}-${{ matrix.os }}
+          COVERALLS_PARALLEL: true
 
-  finish:
-    needs: build_wheels
+  coveralls:
+    name: Indicate completion to coveralls.io
+    needs: tests
     runs-on: ubuntu-latest
+    container: python:3-slim
     steps:
-    - name: Coveralls Finished
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.GIHUB_TOKEN }}
-        parallel-finished: true
+    - name: Finished
+      run: |
+        pip3 install --upgrade coveralls
+        coveralls --service=github --finish
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
