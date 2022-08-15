@@ -1,4 +1,0 @@
-recursive-include mpf *.py *.yaml *.png *.md *.so *.pyd *.ogg *.wav
-
-
-
