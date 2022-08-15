@@ -1,0 +1,41 @@
+name: Wheel Builder
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build_wheels:
+    name: Push new release to PyPI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout MPF
+        uses: actions/checkout@v3
+
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install MPF
+        run: |
+          pip install --upgrade pip setuptools wheel build
+          pip install -e .
+      
+      - name: Run tests
+        run: python -m unittest discover -s mpf/tests
+      
+      - name: Build wheel
+        run: python -m build
+
+      - uses: actions/upload-artifact@v3
+        with:
+          path: ./dist/*.*
+      
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          print_hash: true
