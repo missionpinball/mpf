@@ -46,4 +46,20 @@ jobs:
       - name: Run tests
         run: |
           coverage run -m unittest discover -s mpf/tests
-          coveralls
+
+      - name: Coveralls Parallel
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          flag-name: run-${{ matrix.python-version }}-${{ matrix.os }}
+          parallel: true
+
+  finish:
+    needs: build_wheels
+    runs-on: ubuntu-latest
+    steps:
+    - name: Coveralls Finished
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GIHUB_TOKEN }}
+        parallel-finished: true
