@@ -71,6 +71,7 @@ mpf:
         rgb_dmds: mpf.devices.rgb_dmd.RgbDmd
         light_stripes: mpf.devices.light_group.LightStrip
         light_rings: mpf.devices.light_group.LightRing
+        neoseg_displays: mpf.devices.light_group.NeoSegDisplay
         magnets: mpf.devices.magnet.Magnet
         kickbacks: mpf.devices.kickback.Kickback
         combo_switches: mpf.devices.combo_switch.ComboSwitch
