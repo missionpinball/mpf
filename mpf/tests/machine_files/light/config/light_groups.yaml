@@ -36,3 +36,17 @@ light_rings:
     center_x: 100
     center_y: 50
     debug: True
+
+neoseg_displays:    
+  neoSeg_0:
+    start_channel: 0-0-0
+    size: 8digit
+    light_template:
+      type: w
+      subtype: led
+  neoSeg_1:
+    start_channel: 0-0-120
+    size: 2digit
+    light_template:
+      type: w
+      subtype: led

@@ -164,6 +164,24 @@ class TestLightSegmentDisplays(MpfTestCase):
         self.assertLightColor("segment5_g", "off")
         self.assertLightColor("segment5_h", "on")
 
+        # show 11 centered on neoseg display
+        self.post_event("show_centered_11")
+        self.advance_time_and_run()
+
+        self.assertLightColor("neoSeg_0_light_30", "on")
+        self.assertLightColor("neoSeg_0_light_31", "on")
+        self.assertLightColor("neoSeg_0_light_34", "on")
+        self.assertLightColor("neoSeg_1_light_81", "on")
+        self.assertLightColor("neoSeg_1_light_90", "on")
+        self.assertLightColor("neoSeg_1_light_93", "on")
+        self.assertLightColor("neoSeg_0_light_29", "off")
+        self.assertLightColor("neoSeg_0_light_32", "off")
+        self.assertLightColor("neoSeg_0_light_35", "off")
+        self.assertLightColor("neoSeg_1_light_82", "off")
+        self.assertLightColor("neoSeg_1_light_91", "off")
+        self.assertLightColor("neoSeg_1_light_92", "off")
+
+
     @test_config("config_dots.yaml")
     def test_dots(self):
         """Check that embedded dots work properly."""

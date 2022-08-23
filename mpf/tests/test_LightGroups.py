@@ -66,3 +66,31 @@ class TestLightGroups(MpfTestCase):
         # 360/0 degree
         self.assertEqual(100, self.machine.lights["ring1_light_9"].config['x'])
         self.assertEqual(53, self.machine.lights["ring1_light_9"].config['y'])
+
+        # neoSeg_0
+        self.assertEqual("led-0-0-0", self.machine.lights["neoSeg_0_light_0"].hw_drivers["white"][0].number)
+        self.assertEqual("led-led-0-0-0+1", self.machine.lights["neoSeg_0_light_1"].hw_drivers["white"][0].number)
+        self.assertEqual("led-led-led-0-0-0+1+1", self.machine.lights["neoSeg_0_light_2"].hw_drivers["white"][0].number)
+        self.assertEqual("neoSeg_0_light_119", self.machine.lights["neoSeg_0_light_119"].name)
+        # sanity check order...not 100%
+        self.assertEqual(self.machine.neoseg_displays["neoSeg_0"].lights[0].name, self.machine.lights["neoSeg_0_light_95"].name)
+        self.assertEqual(self.machine.neoseg_displays["neoSeg_0"].lights[20].name, self.machine.lights["neoSeg_0_light_103"].name)
+        self.assertEqual(self.machine.neoseg_displays["neoSeg_0"].lights[40].name, self.machine.lights["neoSeg_0_light_66"].name)
+        self.assertEqual(self.machine.neoseg_displays["neoSeg_0"].lights[60].name, self.machine.lights["neoSeg_0_light_5"].name)
+        self.assertEqual(self.machine.neoseg_displays["neoSeg_0"].lights[80].name, self.machine.lights["neoSeg_0_light_13"].name)
+        self.assertEqual(self.machine.neoseg_displays["neoSeg_0"].lights[100].name, self.machine.lights["neoSeg_0_light_36"].name)
+        self.assertEqual(self.machine.neoseg_displays["neoSeg_0"].lights[119].name, self.machine.lights["neoSeg_0_light_35"].name)
+
+        # neoSeg_1
+        self.assertEqual("led-0-0-120", self.machine.lights["neoSeg_1_light_0"].hw_drivers["white"][0].number)
+        self.assertEqual("led-led-0-0-120+1", self.machine.lights["neoSeg_1_light_1"].hw_drivers["white"][0].number)
+        self.assertEqual("led-led-led-0-0-120+1+1", self.machine.lights["neoSeg_1_light_2"].hw_drivers["white"][0].number)
+        self.assertEqual("neoSeg_1_light_29", self.machine.lights["neoSeg_1_light_29"].name)
+        # sanity check order...not 100%
+        self.assertEqual(self.machine.neoseg_displays["neoSeg_1"].lights[0].name, self.machine.lights["neoSeg_1_light_5"].name)
+        self.assertEqual(self.machine.neoseg_displays["neoSeg_1"].lights[5].name, self.machine.lights["neoSeg_1_light_29"].name)
+        self.assertEqual(self.machine.neoseg_displays["neoSeg_1"].lights[10].name, self.machine.lights["neoSeg_1_light_21"].name)
+        self.assertEqual(self.machine.neoseg_displays["neoSeg_1"].lights[15].name, self.machine.lights["neoSeg_1_light_14"].name)
+        self.assertEqual(self.machine.neoseg_displays["neoSeg_1"].lights[20].name, self.machine.lights["neoSeg_1_light_13"].name)
+        self.assertEqual(self.machine.neoseg_displays["neoSeg_1"].lights[25].name, self.machine.lights["neoSeg_1_light_15"].name)
+        self.assertEqual(self.machine.neoseg_displays["neoSeg_1"].lights[29].name, self.machine.lights["neoSeg_1_light_20"].name)
