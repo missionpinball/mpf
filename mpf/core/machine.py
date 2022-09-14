@@ -328,7 +328,7 @@ class MachineController(LogMixin):
             init_done.append(hardware_platform.initialize())
 
         # wait for all of them in parallel
-        results = await asyncio.wait(init_done)
+        results = await asyncio.wait([asyncio.create_task(init_done) for init_done in init_done])
         for result in results[0]:
             result.result()
 

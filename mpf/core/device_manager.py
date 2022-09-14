@@ -173,7 +173,7 @@ class DeviceManager(MpfController):
             for device_name in config:
                 futures.append(collection[device_name].device_added_system_wide())
 
-        await asyncio.wait(futures)
+        await asyncio.wait([asyncio.create_task(futures) for futures in futures])
 
     # pylint: disable-msg=too-many-nested-blocks
     def get_device_control_events(self, config) -> Generator[Tuple[str, Callable, int, "Device"], None, None]:
