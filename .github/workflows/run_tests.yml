@@ -1,0 +1,67 @@
+name: Test on all platforms
+
+on: [push, pull_request]
+
+jobs:
+  tests:
+    name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - os: windows-latest
+          python-version: 3.7
+        - os: windows-latest
+          python-version: 3.8
+        - os: windows-latest
+          python-version: 3.9
+        - os: ubuntu-latest
+          python-version: 3.7
+        - os: ubuntu-latest
+          python-version: 3.8
+        - os: ubuntu-latest
+          python-version: 3.9
+        - os: macos-latest
+          python-version: 3.7
+        - os: macos-latest
+          python-version: 3.8
+        - os: macos-latest
+          python-version: 3.9
+
+    steps:
+      - name: Checkout MPF
+        uses: actions/checkout@v3
+
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install MPF
+        run: |
+          pip install --upgrade pip setuptools wheel build coveralls
+          pip install -e .
+
+      - name: Run tests
+        run: coverage run -m unittest discover -s mpf/tests
+
+      - name: Upload coverage data to coveralls.io
+        run: coveralls --service=github
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_FLAG_NAME: ${{ matrix.python-version }}-${{ matrix.os }}
+          COVERALLS_PARALLEL: true
+
+  coveralls:
+    name: Indicate completion to coveralls.io
+    needs: tests
+    runs-on: ubuntu-latest
+    container: python:3-slim
+    steps:
+    - name: Finished
+      run: |
+        pip3 install --upgrade coveralls
+        coveralls --service=github --finish
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

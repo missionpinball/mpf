@@ -65,6 +65,20 @@ lights:
   segment5_h:
     number:
 
+neoseg_displays:
+  neoSeg_0:
+    start_channel: 0-0-0
+    size: 8digit
+    light_template:
+      type: w
+      subtype: led
+  neoSeg_1:
+    start_channel: 0-0-120
+    size: 8digit
+    light_template:
+      type: w
+      subtype: led
+
 segment_displays:
   display1:
     number: 1
@@ -114,6 +128,17 @@ segment_displays:
           g: segment5_g
           h: segment5_h
       type: 8segment
+  neoSegTop:
+    number: 1
+    size: 16
+    integrated_dots: true
+    use_dots_for_commas: true
+    default_transition_update_hz: 30
+    platform_settings:
+      light_groups:
+         - neoSeg_0
+         - neoSeg_1
+      type: 14segment
 
 segment_display_player:
   show_1337:
@@ -136,3 +161,6 @@ segment_display_player:
   remove_text_display1:
     display1:
       action: remove
+  show_centered_11:
+    neoSegTop:
+      text: "       11       "

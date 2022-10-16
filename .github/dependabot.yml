@@ -1,0 +1,8 @@
+version: 2
+
+updates:
+  - package-ecosystem: "pip"
+    open-pull-requests-limit: 10
+    directory: "/" # Location of package manifests
+    schedule:
+      interval: "daily"

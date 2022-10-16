@@ -78,8 +78,28 @@ class LightSegmentDisplaysPlatform(SegmentDisplaySoftwareFlashPlatform):
     async def configure_segment_display(self, number: str, display_size: int, platform_settings) -> LightSegmentDisplay:
         """Configure light segment display."""
         del display_size
+
+        if platform_settings['lights'] != []:
+            _lights = platform_settings['lights']
+        else:
+            #currently supporting 14segment displays
+            segments = ['a','b','c','d','e','f','g1','g2','h','j','k','l','m','n','dp']
+            digit_len = len(segments)
+
+            #get single list of all lights
+            _lights = []
+            for lt_group in platform_settings['light_groups']:
+                await lt_group.wait_for_loaded()
+                _lights.append(lt_group.lights)
+                self.log.debug("last light in group %s", lt_group.lights[-1].name)
+            _lights = [num for sublist in _lights for num in sublist]
+
+            #split list into dicts of digits
+            _lights = [_lights[i:i + digit_len] for i in range(0, len(_lights), digit_len)]
+            _lights = [dict(zip(segments,digit_lights)) for digit_lights in _lights]
+
         display = LightSegmentDisplay(number,
-                                      lights=platform_settings['lights'],
+                                      lights=_lights,
                                       segment_type=platform_settings['type'])
         self._handle_software_flash(display)
         return display

@@ -1,0 +1,72 @@
+[project]
+name = "mpf"
+description = "The Mission Pinball Framework"
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "MIT"}
+authors = [{ name = "The Mission Pinball Framework Team", email = "brian@missionpinball.org"}]
+keywords = ["pinball"]
+classifiers=[
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Natural Language :: English",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Artistic Software",
+    "Topic :: Games/Entertainment :: Arcade"
+    ]
+dependencies = [
+    "ruamel.yaml == 0.15.42",  # newer than this requires c requires compiled c lib, currently no Mac arm versions
+    "pyserial == 3.5",
+    "pyserial-asyncio == 0.4; platform_system=='Windows'",
+    "pyserial-asyncio == 0.5; platform_system!='Windows'",
+    "sortedcontainers == 2.3.0",
+    "psutil >= 5.7.3",
+    "packaging",
+    ]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+cli = ['prompt_toolkit==3.0.8', 'asciimatics==1.12.0', 'terminaltables==3.1.0',]
+crash_reporter = ['requests==2.22.0']
+irc = ['irc==19.0.1']
+linux_i2c = ['smbus2_asyncio==0.0.5']
+osc = ['python-osc==1.7.4']
+pin2dmd = ['pyusb==1.1.0']
+rpi = ['apigpio-mpf==0.0.3']
+vpe = ['grpcio_tools==1.34.0', 'grpcio==1.34.0', 'protobuf==3.14.0',]
+all = [  # currently no way to just use the names from above afaik?
+    'prompt_toolkit==3.0.8', 'asciimatics==1.12.0', 'terminaltables==3.1.0',
+    'requests==2.22.0', 'irc==19.0.1', 'smbus2_asyncio==0.0.5',
+    'python-osc==1.7.4', 'pyusb==1.1.0', 'apigpio-mpf==0.0.3',
+    'grpcio_tools==1.34.0', 'grpcio==1.34.0', 'protobuf==3.14.0',
+    ]
+
+[project.urls]
+homepage = "https://missionpinball.org"
+docs = "https://docs.missionpinball.org"
+support-forum = "https://groups.google.com/g/mpf-users"
+
+[project.scripts]
+mpf = "mpf.commands:run_from_command_line"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = {attr = "mpf._version.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["mpf*"]
+
+[build-system]
+requires = [
+    "setuptools >= 63",
+    "setuptools_scm[toml] >= 6.2",
+    ]
+build-backend = "setuptools.build_meta"
