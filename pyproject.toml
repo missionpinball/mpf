@@ -39,12 +39,12 @@ linux_i2c = ['smbus2_asyncio==0.0.5']
 osc = ['python-osc==1.7.4']
 pin2dmd = ['pyusb==1.1.0']
 rpi = ['apigpio-mpf==0.0.3']
-vpe = ['grpcio_tools==1.34.0', 'grpcio==1.34.0', 'protobuf==3.14.0',]
+vpe = ['grpcio_tools==1.50.0', 'grpcio==1.34.0', 'protobuf==3.14.0',]
 all = [  # currently no way to just use the names from above afaik?
     'prompt_toolkit==3.0.8', 'asciimatics==1.12.0', 'terminaltables==3.1.0',
     'requests==2.22.0', 'irc==19.0.1', 'smbus2_asyncio==0.0.5',
     'python-osc==1.7.4', 'pyusb==1.1.0', 'apigpio-mpf==0.0.3',
-    'grpcio_tools==1.34.0', 'grpcio==1.34.0', 'protobuf==3.14.0',
+    'grpcio_tools==1.50.0', 'grpcio==1.34.0', 'protobuf==3.14.0',
     ]
 
 [project.urls]
