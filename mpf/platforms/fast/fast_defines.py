@@ -172,3 +172,27 @@ RETRO_GI_MAP = {
     'G01': '00', 'G02': '01', 'G03': '02', 'G04': '03',
     'G05': '04', 'G06': '05', 'G07': '06', 'G08': '07',
 }
+
+EXPANSION_BOARD_ADDRESS_MAP = {
+
+    # board type - index : one byte address
+    'exp-0071-i0': 'B4',
+    'exp-0071-i1': 'B5',
+    'exp-0071-i2': 'B6',
+    'exp-0071-i3': 'B7',
+
+    'exp-0201-i0': '88',
+    'exp-0201-i1': '89',
+    'exp-0201-i2': '8A',
+    'exp-0201-i3': '8B',
+
+    'cpu-2000-i0': '48',
+}
+
+EXPANSION_BOARD_BREAKOUT_MAP = {
+
+    # board: highest breakout index, zero-based
+    '0071': 2,
+    '0201': 3,
+    '2000': 5,
+}

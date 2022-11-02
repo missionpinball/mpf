@@ -1,11 +1,11 @@
 """Fast serial communicator."""
 import asyncio
 from packaging import version
+from serial import SerialException, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
+from typing import Optional
 from mpf.platforms.fast import fast_defines
 
 from mpf.core.utility_functions import Util
-
-from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
 
 # Minimum firmware versions needed for this module
 from mpf.platforms.fast.fast_io_board import FastIoBoard
@@ -19,7 +19,6 @@ RGB_MIN_FW = version.parse('2.0')          # Minimum FW for an RGB LED controlle
 RGB_LEGACY_MIN_FW = version.parse('0.87')
 IO_MIN_FW = version.parse('1.09')          # Minimum FW for an IO board linked to a V2 controller
 IO_LEGACY_MIN_FW = version.parse('0.87')   # Minimum FW for an IO board linked to a V1 controller
-SEG_MIN_FW = version.parse('0.10')         # Minimum FW for a Segment Display
 
 LEGACY_ID = 'FP-CPU-0'      # Start of an id for V1 controller
 RETRO_ID = 'FP-SBI'         # Start of an id for a Retro controller
@@ -30,81 +29,62 @@ V2_FW = '1.80'              # Firmware cutoff from V1 to V2 controllers
 # RGB_LATEST_FW = '0.88'
 # IO_LATEST_FW = '0.89'
 
+MYPY = False
+if MYPY:   # pragma: no cover
+    from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
-# pylint: disable-msg=too-many-instance-attributes
-class FastSerialCommunicator(BaseSerialCommunicator):
+HEX_FORMAT = " 0x%02x"
 
-    """Handles the serial communication to the FAST platform."""
-
-    ignored_messages = ['RX:P',  # RGB Pass
-                        'SN:P',  # Network Switch pass
-                        'SL:P',  # Local Switch pass
-                        'LX:P',  # Lamp pass
-                        'PX:P',  # Segment pass
-                        'DN:P',  # Network driver pass
-                        'DL:P',  # Local driver pass
-                        'XX:F',  # Unrecognized command?
-                        'R1:F',
-                        'L1:P',
-                        'GI:P',
-                        'TL:P',
-                        'TN:P',
-                        'XO:P',  # Servo/Daughterboard Pass
-                        'XX:U',
-                        'XX:N'
-                        ]
-
-    __slots__ = ["dmd", "remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
-                 "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
-                 "send_queue", "is_retro", "is_legacy"]
+class FastSerialConnector:
+    """Connects to a serial port and determines which FAST board is on the other end."""
 
     def __init__(self, platform, port, baud):
-        """Initialise communicator.
 
-        Args:
-        ----
-            platform(mpf.platforms.fast.fast.HardwarePlatform): the fast hardware platform
-            port: serial port
-            baud: baud rate
-        """
-        self.dmd = False
-
-        self.remote_processor = None
-        self.remote_model = None
-        self.remote_firmware = 0.0
+        self.platform = platform
+        self.port = port
+        self.baud = baud
+        self.xonxoff = False
+        self.machine = platform.machine
+        self.log = platform.log
+        self.debug = platform.debug
         self.is_retro = False
         self.is_legacy = False
-        self.max_messages_in_flight = 10
-        self.messages_in_flight = 0
-        self.ignored_messages_in_flight = {b'-N', b'/N', b'/L', b'-L'}
 
-        self.send_ready = asyncio.Event()
-        self.send_ready.set()
-        self.write_task = None
+    async def connect(self):
+        """Connect to the serial port."""
+        self.log.info("Connecting to %s at %sbps", self.port, self.baud)
+        while True:
+            try:
+                connector = self.machine.clock.open_serial_connection(
+                    url=self.port, baudrate=self.baud, limit=0, xonxoff=False,
+                    bytesize=EIGHTBITS, parity=PARITY_NONE, stopbits=STOPBITS_ONE)
+                self.reader, self.writer = await connector
+            except SerialException:
+                if not self.machine.options["production"]:
+                    raise
 
-        self.received_msg = b''
+                # if we are in production mode retry
+                await asyncio.sleep(.1)
+                self.log.debug("Connection to %s failed. Will retry.", self.port)
+            else:
+                # we got a connection
+                break
 
-        self.send_queue = asyncio.Queue()
+        serial = self.writer.transport.serial
+        if hasattr(serial, "set_low_latency_mode"):
+            try:
+                serial.set_low_latency_mode(True)
+            except (NotImplementedError, ValueError) as e:
+                self.log.info("Could not set %s to low latency mode: %s", self.port, e)
 
-        super().__init__(platform, port, baud)
+        # defaults are slightly high for our use case
+        self.writer.transport.set_write_buffer_limits(2048, 1024)
 
-    def stop(self):
-        """Stop and shut down this serial connection."""
-        if self.write_task:
-            self.write_task.cancel()
-            self.write_task = None
-        super().stop()
-
-    async def _read_with_timeout(self, timeout):
-        try:
-            msg_raw = await asyncio.wait_for(self.readuntil(b'\r'), timeout=timeout)
-        except asyncio.TimeoutError:
-            return ""
-        return msg_raw.decode()
-
-    async def _identify_connection(self):
-        """Identify which processor this serial connection is talking to."""
-        # keep looping and wait for an ID response
+        # read everything which is sitting in the serial
+        self.writer.transport.serial.reset_input_buffer()
+        # clear buffer
+        # pylint: disable-msg=protected-access
+        self.reader._buffer = bytearray()
 
         msg = ''
 
@@ -151,6 +131,121 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                                self.remote_processor, self.remote_model,
                                self.remote_firmware)
 
+        # Transfer connection over to serial communicator
+
+        if self.remote_processor == 'SEG':
+            self.is_legacy = False
+            from mpf.platforms.fast.communicators.seg import FastSegCommunicator
+            return FastSegCommunicator(self.platform, self.remote_processor,
+                                      self.remote_model, self.remote_firmware,
+                                      self.is_legacy, self.is_retro,
+                                      self.reader, self.writer)
+        elif self.remote_processor == 'EXP':
+            self.is_legacy = False
+            from mpf.platforms.fast.communicators.exp import FastExpCommunicator
+            return FastExpCommunicator(self.platform, self.reader, self.writer)
+        else:
+            return FastSerialCommunicator(self.platform, self.remote_processor,
+                                        self.remote_model, self.remote_firmware,
+                                        self.is_legacy, self.is_retro,
+                                        self.reader, self.writer)
+
+    async def _read_with_timeout(self, timeout):
+        try:
+            msg_raw = await asyncio.wait_for(self.readuntil(b'\r'), timeout=timeout)
+        except asyncio.TimeoutError:
+            return ""
+        return msg_raw.decode()
+
+    # pylint: disable-msg=inconsistent-return-statements
+    async def readuntil(self, separator, min_chars: int = 0):
+        """Read until separator.
+
+        Args:
+        ----
+            separator: Read until this separator byte.
+            min_chars: Minimum message length before separator
+        """
+        assert self.reader is not None
+        # asyncio StreamReader only supports this from python 3.5.2 on
+        buffer = b''
+        while True:
+            char = await self.reader.readexactly(1)
+            buffer += char
+            if char == separator and len(buffer) > min_chars:
+                if self.debug:
+                    self.log.debug("%s received: %s (%s)", self, buffer, "".join(HEX_FORMAT % b for b in buffer))
+                return buffer
+
+# pylint: disable-msg=too-many-instance-attributes
+class FastSerialCommunicator:
+
+    """Handles the serial communication to the FAST platform."""
+
+    ignored_messages = ['RX:P',  # RGB Pass
+                        'SN:P',  # Network Switch pass
+                        'SL:P',  # Local Switch pass
+                        'LX:P',  # Lamp pass
+                        'PX:P',  # Segment pass
+                        'DN:P',  # Network driver pass
+                        'DL:P',  # Local driver pass
+                        'XX:F',  # Unrecognized command?
+                        'R1:F',
+                        'L1:P',
+                        'GI:P',
+                        'TL:P',
+                        'TN:P',
+                        'XO:P',  # Servo/Daughterboard Pass
+                        'XX:U',
+                        'XX:N'
+                        ]
+
+    __slots__ = ["dmd", "remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
+                 "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
+                 "send_queue", "is_retro", "is_legacy", "machine", "platform", "log", "debug", "port", "baud",
+                 "xonxoff", "reader", "writer", "read_task"]
+
+    def __init__(self, platform, remote_processor, remote_model, remote_firmware,
+                 is_legacy, is_retro, reader, writer):
+        """Initialise communicator.
+
+        Args:
+        ----
+            platform(mpf.platforms.fast.fast.HardwarePlatform): the fast hardware platform
+            port: serial port
+            baud: baud rate
+        """
+        self.dmd = False
+        self.platform = platform
+        self.remote_processor = remote_processor
+        self.remote_model = remote_model
+        self.remote_firmware = remote_firmware
+        self.is_retro = is_retro
+        self.is_legacy = is_legacy
+        self.max_messages_in_flight = 10
+        self.messages_in_flight = 0
+        self.ignored_messages_in_flight = {b'-N', b'/N', b'/L', b'-L'}
+
+        self.send_ready = asyncio.Event()
+        self.send_ready.set()
+        self.write_task = None
+
+        self.received_msg = b''
+
+        self.send_queue = asyncio.Queue()
+
+        self.machine = platform.machine     # type: MachineController
+
+        self.log = self.platform.log
+        self.debug = self.platform.config['debug']
+
+
+        self.reader = reader      # type: Optional[asyncio.StreamReader]
+        self.writer = writer      # type: Optional[asyncio.StreamWriter]
+        self.read_task = None
+
+    async def init(self):
+
         self.machine.variables.set_machine_var("fast_{}_firmware".format(self.remote_processor.lower()),
                                                self.remote_firmware)
         '''machine_var: fast_(x)_firmware
@@ -188,10 +283,6 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             self.max_messages_in_flight = self.platform.config['rgb_buffer']
             self.platform.debug_log("Setting RGB buffer size: %s",
                                     self.max_messages_in_flight)
-        elif self.remote_processor == 'SEG':
-            min_version = SEG_MIN_FW
-            # latest_version = SEG_LATEST_FW
-            self.max_messages_in_flight = 0  # SEG doesn't have ACK messages
         else:
             raise AttributeError(f"Unrecognized FAST processor type: {self.remote_processor}")
 
@@ -207,6 +298,45 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
         self.write_task = self.machine.clock.loop.create_task(self._socket_writer())
         self.write_task.add_done_callback(Util.raise_exceptions)
+
+        return self
+
+    # Duplicated from FastSerialConnector for now
+    # pylint: disable-msg=inconsistent-return-statements
+    async def readuntil(self, separator, min_chars: int = 0):
+        """Read until separator.
+
+        Args:
+        ----
+            separator: Read until this separator byte.
+            min_chars: Minimum message length before separator
+        """
+        assert self.reader is not None
+        # asyncio StreamReader only supports this from python 3.5.2 on
+        buffer = b''
+        while True:
+            char = await self.reader.readexactly(1)
+            buffer += char
+            if char == separator and len(buffer) > min_chars:
+                if self.debug:
+                    self.log.debug("%s received: %s (%s)", self, buffer, "".join(HEX_FORMAT % b for b in buffer))
+                return buffer
+
+    def stop(self):
+        """Stop and shut down this serial connection."""
+        if self.write_task:
+            self.write_task.cancel()
+            self.write_task = None
+        self.log.error("Stop called on serial connection %s", self.remote_processor)
+        if self.read_task:
+            self.read_task.cancel()
+            self.read_task = None
+        if self.writer:
+            self.writer.close()
+            if hasattr(self.writer, "wait_closed"):
+                # Python 3.7+ only
+                self.machine.clock.loop.run_until_complete(self.writer.wait_closed())
+            self.writer = None
 
     async def reset_net_cpu(self):
         """Reset the NET CPU."""
@@ -228,6 +358,8 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         msg = ''
         while msg != 'CH:P\r':
             msg = (await self.readuntil(b'\r')).decode()
+            if msg == '\x00CH:P\r':  # workaround as the -5 Neurons send a null byte after the final boot message
+                msg = 'CH:P\r'
             self.platform.debug_log("Got: %s", msg)
 
     async def query_fast_io_boards(self):
@@ -375,7 +507,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
     def __repr__(self):
         """Return str representation."""
-        return "{} ({})".format(self.port, self.remote_processor)
+        return f"FAST Communicator attached to {self.remote_processor}"
 
     def _parse_msg(self, msg):
         self.received_msg += msg
@@ -406,3 +538,38 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
             if msg.decode() not in self.ignored_messages:
                 self.platform.process_received_message(msg.decode(), self.remote_processor)
+
+    async def read(self, n=-1):
+        """Read up to `n` bytes from the stream and log the result if debug is true.
+
+        See :func:`StreamReader.read` for details about read and the `n` parameter.
+        """
+        try:
+            resp = await self.reader.read(n)
+        except asyncio.CancelledError:  # pylint: disable-msg=try-except-raise
+            raise
+        except Exception as e:  # pylint: disable-msg=broad-except
+            self.log.warning("Serial error: {}".format(e))
+            return None
+
+        # we either got empty response (-> socket closed) or and error
+        if not resp:
+            self.log.warning("Serial closed.")
+            self.machine.stop("Serial {} closed.".format(self.port))
+            return None
+
+        if self.debug:
+            self.log.debug("%s received: %s (%s)", self, resp, "".join(HEX_FORMAT % b for b in resp))
+        return resp
+
+    async def start_read_loop(self):
+        """Start the read loop."""
+        self.read_task = self.machine.clock.loop.create_task(self._socket_reader())
+        self.read_task.add_done_callback(Util.raise_exceptions)
+
+    async def _socket_reader(self):
+        while True:
+            resp = await self.read(128)
+            if resp is None:
+                return
+            self._parse_msg(resp)

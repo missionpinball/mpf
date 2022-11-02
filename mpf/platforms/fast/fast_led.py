@@ -6,7 +6,7 @@ from typing import List
 
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
-
+from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_ADDRESS_MAP
 
 class FASTDirectLED:
 
@@ -15,7 +15,7 @@ class FASTDirectLED:
     __slots__ = ["number", "number_int", "dirty", "hardware_fade_ms", "log", "channels", "machine"]
 
     def __init__(self, number: str, hardware_fade_ms: int, machine) -> None:
-        """Initialise FAST LED."""
+        """Initialize FAST LED on RGB processor."""
         self.number_int = int(number)
         self.number = Util.int_to_hex_string(self.number_int)
         self.dirty = True
@@ -49,10 +49,44 @@ class FASTDirectLED:
 
         return result
 
+class FASTExpLED(FASTDirectLED):
+
+    """FAST RGB LED on an expansion board."""
+
+    # __slots__ = ["board_address", "breakout", "number_int", "number", "dirty", "hardware_fade_ms", "log", "channels", "machine"]
+
+    def __init__(self, number: str, hardware_fade_ms: int, machine) -> None:
+        """Initialize FAST LED."""
+
+        # example exp-201-i0-b0-p1-1
+
+        try:
+            prefix, board, id, breakout, port, led = number.split("-")
+
+        except ValueError as e:
+            machine.platform_controller.raise_config_error(
+                    f"Could not parse LED number {number}. Please verify the format.", 7)
+
+        board = board.zfill(4)
+        breakout = int(breakout[1:])
+        port = int(port[1:]) - 1
+        led = int(led) - 1
+
+        self.board_address = EXPANSION_BOARD_ADDRESS_MAP[f'{prefix}-{board}-{id}'] # string hex byte
+        self.breakout = breakout # string nibble 0-5
+        self.index = (port * 32) + led  # int 0-31
+        self.number = f'{self.board_address}{self.breakout}{Util.int_to_hex_string(self.index)}'
+        self.dirty = True
+        self.machine = machine
+        self.hardware_fade_ms = hardware_fade_ms
+        self.log = logging.getLogger('FASTLED')
+        self.channels = [None, None, None]      # type: List[Optional[FASTDirectLEDChannel]]
+        # All FAST LEDs are 3 element RGB and are set using hex strings
+        self.log.debug("Creating FAST RGB LED on expansion board at hardware address: %s", self.number)
 
 class FASTDirectLEDChannel(LightPlatformInterface):
 
-    """Represents a single RGB LED channel connected to the Fast hardware platform."""
+    """Represents a single RGB LED channel connected to the FAST hardware platform."""
 
     __slots__ = ["led", "channel", "_current_fade", "_last_brightness"]
 

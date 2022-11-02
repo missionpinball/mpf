@@ -1,0 +1,44 @@
+#config_version=5
+
+hardware:
+    platform: fast
+
+fast:
+    driverboards: fast
+    ports: com3, com4
+    debug: true
+
+lights:
+  led1:
+    number: exp-201-i0-b0-p1-1 # @880:00
+  led2:
+    number: exp-0201-i0-b0-p1-2 # @880:01
+  led3:
+    number: exp-0201-i0-b0-p1-5 # @880:04
+  led4:
+    number: exp-0201-i0-b1-p2-2 # @881:33
+  led5:
+    number: exp-0201-i0-b1-p2-3 # @881:34
+  # led3:
+  #   number: exp-201-i1-b2-p1-1 #0x88
+  # led4:
+  #   number: exp-301-i0-b1-p1-1 # 0x94
+  # led5:
+  #   number: exp-201-i1-b1-p1-1 #0x89
+  # led6:
+  #   number: exp-201-i2-b2-p1-1 #0x8A
+  # led7:
+  #   number: exp-71-i0-b0-p1-1 # 0xb4
+  # led8:
+  #   number: exp-071-i0-b0-p2-1 # 0xb4
+  # led9:
+  #   number: exp-0071-i0-b0-p3-2 # 0xb4
+  # led10:
+  #   number: cpu-2000-i0-b0-p3-2 # 0xb4
+
+
+# servos:
+#     servo1:
+#         number: 3
+#     servo20:
+#         number: 3-2
