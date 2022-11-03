@@ -21,6 +21,7 @@ from mpf.platforms.fast.fast_light import FASTMatrixLight
 from mpf.platforms.fast.fast_segment_display import FASTSegmentDisplay
 from mpf.platforms.fast.fast_serial_communicator import FastSerialConnector
 from mpf.platforms.fast.fast_switch import FASTSwitch
+from mpf.platforms.fast.fast_exp_board import FastExpansionBoard, FastBreakoutBoard
 from mpf.platforms.autodetect import autodetect_fast_ports
 from mpf.core.platform import ServoPlatform, DmdPlatform, LightsPlatform, SegmentDisplayPlatform, \
     DriverPlatform, DriverSettings, SwitchPlatform, SwitchSettings, DriverConfig, SwitchConfig, \
@@ -90,8 +91,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.fast_segs = list()
         self.flag_led_tick_registered = False
         self.flag_exp_led_tick_registered = False
-        self.exp_boards = dict()  # k: address, v: FastExpBoard instances
-        self.exp_dirty_led_ports = set()  # contains FastLEDPort objects
+        self.exp_boards = dict()  # k: address, v: FastExpansionBoard instances
+        self.exp_dirty_led_ports = dict()  # k: breakout address (byte+nibble) v: contains FastLEDPort objects
 
         self.hw_switch_data = None
         self.io_boards = dict()     # type: Dict[int, FastIoBoard]
@@ -325,8 +326,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.rgb_connection = communicator
             self.rgb_connection.send('RF:0')
             self.rgb_connection.send('RA:000000')  # turn off all LEDs
-            self.rgb_connection.send('RF:{}'.format(
-                Util.int_to_hex_string(self.config['hardware_led_fade_time'])))
+            self.rgb_connection.send(f"RF:{Util.int_to_hex_string(self.config['hardware_led_fade_time'])}")
 
         elif name == 'EXP':
             self.exp_connection = communicator
@@ -368,13 +368,62 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color) for led in dirty_leds])
             self.rgb_connection.send(msg)
 
+    def create_expansion_board(self, exp_board_address):
+        """This can be for an exp board or exp+brk board."""
+
+        if exp_board_address in self.exp_boards:
+            self.log.error(f"Expansion board at address {exp_board_address} already exists.") # TODO Raise something
+
+        try:
+            board_type, product_id, version = self.exp_connection.verify_board_at_address(exp_board_address)
+
+        except ValueError:
+            self.log.error(f"Expansion board at address {exp_board_address} did not respond.")  # TODO raise something
+
+        if board_type != 'EXP':
+            self.log.error(f"Expansion board at address {exp_board_address} is not an expansion board.")  # TODO raise something
+
+        self.exp_boards[exp_board_address] = FastExpansionBoard(self, exp_board_address, product_id, version)
+
+    def verify_expansion_board(self, exp_board_address):
+        if exp_board_address not in self.exp_boards:
+            self.create_expansion_board(exp_board_address)
+        return self.exp_boards[exp_board_address]
+
+    def create_breakout_board(self, exp_board_address, breakout_index):
+        self.verify_expansion_board(exp_board_address)
+
+        exp_board = self.exp_boards[exp_board_address]
+
+        if not exp_board.breakouts[breakout_index]:
+            exp_board.breakouts[breakout_index] = FastBreakoutBoard(exp_board, breakout_index)
+
     def update_exp_leds(self):
         # max 32ms / 31.25fps TODO add enforcement
-        pass # TODO
 
-        dirty_ports = [port for port in self.exp_led_ports if port.dirty]
+        for brk, port in self.exp_dirty_led_ports.items():
+            # msg = 'RD:' + ','.join(["%s%s" % (led.number, led.current_color) for led in self.exp_leds[port].values()])
 
+            self.exp_connection.set_active_breakout(brk)
 
+            msg = f'RD:{port.lowest_dirty_led}{port.highest_dirty_led-port.lowest_dirty_led+1}'
+
+            for led in port.leds.values():
+                if led.dirty:
+                    msg += led.current_color
+
+            self.exp_connection.send(msg)
+
+            port.clear_dirty()
+
+            self.exp_connection.send(msg)
+
+        self.exp_dirty_led_ports = dict()
+
+    def mark_exp_led_dirty(self, port):
+        if port.address not in self.exp_dirty_led_ports:
+            self.exp_dirty_led_ports[port.address] = set()
+        self.exp_dirty_led_ports[port.address].add(port)
 
     async def get_hw_switch_states(self):
         """Return hardware states."""
@@ -730,7 +779,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                         self.update_exp_leds, 1 / self.machine.config['mpf']['default_light_hw_update_hz'])
                     self.flag_exp_led_tick_registered = True
 
-                this_led = FASTExpLED(number_str, int(self.config['hardware_led_fade_time']), self.machine)
+                this_led = FASTExpLED(number_str, int(self.config['hardware_led_fade_time']), self)
 
                 # this code runs once for each channel, so it will be called 3x per LED which
                 # is why we check this here
@@ -751,7 +800,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
                 if number_str not in self.fast_leds:
                     self.fast_leds[number_str] = FASTDirectLED(
-                        number_str, int(self.config['hardware_led_fade_time']), self.machine)
+                        number_str, int(self.config['hardware_led_fade_time']), self)
 
             fast_led_channel = FASTDirectLEDChannel(self.fast_leds[number_str], channel)
             self.fast_leds[number_str].add_channel(int(channel), fast_led_channel)

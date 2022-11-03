@@ -177,13 +177,12 @@ class TestFastBase(MpfTestCase):
         self.assertTrue(platform._exp_led_task)
         # self.assertEqual(len(platform.fast_exp_leds), 5)
         self.assertTrue(platform.flag_exp_tick_registered)  # bool
-        )
 
         self.assertIn('88', platform.exp_boards)
 
         self.assertTrue(platform.exp_dirty_led_ports)  # dirty on startup
 
-        # FastExpBoard
+        # FastExpansionBoard
 
         board = platform.exp_boards['88']
 

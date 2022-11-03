@@ -1,34 +1,30 @@
 """FAST Expansion Board."""
 
-class FastExpBoard:
+from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_BREAKOUT_COUNTS
+
+class FastExpansionBoard:
 
     """A FAST Expansion board on the EXP connection."""
 
-    def __init__(self, communicator):
-        """Initialize FastExpBoard."""
+    def __init__(self, communicator, address, model_string, firmware_version):
+        """Initialize FastExpansionBoard."""
 
         self.communicator = communicator
 
-        self.address = None
-        self.model_string = None
-        self.firmware_version = None
+        self.address = address
+        self.model_string = model_string
+        self.firmware_version = firmware_version
 
-        self.breakouts = dict() # type: Dict[int, FastBreakout]
-
+        self.breakouts = [None] * EXPANSION_BOARD_BREAKOUT_COUNTS[model_string]
 
     def get_description_string(self) -> str:
         """Return description string."""
-        return f"Expansion Board Model: {self.model_string},  Firmware: {self.firmware_version}"
+        return f"Expansion Board Model: {self.model_string},  Firmware: {self.firmware_version}" #TODO add brk
 
-    def add_led_port(self, port):
-        """Add LED port."""
-        self.led_ports[port.address] = port
-
-    def set_active(self):
+    def set_active(self, address):
         """Set board active."""
-        pass
+        self.communicator.send(f'EA:{address}')
 
-        # send EA:{address}
 
 class FastBreakoutBoard:
 
@@ -41,19 +37,25 @@ class FastBreakoutBoard:
         """Initialize FastBreakoutBoard."""
         self.expansion_board = expansion_board  # object
         self.index = index  # int, zero-based, 0-5
-        self.led_ports = dict() # type: Dict[str(address+brk nibble), FastLedPort]
+        self.address = f'{self.expansion_board.address}{self.index}'  # string hex byte + nibble
+        self.led_ports = list(None, None, None, None) # type: Dict[str(address+brk nibble), FastLedPort]
+        # all brk LED are four ports
 
+    def set_active(self):
+        """Set board active."""
+        self.expansion_board.set_active(self.address)
 
 class FastLEDPort:
 
     """A FAST LED port on an expansion board breakout."""
 
-    def __init__(self, address, index):
+    def __init__(self, breakout_board, address, index):
         """Initialize FastLEDPort."""
+        self.breakout = breakout_board  # brk object, TODO
         self.address = address  # string, board address + brk index, byte + nibble
-        self.index = index
+        self.index = index  # 0-3, corresponds to brk LED port index
         self.leds = list() # max len 32 (0-31), corresponds to LED index
-        self.dirty = True
+        self.dirty = True  # any led in port is dirty  TODO do we need this
         self.lowest_dirty_led = 0  #int
         self.highest_dirty_led = 0  #int
 

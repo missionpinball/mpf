@@ -200,10 +200,10 @@ class FastSerialCommunicator:
                         'XX:N'
                         ]
 
-    __slots__ = ["dmd", "remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
-                 "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
-                 "send_queue", "is_retro", "is_legacy", "machine", "platform", "log", "debug", "port", "baud",
-                 "xonxoff", "reader", "writer", "read_task"]
+    # __slots__ = ["dmd", "remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
+    #              "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
+    #              "send_queue", "is_retro", "is_legacy", "machine", "platform", "log", "debug", "port", "baud",
+    #              "xonxoff", "reader", "writer", "read_task"]
 
     def __init__(self, platform, remote_processor, remote_model, remote_firmware,
                  is_legacy, is_retro, reader, writer):
@@ -373,7 +373,7 @@ class FastSerialCommunicator:
             await asyncio.sleep(.2)
             await asyncio.wait_for(self.reset_net_cpu(), 10)
         except asyncio.TimeoutError:
-            self.platform.warning_log("Reset of NET CPU failed. This might be a firmware bug in your version.")
+            self.platform.warning_log("Reset of NET CPU failed.")
         else:
             self.platform.debug_log("Reset successful")
 
@@ -394,7 +394,7 @@ class FastSerialCommunicator:
         while not msg.startswith('SA:'):
             msg = (await self.readuntil(b'\r')).decode()
             if not msg.startswith('SA:'):
-                self.platform.log.warning("Got unexpected message from FAST when awaiting SA: %s", msg)
+                self.platform.log.warning("Got unexpected message from FAST while awaiting SA: %s", msg)
 
         self.platform.process_received_message(msg, "NET")
         self.platform.debug_log('Querying FAST IO boards (legacy %s, retro %s)...', self.is_legacy, self.is_retro)
@@ -498,7 +498,7 @@ class FastSerialCommunicator:
             try:
                 await asyncio.wait_for(self.send_ready.wait(), 1.0)
             except asyncio.TimeoutError:
-                self.log.warning("Port %s was blocked for more than 1s. Reseting send queue! If this happens "
+                self.log.warning("Port %s was blocked for more than 1s. Resetting send queue! If this happens "
                                  "frequently report a bug!", self.port)
                 self.messages_in_flight = 0
                 self.send_ready.set()

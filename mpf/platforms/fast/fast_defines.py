@@ -189,10 +189,10 @@ EXPANSION_BOARD_ADDRESS_MAP = {
     'cpu-2000-i0': '48',
 }
 
-EXPANSION_BOARD_BREAKOUT_MAP = {
+EXPANSION_BOARD_BREAKOUT_COUNTS = {
 
-    # board: highest breakout index, zero-based
-    '0071': 2,
-    '0201': 3,
-    '2000': 5,
+    # board: number of breakouts
+    'FP-EXP-0071': 1,
+    'FP-EXP-0201': 4,
+    'FP-CPU-2000': 4,
 }

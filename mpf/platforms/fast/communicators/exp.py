@@ -50,12 +50,9 @@ class FastExpCommunicator:
         # self.max_messages_in_flight = 10
         # self.messages_in_flight = 0
         # self.ignored_messages_in_flight = {b'-N', b'/N', b'/L', b'-L'}
-        self.boards = dict()  # keys = board addresses, values = FastExpBoard objects
+        self.boards = dict()  # keys = board addresses, values = FastExpansionBoard objects
         self.led_ports = set()  # set of LED port objects
         # this is a set since if a port doesn't have any LEDs attached then we want it to not exist in our world
-
-        self.active_board = None  # type: Optional[FastExpBoard]
-        self.exp_boards = dict()  # str address: FastExpBoard
 
         self.send_ready = asyncio.Event()
         self.send_ready.set()
@@ -63,6 +60,8 @@ class FastExpCommunicator:
         self.read_task = None
 
         self.received_msg = b''
+
+        self.active_address = None
 
         self.send_queue = asyncio.Queue()
 
@@ -115,6 +114,10 @@ class FastExpCommunicator:
                 # Python 3.7+ only
                 self.machine.clock.loop.run_until_complete(self.writer.wait_closed())
             self.writer = None
+
+    def set_active_board(self, board_address):
+        self.active_board = self.exp_boards[board_address]
+        self.send(f'EA:{board_address}')
 
     def send(self, msg):
         """Send a message to the remote processor over the serial connection.
@@ -216,7 +219,24 @@ class FastExpCommunicator:
                 return
             self._parse_msg(resp)
 
-    def set_active_board(self, board):
+    async def verify_board_at_address(self, board_address):
+        """Get an ID: response from the board (exp or brk) at the given address.
 
-        self.send(f"EA:{board.address}")
-        self.active_board = board
+        Returns ID: command response or None if no response. TODO test
+
+        Examples:
+        ID:88  --> ID:EXP FP-EXP-0201     1.0
+        ID:880 --> ID:LED FP-BRK-0001     1.0
+
+        Returns board class, model string, and version string
+        """
+
+        self.send(f'ID:{board_address}')
+        msg = await self._read_with_timeout(.5)
+        return msg.split(':')[1].split()
+
+
+    def set_active_address(self, brk):
+        """Set the active address for the exp bus. This can be 2 hex chars for an exp board or 3 for exp+brk."""
+        self.send(f"EA:{brk.address}")
+        self.active_address = brk
