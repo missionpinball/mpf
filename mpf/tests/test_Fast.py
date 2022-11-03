@@ -496,33 +496,6 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
-    def test_firmware_update(self):
-        self.maxDiff = None
-        commands = []
-
-        def _catch_update(cmd):
-            commands.append(cmd)
-            return len(cmd)
-        parse_func = self.net_cpu.write
-        self.net_cpu.write = _catch_update
-        output = self.machine.default_platform.update_firmware()
-        self.advance_time_and_run()
-        self.net_cpu.write = parse_func
-        # check if we send the dummy update
-        self.assertEqual([b'BL:AA55\r>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-                          b'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-                          b'>>>>>>>>>>>>>>>>>>>>>>>>>\rBL:AA55\r<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
-                          b'<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
-                          b'<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\rBL:AA55\r>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-                          b'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-                          b'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\rDUMMY UPDAT'
-                          b'E\r', b'WD:3e8\r', b'WD:3e8\r'], commands)
-        expected_output = """NET CPU is version 2.00
-Found an update to version 2.04 for the NET CPU. Will flash file firmware/FAST_NET_01_04_00.txt
-Update done.
-"""
-        self.assertEqual(expected_output, output)
-
     def test_servo(self):
         # go to min position
         self.net_cpu.expected_commands = {
@@ -983,4 +956,3 @@ Update done.
         self.assertEqual("FAST", self.startup_error.__cause__.get_logger_name())
         self.assertEqual("Light syntax is number-channel (but was \"3\") for light test_led.",
                          self.startup_error.__cause__._message)
-
