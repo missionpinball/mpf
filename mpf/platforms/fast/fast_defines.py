@@ -1,7 +1,7 @@
 """Defines for FAST Boards."""
 
 HARDWARE_KEY = {
-    "fast":  '2000',
+    "neuron":  '2000',
     "sys11": '1100',
     "wpc89": '8900',
     "wpc95": '9500'

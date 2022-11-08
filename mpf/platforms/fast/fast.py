@@ -57,17 +57,16 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.config = self.machine.config_validator.validate_config("fast", self.machine.config['fast'])
         self._configure_device_logging_and_debug("FAST", self.config)
 
-        if self.config["driverboards"]:
-            self.machine_type = self.config["driverboards"]
-        elif self.machine.config['hardware']['driverboards']:
-            self.machine_type = self.machine.config['hardware']['driverboards'].lower()
-        else:
-            self.machine_type = 'fast'
+        if self.machine.config['hardware']['driverboards']:
+            raise AssertionError("'hardware:' 'driverboards:' is no longer valid for FAST controllers. Please add a 'controller' entry to the 'fast' section of your config file.")
+
+        if self.config["controller"]:
+            self.machine_type = self.config["controller"]
 
         if self.machine_type in ['sys11', 'wpc89', 'wpc95']:
             self.debug_log("Configuring the FAST Controller for Retro driver board")
             self.is_retro = True
-        elif self.machine_type == 'fast':
+        elif self.machine_type in ['neuron', 'nano']:
             self.debug_log("Configuring FAST Controller for FAST I/O boards.")
             self.is_retro = False
         else:
@@ -594,7 +593,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 self.raise_config_error(f"Could not find Retro driver {number}", 1)
 
         # If we have FAST IO boards, we need to make sure we have hex strings
-        elif self.machine_type == 'fast':
+        elif self.machine_type in ['nano', 'neuron']:
             number = self._parse_driver_number(number)
 
         else:

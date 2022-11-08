@@ -70,7 +70,7 @@ class FastExpCommunicator(FastSerialCommunicator):
         # Register the connection so when we query the boards we know what responses to expect
         self.platform.register_processor_connection('EXP', self)
 
-        await self.reset_exp_cpu()
+        # await self.reset_exp_cpu()
 
         self.write_task = self.machine.clock.loop.create_task(self._socket_writer())
         self.write_task.add_done_callback(Util.raise_exceptions)
@@ -79,6 +79,9 @@ class FastExpCommunicator(FastSerialCommunicator):
 
     async def reset_exp_cpu(self):
         """Reset the active EXP CPU."""
+
+        # TODO: Will this work with no address?
+
         self.platform.debug_log('Resetting active EXP CPU.')
         self.writer.write('BR:\r'.encode())
         msg = ''
