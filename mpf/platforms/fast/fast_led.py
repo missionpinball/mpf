@@ -68,16 +68,17 @@ class FASTExpLED(FASTDirectLED):
             platform.raise_config_error(
                     f"Could not parse LED number {number}. Please verify the format.", 7)
 
-        board = board.zfill(4)
-        breakout = int(breakout[1:])
-        port = int(port[1:]) - 1
-        led = int(led) - 1
+        board = board.zfill(4)  # '201'
+        breakout = int(breakout[1:])  # 'b0'
+        port = int(port[1:]) - 1  # 'p1'
+        led = int(led) - 1  # '1'
 
-        self.board_address = EXPANSION_BOARD_ADDRESS_MAP[f'{prefix}-{board}-{id}'] # string hex byte
-        self.breakout = breakout # string nibble 0-5
-        self.address = f'{self.board_address}{breakout}' # string hex byte + nibble
+        self.board_address = EXPANSION_BOARD_ADDRESS_MAP[f'{prefix}-{board}-{id}'] # '88'
+        # self.breakout = breakout # '0'
+        self.address = f'{self.board_address}{breakout}' # '880'
+        self.port = port
         self.index = (port * 32) + led  # int 0-31
-        self.number = f'{self.board_address}{self.breakout}{Util.int_to_hex_string(self.index)}'
+        self.number = f'{self.board_address}{breakout}{Util.int_to_hex_string(self.index)}' #  '88000'
         self.dirty = True
         self.machine = platform.machine
         self.platform = platform
@@ -89,7 +90,7 @@ class FASTExpLED(FASTDirectLED):
 
         # TODO check to see if this breakout exists. If not, create it.
 
-        platform.create_breakout_board(self.board_address, self.breakout)
+        self.breakout = platform.create_breakout_board(self.board_address, breakout)
 
         # TODO current color property, also add to the fast dirty exp led dict, need to add key as
         # board address and add board to a value set.

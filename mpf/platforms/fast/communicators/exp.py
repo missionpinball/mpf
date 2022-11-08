@@ -1,7 +1,7 @@
 import asyncio
 from packaging import version
 from typing import Optional
-from mpf.platforms.fast import fast_defines
+from mpf.platforms.fast.fast_serial_communicator import FastSerialCommunicator
 
 from mpf.core.utility_functions import Util
 
@@ -16,14 +16,11 @@ if MYPY:   # pragma: no cover
 
 HEX_FORMAT = " 0x%02x"
 
-class FastExpCommunicator:
+class FastExpCommunicator(FastSerialCommunicator):
 
     """Handles the serial communication to the FAST platform."""
 
-    ignored_messages = ['RX:P',  # RGB Pass
-                        'XX:U',
-                        'XX:N',
-                        ]
+    ignored_messages = ['XX:F',]
 
     # __slots__ = ["remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
     #              "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
@@ -73,50 +70,24 @@ class FastExpCommunicator:
         # Register the connection so when we query the boards we know what responses to expect
         self.platform.register_processor_connection('EXP', self)
 
+        await self.reset_exp_cpu()
+
         self.write_task = self.machine.clock.loop.create_task(self._socket_writer())
         self.write_task.add_done_callback(Util.raise_exceptions)
 
         return self
 
-    # Duplicated from FastSerialConnector for now
-    # pylint: disable-msg=inconsistent-return-statements
-    async def readuntil(self, separator, min_chars: int = 0):
-        """Read until separator.
-
-        Args:
-        ----
-            separator: Read until this separator byte.
-            min_chars: Minimum message length before separator
-        """
-        assert self.reader is not None
-        # asyncio StreamReader only supports this from python 3.5.2 on
-        buffer = b''
-        while True:
-            char = await self.reader.readexactly(1)
-            buffer += char
-            if char == separator and len(buffer) > min_chars:
-                if self.debug:
-                    self.log.debug("%s received: %s (%s)", self, buffer, "".join(HEX_FORMAT % b for b in buffer))
-                return buffer
-
-    def stop(self):
-        """Stop and shut down this serial connection."""
-        if self.write_task:
-            self.write_task.cancel()
-            self.write_task = None
-        self.log.error("Stop called on serial connection %s", self.remote_processor)
-        if self.read_task:
-            self.read_task.cancel()
-            self.read_task = None
-        if self.writer:
-            self.writer.close()
-            if hasattr(self.writer, "wait_closed"):
-                # Python 3.7+ only
-                self.machine.clock.loop.run_until_complete(self.writer.wait_closed())
-            self.writer = None
+    async def reset_exp_cpu(self):
+        """Reset the active EXP CPU."""
+        self.platform.debug_log('Resetting active EXP CPU.')
+        self.writer.write('BR:\r'.encode())
+        msg = ''
+        while msg != 'BR:P\r':
+            msg = (await self.readuntil(b'\r')).decode()
+            self.platform.debug_log("Got: %s", msg)
 
     def set_active_board(self, board_address):
-        self.active_board = self.exp_boards[board_address]
+        self.active_board = board_address
         self.send(f'EA:{board_address}')
 
     def send(self, msg):
@@ -231,10 +202,25 @@ class FastExpCommunicator:
         Returns board class, model string, and version string
         """
 
-        self.send(f'ID:{board_address}')
-        msg = await self._read_with_timeout(.5)
+        # TODO I think this code doesn't work yet.
+
+        while True:
+            self.send(f'ID:{board_address}')
+            msg = await self._read_with_timeout(.5)
+
+            if msg.startswith('ID:'):
+                break
+
+            await asyncio.sleep(.5)
+
         return msg.split(':')[1].split()
 
+    async def _read_with_timeout(self, timeout):
+        try:
+            msg_raw = await asyncio.wait_for(self.readuntil(b'\r'), timeout=timeout)
+        except asyncio.TimeoutError:
+            return ""
+        return msg_raw.decode()
 
     def set_active_address(self, brk):
         """Set the active address for the exp bus. This can be 2 hex chars for an exp board or 3 for exp+brk."""

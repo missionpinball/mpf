@@ -111,8 +111,9 @@ class FastSerialConnector:
         # ID:DMD FP-CPU-002-1 00.87
         # ID:NET FP-CPU-002-2 00.85
         # ID:RGB FP-CPU-002-2 00.85
-        # ID:FP-CPU-2000-2     2.05
+        # ID:NET FP-CPU-2000  02.06
         # ID:NET FP-SBI-0095-3 2.01
+        # ID:EXP FP-EXP-0201  0.5
 
         try:
             self.remote_processor, self.remote_model, self.remote_firmware = msg[3:].split()

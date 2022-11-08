@@ -192,7 +192,7 @@ EXPANSION_BOARD_ADDRESS_MAP = {
 EXPANSION_BOARD_BREAKOUT_COUNTS = {
 
     # board: number of breakouts
-    'FP-EXP-0071': 1,
-    'FP-EXP-0201': 4,
-    'FP-CPU-2000': 4,
+    'b4': 1,  # 071
+    '88': 4,  # 201
+    '48': 4,  # Neuron
 }

@@ -11,7 +11,6 @@ class MockFastExp(BaseMockFast):
         super().__init__()
         self.type = "EXP"
         # self.ignore_commands["L1:23,FF"] = True
-        self.exp_boards = dict()
         self.leds = dict()  #
         self.active_board = None
         self.cmd_stack = list()
@@ -25,16 +24,16 @@ class MockFastExp(BaseMockFast):
         if '@' in cmd:
             cmd, self.active_board = cmd.split("@", 1)
 
-        if cmd == "EA:":
+        if cmd == "EA":
             self.active_board = payload.upper()
             return True
 
-        elif cmd == "ID:":
-            self.queue.append("ID:EXP  FP-")
+        elif cmd == "ID":
+            self.queue.append("ID:EXP FP-EXP-0201  0.5")
             # TODO where do we store different ones for different boards?
             return True
 
-        elif cmd == "RD:":
+        elif cmd == "RD":
             # RD:<COUNT><INDEX>{<R><G><B>...}
             pass
 
@@ -101,10 +100,8 @@ class TestFastBase(MpfTestCase):
         }
 
         self.exp_cpu.expected_commands = {
-            'ID:': 'ID:EXP FP-EXP-0201-1 00.50',
-            "RF:0": "RF:P",
-            "RA:000000": "RA:P",
-            "RF:00": "RF:P",
+            'ID:': 'ID:EXP FP-EXP-0201 0.5',
+            "BR:": "BR:P",
         }
 
     def tearDown(self):
@@ -114,7 +111,7 @@ class TestFastBase(MpfTestCase):
             }
         if self.exp_cpu:
             self.exp_cpu.expected_commands = {
-                "BL:AA55": "!SRE"
+
             }
 
         super().tearDown()

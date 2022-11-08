@@ -218,7 +218,7 @@ class FastSegCommunicator:
             try:
                 await asyncio.wait_for(self.send_ready.wait(), 1.0)
             except asyncio.TimeoutError:
-                self.log.warning("Port %s was blocked for more than 1s. Reseting send queue! If this happens "
+                self.log.warning("Port %s was blocked for more than 1s. Resetting send queue! If this happens "
                                  "frequently report a bug!", self.port)
                 self.messages_in_flight = 0
                 self.send_ready.set()

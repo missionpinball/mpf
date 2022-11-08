@@ -1,21 +1,28 @@
 """FAST Expansion Board."""
 
-from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_BREAKOUT_COUNTS
+from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_BREAKOUT_COUNTS, EXPANSION_BOARD_ADDRESS_MAP
 
 class FastExpansionBoard:
 
     """A FAST Expansion board on the EXP connection."""
 
-    def __init__(self, communicator, address, model_string, firmware_version):
+    def __init__(self, communicator, address):
         """Initialize FastExpansionBoard."""
 
         self.communicator = communicator
-
+        self.log = communicator.log
         self.address = address
-        self.model_string = model_string
-        self.firmware_version = firmware_version
+        self.product_id = None
 
-        self.breakouts = [None] * EXPANSION_BOARD_BREAKOUT_COUNTS[model_string]
+        # get up product id from address
+        for k, v in EXPANSION_BOARD_ADDRESS_MAP.items():
+            if v == address:
+                self.product_id = k
+                break
+
+        self.log.debug(f"Creating FAST Expansion Board {self.product_id} at address {address}")
+
+        self.breakouts = [None] * EXPANSION_BOARD_BREAKOUT_COUNTS[address]
 
     def get_description_string(self) -> str:
         """Return description string."""
@@ -36,9 +43,11 @@ class FastBreakoutBoard:
     def __init__(self, expansion_board, index):
         """Initialize FastBreakoutBoard."""
         self.expansion_board = expansion_board  # object
+        self.log = expansion_board.log
+        self.log.debug(f"Creating FAST Breakout Board at address {self.expansion_board.address}{index}")
         self.index = index  # int, zero-based, 0-5
         self.address = f'{self.expansion_board.address}{self.index}'  # string hex byte + nibble
-        self.led_ports = list(None, None, None, None) # type: Dict[str(address+brk nibble), FastLedPort]
+        self.led_ports = [None] * 4
         # all brk LED are four ports
 
     def set_active(self):
@@ -59,6 +68,8 @@ class FastLEDPort:
         self.lowest_dirty_led = 0  #int
         self.highest_dirty_led = 0  #int
 
+        self.breakout.led_ports[index] = self
+
         # TODO
         # when flipping to dirty, also add to platform dirty_led_ports
 
@@ -68,6 +79,11 @@ class FastLEDPort:
         if led.index >= 32:
             raise AssertionError("FAST LED ports can only have 32 LEDs.")
             # TODO add a test and then figure out where this should actually live
+
+    def clear_dirty(self):
+        self.lowest_dirty_led = 0
+        self.highest_dirty_led = 0
+        self.dirty = False
 
     def flush(self):
         """Flush port."""
