@@ -50,6 +50,9 @@ class FastSerialConnector:
         self.is_retro = False
         self.is_legacy = False
 
+    def __repr__(self):
+        return f'<FastSerialConnector: {self.port}>'
+
     async def connect(self):
         """Connect to the serial port."""
         self.log.info("Connecting to %s at %sbps", self.port, self.baud)
@@ -93,8 +96,7 @@ class FastSerialConnector:
         self.writer.write(((' ' * 256 * 4) + '\r').encode())
 
         while True:
-            self.platform.debug_log("Sending 'ID:' command to port '%s'",
-                                    self.port)
+            self.platform.debug_log(f"Sending 'ID:' command to port {self.port}")
             self.writer.write('ID:\r'.encode())
             msg = await self._read_with_timeout(.5)
 
@@ -141,7 +143,7 @@ class FastSerialConnector:
                                       self.remote_model, self.remote_firmware,
                                       self.is_legacy, self.is_retro,
                                       self.reader, self.writer)
-        elif self.remote_processor == 'EXP':
+        elif self.remote_processor in ['EXP', 'LED']:
             self.is_legacy = False
             from mpf.platforms.fast.communicators.exp import FastExpCommunicator
             return FastExpCommunicator(self.platform, self.reader, self.writer)

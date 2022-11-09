@@ -1,10 +1,12 @@
 """Defines for FAST Boards."""
 
+FAST_CONFIG_VERSION = 2
+
 HARDWARE_KEY = {
     "neuron":  '2000',
-    "sys11": '1100',
-    "wpc89": '8900',
-    "wpc95": '9500'
+    "sys11":   '1100',
+    "wpc89":   '8900',
+    "wpc95":   '9500'
 }
 
 RETRO_SWITCH_MAP = {
@@ -176,23 +178,23 @@ RETRO_GI_MAP = {
 EXPANSION_BOARD_ADDRESS_MAP = {
 
     # board type - index : one byte address
-    'exp-0071-i0': 'B4',
-    'exp-0071-i1': 'B5',
-    'exp-0071-i2': 'B6',
-    'exp-0071-i3': 'B7',
+    '0071-0': 'B4',
+    '0071-1': 'B5',
+    '0071-2': 'B6',
+    '0071-3': 'B7',
 
-    'exp-0201-i0': '88',
-    'exp-0201-i1': '89',
-    'exp-0201-i2': '8A',
-    'exp-0201-i3': '8B',
+    '0201-0': '88',
+    '0201-1': '89',
+    '0201-2': '8A',
+    '0201-3': '8B',
 
-    'cpu-2000-i0': '48',
+    'neuron': '48',
 }
 
 EXPANSION_BOARD_BREAKOUT_COUNTS = {
 
     # board: number of breakouts
-    'b4': 1,  # 071
-    '88': 4,  # 201
-    '48': 4,  # Neuron
+    'FP-EXP-0071': 1,  # 071
+    'FP-EXP-0201': 4,  # 201
+    'FP-CPU-2000': 4,  # Neuron
 }

@@ -7,7 +7,7 @@ fast:
     controller: neuron
     ports: com3, com4
     debug: true
-    exp_boards: 201-0, 71-0
+    expansion_boards: 201-0, 71-0
 
 lights:
   led1:

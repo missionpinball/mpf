@@ -2,6 +2,8 @@ import asyncio
 from packaging import version
 from typing import Optional
 from mpf.platforms.fast.fast_serial_communicator import FastSerialCommunicator
+from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_ADDRESS_MAP
+from mpf.platforms.fast.fast_exp_board import FastExpansionBoard
 
 from mpf.core.utility_functions import Util
 
@@ -43,11 +45,12 @@ class FastExpCommunicator(FastSerialCommunicator):
         self.machine = platform.machine     # type: MachineController
         self.log = self.platform.log
         self.debug = self.platform.config['debug']
+        self.exp_config = self.platform.config['expansion_boards']
 
         # self.max_messages_in_flight = 10
         # self.messages_in_flight = 0
         # self.ignored_messages_in_flight = {b'-N', b'/N', b'/L', b'-L'}
-        self.boards = dict()  # keys = board addresses, values = FastExpansionBoard objects
+        self.exp_boards = dict()  # keys = board addresses, values = FastExpansionBoard objects
         self.led_ports = set()  # set of LED port objects
         # this is a set since if a port doesn't have any LEDs attached then we want it to not exist in our world
 
@@ -72,22 +75,46 @@ class FastExpCommunicator(FastSerialCommunicator):
 
         # await self.reset_exp_cpu()
 
+        await self.query_exp_boards()
+
         self.write_task = self.machine.clock.loop.create_task(self._socket_writer())
         self.write_task.add_done_callback(Util.raise_exceptions)
 
         return self
 
-    async def reset_exp_cpu(self):
-        """Reset the active EXP CPU."""
+    async def query_exp_boards(self):
+        """Query the EXP bus for connected boards."""
 
-        # TODO: Will this work with no address?
+        self.platform.debug_log("Verifying connected expansion boards.")
 
-        self.platform.debug_log('Resetting active EXP CPU.')
-        self.writer.write('BR:\r'.encode())
-        msg = ''
-        while msg != 'BR:P\r':
-            msg = (await self.readuntil(b'\r')).decode()
-            self.platform.debug_log("Got: %s", msg)
+        for board in self.exp_config:
+
+            while True:
+
+                board = board.zfill(6)  # '71-1' --> '0071-1'
+                address = EXPANSION_BOARD_ADDRESS_MAP[board]
+
+                self.platform.debug_log(f"Querying {board} at address {address}")
+                self.writer.write(f'ID@{address}:\r'.encode())
+                msg = await self._read_with_timeout(.5)
+
+                # ignore XX replies here.
+                # TODO this code is duplicated in the serial connector. Refactor
+                while msg.startswith('XX:'):
+                    msg = await self._read_with_timeout(.5)
+
+                if msg.startswith('ID:'):
+                    break
+
+                await asyncio.sleep(.5)
+
+            processor, product_id, firmware_version = msg[3:].split()
+
+            self.platform.log.info(f'Found expansion board {board} at address {address} with processor {processor}, model {product_id}, and firmware {firmware_version}')
+
+            board_obj = FastExpansionBoard(self, address, product_id, firmware_version)
+            self.exp_boards[address] = board_obj
+            self.platform.register_expansion_board(board_obj)
 
     def set_active_board(self, board_address):
         self.active_board = board_address
@@ -102,6 +129,7 @@ class FastExpCommunicator(FastSerialCommunicator):
                 be added automatically.
 
         """
+        self.platform.debug_log("EXP send: %s", msg)
         self.send_queue.put_nowait(msg)
 
     def _send(self, msg):
@@ -110,7 +138,7 @@ class FastExpCommunicator(FastSerialCommunicator):
         # to track in the future (maybe?), we can add here
 
         self.writer.write(msg.encode() + b'\r')
-        self.platform.log.debug("Sending without message flight tracking: %s", msg)
+        self.platform.log.debug("EXP _send: %s", msg)
 
     async def _socket_writer(self):
         while True:
@@ -192,31 +220,6 @@ class FastExpCommunicator(FastSerialCommunicator):
             if resp is None:
                 return
             self._parse_msg(resp)
-
-    async def verify_board_at_address(self, board_address):
-        """Get an ID: response from the board (exp or brk) at the given address.
-
-        Returns ID: command response or None if no response. TODO test
-
-        Examples:
-        ID:88  --> ID:EXP FP-EXP-0201     1.0
-        ID:880 --> ID:LED FP-BRK-0001     1.0
-
-        Returns board class, model string, and version string
-        """
-
-        # TODO I think this code doesn't work yet.
-
-        while True:
-            self.send(f'ID:{board_address}')
-            msg = await self._read_with_timeout(.5)
-
-            if msg.startswith('ID:'):
-                break
-
-            await asyncio.sleep(.5)
-
-        return msg.split(':')[1].split()
 
     async def _read_with_timeout(self, timeout):
         try:

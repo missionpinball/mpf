@@ -173,11 +173,11 @@ class TestFastBase(MpfTestCase):
         self.assertTrue(platform.exp_connection)
         self.assertTrue(platform._exp_led_task)
         # self.assertEqual(len(platform.fast_exp_leds), 5)
-        self.assertTrue(platform.flag_exp_tick_registered)  # bool
+        self.assertTrue(platform.flag_exp_led_tick_registered)  # bool
 
         self.assertIn('88', platform.exp_boards)
 
-        self.assertTrue(platform.exp_dirty_led_ports)  # dirty on startup
+        # self.assertTrue(platform.exp_dirty_led_ports)  # dirty on startup
 
         # FastExpansionBoard
 
@@ -185,30 +185,31 @@ class TestFastBase(MpfTestCase):
 
         board.communicator
         board.address
-        board.model_string
+        board.product_id
         board.firmware_version
-        board.breakouts  # dict()
+        board.breakouts  # list() # check that it's 4 and contains brk objects
 
         # FastBreakoutBoard
 
-        brk = platform.exp_boards['88'].breakouts['0']
-        # TODO change from string to int and make it a list
-        # faster to lookup, and we will ahve a spearate dirty list
-
+        brk = platform.exp_boards['88'].breakouts[0]
         brk.expansion_board
         brk.index
         brk.led_ports  # dict()
+        brk.address
 
         # FastLEDPort
 
-        port = platform.exp_boards['88'].breakouts['0'].led_ports['0']
+        port = platform.exp_boards['88'].breakouts[0].led_ports[0]
 
-        port.address
-        port.index
-        port.leds
-        port.dirty
-        port.lowest_dirty_led
-        port.highest_dirty_led
+        # this is zero so far
+
+        # port.breakout
+        # port.address
+        # port.index
+        # port.leds
+        # port.dirty
+        # port.lowest_dirty_led
+        # port.highest_dirty_led
 
 
         # self.assertEqual("000000", self.exp_cpu.leds['exp-0201-i0-b0-p1-1'])

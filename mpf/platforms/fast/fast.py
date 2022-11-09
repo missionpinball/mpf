@@ -92,7 +92,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.flag_exp_led_tick_registered = False
         self.exp_boards = dict()  # k: EE address, v: FastExpansionBoard instances
         self.exp_breakout_boards = dict()  # k: EEB address, v: FastBreakoutBoard instances
-        self.exp_dirty_led_ports = set() # Tuples (brk_address, FastLedPort)
+        self.exp_dirty_led_ports = set() # FastLedPort instances
 
         self.hw_switch_data = None
         self.io_boards = dict()     # type: Dict[int, FastIoBoard]
@@ -220,6 +220,18 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if board.node_id in self.io_boards:
             raise AssertionError("Duplicate node_id")
         self.io_boards[board.node_id] = board
+
+    def register_expansion_board(self, board):
+        """Register an Expansion board."""
+        if board.address in self.exp_boards:
+            raise AssertionError("Duplicate expansion board address")
+        self.exp_boards[board.address] = board
+
+    def register_breakout_board(self, board):
+        """Register an Breakout board."""
+        if board.address in self.exp_breakout_boards:
+            raise AssertionError("Duplicate breakout board address")
+        self.exp_breakout_boards[board.address] = board
 
     def _update_watchdog(self):
         """Send Watchdog command."""
@@ -368,42 +380,21 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color) for led in dirty_leds])
             self.rgb_connection.send(msg)
 
-    def create_expansion_board(self, exp_board_address):
-        """This can be for an exp board or exp+brk board."""
-
-        self.exp_boards[exp_board_address] = FastExpansionBoard(self, exp_board_address)
-
-    def verify_expansion_board(self, exp_board_address):
-        if exp_board_address not in self.exp_boards:
-            self.create_expansion_board(exp_board_address)
-        return self.exp_boards[exp_board_address]
-
-    def create_breakout_board(self, exp_board_address, breakout_index):
-
-        # TODO currently this is called multiple times for each board, so rename it or re-architect
-
-        exp_board = self.verify_expansion_board(exp_board_address)
-
-        if not exp_board.breakouts[breakout_index]:
-            breakout = FastBreakoutBoard(exp_board, breakout_index)
-            exp_board.breakouts[breakout_index] = breakout
-            self.exp_breakout_boards[f'{exp_board_address}{breakout_index}'] = breakout
-
-        return exp_board.breakouts[breakout_index]
-
     def update_exp_leds(self):
         # max 32ms / 31.25fps TODO add enforcement
 
-        for brk, port in enumerate(self.exp_dirty_led_ports):
-            # msg = 'RD:' + ','.join(["%s%s" % (led.number, led.current_color) for led in self.exp_leds[port].values()])
+        for port in self.exp_dirty_led_ports:
+
+            brk = port.breakout
 
             brk.set_active()
+            count = port.highest_dirty_led - port.lowest_dirty_led + 1
+            idx = port.lowest_dirty_led
 
-            msg = f'RD:{port.lowest_dirty_led}{port.highest_dirty_led-port.lowest_dirty_led+1}'
+            msg = f'RD:{count}{idx}'
 
-            for led in port.leds.values():
-                if led.dirty:
-                    msg += led.current_color
+            for led in port.leds[idx:idx + count]:
+                msg += led.current_color
 
             self.exp_connection.send(msg)
 
@@ -413,7 +404,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     def mark_exp_led_dirty(self, led):
         # TODO this is ugly
-        self.exp_dirty_led_ports.add((led.breakout, led.breakout.led_ports[led.port]))
+        self.exp_dirty_led_ports.add(led.breakout_board.led_ports[led.port])
 
     async def get_hw_switch_states(self):
         """Return hardware states."""

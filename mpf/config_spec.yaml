@@ -610,7 +610,7 @@ fast:
     __type__: config
     # driverboards: single|enum(fast,sys11,wpc89,wpc95,None)|None
     controller: single|enum(neuron,nano,sys11,wpc89,wpc95)|
-    exp_boards: list|str|None
+    expansion_boards: list|str|None
     ports: list|str|
     baud: list|int|921600
     watchdog: single|ms|1000
