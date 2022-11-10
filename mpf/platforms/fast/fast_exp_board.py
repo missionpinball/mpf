@@ -27,13 +27,16 @@ class FastExpansionBoard:
             self.breakouts.append(brk_board)
             self.platform.register_breakout_board(brk_board)
 
+    def __repr__(self):
+        return f"{self.product_id} @{self.address}"
+
     def get_description_string(self) -> str:
         """Return description string."""
         return f"Expansion Board Model: {self.model_string},  Firmware: {self.firmware_version}" #TODO add brk
 
     def set_active(self, address):
         """Set board active."""
-        self.communicator.send(f'EA:{address}')
+        self.communicator.set_active(address)
 
     async def init(self):
         """Initialize board."""
@@ -43,7 +46,6 @@ class FastExpansionBoard:
     async def query_breakout_boards(self):
         while True:
             pass
-
 
     async def reset_exp_board(self, address):
         """Reset an expansion board."""
@@ -79,43 +81,38 @@ class FastBreakoutBoard:
 
         platform.machine.events.add_handler('init_phase_2', self._initialize)
 
+    def __repr__(self):
+        return f"Breakout {self.index}, on {self.expansion_board}"
+
     def _initialize(self, **kwargs):
         """Populate the LED Ports with LED objects."""
 
         for number, led in self.platform.fast_exp_leds.items():
 
-            led.port_obj.leds[led.index % 32] = led
+            if number.startswith(self.address):
+                led_index = led.index % 32
+                self.led_ports[led.port].leds[led_index] = led
 
         for port in self.led_ports:
 
-            # Trim the leading and trailing None values from the LED lists
-            first_led = -1
+            # Trim the list so it only contains LEDs
             last_led = -1
             for i in range(32):
                 if port.leds[i] is not None:
-                    if first_led < 0:
-                        first_led = i
-                    last_led = i
+                        last_led = i
 
-            port.leds = port.leds[first_led:last_led]
+            if last_led == -1:
+                port.leds = list()
+            else:
+                port.leds = port.leds[:last_led+1]
 
-            # Fill in any missing ones with dummies that will have color.
-            for i in range(len(port.leds)):
-                if port.leds[i] is None:
-                    port.leds[i] = FASTDummyLED(f'{port.address}{str(i).zfill(2)}')
+            if None in port.leds:
+                raise AssertionError("FAST LED port lists cannot have None values.")  # TODO provide guidance on how to fix
 
     def set_active(self):
         """Set board active."""
-        self.communicator.send(f'EA:{self.address}')  # No response expected
+        self.communicator.set_active_board(self.address)
 
-
-class FASTDummyLED:
-
-    def __init__(self, address):
-        self.address = address
-        self.color = (0, 0, 0)
-        self.dirty = False
-        self.port_obj = None
 
 class FastLEDPort:
 
@@ -130,11 +127,7 @@ class FastLEDPort:
         self.dirty = True  # any led in port is dirty  TODO do we need this
         self.lowest_dirty_led = 0  #int
         self.highest_dirty_led = 0  #int
-
         self.platform = breakout_board.platform
-
-        # TODO
-        # when flipping to dirty, also add to platform dirty_led_ports
 
     def add_led(self, led):
         """Add LED to port."""
@@ -157,9 +150,3 @@ class FastLEDPort:
             self.highest_dirty_led = led_index
 
         self.platform.exp_dirty_led_ports.add(self)
-
-    def flush(self):
-        """Flush port."""
-        if self.dirty:
-            # TODO send data to board
-            self.dirty = False

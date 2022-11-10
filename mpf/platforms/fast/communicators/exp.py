@@ -46,6 +46,7 @@ class FastExpCommunicator(FastSerialCommunicator):
         self.log = self.platform.log
         self.debug = self.platform.config['debug']
         self.exp_config = self.platform.config['expansion_boards']
+        self.remote_processor = 'EXP'
 
         # self.max_messages_in_flight = 10
         # self.messages_in_flight = 0
@@ -58,17 +59,11 @@ class FastExpCommunicator(FastSerialCommunicator):
         self.send_ready.set()
         self.write_task = None
         self.read_task = None
-
         self.received_msg = b''
-
-        self.active_address = None
-
+        self.active_board = None
         self.send_queue = asyncio.Queue()
 
     async def init(self):
-
-        # TODO Firmware checking
-        # Existing fw checks assume only one board per connection, but we need to check each board, so this is a future TODO
 
         # Register the connection so when we query the boards we know what responses to expect
         self.platform.register_processor_connection('EXP', self)
@@ -82,8 +77,15 @@ class FastExpCommunicator(FastSerialCommunicator):
 
         return self
 
+    def __repr__(self):
+        """Return str representation."""
+        return "FAST EXP Communicator"
+
     async def query_exp_boards(self):
         """Query the EXP bus for connected boards."""
+
+        # TODO Firmware checking
+        # Existing fw checks assume only one board per connection, but we need to check each board, so this is a future TODO
 
         self.platform.debug_log("Verifying connected expansion boards.")
 
@@ -119,6 +121,7 @@ class FastExpCommunicator(FastSerialCommunicator):
     def set_active_board(self, board_address):
         self.active_board = board_address
         self.send(f'EA:{board_address}')
+        # self.writer.write(f'EA:{board_address}\r'.encode())
 
     def send(self, msg):
         """Send a message to the remote processor over the serial connection.
@@ -129,7 +132,7 @@ class FastExpCommunicator(FastSerialCommunicator):
                 be added automatically.
 
         """
-        self.platform.debug_log("EXP send: %s", msg)
+        # self.platform.debug_log("EXP send: %s", msg)
         self.send_queue.put_nowait(msg)
 
     def _send(self, msg):
@@ -138,23 +141,19 @@ class FastExpCommunicator(FastSerialCommunicator):
         # to track in the future (maybe?), we can add here
 
         self.writer.write(msg.encode() + b'\r')
-        self.platform.log.debug("EXP _send: %s", msg)
 
     async def _socket_writer(self):
         while True:
             msg = await self.send_queue.get()
-            try:
-                await asyncio.wait_for(self.send_ready.wait(), 1.0)
-            except asyncio.TimeoutError:
-                self.log.warning("Port %s was blocked for more than 1s. Resetting send queue! If this happens "
-                                 "frequently report a bug!", self.port)
-                self.send_ready.set()
+            # try:
+            #     await asyncio.wait_for(self.send_ready.wait(), 1.0)
+            # except asyncio.TimeoutError:
+            #     self.log.warning("Port %s was blocked for more than 1s. Resetting send queue! If this happens "
+            #                      "frequently report a bug!", self.port)
+            #     self.send_ready.set()
+            a = 1
 
             self._send(msg)
-
-    def __repr__(self):
-        """Return str representation."""
-        return f"FAST Communicator attached to EXP Bus"
 
     def _parse_msg(self, msg):
         self.received_msg += msg
@@ -168,17 +167,6 @@ class FastExpCommunicator(FastSerialCommunicator):
 
             msg = self.received_msg[:pos]
             self.received_msg = self.received_msg[pos + 1:]
-
-            if msg[:2] not in self.ignored_messages_in_flight:
-
-                self.messages_in_flight -= 1
-                if self.messages_in_flight <= self.max_messages_in_flight or not self.read_task:
-                    self.send_ready.set()
-                if self.messages_in_flight < 0:
-                    self.log.warning("Port %s received more messages than "
-                                     "were sent! Resetting!",
-                                     self.remote_processor)
-                    self.messages_in_flight = 0
 
             if not msg:
                 continue
@@ -227,8 +215,3 @@ class FastExpCommunicator(FastSerialCommunicator):
         except asyncio.TimeoutError:
             return ""
         return msg_raw.decode()
-
-    def set_active_address(self, brk):
-        """Set the active address for the exp bus. This can be 2 hex chars for an exp board or 3 for exp+brk."""
-        self.send(f"EA:{brk.address}")
-        self.active_address = brk

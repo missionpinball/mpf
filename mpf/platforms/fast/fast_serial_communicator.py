@@ -510,7 +510,7 @@ class FastSerialCommunicator:
 
     def __repr__(self):
         """Return str representation."""
-        return f"FAST Communicator attached to {self.remote_processor}"
+        return f"{self.remote_processor} Communicator"
 
     def _parse_msg(self, msg):
         self.received_msg += msg

@@ -5,6 +5,7 @@ hardware, including the FAST Neuron, Nano, and Retro controllers as well
 as FAST I/O boards.
 """
 import asyncio
+from base64 import b16decode
 from copy import deepcopy
 from typing import Dict, Set, Optional
 from serial import SerialException
@@ -391,20 +392,19 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             count = port.highest_dirty_led - port.lowest_dirty_led + 1
             idx = port.lowest_dirty_led
 
-            msg = f'RD:{count}{idx}'
+            hex_count = Util.int_to_hex_string(count)
+            hex_idx = Util.int_to_hex_string(idx)
+
+            msg = f'52443A{hex_count}{hex_idx}'  # RD: in hex 52 44 3A
 
             for led in port.leds[idx:idx + count]:
                 msg += led.current_color
 
-            self.exp_connection.send(msg)
+            self.exp_connection.writer.write(b16decode(msg))
 
             port.clear_dirty()
 
         self.exp_dirty_led_ports = set()
-
-    def mark_exp_led_dirty(self, led):
-        # TODO this is ugly
-        self.exp_dirty_led_ports.add(led.breakout_board.led_ports[led.port])
 
     async def get_hw_switch_states(self):
         """Return hardware states."""
