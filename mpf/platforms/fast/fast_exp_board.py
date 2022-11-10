@@ -124,7 +124,7 @@ class FastLEDPort:
         self.address = address  # string, board address + brk index, byte + nibble
         self.index = index  # 0-3, corresponds to brk LED port index
         self.leds = [None] * 32 # max len 32 (0-31), corresponds to LED index #TODO make this adjustable
-        self.dirty = True  # any led in port is dirty  TODO do we need this
+        self.dirty = False
         self.lowest_dirty_led = 0  #int
         self.highest_dirty_led = 0  #int
         self.platform = breakout_board.platform
@@ -142,11 +142,14 @@ class FastLEDPort:
         self.dirty = False
 
     def set_dirty(self, led_index):
-        self.dirty = True
 
         if led_index < self.lowest_dirty_led:
             self.lowest_dirty_led = led_index
         if led_index > self.highest_dirty_led:
             self.highest_dirty_led = led_index
+
+        if not self.dirty:
+            self.lowest_dirty_led = self.highest_dirty_led
+            self.dirty = True
 
         self.platform.exp_dirty_led_ports.add(self)

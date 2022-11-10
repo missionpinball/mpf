@@ -18,7 +18,7 @@ if MYPY:   # pragma: no cover
 
 HEX_FORMAT = " 0x%02x"
 
-class FastExpCommunicator(FastSerialCommunicator):
+class FastExpCommunicator:
 
     """Handles the serial communication to the FAST platform."""
 
@@ -55,13 +55,13 @@ class FastExpCommunicator(FastSerialCommunicator):
         self.led_ports = set()  # set of LED port objects
         # this is a set since if a port doesn't have any LEDs attached then we want it to not exist in our world
 
-        self.send_ready = asyncio.Event()
-        self.send_ready.set()
+        # self.send_ready = asyncio.Event()
+        # self.send_ready.set()
         self.write_task = None
         self.read_task = None
         self.received_msg = b''
         self.active_board = None
-        self.send_queue = asyncio.Queue()
+        # self.send_queue = asyncio.Queue()
 
     async def init(self):
 
@@ -72,8 +72,8 @@ class FastExpCommunicator(FastSerialCommunicator):
 
         await self.query_exp_boards()
 
-        self.write_task = self.machine.clock.loop.create_task(self._socket_writer())
-        self.write_task.add_done_callback(Util.raise_exceptions)
+        # self.write_task = self.machine.clock.loop.create_task(self._socket_writer())
+        # self.write_task.add_done_callback(Util.raise_exceptions)
 
         return self
 
@@ -97,7 +97,8 @@ class FastExpCommunicator(FastSerialCommunicator):
                 address = EXPANSION_BOARD_ADDRESS_MAP[board]
 
                 self.platform.debug_log(f"Querying {board} at address {address}")
-                self.writer.write(f'ID@{address}:\r'.encode())
+                # self.writer.write(f'ID@{address}:\r'.encode())
+                self.send(f'ID@{address}:')
                 msg = await self._read_with_timeout(.5)
 
                 # ignore XX replies here.
@@ -133,27 +134,12 @@ class FastExpCommunicator(FastSerialCommunicator):
 
         """
         # self.platform.debug_log("EXP send: %s", msg)
-        self.send_queue.put_nowait(msg)
+        # self.send_queue.put_nowait(msg)
+        self.send_raw(msg.encode() + b'\r')
 
-    def _send(self, msg):
-
-        # TODO for now EXP bus will not track any messages. If there are ones we want
-        # to track in the future (maybe?), we can add here
-
-        self.writer.write(msg.encode() + b'\r')
-
-    async def _socket_writer(self):
-        while True:
-            msg = await self.send_queue.get()
-            # try:
-            #     await asyncio.wait_for(self.send_ready.wait(), 1.0)
-            # except asyncio.TimeoutError:
-            #     self.log.warning("Port %s was blocked for more than 1s. Resetting send queue! If this happens "
-            #                      "frequently report a bug!", self.port)
-            #     self.send_ready.set()
-            a = 1
-
-            self._send(msg)
+    def send_raw(self, msg):
+        # Sends a message as is, without encoding or adding a <CR> character
+        self.writer.write(msg)
 
     def _parse_msg(self, msg):
         self.received_msg += msg
@@ -215,3 +201,23 @@ class FastExpCommunicator(FastSerialCommunicator):
         except asyncio.TimeoutError:
             return ""
         return msg_raw.decode()
+
+    # pylint: disable-msg=inconsistent-return-statements
+    async def readuntil(self, separator, min_chars: int = 0):
+        """Read until separator.
+
+        Args:
+        ----
+            separator: Read until this separator byte.
+            min_chars: Minimum message length before separator
+        """
+        assert self.reader is not None
+        # asyncio StreamReader only supports this from python 3.5.2 on
+        buffer = b''
+        while True:
+            char = await self.reader.readexactly(1)
+            buffer += char
+            if char == separator and len(buffer) > min_chars:
+                if self.debug:
+                    self.log.debug("%s received: %s (%s)", self, buffer, "".join(HEX_FORMAT % b for b in buffer))
+                return buffer

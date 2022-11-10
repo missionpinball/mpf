@@ -1,10 +1,12 @@
 from mpf.core.platform import SwitchConfig
 from mpf.core.rgb_color import RGBColor
+from mpf.core.utility_functions import Util
 from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.tests.MpfTestCase import MpfTestCase, MagicMock, test_config, expect_startup_error
 
 from mpf.tests.loop import MockSerial
 from mpf.tests.test_Fast import BaseMockFast, MockFastNet
+
 
 class MockFastExp(BaseMockFast):
     def __init__(self, test_fast_base):
@@ -14,10 +16,11 @@ class MockFastExp(BaseMockFast):
         # self.ignore_commands["L1:23,FF"] = True
         self.leds = dict()  #
         self.active_board = None
-        self.cmd_stack = list()
-        self.led_map = dict()  # LED number to name index
+        self.cmd_stack = list()  # list of commands received, e.g. ['ID:', 'ID@88:', 'ID@89:', 'EA:880', 'RD:0200ffffff121212']
+        self.led_map = dict()  # LED number to name index, e.g. 88000: "led1", 88121: "led5"
 
     def _parse(self, cmd):
+        # returns True if the command was handled, False if it was not
 
         self.cmd_stack.append(cmd)
 
@@ -44,13 +47,24 @@ class MockFastExp(BaseMockFast):
             elif temp_active == '48':  # Neuron
                 self.queue.append("ID:EXP FP-CPU-2000 0.5")
 
-            if not temp_active:
+            if not temp_active:  # no ID has been set, so lowest address will respond
                 self.queue.append("ID:EXP FP-CPU-2000 0.5")
 
             return True
 
+        elif cmd == "BR":
+            # turn off all the LEDs on that board
+            for led_number, led_name in self.led_map.items():
+                if led_number.startswith(temp_active):
+                    self.leds[led_name] = "000000"
+
+            self.queue.append("BR:P")
+            return True
+
         elif cmd == "RD":
             # RD:<COUNT><INDEX>{<R><G><B>...}
+
+            # 88120
 
             self.test_fast_base.assertTrue(self.active_board, "Received RD: command with no active expansion board set")
 
@@ -59,17 +73,22 @@ class MockFastExp(BaseMockFast):
                     led_number = led.hw_drivers['red'][0].number.split('-')[0]  # 88000
                     self.led_map[led_number] = name
 
-            count = int(payload[:2])
-            index = int(payload[2:4])
+            count = int(payload[:2], 16)
+            index = int(payload[2:4], 16)
             color_data = payload[4:]
 
             assert len(color_data) == count * 6
 
             # update our record of the LED colors
-            for count in range(count):
-                color = color_data[count * 6:count * 6 + 6]
-                led_number = f'{self.active_board}{index + count:02d}'
+            for i in range(count):
+                color = color_data[i * 6:i * 6 + 6]
+                led_number = f'{self.active_board}{index + i:02d}'
+                led_number = f'{self.active_board}{ Util.int_to_hex_string(index + i)}'
                 self.leds[self.led_map[led_number]] = color
+
+            return True
+
+        return False
 
     def _handle_msg(self, msg):
         msg_len = len(msg)
@@ -77,27 +96,30 @@ class MockFastExp(BaseMockFast):
         try:
             cmd = msg.decode()
         except UnicodeDecodeError:
+            # binary message. The first three chars are the command, the rest is the binary payload
             cmd = f'{msg[:3].decode()}{msg[3:].hex()}'
 
-        # strip newline
-        # ignore init garbage
-        if cmd == (' ' * 256 * 4):
-            return msg_len
-
-        if cmd in self.ignore_commands:
-            self.queue.append(cmd[:3] + "P")
-            return msg_len
+        # if cmd in self.ignore_commands:
+        #     self.queue.append(cmd[:3] + "P")
+        #     return msg_len
 
         if self._parse(cmd):
             return msg_len
 
-        if cmd in self.expected_commands:
+        elif cmd in self.expected_commands:
             if self.expected_commands[cmd]:
                 self.queue.append(self.expected_commands[cmd])
             del self.expected_commands[cmd]
             return msg_len
+
         else:
             raise Exception("Unexpected command for " + self.type + ": " + str(cmd))
+
+    def send(self, msg):
+        if not self.is_open:
+            raise AssertionError("Serial not open")
+
+        return self.write(msg.encode() + b'\r')
 
     def write(self, msg):
         """Write message."""
@@ -105,14 +127,14 @@ class MockFastExp(BaseMockFast):
         # TODO this is an example of how it come in which we might need to handle
         # b'EA:880\rRD:\x02\x00\xff\xff\xff\x12\x12\x12'
 
-        if msg.endswith(b'\r'):
-            parts = msg.split(b'\r')
-            assert parts.pop() == b''
-            for part in parts:
-                self._handle_msg(part)
+        ignored_parts = [b' ' * 1024, b'']
 
-        else:  # no \r, possibly binary data
-            self._handle_msg(msg)
+        parts = msg.split(b'\r')
+        # assert parts.pop() == b''
+        for part in parts:
+            if part in ignored_parts:
+                continue
+            self._handle_msg(part)
 
         return len(msg)
 
@@ -153,11 +175,6 @@ class TestFastBase(MpfTestCase):
             **self.net_cpu.attached_boards,
         }
 
-        self.exp_cpu.expected_commands = {
-            'ID:': 'ID:EXP FP-EXP-0201 0.5',
-            "BR:": "BR:P",
-        }
-
     def tearDown(self):
         if self.net_cpu:
             self.net_cpu.expected_commands = {
@@ -165,7 +182,6 @@ class TestFastBase(MpfTestCase):
             }
         if self.exp_cpu:
             self.exp_cpu.expected_commands = {
-
             }
 
         super().tearDown()
@@ -214,8 +230,10 @@ class TestFastBase(MpfTestCase):
         platform = self.machine.default_platform
 
         self.advance_time_and_run(1)
-        led1 = self.machine.lights["led1"]
-        led2 = self.machine.lights["led2"]
+
+        # create local references to all the lights
+        for led_name, led_obj in self.machine.lights.items():
+            globals()[led_name] = led_obj
 
         self.assertIn("88000", platform.fast_exp_leds)
         self.assertIn("88001", platform.fast_exp_leds)
@@ -223,8 +241,6 @@ class TestFastBase(MpfTestCase):
         self.assertIn("88120", platform.fast_exp_leds)
         self.assertIn("88121", platform.fast_exp_leds)
         self.assertIn("89200", platform.fast_exp_leds)
-
-
 
         # check to make sure everything is getting set up properly
         self.assertTrue(platform.exp_connection)
@@ -273,12 +289,26 @@ class TestFastBase(MpfTestCase):
         # self.assertEqual("000000", self.exp_cpu.leds['exp-0201-i0-b0-p2-1'])
         # test led on
         led1.on()
-        led2.color(RGBColor((100, 100, 100)), fade_ms=100)
-        self.advance_time_and_run(1)
-        # self.assertEqual("ffffff", self.exp_cpu.leds['97'])
-        # self.assertEqual("000000", self.exp_cpu.leds['98'])
-
+        led2.color("121212")
+        self.advance_time_and_run()
+        self.assertEqual("ffffff", self.exp_cpu.leds['led1'])
+        self.assertEqual("121212", self.exp_cpu.leds['led2'])
         # device2.color("001122")
+
+        # turn on a LED on a different board that has a hex index too
+        led18.on()
+        self.advance_time_and_run()
+        self.assertEqual("ffffff", self.exp_cpu.leds['led18'])
+
+        self.assertIn('RD:016affffff', self.exp_cpu.cmd_stack) # verifies that a non-zero LED does not include all the lower index ones.
+        # This is what we don't want: 'RD:0b60000000000000000000000000000000000000000000000000000000000000ffffff'
+
+        # verify a board reset turns off the LEDs only on the current active board
+        self.exp_cpu.send("BR:")
+        self.advance_time_and_run()
+        self.assertEqual("000000", self.exp_cpu.leds['led18'])  # this is on the active board and should be off
+        self.assertEqual("ffffff", self.exp_cpu.leds['led1'])  # this is on a non-active board ans should still be on
+        self.assertEqual("121212", self.exp_cpu.leds['led2'])
 
         # # test led off
         # device.off()

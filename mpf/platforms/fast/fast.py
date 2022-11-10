@@ -389,18 +389,19 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             brk = port.breakout
 
             brk.set_active()
-            count = port.highest_dirty_led - port.lowest_dirty_led + 1
+            count = port.highest_dirty_led + 1 - (port.lowest_dirty_led)
             idx = port.lowest_dirty_led
+            port_idx = idx % 32
 
             hex_count = Util.int_to_hex_string(count)
             hex_idx = Util.int_to_hex_string(idx)
 
             msg = f'52443A{hex_count}{hex_idx}'  # RD: in hex 52 44 3A
 
-            for led in port.leds[idx:idx + count]:
+            for led in port.leds[port_idx:port_idx + count]:
                 msg += led.current_color
 
-            self.exp_connection.writer.write(b16decode(msg))
+            self.exp_connection.send_raw(b16decode(msg))
 
             port.clear_dirty()
 

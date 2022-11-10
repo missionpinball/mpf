@@ -48,7 +48,7 @@ class FastSerialConnector:
         self.log = platform.log
         self.debug = platform.debug
         self.is_retro = False
-        self.is_legacy = False
+        self.is_legacy = False  # FAST NET v1 e.g. Nano
 
     def __repr__(self):
         return f'<FastSerialConnector: {self.port}>'
@@ -126,7 +126,7 @@ class FastSerialConnector:
 
         if self.remote_model.startswith(RETRO_ID):
             self.is_retro = True
-        elif version.parse(self.remote_firmware) < version.parse(V2_FW):
+        elif self.platform.machine_type not in fast_defines.HARDWARE_KEY:
             self.is_legacy = True
 
         self.platform.log.info("Connected! Processor: %s, "
@@ -210,7 +210,7 @@ class FastSerialCommunicator:
 
     def __init__(self, platform, remote_processor, remote_model, remote_firmware,
                  is_legacy, is_retro, reader, writer):
-        """Initialise communicator.
+        """Initialize communicator.
 
         Args:
         ----
