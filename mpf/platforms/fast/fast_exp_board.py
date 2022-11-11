@@ -64,6 +64,7 @@ class FastBreakoutBoard:
         self.communicator = communicator
         self.address = f'{self.expansion_board.address}{self.index}'  # string hex byte + nibble
         self.leds = list()
+        self.led_fade_rate = 0
 
         # TODO this is temporary, change to figure out for real what's on each breakout board.
         # for idx in range(4):  # all brk LED are four ports
@@ -89,6 +90,12 @@ class FastBreakoutBoard:
     def set_active(self):
         """Set board active."""
         self.communicator.set_active_board(self.address)
+
+    def set_led_fade(self, rate):
+        """Set LED fade rate in ms."""
+
+        self.led_fade_rate = rate
+        self.communicator.set_led_fade_rate(self.address, rate)
 
 
 # class FastLEDPort:

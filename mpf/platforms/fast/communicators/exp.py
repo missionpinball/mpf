@@ -136,6 +136,18 @@ class FastExpCommunicator:
         self.send(f'EA:{board_address}')
         # self.writer.write(f'EA:{board_address}\r'.encode())
 
+    def set_led_fade_rate(self, board_address, rate):
+        if rate > 8191:
+            self.log.warning(f"FAST LED fade rate of {rate}ms is too high. Setting to 8191ms")
+            rate = 8191
+        elif rate < 0:
+            self.log.warning(f"FAST LED fade rate of {rate}ms is too low. Setting to 0ms")
+            rate = 0
+
+
+        self.platform.debug_log(f"{self} - Setting LED fade rate to {rate}ms")
+        self.send(f'RF@{board_address}:{Util.int_to_hex_string(rate, True)}')
+
     def send(self, msg):
         """Send a message to the remote processor over the serial connection.
 
@@ -145,12 +157,12 @@ class FastExpCommunicator:
                 be added automatically.
 
         """
-        # self.platform.debug_log("EXP send: %s", msg)
-        # self.send_queue.put_nowait(msg)
+
         self.send_raw(msg.encode() + b'\r')
 
     def send_raw(self, msg):
         # Sends a message as is, without encoding or adding a <CR> character
+        self.platform.debug_log("EXP send: %s", msg)
         self.writer.write(msg)
 
     def _parse_msg(self, msg):
