@@ -62,7 +62,7 @@ class MockFastExp(BaseMockFast):
             return True
 
         elif cmd == "RD":
-            # RD:<COUNT><INDEX>{<R><G><B>...}
+            # RD:<COUNT>{<INDEX><R><G><B>...}
 
             # 88120
 
@@ -74,16 +74,17 @@ class MockFastExp(BaseMockFast):
                     self.led_map[led_number] = name
 
             count = int(payload[:2], 16)
-            index = int(payload[2:4], 16)
-            color_data = payload[4:]
+            color_data = payload[2:]
 
-            assert len(color_data) == count * 6
+            assert len(color_data) == count * 8
 
             # update our record of the LED colors
             for i in range(count):
-                color = color_data[i * 6:i * 6 + 6]
-                led_number = f'{self.active_board}{index + i:02d}'
-                led_number = f'{self.active_board}{ Util.int_to_hex_string(index + i)}'
+                color = color_data[i * 8 + 2:i * 8 + 8]
+                # led_number = f'{self.active_board}{index + i:02d}'
+                # make uppercase
+                led_number = f'{self.active_board}{color_data[i * 8:i * 8 + 2]}'.upper()
+
                 self.leds[self.led_map[led_number]] = color
 
             return True
@@ -267,12 +268,12 @@ class TestFastBase(MpfTestCase):
         brk = platform.exp_boards['88'].breakouts[0]
         brk.expansion_board
         brk.index
-        brk.led_ports  # dict()
+        # brk.led_ports  # dict()
         brk.address
 
         # FastLEDPort
 
-        port = platform.exp_boards['88'].breakouts[0].led_ports[0]
+        # port = platform.exp_boards['88'].breakouts[0].led_ports[0]
 
         # this is zero so far
 
@@ -289,11 +290,14 @@ class TestFastBase(MpfTestCase):
         # self.assertEqual("000000", self.exp_cpu.leds['exp-0201-i0-b0-p2-1'])
         # test led on
         led1.on()
-        led2.color("121212")
+        led2.color("ff1234")
+        led3.color("121212")
         self.advance_time_and_run()
         self.assertEqual("ffffff", self.exp_cpu.leds['led1'])
-        self.assertEqual("121212", self.exp_cpu.leds['led2'])
-        # device2.color("001122")
+        self.assertEqual("121212", self.exp_cpu.leds['led3'])
+
+        # verify we got a color command for just these two without the one in the middle
+        self.assertIn('RD:0300ffffff01ff123402121212', self.exp_cpu.cmd_stack)
 
         # turn on a LED on a different board that has a hex index too
         led18.on()
@@ -308,7 +312,7 @@ class TestFastBase(MpfTestCase):
         self.advance_time_and_run()
         self.assertEqual("000000", self.exp_cpu.leds['led18'])  # this is on the active board and should be off
         self.assertEqual("ffffff", self.exp_cpu.leds['led1'])  # this is on a non-active board ans should still be on
-        self.assertEqual("121212", self.exp_cpu.leds['led2'])
+        self.assertEqual("121212", self.exp_cpu.leds['led3'])
 
         # # test led off
         # device.off()

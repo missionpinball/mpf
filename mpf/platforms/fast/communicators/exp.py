@@ -84,7 +84,7 @@ class FastExpCommunicator:
     async def query_exp_boards(self):
         """Query the EXP bus for connected boards."""
 
-        # TODO Firmware checking
+        # TODO Firmware checking, we require min 0.6
         # Existing fw checks assume only one board per connection, but we need to check each board, so this is a future TODO
 
         self.platform.debug_log("Verifying connected expansion boards.")
@@ -115,9 +115,21 @@ class FastExpCommunicator:
 
             self.platform.log.info(f'Found expansion board {board} at address {address} with processor {processor}, model {product_id}, and firmware {firmware_version}')
 
+            await self.reset_exp_board(address)
+
             board_obj = FastExpansionBoard(self, address, product_id, firmware_version)
             self.exp_boards[address] = board_obj
             self.platform.register_expansion_board(board_obj)
+
+    async def reset_exp_board(self, address):
+        """Reset an expansion board."""
+
+        self.platform.debug_log(f'Resetting EXP Board @{address}.')
+        self.send(f'BR@{address}:')
+        msg = ''
+        while msg != 'BR:P\r':
+            msg = (await self.readuntil(b'\r')).decode()
+            self.platform.debug_log("Got: %s", msg)
 
     def set_active_board(self, board_address):
         self.active_board = board_address

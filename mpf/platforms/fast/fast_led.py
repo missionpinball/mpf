@@ -38,7 +38,8 @@ class FASTDirectLED:
         self.dirty = False
         current_time = self.machine.clock.get_time()
         # send this as grb because the hardware will twist it again
-        for index in [1, 0, 2]:
+        # changed by Brian, TODO confirm?
+        for index in [0, 1, 2]:
             channel = self.channels[index]
             if channel:
                 brightness, _, done = channel.get_fade_and_brightness(current_time)
@@ -82,10 +83,10 @@ class FASTExpLED(FASTDirectLED):
         # self.breakout = breakout # '0'
         self.address = f'{self.board_address}{breakout}' # '880'
         self.port = port
-        self.port_obj = self.breakout_board.led_ports[port]
+        # self.port_obj = self.breakout_board.led_ports[port]
         self.index = (port * 32) + led  # int 0-31
         self.number = f'{self.board_address}{breakout}{Util.int_to_hex_string(self.index)}' #  '88000'
-        self.dirty = True
+        self.dirty = False  # we can reset the board on connection so we don't need to send the first color
         self.machine = platform.machine
         self.platform = platform
         self.hardware_fade_ms = hardware_fade_ms
@@ -121,9 +122,9 @@ class FASTDirectLEDChannel(LightPlatformInterface):
         """Set brightness via callback."""
         self.led.dirty = True
 
-        # TODO change to getter/setter and do it there just for EXP LEDs
-        if isinstance(self.led, FASTExpLED):
-            self.led.port_obj.set_dirty(self.led.index)
+        # # TODO change to getter/setter and do it there just for EXP LEDs
+        # if isinstance(self.led, FASTExpLED):
+        #     self.led.port_obj.set_dirty(self.led.index)
 
         self._current_fade = (start_brightness, start_time, target_brightness, target_time)
         self._last_brightness = None

@@ -93,7 +93,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.flag_exp_led_tick_registered = False
         self.exp_boards = dict()  # k: EE address, v: FastExpansionBoard instances
         self.exp_breakout_boards = dict()  # k: EEB address, v: FastBreakoutBoard instances
-        self.exp_dirty_led_ports = set() # FastLedPort instances
+        # self.exp_dirty_led_ports = set() # FastLedPort instances
+        self.exp_breakouts_with_leds = set()
 
         self.hw_switch_data = None
         self.io_boards = dict()     # type: Dict[int, FastIoBoard]
@@ -229,10 +230,14 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.exp_boards[board.address] = board
 
     def register_breakout_board(self, board):
-        """Register an Breakout board."""
+        """Register a Breakout board."""
         if board.address in self.exp_breakout_boards:
             raise AssertionError("Duplicate breakout board address")
         self.exp_breakout_boards[board.address] = board
+
+    def register_led_board(self, board):
+        """Register a Breakout board that has LEDs."""
+        self.exp_breakouts_with_leds.add(board.address[:3])
 
     def _update_watchdog(self):
         """Send Watchdog command."""
@@ -384,28 +389,19 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def update_exp_leds(self):
         # max 32ms / 31.25fps TODO add enforcement
 
-        for port in self.exp_dirty_led_ports:
+        for breakout_address in self.exp_breakouts_with_leds:
+            dirty_leds = {k:v.current_color for (k, v) in self.fast_exp_leds.items() if (v.dirty and v.address == breakout_address)}
+            # {'88000': 'FFFFFF', '88002': '121212'}
 
-            brk = port.breakout
+            if dirty_leds:
+                hex_count = Util.int_to_hex_string(len(dirty_leds))
+                msg = f'52443A{hex_count}'  # RD: in hex 52443A
 
-            brk.set_active()
-            count = port.highest_dirty_led + 1 - (port.lowest_dirty_led)
-            idx = port.lowest_dirty_led
-            port_idx = idx % 32
+                for led_num, color in dirty_leds.items():
+                    msg += f'{led_num[3:]}{color}'
 
-            hex_count = Util.int_to_hex_string(count)
-            hex_idx = Util.int_to_hex_string(idx)
-
-            msg = f'52443A{hex_count}{hex_idx}'  # RD: in hex 52 44 3A
-
-            for led in port.leds[port_idx:port_idx + count]:
-                msg += led.current_color
-
-            self.exp_connection.send_raw(b16decode(msg))
-
-            port.clear_dirty()
-
-        self.exp_dirty_led_ports = set()
+                self.exp_connection.set_active_board(breakout_address)
+                self.exp_connection.send_raw(b16decode(msg))
 
     async def get_hw_switch_states(self):
         """Return hardware states."""
