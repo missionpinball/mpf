@@ -24,11 +24,6 @@ LEGACY_ID = 'FP-CPU-0'      # Start of an id for V1 controller
 RETRO_ID = 'FP-SBI'         # Start of an id for a Retro controller
 V2_FW = '1.80'              # Firmware cutoff from V1 to V2 controllers
 
-# DMD_LATEST_FW = '0.88'
-# NET_LATEST_FW = '0.90'
-# RGB_LATEST_FW = '0.88'
-# IO_LATEST_FW = '0.89'
-
 MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
@@ -37,6 +32,9 @@ HEX_FORMAT = " 0x%02x"
 
 class FastSerialConnector:
     """Connects to a serial port and determines which FAST board is on the other end."""
+
+    __slots__ = ["platform", "port", "baud", "xonxoff", "machine", "log", "debug", "is_retro", "is_legacy", "reader",
+                 "writer", "remote_model", "remote_firmware", "remote_processor"]
 
     def __init__(self, platform, port, baud):
 
@@ -47,8 +45,8 @@ class FastSerialConnector:
         self.machine = platform.machine
         self.log = platform.log
         self.debug = platform.debug
-        self.is_retro = False
-        self.is_legacy = False  # FAST NET v1 e.g. Nano
+        self.is_retro = False  # FAST Retro Controller (System 11, WPC-89, WPC-95)
+        self.is_legacy = False  # FAST NET v1 (Nano)
 
     def __repr__(self):
         return f'<FastSerialConnector: {self.port}>'
@@ -96,7 +94,7 @@ class FastSerialConnector:
         self.writer.write(((' ' * 256 * 4) + '\r').encode())
 
         while True:
-            self.platform.debug_log(f"Sending 'ID:' command to port {self.port}")
+            self.platform.debug_log(f"Sending 'ID:' command to {self.port}")
             self.writer.write('ID:\r'.encode())
             msg = await self._read_with_timeout(.5)
 
@@ -108,14 +106,6 @@ class FastSerialConnector:
                 break
 
             await asyncio.sleep(.5)
-
-        # examples of ID responses
-        # ID:DMD FP-CPU-002-1 00.87
-        # ID:NET FP-CPU-002-2 00.85
-        # ID:RGB FP-CPU-002-2 00.85
-        # ID:NET FP-CPU-2000  02.06
-        # ID:NET FP-SBI-0095-3 2.01
-        # ID:EXP FP-EXP-0201  0.5
 
         try:
             self.remote_processor, self.remote_model, self.remote_firmware = msg[3:].split()
@@ -203,10 +193,10 @@ class FastSerialCommunicator:
                         'XX:N'
                         ]
 
-    # __slots__ = ["dmd", "remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
-    #              "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
-    #              "send_queue", "is_retro", "is_legacy", "machine", "platform", "log", "debug", "port", "baud",
-    #              "xonxoff", "reader", "writer", "read_task"]
+    __slots__ = ["dmd", "remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
+                 "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
+                 "send_queue", "is_retro", "is_legacy", "machine", "platform", "log", "debug", "read_task",
+                 "reader", "writer"]
 
     def __init__(self, platform, remote_processor, remote_model, remote_firmware,
                  is_legacy, is_retro, reader, writer):

@@ -12,7 +12,7 @@ class FASTDirectLED:
 
     """FAST RGB LED."""
 
-    __slots__ = ["number", "number_int", "dirty", "hardware_fade_ms", "log", "channels", "machine"]
+    __slots__ = ["number", "number_int", "dirty", "hardware_fade_ms", "log", "channels", "machine", "platform"]
 
     def __init__(self, number: str, hardware_fade_ms: int, platform) -> None:
         """Initialize FAST LED on RGB processor."""
@@ -43,7 +43,6 @@ class FASTDirectLED:
             channel = self.channels[index]
             if channel:
                 brightness, _, done = channel.get_fade_and_brightness(current_time)
-                # result += hex(int(brightness * 255))[2:].zfill(2)
                 result += f'{int(brightness * 255):02X}'
                 if not done:
                     self.dirty = True
@@ -56,10 +55,35 @@ class FASTExpLED(FASTDirectLED):
 
     """FAST RGB LED on an expansion board."""
 
-    # __slots__ = ["board_address", "breakout", "number_int", "number", "dirty", "hardware_fade_ms", "log", "channels", "machine"]
+    __slots__ = ["board_address", "platform", "breakout_board", "port", "dirty", "machine", "platform", "hardware_fade_ms",
+                 "log", "channels", "breakout", "index", "address", "exp_board"]
 
     def __init__(self, number: str, hardware_fade_ms: int, platform) -> None:
         """Initialize FAST LED."""
+
+        self.board_address, self.breakout, self.port, self.index, self.number = self.parse_number_string(number, platform)
+        self.platform = platform
+        self.breakout_board = self.platform.exp_breakout_boards[f'{self.board_address}{self.breakout}']
+        self.address = f'{self.board_address}{self.breakout}' # '880'
+        self.port = self.port
+        self.dirty = False  # we can reset the board on connection so we don't need to send the first color
+        self.machine = platform.machine
+        self.platform = platform
+        self.hardware_fade_ms = hardware_fade_ms
+        self.log = logging.getLogger('FASTLED')
+        self.channels = [None, None, None]      # type: List[Optional[FASTDirectLEDChannel]]
+        # All FAST LEDs are 3 element RGB and are set using hex strings
+        self.log.debug("Creating FAST RGB LED on expansion board at hardware address: %s", self.number)
+
+        try:
+            self.exp_board = self.platform.exp_boards[self.board_address]
+        except KeyError:
+            # raise ConfigFileError("Expansion board {} not found.".format(self.board_address)) #TODO
+            raise ValueError("Expansion board {} not found in config.".format(self.board_address))
+
+    @classmethod
+    def parse_number_string(cls, number: str, platform, return_all=True) -> str:
+        """Return number string."""
 
         # example exp-201-i0-b0-p1-1
 
@@ -76,33 +100,14 @@ class FASTExpLED(FASTDirectLED):
         port = int(port[1:]) - 1  # 'p1' -> 0
         led = int(led) - 1  # '1' -> 0
 
-        self.board_address = EXPANSION_BOARD_ADDRESS_MAP[f'{board}-{id}'] # '88'
-        self.platform = platform
+        board_address = EXPANSION_BOARD_ADDRESS_MAP[f'{board}-{id}'] # '88'
+        index = (port * 32) + led  # int 0-31
+        number_str = f'{board_address}{breakout}{Util.int_to_hex_string(index)}' #  '88000'
 
-        self.breakout_board = self.platform.exp_breakout_boards[f'{self.board_address}{breakout}']
-        # self.breakout = breakout # '0'
-        self.address = f'{self.board_address}{breakout}' # '880'
-        self.port = port
-        # self.port_obj = self.breakout_board.led_ports[port]
-        self.index = (port * 32) + led  # int 0-31
-        self.number = f'{self.board_address}{breakout}{Util.int_to_hex_string(self.index)}' #  '88000'
-        self.dirty = False  # we can reset the board on connection so we don't need to send the first color
-        self.machine = platform.machine
-        self.platform = platform
-        self.hardware_fade_ms = hardware_fade_ms
-        self.log = logging.getLogger('FASTLED')
-        self.channels = [None, None, None]      # type: List[Optional[FASTDirectLEDChannel]]
-        # All FAST LEDs are 3 element RGB and are set using hex strings
-        self.log.debug("Creating FAST RGB LED on expansion board at hardware address: %s", self.number)
-
-        # TODO current color property, also add to the fast dirty exp led dict, need to add key as
-        # board address and add board to a value set.
-
-        try:
-            self.exp_board = self.platform.exp_boards[self.board_address]
-        except KeyError:
-            # raise ConfigFileError("Expansion board {} not found.".format(self.board_address)) #TODO
-            raise ValueError("Expansion board {} not found in config.".format(self.board_address))
+        if return_all:
+            return board_address, breakout, port, index, number_str
+        else:
+            return number_str
 
 class FASTDirectLEDChannel(LightPlatformInterface):
 
@@ -121,11 +126,6 @@ class FASTDirectLEDChannel(LightPlatformInterface):
     def set_fade(self, start_brightness, start_time, target_brightness, target_time):
         """Set brightness via callback."""
         self.led.dirty = True
-
-        # # TODO change to getter/setter and do it there just for EXP LEDs
-        # if isinstance(self.led, FASTExpLED):
-        #     self.led.port_obj.set_dirty(self.led.index)
-
         self._current_fade = (start_brightness, start_time, target_brightness, target_time)
         self._last_brightness = None
 

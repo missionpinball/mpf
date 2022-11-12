@@ -24,10 +24,10 @@ class FastExpCommunicator:
 
     ignored_messages = ['XX:F',]
 
-    # __slots__ = ["remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
-    #              "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
-    #              "send_queue", "is_retro", "is_legacy", "machine", "platform", "log", "debug", "port", "baud",
-    #              "xonxoff", "reader", "writer", "read_task", "boards"]
+    __slots__ = ["remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
+                 "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
+                 "send_queue", "is_retro", "is_legacy", "machine", "platform", "log", "debug", "port", "baud",
+                 "xonxoff", "reader", "writer", "read_task", "boards", "exp_config", "exp_boards", "active_board"]
 
     def __init__(self, platform, reader, writer):
         """Initialize communicator.
@@ -47,34 +47,17 @@ class FastExpCommunicator:
         self.debug = self.platform.config['debug']
         self.exp_config = self.platform.config['expansion_boards']
         self.remote_processor = 'EXP'
-
-        # self.max_messages_in_flight = 10
-        # self.messages_in_flight = 0
-        # self.ignored_messages_in_flight = {b'-N', b'/N', b'/L', b'-L'}
         self.exp_boards = dict()  # keys = board addresses, values = FastExpansionBoard objects
-        self.led_ports = set()  # set of LED port objects
-        # this is a set since if a port doesn't have any LEDs attached then we want it to not exist in our world
-
-        # self.send_ready = asyncio.Event()
-        # self.send_ready.set()
         self.write_task = None
         self.read_task = None
         self.received_msg = b''
         self.active_board = None
-        # self.send_queue = asyncio.Queue()
 
     async def init(self):
 
         # Register the connection so when we query the boards we know what responses to expect
         self.platform.register_processor_connection('EXP', self)
-
-        # await self.reset_exp_cpu()
-
         await self.query_exp_boards()
-
-        # self.write_task = self.machine.clock.loop.create_task(self._socket_writer())
-        # self.write_task.add_done_callback(Util.raise_exceptions)
-
         return self
 
     def __repr__(self):
@@ -92,7 +75,6 @@ class FastExpCommunicator:
         for board in self.exp_config:
 
             while True:
-
                 board = board.zfill(6)  # '71-1' --> '0071-1'
                 address = EXPANSION_BOARD_ADDRESS_MAP[board]
 
@@ -144,7 +126,6 @@ class FastExpCommunicator:
             self.log.warning(f"FAST LED fade rate of {rate}ms is too low. Setting to 0ms")
             rate = 0
 
-
         self.platform.debug_log(f"{self} - Setting LED fade rate to {rate}ms")
         self.send(f'RF@{board_address}:{Util.int_to_hex_string(rate, True)}')
 
@@ -157,7 +138,6 @@ class FastExpCommunicator:
                 be added automatically.
 
         """
-
         self.send_raw(msg.encode() + b'\r')
 
     def send_raw(self, msg):
@@ -245,3 +225,19 @@ class FastExpCommunicator:
                 if self.debug:
                     self.log.debug("%s received: %s (%s)", self, buffer, "".join(HEX_FORMAT % b for b in buffer))
                 return buffer
+
+    def stop(self):
+        """Stop and shut down this serial connection."""
+        if self.write_task:
+            self.write_task.cancel()
+            self.write_task = None
+        self.log.error("Stop called on serial connection %s", self.remote_processor)
+        if self.read_task:
+            self.read_task.cancel()
+            self.read_task = None
+        if self.writer:
+            self.writer.close()
+            if hasattr(self.writer, "wait_closed"):
+                # Python 3.7+ only
+                self.machine.clock.loop.run_until_complete(self.writer.wait_closed())
+            self.writer = None

@@ -41,10 +41,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     """Platform class for the FAST hardware controller."""
 
-    # __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "seg_connection", "exp_connection", "is_retro",
-    #              "serial_connections", "fast_leds", "fast_exp_leds", "fast_commands", "config", "machine_type", "hw_switch_data",
-    #              "io_boards", "flag_led_tick_registered", "_watchdog_task", "_led_task", "_seg_task",
-    #              "fast_segs"]
+    __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "seg_connection", "exp_connection", "is_retro",
+                 "serial_connections", "fast_leds", "fast_exp_leds", "fast_commands", "config", "machine_type", "hw_switch_data",
+                 "io_boards", "flag_led_tick_registered", "flag_exp_led_tick_registered", "_watchdog_task", "_led_task", "_exp_led_task", "_seg_task",
+                 "fast_segs", "exp_boards", "exp_breakout_boards", "exp_breakouts_with_leds"]
 
     def __init__(self, machine):
         """Initialise fast hardware platform.
@@ -150,6 +150,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 self.seg_connection.remote_processor,
                 self.seg_connection.remote_model,
                 self.seg_connection.remote_firmware)
+        if not self.exp_connection:
+            infos += "No connection to the Expansion Bus.\n"
+        else:
+            infos += "Details to be added..."  # TODO walk the tree and print details
 
         infos += "\nBoards:\n"
         for board in self.io_boards.values():
@@ -171,15 +175,24 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if self._watchdog_task:
             self._watchdog_task.cancel()
             self._watchdog_task = None
+        if self._exp_led_task:
+            self._exp_led_task.cancel()
+            self._exp_led_task = None
+
         if self.net_connection:
-            # set watchdog to expire in 1ms
-            self.net_connection.writer.write(b'WD:1\r')
+            self.net_connection.writer.write(b'WD:1\r')  # set watchdog to expire in 1ms
         if self.rgb_connection:
             self.rgb_connection.writer.write(b'BL:AA55\r')  # reset CPU using bootloader
         if self.dmd_connection:
             self.dmd_connection.writer.write(b'BL:AA55\r')  # reset CPU using bootloader
+        if self.seg_connection:
+            # self.seg_connection.writer.write(b'***\r')  # TODO: reset CPU using
+            pass
+        if self.exp_connection:
+            for board_address in self.exp_boards.keys():
+                self.exp_connection.writer.write(f'BR@{board_address}:\r'.encode())
 
-        # wait 100ms for the messages to be send
+        # wait 100ms for the messages to be sent
         self.machine.clock.loop.run_until_complete(asyncio.sleep(.1))
 
         if self.net_connection:
@@ -198,6 +211,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.seg_connection.stop()
             self.seg_connection = None
 
+        if self.exp_connection:
+            self.exp_connection.stop()
+            self.exp_connection = None
+
         self.serial_connections = set()
 
     async def start(self):
@@ -213,7 +230,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         return '<Platform.FAST>'
 
     def register_io_board(self, board):
-        """Register an IO board.
+        """Register a FAST I/O Board.
 
         Args:
         ----
@@ -730,7 +747,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         del platform_settings
 
-        if not self.net_connection or not self.exp_connection:
+        if not (self.net_connection or self.exp_connection):
             raise AssertionError('A request was made to configure a FAST Light, '
                                  'but no connection to a NET or EXP processor is '
                                  'available')
@@ -753,19 +770,23 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             if number_str[:3] in ('exp', 'cpu'):
 
                 if not self.flag_exp_led_tick_registered:
+
+                    if self.machine.config['mpf']['default_light_hw_update_hz'] > 31.25:
+                        self.machine.config['mpf']['default_light_hw_update_hz'] = 31.25  # TODO move this to a FAST specific place
+
                     self._exp_led_task = self.machine.clock.schedule_interval(
                         self.update_exp_leds, 1 / self.machine.config['mpf']['default_light_hw_update_hz'])
                     self.flag_exp_led_tick_registered = True
 
-                this_led = FASTExpLED(number_str, int(self.config['hardware_led_fade_time']), self)
+                this_led_number = FASTExpLED.parse_number_string(number_str, self, return_all=False)
 
                 # this code runs once for each channel, so it will be called 3x per LED which
                 # is why we check this here
-                if this_led.number not in self.fast_exp_leds:
-                    self.fast_exp_leds[this_led.number] = this_led
+                if this_led_number not in self.fast_exp_leds:
+                    self.fast_exp_leds[this_led_number] = FASTExpLED(number_str, int(self.config['hardware_led_fade_time']), self)
 
-                fast_led_channel = FASTDirectLEDChannel(self.fast_exp_leds[this_led.number], channel)
-                self.fast_exp_leds[this_led.number].add_channel(int(channel), fast_led_channel)
+                fast_led_channel = FASTDirectLEDChannel(self.fast_exp_leds[this_led_number], channel)
+                self.fast_exp_leds[this_led_number].add_channel(int(channel), fast_led_channel)
 
                 return fast_led_channel
 
@@ -818,8 +839,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 }
             ]
         if not subtype or subtype == "led":
-
-            # is this an expansion board LED or an RGB processor LED?
 
             if str(number).startswith("exp") or str(number).startswith("cpu"):
                 # expansion board LED

@@ -7,6 +7,8 @@ class FastExpansionBoard:
 
     """A FAST Expansion board on the EXP connection."""
 
+    __slots__ = ["communicator", "log", "address", "product_id", "firmware_version", "platform", "breakouts"]
+
     def __init__(self, communicator, address, product_id, firmware_version):
         """Initialize FastExpansionBoard."""
 
@@ -54,6 +56,8 @@ class FastBreakoutBoard:
         Not really used yet, but will be in the future to track firmware versions on breakouts, wiring connections, etc.
     """
 
+    __slots__ = ["expansion_board", "log", "index", "platform", "communicator", "address", "leds", "led_fade_rate"]
+
     def __init__(self, expansion_board, index, platform, communicator):
         """Initialize FastBreakoutBoard."""
         self.expansion_board = expansion_board  # object
@@ -67,10 +71,8 @@ class FastBreakoutBoard:
         self.led_fade_rate = 0
 
         # TODO this is temporary, change to figure out for real what's on each breakout board.
-        # for idx in range(4):  # all brk LED are four ports
-        #     self.led_ports.append(FastLEDPort(self, self.address, idx))
 
-        platform.machine.events.add_handler('init_phase_2', self._initialize)
+        self.platform.machine.events.add_handler('init_phase_2', self._initialize)
 
     def __repr__(self):
         return f"Breakout {self.index}, on {self.expansion_board}"
@@ -96,44 +98,3 @@ class FastBreakoutBoard:
 
         self.led_fade_rate = rate
         self.communicator.set_led_fade_rate(self.address, rate)
-
-
-# class FastLEDPort:
-
-#     """A FAST LED port on an expansion board breakout."""
-
-#     def __init__(self, breakout_board, address, index):
-#         """Initialize FastLEDPort."""
-#         self.breakout = breakout_board  # brk object, TODO
-#         self.address = address  # string, board address + brk index, byte + nibble
-#         self.index = index  # 0-3, corresponds to brk LED port index
-#         self.leds = [None] * 32 # max len 32 (0-31), corresponds to LED index #TODO make this adjustable
-#         self.dirty = False
-#         self.lowest_dirty_led = 0  #int
-#         self.highest_dirty_led = 0  #int
-#         self.platform = breakout_board.platform
-
-#     def add_led(self, led):
-#         """Add LED to port."""
-
-#         if led.index >= 32:
-#             raise AssertionError("FAST LED ports can only have 32 LEDs.")
-#             # TODO add a test and then figure out where this should actually live
-
-#     def clear_dirty(self):
-#         self.lowest_dirty_led = 0
-#         self.highest_dirty_led = 0
-#         self.dirty = False
-
-#     def set_dirty(self, led_index):
-
-#         if led_index < self.lowest_dirty_led:
-#             self.lowest_dirty_led = led_index
-#         if led_index > self.highest_dirty_led:
-#             self.highest_dirty_led = led_index
-
-#         if not self.dirty:
-#             self.lowest_dirty_led = self.highest_dirty_led
-#             self.dirty = True
-
-#         self.platform.exp_dirty_led_ports.add(self)

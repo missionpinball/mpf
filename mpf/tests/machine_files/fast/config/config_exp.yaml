@@ -30,6 +30,7 @@ lights:
     number: exp-201-i2-b2-p4-2 # 8A261
   led10:
     number: exp-201-i2-b2-p4-3 # 8A262
+    type: grb
   led11:
     number: exp-201-i2-b2-p4-4 # 8A263
   led12:

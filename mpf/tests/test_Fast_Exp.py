@@ -81,8 +81,6 @@ class MockFastExp(BaseMockFast):
             # update our record of the LED colors
             for i in range(count):
                 color = color_data[i * 8 + 2:i * 8 + 8]
-                # led_number = f'{self.active_board}{index + i:02d}'
-                # make uppercase
                 led_number = f'{self.active_board}{color_data[i * 8:i * 8 + 2]}'.upper()
 
                 self.leds[self.led_map[led_number]] = color
@@ -251,44 +249,6 @@ class TestFastBase(MpfTestCase):
 
         self.assertIn('88', platform.exp_boards)
 
-        # self.assertTrue(platform.exp_dirty_led_ports)  # dirty on startup
-
-        # FastExpansionBoard
-
-        board = platform.exp_boards['88']
-
-        board.communicator
-        board.address
-        board.product_id
-        board.firmware_version
-        board.breakouts  # list() # check that it's 4 and contains brk objects
-
-        # FastBreakoutBoard
-
-        brk = platform.exp_boards['88'].breakouts[0]
-        brk.expansion_board
-        brk.index
-        # brk.led_ports  # dict()
-        brk.address
-
-        # FastLEDPort
-
-        # port = platform.exp_boards['88'].breakouts[0].led_ports[0]
-
-        # this is zero so far
-
-        # port.breakout
-        # port.address
-        # port.index
-        # port.leds
-        # port.dirty
-        # port.lowest_dirty_led
-        # port.highest_dirty_led
-
-
-        # self.assertEqual("000000", self.exp_cpu.leds['exp-0201-i0-b0-p1-1'])
-        # self.assertEqual("000000", self.exp_cpu.leds['exp-0201-i0-b0-p2-1'])
-        # test led on
         led1.on()
         led2.color("ff1234")
         led3.color("121212")
@@ -313,6 +273,11 @@ class TestFastBase(MpfTestCase):
         self.assertEqual("000000", self.exp_cpu.leds['led18'])  # this is on the active board and should be off
         self.assertEqual("ffffff", self.exp_cpu.leds['led1'])  # this is on a non-active board ans should still be on
         self.assertEqual("121212", self.exp_cpu.leds['led3'])
+
+        # test led10 grb
+        led10.color("ff1234")
+        self.advance_time_and_run()
+        self.assertEqual("12ff34", self.exp_cpu.leds['led10'])  # ensure the hardware received the colors in RGB order
 
         # # test led off
         # device.off()

@@ -4,7 +4,7 @@ hardware:
     platform: fast
 
 fast:
-    controller: nano
+    controller: neuron
     ports: com3, com4, com5, com6
     debug: true
 
