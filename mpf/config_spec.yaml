@@ -608,7 +608,9 @@ fadecandy:
 fast:
     __valid_in__: machine
     __type__: config
-    driverboards: single|enum(fast,sys11,wpc89,wpc95,None)|None
+    # driverboards: single|enum(fast,sys11,wpc89,wpc95,None)|None
+    controller: single|enum(neuron,nano,sys11,wpc89,wpc95)|
+    expansion_boards: list|str|None
     ports: list|str|
     baud: list|int|921600
     watchdog: single|ms|1000
@@ -623,7 +625,7 @@ fast:
     dmd_buffer: single|int|3
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
-    firmware_updates: list|subconfig(fast_firmware_update)|None
+    # firmware_updates: list|subconfig(fast_firmware_update)|None
     ignore_rgb_crash: single|bool|false
     segment_display_update_hz: single|int|20
 fast_firmware_update:

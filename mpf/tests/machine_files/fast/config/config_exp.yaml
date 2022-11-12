@@ -1,0 +1,57 @@
+#config_version=5
+
+hardware:
+    platform: fast
+
+fast:
+    controller: neuron
+    ports: com3, com4
+    debug: true
+    expansion_boards: 201-0, 201-1, 71-0, 201-2
+
+lights:
+  led1:
+    number: exp-201-i0-b0-p1-1 # @880:00
+  led2:
+    number: exp-0201-i0-b0-p1-2 # @880:01
+  led3:
+    number: exp-0201-i0-b0-p1-3 # @880:02
+  led4:
+    number: exp-0201-i0-b1-p2-1 # @881:20
+  led5:
+    number: exp-0201-i0-b1-p2-2 # @881:21
+  led6:
+    number: exp-201-i1-b2-p1-1 # 89200
+  led7:
+    number: exp-201-i1-b1-p1-1 # 89100
+  led8:
+    number: exp-201-i2-b2-p4-1 # 8A260
+  led9:
+    number: exp-201-i2-b2-p4-2 # 8A261
+  led10:
+    number: exp-201-i2-b2-p4-3 # 8A262
+    type: grb
+  led11:
+    number: exp-201-i2-b2-p4-4 # 8A263
+  led12:
+    number: exp-201-i2-b2-p4-5 # 8A264
+  led13:
+    number: exp-201-i2-b2-p4-6 # 8A265
+  led14:
+    number: exp-201-i2-b2-p4-7 # 8A266
+  led15:
+    number: exp-201-i2-b2-p4-8 # 8A267
+  led16:
+    number: exp-201-i2-b2-p4-9 # 8A268
+  led17:
+    number: exp-201-i2-b2-p4-10 # 8A269
+  led18:
+    number: exp-201-i2-b2-p4-11 # 8A26A
+
+
+
+# servos:
+#     servo1:
+#         number: 3
+#     servo20:
+#         number: 3-2

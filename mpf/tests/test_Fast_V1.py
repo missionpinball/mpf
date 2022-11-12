@@ -14,7 +14,7 @@ class TestFastV1(TestFastBase):
         # V1 firmware uses network switches (SN/DN) and no CH
         self.net_cpu.expected_commands = {
             'BR:': '\rFOO\r#!B:02',    # there might be some garbage in front of the command
-            'ID:': 'ID:NET FP-CPU-002-1 01.03',
+            'ID:': 'ID:NET FP-CPU-002-2 01.05',
             'NN:00': 'NN:00,FP-I/O-3208-2   ,01.00,08,20,04,06,00,00,00,00',     # 3208 board
             'NN:01': 'NN:01,FP-I/O-0804-1   ,01.00,04,08,04,06,00,00,00,00',     # 0804 board
             'NN:02': 'NN:02,FP-I/O-1616-2   ,01.00,10,10,04,06,00,00,00,00',     # 1616 board
@@ -46,16 +46,16 @@ class TestFastV1(TestFastBase):
             "XO:14,7F": "XO:P"
         }
         self.dmd_cpu.expected_commands = {
-            b'ID:': 'ID:DMD FP-CPU-002-1 00.88',
+            b'ID:': 'ID:DMD FP-CPU-002-2 00.88',
         }
         self.rgb_cpu.expected_commands = {
-            'ID:': 'ID:RGB FP-CPU-002-1 00.89',
+            'ID:': 'ID:RGB FP-CPU-002-2 00.89',
             "RF:0": "RF:P",
             "RA:000000": "RA:P",
             "RF:00": "RF:P",
         }
         self.seg_cpu.expected_commands = {
-            'ID:': 'ID:SEG FP-CPU-002-1 00.10',
+            'ID:': 'ID:SEG FP-CPU-002-2 00.10',
         }
 
     def setUp(self):
@@ -79,13 +79,13 @@ class TestFastV1(TestFastBase):
             self.assertEqual(16, self.machine.default_platform.io_boards[3].driver_count)
 
             self.assertEqual("00.88", self.machine.variables.get_machine_var("fast_dmd_firmware"))
-            self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_dmd_model"))
+            self.assertEqual("FP-CPU-002-2", self.machine.variables.get_machine_var("fast_dmd_model"))
             self.assertEqual("00.89", self.machine.variables.get_machine_var("fast_rgb_firmware"))
-            self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_rgb_model"))
-            self.assertEqual("01.03", self.machine.variables.get_machine_var("fast_net_firmware"))
-            self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_net_model"))
+            self.assertEqual("FP-CPU-002-2", self.machine.variables.get_machine_var("fast_rgb_model"))
+            self.assertEqual("01.05", self.machine.variables.get_machine_var("fast_net_firmware"))
+            self.assertEqual("FP-CPU-002-2", self.machine.variables.get_machine_var("fast_net_model"))
             self.assertEqual("00.10", self.machine.variables.get_machine_var("fast_seg_firmware"))
-            self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_seg_model"))
+            self.assertEqual("FP-CPU-002-2", self.machine.variables.get_machine_var("fast_seg_model"))
 
     def test_coils(self):
         self._test_pulse()
@@ -98,10 +98,11 @@ class TestFastV1(TestFastBase):
         self._test_coil_configure()
 
         # test hardware scan
-        info_str = """NET CPU: NET FP-CPU-002-1 01.03
-RGB CPU: RGB FP-CPU-002-1 00.89
-DMD CPU: DMD FP-CPU-002-1 00.88
-Segment Controller: SEG FP-CPU-002-1 00.10
+        info_str = """NET CPU: NET FP-CPU-002-2 01.05
+RGB CPU: RGB FP-CPU-002-2 00.89
+DMD CPU: DMD FP-CPU-002-2 00.88
+Segment Controller: SEG FP-CPU-002-2 00.10
+No connection to the Expansion Bus.
 
 Boards:
 Board 0 - Model: FP-I/O-3208-2    Firmware: 01.00 Switches: 32 Drivers: 8
@@ -309,32 +310,6 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
         self.machine.autofire_coils["ac_inverted_switch"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
-
-    def test_firmware_update(self):
-        commands = []
-
-        def _catch_update(cmd):
-            commands.append(cmd)
-            return len(cmd)
-        parse_func = self.net_cpu.write
-        self.net_cpu.write = _catch_update
-        output = self.machine.default_platform.update_firmware()
-        self.advance_time_and_run()
-        self.net_cpu.write = parse_func
-        # check if we send the dummy update
-        self.assertEqual([b'BL:AA55\r>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-                          b'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-                          b'>>>>>>>>>>>>>>>>>>>>>>>>>\rBL:AA55\r<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
-                          b'<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
-                          b'<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\rBL:AA55\r>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-                          b'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-                          b'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\rDUMMY UPDAT'
-                          b'E\r', b'WD:3e8\r', b'WD:3e8\r'], commands)
-        expected_output = """NET CPU is version 01.03
-Found an update to version 1.04 for the NET CPU. Will flash file firmware/FAST_NET_01_04_00.txt
-Update done.
-"""
-        self.assertEqual(expected_output, output)
 
     def test_servo(self):
         # go to min position
@@ -748,7 +723,7 @@ Update done.
         # test led on
         device.on()
         self.advance_time_and_run(1)
-        self.assertEqual("ffffff", self.rgb_cpu.leds['97'])
+        self.assertEqual("FFFFFF", self.rgb_cpu.leds['97'])
         self.assertEqual("000000", self.rgb_cpu.leds['98'])
 
         device2.color("001122")
@@ -757,12 +732,12 @@ Update done.
         device.off()
         self.advance_time_and_run(1)
         self.assertEqual("000000", self.rgb_cpu.leds['97'])
-        self.assertEqual("001122", self.rgb_cpu.leds['98'])
+        self.assertEqual("110022", self.rgb_cpu.leds['98'])  # GRB so ensure it's not 001122
 
         # test led color
         device.color(RGBColor((2, 23, 42)))
         self.advance_time_and_run(1)
-        self.assertEqual("02172a", self.rgb_cpu.leds['97'])
+        self.assertEqual("17022A", self.rgb_cpu.leds['97'])  # GRB so ensure it's not 001122
 
         # test led off
         device.off()

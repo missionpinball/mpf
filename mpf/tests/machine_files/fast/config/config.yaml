@@ -4,13 +4,9 @@ hardware:
     platform: fast
 
 fast:
-    driverboards: fast
+    controller: neuron
     ports: com3, com4, com5, com6
     debug: true
-    firmware_updates:
-      - type: net
-        version: "2.04"
-        file: "firmware/FAST_NET_01_04_00.txt"
 
 switches:
     s_test:

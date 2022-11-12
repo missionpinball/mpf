@@ -1,9 +1,9 @@
-"""Fast Io board."""
+"""FAST I/O Board."""
 
 
 class FastIoBoard:
 
-    """A fast IO board on the NET processor."""
+    """A FAST I/O board on the NET processor."""
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, node_id, model_string, firmware_version, switch_count, driver_count):
