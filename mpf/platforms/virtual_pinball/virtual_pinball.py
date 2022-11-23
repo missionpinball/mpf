@@ -130,7 +130,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self._switches = {}         # type: Dict[str, VirtualPinballSwitch]
         self._drivers = {}          # type: Dict[str, VirtualPinballDriver]
         self._last_drivers = {}     # type: Dict[str, bool]
-        self._last_lights = {}      # type: Dict[str, bool]
+        self._last_lights = {}      # type: Dict[str, float]
         self._started = asyncio.Event()
         self.log = logging.getLogger("VPX Platform")
         self.log.debug("Configuring VPX hardware interface.")
@@ -214,16 +214,16 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         return changed_drivers
 
     def _get_changed_lights_by_subtype(self, subtype):
-        """Return changed lights since last call."""
+        """Return changed lights since last call. Returns bool for each light state but floating point brightness is stored in _last_lights to support other methods returning float."""
         changed_lamps = []
         for number, light in self._lights.items():
             if light.subtype != subtype:
                 continue
             brightness = light.current_brightness
             state = bool(brightness > 0.5)
-            if state != self._last_lights[number]:
+            if state != bool(self._last_lights[number] > 0.5):
                 changed_lamps.append((light.hw_number, state))
-                self._last_lights[number] = state
+                self._last_lights[number] = brightness
 
         return changed_lamps
 
@@ -349,7 +349,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         key = number + "-" + subtype
         light = VirtualPinballLight(key, subtype, number, self.machine)
         self._lights[key] = light
-        self._last_lights[key] = False
+        self._last_lights[key] = 0.0
         return light
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
