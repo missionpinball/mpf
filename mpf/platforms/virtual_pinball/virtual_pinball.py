@@ -226,6 +226,19 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                 self._last_lights[number] = brightness
 
         return changed_lamps
+        
+    def _get_changed_brightness_lights_by_subtype(self, subtype):
+        """Return changed lights since last call. Returns float for each light brightness."""
+        changed_lamps = []
+        for number, light in self._lights.items():
+            if light.subtype != subtype:
+                continue
+            brightness = light.current_brightness
+            if brightness != self._last_lights[number]:
+                changed_lamps.append((light.hw_number, brightness))
+                self._last_lights[number] = brightness
+
+        return changed_lamps
 
     def vpx_changed_lamps(self):
         """Return changed lamps since last call."""
@@ -236,8 +249,12 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         return self._get_changed_lights_by_subtype("gi")
 
     def vpx_changed_leds(self):
-        """Return changed lamps since last call."""
+        """Return changed leds since last call."""
         return self._get_changed_lights_by_subtype("led")
+        
+    def vpx_changed_brightness_leds(self):
+        """Return changed brightness leds since last call."""
+        return self._get_changed_brightness_lights_by_subtype("led")
 
     def vpx_changed_flashers(self):
         """Return changed lamps since last call."""
