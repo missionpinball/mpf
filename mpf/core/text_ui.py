@@ -327,7 +327,6 @@ class TextUi(MpfController):
 
         names = self.config.get('player_vars', player_vars.keys())
         for name in names:
-            self.machine.events.replace_handler('player_' + name, self._update_player)
             self._player_widgets.append(Label("{}: {}".format(name, player_vars[name])))
 
         self._layout_change = True
