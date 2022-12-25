@@ -548,6 +548,9 @@ effects:
         size: single|float|4.0
     invert_colors:
         none: ignore
+    linear_gradient:
+        color_stops: dict|float:kivycolor|None
+        angle: single|float|0.0
     monochrome:
         luminosity: list|float|.299, .587, .114
     pixelate:
