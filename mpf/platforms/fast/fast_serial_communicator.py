@@ -133,7 +133,7 @@ class FastSerialConnector:
                                       self.remote_model, self.remote_firmware,
                                       self.is_legacy, self.is_retro,
                                       self.reader, self.writer)
-        elif self.remote_processor in ['EXP', 'LED']:
+        elif self.remote_processor in ['EXP', 'LED', 'BRK']:
             self.is_legacy = False
             from mpf.platforms.fast.communicators.exp import FastExpCommunicator
             return FastExpCommunicator(self.platform, self.reader, self.writer)
