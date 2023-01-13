@@ -14,6 +14,7 @@ from mpf.exceptions.runtime_error import MpfRuntimeError
 from mpf.platforms.fast.fast_io_board import FastIoBoard
 from mpf.platforms.fast.fast_servo import FastServo
 from mpf.platforms.fast import fast_defines
+from mpf.platforms.fast.fast_audio import FASTAudio
 from mpf.platforms.fast.fast_dmd import FASTDMD
 from mpf.platforms.fast.fast_driver import FASTDriver
 from mpf.platforms.fast.fast_gi import FASTGIString
@@ -41,10 +42,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     """Platform class for the FAST hardware controller."""
 
-    __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "seg_connection", "exp_connection", "is_retro",
-                 "serial_connections", "fast_leds", "fast_exp_leds", "fast_commands", "config", "machine_type", "hw_switch_data",
-                 "io_boards", "flag_led_tick_registered", "flag_exp_led_tick_registered", "_watchdog_task", "_led_task", "_exp_led_task", "_seg_task",
-                 "fast_segs", "exp_boards", "exp_breakout_boards", "exp_breakouts_with_leds"]
+    __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "seg_connection", "aud_connection", "is_retro",
+                 "serial_connections", "fast_leds", "fast_commands", "config", "machine_type", "hw_switch_data",
+                 "io_boards", "flag_led_tick_registered", "_watchdog_task", "_led_task", "_seg_task",
+                 "fast_segs"]
 
     def __init__(self, machine):
         """Initialise fast hardware platform.
@@ -76,6 +77,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         # Most FAST platforms don't use ticks, but System11 does
         self.features['tickless'] = self.machine_type != 'sys11'
 
+        self.aud_connection = None
         self.dmd_connection = None
         self.net_connection = None
         self.rgb_connection = None
@@ -111,6 +113,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                               'LX': lambda x, y: None,  # lamp cmd received
                               'PX': lambda x, y: None,  # segment cmd received
                               'WD': lambda x, y: None,  # watchdog
+                              'AV': lambda x, y: self.receive_audio('AV', x, y), # audio cmd received
+                              'AS': lambda x, y: self.receive_audio('AS', x, y),
+                              'AH': lambda x, y: self.receive_audio('AH', x, y),
                               'SA': self.receive_sa,  # all switch states
                               '/N': self.receive_nw_open,    # nw switch open
                               '-N': self.receive_nw_closed,  # nw switch closed
@@ -136,6 +141,13 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 self.rgb_connection.remote_processor,
                 self.rgb_connection.remote_model,
                 self.rgb_connection.remote_firmware)
+        if not self.aud_connection:
+            infos += "No connection to the Audio Controller.\n"
+        else:
+            infos += "Audio Controller: {} {} {}\n".format(
+                self.aud_connection.remote_processor,
+                self.aud_connection.remote_model,
+                self.aud_connection.remote_firmware)
         if not self.dmd_connection:
             infos += "No connection to the DMD CPU.\n"
         else:
@@ -198,6 +210,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if self.net_connection:
             self.net_connection.stop()
             self.net_connection = None
+
+        if self.aud_connection:
+            self.aud_connection.stop()
+            self.aud_connection = None
 
         if self.rgb_connection:
             self.rgb_connection.stop()
@@ -346,7 +362,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             communicator: communicator object
             name: name of processor
         """
-        if name == 'DMD':
+        if name == "AUD":
+            self.aud_connection = communicator
+        elif name == 'DMD':
             self.dmd_connection = communicator
         elif name == 'NET':
             self.net_connection = communicator
@@ -868,6 +886,17 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                  "available.")
 
         return FASTDMD(self.machine, self.dmd_connection.send)
+
+
+    def configure_hardware_sound_system(self, platform_settings):
+        """Configure a hardware FAST audio controller."""
+        if not self.aud_connection:
+            raise AssertionError("A request was made to configure a FAST AUDIO, "
+                                 "but no connection to a AUDIO processor is "
+                                 "available.")
+
+        return FASTAudio(self.machine, self.aud_connection.send, platform_settings)
+
 
     async def configure_segment_display(self, number: str, display_size: int, platform_settings) -> FASTSegmentDisplay:
         """Configure a segment display."""
