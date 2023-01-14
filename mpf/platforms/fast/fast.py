@@ -42,10 +42,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     """Platform class for the FAST hardware controller."""
 
-    __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "seg_connection", "aud_connection", "is_retro",
+    __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "seg_connection", "exp_connection", "aud_connection", "is_retro",
                  "serial_connections", "fast_leds", "fast_commands", "config", "machine_type", "hw_switch_data",
-                 "io_boards", "flag_led_tick_registered", "_watchdog_task", "_led_task", "_seg_task",
-                 "fast_segs"]
+                 "io_boards", "flag_led_tick_registered", "_watchdog_task", "_led_task", "_seg_task", "_exp_led_task",
+                 "fast_exp_leds", "flag_exp_led_tick_registered", "fast_segs", "exp_boards", "exp_breakout_boards",
+                 "exp_breakouts_with_leds"]
 
     def __init__(self, machine):
         """Initialise fast hardware platform.
