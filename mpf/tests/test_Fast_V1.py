@@ -100,6 +100,7 @@ class TestFastV1(TestFastBase):
         # test hardware scan
         info_str = """NET CPU: NET FP-CPU-002-2 01.05
 RGB CPU: RGB FP-CPU-002-2 00.89
+No connection to the Audio Controller.
 DMD CPU: DMD FP-CPU-002-2 00.88
 Segment Controller: SEG FP-CPU-002-2 00.10
 No connection to the Expansion Bus.
