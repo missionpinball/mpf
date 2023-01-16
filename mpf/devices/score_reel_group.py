@@ -67,7 +67,7 @@ class ScoreReelGroup(SystemWideDevice):
             if self.config['chimes'][i]:
                 if not self.reels[i]:
                     self.raise_config_error("Invalid reel for chime {}".format(self.config['chimes'][i]), 1)
-                self.machine.events.add_handler(event='reel_' + self.reels[i].name + '_advance',
+                self.machine.events.add_handler(event='reel_' + self.reels[i].name + '_advancing',
                                                 handler=self.chime,
                                                 chime=self.config['chimes'][i])
 
