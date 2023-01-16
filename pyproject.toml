@@ -25,7 +25,7 @@ dependencies = [
     "pyserial == 3.5",
     "pyserial-asyncio == 0.4; platform_system=='Windows'",
     "pyserial-asyncio == 0.5; platform_system!='Windows'",
-    "sortedcontainers == 2.3.0",
+    "sortedcontainers == 2.4.0",
     "psutil == 5.9.4",
     "packaging",
     ]
