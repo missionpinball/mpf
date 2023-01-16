@@ -46,8 +46,7 @@ class Command:
         parser.add_argument("-b",
                             action="store_false", dest="bcp", default=True,
                             help="Runs MPF without making a connection "
-                                 "attempt to a "
-                                 "BCP Server")
+                                 "attempt to a BCP Server")
 
         parser.add_argument("-c",
                             action="store", dest="configfile",
@@ -151,10 +150,6 @@ class Command:
         self.args = parser.parse_args(args)
         self.args.configfile = Util.string_to_event_list(self.args.configfile)
 
-        # Configure logging. Creates a logfile and logs to the console.
-        # Formatting options are documented here:
-        # https://docs.python.org/2.7/library/logging.html#logrecord-attributes
-
         try:
             os.makedirs(os.path.join(machine_path, 'logs'))
         except OSError as exception:
@@ -179,14 +174,14 @@ class Command:
         console_log.setFormatter(logging.Formatter(
             '%(levelname)s : %(name)s : %(message)s'))
 
-        # initialise async handler for console
+        # initialize async handler for console
         console_log_queue = Queue()
         console_queue_handler = QueueHandler(console_log_queue)
         self.console_queue_listener = logging.handlers.QueueListener(
             console_log_queue, console_log)
         self.console_queue_listener.start()
 
-        # initialise file log
+        # initialize file log
         file_log = logging.FileHandler(full_logfile_path)
         if self.args.jsonlogging:
             formatter = JSONFormatter()
@@ -194,7 +189,7 @@ class Command:
             formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
         file_log.setFormatter(formatter)
 
-        # initialise async handler for file log
+        # initialize async handler for file log
         file_log_queue = Queue()
         file_queue_handler = QueueHandler(file_log_queue)
         self.file_queue_listener = logging.handlers.QueueListener(
