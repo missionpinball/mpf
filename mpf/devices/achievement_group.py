@@ -76,7 +76,7 @@ class AchievementGroup(ModeDevice):
         if show:
             self._show = show.play(
                 priority=self.mode.priority,
-                loops=-1,
+                loops=-1, sync_ms=self.config['sync_ms'],
                 show_tokens=self.config['show_tokens'])
 
         for e in self.config['events_when_enabled']:
@@ -204,11 +204,14 @@ class AchievementGroup(ModeDevice):
     def event_select_random_achievement(self, **kwargs):
         """Event handler for select_random_achievement event."""
         del kwargs
-        self.select_random_achievement()
+        if self.config['disable_random']:
+            self.rotate_right()
+        else:
+            self.select_random_achievement()
 
     def select_random_achievement(self):
-        """Select a random achievement."""
-        self.debug_log("Selecting random achievement")
+        """Select a random or sequential achievement."""
+        self.debug_log("Selecting an achievement")
 
         if not self._is_ok_to_change_selection():
             self.debug_log("Not ok to change selection. Aborting")
@@ -218,10 +221,14 @@ class AchievementGroup(ModeDevice):
             self._selected_member.unselect()
 
         try:
-            ach = choice(self._get_available_achievements_for_selection())
             # todo change this to use our Randomizer class
+            if self.config['disable_random']:
+                ach = self._get_available_achievements_for_selection()[0]
+                self.debug_log("Picked new non-random achievement: %s", ach)
+            else:
+                ach = choice(self._get_available_achievements_for_selection())
+                self.debug_log("Picked new random achievement: %s", ach)
             self._selected_member = ach
-            self.debug_log("Picked new random achievement: %s", ach)
             ach.select()
         except IndexError:
             self._no_more_enabled()
@@ -290,7 +297,7 @@ class AchievementGroup(ModeDevice):
             self.debug_log("Do not have a current selected member")
 
         if self.config['auto_select']:
-            self.debug_log("Auto select is true. Getting random achievement")
+            self.debug_log("Auto select is true. Getting achievement")
             self.select_random_achievement()
 
         return False
