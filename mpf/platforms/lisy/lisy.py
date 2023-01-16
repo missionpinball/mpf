@@ -772,8 +772,9 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         self._handle_software_flash(display)
         return display
 
-    def configure_hardware_sound_system(self) -> HardwareSoundPlatformInterface:
+    def configure_hardware_sound_system(self, platform_settings) -> HardwareSoundPlatformInterface:
         """Configure hardware sound."""
+        del platform_settings
         return LisySound(self)
 
     def send_byte(self, cmd: int, byte: bytes = None):
