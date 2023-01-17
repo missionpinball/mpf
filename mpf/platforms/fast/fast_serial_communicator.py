@@ -397,7 +397,7 @@ class FastSerialCommunicator:
                 self.platform.log.warning("Got unexpected message from FAST while awaiting SA: %s", msg)
 
         self.platform.process_received_message(msg, "NET")
-        self.platform.debug_log('Querying FAST IO boards (legacy %s, retro %s)...', self.is_legacy, self.is_retro)
+        self.platform.debug_log('Querying FAST I/O boards (legacy %s, retro %s)...', self.is_legacy, self.is_retro)
 
         firmware_ok = True
 
@@ -437,7 +437,7 @@ class FastSerialCommunicator:
 
             # Iterate as many boards as possible
             if not model or model == '!Node Not Found!':
-                break
+                break  # todo should we add an option to error if no boards are found?
 
             self.platform.register_io_board(FastIoBoard(int(node_id, 16), model, fw, int(sw, 16), int(dr, 16)))
 

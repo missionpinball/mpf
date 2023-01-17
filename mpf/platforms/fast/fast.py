@@ -40,16 +40,18 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                            SegmentDisplayPlatform,
                            System11OverlayPlatform):
 
-    """Platform class for the FAST hardware controller."""
+    """Platform class for the FAST Pinball hardware."""
 
-    __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "seg_connection", "exp_connection", "aud_connection", "is_retro",
-                 "serial_connections", "fast_leds", "fast_commands", "config", "machine_type", "hw_switch_data",
-                 "io_boards", "flag_led_tick_registered", "_watchdog_task", "_led_task", "_seg_task", "_exp_led_task",
-                 "fast_exp_leds", "flag_exp_led_tick_registered", "fast_segs", "exp_boards", "exp_breakout_boards",
-                 "exp_breakouts_with_leds"]
+    # __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "seg_connection", "exp_connection", "aud_connection",
+    #              "is_retro", "serial_connections", "fast_leds", "fast_commands", "config", "machine_type", "hw_switch_data",
+    #              "io_boards", "flag_led_tick_registered", "_watchdog_task", "_led_task", "_seg_task", "_exp_led_task",
+    #              "fast_exp_leds", "flag_exp_led_tick_registered", "fast_segs", "exp_boards", "exp_breakout_boards",
+    #              "exp_breakouts_with_leds"]
+
+    port_types = ['net', 'exp', 'aud', 'dmd', 'rgb', 'seg', 'emu']
 
     def __init__(self, machine):
-        """Initialise fast hardware platform.
+        """Initialize FAST hardware platform.
 
         Args:
         ----
@@ -58,13 +60,17 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         super().__init__(machine)
 
         self.config = self.machine.config_validator.validate_config("fast", self.machine.config['fast'])
-        self._configure_device_logging_and_debug("FAST", self.config)
+        self._configure_device_logging_and_debug("FAST", self.config)  #todo
 
-        if self.machine.config['hardware']['driverboards']:
-            raise AssertionError("'hardware:' 'driverboards:' is no longer valid for FAST controllers. Please add a 'controller' entry to the 'fast' section of your config file.")
+        self.ports = list()
 
-        if self.config["controller"]:
-            self.machine_type = self.config["controller"]
+        for port_type in self.port_types:
+            if port_type in self.config:
+                self.ports.append(port_type)
+
+
+        if self.config["net"]["controller"]:
+            self.machine_type = self.config["net"]["controller"]
 
         if self.machine_type in ['sys11', 'wpc89', 'wpc95']:
             self.debug_log("Configuring the FAST Controller for Retro driver board")
@@ -237,7 +243,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     async def start(self):
         """Start listening for commands and schedule watchdog."""
         self._watchdog_task = self.machine.clock.schedule_interval(self._update_watchdog,
-                                                                   self.config['watchdog'] / 2000)
+                                                                   self.config['net']['watchdog'] / 2000)
+        # todo move watchdog to only be on net cpu
 
         for connection in self.serial_connections:
             await connection.start_read_loop()
@@ -308,39 +315,27 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.log.warning("Received unknown serial command? %s from %s.", msg, remote_processor)
 
     async def _connect_to_hardware(self):
-        """Connect to each port from the config.
+        """Connect to each port from the config."""
 
-        This process will cause the connection threads to figure out which processor they've connected to
-        and to register themselves.
-        """
-        ports = None
-        if self.config['ports'][0] == "autodetect":
-            auto_ports = autodetect_fast_ports(self.is_retro)
-            if self.is_retro:
-                # Retro only returns one port
-                ports = auto_ports
+        for port in self.ports:
+
+            config = self.config[port]
+
+            if port == 'net':
+                from mpf.platforms.fast.communicators.net import FastNetCommunicator
+                communicator = FastNetCommunicator(platform=self, processor=port, config=config)
+            elif port == 'seg':
+                from mpf.platforms.fast.communicators.seg import FastSegCommunicator
+                communicator = FastSegCommunicator(platform=self, processor=port,config=config)
+            elif port == 'exp':
+                from mpf.platforms.fast.communicators.exp import FastExpCommunicator
+                communicator = FastExpCommunicator(platform=self, processor=port,config=config)
             else:
-                # Net returns four ports, the second is the CPU
-                ports = [auto_ports[1]]
-                if 'dmd' in self.config['ports']:
-                    ports.insert(0, auto_ports[0])
-                if 'rgb' in self.config['ports']:
-                    ports.append(auto_ports[2])
-                if 'exp' in self.config['ports']:
-                    ports.append(auto_ports[3])
-        else:
-            ports = self.config['ports']
+                print(f"bad port:{port}")
+                quit()
 
-        bauds = self.config['baud']
-        if len(bauds) == 1:
-            bauds = [bauds[0]] * len(ports)
-        elif len(bauds) != len(ports):
-            raise AssertionError("FAST configuration found {} ports and {} baud rates".format(len(ports), len(bauds)))
-
-        for index, port in enumerate(ports):
-            conn = FastSerialConnector(platform=self, port=port, baud=bauds[index])
             try:
-                communicator = await conn.connect()
+                await communicator.connect()
             except SerialException as e:
                 raise MpfRuntimeError("Could not open serial port {}. Check if you configured the correct port in the "
                                       "fast config section and if you got sufficient permissions to that "
@@ -363,6 +358,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             communicator: communicator object
             name: name of processor
         """
+
         if name == "AUD":
             self.aud_connection = communicator
         elif name == 'DMD':
@@ -772,10 +768,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                  'available')
         if subtype == "gi":
             return FASTGIString(number, self.net_connection.send, self.machine,
-                                int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000))
+                                int(1 / self.config['net']['gi_hz'] * 1000))
         if subtype == "matrix":
             return FASTMatrixLight(number, self.net_connection.send, self.machine,
-                                   int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000), self)
+                                   int(1 / self.config['net']['lamp_hz'] * 1000), self)
         if not subtype or subtype == "led":
 
             try:
@@ -790,11 +786,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
                 if not self.flag_exp_led_tick_registered:
 
-                    if self.machine.config['mpf']['default_light_hw_update_hz'] > 31.25:
-                        self.machine.config['mpf']['default_light_hw_update_hz'] = 31.25  # TODO move this to a FAST specific place
+                    if self.config['exp']['led_hz'] > 31.25:
+                        self.config['exp']['led_hz'] = 31.25
 
                     self._exp_led_task = self.machine.clock.schedule_interval(
-                        self.update_exp_leds, 1 / self.machine.config['mpf']['default_light_hw_update_hz'])
+                        self.update_exp_leds, 1 / self.config['exp']['led_hz'])
                     self.flag_exp_led_tick_registered = True
 
                 this_led_number = FASTExpLED.parse_number_string(number_str, self, return_all=False)
@@ -802,7 +798,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 # this code runs once for each channel, so it will be called 3x per LED which
                 # is why we check this here
                 if this_led_number not in self.fast_exp_leds:
-                    self.fast_exp_leds[this_led_number] = FASTExpLED(number_str, int(self.config['hardware_led_fade_time']), self)
+                    self.fast_exp_leds[this_led_number] = FASTExpLED(number_str, int(self.config['exp']['led_fade_time']), self)
 
                 fast_led_channel = FASTDirectLEDChannel(self.fast_exp_leds[this_led_number], channel)
                 self.fast_exp_leds[this_led_number].add_channel(int(channel), fast_led_channel)
@@ -813,12 +809,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
                 if not self.flag_led_tick_registered:
                     self._led_task = self.machine.clock.schedule_interval(
-                        self.update_leds, 1 / self.machine.config['mpf']['default_light_hw_update_hz'])
+                        self.update_leds, 1 / self.config['rgb']['led_hz'])
                     self.flag_led_tick_registered = True
 
                 if number_str not in self.fast_leds:
                     self.fast_leds[number_str] = FASTDirectLED(
-                        number_str, int(self.config['hardware_led_fade_time']), self)
+                        number_str, int(self.config['rgb']['led_fade_time']), self)  # todo is this a real setting?
 
             fast_led_channel = FASTDirectLEDChannel(self.fast_leds[number_str], channel)
             self.fast_leds[number_str].add_channel(int(channel), fast_led_channel)

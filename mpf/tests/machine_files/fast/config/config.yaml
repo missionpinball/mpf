@@ -4,9 +4,10 @@ hardware:
     platform: fast
 
 fast:
-    controller: neuron
-    ports: com3, com4, com5, com6
-    debug: true
+    net:
+        port: com3
+        controller: neuron
+        debug: true
 
 switches:
     s_test:

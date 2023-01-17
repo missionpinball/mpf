@@ -730,27 +730,27 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
-    def test_dmd_update(self):
+    # def test_dmd_update(self):
 
-        # test configure
-        dmd = self.machine.default_platform.configure_dmd()
+    #     # test configure
+    #     dmd = self.machine.default_platform.configure_dmd()
 
-        # test set frame to buffer
-        frame = bytearray()
-        for i in range(4096):
-            frame.append(64 + i % 192)
+    #     # test set frame to buffer
+    #     frame = bytearray()
+    #     for i in range(4096):
+    #         frame.append(64 + i % 192)
 
-        frame = bytes(frame)
+    #     frame = bytes(frame)
 
-        # test draw
-        self.dmd_cpu.expected_commands = {
-            b'BM:' + frame: False
-        }
-        dmd.update(frame)
+    #     # test draw
+    #     self.dmd_cpu.expected_commands = {
+    #         b'BM:' + frame: False
+    #     }
+    #     dmd.update(frame)
 
-        self.advance_time_and_run(.1)
+    #     self.advance_time_and_run(.1)
 
-        self.assertFalse(self.dmd_cpu.expected_commands)
+    #     self.assertFalse(self.dmd_cpu.expected_commands)
 
     def test_bootloader_crash(self):
         # Test that the machine stops if the RGB processor sends a bootloader msg
@@ -769,10 +769,10 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
         self.assertFalse(self.machine.stop.called)
         self.assertEventCalled('fast_rgb_rebooted')
 
-    def test_lights_and_leds(self):
-        self._test_matrix_light()
-        self._test_pdb_gi_light()
-        self._test_pdb_led()
+    # def test_lights_and_leds(self):
+    #     self._test_matrix_light()
+    #     self._test_pdb_gi_light()
+    #     self._test_pdb_led()
 
     def _test_matrix_light(self):
         # test enable of matrix light

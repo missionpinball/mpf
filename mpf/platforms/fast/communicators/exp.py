@@ -4,6 +4,7 @@ from typing import Optional
 from mpf.platforms.fast.fast_serial_communicator import FastSerialCommunicator
 from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_ADDRESS_MAP
 from mpf.platforms.fast.fast_exp_board import FastExpansionBoard
+from mpf.platforms.fast.communicators.base import FastSerialCommunicator
 
 from mpf.core.utility_functions import Util
 
@@ -18,51 +19,29 @@ if MYPY:   # pragma: no cover
 
 HEX_FORMAT = " 0x%02x"
 
-class FastExpCommunicator:
+class FastExpCommunicator(FastSerialCommunicator):
 
     """Handles the serial communication to the FAST platform."""
 
     ignored_messages = ['XX:F',]
 
-    __slots__ = ["remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
-                 "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
-                 "send_queue", "is_retro", "is_legacy", "machine", "platform", "log", "debug", "port", "baud",
-                 "xonxoff", "reader", "writer", "read_task", "boards", "exp_config", "exp_boards", "active_board"]
+    # __slots__ = ["remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
+    #              "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
+    #              "send_queue", "is_retro", "is_legacy", "machine", "platform", "log", "debug", "port", "baud",
+    #              "xonxoff", "reader", "writer", "read_task", "boards", "exp_config", "exp_boards", "active_board"]
 
-    def __init__(self, platform, reader, writer):
-        """Initialize communicator.
+    def __init__(self, platform, processor, config):
 
-        Args:
-        ----
-            platform(mpf.platforms.fast.fast.HardwarePlatform): the fast hardware platform
-            reader: asyncio.StreamReader
-            writer: asyncio.StreamWriter
-        """
+        super().__init__(platform, processor, config)
 
-        self.platform = platform
-        self.reader = reader      # type: Optional[asyncio.StreamReader]
-        self.writer = writer      # type: Optional[asyncio.StreamWriter]
-        self.machine = platform.machine     # type: MachineController
-        self.log = self.platform.log
-        self.debug = self.platform.config['debug']
-        self.exp_config = self.platform.config['expansion_boards']
-        self.remote_processor = 'EXP'
         self.exp_boards = dict()  # keys = board addresses, values = FastExpansionBoard objects
-        self.write_task = None
-        self.read_task = None
-        self.received_msg = b''
         self.active_board = None
 
     async def init(self):
 
-        # Register the connection so when we query the boards we know what responses to expect
-        self.platform.register_processor_connection('EXP', self)
+        await super().init()
         await self.query_exp_boards()
         return self
-
-    def __repr__(self):
-        """Return str representation."""
-        return "FAST EXP Communicator"
 
     async def query_exp_boards(self):
         """Query the EXP bus for connected boards."""
@@ -72,7 +51,7 @@ class FastExpCommunicator:
 
         self.platform.debug_log("Verifying connected expansion boards.")
 
-        for board in self.exp_config:
+        for board in self.config['boards']:
 
             while True:
                 board = board.zfill(6)  # '71-1' --> '0071-1'
@@ -138,106 +117,9 @@ class FastExpCommunicator:
                 be added automatically.
 
         """
-        self.send_raw(msg.encode() + b'\r')
+        self.send_raw(msg.encode() + b'\r')  # todo this is an override
 
     def send_raw(self, msg):
         # Sends a message as is, without encoding or adding a <CR> character
         self.platform.debug_log("EXP send: %s", msg)
         self.writer.write(msg)
-
-    def _parse_msg(self, msg):
-        self.received_msg += msg
-
-        while True:
-            pos = self.received_msg.find(b'\r')
-
-            # no more complete messages
-            if pos == -1:
-                break
-
-            msg = self.received_msg[:pos]
-            self.received_msg = self.received_msg[pos + 1:]
-
-            if not msg:
-                continue
-
-            if msg.decode() not in self.ignored_messages:
-                self.platform.process_received_message(msg.decode(), self.remote_processor)
-
-    async def read(self, n=-1):
-        """Read up to `n` bytes from the stream and log the result if debug is true.
-
-        See :func:`StreamReader.read` for details about read and the `n` parameter.
-        """
-        try:
-            resp = await self.reader.read(n)
-        except asyncio.CancelledError:  # pylint: disable-msg=try-except-raise
-            raise
-        except Exception as e:  # pylint: disable-msg=broad-except
-            self.log.warning("Serial error: {}".format(e))
-            return None
-
-        # we either got empty response (-> socket closed) or and error
-        if not resp:
-            self.log.warning("Serial closed.")
-            self.machine.stop("Serial {} closed.".format(self.port))
-            return None
-
-        if self.debug:
-            self.log.debug("%s received: %s (%s)", self, resp, "".join(HEX_FORMAT % b for b in resp))
-        return resp
-
-    async def start_read_loop(self):
-        """Start the read loop."""
-        self.read_task = self.machine.clock.loop.create_task(self._socket_reader())
-        self.read_task.add_done_callback(Util.raise_exceptions)
-
-    async def _socket_reader(self):
-        while True:
-            resp = await self.read(128)
-            if resp is None:
-                return
-            self._parse_msg(resp)
-
-    async def _read_with_timeout(self, timeout):
-        try:
-            msg_raw = await asyncio.wait_for(self.readuntil(b'\r'), timeout=timeout)
-        except asyncio.TimeoutError:
-            return ""
-        return msg_raw.decode()
-
-    # pylint: disable-msg=inconsistent-return-statements
-    async def readuntil(self, separator, min_chars: int = 0):
-        """Read until separator.
-
-        Args:
-        ----
-            separator: Read until this separator byte.
-            min_chars: Minimum message length before separator
-        """
-        assert self.reader is not None
-        # asyncio StreamReader only supports this from python 3.5.2 on
-        buffer = b''
-        while True:
-            char = await self.reader.readexactly(1)
-            buffer += char
-            if char == separator and len(buffer) > min_chars:
-                if self.debug:
-                    self.log.debug("%s received: %s (%s)", self, buffer, "".join(HEX_FORMAT % b for b in buffer))
-                return buffer
-
-    def stop(self):
-        """Stop and shut down this serial connection."""
-        if self.write_task:
-            self.write_task.cancel()
-            self.write_task = None
-        self.log.error("Stop called on serial connection %s", self.remote_processor)
-        if self.read_task:
-            self.read_task.cancel()
-            self.read_task = None
-        if self.writer:
-            self.writer.close()
-            if hasattr(self.writer, "wait_closed"):
-                # Python 3.7+ only
-                self.machine.clock.loop.run_until_complete(self.writer.wait_closed())
-            self.writer = None
