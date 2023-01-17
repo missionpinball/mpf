@@ -40,11 +40,11 @@ class FastSegCommunicator:
 
     __slots__ = ["remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
                  "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
-                 "send_queue", "is_retro", "is_legacy", "machine", "platform", "log", "debug", "port", "baud",
+                 "send_queue", "is_retro", "is_nano", "machine", "platform", "log", "debug", "port", "baud",
                  "xonxoff", "reader", "writer", "read_task"]
 
     def __init__(self, platform, remote_processor, remote_model, remote_firmware,
-                 is_legacy, is_retro, reader, writer):
+                 is_nano, is_retro, reader, writer):
         """Initialise communicator.
 
         Args:
@@ -58,7 +58,7 @@ class FastSegCommunicator:
         self.remote_model = remote_model
         self.remote_firmware = remote_firmware
         self.is_retro = is_retro
-        self.is_legacy = is_legacy
+        self.is_nano = is_nano
         self.max_messages_in_flight = 10
         self.messages_in_flight = 0
         self.ignored_messages_in_flight = {b'-N', b'/N', b'/L', b'-L'}

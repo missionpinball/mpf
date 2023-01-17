@@ -1,7 +1,6 @@
 import asyncio
 from packaging import version
 from typing import Optional
-from mpf.platforms.fast.fast_serial_communicator import FastSerialCommunicator
 from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_ADDRESS_MAP
 from mpf.platforms.fast.fast_exp_board import FastExpansionBoard
 from mpf.platforms.fast.communicators.base import FastSerialCommunicator
@@ -27,7 +26,7 @@ class FastExpCommunicator(FastSerialCommunicator):
 
     # __slots__ = ["remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
     #              "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
-    #              "send_queue", "is_retro", "is_legacy", "machine", "platform", "log", "debug", "port", "baud",
+    #              "send_queue", "is_retro", "is_nano", "machine", "platform", "log", "debug", "port", "baud",
     #              "xonxoff", "reader", "writer", "read_task", "boards", "exp_config", "exp_boards", "active_board"]
 
     def __init__(self, platform, processor, config):

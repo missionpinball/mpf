@@ -102,7 +102,7 @@ class FastSerialCommunicator:
         # if self.remote_model.startswith(RETRO_ID):
         #     self.is_retro = True
         # elif self.platform.machine_type not in fast_defines.HARDWARE_KEY:
-        #     self.is_legacy = True
+        #     self.is_nano = True
 
         self.platform.log.info("Connected! Processor: %s, "
                                "Board Type: %s, Firmware: %s",
@@ -112,21 +112,21 @@ class FastSerialCommunicator:
         # Transfer connection over to serial communicator
 
         # if self.remote_processor == 'SEG':
-        #     # self.is_legacy = False
+        #     # self.is_nano = False
         #     from mpf.platforms.fast.communicators.seg import FastSegCommunicator
         #     return FastSegCommunicator(self.platform, self.remote_processor,
         #                               self.remote_model, self.remote_firmware,
-        #                               self.is_legacy, self.is_retro,
+        #                               self.is_nano, self.is_retro,
         #                               self.reader, self.writer)
         # elif self.remote_processor in ['EXP', 'LED', 'BRK']:
-        #     self.is_legacy = False
+        #     self.is_nano = False
         #     from mpf.platforms.fast.communicators.exp import FastExpCommunicator
         #     return FastExpCommunicator(self.platform, self.reader, self.writer)
         # else:
 
         # return FastSerialCommunicator(self.platform, self.remote_processor,
         #                             self.remote_model, self.remote_firmware,
-        #                             self.is_legacy, self.is_retro,
+        #                             self.is_nano, self.is_retro,
         #                             self.reader, self.writer)
 
     async def init(self):
@@ -244,7 +244,7 @@ class FastSerialCommunicator:
 
     # __slots__ = ["aud", "dmd", "remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
     #              "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
-    #              "send_queue", "is_retro", "is_legacy", "machine", "platform", "log", "debug", "read_task",
+    #              "send_queue", "is_retro", "is_nano", "machine", "platform", "log", "debug", "read_task",
     #              "reader", "writer"]
 
 

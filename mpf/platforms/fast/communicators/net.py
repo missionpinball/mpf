@@ -37,7 +37,7 @@ class FastNetCommunicator(FastSerialCommunicator):
 
         await super().init()
 
-        self.is_legacy = False  # temp todo
+        self.is_nano = False  # temp todo
         self.is_retro = False  # temp todo
 
         await self.query_fast_io_boards()
@@ -88,7 +88,7 @@ class FastNetCommunicator(FastSerialCommunicator):
         else:
             self.platform.debug_log("Reset successful")
 
-        if not self.is_legacy:
+        if not self.is_nano:
             await asyncio.sleep(.2)
             try:
                 await asyncio.wait_for(self.configure_hardware(), 15)
@@ -108,7 +108,7 @@ class FastNetCommunicator(FastSerialCommunicator):
                 self.platform.log.warning("Got unexpected message from FAST while awaiting SA: %s", msg)
 
         self.platform.process_received_message(msg, "NET")
-        self.platform.debug_log('Querying FAST I/O boards (legacy %s, retro %s)...', self.is_legacy, self.is_retro)
+        self.platform.debug_log('Querying FAST I/O boards (legacy %s, retro %s)...', self.is_nano, self.is_retro)
 
         firmware_ok = True
 
@@ -155,7 +155,7 @@ class FastNetCommunicator(FastSerialCommunicator):
             self.platform.debug_log('Fast IO Board %s: Model: %s, Firmware: %s, Switches: %s, Drivers: %s',
                                     node_id, model, fw, int(sw, 16), int(dr, 16))
 
-            min_fw = IO_LEGACY_MIN_FW if self.is_legacy else IO_MIN_FW
+            min_fw = IO_LEGACY_MIN_FW if self.is_nano else IO_MIN_FW
             if min_fw > version.parse(fw):
                 self.platform.log.critical("Firmware version mismatch. MPF requires the IO boards "
                                            "to be firmware %s, but your Board %s (%s) is firmware %s",
