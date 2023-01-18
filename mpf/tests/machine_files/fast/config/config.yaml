@@ -5,9 +5,14 @@ hardware:
 
 fast:
     net:
-        port: com3
+        port: com4
         controller: neuron
-        debug: true
+    seg:
+        port: com3
+    rgb:
+        port: com5
+    dmd:
+        port: com6
 
 switches:
     s_test:

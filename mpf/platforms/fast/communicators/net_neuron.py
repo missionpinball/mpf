@@ -6,48 +6,21 @@ from mpf.platforms.fast import fast_defines
 
 from mpf.core.utility_functions import Util
 from mpf.platforms.fast.communicators.base import FastSerialCommunicator
+from mpf.platforms.fast.fast_io_board import FastIoBoard
 
-class FastNetCommunicator(FastSerialCommunicator):
+MIN_FW = version.parse('2.06')
+IO_MIN_FW = version.parse('0.87')
 
+class FastNetNeuronCommunicator(FastSerialCommunicator):
 
+    is_nano = False  # temp change to mixin
+    is_retro = False  # temp change to mixin
 
-    MIN_FW = version.parse('2.06')
+    ignored_messages = []
 
-
-    ignored_messages = ['RX:P',  # RGB Pass
-                        'SN:P',  # Network Switch pass
-                        'SL:P',  # Local Switch pass
-                        'LX:P',  # Lamp pass
-                        'PX:P',  # Segment pass
-                        'DN:P',  # Network driver pass
-                        'DL:P',  # Local driver pass
-                        'XX:F',  # Unrecognized command?
-                        'R1:F',
-                        'L1:P',
-                        'GI:P',
-                        'TL:P',
-                        'TN:P',
-                        'XO:P',  # Servo/Daughterboard Pass
-                        'XX:U',
-                        'XX:N'
-                        ]
-
-
-    async def init(self):
-
-        await super().init()
-
-        self.is_nano = False  # temp todo
-        self.is_retro = False  # temp todo
-
+    async def init_done(self):
         await self.query_fast_io_boards()
-
-
-
-        return self
-
-
-
+        await super().init_done()
 
     async def reset_net_cpu(self):
         """Reset the NET CPU."""
@@ -74,9 +47,9 @@ class FastNetCommunicator(FastSerialCommunicator):
             self.platform.debug_log("Got: %s", msg)
 
     async def query_fast_io_boards(self):
-        """Query the NET processor to see if any FAST IO boards are connected.
+        """Query the NET processor to see if any FAST I/O boards are connected.
 
-        If so, queries the IO boards to log them and make sure they're the  proper firmware version.
+        If so, queries the I/O boards to log them and make sure they're the  proper firmware version.
         """
         # reset CPU early
         try:
@@ -88,14 +61,13 @@ class FastNetCommunicator(FastSerialCommunicator):
         else:
             self.platform.debug_log("Reset successful")
 
-        if not self.is_nano:
-            await asyncio.sleep(.2)
-            try:
-                await asyncio.wait_for(self.configure_hardware(), 15)
-            except asyncio.TimeoutError:
-                self.platform.warning_log("Configuring FAST hardware timed out.")
-            else:
-                self.platform.debug_log("FAST hardware configuration accepted.")
+        await asyncio.sleep(.2)
+        try:
+            await asyncio.wait_for(self.configure_hardware(), 15)
+        except asyncio.TimeoutError:
+            self.platform.warning_log("Configuring FAST hardware timed out.")
+        else:
+            self.platform.debug_log("FAST hardware configuration accepted.")
 
         await asyncio.sleep(.5)
 
@@ -108,27 +80,9 @@ class FastNetCommunicator(FastSerialCommunicator):
                 self.platform.log.warning("Got unexpected message from FAST while awaiting SA: %s", msg)
 
         self.platform.process_received_message(msg, "NET")
-        self.platform.debug_log('Querying FAST I/O boards (legacy %s, retro %s)...', self.is_nano, self.is_retro)
+        self.platform.debug_log('Querying FAST I/O boards')
 
         firmware_ok = True
-
-        if self.is_retro:
-            # TODO: [Retro] Move the config defines to the Retro's firmware and retrieve via serial query
-            # In the meantime, hard-code values large enough to account for the biggest machines
-            node_id, drivers, switches = ['00', '40', '80']  # in HEX, aka DEC values 0, 64, 128
-            self.platform.register_io_board(FastIoBoard(
-                int(node_id, 16),
-                self.remote_model,
-                self.remote_firmware,
-                int(switches, 16),
-                int(drivers, 16))
-            )
-
-            self.platform.debug_log('Fast Retro Board %s: Model: %s, Firmware: %s, Switches: %s, Drivers: %s',
-                                    node_id, self.remote_model, self.remote_firmware,
-                                    int(switches, 16), int(drivers, 16))
-
-            return
 
         for board_id in range(128):
             self.writer.write('NN:{:02X}\r'.format(board_id).encode())
@@ -136,7 +90,7 @@ class FastNetCommunicator(FastSerialCommunicator):
             while not msg.startswith('NN:'):
                 msg = (await self.readuntil(b'\r')).decode()
                 if not msg.startswith('NN:'):
-                    self.platform.debug_log("Got unexpected message from FAST while querying IO Boards: %s", msg)
+                    self.platform.debug_log("Got unexpected message from FAST while querying I/O Boards: %s", msg)
 
             if msg == 'NN:F\r':
                 break
@@ -152,15 +106,15 @@ class FastNetCommunicator(FastSerialCommunicator):
 
             self.platform.register_io_board(FastIoBoard(int(node_id, 16), model, fw, int(sw, 16), int(dr, 16)))
 
-            self.platform.debug_log('Fast IO Board %s: Model: %s, Firmware: %s, Switches: %s, Drivers: %s',
+            self.platform.debug_log('Fast I/O Board %s: Model: %s, Firmware: %s, Switches: %s, Drivers: %s',
                                     node_id, model, fw, int(sw, 16), int(dr, 16))
 
-            min_fw = IO_LEGACY_MIN_FW if self.is_nano else IO_MIN_FW
+            min_fw = IO_MIN_FW
             if min_fw > version.parse(fw):
-                self.platform.log.critical("Firmware version mismatch. MPF requires the IO boards "
+                self.platform.log.critical("Firmware version mismatch. MPF requires the I/O boards "
                                            "to be firmware %s, but your Board %s (%s) is firmware %s",
                                            min_fw, node_id, model, fw)
                 firmware_ok = False
 
         if not firmware_ok:
-            raise AssertionError("Exiting due to IO board firmware mismatch")
+            raise AssertionError("Exiting due to I/O board firmware mismatch")

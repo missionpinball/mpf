@@ -21,7 +21,6 @@ from mpf.platforms.fast.fast_gi import FASTGIString
 from mpf.platforms.fast.fast_led import FASTDirectLED, FASTDirectLEDChannel, FASTExpLED
 from mpf.platforms.fast.fast_light import FASTMatrixLight
 from mpf.platforms.fast.fast_segment_display import FASTSegmentDisplay
-from mpf.platforms.fast.fast_serial_communicator import FastSerialConnector
 from mpf.platforms.fast.fast_switch import FASTSwitch
 from mpf.platforms.fast.fast_exp_board import FastExpansionBoard, FastBreakoutBoard
 from mpf.platforms.autodetect import autodetect_fast_ports
@@ -65,7 +64,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.ports = list()
 
         for port_type in self.port_types:
-            if port_type in self.config:
+            if self.config[port_type]:
                 self.ports.append(port_type)
 
 
@@ -94,7 +93,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self._led_task = None
         self._exp_led_task = None
         self._seg_task = None
-        self.serial_connections = set()         # type: Set[FastSerialCommunicator]
+        self.serial_connections = set()
         self.fast_leds = dict()
         self.fast_exp_leds = dict()
         self.fast_segs = list()
@@ -322,17 +321,45 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             config = self.config[port]
 
             if port == 'net':
-                from mpf.platforms.fast.communicators.net import FastNetCommunicator
-                communicator = FastNetCommunicator(platform=self, processor=port, config=config)
-            elif port == 'seg':
-                from mpf.platforms.fast.communicators.seg import FastSegCommunicator
-                communicator = FastSegCommunicator(platform=self, processor=port,config=config)
+                if config['controller'] == 'neuron':
+                    from mpf.platforms.fast.communicators.net_neuron import FastNetNeuronCommunicator
+                    communicator = FastNetNeuronCommunicator(platform=self, processor=port, config=config)
+                elif config['controller'] == 'nano':
+                    from mpf.platforms.fast.communicators.net_nano import FastNetNanoCommunicator
+                    communicator = FastNetNanoCommunicator(platform=self, processor=port, config=config)
+                elif config['controller'] in ['sys11', 'wpc89', 'wpc95']:
+                    from mpf.platforms.fast.communicators.net_retro import FastNetRetroCommunicator
+                    communicator = FastNetRetroCommunicator(platform=self, processor=port, config=config)
+                else:
+                    raise AssertionError("Unknown controller type")  # todo better error
+                self.net_connection = communicator
+
             elif port == 'exp':
                 from mpf.platforms.fast.communicators.exp import FastExpCommunicator
                 communicator = FastExpCommunicator(platform=self, processor=port,config=config)
+                self.exp_connection = communicator
+            elif port == 'seg':
+                from mpf.platforms.fast.communicators.seg import FastSegCommunicator
+                communicator = FastSegCommunicator(platform=self, processor=port,config=config)
+                self.seg_connection = communicator
+            elif port == 'aud':
+                from mpf.platforms.fast.communicators.aud import FastAudCommunicator
+                communicator = FastAudCommunicator(platform=self, processor=port,config=config)
+                self.aud_connection = communicator
+            elif port == 'dmd':
+                from mpf.platforms.fast.communicators.dmd import FastDmdCommunicator
+                communicator = FastDmdCommunicator(platform=self, processor=port,config=config)
+                self.dmd_connection = communicator
+            elif port == 'emu':
+                from mpf.platforms.fast.communicators.emu import FastEmuCommunicator
+                communicator = FastEmuCommunicator(platform=self, processor=port,config=config)
+                self.emu_connection = communicator
+            elif port == 'rgb':
+                from mpf.platforms.fast.communicators.rgb import FastRgbCommunicator
+                communicator = FastRgbCommunicator(platform=self, processor=port,config=config)
+                self.rgb_connection = communicator
             else:
-                print(f"bad port:{port}")
-                quit()
+                raise AssertionError("Unknown processor type")  # todo better error
 
             try:
                 await communicator.connect()
@@ -343,46 +370,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             await communicator.init()
             self.serial_connections.add(communicator)
 
-    def register_processor_connection(self, name: str, communicator):
-        """Register processor.
-
-        Once a communication link has been established with one of the
-        processors on the FAST board, this method lets the communicator let MPF
-        know which processor it's talking to.
-
-        This is a separate method since we don't know which processor is on
-        which serial port ahead of time.
-
-        Args:
-        ----
-            communicator: communicator object
-            name: name of processor
-        """
-
-        if name == "AUD":
-            self.aud_connection = communicator
-        elif name == 'DMD':
-            self.dmd_connection = communicator
-        elif name == 'NET':
-            self.net_connection = communicator
-        elif name == 'SEG':
-            self.seg_connection = communicator
-
-            if not self._seg_task:
-                # Need to wait until the segs are all set up
-                self.machine.events.add_handler('machine_reset_phase_3', self._start_seg_updates)
-
-        elif name == 'RGB':
-            self.rgb_connection = communicator
-            self.rgb_connection.send('RF:0')
-            self.rgb_connection.send('RA:000000')  # turn off all LEDs
-            self.rgb_connection.send(f"RF:{Util.int_to_hex_string(self.config['hardware_led_fade_time'])}")
-
-        elif name == 'EXP':
-            self.exp_connection = communicator
-
     def _start_seg_updates(self, **kwargs):
-
         for s in self.machine.device_manager.collections["segment_displays"]:
             self.fast_segs.append(s.hw_display)
 
@@ -394,7 +382,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                                     'segment_display_update_hz'])
 
     def _update_segs(self, **kwargs):
-
         for s in self.fast_segs:
 
             if s.next_text:
@@ -612,7 +599,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             except KeyError:
                 self.raise_config_error(f"Could not find Retro driver {number}", 1)
 
-        # If we have FAST IO boards, we need to make sure we have hex strings
+        # If we have FAST I/O boards, we need to make sure we have hex strings
         elif self.machine_type in ['nano', 'neuron']:
             number = self._parse_driver_number(number)
 
@@ -1031,7 +1018,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         driver.set_autofire(cmd, coil.pulse_settings.duration, coil.pulse_settings.power, 0)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
-        """Set pulse on hit and enable and relase rule on driver."""
+        """Set pulse on hit and enable and release rule on driver."""
         self.debug_log("Setting Pulse on hit and enable and release HW Rule. "
                        "Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)

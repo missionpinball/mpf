@@ -2,7 +2,7 @@ from packaging import version
 
 from mpf.platforms.fast.communicators.base import FastSerialCommunicator
 
-MIN_FW = version.parse('0.10')         # Minimum FW for a Segment Display
+MIN_FW = version.parse('0.10')
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -10,14 +10,8 @@ if MYPY:   # pragma: no cover
 
 HEX_FORMAT = " 0x%02x"
 
-class FastSegCommunicator(FastSerialCommunicator):
+class FastAudCommunicator(FastSerialCommunicator):
 
     """Handles the serial communication to the FAST platform."""
 
     ignored_messages = []
-
-    async def init(self):
-        if not self.platform._seg_task:
-            self.machine.events.add_handler('machine_reset_phase_3', self.platform._start_seg_updates)
-
-        super().init()

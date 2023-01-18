@@ -8,9 +8,7 @@ from mpf.platforms.fast.communicators.base import FastSerialCommunicator
 from mpf.core.utility_functions import Util
 
 # Minimum firmware versions needed for this module
-from mpf.platforms.fast.fast_io_board import FastIoBoard
-
-EXP_MIN_FW = version.parse('0.10')
+MIN_FW = version.parse('0.10')
 
 MYPY = False
 if MYPY:   # pragma: no cover

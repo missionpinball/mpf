@@ -8,13 +8,21 @@ from mpf.core.utility_functions import Util
 
 HEX_FORMAT = " 0x%02x"
 
+MIN_FW = version.parse('0.00') # override in subclass
+
 class FastSerialCommunicator:
 
-    MIN_FW = version.parse('0.00') # override in subclass
+    """Handles the serial communication to the FAST platform."""
 
+    ignored_messages = []
+
+    # __slots__ = ["aud", "dmd", "remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
+    #              "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
+    #              "send_queue", "is_retro", "is_nano", "machine", "platform", "log", "debug", "read_task",
+    #              "reader", "writer"]
 
     def __init__(self, platform, processor, config):
-        """Initialise FastNetCommunicator."""
+        """Initialize FastSerialCommunicator."""
         self.platform = platform
         self.remote_processor = processor
         self.config = config
@@ -26,7 +34,6 @@ class FastSerialCommunicator:
         self.log = platform.log
         self.machine = platform.machine
         self.debug = platform.debug
-
 
         self.remote_firmware = None
         self.send_ready = asyncio.Event()
@@ -99,35 +106,10 @@ class FastSerialCommunicator:
             self.remote_model, self.remote_firmware = msg[3:].split()
             self.remote_processor = 'NET'
 
-        # if self.remote_model.startswith(RETRO_ID):
-        #     self.is_retro = True
-        # elif self.platform.machine_type not in fast_defines.HARDWARE_KEY:
-        #     self.is_nano = True
-
         self.platform.log.info("Connected! Processor: %s, "
                                "Board Type: %s, Firmware: %s",
                                self.remote_processor, self.remote_model,
                                self.remote_firmware)
-
-        # Transfer connection over to serial communicator
-
-        # if self.remote_processor == 'SEG':
-        #     # self.is_nano = False
-        #     from mpf.platforms.fast.communicators.seg import FastSegCommunicator
-        #     return FastSegCommunicator(self.platform, self.remote_processor,
-        #                               self.remote_model, self.remote_firmware,
-        #                               self.is_nano, self.is_retro,
-        #                               self.reader, self.writer)
-        # elif self.remote_processor in ['EXP', 'LED', 'BRK']:
-        #     self.is_nano = False
-        #     from mpf.platforms.fast.communicators.exp import FastExpCommunicator
-        #     return FastExpCommunicator(self.platform, self.reader, self.writer)
-        # else:
-
-        # return FastSerialCommunicator(self.platform, self.remote_processor,
-        #                             self.remote_model, self.remote_firmware,
-        #                             self.is_nano, self.is_retro,
-        #                             self.reader, self.writer)
 
     async def init(self):
 
@@ -137,7 +119,7 @@ class FastSerialCommunicator:
 
         desc: Holds the version number of the firmware for the processor on
         the FAST Pinball controller that's connected. The "x" is replaced with
-        either "dmd", "net", or "rgb", one for each processor that's attached.
+        processor attached (e.g. "net", "exp", etc).
         '''
 
         self.machine.variables.set_machine_var("fast_{}_model".format(self.remote_processor.lower()), self.remote_model)
@@ -146,51 +128,19 @@ class FastSerialCommunicator:
 
         desc: Holds the model number of the board for the processor on
         the FAST Pinball controller that's connected. The "x" is replaced with
-        either "dmd", "net", or "rgb", one for each processor that's attached.
+        processor attached (e.g. "net", "exp", etc).
         '''
 
-        # if self.remote_processor == "AUD":
-        #     min_version = AUD_MIN_FW
-        #     self.aud = True
-        #     self.max_messages_in_flight = self.platform.config['aud_buffer']
-        #     self.platform.debug_log("Setting AUD buffer size: %s",
-        #                             self.max_messages_in_flight)
-        # elif self.remote_processor == 'DMD':
-        #     min_version = DMD_MIN_FW
-        #     # latest_version = DMD_LATEST_FW
-        #     self.dmd = True
-        #     self.max_messages_in_flight = self.platform.config['dmd_buffer']
-        #     self.platform.debug_log("Setting DMD buffer size: %s",
-        #                             self.max_messages_in_flight)
-        # elif self.remote_processor == 'NET':
-        #     min_version = NET_LEGACY_MIN_FW if self.remote_model.startswith(LEGACY_ID) else NET_MIN_FW
-        #     # latest_version = NET_LATEST_FW
-        #     self.max_messages_in_flight = self.platform.config['net_buffer']
-        #     self.platform.debug_log("Setting NET buffer size: %s",
-        #                             self.max_messages_in_flight)
-        # elif self.remote_processor == 'RGB':
-        #     min_version = RGB_LEGACY_MIN_FW if self.remote_model.startswith(LEGACY_ID) else RGB_MIN_FW
-        #     # latest_version = RGB_LATEST_FW
-        #     self.max_messages_in_flight = self.platform.config['rgb_buffer']
-        #     self.platform.debug_log("Setting RGB buffer size: %s",
-        #                             self.max_messages_in_flight)
-        # else:
-        #     raise AttributeError(f"Unrecognized FAST processor type: {self.remote_processor}")
-
-        if version.parse(self.remote_firmware) < self.MIN_FW:
+        if version.parse(self.remote_firmware) < MIN_FW:
             raise AssertionError(f'Firmware version mismatch. MPF requires the {self.remote_processor} processor '
                                  f'to be firmware {self.MIN_FW}, but yours is {self.remote_firmware}')
 
-        # Register the connection so when we query the boards we know what responses to expect
-        self.platform.register_processor_connection(self.remote_processor, self)
+        await self.init_done()
 
-        # if self.remote_processor == 'NET':
-        #     await self.query_fast_io_boards()
-
-        self.write_task = self.machine.clock.loop.create_task(self._socket_writer())
-        self.write_task.add_done_callback(Util.raise_exceptions)
-
-        return self
+    async def init_done(self):
+        """Init done."""
+        self.read_task = self.machine.clock.loop.create_task(self._socket_reader())
+        self.read_task.add_done_callback(Util.raise_exceptions)
 
     async def _read_with_timeout(self, timeout):
         try:
@@ -219,37 +169,6 @@ class FastSerialCommunicator:
                     self.log.debug("%s received: %s (%s)", self, buffer, "".join(HEX_FORMAT % b for b in buffer))
                 return buffer
 
-
-# class FastSerialCommunicator:
-
-    """Handles the serial communication to the FAST platform."""
-
-    ignored_messages = ['RX:P',  # RGB Pass
-                        'SN:P',  # Network Switch pass
-                        'SL:P',  # Local Switch pass
-                        'LX:P',  # Lamp pass
-                        'PX:P',  # Segment pass
-                        'DN:P',  # Network driver pass
-                        'DL:P',  # Local driver pass
-                        'XX:F',  # Unrecognized command?
-                        'R1:F',
-                        'L1:P',
-                        'GI:P',
-                        'TL:P',
-                        'TN:P',
-                        'XO:P',  # Servo/Daughterboard Pass
-                        'XX:U',
-                        'XX:N'
-                        ]
-
-    # __slots__ = ["aud", "dmd", "remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
-    #              "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
-    #              "send_queue", "is_retro", "is_nano", "machine", "platform", "log", "debug", "read_task",
-    #              "reader", "writer"]
-
-
-
-
     def stop(self):
         """Stop and shut down this serial connection."""
         if self.write_task:
@@ -266,10 +185,6 @@ class FastSerialCommunicator:
                 self.machine.clock.loop.run_until_complete(self.writer.wait_closed())
             self.writer = None
 
-
-
-
-
     def send(self, msg):
         """Send a message to the remote processor over the serial connection.
 
@@ -283,30 +198,13 @@ class FastSerialCommunicator:
 
     def _send(self, msg):
         debug = self.platform.config['debug']
-        if self.dmd:
-            self.writer.write(b'BM:' + msg)
-            # Don't log W(atchdog), they are noisy
-            if debug and msg[0] != "W":
-                self.platform.log.debug("Send: %s", "".join(" 0x%02x" % b for b in msg))
 
-        elif not self.max_messages_in_flight:  # For processors that don't use this
-            self.writer.write(msg.encode() + b'\r')
-            self.platform.log.debug("Sending without message flight tracking: %s", msg)
-        else:
-            self.messages_in_flight += 1
-            if self.messages_in_flight > self.max_messages_in_flight:
-                self.send_ready.clear()
+        self.writer.write(msg.encode() + b'\r')
+        self.platform.log.debug("Sending without message: %s", msg)
 
-                self.log.debug("Enabling Flow Control for %s connection. "
-                               "Messages in flight: %s, Max setting: %s",
-                               self.remote_processor,
-                               self.messages_in_flight,
-                               self.max_messages_in_flight)
-
-            self.writer.write(msg.encode() + b'\r')
-            # Don't log W(atchdog) or L(ight) messages, they are noisy
-            if debug and msg[0] != "W" and msg[0] != "L":
-                self.platform.log.debug("Send: %s", msg)
+        # Don't log W(atchdog) or L(ight) messages, they are noisy
+        if debug and msg[0] != "W" and msg[0] != "L":
+            self.platform.log.debug("Send: %s", msg)
 
     async def _socket_writer(self):
         while True:
@@ -320,8 +218,6 @@ class FastSerialCommunicator:
                 self.send_ready.set()
 
             self._send(msg)
-
-
 
     def _parse_msg(self, msg):
         self.received_msg += msg
