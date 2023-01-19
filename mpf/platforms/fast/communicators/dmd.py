@@ -13,7 +13,7 @@ class FastDmdCommunicator(FastSerialCommunicator):
 
     ignored_messages = []
 
-    def _send(self, msg):
+    def _send(self, msg): # todo is this meth even used?
         self.writer.write(b'BM:' + msg)
 
         if self.platform.config['debug']:

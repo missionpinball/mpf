@@ -19,7 +19,11 @@ class BaseMockFast(MockSerial):
         del length
         if not self.queue:
             return
-        msg = (self.queue.pop() + '\r').encode()
+        # msg = (self.queue.pop() + '\r').encode()
+
+        msg = self.queue.pop()
+        print(f'<<< {msg}')
+        msg = (msg + '\r').encode()
         return msg
 
     def read_ready(self):
@@ -45,6 +49,7 @@ class BaseMockFast(MockSerial):
     def _handle_msg(self, msg):
         msg_len = len(msg)
         cmd = msg.decode()
+        print(f'>>> {cmd}')
         # strip newline
         # ignore init garbage
         if cmd == (' ' * 256 * 4):
@@ -140,19 +145,26 @@ class MockFastNet(BaseMockFast):
     def __init__(self):
         super().__init__()
         self.type = "NET"
-        self.id = "FP-CPU-2000-1 2.00"
+        self.id = "NET FP-CPU-2000  02.06"
         self.sa = "09,050000000000000000"
         self.ch = "2000"
         self.expected_commands = None
 
-        self.attached_boards = {
-            'NN:00': 'NN:00,FP-I/O-3208-2   ,02.00,08,20,04,06,00,00,00,00',     # 3208 board
-            'NN:01': 'NN:01,FP-I/O-0804-1   ,02.00,04,08,04,06,00,00,00,00',     # 0804 board
-            'NN:02': 'NN:02,FP-I/O-1616-2   ,02.00,10,10,04,06,00,00,00,00',     # 1616 board
-            'NN:03': 'NN:03,FP-I/O-1616-2   ,02.00,10,10,04,06,00,00,00,00',     # 1616 board
-            'NN:04': 'NN:04,,,,,,,,,,',     # no board
-        }
+        # self.attached_boards = {
+        #     'NN:00': 'NN:00,FP-I/O-3208-2   ,02.00,08,20,04,06,00,00,00,00',     # 3208 board
+        #     'NN:01': 'NN:01,FP-I/O-0804-1   ,02.00,04,08,04,06,00,00,00,00',     # 0804 board
+        #     'NN:02': 'NN:02,FP-I/O-1616-2   ,02.00,10,10,04,06,00,00,00,00',     # 1616 board
+        #     'NN:03': 'NN:03,FP-I/O-1616-2   ,02.00,10,10,04,06,00,00,00,00',     # 1616 board
+        #     'NN:04': 'NN:04,,,,,,,,,,',     # no board
+        # }
 
+        self.attached_boards = {
+            'NN:00': 'NN:00,FP-I/O-3208-3   ,01.09,08,20,00,00,00,00,00,00',     # 3208 board
+            'NN:01': 'NN:01,FP-I/O-0804-3   ,01.09,04,08,00,00,00,00,00,00',     # 0804 board
+            'NN:02': 'NN:02,FP-I/O-1616-3   ,01.09,10,10,00,00,00,00,00,00',     # 1616 board
+            'NN:03': 'NN:03,FP-I/O-1616-3   ,01.09,10,10,00,00,00,00,00,00',     # 1616 board
+            'NN:04': 'NN:04,!Node Not Found!,00.00,00,00,00,00,00,00,00,00',     # no board
+        }
 
 class MockFastSeg(BaseMockFast):
     def __init__(self):
@@ -196,7 +208,7 @@ class TestFastBase(MpfTestCase):
 
     def create_expected_commands(self):
         self.net_cpu.expected_commands = {
-            'BR:': '#!B:02',    # there might be some garbage in front of the command
+            'BR:': '\r\r!B:00\r..!B:02\r.',
             'ID:': f'ID:{self.net_cpu.id}',
             f'CH:{self.net_cpu.ch},FF': 'CH:P',
             **self.net_cpu.attached_boards,

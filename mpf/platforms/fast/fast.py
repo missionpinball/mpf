@@ -22,7 +22,6 @@ from mpf.platforms.fast.fast_led import FASTDirectLED, FASTDirectLEDChannel, FAS
 from mpf.platforms.fast.fast_light import FASTMatrixLight
 from mpf.platforms.fast.fast_segment_display import FASTSegmentDisplay
 from mpf.platforms.fast.fast_switch import FASTSwitch
-from mpf.platforms.fast.fast_exp_board import FastExpansionBoard, FastBreakoutBoard
 from mpf.platforms.autodetect import autodetect_fast_ports
 from mpf.core.platform import ServoPlatform, DmdPlatform, LightsPlatform, SegmentDisplayPlatform, \
     DriverPlatform, DriverSettings, SwitchPlatform, SwitchSettings, DriverConfig, SwitchConfig, \
@@ -73,6 +72,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         if self.machine_type in ['sys11', 'wpc89', 'wpc95']:
             self.debug_log("Configuring the FAST Controller for Retro driver board")
+            # todo make logs respect fast:debug:True or figure out how they work
             self.is_retro = True
         elif self.machine_type in ['neuron', 'nano']:
             self.debug_log("Configuring FAST Controller for FAST I/O boards.")
@@ -364,9 +364,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             try:
                 await communicator.connect()
             except SerialException as e:
-                raise MpfRuntimeError("Could not open serial port {}. Check if you configured the correct port in the "
-                                      "fast config section and if you got sufficient permissions to that "
-                                      "port".format(port), 1, self.log.name) from e
+                raise MpfRuntimeError("Could not open serial port {}. Is something else connected to the port? "
+                                      "Did the port number or your computer change? Do you have permissions to the port? "
+                                      "".format(port), 1, self.log.name) from e
             await communicator.init()
             self.serial_connections.add(communicator)
 
@@ -770,6 +770,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 raise
 
             if number_str[:3] in ('exp', 'cpu'):
+
+                if not self.exp_connection:
+                    self.raise_config_error("An LED is configured for an expansion board, but no EXP connection exists.", 10)  #todo pick a real number
 
                 if not self.flag_exp_led_tick_registered:
 

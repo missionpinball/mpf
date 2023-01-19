@@ -20,4 +20,4 @@ class FastSegCommunicator(FastSerialCommunicator):
         if not self.platform._seg_task:
             self.machine.events.add_handler('machine_reset_phase_3', self.platform._start_seg_updates)
 
-        super().init()
+        await super().init()

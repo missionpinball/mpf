@@ -43,6 +43,8 @@ class FASTSwitch(SwitchPlatformInterface):
 
     def configure_debounce(self, debounce):
         """Configure debounce settings."""
+
+        # Set the debounce from the generic true/false first, then override if the platform settings have specific values
         if debounce:
             debounce_open = Util.int_to_hex_string(self.platform.config['net']['default_normal_debounce_open'])
             debounce_close = Util.int_to_hex_string(self.platform.config['net']['default_normal_debounce_close'])
@@ -55,8 +57,6 @@ class FASTSwitch(SwitchPlatformInterface):
 
         if 'debounce_close' in self.platform_settings and self.platform_settings['debounce_close'] is not None:
             debounce_close = self.platform.convert_number_from_config(self.platform_settings['debounce_close'])
-
-        # todo verify that the above is correct
 
         if self.connection:
             cmd = 'SN:'

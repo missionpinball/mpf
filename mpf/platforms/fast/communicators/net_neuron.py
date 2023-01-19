@@ -27,24 +27,12 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.platform.debug_log('Resetting NET CPU.')
         self.writer.write('BR:\r'.encode())
         msg = ''
-        while msg != 'BR:P\r' and not msg.endswith('!B:02\r'):
+        while not msg.endswith('!B:02\r'):
             msg = (await self.readuntil(b'\r')).decode()
-            self.platform.debug_log("Got: %s", msg)
+            self.platform.debug_log("<<< %s", msg)
 
-    async def configure_hardware(self):
-        """Verify Retro board type."""
-        # For Retro boards, send the CPU configuration
-        hardware_key = fast_defines.HARDWARE_KEY[self.platform.machine_type]
-        self.platform.debug_log("Writing FAST hardware key %s from machine type %s",
-                                hardware_key, self.platform.machine_type)
-        self.writer.write(f'CH:{hardware_key},FF\r'.encode())
-
-        msg = ''
-        while msg != 'CH:P\r':
-            msg = (await self.readuntil(b'\r')).decode()
-            if msg == '\x00CH:P\r':  # workaround as the -5 Neurons send a null byte after the final boot message
-                msg = 'CH:P\r'
-            self.platform.debug_log("Got: %s", msg)
+            if self.port_debug:
+                self.platform.log.info(f"{self.remote_processor} >>> {msg}")
 
     async def query_fast_io_boards(self):
         """Query the NET processor to see if any FAST I/O boards are connected.
@@ -118,3 +106,18 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
 
         if not firmware_ok:
             raise AssertionError("Exiting due to I/O board firmware mismatch")
+
+    async def configure_hardware(self):
+        """Verify Retro board type."""
+        # For Retro boards, send the CPU configuration
+        hardware_key = fast_defines.HARDWARE_KEY[self.platform.machine_type]
+        self.platform.debug_log("Writing FAST hardware key %s from machine type %s",
+                                hardware_key, self.platform.machine_type)
+        self.writer.write(f'CH:{hardware_key},FF\r'.encode())
+
+        msg = ''
+        while msg != 'CH:P\r':
+            msg = (await self.readuntil(b'\r')).decode()
+            if msg == '\x00CH:P\r':  # workaround as the -5 Neurons send a null byte after the final boot message
+                msg = 'CH:P\r'
+            self.platform.debug_log("Got: %s", msg)

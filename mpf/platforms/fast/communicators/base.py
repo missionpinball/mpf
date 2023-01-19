@@ -1,7 +1,6 @@
 import asyncio
 from packaging import version
 from serial import SerialException, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
-from typing import Optional
 from mpf.platforms.fast import fast_defines
 
 from mpf.core.utility_functions import Util
@@ -33,12 +32,18 @@ class FastSerialCommunicator:
         self.received_msg = b''
         self.log = platform.log
         self.machine = platform.machine
-        self.debug = platform.debug
+        self.fast_debug = platform.debug
+        self.port_debug = config['debug']
 
         self.remote_firmware = None
         self.send_ready = asyncio.Event()
         self.send_ready.set()
         self.send_queue = asyncio.Queue()
+
+        if self.port_debug:
+            self.send = self.debug_send
+        else:
+            self.send = self.optimized_send
 
     def __repr__(self):
         return f'<FAST {self.remote_processor.upper()} Communicator: {self.config["port"]}>'
@@ -58,7 +63,7 @@ class FastSerialCommunicator:
 
                 # if we are in production mode retry
                 await asyncio.sleep(.1)
-                self.log.debug("Connection to %s failed. Will retry.", self.config['port'])
+                self.log.warning("Connection to %s failed. Will retry.", self.config['port'])
             else:
                 # we got a connection
                 break
@@ -68,7 +73,7 @@ class FastSerialCommunicator:
             try:
                 serial.set_low_latency_mode(True)
             except (NotImplementedError, ValueError) as e:
-                self.log.info("Could not set %s to low latency mode: %s", self.config['port'], e)
+                self.log.debug(f"Could not enable low latency mode for {self.config['port']}. {e}")
 
         # defaults are slightly high for our use case
         self.writer.transport.set_write_buffer_limits(2048, 1024)
@@ -106,10 +111,10 @@ class FastSerialCommunicator:
             self.remote_model, self.remote_firmware = msg[3:].split()
             self.remote_processor = 'NET'
 
-        self.platform.log.info("Connected! Processor: %s, "
-                               "Board Type: %s, Firmware: %s",
-                               self.remote_processor, self.remote_model,
-                               self.remote_firmware)
+            # todo move this to a subclass
+            # Neuron 2.06 returns `ID:NET FP-CPU-2000  02.06`
+
+        self.platform.log.info(f"Connected to {self.remote_processor} processor on {self.remote_model} with firmware v{self.remote_firmware}")
 
     async def init(self):
 
@@ -165,7 +170,7 @@ class FastSerialCommunicator:
             char = await self.reader.readexactly(1)
             buffer += char
             if char == separator and len(buffer) > min_chars:
-                if self.debug:
+                if self.port_debug:
                     self.log.debug("%s received: %s (%s)", self, buffer, "".join(HEX_FORMAT % b for b in buffer))
                 return buffer
 
@@ -185,26 +190,31 @@ class FastSerialCommunicator:
                 self.machine.clock.loop.run_until_complete(self.writer.wait_closed())
             self.writer = None
 
-    def send(self, msg):
-        """Send a message to the remote processor over the serial connection.
+    # def send(self, msg):
+    #     """Send a message to the remote processor over the serial connection.
 
-        Args:
-        ----
-            msg: String of the message you want to send. THe <CR> character will
-                be added automatically.
+    #     Args:
+    #     ----
+    #         msg: String of the message you want to send. THe <CR> character will
+    #             be added automatically.
 
-        """
+    #     """
+    #     self.send_queue.put_nowait(msg)
+
+
+    def debug_send(self, msg):
+        # this is accessed via self.send and mapped to the correct send method so we don't have a bunch of if statements
+
         self.send_queue.put_nowait(msg)
 
-    def _send(self, msg):
-        debug = self.platform.config['debug']
-
-        self.writer.write(msg.encode() + b'\r')
-        self.platform.log.debug("Sending without message: %s", msg)
-
         # Don't log W(atchdog) or L(ight) messages, they are noisy
-        if debug and msg[0] != "W" and msg[0] != "L":
-            self.platform.log.debug("Send: %s", msg)
+        if msg[0] != "W" and msg[0] != "L":  # todo move to net instance
+            self.platform.log.info("Send: %s", msg)
+
+    def optimized_send(self, msg):
+        # this is accessed via self.send and mapped to the correct send method so we don't have a bunch of if statements
+
+        self.send_queue.put_nowait(msg)
 
     async def _socket_writer(self):
         while True:
@@ -213,7 +223,7 @@ class FastSerialCommunicator:
                 await asyncio.wait_for(self.send_ready.wait(), 1.0)
             except asyncio.TimeoutError:
                 self.log.warning("Port %s was blocked for more than 1s. Resetting send queue! If this happens "
-                                 "frequently report a bug!", self.port)
+                                 "frequently report a bug!", self.config["port"])
                 self.messages_in_flight = 0
                 self.send_ready.set()
 
@@ -254,10 +264,10 @@ class FastSerialCommunicator:
         # we either got empty response (-> socket closed) or and error
         if not resp:
             self.log.warning("Serial closed.")
-            self.machine.stop("Serial {} closed.".format(self.port))
+            self.machine.stop("Serial {} closed.".format(self.config["port"]))
             return None
 
-        if self.debug:
+        if self.port_debug:
             self.log.debug("%s received: %s (%s)", self, resp, "".join(HEX_FORMAT % b for b in resp))
         return resp
 

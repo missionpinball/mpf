@@ -1,14 +1,11 @@
 import asyncio
 from packaging import version
-from typing import Optional
+from serial import SerialException, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
 from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_ADDRESS_MAP
 from mpf.platforms.fast.fast_exp_board import FastExpansionBoard
 from mpf.platforms.fast.communicators.base import FastSerialCommunicator
 
 from mpf.core.utility_functions import Util
-
-# Minimum firmware versions needed for this module
-MIN_FW = version.parse('0.10')
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -17,6 +14,8 @@ if MYPY:   # pragma: no cover
 HEX_FORMAT = " 0x%02x"
 
 class FastExpCommunicator(FastSerialCommunicator):
+
+    MIN_FW = version.parse('0.7')
 
     """Handles the serial communication to the FAST platform."""
 
@@ -36,9 +35,52 @@ class FastExpCommunicator(FastSerialCommunicator):
 
     async def init(self):
 
-        await super().init()
         await self.query_exp_boards()
-        return self
+        await self.init_done()
+
+    async def connect(self):
+        """Connect to the serial port."""
+
+        # TODO combine this with the base class and move the extra stuff it does somewhere else
+
+
+        self.log.info("Connecting to %s at %sbps", self.config['port'], self.config['baud'])
+        while True:
+            try:
+                connector = self.machine.clock.open_serial_connection(
+                    url=self.config['port'], baudrate=self.config['baud'], limit=0, xonxoff=False,
+                    bytesize=EIGHTBITS, parity=PARITY_NONE, stopbits=STOPBITS_ONE)
+                self.reader, self.writer = await connector
+            except SerialException:
+                if not self.machine.options["production"]:
+                    raise
+
+                # if we are in production mode retry
+                await asyncio.sleep(.1)
+                self.log.warning("Connection to %s failed. Will retry.", self.config['port'])
+            else:
+                # we got a connection
+                break
+
+        serial = self.writer.transport.serial
+        if hasattr(serial, "set_low_latency_mode"):
+            try:
+                serial.set_low_latency_mode(True)
+            except (NotImplementedError, ValueError) as e:
+                self.log.debug(f"Could not enable low latency mode for {self.config['port']}. {e}")
+
+        # defaults are slightly high for our use case
+        self.writer.transport.set_write_buffer_limits(2048, 1024)
+
+        # read everything which is sitting in the serial
+        self.writer.transport.serial.reset_input_buffer()
+        # clear buffer
+        # pylint: disable-msg=protected-access
+        self.reader._buffer = bytearray()
+
+        # TODO confirm there's a binary command timeout
+        self.platform.debug_log("Connected to FAST processor. Sending 4 CRs to clear buffer.")
+        self.writer.write(('\r\r\r\r').encode())
 
     async def query_exp_boards(self):
         """Query the EXP bus for connected boards."""
@@ -49,22 +91,25 @@ class FastExpCommunicator(FastSerialCommunicator):
         self.platform.debug_log("Verifying connected expansion boards.")
 
         for board in self.config['boards']:
+            msg = ''
+            board = board.zfill(6)  # '71-1' --> '0071-1'
+            address = EXPANSION_BOARD_ADDRESS_MAP[board]
 
             while True:
-                board = board.zfill(6)  # '71-1' --> '0071-1'
-                address = EXPANSION_BOARD_ADDRESS_MAP[board]
 
                 self.platform.debug_log(f"Querying {board} at address {address}")
                 # self.writer.write(f'ID@{address}:\r'.encode())
-                self.send(f'ID@{address}:')
+                self.writer.write(f'ID@{address}:'.encode())
                 msg = await self._read_with_timeout(.5)
+
+                print(msg)
 
                 # ignore XX replies here.
                 # TODO this code is duplicated in the serial connector. Refactor
                 while msg.startswith('XX:'):
                     msg = await self._read_with_timeout(.5)
 
-                if msg.startswith('ID:'):
+                if msg.startswith('ID:EXP'):
                     break
 
                 await asyncio.sleep(.5)
@@ -72,6 +117,10 @@ class FastExpCommunicator(FastSerialCommunicator):
             processor, product_id, firmware_version = msg[3:].split()
 
             self.platform.log.info(f'Found expansion board {board} at address {address} with processor {processor}, model {product_id}, and firmware {firmware_version}')
+
+            if version.parse(firmware_version) < self.MIN_FW:
+                raise AssertionError(f'Firmware version mismatch. MPF requires the EXP processor '
+                                 f'to be firmware {self.MIN_FW}, but yours is {firmware_version}')
 
             await self.reset_exp_board(address)
 
@@ -85,9 +134,10 @@ class FastExpCommunicator(FastSerialCommunicator):
         self.platform.debug_log(f'Resetting EXP Board @{address}.')
         self.send(f'BR@{address}:')
         msg = ''
-        while msg != 'BR:P\r':
-            msg = (await self.readuntil(b'\r')).decode()
-            self.platform.debug_log("Got: %s", msg)
+        # TODO Jan 19
+        # while msg != 'BR:P':
+        #     msg = await self._read_with_timeout(.5)
+        #     self.platform.debug_log("Got: %s", msg)
 
     def set_active_board(self, board_address):
         self.active_board = board_address
@@ -105,16 +155,17 @@ class FastExpCommunicator(FastSerialCommunicator):
         self.platform.debug_log(f"{self} - Setting LED fade rate to {rate}ms")
         self.send(f'RF@{board_address}:{Util.int_to_hex_string(rate, True)}')
 
-    def send(self, msg):
-        """Send a message to the remote processor over the serial connection.
+    # TODO Jan 19
+    # def send(self, msg):
+    #     """Send a message to the remote processor over the serial connection.
 
-        Args:
-        ----
-            msg: String of the message you want to send. THe <CR> character will
-                be added automatically.
+    #     Args:
+    #     ----
+    #         msg: String of the message you want to send. THe <CR> character will
+    #             be added automatically.
 
-        """
-        self.send_raw(msg.encode() + b'\r')  # todo this is an override
+    #     """
+    #     self.send_raw(msg.encode() + b'\r')  # todo this is an override
 
     def send_raw(self, msg):
         # Sends a message as is, without encoding or adding a <CR> character
