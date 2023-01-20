@@ -875,7 +875,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                  "but no connection to a DMD processor is "
                                  "available.")
 
-        return FASTDMD(self.machine, self.dmd_connection.send)
+        return FASTDMD(self.machine, self.dmd_connection.send_raw)
 
 
     def configure_hardware_sound_system(self, platform_settings):
