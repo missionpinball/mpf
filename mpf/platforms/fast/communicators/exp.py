@@ -19,7 +19,8 @@ class FastExpCommunicator(FastSerialCommunicator):
 
     """Handles the serial communication to the FAST platform."""
 
-    ignored_messages = ['XX:F',]
+    ignored_messages = ['XX:F',
+                        'BR:P']  # TODO move to... somewhere? SHould this do something?
 
     # __slots__ = ["remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
     #              "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
@@ -34,9 +35,9 @@ class FastExpCommunicator(FastSerialCommunicator):
         self.active_board = None
 
     async def init(self):
+        # override w/o super because EXP processor does this per-board later
 
         await self.query_exp_boards()
-        await self.init_done()
 
     async def connect(self):
         """Connect to the serial port."""
@@ -80,7 +81,7 @@ class FastExpCommunicator(FastSerialCommunicator):
 
         # TODO confirm there's a binary command timeout
         self.platform.debug_log("Connected to FAST processor. Sending 4 CRs to clear buffer.")
-        self.writer.write(('\r\r\r\r').encode())
+        self.send(('\r\r\r'))
 
     async def query_exp_boards(self):
         """Query the EXP bus for connected boards."""
@@ -98,11 +99,9 @@ class FastExpCommunicator(FastSerialCommunicator):
             while True:
 
                 self.platform.debug_log(f"Querying {board} at address {address}")
-                # self.writer.write(f'ID@{address}:\r'.encode())
-                self.writer.write(f'ID@{address}:'.encode())
+                # self.send(f'ID@{address}:')
+                self.send(f'ID@{address}:')
                 msg = await self._read_with_timeout(.5)
-
-                print(msg)
 
                 # ignore XX replies here.
                 # TODO this code is duplicated in the serial connector. Refactor
@@ -131,18 +130,14 @@ class FastExpCommunicator(FastSerialCommunicator):
     async def reset_exp_board(self, address):
         """Reset an expansion board."""
 
-        self.platform.debug_log(f'Resetting EXP Board @{address}.')
         self.send(f'BR@{address}:')
         msg = ''
-        # TODO Jan 19
-        # while msg != 'BR:P':
-        #     msg = await self._read_with_timeout(.5)
-        #     self.platform.debug_log("Got: %s", msg)
+        while msg != 'BR:P\r':
+            msg = await self._read_with_timeout(.5)  # TODO move this after the reader task is started and handle it like a normal message?
 
     def set_active_board(self, board_address):
         self.active_board = board_address
         self.send(f'EA:{board_address}')
-        # self.writer.write(f'EA:{board_address}\r'.encode())
 
     def set_led_fade_rate(self, board_address, rate):
         if rate > 8191:
@@ -154,20 +149,3 @@ class FastExpCommunicator(FastSerialCommunicator):
 
         self.platform.debug_log(f"{self} - Setting LED fade rate to {rate}ms")
         self.send(f'RF@{board_address}:{Util.int_to_hex_string(rate, True)}')
-
-    # TODO Jan 19
-    # def send(self, msg):
-    #     """Send a message to the remote processor over the serial connection.
-
-    #     Args:
-    #     ----
-    #         msg: String of the message you want to send. THe <CR> character will
-    #             be added automatically.
-
-    #     """
-    #     self.send_raw(msg.encode() + b'\r')  # todo this is an override
-
-    def send_raw(self, msg):
-        # Sends a message as is, without encoding or adding a <CR> character
-        self.platform.debug_log("EXP send: %s", msg)
-        self.writer.write(msg)

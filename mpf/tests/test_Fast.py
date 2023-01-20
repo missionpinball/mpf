@@ -297,7 +297,8 @@ class TestFastBase(MpfTestCase):
         self._test_coil_configure()
 
         # test hardware scan
-        info_str = """NET CPU: NET FP-CPU-2000-1 2.00
+        print(self.machine.default_platform.get_info_string())
+        info_str = """NET CPU: NET FP-CPU-2000 02.06
 RGB CPU: RGB FP-CPU-002-2 00.89
 No connection to the Audio Controller.
 DMD CPU: DMD FP-CPU-002-2 00.88
@@ -305,10 +306,10 @@ Segment Controller: SEG FP-CPU-002-2 00.10
 No connection to the Expansion Bus.
 
 Boards:
-Board 0 - Model: FP-I/O-3208-2    Firmware: 02.00 Switches: 32 Drivers: 8
-Board 1 - Model: FP-I/O-0804-1    Firmware: 02.00 Switches: 8 Drivers: 4
-Board 2 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
-Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
+Board 0 - Model: FP-I/O-3208-3    Firmware: 01.09 Switches: 32 Drivers: 8
+Board 1 - Model: FP-I/O-0804-3    Firmware: 01.09 Switches: 8 Drivers: 4
+Board 2 - Model: FP-I/O-1616-3    Firmware: 01.09 Switches: 16 Drivers: 16
+Board 3 - Model: FP-I/O-1616-3    Firmware: 01.09 Switches: 16 Drivers: 16
 """
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
@@ -766,6 +767,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
 
     def test_bootloader_crash(self):
         # Test that the machine stops if the RGB processor sends a bootloader msg
+        self.machine.default_platform.config['rgb']['ignore_reboot'] = False
         self.machine.stop = MagicMock()
         self.machine.default_platform.process_received_message("!B:00", "RGB")
         self.advance_time_and_run(1)
@@ -773,7 +775,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 02.00 Switches: 16 Drivers: 16
 
     def test_bootloader_crash_ignored(self):
         # Test that RGB processor bootloader msgs can be ignored
-        self.machine.default_platform.config['ignore_rgb_crash'] = True
+        self.machine.default_platform.config['rgb']['ignore_reboot'] = True
         self.mock_event('fast_rgb_rebooted')
         self.machine.stop = MagicMock()
         self.machine.default_platform.process_received_message("!B:00", "RGB")

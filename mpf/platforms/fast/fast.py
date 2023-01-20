@@ -198,17 +198,20 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self._exp_led_task = None
 
         if self.net_connection:
-            self.net_connection.writer.write(b'WD:1\r')  # set watchdog to expire in 1ms
+            try:
+                self.net_connection.send('WD:1')  # set watchdog to expire in 1ms
+            except Exception:  # port might be closed already
+                pass
         if self.rgb_connection:
-            self.rgb_connection.writer.write(b'BL:AA55\r')  # reset CPU using bootloader
+            self.rgb_connection.send('BL:AA55')  # reset CPU using bootloader
         if self.dmd_connection:
-            self.dmd_connection.writer.write(b'BL:AA55\r')  # reset CPU using bootloader
+            self.dmd_connection.send('BL:AA55')  # reset CPU using bootloader
         if self.seg_connection:
-            # self.seg_connection.writer.write(b'***\r')  # TODO: reset CPU using
+            # self.seg_connection.send('***')  # TODO: reset CPU using
             pass
         if self.exp_connection:
             for board_address in self.exp_boards.keys():
-                self.exp_connection.writer.write(f'BR@{board_address}:\r'.encode())
+                self.exp_connection.send(f'BR@{board_address}:')
 
         # wait 100ms for the messages to be sent
         self.machine.clock.loop.run_until_complete(asyncio.sleep(.1))
@@ -282,7 +285,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def _update_watchdog(self):
         """Send Watchdog command."""
         try:
-            self.net_connection.send('WD:' + str(hex(self.config['watchdog']))[2:])
+            self.net_connection.send('WD:' + str(hex(self.config['watchdog']))[2:])  # TODO don't calc each loop
         except:
             pass
 
@@ -1067,10 +1070,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         driver.clear_autofire(driver.get_config_cmd(), driver.number)
 
-    def receive_bootloader(self, msg, remote_processor):
+    def receive_bootloader(self, msg, remote_processor):  # move? TODO
         """Process bootloader message."""
         self.debug_log("Got Bootloader message: %s from %s", msg, remote_processor)
-        ignore_rgb = self.config['ignore_rgb_crash'] and \
+        ignore_rgb = self.config['rgb']['ignore_reboot'] and \
             remote_processor == self.rgb_connection.remote_processor
         if msg in ('00', '02'):
             action = "Ignoring RGB crash and continuing play." if ignore_rgb else "MPF will exit now."

@@ -27,7 +27,6 @@ class FastSerialCommunicator:
         self.config = config
         self.writer = None
         self.reader = None
-        self.write_task = None
         self.read_task = None
         self.received_msg = b''
         self.log = platform.log
@@ -36,9 +35,6 @@ class FastSerialCommunicator:
         self.port_debug = config['debug']
 
         self.remote_firmware = None
-        self.send_ready = asyncio.Event()
-        self.send_ready.set()
-        self.send_queue = asyncio.Queue()
 
         if self.port_debug:
             self.send = self.debug_send
@@ -88,11 +84,11 @@ class FastSerialCommunicator:
 
         # send enough dummy commands to clear out any buffers on the FAST
         # board that might be waiting for more commands
-        self.writer.write(((' ' * 256 * 4) + '\r').encode())
+        self.send(' ' * 256 * 4)
 
         while True:
             self.platform.debug_log(f"Sending 'ID:' command to {self.config['port']}")
-            self.writer.write('ID:\r'.encode())
+            self.send('ID:')
             msg = await self._read_with_timeout(.5)
 
             # ignore XX replies here.
@@ -140,13 +136,6 @@ class FastSerialCommunicator:
             raise AssertionError(f'Firmware version mismatch. MPF requires the {self.remote_processor} processor '
                                  f'to be firmware {self.MIN_FW}, but yours is {self.remote_firmware}')
 
-        await self.init_done()
-
-    async def init_done(self):
-        """Init done."""
-        self.read_task = self.machine.clock.loop.create_task(self._socket_reader())
-        self.read_task.add_done_callback(Util.raise_exceptions)
-
     async def _read_with_timeout(self, timeout):
         try:
             msg_raw = await asyncio.wait_for(self.readuntil(b'\r'), timeout=timeout)
@@ -176,9 +165,6 @@ class FastSerialCommunicator:
 
     def stop(self):
         """Stop and shut down this serial connection."""
-        if self.write_task:
-            self.write_task.cancel()
-            self.write_task = None
         self.log.error("Stop called on serial connection %s", self.remote_processor)
         if self.read_task:
             self.read_task.cancel()
@@ -190,22 +176,11 @@ class FastSerialCommunicator:
                 self.machine.clock.loop.run_until_complete(self.writer.wait_closed())
             self.writer = None
 
-    # def send(self, msg):
-    #     """Send a message to the remote processor over the serial connection.
-
-    #     Args:
-    #     ----
-    #         msg: String of the message you want to send. THe <CR> character will
-    #             be added automatically.
-
-    #     """
-    #     self.send_queue.put_nowait(msg)
-
 
     def debug_send(self, msg):
         # this is accessed via self.send and mapped to the correct send method so we don't have a bunch of if statements
 
-        self.send_queue.put_nowait(msg)
+        self.writer.write(msg.encode() + b'\r')
 
         # Don't log W(atchdog) or L(ight) messages, they are noisy
         if msg[0] != "W" and msg[0] != "L":  # todo move to net instance
@@ -214,20 +189,12 @@ class FastSerialCommunicator:
     def optimized_send(self, msg):
         # this is accessed via self.send and mapped to the correct send method so we don't have a bunch of if statements
 
-        self.send_queue.put_nowait(msg)
+        self.writer.write(msg.encode() + b'\r')
 
-    async def _socket_writer(self):
-        while True:
-            msg = await self.send_queue.get()
-            try:
-                await asyncio.wait_for(self.send_ready.wait(), 1.0)
-            except asyncio.TimeoutError:
-                self.log.warning("Port %s was blocked for more than 1s. Resetting send queue! If this happens "
-                                 "frequently report a bug!", self.config["port"])
-                self.messages_in_flight = 0
-                self.send_ready.set()
-
-            self._send(msg)
+    def send_raw(self, msg):
+        # Sends a message as is, without encoding or adding a <CR> character
+        self.platform.debug_log("EXP send: %s", msg)
+        self.writer.write(msg)
 
     def _parse_msg(self, msg):
         self.received_msg += msg

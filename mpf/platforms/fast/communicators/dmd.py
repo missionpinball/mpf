@@ -14,7 +14,4 @@ class FastDmdCommunicator(FastSerialCommunicator):
     ignored_messages = []
 
     def _send(self, msg): # todo is this meth even used?
-        self.writer.write(b'BM:' + msg)
-
-        if self.platform.config['debug']:
-            self.platform.log.debug(f"Send: BM: {len(msg)} bytes")
+        self.send_raw(b'BM:' + msg)
