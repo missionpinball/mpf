@@ -1,7 +1,5 @@
 import asyncio
 from packaging import version
-from serial import SerialException, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
-from typing import Optional
 from mpf.platforms.fast import fast_defines
 
 from mpf.core.utility_functions import Util
@@ -30,6 +28,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         while not msg.endswith('!B:02\r'):
             msg = (await self.readuntil(b'\r')).decode()
             self.platform.debug_log("<<< %s", msg)
+            # TODO use readuntil only if reader task is not running?
 
             if self.port_debug:
                 self.platform.log.info(f"{self.remote_processor} >>> {msg}")
