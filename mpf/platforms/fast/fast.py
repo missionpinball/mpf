@@ -877,6 +877,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         return FASTDMD(self.machine, self.dmd_connection.send_raw)
 
+
     def configure_hardware_sound_system(self, platform_settings):
         """Configure a hardware FAST audio controller."""
         if not self.aud_connection:
@@ -885,6 +886,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                  "available.")
 
         return FASTAudio(self.machine, self.aud_connection.send, platform_settings)
+
 
     async def configure_segment_display(self, number: str, display_size: int, platform_settings) -> FASTSegmentDisplay:
         """Configure a segment display."""

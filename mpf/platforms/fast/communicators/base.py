@@ -33,8 +33,6 @@ class FastSerialCommunicator:
         self.machine = platform.machine
         self.fast_debug = platform.debug
         self.port_debug = config['debug']
-        self.paused = False
-        self.resume_msg = None
 
         self.remote_firmware = None
 
@@ -179,18 +177,10 @@ class FastSerialCommunicator:
             self.writer = None
 
 
-    def debug_send(self, msg, resume_msg=''):
+    def debug_send(self, msg):
         # this is accessed via self.send and mapped to the correct send method so we don't have a bunch of if statements
 
         self.writer.write(msg.encode() + b'\r')
-
-        if resume_msg:
-            self.log.info(resume_msg)
-            self.writer.transport.pause_writing()
-            # TODO self.writer.transport.pause_reading()
-            # TODO self.writer.transport._paused()
-            self.resume_msg = msg
-            self.paused = True
 
         # Don't log W(atchdog) or L(ight) messages, they are noisy
         if msg[0] != "W" and msg[0] != "L":  # todo move to net instance
@@ -219,21 +209,11 @@ class FastSerialCommunicator:
             msg = self.received_msg[:pos]
             self.received_msg = self.received_msg[pos + 1:]
 
-            # TODO add logging
-
             if not msg:
                 continue
 
-            msg = msg.decode()
-
-            if self.paused and msg == self.resume_msg:
-                self.writer.transport.resume_writing()
-                self.paused = False
-                self.resume_msg = None
-                continue
-
-            if msg not in self.ignored_messages:
-                self.platform.process_received_message(msg, self.remote_processor)
+            if msg.decode() not in self.ignored_messages:
+                self.platform.process_received_message(msg.decode(), self.remote_processor)
 
     async def read(self, n=-1):
         """Read up to `n` bytes from the stream and log the result if debug is true.
