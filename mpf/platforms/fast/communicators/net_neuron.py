@@ -1,7 +1,5 @@
 import asyncio
 from packaging import version
-from serial import SerialException, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
-from typing import Optional
 from mpf.platforms.fast import fast_defines
 
 from mpf.core.utility_functions import Util
@@ -25,14 +23,10 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
     async def reset_net_cpu(self):
         """Reset the NET CPU."""
         self.platform.debug_log('Resetting NET CPU.')
-        self.send('BR:')
+        self.write_to_port(b'BR:\r')
         msg = ''
         while not msg.endswith('!B:02\r'):
-            msg = (await self.readuntil(b'\r')).decode()
-            self.platform.debug_log("<<< %s", msg)
-
-            if self.port_debug:
-                self.platform.log.info(f"{self.remote_processor} >>> {msg}")
+            msg = (await self.readuntil(b'\r')).decode()  # TODO use readuntil only if reader task is not running
 
     async def query_fast_io_boards(self):
         """Query the NET processor to see if any FAST I/O boards are connected.
@@ -60,7 +54,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         await asyncio.sleep(.5)
 
         self.platform.debug_log('Reading all switches.')
-        self.send('SA:')
+        self.write_to_port(b'SA:\r')
         msg = ''
         while not msg.startswith('SA:'):
             msg = (await self.readuntil(b'\r')).decode()
@@ -73,7 +67,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         firmware_ok = True
 
         for board_id in range(128):
-            self.send('NN:{:02X}'.format(board_id))
+            self.write_to_port('NN:{:02X}\r'.format(board_id).encode())
             msg = ''
             while not msg.startswith('NN:'):
                 msg = (await self.readuntil(b'\r')).decode()
@@ -113,7 +107,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         hardware_key = fast_defines.HARDWARE_KEY[self.platform.machine_type]
         self.platform.debug_log("Writing FAST hardware key %s from machine type %s",
                                 hardware_key, self.platform.machine_type)
-        self.send(f'CH:{hardware_key},FF')
+        self.write_to_port(f'CH:{hardware_key},FF\r'.encode())
 
         msg = ''
         while msg != 'CH:P\r':

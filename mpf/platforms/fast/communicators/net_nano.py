@@ -25,7 +25,7 @@ class FastNetNanoCommunicator(FastSerialCommunicator):
     async def reset_net_cpu(self):
         """Reset the NET CPU."""
         self.platform.debug_log('Resetting NET CPU.')
-        self.send('BR:')
+        self.send_txt('BR:')
         msg = ''
         while msg != 'BR:P\r' and not msg.endswith('!B:02\r'):
             msg = (await self.readuntil(b'\r')).decode()
@@ -49,7 +49,7 @@ class FastNetNanoCommunicator(FastSerialCommunicator):
         await asyncio.sleep(.5)
 
         self.platform.debug_log('Reading all switches.')
-        self.send('SA:')
+        self.write_to_port('SA:')
         msg = ''
         while not msg.startswith('SA:'):
             msg = (await self.readuntil(b'\r')).decode()
@@ -62,7 +62,7 @@ class FastNetNanoCommunicator(FastSerialCommunicator):
         firmware_ok = True
 
         for board_id in range(128):
-            self.send('NN:{:02X}'.format(board_id))
+            self.write_to_port('NN:{:02X}'.format(board_id))
             msg = ''
             while not msg.startswith('NN:'):
                 msg = (await self.readuntil(b'\r')).decode()

@@ -1,7 +1,5 @@
 import asyncio
 from packaging import version
-from serial import SerialException, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
-from typing import Optional
 from mpf.platforms.fast import fast_defines
 
 from mpf.core.utility_functions import Util
@@ -23,7 +21,7 @@ class FastNetRetroCommunicator(FastSerialCommunicator):
     async def reset_net_cpu(self):
         """Reset the NET CPU."""
         self.platform.debug_log('Resetting NET CPU.')
-        self.send('BR:')
+        self.write_to_port('BR:')
         msg = ''
         while msg != 'BR:P\r' and not msg.endswith('!B:02\r'):
             msg = (await self.readuntil(b'\r')).decode()
@@ -35,7 +33,7 @@ class FastNetRetroCommunicator(FastSerialCommunicator):
         hardware_key = fast_defines.HARDWARE_KEY[self.platform.machine_type]
         self.platform.debug_log("Writing FAST hardware key %s from machine type %s",
                                 hardware_key, self.platform.machine_type)
-        self.send(f'CH:{hardware_key},FF')
+        self.write_to_port(f'CH:{hardware_key},FF')
 
         msg = ''
         while msg != 'CH:P\r':
@@ -73,7 +71,7 @@ class FastNetRetroCommunicator(FastSerialCommunicator):
         await asyncio.sleep(.5)
 
         self.platform.debug_log('Reading all switches.')
-        self.send('SA:')
+        self.write_to_port('SA:')
         msg = ''
         while not msg.startswith('SA:'):
             msg = (await self.readuntil(b'\r')).decode()

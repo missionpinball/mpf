@@ -14,14 +14,14 @@ class FASTSwitch(SwitchPlatformInterface):
 
     """A switch conntected to a fast controller."""
 
-    __slots__ = ["log", "connection", "send", "platform_settings", "_configured_debounce"]
+    # __slots__ = ["log", "connection", "send", "platform_settings", "_configured_debounce"]
 
     def __init__(self, config: SwitchConfig, number_tuple, platform: "FastHardwarePlatform", platform_settings) -> None:
         """Initialise switch."""
         super().__init__(config, number_tuple, platform)
         self.log = logging.getLogger('FASTSwitch')
-        self.connection = number_tuple[1]
-        self.send = platform.net_connection.send
+        self.is_network = number_tuple[1]
+        self.connection = platform.net_connection
         self.platform_settings = platform_settings
         self._configured_debounce = False
         self.configure_debounce(config.debounce in ("normal", "auto"))
@@ -58,7 +58,7 @@ class FASTSwitch(SwitchPlatformInterface):
         if 'debounce_close' in self.platform_settings and self.platform_settings['debounce_close'] is not None:
             debounce_close = self.platform.convert_number_from_config(self.platform_settings['debounce_close'])
 
-        if self.connection:
+        if self.is_network:  # TODO remove this if
             cmd = 'SN:'
         else:
             cmd = 'SL:'
@@ -69,10 +69,10 @@ class FASTSwitch(SwitchPlatformInterface):
 
         self._configured_debounce = new_setting
 
-        cmd = '{}{},01,{},{}'.format(
+        final = '{}{},01,{},{}'.format(
             cmd,
             self.number[0],
             debounce_open,
             debounce_close)
 
-        self.send(cmd)
+        self.connection.send_txt_with_ack(final, f"{cmd}P")

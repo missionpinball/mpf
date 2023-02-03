@@ -7,7 +7,6 @@ fast:
     net:
         port: com4
         controller: neuron
-        debug: true
     seg:
         port: com3
     rgb:

@@ -26,7 +26,7 @@ class FastServo(ServoPlatformInterface):
             self.number,
             Util.int_to_hex_string(position_numeric))
 
-        self.net_connection.send(cmd)
+        self.net_connection.send_txt(cmd)
 
     def set_speed_limit(self, speed_limit):
         """Not implemented."""

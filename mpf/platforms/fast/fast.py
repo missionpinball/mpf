@@ -199,19 +199,19 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         if self.net_connection:
             try:
-                self.net_connection.send('WD:1')  # set watchdog to expire in 1ms
+                self.net_connection.send_txt('WD:1')  # set watchdog to expire in 1ms
             except Exception:  # port might be closed already
                 pass
         if self.rgb_connection:
-            self.rgb_connection.send('BL:AA55')  # reset CPU using bootloader
+            self.rgb_connection.send_txt('BL:AA55')  # reset CPU using bootloader
         if self.dmd_connection:
-            self.dmd_connection.send('BL:AA55')  # reset CPU using bootloader
+            self.dmd_connection.send_txt('BL:AA55')  # reset CPU using bootloader
         if self.seg_connection:
-            # self.seg_connection.send('***')  # TODO: reset CPU using
+            # self.seg_connection.send_txt('***')  # TODO: reset CPU using
             pass
         if self.exp_connection:
             for board_address in self.exp_boards.keys():
-                self.exp_connection.send(f'BR@{board_address}:')
+                self.exp_connection.send_txt(f'BR@{board_address}:')
 
         # wait 100ms for the messages to be sent
         self.machine.clock.loop.run_until_complete(asyncio.sleep(.1))
@@ -285,7 +285,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def _update_watchdog(self):
         """Send Watchdog command."""
         try:
-            self.net_connection.send('WD:' + str(hex(self.config['watchdog']))[2:])  # TODO don't calc each loop
+            self.net_connection.send_txt('WD:' + str(hex(self.config['watchdog']))[2:])  # TODO don't calc each loop
         except:
             pass
 
@@ -362,7 +362,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 communicator = FastRgbCommunicator(platform=self, processor=port,config=config)
                 self.rgb_connection = communicator
             else:
-                raise AssertionError("Unknown processor type")  # todo better error
+                raise AssertionError("Unknown processor type")  # TODO better error
 
             try:
                 await communicator.connect()
@@ -388,11 +388,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         for s in self.fast_segs:
 
             if s.next_text:
-                self.seg_connection.send(f'PA:{s.hex_id},{s.next_text.convert_to_str()[0:7]}')
+                self.seg_connection.send_txt(f'PA:{s.hex_id},{s.next_text.convert_to_str()[0:7]}')
                 s.next_text = None
 
             if s.next_color:
-                self.seg_connection.send(('PC:{},{}').format(s.hex_id, s.next_color))
+                self.seg_connection.send_txt(('PC:{},{}').format(s.hex_id, s.next_color))
                 s.next_color = None
 
     def update_leds(self):
@@ -406,7 +406,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         if dirty_leds:
             msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color) for led in dirty_leds])
-            self.rgb_connection.send(msg)
+            self.rgb_connection.send_txt(msg)
 
     def update_exp_leds(self):
         # max 32ms / 31.25fps TODO add enforcement
@@ -423,7 +423,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                     msg += f'{led_num[3:]}{color}'
 
                 self.exp_connection.set_active_board(breakout_address)
-                self.exp_connection.send_raw(b16decode(msg))
+                self.exp_connection.send_bytes(b16decode(msg))
 
     async def get_hw_switch_states(self):
         """Return hardware states."""
@@ -757,10 +757,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                  'but no connection to a NET or EXP processor is '
                                  'available')
         if subtype == "gi":
-            return FASTGIString(number, self.net_connection.send, self.machine,
+            return FASTGIString(number, self.net_connection, self.machine,
                                 int(1 / self.config['net']['gi_hz'] * 1000))
         if subtype == "matrix":
-            return FASTMatrixLight(number, self.net_connection.send, self.machine,
+            return FASTMatrixLight(number, self.net_connection, self.machine,
                                    int(1 / self.config['net']['lamp_hz'] * 1000), self)
         if not subtype or subtype == "led":
 

@@ -202,7 +202,10 @@ class TestFastBase(MpfTestCase):
             # tiny delay here to let the startup traffic clear out so that tests don't get
             # slammed with unexpected network traffic.
             # Note that the above scenario only causes tests to fail on Windows machines!
-            self.advance_time_and_run(0.1)
+
+            # These startup calls simulate some delay in response, so we need to wait the full
+            # second below. This might need to be increased if there's lots of hardware.
+            self.advance_time_and_run(1)
 
     # def test_servo(self):
     #     # go to min position

@@ -88,7 +88,7 @@ class FASTAudio(HardwareSoundPlatformInterface):
         # FAST Audio board supports 64 levels of precision, so convert the float accordingly
         value = Util.int_to_hex_string(ceil(volume * 64))
         msg = f"{self.track_keys[track]}:{Util.int_to_hex_string(value)}"
-        self.send(msg)
+        self.send_txt(msg)
 
     def press_power(self, ms=None):
         self._press(FastLcdButtons.POWER)
@@ -111,5 +111,4 @@ class FASTAudio(HardwareSoundPlatformInterface):
     def _press(self, target: FastLcdButtons, ms: 10):
         if not target in self.lcd_keys:
             raise ValueError(f"LCD button for {target} is not defined in platform settings ({self.lcd_keys.keys()}")
-        self.send(f"XO:{self.lcd_keys[target]},{Util.int_to_hex_string(ms)}")
-
+        self.send_txt(f"XO:{self.lcd_keys[target]},{Util.int_to_hex_string(ms)}")

@@ -81,7 +81,11 @@ class FastExpCommunicator(FastSerialCommunicator):
 
         # TODO confirm there's a binary command timeout
         self.platform.debug_log("Connected to FAST processor. Sending 4 CRs to clear buffer.")
-        self.send(('\r\r\r'))
+        self.send_txt(('\r\r\r'))
+
+        self.log.debug(f"{self} Creating send task")
+        self.write_task = self.machine.clock.loop.create_task(self._socket_writer())
+        self.write_task.add_done_callback(Util.raise_exceptions)
 
     async def query_exp_boards(self):
         """Query the EXP bus for connected boards."""
@@ -99,8 +103,8 @@ class FastExpCommunicator(FastSerialCommunicator):
             while True:
 
                 self.platform.debug_log(f"Querying {board} at address {address}")
-                # self.send(f'ID@{address}:')
-                self.send(f'ID@{address}:')
+                # self.send_txt(f'ID@{address}:')
+                self.write_to_port(f'ID@{address}:\r'.encode())
                 msg = await self._read_with_timeout(.5)
 
                 # ignore XX replies here.
@@ -130,14 +134,17 @@ class FastExpCommunicator(FastSerialCommunicator):
     async def reset_exp_board(self, address):
         """Reset an expansion board."""
 
-        self.send(f'BR@{address}:')
+        self.write_to_port(f'BR@{address}:\r'.encode())
         msg = ''
         while msg != 'BR:P\r':
             msg = await self._read_with_timeout(.5)  # TODO move this after the reader task is started and handle it like a normal message?
 
     def set_active_board(self, board_address):
-        self.active_board = board_address
-        self.send(f'EA:{board_address}')
+
+        if self.active_board != board_address:
+            self.log.debug(f"Setting active EXP board to {board_address}")
+            self.active_board = board_address
+            self.send_txt(f'EA:{board_address}')
 
     def set_led_fade_rate(self, board_address, rate):
         if rate > 8191:
@@ -148,4 +155,4 @@ class FastExpCommunicator(FastSerialCommunicator):
             rate = 0
 
         self.platform.debug_log(f"{self} - Setting LED fade rate to {rate}ms")
-        self.send(f'RF@{board_address}:{Util.int_to_hex_string(rate, True)}')
+        self.send_txt(f'RF@{board_address}:{Util.int_to_hex_string(rate, True)}')

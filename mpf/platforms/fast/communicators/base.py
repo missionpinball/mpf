@@ -36,10 +36,14 @@ class FastSerialCommunicator:
 
         self.remote_firmware = None
 
-        if self.port_debug:
-            self.send = self.debug_send
-        else:
-            self.send = self.optimized_send
+        self.send_ready = asyncio.Event()
+        self.send_ready.set()
+        self.send_queue = asyncio.Queue()
+        self.unpause_msg = None
+        self.write_task = None
+
+        self.ignore_decode_errors = True  # TODO set to False once the connection is established
+        # TODO make this a config option? meh.
 
     def __repr__(self):
         return f'<FAST {self.remote_processor.upper()} Communicator: {self.config["port"]}>'
@@ -84,14 +88,15 @@ class FastSerialCommunicator:
 
         # send enough dummy commands to clear out any buffers on the FAST
         # board that might be waiting for more commands
-        self.send(' ' * 256 * 4)
+        self.write_to_port(b' ' * 256 * 4)  # TODO only on Nano, others have timeouts?
+        self.write_to_port(b'\r')
 
         while True:
             self.platform.debug_log(f"Sending 'ID:' command to {self.config['port']}")
-            self.send('ID:')
+            self.write_to_port('ID:\r'.encode())
             msg = await self._read_with_timeout(.5)
 
-            # ignore XX replies here.
+            # ignore XX replies here. There will be at least one from the dummy commands above
             while msg.startswith('XX:'):
                 msg = await self._read_with_timeout(.5)
 
@@ -99,6 +104,9 @@ class FastSerialCommunicator:
                 break
 
             await asyncio.sleep(.5)
+
+        # Now that we have a clean connection, any decode errors are real
+        self.ignore_decode_errors = False
 
         try:
             self.remote_processor, self.remote_model, self.remote_firmware = msg[3:].split()
@@ -111,6 +119,10 @@ class FastSerialCommunicator:
             # Neuron 2.06 returns `ID:NET FP-CPU-2000  02.06`
 
         self.platform.log.info(f"Connected to {self.remote_processor} processor on {self.remote_model} with firmware v{self.remote_firmware}")
+
+        self.log.debug(f"{self} Creating send task")
+        self.write_task = self.machine.clock.loop.create_task(self._socket_writer())
+        self.write_task.add_done_callback(Util.raise_exceptions)
 
     async def init(self):
 
@@ -136,6 +148,8 @@ class FastSerialCommunicator:
             raise AssertionError(f'Firmware version mismatch. MPF requires the {self.remote_processor} processor '
                                  f'to be firmware {self.MIN_FW}, but yours is {self.remote_firmware}')
 
+        # await self.create_send_task()
+
     async def _read_with_timeout(self, timeout):
         try:
             msg_raw = await asyncio.wait_for(self.readuntil(b'\r'), timeout=timeout)
@@ -160,7 +174,7 @@ class FastSerialCommunicator:
             buffer += char
             if char == separator and len(buffer) > min_chars:
                 if self.port_debug:
-                    self.log.debug("%s received: %s (%s)", self, buffer, "".join(HEX_FORMAT % b for b in buffer))
+                    self.log.info(f"{self.remote_processor} <<<< {buffer}")
                 return buffer
 
     def stop(self):
@@ -169,6 +183,11 @@ class FastSerialCommunicator:
         if self.read_task:
             self.read_task.cancel()
             self.read_task = None
+
+        if self.write_task:
+            self.write_task.cancel()
+            self.write_task = None
+
         if self.writer:
             self.writer.close()
             if hasattr(self.writer, "wait_closed"):
@@ -176,24 +195,21 @@ class FastSerialCommunicator:
                 self.machine.clock.loop.run_until_complete(self.writer.wait_closed())
             self.writer = None
 
+    def send_txt(self, msg):
+        self.send_queue.put_nowait((f'{msg}\r'.encode(), None))
 
-    def debug_send(self, msg):
-        # this is accessed via self.send and mapped to the correct send method so we don't have a bunch of if statements
+    def send_txt_with_ack(self, msg, pause_until):
+        self.send_queue.put_nowait((f'{msg}\r'.encode(), pause_until.encode()))
 
-        self.writer.write(msg.encode() + b'\r')
+    def send_bytes(self, msg):
+        self.send_queue.put_nowait((msg, None))
 
-        # Don't log W(atchdog) or L(ight) messages, they are noisy
-        if msg[0] != "W" and msg[0] != "L":  # todo move to net instance
-            self.platform.log.info("Send: %s", msg)
-
-    def optimized_send(self, msg):
-        # this is accessed via self.send and mapped to the correct send method so we don't have a bunch of if statements
-
-        self.writer.write(msg.encode() + b'\r')
-
-    def send_raw(self, msg):
+    def write_to_port(self, msg):
         # Sends a message as is, without encoding or adding a <CR> character
-        self.platform.debug_log("EXP send: %s", msg)
+        if self.port_debug:
+            if msg[0] != "W" and msg[0] != "L":  # TODO move to net instance
+                self.log.info(f"{self.remote_processor} >>>> {msg}")
+
         self.writer.write(msg)
 
     def _parse_msg(self, msg):
@@ -211,6 +227,10 @@ class FastSerialCommunicator:
 
             if not msg:
                 continue
+
+            if self.unpause_msg and msg == self.unpause_msg:
+                self.unpause_msg = None
+                self.send_ready.set()
 
             if msg.decode() not in self.ignored_messages:
                 self.platform.process_received_message(msg.decode(), self.remote_processor)
@@ -235,13 +255,20 @@ class FastSerialCommunicator:
             return None
 
         if self.port_debug:
-            self.log.debug("%s received: %s (%s)", self, resp, "".join(HEX_FORMAT % b for b in resp))
+            self.log.info(f"{self.remote_processor} <<<< {resp}")
         return resp
 
     async def start_read_loop(self):
         """Start the read loop."""
+        self.log.debug(f" {self} Starting read loop")
         self.read_task = self.machine.clock.loop.create_task(self._socket_reader())
         self.read_task.add_done_callback(Util.raise_exceptions)
+
+    # async def create_send_task(self):
+    #     """Create the send task."""
+    #     self.log.debug(f"{self} Creating send task")
+    #     self.write_task = self.machine.clock.loop.create_task(self._socket_writer())
+    #     self.write_task.add_done_callback(Util.raise_exceptions)
 
     async def _socket_reader(self):
         while True:
@@ -249,3 +276,22 @@ class FastSerialCommunicator:
             if resp is None:
                 return
             self._parse_msg(resp)
+
+    async def _socket_writer(self):
+        while True:
+            res = await self.send_queue.get()
+
+            (msg, pause_until) = res
+
+            try:
+                await asyncio.wait_for(self.send_ready.wait(), timeout=1)
+            except asyncio.TimeoutError:
+                self.log.error("Timeout waiting for send_ready. Message was: %s", msg)
+                # TODO Decide what to do here, prob raise a specific exception?
+                self.send_ready.set()  # TODO only if we decide to continue
+
+            if pause_until:
+                self.unpause_msg = pause_until
+                self.send_ready.clear()
+
+            self.write_to_port(msg)

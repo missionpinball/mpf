@@ -9,19 +9,19 @@ class FASTMatrixLight(LightPlatformSoftwareFade):
 
     """A direct light on a fast controller."""
 
-    __slots__ = ["log", "number", "send", "platform"]
+    # __slots__ = ["log", "number", "send", "platform"]
 
     # pylint: disable-msg=too-many-arguments
-    def __init__(self, number, sender, machine, fade_interval_ms: int, platform) -> None:
+    def __init__(self, number, connection, machine, fade_interval_ms: int, platform) -> None:
         """Initialise light."""
         super().__init__(number, machine.clock.loop, fade_interval_ms)
         self.log = logging.getLogger('FASTMatrixLight')
-        self.send = sender
+        self.connection = connection
         self.platform = platform
 
     def set_brightness(self, brightness: float):
         """Set matrix light brightness."""
-        self.send(f'L1:{self.number},{Util.int_to_hex_string(int(brightness * 255))}')
+        self.connection.send_txt(f'L1:{self.number},{Util.int_to_hex_string(int(brightness * 255))}')
 
     def get_board_name(self):
         """Return the board of this light."""
