@@ -381,8 +381,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         if self.fast_segs:
             self._seg_task = self.machine.clock.schedule_interval(self._update_segs,
-                                                1 / self.machine.config['fast'][
-                                                    'segment_display_update_hz'])
+                                                1 / self.config['seg']['fps'])
 
     def _update_segs(self, **kwargs):
         for s in self.fast_segs:

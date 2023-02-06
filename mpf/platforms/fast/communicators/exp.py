@@ -12,10 +12,9 @@ if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 HEX_FORMAT = " 0x%02x"
+MIN_FW = version.parse('0.7')
 
 class FastExpCommunicator(FastSerialCommunicator):
-
-    MIN_FW = version.parse('0.7')
 
     """Handles the serial communication to the FAST platform."""
 
@@ -121,9 +120,9 @@ class FastExpCommunicator(FastSerialCommunicator):
 
             self.platform.log.info(f'Found expansion board {board} at address {address} with processor {processor}, model {product_id}, and firmware {firmware_version}')
 
-            if version.parse(firmware_version) < self.MIN_FW:
+            if version.parse(firmware_version) < MIN_FW:
                 raise AssertionError(f'Firmware version mismatch. MPF requires the EXP processor '
-                                 f'to be firmware {self.MIN_FW}, but yours is {firmware_version}')
+                                 f'to be firmware {MIN_FW}, but yours is {firmware_version}')
 
             await self.reset_exp_board(address)
 

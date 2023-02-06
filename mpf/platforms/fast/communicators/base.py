@@ -1,7 +1,6 @@
 import asyncio
 from packaging import version
 from serial import SerialException, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
-from mpf.platforms.fast import fast_defines
 
 from mpf.core.utility_functions import Util
 
@@ -23,18 +22,18 @@ class FastSerialCommunicator:
     def __init__(self, platform, processor, config):
         """Initialize FastSerialCommunicator."""
         self.platform = platform
-        self.remote_processor = processor
+        self.remote_processor = processor.upper()
         self.config = config
         self.writer = None
         self.reader = None
         self.read_task = None
         self.received_msg = b''
-        self.log = platform.log
+        self.log = platform.log  # TODO child logger per processor? Different debug logger?
         self.machine = platform.machine
         self.fast_debug = platform.debug
         self.port_debug = config['debug']
 
-        self.remote_firmware = None
+        self.remote_firmware = None  # TODO some connections have more than one processor, should there be a processor object?
 
         self.send_ready = asyncio.Event()
         self.send_ready.set()
@@ -44,9 +43,10 @@ class FastSerialCommunicator:
 
         self.ignore_decode_errors = True  # TODO set to False once the connection is established
         # TODO make this a config option? meh.
+        # TODO this is not implemented yet
 
     def __repr__(self):
-        return f'<FAST {self.remote_processor.upper()} Communicator: {self.config["port"]}>'
+        return f'<FAST {self.remote_processor} Communicator>'
 
     async def connect(self):
         """Connect to the serial port."""
@@ -146,9 +146,7 @@ class FastSerialCommunicator:
 
         if version.parse(self.remote_firmware) < MIN_FW:
             raise AssertionError(f'Firmware version mismatch. MPF requires the {self.remote_processor} processor '
-                                 f'to be firmware {self.MIN_FW}, but yours is {self.remote_firmware}')
-
-        # await self.create_send_task()
+                                 f'to be firmware {MIN_FW}, but yours is {self.remote_firmware}')
 
     async def _read_with_timeout(self, timeout):
         try:
@@ -279,12 +277,16 @@ class FastSerialCommunicator:
 
     async def _socket_writer(self):
         while True:
+            self.log.info("Waiting for send_queue.")
             res = await self.send_queue.get()
+            self.log.info("Got send_queue item: %s", res)
 
             (msg, pause_until) = res
 
             try:
+                self.log.info("Waiting for send_ready. State: %s", self.send_ready.is_set())
                 await asyncio.wait_for(self.send_ready.wait(), timeout=1)
+                self.log.info("Got send_ready.")
             except asyncio.TimeoutError:
                 self.log.error("Timeout waiting for send_ready. Message was: %s", msg)
                 # TODO Decide what to do here, prob raise a specific exception?

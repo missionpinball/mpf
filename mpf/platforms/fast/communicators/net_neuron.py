@@ -7,14 +7,16 @@ from mpf.platforms.fast.communicators.base import FastSerialCommunicator
 from mpf.platforms.fast.fast_io_board import FastIoBoard
 
 MIN_FW = version.parse('2.06')
-IO_MIN_FW = version.parse('0.87')
+IO_MIN_FW = version.parse('1.09')
 
 class FastNetNeuronCommunicator(FastSerialCommunicator):
 
     is_nano = False  # temp change to mixin
     is_retro = False  # temp change to mixin
 
-    ignored_messages = []
+    ignored_messages = ['DL:P',
+                        'TL:P',
+                        'SL:P']
 
     async def init(self):
         await super().init()
