@@ -11,9 +11,6 @@ IO_MIN_FW = version.parse('1.09')
 
 class FastNetNeuronCommunicator(FastSerialCommunicator):
 
-    is_nano = False  # temp change to mixin
-    is_retro = False  # temp change to mixin
-
     ignored_messages = ['DL:P',
                         'TL:P',
                         'SL:P']

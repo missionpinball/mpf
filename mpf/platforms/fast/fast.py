@@ -438,7 +438,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         hw_states = {}
 
         # Support for v1 firmware which uses network + local switches
-        if self.serial_connections['net'].is_nano:
+        if self.machine_type == 'nano':
             _, local_states, _, nw_states = msg.split(',')
             for offset, byte in enumerate(bytearray.fromhex(nw_states)):
                 for i in range(8):
@@ -529,7 +529,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             raise AssertionError("Driver needs a number")
 
         # Figure out the connection type for v1 hardware: local or network (default)
-        if self.serial_connections['net'].is_nano:
+        if self.machine_type == 'nano':
             if ('connection' in platform_settings and
                     platform_settings['connection'].lower() == 'local'):
                 platform_settings['connection'] = 0
@@ -669,7 +669,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 self.raise_config_error(f"Could not parse switch number {config.name}/{number}. Seems "
                                         "to be not a valid switch number for the FAST platform.", 8)
 
-        if self.serial_connections['net'].is_nano:
+        if self.machine_type == 'nano':
             # V1 devices can explicitly define switches to be local, or default to network
             if ('connection' in platform_config and
                     platform_config['connection'].lower() == 'local'):
@@ -856,7 +856,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     def _check_switch_coil_combination(self, switch, coil):
         # V2 hardware can write rules across node boards
-        if not self.serial_connections['net'].is_nano:
+        if not self.machine_type == 'nano':
             return
 
         switch_number = int(switch.hw_switch.number[0], 16)

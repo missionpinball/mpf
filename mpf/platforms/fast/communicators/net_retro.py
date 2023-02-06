@@ -9,9 +9,6 @@ MIN_FW = version.parse('2.06')
 
 class FastNetRetroCommunicator(FastSerialCommunicator):
 
-    is_nano = False  # temp change to mixin
-    is_retro = True  # temp change to mixin
-
     ignored_messages = []
 
     async def init(self):
