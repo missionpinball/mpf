@@ -301,14 +301,12 @@ class TestFastBase(MpfTestCase):
 
         # test hardware scan
         print(self.machine.default_platform.get_info_string())
-        info_str = """NET CPU: NET FP-CPU-2000 02.06
-RGB CPU: RGB FP-CPU-002-2 00.89
-No connection to the Audio Controller.
-DMD CPU: DMD FP-CPU-002-2 00.88
-Segment Controller: SEG FP-CPU-002-2 00.10
-No connection to the Expansion Bus.
+        info_str = """DMD: FP-CPU-002-2 v00.88
+NET: FP-CPU-2000 v02.06
+RGB: FP-CPU-002-2 v00.89
+SEG: FP-CPU-002-2 v00.10
 
-Boards:
+I/O Boards:
 Board 0 - Model: FP-I/O-3208-3    Firmware: 01.09 Switches: 32 Drivers: 8
 Board 1 - Model: FP-I/O-0804-3    Firmware: 01.09 Switches: 8 Drivers: 4
 Board 2 - Model: FP-I/O-1616-3    Firmware: 01.09 Switches: 16 Drivers: 16

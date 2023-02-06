@@ -21,7 +21,7 @@ class FASTSwitch(SwitchPlatformInterface):
         super().__init__(config, number_tuple, platform)
         self.log = logging.getLogger('FASTSwitch')
         self.is_network = number_tuple[1]
-        self.connection = platform.net_connection
+        self.connection = platform.serial_connections['net']
         self.platform_settings = platform_settings
         self._configured_debounce = False
         self.configure_debounce(config.debounce in ("normal", "auto"))

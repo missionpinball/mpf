@@ -83,17 +83,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         # Most FAST platforms don't use ticks, but System11 does
         self.features['tickless'] = self.machine_type != 'sys11'
 
-        self.aud_connection = None
-        self.dmd_connection = None
-        self.net_connection = None
-        self.rgb_connection = None
-        self.seg_connection = None
-        self.exp_connection = None
         self._watchdog_task = None
         self._led_task = None
         self._exp_led_task = None
         self._seg_task = None
-        self.serial_connections = set()
+        self.serial_connections = dict()
         self.fast_leds = dict()
         self.fast_exp_leds = dict()
         self.fast_segs = list()
@@ -132,51 +126,15 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     def get_info_string(self):
         """Dump info strings about boards."""
-        infos = ""
-        if not self.net_connection:
-            infos += "No connection to the NET CPU.\n"
-        else:
-            infos += "NET CPU: {} {} {}\n".format(
-                self.net_connection.remote_processor,
-                self.net_connection.remote_model,
-                self.net_connection.remote_firmware)
-        if not self.rgb_connection:
-            infos += "No connection to the RGB CPU.\n"
-        else:
-            infos += "RGB CPU: {} {} {}\n".format(
-                self.rgb_connection.remote_processor,
-                self.rgb_connection.remote_model,
-                self.rgb_connection.remote_firmware)
-        if not self.aud_connection:
-            infos += "No connection to the Audio Controller.\n"
-        else:
-            infos += "Audio Controller: {} {} {}\n".format(
-                self.aud_connection.remote_processor,
-                self.aud_connection.remote_model,
-                self.aud_connection.remote_firmware)
-        if not self.dmd_connection:
-            infos += "No connection to the DMD CPU.\n"
-        else:
-            infos += "DMD CPU: {} {} {}\n".format(
-                self.dmd_connection.remote_processor,
-                self.dmd_connection.remote_model,
-                self.dmd_connection.remote_firmware)
-        if not self.seg_connection:
-            infos += "No connection to the Segment Controller.\n"
-        else:
-            infos += "Segment Controller: {} {} {}\n".format(
-                self.seg_connection.remote_processor,
-                self.seg_connection.remote_model,
-                self.seg_connection.remote_firmware)
-        if not self.exp_connection:
-            infos += "No connection to the Expansion Bus.\n"
-        else:
-            infos += "Details to be added..."  # TODO walk the tree and print details
+        info_string = ""
 
-        infos += "\nBoards:\n"
+        for port in sorted(self.serial_connections.keys()):
+            info_string += f"{port.upper()}: {self.serial_connections[port].remote_model} v{self.serial_connections[port].remote_firmware}\n"
+
+        info_string += "\nI/O Boards:\n"
         for board in self.io_boards.values():
-            infos += board.get_description_string() + "\n"
-        return infos
+            info_string += board.get_description_string() + "\n"
+        return info_string
 
     async def initialize(self):
         """Initialise platform."""
@@ -197,50 +155,37 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self._exp_led_task.cancel()
             self._exp_led_task = None
 
-        if self.net_connection:
+        if self.serial_connections['net']:  # TODO move to communicator via .stop() method
             try:
-                self.net_connection.send_txt('WD:1')  # set watchdog to expire in 1ms
+                self.serial_connections['net'].send_txt('WD:1')  # set watchdog to expire in 1ms
             except Exception:  # port might be closed already
                 pass
-        if self.rgb_connection:
-            self.rgb_connection.send_txt('BL:AA55')  # reset CPU using bootloader
-        if self.dmd_connection:
-            self.dmd_connection.send_txt('BL:AA55')  # reset CPU using bootloader
-        if self.seg_connection:
-            # self.seg_connection.send_txt('***')  # TODO: reset CPU using
+                # TODO move to communicator via .stop() method, await in comm for ack message
+
+
+        if self.serial_connections['rgb']:
+            self.serial_connections['rgb'].send_txt('BL:AA55')  # reset CPU using bootloader
+        if self.serial_connections['dmd']:
+            self.serial_connections['dmd'].send_txt('BL:AA55')  # reset CPU using bootloader
+        if self.serial_connections['seg']:
+            # self.serial_connections['seg'].send_txt('***')  # TODO: reset CPU using
             pass
-        if self.exp_connection:
+
+        try:
             for board_address in self.exp_boards.keys():
-                self.exp_connection.send_txt(f'BR@{board_address}:')
+                self.serial_connections['exp'].send_txt(f'BR@{board_address}:')
+        except KeyError:
+            pass
 
         # wait 100ms for the messages to be sent
         self.machine.clock.loop.run_until_complete(asyncio.sleep(.1))
 
-        if self.net_connection:
-            self.net_connection.stop()
-            self.net_connection = None
+        for port, connection in self.serial_connections.items():
+            if connection:
+                connection.stop()
+                self.serial_connections[port] = None
 
-        if self.aud_connection:
-            self.aud_connection.stop()
-            self.aud_connection = None
-
-        if self.rgb_connection:
-            self.rgb_connection.stop()
-            self.rgb_connection = None
-
-        if self.dmd_connection:
-            self.dmd_connection.stop()
-            self.dmd_connection = None
-
-        if self.seg_connection:
-            self.seg_connection.stop()
-            self.seg_connection = None
-
-        if self.exp_connection:
-            self.exp_connection.stop()
-            self.exp_connection = None
-
-        self.serial_connections = set()
+        self.serial_connections = dict()
 
     async def start(self):
         """Start listening for commands and schedule watchdog."""
@@ -248,7 +193,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                                                    self.config['net']['watchdog'] / 2000)
         # todo move watchdog to only be on net cpu
 
-        for connection in self.serial_connections:
+        for connection in self.serial_connections.values():
             await connection.start_read_loop()
 
     def __repr__(self):
@@ -285,7 +230,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def _update_watchdog(self):
         """Send Watchdog command."""
         try:
-            self.net_connection.send_txt('WD:' + str(hex(self.config['watchdog']))[2:])  # TODO don't calc each loop
+            self.serial_connections['net'].send_txt('WD:' + str(hex(self.config['watchdog']))[2:])  # TODO don't calc each loop
         except:
             pass
 
@@ -334,33 +279,33 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                     from mpf.platforms.fast.communicators.net_retro import FastNetRetroCommunicator
                     communicator = FastNetRetroCommunicator(platform=self, processor=port, config=config)
                 else:
-                    raise AssertionError("Unknown controller type")  # todo better error
-                self.net_connection = communicator
+                    raise AssertionError("Unknown controller type")  # TODO better error
+                self.serial_connections['net'] = communicator
 
             elif port == 'exp':
                 from mpf.platforms.fast.communicators.exp import FastExpCommunicator
                 communicator = FastExpCommunicator(platform=self, processor=port,config=config)
-                self.exp_connection = communicator
+                self.serial_connections['exp'] = communicator
             elif port == 'seg':
                 from mpf.platforms.fast.communicators.seg import FastSegCommunicator
                 communicator = FastSegCommunicator(platform=self, processor=port,config=config)
-                self.seg_connection = communicator
+                self.serial_connections['seg'] = communicator
             elif port == 'aud':
                 from mpf.platforms.fast.communicators.aud import FastAudCommunicator
                 communicator = FastAudCommunicator(platform=self, processor=port,config=config)
-                self.aud_connection = communicator
+                self.serial_connections['aud'] = communicator
             elif port == 'dmd':
                 from mpf.platforms.fast.communicators.dmd import FastDmdCommunicator
                 communicator = FastDmdCommunicator(platform=self, processor=port,config=config)
-                self.dmd_connection = communicator
+                self.serial_connections['dmd'] = communicator
             elif port == 'emu':
                 from mpf.platforms.fast.communicators.emu import FastEmuCommunicator
                 communicator = FastEmuCommunicator(platform=self, processor=port,config=config)
-                self.emu_connection = communicator
+                self.serial_connections['emu'] = communicator
             elif port == 'rgb':
                 from mpf.platforms.fast.communicators.rgb import FastRgbCommunicator
                 communicator = FastRgbCommunicator(platform=self, processor=port,config=config)
-                self.rgb_connection = communicator
+                self.serial_connections['rgb'] = communicator
             else:
                 raise AssertionError("Unknown processor type")  # TODO better error
 
@@ -371,9 +316,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                       "Did the port number or your computer change? Do you have permissions to the port? "
                                       "".format(port), 1, self.log.name) from e
             await communicator.init()
-            self.serial_connections.add(communicator)
+            self.serial_connections[port] = communicator
 
-    def _start_seg_updates(self, **kwargs):
+    def _start_seg_updates(self, **kwargs):  #TODO Move to comm, base class even for all the use update tasks
         for s in self.machine.device_manager.collections["segment_displays"]:
             self.fast_segs.append(s.hw_display)
 
@@ -387,11 +332,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         for s in self.fast_segs:
 
             if s.next_text:
-                self.seg_connection.send_txt(f'PA:{s.hex_id},{s.next_text.convert_to_str()[0:7]}')
+                self.serial_connections['seg'].send_txt(f'PA:{s.hex_id},{s.next_text.convert_to_str()[0:7]}')
                 s.next_text = None
 
             if s.next_color:
-                self.seg_connection.send_txt(('PC:{},{}').format(s.hex_id, s.next_color))
+                self.serial_connections['seg'].send_txt(('PC:{},{}').format(s.hex_id, s.next_color))
                 s.next_color = None
 
     def update_leds(self):
@@ -405,7 +350,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         if dirty_leds:
             msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color) for led in dirty_leds])
-            self.rgb_connection.send_txt(msg)
+            self.serial_connections['rgb'].send_txt(msg)
 
     def update_exp_leds(self):
         # max 32ms / 31.25fps TODO add enforcement
@@ -421,8 +366,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 for led_num, color in dirty_leds.items():
                     msg += f'{led_num[3:]}{color}'
 
-                self.exp_connection.set_active_board(breakout_address)
-                self.exp_connection.send_bytes(b16decode(msg))
+                self.serial_connections['exp'].set_active_board(breakout_address)
+                self.serial_connections['exp'].send_bytes(b16decode(msg))
 
     async def get_hw_switch_states(self):
         """Return hardware states."""
@@ -493,7 +438,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         hw_states = {}
 
         # Support for v1 firmware which uses network + local switches
-        if self.net_connection.is_nano:
+        if self.serial_connections['net'].is_nano:
             _, local_states, _, nw_states = msg.split(',')
             for offset, byte in enumerate(bytearray.fromhex(nw_states)):
                 for i in range(8):
@@ -575,7 +520,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         # dont modify the config. make a copy
         platform_settings = deepcopy(platform_settings)
 
-        if not self.net_connection:
+        if not self.serial_connections['net']:
             raise AssertionError('A request was made to configure a FAST '
                                  'driver, but no connection to a NET processor'
                                  'is available')
@@ -584,7 +529,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             raise AssertionError("Driver needs a number")
 
         # Figure out the connection type for v1 hardware: local or network (default)
-        if self.net_connection.is_nano:
+        if self.serial_connections['net'].is_nano:
             if ('connection' in platform_settings and
                     platform_settings['connection'].lower() == 'local'):
                 platform_settings['connection'] = 0
@@ -638,7 +583,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """
         number_int = self._parse_servo_number(str(number))
 
-        return FastServo(number_int, self.net_connection)
+        return FastServo(number_int, self.serial_connections['net'])
 
     def _parse_switch_number(self, number):
         try:
@@ -706,7 +651,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if not number:
             raise AssertionError("Switch needs a number")
 
-        if not self.net_connection:
+        if not self.serial_connections['net']:
             raise AssertionError("A request was made to configure a FAST "
                                  "switch, but no connection to a NET processor"
                                  "is available")
@@ -724,7 +669,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 self.raise_config_error(f"Could not parse switch number {config.name}/{number}. Seems "
                                         "to be not a valid switch number for the FAST platform.", 8)
 
-        if self.net_connection.is_nano:
+        if self.serial_connections['net'].is_nano:
             # V1 devices can explicitly define switches to be local, or default to network
             if ('connection' in platform_config and
                     platform_config['connection'].lower() == 'local'):
@@ -751,15 +696,15 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         del platform_settings
 
-        if not (self.net_connection or self.exp_connection):
+        if not (self.serial_connections['net'] or self.serial_connections['exp']):
             raise AssertionError('A request was made to configure a FAST Light, '
                                  'but no connection to a NET or EXP processor is '
                                  'available')
         if subtype == "gi":
-            return FASTGIString(number, self.net_connection, self.machine,
+            return FASTGIString(number, self.serial_connections['net'], self.machine,
                                 int(1 / self.config['net']['gi_hz'] * 1000))
         if subtype == "matrix":
-            return FASTMatrixLight(number, self.net_connection, self.machine,
+            return FASTMatrixLight(number, self.serial_connections['net'], self.machine,
                                    int(1 / self.config['net']['lamp_hz'] * 1000), self)
         if not subtype or subtype == "led":
 
@@ -773,7 +718,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
             if number_str[:3] in ('exp', 'cpu'):
 
-                if not self.exp_connection:
+                if not self.serial_connections['exp']:
                     self.raise_config_error("An LED is configured for an expansion board, but no EXP connection exists.", 10)  #todo pick a real number
 
                 if not self.flag_exp_led_tick_registered:
@@ -869,34 +814,34 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     def configure_dmd(self):
         """Configure a hardware DMD connected to a FAST controller."""
-        if not self.dmd_connection:
+        if not self.serial_connections['dmd']:
             raise AssertionError("A request was made to configure a FAST DMD, "
                                  "but no connection to a DMD processor is "
                                  "available.")
 
-        return FASTDMD(self.machine, self.dmd_connection.send_raw)
+        return FASTDMD(self.machine, self.serial_connections['dmd'].send_raw)
 
 
     def configure_hardware_sound_system(self, platform_settings):
         """Configure a hardware FAST audio controller."""
-        if not self.aud_connection:
+        if not self.serial_connections['aud']:
             raise AssertionError("A request was made to configure a FAST AUDIO, "
                                  "but no connection to a AUDIO processor is "
                                  "available.")
 
-        return FASTAudio(self.machine, self.aud_connection.send, platform_settings)
+        return FASTAudio(self.machine, self.serial_connections['aud'].send, platform_settings)
 
 
     async def configure_segment_display(self, number: str, display_size: int, platform_settings) -> FASTSegmentDisplay:
         """Configure a segment display."""
         self.debug_log("Configuring FAST segment display.")
         del platform_settings
-        if not self.seg_connection:
+        if not self.serial_connections['seg']:
             raise AssertionError("A request was made to configure a FAST "
                                  "Segment Display but no connection is "
                                  "available.")
 
-        display = FASTSegmentDisplay(int(number), self.seg_connection)
+        display = FASTSegmentDisplay(int(number), self.serial_connections['seg'])
         return display
 
     @classmethod
@@ -911,7 +856,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     def _check_switch_coil_combination(self, switch, coil):
         # V2 hardware can write rules across node boards
-        if not self.net_connection.is_nano:
+        if not self.serial_connections['net'].is_nano:
             return
 
         switch_number = int(switch.hw_switch.number[0], 16)
@@ -1073,7 +1018,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Process bootloader message."""
         self.debug_log("Got Bootloader message: %s from %s", msg, remote_processor)
         ignore_rgb = self.config['rgb']['ignore_reboot'] and \
-            remote_processor == self.rgb_connection.remote_processor
+            remote_processor == self.serial_connections['rgb'].remote_processor
         if msg in ('00', '02'):
             action = "Ignoring RGB crash and continuing play." if ignore_rgb else "MPF will exit now."
             self.error_log("The FAST %s processor rebooted. Unfortunately, that means that it lost all its state "

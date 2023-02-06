@@ -29,7 +29,7 @@ class FASTDriver(DriverPlatformInterface):
         self.machine = platform.machine
         self.platform = platform
         self.driver_settings = {}                   # type: Dict[str, str]
-        self.connection = platform.net_connection
+        self.connection = platform.serial_connections['net']
         self.platform_settings = platform_settings
 
         if platform_settings['connection'] == 1:
