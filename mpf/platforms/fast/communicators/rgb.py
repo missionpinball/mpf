@@ -16,6 +16,6 @@ class FastRgbCommunicator(FastSerialCommunicator):
 
     def reset(self):
         """Reset the RGB processor."""
-        self.send_txt('RF:0')
-        self.send_txt('RA:000000')
-        self.send_txt(f"RF:{Util.int_to_hex_string(self.config['rgb']['led_fade_time'])}")
+        self.send_blind('RF:0')
+        self.send_blind('RA:000000')
+        self.send_blind(f"RF:{Util.int_to_hex_string(self.config['rgb']['led_fade_time'])}")

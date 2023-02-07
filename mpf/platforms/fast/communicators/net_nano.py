@@ -22,7 +22,7 @@ class FastNetNanoCommunicator(FastSerialCommunicator):
     async def reset_net_cpu(self):
         """Reset the NET CPU."""
         self.platform.debug_log('Resetting NET CPU.')
-        self.send_txt('BR:')
+        self.send_blind('BR:')
         msg = ''
         while msg != 'BR:P\r' and not msg.endswith('!B:02\r'):
             msg = (await self.readuntil(b'\r')).decode()

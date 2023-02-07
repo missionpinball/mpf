@@ -15,102 +15,93 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
                         'TL:P',
                         'SL:P']
 
+    def __init__(self, platform, processor, config):
+
+        super().__init__(platform, processor, config)
+
+        self.message_processors['SA'] = self._process_sa
+        self.message_processors['!B'] = self._process_boot_message
+        self.message_processors['NN'] = self._process_nn
+
     async def init(self):
-        await super().init()
-        await self.query_fast_io_boards()
+        await self.send_query('ID:')  # Verify we're connected to a Neuron
+        await self.send_query('BR:', '!B:00')  # Reset the Neuron
+        self.send_and_confirm('CH:2000,FF:', 'CH:P')  # Configure hardware for Neuron with active switch reporting
+        await self.query_io_boards()
+        await self.send_query('SA:')  # Update switch states from hw
 
-    async def reset_net_cpu(self):
+    async def clear_board_serial_buffer(self):
+        """Clear out the serial buffer."""
+        while True:
+            # send enough dummy commands to clear out any buffers on the FAST
+            # board that might be waiting for more commands
+            self.write_to_port(b' ' * 1024)  # TODO only on Nano, others have timeouts?
+            self.write_to_port(b'\r')
+            msg = await self._read_with_timeout(.5)
+
+            if msg.startswith('XX:'):
+                break
+
+            await asyncio.sleep(.5)
+
+    def _process_boot_message(self, msg):
         """Reset the NET CPU."""
-        self.platform.debug_log('Resetting NET CPU.')
-        self.write_to_port(b'BR:\r')
-        msg = ''
-        while not msg.endswith('!B:02\r'):
-            msg = (await self.readuntil(b'\r')).decode()  # TODO use readuntil only if reader task is not running
 
-    async def query_fast_io_boards(self):
+        self.current_message_processor = self._process_boot_message
+
+        if msg == '!B:00':
+            self.log.info("Processor will reboot.")
+            return msg, True
+
+        if msg[-5:] == '!B:02':
+            self.log.info("Processor boot complete.")
+            return msg, False
+
+
+    async def query_io_boards(self):
         """Query the NET processor to see if any FAST I/O boards are connected.
 
         If so, queries the I/O boards to log them and make sure they're the  proper firmware version.
         """
-        # reset CPU early
-        try:
-            # Wait a moment for any previous message cache to clear
-            await asyncio.sleep(.2)
-            await asyncio.wait_for(self.reset_net_cpu(), 10)
-        except asyncio.TimeoutError:
-            self.platform.warning_log("Reset of NET CPU failed.")
-        else:
-            self.platform.debug_log("Reset successful")
 
-        await asyncio.sleep(.2)
-        try:
-            await asyncio.wait_for(self.configure_hardware(), 15)
-        except asyncio.TimeoutError:
-            self.platform.warning_log("Configuring FAST hardware timed out.")
-        else:
-            self.platform.debug_log("FAST hardware configuration accepted.")
+        for board_id in range(128):
+            found = await self.send_query('NN:{:02X}'.format(board_id))
 
-        await asyncio.sleep(.5)
+            if not found:
+                break
 
-        self.platform.debug_log('Reading all switches.')
-        self.write_to_port(b'SA:\r')
-        msg = ''
-        while not msg.startswith('SA:'):
-            msg = (await self.readuntil(b'\r')).decode()
-            if not msg.startswith('SA:'):
-                self.platform.log.warning("Got unexpected message from FAST while awaiting SA: %s", msg)
-
-        self.platform.process_received_message(msg, "NET")
-        self.platform.debug_log('Querying FAST I/O boards')
+    def _process_nn(self, msg):
 
         firmware_ok = True
 
-        for board_id in range(128):
-            self.write_to_port('NN:{:02X}\r'.format(board_id).encode())
-            msg = ''
-            while not msg.startswith('NN:'):
-                msg = (await self.readuntil(b'\r')).decode()
-                if not msg.startswith('NN:'):
-                    self.platform.debug_log("Got unexpected message from FAST while querying I/O Boards: %s", msg)
+        if msg == 'NN:F\r':
+            return
 
-            if msg == 'NN:F\r':
-                break
+        node_id, model, fw, dr, sw, _, _, _, _, _, _ = msg.split(',')
+        node_id = node_id[3:]
 
-            node_id, model, fw, dr, sw, _, _, _, _, _, _ = msg.split(',')
-            node_id = node_id[3:]
+        model = model.strip('\x00')
 
-            model = model.strip('\x00')
+        # Iterate as many boards as possible
+        if not model or model == '!Node Not Found!':
+            return False
 
-            # Iterate as many boards as possible
-            if not model or model == '!Node Not Found!':
-                break
+        self.platform.register_io_board(FastIoBoard(int(node_id, 16), model, fw, int(sw, 16), int(dr, 16)))
 
-            self.platform.register_io_board(FastIoBoard(int(node_id, 16), model, fw, int(sw, 16), int(dr, 16)))
+        self.platform.debug_log('Fast I/O Board %s: Model: %s, Firmware: %s, Switches: %s, Drivers: %s',
+                                node_id, model, fw, int(sw, 16), int(dr, 16))
 
-            self.platform.debug_log('Fast I/O Board %s: Model: %s, Firmware: %s, Switches: %s, Drivers: %s',
-                                    node_id, model, fw, int(sw, 16), int(dr, 16))
-
-            min_fw = IO_MIN_FW
-            if min_fw > version.parse(fw):
-                self.platform.log.critical("Firmware version mismatch. MPF requires the I/O boards "
-                                           "to be firmware %s, but your Board %s (%s) is firmware %s",
-                                           min_fw, node_id, model, fw)
-                firmware_ok = False
+        min_fw = IO_MIN_FW
+        if min_fw > version.parse(fw):
+            self.platform.log.critical("Firmware version mismatch. MPF requires the I/O boards "
+                                        "to be firmware %s, but your Board %s (%s) is firmware %s",
+                                        min_fw, node_id, model, fw)
+            firmware_ok = False
 
         if not firmware_ok:
             raise AssertionError("Exiting due to I/O board firmware mismatch")
 
-    async def configure_hardware(self):
-        """Verify Retro board type."""
-        # For Retro boards, send the CPU configuration
-        hardware_key = fast_defines.HARDWARE_KEY[self.platform.machine_type]
-        self.platform.debug_log("Writing FAST hardware key %s from machine type %s",
-                                hardware_key, self.platform.machine_type)
-        self.write_to_port(f'CH:{hardware_key},FF\r'.encode())
+        return True
 
-        msg = ''
-        while msg != 'CH:P\r':
-            msg = (await self.readuntil(b'\r')).decode()
-            if msg == '\x00CH:P\r':  # workaround as the -5 Neurons send a null byte after the final boot message
-                msg = 'CH:P\r'
-            self.platform.debug_log("Got: %s", msg)
+    def _process_sa(self, msg):
+        self.platform.process_received_message(msg, "NET")

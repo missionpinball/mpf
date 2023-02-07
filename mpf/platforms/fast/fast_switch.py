@@ -75,4 +75,4 @@ class FASTSwitch(SwitchPlatformInterface):
             debounce_open,
             debounce_close)
 
-        self.connection.send_txt_with_ack(final, f"{cmd}P")
+        self.connection.send_and_confirm(final, f"{cmd}P")

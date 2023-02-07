@@ -66,7 +66,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             if self.config[port_type]:
                 self.ports.append(port_type)
 
-
         if self.config["net"]["controller"]:
             self.machine_type = self.config["net"]["controller"]
 
@@ -155,25 +154,25 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self._exp_led_task.cancel()
             self._exp_led_task = None
 
-        if self.serial_connections['net']:  # TODO move to communicator via .stop() method
+        if 'net' in self.serial_connections:  # TODO move to communicator via .stop() method
             try:
-                self.serial_connections['net'].send_txt('WD:1')  # set watchdog to expire in 1ms
+                self.serial_connections['net'].send_blind('WD:1')  # set watchdog to expire in 1ms
             except Exception:  # port might be closed already
                 pass
                 # TODO move to communicator via .stop() method, await in comm for ack message
 
 
-        if self.serial_connections['rgb']:
-            self.serial_connections['rgb'].send_txt('BL:AA55')  # reset CPU using bootloader
-        if self.serial_connections['dmd']:
-            self.serial_connections['dmd'].send_txt('BL:AA55')  # reset CPU using bootloader
-        if self.serial_connections['seg']:
-            # self.serial_connections['seg'].send_txt('***')  # TODO: reset CPU using
+        if 'rgb' in self.serial_connections:
+            self.serial_connections['rgb'].send_blind('BL:AA55')  # reset CPU using bootloader
+        if 'dmd' in self.serial_connections:
+            self.serial_connections['dmd'].send_blind('BL:AA55')  # reset CPU using bootloader
+        if 'seg' in self.serial_connections:
+            # self.serial_connections['seg'].send_blind('***')  # TODO: reset CPU using
             pass
 
         try:
             for board_address in self.exp_boards.keys():
-                self.serial_connections['exp'].send_txt(f'BR@{board_address}:')
+                self.serial_connections['exp'].send_blind(f'BR@{board_address}:')
         except KeyError:
             pass
 
@@ -191,10 +190,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Start listening for commands and schedule watchdog."""
         self._watchdog_task = self.machine.clock.schedule_interval(self._update_watchdog,
                                                                    self.config['net']['watchdog'] / 2000)
-        # todo move watchdog to only be on net cpu
+        # TODO move watchdog to only be on net cpu
 
-        for connection in self.serial_connections.values():
-            await connection.start_read_loop()
+        # for connection in self.serial_connections.values():
+        #     await connection.start_read_loop()
 
     def __repr__(self):
         """Return str representation."""
@@ -230,7 +229,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def _update_watchdog(self):
         """Send Watchdog command."""
         try:
-            self.serial_connections['net'].send_txt('WD:' + str(hex(self.config['watchdog']))[2:])  # TODO don't calc each loop
+            self.serial_connections['net'].send_blind('WD:' + str(hex(self.config['watchdog']))[2:])  # TODO don't calc each loop
         except:
             pass
 
@@ -332,11 +331,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         for s in self.fast_segs:
 
             if s.next_text:
-                self.serial_connections['seg'].send_txt(f'PA:{s.hex_id},{s.next_text.convert_to_str()[0:7]}')
+                self.serial_connections['seg'].send_blind(f'PA:{s.hex_id},{s.next_text.convert_to_str()[0:7]}')
                 s.next_text = None
 
             if s.next_color:
-                self.serial_connections['seg'].send_txt(('PC:{},{}').format(s.hex_id, s.next_color))
+                self.serial_connections['seg'].send_blind(('PC:{},{}').format(s.hex_id, s.next_color))
                 s.next_color = None
 
     def update_leds(self):
@@ -350,7 +349,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         if dirty_leds:
             msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color) for led in dirty_leds])
-            self.serial_connections['rgb'].send_txt(msg)
+            self.serial_connections['rgb'].send_blind(msg)
 
     def update_exp_leds(self):
         # max 32ms / 31.25fps TODO add enforcement
@@ -751,7 +750,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
                 if number_str not in self.fast_leds:
                     self.fast_leds[number_str] = FASTDirectLED(
-                        number_str, int(self.config['rgb']['led_fade_time']), self)  # todo is this a real setting?
+                        number_str, int(self.config['rgb']['led_fade_time']), self)
 
             fast_led_channel = FASTDirectLEDChannel(self.fast_leds[number_str], channel)
             self.fast_leds[number_str].add_channel(int(channel), fast_led_channel)
