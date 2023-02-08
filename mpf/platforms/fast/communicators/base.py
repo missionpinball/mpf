@@ -243,17 +243,17 @@ class FastSerialCommunicator:
             if not msg:
                 continue
 
-            # Are we waiting for a confirmation message
+            # If we're waiting for a confirmation message and this is it, clear it
+            # But continue processing since this message could also be a response to a query
+            # and/or a message we're waiting for
             if self.confirm_msg and msg[:len(self.confirm_msg)] == self.confirm_msg:
                 self.confirm_msg = None
 
-            # Is a query in progress? If so, if current_message_processor is callable, it's a query
+            # If there is not a current message processor, and we're not waiting for a query in progress, then there's nothing else to do here, we can ensure sending is enabled and bounce
             if not callable(self.current_message_processor) and self.no_waiting.is_set():
                 self.send_ready.set()
                 continue
 
-            # if not (self.no_waiting and callable(self.current_message_processor)):
-            #     continue
             try:
                 msg = msg.decode()
             except UnicodeDecodeError:
@@ -264,12 +264,15 @@ class FastSerialCommunicator:
             if msg in self.ignored_messages:
                 continue
 
+            # We have this message, and it's not to be ignored, so we need to process it.
+            # Use either the custom processor, or the default one for this message
             if callable(self.current_message_processor):
                 msg, still_waiting = self.current_message_processor(msg)
 
             else:
                 msg, still_waiting = self.message_processors[msg[:2]](msg)
 
+            # If the message processor is done, clear everything up
             if not still_waiting:
                 self.current_message_processor = None
                 self.no_waiting.set()
@@ -324,6 +327,7 @@ class FastSerialCommunicator:
         while True:
             self.log.info("Waiting for send_queue.")
             res = await self.send_queue.get()
+            await asyncio.wait_for(self.send_ready.wait(), timeout=None)  # TODO timeout? Prob no, but should do something to not block forever
             self.log.info("Got send_queue item: %s", res)
 
             (msg, pause_until, is_query) = res
