@@ -13,7 +13,8 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
 
     ignored_messages = ['DL:P',
                         'TL:P',
-                        'SL:P']
+                        'SL:P',
+                        'WD:P']
 
     def __init__(self, platform, processor, config):
 
@@ -27,6 +28,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         await self.send_query('ID:')  # Verify we're connected to a Neuron
         await self.send_query('BR:', '!B:00')  # Reset the Neuron
         self.send_and_confirm('CH:2000,FF:', 'CH:P')  # Configure hardware for Neuron with active switch reporting
+        await asyncio.sleep(.5)  # Give the I/O Loop time to start after the reboot
         await self.query_io_boards()
         await self.send_query('SA:')  # Update switch states from hw
 
@@ -50,11 +52,11 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.current_message_processor = self._process_boot_message
 
         if msg == '!B:00':
-            self.log.info("Processor will reboot.")
+            self.log.info("Resetting NET Processor...")
             return msg, True
 
         if msg[-5:] == '!B:02':
-            self.log.info("Processor boot complete.")
+            self.log.info("Processor reset complete.")
             return msg, False
 
 
@@ -64,18 +66,31 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         If so, queries the I/O boards to log them and make sure they're the  proper firmware version.
         """
 
-        for board_id in range(128):
-            found = await self.send_query('NN:{:02X}'.format(board_id))
+        current_node = 0
+        self.log.info("Querying I/O Boards...")
+        while current_node < 10:
+            self.log.info("about to await results of NN:{:02X}".format(current_node))
+            await self.send_query('NN:{:02X}'.format(current_node))
+            await asyncio.sleep(.5)
+            self.log.info(f"Got NN: Results. current_node: {current_node}, io_boards: {self.platform.io_boards}")
 
-            if not found:
+            # Don't move on until we get board 00 in since it can take a sec after a reset
+            if not len(self.platform.io_boards):
+                continue
+            else:
+                current_node += 1
+
+            # If our count is greater than the number of boards we have, we're done
+            if current_node > len(self.platform.io_boards):
                 break
 
     def _process_nn(self, msg):
-
+        self.log.info("Received NN message: %s", msg)
+        self.log.info("Platform IO Boards: %s", self.platform.io_boards)
         firmware_ok = True
 
-        if msg == 'NN:F\r':
-            return
+        if msg == 'NN:F':
+            return msg, False
 
         node_id, model, fw, dr, sw, _, _, _, _, _, _ = msg.split(',')
         node_id = node_id[3:]
@@ -84,11 +99,17 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
 
         # Iterate as many boards as possible
         if not model or model == '!Node Not Found!':
-            return False
+            self.log.info(f"No more I/O boards found. Platform IO Boards: {self.platform.io_boards}")
+            # if self.platform.io_boards:
+            #     return msg, True
+            return msg, False
+
+        if Util.hex_string_to_int(node_id) in self.platform.io_boards:
+            return msg, False
 
         self.platform.register_io_board(FastIoBoard(int(node_id, 16), model, fw, int(sw, 16), int(dr, 16)))
 
-        self.platform.debug_log('Fast I/O Board %s: Model: %s, Firmware: %s, Switches: %s, Drivers: %s',
+        self.log.info('Registered I/O Board %s: Model: %s, Firmware: %s, Switches: %s, Drivers: %s',
                                 node_id, model, fw, int(sw, 16), int(dr, 16))
 
         min_fw = IO_MIN_FW
@@ -101,7 +122,8 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         if not firmware_ok:
             raise AssertionError("Exiting due to I/O board firmware mismatch")
 
-        return True
+        return msg, False
 
     def _process_sa(self, msg):
         self.platform.process_received_message(msg, "NET")
+        return msg, False

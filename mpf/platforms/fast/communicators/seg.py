@@ -18,11 +18,24 @@ class FastSegCommunicator(FastSerialCommunicator):
 
     async def init(self):
 
-        # There are a bunch of seg displays out in the world with version FF.FF, so let's call those 0.9.
-        if self.remote_firmware == 'FF.FF':
-            self.remote_firmware = '0.01'
-
         if not self.platform._seg_task:
             self.machine.events.add_handler('machine_reset_phase_3', self.platform._start_seg_updates)
 
         await super().init()
+
+    def _process_id(self, msg):
+        """Process the ID response."""
+
+        # No FW comparison as some have v 'FF.FF' We can fix this for real in the future if the
+        # firmware is changed in a way that matters for MPF.
+
+        self.remote_processor, self.remote_model, self.remote_firmware = msg[3:].split()
+
+        self.platform.log.info(f"Connected to {self.remote_processor} processor on {self.remote_model} with firmware v{self.remote_firmware}")
+
+        self.machine.variables.set_machine_var("fast_{}_firmware".format(self.remote_processor.lower()),
+                                               self.remote_firmware)
+
+        self.machine.variables.set_machine_var("fast_{}_model".format(self.remote_processor.lower()), self.remote_model)
+
+        return msg, False

@@ -123,6 +123,8 @@ class FastSerialCommunicator:
         """Process the XX response."""
         self.log.warning("Received XX response: %s", msg)  # what are we going to do here? TODO
 
+        return msg, False
+
     def _process_id(self, msg):
         """Process the ID response."""
         self.remote_processor, self.remote_model, self.remote_firmware = msg[3:].split()
@@ -150,6 +152,8 @@ class FastSerialCommunicator:
         if version.parse(self.remote_firmware) < MIN_FW:
             raise AssertionError(f'Firmware version mismatch. MPF requires the {self.remote_processor} processor '
                                  f'to be firmware {MIN_FW}, but yours is {self.remote_firmware}')
+
+        return msg, False
 
     async def _read_with_timeout(self, timeout):
         try:
@@ -224,6 +228,7 @@ class FastSerialCommunicator:
 
     def _parse_msg(self, msg):
         self.received_msg += msg
+        self.log.info(f'Parsing message: {msg}')
 
         while True:
             pos = self.received_msg.find(b'\r')
@@ -238,10 +243,17 @@ class FastSerialCommunicator:
             if not msg:
                 continue
 
+            # Are we waiting for a confirmation message
             if self.confirm_msg and msg[:len(self.confirm_msg)] == self.confirm_msg:
                 self.confirm_msg = None
-                self.send_ready.set()
 
+            # Is a query in progress? If so, if current_message_processor is callable, it's a query
+            if not callable(self.current_message_processor) and self.no_waiting.is_set():
+                self.send_ready.set()
+                continue
+
+            # if not (self.no_waiting and callable(self.current_message_processor)):
+            #     continue
             try:
                 msg = msg.decode()
             except UnicodeDecodeError:
@@ -249,24 +261,19 @@ class FastSerialCommunicator:
                 if not self.ignore_decode_errors:
                     raise
 
-            if msg not in self.ignored_messages and not self.no_waiting.is_set():
+            if msg in self.ignored_messages:
+                continue
 
-                if self.current_message_processor:
-                    msg, still_waiting = self.current_message_processor(msg)
+            if callable(self.current_message_processor):
+                msg, still_waiting = self.current_message_processor(msg)
 
-                    if not still_waiting:
-                        self.current_message_processor = None
-                        self.no_waiting.set()
+            else:
+                msg, still_waiting = self.message_processors[msg[:2]](msg)
 
-                    return
-
-                # TODO we have to set no_waiting somewhere, can't automatically do it here because maybe
-                # the message processor is waiting for something else. So it could set it, but how would we
-                # know here? Should the message processor return two things, the processed message and whether it's still waiting?
-
-                self.message_processors[msg[:2]](msg)
-
-
+            if not still_waiting:
+                self.current_message_processor = None
+                self.no_waiting.set()
+                self.send_ready.set()
 
                 # else:
                 #     self.platform.process_received_message(msg, self.remote_processor)  # TODO remove?
@@ -322,13 +329,14 @@ class FastSerialCommunicator:
             (msg, pause_until, is_query) = res
 
             try:
-                self.log.info("Waiting for send_ready. State: %s", self.send_ready.is_set())
+                self.log.info("_socket_write, is send_ready? %s", self.send_ready.is_set())
                 await asyncio.wait_for(self.send_ready.wait(), timeout=1)
                 self.log.info("Got send_ready.")
             except asyncio.TimeoutError:
                 self.log.error("Timeout waiting for send_ready. Message was: %s", msg)
                 # TODO Decide what to do here, prob raise a specific exception?
-                self.send_ready.set()  # TODO only if we decide to continue
+                # self.send_ready.set()  # TODO only if we decide to continue
+                raise
 
             if pause_until:
                 self.confirm_msg = pause_until
