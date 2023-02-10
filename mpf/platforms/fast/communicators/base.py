@@ -37,9 +37,9 @@ class FastSerialCommunicator:
 
         self.send_ready = asyncio.Event()
         self.send_ready.set()
+        self.query_done = asyncio.Event()
+        self.query_done.set()
         self.send_queue = asyncio.Queue()
-        self.no_waiting = asyncio.Event()
-        self.no_waiting.set()
         self.confirm_msg = None
         self.write_task = None
 
@@ -47,9 +47,8 @@ class FastSerialCommunicator:
         # TODO make this a config option? meh.
         # TODO this is not implemented yet
 
-        self.message_processors = {'XX': self._process_xx,
-                                   'ID': self._process_id}
-        self.current_message_processor = None
+        self.message_processors = {'XX:': self._process_xx,
+                                   'ID:': self._process_id}
 
     def __repr__(self):
         return f'<FAST {self.remote_processor} Communicator>'
@@ -117,13 +116,11 @@ class FastSerialCommunicator:
 
     async def init(self):
 
-        await self.send_query('ID:')
+        await self.send_query('ID:', 'ID:')
 
     def _process_xx(self, msg):
         """Process the XX response."""
         self.log.warning("Received XX response: %s", msg)  # what are we going to do here? TODO
-
-        return msg, False
 
     def _process_id(self, msg):
         """Process the ID response."""
@@ -152,8 +149,6 @@ class FastSerialCommunicator:
         if version.parse(self.remote_firmware) < MIN_FW:
             raise AssertionError(f'Firmware version mismatch. MPF requires the {self.remote_processor} processor '
                                  f'to be firmware {MIN_FW}, but yours is {self.remote_firmware}')
-
-        return msg, False
 
     async def _read_with_timeout(self, timeout):
         try:
@@ -202,29 +197,19 @@ class FastSerialCommunicator:
 
     async def send_query(self, msg, response_msg=None):
 
-        if not response_msg:
-            response_msg = msg
+        self.send_queue.put_nowait((f'{msg}\r'.encode(), response_msg))
+        self.query_done.clear()
 
-        self.send_queue.put_nowait((f'{msg}\r'.encode(), response_msg.encode(), True))
+        await asyncio.wait_for(self.query_done.wait(), timeout=None)  # TODO should there be a timeout?
 
-        await asyncio.wait_for(self.no_waiting.wait(), timeout=5)  # some commands, like board resets, take a while
+    def send_and_confirm(self, msg, confirm_msg):
+        self.send_queue.put_nowait((f'{msg}\r'.encode(), confirm_msg))
 
     def send_blind(self, msg):
-        self.send_queue.put_nowait((f'{msg}\r'.encode(), None, False))
-
-    def send_and_confirm(self, msg, pause_until):
-        self.send_queue.put_nowait((f'{msg}\r'.encode(), pause_until.encode(), False))
+        self.send_queue.put_nowait((f'{msg}\r'.encode(), None))
 
     def send_bytes(self, msg):
-        self.send_queue.put_nowait((msg, None, False))
-
-    def write_to_port(self, msg):
-        # Sends a message as is, without encoding or adding a <CR> character
-        if self.port_debug:
-            if msg[0] != "W" and msg[0] != "L":  # TODO move to net instance
-                self.log.info(f"{self.remote_processor} >>>> {msg}")
-
-        self.writer.write(msg)
+        self.send_queue.put_nowait((msg, None))
 
     def _parse_msg(self, msg):
         self.received_msg += msg
@@ -243,17 +228,6 @@ class FastSerialCommunicator:
             if not msg:
                 continue
 
-            # If we're waiting for a confirmation message and this is it, clear it
-            # But continue processing since this message could also be a response to a query
-            # and/or a message we're waiting for
-            if self.confirm_msg and msg[:len(self.confirm_msg)] == self.confirm_msg:
-                self.confirm_msg = None
-
-            # If there is not a current message processor, and we're not waiting for a query in progress, then there's nothing else to do here, we can ensure sending is enabled and bounce
-            if not callable(self.current_message_processor) and self.no_waiting.is_set():
-                self.send_ready.set()
-                continue
-
             try:
                 msg = msg.decode()
             except UnicodeDecodeError:
@@ -264,22 +238,37 @@ class FastSerialCommunicator:
             if msg in self.ignored_messages:
                 continue
 
-            # We have this message, and it's not to be ignored, so we need to process it.
-            # Use either the custom processor, or the default one for this message
-            if callable(self.current_message_processor):
-                msg, still_waiting = self.current_message_processor(msg)
+            handled = False
 
-            else:
-                msg, still_waiting = self.message_processors[msg[:2]](msg)
+            # If this message header is in our list of message processors, call it
+            msg_header = msg[:3]
+            if msg_header in self.message_processors:
+                self.message_processors[msg_header](msg)
+                handled = True
 
-            # If the message processor is done, clear everything up
-            if not still_waiting:
-                self.current_message_processor = None
-                self.no_waiting.set()
+            # Does this message match the start of the confirm message?
+            if self.confirm_msg and msg.startswith(self.confirm_msg):
+                self.confirm_msg = None
                 self.send_ready.set()
+                handled = True
 
-                # else:
-                #     self.platform.process_received_message(msg, self.remote_processor)  # TODO remove?
+                # Did we also have a query in progress? If so, mark it done
+                if not self.query_done.is_set():
+                    self.query_done.set()
+
+            if not handled:
+                self.log.warning(f"Unknown message received: {msg}")
+                # TODO: should we raise an exception here?
+
+            # else:
+            #     self.platform.process_received_message(msg, self.remote_processor)  # TODO remove?
+
+    async def _socket_reader(self):
+        while True:
+            resp = await self.read(128)
+            if resp is None:
+                return
+            self._parse_msg(resp)
 
     async def read(self, n=-1):
         """Read up to `n` bytes from the stream and log the result if debug is true.
@@ -304,33 +293,12 @@ class FastSerialCommunicator:
             self.log.info(f"{self.remote_processor} <<<< {resp}")
         return resp
 
-    # async def start_read_loop(self):
-    #     """Start the read loop."""
-    #     self.log.debug(f" {self} Starting read loop")
-    #     self.read_task = self.machine.clock.loop.create_task(self._socket_reader())
-    #     self.read_task.add_done_callback(Util.raise_exceptions)
-
-    # async def create_send_task(self):
-    #     """Create the send task."""
-    #     self.log.debug(f"{self} Creating send task")
-    #     self.write_task = self.machine.clock.loop.create_task(self._socket_writer())
-    #     self.write_task.add_done_callback(Util.raise_exceptions)
-
-    async def _socket_reader(self):
-        while True:
-            resp = await self.read(128)
-            if resp is None:
-                return
-            self._parse_msg(resp)
-
     async def _socket_writer(self):
         while True:
             self.log.info("Waiting for send_queue.")
-            res = await self.send_queue.get()
+            msg, confirm_msg = await self.send_queue.get()
             await asyncio.wait_for(self.send_ready.wait(), timeout=None)  # TODO timeout? Prob no, but should do something to not block forever
-            self.log.info("Got send_queue item: %s", res)
-
-            (msg, pause_until, is_query) = res
+            self.log.info(f"Got send_queue item: {msg}, wait for: {confirm_msg}")
 
             try:
                 self.log.info("_socket_write, is send_ready? %s", self.send_ready.is_set())
@@ -342,11 +310,16 @@ class FastSerialCommunicator:
                 # self.send_ready.set()  # TODO only if we decide to continue
                 raise
 
-            if pause_until:
-                self.confirm_msg = pause_until
+            if confirm_msg:
+                self.confirm_msg = confirm_msg
                 self.send_ready.clear()
 
-            if is_query:
-                self.no_waiting.clear()
-
             self.write_to_port(msg)
+
+    def write_to_port(self, msg):
+        # Sends a message as is, without encoding or adding a <CR> character
+        if self.port_debug:
+            if msg[0] != "W" and msg[0] != "L":  # TODO move to net instance
+                self.log.info(f"{self.remote_processor} >>>> {msg}")
+
+        self.writer.write(msg)

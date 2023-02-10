@@ -368,8 +368,23 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 self.serial_connections['exp'].set_active_board(breakout_address)
                 self.serial_connections['exp'].send_bytes(b16decode(msg))
 
-    async def get_hw_switch_states(self):
-        """Return hardware states."""
+    async def get_hw_switch_states(self, query_hw=True):
+        """Return hardware states.
+
+        Args:
+        ----
+            query_hw: Await an SA: command to update the switches from the physical hardware.
+                Otherwise this returns the last known hw states.
+
+        """
+
+        # This meth is called during init_phase_2, but usually DL and SL config commands are still
+        # processing since those are not async. So awaiting the SA results holds the init until this
+        # is done which mean the DL/SL commands are processed before the init completes.
+
+        if query_hw:
+            await self.serial_connections['net'].send_query('SA:', 'SA:')
+
         return self.hw_switch_data
 
     def receive_nw_open(self, msg, remote_processor):

@@ -12,7 +12,7 @@ if MYPY:   # pragma: no cover
 
 class FASTSwitch(SwitchPlatformInterface):
 
-    """A switch conntected to a fast controller."""
+    """A switch connected to a fast controller."""
 
     # __slots__ = ["log", "connection", "send", "platform_settings", "_configured_debounce"]
 

@@ -20,6 +20,7 @@ class FastSegCommunicator(FastSerialCommunicator):
 
         if not self.platform._seg_task:
             self.machine.events.add_handler('machine_reset_phase_3', self.platform._start_seg_updates)
+            # TODO formalize and move
 
         await super().init()
 
@@ -37,5 +38,3 @@ class FastSegCommunicator(FastSerialCommunicator):
                                                self.remote_firmware)
 
         self.machine.variables.set_machine_var("fast_{}_model".format(self.remote_processor.lower()), self.remote_model)
-
-        return msg, False
