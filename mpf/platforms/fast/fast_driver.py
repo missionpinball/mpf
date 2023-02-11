@@ -118,7 +118,7 @@ class FASTDriver(DriverPlatformInterface):
         cmd = '{}{},02'.format(self.get_trigger_cmd(), self.number)
 
         self.log.debug("Sending Disable Command: %s", cmd)
-        self.connection.send_and_confirm(cmd, f"{self.get_trigger_cmd()}P")  # TODO remove config lookups
+        self.connection.send_blind(cmd)  # TODO remove config lookups
 
         self._reenable_autofire_if_configured()
 
@@ -127,7 +127,7 @@ class FASTDriver(DriverPlatformInterface):
             cmd = '{}{},00'.format(self.get_trigger_cmd(), self.number)
 
             self.log.debug("Re-enabling auto fire mode: %s", cmd)
-            self.connection.send_and_confirm(cmd, f"{self.get_trigger_cmd()}P")  # TODO remove config lookups
+            self.connection.send_blind(cmd)  # TODO remove config lookups
 
     def set_autofire(self, autofire_cmd, pulse_duration, pulse_power, hold_power):
         """Set an autofire."""
@@ -141,7 +141,7 @@ class FASTDriver(DriverPlatformInterface):
         """Clear autofire."""
         cmd = '{}{},81'.format(config_cmd, number)
         self.log.debug("Clearing hardware rule: %s", cmd)
-        self.connection.send_blind(cmd)  # TODO send_txt_with_ack
+        self.connection.send_and_confirm(cmd)  # TODO send_txt_with_ack
         self.autofire = None
         self.config_state = None
 
@@ -213,7 +213,7 @@ class FASTDriver(DriverPlatformInterface):
         else:
             # Trigger the driver directly using the existing configuration
             cmd = '{}{},01'.format(self.get_trigger_cmd(), self.number)
-            self.connection.send_and_confirm(cmd, f"{self.get_trigger_cmd()}P")  # TODO remove config lookups
+            self.connection.send_blind(cmd)  # TODO remove config lookups
 
         # restore autofire
         self._reenable_autofire_if_configured()

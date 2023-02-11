@@ -100,6 +100,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.hw_switch_data = None
         self.io_boards = dict()     # type: Dict[int, FastIoBoard]
 
+        # TODO move these to comms and then remove this dict
         self.fast_commands = {'ID': lambda x, y: None,  # processor ID
                               'WX': lambda x, y: None,  # watchdog
                               'NI': lambda x, y: None,  # node ID
@@ -118,8 +119,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                               'SA': self.receive_sa,  # all switch states
                               '/N': self.receive_nw_open,    # nw switch open
                               '-N': self.receive_nw_closed,  # nw switch closed
-                              '/L': self.receive_local_open,    # local sw open
-                              '-L': self.receive_local_closed,  # local sw cls
+                            #   '/L': self.receive_local_open,    # local sw open
+                            #   '-L': self.receive_local_closed,  # local sw cls
                               '!B': self.receive_bootloader,    # nano bootloader message
                               }
 
@@ -137,7 +138,26 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     async def initialize(self):
         """Initialise platform."""
+        self.machine.events.add_async_handler('reset_phase_1', self.soft_reset)
+        self.machine.events.add_handler('init_phase_3', self._start_connections)
         await self._connect_to_hardware()
+
+    async def soft_reset(self, **kwargs):
+        """Soft reset the FAST controller.
+
+        Used to reset / sync / verify all hardware configurations. This command does not perform a
+        hard reset of the boards, rather it queries the boards for their current configuration and
+        reapplies (with warnings) any configs that are out of sync.
+
+        This command runs during the reset_phase_1 event.
+        """
+        del kwargs
+        self.debug_log("Soft resetting FAST platform.")
+
+        # TODO walk through all comms and call .soft_reset() on each one
+
+        for comm in self.serial_connections.values():
+            await comm.soft_reset()
 
     def stop(self):
         """Stop platform and close connections."""
@@ -154,14 +174,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self._exp_led_task.cancel()
             self._exp_led_task = None
 
-        if 'net' in self.serial_connections:  # TODO move to communicator via .stop() method
-            try:
-                self.serial_connections['net'].send_blind('WD:1')  # set watchdog to expire in 1ms
-            except Exception:  # port might be closed already
-                pass
-                # TODO move to communicator via .stop() method, await in comm for ack message
-
-
         if 'rgb' in self.serial_connections:
             self.serial_connections['rgb'].send_blind('BL:AA55')  # reset CPU using bootloader
         if 'dmd' in self.serial_connections:
@@ -176,6 +188,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         except KeyError:
             pass
 
+        for conn in self.serial_connections.values():
+            conn.stopping()
+
         # wait 100ms for the messages to be sent
         self.machine.clock.loop.run_until_complete(asyncio.sleep(.1))
 
@@ -186,14 +201,15 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         self.serial_connections = dict()
 
-    async def start(self):
-        """Start listening for commands and schedule watchdog."""
-        self._watchdog_task = self.machine.clock.schedule_interval(self._update_watchdog,
-                                                                   self.config['net']['watchdog'] / 2000)
-        # TODO move watchdog to only be on net cpu
+    # async def start(self):  # run init_phase_5
+    #     for comm in self.serial_connections.values():
+    #         comm.start()
+    #     pass
 
-        # for connection in self.serial_connections.values():
-        #     await connection.start_read_loop()
+    def _start_connections(self, **kwargs):  # run init_phase_3
+        del kwargs
+        for comm in self.serial_connections.values():
+            comm.start()
 
     def __repr__(self):
         """Return str representation."""
@@ -225,13 +241,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def register_led_board(self, board):
         """Register a Breakout board that has LEDs."""
         self.exp_breakouts_with_leds.add(board.address[:3])
-
-    def _update_watchdog(self):
-        """Send Watchdog command."""
-        try:
-            self.serial_connections['net'].send_blind('WD:' + str(hex(self.config['watchdog']))[2:])  # TODO don't calc each loop
-        except:
-            pass
 
     def process_received_message(self, msg: str, remote_processor: str):
         """Send an incoming message from the FAST controller to the proper method for servicing.
@@ -413,31 +422,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                                              num=(msg, 1),
                                                              platform=self)
 
-    def receive_local_open(self, msg, remote_processor):
-        """Process local switch open.
 
-        Args:
-        ----
-            msg: switch number
-            remote_processor: Processor which sent the message.
-        """
-        assert remote_processor == "NET"
-        self.machine.switch_controller.process_switch_by_num(state=0,
-                                                             num=(msg, 0),
-                                                             platform=self)
-
-    def receive_local_closed(self, msg, remote_processor):
-        """Process local switch closed.
-
-        Args:
-        ----
-            msg: switch number
-            remote_processor: Processor which sent the message.
-        """
-        assert remote_processor == "NET"
-        self.machine.switch_controller.process_switch_by_num(state=1,
-                                                             num=(msg, 0),
-                                                             platform=self)
 
     def receive_sa(self, msg, remote_processor):
         """Receive all switch states.

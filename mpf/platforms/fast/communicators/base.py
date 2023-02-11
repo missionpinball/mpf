@@ -53,6 +53,9 @@ class FastSerialCommunicator:
     def __repr__(self):
         return f'<FAST {self.remote_processor} Communicator>'
 
+    async def soft_reset(self):
+        raise NotImplementedError
+
     async def connect(self):
         """Does several things to connect to the FAST processor.
 
@@ -124,7 +127,7 @@ class FastSerialCommunicator:
 
     def _process_id(self, msg):
         """Process the ID response."""
-        self.remote_processor, self.remote_model, self.remote_firmware = msg[3:].split()
+        self.remote_processor, self.remote_model, self.remote_firmware = msg.split()
 
         self.platform.log.info(f"Connected to {self.remote_processor} processor on {self.remote_model} with firmware v{self.remote_firmware}")
 
@@ -176,6 +179,15 @@ class FastSerialCommunicator:
                 if self.port_debug:
                     self.log.info(f"{self.remote_processor} <<<< {buffer}")
                 return buffer
+
+    def start(self):
+        """Start periodic tasks, etc.
+
+        Called once on MPF boot, not at game start."""
+
+    def stopping(self):
+        """The serial connection is about to stop. This is called before stop() and allows you
+        to do things that need to go out before the connection is closed. A 100ms delay to allow for this happens after this is called."""
 
     def stop(self):
         """Stop and shut down this serial connection."""
@@ -243,7 +255,7 @@ class FastSerialCommunicator:
             # If this message header is in our list of message processors, call it
             msg_header = msg[:3]
             if msg_header in self.message_processors:
-                self.message_processors[msg_header](msg)
+                self.message_processors[msg_header](msg[3:])
                 handled = True
 
             # Does this message match the start of the confirm message?
@@ -259,9 +271,6 @@ class FastSerialCommunicator:
             if not handled:
                 self.log.warning(f"Unknown message received: {msg}")
                 # TODO: should we raise an exception here?
-
-            # else:
-            #     self.platform.process_received_message(msg, self.remote_processor)  # TODO remove?
 
     async def _socket_reader(self):
         while True:
@@ -319,7 +328,6 @@ class FastSerialCommunicator:
     def write_to_port(self, msg):
         # Sends a message as is, without encoding or adding a <CR> character
         if self.port_debug:
-            if msg[0] != "W" and msg[0] != "L":  # TODO move to net instance
-                self.log.info(f"{self.remote_processor} >>>> {msg}")
+            self.log.info(f"{self.remote_processor} >>>> {msg}")
 
         self.writer.write(msg)

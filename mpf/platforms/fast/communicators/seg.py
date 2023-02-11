@@ -30,7 +30,7 @@ class FastSegCommunicator(FastSerialCommunicator):
         # No FW comparison as some have v 'FF.FF' We can fix this for real in the future if the
         # firmware is changed in a way that matters for MPF.
 
-        self.remote_processor, self.remote_model, self.remote_firmware = msg[3:].split()
+        self.remote_processor, self.remote_model, self.remote_firmware = msg.split()
 
         self.platform.log.info(f"Connected to {self.remote_processor} processor on {self.remote_model} with firmware v{self.remote_firmware}")
 
