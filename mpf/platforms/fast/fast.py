@@ -5,7 +5,7 @@ hardware, including the FAST Neuron, Nano, and Retro controllers as well
 as FAST I/O boards.
 """
 import asyncio
-from base64 import b16decode
+
 from copy import deepcopy
 from typing import Dict, Set, Optional
 from serial import SerialException
@@ -22,7 +22,6 @@ from mpf.platforms.fast.fast_led import FASTDirectLED, FASTDirectLEDChannel, FAS
 from mpf.platforms.fast.fast_light import FASTMatrixLight
 from mpf.platforms.fast.fast_segment_display import FASTSegmentDisplay
 from mpf.platforms.fast.fast_switch import FASTSwitch
-from mpf.platforms.autodetect import autodetect_fast_ports
 from mpf.core.platform import ServoPlatform, DmdPlatform, LightsPlatform, SegmentDisplayPlatform, \
     DriverPlatform, DriverSettings, SwitchPlatform, SwitchSettings, DriverConfig, SwitchConfig, \
     RepulseSettings
@@ -42,8 +41,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     # __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "seg_connection", "exp_connection", "aud_connection",
     #              "is_retro", "serial_connections", "fast_leds", "fast_commands", "config", "machine_type", "hw_switch_data",
-    #              "io_boards", "flag_led_tick_registered", "_watchdog_task", "_led_task", "_seg_task", "_exp_led_task",
-    #              "fast_exp_leds", "flag_exp_led_tick_registered", "fast_segs", "exp_boards", "exp_breakout_boards",
+    #              "io_boards", "flag_led_tick_registered", "_led_task",
+    #              "fast_exp_leds", "fast_segs", "exp_boards", "exp_breakout_boards",
     #              "exp_breakouts_with_leds"]
 
     port_types = ['net', 'exp', 'aud', 'dmd', 'rgb', 'seg', 'emu']
@@ -82,16 +81,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         # Most FAST platforms don't use ticks, but System11 does
         self.features['tickless'] = self.machine_type != 'sys11'
 
-        self._watchdog_task = None
-        self._led_task = None
-        self._exp_led_task = None
-        self._seg_task = None
         self.serial_connections = dict()
         self.fast_leds = dict()
         self.fast_exp_leds = dict()
         self.fast_segs = list()
-        self.flag_led_tick_registered = False
-        self.flag_exp_led_tick_registered = False
         self.exp_boards = dict()  # k: EE address, v: FastExpansionBoard instances
         self.exp_breakout_boards = dict()  # k: EEB address, v: FastBreakoutBoard instances
         # self.exp_dirty_led_ports = set() # FastLedPort instances
@@ -99,30 +92,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         self.hw_switch_data = None
         self.io_boards = dict()     # type: Dict[int, FastIoBoard]
-
-        # TODO move these to comms and then remove this dict
-        self.fast_commands = {'ID': lambda x, y: None,  # processor ID
-                              'WX': lambda x, y: None,  # watchdog
-                              'NI': lambda x, y: None,  # node ID
-                              'RX': lambda x, y: None,  # RGB cmd received
-                              'RA': lambda x, y: None,  # RGB all cmd received
-                              'RS': lambda x, y: None,  # RGB single cmd received
-                              'RF': lambda x, y: None,  # RGB fade cmd received
-                              'DX': lambda x, y: None,  # DMD cmd received
-                              'SX': lambda x, y: None,  # sw config received
-                              'LX': lambda x, y: None,  # lamp cmd received
-                              'PX': lambda x, y: None,  # segment cmd received
-                              'WD': lambda x, y: None,  # watchdog
-                              'AV': lambda x, y: self.receive_audio('AV', x, y), # audio cmd received
-                              'AS': lambda x, y: self.receive_audio('AS', x, y),
-                              'AH': lambda x, y: self.receive_audio('AH', x, y),
-                              'SA': self.receive_sa,  # all switch states
-                              '/N': self.receive_nw_open,    # nw switch open
-                              '-N': self.receive_nw_closed,  # nw switch closed
-                            #   '/L': self.receive_local_open,    # local sw open
-                            #   '-L': self.receive_local_closed,  # local sw cls
-                              '!B': self.receive_bootloader,    # nano bootloader message
-                              }
 
     def get_info_string(self):
         """Dump info strings about boards."""
@@ -154,41 +123,20 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         del kwargs
         self.debug_log("Soft resetting FAST platform.")
 
-        # TODO walk through all comms and call .soft_reset() on each one
-
         for comm in self.serial_connections.values():
             await comm.soft_reset()
 
     def stop(self):
         """Stop platform and close connections."""
-        if self._led_task:
-            self._led_task.cancel()
-            self._led_task = None
-        if self._seg_task:
-            self._seg_task.cancel()
-            self._seg_task = None
-        if self._watchdog_task:
-            self._watchdog_task.cancel()
-            self._watchdog_task = None
-        if self._exp_led_task:
-            self._exp_led_task.cancel()
-            self._exp_led_task = None
-
-        if 'rgb' in self.serial_connections:
-            self.serial_connections['rgb'].send_blind('BL:AA55')  # reset CPU using bootloader
-        if 'dmd' in self.serial_connections:
-            self.serial_connections['dmd'].send_blind('BL:AA55')  # reset CPU using bootloader
-        if 'seg' in self.serial_connections:
-            # self.serial_connections['seg'].send_blind('***')  # TODO: reset CPU using
-            pass
-
-        try:
-            for board_address in self.exp_boards.keys():
-                self.serial_connections['exp'].send_blind(f'BR@{board_address}:')
-        except KeyError:
-            pass
 
         for conn in self.serial_connections.values():
+            # clear out whatever's in the send queues
+            for _ in range(conn.send_queue.qsize()):
+                conn.send_queue.get_nowait()
+                conn.send_queue.task_done()
+
+            conn.query_done.set()
+            conn.send_ready.set()
             conn.stopping()
 
         # wait 100ms for the messages to be sent
@@ -201,12 +149,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         self.serial_connections = dict()
 
-    # async def start(self):  # run init_phase_5
-    #     for comm in self.serial_connections.values():
-    #         comm.start()
-    #     pass
-
-    def _start_connections(self, **kwargs):  # run init_phase_3
+    def _start_connections(self, **kwargs):  # init_phase_3
         del kwargs
         for comm in self.serial_connections.values():
             comm.start()
@@ -241,33 +184,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def register_led_board(self, board):
         """Register a Breakout board that has LEDs."""
         self.exp_breakouts_with_leds.add(board.address[:3])
-
-    def process_received_message(self, msg: str, remote_processor: str):
-        """Send an incoming message from the FAST controller to the proper method for servicing.
-
-        Args:
-        ----
-            msg: messaged which was received
-            remote_processor: Processor which sent the message.
-        """
-        assert self.log is not None
-        if msg == "!SRE":
-            # ignore system interrupt
-            self.log.info("Received system interrupt from %s.", remote_processor)
-            return
-
-        if msg[2:3] == ':':
-            cmd = msg[0:2]
-            payload = msg[3:].replace('\r', '')
-        else:   # pragma: no cover
-            self.log.warning("Received malformed message: %s from %s", msg, remote_processor)
-            return
-
-        # Can't use try since it swallows too many errors for now #TODO
-        if cmd in self.fast_commands:
-            self.fast_commands[cmd](payload, remote_processor)
-        else:   # pragma: no cover
-            self.log.warning("Received unknown serial command? %s from %s.", msg, remote_processor)
 
     async def _connect_to_hardware(self):
         """Connect to each port from the config."""
@@ -326,57 +242,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             await communicator.init()
             self.serial_connections[port] = communicator
 
-    def _start_seg_updates(self, **kwargs):  #TODO Move to comm, base class even for all the use update tasks
-        for s in self.machine.device_manager.collections["segment_displays"]:
-            self.fast_segs.append(s.hw_display)
-
-        self.fast_segs.sort(key=lambda x: x.number)
-
-        if self.fast_segs:
-            self._seg_task = self.machine.clock.schedule_interval(self._update_segs,
-                                                1 / self.config['seg']['fps'])
-
-    def _update_segs(self, **kwargs):
-        for s in self.fast_segs:
-
-            if s.next_text:
-                self.serial_connections['seg'].send_blind(f'PA:{s.hex_id},{s.next_text.convert_to_str()[0:7]}')
-                s.next_text = None
-
-            if s.next_color:
-                self.serial_connections['seg'].send_blind(('PC:{},{}').format(s.hex_id, s.next_color))
-                s.next_color = None
-
-    def update_leds(self):
-        """Update all the LEDs connected to the RGB processor of a FAST Nano controller.
-
-        This is done once per game loop for efficiency (i.e. all LEDs are sent as a single
-        update rather than lots of individual ones).
-
-        """
-        dirty_leds = [led for led in self.fast_leds.values() if led.dirty]
-
-        if dirty_leds:
-            msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color) for led in dirty_leds])
-            self.serial_connections['rgb'].send_blind(msg)
-
-    def update_exp_leds(self):
-        # max 32ms / 31.25fps TODO add enforcement
-
-        for breakout_address in self.exp_breakouts_with_leds:
-            dirty_leds = {k:v.current_color for (k, v) in self.fast_exp_leds.items() if (v.dirty and v.address == breakout_address)}
-            # {'88000': 'FFFFFF', '88002': '121212'}
-
-            if dirty_leds:
-                hex_count = Util.int_to_hex_string(len(dirty_leds))
-                msg = f'52443A{hex_count}'  # RD: in hex 52443A
-
-                for led_num, color in dirty_leds.items():
-                    msg += f'{led_num[3:]}{color}'
-
-                self.serial_connections['exp'].set_active_board(breakout_address)
-                self.serial_connections['exp'].send_bytes(b16decode(msg))
-
     async def get_hw_switch_states(self, query_hw=True):
         """Return hardware states.
 
@@ -395,72 +260,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             await self.serial_connections['net'].send_query('SA:', 'SA:')
 
         return self.hw_switch_data
-
-    def receive_nw_open(self, msg, remote_processor):
-        """Process network switch open.
-
-        Args:
-        ----
-            msg: switch number
-            remote_processor: Processor which sent the message.
-        """
-        assert remote_processor == "NET"
-        self.machine.switch_controller.process_switch_by_num(state=0,
-                                                             num=(msg, 1),
-                                                             platform=self)
-
-    def receive_nw_closed(self, msg, remote_processor):
-        """Process network switch closed.
-
-        Args:
-        ----
-            msg: switch number
-            remote_processor: Processor which sent the message.
-        """
-        assert remote_processor == "NET"
-        self.machine.switch_controller.process_switch_by_num(state=1,
-                                                             num=(msg, 1),
-                                                             platform=self)
-
-
-
-    def receive_sa(self, msg, remote_processor):
-        """Receive all switch states.
-
-        Args:
-        ----
-            msg: switch states as bytearray
-            remote_processor: Processor which sent the message.
-        """
-        assert remote_processor == "NET"
-        self.debug_log("Received SA: %s", msg)
-        hw_states = {}
-
-        # Support for v1 firmware which uses network + local switches
-        if self.machine_type == 'nano':
-            _, local_states, _, nw_states = msg.split(',')
-            for offset, byte in enumerate(bytearray.fromhex(nw_states)):
-                for i in range(8):
-                    num = Util.int_to_hex_string((offset * 8) + i)
-                    if byte & (2**i):
-                        hw_states[(num, 1)] = 1
-                    else:
-                        hw_states[(num, 1)] = 0
-        # Support for v2 firmware which uses only local switches
-        else:
-            _, local_states = msg.split(',')
-
-        for offset, byte in enumerate(bytearray.fromhex(local_states)):
-            for i in range(8):
-
-                num = Util.int_to_hex_string((offset * 8) + i)
-
-                if byte & (2**i):
-                    hw_states[(num, 0)] = 1
-                else:
-                    hw_states[(num, 0)] = 0
-
-        self.hw_switch_data = hw_states
 
     @staticmethod
     def convert_number_from_config(number):
@@ -718,16 +517,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             if number_str[:3] in ('exp', 'cpu'):
 
                 if not self.serial_connections['exp']:
-                    self.raise_config_error("An LED is configured for an expansion board, but no EXP connection exists.", 10)  #todo pick a real number
-
-                if not self.flag_exp_led_tick_registered:
-
-                    if self.config['exp']['led_hz'] > 31.25:
-                        self.config['exp']['led_hz'] = 31.25
-
-                    self._exp_led_task = self.machine.clock.schedule_interval(
-                        self.update_exp_leds, 1 / self.config['exp']['led_hz'])
-                    self.flag_exp_led_tick_registered = True
+                    self.raise_config_error("An LED is configured for an expansion board, but no EXP connection exists.", 10)  # TODO pick a real number
 
                 this_led_number = FASTExpLED.parse_number_string(number_str, self, return_all=False)
 
@@ -742,15 +532,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 return fast_led_channel
 
             elif number_str not in self.fast_leds:
-
-                if not self.flag_led_tick_registered:
-                    self._led_task = self.machine.clock.schedule_interval(
-                        self.update_leds, 1 / self.config['rgb']['led_hz'])
-                    self.flag_led_tick_registered = True
-
-                if number_str not in self.fast_leds:
-                    self.fast_leds[number_str] = FASTDirectLED(
-                        number_str, int(self.config['rgb']['led_fade_time']), self)
+                self.fast_leds[number_str] = FASTDirectLED(
+                    number_str, int(self.config['rgb']['led_fade_time']), self)
 
             fast_led_channel = FASTDirectLEDChannel(self.fast_leds[number_str], channel)
             self.fast_leds[number_str].add_channel(int(channel), fast_led_channel)
@@ -1013,17 +796,68 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         driver.clear_autofire(driver.get_config_cmd(), driver.number)
 
-    def receive_bootloader(self, msg, remote_processor):  # move? TODO
-        """Process bootloader message."""
-        self.debug_log("Got Bootloader message: %s from %s", msg, remote_processor)
-        ignore_rgb = self.config['rgb']['ignore_reboot'] and \
-            remote_processor == self.serial_connections['rgb'].remote_processor
-        if msg in ('00', '02'):
-            action = "Ignoring RGB crash and continuing play." if ignore_rgb else "MPF will exit now."
-            self.error_log("The FAST %s processor rebooted. Unfortunately, that means that it lost all its state "
-                           "(such as hardware rules or switch configs). This is likely caused by an unstable "
-                           "power supply but it might also be a firmware bug. %s", remote_processor, action)
-            if ignore_rgb:
-                self.machine.events.post("fast_rgb_rebooted", msg=msg)
-                return
-            self.machine.stop("FAST {} rebooted during game".format(remote_processor))
+# TODO everything below needs to move
+
+    def receive_nw_open(self, msg, remote_processor):
+        """Process network switch open.
+
+        Args:
+        ----
+            msg: switch number
+            remote_processor: Processor which sent the message.
+        """
+        assert remote_processor == "NET"
+        self.machine.switch_controller.process_switch_by_num(state=0,
+                                                             num=(msg, 1),
+                                                             platform=self)
+
+    def receive_nw_closed(self, msg, remote_processor):
+        """Process network switch closed.
+
+        Args:
+        ----
+            msg: switch number
+            remote_processor: Processor which sent the message.
+        """
+        assert remote_processor == "NET"
+        self.machine.switch_controller.process_switch_by_num(state=1,
+                                                             num=(msg, 1),
+                                                             platform=self)
+
+    def receive_sa(self, msg, remote_processor):
+        """Receive all switch states.
+
+        Args:
+        ----
+            msg: switch states as bytearray
+            remote_processor: Processor which sent the message.
+        """
+        assert remote_processor == "NET"
+        self.debug_log("Received SA: %s", msg)
+        hw_states = {}
+
+        # Support for v1 firmware which uses network + local switches
+        if self.machine_type == 'nano':
+            _, local_states, _, nw_states = msg.split(',')
+            for offset, byte in enumerate(bytearray.fromhex(nw_states)):
+                for i in range(8):
+                    num = Util.int_to_hex_string((offset * 8) + i)
+                    if byte & (2**i):
+                        hw_states[(num, 1)] = 1
+                    else:
+                        hw_states[(num, 1)] = 0
+        # Support for v2 firmware which uses only local switches
+        else:
+            _, local_states = msg.split(',')
+
+        for offset, byte in enumerate(bytearray.fromhex(local_states)):
+            for i in range(8):
+
+                num = Util.int_to_hex_string((offset * 8) + i)
+
+                if byte & (2**i):
+                    hw_states[(num, 0)] = 1
+                else:
+                    hw_states[(num, 0)] = 0
+
+        self.hw_switch_data = hw_states

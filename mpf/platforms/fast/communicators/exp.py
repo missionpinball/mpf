@@ -1,4 +1,5 @@
 import asyncio
+from base64 import b16decode
 from packaging import version
 from serial import SerialException, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
 from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_ADDRESS_MAP
@@ -32,6 +33,7 @@ class FastExpCommunicator(FastSerialCommunicator):
 
         self.exp_boards = dict()  # keys = board addresses, values = FastExpansionBoard objects
         self.active_board = None
+        self._led_task = None
 
     async def init(self):
         # override w/o super because EXP processor does this per-board later
@@ -155,3 +157,41 @@ class FastExpCommunicator(FastSerialCommunicator):
 
         self.platform.debug_log(f"{self} - Setting LED fade rate to {rate}ms")
         self.send_blind(f'RF@{board_address}:{Util.int_to_hex_string(rate, True)}')
+
+    def start(self):
+        """Start listening for commands and schedule watchdog."""
+        self._update_leds()
+
+        if self.config['led_hz'] > 31.25:
+            self.config['led_hz'] = 31.25
+
+        self._led_task = self.machine.clock.schedule_interval(
+                        self._update_leds, 1 / self.config['led_hz'])
+
+    def _update_leds(self):
+        # max 32ms / 31.25fps TODO add enforcement
+
+        for breakout_address in self.platform.exp_breakouts_with_leds:
+            dirty_leds = {k:v.current_color for (k, v) in self.platform.fast_exp_leds.items() if (v.dirty and v.address == breakout_address)}
+            # {'88000': 'FFFFFF', '88002': '121212'}
+
+            if dirty_leds:
+                hex_count = Util.int_to_hex_string(len(dirty_leds))
+                msg = f'52443A{hex_count}'  # RD: in hex 52443A
+
+                for led_num, color in dirty_leds.items():
+                    msg += f'{led_num[3:]}{color}'
+
+                self.set_active_board(breakout_address)
+                self.send_bytes(b16decode(msg))
+
+    def stopping(self):
+        if self._led_task:
+            self._led_task.cancel()
+            self._led_task = None
+
+        try:
+            for board_address in self.exp_boards.keys():
+                self.send_blind(f'BR@{board_address}:')
+        except KeyError:
+            pass

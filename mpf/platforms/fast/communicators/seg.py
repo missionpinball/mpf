@@ -18,11 +18,32 @@ class FastSegCommunicator(FastSerialCommunicator):
 
     async def init(self):
 
-        if not self.platform._seg_task:
-            self.machine.events.add_handler('machine_reset_phase_3', self.platform._start_seg_updates)
-            # TODO formalize and move
-
         await super().init()
+
+        self._seg_task = None
+
+    def start(self):
+        """Start the communicator."""
+
+        for s in self.machine.device_manager.collections["segment_displays"]:
+            self.platform.fast_segs.append(s.hw_display)
+
+        self.platform.fast_segs.sort(key=lambda x: x.number)
+
+        if self.platform.fast_segs:
+            self._seg_task = self.machine.clock.schedule_interval(self._update_segs,
+                                                1 / self.config['fps'])
+
+    def _update_segs(self, **kwargs):
+        for s in self.platform.fast_segs:
+
+            if s.next_text:
+                self.send_blind(f'PA:{s.hex_id},{s.next_text.convert_to_str()[0:7]}')
+                s.next_text = None
+
+            if s.next_color:
+                self.send_blind(('PC:{},{}').format(s.hex_id, s.next_color))
+                s.next_color = None
 
     def _process_id(self, msg):
         """Process the ID response."""
@@ -30,11 +51,19 @@ class FastSegCommunicator(FastSerialCommunicator):
         # No FW comparison as some have v 'FF.FF' We can fix this for real in the future if the
         # firmware is changed in a way that matters for MPF.
 
+        # TODO make this actually check each display
         self.remote_processor, self.remote_model, self.remote_firmware = msg.split()
+        self.platform.log.info(f"Connected to SEG processor on {self.remote_model} with firmware v{self.remote_firmware}")
+        self.machine.variables.set_machine_var("fast_seg_firmware", self.remote_firmware)
+        self.machine.variables.set_machine_var("fast_seg_model", self.remote_model)
 
-        self.platform.log.info(f"Connected to {self.remote_processor} processor on {self.remote_model} with firmware v{self.remote_firmware}")
+    def stopping(self):
+        if self._seg_task:
+            self._seg_task.cancel()
+            self._seg_task = None
 
-        self.machine.variables.set_machine_var("fast_{}_firmware".format(self.remote_processor.lower()),
-                                               self.remote_firmware)
-
-        self.machine.variables.set_machine_var("fast_{}_model".format(self.remote_processor.lower()), self.remote_model)
+        # TODO Better way to do this?
+        for s in self.platform.fast_segs:
+            self.send_blind(f'PA:{s.hex_id},        ')
+            s.next_text = None
+            s.next_color = None
