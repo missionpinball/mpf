@@ -126,7 +126,7 @@ class MockFastRgb(BaseMockFast):
             return True
 
 
-class MockFastNet(BaseMockFast):  # TODO change this to just neuron
+class MockFastNetNeuron(BaseMockFast):  # TODO change this to just neuron
     def __init__(self):
         super().__init__()
         self.type = "NET"
@@ -213,7 +213,7 @@ class TestFastBase(MpfTestCase):
             self.clock.mock_serial("com6", self.dmd_cpu)
 
     def create_connections(self):
-        self.net_cpu = MockFastNet()
+        self.net_cpu = MockFastNetNeuron()
         self.rgb_cpu = MockFastRgb()
         self.dmd_cpu = MockFastDmd()
         self.seg_cpu = MockFastSeg()

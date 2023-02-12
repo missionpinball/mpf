@@ -141,7 +141,7 @@ class FASTDriver(DriverPlatformInterface):
         """Clear autofire."""
         cmd = '{}{},81'.format(config_cmd, number)
         self.log.debug("Clearing hardware rule: %s", cmd)
-        self.connection.send_and_confirm(cmd)  # TODO send_txt_with_ack
+        self.connection.send_and_confirm(cmd, f'{config_cmd}P')
         self.autofire = None
         self.config_state = None
 

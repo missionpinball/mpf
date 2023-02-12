@@ -5,7 +5,7 @@ from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.tests.MpfTestCase import MpfTestCase, MagicMock, test_config, expect_startup_error
 
 from mpf.tests.loop import MockSerial
-from mpf.tests.test_Fast import BaseMockFast, MockFastNet
+from mpf.tests.test_Fast import BaseMockFast, MockFastNetNeuron
 
 
 class MockFastExp(BaseMockFast):
@@ -161,7 +161,7 @@ class TestFastBase(MpfTestCase):
             self.clock.mock_serial("com4", self.exp_cpu)
 
     def create_connections(self):
-        self.net_cpu = MockFastNet()
+        self.net_cpu = MockFastNetNeuron()
         self.exp_cpu = MockFastExp(self)
 
     def create_expected_commands(self):
