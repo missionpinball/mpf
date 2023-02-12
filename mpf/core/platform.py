@@ -13,6 +13,7 @@ MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.devices.switch import Switch   # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.stepper import Stepper     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.servo import Servo     # pylint: disable-msg=cyclic-import,unused-import
     from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface  # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface  # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
@@ -321,14 +322,40 @@ class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_servos'] = True
 
     @abc.abstractmethod
-    async def configure_servo(self, number: str) -> "ServoPlatformInterface":
+    async def configure_servo(self, number: str, config: dict, platform_config: dict) -> "ServoPlatformInterface":
         """Configure a servo device in platform.
 
         Args:
         ----
             number: Number of the servo
+            config: The config section for this servo
+            platform_config: Platform specific settings.
         """
         raise NotImplementedError
+
+    @classmethod
+    def get_servo_config_section(cls) -> Optional[str]:
+        """Return config section for additional servo config items."""
+        return None
+
+    def validate_servo_section(self, servo: "Servo", config: dict) -> dict:
+        """Validate a servo config for platform.
+
+        Args:
+        ----
+            servo: Servo to validate.
+            config: Config to validate.
+
+        Returns: Validated config.
+        """
+        if self.get_servo_config_section():
+            spec = self.get_servo_config_section()     # pylint: disable-msg=assignment-from-none
+            config = servo.machine.config_validator.validate_config(spec, config, servo.name)
+        elif config:
+            raise AssertionError("No platform_config supported but not empty {} for servo {}".
+                                 format(config, servo.name))
+
+        return config
 
 
 class StepperPlatform(BasePlatform, metaclass=abc.ABCMeta):

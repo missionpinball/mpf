@@ -39,16 +39,19 @@ class MockFastExp(BaseMockFast):
         if cmd == "ID":
 
             if temp_active in ["88", "89", "8A", "8B"]:  # 201
-                self.queue.append("ID:EXP FP-EXP-0201  0.5")
+                self.queue.append("ID:EXP FP-EXP-0201  0.8")
 
             elif temp_active in ["B4", "B5", "B6", "B7"]:  # 71
-                self.queue.append("ID:EXP FP-EXP-0071  0.5")
+                self.queue.append("ID:EXP FP-EXP-0071  0.8")
+
+            elif temp_active in ["84", "85", "86", "87"]:  # 71
+                self.queue.append("ID:EXP FP-EXP-0081  0.8")
 
             elif temp_active == '48':  # Neuron
-                self.queue.append("ID:EXP FP-CPU-2000 0.5")
+                self.queue.append("ID:EXP FP-CPU-2000 0.8")
 
             if not temp_active:  # no ID has been set, so lowest address will respond
-                self.queue.append("ID:EXP FP-CPU-2000 0.5")
+                self.queue.append("ID:EXP FP-CPU-2000 0.8")
 
             return True
 
@@ -87,6 +90,9 @@ class MockFastExp(BaseMockFast):
 
             return True
 
+        elif cmd in ["EM", "MP"]:
+            return True
+
         return False
 
     def _handle_msg(self, msg):
@@ -98,9 +104,9 @@ class MockFastExp(BaseMockFast):
             # binary message. The first three chars are the command, the rest is the binary payload
             cmd = f'{msg[:3].decode()}{msg[3:].hex()}'
 
-        # if cmd in self.ignore_commands:
-        #     self.queue.append(cmd[:3] + "P")
-        #     return msg_len
+        if cmd in self.ignore_commands:
+            # self.queue.append(cmd[:3] + "P")
+            return msg_len
 
         if self._parse(cmd):
             return msg_len
@@ -114,31 +120,31 @@ class MockFastExp(BaseMockFast):
         else:
             raise Exception("Unexpected command for " + self.type + ": " + str(cmd))
 
-    def send(self, msg):
-        if not self.is_open:
-            raise AssertionError("Serial not open")
+    # def send(self, msg):
+    #     if not self.is_open:
+    #         raise AssertionError("Serial not open")
 
-        return self.write(msg.encode() + b'\r')
+    #     return self.write(msg.encode() + b'\r')
 
-    def write(self, msg):
-        """Write message."""
+    # def write(self, msg):
+    #     """Write message."""
 
-        # TODO this is an example of how it come in which we might need to handle
-        # b'EA:880\rRD:\x02\x00\xff\xff\xff\x12\x12\x12'
+    #     # TODO this is an example of how it come in which we might need to handle
+    #     # b'EA:880\rRD:\x02\x00\xff\xff\xff\x12\x12\x12'
 
-        ignored_parts = [b' ' * 1024, b'']
+    #     ignored_parts = [b' ' * 1024, b'']
 
-        parts = msg.split(b'\r')
-        # assert parts.pop() == b''
-        for part in parts:
-            if part in ignored_parts:
-                continue
-            self._handle_msg(part)
+    #     parts = msg.split(b'\r')
+    #     # assert parts.pop() == b''
+    #     for part in parts:
+    #         if part in ignored_parts:
+    #             continue
+    #         self._handle_msg(part)
 
-        return len(msg)
+    #     return len(msg)
 
 
-class TestFastBase(MpfTestCase):
+class TestFastExp(MpfTestCase):
     """Base class for FAST platform tests, using a default V2 network."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -167,7 +173,7 @@ class TestFastBase(MpfTestCase):
     def create_expected_commands(self):
 
         self.net_cpu.expected_commands = {
-            'BR:': '#!B:02',    # there might be some garbage in front of the command
+            # 'BR:': '#!B:02',    # there might be some garbage in front of the command
             'ID:': f'ID:{self.net_cpu.id}',
             f'CH:{self.net_cpu.ch},FF': 'CH:P',
             "SA:": f"SA:{self.net_cpu.sa}",
@@ -207,22 +213,23 @@ class TestFastBase(MpfTestCase):
             # second below. This might need to be increased if there's lots of hardware.
             self.advance_time_and_run(1)
 
-    # def test_servo(self):
-    #     # go to min position
-    #     self.exp_cpu.expected_commands = {
-    #             "XO:03,00": "XO:P"
-    #     }
-    #     self.machine.servos["servo1"].go_to_position(0)
-    #     self.advance_time_and_run(.1)
-    #     self.assertFalse(self.net_cpu.expected_commands)
+    def test_servo(self):
+        # go to min position
+        self.exp_cpu.expected_commands = {
+                "EM@84:0,1,07D0,01F4,07D0,05DC": "",  # EM:<INDEX>,1,<MAX_TIME_MS>,<MIN_US>,<MAX_US>,<NEUTRAL_US><CR>  1 = servo
+                "MP@84:0,00": ""                    # MP:<INDEX>,<POSITION>,<TIME_MS><CR>
+        }
+        self.machine.servos["servo1"].go_to_position(0)
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.net_cpu.expected_commands)
 
-    #     # go to max position
-    #     self.exp_cpu.expected_commands = {
-    #             "XO:03,FF": "XO:P"
-    #     }
-    #     self.machine.servos["servo1"].go_to_position(1)
-    #     self.advance_time_and_run(.1)
-    #     self.assertFalse(self.exp_cpu.expected_commands)
+        # go to max position
+        self.exp_cpu.expected_commands = {
+                "MP@84:0,FF": ""
+        }
+        self.machine.servos["servo1"].go_to_position(1)
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.exp_cpu.expected_commands)
 
     def test_leds(self):
         self._test_led()

@@ -135,10 +135,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 for _ in range(conn.send_queue.qsize()):
                     conn.send_queue.get_nowait()
                     conn.send_queue.task_done()
-
                 conn.query_done.set()
                 conn.send_ready.set()
-                conn.stopping()
+
+        for conn in self.serial_connections.values():
+            conn.stopping()
 
         # wait 100ms for the messages to be sent
         if not self.unit_test:
@@ -372,18 +373,24 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         # every servo board supports exactly 6 servos
         return self.convert_number_from_config(board * 6 + servo)
 
-    async def configure_servo(self, number: str) -> FastServo:
+    async def configure_servo(self, number: str, config: dict) -> FastServo:
         """Configure a servo.
 
         Args:
         ----
             number: Number of servo
+            config: Dict of config settings.
 
         Returns: Servo object.
         """
-        number_int = self._parse_servo_number(str(number))
+        del number
 
-        return FastServo(number_int, self.serial_connections['net'])
+        if 'exp' not in self.serial_connections:
+            raise AssertionError('A request was made to configure a FAST '
+                                 'servo, but no connection to an EXP processor'
+                                 'is available')
+
+        return FastServo(config, self.serial_connections['exp'])
 
     def _parse_switch_number(self, number):
         try:

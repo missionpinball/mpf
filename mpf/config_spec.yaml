@@ -1490,6 +1490,12 @@ servos:
     reset_events: event_handler|event_handler:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
     number: single|str|
     platform: single|str|None
+    platform_settings: single|dict|None
+fast_servos:
+    max_us: single|int|2000
+    min_us: single|int|1000
+    home_us: single|int|1500
+    max_runtime: single|ms|2000  # 65535 max
 settings:
     __valid_in__: machine
     __type__: config_dict

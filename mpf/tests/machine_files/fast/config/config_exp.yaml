@@ -4,10 +4,12 @@ hardware:
     platform: fast
 
 fast:
+  net:
+    port: com3
     controller: neuron
-    ports: com3, com4
-    debug: true
-    expansion_boards: 201-0, 201-1, 71-0, 201-2
+  exp:
+    port: com4
+    boards: 201-0, 201-1, 71-0, 201-2
 
 lights:
   led1:
@@ -48,10 +50,18 @@ lights:
   led18:
     number: exp-201-i2-b2-p4-11 # 8A26A
 
-
-
-# servos:
-#     servo1:
-#         number: 3
-#     servo20:
-#         number: 3-2
+servos:
+    servo1:
+        number: FP-EXP-0071-i0-s1
+        platform_settings:
+            min_us: 500
+            home_us: 1500
+            max_us: 2500
+            max_runtime: 2s
+    # servo20:
+    #     number: FP-EXP-0071-i1-b0-4
+    #     servo_min: 500
+    #     servo_max: 2500
+    #     reset_position: 1000
+    #     ball_search_min: 700
+    #     ball_search_max: 1200

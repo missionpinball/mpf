@@ -213,8 +213,9 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
             self.machine.clock.loop.run_until_complete(self.pi.stop())
             self.pi = None
 
-    async def configure_servo(self, number: str) -> ServoPlatformInterface:
+    async def configure_servo(self, number: str, config: dict) -> ServoPlatformInterface:
         """Configure a servo."""
+        del config
         return RpiServo(number, self)
 
     async def get_hw_switch_states(self):

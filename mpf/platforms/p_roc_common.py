@@ -795,13 +795,14 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
                                       {'notifyHost': True, 'reloadActive': False}, [], False)
         return switch
 
-    async def configure_servo(self, number: str) -> ServoPlatformInterface:
+    async def configure_servo(self, number: str, config: dict) -> ServoPlatformInterface:
         """Configure a servo on a PD-LED board.
 
         Args:
         ----
             number: Number of the servo
         """
+        del config
         try:
             board, index = number.split("-")
         except ValueError:

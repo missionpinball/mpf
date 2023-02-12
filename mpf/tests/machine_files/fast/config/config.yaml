@@ -124,12 +124,6 @@ autofire_coils:
         coil: c_flipper_hold
         switch: s_test3
 
-servos:
-    servo1:
-        number: 3
-    servo20:
-        number: 3-2
-
 flippers:
     f_test_single:
         debug: true

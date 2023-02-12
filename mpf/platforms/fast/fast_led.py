@@ -81,7 +81,7 @@ class FASTExpLED(FASTDirectLED):
             # raise ConfigFileError("Expansion board {} not found.".format(self.board_address)) #TODO
             raise ValueError("Expansion board {} not found in config.".format(self.board_address))
 
-    @classmethod
+    @classmethod  # TODO move & combine with FASTExpCommunicator.get_address_from_number_string
     def parse_number_string(cls, number: str, platform, return_all=True) -> str:
         """Return number string."""
 

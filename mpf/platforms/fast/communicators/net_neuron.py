@@ -83,6 +83,9 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
 
             # Don't move on until we get board 00 in since it can take a sec after a reset
             if not len(self.platform.io_boards):
+                if 'switches' not in self.machine.config and 'coils' not in self.machine.config:
+                    # No switches or coils, so we don't need I/O boards. This is nice when people are first getting started
+                    break
                 continue
             else:
                 current_node += 1

@@ -64,8 +64,9 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
     def stop(self):
         """Stop platform."""
 
-    async def configure_servo(self, number: str):
+    async def configure_servo(self, number: str, config: dict):
         """Configure a servo device in platform."""
+        del config
         return VirtualServo(number)
 
     async def configure_stepper(self, number: str, config: dict):

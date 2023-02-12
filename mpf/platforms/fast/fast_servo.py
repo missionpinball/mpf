@@ -5,14 +5,35 @@ from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInter
 
 class FastServo(ServoPlatformInterface):
 
-    """A servo in the FAST platform."""
+    """A servo in the FAST platform connected to a FAST Expansion Board."""
 
-    __slots__ = ["number", "net_connection"]
+    # __slots__ = ["number", "exp_connection"]
 
-    def __init__(self, number, net_connection):
+    def __init__(self, config, exp_connection):
         """Initialise servo."""
-        self.number = number
-        self.net_connection = net_connection
+        self.config = config
+        self.exp_connection = exp_connection
+
+        board_address, breakout_address, device = self.exp_connection.get_address_from_number_string(config['number'])
+
+        self.base_address = f'{board_address}{breakout_address}'
+        self.servo_index = str(int(device[-1]) - 1)  # Servos are 0-indexed
+
+        assert(board_address in exp_connection.exp_boards, f"Board address {board_address} not found")
+        assert(self.base_address in ['B40', 'B50', 'B60', 'B70'], f"Board address not valid")  # Servos only on EXP-0071 boards for now
+
+        self.write_config_to_servo()
+
+    def write_config_to_servo(self):
+
+        # TODO need proper config validation for platform_settings
+
+        min_us = f"{self.config['platform_settings']['min_us']:02X}"
+        max_us = f"{self.config['platform_settings']['max_us']:02X}"
+        home_us = f"{self.config['platform_settings']['home_us']:02X}"
+        max_runtime = f"{self.config['platform_settings']['max_runtime']:02X}"
+
+        self.exp_connection.send_blind(f"EM@{self.base_address}:{self.servo_index},1,{max_runtime},{min_us},{max_us},{home_us}")
 
     def go_to_position(self, position):
         """Set a servo position."""
@@ -20,13 +41,11 @@ class FastServo(ServoPlatformInterface):
             raise AssertionError("Position has to be between 0 and 1")
 
         # convert from [0,1] to [0, 255]
-        position_numeric = int(position * 255)
+        position_hex = f'{int(position * 255):02X}'
 
-        cmd = 'XO:{},{}'.format(
-            self.number,
-            Util.int_to_hex_string(position_numeric))
+        cmd = f'MP@{self.base_address}:{self.servo_index},{position_hex},FFFF'
 
-        self.net_connection.send_blind(cmd)
+        self.exp_connection.send_blind(cmd)
 
     def set_speed_limit(self, speed_limit):
         """Not implemented."""

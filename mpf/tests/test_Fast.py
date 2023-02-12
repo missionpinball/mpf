@@ -524,23 +524,6 @@ Board 3 - Model: FP-I/O-1616-3    Firmware: 01.09 Switches: 16 Drivers: 16
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
-    def test_servo(self):
-        # go to min position
-        self.net_cpu.expected_commands = {
-                "XO:03,00": "XO:P"
-        }
-        self.machine.servos["servo1"].go_to_position(0)
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.net_cpu.expected_commands)
-
-        # go to max position
-        self.net_cpu.expected_commands = {
-                "XO:03,FF": "XO:P"
-        }
-        self.machine.servos["servo1"].go_to_position(1)
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.net_cpu.expected_commands)
-
     def _switch_hit_cb(self, **kwargs):
         self.switch_hit = True
 
