@@ -135,7 +135,7 @@ class FASTDriver(DriverPlatformInterface):
         self.config_state = pulse_duration, pulse_power, hold_power
         self._autofire_cleared = False
         self.log.debug("Writing hardware rule: %s", autofire_cmd)
-        self.connection.send_blind(autofire_cmd)  # TODO send_txt_with_ack
+        self.connection.send_and_confirm(autofire_cmd, f'{autofire_cmd[:3]}P')
 
     def clear_autofire(self, config_cmd, number):
         """Clear autofire."""
@@ -228,4 +228,4 @@ class FASTDriver(DriverPlatformInterface):
             self.config_state = self.autofire[1]
 
             self.log.debug("Re-enabling auto fire mode: %s", cmd)
-            self.connection.send_blind(cmd)  # TODO send_txt_with_ack
+            self.connection.send_and_confirm(cmd, f'{cmd[:3]}P')  # TODO send_txt_with_ack
