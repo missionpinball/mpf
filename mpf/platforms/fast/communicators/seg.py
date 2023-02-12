@@ -8,8 +8,6 @@ MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
-HEX_FORMAT = " 0x%02x"
-
 class FastSegCommunicator(FastSerialCommunicator):
 
     """Handles the serial communication to the FAST platform."""
@@ -17,7 +15,6 @@ class FastSegCommunicator(FastSerialCommunicator):
     ignored_messages = []
 
     async def init(self):
-
         await super().init()
 
         self._seg_task = None

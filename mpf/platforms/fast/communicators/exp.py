@@ -12,7 +12,6 @@ MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
-HEX_FORMAT = " 0x%02x"
 MIN_FW = version.parse('0.7')
 
 class FastExpCommunicator(FastSerialCommunicator):
@@ -39,54 +38,6 @@ class FastExpCommunicator(FastSerialCommunicator):
         # override w/o super because EXP processor does this per-board later
 
         await self.query_exp_boards()
-
-    async def connect(self):
-        """Connect to the serial port."""
-
-        # TODO combine this with the base class and move the extra stuff it does somewhere else
-
-
-        self.log.info("Connecting to %s at %sbps", self.config['port'], self.config['baud'])
-        while True:
-            try:
-                connector = self.machine.clock.open_serial_connection(
-                    url=self.config['port'], baudrate=self.config['baud'], limit=0, xonxoff=False,
-                    bytesize=EIGHTBITS, parity=PARITY_NONE, stopbits=STOPBITS_ONE)
-                self.reader, self.writer = await connector
-            except SerialException:
-                if not self.machine.options["production"]:
-                    raise
-
-                # if we are in production mode retry
-                await asyncio.sleep(.1)
-                self.log.warning("Connection to %s failed. Will retry.", self.config['port'])
-            else:
-                # we got a connection
-                break
-
-        serial = self.writer.transport.serial
-        if hasattr(serial, "set_low_latency_mode"):
-            try:
-                serial.set_low_latency_mode(True)
-            except (NotImplementedError, ValueError) as e:
-                self.log.debug(f"Could not enable low latency mode for {self.config['port']}. {e}")
-
-        # defaults are slightly high for our use case
-        self.writer.transport.set_write_buffer_limits(2048, 1024)
-
-        # read everything which is sitting in the serial
-        self.writer.transport.serial.reset_input_buffer()
-        # clear buffer
-        # pylint: disable-msg=protected-access
-        self.reader._buffer = bytearray()
-
-        # TODO confirm there's a binary command timeout
-        self.platform.debug_log("Connected to FAST processor. Sending 4 CRs to clear buffer.")
-        self.send_blind(('\r\r\r'))
-
-        self.log.debug(f"{self} Creating send task")
-        self.write_task = self.machine.clock.loop.create_task(self._socket_writer())
-        self.write_task.add_done_callback(Util.raise_exceptions)
 
     async def query_exp_boards(self):
         """Query the EXP bus for connected boards."""
@@ -169,11 +120,8 @@ class FastExpCommunicator(FastSerialCommunicator):
                         self._update_leds, 1 / self.config['led_hz'])
 
     def _update_leds(self):
-        # max 32ms / 31.25fps TODO add enforcement
-
         for breakout_address in self.platform.exp_breakouts_with_leds:
             dirty_leds = {k:v.current_color for (k, v) in self.platform.fast_exp_leds.items() if (v.dirty and v.address == breakout_address)}
-            # {'88000': 'FFFFFF', '88002': '121212'}
 
             if dirty_leds:
                 hex_count = Util.int_to_hex_string(len(dirty_leds))

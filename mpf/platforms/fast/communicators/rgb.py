@@ -3,8 +3,6 @@ from packaging import version
 from mpf.core.utility_functions import Util
 from mpf.platforms.fast.communicators.base import FastSerialCommunicator
 
-HEX_FORMAT = " 0x%02x"
-
 MIN_FW = version.parse('0.87') # override in subclass
 
 class FastRgbCommunicator(FastSerialCommunicator):
@@ -13,7 +11,7 @@ class FastRgbCommunicator(FastSerialCommunicator):
     the Nano Controller and FP-EXP-0800 LED controller."""
 
     ignored_messages = ['RA:P',
-                        'RF:P',
+                        'RF:',
                         'RS:P']
 
     def __init__(self, platform, processor, config):
@@ -24,7 +22,7 @@ class FastRgbCommunicator(FastSerialCommunicator):
 
     def _process_boot_msg(self, msg):
         """Process bootloader message."""
-        self.debug_log(f"Got Bootloader message: !B:{msg}"))
+        self.debug_log(f"Got Bootloader message: !B:{msg}")
         ignore_rgb = self.config['ignore_reboot']
         if msg in ('00', '02'):
             if ignore_rgb:

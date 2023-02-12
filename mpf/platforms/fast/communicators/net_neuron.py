@@ -18,7 +18,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
 
         super().__init__(platform, processor, config)
 
-        self.watchdog_cmd = f"WD:{hex(config['watchdog'])}"
+        self.watchdog_cmd = f"WD:{config['watchdog']:02X}"
         self._watchdog_task = None
 
         self.message_processors['SA:'] = self._process_sa
@@ -27,13 +27,14 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.message_processors['NN:'] = self._process_nn
         self.message_processors['/L:'] = self._process_switch_open
         self.message_processors['-L:'] = self._process_switch_closed
+        # TODO add 'SL:', 'DL:' etc to look for DL:F, but then what do we do with it?
 
     async def init(self):
         await self.send_query('ID:', 'ID:')  # Verify we're connected to a Neuron
-        await self.send_query('CH:2000,FF:', 'CH:P')  # Configure hardware for Neuron with active switch reporting
-        self.send_blind('WD:1') # Disable watchdog since who knows what state the board is in?
+        await self.send_query('CH:2000,FF', 'CH:P')  # Configure hardware for Neuron with active switch reporting
+        self.send_blind('WD:1') # Force expire the watchdog since who knows what state the board is in?
         await self.query_io_boards()
-        await asyncio.sleep(1)
+        # await asyncio.sleep(1)  # was experimenting to see if this affects the results of the SA: next
         await self.send_query('SA:', 'SA:')  # Get initial states so switches can be created
 
     async def soft_reset(self, **kwargs):
@@ -77,12 +78,8 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         """
 
         current_node = 0
-        self.log.info("Querying I/O Boards...")
         while current_node < 10:
-            self.log.info("about to await results of NN:{:02X}".format(current_node))
             await self.send_query('NN:{:02X}'.format(current_node), 'NN:')
-            # await asyncio.sleep(.5)
-            self.log.info(f"Got NN: Results. current_node: {current_node}, io_boards: {self.platform.io_boards}")
 
             # Don't move on until we get board 00 in since it can take a sec after a reset
             if not len(self.platform.io_boards):
@@ -95,8 +92,6 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
                 break
 
     def _process_nn(self, msg):
-        self.log.info("Received NN message: %s", msg)
-        self.log.info("Platform IO Boards: %s", self.platform.io_boards)
         firmware_ok = True
 
         if msg == 'F':  # NN:F

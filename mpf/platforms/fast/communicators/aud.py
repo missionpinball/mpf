@@ -8,8 +8,6 @@ MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
-HEX_FORMAT = " 0x%02x"
-
 class FastAudCommunicator(FastSerialCommunicator):
 
     """Handles the serial communication to the FAST platform."""

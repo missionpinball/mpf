@@ -2,17 +2,17 @@ import asyncio
 from packaging import version
 from serial import SerialException, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
 
+from mpf.core.logging import LogMixin
 from mpf.core.utility_functions import Util
 
-HEX_FORMAT = " 0x%02x"
 MIN_FW = version.parse('0.00') # override in subclass
 HAS_UPDATE_TASK = False
 
-class FastSerialCommunicator:
+class FastSerialCommunicator(LogMixin):
 
     """Handles the serial communication to the FAST platform."""
 
-    ignored_messages = ['WD:P']
+    ignored_messages = []
 
     # __slots__ = ["aud", "dmd", "remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
     #              "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
@@ -28,7 +28,7 @@ class FastSerialCommunicator:
         self.reader = None
         self.read_task = None
         self.received_msg = b''
-        self.log = platform.log  # TODO child logger per processor? Different debug logger?
+        self.log = None
         self.machine = platform.machine
         self.fast_debug = platform.debug
         self.port_debug = config['debug']
@@ -50,6 +50,9 @@ class FastSerialCommunicator:
         self.message_processors = {'XX:': self._process_xx,
                                    'ID:': self._process_id}
 
+        self.configure_logging(logger=f'[{self.remote_processor}]', console_level=config['debug'],
+                               file_level=config['debug'], url_base='https://fastpinball.com/mpf/error')
+
     def __repr__(self):
         return f'<FAST {self.remote_processor} Communicator>'
 
@@ -64,7 +67,7 @@ class FastSerialCommunicator:
         * Starts the read & write tasks
         * Set the flag to ignore decode errors
         """
-        self.log.debug(f"Connecting to {self.config['port']} at {self.config['baud']}bps")
+        self.log.info(f"Connecting to {self.config['port']} at {self.config['baud']}bps")
 
         while True:
             try:
@@ -115,7 +118,7 @@ class FastSerialCommunicator:
         """Clear out the serial buffer."""
 
         self.write_to_port(b'\r\r\r\r')
-        await asyncio.sleep(.5)
+        # await asyncio.sleep(.5)
 
     async def init(self):
 
@@ -129,7 +132,7 @@ class FastSerialCommunicator:
         """Process the ID response."""
         self.remote_processor, self.remote_model, self.remote_firmware = msg.split()
 
-        self.platform.log.info(f"Connected to {self.remote_processor} processor on {self.remote_model} with firmware v{self.remote_firmware}")
+        self.log.info(f"Connected to {self.remote_model} with firmware v{self.remote_firmware}")
 
         self.machine.variables.set_machine_var("fast_{}_firmware".format(self.remote_processor.lower()),
                                                self.remote_firmware)
@@ -177,7 +180,7 @@ class FastSerialCommunicator:
             buffer += char
             if char == separator and len(buffer) > min_chars:
                 if self.port_debug:
-                    self.log.info(f"{self.remote_processor} <<<< {buffer}")
+                    self.log.info(f"<<<< {buffer}")
                 return buffer
 
     def start(self):
@@ -185,13 +188,15 @@ class FastSerialCommunicator:
 
         Called once on MPF boot, not at game start."""
 
+        pass
+
     def stopping(self):
         """The serial connection is about to stop. This is called before stop() and allows you
         to do things that need to go out before the connection is closed. A 100ms delay to allow for this happens after this is called."""
 
     def stop(self):
         """Stop and shut down this serial connection."""
-        self.log.error("Stop called on serial connection %s", self.remote_processor)
+        self.log.debug("Stop called on serial connection %s", self.remote_processor)
         if self.read_task:
             self.read_task.cancel()
             self.read_task = None
@@ -223,9 +228,8 @@ class FastSerialCommunicator:
     def send_bytes(self, msg):
         self.send_queue.put_nowait((msg, None))
 
-    def _parse_msg(self, msg):
+    def parse_raw_bytes(self, msg):
         self.received_msg += msg
-        self.log.info(f'Parsing message: {msg}')
 
         while True:
             pos = self.received_msg.find(b'\r')
@@ -277,7 +281,7 @@ class FastSerialCommunicator:
             resp = await self.read(128)
             if resp is None:
                 return
-            self._parse_msg(resp)
+            self.parse_raw_bytes(resp)
 
     async def read(self, n=-1):
         """Read up to `n` bytes from the stream and log the result if debug is true.
@@ -299,20 +303,16 @@ class FastSerialCommunicator:
             return None
 
         if self.port_debug:
-            self.log.info(f"{self.remote_processor} <<<< {resp}")
+            self.log.info(f"<<<< {resp}")
         return resp
 
     async def _socket_writer(self):
         while True:
-            self.log.info("Waiting for send_queue.")
             msg, confirm_msg = await self.send_queue.get()
             await asyncio.wait_for(self.send_ready.wait(), timeout=None)  # TODO timeout? Prob no, but should do something to not block forever
-            self.log.info(f"Got send_queue item: {msg}, wait for: {confirm_msg}")
 
             try:
-                self.log.info("_socket_write, is send_ready? %s", self.send_ready.is_set())
                 await asyncio.wait_for(self.send_ready.wait(), timeout=1)
-                self.log.info("Got send_ready.")
             except asyncio.TimeoutError:
                 self.log.error("Timeout waiting for send_ready. Message was: %s", msg)
                 # TODO Decide what to do here, prob raise a specific exception?
@@ -328,6 +328,6 @@ class FastSerialCommunicator:
     def write_to_port(self, msg):
         # Sends a message as is, without encoding or adding a <CR> character
         if self.port_debug:
-            self.log.info(f"{self.remote_processor} >>>> {msg}")
+            self.log.info(f">>>> {msg}")
 
         self.writer.write(msg)

@@ -57,13 +57,13 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         super().__init__(machine)
 
         self.config = self.machine.config_validator.validate_config("fast", self.machine.config['fast'])
-        self._configure_device_logging_and_debug("FAST", self.config)  #todo
+        self._configure_device_logging_and_debug("FAST", self.config, url_base='https://fastpinball.com/mpf/error')  #todo
 
-        self.ports = list()
+        self.configured_ports = list()
 
         for port_type in self.port_types:
             if self.config[port_type]:
-                self.ports.append(port_type)
+                self.configured_ports.append(port_type)
 
         if self.config["net"]["controller"]:
             self.machine_type = self.config["net"]["controller"]
@@ -129,18 +129,20 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def stop(self):
         """Stop platform and close connections."""
 
-        for conn in self.serial_connections.values():
-            # clear out whatever's in the send queues
-            for _ in range(conn.send_queue.qsize()):
-                conn.send_queue.get_nowait()
-                conn.send_queue.task_done()
+        if not self.unit_test:  # Only do this with real hardware TODO better way to check?
+            for conn in self.serial_connections.values():
+                # clear out whatever's in the send queues
+                for _ in range(conn.send_queue.qsize()):
+                    conn.send_queue.get_nowait()
+                    conn.send_queue.task_done()
 
-            conn.query_done.set()
-            conn.send_ready.set()
-            conn.stopping()
+                conn.query_done.set()
+                conn.send_ready.set()
+                conn.stopping()
 
         # wait 100ms for the messages to be sent
-        self.machine.clock.loop.run_until_complete(asyncio.sleep(.1))
+        if not self.unit_test:
+            self.machine.clock.loop.run_until_complete(asyncio.sleep(.1))
 
         for port, connection in self.serial_connections.items():
             if connection:
@@ -188,7 +190,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     async def _connect_to_hardware(self):
         """Connect to each port from the config."""
 
-        for port in self.ports:
+        for port in self.configured_ports:
 
             config = self.config[port]
 

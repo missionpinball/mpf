@@ -347,7 +347,7 @@ class Util:
         source_int = int(source_int)
 
         if 0 <= source_int <= 255 or allow_overflow:
-            return format(source_int, 'x').upper().zfill(2)
+            return f"{source_int:02X}"
 
         raise ValueError("invalid source int: %s" % source_int)
 

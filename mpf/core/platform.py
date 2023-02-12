@@ -69,7 +69,7 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
                                     "you configured for {feature_name} actually supports that type "
                                     "of devices.".format(self.__class__, feature_name=feature_name), 99)
 
-    def _configure_device_logging_and_debug(self, logger_name, config):
+    def _configure_device_logging_and_debug(self, logger_name, config, url_base=None):
         """Configure logging for platform."""
         if config['debug']:
             self.debug = True
@@ -78,7 +78,8 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
 
         self.configure_logging(logger_name,
                                config['console_log'],
-                               config['file_log'])
+                               config['file_log'],
+                               url_base=url_base)
 
     @classmethod
     def get_config_spec(cls):
