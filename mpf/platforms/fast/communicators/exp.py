@@ -85,7 +85,7 @@ class FastExpCommunicator(FastSerialCommunicator):
 
         if self.platform.machine_type == 'neuron' and 'neuron' not in self.config['boards']:
 
-            self.config['boards']['neuron'] = {'model': 'FP-CPU-2000', 'id': '0',}
+            self.config['boards']['neuron'] = {'model': 'FP-EXP-2000', 'id': '0',}
             self.machine.config_validator.validate_config("fast_exp_board", self.config['boards']['neuron'])
 
         for board_name, board_config in self.config['boards'].items():
