@@ -643,9 +643,21 @@ fast_exp:
     debug: single|bool|false
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
-    boards: list|str|None
+    boards: dict|str:subconfig(fast_exp_board)|
+    # led_fade_time: single|ms|0
+    # led_hz: single|int|30
+fast_exp_board:
+    model: single|str|
+    id: single|enum(0,1,2,3)|0
+    breakouts: ignore  # TODO once we have breakouts
+    led_ports: list|subconfig(fast_led_port)|None
     led_fade_time: single|ms|0
     led_hz: single|int|30
+    servos: ignore # TODO dunno if we need this but want to remember to think about it once servo support is fully added
+fast_led_port:
+    port: single|str|
+    type: single|enum(ws2812,apa-102)|ws2812
+    leds: single|int|32
 fast_aud:
     port: single|str|
     baud: single|int|230400

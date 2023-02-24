@@ -9,55 +9,99 @@ fast:
     controller: neuron
   exp:
     port: com4
-    boards: 201-0, 201-1, 71-0, 201-2
+    debug: true
+    boards:
+      brian:
+        model: FP-exp-0201  # test mixed case
+        id: 0
+        breakouts: None
+        led_ports:
+          - port: 1
+            leds: 32
+            type: ws2812
+          - port: 2
+            leds: 32
+            type: apa-102
+        led_hz: 30
+      aaron:
+        model: FP-EXP-0201-2  # test hw revision number included
+        id: 1
+        breakouts: None
+        led_ports:
+          - port: 1
+            leds: 32
+            type: ws2812
+          - port: 2
+            leds: 32
+            type: apa-102
+      dave:
+        model: FP-EXP-0071
+        id: 0
+        breakouts: None
+        led_ports:
+          - port: 1
+            leds: 32
+            type: ws2812
+          - port: 2
+            leds: 32
+            type: apa-102
+        servos:
+          - port: 1
+            servos: 4
+      eli:
+        model: FP-EXP-0081-1
 
 lights:
   led1:
-    number: exp-201-i0-b0-p1-1 # @880:00
+    number: Brian-b1-1-1 # @880:00  # test mixed case
   led2:
-    number: exp-0201-i0-b0-p1-2 # @880:01
+    number: brian-1-2 # @880:01
   led3:
-    number: exp-0201-i0-b0-p1-3 # @880:02
+    number: brian-1-3 # @880:02
   led4:
-    number: exp-0201-i0-b1-p2-1 # @881:20
+    number: brian-b1-2-1 # @881:20
   led5:
-    number: exp-0201-i0-b1-p2-2 # @881:21
+    number: brian-b1-2-2 # @881:21
   led6:
-    number: exp-201-i1-b2-p1-1 # 89200
+    number: aaron-b2-1-1 # 89200
   led7:
-    number: exp-201-i1-b1-p1-1 # 89100
+    number: aaron-b1-1-1 # 89100
   led8:
-    number: exp-201-i2-b2-p4-1 # 8A260
+    number: dave-4-1
   led9:
-    number: exp-201-i2-b2-p4-2 # 8A261
+    number: dave-4-2
   led10:
-    number: exp-201-i2-b2-p4-3 # 8A262
+    number: dave-4-3
     type: grb
   led11:
-    number: exp-201-i2-b2-p4-4 # 8A263
+    number: dave-4-4
   led12:
-    number: exp-201-i2-b2-p4-5 # 8A264
+    number: dave-4-5
   led13:
-    number: exp-201-i2-b2-p4-6 # 8A265
+    number: dave-4-6
   led14:
-    number: exp-201-i2-b2-p4-7 # 8A266
+    number: dave-4-7
   led15:
-    number: exp-201-i2-b2-p4-8 # 8A267
+    number: dave-4-8
   led16:
-    number: exp-201-i2-b2-p4-9 # 8A268
+    number: dave-4-9
   led17:
-    number: exp-201-i2-b2-p4-10 # 8A269
+    number: dave-4-10
   led18:
-    number: exp-201-i2-b2-p4-11 # 8A26A
+    number: dave-4-11
+  led19:
+    number: eli-8-1
 
 servos:
     servo1:
-        number: FP-EXP-0071-i0-s1
+        number: dAve-1  # test mixed case
         platform_settings:
             min_us: 500
             home_us: 1500
             max_us: 2500
             max_runtime: 2s
+    servo2:
+        number: dave-b1-2
     # servo20:
     #     number: FP-EXP-0071-i1-b0-4
     #     servo_min: 500

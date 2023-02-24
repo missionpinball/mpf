@@ -257,7 +257,7 @@ class TestFastExp(MpfTestCase):
         # self.assertEqual(len(platform.fast_exp_leds), 5)
         self.assertTrue(platform.flag_exp_led_tick_registered)  # bool
 
-        self.assertIn('88', platform.exp_boards)
+        self.assertIn('88', platform.exp_boards_by_address)
 
         led1.on()
         led2.color("ff1234")

@@ -176,30 +176,41 @@ RETRO_GI_MAP = {
 }
 
 EXPANSION_BOARD_ADDRESS_MAP = {
-
-    # board type - index : one byte address
-    '0071-0': 'B4',
-    '0071-1': 'B5',
-    '0071-2': 'B6',
-    '0071-3': 'B7',
-
-    '0081-0': '84',
-    '0081-1': '85',
-    '0081-2': '86',
-    '0081-3': '87',
-
-    '0201-0': '88',
-    '0201-1': '89',
-    '0201-2': '8A',
-    '0201-3': '8B',
-
-    'neuron': '48',
+    ('FP-EXP-0071', '0'): 'B4',
+    ('FP-EXP-0071', '1'): 'B5',
+    ('FP-EXP-0071', '2'): 'B6',
+    ('FP-EXP-0071', '3'): 'B7',
+    ('FP-EXP-0081', '0'): '84',
+    ('FP-EXP-0081', '1'): '85',
+    ('FP-EXP-0081', '2'): '86',
+    ('FP-EXP-0081', '3'): '87',
+    ('FP-EXP-0201', '0'): '88',
+    ('FP-EXP-0201', '1'): '89',
+    ('FP-EXP-0201', '2'): '8A',
+    ('FP-EXP-0201', '3'): '8B',
+    ('neuron', '0'): '48',
+    ('FP-CPU-2000', '0'): '48',
 }
 
-EXPANSION_BOARD_BREAKOUT_COUNTS = {
-
-    # board: number of breakouts
-    'FP-EXP-0071': 1,  # 071
-    'FP-EXP-0201': 4,  # 201
-    'FP-CPU-2000': 4,  # Neuron
+EXPANSION_BOARD_FEATURES = {
+    'FP-EXP-0071': {
+        'led_ports': 4,
+        'servo_ports': 4,
+        'breakout_ports': 0,
+    },
+    'FP-EXP-0081': {
+        'led_ports': 8,
+        'servo_ports': 0,
+        'breakout_ports': 0,
+    },
+    'FP-EXP-0201': {
+        'led_ports': 4,
+        'servo_ports': 0,
+        'breakout_ports': 3,
+    },
+    'FP-CPU-2000': {
+        'led_ports': 4,
+        'servo_ports': 0,
+        'breakout_ports': 3,
+    },
 }

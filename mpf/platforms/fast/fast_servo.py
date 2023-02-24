@@ -9,31 +9,25 @@ class FastServo(ServoPlatformInterface):
 
     # __slots__ = ["number", "exp_connection"]
 
-    def __init__(self, config, exp_connection):
-        """Initialise servo."""
+    def __init__(self, breakout_board, port, config):
+        """Initialize servo."""
         self.config = config
-        self.exp_connection = exp_connection
+        self.exp_connection = breakout_board.communicator
 
-        board_address, breakout_address, device = self.exp_connection.get_address_from_number_string(config['number'])
+        # board_address, breakout_address, device = self.exp_connection.get_address_from_number_string(config['number'])
 
-        self.base_address = f'{board_address}{breakout_address}'
-        self.servo_index = str(int(device[-1]) - 1)  # Servos are 0-indexed
-        self.max_runtime = f"{config['platform_settings']['max_runtime']:02X}"
-
-        assert(board_address in exp_connection.exp_boards, f"Board address {board_address} not found")
-        assert(self.base_address in ['B40', 'B50', 'B60', 'B70'], f"Board address not valid")  # Servos only on EXP-0071 boards for now
+        self.base_address = breakout_board.address
+        self.servo_index = str(int(port) - 1)  # Servos are 0-indexed
+        self.max_runtime = f"{config['max_runtime']:02X}"
 
         self.write_config_to_servo()
 
     def write_config_to_servo(self):
+        min_us = f"{self.config['min_us']:02X}"
+        max_us = f"{self.config['max_us']:02X}"
+        home_us = f"{self.config['home_us']:02X}"
 
-        # TODO need proper config validation for platform_settings
-
-        min_us = f"{self.config['platform_settings']['min_us']:02X}"
-        max_us = f"{self.config['platform_settings']['max_us']:02X}"
-        home_us = f"{self.config['platform_settings']['home_us']:02X}"
-
-        self.exp_connection.send_blind(f"EM@{self.base_address}:{self.servo_index},1,{self.max_runtime},{min_us},{max_us},{home_us}")
+        self.exp_connection.send_and_confirm(f"EM@{self.base_address}:{self.servo_index},1,{self.max_runtime},{min_us},{max_us},{home_us}", 'EM:P')
 
     def go_to_position(self, position):
         """Set a servo position."""

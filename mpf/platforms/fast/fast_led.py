@@ -61,11 +61,14 @@ class FASTExpLED(FASTDirectLED):
     def __init__(self, number: str, hardware_fade_ms: int, platform) -> None:
         """Initialize FAST LED."""
 
-        self.board_address, self.breakout, self.port, self.index, self.number = self.parse_number_string(number, platform)
+        # self.board_address, self.breakout, self.port, self.index, self.number = self.parse_number_string(number, platform)
+        self.number = number
         self.platform = platform
-        self.breakout_board = self.platform.exp_breakout_boards[f'{self.board_address}{self.breakout}']
-        self.address = f'{self.board_address}{self.breakout}' # '880'
-        self.port = self.port
+        self.address = f'{number[0:3]}' # '880'
+        self.exp_board = platform.exp_boards_by_address[self.address[0:2]]
+        self.breakout_board = platform.exp_breakout_boards[self.address]
+
+        # self.port = self.port
         self.dirty = False  # we can reset the board on connection so we don't need to send the first color
         self.machine = platform.machine
         self.platform = platform
@@ -75,39 +78,35 @@ class FASTExpLED(FASTDirectLED):
         # All FAST LEDs are 3 element RGB and are set using hex strings
         self.log.debug("Creating FAST RGB LED on expansion board at hardware address: %s", self.number)
 
-        try:
-            self.exp_board = self.platform.exp_boards[self.board_address]
-        except KeyError:
-            # raise ConfigFileError("Expansion board {} not found.".format(self.board_address)) #TODO
-            raise ValueError("Expansion board {} not found in config.".format(self.board_address))
+    # @classmethod
+    # def parse_number_string(cls, number: str, platform, return_all=True) -> str:
+    #     """Return number string."""
 
-    @classmethod  # TODO move & combine with FASTExpCommunicator.get_address_from_number_string
-    def parse_number_string(cls, number: str, platform, return_all=True) -> str:
-        """Return number string."""
+    #     # examples
+    #     # brian-b0-1-1
+    #     # brian-3-1
 
-        # example exp-201-i0-b0-p1-1
+    #     try:
+    #         _, board, id, breakout, port, led = number.split("-")
 
-        try:
-            _, board, id, breakout, port, led = number.split("-")
+    #     except ValueError as e:
+    #         platform.raise_config_error(
+    #                 f"Could not parse LED number {number}. Please verify the format.", 7)
 
-        except ValueError as e:
-            platform.raise_config_error(
-                    f"Could not parse LED number {number}. Please verify the format.", 7)
+    #     board = board.zfill(4)  # '201' -> '0201'
+    #     id = int(id[1:])  # 'i0' -> 0
+    #     breakout = int(breakout[1:])  # 'b0' -> 0
+    #     port = int(port[1:]) - 1  # 'p1' -> 0
+    #     led = int(led) - 1  # '1' -> 0
 
-        board = board.zfill(4)  # '201' -> '0201'
-        id = int(id[1:])  # 'i0' -> 0
-        breakout = int(breakout[1:])  # 'b0' -> 0
-        port = int(port[1:]) - 1  # 'p1' -> 0
-        led = int(led) - 1  # '1' -> 0
+    #     board_address = EXPANSION_BOARD_ADDRESS_MAP[f'{board}-{id}'] # '88'
+    #     index = (port * 32) + led  # int 0-31
+    #     number_str = f'{board_address}{breakout}{Util.int_to_hex_string(index)}' #  '88000'
 
-        board_address = EXPANSION_BOARD_ADDRESS_MAP[f'{board}-{id}'] # '88'
-        index = (port * 32) + led  # int 0-31
-        number_str = f'{board_address}{breakout}{Util.int_to_hex_string(index)}' #  '88000'
-
-        if return_all:
-            return board_address, breakout, port, index, number_str
-        else:
-            return number_str
+    #     if return_all:
+    #         return board_address, breakout, port, index, number_str
+    #     else:
+    #         return number_str
 
 class FASTDirectLEDChannel(LightPlatformInterface):
 

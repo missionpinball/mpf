@@ -29,7 +29,7 @@ class FastExpCommunicator(FastSerialCommunicator):
 
         super().__init__(platform, processor, config)
 
-        self.exp_boards = dict()  # keys = board addresses, values = FastExpansionBoard objects
+        self.exp_boards_by_address = dict()  # keys = board addresses, values = FastExpansionBoard objects
         self.active_board = None
         self._led_task = None
 
@@ -42,24 +42,13 @@ class FastExpCommunicator(FastSerialCommunicator):
 
     def start(self):
         """Start listening for commands and schedule watchdog."""
-        self._update_leds()
 
-        if self.config['led_hz'] > 31.25:
-            self.config['led_hz'] = 31.25
-
-        self._led_task = self.machine.clock.schedule_interval(
-                        self._update_leds, 1 / self.config['led_hz'])
+        for board in self.exp_boards_by_address.values():
+            board.start()
 
     def stopping(self):
-        if self._led_task:
-            self._led_task.cancel()
-            self._led_task = None
-
-        try:
-            for board_address in self.exp_boards.keys():
-                self.send_blind(f'BR@{board_address}:')
-        except KeyError:
-            pass
+        for board in self.exp_boards_by_address.values():
+            board.stopping()
 
     def get_address_from_number_string(self, number_str):
         """Return number string."""
@@ -94,42 +83,39 @@ class FastExpCommunicator(FastSerialCommunicator):
     async def query_exp_boards(self):
         """Query the EXP bus for connected boards."""
 
-        board_count = 0
-        for board in self.config['boards']:
-            board = board.zfill(6)  # '71-1' --> '0071-1'
-            self.active_board = EXPANSION_BOARD_ADDRESS_MAP[board]
+        for board_name, board_config in self.config['boards'].items():
 
-            while board_count < len(self.config['boards']):
+            board_config['model'] = ('-').join(board_config['model'].split('-')[:3]).upper()  # FP-eXp-0071-2 -> FP-EXP-0071
+            self.active_board = EXPANSION_BOARD_ADDRESS_MAP[(board_config['model'], board_config['id'])]
 
-                await self.send_query(f'ID@{self.active_board}:', 'ID:')
+            if self.active_board in self.exp_boards_by_address:
+            # Got an ID for a board that's already registered. This shouldn't happen?
+                raise AssertionError(f'Expansion Board at address {self.active_board} is already registered')
 
-                if len(self.exp_boards) > board_count:
-                    self.reset_exp_board(self.active_board)
-                    board_count += 1
-                    break
+            board_obj = FastExpansionBoard(board_name, self, self.active_board, board_config)
+            self.exp_boards_by_address[self.active_board] = board_obj  # registers with this EXP communicator
+            self.platform.register_expansion_board(board_obj)  # registers with the platform
+
+            await self.send_query(f'ID@{self.active_board}:', 'ID:')
+
+            board_obj.reset()
 
     def _process_id(self, msg):
-        product_id, firmware_version = msg[3:].split()
+        bus, product_id, firmware_version = msg.split()
+        assert bus == 'EXP'
 
         if version.parse(firmware_version) < MIN_FW:
             raise AssertionError(f'Firmware version mismatch. MPF requires the EXP processor '
                                 f'to be firmware {MIN_FW}, but yours is {firmware_version}')
 
-        if self.active_board in self.exp_boards:
-            # Got an ID for a board that's already registered, which is fine, nothing more to do
-            return
-
-        board_obj = FastExpansionBoard(self, self.active_board, product_id, firmware_version)
-        self.platform.log.info(f'Registered Expansion board: {product_id}, v{firmware_version}')
-        self.exp_boards[self.active_board] = board_obj
-        self.platform.register_expansion_board(board_obj)
+        self.exp_boards_by_address[self.active_board].verify_hardware(product_id, firmware_version)
 
     def _process_br(self, msg):
         pass  # TODO
 
-    async def reset_exp_board(self, address):
-        """Reset an expansion board. Can be 2 or 3 digit hex string."""
-        self.send_and_confirm(f'BR@{address}:\r', 'BR:P')
+    # async def reset_exp_board(self, address):
+    #     """Reset an expansion board. Can be 2 or 3 digit hex string."""
+    #     self.send_and_confirm(f'BR@{address}:\r', 'BR:P')
 
     def set_active_board(self, board_address):
         """Sets the active board. Can be 2 or 3 digit hex string."""
@@ -148,17 +134,3 @@ class FastExpCommunicator(FastSerialCommunicator):
 
         self.platform.debug_log(f"{self} - Setting LED fade rate to {rate}ms")
         self.send_blind(f'RF@{board_address}:{Util.int_to_hex_string(rate, True)}')
-
-    def _update_leds(self):
-        for breakout_address in self.platform.exp_breakouts_with_leds:
-            dirty_leds = {k:v.current_color for (k, v) in self.platform.fast_exp_leds.items() if (v.dirty and v.address == breakout_address)}
-
-            if dirty_leds:
-                hex_count = Util.int_to_hex_string(len(dirty_leds))
-                msg = f'52443A{hex_count}'  # RD: in hex 52443A
-
-                for led_num, color in dirty_leds.items():
-                    msg += f'{led_num[3:]}{color}'
-
-                self.set_active_board(breakout_address)
-                self.send_bytes(b16decode(msg))

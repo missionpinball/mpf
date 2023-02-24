@@ -85,7 +85,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.fast_leds = dict()
         self.fast_exp_leds = dict()
         self.fast_segs = list()
-        self.exp_boards = dict()  # k: EE address, v: FastExpansionBoard instances
+        self.exp_boards_by_address = dict()  # k: EE address, v: FastExpansionBoard instances
+        self.exp_boards_by_name = dict()  # k: str name, v: FastExpansionBoard instances
         self.exp_breakout_boards = dict()  # k: EEB address, v: FastBreakoutBoard instances
         # self.exp_dirty_led_ports = set() # FastLedPort instances
         self.exp_breakouts_with_leds = set()
@@ -174,9 +175,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     def register_expansion_board(self, board):
         """Register an Expansion board."""
-        if board.address in self.exp_boards:
+        if board.address in self.exp_boards_by_address:
             raise AssertionError("Duplicate expansion board address")
-        self.exp_boards[board.address] = board
+        self.exp_boards_by_address[board.address] = board
+        self.exp_boards_by_name[board.name] = board
 
     def register_breakout_board(self, board):
         """Register a Breakout board."""
@@ -383,14 +385,28 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         Returns: Servo object.
         """
-        del number
+        # TODO consolidate with similar code in configure_light()
+        number = number.lower()
+        parts = number.split("-")
 
-        if 'exp' not in self.serial_connections:
-            raise AssertionError('A request was made to configure a FAST '
-                                 'servo, but no connection to an EXP processor'
-                                 'is available')
+        exp_board = self.exp_boards_by_name[parts[0]]
 
-        return FastServo(config, self.serial_connections['exp'])
+        try:
+            name, port = parts
+            breakout = '0'
+        except ValueError:
+            name, breakout, port = parts
+            breakout = breakout.strip('b')
+
+        # verify this board support servos
+        assert int(port) in range(1, exp_board.features['servo_ports'])
+
+        brk_board = exp_board.breakouts[int(breakout) - 1]
+
+        config.update(self.machine.config_validator.validate_config('fast_servos', config['platform_settings']))
+        del config['platform_settings']
+
+        return FastServo(brk_board, port, config)
 
     def _parse_switch_number(self, number):
         try:
@@ -501,6 +517,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def configure_light(self, number, subtype, config, platform_settings) -> LightPlatformInterface:
         """Configure light in platform."""
 
+        # number will have the trailing -X representing the chanel. Typically -0, -1, -2 for RGB LEDs
+
         del platform_settings
 
         if not (self.serial_connections['net'] or self.serial_connections['exp']):
@@ -515,37 +533,43 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                    int(1 / self.config['net']['lamp_hz'] * 1000), self)
         if not subtype or subtype == "led":
 
-            try:
-                number_str, channel = number.rsplit('-', 1)
+            parts, channel = number.lower().rsplit('-', 1)  # make everything lowercase and strip trailing channel number
+            parts = parts.split('-')  # split into board name, (breakout), port, led
 
-            except ValueError as e:
-                self.raise_config_error("Light syntax is number-channel (but was \"{}\") for light {}.".format(
-                    number, config.name), 9, source_exception=e)
-                raise
+            if parts[0] in self.exp_boards_by_name:
+                # this is an expansion board LED
+                exp_board = self.exp_boards_by_name[parts[0]]
 
-            if number_str[:3] in ('exp', 'cpu'):
+                try:
+                    name, port, led = parts
+                    breakout = '0'
+                except ValueError:
+                    name, breakout, port, led = parts
+                    breakout = breakout.strip('b')
 
-                if not self.serial_connections['exp']:
-                    self.raise_config_error("An LED is configured for an expansion board, but no EXP connection exists.", 10)  # TODO pick a real number
+                brk_board = exp_board.breakouts[int(breakout) - 1]
 
-                this_led_number = FASTExpLED.parse_number_string(number_str, self, return_all=False)
+                port_offset = ((int(port) - 1) * 32)  # TODO read actual value for how many LEDs per port
+                led = int(led) - 1
+                index = f'{(port_offset + led):02x}'
+                this_led_number = f'{brk_board.address}{index}'
 
                 # this code runs once for each channel, so it will be called 3x per LED which
                 # is why we check this here
                 if this_led_number not in self.fast_exp_leds:
-                    self.fast_exp_leds[this_led_number] = FASTExpLED(number_str, int(self.config['exp']['led_fade_time']), self)
+                    self.fast_exp_leds[this_led_number] = FASTExpLED(this_led_number, exp_board.config['led_fade_time'], self)
 
                 fast_led_channel = FASTDirectLEDChannel(self.fast_exp_leds[this_led_number], channel)
                 self.fast_exp_leds[this_led_number].add_channel(int(channel), fast_led_channel)
 
                 return fast_led_channel
 
-            elif number_str not in self.fast_leds:
-                self.fast_leds[number_str] = FASTDirectLED(
-                    number_str, int(self.config['rgb']['led_fade_time']), self)
+            elif number not in self.fast_leds:
+                self.fast_leds[number] = FASTDirectLED(
+                    number, int(self.config['rgb']['led_fade_time']), self)
 
-            fast_led_channel = FASTDirectLEDChannel(self.fast_leds[number_str], channel)
-            self.fast_leds[number_str].add_channel(int(channel), fast_led_channel)
+            fast_led_channel = FASTDirectLEDChannel(self.fast_leds[number], channel)
+            self.fast_leds[number].add_channel(int(channel), fast_led_channel)
 
             return fast_led_channel
 
@@ -583,22 +607,24 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             ]
         if not subtype or subtype == "led":
 
-            if str(number).startswith("exp") or str(number).startswith("cpu"):
-                # expansion board LED
-                index = number
+            # parts = number.split('-')
 
-            # if the LED number is in <channel> - <led> format, convert it to a
-            # FAST hardware number
-            elif '-' in str(number):
-                num = str(number).split('-')
-                index = (int(num[0]) * 64) + int(num[1])
-            else:
-                index = int(number)
+            # if parts[0].lower() in self.exp_boards_by_name:
+            #     # we have an expansion LED
+            #     number = '-'.join(parts[1:])  # strip of the exp board friendly name
+
+            # # if the LED number is in <channel> - <led> format, convert it to a
+            # # FAST hardware number
+            # if '-' in str(number):
+            #     num = str(number).split('-')
+            #     index = (int(num[0]) * 64) + int(num[1])
+            # else:
+            #     index = int(number)
 
             return [
-                {"number": f"{index}-0"},
-                {"number": f"{index}-1"},
-                {"number": f"{index}-2"},
+                {"number": f"{number}-0"},
+                {"number": f"{number}-1"},
+                {"number": f"{number}-2"},
             ]
 
         raise AssertionError(f"Unknown subtype {subtype}")
