@@ -191,25 +191,43 @@ EXPANSION_BOARD_ADDRESS_MAP = {
     ('FP-EXP-2000', '0'): '48',
 }
 
-EXPANSION_BOARD_FEATURES = {
+EXPANSION_BOARD_BREAKOUTS = {  # Total breakouts including built-in one
+    'FP-EXP-0071': 1,
+    'FP-EXP-0081': 1,
+    'FP-EXP-0201': 4,
+    'FP-EXP-2000': 4,
+}
+
+EXP_BREAKOUT_0_IDS = {  # Names of the breakouts that are built in to each board
+    'FP-EXP-0071': 'FP-EXP-0071',
+    'FP-EXP-0081': 'FP-EXP-0081',
+    'FP-EXP-0201': 'FP-EXP-0201',
+    'FP-EXP-2000': 'FP-BRK-0001',
+}
+
+BREAKOUT_FEATURES = {
     'FP-EXP-0071': {
         'led_ports': 4,
         'servo_ports': 4,
-        'breakout_ports': 0,
     },
     'FP-EXP-0081': {
         'led_ports': 8,
-        'servo_ports': 0,
-        'breakout_ports': 0,
     },
     'FP-EXP-0201': {
         'led_ports': 4,
-        'servo_ports': 0,
-        'breakout_ports': 3,
     },
     'FP-EXP-2000': {
         'led_ports': 4,
-        'servo_ports': 0,
-        'breakout_ports': 3,
     },
+    'FP-BRK-0001': {
+        'led_ports': 4,
+    },
+    'FP-DRV-0800': {
+        'servo_ports': 8,
+    },
+    'FP-BRK-0116': {
+        'flasher_ports': 16,
+    },
+    'FP-PWR-0007': {
+        'device_class': 'mpf.platforms.fast.fast_exp_board',},  # TODO temp module until this code is written
 }

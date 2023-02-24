@@ -1,11 +1,15 @@
 """FAST Expansion Board."""
 
 from base64 import b16decode
+from importlib import import_module
+from packaging import version
 
-from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_FEATURES, EXPANSION_BOARD_ADDRESS_MAP
+from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_BREAKOUTS, BREAKOUT_FEATURES, EXP_BREAKOUT_0_IDS
 from mpf.platforms.fast.fast_led import FASTExpLED
 
 class FastExpansionBoard:
+
+    MIN_FW = version.parse('0.7')
 
     """A FAST Expansion board on the EXP connection."""
 
@@ -28,21 +32,27 @@ class FastExpansionBoard:
 
         self.log.debug(f'Creating FAST Expansion Board "{self.name}" ({self.model} ID {self.id})')
 
-        self.breakouts = list()
+        self.num_breakouts = EXPANSION_BOARD_BREAKOUTS[self.model]
+        self.breakouts = dict()
         self.breakouts_with_leds = list()
-
-        self.features = EXPANSION_BOARD_FEATURES[self.model]
-        # led_ports
-        # breakout_ports
-        # servo_ports
-
         self._led_task = None  # todo move to breakout or port and/or mixin class?
 
+        self.create_breakout({'port': '0', 'model': self.model})
 
-        for index in range(self.features['breakout_ports'] + 1):  # +1 for the built-in breakout
-            brk_board = FastBreakoutBoard(self, index, self.platform, communicator)
-            self.breakouts.append(brk_board)
-            self.platform.register_breakout_board(brk_board)
+        for brk in self.config['breakouts']:
+            if brk:
+                self.create_breakout(brk)
+
+    def create_breakout(self, config):
+        if BREAKOUT_FEATURES[config['model']].get('device_class'):
+            # module = import_module(BREAKOUT_FEATURES[config['model']]['device_class'])
+            module = import_module('mpf.platforms.fast.fast_exp_board')
+            brk_board = module.FastBreakoutBoard(config, self)
+        else:
+            brk_board = FastBreakoutBoard(config, self)
+
+        self.breakouts[config['port']] = brk_board
+        self.platform.register_breakout_board(brk_board)
 
     def __repr__(self):
         return f'{self.model} "{self.name}"'
@@ -55,27 +65,35 @@ class FastExpansionBoard:
         """Set board active."""
         self.communicator.set_active(address)
 
-    def verify_hardware(self, id_string, firmware_version):
+    def verify_hardware(self, id_string, active_board):
         """Verify hardware."""
 
-        self.firmware_version = firmware_version
+        exp_board = active_board[:2]
+        brk_board = active_board[2:]
+        proc, product_id, firmware_version = id_string.split()
 
-        if id_string != self.model:
-            self.log.error(f"Expected {self.model} but got {id_string} from {self}")
-            self.hw_verified = False
+        assert exp_board == self.address
+
+        if proc == 'EXP':
+
+            self.firmware_version = firmware_version
+
+            if product_id != self.model:
+                raise AssertionError(f"Expected {self.model} but got {id_string} from {self}")
+            else:
+                self.hw_verified = True
+
+        elif proc in ('BRK', 'LED'):
+
+            brk = self.breakouts[brk_board]
+
+            if product_id != brk.model:
+                raise AssertionError(f"Expected {brk.model} but got {id_string} from {self}")
+            else:
+                brk.hw_verified = True
+
         else:
-            self.hw_verified = True
-
-        return self.hw_verified
-
-    async def init(self):
-        """Initialize board."""
-        for index in range(len(self.breakouts)):
-            self.breakouts[index] = FastBreakoutBoard(self, index)
-
-    # async def query_breakout_boards(self):
-    #     while True:
-    #         pass
+            raise AssertionError(f'Unknown processor type {proc} in ID response')
 
     def start(self):
         self._update_leds()
@@ -117,19 +135,27 @@ class FastBreakoutBoard:
         Not really used yet, but will be in the future to track firmware versions on breakouts, wiring connections, etc.
     """
 
-    __slots__ = ["expansion_board", "log", "index", "platform", "communicator", "address", "leds", "led_fade_rate"]
+    # __slots__ = ["expansion_board", "log", "index", "platform", "communicator", "address", "leds", "led_fade_rate"]
 
-    def __init__(self, expansion_board, index, platform, communicator):
+    def __init__(self, config, expansion_board):
         """Initialize FastBreakoutBoard."""
+        self.config = config
         self.expansion_board = expansion_board  # object
         self.log = expansion_board.log
-        self.log.debug(f"Creating FAST Breakout Board at address {self.expansion_board.address}{index}")
-        self.index = index  # int, zero-based, 0-5
-        self.platform = platform
-        self.communicator = communicator
+        self.index = config['port']  # int, zero-based, 0-5
+        self.log.debug(f"Creating FAST Breakout Board {self.index} on {self.expansion_board}")
+        self.platform = expansion_board.platform
+        self.communicator = expansion_board.communicator
         self.address = f'{self.expansion_board.address}{self.index}'  # string hex byte + nibble
+        self.features = BREAKOUT_FEATURES[config['model']]
         self.leds = list()
         self.led_fade_rate = 0
+        self.hw_verified = False
+
+        if self.index == '0':  # Built in breakout 0 boards may have different models than their parent expansion boards
+            self.model = EXP_BREAKOUT_0_IDS[self.config['model']]
+        else:
+            self.model = self.config['model']
 
         # TODO this is temporary, change to figure out for real what's on each breakout board.
 
@@ -159,3 +185,10 @@ class FastBreakoutBoard:
 
         self.led_fade_rate = rate
         self.communicator.set_led_fade_rate(self.address, rate)
+
+    async def query_breakout_boards(self):
+        """Query breakout boards."""
+
+
+
+        await self.send_query(f'ID@{self.active_board}:', 'ID:')

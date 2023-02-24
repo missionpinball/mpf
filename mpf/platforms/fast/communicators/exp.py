@@ -12,7 +12,7 @@ MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
-MIN_FW = version.parse('0.7')
+MIN_FW = None  # this is set in the EXP and BRK classes
 
 class FastExpCommunicator(FastSerialCommunicator):
 
@@ -50,36 +50,6 @@ class FastExpCommunicator(FastSerialCommunicator):
         for board in self.exp_boards_by_address.values():
             board.stopping()
 
-    def get_address_from_number_string(self, number_str):
-        """Return number string."""
-
-        # examples
-        # exp-201-i0-b0-p1-1
-        # fp-exp-201-i0-b0-p1-1
-
-        stripped_str = number_str.lower().strip('fp-')
-
-        try:
-            _, _board, _id, the_rest = stripped_str.split("-", 4)
-
-        except ValueError as e:
-            self.platform.raise_config_error(
-                    f"Could not parse EXP number {number_str}. Please verify the format.", 7)  # TODO get a real error code
-
-        if the_rest.startswith('b'):
-            breakout, device = the_rest.split('-')
-        else:
-            breakout = 'b0'
-            device = the_rest
-
-        _board = _board.zfill(4)  # '201' -> '0201'
-        _id = int(_id[1:])  # 'i0' -> 0
-        breakout = int(breakout[1:])  # 'b0' -> 0
-        device = device  # 'p1-1' -> 'p1-1' or 's1'
-        board_address = EXPANSION_BOARD_ADDRESS_MAP[f'{_board}-{_id}'] # '88'
-
-        return board_address, breakout, device
-
     async def query_exp_boards(self):
         """Query the EXP bus for connected boards."""
 
@@ -103,24 +73,18 @@ class FastExpCommunicator(FastSerialCommunicator):
 
             await self.send_query(f'ID@{self.active_board}:', 'ID:')
 
+            for breakout_board in board_obj.breakouts.values():
+                self.active_board = breakout_board.address
+                await self.send_query(f'ID@{self.active_board}:', 'ID:')
+
             board_obj.reset()
 
     def _process_id(self, msg):
-        bus, product_id, firmware_version = msg.split()
-        assert bus == 'EXP'
 
-        if version.parse(firmware_version) < MIN_FW:
-            raise AssertionError(f'Firmware version mismatch. MPF requires the EXP processor '
-                                f'to be firmware {MIN_FW}, but yours is {firmware_version}')
-
-        self.exp_boards_by_address[self.active_board].verify_hardware(product_id, firmware_version)
+        self.exp_boards_by_address[self.active_board[:2]].verify_hardware(msg, self.active_board)
 
     def _process_br(self, msg):
         pass  # TODO
-
-    # async def reset_exp_board(self, address):
-    #     """Reset an expansion board. Can be 2 or 3 digit hex string."""
-    #     self.send_and_confirm(f'BR@{address}:\r', 'BR:P')
 
     def set_active_board(self, board_address):
         """Sets the active board. Can be 2 or 3 digit hex string."""

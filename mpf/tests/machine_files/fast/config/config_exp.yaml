@@ -26,7 +26,10 @@ fast:
       aaron:
         model: FP-EXP-0201-2  # test hw revision number included
         id: 1
-        breakouts: None
+        breakouts:
+          - port: 1
+            model: FP-PWR-0007
+
         led_ports:
           - port: 1
             leds: 32
@@ -45,9 +48,6 @@ fast:
           - port: 2
             leds: 32
             type: apa-102
-        servos:
-          - port: 1
-            servos: 4
       eli:
         model: FP-EXP-0081-1
 

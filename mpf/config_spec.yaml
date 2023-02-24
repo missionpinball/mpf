@@ -645,11 +645,14 @@ fast_exp:
 fast_exp_board:
     model: single|str|
     id: single|enum(0,1,2,3)|0
-    breakouts: ignore  # TODO once we have breakouts
+    breakouts: list|subconfig(fast_breakout)|None
     led_ports: list|subconfig(fast_led_port)|None
     led_fade_time: single|ms|0
     led_hz: single|int|30
-    servos: ignore # TODO dunno if we need this but want to remember to think about it once servo support is fully added
+fast_breakout:
+    port: single|enum(1,2,3,4)|  # No 0 here since that's the built-in one
+    model: single|str|
+    led_ports: list|subconfig(fast_led_port)|None
 fast_led_port:
     port: single|str|
     type: single|enum(ws2812,apa-102)|ws2812

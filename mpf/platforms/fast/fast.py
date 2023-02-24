@@ -393,15 +393,15 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         try:
             name, port = parts
-            breakout = '0'
+            breakout_id = '0'
         except ValueError:
-            name, breakout, port = parts
-            breakout = breakout.strip('b')
+            name, breakout_id, port = parts
+            breakout_id = breakout_id.strip('b')
+
+        brk_board = exp_board.breakouts[breakout_id]
 
         # verify this board support servos
-        assert int(port) in range(1, exp_board.features['servo_ports'])
-
-        brk_board = exp_board.breakouts[int(breakout) - 1]
+        assert int(port) in range(1, brk_board.features['servo_ports'])
 
         config.update(self.machine.config_validator.validate_config('fast_servos', config['platform_settings']))
         del config['platform_settings']
@@ -547,7 +547,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                     name, breakout, port, led = parts
                     breakout = breakout.strip('b')
 
-                brk_board = exp_board.breakouts[int(breakout) - 1]
+                brk_board = exp_board.breakouts[breakout]
 
                 port_offset = ((int(port) - 1) * 32)  # TODO read actual value for how many LEDs per port
                 led = int(led) - 1
