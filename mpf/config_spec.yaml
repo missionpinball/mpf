@@ -644,6 +644,7 @@ fast_exp:
     # led_hz: single|int|30
 fast_exp_board:
     model: single|str|
+    address: single|str|None
     id: single|enum(0,1,2,3)|0
     breakouts: list|subconfig(fast_breakout)|None
     led_ports: list|subconfig(fast_led_port)|None

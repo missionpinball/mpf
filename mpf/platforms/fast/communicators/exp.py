@@ -61,7 +61,11 @@ class FastExpCommunicator(FastSerialCommunicator):
         for board_name, board_config in self.config['boards'].items():
 
             board_config['model'] = ('-').join(board_config['model'].split('-')[:3]).upper()  # FP-eXp-0071-2 -> FP-EXP-0071
-            self.active_board = EXPANSION_BOARD_ADDRESS_MAP[(board_config['model'], board_config['id'])]
+
+            if not board_config['address']:  # Is there a custom address for this board? If not, look up the default
+                board_config['address'] = EXPANSION_BOARD_ADDRESS_MAP[(board_config['model'], board_config['id'])]
+
+            self.active_board = board_config['address']
 
             if self.active_board in self.exp_boards_by_address:
             # Got an ID for a board that's already registered. This shouldn't happen?
