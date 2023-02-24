@@ -41,14 +41,29 @@ class MockFastExp(BaseMockFast):
             if temp_active in ["88", "89", "8A", "8B"]:  # 201
                 self.queue.append("ID:EXP FP-EXP-0201  0.8")
 
+            elif temp_active in ["880", "890"]:  # 201
+                self.queue.append("ID:LED FP-BRK-0001  0.8")
+
+            elif temp_active in ["891"]:  # 201
+                self.queue.append("ID:BRK FP-PWR-0007  0.8")
+
             elif temp_active in ["B4", "B5", "B6", "B7"]:  # 71
                 self.queue.append("ID:EXP FP-EXP-0071  0.8")
+
+            elif temp_active == 'B40':  # Neuron
+                self.queue.append("ID:BRK FP-EXP-0071  0.0")
 
             elif temp_active in ["84", "85", "86", "87"]:  # 71
                 self.queue.append("ID:EXP FP-EXP-0081  0.8")
 
+            elif temp_active == '840':  # Neuron
+                self.queue.append("ID:BRK FP-EXP-0081  0.0")
+
             elif temp_active == '48':  # Neuron
                 self.queue.append("ID:EXP FP-EXP-2000 0.8")
+
+            elif temp_active == '480':  # Neuron
+                self.queue.append("ID:LED FP-BRK-0001  0.8")
 
             if not temp_active:  # no ID has been set, so lowest address will respond
                 self.queue.append("ID:EXP FP-EXP-2000 0.8")
@@ -103,6 +118,8 @@ class MockFastExp(BaseMockFast):
         except UnicodeDecodeError:
             # binary message. The first three chars are the command, the rest is the binary payload
             cmd = f'{msg[:3].decode()}{msg[3:].hex()}'
+
+        print(f'{self.type} >>> {cmd}')
 
         if cmd in self.ignore_commands:
             # self.queue.append(cmd[:3] + "P")

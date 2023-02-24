@@ -11,7 +11,7 @@ fast:
     port: com4
     debug: true
     boards:
-      brian:
+      brian:  # 88
         model: FP-exp-0201  # test mixed case
         id: 0
         breakouts: None
@@ -23,11 +23,11 @@ fast:
             leds: 32
             type: apa-102
         led_hz: 30
-      aaron:
+      aaron:  # 89
         model: FP-EXP-0201-2  # test hw revision number included
         id: 1
         breakouts:
-          - port: 1
+          - port: 1  # 891
             model: FP-PWR-0007
 
         led_ports:
@@ -37,7 +37,7 @@ fast:
           - port: 2
             leds: 32
             type: apa-102
-      dave:
+      dave:  # B4
         model: FP-EXP-0071
         id: 0
         breakouts: None

@@ -201,7 +201,7 @@ EXPANSION_BOARD_BREAKOUTS = {  # Total breakouts including built-in one
 EXP_BREAKOUT_0_IDS = {  # Names of the breakouts that are built in to each board
     'FP-EXP-0071': 'FP-EXP-0071',
     'FP-EXP-0081': 'FP-EXP-0081',
-    'FP-EXP-0201': 'FP-EXP-0201',
+    'FP-EXP-0201': 'FP-BRK-0001',
     'FP-EXP-2000': 'FP-BRK-0001',
 }
 
