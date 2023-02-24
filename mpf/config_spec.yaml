@@ -637,6 +637,7 @@ fast_net:
     default_normal_debounce_close: single|ms|4
     gi_hz: single|int|30
     lamp_hz: single|int|30
+    io_boards_required: single|bool|true
 fast_exp:
     port: single|str|
     baud: single|int|921600
