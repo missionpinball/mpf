@@ -111,8 +111,8 @@ class FastExpansionBoard:
 
         self.communicator.send_blind(f'BR@{self.address}:')
 
-    def reset(self):
-        self.communicator.send_and_confirm(f'BR@{self.address}:', 'BR:P')
+    async def reset(self):
+        await self.communicator.send_query(f'BR@{self.address}:', 'BR:P')
 
     def _update_leds(self):
 

@@ -81,10 +81,9 @@ class FastExpCommunicator(FastSerialCommunicator):
                 self.active_board = breakout_board.address
                 await self.send_query(f'ID@{self.active_board}:', 'ID:')
 
-            board_obj.reset()
+            await board_obj.reset()
 
     def _process_id(self, msg):
-
         self.exp_boards_by_address[self.active_board[:2]].verify_hardware(msg, self.active_board)
 
     def _process_br(self, msg):
