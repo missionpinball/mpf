@@ -86,8 +86,6 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
                 if 'switches' not in self.machine.config and 'coils' not in self.machine.config:
                     # No switches or coils, so we don't need I/O boards. This is nice when people are first getting started
                     break
-                if not self.config['io_boards_required']:  # TODO test needed
-                    break
                 continue
             else:
                 current_node += 1

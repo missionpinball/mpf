@@ -48,10 +48,10 @@ class MockFastExp(BaseMockFast):
                 self.queue.append("ID:EXP FP-EXP-0081  0.8")
 
             elif temp_active == '48':  # Neuron
-                self.queue.append("ID:EXP FP-CPU-2000 0.8")
+                self.queue.append("ID:EXP FP-EXP-2000 0.8")
 
             if not temp_active:  # no ID has been set, so lowest address will respond
-                self.queue.append("ID:EXP FP-CPU-2000 0.8")
+                self.queue.append("ID:EXP FP-EXP-2000 0.8")
 
             return True
 

@@ -345,10 +345,6 @@ dual_wound_coils:
     eos_switch: single|machine(switches)|None
 opp_coils:
     recycle_factor: single|int|None
-fast_coils:
-    connection: single|enum(network,local,auto)|auto
-    recycle_ms: single|ms|None
-    hold_pwm_patter: single|str|None
 pkone_coils:
     recycle_ms: single|ms|None
 coil_player:
@@ -637,7 +633,6 @@ fast_net:
     default_normal_debounce_close: single|ms|4
     gi_hz: single|int|30
     lamp_hz: single|int|30
-    io_boards_required: single|bool|true
 fast_exp:
     port: single|str|
     baud: single|int|921600
@@ -694,7 +689,18 @@ fast_rgb:
     led_fade_time: single|ms|0
     led_hz: single|int|30
     ignore_reboot: single|bool|true
-
+fast_switches:
+    debounce_open: single|str|None
+    debounce_close: single|str|None
+fast_coils:
+    connection: single|enum(network,local,auto)|auto
+    recycle_ms: single|ms|None
+    hold_pwm_patter: single|str|None
+fast_servos:
+    max_us: single|int|2000
+    min_us: single|int|1000
+    home_us: single|int|1500
+    max_runtime: single|ms|2000  # 65535 max
 file_shows:
     __valid_in__: machine, mode                      # todo add to validator
     __type__: config_dict
@@ -1504,11 +1510,6 @@ servos:
     number: single|str|
     platform: single|str|None
     platform_settings: single|dict|None
-fast_servos:
-    max_us: single|int|2000
-    min_us: single|int|1000
-    home_us: single|int|1500
-    max_runtime: single|ms|2000  # 65535 max
 settings:
     __valid_in__: machine
     __type__: config_dict
@@ -1947,9 +1948,6 @@ switches:
     x: single|float|None
     y: single|float|None
     z: single|float|None
-fast_switches:
-    debounce_open: single|str|None
-    debounce_close: single|str|None
 system11:
     __valid_in__: machine
     __type__: config

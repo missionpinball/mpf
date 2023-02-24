@@ -107,8 +107,8 @@ class FastExpansionBoard:
                 for led_num, color in dirty_leds.items():
                     msg += f'{led_num[3:]}{color}'
 
-                self.communicator.set_active_board(breakout_address)  #TODO use with @ address instead
-                self.communicator.send_bytes(b16decode(msg))
+                self.communicator.set_active_board(breakout_address)  # TODO use with @ address instead
+                self.communicator.send_bytes(b16decode(msg.upper()))  # TODO I feel like upper() is a back, look into how colors are coming through in lower
 
 class FastBreakoutBoard:
 

@@ -188,7 +188,7 @@ EXPANSION_BOARD_ADDRESS_MAP = {
     ('FP-EXP-0201', '1'): '89',
     ('FP-EXP-0201', '2'): '8A',
     ('FP-EXP-0201', '3'): '8B',
-    ('FP-CPU-2000', '0'): '48',
+    ('FP-EXP-2000', '0'): '48',
 }
 
 EXPANSION_BOARD_FEATURES = {
@@ -207,7 +207,7 @@ EXPANSION_BOARD_FEATURES = {
         'servo_ports': 0,
         'breakout_ports': 3,
     },
-    'FP-CPU-2000': {
+    'FP-EXP-2000': {
         'led_ports': 4,
         'servo_ports': 0,
         'breakout_ports': 3,
