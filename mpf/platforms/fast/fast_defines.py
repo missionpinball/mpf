@@ -188,7 +188,6 @@ EXPANSION_BOARD_ADDRESS_MAP = {
     ('FP-EXP-0201', '1'): '89',
     ('FP-EXP-0201', '2'): '8A',
     ('FP-EXP-0201', '3'): '8B',
-    ('neuron', '0'): '48',
     ('FP-CPU-2000', '0'): '48',
 }
 

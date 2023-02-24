@@ -91,6 +91,8 @@ lights:
     number: dave-4-11
   led19:
     number: eli-8-1
+  led20:
+    number: neuron-1-1
 
 servos:
     servo1:
