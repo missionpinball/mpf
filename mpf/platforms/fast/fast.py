@@ -279,36 +279,25 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             total_drivers = 0
             for board_obj in self.io_boards.values():
                 total_drivers += board_obj.driver_count
-            try:
-                index = self.convert_number_from_config(number)
-            except ValueError:
-                self.raise_config_error(
-                    f"Could not parse driver number {number}. Please verify the number format is either " +
-                    "board-driver or driver. Driver should be an integer here.", 7)
+            index = self.convert_number_from_config(number)
 
             if int(index, 16) >= total_drivers:
-                raise AssertionError(f"Driver {int(index, 16)} does not exist. "
-                                     f"Only {total_drivers} drivers found. Driver number: {number}") from e
+                raise AssertionError(f"Driver {int(index, 16)} does not exist. Only "
+                                     f"{total_drivers} drivers found. Driver number: {number}") from e
 
             return index
 
-        board = int(board_str)
+        try:
+            board = self.io_boards_by_name[board_str]
+        except KeyError:
+            raise AssertionError(f"Board {board_str} does not exist for driver {number}")
+
         driver = int(driver_str)
 
-        if board not in self.io_boards:
-            raise AssertionError(f"Board {board} does not exist for driver {number}")
+        if board.driver_count <= driver:
+            raise AssertionError(f"Board {board} only has drivers 0-{board.driver_count-1}. Driver value {driver} is not valid.")
 
-        if self.io_boards[board].driver_count <= driver:
-            raise AssertionError(f"Board {board} only has {self.io_boards[board].driver_count} drivers. "
-                                 "Driver: {number}")
-
-        index = 0
-        for board_number, board_obj in self.io_boards.items():
-            if board_number >= board:
-                continue
-            index += board_obj.driver_count
-
-        return Util.int_to_hex_string(index + driver)
+        return Util.int_to_hex_string(board.start_driver + driver)
 
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict) -> FASTDriver:
         """Configure a driver.

@@ -118,7 +118,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
         self.net_cpu.expected_commands = {
             "DN:2B,00,00,00": "DN:P"
         }
-        coil = self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '3-15',
+        coil = self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '1616_2-15',
                                                               {"connection": "network", "recycle_ms": 10})
         self.assertEqual('2B', coil.number)
         self.advance_time_and_run(.1)
@@ -126,17 +126,17 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
 
         # board 0 has 8 drivers. configuring driver 9 should not work
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '0-8',
+            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '3208-8',
                                                            {"connection": "network", "recycle_ms": 10})
 
-        # only boards 0-3 exist
+        # test error for invalid board
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '4-0',
+            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, 'brian-0',
                                                            {"connection": "network", "recycle_ms": 10})
 
-        # only 8 + 4 + 16 + 16 = 44 = 0x2C driver exist
+        # test error for driver number too high
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '44',
+            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '3208-9',
                                                            {"connection": "network", "recycle_ms": 10})
 
     def _test_pulse(self):

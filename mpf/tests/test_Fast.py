@@ -145,7 +145,6 @@ class MockFastNetNeuron(BaseMockFastSerial):  # TODO change this to just neuron
             'NN:02': 'NN:02,FP-I/O-1616-3   ,01.09,10,10,00,00,00,00,00,00',     # 1616 board
             'NN:03': 'NN:03,FP-I/O-1616-3   ,01.09,10,10,00,00,00,00,00,00',     # 1616 board
             'NN:04': 'NN:04,FP-I/O-0024-3   ,01.10,08,18,00,00,00,00,00,00',     # Cab I/O board
-            'NN:05': 'NN:05,!Node Not Found!,00.00,00,00,00,00,00,00,00,00',     # no board
         }
         self.cmd_stack = list()
 
@@ -327,11 +326,11 @@ RGB: FP-CPU-002-2 v00.89
 SEG: FP-CPU-002-2 v00.10
 
 I/O Boards:
-Board 0 - Model: FP-I/O-3208-3    Firmware: 01.09 Switches: 32 Drivers: 8
-Board 1 - Model: FP-I/O-0804-3    Firmware: 01.09 Switches: 8 Drivers: 4
-Board 2 - Model: FP-I/O-1616-3    Firmware: 01.09 Switches: 16 Drivers: 16
-Board 3 - Model: FP-I/O-1616-3    Firmware: 01.09 Switches: 16 Drivers: 16
-Board 4 - Model: FP-I/O-0024-3    Firmware: 01.10 Switches: 24 Drivers: 8
+Board 0 - Model: FP-I/O-3208 Firmware: 01.09 Switches: 32 Drivers: 8
+Board 1 - Model: FP-I/O-0804 Firmware: 01.09 Switches: 8 Drivers: 4
+Board 2 - Model: FP-I/O-1616 Firmware: 01.09 Switches: 16 Drivers: 16
+Board 3 - Model: FP-I/O-1616 Firmware: 01.09 Switches: 16 Drivers: 16
+Board 4 - Model: FP-I/O-0024 Firmware: 01.10 Switches: 24 Drivers: 8
 """
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
@@ -342,7 +341,7 @@ Board 4 - Model: FP-I/O-0024-3    Firmware: 01.10 Switches: 24 Drivers: 8
         self.net_cpu.expected_commands = {
             "DL:2B,00,00,00": "DL:P"
         }
-        coil = self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '3-15',
+        coil = self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '1616_2-15',
                                                               {"connection": "network", "recycle_ms": 10})
         self.assertEqual('2B', coil.number)
         self.advance_time_and_run(.1)
@@ -350,17 +349,17 @@ Board 4 - Model: FP-I/O-0024-3    Firmware: 01.10 Switches: 24 Drivers: 8
 
         # board 0 has 8 drivers. configuring driver 9 should not work
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '0-8',
+            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '3208-8',
                                                            {"connection": "network", "recycle_ms": 10})
 
-        # only boards 0-3 exist
+        # test error for invalid board
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '4-0',
+            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, 'brian-0',
                                                            {"connection": "network", "recycle_ms": 10})
 
-        # only 8 + 4 + 16 + 16 = 44 = 0x2C driver exist
+        # test error for driver number too high
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '44',
+            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '3208-9',
                                                            {"connection": "network", "recycle_ms": 10})
 
     def _test_pulse(self):
