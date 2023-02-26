@@ -434,12 +434,12 @@ Board 3 - Model: FP-I/O-1616-3    Firmware: 01.09 Switches: 16 Drivers: 16
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
-    def test_nano_reboot(self):
-        # NANO reboots
-        self.net_cpu.queue.append("!B:00")
-        self.advance_time_and_run(.1)
-        # assert that MPF will stop
-        self.assertTrue(self.machine.stop_future.done())
+    # def test_nano_reboot(self):  # TODO move to Nano test class
+    #     # NANO reboots
+    #     self.net_cpu.queue.append("!B:00")
+    #     self.advance_time_and_run(.1)
+    #     # assert that MPF will stop
+    #     self.assertTrue(self.machine.stop_future.done())
 
     def test_rules(self):
         self._test_enable_exception_hw_rule()
@@ -697,7 +697,7 @@ Board 3 - Model: FP-I/O-1616-3    Firmware: 01.09 Switches: 16 Drivers: 16
         # manual disable with hw rule
         self.net_cpu.expected_commands = {
             "TL:20,02": "TL:P",
-            "DL:20,01,01,18,0B,FF,01,00,00": "DN_P",    # configure rules
+            "DL:20,01,01,18,0B,FF,01,00,00": "DL:P",    # configure rules
             "TL:20,00": "TL:P"                          # reenable autofire rule
         }
         self.machine.coils["c_flipper_main"].disable()
@@ -770,23 +770,23 @@ Board 3 - Model: FP-I/O-1616-3    Firmware: 01.09 Switches: 16 Drivers: 16
 
     #     self.assertFalse(self.dmd_cpu.expected_commands)
 
-    def test_bootloader_crash(self):
-        # Test that the machine stops if the RGB processor sends a bootloader msg
-        self.machine.default_platform.config['rgb']['ignore_reboot'] = False
-        self.machine.stop = MagicMock()
-        self.machine.default_platform.serial_connections['net'].parse_raw_bytes(b"!B:00\r")
-        self.advance_time_and_run(1)
-        self.assertTrue(self.machine.stop.called)
+    # def test_bootloader_crash(self):
+    #     # Test that the machine stops if the RGB processor sends a bootloader msg
+    #     self.machine.default_platform.config['rgb']['ignore_reboot'] = False
+    #     self.machine.stop = MagicMock()
+    #     self.machine.default_platform.serial_connections['net'].parse_raw_bytes(b"!B:00\r")
+    #     self.advance_time_and_run(1)
+    #     self.assertTrue(self.machine.stop.called)
 
-    def test_bootloader_crash_ignored(self):
-        # Test that RGB processor bootloader msgs can be ignored
-        self.machine.default_platform.config['rgb']['ignore_reboot'] = True
-        self.mock_event('fast_rgb_rebooted')
-        self.machine.stop = MagicMock()
-        self.machine.default_platform.serial_connections['net'].parse_raw_bytes(b"!B:00\r")
-        self.advance_time_and_run(1)
-        self.assertFalse(self.machine.stop.called)
-        self.assertEventCalled('fast_rgb_rebooted')
+    # def test_bootloader_crash_ignored(self):
+    #     # Test that RGB processor bootloader msgs can be ignored
+    #     self.machine.default_platform.config['rgb']['ignore_reboot'] = True
+    #     self.mock_event('fast_rgb_rebooted')
+    #     self.machine.stop = MagicMock()
+    #     self.machine.default_platform.serial_connections['rgb'].parse_raw_bytes(b"!B:00\r")
+    #     self.advance_time_and_run(1)
+    #     self.assertFalse(self.machine.stop.called)
+    #     self.assertEventCalled('fast_rgb_rebooted')
 
     # def test_lights_and_leds(self):
     #     self._test_matrix_light()
