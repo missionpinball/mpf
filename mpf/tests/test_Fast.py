@@ -144,7 +144,8 @@ class MockFastNetNeuron(BaseMockFastSerial):  # TODO change this to just neuron
             'NN:01': 'NN:01,FP-I/O-0804-3   ,01.09,04,08,00,00,00,00,00,00',     # 0804 board
             'NN:02': 'NN:02,FP-I/O-1616-3   ,01.09,10,10,00,00,00,00,00,00',     # 1616 board
             'NN:03': 'NN:03,FP-I/O-1616-3   ,01.09,10,10,00,00,00,00,00,00',     # 1616 board
-            'NN:04': 'NN:04,!Node Not Found!,00.00,00,00,00,00,00,00,00,00',     # no board
+            'NN:04': 'NN:04,FP-I/O-0024-3   ,01.10,08,18,00,00,00,00,00,00',     # Cab I/O board
+            'NN:05': 'NN:05,!Node Not Found!,00.00,00,00,00,00,00,00,00,00',     # no board
         }
         self.cmd_stack = list()
 
@@ -330,6 +331,7 @@ Board 0 - Model: FP-I/O-3208-3    Firmware: 01.09 Switches: 32 Drivers: 8
 Board 1 - Model: FP-I/O-0804-3    Firmware: 01.09 Switches: 8 Drivers: 4
 Board 2 - Model: FP-I/O-1616-3    Firmware: 01.09 Switches: 16 Drivers: 16
 Board 3 - Model: FP-I/O-1616-3    Firmware: 01.09 Switches: 16 Drivers: 16
+Board 4 - Model: FP-I/O-0024-3    Firmware: 01.10 Switches: 24 Drivers: 8
 """
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 

@@ -20,6 +20,9 @@ fast:
             1616_2:
                 model: FP-I/O-1616
                 order: 4
+            cab:
+                model: FP-CAB-0001
+                order: 5
     seg:
         port: com3
     rgb:

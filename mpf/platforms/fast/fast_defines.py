@@ -231,3 +231,12 @@ BREAKOUT_FEATURES = {
     'FP-PWR-0007': {
         'device_class': 'mpf.platforms.fast.fast_exp_board',},  # TODO temp module until this code is written
 }
+
+VALID_IO_BOARDS = (
+    'FP-I/O-3208',
+    'FP-I/O-1616',
+    'FP-I/O-1604',
+    'FP-I/O-0804',
+    'FP-I/O-0024',
+    'FP-CAB-0001',  # internally the same as FP-I/O-0024
+)

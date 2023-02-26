@@ -91,7 +91,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.exp_breakouts_with_leds = set()
 
         self.hw_switch_data = None
-        self.io_boards = dict()     # type: Dict[int, FastIoBoard]
+        self.io_boards = dict()     # type: Dict[int, FastIoBoard]  # TODO move to NET communicator(s) classes?
         self.io_boards_by_name = dict()     # type: Dict[str, FastIoBoard]
 
     def get_info_string(self):

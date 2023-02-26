@@ -112,6 +112,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         dr = Util.hex_string_to_int(dr)
         sw = Util.hex_string_to_int(sw)
         model = model.strip('\x00')
+        model = ('-').join(model.split('-')[:3])  # Remove the revision dash if it's there
 
         if not model or model == '!Node Not Found!':
             return
@@ -120,6 +121,13 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
             return
 
         name = self.io_loop[node_id]
+        model_string_from_config = ('-').join(self.config['io_loop'][name]['model'].split('-')[:3]).upper()  # Fp-I/O-3208-2 -> FP-I/O-3208
+
+        if model_string_from_config == 'FP-CAB-0001':
+            model_string_from_config = 'FP-I/O-0024'  # FP-CAB-0001 will report as FP-I/O-0024
+            # TODO this should probably go somewhere else, but meh
+
+        assert model == model_string_from_config, f'I/O board config error. Board {node_id} is reporting as model {model}, but the config file says it\'s model "{mode_string_from_config}"'
 
         prior_sw = 0
         prior_drv = 0
