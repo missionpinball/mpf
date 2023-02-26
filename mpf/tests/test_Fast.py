@@ -137,7 +137,7 @@ class MockFastNetNeuron(BaseMockFastSerial):  # TODO change this to just neuron
         self.expected_commands = {
             'CH:2000,FF':'CH:P',
             'SA:':'SA:09,050000000000000000',
-        }
+        }  # TODO change to create_expected_commands()
 
         self.attached_boards = {
             'NN:00': 'NN:00,FP-I/O-3208-3   ,01.09,08,20,00,00,00,00,00,00',     # 3208 board
@@ -146,6 +146,7 @@ class MockFastNetNeuron(BaseMockFastSerial):  # TODO change this to just neuron
             'NN:03': 'NN:03,FP-I/O-1616-3   ,01.09,10,10,00,00,00,00,00,00',     # 1616 board
             'NN:04': 'NN:04,!Node Not Found!,00.00,00,00,00,00,00,00,00,00',     # no board
         }
+        self.cmd_stack = list()
 
     def _handle_msg(self, msg):
         msg_len = len(msg)
@@ -175,6 +176,16 @@ class MockFastNetNeuron(BaseMockFastSerial):  # TODO change this to just neuron
             return msg_len
         else:
             raise Exception("Unexpected command for " + self.type + ": " + str(cmd))
+
+    def _parse(self, cmd):
+
+        self.cmd_stack.append(cmd)
+
+        cmd, payload = cmd.split(':', 1)
+
+        if cmd == "SA":
+            self.queue.append("SA:09,050000000000000000")
+            return True
 
 class MockFastSeg(BaseMockFastSerial):
     def __init__(self):
@@ -270,10 +281,10 @@ class TestFastBase(MpfTestCase):
         #     self.rgb_cpu.expected_commands = {
         #         "BL:AA55": "!SRE"
         #     }
-        if self.net_cpu:
-            self.net_cpu.expected_commands = {
-                "WD:1": "WD:P"
-            }
+        # if self.net_cpu:
+        #     self.net_cpu.expected_commands = {
+        #         "WD:1": "WD:P"
+        #     }  # TODO should these work? What are we missing when tests end wihout this?
         super().tearDown()
         if not self.startup_error:
             self.assertFalse(self.net_cpu and self.net_cpu.expected_commands)

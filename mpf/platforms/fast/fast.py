@@ -535,9 +535,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 except KeyError:
                     raise AssertionError(f'Board {exp_board} does not have a configuration entry for Breakout {breakout}')  # TODO change to mpf config exception
 
-                port_offset = ((int(port) - 1) * 32)  # TODO read actual value for how many LEDs per port
-                led = int(led) - 1
-                index = f'{(port_offset + led):02x}'
+                index = self.port_idx_to_hex(port, led, 32)
                 this_led_number = f'{brk_board.address}{index}'
 
                 # this code runs once for each channel, so it will be called 3x per LED which
@@ -550,7 +548,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
                 return fast_led_channel
 
-            elif number not in self.fast_leds:
+            try:
+                number = self.port_idx_to_hex(parts[0], parts[1], 64)
+            except IndexError:
+                number = f'{int(parts[0]):02X}' # this is a legacy LED number as an int
+
+            if number not in self.fast_leds:
                 self.fast_leds[number] = FASTDirectLED(
                     number, int(self.config['rgb']['led_fade_time']), self)
 
@@ -560,6 +563,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             return fast_led_channel
 
         raise AssertionError("Unknown subtype {}".format(subtype))
+
+    def port_idx_to_hex(self, port, device_num, devices_per_port):
+
+        port_offset = ((int(port) - 1) * devices_per_port)
+        device_num = int(device_num) - 1
+        return f'{(port_offset + device_num):02X}'
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Parse light channels from number string."""

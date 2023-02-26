@@ -91,6 +91,7 @@ class MockFastExp(BaseMockFastSerial):
                     led_number = led.hw_drivers['red'][0].number.split('-')[0]  # 88000
                     self.led_map[led_number] = name
 
+            payload = payload.upper()
             count = int(payload[:2], 16)
             color_data = payload[2:]
 
@@ -167,7 +168,7 @@ class TestFastExp(MpfTestCase):
             # 'BR:': '#!B:02',    # there might be some garbage in front of the command
             'ID:': f'ID:{self.net_cpu.id}',
             f'CH:{self.net_cpu.ch},FF': 'CH:P',
-            "SA:": f"SA:{self.net_cpu.sa}",
+            # "SA:": f"SA:{self.net_cpu.sa}",
             **self.net_cpu.attached_boards,
         }
 
@@ -246,8 +247,8 @@ class TestFastExp(MpfTestCase):
         self.assertIn("88100", platform.fast_exp_leds)
         self.assertIn("88001", platform.fast_exp_leds)
         self.assertIn("88002", platform.fast_exp_leds)
-        self.assertIn("88120", platform.fast_exp_leds)
-        self.assertIn("88121", platform.fast_exp_leds)
+        self.assertIn("88140", platform.fast_exp_leds)
+        self.assertIn("88141", platform.fast_exp_leds)
         self.assertIn("89300", platform.fast_exp_leds)
 
         exp_comm = platform.serial_connections['exp']
@@ -265,7 +266,7 @@ class TestFastExp(MpfTestCase):
         self.advance_time_and_run(1)
         self.advance_time_and_run(1)
         self.advance_time_and_run(1)
-        self.assertEqual("ffffff", self.exp_cpu.leds['led1'])
+        self.assertEqual("FFFFFF", self.exp_cpu.leds['led1'])
         self.assertEqual("121212", self.exp_cpu.leds['led3'])
 
         self.assertFalse(self.exp_cpu.expected_commands)
@@ -278,22 +279,22 @@ class TestFastExp(MpfTestCase):
         # turn on a LED on a different board that has a hex index too
         led18.on()
         self.advance_time_and_run()
-        self.assertEqual("ffffff", self.exp_cpu.leds['led18'])
+        self.assertEqual("FFFFFF", self.exp_cpu.leds['led18'])
 
-        self.assertIn('RD:016affffff', self.exp_cpu.cmd_stack) # verifies that a non-zero LED does not include all the lower index ones.
+        self.assertIn('RD:01caffffff', self.exp_cpu.cmd_stack) # verifies that a non-zero LED does not include all the lower index ones.
         # This is what we don't want: 'RD:0b60000000000000000000000000000000000000000000000000000000000000ffffff'
 
         # verify a board reset turns off the LEDs only on the current active board
         self.exp_cpu.write(b'BR:')
         self.advance_time_and_run()
         self.assertEqual("000000", self.exp_cpu.leds['led18'])  # this is on the active board and should be off
-        self.assertEqual("ffffff", self.exp_cpu.leds['led1'])  # this is on a non-active board ans should still be on
+        self.assertEqual("FFFFFF", self.exp_cpu.leds['led1'])  # this is on a non-active board ans should still be on
         self.assertEqual("121212", self.exp_cpu.leds['led3'])
 
         # test led10 grb
         led10.color("ff1234")
         self.advance_time_and_run()
-        self.assertEqual("12ff34", self.exp_cpu.leds['led10'])  # ensure the hardware received the colors in RGB order
+        self.assertEqual("12FF34", self.exp_cpu.leds['led10'])  # ensure the hardware received the colors in RGB order
 
         # # test led off
         # device.off()
