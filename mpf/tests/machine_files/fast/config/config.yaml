@@ -7,6 +7,19 @@ fast:
     net:
         port: com4
         controller: neuron
+        io_loop:
+            3208:
+                model: FP-I/O-3208
+                order: 1
+            0804:
+                model: FP-I/O-0804
+                order: 2
+            1616_1:
+                model: FP-I/O-1616
+                order: 3
+            1616_2:
+                model: FP-I/O-1616
+                order: 4
     seg:
         port: com3
     rgb:
@@ -16,27 +29,27 @@ fast:
 
 switches:
     s_test:
-        number: 7
+        number: 3208-7
         platform_settings:
             debounce_open: 26
             debounce_close: 5
     s_test_nc:
-        number: 26
+        number: 3208-26
         type: 'NC'
     s_slingshot_test:
-        number: 22
+        number: 3208-22
     s_flipper:
-        number: 1
+        number: 3208-1
     s_flipper_eos:
-        number: 2
+        number: 3208-2
     s_autofire:
-        number: 3
+        number: 3208-3
     s_test3:
-        number: 3-1
+        number: 1616_2-1
     s_nux_up:
-        number: 0-11
+        number: 3208-11
     s_nux_down:
-        number: 0-12
+        number: 3208-12
 
 digital_outputs:
   c_nux_motor:

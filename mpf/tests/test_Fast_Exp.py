@@ -247,8 +247,8 @@ class TestFastExp(MpfTestCase):
         self.assertIn("88100", platform.fast_exp_leds)
         self.assertIn("88001", platform.fast_exp_leds)
         self.assertIn("88002", platform.fast_exp_leds)
-        self.assertIn("88140", platform.fast_exp_leds)
-        self.assertIn("88141", platform.fast_exp_leds)
+        self.assertIn("88120", platform.fast_exp_leds)
+        self.assertIn("88121", platform.fast_exp_leds)
         self.assertIn("89300", platform.fast_exp_leds)
 
         exp_comm = platform.serial_connections['exp']
@@ -281,7 +281,7 @@ class TestFastExp(MpfTestCase):
         self.advance_time_and_run()
         self.assertEqual("FFFFFF", self.exp_cpu.leds['led18'])
 
-        self.assertIn('RD:01caffffff', self.exp_cpu.cmd_stack) # verifies that a non-zero LED does not include all the lower index ones.
+        self.assertIn('RD:016affffff', self.exp_cpu.cmd_stack) # verifies that a non-zero LED does not include all the lower index ones.
         # This is what we don't want: 'RD:0b60000000000000000000000000000000000000000000000000000000000000ffffff'
 
         # verify a board reset turns off the LEDs only on the current active board

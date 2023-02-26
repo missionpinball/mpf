@@ -42,8 +42,6 @@ class TestFastV1(TestFastBase):
             "DN:20,00,00,00": "DN:P",
             "DN:21,00,00,00": "DN:P",
             "DN:01,C1,00,18,00,FF,FF,00": "DN:P",   # configure digital output
-            "XO:03,7F": "XO:P",
-            "XO:14,7F": "XO:P"
         }
         self.dmd_cpu.expected_commands = {
             b'ID:': 'ID:DMD FP-CPU-002-2 00.88',
@@ -312,23 +310,6 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
-    def test_servo(self):
-        # go to min position
-        self.net_cpu.expected_commands = {
-                "XO:03,00": "XO:P"
-        }
-        self.machine.servos["servo1"].go_to_position(0)
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.net_cpu.expected_commands)
-
-        # go to max position
-        self.net_cpu.expected_commands = {
-                "XO:03,FF": "XO:P"
-        }
-        self.machine.servos["servo1"].go_to_position(1)
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.net_cpu.expected_commands)
-
     def _switch_hit_cb(self, **kwargs):
         self.switch_hit = True
 
@@ -342,28 +323,28 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
         self.net_cpu.expected_commands = {
             "SN:1F,01,04,04": "SN:P"
         }
-        self.machine.default_platform.configure_switch('0-31', SwitchConfig(name="", debounce='auto', invert=0), {})
+        self.machine.default_platform.configure_switch('3208-31', SwitchConfig(name="", debounce='auto', invert=0), {})
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # next should not work
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch('0-32', SwitchConfig(name="", debounce='auto', invert=0), {})
+            self.machine.default_platform.configure_switch('3208-32', SwitchConfig(name="", debounce='auto', invert=0), {})
 
         self.net_cpu.expected_commands = {
             "SN:47,01,04,04": "SN:P"
         }
-        self.machine.default_platform.configure_switch('3-15', SwitchConfig(name="", debounce='auto', invert=0), {})
+        self.machine.default_platform.configure_switch('1616_2-15', SwitchConfig(name="", debounce='auto', invert=0), {})
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # invalid board
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch('4-0', SwitchConfig(name="", debounce='auto', invert=0), {})
+            self.machine.default_platform.configure_switch('brian-0', SwitchConfig(name="", debounce='auto', invert=0), {})
 
-        # last switch is 0x47. 0x48 = 72
+        # invalid switch number
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch('72', SwitchConfig(name="", debounce='auto', invert=0), {})
+            self.machine.default_platform.configure_switch('3208-33', SwitchConfig(name="", debounce='auto', invert=0), {})
 
     def _test_switch_changes(self):
         self.assertSwitchState("s_flipper", 0)

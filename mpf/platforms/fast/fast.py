@@ -57,7 +57,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         super().__init__(machine)
 
         self.config = self.machine.config_validator.validate_config("fast", self.machine.config['fast'])
-        self._configure_device_logging_and_debug("FAST", self.config, url_base='https://fastpinball.com/mpf/error')  #todo
+        self._configure_device_logging_and_debug("FAST", self.config, url_base='https://fastpinball.com/mpf/error')  # TODO
 
         self.configured_ports = list()
 
@@ -65,8 +65,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             if self.config[port_type]:
                 self.configured_ports.append(port_type)
 
-        if self.config["net"]["controller"]:
-            self.machine_type = self.config["net"]["controller"]
+        self.machine_type = self.config["net"]["controller"]
 
         if self.machine_type in ['sys11', 'wpc89', 'wpc95']:
             self.debug_log("Configuring the FAST Controller for Retro driver board")
@@ -93,6 +92,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         self.hw_switch_data = None
         self.io_boards = dict()     # type: Dict[int, FastIoBoard]
+        self.io_boards_by_name = dict()     # type: Dict[str, FastIoBoard]
 
     def get_info_string(self):
         """Dump info strings about boards."""
@@ -172,6 +172,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if board.node_id in self.io_boards:
             raise AssertionError("Duplicate node_id")
         self.io_boards[board.node_id] = board
+        self.io_boards_by_name[board.name] = board
 
     def register_expansion_board(self, board):
         """Register an Expansion board."""
@@ -406,23 +407,17 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
             return index
 
-        board = int(board_str)
+        try:
+            board = self.io_boards_by_name[board_str]
+        except KeyError:
+            raise AssertionError(f"Board {board_str} does not exist for switch {number}")
+
         switch = int(switch_str)
 
-        if board not in self.io_boards:
-            raise AssertionError("Board {} does not exist for switch {}".format(board, number))
+        if board.switch_count <= switch:
+            raise AssertionError(f"Board {board} only has switches 0-{board.switch_count-1}. Switch value {switch} is not valid.")
 
-        if self.io_boards[board].switch_count <= switch:
-            raise AssertionError("Board {} only has {} switches. Switch: {}".format(
-                board, self.io_boards[board].switch_count, number))
-
-        index = 0
-        for board_number, board_obj in self.io_boards.items():
-            if board_number >= board:
-                continue
-            index += board_obj.switch_count
-
-        return Util.int_to_hex_string(index + switch)
+        return Util.int_to_hex_string(board.start_switch + switch)
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict) -> FASTSwitch:
         """Configure the switch object for a FAST Pinball controller.

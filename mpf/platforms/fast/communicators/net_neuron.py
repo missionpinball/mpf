@@ -6,11 +6,10 @@ from mpf.core.utility_functions import Util
 from mpf.platforms.fast.communicators.base import FastSerialCommunicator
 from mpf.platforms.fast.fast_io_board import FastIoBoard
 
-MIN_FW = version.parse('2.06')
-IO_MIN_FW = version.parse('1.09')
-
 class FastNetNeuronCommunicator(FastSerialCommunicator):
 
+    MIN_FW = version.parse('2.06')
+    IO_MIN_FW = version.parse('1.09')
     ignored_messages = ['WD:P',
                         'TL:P']
 
@@ -21,6 +20,8 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.watchdog_cmd = f"WD:{config['watchdog']:02X}"
         self._watchdog_task = None
 
+        self.io_loop = [None] * len(self.config['io_loop'])
+
         self.message_processors['SA:'] = self._process_sa
         self.message_processors['!B:'] = self._process_boot_message
         self.message_processors['\x11\x11!'] = self._process_reboot_done
@@ -29,12 +30,16 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.message_processors['-L:'] = self._process_switch_closed
         # TODO add 'SL:', 'DL:' etc to look for DL:F, but then what do we do with it?
 
+
+        for board, config in self.config['io_loop'].items():
+            config['index'] = int(config['order'])-1
+            self.io_loop[config['index']] = board
+
     async def init(self):
         await self.send_query('ID:', 'ID:')  # Verify we're connected to a Neuron
         await self.send_query('CH:2000,FF', 'CH:P')  # Configure hardware for Neuron with active switch reporting
         self.send_blind('WD:1') # Force expire the watchdog since who knows what state the board is in?
         await self.query_io_boards()
-        # await asyncio.sleep(1)  # was experimenting to see if this affects the results of the SA: next
         await self.send_query('SA:', 'SA:')  # Get initial states so switches can be created
 
     async def soft_reset(self, **kwargs):
@@ -78,7 +83,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         """
 
         current_node = 0
-        while current_node < 10:
+        while current_node < len(self.config['io_loop']):
             await self.send_query('NN:{:02X}'.format(current_node), 'NN:')
 
             # Don't move on until we get board 00 in since it can take a sec after a reset
@@ -103,20 +108,32 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         node_id, model, fw, dr, sw, _, _, _, _, _, _ = msg.split(',')
         # node_id = node_id[3:]
 
+        node_id = Util.hex_string_to_int(node_id)
+        dr = Util.hex_string_to_int(dr)
+        sw = Util.hex_string_to_int(sw)
         model = model.strip('\x00')
 
         if not model or model == '!Node Not Found!':
             return
 
-        if Util.hex_string_to_int(node_id) in self.platform.io_boards:
+        if node_id in self.platform.io_boards:
             return
 
-        self.platform.register_io_board(FastIoBoard(int(node_id, 16), model, fw, int(sw, 16), int(dr, 16)))
+        name = self.io_loop[node_id]
+
+        prior_sw = 0
+        prior_drv = 0
+
+        for i in range(node_id):
+            prior_sw += self.platform.io_boards[i].switch_count
+            prior_drv += self.platform.io_boards[i].driver_count
+
+        self.platform.register_io_board(FastIoBoard(name, node_id, model, fw, sw, dr, prior_sw, prior_drv))
 
         self.log.info('Registered I/O Board %s: Model: %s, Firmware: %s, Switches: %s, Drivers: %s',
-                                node_id, model, fw, int(sw, 16), int(dr, 16))
+                                node_id, model, fw, sw, dr)
 
-        min_fw = IO_MIN_FW
+        min_fw = self.IO_MIN_FW  # TODO move to IO board class
         if min_fw > version.parse(fw):
             self.platform.log.critical("Firmware version mismatch. MPF requires the I/O boards "
                                         "to be firmware %s, but your Board %s (%s) is firmware %s",

@@ -621,6 +621,7 @@ fast:
     file_log: single|enum(none,basic,full)|basic
 fast_net:
     port: single|str|
+    io_loop: dict|str:subconfig(fast_io_loop)|
     baud: single|int|921600
     debug: single|bool|false
     console_log: single|enum(none,basic,full)|none
@@ -633,6 +634,9 @@ fast_net:
     default_normal_debounce_close: single|ms|4
     gi_hz: single|int|30
     lamp_hz: single|int|30
+fast_io_loop:
+    model: single|str|  # FP-I/O-0804, etc.
+    order: single|enum(1,2,3,4,5,6,7,8,9)|
 fast_exp:
     port: single|str|
     baud: single|int|921600
@@ -643,8 +647,8 @@ fast_exp:
     # led_fade_time: single|ms|0
     # led_hz: single|int|30
 fast_exp_board:
-    model: single|str|
-    address: single|str|None
+    model: single|str|  # FP-EXP-0071, etc.
+    address: single|str|None  # overrides the lookup address, useful for partner-specific firmware
     id: single|enum(0,1,2,3)|0
     breakouts: list|subconfig(fast_breakout)|None
     led_ports: list|subconfig(fast_led_port)|None

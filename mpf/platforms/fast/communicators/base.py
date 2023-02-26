@@ -308,7 +308,11 @@ class FastSerialCommunicator(LogMixin):
 
     async def _socket_writer(self):
         while True:
-            msg, confirm_msg = await self.send_queue.get()
+            try:
+                msg, confirm_msg = await self.send_queue.get()
+            except:
+                return  # TODO better way to catch shutting down?
+
             await asyncio.wait_for(self.send_ready.wait(), timeout=None)  # TODO timeout? Prob no, but should do something to not block forever
 
             try:
