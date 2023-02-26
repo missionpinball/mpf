@@ -25,6 +25,7 @@ class FastServo(ServoPlatformInterface):
         max_us = f"{self.config['max_us']:02X}"
         home_us = f"{self.config['home_us']:02X}"
 
+        # EM:<INDEX>,1,<MAX_TIME_MS>,<MIN>,<MAX>,<NEUTRAL><CR>
         self.exp_connection.send_and_confirm(f"EM@{self.base_address}:{self.servo_index},1,{self.max_runtime},{min_us},{max_us},{home_us}", 'EM:P')
 
     def go_to_position(self, position):
@@ -32,18 +33,18 @@ class FastServo(ServoPlatformInterface):
         if position < 0 or position > 1:
             raise AssertionError("Position has to be between 0 and 1")
 
-        # convert from [0,1] to [0, 255]
-        position_hex = f'{int(position * 255):02X}'
-
-        cmd = f'MP@{self.base_address}:{self.servo_index},{position_hex},{self.max_runtime}'
-
-        self.exp_connection.send_blind(cmd)
+        # MP:<INDEX>,<POSITION>,<TIME_MS><CR>
+        self.exp_connection.send_blind(f'MP@{self.base_address}:{self.servo_index},{int(position * 255):02X},{self.max_runtime}')
 
     def set_speed_limit(self, speed_limit):
-        """Not implemented."""
+        """ Called during servo init """
+        pass
 
     def set_acceleration_limit(self, acceleration_limit):
-        """Not implemented."""
+        """ Called during servo init """
+        pass
 
     def stop(self):
-        """Not implemented."""
+        """ Called during shutdown """
+        pass
+        # TODO: send command to go home and power off servo

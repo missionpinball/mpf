@@ -358,23 +358,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         return FASTDriver(config, self, number, platform_settings)
 
-    def _parse_servo_number(self, number):
-        try:
-            board_str, servo_str = number.split("-")
-        except ValueError:
-            return self.convert_number_from_config(number)
-
-        board = int(board_str)
-        servo = int(servo_str)
-        if board < 0:
-            raise AssertionError("Board needs to be positive.")
-
-        if servo < 0 or servo > 5:
-            raise AssertionError("Servo number has to be between 0 and 5.")
-
-        # every servo board supports exactly 6 servos
-        return self.convert_number_from_config(board * 6 + servo)
-
     async def configure_servo(self, number: str, config: dict) -> FastServo:
         """Configure a servo.
 
@@ -401,7 +384,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         brk_board = exp_board.breakouts[breakout_id]
 
         # verify this board support servos
-        assert int(port) in range(1, brk_board.features['servo_ports'])
+        assert int(port) <= int(brk_board.features['servo_ports'])  # TODO should this be stored as an int?
 
         config.update(self.machine.config_validator.validate_config('fast_servos', config['platform_settings']))
         del config['platform_settings']
@@ -547,7 +530,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                     name, breakout, port, led = parts
                     breakout = breakout.strip('b')
 
-                brk_board = exp_board.breakouts[breakout]
+                try:
+                    brk_board = exp_board.breakouts[breakout]
+                except KeyError:
+                    raise AssertionError(f'Board {exp_board} does not have a configuration entry for Breakout {breakout}')  # TODO change to mpf config exception
 
                 port_offset = ((int(port) - 1) * 32)  # TODO read actual value for how many LEDs per port
                 led = int(led) - 1

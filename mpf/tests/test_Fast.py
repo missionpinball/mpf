@@ -6,7 +6,7 @@ from mpf.tests.MpfTestCase import MpfTestCase, MagicMock, test_config, expect_st
 from mpf.tests.loop import MockSerial
 
 
-class BaseMockFast(MockSerial):
+class BaseMockFastSerial(MockSerial):
 
     def __init__(self):
         super().__init__()
@@ -16,6 +16,7 @@ class BaseMockFast(MockSerial):
         self.ignore_commands = {}
 
     def read(self, length):
+        """ Reads the message from the queue and se"""
         del length
         if not self.queue:
             return
@@ -75,7 +76,7 @@ class BaseMockFast(MockSerial):
         pass
 
 
-class MockFastDmd(BaseMockFast):
+class MockFastDmd(BaseMockFastSerial):
     def __init__(self):
         super().__init__()
         self.type = "DMD"
@@ -104,7 +105,7 @@ class MockFastDmd(BaseMockFast):
             raise Exception(self.type + ": " + str(cmd))
 
 
-class MockFastRgb(BaseMockFast):
+class MockFastRgb(BaseMockFastSerial):
     def __init__(self):
         super().__init__()
         self.type = "RGB"
@@ -126,7 +127,7 @@ class MockFastRgb(BaseMockFast):
             return True
 
 
-class MockFastNetNeuron(BaseMockFast):  # TODO change this to just neuron
+class MockFastNetNeuron(BaseMockFastSerial):  # TODO change this to just neuron
     def __init__(self):
         super().__init__()
         self.type = "NET"
@@ -135,7 +136,8 @@ class MockFastNetNeuron(BaseMockFast):  # TODO change this to just neuron
         self.ch = "2000"  # TODO remove
         self.expected_commands = {
             'CH:2000,FF':'CH:P',
-            'SA:':'SA:09,050000000000000000'}
+            'SA:':'SA:09,050000000000000000',
+        }
 
         self.attached_boards = {
             'NN:00': 'NN:00,FP-I/O-3208-3   ,01.09,08,20,00,00,00,00,00,00',     # 3208 board
@@ -159,10 +161,6 @@ class MockFastNetNeuron(BaseMockFast):  # TODO change this to just neuron
             self.queue.append("WD:P")
             return msg_len
 
-        if cmd == "SA:":
-            self.queue.append('SA:09,050000000000000000')
-            return msg_len
-
         if cmd in self.ignore_commands:
             self.queue.append(cmd[:3] + "P")
             return msg_len
@@ -178,7 +176,7 @@ class MockFastNetNeuron(BaseMockFast):  # TODO change this to just neuron
         else:
             raise Exception("Unexpected command for " + self.type + ": " + str(cmd))
 
-class MockFastSeg(BaseMockFast):
+class MockFastSeg(BaseMockFastSerial):
     def __init__(self):
         super().__init__()
         self.type = "SEG"
@@ -272,10 +270,10 @@ class TestFastBase(MpfTestCase):
         #     self.rgb_cpu.expected_commands = {
         #         "BL:AA55": "!SRE"
         #     }
-        # if self.net_cpu:
-        #     self.net_cpu.expected_commands = {
-        #         "WD:1": "WD:P"
-        #     }
+        if self.net_cpu:
+            self.net_cpu.expected_commands = {
+                "WD:1": "WD:P"
+            }
         super().tearDown()
         if not self.startup_error:
             self.assertFalse(self.net_cpu and self.net_cpu.expected_commands)
