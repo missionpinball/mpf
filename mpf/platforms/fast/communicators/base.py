@@ -108,10 +108,10 @@ class FastSerialCommunicator(LogMixin):
 
         self.ignore_decode_errors = False
 
-        self.write_task = self.machine.clock.loop.create_task(self._socket_writer())
+        self.write_task = asyncio.create_task(self._socket_writer())
         self.write_task.add_done_callback(Util.raise_exceptions)
 
-        self.read_task = self.machine.clock.loop.create_task(self._socket_reader())
+        self.read_task = asyncio.create_task(self._socket_reader())
         self.read_task.add_done_callback(Util.raise_exceptions)
 
     async def clear_board_serial_buffer(self):

@@ -9,7 +9,7 @@ import ruamel.yaml.representer
 from ruamel.yaml import StringIO, YAML, VersionedResolver
 from ruamel.yaml.reader import Reader
 from ruamel.yaml.scanner import RoundTripScanner
-from ruamel.yaml.parser import Parser
+from ruamel.yaml.parser import RoundTripParser
 from ruamel.yaml.composer import Composer
 from ruamel.yaml.constructor import RoundTripConstructor
 from ruamel.yaml.dumper import RoundTripDumper
@@ -39,7 +39,9 @@ class FormattedInt(ruamel.yaml.scalarint.ScalarInt):
 
 def alt_construct_yaml_int(constructor, node):
     """Parse integers using FormattedInt."""
-    value_s = ruamel.yaml.compat.to_str(constructor.construct_scalar(node))
+    value_s = constructor.construct_scalar(node)
+    if not isinstance(value_s, str):
+        value_s = value_s.encode('utf-8')
     if value_s.isdigit():
         return constructor.construct_yaml_int(node)
     return FormattedInt(value_s)
@@ -77,7 +79,7 @@ def init_typ(self):
     self.Constructor = ruamel.yaml.constructor.RoundTripConstructor  # type: Any
 
 
-class MpfRoundTripLoader(Reader, RoundTripScanner, Parser, Composer, RoundTripConstructor, MpfResolver):
+class MpfRoundTripLoader(Reader, RoundTripScanner, RoundTripParser, Composer, RoundTripConstructor, MpfResolver):
 
     """Config loader which can roundtrip."""
 
@@ -99,7 +101,12 @@ class YamlRoundtrip(YamlInterface):     # pragma: no cover
     @staticmethod
     def process(data_string):
         """Parse yaml from a string."""
-        return ruamel.yaml.load(data_string, Loader=MpfRoundTripLoader)
+
+        my_loader = ruamel.yaml.YAML()
+        my_loader.Loader = MpfRoundTripLoader
+        return my_loader.load(data_string)
+
+        # return ruamel.yaml.load(data_string, Loader=MpfRoundTripLoader)
 
     @staticmethod
     def save_to_str(data):

@@ -1,6 +1,6 @@
 """LISY platform for System 1 and System 80."""
 import asyncio
-from distutils.version import StrictVersion
+from packaging import version
 
 from typing import Dict, Optional, List
 
@@ -59,7 +59,7 @@ class LisyDriver(DriverPlatformInterface):
 
     def configure_recycle(self, recycle_time):
         """Configure recycle time."""
-        if self.platform.api_version < StrictVersion("0.9"):
+        if self.platform.api_version < version.parse("0.9"):
             return
         if recycle_time > 255:
             recycle_time = 255
@@ -191,7 +191,7 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
 
     async def initialize(self):
         """Initialize segment display."""
-        if self.platform.api_version >= StrictVersion("0.9"):
+        if self.platform.api_version >= version.parse("0.9"):
             # display info for display
             display_info = await self.platform.send_byte_and_read_response(
                 LisyDefines.InfoGetDisplayDetails, bytearray([self.number]), 2)
@@ -236,7 +236,7 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
     def _set_text(self, text: SegmentDisplayText):
         """Set text to display."""
         assert self.platform.api_version is not None
-        if self.platform.api_version >= StrictVersion("0.9"):
+        if self.platform.api_version >= version.parse("0.9"):
             formatted_text = self._format_text(text)
             self.platform.send_byte(LisyDefines.DisplaysSetDisplay0To + self.number,
                                     bytearray([len(formatted_text)]) + formatted_text)
@@ -257,7 +257,7 @@ class LisySound(HardwareSoundPlatformInterface):
     def play_sound(self, number: int, track: int = 1):
         """Play sound with number."""
         assert self.platform.api_version is not None
-        if self.platform.api_version >= StrictVersion("0.9"):
+        if self.platform.api_version >= version.parse("0.9"):
             self.platform.send_byte(LisyDefines.SoundPlaySound, bytes([track, number]))
         else:
             assert track == 1
@@ -268,7 +268,7 @@ class LisySound(HardwareSoundPlatformInterface):
         assert self.platform.api_version is not None
         flags = 1 if platform_options.get("loop", False) else 0
         flags += 2 if platform_options.get("no_cache", False) else 0
-        if self.platform.api_version >= StrictVersion("0.9"):
+        if self.platform.api_version >= version.parse("0.9"):
             self.platform.send_string(LisyDefines.SoundPlaySoundFile, chr(track) + chr(flags) + file)
         else:
             assert track == 1
@@ -279,7 +279,7 @@ class LisySound(HardwareSoundPlatformInterface):
         assert self.platform.api_version is not None
         flags = 1 if platform_options.get("loop", False) else 0
         flags += 2 if platform_options.get("no_cache", False) else 0
-        if self.platform.api_version >= StrictVersion("0.9"):
+        if self.platform.api_version >= version.parse("0.9"):
             self.platform.send_string(LisyDefines.SoundTextToSpeech, chr(track) + chr(flags) + text)
         else:
             assert track == 1
@@ -288,7 +288,7 @@ class LisySound(HardwareSoundPlatformInterface):
     def set_volume(self, volume: float, track: int = 1):
         """Set volume."""
         assert self.platform.api_version is not None
-        if self.platform.api_version >= StrictVersion("0.9"):
+        if self.platform.api_version >= version.parse("0.9"):
             self.platform.send_byte(LisyDefines.SoundSetVolume, bytes([track, int(volume * 100)]))
         else:
             assert track == 1
@@ -297,7 +297,7 @@ class LisySound(HardwareSoundPlatformInterface):
     def stop_all_sounds(self, track: int = 1):
         """Stop all sounds."""
         assert self.platform.api_version is not None
-        if self.platform.api_version >= StrictVersion("0.9"):
+        if self.platform.api_version >= version.parse("0.9"):
             self.platform.send_byte(LisyDefines.SoundStopAllSounds, bytes([track]))
         else:
             assert track == 1
@@ -337,7 +337,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
         self.config = self.machine.config_validator.validate_config("lisy", self.machine.config['lisy'])
         self._configure_device_logging_and_debug("lisy", self.config)
-        self.api_version = None             # type: Optional[StrictVersion]
+        self.api_version = None             # type: Optional[version.parse]
         self._light_system = None
         self._send_length_of_command = self.config['send_length_after_command']
 
@@ -439,7 +439,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 self._lisy_version = lisy_version.decode()
 
                 if api_version:
-                    self.api_version = StrictVersion(api_version.decode())
+                    self.api_version = version.parse(api_version.decode())
                 else:
                     self.error_log("Failed to read api_version from LISY. Got %s", api_version)
                     continue
@@ -481,12 +481,12 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             self.send_byte(LisyDefines.InfoGetSwitchCount)
             self._number_of_switches = await self._read_byte()
 
-            if self.api_version >= StrictVersion("0.10"):
+            if self.api_version >= version.parse("0.10"):
                 # get number of modern lights
                 self.send_byte(LisyDefines.GetModernLightsCount)
                 # in api version 10+ this returns two bytes
                 self._number_of_modern_lights = await self._read_two_bytes()
-            elif self.api_version >= StrictVersion("0.9"):
+            elif self.api_version >= version.parse("0.9"):
                 # get number of modern lights
                 self.send_byte(LisyDefines.GetModernLightsCount)
                 self._number_of_modern_lights = await self._read_byte()
@@ -517,7 +517,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
                 self._inputs[str(number)] = state == 1
 
-            self._watchdog_task = self.machine.clock.loop.create_task(self._watchdog())
+            self._watchdog_task = asyncio.create_task(self._watchdog())
             self._watchdog_task.add_done_callback(Util.raise_exceptions)
 
             self.debug_log("Init of LISY done.")
@@ -539,7 +539,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
     async def start(self):
         """Start reading switch changes."""
-        self._poll_task = self.machine.clock.loop.create_task(self._poll())
+        self._poll_task = asyncio.create_task(self._poll())
         self._poll_task.add_done_callback(Util.raise_exceptions)
         if self._light_system:
             self._light_system.start()

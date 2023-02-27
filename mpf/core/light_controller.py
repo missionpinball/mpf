@@ -96,7 +96,7 @@ class LightController(MpfController):
     def monitor_lights(self):
         """Update the color of lights for the monitor."""
         if not self._monitor_update_task:
-            self._monitor_update_task = self.machine.clock.loop.create_task(self._monitor_update_lights())
+            self._monitor_update_task = asyncio.create_task(self._monitor_update_lights())
             self._monitor_update_task.add_done_callback(Util.raise_exceptions)
 
     async def _monitor_update_lights(self):

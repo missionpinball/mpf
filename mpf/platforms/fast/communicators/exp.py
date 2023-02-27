@@ -1,6 +1,5 @@
 import asyncio
 from base64 import b16decode
-from packaging import version
 from serial import SerialException, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
 from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_ADDRESS_MAP
 from mpf.platforms.fast.fast_exp_board import FastExpansionBoard

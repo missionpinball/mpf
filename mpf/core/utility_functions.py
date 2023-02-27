@@ -1,5 +1,5 @@
 """Contains the Util class which includes many utility functions."""
-from collections import Iterable as IterableCollection
+from collections.abc import Iterable as IterableCollection
 from copy import deepcopy
 import re
 from fractions import Fraction

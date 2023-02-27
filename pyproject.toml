@@ -21,12 +21,12 @@ classifiers=[
     "Topic :: Games/Entertainment :: Arcade"
     ]
 dependencies = [
-    "ruamel.yaml == 0.15.42",  # newer than this requires c requires compiled c lib, currently no Mac arm versions
-    "pyserial == 3.5",
+    "ruamel.yaml",  # newer than this requires c requires compiled c lib, currently no Mac arm versions
+    "pyserial",
     "pyserial-asyncio == 0.4; platform_system=='Windows'",
-    "pyserial-asyncio == 0.5; platform_system!='Windows'",
-    "sortedcontainers == 2.3.0",
-    "psutil == 5.9.4",
+    "pyserial-asyncio; platform_system!='Windows'",
+    "sortedcontainers",
+    "psutil",
     "packaging",
     "uvloop; platform_system!='Windows'" # TODO add version
     ]

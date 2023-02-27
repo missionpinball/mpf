@@ -112,7 +112,7 @@ class EventManager(MpfController):
 
     def _async_handler_coroutine(self, _coroutine, queue, **kwargs):
         queue.wait()
-        task = self.machine.clock.loop.create_task(_coroutine(**kwargs))
+        task = asyncio.create_task(_coroutine(**kwargs))
         task.add_done_callback(partial(self._async_handler_done, queue))
 
     @staticmethod
@@ -729,7 +729,7 @@ class EventManager(MpfController):
             # fast path if there are not handlers
             self.callback_queue.append((callback, kwargs))
         else:
-            task = self.machine.clock.loop.create_task(self._run_handlers_sequential(event, callback, kwargs))
+            task = asyncio.create_task(self._run_handlers_sequential(event, callback, kwargs))
             task.add_done_callback(self._queue_task_done)
             self._queue_tasks.append(task)
 

@@ -243,7 +243,7 @@ class SegmentDisplaySoftwareFlashPlatform(SegmentDisplayPlatform, metaclass=abc.
     async def initialize(self):
         """Start flash task."""
         await super().initialize()
-        self._display_flash_task = self.machine.clock.loop.create_task(self._display_flash())
+        self._display_flash_task = asyncio.create_task(self._display_flash())
         self._display_flash_task.add_done_callback(Util.raise_exceptions)
 
     async def _display_flash(self):

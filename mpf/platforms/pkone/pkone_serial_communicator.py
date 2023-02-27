@@ -1,7 +1,7 @@
 """PKONE serial communicator."""
 import asyncio
 import re
-from distutils.version import StrictVersion
+from packaging import version
 
 from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
 from mpf.platforms.pkone.pkone_extension import PKONEExtensionBoard
@@ -99,7 +99,7 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
         desc: Holds the model name and hardware revision number of the Penny K Pinball PKONE controller
         board that's connected.'''
 
-        if StrictVersion(NANO_MIN_FW) > StrictVersion(self.remote_firmware):
+        if version.parse(NANO_MIN_FW) > version.parse(self.remote_firmware):
             raise AssertionError('Firmware version mismatch. MPF requires '
                                  'the PKONE Nano Controller to be firmware {}, but yours is {}. '
                                  'Please update your firmware.'.
@@ -155,7 +155,7 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
                 firmware = match.group(3)[:-1] + '.' + match.group(3)[-1]
                 hardware_rev = match.group(4)
 
-                if StrictVersion(EXTENSION_MIN_FW) > StrictVersion(firmware):
+                if version.parse(EXTENSION_MIN_FW) > version.parse(firmware):
                     raise AssertionError('Firmware version mismatch. MPF requires '
                                          'PKONE Extension boards to be at least firmware {}, but yours is {}. '
                                          'Please update your firmware.'.
@@ -173,7 +173,7 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
                 hardware_rev = match.group(4)
                 rgbw_firmware = match.group(6) == 'RGBW'
 
-                if StrictVersion(LIGHTSHOW_MIN_FW) > StrictVersion(firmware):
+                if version.parse(LIGHTSHOW_MIN_FW) > version.parse(firmware):
                     raise AssertionError('Firmware version mismatch. MPF requires '
                                          'PKONE Lightshow boards to be at least firmware {}, but yours is {}. '
                                          'Please update your firmware.'.

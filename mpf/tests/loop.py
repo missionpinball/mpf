@@ -1,7 +1,7 @@
 import datetime
 import selectors
 import socket
-from asyncio import base_events, coroutine, events      # type: ignore
+from asyncio import base_events, events      # type: ignore
 import collections
 import heapq
 
@@ -511,8 +511,8 @@ class TestClock(ClockBase):
         await server.bind(client_connected_cb)
         return server
 
-    @coroutine
-    def open_connection(self, host=None, port=None, *,
+
+    async def open_connection(self, host=None, port=None, *,
                         limit=None, **kwds):
         """A wrapper for create_connection() returning a (reader, writer) pair.
 
@@ -556,8 +556,7 @@ class TestClock(ClockBase):
             serial.is_open = True
         return serial
 
-    @coroutine
-    def open_serial_connection(self, limit=None, **kwargs):     # type: ignore
+    async def open_serial_connection(self, limit=None, **kwargs):     # type: ignore
         """A wrapper for create_serial_connection() returning a (reader, writer) pair.
 
         The reader returned is a StreamReader instance; the writer is a

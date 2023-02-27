@@ -225,7 +225,12 @@ class YamlInterface(FileInterface):
     @staticmethod
     def process(data_string: Iterable[str]) -> dict:
         """Parse yaml from a string."""
-        return yaml.load(data_string, Loader=MpfLoader)
+
+        my_loader = yaml.YAML()
+        my_loader.Loader = MpfLoader
+        return my_loader.load(data_string)
+
+        # return yaml.load(data_string, Loader=MpfLoader)
 
     def save(self, filename: str, data: dict) -> None:   # pragma: no cover
         """Save config to yaml file."""

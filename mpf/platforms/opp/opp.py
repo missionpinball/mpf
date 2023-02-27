@@ -141,7 +141,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoP
         """Start polling and listening for commands."""
         # start polling
         for chain_serial in self.read_input_msg:
-            self._poll_task[chain_serial] = self.machine.clock.loop.create_task(self._poll_sender(chain_serial))
+            self._poll_task[chain_serial] = asyncio.create_task(self._poll_sender(chain_serial))
             self._poll_task[chain_serial].add_done_callback(Util.raise_exceptions)
 
         # start listening for commands

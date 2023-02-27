@@ -433,11 +433,11 @@ class MachineController(LogMixin):
         """
         python_version_info = sys.version_info
 
-        if not (python_version_info[0] == 3 and python_version_info[1] in (5, 6, 7, 8, 9)):
-            raise AssertionError("Incorrect Python version. MPF requires "
-                                 "Python 3.5, 3.6, 3.7, 3.8 or 3.9. You have Python {}.{}.{}."
-                                 .format(python_version_info[0], python_version_info[1],
-                                         python_version_info[2]))
+        # if not (python_version_info[0] == 3 and python_version_info[1] in (5, 6, 7, 8, 9)):
+        #     raise AssertionError("Incorrect Python version. MPF requires "
+        #                          "Python 3.5, 3.6, 3.7, 3.8 or 3.9. You have Python {}.{}.{}."
+        #                          .format(python_version_info[0], python_version_info[1],
+        #                                  python_version_info[2]))
 
         self.log.info("Platform: %s", sys.platform)
         self.log.info("Python executable location: %s", sys.executable)
