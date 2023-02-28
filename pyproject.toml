@@ -13,6 +13,8 @@ classifiers=[
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Natural Language :: English",
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: Microsoft :: Windows",
@@ -21,13 +23,13 @@ classifiers=[
     "Topic :: Games/Entertainment :: Arcade"
     ]
 dependencies = [
-    "ruamel.yaml",  # newer than this requires c requires compiled c lib, currently no Mac arm versions
-    "pyserial",
+    "ruamel.yaml",  # newer than this requires c requires compiled c lib, currently no Mac arm versions, tested with 0.17.21
+    "pyserial",  # 3.5
     "pyserial-asyncio == 0.4; platform_system=='Windows'",
-    "pyserial-asyncio; platform_system!='Windows'",
-    "sortedcontainers",
-    "psutil",
-    "packaging",
+    "pyserial-asyncio; platform_system!='Windows'",  # 3.6
+    "sortedcontainers",  # 2.4.0
+    "psutil",  # 5.9.4
+    "packaging",  # 23.0
     "uvloop; platform_system!='Windows'" # TODO add version
     ]
 dynamic = ["version"]
