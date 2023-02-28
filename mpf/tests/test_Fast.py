@@ -23,7 +23,7 @@ class BaseMockFastSerial(MockSerial):
         # msg = (self.queue.pop() + '\r').encode()
 
         msg = self.queue.pop()
-        print(f'{self.type} <<< {msg}')
+        # print(f'{self.type} <<< {msg}')
         msg = (msg + '\r').encode()
         return msg
 
@@ -50,7 +50,7 @@ class BaseMockFastSerial(MockSerial):
     def _handle_msg(self, msg):
         msg_len = len(msg)
         cmd = msg.decode()
-        print(f'{self.type} >>> {cmd}')
+        # print(f'{self.type} >>> {cmd}')
         # strip newline
         # ignore init garbage
         if cmd == (' ' * 256 * 4):
@@ -151,7 +151,7 @@ class MockFastNetNeuron(BaseMockFastSerial):  # TODO change this to just neuron
     def _handle_msg(self, msg):
         msg_len = len(msg)
         cmd = msg.decode()
-        print(f'{self.type} >>> {cmd}')
+        # print(f'{self.type} >>> {cmd}')
         # strip newline
         # ignore init garbage
         if cmd == (' ' * 256 * 4):
@@ -319,7 +319,7 @@ class TestFastBase(MpfTestCase):
         self._test_coil_configure()
 
         # test hardware scan
-        print(self.machine.default_platform.get_info_string())
+        # print(self.machine.default_platform.get_info_string())
         info_str = """DMD: FP-CPU-002-2 v00.88
 NET: FP-CPU-2000 v02.06
 RGB: FP-CPU-002-2 v00.89

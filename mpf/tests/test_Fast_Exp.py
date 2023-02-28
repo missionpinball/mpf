@@ -117,7 +117,7 @@ class MockFastExp(BaseMockFastSerial):
             # binary message. The first three chars are the command, the rest is the binary payload
             cmd = f'{msg[:3].decode()}{msg[3:].hex()}'
 
-        print(f'{self.type} >>> {cmd}')
+        # print(f'{self.type} >>> {cmd}')
 
         if cmd in self.ignore_commands:
             # self.queue.append(cmd[:3] + "P")
