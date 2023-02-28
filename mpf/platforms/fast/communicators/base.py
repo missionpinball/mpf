@@ -205,6 +205,8 @@ class FastSerialCommunicator(LogMixin):
             self.write_task.cancel()
             self.write_task = None
 
+        self.send_queue.clear()
+
         if self.writer:
             self.writer.close()
             if hasattr(self.writer, "wait_closed"):
@@ -334,4 +336,8 @@ class FastSerialCommunicator(LogMixin):
         if self.port_debug:
             self.log.info(f">>>> {msg}")
 
-        self.writer.write(msg)
+        try:
+            self.writer.write(msg)
+        except AttributeError:
+            self.log.warning(f"Serial connection is not open. Cannot send message: {msg}")
+            return
