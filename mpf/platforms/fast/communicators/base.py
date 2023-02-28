@@ -205,8 +205,6 @@ class FastSerialCommunicator(LogMixin):
             self.write_task.cancel()
             self.write_task = None
 
-        self.send_queue.clear()
-
         if self.writer:
             self.writer.close()
             if hasattr(self.writer, "wait_closed"):
