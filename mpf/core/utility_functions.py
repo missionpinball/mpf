@@ -1,6 +1,7 @@
 """Contains the Util class which includes many utility functions."""
 from collections.abc import Iterable as IterableCollection
 from copy import deepcopy
+import importlib
 import re
 from fractions import Fraction
 from functools import reduce, lru_cache
@@ -605,16 +606,12 @@ class Util:
             class_string(str): The input string
 
         Returns a reference to the python class object.
-
-        This function came from here:
-        http://stackoverflow.com/questions/452969/does-python-have-an-equivalent-to-java-class-forname
         """
-        # todo I think there's a better way to do this in Python 3
+
         parts = class_string.split('.')
         module = ".".join(parts[:-1])
-        m = __import__(module)
-        for comp in parts[1:]:
-            m = getattr(m, comp)
+        m = importlib.import_module(module)
+        m = getattr(m, parts[-1:][0])
         return m
 
     @staticmethod

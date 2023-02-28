@@ -417,8 +417,75 @@ class MpfTestCase(unittest.TestCase):
         """
         self.machine.log.info("Advancing time by %s", delta)
         try:
+            # Original
+            # a = asyncio.all_tasks()
             self.loop.run_until_complete(asyncio.sleep(delay=delta))
+            # TypeError: Passing coroutines is forbidden, use tasks explicitly.
+
+            # These are all the things I've tried.
+
+            # task = asyncio.create_task(asyncio.sleep(delay=delta))
+            # self.loop.run_until_complete(task)
+            # RuntimeError: no running event loop
+
+            # loop = asyncio.get_event_loop()
+            # task = asyncio.create_task(asyncio.sleep(delay=delta))
+            # loop.run_until_complete(task)
+            # RuntimeError: no running event loop
+
+            # loop = asyncio.new_event_loop()
+            # asyncio.set_event_loop(loop)
+            # RuntimeError: no running event loop
+
+            # async def my_coroutine(delay):
+            #     await asyncio.sleep(delay=delta)
+            # loop = asyncio.new_event_loop()
+            # asyncio.set_event_loop(loop)
+            # loop.run_until_complete(my_coroutine(delay=delta))
+            # Weird errors and failures
+
+            # if self.loop.is_running():
+            #     self.loop.run_until_complete(asyncio.sleep(delay=delta))
+            #     return
+            # else:
+            #     loop = asyncio.new_event_loop()
+            #     loop.run_until_complete(loop.create_task(asyncio.sleep(delay=delta)))
+            # AssertionError: unexpectedly None : Expected a running game but no game is active.
+
+            # asyncio.wait_for(asyncio.sleep(delay=delta), timeout=delta)
+            # lots of errors
+
+            # self.loop.run_until_complete(asyncio.sleep(delay=delta))
+            # TypeError: Passing coroutines is forbidden, use tasks explicitly.
+
+            # loop = asyncio.get_running_loop()
+            # task = loop.create_task(asyncio.sleep(delay=delta))
+            # task.add_done_callback(Util.raise_exceptions)
+            # loop.run_until_complete(task)
+
+            # task = self.loop.create_task(asyncio.sleep(delay=delta))
+            # self.tasks.append(task)
+            # self.loop.run_until_complete(task)
+            # TypeError: Passing coroutines is forbidden, use tasks explicitly.
+
+            # future = asyncio.sleep(delay=delta)
+            # result = self.machine.clock.loop.run_until_complete(future)
+            # return result
+
+            # if self.loop and self.loop.is_running():
+            #     task = asyncio.create_task(asyncio.sleep(delay=delta))
+            #     self.loop.run_until_complete(task)
+
+            # self.loop.run_until_complete(asyncio.sleep(delay=delta))
+
+
+            # d = asyncio.ensure_future(asyncio.sleep(delay=delta))
+            # while not d.done() and not self._exception:
+            #     self.loop.run_once()
+            # Lots of errors
+
             return
+
         except RuntimeError as e:
             try:
                 self.machine.stop()
@@ -586,8 +653,8 @@ class MpfTestCase(unittest.TestCase):
         start = time.time()
         while not init.done() and not self._exception:
             self.loop.run_once()
-            # if time.time() > start + timeout:
-            #     raise AssertionError("Start took more than {}s".format(timeout))
+            if time.time() > start + timeout:
+                raise AssertionError("Start took more than {}s".format(timeout))
 
         # trigger exception if there was one
         init.result()

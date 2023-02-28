@@ -24,7 +24,7 @@ class BcpServer(MpfController):
     async def start(self):
         """Start the server."""
         try:
-            self._server = await asyncio.start_server(
+            self._server = await self.machine.clock.start_server(
                 self._accept_client, self._ip, self._port)
         except OSError as e:
             raise MpfRuntimeError("Failed to bind BCP Socket to {} on port {}. "

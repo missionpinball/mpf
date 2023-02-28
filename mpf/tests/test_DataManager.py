@@ -41,7 +41,9 @@ class TestDataManager(MpfTestCase):
                 manager.save_all({"hallo": "world"})
                 while not move_mock.called:
                     time.sleep(.00001)
-                open_mock().write.assert_called_once_with('hallo: world\n')
+                expected_output = "hallo: world\n"
+                output = ''.join([res[0][0] for res in open_mock().write.call_args_list])
+                self.assertEqual(output, expected_output)
                 self.assertTrue(move_mock.called)
 
         open_mock = mock_open(read_data='hallo: world\n')

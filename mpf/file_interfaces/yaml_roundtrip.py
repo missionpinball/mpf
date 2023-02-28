@@ -9,12 +9,12 @@ import ruamel.yaml.representer
 from ruamel.yaml import StringIO, YAML, VersionedResolver
 from ruamel.yaml.reader import Reader
 from ruamel.yaml.scanner import RoundTripScanner
-from ruamel.yaml.parser import RoundTripParser
+from ruamel.yaml.parser import Parser
 from ruamel.yaml.composer import Composer
 from ruamel.yaml.constructor import RoundTripConstructor
 from ruamel.yaml.dumper import RoundTripDumper
 
-from mpf.file_interfaces.yaml_interface import YamlInterface, MpfResolver, RESOLVERS
+from mpf.file_interfaces.yaml_interface import YamlInterface, MpfResolver, RESOLVERS, MpfConstructor
 
 # pylint: disable-msg=invalid-name
 typ = 'mpf-rt'
@@ -39,9 +39,7 @@ class FormattedInt(ruamel.yaml.scalarint.ScalarInt):
 
 def alt_construct_yaml_int(constructor, node):
     """Parse integers using FormattedInt."""
-    value_s = constructor.construct_scalar(node)
-    if not isinstance(value_s, str):
-        value_s = value_s.encode('utf-8')
+    value_s = str(constructor.construct_scalar(node))
     if value_s.isdigit():
         return constructor.construct_yaml_int(node)
     return FormattedInt(value_s)
@@ -79,7 +77,7 @@ def init_typ(self):
     self.Constructor = ruamel.yaml.constructor.RoundTripConstructor  # type: Any
 
 
-class MpfRoundTripLoader(Reader, RoundTripScanner, RoundTripParser, Composer, RoundTripConstructor, MpfResolver):
+class MpfRoundTripLoader(Reader, RoundTripScanner, Parser, Composer, RoundTripConstructor, MpfResolver):
 
     """Config loader which can roundtrip."""
 
@@ -93,6 +91,8 @@ class MpfRoundTripLoader(Reader, RoundTripScanner, RoundTripParser, Composer, Ro
         RoundTripConstructor.__init__(self, preserve_quotes=preserve_quotes, loader=self)
         MpfResolver.__init__(self, loadumper=self)
 
+        self.comment_handling = None
+
 
 class YamlRoundtrip(YamlInterface):     # pragma: no cover
 
@@ -102,17 +102,21 @@ class YamlRoundtrip(YamlInterface):     # pragma: no cover
     def process(data_string):
         """Parse yaml from a string."""
 
-        my_loader = ruamel.yaml.YAML()
-        my_loader.Loader = MpfRoundTripLoader
-        return my_loader.load(data_string)
-
-        # return ruamel.yaml.load(data_string, Loader=MpfRoundTripLoader)
+        loader = MpfRoundTripLoader(data_string)
+        return loader.get_single_data()
 
     @staticmethod
     def save_to_str(data):
         """Return yaml string from config."""
-        return ruamel.yaml.dump(data, Dumper=RoundTripDumper,
-                                default_flow_style=False, indent=4, width=10)
+
+        with StringIO() as output:
+            yaml = YAML()
+            yaml.default_flow_style = False
+            yaml.indent = 4
+            yaml.width = 10
+            yaml.Dumper = RoundTripDumper
+            yaml.dump(data, output)
+            return output.getvalue()
 
     def save(self, filename, data):
         """Save config to yaml file."""

@@ -90,7 +90,8 @@ a: 3
 
 '''
         with self.assertRaises(KeyError):
-            yaml.load(yaml_str, Loader=MpfLoader)
+            loader = MpfLoader(yaml_str)
+            loader.get_single_data()
 
     def test_yaml_patches(self):
 

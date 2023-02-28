@@ -160,6 +160,8 @@ class MpfLoader(Reader, Scanner, Parser, Composer, MpfConstructor, MpfResolver):
         MpfConstructor.__init__(self, loader=self)
         MpfResolver.__init__(self, loadumper=self)
 
+        self.comment_handling = None
+
 
 class YamlInterface(FileInterface):
 
@@ -230,12 +232,11 @@ class YamlInterface(FileInterface):
         my_loader.Loader = MpfLoader
         return my_loader.load(data_string)
 
-        # return yaml.load(data_string, Loader=MpfLoader)
-
     def save(self, filename: str, data: dict) -> None:   # pragma: no cover
         """Save config to yaml file."""
-        data_str = yaml.dump(data, default_flow_style=False)
-        if not data_str:
-            raise AssertionError("Failed to serialize data.")
+
         with open(filename, 'w', encoding='utf8') as output_file:
-            output_file.write(data_str)
+            y = yaml.YAML()
+            y.default_flow_style = False
+            y.line_break = ''
+            y.dump(data, output_file)
