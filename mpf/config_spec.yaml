@@ -620,7 +620,7 @@ fast:
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
 fast_net:
-    port: single|str|
+    port: list|str|
     io_loop: dict|str:subconfig(fast_io_loop)|None
     baud: single|int|921600
     debug: single|bool|false
@@ -638,7 +638,7 @@ fast_io_loop:
     model: single|str|  # FP-I/O-0804, etc.
     order: single|enum(1,2,3,4,5,6,7,8,9)|
 fast_exp:
-    port: single|str|
+    port: list|str|
     baud: single|int|921600
     debug: single|bool|false
     console_log: single|enum(none,basic,full)|none
@@ -663,33 +663,33 @@ fast_led_port:
     type: single|enum(ws2812,apa-102)|ws2812
     leds: single|int|32
 fast_aud:
-    port: single|str|
+    port: list|str|
     baud: single|int|230400
     debug: single|bool|false
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
 fast_seg:
-    port: single|str|
+    port: list|str|
     baud: single|int|230400
     debug: single|bool|false
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
     fps: single|int|20
 fast_dmd:
-    port: single|str|
+    port: list|str|
     baud: single|int|2000000
     debug: single|bool|false
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
     fps: single|int|20
 fast_emu:
-    port: single|str|
+    port: list|str|
     baud: single|int|230400
     debug: single|bool|false
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
 fast_rgb:
-    port: single|str|
+    port: list|str|
     baud: single|int|921600
     debug: single|bool|false
     console_log: single|enum(none,basic,full)|none

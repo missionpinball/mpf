@@ -67,24 +67,35 @@ class FastSerialCommunicator(LogMixin):
         * Starts the read & write tasks
         * Set the flag to ignore decode errors
         """
-        self.log.info(f"Connecting to {self.config['port']} at {self.config['baud']}bps")
 
-        while True:
-            try:
-                connector = self.machine.clock.open_serial_connection(
-                    url=self.config['port'], baudrate=self.config['baud'], limit=0, xonxoff=False,
-                    bytesize=EIGHTBITS, parity=PARITY_NONE, stopbits=STOPBITS_ONE)
-                self.reader, self.writer = await connector
-            except SerialException:
-                if not self.machine.options["production"]:
-                    raise
+        for port in self.config['port']:
+            self.log.info(f"Trying to connect to {port} at {self.config['baud']}bps")
+            success = False
 
-                # if we are in production mode, retry
-                await asyncio.sleep(.1)
-                self.log.warning("Connection to %s failed. Will retry.", self.config['port'])
-            else:
-                # we got a connection
+            while not success:
+                try:
+                    connector = self.machine.clock.open_serial_connection(
+                        url=port, baudrate=self.config['baud'], limit=0, xonxoff=False,
+                        bytesize=EIGHTBITS, parity=PARITY_NONE, stopbits=STOPBITS_ONE)
+                    self.reader, self.writer = await connector
+                except SerialException:
+                    if not self.machine.options["production"]:
+                        break
+
+                    # if we are in production mode, retry
+                    await asyncio.sleep(.1)
+                    self.log.warning("Connection to %s failed. Will retry.", port)
+                else:
+                    # we got a connection
+                    self.log.info(f"Connected to {port} at {self.config['baud']}bps")
+                    success = True
+                    break
+
+            if success:
                 break
+        else:
+            self.log.error("Failed to connect to any of the specified ports.")
+            raise SerialException("Could not connect to any of the specified ports.")
 
         serial = self.writer.transport.serial
         if hasattr(serial, "set_low_latency_mode"):
