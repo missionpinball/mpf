@@ -1,1 +1,1 @@
-See: http://docs.missionpinball.org/en/latest/versions/release_notes.html
+See: http://docs.missionpinball.org/versions/release_notes.html
