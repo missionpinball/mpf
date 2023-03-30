@@ -101,8 +101,9 @@ class FastSerialCommunicator(LogMixin):
         if hasattr(serial, "set_low_latency_mode"):
             try:
                 serial.set_low_latency_mode(True)
+                self.log.debug(f"Connected via low latency mode for {self.config['port']}.")
             except (NotImplementedError, ValueError) as e:
-                self.log.debug(f"Could not enable low latency mode for {self.config['port']}. {e}")
+                self.log.debug(f"Connected via standard mode for {self.config['port']}. {e}")
 
         # defaults are slightly high for our use case
         self.writer.transport.set_write_buffer_limits(2048, 1024)
@@ -228,7 +229,14 @@ class FastSerialCommunicator(LogMixin):
         self.send_queue.put_nowait((f'{msg}\r'.encode(), response_msg))
         self.query_done.clear()
 
-        await asyncio.wait_for(self.query_done.wait(), timeout=None)  # TODO should there be a timeout?
+        try:
+            await asyncio.wait_for(self.query_done.wait(), timeout=1)  # TODO make configurable?
+        except asyncio.TimeoutError:
+            # TODO better timeout handling
+            # Add a timeout callback to message_processors which can be called here.
+            # That will allow intelligent handling of timeouts depending on message type
+            self.log.error(f'Message Timeout: The serial message {msg} did not receive a response.')
+            self.machine.shutdown()  # TODO make this optional? Continue without?
 
     def send_and_confirm(self, msg, confirm_msg):
         self.send_queue.put_nowait((f'{msg}\r'.encode(), confirm_msg))
