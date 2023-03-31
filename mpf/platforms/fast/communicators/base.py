@@ -235,8 +235,8 @@ class FastSerialCommunicator(LogMixin):
             # TODO better timeout handling
             # Add a timeout callback to message_processors which can be called here.
             # That will allow intelligent handling of timeouts depending on message type
-            self.log.error(f'Message Timeout: The serial message {msg} did not receive a response.')
-            self.machine.shutdown()  # TODO make this optional? Continue without?
+            raise asyncio.TimeoutError(f'Message Timeout: The serial message {msg} did not receive a response.')
+
 
     def send_and_confirm(self, msg, confirm_msg):
         self.send_queue.put_nowait((f'{msg}\r'.encode(), confirm_msg))
