@@ -1760,6 +1760,9 @@ sound_ducking:
 sound_marker:
     time: single|secs|
     events: list|event_posted|
+speedometers:
+    start_switch: single|machine(switches)|None
+    stop_switch: single|machine(switches)|None
 spi_bit_bang:
     __valid_in__: machine
     __type__: config
