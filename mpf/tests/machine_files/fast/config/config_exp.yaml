@@ -27,7 +27,7 @@ fast:
     port: com4
     boards:
       brian:
-        model: FP-exp-0201  # test mixed case
+        model: FP-exp-0091  # test mixed case
         breakouts:
           - port: 1
             model: FP-BRK-0001
@@ -42,7 +42,7 @@ fast:
             type: apa-102
         led_hz: 30
       aaron:
-        model: FP-EXP-0201-2  # test hw revision number included
+        model: FP-EXP-0091-2  # test hw revision number included
         id: 1
         breakouts:
           - port: 3
