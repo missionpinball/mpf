@@ -30,7 +30,7 @@ class FastExpCommunicator(FastSerialCommunicator):
         super().__init__(platform, processor, config)
 
         self.exp_boards_by_address = dict()  # keys = board addresses, values = FastExpansionBoard objects
-        self.active_board = None
+        self.active_board = None  # TODO change to setter/getter
         self._led_task = None
 
         self.message_processors['BR:'] = self._process_br
@@ -53,33 +53,35 @@ class FastExpCommunicator(FastSerialCommunicator):
     async def query_exp_boards(self):
         """Query the EXP bus for connected boards."""
 
-        if self.platform.machine_type == 'neuron' and 'neuron' not in self.config['boards']:
+        # if self.platform.machine_type == 'neuron' and 'neuron' not in self.config['boards']:
 
-            self.config['boards']['neuron'] = {'model': 'FP-EXP-2000', 'id': '0',}
-            self.machine.config_validator.validate_config("fast_exp_board", self.config['boards']['neuron'])
+        #     self.config['boards']['neuron'] = {'model': 'FP-EXP-2000', 'id': '0',}
+        #     self.machine.config_validator.validate_config("fast_exp_board", self.config['boards']['neuron'])
 
         for board_name, board_config in self.config['boards'].items():
 
             board_config['model'] = ('-').join(board_config['model'].split('-')[:3]).upper()  # FP-eXp-0071-2 -> FP-EXP-0071
 
             if not board_config['address']:  # Is there a custom address for this board? If not, look up the default
-                board_config['address'] = EXPANSION_BOARD_ADDRESS_MAP[(board_config['model'], board_config['id'])]
+                board_address = EXPANSION_BOARD_ADDRESS_MAP[(board_config['model'], board_config['id'])]
+            else:
+                board_address = board_config['address']
 
-            self.active_board = board_config['address']
-
-            if self.active_board in self.exp_boards_by_address:
+            if board_address in self.exp_boards_by_address:
             # Got an ID for a board that's already registered. This shouldn't happen?
-                raise AssertionError(f'Expansion Board at address {self.active_board} is already registered')
+                raise AssertionError(f'Expansion Board at address {board_address} is already registered')
 
-            board_obj = FastExpansionBoard(board_name, self, self.active_board, board_config)
-            self.exp_boards_by_address[self.active_board] = board_obj  # registers with this EXP communicator
+            board_obj = FastExpansionBoard(board_name, self, board_address, board_config)
+            self.exp_boards_by_address[board_address] = board_obj  # registers with this EXP communicator
             self.platform.register_expansion_board(board_obj)  # registers with the platform
 
-            await self.send_query(f'ID@{self.active_board}:', 'ID:')
+            self.set_active_board(board_address)
+            await self.send_query(f'ID:', 'ID:')
 
             for breakout_board in board_obj.breakouts.values():
-                self.active_board = breakout_board.address
-                await self.send_query(f'ID@{self.active_board}:', 'ID:')
+                brk_board_address = breakout_board.address
+                self.set_active_board(brk_board_address)
+                await self.send_query(f'ID:', 'ID:')
 
             await board_obj.reset()
 

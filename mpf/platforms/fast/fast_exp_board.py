@@ -192,10 +192,3 @@ class FastBreakoutBoard:
 
         self.led_fade_rate = rate
         self.communicator.set_led_fade_rate(self.address, rate)
-
-    async def query_breakout_boards(self):
-        """Query breakout boards."""
-
-
-
-        await self.send_query(f'ID@{self.active_board}:', 'ID:')
