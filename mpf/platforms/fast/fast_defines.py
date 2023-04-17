@@ -184,24 +184,24 @@ EXPANSION_BOARD_ADDRESS_MAP = {
     ('FP-EXP-0081', '1'): '85',
     ('FP-EXP-0081', '2'): '86',
     ('FP-EXP-0081', '3'): '87',
-    ('FP-EXP-0201', '0'): '88',
-    ('FP-EXP-0201', '1'): '89',
-    ('FP-EXP-0201', '2'): '8A',
-    ('FP-EXP-0201', '3'): '8B',
+    ('FP-EXP-0091', '0'): '88',
+    ('FP-EXP-0091', '1'): '89',
+    ('FP-EXP-0091', '2'): '8A',
+    ('FP-EXP-0091', '3'): '8B',
     ('FP-EXP-2000', '0'): '48',
 }
 
 EXPANSION_BOARD_BREAKOUTS = {  # Total breakouts including built-in one
     'FP-EXP-0071': 1,
     'FP-EXP-0081': 1,
-    'FP-EXP-0201': 4,
+    'FP-EXP-0091': 3,
     'FP-EXP-2000': 4,
 }
 
 EXP_BREAKOUT_0_IDS = {  # Names of the breakouts that are built in to each board
     'FP-EXP-0071': 'FP-EXP-0071',
     'FP-EXP-0081': 'FP-EXP-0081',
-    'FP-EXP-0201': 'FP-BRK-0001',
+    'FP-EXP-0091': 'FP-BRK-0001',
     'FP-EXP-2000': 'FP-BRK-0001',
 }
 
@@ -213,7 +213,7 @@ BREAKOUT_FEATURES = {
     'FP-EXP-0081': {
         'led_ports': 8,
     },
-    'FP-EXP-0201': {
+    'FP-EXP-0091': {
         'led_ports': 4,
     },
     'FP-EXP-2000': {
