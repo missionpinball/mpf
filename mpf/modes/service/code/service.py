@@ -122,6 +122,7 @@ sort_devices_by_number: single|bool|True
             ServiceMenuEntry("Audits Menu", self._audits_menu),
             ServiceMenuEntry("Adjustments Menu", self._adjustments_menu),
             ServiceMenuEntry("Utilities Menu", self._utilities_menu),
+            ServiceMenuEntry("Pricing Menu", self._pricing_menu)
 
         ]
         return entries
@@ -170,6 +171,223 @@ sort_devices_by_number: single|bool|True
 
     async def _diagnostics_light_menu(self):
         await self._make_menu(self._load_diagnostic_light_menu_entries())
+
+    #Pricing 
+    def _load_pricing_menu_entries(self) -> List[ServiceMenuEntry]:
+        """Return the pricing menu items with label and callback."""
+
+        return [
+            ServiceMenuEntry("Credits Per Game", self._pricing_credits_per_game),
+            ServiceMenuEntry("Match Percentage", self._pricing_match_percentage),
+            ServiceMenuEntry("Toggle Free Play/Credit Mode", self._pricing_play),
+            ServiceMenuEntry("Max Credits", self._pricing_max_credits)
+        ]
+    
+    async def _pricing_menu(self):
+        await self._make_menu(self._load_pricing_menu_entries())
+
+    async def _pricing_play(self):
+        """Toggles between Free Play and Credit Play"""
+        selection = await self._make_option_slide("Toggle Play Mode", "Freeplay or Credit Mode", ["Credit", "Free Play"],
+                                                  "THIS COULD POTENTIALLY WIPE ANY EXISTING CREDITS")
+        if selection == "Credit":
+            """Enables Credit Play, and sets max_credits to at least one"""
+
+            self.machine.post("turn_off_free_play", False )
+
+            """event: turn_off_free_play
+                    desc: turn off the ability of free play
+                    args: 
+                        mode: the new game mode 
+            """
+            
+            self.machine.variables.set_machine_var("free_play", False)
+            self.machine.variables.set_machine_var("max_credits", 1.0)
+
+            self.machine.post("set_max_credits", 1.0 )
+
+            self.machine.events.post("enable_credit_play")
+           
+        else:
+            """Enables Free Play"""
+            self.machine.variables.set_machine_var("free_play", True)
+            self.machine.events.post("enable_free_play")
+
+    async def _pricing_max_credits(self):
+        """increases and decreases the maximum allowed credits"""
+        while True:
+            key = await self._get_key()
+
+            if key == "ENTER":
+                return
+
+            elif key == "UP":
+                max_credits = self.machine.variables.get_machine_var("max_credits")
+                if not isinstance(max_credits, int):
+                    max_credits = 1
+
+                max_credits += 1
+                if max_credits >= 5:
+                    max_credits = 5
+                
+                self.machine.variables.set_machine_var("max_credits", max_credits)
+                self.machine.post("max_credits_increase", max_credits)
+
+                """event: max_credit_increase
+                    desc: increase the allowable maximum credits
+                    args: 
+                        max_credts: the new allowed max credits
+                """
+
+            elif key == "DOWN":
+                max_credits = self.machine.variables.get_machine_var("max_credits")
+                if not isinstance(max_credits, int):
+                    max_credits = 1
+                max_credits -= 1
+                if max_credits <= 1:
+                    max_credits = 1
+
+                self.machine.variables.set_machine_var("max_credits", max_credits)
+                self.machine.variables.post("max_credit_decrease", max_credits)
+
+                """event: max_credit_decrease
+                    desc: decrease the allowable maximum credits
+                    args:
+                        max_credtits: the new allowed max credits
+                """      
+    
+    async def _pricing_match_percentage(self):
+        """Decrease or Increase the match percentage: limits it to between 1 and 0.1 (10% - 100%)"""
+        while True:
+            # wait for key
+            key = await self._get_key()
+
+            if key == "ENTER":
+                return
+
+            elif key == "UP":
+                match_percentage = self.machine.variables.get_machine_var("match_percentage")
+                if not isinstance(match_percentage, float):
+                    match_percentage = 1.0
+                match_percentage += .1
+                if match_percentage >= 1.0:
+                    match_percentage = 1.0
+
+                self.machine.variables.set_machine_var("match_percentage", match_percentage)
+                # post event for increased match percentage 
+                self.machine.events.post("match_percentage_increase", match_percentage)
+
+                '''event: match_percentage_increase
+
+                desc: Increase match percentage chances
+
+                args:
+
+                    match_percentage: New match_percentage as float between 0.1 an 1.0
+                '''
+            elif key == "DOWN":
+                match_percentage = self.machine.variables.get_machine_var("match_percentage")
+                if not isinstance(match_percentage, float):
+                    match_percentage =  1.0
+                match_percentage -= .1
+                if match_percentage <= 0.1:
+                    match_percentage = 0.1
+                self.machine.variables.set_machine_var("match_percentage", match_percentage)
+                # post event for decreased match percentage
+                self.machine.events.post("match_percentage_decrease", match_percentage)
+               
+                '''event: match_percentage_decrease
+
+                    desc: decrease match percentage
+
+                    args:
+
+                        match_percentage: New match_percentage as float between 0.1 an 1.0'''
+        
+    async def _pricing_credits_per_game(self):
+        """Edit the different pricing tiers"""
+        # should be a credits_pricing_tiers obj? 
+        pricing = self.machine.variables.get_machine_var("pricing_tiers")
+        new_pricing = []
+
+        for i in range(len(pricing)):
+           price = pricing[i]
+           credits = pricing[i+1]
+
+
+        # flag allows the user to change between editing the pricing tiers price and credits
+           flag = True
+
+           while True:
+            # wait for key
+                    key = await self._get_key()
+
+                    if key == "ENTER":
+
+                        if flag == True:
+                            flag = False
+
+                        else:
+                            new_pricing.append(price)
+                            new_pricing.append(credits)
+
+                            i =+ 2
+                            return
+
+                    elif key == "UP":
+
+                        if flag == False:
+                            if not isinstance(credits, int):
+                                credits = 1
+                            credits += 1
+                            if credits > self.machine.variables.get_machine_var("max_credits"):
+                                credits = self.machine.variables.get_machine_var("max_credits")
+
+                        else:
+                            if not isinstance(price, float):
+                                price = 0.25
+
+                            price += 0.25
+                            if credits >= 1.0:
+                                price = 1.0
+
+ 
+                        # post event for increased credit amount 
+                        temp = [price, credits]
+                        self.machine.events.post("increase_pricing_tier", temp)
+
+                        """event: increase_pricing_tier
+                            desc: increase either price or credits in the tier
+                            args: 
+                                the new value of the current pricing tier [price, credits]
+                                """
+            
+                    elif key == "DOWN":
+                        if flag == False:
+                            if not isinstance(credits, int):
+                             credits =  1
+                            credits -= 1
+                            if credits <= 1:
+                                credits = 1
+
+                        else:
+                            if not isinstance(price, float):
+                                price = 0.25
+                            price -= 0.25
+                            if price <= 0.25:
+                                price = 0.25
+
+                        # post event for decreased credit amount 
+                        temp = [price, credits]
+                        self.machine.events.post("decrease_pricing_tier", temp)
+
+                        """event: decrease_pricing_tier
+                           desc: decrease either the price or credits in the tier
+                           args: 
+                            the new value of the current pricing tier [price, credits]"""
+
+        self.machine.variables.set_machine_var("pricing_tiers", new_pricing)    
+        self.machine.events.post("pricing_tier_change", new_pricing)
 
     # Adjustments
     def _load_adjustments_menu_entries(self) -> List[ServiceMenuEntry]:

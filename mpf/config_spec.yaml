@@ -414,6 +414,8 @@ credits_events:
 credits_pricing_tiers:
     price: single|template_float|.50
     credits: single|template_int|1
+match:
+    match_percentage: single|float_or_token|1.0
 device:     # base for all devices
     label: single|str|%
     tags: list|str|None

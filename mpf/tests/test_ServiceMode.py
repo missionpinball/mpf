@@ -141,12 +141,21 @@ class TestServiceMode(MpfFakeGameTestCase):
 
         self.hit_and_release_switch("s_service_up")
         self.advance_time_and_run()
-        self.assertEventCalledWith("service_menu_selected", label='Diagnostics Menu')
+        self.assertEventCalledWith("service_menu_selected", label='Pricing Menu')
 
         self.hit_and_release_switch("s_service_down")
         self.advance_time_and_run()
         self.assertEventCalledWith("service_menu_selected", label='Utilities Menu')
 
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_menu_selected", label='Pricing Menu')
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_menu_selected", label='Diagnostics Menu')
+
+        
     def test_utilities_reset(self):
         self.hit_and_release_switch("s_service_esc")
         self.advance_time_and_run(.1)
@@ -589,3 +598,50 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.advance_time_and_run()
 
         self.assertEventCalled("service_settings_stop")
+
+    def test_pricing(self):
+        self.mock_event("service_menu_selected")
+        
+        # enter menu
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+
+        self.assertEventCalledWith("service_menu_selected", label='Diagnostics Menu')
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+
+        # enter pricing menu
+        self.assertEventCalledWith("service_menu_selected", label='Pricing Menu')
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+
+
+        # check that each pricing menu exists
+        self.assertEventCalledWith("service_menu_selected", label="Credits Per Game")
+
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+
+        self.assertEventCalledWith("service_menu_selected", label="Match Percentage")
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+
+        self.assertEventCalledWith("service_menu_selected", label="Toggle Free Play/Credit Mode")
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        
+        self.assertEventCalledWith("service_menu_selected", label="Max Credits")
+
