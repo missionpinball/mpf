@@ -4,6 +4,7 @@ Fixes for octal and boolean values are from here:
 http://stackoverflow.com/questions/32965846/cant-parse-yaml-correctly/
 """
 import copy
+from typing import Any, Iterable, List, Dict
 
 from ruamel import yaml
 from ruamel.yaml.error import MarkedYAMLError
@@ -12,6 +13,7 @@ from ruamel.yaml.error import MarkedYAMLError
 from mpf.core.file_interface import FileInterface
 
 _yaml = yaml.YAML()
+_yaml.default_flow_style = False
 
 class YamlInterface(FileInterface):
 
@@ -77,16 +79,11 @@ class YamlInterface(FileInterface):
     @staticmethod
     def process(data_string: Iterable[str]) -> dict:
         """Parse yaml from a string."""
-        p = _yaml.load(data_string)  # todo instantiate only once
-        return p
+        return _yaml.load(data_string)  # todo instantiate only once
 
     def save(self, filename: str, data: dict) -> None:   # pragma: no cover
         """Save config to yaml file."""
-        data_str = _yaml.dump(data, default_flow_style=False)
-        if not data_str:
-            raise AssertionError("Failed to serialize data.")
         with open(filename, 'w', encoding='utf8') as output_file:
-            y = yaml.YAML()
-            y.default_flow_style = False
-            y.line_break = ''
-            y.dump(data, output_file)
+            _yaml.default_flow_style = False
+            _yaml.line_break = ''
+            _yaml.dump(data, output_file)

@@ -1,7 +1,7 @@
 #show_version=5
 - time: 0
   lights:
-    led_01: 006400
+    led_01: "006400"
     led_02: CCCCCC
     light_01: CC
     light_02: 78
@@ -17,7 +17,7 @@
     light_01: FF
     light_02: 33
     gi_01: 99
-- time: +1
+- time: "+1"
   lights:
     led_01: MidnightBlue-f500 ms
     led_02: DarkOrange-f0.5 s
