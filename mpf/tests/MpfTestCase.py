@@ -953,9 +953,8 @@ class MpfTestCase(unittest.TestCase):
 
         duration = time.time() - self.test_start_time
         if duration > self.expected_duration:
-            print("Test {}.{} took {} > {}s".format(self.__class__,
-                  self._testMethodName, round(duration, 2),
-                  self.expected_duration))
+            print(f"Test {self.__class__}.{self._testMethodName} took"
+                  f"{round(duration, 2)} > {self.expected_duration}s")
 
         self.machine.log.debug("Test ended")
         if sys.exc_info != (None, None, None):

@@ -6,12 +6,8 @@ game:
 test_section:
   true_key1: true
   true_key2: True
-  true_key3: yes
-  true_key4: Yes
   false_key1: false
   false_key2: False
-  false_key3: no
-  false_key4: No
   on_string: on
   off_string: off
   int_6400: 6400
