@@ -15,11 +15,3 @@ class TestCustomCode(MpfTestCase):
         self.machine_run()
 
         self.assertEqual(1, self._events['test_response'])
-
-    @test_config_directory('tests/machine_files/scriptlet/')
-    def test_legacy_scriptlet(self):
-        self.mock_event("test_response")
-        self.post_event("test_event")
-        self.machine_run()
-
-        self.assertEqual(1, self._events['test_response'])

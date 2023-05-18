@@ -134,7 +134,6 @@ mpf:
         visual_pinball_engine: mpf.platforms.visual_pinball_engine.visual_pinball_engine.VisualPinballEnginePlatform
 
     paths:
-        scriptlets: scriptlets
         audits: data/audits.yaml
         machine_vars: data/machine_vars.yaml
         high_scores: data/high_scores.yaml
