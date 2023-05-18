@@ -18,7 +18,7 @@ match up to any of MPF's built in devices. The elevator and claw unloader
 in *Demolition Man* is a good example, and what we'll use here.
 
 (You can read about how to download and run *Demo Man* in the
-`example games section <http://docs.missionpinball.org/en/latest/example_games>`_
+`example games section <http://docs.missionpinball.org/example_games>`_
 section of the MPF User Documentation.)
 
 Here's how to create a custom code class:
@@ -35,7 +35,7 @@ In the *Demo Man* example, it looks like this:
 .. image:: /images/scriptlet.png
 
 Add an empty ``__init__.py`` file into your folder to make it a package.
-It become the package ``code`` and all your classes will be referenced as 
+It become the package ``code`` and all your classes will be referenced as
 ``code.file_name.ClassName``.
 
 2. Open and edit your custom code class file

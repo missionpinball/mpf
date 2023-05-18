@@ -99,7 +99,13 @@ class EventManager(MpfController):
 
         priority_start = event_string.find(".")
         if priority_start > 0:
-            additional_priority = int(event_string[priority_start + 1:])
+            try:
+                additional_priority = int(event_string[priority_start + 1:])
+            except ValueError:
+                raise ValueError('Failed to parse priority in event name, '
+                                 f'please remedy "{event_string}". Does your '
+                                 'event name contain a dot?')
+
             event_string = event_string[:priority_start]
 
         return event_string, placeholder, additional_priority

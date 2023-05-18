@@ -7,7 +7,7 @@ mode:
   use_wait_queue: true
 
 # Instructions on how to use this mode:
-# http://docs.missionpinball.org/en/latest/game_logic/high_scores/index.html
+# http://docs.missionpinball.org/game_logic/high_scores/index.html
 
 high_score:
   enter_initials_timeout: 60

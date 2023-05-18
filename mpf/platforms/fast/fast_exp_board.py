@@ -70,7 +70,14 @@ class FastExpansionBoard:
 
         exp_board = active_board[:2]
         brk_board = active_board[2:]
-        proc, product_id, firmware_version = id_string.split()
+
+        try:
+            proc, product_id, firmware_version = id_string.split()
+        except ValueError:
+            if exp_board == '84':  # Workaround for BRK 0 ID: bug in FP-EXP-0081 0.8 firmware
+                proc = 'BRK'
+                product_id = 'FP-EXP-0081'
+                firmware_version = '0.0'
 
         assert exp_board == self.address
 
@@ -185,10 +192,3 @@ class FastBreakoutBoard:
 
         self.led_fade_rate = rate
         self.communicator.set_led_fade_rate(self.address, rate)
-
-    async def query_breakout_boards(self):
-        """Query breakout boards."""
-
-
-
-        await self.send_query(f'ID@{self.active_board}:', 'ID:')

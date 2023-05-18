@@ -319,7 +319,7 @@ class TestFastBase(MpfTestCase):
         self._test_coil_configure()
 
         # test hardware scan
-
+        print(self.machine.default_platform.get_info_string())
         info_str = """DMD: FP-CPU-002-2 v00.88
 NET: FP-CPU-2000 v02.06
 RGB: FP-CPU-002-2 v00.89

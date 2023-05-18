@@ -67,31 +67,43 @@ class FastSerialCommunicator(LogMixin):
         * Starts the read & write tasks
         * Set the flag to ignore decode errors
         """
-        self.log.info(f"Connecting to {self.config['port']} at {self.config['baud']}bps")
 
-        while True:
-            try:
-                connector = self.machine.clock.open_serial_connection(
-                    url=self.config['port'], baudrate=self.config['baud'], limit=0, xonxoff=False,
-                    bytesize=EIGHTBITS, parity=PARITY_NONE, stopbits=STOPBITS_ONE)
-                self.reader, self.writer = await connector
-            except SerialException:
-                if not self.machine.options["production"]:
-                    raise
+        for port in self.config['port']:
+            self.log.info(f"Trying to connect to {port} at {self.config['baud']}bps")
+            success = False
 
-                # if we are in production mode, retry
-                await asyncio.sleep(.1)
-                self.log.warning("Connection to %s failed. Will retry.", self.config['port'])
-            else:
-                # we got a connection
+            while not success:
+                try:
+                    connector = self.machine.clock.open_serial_connection(
+                        url=port, baudrate=self.config['baud'], limit=0, xonxoff=False,
+                        bytesize=EIGHTBITS, parity=PARITY_NONE, stopbits=STOPBITS_ONE)
+                    self.reader, self.writer = await connector
+                except SerialException:
+                    if not self.machine.options["production"]:
+                        break
+
+                    # if we are in production mode, retry
+                    await asyncio.sleep(.1)
+                    self.log.warning("Connection to %s failed. Will retry.", port)
+                else:
+                    # we got a connection
+                    self.log.info(f"Connected to {port} at {self.config['baud']}bps")
+                    success = True
+                    break
+
+            if success:
                 break
+        else:
+            self.log.error("Failed to connect to any of the specified ports.")
+            raise SerialException("Could not connect to any of the specified ports.")
 
         serial = self.writer.transport.serial
         if hasattr(serial, "set_low_latency_mode"):
             try:
                 serial.set_low_latency_mode(True)
+                self.log.debug(f"Connected via low latency mode for {self.config['port']}.")
             except (NotImplementedError, ValueError) as e:
-                self.log.debug(f"Could not enable low latency mode for {self.config['port']}. {e}")
+                self.log.debug(f"Connected via standard mode for {self.config['port']}. {e}")
 
         # defaults are slightly high for our use case
         self.writer.transport.set_write_buffer_limits(2048, 1024)
@@ -217,7 +229,14 @@ class FastSerialCommunicator(LogMixin):
         self.send_queue.put_nowait((f'{msg}\r'.encode(), response_msg))
         self.query_done.clear()
 
-        await asyncio.wait_for(self.query_done.wait(), timeout=None)  # TODO should there be a timeout?
+        try:
+            await asyncio.wait_for(self.query_done.wait(), timeout=1)  # TODO make configurable?
+        except asyncio.TimeoutError:
+            # TODO better timeout handling
+            # Add a timeout callback to message_processors which can be called here.
+            # That will allow intelligent handling of timeouts depending on message type
+            raise asyncio.TimeoutError(f'Message Timeout: The serial message {msg} did not receive a response.')
+
 
     def send_and_confirm(self, msg, confirm_msg):
         self.send_queue.put_nowait((f'{msg}\r'.encode(), confirm_msg))
@@ -334,4 +353,8 @@ class FastSerialCommunicator(LogMixin):
         if self.port_debug:
             self.log.info(f">>>> {msg}")
 
-        self.writer.write(msg)
+        try:
+            self.writer.write(msg)
+        except AttributeError:
+            self.log.warning(f"Serial connection is not open. Cannot send message: {msg}")
+            return

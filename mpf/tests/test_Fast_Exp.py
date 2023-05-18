@@ -38,13 +38,13 @@ class MockFastExp(BaseMockFastSerial):
 
         if cmd == "ID":
 
-            if temp_active in ["88", "89", "8A", "8B"]:  # 201
-                self.queue.append("ID:EXP FP-EXP-0201  0.8")
+            if temp_active in ["88", "89", "8A", "8B"]:  # 091
+                self.queue.append("ID:EXP FP-EXP-0091  0.8")
 
-            elif temp_active in ["480", "880", "881", "890", "893"]:  # 201
+            elif temp_active in ["480", "880", "881", "890", "893"]:  # 091
                 self.queue.append("ID:LED FP-BRK-0001  0.0")
 
-            elif temp_active in ["882"]:  # 201
+            elif temp_active in ["882"]:  # 091
                 self.queue.append("ID:BRK FP-DRV-0800  0.0")
 
             elif temp_active in ["B4", "B5", "B6", "B7"]:  # 71
