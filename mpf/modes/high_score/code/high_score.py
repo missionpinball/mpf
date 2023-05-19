@@ -184,7 +184,8 @@ class HighScore(AsyncMode):
                     # add high score
                     new_list[i] = (player.initials, value)
                     # show award slide
-                    await self._show_award_slide(player.initials, award_names[i], value)
+                    player_num = player.number
+                    await self._show_award_slide(player_num, player.initials, category_name, award_names[i], value)
 
                 # next entry
                 i += 1
@@ -214,7 +215,7 @@ class HighScore(AsyncMode):
 
         return event_result["text"] if "text" in event_result else ''
 
-    async def _show_award_slide(self, player_name: str, award: str, value: int) -> None:
+    async def _show_award_slide(self, player_num, player_name: str, category_name: str, award: str, value: int) -> None:
         if not self.high_score_config['award_slide_display_time']:
             return
 
@@ -226,6 +227,13 @@ class HighScore(AsyncMode):
         self.machine.events.post(
             '{}_award_display'.format(award),
             player_name=player_name,
+            award=award,
+            value=value)
+        self.machine.events.post(
+            '{}_award_display'.format(category_name),
+            player_num=player_num,
+            player_name=player_name,
+            category_name=category_name,
             award=award,
             value=value)
         await asyncio.sleep(self.high_score_config['award_slide_display_time'] / 1000)
