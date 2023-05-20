@@ -20,7 +20,7 @@ if MYPY:   # pragma: no cover
 
 
 # supported operators
-OPERATORS = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
+OPERATORS = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul, ast.FloorDiv: op.floordiv,
              ast.Div: op.truediv, ast.Pow: op.pow, ast.BitXor: op.xor,
              ast.USub: op.neg, ast.Not: op.not_, ast.Mod: op.mod}
 
