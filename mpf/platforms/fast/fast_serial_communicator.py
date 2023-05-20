@@ -278,6 +278,10 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             if debug:
                 self.platform.log.debug("Send: %s", "".join(" 0x%02x" % b for b in msg))
 
+        elif not self.max_messages_in_flight:  # For processors that don't use this
+            self.writer.write(msg.encode() + b'\r')
+            self.platform.log.debug("Sending without message flight tracking: %s", msg)
+
         else:
             self.messages_in_flight += 1
             if self.messages_in_flight > self.max_messages_in_flight:
