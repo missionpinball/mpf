@@ -24,6 +24,7 @@ class MockFastSerial(MockSerial):
         self.msg_history = list()  # list of commands received, e.g. ['ID:', 'ID@88:', 'ID@89:', 'EA:880', 'RD:0200ffffff121212']
         self.expected_commands = dict()  # popped when called, verify empty at end of test
         self.autorespond_commands = dict()  # can be called multiple times, never popped
+        self.port = None
 
     def read(self, length):
         """ Reads the message from receive queue"""
@@ -89,16 +90,11 @@ class MockFastSerial(MockSerial):
         return f'{msg[:3].decode()}{msg[3:].hex()}'
 
 
-class MockFastNetNeuron(MockFastSerial):  # TODO change this to just neuron
+class MockFastNetNeuron(MockFastSerial):
     def __init__(self):
         super().__init__()
-        self.type = "NET"
-        # self.expected_commands = {
-        #     ' ' * 1024: 'XX:F',
-        #     'CH:2000,FF':'CH:P',
-        #     'SA:':'SA:09,050000000000000000',
-        #     'ID:': 'NET FP-CPU-2000  02.06',
-        # }
+        self.type = "NETv2"
+        self.port = 'com3'
 
         self.autorespond_commands = {
             'WD:1' : 'WD:P',
@@ -109,13 +105,7 @@ class MockFastNetNeuron(MockFastSerial):  # TODO change this to just neuron
             'BR:': '\r\r!B:00\r..!B:02\r.',
             }
 
-        self.attached_boards = {
-            'NN:00': 'NN:00,FP-I/O-3208-3   ,01.09,08,20,00,00,00,00,00,00',     # 3208 board
-            'NN:01': 'NN:01,FP-I/O-0804-3   ,01.09,04,08,00,00,00,00,00,00',     # 0804 board
-            'NN:02': 'NN:02,FP-I/O-1616-3   ,01.09,10,10,00,00,00,00,00,00',     # 1616 board
-            'NN:03': 'NN:03,FP-I/O-1616-3   ,01.09,10,10,00,00,00,00,00,00',     # 1616 board
-            'NN:04': 'NN:04,FP-I/O-0024-3   ,01.10,08,18,00,00,00,00,00,00',     # Cab I/O board
-        }
+        self.attached_boards = dict()
         self.msg_history = list()
 
     def process_msg(self, cmd):
@@ -131,6 +121,7 @@ class MockFastExp(MockFastSerial):
         super().__init__()
         self.test_fast_base = test_fast_base
         self.type = 'EXP'
+        self.port = 'com4'
         self.active_board = None
         self.leds = dict()
         self.led_map = dict()  # LED number to name index, e.g. 88000: "led1", 88121: "led5"
@@ -224,49 +215,17 @@ class MockFastExp(MockFastSerial):
 
         return False
 
-
-class MockFastDmd(MockFastSerial):
-    def __init__(self):
-        super().__init__()
-        self.type = "DMD"
-
-    def _simulate_board_response(self, msg):
-        msg_len = len(msg)
-        if msg == (b' ' * 256 * 4):
-            return msg_len
-
-        cmd = msg
-
-        if cmd[:3] == "WD:":
-            self.queue.append("WD:P")
-            return msg_len
-
-        if cmd in self.autorespond_commands:
-            self.queue.append(cmd[:3] + "P")
-            return msg_len
-
-        if cmd in self.expected_commands:
-            if self.expected_commands[cmd]:
-                self.queue.append(self.expected_commands[cmd])
-            del self.expected_commands[cmd]
-            return msg_len
-        else:
-            raise Exception(self.type + ": " + str(cmd))
-
-
 class MockFastRgb(MockFastSerial):
     def __init__(self):
         super().__init__()
-        self.type = "RGB"
+        self.type = 'RGB'
+        self.port = 'com5'
 
         self.autorespond_commands = {
-            'L1:23,FF': 'L1:P',
-            'RF:0': 'RF:P',
-            'RF:00': 'RF:P',
-            'RA:000000': 'RA:P',
-        }
+            'ID:': 'ID:RGB FP-CPU-002-2 00.89',
+            }
 
-        self.leds = {}
+        self.leds = dict()
 
     def process_msg(self, cmd):
         if cmd[:3] == "RS:":
@@ -282,7 +241,45 @@ class MockFastRgb(MockFastSerial):
             return True
 
 
+class MockFastNetNano(MockFastSerial):
+    def __init__(self):
+        super().__init__()
+        self.type = "NETv1"
+        self.port = 'com4'
+
+        self.autorespond_commands = {
+            'WD:1' : 'WD:P',
+            'WD:3E8': 'WD:P',
+            "SA:": "SA:01,00,09,050000000000000000",
+            'ID:': 'ID:NET FP-CPU-002-2  01.05',
+            }
+
+        self.attached_boards = dict()
+        self.msg_history = list()
+
+    def process_msg(self, cmd):
+        if cmd == (' ' * 256 * 4):
+            self.queue.append("XX:F")  # TODO move to Net subclass?
+            return True
+
+        return False
+
 class MockFastSeg(MockFastSerial):
     def __init__(self):
         super().__init__()
         self.type = "SEG"
+        self.port = "com7"
+
+        self.autorespond_commands = {
+            'ID:': 'ID:SEG FP-CPU-002-2 00.10',
+            }
+
+class MockFastDmd(MockFastSerial):
+    def __init__(self):
+        super().__init__()
+        self.type = "DMD"
+        self.port = 'com8'
+
+        self.autorespond_commands = {
+            'ID:': 'ID:DMD FP-CPU-002-2 00.88',
+            }

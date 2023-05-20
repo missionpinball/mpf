@@ -1,19 +1,12 @@
-from mpf.core.platform import SwitchConfig
-from mpf.core.rgb_color import RGBColor
-from mpf.core.utility_functions import Util
-from mpf.exceptions.config_file_error import ConfigFileError
-from mpf.tests.MpfTestCase import MpfTestCase, MagicMock, test_config, expect_startup_error
-
-from mpf.tests.loop import MockSerial
-from mpf.tests.test_Fast import MockFastSerial, MockFastNetNeuron
+from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.platforms.fast import MockFastNetNeuron, MockFastExp
 
 
 class TestFastExp(MpfTestCase):
-    """Base class for FAST platform tests, using a default V2 network."""
+    """Tests the FAST EXP boards."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.net_cpu = None
-        self.exp_cpu = None
+        self.serial_connections_to_mock = ['net1', 'exp']
 
     def get_config_file(self):
         return 'config_exp.yaml'
@@ -23,69 +16,6 @@ class TestFastExp(MpfTestCase):
 
     def get_platform(self):
         return False
-
-    def _mock_loop(self):
-        if self.net_cpu:
-            self.clock.mock_serial("com3", self.net_cpu)
-        if self.exp_cpu:
-            self.clock.mock_serial("com4", self.exp_cpu)
-
-    def create_connections(self):
-        self.net_cpu = MockFastNetNeuron()
-        self.exp_cpu = MockFastExp(self)
-
-    def create_expected_commands(self):
-
-        self.net_cpu.expected_commands = {
-            # 'BR:': '#!B:02',    # there might be some garbage in front of the command
-            ' ' * 1024: 'XX:F',
-            'ID:': 'ID:NET FP-CPU-2000  02.06',
-            'CH:2000,FF':'CH:P',
-            # "SA:": f"SA:{self.net_cpu.sa}",
-            **self.net_cpu.attached_boards,
-        }
-
-        self.exp_cpu.expected_commands = {
-            'EM@B40:0,1,7D0,1F4,9C4,5DC':'EM:P',
-            'EM@B40:1,1,7D0,3E8,7D0,5DC':'EM:P',
-            'EM@882:7,1,7D0,3E8,7D0,5DC':'EM:P',
-            'MP@B40:0,7F,7D0':'EM:P',
-            'MP@B40:1,7F,7D0':'EM:P',
-            'MP@882:7,7F,7D0':'EM:P',
-        }
-
-    def tearDown(self):
-        # if self.net_cpu:
-        #     self.net_cpu.expected_commands = {
-        #         "WD:1": "WD:P"
-        #     }
-        # if self.exp_cpu:
-        #     self.exp_cpu.expected_commands = {
-        #     }
-
-
-        if not self.startup_error:
-            self.assertFalse(self.net_cpu and self.net_cpu.expected_commands)
-            self.assertFalse(self.exp_cpu and self.exp_cpu.expected_commands)
-
-    def setUp(self):
-        self.expected_duration = 2
-        self.create_connections()
-        self.create_expected_commands()
-        super().setUp()
-
-        # If a test is testing a bad config file and causes a startup exception,
-        # the machine will shut down. Safety check before we add futures to the loop.
-        if not self.machine.is_shutting_down:
-            # There are startup calls that keep the serial traffic busy. Many tests define
-            # self.net_cpu.expected_commands assuming that the serial bus is quiet. Add a
-            # tiny delay here to let the startup traffic clear out so that tests don't get
-            # slammed with unexpected network traffic.
-            # Note that the above scenario only causes tests to fail on Windows machines!
-
-            # These startup calls simulate some delay in response, so we need to wait the full
-            # second below. This might need to be increased if there's lots of hardware.
-            self.advance_time_and_run(1)
 
     def test_servo(self):
         # go to min position

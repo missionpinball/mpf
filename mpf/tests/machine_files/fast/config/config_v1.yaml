@@ -5,7 +5,7 @@ hardware:
 
 fast:
     net:
-        port: com4
+        port: com6
         controller: nano
         io_loop:
             3208:
@@ -22,8 +22,6 @@ fast:
                 order: 4
     rgb:
         port: com5
-    dmd:
-        port: com6
 
 switches:
     s_test:
@@ -158,12 +156,6 @@ flippers:
         use_eos: true
 
 lights:
-  test_pdb_light:
-    number: 35
-    subtype: matrix
-  test_gi:
-    number: 42
-    subtype: gi
   test_led:
     number: 2-23
     type: grb

@@ -5,7 +5,7 @@ hardware:
 
 fast:
     net:
-        port: com4
+        port: com3
         controller: neuron
         io_loop:
             io3208:
@@ -24,11 +24,9 @@ fast:
                 model: FP-CAB-0001
                 order: 5
     seg:
-        port: com3
-    rgb:
-        port: com5
+        port: com7
     dmd:
-        port: com6
+        port: com8
 
 switches:
     s_test:
@@ -169,12 +167,3 @@ lights:
   test_gi:
     number: 42
     subtype: gi
-  test_led:
-    number: 2-23
-    type: grb
-  test_led2:
-    previous: test_led
-    type: grb
-  l_o_circle:
-    number: 0-10
-    type: grb

@@ -1,19 +1,16 @@
 # mpf.tests.test_Fast
 
 from mpf.core.platform import SwitchConfig
-from mpf.core.rgb_color import RGBColor
-from mpf.tests.MpfTestCase import MpfTestCase, test_config, expect_startup_error
-from mpf.tests.platforms.fast import MockFastNetNeuron, MockFastDmd, MockFastRgb, MockFastSeg
+from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.platforms.fast import MockFastNetNeuron, MockFastExp, MockFastDmd, MockFastSeg, MockFastRgb, MockFastNetNano
 
 
 class TestFast(MpfTestCase):
-    """Base class for FAST platform tests, using a default V2 network."""
+    """Tests the current FAST modern platforms. Tests for Net v2 (Modern & Retro), SEG, and DMD processors."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.net_cpu = None
-        self.seg_cpu = None
-        self.rgb_cpu = None
-        self.dmd_cpu = None
+        self.serial_connections_to_mock = ['net2', 'seg', 'dmd']
+        self.serial_connections = dict()
 
     def get_config_file(self):
         return 'config.yaml'
@@ -25,25 +22,37 @@ class TestFast(MpfTestCase):
         return False
 
     def _mock_loop(self):
-        if self.net_cpu:
-            self.clock.mock_serial("com4", self.net_cpu)
-        if self.seg_cpu:
-            self.clock.mock_serial("com3", self.seg_cpu)
-        if self.rgb_cpu:
-            self.clock.mock_serial("com5", self.rgb_cpu)
-        if self.dmd_cpu:
-            self.clock.mock_serial("com6", self.dmd_cpu)
+        for conn in self.serial_connections.values():
+            self.clock.mock_serial(conn.port, conn)
 
     def create_connections(self):
-        self.net_cpu = MockFastNetNeuron()
-        self.rgb_cpu = MockFastRgb()
-        self.dmd_cpu = MockFastDmd()
-        self.seg_cpu = MockFastSeg()
+
+        for conn in self.serial_connections_to_mock:
+            if conn == 'net2':
+                self.serial_connections['net2'] = MockFastNetNeuron()  # default com3
+            elif conn == 'exp':
+                self.serial_connections['exp'] = MockFastExp()  # default com4
+            elif conn == 'rgb':
+                self.serial_connections['rgb'] = MockFastRgb()  # default com5
+            elif conn == 'net1':
+                self.serial_connections['net1'] = MockFastNetNano()  # default com6
+            elif conn == 'seg':
+                self.serial_connections['seg'] = MockFastSeg()  # default com7
+            elif conn == 'dmd':
+                self.serial_connections['dmd'] = MockFastDmd()  # default com8
 
     def create_expected_commands(self):
-        self.net_cpu.expected_commands = {
-            ' ' * 1024: 'XX:F',
-            **self.net_cpu.attached_boards,
+
+        self.serial_connections['net2'].attached_boards = {
+            'NN:00': 'NN:00,FP-I/O-3208-3   ,01.09,08,20,00,00,00,00,00,00',     # 3208 board
+            'NN:01': 'NN:01,FP-I/O-0804-3   ,01.09,04,08,00,00,00,00,00,00',     # 0804 board
+            'NN:02': 'NN:02,FP-I/O-1616-3   ,01.09,10,10,00,00,00,00,00,00',     # 1616 board
+            'NN:03': 'NN:03,FP-I/O-1616-3   ,01.09,10,10,00,00,00,00,00,00',     # 1616 board
+            'NN:04': 'NN:04,FP-I/O-0024-3   ,01.10,08,18,00,00,00,00,00,00',     # Cab I/O board
+            }
+
+        self.serial_connections['net2'].expected_commands = {
+            **self.serial_connections['net2'].attached_boards,
             "SL:01,01,04,04": "SL:P",
             "SL:02,01,04,04": "SL:P",
             "SL:03,01,04,04": "SL:P",
@@ -66,44 +75,40 @@ class TestFast(MpfTestCase):
             "DL:20,00,00,00": "DL:P",
             "DL:21,00,00,00": "DL:P",
             "DL:01,C1,00,18,00,FF,FF,00": "DL:P",   # configure digital output
-        }
-        self.dmd_cpu.expected_commands = {
-            b'ID:': 'ID:DMD FP-CPU-002-2 00.88',
-        }
-        self.rgb_cpu.expected_commands = {
-            'ID:': 'ID:RGB FP-CPU-002-2 00.89',
-            "RF:0": "RF:P",
-            "RA:000000": "RA:P",
-            "RF:00": "RF:P",
-        }
-        self.seg_cpu.expected_commands = {
-            'ID:': 'ID:SEG FP-CPU-002-2 00.10',
-        }
+            }
 
     def tearDown(self):
-        # if self.dmd_cpu:
-        #     self.dmd_cpu.expected_commands = {
-        #         b'BL:AA55': "!SRE"
-        #     }
-        # if self.rgb_cpu:
-        #     self.rgb_cpu.expected_commands = {
-        #         "BL:AA55": "!SRE"
-        #     }
-        # if self.net_cpu:
-        #     self.net_cpu.expected_commands = {
-        #         "WD:1": "WD:P"
-        #     }  # TODO should these work? What are we missing when tests end wihout this?
         super().tearDown()
         if not self.startup_error:
-            self.assertFalse(self.net_cpu and self.net_cpu.expected_commands)
-            # self.assertFalse(self.rgb_cpu and self.rgb_cpu.expected_commands)  # TODO re-enable when done, and add the other comms
-            # self.assertFalse(self.dmd_cpu and self.dmd_cpu.expected_commands)
+            for name, conn in self.serial_connections.items():
+                self.assertFalse(conn.expected_commands, f"Expected commands for {name} are not empty: {conn.expected_commands}")
 
     def setUp(self):
         self.expected_duration = 2
         self.create_connections()
         self.create_expected_commands()
         super().setUp()
+
+        if not self.startup_error:
+            self.advance_time_and_run()
+
+            # test io board detection
+            self.assertEqual(4, len(self.machine.default_platform.io_boards))
+            self.assertEqual(32, self.machine.default_platform.io_boards[0].switch_count)
+            self.assertEqual(8, self.machine.default_platform.io_boards[0].driver_count)
+            self.assertEqual(8, self.machine.default_platform.io_boards[1].switch_count)
+            self.assertEqual(4, self.machine.default_platform.io_boards[1].driver_count)
+            self.assertEqual(16, self.machine.default_platform.io_boards[2].switch_count)
+            self.assertEqual(16, self.machine.default_platform.io_boards[2].driver_count)
+            self.assertEqual(16, self.machine.default_platform.io_boards[3].switch_count)
+            self.assertEqual(16, self.machine.default_platform.io_boards[3].driver_count)
+
+            self.assertEqual("00.89", self.machine.variables.get_machine_var("fast_rgb_firmware"))
+            self.assertEqual("FP-CPU-002-2", self.machine.variables.get_machine_var("fast_rgb_model"))
+            self.assertEqual("01.05", self.machine.variables.get_machine_var("fast_net_firmware"))
+            self.assertEqual("FP-CPU-002-2", self.machine.variables.get_machine_var("fast_net_model"))
+            self.assertEqual("00.10", self.machine.variables.get_machine_var("fast_seg_firmware"))
+            self.assertEqual("FP-CPU-002-2", self.machine.variables.get_machine_var("fast_seg_model"))
 
         # If a test is testing a bad config file and causes a startup exception,
         # the machine will shut down. Safety check before we add futures to the loop.
@@ -130,8 +135,7 @@ class TestFast(MpfTestCase):
 
         # test hardware scan
         info_str = """DMD: FP-CPU-002-2 v00.88
-NET: FP-CPU-2000 v02.06
-RGB: FP-CPU-002-2 v00.89
+NET: FP-CPU-2000 v02.13
 SEG: FP-CPU-002-2 v00.10
 
 I/O Boards:
@@ -556,52 +560,29 @@ Board 4 - Model: FP-I/O-0024 Firmware: 01.10 Switches: 24 Drivers: 8
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
-    # def test_dmd_update(self):
+    def test_dmd_update(self):
 
-    #     # test configure
-    #     dmd = self.machine.default_platform.configure_dmd()
+        # test configure
+        dmd = self.machine.default_platform.configure_dmd()
 
-    #     # test set frame to buffer
-    #     frame = bytearray()
-    #     for i in range(4096):
-    #         frame.append(64 + i % 192)
+        # test set frame to buffer
+        frame = bytearray()
+        for i in range(4096):
+            frame.append(64 + i % 192)
 
-    #     frame = bytes(frame)
+        frame = bytes(frame)
 
-    #     # test draw
-    #     self.dmd_cpu.expected_commands = {
-    #         b'BM:' + frame: False
-    #     }
-    #     dmd.update(frame)
+        # test draw
+        self.dmd_cpu.expected_commands = {
+            b'BM:' + frame: False
+        }
+        dmd.update(frame)
 
-    #     self.advance_time_and_run(.1)
+        self.advance_time_and_run(.1)
 
-    #     self.assertFalse(self.dmd_cpu.expected_commands)
+        self.assertFalse(self.dmd_cpu.expected_commands)
 
-    # def test_bootloader_crash(self):
-    #     # Test that the machine stops if the RGB processor sends a bootloader msg
-    #     self.machine.default_platform.config['rgb']['ignore_reboot'] = False
-    #     self.machine.stop = MagicMock()
-    #     self.machine.default_platform.serial_connections['net'].parse_raw_bytes(b"!B:00\r")
-    #     self.advance_time_and_run(1)
-    #     self.assertTrue(self.machine.stop.called)
-
-    # def test_bootloader_crash_ignored(self):
-    #     # Test that RGB processor bootloader msgs can be ignored
-    #     self.machine.default_platform.config['rgb']['ignore_reboot'] = True
-    #     self.mock_event('fast_rgb_rebooted')
-    #     self.machine.stop = MagicMock()
-    #     self.machine.default_platform.serial_connections['rgb'].parse_raw_bytes(b"!B:00\r")
-    #     self.advance_time_and_run(1)
-    #     self.assertFalse(self.machine.stop.called)
-    #     self.assertEventCalled('fast_rgb_rebooted')
-
-    # def test_lights_and_leds(self):
-    #     self._test_matrix_light()
-    #     self._test_pdb_gi_light()
-    #     self._test_pdb_led()
-
-    def _test_matrix_light(self):
+    def test_matrix_lights(self):
         # test enable of matrix light
         self.net_cpu.expected_commands = {
             "L1:23,FF": "L1:P",
@@ -682,7 +663,7 @@ Board 4 - Model: FP-I/O-0024 Firmware: 01.10 Switches: 24 Drivers: 8
             self.advance_time_and_run(.02)
             self.assertFalse(self.net_cpu.expected_commands)
 
-    def _test_pdb_gi_light(self):
+    def test_gi_lights(self):
         # test gi on
         test_gi = self.machine.lights["test_gi"]
         self.net_cpu.expected_commands = {
@@ -727,52 +708,6 @@ Board 4 - Model: FP-I/O-0024 Firmware: 01.10 Switches: 24 Drivers: 8
         test_gi.on(brightness=0)
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
-
-    def _test_pdb_led(self):
-        self.advance_time_and_run()
-        test_led1 = self.machine.lights["test_led"]
-        test_led2 = self.machine.lights["test_led2"]
-        self.assertEqual("000000", self.rgb_cpu.leds['97'])
-        self.assertEqual("000000", self.rgb_cpu.leds['98'])
-        # test led on
-        test_led1.on()
-        self.advance_time_and_run(1)
-        self.assertEqual("FFFFFF", self.rgb_cpu.leds['97'])
-        self.assertEqual("000000", self.rgb_cpu.leds['98'])
-
-        test_led2.color("001122")
-
-        # test led off
-        test_led1.off()
-        self.advance_time_and_run(1)
-        self.assertEqual("000000", self.rgb_cpu.leds['97'])
-        self.assertEqual("110022", self.rgb_cpu.leds['98'])  #GRB so hardware colors need to be swapped also
-
-        # test led color
-        test_led1.color(RGBColor((2, 23, 42)))
-        self.advance_time_and_run(1)
-        self.assertEqual("17022A", self.rgb_cpu.leds['97'])  # GRB
-
-        # test led off
-        test_led1.off()
-        self.advance_time_and_run(1)
-        self.assertEqual("000000", self.rgb_cpu.leds['97'])
-
-        self.advance_time_and_run(.02)
-
-        # fade led over 100ms
-        test_led1.color(RGBColor((100, 100, 100)), fade_ms=100)
-        self.advance_time_and_run(.03)
-        self.assertTrue(10 < int(self.rgb_cpu.leds['97'][0:2], 16) < 40)
-        self.assertTrue(self.rgb_cpu.leds['97'][0:2] == self.rgb_cpu.leds['97'][2:4] == self.rgb_cpu.leds['97'][4:6])
-        self.advance_time_and_run(.03)
-        self.assertTrue(40 < int(self.rgb_cpu.leds['97'][0:2], 16) < 60)
-        self.assertTrue(self.rgb_cpu.leds['97'][0:2] == self.rgb_cpu.leds['97'][2:4] == self.rgb_cpu.leds['97'][4:6])
-        self.advance_time_and_run(.03)
-        self.assertTrue(60 < int(self.rgb_cpu.leds['97'][0:2], 16) < 90)
-        self.assertTrue(self.rgb_cpu.leds['97'][0:2] == self.rgb_cpu.leds['97'][2:4] == self.rgb_cpu.leds['97'][4:6])
-        self.advance_time_and_run(2)
-        self.assertEqual("646464", self.rgb_cpu.leds['97'])
 
     # @expect_startup_error()
     # @test_config("error_lights.yaml")
