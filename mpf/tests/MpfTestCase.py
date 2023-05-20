@@ -951,10 +951,13 @@ class MpfTestCase(unittest.TestCase):
             elif self._exception:
                 raise Exception(self._exception)
 
+        # Sometimes a test will weirdly hang on Github Actions. This will print
+        # that into their logs so we can see what's going on.
         duration = time.time() - self.test_start_time
         if duration > self.expected_duration:
-            print(f"Test {self.__class__}.{self._testMethodName} took"
-                  f"{round(duration, 2)} > {self.expected_duration}s")
+            if os.getenv('GITHUB_ACTIONS', 'false') == 'true':
+                print(f"Test {self.__class__}.{self._testMethodName} took "
+                    f"{round(duration, 2)} > {self.expected_duration}s")
 
         self.machine.log.debug("Test ended")
         if sys.exc_info != (None, None, None):
