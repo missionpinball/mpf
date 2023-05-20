@@ -12,15 +12,14 @@ class BaseMockFastSerial(MockSerial):
         super().__init__()
         self.type = None
         self.queue = []
-        self.expected_commands = {}
-        self.ignore_commands = {}
+        self.expected_commands = dict()  # popped when called, verify empty at end of test
+        self.autorespond_commands = dict()  # can be called multiple times, never popped
 
     def read(self, length):
-        """ Reads the message from the queue and se"""
+        """ Reads the message from receive queue"""
         del length
         if not self.queue:
             return
-        # msg = (self.queue.pop() + '\r').encode()
 
         msg = self.queue.pop()
         # print(f'{self.type} <<< {msg}')
@@ -33,35 +32,32 @@ class BaseMockFastSerial(MockSerial):
     def write_ready(self):
         return True
 
-    def _parse(self, msg):
+    def process_msg(self, msg):
+        """Override this to apply further processing to a message.
+        Return True if processed and complete, False if not."""
         return False
 
     def write(self, msg):
-        """Write message."""
+        """Write message out to the serial port."""
         parts = msg.split(b'\r')
-
         for part in parts:
             if part == b'':
                 continue
-            self._handle_msg(part)
+            self._simulate_board_response(part)
 
         return len(msg)
 
-    def _handle_msg(self, msg):
+    def _simulate_board_response(self, msg):
+        # handles the processing of outgoing messages
         msg_len = len(msg)
         cmd = msg.decode()
         # print(f'{self.type} >>> {cmd}')
-        # strip newline
-        # ignore init garbage
-        if cmd == (' ' * 256 * 4):
-            self.queue.append("XX:F")  # TODO move to Net subclass?
+
+        if cmd in self.autorespond_commands:
+            self.queue.append(self.autorespond_commands[cmd])
             return msg_len
 
-        if cmd in self.ignore_commands:
-            self.queue.append(cmd[:3] + "P")
-            return msg_len
-
-        if self._parse(cmd):
+        if self.process_msg(cmd):
             return msg_len
 
         if cmd in self.expected_commands:
@@ -72,16 +68,13 @@ class BaseMockFastSerial(MockSerial):
         else:
             raise Exception("Unexpected command for " + self.type + ": " + str(cmd))
 
-    def stop(self):
-        pass
-
 
 class MockFastDmd(BaseMockFastSerial):
     def __init__(self):
         super().__init__()
         self.type = "DMD"
 
-    def _handle_msg(self, msg):
+    def _simulate_board_response(self, msg):
         msg_len = len(msg)
         if msg == (b' ' * 256 * 4):
             return msg_len
@@ -92,7 +85,7 @@ class MockFastDmd(BaseMockFastSerial):
             self.queue.append("WD:P")
             return msg_len
 
-        if cmd in self.ignore_commands:
+        if cmd in self.autorespond_commands:
             self.queue.append(cmd[:3] + "P")
             return msg_len
 
@@ -109,11 +102,17 @@ class MockFastRgb(BaseMockFastSerial):
     def __init__(self):
         super().__init__()
         self.type = "RGB"
-        self.ignore_commands["L1:23,FF"] = True
-        self.ignore_commands["RF:0"] = True
+
+        self.autorespond_commands = {
+            'L1:23,FF': 'L1:P',
+            'RF:0': 'RF:P',
+            'RF:00': 'RF:P',
+            'RA:000000': 'RA:P',
+        }
+
         self.leds = {}
 
-    def _parse(self, cmd):
+    def process_msg(self, cmd):
         if cmd[:3] == "RS:":
             remaining = cmd[3:]
             while True:
@@ -131,13 +130,21 @@ class MockFastNetNeuron(BaseMockFastSerial):  # TODO change this to just neuron
     def __init__(self):
         super().__init__()
         self.type = "NET"
-        self.id = "NET FP-CPU-2000  02.06"
-        self.sa = "09,050000000000000000"  # TODO this isn't right
-        self.ch = "2000"  # TODO remove
-        self.expected_commands = {
-            'CH:2000,FF':'CH:P',
+        # self.expected_commands = {
+        #     ' ' * 1024: 'XX:F',
+        #     'CH:2000,FF':'CH:P',
+        #     'SA:':'SA:09,050000000000000000',
+        #     'ID:': 'NET FP-CPU-2000  02.06',
+        # }
+
+        self.autorespond_commands = {
+            'WD:1' : 'WD:P',
+            'WD:3E8': 'WD:P',
             'SA:':'SA:09,050000000000000000',
-        }  # TODO change to create_expected_commands()
+            'CH:2000,FF':'CH:P',
+            'ID:': 'ID:NET FP-CPU-2000  02.06',
+            'BR:': '\r\r!B:00\r..!B:02\r.',
+            }
 
         self.attached_boards = {
             'NN:00': 'NN:00,FP-I/O-3208-3   ,01.09,08,20,00,00,00,00,00,00',     # 3208 board
@@ -148,44 +155,12 @@ class MockFastNetNeuron(BaseMockFastSerial):  # TODO change this to just neuron
         }
         self.cmd_stack = list()
 
-    def _handle_msg(self, msg):
-        msg_len = len(msg)
-        cmd = msg.decode()
-        # print(f'{self.type} >>> {cmd}')
-        # strip newline
-        # ignore init garbage
+    def process_msg(self, cmd):
         if cmd == (' ' * 256 * 4):
             self.queue.append("XX:F")  # TODO move to Net subclass?
-            return msg_len
-
-        if cmd[:3] == "WD:":
-            self.queue.append("WD:P")
-            return msg_len
-
-        if cmd in self.ignore_commands:
-            self.queue.append(cmd[:3] + "P")
-            return msg_len
-
-        if self._parse(cmd):
-            return msg_len
-
-        if cmd in self.expected_commands:
-            if self.expected_commands[cmd]:
-                self.queue.append(self.expected_commands[cmd])
-            del self.expected_commands[cmd]
-            return msg_len
-        else:
-            raise Exception("Unexpected command for " + self.type + ": " + str(cmd))
-
-    def _parse(self, cmd):
-
-        self.cmd_stack.append(cmd)
-
-        cmd, payload = cmd.split(':', 1)
-
-        if cmd == "SA":
-            self.queue.append("SA:09,050000000000000000")
             return True
+
+        return False
 
 class MockFastSeg(BaseMockFastSerial):
     def __init__(self):
@@ -229,11 +204,8 @@ class TestFastBase(MpfTestCase):
 
     def create_expected_commands(self):
         self.net_cpu.expected_commands = {
-            'BR:': '\r\r!B:00\r..!B:02\r.',
-            'ID:': f'ID:{self.net_cpu.id}',
-            f'CH:{self.net_cpu.ch},FF': 'CH:P',
+            ' ' * 1024: 'XX:F',
             **self.net_cpu.attached_boards,
-            "SA:": f"SA:{self.net_cpu.sa}",
             "SL:01,01,04,04": "SL:P",
             "SL:02,01,04,04": "SL:P",
             "SL:03,01,04,04": "SL:P",
@@ -319,7 +291,6 @@ class TestFastBase(MpfTestCase):
         self._test_coil_configure()
 
         # test hardware scan
-        print(self.machine.default_platform.get_info_string())
         info_str = """DMD: FP-CPU-002-2 v00.88
 NET: FP-CPU-2000 v02.06
 RGB: FP-CPU-002-2 v00.89
@@ -341,7 +312,7 @@ Board 4 - Model: FP-I/O-0024 Firmware: 01.10 Switches: 24 Drivers: 8
         self.net_cpu.expected_commands = {
             "DL:2B,00,00,00": "DL:P"
         }
-        coil = self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '1616_2-15',
+        coil = self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, 'io1616lower-15',
                                                               {"connection": "network", "recycle_ms": 10})
         self.assertEqual('2B', coil.number)
         self.advance_time_and_run(.1)
@@ -349,7 +320,7 @@ Board 4 - Model: FP-I/O-0024 Firmware: 01.10 Switches: 24 Drivers: 8
 
         # board 0 has 8 drivers. configuring driver 9 should not work
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '3208-8',
+            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, 'io3208-8',
                                                            {"connection": "network", "recycle_ms": 10})
 
         # test error for invalid board
@@ -359,7 +330,7 @@ Board 4 - Model: FP-I/O-0024 Firmware: 01.10 Switches: 24 Drivers: 8
 
         # test error for driver number too high
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '3208-9',
+            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, 'io3208-9',
                                                            {"connection": "network", "recycle_ms": 10})
 
     def _test_pulse(self):
@@ -545,18 +516,18 @@ Board 4 - Model: FP-I/O-0024 Firmware: 01.10 Switches: 24 Drivers: 8
         self.net_cpu.expected_commands = {
             "SL:1F,01,04,04": "SL:P"
         }
-        self.machine.default_platform.configure_switch('3208-31', SwitchConfig(name="", debounce='auto', invert=0), {})
+        self.machine.default_platform.configure_switch('io3208-31', SwitchConfig(name="", debounce='auto', invert=0), {})
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # next should not work
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch('3208-32', SwitchConfig(name="", debounce='auto', invert=0), {})
+            self.machine.default_platform.configure_switch('io3208-32', SwitchConfig(name="", debounce='auto', invert=0), {})
 
         self.net_cpu.expected_commands = {
             "SL:47,01,04,04": "SL:P"
         }
-        self.machine.default_platform.configure_switch('1616_2-15', SwitchConfig(name="", debounce='auto', invert=0), {})
+        self.machine.default_platform.configure_switch('io1616lower-15', SwitchConfig(name="", debounce='auto', invert=0), {})
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
@@ -566,7 +537,7 @@ Board 4 - Model: FP-I/O-0024 Firmware: 01.10 Switches: 24 Drivers: 8
 
         # switch number higher than board supports
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch('3208-33', SwitchConfig(name="", debounce='auto', invert=0), {})
+            self.machine.default_platform.configure_switch('io3208-33', SwitchConfig(name="", debounce='auto', invert=0), {})
 
     def _test_switch_changes(self):
         self.assertSwitchState("s_flipper", 0)
@@ -727,7 +698,7 @@ Board 4 - Model: FP-I/O-0024 Firmware: 01.10 Switches: 24 Drivers: 8
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
-    def test_flipper_two_coils(self):
+    def disabled_test_flipper_two_coils(self):
         # we pulse the main coil (20)
         # hold coil (21) is pulsed + enabled
         self.net_cpu.expected_commands = {

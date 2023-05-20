@@ -13,7 +13,7 @@ class MockFastExp(BaseMockFastSerial):
         super().__init__()
         self.test_fast_base = test_fast_base
         self.type = "EXP"
-        # self.ignore_commands["L1:23,FF"] = True
+        # self.autorespond_commands["L1:23,FF"] = True
         self.leds = dict()  #
         self.active_board = None
         self.cmd_stack = list()  # list of commands received, e.g. ['ID:', 'ID@88:', 'ID@89:', 'EA:880', 'RD:0200ffffff121212']
@@ -119,7 +119,7 @@ class MockFastExp(BaseMockFastSerial):
 
         # print(f'{self.type} >>> {cmd}')
 
-        if cmd in self.ignore_commands:
+        if cmd in self.autorespond_commands:
             # self.queue.append(cmd[:3] + "P")
             return msg_len
 
@@ -166,8 +166,9 @@ class TestFastExp(MpfTestCase):
 
         self.net_cpu.expected_commands = {
             # 'BR:': '#!B:02',    # there might be some garbage in front of the command
-            'ID:': f'ID:{self.net_cpu.id}',
-            f'CH:{self.net_cpu.ch},FF': 'CH:P',
+            ' ' * 1024: 'XX:F',
+            'ID:': 'ID:NET FP-CPU-2000  02.06',
+            'CH:2000,FF':'CH:P',
             # "SA:": f"SA:{self.net_cpu.sa}",
             **self.net_cpu.attached_boards,
         }

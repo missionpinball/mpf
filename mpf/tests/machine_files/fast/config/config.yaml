@@ -8,16 +8,16 @@ fast:
         port: com4
         controller: neuron
         io_loop:
-            3208:
+            io3208:
                 model: FP-I/O-3208
                 order: 1
-            0804:
+            io0804:
                 model: FP-I/O-0804
                 order: 2
-            1616_1:
+            io1616upper:
                 model: FP-I/O-1616
                 order: 3
-            1616_2:
+            io1616lower:
                 model: FP-I/O-1616
                 order: 4
             cab:
@@ -32,31 +32,31 @@ fast:
 
 switches:
     s_test:
-        number: 3208-7
+        number: io3208-7
         platform_settings:
             debounce_open: 26
             debounce_close: 5
     s_test_nc:
-        number: 3208-26
+        number: io3208-26
         type: 'NC'
     s_slingshot_test:
-        number: 3208-22
+        number: io3208-22
     s_flipper:
-        number: 3208-1
+        number: io3208-1
     s_flipper_eos:
-        number: 3208-2
+        number: io3208-2
     s_autofire:
-        number: 3208-3
+        number: io3208-3
     s_test3:
-        number: 1616_2-1
+        number: io1616lower-1
     s_nux_up:
-        number: 3208-11
+        number: io3208-11
     s_nux_down:
-        number: 3208-12
+        number: io3208-12
 
 digital_outputs:
   c_nux_motor:
-    number: 3208-1
+    number: io3208-1
     type: driver
 
 motors:
@@ -72,47 +72,47 @@ motors:
 
 coils:
     c_test:
-        number: 3208-4
+        number: io3208-4
         default_pulse_ms: 23
         default_recycle: True
         platform_settings:
             recycle_ms: 27
     c_test_allow_enable:
-        number: 3208-6
+        number: io3208-6
         default_pulse_ms: 23
         max_hold_power: 1.0
     c_slingshot_test:
-        number: 3208-7
+        number: io3208-7
     c_pulse_pwm32_mask:
-        number: 1616_1-5
+        number: io1616upper-5
         default_pulse_power: 0.53
         default_hold_power: 0.40
     c_hold_ssm:
-        number: 1616_1-7
+        number: io1616upper-7
         default_hold_power: 0.25    # approximately
         platform_settings:
             hold_pwm_patter: "84224244"
     c_long_pulse:
-        number: 1616_1-6
+        number: io1616upper-6
         default_pulse_ms: 2000
         max_hold_power: 1.0
     c_timed_enable:
-        number: 1616_1-10
+        number: io1616upper-10
         default_pulse_ms: 20
         default_timed_enable_ms: 200
         default_hold_power: 0.25
     c_default_timed_enable:
-        number: 1616_1-11
+        number: io1616upper-11
         default_pulse_ms: 20
         default_timed_enable_ms: 200
         default_hold_power: 0.25
         pulse_with_timed_enable: true
     c_flipper_main:
-        number: 1616_2-4
+        number: io1616lower-4
         default_pulse_ms: 10
         default_hold_power: 0.125
     c_flipper_hold:
-        number: 1616_2-5
+        number: io1616lower-5
         default_hold_power: 0.125
 
 autofire_coils:

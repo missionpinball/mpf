@@ -219,24 +219,36 @@ class FastSerialCommunicator(LogMixin):
 
         if self.writer:
             self.writer.close()
-            if hasattr(self.writer, "wait_closed"):
-                # Python 3.7+ only
+            try:
                 self.machine.clock.loop.run_until_complete(self.writer.wait_closed())
+            except RuntimeError as e:
+                if 'Event loop stopped before Future completed.' in str(e):
+                    self.log.warning("Event loop stopped before writer could close. This may not be an issue if the event loop was stopped intentionally.")
+                else:
+                    raise e
             self.writer = None
 
-    async def send_query(self, msg, response_msg=None):
 
+    async def send_query(self, msg, response_msg=None):
         self.send_queue.put_nowait((f'{msg}\r'.encode(), response_msg))
         self.query_done.clear()
 
+        # The wait_for never returns if we are running in unit tests
+        # I don't know why, way over my head in the mock loop and asyncio code
+        # So this is a workaround for now, I would love if someone could figure out why?
+        # TODO
+        if self.machine.unit_test:
+            timeout = None
+        else:
+            timeout = 1
+
         try:
-            await asyncio.wait_for(self.query_done.wait(), timeout=1)  # TODO make configurable?
+            await asyncio.wait_for(self.query_done.wait(), timeout=timeout)  # TODO make configurable?
         except asyncio.TimeoutError:
             # TODO better timeout handling
             # Add a timeout callback to message_processors which can be called here.
             # That will allow intelligent handling of timeouts depending on message type
             raise asyncio.TimeoutError(f'Message Timeout: The serial message {msg} did not receive a response.')
-
 
     def send_and_confirm(self, msg, confirm_msg):
         self.send_queue.put_nowait((f'{msg}\r'.encode(), confirm_msg))
@@ -334,13 +346,13 @@ class FastSerialCommunicator(LogMixin):
 
             await asyncio.wait_for(self.send_ready.wait(), timeout=None)  # TODO timeout? Prob no, but should do something to not block forever
 
-            try:
-                await asyncio.wait_for(self.send_ready.wait(), timeout=1)
-            except asyncio.TimeoutError:
-                self.log.error("Timeout waiting for send_ready. Message was: %s", msg)
-                # TODO Decide what to do here, prob raise a specific exception?
-                # self.send_ready.set()  # TODO only if we decide to continue
-                raise
+            # try:
+            #     await asyncio.wait_for(self.send_ready.wait(), timeout=1)
+            # except asyncio.TimeoutError:
+            #     self.log.error("Timeout waiting for send_ready. Message was: %s", msg)
+            #     # TODO Decide what to do here, prob raise a specific exception?
+            #     # self.send_ready.set()  # TODO only if we decide to continue
+            #     raise
 
             if confirm_msg:
                 self.confirm_msg = confirm_msg
