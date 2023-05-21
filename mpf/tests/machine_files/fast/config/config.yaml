@@ -30,31 +30,31 @@ fast:
 
 switches:
     s_test:
-        number: io3208-7
+        number: io3208-7  # 7
         platform_settings:
             debounce_open: 26
             debounce_close: 5
     s_test_nc:
-        number: io3208-26
+        number: io3208-26  # 1A
         type: 'NC'
     s_slingshot_test:
-        number: io3208-22
+        number: io3208-22  # 16
     s_flipper:
-        number: io3208-1
+        number: io3208-1  # 1
     s_flipper_eos:
-        number: io3208-2
+        number: io3208-2  # 2
     s_autofire:
-        number: io3208-3
+        number: io3208-3  # 3
     s_test3:
-        number: io1616lower-1
+        number: io1616lower-1  # 39
     s_nux_up:
-        number: io3208-11
+        number: io3208-11  # 0B
     s_nux_down:
-        number: io3208-12
+        number: io3208-12  #
 
 digital_outputs:
   c_nux_motor:
-    number: io3208-1
+    number: io3208-1  # 1
     type: driver
 
 motors:
@@ -70,47 +70,47 @@ motors:
 
 coils:
     c_test:
-        number: io3208-4
+        number: io3208-4  # 4
         default_pulse_ms: 23
         default_recycle: True
         platform_settings:
             recycle_ms: 27
     c_test_allow_enable:
-        number: io3208-6
+        number: io3208-6  # 6
         default_pulse_ms: 23
         max_hold_power: 1.0
     c_slingshot_test:
-        number: io3208-7
+        number: io3208-7  # 7
     c_pulse_pwm32_mask:
-        number: io1616upper-5
+        number: io1616upper-5  # 11
         default_pulse_power: 0.53
         default_hold_power: 0.40
-    c_hold_ssm:
-        number: io1616upper-7
-        default_hold_power: 0.25    # approximately
-        platform_settings:
-            hold_pwm_patter: "84224244"
     c_long_pulse:
-        number: io1616upper-6
+        number: io1616upper-6  # 12
         default_pulse_ms: 2000
         max_hold_power: 1.0
+    c_hold_ssm:
+        number: io1616upper-7  # 13
+        default_hold_power: 0.25
+        platform_settings:
+            hold_pwm_patter: "84224244"
     c_timed_enable:
-        number: io1616upper-10
+        number: io1616upper-10  # 16
         default_pulse_ms: 20
         default_timed_enable_ms: 200
         default_hold_power: 0.25
     c_default_timed_enable:
-        number: io1616upper-11
+        number: io1616upper-11  # 17
         default_pulse_ms: 20
         default_timed_enable_ms: 200
         default_hold_power: 0.25
         pulse_with_timed_enable: true
     c_flipper_main:
-        number: io1616lower-4
+        number: io1616lower-4  # 20
         default_pulse_ms: 10
         default_hold_power: 0.125
     c_flipper_hold:
-        number: io1616lower-5
+        number: io1616lower-5  # 21
         default_hold_power: 0.125
 
 autofire_coils:

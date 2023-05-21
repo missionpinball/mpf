@@ -108,7 +108,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     async def initialize(self):
         """Initialise platform."""
-        self.machine.events.add_async_handler('reset_phase_1', self.soft_reset)
+        self.machine.events.add_async_handler('machine_reset_phase_1', self.soft_reset)
         self.machine.events.add_handler('init_phase_3', self._start_connections)
         await self._connect_to_hardware()
 
@@ -162,7 +162,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Return str representation."""
         return '<Platform.FAST>'
 
-    def register_io_board(self, board):
+    def register_io_board(self, board):  # TODO move to NET communicator(s) classes?
         """Register a FAST I/O Board.
 
         Args:
@@ -174,24 +174,24 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.io_boards[board.node_id] = board
         self.io_boards_by_name[board.name] = board
 
-    def register_expansion_board(self, board):
+    def register_expansion_board(self, board):  # TODO move to EXP communicator(s) classes?
         """Register an Expansion board."""
         if board.address in self.exp_boards_by_address:
             raise AssertionError("Duplicate expansion board address")
         self.exp_boards_by_address[board.address] = board
         self.exp_boards_by_name[board.name] = board
 
-    def register_breakout_board(self, board):
+    def register_breakout_board(self, board):  # TODO move to EXP communicator(s) classes?
         """Register a Breakout board."""
         if board.address in self.exp_breakout_boards:
             raise AssertionError("Duplicate breakout board address")
         self.exp_breakout_boards[board.address] = board
 
-    def register_led_board(self, board):
+    def register_led_board(self, board):  # TODO move to EXP communicator(s) classes?
         """Register a Breakout board that has LEDs."""
         self.exp_breakouts_with_leds.add(board.address[:3])
 
-    async def _connect_to_hardware(self):
+    async def _connect_to_hardware(self):  # TODO move to class methods?
         """Connect to each port from the config."""
 
         for port in self.configured_ports:
@@ -459,25 +459,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 self.raise_config_error(f"Could not parse switch number {config.name}/{number}. Seems "
                                         "to be not a valid switch number for the FAST platform.", 8)
 
-        if self.machine_type == 'nano':
-            # V1 devices can explicitly define switches to be local, or default to network
-            if ('connection' in platform_config and
-                    platform_config['connection'].lower() == 'local'):
-                platform_config['connection'] = 0
-            else:
-                platform_config['connection'] = 1
-        else:
-            # V2 devices are only local switches
-            platform_config['connection'] = 0
-
-        # convert the switch number into a tuple which is:
-        # (switch number, connection)
-        number_tuple = (number, platform_config['connection'])
-
-        self.debug_log("FAST Switch hardware tuple: %s (%s)", number, config.name)
-
-        switch = FASTSwitch(config=config, number_tuple=number_tuple,
-                            platform=self, platform_settings=platform_config)
+        switch = self.serial_connections['net'].switches[int(number, 16)]
+        switch.update_config(config, platform_config)
 
         return switch
 

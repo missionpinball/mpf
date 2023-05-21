@@ -35,3 +35,21 @@ class FastNetNanoCommunicator(FastNetNeuronCommunicator):
         self.send_blind('WD:1') # Force expire the watchdog since who knows what state the board is in?
         await self.query_io_boards()
         await self.send_query('SA:', 'SA:')  # Get initial states so switches can be created
+
+    def _process_sa(self, msg):
+        hw_states = {}
+        _, local_states = msg.split(',')
+        raise NotImplementedError("TODO: Implement this for Net Nano")
+        # I think we need to swap above? look at the command..
+
+        for offset, byte in enumerate(bytearray.fromhex(local_states)):
+            for i in range(8):
+
+                num = Util.int_to_hex_string((offset * 8) + i)
+
+                if byte & (2**i):
+                    hw_states[num] = 1
+                else:
+                    hw_states[num] = 0
+
+        self.platform.hw_switch_data = hw_states

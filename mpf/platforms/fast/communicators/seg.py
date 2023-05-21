@@ -51,8 +51,6 @@ class FastSegCommunicator(FastSerialCommunicator):
         # TODO make this actually check each display
         self.remote_processor, self.remote_model, self.remote_firmware = msg.split()
         self.platform.log.info(f"Connected to SEG processor on {self.remote_model} with firmware v{self.remote_firmware}")
-        self.machine.variables.set_machine_var("fast_seg_firmware", self.remote_firmware)
-        self.machine.variables.set_machine_var("fast_seg_model", self.remote_model)
 
     def stopping(self):
         if self._seg_task:

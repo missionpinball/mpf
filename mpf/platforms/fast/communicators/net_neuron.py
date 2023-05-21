@@ -22,6 +22,9 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
 
         self.io_loop = [None] * len(self.config['io_loop'])
 
+        self.switches = list()
+        self.drivers = list()
+
         self.message_processors['SA:'] = self._process_sa
         self.message_processors['!B:'] = self._process_boot_message
         self.message_processors['\x11\x11!'] = self._process_reboot_done
@@ -29,7 +32,6 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.message_processors['/L:'] = self._process_switch_open
         self.message_processors['-L:'] = self._process_switch_closed
         # TODO add 'SL:', 'DL:' etc to look for DL:F, but then what do we do with it?
-
 
         for board, config in self.config['io_loop'].items():
             config['index'] = int(config['order'])-1
@@ -136,7 +138,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
             prior_sw += self.platform.io_boards[i].switch_count
             prior_drv += self.platform.io_boards[i].driver_count
 
-        self.platform.register_io_board(FastIoBoard(name, node_id, model, fw, sw, dr, prior_sw, prior_drv))
+        self.platform.register_io_board(FastIoBoard(self, name, node_id, model, fw, sw, dr, prior_sw, prior_drv))
 
         self.log.info('Registered I/O Board %s: Model: %s, Firmware: %s, Switches: %s, Drivers: %s',
                                 node_id, model, fw, sw, dr)
@@ -158,12 +160,12 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         for offset, byte in enumerate(bytearray.fromhex(local_states)):
             for i in range(8):
 
-                num = Util.int_to_hex_string((offset * 8) + i)
+                num = (offset * 8) + i
 
                 if byte & (2**i):
-                    hw_states[(num, 0)] = 1
+                    hw_states[num] = 1
                 else:
-                    hw_states[(num, 0)] = 0
+                    hw_states[num] = 0
 
         self.platform.hw_switch_data = hw_states
 

@@ -1,30 +1,53 @@
-"""A switch conntected to a fast controller."""
+"""A switch connected to a FAST controller."""
 import logging
 
-from mpf.core.platform import SwitchConfig
 from mpf.core.utility_functions import Util
-from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
 MYPY = False
-if MYPY:   # pragma: no cover
-    from mpf.platforms.fast.fast import FastHardwarePlatform    # pylint: disable-msg=cyclic-import,unused-import
 
 
-class FASTSwitch(SwitchPlatformInterface):
+class FASTSwitch:
 
     """A switch connected to a fast controller."""
 
     # __slots__ = ["log", "connection", "send", "platform_settings", "_configured_debounce"]
 
-    def __init__(self, config: SwitchConfig, number_tuple, platform: "FastHardwarePlatform", platform_settings) -> None:
+    def __init__(self, communicator, net_version, hw_number, ) -> None:
         """Initialise switch."""
-        super().__init__(config, number_tuple, platform)
-        self.log = logging.getLogger('FASTSwitch')
-        self.is_network = number_tuple[1]
-        self.connection = platform.serial_connections['net']
-        self.platform_settings = platform_settings
-        self._configured_debounce = False
-        self.configure_debounce(config.debounce in ("normal", "auto"))
+        self.communicator = communicator
+        self.net_version = net_version
+        self.number = hw_number
+
+        self.invert = False
+        self.debounce = None
+        self.platform = None
+        self.active = False
+
+        self.mode = 0
+        self.debounce_open = 0
+        self.debounce_close = 0
+
+    def update_config(self, config, platform_settings):
+        """Update config."""
+        # TODO add validation
+
+        self.configure_debounce(config, platform_settings)
+
+        if self.invert:
+            self.mode = 2
+        else:
+            self.mode = 1
+
+    def send_config_to_switch(self):
+        if self.net_version == 1:
+            cmd = 'SN:'
+        else:
+            cmd = 'SL:'
+
+        final = f'{cmd}{self.number},{self.mode},{self.debounce_open},{self.debounce_close}'
+
+        self.communicator.send_and_confirm(final, f"{cmd}P")
+        self.dirty = False
 
     def get_board_name(self):
         """Return the board of this switch."""
@@ -41,38 +64,22 @@ class FASTSwitch(SwitchPlatformInterface):
         # fall back if not found
         return "FAST Unknown Board"
 
-    def configure_debounce(self, debounce):
+    def configure_debounce(self, config, platform_settings):
         """Configure debounce settings."""
 
         # Set the debounce from the generic true/false first, then override if the platform settings have specific values
-        if debounce:
-            debounce_open = Util.int_to_hex_string(self.platform.config['net']['default_normal_debounce_open'])
-            debounce_close = Util.int_to_hex_string(self.platform.config['net']['default_normal_debounce_close'])
+        if config.debounce in ['normal', 'auto']:
+            debounce_open = Util.int_to_hex_string(self.communicator.config['default_normal_debounce_open'])
+            debounce_close = Util.int_to_hex_string(self.communicator.config['default_normal_debounce_close'])
         else:
-            debounce_open = Util.int_to_hex_string(self.platform.config['net']['default_quick_debounce_open'])
-            debounce_close = Util.int_to_hex_string(self.platform.config['net']['default_quick_debounce_close'])
+            debounce_open = Util.int_to_hex_string(self.communicator.config['default_quick_debounce_open'])
+            debounce_close = Util.int_to_hex_string(self.communicator.config['default_quick_debounce_close'])
 
-        if 'debounce_open' in self.platform_settings and self.platform_settings['debounce_open'] is not None:
-            debounce_open = self.platform.convert_number_from_config(self.platform_settings['debounce_open'])
+        if 'debounce_open' in platform_settings and platform_settings['debounce_open'] is not None:
+            debounce_open = self.communicator.platform.convert_number_from_config(platform_settings['debounce_open'])
 
-        if 'debounce_close' in self.platform_settings and self.platform_settings['debounce_close'] is not None:
-            debounce_close = self.platform.convert_number_from_config(self.platform_settings['debounce_close'])
+        if 'debounce_close' in platform_settings and platform_settings['debounce_close'] is not None:
+            debounce_close = self.communicator.platform.convert_number_from_config(platform_settings['debounce_close'])
 
-        if self.is_network:  # TODO remove this if
-            cmd = 'SN:'
-        else:
-            cmd = 'SL:'
-
-        new_setting = (debounce_open, debounce_close)
-        if new_setting == self._configured_debounce:
-            return
-
-        self._configured_debounce = new_setting
-
-        final = '{}{},01,{},{}'.format(
-            cmd,
-            self.number[0],
-            debounce_open,
-            debounce_close)
-
-        self.connection.send_and_confirm(final, f"{cmd}P")
+        self.debounce_open = debounce_open
+        self.debounce_close = debounce_close

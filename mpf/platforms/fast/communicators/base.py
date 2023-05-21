@@ -146,24 +146,6 @@ class FastSerialCommunicator(LogMixin):
 
         self.log.info(f"Connected to {self.remote_model} with firmware v{self.remote_firmware}")
 
-        self.machine.variables.set_machine_var("fast_{}_firmware".format(self.remote_processor.lower()),
-                                               self.remote_firmware)
-        '''machine_var: fast_(x)_firmware
-
-        desc: Holds the version number of the firmware for the processor on
-        the FAST Pinball controller that's connected. The "x" is replaced with
-        processor attached (e.g. "net", "exp", etc).
-        '''
-
-        self.machine.variables.set_machine_var("fast_{}_model".format(self.remote_processor.lower()), self.remote_model)
-
-        '''machine_var: fast_(x)_model
-
-        desc: Holds the model number of the board for the processor on
-        the FAST Pinball controller that's connected. The "x" is replaced with
-        processor attached (e.g. "net", "exp", etc).
-        '''
-
         if version.parse(self.remote_firmware) < MIN_FW:
             raise AssertionError(f'Firmware version mismatch. MPF requires the {self.remote_processor} processor '
                                  f'to be firmware {MIN_FW}, but yours is {self.remote_firmware}')

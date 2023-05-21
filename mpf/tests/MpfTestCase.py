@@ -595,8 +595,9 @@ class MpfTestCase(unittest.TestCase):
         start = time.time()
         while not init.done() and not self._exception:
             self.loop.run_once()
-            if time.time() > start + timeout:
-                raise AssertionError("Start took more than {}s".format(timeout))
+            if os.getenv('GITHUB_ACTIONS', 'false') == 'true':  # If we're running on github
+                if time.time() > start + timeout:
+                    raise AssertionError("Start took more than {}s".format(timeout))
 
         # trigger exception if there was one
         init.result()

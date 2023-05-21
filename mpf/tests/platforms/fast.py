@@ -1,16 +1,12 @@
-"""FAST Pinball mock hardware platform.
-
-In this module:
+"""FAST Pinball mock hardware platform. In this module:
 
 MockFastSerial
 MockFastNetNeuron
 MockFastExp
-MockFastDmd
 MockFastRgb
+MockFastNetNano
 MockFastSeg
-
-
-
+MockFastDmd
 """
 
 from mpf.tests.loop import MockSerial
@@ -83,7 +79,7 @@ class MockFastSerial(MockSerial):
             del self.expected_commands[cmd]
             return msg_len
         else:
-            raise Exception("Unexpected command for " + self.type + ": " + str(cmd))
+            raise Exception(f"Unexpected command for {self.type}: {cmd}")
 
     def _process_binary_msg(self, msg):
         # The first three chars are the command (XX:), the rest is the binary payload
@@ -101,7 +97,7 @@ class MockFastNetNeuron(MockFastSerial):
             'WD:3E8': 'WD:P',
             'SA:':'SA:09,050000000000000000',
             'CH:2000,FF':'CH:P',
-            'ID:': 'ID:NET FP-CPU-2000  02.06',
+            'ID:': 'ID:NET FP-CPU-2000  02.13',
             'BR:': '\r\r!B:00\r..!B:02\r.',
             }
 
@@ -110,7 +106,7 @@ class MockFastNetNeuron(MockFastSerial):
 
     def process_msg(self, cmd):
         if cmd == (' ' * 256 * 4):
-            self.queue.append("XX:F")  # TODO move to Net subclass?
+            self.queue.append("XX:F")
             return True
 
         return False
@@ -259,7 +255,7 @@ class MockFastNetNano(MockFastSerial):
 
     def process_msg(self, cmd):
         if cmd == (' ' * 256 * 4):
-            self.queue.append("XX:F")  # TODO move to Net subclass?
+            self.queue.append("XX:F")
             return True
 
         return False

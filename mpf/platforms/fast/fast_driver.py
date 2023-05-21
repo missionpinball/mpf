@@ -109,13 +109,14 @@ class FASTDriver(DriverPlatformInterface):
         """Reset a driver."""
         self.log.debug("Resetting driver %s", self.driver_settings)
 
-        cmd = '{}{},00,00,00'.format(self.get_config_cmd(), self.number)
+        cmd = f'{self.get_config_cmd()}{self.number},00,00,00'
 
+        # confirmation message is DL:P or DN:P
         self.connection.send_and_confirm(cmd, f"{self.get_config_cmd()}P")  # TODO remove config lookups
 
     def disable(self):
         """Disable (turn off) this driver."""
-        cmd = '{}{},02'.format(self.get_trigger_cmd(), self.number)
+        cmd = f'{self.get_trigger_cmd()}{self.number},02'
 
         self.log.debug("Sending Disable Command: %s", cmd)
         self.connection.send_blind(cmd)  # TODO remove config lookups
@@ -124,8 +125,7 @@ class FASTDriver(DriverPlatformInterface):
 
         # reenable the autofire
         if self.autofire:
-            cmd = '{}{},00'.format(self.get_trigger_cmd(), self.number)
-
+            cmd = f'{self.get_trigger_cmd()}{self.number},00'
             self.log.debug("Re-enabling auto fire mode: %s", cmd)
             self.connection.send_blind(cmd)  # TODO remove config lookups
 
@@ -151,7 +151,7 @@ class FASTDriver(DriverPlatformInterface):
         if self.autofire and self.config_state == config_state:
             # If this driver is also configured for an autofire rule, we just
             # manually trigger it with the trigger_cmd and manual on ('03')
-            cmd = '{}{},03'.format(self.get_trigger_cmd(), self.number)
+            cmd = f'{self.get_trigger_cmd()}{self.number},03'
         else:
             # Otherwise we send a full config command, trigger C1 (logic triggered
             # and drive now) switch ID 00, mode 18 (latched)
@@ -200,7 +200,7 @@ class FASTDriver(DriverPlatformInterface):
             self.config_state = config_state
             self._autofire_cleared = True
 
-            # The 89 command will write this rule to the driver and pulse it immediately after
+            # The 89 trigger will write this rule to the driver and pulse it immediately after
             cmd = '{}{},89,00,10,{},{},{},{},00'.format(
                 self.get_config_cmd(),
                 self.number,
