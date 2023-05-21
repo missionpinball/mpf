@@ -39,14 +39,8 @@ class FASTSwitch:
             self.mode = 1
 
     def send_config_to_switch(self):
-        if self.net_version == 1:
-            cmd = 'SN:'
-        else:
-            cmd = 'SL:'
-
-        final = f'{cmd}{self.number},{self.mode},{self.debounce_open},{self.debounce_close}'
-
-        self.communicator.send_and_confirm(final, f"{cmd}P")
+        final = f'{self.communicator.switch_cmd}:{self.number},{self.mode},{self.debounce_open},{self.debounce_close}'
+        self.communicator.send_query(final, f"{self.communicator.switch_cmd}:P")
 
     def get_board_name(self):
         """Return the board of this switch."""

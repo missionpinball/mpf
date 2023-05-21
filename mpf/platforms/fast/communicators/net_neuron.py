@@ -25,6 +25,10 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.switches = list()
         self.drivers = list()
 
+        self.trigger_cmd = 'TL'
+        self.driver_cmd = 'DL'
+        self.switch_cmd = 'SL'
+
         self.message_processors['SA:'] = self._process_sa
         self.message_processors['!B:'] = self._process_boot_message
         self.message_processors['\x11\x11!'] = self._process_reboot_done
@@ -161,6 +165,12 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
             raise AssertionError("Exiting due to I/O board firmware mismatch")
 
     def _process_sl(self, msg):
+
+        # TODO is this marking an SL:L query done too soon since the first SL:68 will return.
+        # Do we need a proper query done lock?
+        # easy, set the lock when the query message actually goes out,
+        # the callback clears the lock. While the lock is set, no other messages are processed
+        # except for WD? So we need a query lock priority, haha only half joking
 
         if msg == 'P':
             return

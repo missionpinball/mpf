@@ -24,7 +24,7 @@ classifiers=[
     ]
 dependencies = [
     "ruamel.yaml",  # 0.17.26
-    "pyserial",  # 3.5
+    "pyserial",  # 3.6
     "pyserial-asyncio", # 0.6
     "sortedcontainers",  # 2.4.0
     "psutil",  # 5.9.5

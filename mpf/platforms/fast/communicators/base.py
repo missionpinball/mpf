@@ -54,7 +54,7 @@ class FastSerialCommunicator(LogMixin):
                                file_level=config['debug'], url_base='https://fastpinball.com/mpf/error')
 
     def __repr__(self):
-        return f'<FAST {self.remote_processor} Communicator>'
+        return f'<{self.__class__.__name__}>'
 
     async def soft_reset(self):
         raise NotImplementedError
@@ -215,6 +215,14 @@ class FastSerialCommunicator(LogMixin):
         self.send_queue.put_nowait((priority, f'{msg}\r'.encode(), response_msg))
         self.query_done.clear()
 
+        # Is this a bug? If the queue gets backed up, I think clearing it here means could miss a response?
+        # TODO
+
+        # Prob why it's timing out on unit tests
+
+        # Should we block while waiting for this message to go out?
+        # We just need a good way to wait for query messages
+
         # The wait_for never returns if we are running in unit tests
         # I don't know why, way over my head in the mock loop and asyncio code
         # So this is a workaround for now, I would love if someone could figure out why?
@@ -284,6 +292,9 @@ class FastSerialCommunicator(LogMixin):
                 # Did we also have a query in progress? If so, mark it done
                 if not self.query_done.is_set():
                     self.query_done.set()
+
+                    # Currently this will process once the method in the query cb is done
+                    # We could change this to async and add a proper query done lock
 
             if not handled:
                 self.log.warning(f"Unknown message received: {msg}")

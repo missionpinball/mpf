@@ -22,6 +22,10 @@ class FastNetNanoCommunicator(FastNetNeuronCommunicator):
         self.watchdog_cmd = f"WD:{config['watchdog']:02X}"
         self._watchdog_task = None
 
+        self.trigger_cmd = 'TN'
+        self.driver_cmd = 'DN'
+        self.switch_cmd = 'SN'
+
         self.message_processors['SA:'] = self._process_sa
         self.message_processors['!B:'] = self._process_boot_message
         self.message_processors['\x11\x11!'] = self._process_reboot_done
