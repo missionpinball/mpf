@@ -19,7 +19,7 @@ class FastSegCommunicator(FastSerialCommunicator):
 
         self._seg_task = None
 
-    def start(self):
+    def start_tasks(self):
         """Start the communicator."""
 
         for s in self.machine.device_manager.collections["segment_displays"]:

@@ -39,11 +39,11 @@ class FastExpCommunicator(FastSerialCommunicator):
 
         await self.query_exp_boards()
 
-    def start(self):
+    def start_tasks(self):
         """Start listening for commands and schedule watchdog."""
 
         for board in self.exp_boards_by_address.values():
-            board.start()
+            board.start_tasks()
 
     def stopping(self):
         for board in self.exp_boards_by_address.values():

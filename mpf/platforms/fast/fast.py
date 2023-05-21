@@ -109,7 +109,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     async def initialize(self):
         """Initialise platform."""
         self.machine.events.add_async_handler('machine_reset_phase_1', self.soft_reset)
-        self.machine.events.add_handler('init_phase_3', self._start_connections)
+        self.machine.events.add_handler('init_phase_3', self._start_communicator_tasks)
         await self._connect_to_hardware()
 
     async def soft_reset(self, **kwargs):
@@ -153,10 +153,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         self.serial_connections = dict()
 
-    def _start_connections(self, **kwargs):  # init_phase_3
+    def _start_communicator_tasks(self, **kwargs):  # init_phase_3
         del kwargs
         for comm in self.serial_connections.values():
-            comm.start()
+            comm.start_tasks()
 
     def __repr__(self):
         """Return str representation."""

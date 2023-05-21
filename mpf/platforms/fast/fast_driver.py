@@ -40,7 +40,6 @@ class FASTDriver(DriverPlatformInterface):
             self.driver_settings['trigger_cmd'] = 'TL:'
 
         self.log.debug("Driver Settings: %s", self.driver_settings)
-        self.reset()
 
     def get_board_name(self):
         """Return the board of this driver."""

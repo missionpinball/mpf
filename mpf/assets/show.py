@@ -181,7 +181,8 @@ class Show:
         self._get_tokens()
 
     def _show_validation_error(self, msg, error_code) -> "NoReturn":  # pragma: no cover
-        raise ConfigFileError('"{}" >> {}'.format(self.name, msg), error_code, "show", self.name)
+        # raise ConfigFileError('"{}" >> {}'.format(self.name, msg), error_code, "show", self.name)
+        pass  # TODO temp, though if MC is not installed, this will fail, should this be a config option?
 
     def _process_step_actions(self, step, actions):
         if not isinstance(step, dict):

@@ -6,7 +6,7 @@ import os
 import signal
 import socket
 import sys
-from datetime import datetime
+import datetime
 import logging
 from logging.handlers import QueueHandler, SysLogHandler
 
@@ -74,7 +74,7 @@ class Command:
                             metavar='file_name',
                             default=os.path.join(
                                 "logs",
-                                datetime.now().strftime(
+                                datetime.datetime.now().strftime(
                                     "%Y-%m-%d-%H-%M-%S-mpf-" +
                                     socket.gethostname() + ".log")),
                             help="The name (and path) of the log file")
@@ -172,7 +172,8 @@ class Command:
 
         # tell the handler to use this format
         console_log.setFormatter(logging.Formatter(
-            '%(levelname)s : %(name)s : %(message)s'))
+            '%(asctime)s.%(msecs)03d : %(levelname)s : %(name)s : %(message)s', "%S"))
+
 
         # initialize async handler for console
         console_log_queue = Queue()

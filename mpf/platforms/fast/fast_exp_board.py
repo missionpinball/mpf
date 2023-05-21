@@ -102,7 +102,7 @@ class FastExpansionBoard:
         else:
             raise AssertionError(f'Unknown processor type {proc} in ID response')
 
-    def start(self):
+    def start_tasks(self):
         self._update_leds()
 
         if self.config['led_hz'] > 31.25:

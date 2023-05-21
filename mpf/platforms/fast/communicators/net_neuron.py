@@ -29,6 +29,8 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.message_processors['!B:'] = self._process_boot_message
         self.message_processors['\x11\x11!'] = self._process_reboot_done
         self.message_processors['NN:'] = self._process_nn
+        self.message_processors['DL:'] = self._process_dl
+        self.message_processors['SL:'] = self._process_sl
         self.message_processors['/L:'] = self._process_switch_open
         self.message_processors['-L:'] = self._process_switch_closed
         # TODO add 'SL:', 'DL:' etc to look for DL:F, but then what do we do with it?
@@ -48,11 +50,8 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         """Reset the NET processor."""
         del kwargs
 
-        # TODO
-        # get a list of the current hw driver numbers from machine drivers
-        # FAST controllers can hold configs for 104 switches and 48 drivers, so loop through
-        # those, comparing their last known states to the current states and only send
-        # if they are different
+        await self.reset_switches()
+        # await self.reset_drivers() TODO
 
     async def clear_board_serial_buffer(self):
         """Clear out the serial buffer."""
@@ -100,6 +99,14 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
             # If our count is greater than the number of boards we have, we're done
             if current_node > len(self.platform.io_boards):
                 break
+
+    async def reset_switches(self):
+        """Query the NET processsor to get a list of switches and their configurations.
+        Compare that to how they should be configured, and send new configuration
+        commands for any that are different.
+
+        """
+        await self.send_query('SL:L', 'SL:')
 
     def _process_nn(self, msg):
         firmware_ok = True
@@ -153,6 +160,42 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         if not firmware_ok:
             raise AssertionError("Exiting due to I/O board firmware mismatch")
 
+    def _process_sl(self, msg):
+
+        if msg == 'P':
+            return
+
+        try:
+            int(msg, 16)  # received an SL:L switch count response
+            return  # don't need it
+        except ValueError:
+            pass
+
+        # From here down we're processing switch config data
+        # '00,02,01,02' = switch number, mode, debounce close, debounce open
+        # https://fastpinball.com/fast-serial-protocol/net/sl/
+
+        switch, mode, debounce_close, debounce_open = msg.split(',')
+        switch = int(switch, 16)
+
+        try:
+            switch_obj = self.switches[switch]
+        except IndexError:  # we always get data for 104 switches, if we don't have that many, we'll have extras
+            return
+
+        mode = int(mode, 16)
+        debounce_close = int(debounce_close, 16)
+        debounce_open = int(debounce_open, 16)
+
+        if (mode != switch_obj.mode or
+            debounce_close != switch_obj.debounce_close or
+            debounce_open != switch_obj.debounce_open):
+
+            switch_obj.send_config_to_switch()
+
+    def _process_dl(self, msg):
+        pass
+
     def _process_sa(self, msg):
         hw_states = {}
         _, local_states = msg.split(',')
@@ -194,11 +237,16 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
                                                              platform=self.platform)
 
     def _update_watchdog(self):
-        """Send Watchdog command."""
+        """Send Watchdog command.
 
-        self.send_blind(self.watchdog_cmd)
+        The watchdog command is put in the send queue with priority 0, while all other commands use priority 1.
+        This means the watchdog will always go out next to ensure a queue full of commands wanting confirmation won't
+        delay the WD too long.
+        """
 
-    def start(self):
+        self.send_blind(self.watchdog_cmd, priority=0)
+
+    def start_tasks(self):
         """Start listening for commands and schedule watchdog."""
         self._update_watchdog()
         self._watchdog_task = self.machine.clock.schedule_interval(self._update_watchdog,

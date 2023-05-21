@@ -45,7 +45,7 @@ class FastRgbCommunicator(FastSerialCommunicator):
             msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color) for led in dirty_leds])
             self.send_blind(msg)
 
-    def start(self):
+    def start_tasks(self):
         """Start listening for commands and schedule watchdog."""
         self.reset()
 

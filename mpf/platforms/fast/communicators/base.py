@@ -39,7 +39,7 @@ class FastSerialCommunicator(LogMixin):
         self.send_ready.set()
         self.query_done = asyncio.Event()
         self.query_done.set()
-        self.send_queue = asyncio.Queue()
+        self.send_queue = asyncio.PriorityQueue()
         self.confirm_msg = None
         self.write_task = None
 
@@ -177,7 +177,7 @@ class FastSerialCommunicator(LogMixin):
                     self.log.info(f"<<<< {buffer}")
                 return buffer
 
-    def start(self):
+    def start_tasks(self):
         """Start periodic tasks, etc.
 
         Called once on MPF boot, not at game start."""
@@ -211,8 +211,8 @@ class FastSerialCommunicator(LogMixin):
             self.writer = None
 
 
-    async def send_query(self, msg, response_msg=None):
-        self.send_queue.put_nowait((f'{msg}\r'.encode(), response_msg))
+    async def send_query(self, msg, response_msg=None, priority=1):
+        self.send_queue.put_nowait((priority, f'{msg}\r'.encode(), response_msg))
         self.query_done.clear()
 
         # The wait_for never returns if we are running in unit tests
@@ -222,24 +222,24 @@ class FastSerialCommunicator(LogMixin):
         if self.machine.unit_test:
             timeout = None
         else:
-            timeout = 1
+            timeout = 1  # TODO make configurable?
 
         try:
-            await asyncio.wait_for(self.query_done.wait(), timeout=timeout)  # TODO make configurable?
+            await asyncio.wait_for(self.query_done.wait(), timeout=timeout)
         except asyncio.TimeoutError:
             # TODO better timeout handling
             # Add a timeout callback to message_processors which can be called here.
             # That will allow intelligent handling of timeouts depending on message type
-            raise asyncio.TimeoutError(f'Message Timeout: The serial message {msg} did not receive a response.')
+            raise asyncio.TimeoutError(f'{self} The serial message {msg} did not receive a response.')
 
-    def send_and_confirm(self, msg, confirm_msg):
-        self.send_queue.put_nowait((f'{msg}\r'.encode(), confirm_msg))
+    def send_and_confirm(self, msg, confirm_msg, priority=1):
+        self.send_queue.put_nowait((priority, f'{msg}\r'.encode(), confirm_msg))
 
-    def send_blind(self, msg):
-        self.send_queue.put_nowait((f'{msg}\r'.encode(), None))
+    def send_blind(self, msg, priority=1):
+        self.send_queue.put_nowait((priority, f'{msg}\r'.encode(), None))
 
-    def send_bytes(self, msg):
-        self.send_queue.put_nowait((msg, None))
+    def send_bytes(self, msg, priority=1):
+        self.send_queue.put_nowait((priority, msg, None))
 
     def parse_raw_bytes(self, msg):
         self.received_msg += msg
@@ -322,7 +322,7 @@ class FastSerialCommunicator(LogMixin):
     async def _socket_writer(self):
         while True:
             try:
-                msg, confirm_msg = await self.send_queue.get()
+                _, msg, confirm_msg = await self.send_queue.get()
             except:
                 return  # TODO better way to catch shutting down?
 

@@ -47,7 +47,6 @@ class FASTSwitch:
         final = f'{cmd}{self.number},{self.mode},{self.debounce_open},{self.debounce_close}'
 
         self.communicator.send_and_confirm(final, f"{cmd}P")
-        self.dirty = False
 
     def get_board_name(self):
         """Return the board of this switch."""

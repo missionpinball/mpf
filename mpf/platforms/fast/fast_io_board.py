@@ -13,7 +13,7 @@ class FastIoBoard:
     def __init__(self, communicator, name, node_id, model_string, firmware_version, switch_count, driver_count, prior_switches, prior_drivers):
         """Initialise FastIoBoard."""
         self.communicator = communicator
-        self.name = name
+        self.name = str(name)
         self.node_id = node_id  # position in the I/O loop, 0-indexed
         self.model = model_string
         self.firmware_version = firmware_version
