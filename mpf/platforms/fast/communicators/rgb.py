@@ -43,7 +43,7 @@ class FastRgbCommunicator(FastSerialCommunicator):
 
         if dirty_leds:
             msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color) for led in dirty_leds])
-            self.send_blind(msg)
+            self.send_and_forget(msg)
 
     def start_tasks(self):
         """Start listening for commands and schedule watchdog."""
@@ -57,9 +57,9 @@ class FastRgbCommunicator(FastSerialCommunicator):
 
     def reset(self):
         """Reset the RGB processor."""
-        self.send_blind('RF:0')
-        self.send_blind('RA:000000')
-        self.send_blind(f"RF:{Util.int_to_hex_string(self.config['led_fade_time'])}")
+        self.send_and_forget('RF:0')
+        self.send_and_forget('RA:000000')
+        self.send_and_forget(f"RF:{Util.int_to_hex_string(self.config['led_fade_time'])}")
 
     def stopping(self):
         if self._led_task:

@@ -52,12 +52,14 @@ class FastSerialCommunicator(LogMixin):
 
         self.configure_logging(logger=f'[{self.remote_processor}]', console_level=config['debug'],
                                file_level=config['debug'], url_base='https://fastpinball.com/mpf/error')
+                                # TODO change these to not be hardcoded
+                                # TODO do something with the URL endpoint
 
     def __repr__(self):
         return f'<{self.__class__.__name__}>'
 
     async def soft_reset(self):
-        raise NotImplementedError
+        raise NotImplementedError(f"{self.__class__.__name__} does not implement soft_reset()")
 
     async def connect(self):
         """Does several things to connect to the FAST processor.
@@ -134,7 +136,7 @@ class FastSerialCommunicator(LogMixin):
 
     async def init(self):
 
-        await self.send_query('ID:', 'ID:')
+        await self.send_and_wait('ID:', 'ID:')
 
     def _process_xx(self, msg):
         """Process the XX response."""
@@ -211,7 +213,7 @@ class FastSerialCommunicator(LogMixin):
             self.writer = None
 
 
-    async def send_query(self, msg, response_msg=None, priority=1):
+    async def send_and_wait(self, msg, response_msg=None, priority=1, timeout=1):
         self.send_queue.put_nowait((priority, f'{msg}\r'.encode(), response_msg))
         self.query_done.clear()
 
@@ -229,27 +231,22 @@ class FastSerialCommunicator(LogMixin):
         # TODO
         if self.machine.unit_test:
             timeout = None
-        else:
-            timeout = 1  # TODO make configurable?
 
         try:
             await asyncio.wait_for(self.query_done.wait(), timeout=timeout)
         except asyncio.TimeoutError:
-            # TODO better timeout handling
-            # Add a timeout callback to message_processors which can be called here.
-            # That will allow intelligent handling of timeouts depending on message type
-            raise asyncio.TimeoutError(f'{self} The serial message {msg} did not receive a response.')
+            raise asyncio.TimeoutError(f'{self} The serial message {msg} was a query that did not finish after its timeout of {timeout}s.')
 
-    def send_and_confirm(self, msg, confirm_msg, priority=1):
-        self.send_queue.put_nowait((priority, f'{msg}\r'.encode(), confirm_msg))
+    # def send_and_wait(self, msg, confirm_msg, priority=1):
+    #     self.send_queue.put_nowait((priority, f'{msg}\r'.encode(), confirm_msg))
 
-    def send_blind(self, msg, priority=1):
+    def send_and_forget(self, msg, priority=1):
         self.send_queue.put_nowait((priority, f'{msg}\r'.encode(), None))
 
     def send_bytes(self, msg, priority=1):
         self.send_queue.put_nowait((priority, msg, None))
 
-    def parse_raw_bytes(self, msg):
+    def parse_incoming_raw_bytes(self, msg):
         self.received_msg += msg
 
         while True:
@@ -272,8 +269,19 @@ class FastSerialCommunicator(LogMixin):
                 if not self.ignore_decode_errors:
                     raise
 
+            self.dispatch_incoming_msg(msg)
+
+    def dispatch_incoming_msg(self, msg):
+            """ Receives a complete messsage and decides what to do with it:
+
+            * Ignore it
+            * Pass it to a message processor
+            * Confirm it
+
+            """
+
             if msg in self.ignored_messages:
-                continue
+                return
 
             handled = False
 
@@ -289,23 +297,24 @@ class FastSerialCommunicator(LogMixin):
                 self.send_ready.set()
                 handled = True
 
-                # Did we also have a query in progress? If so, mark it done
                 if not self.query_done.is_set():
                     self.query_done.set()
 
-                    # Currently this will process once the method in the query cb is done
-                    # We could change this to async and add a proper query done lock
-
             if not handled:
                 self.log.warning(f"Unknown message received: {msg}")
-                # TODO: should we raise an exception here?
+                # TODO: should we raise an exception here? Prob something configurable?
+
+    def query_is_done(self):
+        if not self.query_done.is_set():
+            self.query_done.set()
 
     async def _socket_reader(self):
+        # Read coroutine
         while True:
             resp = await self.read(128)
             if resp is None:
                 return
-            self.parse_raw_bytes(resp)
+            self.parse_incoming_raw_bytes(resp)
 
     async def read(self, n=-1):
         """Read up to `n` bytes from the stream and log the result if debug is true.
@@ -331,6 +340,7 @@ class FastSerialCommunicator(LogMixin):
         return resp
 
     async def _socket_writer(self):
+        # Write coroutine
         while True:
             try:
                 _, msg, confirm_msg = await self.send_queue.get()

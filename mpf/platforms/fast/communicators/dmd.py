@@ -13,3 +13,6 @@ class FastDmdCommunicator(FastSerialCommunicator):
 
     def _send(self, msg): # todo is this meth even used?
         self.send_bytes(b'BM:' + msg)
+
+    async def soft_reset(self):
+        pass  # TODO blank the screen

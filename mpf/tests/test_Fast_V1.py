@@ -341,7 +341,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
         self.assertFalse(self.switch_hit)
 
         self.machine.events.add_handler("s_test_active", self._switch_hit_cb)
-        self.machine.default_platform.serial_connections['net'].parse_raw_bytes(b"-N:07\r")
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-N:07\r")
         self.advance_time_and_run(1)
 
         self.assertTrue(self.switch_hit)
@@ -352,7 +352,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test", 1)
 
-        self.machine.default_platform.serial_connections['net'].parse_raw_bytes(b"/N:07\r")
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/N:07\r")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test", 0)
@@ -367,13 +367,13 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test_nc", 1)
 
-        self.machine.default_platform.serial_connections['net'].parse_raw_bytes(b"-N:1A\r")
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-N:1A\r")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test_nc", 0)
 
         self.machine.events.add_handler("s_test_nc_active", self._switch_hit_cb)
-        self.machine.default_platform.serial_connections['net'].parse_raw_bytes(b"/N:1A\r")
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/N:1A\r")
         self.advance_time_and_run(1)
 
         self.assertSwitchState("s_test_nc", 1)
@@ -513,7 +513,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
     def test_bootloader_crash(self):
         # Test that the machine stops if the RGB processor sends a bootloader msg
         self.machine.stop = MagicMock()
-        self.machine.default_platform.serial_connections['net'].parse_raw_bytes(b"!B:00\r")
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"!B:00\r")
         self.advance_time_and_run(1)
         self.assertTrue(self.machine.stop.called)
 
@@ -522,7 +522,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
         self.machine.default_platform.config['ignore_rgb_crash'] = True
         self.mock_event('fast_rgb_rebooted')
         self.machine.stop = MagicMock()
-        self.machine.default_platform.serial_connections['net'].parse_raw_bytes(b"!B:00\r")
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"!B:00\r")
         self.advance_time_and_run(1)
         self.assertFalse(self.machine.stop.called)
         self.assertEventCalled('fast_rgb_rebooted')

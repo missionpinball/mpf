@@ -1,6 +1,5 @@
 from mpf.platforms.fast.fast_defines import VALID_IO_BOARDS
 from mpf.platforms.fast.fast_switch import FASTSwitch
-from mpf.core.platform import SwitchConfig
 
 """FAST I/O Board."""
 
@@ -25,6 +24,9 @@ class FastIoBoard:
 
         assert self.model in VALID_IO_BOARDS, "Invalid I/O board model: {}".format(self.model)
 
+        # Create the actual switches and drivers now, since they exist in real life
+        # Even if the MPF users doesn't use them, they still exist and will be included
+        # in config reports, so they all need to exist.
         self.create_switches()
         self.create_drivers()
 
@@ -44,7 +46,8 @@ class FastIoBoard:
     def create_switches(self):
         for i in range(self.switch_count):
             hw_number = self.start_switch + i
-            self.communicator.switches.append(FASTSwitch(self.communicator, self.net_version, hw_number))
+            self.communicator.switches.append(
+                FASTSwitch(self.communicator, self.net_version, hw_number))
 
     def create_drivers(self):
         pass

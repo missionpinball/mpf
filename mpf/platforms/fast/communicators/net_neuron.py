@@ -44,11 +44,11 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
             self.io_loop[config['index']] = board
 
     async def init(self):
-        await self.send_query('ID:', 'ID:')  # Verify we're connected to a Neuron
-        await self.send_query('CH:2000,FF', 'CH:P')  # Configure hardware for Neuron with active switch reporting
-        self.send_blind('WD:1') # Force expire the watchdog since who knows what state the board is in?
+        await self.send_and_wait('ID:', 'ID:')  # Verify we're connected to a Neuron
+        await self.send_and_wait('CH:2000,FF', 'CH:P')  # Configure hardware for Neuron with active switch reporting
+        self.send_and_forget('WD:1') # Force expire the watchdog since who knows what state the board is in?
         await self.query_io_boards()
-        await self.send_query('SA:', 'SA:')  # Get initial states so switches can be created
+        await self.send_and_wait('SA:', 'SA:')  # Get initial states so switches can be created
 
     async def soft_reset(self, **kwargs):
         """Reset the NET processor."""
@@ -89,7 +89,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
 
         current_node = 0
         while current_node < len(self.config['io_loop']):
-            await self.send_query('NN:{:02X}'.format(current_node), 'NN:')
+            await self.send_and_wait('NN:{:02X}'.format(current_node), 'NN:')
 
             # Don't move on until we get board 00 in since it can take a sec after a reset
             if not len(self.platform.io_boards):
@@ -110,7 +110,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         commands for any that are different.
 
         """
-        await self.send_query('SL:L', 'SL:')
+        await self.send_and_wait('SL:L', 'SL:')
 
     def _process_nn(self, msg):
         firmware_ok = True
@@ -254,7 +254,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         delay the WD too long.
         """
 
-        self.send_blind(self.watchdog_cmd, priority=0)
+        self.send_and_forget(self.watchdog_cmd, priority=0)
 
     def start_tasks(self):
         """Start listening for commands and schedule watchdog."""
@@ -266,4 +266,4 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         if self._watchdog_task:
             self._watchdog_task.cancel()
             self._watchdog_task = None
-        self.send_blind('WD:1')
+        self.send_and_forget('WD:1')

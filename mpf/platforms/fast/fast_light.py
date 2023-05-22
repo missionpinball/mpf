@@ -21,7 +21,7 @@ class FASTMatrixLight(LightPlatformSoftwareFade):
 
     def set_brightness(self, brightness: float):
         """Set matrix light brightness."""
-        self.connection.send_blind(f'L1:{self.number},{Util.int_to_hex_string(int(brightness * 255))}')
+        self.connection.send_and_forget(f'L1:{self.number},{Util.int_to_hex_string(int(brightness * 255))}')
 
     def get_board_name(self):
         """Return the board of this light."""

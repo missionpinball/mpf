@@ -77,6 +77,114 @@ class TestFast(MpfTestCase):
             "DL:21,00,00,00": "DL:P",
             }
 
+        self.serial_connections['net2'].expected_commands['SL:L'] = (
+            'SL:68\r'
+            'SL:00,02,01,02\r'
+            'SL:01,01,03,04\r'
+            'SL:02,01,02,14\r'
+            'SL:03,01,02,14\r'
+            'SL:04,01,02,14\r'
+            'SL:05,01,02,14\r'
+            'SL:06,01,02,14\r'
+            'SL:07,01,02,14\r'
+            'SL:08,01,02,14\r'
+            'SL:09,01,02,14\r'
+            'SL:0A,01,02,14\r'
+            'SL:0B,01,02,14\r'
+            'SL:0C,01,02,14\r'
+            'SL:0D,01,02,14\r'
+            'SL:0E,01,02,14\r'
+            'SL:0F,01,02,14\r'
+            'SL:10,01,02,14\r'
+            'SL:11,01,02,14\r'
+            'SL:12,01,02,14\r'
+            'SL:13,01,02,14\r'
+            'SL:14,01,02,14\r'
+            'SL:15,01,02,14\r'
+            'SL:16,01,02,14\r'
+            'SL:17,01,02,14\r'
+            'SL:18,01,02,14\r'
+            'SL:19,01,02,14\r'
+            'SL:1A,01,02,14\r'
+            'SL:1B,01,02,14\r'
+            'SL:1C,01,02,14\r'
+            'SL:1D,01,02,14\r'
+            'SL:1E,01,02,14\r'
+            'SL:1F,01,02,14\r'
+            'SL:20,01,02,14\r'
+            'SL:21,01,02,14\r'
+            'SL:22,01,02,14\r'
+            'SL:23,01,02,14\r'
+            'SL:24,01,02,14\r'
+            'SL:25,01,02,14\r'
+            'SL:26,01,02,14\r'
+            'SL:27,01,02,14\r'
+            'SL:28,01,02,14\r'
+            'SL:29,01,02,14\r'
+            'SL:2A,01,02,14\r'
+            'SL:2B,01,02,14\r'
+            'SL:2C,01,02,14\r'
+            'SL:2D,01,02,14\r'
+            'SL:2E,01,02,14\r'
+            'SL:2F,01,02,14\r'
+            'SL:30,01,02,14\r'
+            'SL:31,01,02,14\r'
+            'SL:32,01,02,14\r'
+            'SL:33,01,02,14\r'
+            'SL:34,01,02,14\r'
+            'SL:35,01,02,14\r'
+            'SL:36,01,02,14\r'
+            'SL:37,01,02,14\r'
+            'SL:38,01,02,14\r'
+            'SL:39,01,02,14\r'
+            'SL:3A,01,02,14\r'
+            'SL:3B,01,02,14\r'
+            'SL:3C,01,02,14\r'
+            'SL:3D,01,02,14\r'
+            'SL:3E,01,02,14\r'
+            'SL:3F,01,02,14\r'
+            'SL:40,01,02,14\r'
+            'SL:41,01,02,14\r'
+            'SL:42,01,02,14\r'
+            'SL:43,01,02,14\r'
+            'SL:44,01,02,14\r'
+            'SL:45,01,02,14\r'
+            'SL:46,01,02,14\r'
+            'SL:47,01,02,14\r'
+            'SL:48,01,02,14\r'
+            'SL:49,01,02,14\r'
+            'SL:4A,01,02,14\r'
+            'SL:4B,01,02,14\r'
+            'SL:4C,01,02,14\r'
+            'SL:4D,01,02,14\r'
+            'SL:4E,01,02,14\r'
+            'SL:4F,01,02,14\r'
+            'SL:50,01,02,14\r'
+            'SL:51,01,02,14\r'
+            'SL:52,01,02,14\r'
+            'SL:53,01,02,14\r'
+            'SL:54,01,02,14\r'
+            'SL:55,01,02,14\r'
+            'SL:56,01,02,14\r'
+            'SL:57,01,02,14\r'
+            'SL:58,01,02,14\r'
+            'SL:59,01,02,14\r'
+            'SL:5A,01,02,14\r'
+            'SL:5B,01,02,14\r'
+            'SL:5C,01,02,14\r'
+            'SL:5D,01,02,14\r'
+            'SL:5E,01,02,14\r'
+            'SL:5F,01,02,14\r'
+            'SL:60,01,02,14\r'
+            'SL:61,01,02,14\r'
+            'SL:62,01,02,14\r'
+            'SL:63,01,02,14\r'
+            'SL:64,01,02,14\r'
+            'SL:65,01,02,14\r'
+            'SL:66,01,02,14\r'
+            'SL:67,01,02,14\r'
+            )
+
     def tearDown(self):
         super().tearDown()
         if not self.startup_error:
@@ -123,17 +231,19 @@ class TestFast(MpfTestCase):
         # self._test_pwm_ssm()
 
         # test hardware scan
-        info_str = """DMD: FP-CPU-002-2 v00.88
-NET: FP-CPU-2000 v02.13
-SEG: FP-CPU-002-2 v00.10
+        info_str = (
+            'DMD: FP-CPU-002-2 v00.88\r'
+            'NET: FP-CPU-2000 v02.13\r'
+            'SEG: FP-CPU-002-2 v00.10\r'
+            '\r'
+            'I/O Boards:\r'
+            'Board 0 - Model: FP-I/O-3208 Firmware: 01.09 Switches: 32 Drivers: 8\r'
+            'Board 1 - Model: FP-I/O-0804 Firmware: 01.09 Switches: 8 Drivers: 4\r'
+            'Board 2 - Model: FP-I/O-1616 Firmware: 01.09 Switches: 16 Drivers: 16\r'
+            'Board 3 - Model: FP-I/O-1616 Firmware: 01.09 Switches: 16 Drivers: 16\r'
+            'Board 4 - Model: FP-I/O-0024 Firmware: 01.10 Switches: 24 Drivers: 8\r'
+            )
 
-I/O Boards:
-Board 0 - Model: FP-I/O-3208 Firmware: 01.09 Switches: 32 Drivers: 8
-Board 1 - Model: FP-I/O-0804 Firmware: 01.09 Switches: 8 Drivers: 4
-Board 2 - Model: FP-I/O-1616 Firmware: 01.09 Switches: 16 Drivers: 16
-Board 3 - Model: FP-I/O-1616 Firmware: 01.09 Switches: 16 Drivers: 16
-Board 4 - Model: FP-I/O-0024 Firmware: 01.10 Switches: 24 Drivers: 8
-"""
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
     def _test_coil_configure(self):
@@ -374,7 +484,7 @@ Board 4 - Model: FP-I/O-0024 Firmware: 01.10 Switches: 24 Drivers: 8
         self.assertFalse(self.switch_hit)
 
         self.machine.events.add_handler("s_test_active", self._switch_hit_cb)
-        self.machine.default_platform.serial_connections['net'].parse_raw_bytes(b"-L:07\r")
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:07\r")
         self.advance_time_and_run(1)
 
         self.assertTrue(self.switch_hit)
@@ -385,7 +495,7 @@ Board 4 - Model: FP-I/O-0024 Firmware: 01.10 Switches: 24 Drivers: 8
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test", 1)
 
-        self.machine.default_platform.serial_connections['net'].parse_raw_bytes(b"/L:07\r")
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:07\r")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test", 0)
@@ -400,13 +510,13 @@ Board 4 - Model: FP-I/O-0024 Firmware: 01.10 Switches: 24 Drivers: 8
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test_nc", 1)
 
-        self.machine.default_platform.serial_connections['net'].parse_raw_bytes(b"-L:1A\r")
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:1A\r")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test_nc", 0)
 
         self.machine.events.add_handler("s_test_nc_active", self._switch_hit_cb)
-        self.machine.default_platform.serial_connections['net'].parse_raw_bytes(b"/L:1A\r")
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:1A\r")
         self.advance_time_and_run(1)
 
         self.assertSwitchState("s_test_nc", 1)

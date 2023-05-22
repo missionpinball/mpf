@@ -75,12 +75,12 @@ class FastExpCommunicator(FastSerialCommunicator):
             self.platform.register_expansion_board(board_obj)  # registers with the platform
 
             self.set_active_board(board_address)
-            await self.send_query(f'ID:', 'ID:')
+            await self.send_and_wait(f'ID:', 'ID:')
 
             for breakout_board in board_obj.breakouts.values():
                 brk_board_address = breakout_board.address
                 self.set_active_board(brk_board_address)
-                await self.send_query(f'ID:', 'ID:')
+                await self.send_and_wait(f'ID:', 'ID:')
 
             await board_obj.reset()
 
@@ -95,7 +95,7 @@ class FastExpCommunicator(FastSerialCommunicator):
         if self.active_board != board_address:
             self.log.debug(f"Setting active EXP board to {board_address}")
             self.active_board = board_address
-            self.send_blind(f'EA:{board_address}')
+            self.send_and_forget(f'EA:{board_address}')
 
     def set_led_fade_rate(self, board_address, rate):
         if rate > 8191:
@@ -106,4 +106,4 @@ class FastExpCommunicator(FastSerialCommunicator):
             rate = 0
 
         self.platform.debug_log(f"{self} - Setting LED fade rate to {rate}ms")
-        self.send_blind(f'RF@{board_address}:{Util.int_to_hex_string(rate, True)}')
+        self.send_and_forget(f'RF@{board_address}:{Util.int_to_hex_string(rate, True)}')

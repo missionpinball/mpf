@@ -587,7 +587,13 @@ class MpfTestCase(unittest.TestCase):
 
     def _initialise_machine(self):
         init = asyncio.ensure_future(self.machine.initialise())
-        self._wait_for_start(init, 20)
+
+        if os.getenv('GITHUB_ACTIONS', 'false') == 'true':  # If we're running on github
+            timeout = 20
+        else:  # running locally
+            timeout = None  # TODO make this configurable
+        self._wait_for_start(init, timeout)
+
         self.machine.events.process_event_queue()
         self.advance_time_and_run(.001)
 
@@ -595,9 +601,8 @@ class MpfTestCase(unittest.TestCase):
         start = time.time()
         while not init.done() and not self._exception:
             self.loop.run_once()
-            if os.getenv('GITHUB_ACTIONS', 'false') == 'true':  # If we're running on github
-                if time.time() > start + timeout:
-                    raise AssertionError("Start took more than {}s".format(timeout))
+            if timeout and time.time() > start + timeout:
+                raise AssertionError("Start took more than {}s".format(timeout))
 
         # trigger exception if there was one
         init.result()

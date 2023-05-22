@@ -26,7 +26,7 @@ class FastServo(ServoPlatformInterface):
         home_us = f"{self.config['home_us']:02X}"
 
         # EM:<INDEX>,1,<MAX_TIME_MS>,<MIN>,<MAX>,<NEUTRAL><CR>
-        self.exp_connection.send_and_confirm(f"EM@{self.base_address}:{self.servo_index},1,{self.max_runtime},{min_us},{max_us},{home_us}", 'EM:P')
+        self.exp_connection.send_and_wait(f"EM@{self.base_address}:{self.servo_index},1,{self.max_runtime},{min_us},{max_us},{home_us}", 'EM:P')
 
     def go_to_position(self, position):
         """Set a servo position."""
@@ -34,7 +34,7 @@ class FastServo(ServoPlatformInterface):
             raise AssertionError("Position has to be between 0 and 1")
 
         # MP:<INDEX>,<POSITION>,<TIME_MS><CR>
-        self.exp_connection.send_blind(f'MP@{self.base_address}:{self.servo_index},{int(position * 255):02X},{self.max_runtime}')
+        self.exp_connection.send_and_forget(f'MP@{self.base_address}:{self.servo_index},{int(position * 255):02X},{self.max_runtime}')
 
     def set_speed_limit(self, speed_limit):
         """ Called during servo init """

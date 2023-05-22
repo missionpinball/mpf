@@ -263,7 +263,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         # is done which mean the DL/SL commands are processed before the init completes.
 
         if query_hw:
-            await self.serial_connections['net'].send_query('SA:', 'SA:')
+            await self.serial_connections['net'].send_and_wait('SA:', 'SA:')
 
         return self.hw_switch_data
 
@@ -320,17 +320,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         if not number:
             raise AssertionError("Driver needs a number")
-
-        # Figure out the connection type for v1 hardware: local or network (default)
-        if self.machine_type == 'nano':
-            if ('connection' in platform_settings and
-                    platform_settings['connection'].lower() == 'local'):
-                platform_settings['connection'] = 0
-            else:
-                platform_settings['connection'] = 1
-        # V2 hardware uses only local drivers
-        else:
-            platform_settings['connection'] = 0
 
         # If we have Retro driver boards, look up the driver number
         if self.is_retro:

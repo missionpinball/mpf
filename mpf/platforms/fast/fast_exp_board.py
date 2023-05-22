@@ -116,10 +116,10 @@ class FastExpansionBoard:
             self._led_task.cancel()
             self._led_task = None
 
-        self.communicator.send_blind(f'BR@{self.address}:')
+        self.communicator.send_and_forget(f'BR@{self.address}:')
 
     async def reset(self):
-        await self.communicator.send_query(f'BR@{self.address}:', 'BR:P')
+        await self.communicator.send_and_wait(f'BR@{self.address}:', 'BR:P')
 
     def _update_leds(self):
 
