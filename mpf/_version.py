@@ -26,11 +26,12 @@ __show_version__ = '5'
 '''The show format version this build of MPF uses.'''
 
 # pylint: disable-msg=invalid-name
-version = "MPF v{}".format(__version__)
+version = "Mission Pinball Framework (FAST Dev Fork) v{}".format(__version__)
 '''A friendly version string for this build of MPF.'''
+# TODO change back before mainlining
 
 # pylint: disable-msg=invalid-name
-extended_version = "MPF v{}, Config version:{}, Show version: {}, " \
+extended_version = "Mission Pinball Framework v{}, Config version:{}, Show version: {}, " \
                    "BCP version:{}".format(__version__, __config_version__,
                                            __show_version__, __bcp_version__)
 '''An extended version string that includes the MPF version, show version,

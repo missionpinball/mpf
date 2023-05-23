@@ -15,7 +15,7 @@ class FastSerialCommunicator(LogMixin):
     ignored_messages = []
 
     # __slots__ = ["aud", "dmd", "remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
-    #              "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
+    #              "messages_in_flight", "ignored_messages_in_flight", "msg_diverter", "write_task", "received_msg",
     #              "send_queue", "is_retro", "is_nano", "machine", "platform", "log", "debug", "read_task",
     #              "reader", "writer"]
 
@@ -35,13 +35,11 @@ class FastSerialCommunicator(LogMixin):
 
         self.remote_firmware = None  # TODO some connections have more than one processor, should there be a processor object?
 
-        self.send_ready = asyncio.Event()
-        self.send_ready.set()
-        self.query_done = asyncio.Event()
-        self.query_done.set()
-        self.send_queue = asyncio.PriorityQueue()
-        self.confirm_msg = None
+        self.msg_diverter = asyncio.Event()
+        # self.msg_diverter.set()
+        self.send_queue = asyncio.PriorityQueue()  # Tuples of (priority, message, callback)
         self.write_task = None
+        self.msg_diverter_callback = None
 
         self.ignore_decode_errors = True  # TODO set to False once the connection is established
         # TODO make this a config option? meh.
@@ -97,7 +95,7 @@ class FastSerialCommunicator(LogMixin):
                 break
         else:
             self.log.error("Failed to connect to any of the specified ports.")
-            raise SerialException("Could not connect to any of the specified ports.")
+            raise SerialException(f"{self} could not connect to a serial port. Is it open in CoolTerm? ;)")
 
         serial = self.writer.transport.serial
         if hasattr(serial, "set_low_latency_mode"):
@@ -136,11 +134,20 @@ class FastSerialCommunicator(LogMixin):
 
     async def init(self):
 
-        await self.send_and_wait('ID:', 'ID:')
+        await self.send_and_wait('ID:', self._process_id)
 
     def _process_xx(self, msg):
         """Process the XX response."""
         self.log.warning("Received XX response: %s", msg)  # what are we going to do here? TODO
+
+    def process_pass_message(self, msg):
+        # TODO do we want this generic one?
+        if msg == 'P':
+            self.disable_msg_diverter()
+            return True
+        else:
+            self.log.warning(f"Received unexpected pass message: {msg}")
+            return False
 
     def _process_id(self, msg):
         """Process the ID response."""
@@ -213,9 +220,24 @@ class FastSerialCommunicator(LogMixin):
             self.writer = None
 
 
-    async def send_and_wait(self, msg, response_msg=None, priority=1, timeout=1):
-        self.send_queue.put_nowait((priority, f'{msg}\r'.encode(), response_msg))
-        self.query_done.clear()
+    async def send_and_wait(self, msg, processing_cb=None, priority=1, timeout=1):
+        """Sends a message to the remote processor and waits (blocks) until a
+        response is received and fully processed.
+
+        The processing_cb needs to release the wait.
+
+        Args:
+            msg (_type_): _description_
+            processing_cb (_type_, optional): _description_. Defaults to None.
+            priority (int, optional): _description_. Defaults to 1.
+            timeout (int, optional): _description_. Defaults to 1.
+
+        Raises:
+            asyncio.TimeoutError: _description_
+        """
+
+        self.send_queue.put_nowait((priority, f'{msg}\r'.encode(), processing_cb))
+
 
         # Is this a bug? If the queue gets backed up, I think clearing it here means could miss a response?
         # TODO
@@ -233,12 +255,9 @@ class FastSerialCommunicator(LogMixin):
             timeout = None
 
         try:
-            await asyncio.wait_for(self.query_done.wait(), timeout=timeout)
+            await asyncio.wait_for(self.msg_diverter.wait(), timeout=timeout)
         except asyncio.TimeoutError:
             raise asyncio.TimeoutError(f'{self} The serial message {msg} was a query that did not finish after its timeout of {timeout}s.')
-
-    # def send_and_wait(self, msg, confirm_msg, priority=1):
-    #     self.send_queue.put_nowait((priority, f'{msg}\r'.encode(), confirm_msg))
 
     def send_and_forget(self, msg, priority=1):
         self.send_queue.put_nowait((priority, f'{msg}\r'.encode(), None))
@@ -272,7 +291,7 @@ class FastSerialCommunicator(LogMixin):
             self.dispatch_incoming_msg(msg)
 
     def dispatch_incoming_msg(self, msg):
-            """ Receives a complete messsage and decides what to do with it:
+            """ Receives a complete message and decides what to do with it:
 
             * Ignore it
             * Pass it to a message processor
@@ -283,30 +302,26 @@ class FastSerialCommunicator(LogMixin):
             if msg in self.ignored_messages:
                 return
 
-            handled = False
+            # Is there a current message processor? They get dibs
+            if self.msg_diverter_callback:
+                # Message processor should return True if additional processing is needed / it can't handle the message
+                if not self.msg_diverter_callback(msg):
+                    self.disable_msg_diverter()
+                    return
 
             # If this message header is in our list of message processors, call it
             msg_header = msg[:3]
             if msg_header in self.message_processors:
                 self.message_processors[msg_header](msg[3:])
-                handled = True
 
-            # Does this message match the start of the confirm message?
-            if self.confirm_msg and msg.startswith(self.confirm_msg):
-                self.confirm_msg = None
-                self.send_ready.set()
-                handled = True
-
-                if not self.query_done.is_set():
-                    self.query_done.set()
-
-            if not handled:
+            else:
                 self.log.warning(f"Unknown message received: {msg}")
                 # TODO: should we raise an exception here? Prob something configurable?
 
-    def query_is_done(self):
-        if not self.query_done.is_set():
-            self.query_done.set()
+    def disable_msg_diverter(self):
+        self.msg_diverter_callback = None
+        if self.msg_diverter.is_set():
+            self.msg_diverter.clear()
 
     async def _socket_reader(self):
         # Read coroutine
@@ -329,7 +344,7 @@ class FastSerialCommunicator(LogMixin):
             self.log.warning("Serial error: {}".format(e))
             return None
 
-        # we either got empty response (-> socket closed) or and error
+        # we either got empty response (-> socket closed) or an error
         if not resp:
             self.log.warning("Serial closed.")
             self.machine.stop("Serial {} closed.".format(self.config["port"]))
@@ -343,23 +358,23 @@ class FastSerialCommunicator(LogMixin):
         # Write coroutine
         while True:
             try:
-                _, msg, confirm_msg = await self.send_queue.get()
+                _, msg, processing_cb = await self.send_queue.get()
             except:
                 return  # TODO better way to catch shutting down?
 
-            await asyncio.wait_for(self.send_ready.wait(), timeout=None)  # TODO timeout? Prob no, but should do something to not block forever
+            await asyncio.wait_for(self.msg_diverter.wait(), timeout=None)  # TODO timeout? Prob no, but should do something to not block forever
 
             # try:
-            #     await asyncio.wait_for(self.send_ready.wait(), timeout=1)
+            #     await asyncio.wait_for(self.msg_diverter.wait(), timeout=1)
             # except asyncio.TimeoutError:
-            #     self.log.error("Timeout waiting for send_ready. Message was: %s", msg)
+            #     self.log.error("Timeout waiting for msg_diverter. Message was: %s", msg)
             #     # TODO Decide what to do here, prob raise a specific exception?
-            #     # self.send_ready.set()  # TODO only if we decide to continue
+            #     # self.msg_diverter.set()  # TODO only if we decide to continue
             #     raise
 
-            if confirm_msg:
-                self.confirm_msg = confirm_msg
-                self.send_ready.clear()
+            if processing_cb:
+                self.msg_diverter_callback = processing_cb
+                self.msg_diverter.clear()
 
             self.write_to_port(msg)
 

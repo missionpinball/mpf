@@ -130,14 +130,14 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def stop(self):
         """Stop platform and close connections."""
 
+        # TODO move all this into the comm classes
         if not self.unit_test:  # Only do this with real hardware TODO better way to check?
             for conn in self.serial_connections.values():
                 # clear out whatever's in the send queues
                 for _ in range(conn.send_queue.qsize()):
                     conn.send_queue.get_nowait()
                     conn.send_queue.task_done()
-                conn.query_done.set()
-                conn.send_ready.set()
+                conn.msg_diverter.set()
 
         for conn in self.serial_connections.values():
             conn.stopping()
@@ -263,7 +263,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         # is done which mean the DL/SL commands are processed before the init completes.
 
         if query_hw:
-            await self.serial_connections['net'].send_and_wait('SA:', 'SA:')
+            await self.serial_connections['net'].send_and_wait('SA:', self.serial_connections['net'].process_switch_config_msg)
 
         return self.hw_switch_data
 

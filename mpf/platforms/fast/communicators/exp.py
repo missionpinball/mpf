@@ -20,7 +20,7 @@ class FastExpCommunicator(FastSerialCommunicator):
     ignored_messages = ['XX:F']
 
     # __slots__ = ["remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
-    #              "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
+    #              "messages_in_flight", "ignored_messages_in_flight", "msg_diverter", "write_task", "received_msg",
     #              "send_queue", "is_retro", "is_nano", "machine", "platform", "log", "debug", "port", "baud",
     #              "xonxoff", "reader", "writer", "read_task", "boards", "exp_config", "exp_boards", "active_board"]
 
@@ -75,12 +75,12 @@ class FastExpCommunicator(FastSerialCommunicator):
             self.platform.register_expansion_board(board_obj)  # registers with the platform
 
             self.set_active_board(board_address)
-            await self.send_and_wait(f'ID:', 'ID:')
+            await self.send_and_wait(f'ID:', self._process_id)
 
             for breakout_board in board_obj.breakouts.values():
                 brk_board_address = breakout_board.address
                 self.set_active_board(brk_board_address)
-                await self.send_and_wait(f'ID:', 'ID:')
+                await self.send_and_wait(f'ID:', self._process_id)
 
             await board_obj.reset()
 

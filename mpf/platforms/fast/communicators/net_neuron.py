@@ -33,8 +33,8 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.message_processors['!B:'] = self._process_boot_message
         self.message_processors['\x11\x11!'] = self._process_reboot_done
         self.message_processors['NN:'] = self._process_nn
-        self.message_processors['DL:'] = self._process_dl
-        self.message_processors['SL:'] = self._process_sl
+        self.message_processors['DL:'] = self.process_driver_config_msg
+        self.message_processors['SL:'] = self.process_switch_config_msg
         self.message_processors['/L:'] = self._process_switch_open
         self.message_processors['-L:'] = self._process_switch_closed
         # TODO add 'SL:', 'DL:' etc to look for DL:F, but then what do we do with it?
@@ -44,11 +44,11 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
             self.io_loop[config['index']] = board
 
     async def init(self):
-        await self.send_and_wait('ID:', 'ID:')  # Verify we're connected to a Neuron
-        await self.send_and_wait('CH:2000,FF', 'CH:P')  # Configure hardware for Neuron with active switch reporting
+        await self.send_and_wait('ID:', self._process_id)  # Verify we're connected to a Neuron
+        await self.send_and_wait('CH:2000,FF', self.process_pass_message)  # Configure hardware for Neuron with active switch reporting
         self.send_and_forget('WD:1') # Force expire the watchdog since who knows what state the board is in?
         await self.query_io_boards()
-        await self.send_and_wait('SA:', 'SA:')  # Get initial states so switches can be created
+        await self.send_and_wait('SA:', self._process_sa)  # Get initial states so switches can be created
 
     async def soft_reset(self, **kwargs):
         """Reset the NET processor."""
@@ -89,7 +89,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
 
         current_node = 0
         while current_node < len(self.config['io_loop']):
-            await self.send_and_wait('NN:{:02X}'.format(current_node), 'NN:')
+            await self.send_and_wait('NN:{:02X}'.format(current_node), self._process_nn)
 
             # Don't move on until we get board 00 in since it can take a sec after a reset
             if not len(self.platform.io_boards):
@@ -110,7 +110,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         commands for any that are different.
 
         """
-        await self.send_and_wait('SL:L', 'SL:')
+        await self.send_and_wait('SL:L', self.process_switch_config_msg)
 
     def _process_nn(self, msg):
         firmware_ok = True
@@ -164,7 +164,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         if not firmware_ok:
             raise AssertionError("Exiting due to I/O board firmware mismatch")
 
-    def _process_sl(self, msg):
+    def process_switch_config_msg(self, msg):
 
         # TODO is this marking an SL:L query done too soon since the first SL:68 will return.
         # Do we need a proper query done lock?
@@ -203,7 +203,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
 
             switch_obj.send_config_to_switch()
 
-    def _process_dl(self, msg):
+    def process_driver_config_msg(self, msg):
         pass
 
     def _process_sa(self, msg):
