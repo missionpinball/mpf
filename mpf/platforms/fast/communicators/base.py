@@ -14,10 +14,7 @@ class FastSerialCommunicator(LogMixin):
 
     ignored_messages = []
 
-    # __slots__ = ["aud", "dmd", "remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
-    #              "messages_in_flight", "ignored_messages_in_flight", "msg_diverter", "write_task", "received_msg",
-    #              "send_queue", "is_retro", "is_nano", "machine", "platform", "log", "debug", "read_task",
-    #              "reader", "writer"]
+    # __slots__ = [] # TODO
 
     def __init__(self, platform, processor, config):
         """Initialize FastSerialCommunicator."""
@@ -36,6 +33,7 @@ class FastSerialCommunicator(LogMixin):
         self.remote_firmware = None  # TODO some connections have more than one processor, should there be a processor object?
 
         self.msg_diverter = asyncio.Event()
+        self.callback_done = asyncio.Event()
         # self.msg_diverter.set()
         self.send_queue = asyncio.PriorityQueue()  # Tuples of (priority, message, callback)
         self.write_task = None
@@ -219,7 +217,6 @@ class FastSerialCommunicator(LogMixin):
                     raise e
             self.writer = None
 
-
     async def send_and_wait(self, msg, processing_cb=None, priority=1, timeout=1):
         """Sends a message to the remote processor and waits (blocks) until a
         response is received and fully processed.
@@ -237,20 +234,8 @@ class FastSerialCommunicator(LogMixin):
         """
 
         self.send_queue.put_nowait((priority, f'{msg}\r'.encode(), processing_cb))
+        await self.msg_diverter.wait()
 
-
-        # Is this a bug? If the queue gets backed up, I think clearing it here means could miss a response?
-        # TODO
-
-        # Prob why it's timing out on unit tests
-
-        # Should we block while waiting for this message to go out?
-        # We just need a good way to wait for query messages
-
-        # The wait_for never returns if we are running in unit tests
-        # I don't know why, way over my head in the mock loop and asyncio code
-        # So this is a workaround for now, I would love if someone could figure out why?
-        # TODO
         if self.machine.unit_test:
             timeout = None
 
@@ -258,6 +243,8 @@ class FastSerialCommunicator(LogMixin):
             await asyncio.wait_for(self.msg_diverter.wait(), timeout=timeout)
         except asyncio.TimeoutError:
             raise asyncio.TimeoutError(f'{self} The serial message {msg} was a query that did not finish after its timeout of {timeout}s.')
+
+
 
     def send_and_forget(self, msg, priority=1):
         self.send_queue.put_nowait((priority, f'{msg}\r'.encode(), None))
@@ -319,9 +306,11 @@ class FastSerialCommunicator(LogMixin):
                 # TODO: should we raise an exception here? Prob something configurable?
 
     def disable_msg_diverter(self):
+        assert self.msg_diverter.is_set(), "msg_diverter should be set when disable_msg_diverter is called"
         self.msg_diverter_callback = None
-        if self.msg_diverter.is_set():
-            self.msg_diverter.clear()
+        # Set the event when the callback is done
+        self.callback_done.set()
+        self.msg_diverter.clear()
 
     async def _socket_reader(self):
         # Read coroutine
@@ -362,21 +351,21 @@ class FastSerialCommunicator(LogMixin):
             except:
                 return  # TODO better way to catch shutting down?
 
-            await asyncio.wait_for(self.msg_diverter.wait(), timeout=None)  # TODO timeout? Prob no, but should do something to not block forever
-
-            # try:
-            #     await asyncio.wait_for(self.msg_diverter.wait(), timeout=1)
-            # except asyncio.TimeoutError:
-            #     self.log.error("Timeout waiting for msg_diverter. Message was: %s", msg)
-            #     # TODO Decide what to do here, prob raise a specific exception?
-            #     # self.msg_diverter.set()  # TODO only if we decide to continue
-            #     raise
-
             if processing_cb:
                 self.msg_diverter_callback = processing_cb
                 self.msg_diverter.clear()
 
-            self.write_to_port(msg)
+                # Sends a message and waits for the callback to finish
+                self.write_to_port(msg)
+
+                # Wait for the callback to finish processing
+                await self.callback_done.wait()
+                # Reset the event for the next callback
+                self.callback_done.clear()
+
+            else:
+                # Sends a message without a callback
+                self.write_to_port(msg)
 
     def write_to_port(self, msg):
         # Sends a message as is, without encoding or adding a <CR> character
