@@ -26,9 +26,9 @@ class FastServo(ServoPlatformInterface):
         home_us = f"{self.config['home_us']:02X}"
 
         # EM:<INDEX>,1,<MAX_TIME_MS>,<MIN>,<MAX>,<NEUTRAL><CR>
-        self.exp_connection.send_and_wait(
+        self.exp_connection.send_with_confirmation(
             f"EM@{self.base_address}:{self.servo_index},1,{self.max_runtime},{min_us},{max_us},{home_us}",
-            self.exp_connection.process_pass_message)
+            'EM:P')
 
     def go_to_position(self, position):
         """Set a servo position."""

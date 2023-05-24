@@ -40,7 +40,7 @@ class FASTSwitch:
 
     def send_config_to_switch(self):
         final = f'{self.communicator.switch_cmd}:{self.number},{self.mode},{self.debounce_open},{self.debounce_close}'
-        self.communicator.send_and_wait(final, self.communicator.process_switch_config_msg)
+        self.communicator.send_with_confirmation(final, f'{self.communicator.switch_cmd}')
 
     def get_board_name(self):
         """Return the board of this switch."""

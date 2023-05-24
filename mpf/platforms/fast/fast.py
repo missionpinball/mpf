@@ -267,7 +267,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         # is done which mean the DL/SL commands are processed before the init completes.
 
         if query_hw:
-            await self.serial_connections['net'].send_and_wait('SA:', self.serial_connections['net'].process_switch_config_msg)
+            await self.serial_connections['net'].send_and_wait_async('SA:', 'SA:')
 
         return self.hw_switch_data
 

@@ -119,7 +119,7 @@ class FastExpansionBoard:
         self.communicator.send_and_forget(f'BR@{self.address}:')
 
     async def reset(self):
-        await self.communicator.send_and_wait(f'BR@{self.address}:', self.communicator.process_pass_message)
+        await self.communicator.send_and_wait_async(f'BR@{self.address}:', 'BR:P')
 
     def _update_leds(self):
 

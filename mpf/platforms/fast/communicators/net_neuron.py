@@ -1,8 +1,10 @@
+# mpf/platforms/fast/communictors/net_neuron.py
+
 import asyncio
 from packaging import version
 
 from mpf.core.utility_functions import Util
-from mpf.platforms.fast.communicators.base import FastSerialCommunicator, msg_processor
+from mpf.platforms.fast.communicators.base import FastSerialCommunicator
 from mpf.platforms.fast.fast_io_board import FastIoBoard
 
 class FastNetNeuronCommunicator(FastSerialCommunicator):
@@ -29,6 +31,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.switch_cmd = 'SL'
 
         self.message_processors['SA:'] = self._process_sa
+        self.message_processors['CH:'] = self.process_pass_message
         self.message_processors['!B:'] = self._process_boot_message
         self.message_processors['\x11\x11!'] = self._process_reboot_done
         self.message_processors['NN:'] = self._process_nn
@@ -43,11 +46,11 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
             self.io_loop[config['index']] = board
 
     async def init(self):
-        await self.send_and_wait('ID:', self._process_id)  # Verify we're connected to a Neuron
-        await self.send_and_wait('CH:2000,FF', self.process_pass_message)  # Configure hardware for Neuron with active switch reporting
+        await self.send_and_wait_async('ID:', 'ID:')  # Verify we're connected to a Neuron
+        await self.send_and_wait_async('CH:2000,FF', 'CH:')  # Configure hardware for Neuron with active switch reporting
         self.send_and_forget('WD:1') # Force expire the watchdog since who knows what state the board is in?
         await self.query_io_boards()
-        await self.send_and_wait('SA:', self._process_sa)  # Get initial states so switches can be created
+        await self.send_and_wait_async('SA:', 'SA:')  # Get initial states so switches can be created
 
     async def soft_reset(self, **kwargs):
         """Reset the NET processor."""
@@ -83,7 +86,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
     async def query_io_boards(self):
         """Query the NET processor to see if any FAST I/O boards are connected.
 
-        If so, queries the I/O boards to log them and make sure they're the  proper firmware version.
+        If so, queries the I/O boards to log them and make sure they're the proper firmware version.
         """
 
         if 'switches' not in self.machine.config and 'coils' not in self.machine.config:
@@ -92,12 +95,10 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
 
         current_node = 0
         while current_node < len(self.config['io_loop']):
-            await self.send_and_wait('NN:{:02X}'.format(current_node), self._process_nn)
+            await self.send_and_wait_async('NN:{:02X}'.format(current_node), 'NN:')
 
             # Don't move on until we get board 00 in since it can take a sec after a reset
             if current_node + 1 >= len(self.platform.io_boards):
-                continue
-            else:
                 current_node += 1
 
             # If our count is greater than the number of boards we have, we're done
@@ -110,14 +111,13 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         commands for any that are different.
 
         """
-        await self.send_and_wait('SL:L', self.process_switch_config_msg)
+        await self.send_and_wait_async('SL:L', self.switch_cmd)
 
-    @msg_processor('NN:')
-    def _process_nn(self, cmd, msg):
+    def _process_nn(self, msg):
         firmware_ok = True
 
         if msg == 'F':  # NN:F
-            return True
+            return
 
         node_id, model, fw, dr, sw, _, _, _, _, _, _ = msg.split(',')
 
@@ -128,10 +128,10 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         model = ('-').join(model.split('-')[:3])  # Remove the revision dash if it's there
 
         if not model or model == '!Node Not Found!':
-            return True
+            return
 
         if node_id in self.platform.io_boards:
-            return True
+            return
 
         name = self.io_loop[node_id]
         model_string_from_config = ('-').join(self.config['io_loop'][name]['model'].split('-')[:3]).upper()  # Fp-I/O-3208-2 -> FP-I/O-3208
@@ -164,10 +164,12 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         if not firmware_ok:
             raise AssertionError("Exiting due to I/O board firmware mismatch")
 
-        return True
+        self.no_response_waiting.set()
 
-    @msg_processor('SL:')
-    def process_switch_config_msg(self, cmd, msg):
+    def process_driver_config_msg(self, msg):
+        pass # TODO
+
+    def process_switch_config_msg(self, msg):
 
         # TODO is this marking an SL:L query done too soon since the first SL:68 will return.
         # Do we need a proper query done lock?
@@ -207,9 +209,6 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
             switch_obj.send_config_to_switch()
 
         return True
-
-    def process_driver_config_msg(self, msg):
-        pass
 
     def _process_sa(self, msg):
         hw_states = {}
@@ -259,7 +258,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         delay the WD too long.
         """
 
-        self.send_and_forget(self.watchdog_cmd, priority=0)
+        self.send_and_forget(self.watchdog_cmd)
 
     def start_tasks(self):
         """Start listening for commands and schedule watchdog."""
