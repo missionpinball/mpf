@@ -1,9 +1,8 @@
 import asyncio
 from packaging import version
-from mpf.platforms.fast import fast_defines
 
 from mpf.core.utility_functions import Util
-from mpf.platforms.fast.communicators.base import FastSerialCommunicator
+from mpf.platforms.fast.communicators.base import FastSerialCommunicator, msg_processor
 from mpf.platforms.fast.fast_io_board import FastIoBoard
 
 class FastNetNeuronCommunicator(FastSerialCommunicator):
@@ -87,22 +86,23 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         If so, queries the I/O boards to log them and make sure they're the  proper firmware version.
         """
 
+        if 'switches' not in self.machine.config and 'coils' not in self.machine.config:
+            self.log.debug("No coils or switches configured. Skipping I/O board discovery.")
+            return
+
         current_node = 0
         while current_node < len(self.config['io_loop']):
             await self.send_and_wait('NN:{:02X}'.format(current_node), self._process_nn)
 
             # Don't move on until we get board 00 in since it can take a sec after a reset
-            if not len(self.platform.io_boards):
-                if 'switches' not in self.machine.config and 'coils' not in self.machine.config:
-                    # No switches or coils, so we don't need I/O boards. This is nice when people are first getting started
-                    break
+            if current_node + 1 >= len(self.platform.io_boards):
                 continue
             else:
                 current_node += 1
 
             # If our count is greater than the number of boards we have, we're done
-            if current_node > len(self.platform.io_boards):
-                break
+            # if current_node > len(self.platform.io_boards):
+            #     break
 
     async def reset_switches(self):
         """Query the NET processsor to get a list of switches and their configurations.
@@ -112,14 +112,14 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         """
         await self.send_and_wait('SL:L', self.process_switch_config_msg)
 
-    def _process_nn(self, msg):
+    @msg_processor('NN:')
+    def _process_nn(self, cmd, msg):
         firmware_ok = True
 
         if msg == 'F':  # NN:F
-            return
+            return True
 
         node_id, model, fw, dr, sw, _, _, _, _, _, _ = msg.split(',')
-        # node_id = node_id[3:]
 
         node_id = Util.hex_string_to_int(node_id)
         dr = Util.hex_string_to_int(dr)
@@ -128,10 +128,10 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         model = ('-').join(model.split('-')[:3])  # Remove the revision dash if it's there
 
         if not model or model == '!Node Not Found!':
-            return
+            return True
 
         if node_id in self.platform.io_boards:
-            return
+            return True
 
         name = self.io_loop[node_id]
         model_string_from_config = ('-').join(self.config['io_loop'][name]['model'].split('-')[:3]).upper()  # Fp-I/O-3208-2 -> FP-I/O-3208
@@ -164,7 +164,10 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         if not firmware_ok:
             raise AssertionError("Exiting due to I/O board firmware mismatch")
 
-    def process_switch_config_msg(self, msg):
+        return True
+
+    @msg_processor('SL:')
+    def process_switch_config_msg(self, cmd, msg):
 
         # TODO is this marking an SL:L query done too soon since the first SL:68 will return.
         # Do we need a proper query done lock?
@@ -173,11 +176,11 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         # except for WD? So we need a query lock priority, haha only half joking
 
         if msg == 'P':
-            return
+            return True  # done
 
         try:
             int(msg, 16)  # received an SL:L switch count response
-            return  # don't need it
+            return True  # don't need it
         except ValueError:
             pass
 
@@ -202,6 +205,8 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
             debounce_open != switch_obj.debounce_open):
 
             switch_obj.send_config_to_switch()
+
+        return True
 
     def process_driver_config_msg(self, msg):
         pass

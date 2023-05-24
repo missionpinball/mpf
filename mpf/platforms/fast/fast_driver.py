@@ -89,13 +89,13 @@ class FASTDriver(DriverPlatformInterface):
 
         return Util.int_to_hex_string(int(control))
 
-    def reset(self):
+    async def reset(self):
         """Reset a driver."""
         self.log.debug("Resetting driver %s", self.driver_settings)
 
         cmd = f'{self.connection.driver_cmd}:{self.number},00,00,00'
 
-        self.connection.send_and_wait(cmd, self.connection.process_dl)
+        await self.connection.send_and_wait(cmd, self.connection.process_dl)
 
     def disable(self):
         """Disable (turn off) this driver."""
@@ -118,13 +118,13 @@ class FASTDriver(DriverPlatformInterface):
         self.config_state = pulse_duration, pulse_power, hold_power
         self._autofire_cleared = False
         self.log.debug("Writing hardware rule: %s", autofire_cmd)
-        self.connection.send_and_wait(autofire_cmd, self.connection.process_driver_config_msg)
+        await self.connection.send_and_wait(autofire_cmd, self.connection.process_driver_config_msg)
 
     def clear_autofire(self, config_cmd, number):
         """Clear autofire."""
         cmd = '{}{},81'.format(config_cmd, number)
         self.log.debug("Clearing hardware rule: %s", cmd)
-        self.connection.send_and_wait(cmd, self.connection.process_driver_config_msg)
+        await self.connection.send_and_wait(cmd, self.connection.process_driver_config_msg)
         self.autofire = None
         self.config_state = None
 
@@ -192,7 +192,7 @@ class FASTDriver(DriverPlatformInterface):
                 hold_ms,
                 hold_power
             )
-            self.connection.send_and_wait(cmd, self.connection.process_driver_config_msg)
+            await self.connection.send_and_wait(cmd, self.connection.process_driver_config_msg)
         else:
             # Trigger the driver directly using the existing configuration
             cmd = '{}:{},01'.format(self.connection.trigger_cmd, self.number)
@@ -211,4 +211,4 @@ class FASTDriver(DriverPlatformInterface):
             self.config_state = self.autofire[1]
 
             self.log.debug("Re-enabling auto fire mode: %s", cmd)
-            self.connection.send_and_wait(cmd, self.connection.process_driver_config_msg)  # TODO send_txt_with_ack
+            await self.connection.send_and_wait(cmd, self.connection.process_driver_config_msg)  # TODO send_txt_with_ack

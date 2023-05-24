@@ -134,10 +134,14 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if not self.unit_test:  # Only do this with real hardware TODO better way to check?
             for conn in self.serial_connections.values():
                 # clear out whatever's in the send queues
+
+                # TODO register a diverter callback which just swallows all messages
+                # Then set the diverter and clear the queue
+
                 for _ in range(conn.send_queue.qsize()):
                     conn.send_queue.get_nowait()
                     conn.send_queue.task_done()
-                conn.msg_diverter.set()
+                # conn.msg_diverter.set()
 
         for conn in self.serial_connections.values():
             conn.stopping()

@@ -1,4 +1,5 @@
 import asyncio
+import functools
 from packaging import version
 from serial import SerialException, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
 
@@ -7,6 +8,19 @@ from mpf.core.utility_functions import Util
 
 MIN_FW = version.parse('0.00') # override in subclass
 HAS_UPDATE_TASK = False
+
+
+def msg_processor(*cmds):
+    '''Decorator which will allow a message through that starts with the prefix (or list of prefixes))'''
+    def decorator(func):
+        @functools.wraps(func)
+        async def wrapper(self, msg):
+            cmd, _, rest = msg.partition(':')
+            if cmd not in cmds:
+                return False
+            return await func(self, cmd, rest)
+        return wrapper
+    return decorator
 
 class FastSerialCommunicator(LogMixin):
 
@@ -32,12 +46,16 @@ class FastSerialCommunicator(LogMixin):
 
         self.remote_firmware = None  # TODO some connections have more than one processor, should there be a processor object?
 
-        self.msg_diverter = asyncio.Event()
-        self.callback_done = asyncio.Event()
-        # self.msg_diverter.set()
+        # self.msg_diverter = asyncio.Event()
+        # self.callback_done = asyncio.Event()
         self.send_queue = asyncio.PriorityQueue()  # Tuples of (priority, message, callback)
         self.write_task = None
-        self.msg_diverter_callback = None
+        # self.msg_diverter_callback = None
+        # self.msg_diverter_set = asyncio.Event()
+
+        self.callback_queue = asyncio.Queue()  # Queue for callbacks
+        self.callback_done_future = None  # Future for callback completion
+        self.callback_stack = list()  # Stack of callbacks who want to process messages
 
         self.ignore_decode_errors = True  # TODO set to False once the connection is established
         # TODO make this a config option? meh.
@@ -134,20 +152,22 @@ class FastSerialCommunicator(LogMixin):
 
         await self.send_and_wait('ID:', self._process_id)
 
-    def _process_xx(self, msg):
+    @msg_processor('XX:')
+    def _process_xx(self, cmd, msg):
         """Process the XX response."""
-        self.log.warning("Received XX response: %s", msg)  # what are we going to do here? TODO
+        self.log.warning(f"Received XX response: {cmd}:{msg}")  # what are we going to do here? TODO
+        return True
 
-    def process_pass_message(self, msg):
-        # TODO do we want this generic one?
+    @msg_processor('CH:')
+    def process_pass_message(self, cmd, msg):
         if msg == 'P':
-            self.disable_msg_diverter()
             return True
         else:
-            self.log.warning(f"Received unexpected pass message: {msg}")
-            return False
+            self.log.warning(f"Received unexpected pass message: {cmd}:{msg}")
+            return True
 
-    def _process_id(self, msg):
+    @msg_processor('ID:')
+    def _process_id(self, cmd, msg):
         """Process the ID response."""
         self.remote_processor, self.remote_model, self.remote_firmware = msg.split()
 
@@ -156,6 +176,8 @@ class FastSerialCommunicator(LogMixin):
         if version.parse(self.remote_firmware) < MIN_FW:
             raise AssertionError(f'Firmware version mismatch. MPF requires the {self.remote_processor} processor '
                                  f'to be firmware {MIN_FW}, but yours is {self.remote_firmware}')
+
+        return True
 
     async def _read_with_timeout(self, timeout):
         try:
@@ -217,15 +239,15 @@ class FastSerialCommunicator(LogMixin):
                     raise e
             self.writer = None
 
-    async def send_and_wait(self, msg, processing_cb=None, priority=1, timeout=1):
+    async def send_and_wait(self, msg, callback, priority=1, timeout=1):
         """Sends a message to the remote processor and waits (blocks) until a
         response is received and fully processed.
 
-        The processing_cb needs to release the wait.
+        The callback needs to release the wait.
 
         Args:
             msg (_type_): _description_
-            processing_cb (_type_, optional): _description_. Defaults to None.
+            callback (_type_, optional): _description_. Defaults to None.
             priority (int, optional): _description_. Defaults to 1.
             timeout (int, optional): _description_. Defaults to 1.
 
@@ -233,18 +255,17 @@ class FastSerialCommunicator(LogMixin):
             asyncio.TimeoutError: _description_
         """
 
-        self.send_queue.put_nowait((priority, f'{msg}\r'.encode(), processing_cb))
-        await self.msg_diverter.wait()
+        self.send_queue.put_nowait((priority, f'{msg}\r'.encode(), callback))
 
-        if self.machine.unit_test:
-            timeout = None
+        if callback is not None:
+            # Create a future for callback completion
+            self.callback_stack.append(callback)
+            self.callback_done_future = self.machine.clock.loop.create_future()
 
-        try:
-            await asyncio.wait_for(self.msg_diverter.wait(), timeout=timeout)
-        except asyncio.TimeoutError:
-            raise asyncio.TimeoutError(f'{self} The serial message {msg} was a query that did not finish after its timeout of {timeout}s.')
-
-
+            try:
+                await asyncio.wait_for(self.callback_done_future, timeout=timeout)
+            except asyncio.TimeoutError:
+                raise asyncio.TimeoutError(f'{self} The serial message {msg} was a query that did not finish after its timeout of {timeout}s.')
 
     def send_and_forget(self, msg, priority=1):
         self.send_queue.put_nowait((priority, f'{msg}\r'.encode(), None))
@@ -278,39 +299,26 @@ class FastSerialCommunicator(LogMixin):
             self.dispatch_incoming_msg(msg)
 
     def dispatch_incoming_msg(self, msg):
-            """ Receives a complete message and decides what to do with it:
 
-            * Ignore it
-            * Pass it to a message processor
-            * Confirm it
+        if msg in self.ignored_messages:
+            return
 
-            """
-
-            if msg in self.ignored_messages:
+        # Try to pass the message to the most recently registered callback
+        while self.callback_stack:
+            callback = self.callback_stack[-1]
+            if callback(msg):
+                # The callback handled the message and wants to remain active
                 return
-
-            # Is there a current message processor? They get dibs
-            if self.msg_diverter_callback:
-                # Message processor should return True if additional processing is needed / it can't handle the message
-                if not self.msg_diverter_callback(msg):
-                    self.disable_msg_diverter()
-                    return
-
-            # If this message header is in our list of message processors, call it
-            msg_header = msg[:3]
-            if msg_header in self.message_processors:
-                self.message_processors[msg_header](msg[3:])
-
             else:
-                self.log.warning(f"Unknown message received: {msg}")
-                # TODO: should we raise an exception here? Prob something configurable?
+                # The callback is done, so remove it from the stack
+                self.callback_stack.pop()
 
-    def disable_msg_diverter(self):
-        assert self.msg_diverter.is_set(), "msg_diverter should be set when disable_msg_diverter is called"
-        self.msg_diverter_callback = None
-        # Set the event when the callback is done
-        self.callback_done.set()
-        self.msg_diverter.clear()
+        # If no callback handled the message, pass it to a message processor
+        msg_header = msg[:3]
+        if msg_header in self.message_processors:
+            self.message_processors[msg_header](msg[3:])
+        else:
+            self.log.warning(f"Unknown message received: {msg}")
 
     async def _socket_reader(self):
         # Read coroutine
@@ -319,6 +327,16 @@ class FastSerialCommunicator(LogMixin):
             if resp is None:
                 return
             self.parse_incoming_raw_bytes(resp)
+
+            # If there's a callback in the callback_queue, apply it to the message
+            if not self.callback_queue.empty():
+                callback = await self.callback_queue.get()
+                if callback(resp):
+                    # If the callback is done, set the result of the future
+                    self.callback_done_future.set_result(None)
+                else:
+                    # If the callback is not done, put it back into the callback_queue
+                    await self.callback_queue.put(callback)
 
     async def read(self, n=-1):
         """Read up to `n` bytes from the stream and log the result if debug is true.
@@ -347,25 +365,17 @@ class FastSerialCommunicator(LogMixin):
         # Write coroutine
         while True:
             try:
-                _, msg, processing_cb = await self.send_queue.get()
+                _, msg, callback = await self.send_queue.get()
+
+                if callback is not None:
+                    # Put the callback into the callback_queue
+                    await self.callback_queue.put(callback)
+
+                # Sends a message
+                self.write_to_port(msg)
+
             except:
                 return  # TODO better way to catch shutting down?
-
-            if processing_cb:
-                self.msg_diverter_callback = processing_cb
-                self.msg_diverter.clear()
-
-                # Sends a message and waits for the callback to finish
-                self.write_to_port(msg)
-
-                # Wait for the callback to finish processing
-                await self.callback_done.wait()
-                # Reset the event for the next callback
-                self.callback_done.clear()
-
-            else:
-                # Sends a message without a callback
-                self.write_to_port(msg)
 
     def write_to_port(self, msg):
         # Sends a message as is, without encoding or adding a <CR> character
