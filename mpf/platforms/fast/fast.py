@@ -303,7 +303,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         return Util.int_to_hex_string(board.start_driver + driver)
 
-    def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict) -> FASTDriver:
+    def configure_driver(self, config: DriverConfig, number: str, platform_config: dict) -> FASTDriver:
         """Configure a driver.
 
         Args:
@@ -314,8 +314,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         Returns: Driver object
         """
-        # dont modify the config. make a copy
-        platform_settings = deepcopy(platform_settings)
+
+        # platform_config['recycle_ms'] = 27
+        # platform_config['connection'] = 'auto'
+        # platform_config['hold_pwm_patter'] = None
 
         if not self.serial_connections['net']:
             raise AssertionError('A request was made to configure a FAST '
@@ -339,7 +341,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         else:
             raise AssertionError("Invalid machine type: {self.machine_type}")
 
-        return FASTDriver(config, self, number, platform_settings)
+        driver = self.serial_connections['net'].drivers[int(number, 16)]
+        driver.set_initial_config(config, platform_config)
+
+        return driver
 
     async def configure_servo(self, number: str, config: dict) -> FastServo:
         """Configure a servo.
@@ -453,7 +458,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                         "to be not a valid switch number for the FAST platform.", 8)
 
         switch = self.serial_connections['net'].switches[int(number, 16)]
-        switch.update_config(config, platform_config)
+        switch.set_initial_config(config, platform_config)
 
         return switch
 

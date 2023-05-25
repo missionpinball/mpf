@@ -317,6 +317,11 @@ class Util:
         return return_int
 
     @staticmethod
+    def float_to_hex(f: float) -> str:
+        """Convert a float from 0.0-1.0 to a 2-char hex byte (in string form)."""
+        return hex(int(f * 255))[2:].zfill(2).upper()
+
+    @staticmethod
     def event_config_to_dict(config) -> dict:
         """Convert event config to a dict."""
         return_dict = dict()

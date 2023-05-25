@@ -2,8 +2,18 @@
 import logging
 
 from mpf.core.utility_functions import Util
+from dataclasses import dataclass
+
 
 MYPY = False
+
+@dataclass
+class FastSwitchConfig:
+    number: str          # '00'-'68'
+    mode: str            # '00'-'02'
+    debounce_close: str  # '00'-'FF'
+    debounce_open: str   # '00'-'FF'
+
 
 
 class FASTSwitch:
@@ -22,12 +32,16 @@ class FASTSwitch:
         self.debounce = None
         self.platform = None
         self.active = False
+        self.hw_config_good = False
 
         self.mode = 0
         self.debounce_open = 0
         self.debounce_close = 0
 
-    def update_config(self, config, platform_settings):
+        self.hw_switch_config = FastSwitchConfig(number=Util.int_to_hex_string(hw_number),
+                                                 mode='00', debounce_close='00', debounce_open='00')
+
+    def set_initial_config(self, config, platform_settings):
         """Update config."""
         # TODO add validation
 
@@ -39,8 +53,8 @@ class FASTSwitch:
             self.mode = 1
 
     def send_config_to_switch(self):
-        final = f'{self.communicator.switch_cmd}:{self.number},{self.mode},{self.debounce_open},{self.debounce_close}'
-        self.communicator.send_with_confirmation(final, f'{self.communicator.switch_cmd}')
+        msg = f'{self.communicator.switch_cmd}:{self.number},{self.mode},{self.debounce_open},{self.debounce_close}'
+        self.communicator.send_with_confirmation(msg, f'{self.communicator.switch_cmd}')
 
     def get_board_name(self):
         """Return the board of this switch."""

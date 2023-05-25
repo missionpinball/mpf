@@ -1,5 +1,6 @@
 from mpf.platforms.fast.fast_defines import VALID_IO_BOARDS
 from mpf.platforms.fast.fast_switch import FASTSwitch
+from mpf.platforms.fast.fast_driver import FASTDriver
 
 """FAST I/O Board."""
 
@@ -50,4 +51,7 @@ class FastIoBoard:
                 FASTSwitch(self.communicator, self.net_version, hw_number))
 
     def create_drivers(self):
-        pass
+        for i in range(self.driver_count):
+            hw_number = self.start_driver + i
+            self.communicator.drivers.append(
+                FASTDriver(self.communicator, self.net_version, hw_number))

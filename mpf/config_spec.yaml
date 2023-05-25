@@ -701,9 +701,10 @@ fast_switches:
     debounce_open: single|str|None
     debounce_close: single|str|None
 fast_coils:
-    connection: single|enum(network,local,auto)|auto
     recycle_ms: single|ms|None
     hold_pwm_patter: single|str|None
+    pwm2_ms: single|ms|None
+    pwm2_power: single|int|None
 fast_servos:
     max_us: single|int|2000
     min_us: single|int|1000

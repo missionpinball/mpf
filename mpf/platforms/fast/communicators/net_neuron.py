@@ -6,6 +6,9 @@ from packaging import version
 from mpf.core.utility_functions import Util
 from mpf.platforms.fast.communicators.base import FastSerialCommunicator
 from mpf.platforms.fast.fast_io_board import FastIoBoard
+from mpf.exceptions.config_file_error import ConfigFileError
+from mpf.platforms.fast.fast_driver import FastDriverConfig
+
 
 class FastNetNeuronCommunicator(FastSerialCommunicator):
 
@@ -57,7 +60,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         del kwargs
 
         await self.reset_switches()
-        # await self.reset_drivers() TODO
+        await self.reset_drivers()
 
     async def clear_board_serial_buffer(self):
         """Clear out the serial buffer."""
@@ -111,7 +114,19 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         commands for any that are different.
 
         """
-        await self.send_and_wait_async('SL:L', self.switch_cmd)
+        # await self.send_and_wait_async('SL:L', self.switch_cmd)
+
+        for switch in self.switches:
+            await self.send_and_wait_async(f'SL:{switch.hw_switch_config.number}', self.switch_cmd)
+
+    async def reset_drivers(self):
+        """Query the NET processsor to get a list of drivers and their configurations.
+        Compare that to how they should be configured, and send new configuration
+        commands for any that are different.
+
+        """
+        for driver in self.drivers:
+            await self.send_and_wait_async(f'DL:{driver.hw_driver_config.number}', self.driver_cmd)
 
     def _process_nn(self, msg):
         firmware_ok = True
@@ -167,22 +182,39 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.no_response_waiting.set()
 
     def process_driver_config_msg(self, msg):
-        pass # TODO
+        if msg == 'P':
+            return
+
+        try:
+            int(msg, 16)  # received an DL:L switch count response
+            return
+        except ValueError:
+            pass
+
+        # From here down we're processing driver config data, 9 fields, one byte each
+        # <driver_id>,<trigger>,<switch_id>,<mode>,<param_1>,<param_2>,<param_3>,<param_4>,<param_5>
+        # https://fastpinball.com/fast-serial-protocol/net/dl/
+
+        current_hw_driver_config = FastDriverConfig(*msg.split(','))
+
+        try:
+            driver_obj = self.drivers[int(current_hw_driver_config.number, 16)]
+        except IndexError:
+            return  # we always get data for 48 drivers, no worries if we don't have that many
+
+        if driver_obj.hw_driver_config != current_hw_driver_config:
+            driver_obj.send_config_to_driver()
+        else:
+            driver_obj.hw_config_good = True
 
     def process_switch_config_msg(self, msg):
 
-        # TODO is this marking an SL:L query done too soon since the first SL:68 will return.
-        # Do we need a proper query done lock?
-        # easy, set the lock when the query message actually goes out,
-        # the callback clears the lock. While the lock is set, no other messages are processed
-        # except for WD? So we need a query lock priority, haha only half joking
-
         if msg == 'P':
-            return True  # done
+            return
 
         try:
             int(msg, 16)  # received an SL:L switch count response
-            return True  # don't need it
+            return
         except ValueError:
             pass
 
@@ -208,7 +240,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
 
             switch_obj.send_config_to_switch()
 
-        return True
+        switch_obj.hw_state_good = True
 
     def _process_sa(self, msg):
         hw_states = {}
@@ -251,20 +283,15 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
                                                              platform=self.platform)
 
     def _update_watchdog(self):
-        """Send Watchdog command.
-
-        The watchdog command is put in the send queue with priority 0, while all other commands use priority 1.
-        This means the watchdog will always go out next to ensure a queue full of commands wanting confirmation won't
-        delay the WD too long.
-        """
+        """Send Watchdog command."""
 
         self.send_and_forget(self.watchdog_cmd)
 
     def start_tasks(self):
         """Start listening for commands and schedule watchdog."""
         self._update_watchdog()
-        self._watchdog_task = self.machine.clock.schedule_interval(self._update_watchdog,
-                                                                   self.config['watchdog'] / 2000)
+        # self._watchdog_task = self.machine.clock.schedule_interval(self._update_watchdog,
+        #                                                            self.config['watchdog'] / 2000)
 
     def stopping(self):
         if self._watchdog_task:

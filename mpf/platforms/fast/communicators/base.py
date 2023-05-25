@@ -42,9 +42,7 @@ class FastSerialCommunicator(LogMixin):
         self.no_response_waiting = asyncio.Event()
         self.no_response_waiting.set()  # Initially, we're not waiting for any response
 
-        self.ignore_decode_errors = True  # TODO set to False once the connection is established
-        # TODO make this a config option? meh.
-        # TODO this is not implemented yet
+        self.ignore_decode_errors = True
 
         self.message_processors = {'XX:': self._process_xx,
                                    'ID:': self._process_id}
@@ -165,7 +163,6 @@ class FastSerialCommunicator(LogMixin):
             min_chars: Minimum message length before separator
         """
         assert self.reader is not None
-        # asyncio StreamReader only supports this from python 3.5.2 on
         buffer = b''
         while True:
             char = await self.reader.readexactly(1)
