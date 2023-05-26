@@ -675,7 +675,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             driver.get_pwm_for_cmd(coil.pulse_settings.power),
             driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
-        enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
+        enable_switch.hw_switch.calculate_debounce(enable_switch.debounce)
         driver.set_autofire(cmd, coil.pulse_settings.duration, coil.pulse_settings.power, 0)
 
     def set_pulse_on_hit_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
@@ -710,8 +710,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             driver.get_pwm_for_cmd(coil.pulse_settings.power),
             driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
-        enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
-        eos_switch.hw_switch.configure_debounce(eos_switch.debounce)
+        enable_switch.hw_switch.calculate_debounce(enable_switch.debounce)
+        eos_switch.hw_switch.calculate_debounce(eos_switch.debounce)
         driver.set_autofire(cmd, coil.pulse_settings.duration, coil.pulse_settings.power, 0)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
@@ -741,7 +741,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             driver.get_pwm_for_cmd(coil.pulse_settings.power),
             driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
-        enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
+        enable_switch.hw_switch.calculate_debounce(enable_switch.debounce)
         driver.set_autofire(cmd, coil.pulse_settings.duration, coil.pulse_settings.power, 0)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
@@ -764,7 +764,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             driver.get_hold_pwm_for_cmd(coil.hold_settings.power),
             driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
-        enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
+        enable_switch.hw_switch.calculate_debounce(enable_switch.debounce)
         driver.set_autofire(cmd, coil.pulse_settings.duration, coil.pulse_settings.power, coil.hold_settings.power)
 
     def clear_hw_rule(self, switch, coil):

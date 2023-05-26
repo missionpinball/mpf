@@ -25,7 +25,7 @@ class FastDriverConfig:
     param4: str
     param5: str
 
-class FASTDriver(DriverPlatformInterface):
+class FASTDriver:
 
     """Base class for drivers connected to a FAST Controller."""
 
@@ -35,18 +35,21 @@ class FASTDriver(DriverPlatformInterface):
     def __init__(self, communicator: FastSerialCommunicator, net_version: int, hw_number: int) -> None:
         """Initialise driver."""
         self.log = logging.getLogger('FASTDriver')
-        self.autofire = None
+
         self.communicator = communicator
         self.net_version = net_version
         self.number = hw_number
-        self.hw_driver_config = FastDriverConfig(number=Util.int_to_hex_string(hw_number), trigger='00', switch_id='00', mode='00',
-                                                 param1='00', param2='00', param3='00', param4='00', param5='00')
+
+        self.baseline_mpf_config = None
+        self.platform_settings = None
 
         self.hw_config_good = False
         self.platform_settings = None
+        self.autofire = None
         self.config_state = None # Tuple (pulse_ms, pulse_power, hold_power) in MPF scale
 
-        # TODO redo all the commands below to match these new params
+        self.hw_driver_config = FastDriverConfig(number=Util.int_to_hex_string(hw_number), trigger='00', switch_id='00', mode='00',
+                                                 param1='00', param2='00', param3='00', param4='00', param5='00')
 
     def set_initial_config(self, mpf_config: DriverConfig, platform_settings):
         """Sets the initial config for this driver by merging the machine-wide config,
@@ -112,6 +115,7 @@ class FASTDriver(DriverPlatformInterface):
         return fast_config
 
     def send_config_to_driver(self):
+        # TODO this sends hw_driver_config, switch version sends MPF config
         msg = (f'{self.communicator.driver_cmd}:{self.number},{self.hw_driver_config.trigger},'
                f'{self.hw_driver_config.switch_id},{self.hw_driver_config.mode},{self.hw_driver_config.param1},'
                f'{self.hw_driver_config.param2},{self.hw_driver_config.param3},{self.hw_driver_config.param4},'

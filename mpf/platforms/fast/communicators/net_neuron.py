@@ -109,24 +109,27 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
             #     break
 
     async def reset_switches(self):
-        """Query the NET processsor to get a list of switches and their configurations.
+        """Query the NET processor to get a list of switches and their configurations.
         Compare that to how they should be configured, and send new configuration
         commands for any that are different.
-
         """
-        # await self.send_and_wait_async('SL:L', self.switch_cmd)
+
+        # self.switches contains a list of all switches
 
         for switch in self.switches:
-            await self.send_and_wait_async(f'SL:{switch.hw_switch_config.number}', self.switch_cmd)
+            await self.send_and_wait_async(f'SL:{Util.int_to_hex_string(switch.number)}',
+                                           self.switch_cmd)
+
+
 
     async def reset_drivers(self):
-        """Query the NET processsor to get a list of drivers and their configurations.
+        """Query the NET processor to get a list of drivers and their configurations.
         Compare that to how they should be configured, and send new configuration
         commands for any that are different.
 
         """
         for driver in self.drivers:
-            await self.send_and_wait_async(f'DL:{driver.hw_driver_config.number}', self.driver_cmd)
+            await self.send_and_wait_async(f'DL:{Util.int_to_hex_string(driver.number)}', self.driver_cmd)
 
     def _process_nn(self, msg):
         firmware_ok = True
@@ -223,20 +226,19 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         # https://fastpinball.com/fast-serial-protocol/net/sl/
 
         switch, mode, debounce_close, debounce_open = msg.split(',')
-        switch = int(switch, 16)
 
         try:
-            switch_obj = self.switches[switch]
-        except IndexError:  # we always get data for 104 switches, if we don't have that many, we'll have extras
+            switch_obj = self.switches[int(switch, 16)]
+        except IndexError:  # Neuron tracks 104 switches regardless of how many are connected
             return
 
-        mode = int(mode, 16)
-        debounce_close = int(debounce_close, 16)
-        debounce_open = int(debounce_open, 16)
+        if not switch_obj.current_hw_config:
+            switch_obj.send_config_to_switch()
 
-        if (mode != switch_obj.mode or
-            debounce_close != switch_obj.debounce_close or
-            debounce_open != switch_obj.debounce_open):
+        elif not (switch == switch_obj.current_hw_config.number and
+            mode == switch_obj.current_hw_config.mode and
+            debounce_close == switch_obj.current_hw_config.debounce_close and
+            debounce_open == switch_obj.current_hw_config.debounce_open):
 
             switch_obj.send_config_to_switch()
 
