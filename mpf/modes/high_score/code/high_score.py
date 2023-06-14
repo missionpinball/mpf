@@ -142,14 +142,9 @@ class HighScore(AsyncMode):
 
                     if len(hs_vars) > 0:
                         for k, v in hs_vars[0].items():
-                            if 'player' in k:
-                                self.machine.variables.set_machine_var(
-                                    name=category + str(position + 1) + '_' + str(k),
-                                    value=v)
-                            else:
-                                self.machine.variables.set_machine_var(
-                                    name=category + str(position + 1) + '_' + str(k),
-                                    value=v)
+                            self.machine.variables.set_machine_var(
+                                name=category + str(position + 1) + '_' + str(k),
+                                value=v)
 
                     '''machine_var: (high_score_category)(position)_(variable)
 
@@ -205,21 +200,10 @@ class HighScore(AsyncMode):
                             del new_list[i]
                             # no entry when the player missed the timeout
                             continue
-                    player_num_index = player.number - 1
                     # get vars from config
                     self._load_vars()
-                    # create dictionary of the variable name and its value, then load it for the category
-                    var_dict = dict()
                     if category_name in self.vars:
-                        j = 0
-                        while j < len(self.vars[category_name]) and bool(self.vars[category_name]):
-                            if 'player' in self.vars[category_name][j][0]:
-                                var_dict[self.vars[category_name][j][0] + '.' + self.vars[category_name][j][1]] \
-                                      = self.machine.game.player_list[player_num_index][self.vars[category_name][j][1]]
-                            else:
-                                var_dict[self.vars[category_name][j][0] + '.' + self.vars[category_name][j][1]] \
-                                   = self.machine.variables.get_machine_var(self.vars[category_name][j][1])
-                            j += 1
+                        var_dict = self._assign_vars(category_name, player)
                         # add high score with variables
                         new_list[i] = (player.initials, value, var_dict)
                     else:
@@ -238,6 +222,23 @@ class HighScore(AsyncMode):
         self.high_scores = new_high_score_list
         self._write_scores_to_disk()
         self._create_machine_vars()
+
+    def _assign_vars(self, category_name, player):
+        """Define all vars that are for the given category, and assign their values."""
+        # create dictionary of the variable name and its value, then load it for the category
+        player_num_index = player.number - 1
+        var_dict = dict()
+        j = 0
+        while j < len(self.vars[category_name]) and bool(self.vars[category_name]):
+            if 'player' in self.vars[category_name][j][0]:
+                var_dict[self.vars[category_name][j][0] + '.' + self.vars[category_name][j][1]] \
+                    = self.machine.game.player_list[player_num_index][self.vars[category_name][j][1]]
+            else:
+                var_dict[self.vars[category_name][j][0] + '.' + self.vars[category_name][j][1]] \
+                    = self.machine.variables.get_machine_var(self.vars[category_name][j][1])
+            j += 1
+        # return the dictionary of items for this specific player and category entry
+        return var_dict
 
     # pylint: disable-msg=too-many-arguments
     async def _ask_player_for_initials(self, player: Player, award_label: str, value: int) -> str:
