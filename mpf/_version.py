@@ -38,10 +38,10 @@ and BCP versions used in this build of MPF.'''
 
 if "dev" in __version__:
     # pylint: disable-msg=invalid-name
-    log_url = "https://docs.missionpinball.org/en/dev/logs/{}.html"
+    log_url = "https://missionpinball.org/logs/{}"
 else:
     # pylint: disable-msg=invalid-name
-    log_url = "https://docs.missionpinball.org/en/{}/logs/{{}}.html".format(__short_version__)
+    log_url = "https://missionpinball.org/{}/logs/{{}}".format(__short_version__)
 
 __api__ = ['version',
            '__short_version__',

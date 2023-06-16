@@ -51,8 +51,7 @@ all = [  # currently no way to just use the names from above afaik?
 
 [project.urls]
 homepage = "https://missionpinball.org"
-docs = "https://docs.missionpinball.org"
-support-forum = "https://groups.google.com/g/mpf-users"
+support-forum = "https://missionpinball.org/community/"
 
 [project.scripts]
 mpf = "mpf.commands:run_from_command_line"
