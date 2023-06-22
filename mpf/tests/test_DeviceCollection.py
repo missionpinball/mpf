@@ -38,3 +38,8 @@ class TestDeviceCollection(MpfTestCase):
         self.assertIn(led2, self.machine.lights.items_tagged('tag1'))
         self.assertNotIn(led3, self.machine.lights.items_tagged('tag1'))
         self.assertNotIn(led4, self.machine.lights.items_tagged('tag1'))
+
+        self.assertIn(led1, self.machine.lights.items_tagged('*'))
+        self.assertIn(led2, self.machine.lights.items_tagged('*'))
+        self.assertIn(led3, self.machine.lights.items_tagged('*'))
+        self.assertIn(led4, self.machine.lights.items_tagged('*'))
