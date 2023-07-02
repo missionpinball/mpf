@@ -2192,8 +2192,8 @@ widgets:
         rotation: single|int_or_token|0
         scale: single|float_or_token|1.0
         casing: single|str|None
-        # outline_color: single|kivycolor|ffffffff
-        # outline_width: single|int_or_token|0
+        outline_color: single|kivycolor|ffffffff
+        outline_width: single|int_or_token|0
         # text_size: single|int_or_token|None  # sets width of bounding box, not font
         # shorten: single|bool_or_token|None
         # mipmap: single|bool_or_token|None
