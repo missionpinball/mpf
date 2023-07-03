@@ -56,6 +56,7 @@ class ConfigValidator:
             "lstr": self._validate_type_lstr,
             "float": self._validate_type_float,
             "float_or_token": self._validate_type_or_token(self._validate_type_float),
+            "template_float_or_token": self._validate_type_or_token(self._validate_type_template_float),
             "int": self._validate_type_int,
             "int_or_token": self._validate_type_or_token(self._validate_type_int),
             "num": self._validate_type_num,
@@ -454,7 +455,7 @@ class ConfigValidator:
 
         return self.machine.placeholder_manager.build_quoted_string_template(item)
 
-    def _validate_type_template_float(self, item, validation_failure_info):
+    def _validate_type_template_float(self, item, validation_failure_info, param=None):
         if item is None:
             return None
         if not isinstance(item, (str, float, int)):
