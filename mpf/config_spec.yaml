@@ -725,6 +725,7 @@ high_score:
     enter_initials_timeout: single|secs|20s
     reverse_sort: list|str|None
     reset_high_scores_events: list|event_handler|high_scores_reset,factory_reset
+    vars: dict|str:list|None
 info_lights:
     __valid_in__: machine                            # todo add to validator
     __type__: config
