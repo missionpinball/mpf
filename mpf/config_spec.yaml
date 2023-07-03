@@ -1761,6 +1761,11 @@ sound_ducking:
 sound_marker:
     time: single|secs|
     events: list|event_posted|
+speedometers:
+    __valid_in__: machine, mode
+    __type__: device
+    start_switch: single|machine(switches)|None
+    stop_switch: single|machine(switches)|None
 spi_bit_bang:
     __valid_in__: machine
     __type__: config
