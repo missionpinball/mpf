@@ -174,7 +174,10 @@ class SequenceShot(SystemWideDevice, ModeDevice):
 
     def _completed(self):
         #measure the elapsed time between start and completion of the sequence
-        elapsed = self.machine.clock.get_time() - self._start_time
+        if self._start_time is not None:
+            elapsed = self.machine.clock.get_time() - self._start_time
+        else:
+            elapsed = 0
 
         """Post sequence complete event including its elapsed time to complete."""
         self.machine.events.post("{}_hit".format(self.name),elapsed=elapsed)
