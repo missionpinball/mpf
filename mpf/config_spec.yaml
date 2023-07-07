@@ -1543,7 +1543,7 @@ show_player:
     action: single|enum(play,stop,pause,resume,advance,step_back,update,queue)|play
     show: single|str|None
     priority: single|int_or_token|0
-    speed: single|float_or_token|1
+    speed: single|template_float_or_token|1
     block_queue: single|bool|false
     start_step: single|template_int|1
     start_running: single|template_bool|True
