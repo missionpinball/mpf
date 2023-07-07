@@ -306,11 +306,14 @@ class DeviceCollection(dict):
         Args:
         ----
             tag: A string of the tag name which specifies what devices are
-                returned.
+                returned.  A value of "*" returns all devices.
 
         Returns a list of device objects. If no devices are found with that tag, it
         will return an empty list.
         """
+        if tag == "*":
+            return self.values()
+
         items_in_tag_cache = self._tag_cache.get(tag, None)
         if items_in_tag_cache is not None:
             return items_in_tag_cache
