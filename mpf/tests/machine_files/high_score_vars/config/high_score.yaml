@@ -1,0 +1,10 @@
+#config_version=5
+
+modes:
+  - high_score
+  - tilt
+
+switches:
+  s_tilt:
+    tags: tilt_warning
+    number:

@@ -801,6 +801,7 @@ high_score:
     enter_initials_timeout: single|secs|20s
     reverse_sort: list|str|None
     reset_high_scores_events: list|event_handler|high_scores_reset,factory_reset
+    vars: dict|str:list|None
 info_lights:
     __valid_in__: machine                            # todo add to validator
     __type__: config
@@ -1613,7 +1614,7 @@ show_player:
     action: single|enum(play,stop,pause,resume,advance,step_back,update,queue)|play
     show: single|str|None
     priority: single|int_or_token|0
-    speed: single|float_or_token|1
+    speed: single|template_float_or_token|1
     block_queue: single|bool|false
     start_step: single|template_int|1
     start_running: single|template_bool|True
@@ -1831,6 +1832,11 @@ sound_ducking:
 sound_marker:
     time: single|secs|
     events: list|event_posted|
+speedometers:
+    __valid_in__: machine, mode
+    __type__: device
+    start_switch: single|machine(switches)|None
+    stop_switch: single|machine(switches)|None
 spi_bit_bang:
     __valid_in__: machine
     __type__: config
@@ -2259,8 +2265,8 @@ widgets:
         rotation: single|int_or_token|0
         scale: single|float_or_token|1.0
         casing: single|str|None
-        # outline_color: single|kivycolor|ffffffff
-        # outline_width: single|int_or_token|0
+        outline_color: single|kivycolor|ffffffff
+        outline_width: single|int_or_token|0
         # text_size: single|int_or_token|None  # sets width of bounding box, not font
         # shorten: single|bool_or_token|None
         # mipmap: single|bool_or_token|None
