@@ -44,7 +44,7 @@ class BallDeviceStateHandler:
 
     async def initialise(self):
         """Initialise handler."""
-        self._task = self.machine.clock.loop.create_task(self._run())
+        self._task = asyncio.create_task(self._run())
         self._task.add_done_callback(Util.raise_exceptions)
 
     async def _run(self):

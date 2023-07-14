@@ -64,7 +64,7 @@ class SpiBitBangPlatform(SwitchPlatform):
         self.config = self.machine.config_validator.validate_config("spi_bit_bang",
                                                                     self.machine.config.get('spi_bit_bang', {}))
 
-        self._read_task = self.machine.clock.loop.create_task(self._run())
+        self._read_task = asyncio.create_task(self._run())
         self._read_task.add_done_callback(Util.raise_exceptions)
 
     def stop(self):

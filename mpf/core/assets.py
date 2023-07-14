@@ -1,5 +1,6 @@
 # pylint: disable-msg=too-many-lines
 """Contains AssetManager, AssetLoader, and Asset base classes."""
+import asyncio
 import copy
 import os
 import random
@@ -629,7 +630,7 @@ class AsyncioSyncAssetManager(BaseAssetManager):
     def load_asset(self, asset):
         """Load an asset."""
         self.num_assets_to_load += 1
-        task = self.machine.clock.loop.create_task(self.wait_for_asset_load(asset))
+        task = asyncio.create_task(self.wait_for_asset_load(asset))
         task.add_done_callback(Util.raise_exceptions)
 
 

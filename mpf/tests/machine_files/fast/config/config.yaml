@@ -4,41 +4,57 @@ hardware:
     platform: fast
 
 fast:
-    driverboards: fast
-    ports: com3, com4, com5, com6
-    debug: true
-    firmware_updates:
-      - type: net
-        version: "2.04"
-        file: "firmware/FAST_NET_01_04_00.txt"
+    net:
+        port: com3
+        controller: neuron
+        io_loop:
+            io3208:
+                model: FP-I/O-3208
+                order: 1
+            io0804:
+                model: FP-I/O-0804
+                order: 2
+            io1616upper:
+                model: FP-I/O-1616
+                order: 3
+            io1616lower:
+                model: FP-I/O-1616
+                order: 4
+            cab:
+                model: FP-CAB-0001
+                order: 5
+    seg:
+        port: com7
+    dmd:
+        port: com8
 
 switches:
     s_test:
-        number: 7
+        number: io3208-7  # 7
         platform_settings:
             debounce_open: 26
             debounce_close: 5
     s_test_nc:
-        number: 26
+        number: io3208-26  # 1A
         type: 'NC'
     s_slingshot_test:
-        number: 22
+        number: io3208-22  # 16
     s_flipper:
-        number: 1
+        number: io3208-1  # 1
     s_flipper_eos:
-        number: 2
+        number: io3208-2  # 2
     s_autofire:
-        number: 3
+        number: io3208-3  # 3
     s_test3:
-        number: 3-1
+        number: io1616lower-1  # 39
     s_nux_up:
-        number: 0-11
+        number: io3208-11  # 0B
     s_nux_down:
-        number: 0-12
+        number: io3208-12  #
 
 digital_outputs:
   c_nux_motor:
-    number: 0-1
+    number: io3208-1  # 1
     type: driver
 
 motors:
@@ -54,47 +70,47 @@ motors:
 
 coils:
     c_test:
-        number: 4
+        number: io3208-4  # 4
         default_pulse_ms: 23
         default_recycle: True
         platform_settings:
             recycle_ms: 27
     c_test_allow_enable:
-        number: 6
+        number: io3208-6  # 6
         default_pulse_ms: 23
         max_hold_power: 1.0
     c_slingshot_test:
-        number: 7
+        number: io3208-7  # 7
     c_pulse_pwm32_mask:
-        number: 17
+        number: io1616upper-5  # 11
         default_pulse_power: 0.53
         default_hold_power: 0.40
-    c_hold_ssm:
-        number: 19
-        default_hold_power: 0.25    # approximately
-        platform_settings:
-            hold_pwm_patter: "84224244"
     c_long_pulse:
-        number: 18
+        number: io1616upper-6  # 12
         default_pulse_ms: 2000
         max_hold_power: 1.0
+    c_hold_ssm:
+        number: io1616upper-7  # 13
+        default_hold_power: 0.25
+        platform_settings:
+            hold_pwm_patter: "84224244"
     c_timed_enable:
-        number: 22
+        number: io1616upper-10  # 16
         default_pulse_ms: 20
         default_timed_enable_ms: 200
         default_hold_power: 0.25
     c_default_timed_enable:
-        number: 23
+        number: io1616upper-11  # 17
         default_pulse_ms: 20
         default_timed_enable_ms: 200
         default_hold_power: 0.25
         pulse_with_timed_enable: true
     c_flipper_main:
-        number: 32
+        number: io1616lower-4  # 20
         default_pulse_ms: 10
         default_hold_power: 0.125
     c_flipper_hold:
-        number: 3-5
+        number: io1616lower-5  # 21
         default_hold_power: 0.125
 
 autofire_coils:
@@ -121,12 +137,6 @@ autofire_coils:
     ac_board_3:
         coil: c_flipper_hold
         switch: s_test3
-
-servos:
-    servo1:
-        number: 3
-    servo20:
-        number: 3-2
 
 flippers:
     f_test_single:
@@ -157,12 +167,3 @@ lights:
   test_gi:
     number: 42
     subtype: gi
-  test_led:
-    number: 2-23
-    type: grb
-  test_led2:
-    previous: test_led
-    type: grb
-  l_o_circle:
-    number: 0-10
-    type: grb

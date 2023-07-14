@@ -190,7 +190,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
                     has_inputs = True
 
             if has_inputs:
-                self.gpio_poll_task = self.machine.clock.loop.create_task(self._poll_gpios())
+                self.gpio_poll_task = asyncio.create_task(self._poll_gpios())
                 self.gpio_poll_task.add_done_callback(Util.raise_exceptions)
 
             self.run_proc_cmd_no_wait("write_data", 0x00, 0x03, self.gpio_config)

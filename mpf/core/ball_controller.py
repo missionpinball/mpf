@@ -61,7 +61,7 @@ class BallController(MpfController):
             # there is no non-playfield device. end this.
             return
 
-        self._add_new_balls_task = self.machine.clock.loop.create_task(self._add_new_balls_to_playfield())
+        self._add_new_balls_task = asyncio.create_task(self._add_new_balls_to_playfield())
         self._add_new_balls_task.add_done_callback(Util.raise_exceptions)
 
     def _stop(self, **kwargs) -> None:

@@ -99,7 +99,13 @@ class EventManager(MpfController):
 
         priority_start = event_string.find(".")
         if priority_start > 0:
-            additional_priority = int(event_string[priority_start + 1:])
+            try:
+                additional_priority = int(event_string[priority_start + 1:])
+            except ValueError:
+                raise ValueError('Failed to parse priority in event name, '
+                                 f'please remedy "{event_string}". Does your '
+                                 'event name contain a dot?')
+
             event_string = event_string[:priority_start]
 
         return event_string, placeholder, additional_priority
@@ -112,7 +118,7 @@ class EventManager(MpfController):
 
     def _async_handler_coroutine(self, _coroutine, queue, **kwargs):
         queue.wait()
-        task = self.machine.clock.loop.create_task(_coroutine(**kwargs))
+        task = asyncio.create_task(_coroutine(**kwargs))
         task.add_done_callback(partial(self._async_handler_done, queue))
 
     @staticmethod
@@ -770,7 +776,7 @@ class EventManager(MpfController):
             # fast path if there are not handlers
             self.callback_queue.append((callback, kwargs))
         else:
-            task = self.machine.clock.loop.create_task(self._run_handlers_sequential(event, callback, kwargs))
+            task = asyncio.create_task(self._run_handlers_sequential(event, callback, kwargs))
             task.add_done_callback(self._queue_task_done)
             self._queue_tasks.append(task)
 

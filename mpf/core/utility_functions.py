@@ -1,6 +1,7 @@
 """Contains the Util class which includes many utility functions."""
-from collections import Iterable as IterableCollection
+from collections.abc import Iterable as IterableCollection
 from copy import deepcopy
+import importlib
 import re
 from fractions import Fraction
 from functools import reduce, lru_cache
@@ -316,6 +317,11 @@ class Util:
         return return_int
 
     @staticmethod
+    def float_to_hex(f: float) -> str:
+        """Convert a float from 0.0-1.0 to a 2-char hex byte (in string form)."""
+        return hex(int(f * 255))[2:].zfill(2).upper()
+
+    @staticmethod
     def event_config_to_dict(config) -> dict:
         """Convert event config to a dict."""
         return_dict = dict()
@@ -347,7 +353,7 @@ class Util:
         source_int = int(source_int)
 
         if 0 <= source_int <= 255 or allow_overflow:
-            return format(source_int, 'x').upper().zfill(2)
+            return f"{source_int:02X}"
 
         raise ValueError("invalid source int: %s" % source_int)
 
@@ -605,16 +611,12 @@ class Util:
             class_string(str): The input string
 
         Returns a reference to the python class object.
-
-        This function came from here:
-        http://stackoverflow.com/questions/452969/does-python-have-an-equivalent-to-java-class-forname
         """
-        # todo I think there's a better way to do this in Python 3
+
         parts = class_string.split('.')
         module = ".".join(parts[:-1])
-        m = __import__(module)
-        for comp in parts[1:]:
-            m = getattr(m, comp)
+        m = importlib.import_module(module)
+        m = getattr(m, parts[-1:][0])
         return m
 
     @staticmethod

@@ -92,7 +92,7 @@ class SwitchController(MpfController):
         self.log_active_switches()
 
     async def update_switches_from_hw(self):
-        """Update the states of all the switches be re-reading the states from the hardware platform.
+        """Update the states of all the switches by re-reading the states from the hardware platform.
 
         This method works silently and does not post any events if any switches
         changed state.
@@ -115,9 +115,9 @@ class SwitchController(MpfController):
                 try:
                     switch.state = switch_states[number] ^ switch.invert
                 except (IndexError, KeyError):
-                    raise AssertionError("Missing switch {} in update from HW: {} "
-                                         "State from HW: {}, switches known: {}".
-                                         format(switch, platform, switch_states, switches))
+                    raise AssertionError(f"Missing switch {switch} in update from HW: {platform} "
+                                         f"\nHW States: {switch_states}"
+                                         f"\nKnown switches: {switches}")
 
     async def verify_switches(self) -> bool:
         """Verify that switches states match the hardware.

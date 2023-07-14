@@ -61,10 +61,10 @@ shows:
     - time: 0
       lights:
         led_01: (color1)
-    - time: +1
+    - time: "+1"
       lights:
         led_02: (color2)
-    - time: +1
+    - time: "+1"
   leds_extended:
     - time: 0
       lights:
@@ -97,10 +97,10 @@ shows:
     - time: 0
       lights:
         led_01: (color1)
-    - time: +1
+    - time: "+1"
       lights:
         led_02: (color2)-f900ms
-    - time: +1
+    - time: "+1"
   manual_advance:
     - duration: -1
       lights:

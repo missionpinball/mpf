@@ -51,8 +51,9 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
         await asyncio.sleep(.01)     # needed to end sleep according to datasheet
         return i2c_device
 
-    async def configure_servo(self, number: str):
+    async def configure_servo(self, number: str, config: dict):
         """Configure servo."""
+        del config
         try:
             i2c_address, servo_number = number.rsplit("-", 1)
         except ValueError:

@@ -48,6 +48,7 @@ class ShowController(MpfController):
         del kwargs
         show_names = self.machine.mpf_config.get_shows()
         for show_name in show_names:
+            self.log.debug(f"Loading show: {show_name}")
             show_config = self.machine.mpf_config.get_show_config(show_name)
             self.machine.shows[show_name].load(show_config)
 

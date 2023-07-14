@@ -85,12 +85,12 @@ class FileManager:
             file = FileManager.locate_file(filename)
         except FileNotFoundError:
             if halt_on_error:
-                raise IOError("Could not find file {}".format(filename))
+                raise OSError("Could not find file {}".format(filename))
 
             return dict()
 
         if not file and halt_on_error:
-            raise IOError(
+            raise OSError(
                 "Could not find file '{}'. Resolved abs path to {}".format(
                     filename, os.path.abspath(filename)))
 

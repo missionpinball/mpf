@@ -417,8 +417,17 @@ class MpfTestCase(unittest.TestCase):
         """
         self.machine.log.info("Advancing time by %s", delta)
         try:
+            # Original
             self.loop.run_until_complete(asyncio.sleep(delay=delta))
+
+            # Tried this, doesn't fix the score reel test prob, so not changing it
+            # self.task = self.loop.create_task(asyncio.sleep(delay=delta))
+            # self.task.add_done_callback(Util.raise_exceptions)
+            # self.loop.run_until_complete(self.task)
+
+
             return
+
         except RuntimeError as e:
             try:
                 self.machine.stop()
@@ -578,7 +587,13 @@ class MpfTestCase(unittest.TestCase):
 
     def _initialise_machine(self):
         init = asyncio.ensure_future(self.machine.initialise())
-        self._wait_for_start(init, 20)
+
+        if os.getenv('GITHUB_ACTIONS', 'false') == 'true':  # If we're running on github
+            timeout = 20
+        else:  # running locally
+            timeout = None  # TODO make this configurable
+        self._wait_for_start(init, timeout)
+
         self.machine.events.process_event_queue()
         self.advance_time_and_run(.001)
 
@@ -586,7 +601,7 @@ class MpfTestCase(unittest.TestCase):
         start = time.time()
         while not init.done() and not self._exception:
             self.loop.run_once()
-            if time.time() > start + timeout:
+            if timeout and time.time() > start + timeout:
                 raise AssertionError("Start took more than {}s".format(timeout))
 
         # trigger exception if there was one
@@ -942,11 +957,13 @@ class MpfTestCase(unittest.TestCase):
             elif self._exception:
                 raise Exception(self._exception)
 
+        # Sometimes a test will weirdly hang on Github Actions. This will print
+        # that into their logs so we can see what's going on.
         duration = time.time() - self.test_start_time
         if duration > self.expected_duration:
-            print("Test {}.{} took {} > {}s".format(self.__class__,
-                  self._testMethodName, round(duration, 2),
-                  self.expected_duration))
+            if os.getenv('GITHUB_ACTIONS', 'false') == 'true':
+                print(f"Test {self.__class__}.{self._testMethodName} took "
+                    f"{round(duration, 2)} > {self.expected_duration}s")
 
         self.machine.log.debug("Test ended")
         if sys.exc_info != (None, None, None):

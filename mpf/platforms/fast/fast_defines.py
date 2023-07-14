@@ -1,10 +1,12 @@
 """Defines for FAST Boards."""
 
+FAST_CONFIG_VERSION = 2
+
 HARDWARE_KEY = {
-    "fast":  '2000',
-    "sys11": '1100',
-    "wpc89": '8900',
-    "wpc95": '9500'
+    "neuron":  '2000',
+    "sys11":   '1100',
+    "wpc89":   '8900',
+    "wpc95":   '9500'
 }
 
 RETRO_SWITCH_MAP = {
@@ -172,3 +174,69 @@ RETRO_GI_MAP = {
     'G01': '00', 'G02': '01', 'G03': '02', 'G04': '03',
     'G05': '04', 'G06': '05', 'G07': '06', 'G08': '07',
 }
+
+EXPANSION_BOARD_ADDRESS_MAP = {
+    ('FP-EXP-0071', '0'): 'B4',
+    ('FP-EXP-0071', '1'): 'B5',
+    ('FP-EXP-0071', '2'): 'B6',
+    ('FP-EXP-0071', '3'): 'B7',
+    ('FP-EXP-0081', '0'): '84',
+    ('FP-EXP-0081', '1'): '85',
+    ('FP-EXP-0081', '2'): '86',
+    ('FP-EXP-0081', '3'): '87',
+    ('FP-EXP-0091', '0'): '88',
+    ('FP-EXP-0091', '1'): '89',
+    ('FP-EXP-0091', '2'): '8A',
+    ('FP-EXP-0091', '3'): '8B',
+    ('FP-EXP-2000', '0'): '48',
+}
+
+EXPANSION_BOARD_BREAKOUTS = {  # Total breakouts including built-in one
+    'FP-EXP-0071': 1,
+    'FP-EXP-0081': 1,
+    'FP-EXP-0091': 3,
+    'FP-EXP-2000': 4,
+}
+
+EXP_BREAKOUT_0_IDS = {  # Names of the breakouts that are built in to each board
+    'FP-EXP-0071': 'FP-EXP-0071',
+    'FP-EXP-0081': 'FP-EXP-0081',
+    'FP-EXP-0091': 'FP-BRK-0001',
+    'FP-EXP-2000': 'FP-BRK-0001',
+}
+
+BREAKOUT_FEATURES = {
+    'FP-EXP-0071': {
+        'led_ports': 4,
+        'servo_ports': 4,
+    },
+    'FP-EXP-0081': {
+        'led_ports': 8,
+    },
+    'FP-EXP-0091': {
+        'led_ports': 4,
+    },
+    'FP-EXP-2000': {
+        'led_ports': 4,
+    },
+    'FP-BRK-0001': {
+        'led_ports': 4,
+    },
+    'FP-DRV-0800': {
+        'servo_ports': 8,
+    },
+    'FP-BRK-0116': {
+        'flasher_ports': 16,
+    },
+    'FP-PWR-0007': {
+        'device_class': 'mpf.platforms.fast.fast_exp_board',},  # TODO temp module until this code is written
+}
+
+VALID_IO_BOARDS = (
+    'FP-I/O-3208',
+    'FP-I/O-1616',
+    'FP-I/O-1604',
+    'FP-I/O-0804',
+    'FP-I/O-0024',
+    'FP-CAB-0001',  # internally the same as FP-I/O-0024
+)
