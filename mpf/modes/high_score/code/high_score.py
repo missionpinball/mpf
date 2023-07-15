@@ -231,10 +231,10 @@ class HighScore(AsyncMode):
         j = 0
         while j < len(self.vars[category_name]) and bool(self.vars[category_name]):
             if 'player' in self.vars[category_name][j][0]:
-                var_dict[self.vars[category_name][j][0] + '.' + self.vars[category_name][j][1]] \
+                var_dict[self.vars[category_name][j][0] + '_' + self.vars[category_name][j][1]] \
                     = self.machine.game.player_list[player_num_index][self.vars[category_name][j][1]]
             else:
-                var_dict[self.vars[category_name][j][0] + '.' + self.vars[category_name][j][1]] \
+                var_dict[self.vars[category_name][j][0] + '_' + self.vars[category_name][j][1]] \
                     = self.machine.variables.get_machine_var(self.vars[category_name][j][1])
             j += 1
         # return the dictionary of items for this specific player and category entry
