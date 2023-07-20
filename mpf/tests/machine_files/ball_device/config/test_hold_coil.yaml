@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 
 playfields:
     playfield:
@@ -57,4 +57,3 @@ ball_devices:
         ball_switches: s_ball4_1, s_ball4_2
         tags: trough, home
         debug: true
-

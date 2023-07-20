@@ -131,8 +131,8 @@ class MpfDocTestCaseBase(MockConfigPlayers, MpfGameTestCase):
         machine_config = configs.pop(0)
 
         # add config_version if missing
-        if fixup_config and not machine_config.startswith("#config_version=5"):
-            machine_config = "#config_version=5\n" + machine_config
+        if fixup_config and not machine_config.startswith("#config_version=6"):
+            machine_config = "#config_version=6\n" + machine_config
 
         modes = {}
         shows = {}
@@ -149,20 +149,20 @@ class MpfDocTestCaseBase(MockConfigPlayers, MpfGameTestCase):
             elif section_type.startswith("config:"):
                 # extra config file
                 _, file_name = section_type.split(": ", 2)
-                if fixup_config and not section_config.startswith("#config_version=5"):
-                    section_config = "#config_version=5\n" + section_config
+                if fixup_config and not section_config.startswith("#config_version=6"):
+                    section_config = "#config_version=6\n" + section_config
                 extra_configs[file_name] = section_config
             elif section_type.startswith("mode:"):
                 # normal mode
                 _, mode_name = section_type.split(": ", 2)
-                if fixup_config and not section_config.startswith("#config_version=5"):
-                    section_config = "#config_version=5\n" + section_config
+                if fixup_config and not section_config.startswith("#config_version=6"):
+                    section_config = "#config_version=6\n" + section_config
                 modes[mode_name] = section_config
             elif section_type.startswith("show:"):
                 # show
                 _, show_name = section_type.split(": ", 2)
-                if fixup_config and not section_config.startswith("#show_version=5"):
-                    section_config = "#show_version=5\n" + section_config
+                if fixup_config and not section_config.startswith("#show_version=6"):
+                    section_config = "#show_version=6\n" + section_config
                 shows[show_name] = section_config
             elif section_type.startswith("asset:"):
                 # asset

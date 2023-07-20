@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 lights:
     light_01:
         number: 0

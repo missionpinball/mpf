@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 
 hardware:
     platform: p_roc
@@ -69,4 +69,3 @@ lights:
 segment_displays:
   display1:
     number: 0
-

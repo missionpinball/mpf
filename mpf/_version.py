@@ -19,10 +19,10 @@ __short_version__ = '0.57'
 __bcp_version__ = '1.1'
 '''The version of BCP this build of MPF uses.'''
 
-__config_version__ = '5'
+__config_version__ = '6'
 '''The config file version this build of MPF uses.'''
 
-__show_version__ = '5'
+__show_version__ = '6'
 '''The show format version this build of MPF uses.'''
 
 # pylint: disable-msg=invalid-name
@@ -37,12 +37,8 @@ extended_version = "Mission Pinball Framework v{}, Config version:{}, Show versi
 '''An extended version string that includes the MPF version, show version,
 and BCP versions used in this build of MPF.'''
 
-if "dev" in __version__:
-    # pylint: disable-msg=invalid-name
-    log_url = "https://docs.missionpinball.org/en/dev/logs/{}.html"
-else:
-    # pylint: disable-msg=invalid-name
-    log_url = "https://docs.missionpinball.org/en/{}/logs/{{}}.html".format(__short_version__)
+log_url = "https://missionpinball.org/logs"
+
 
 __api__ = ['version',
            '__short_version__',

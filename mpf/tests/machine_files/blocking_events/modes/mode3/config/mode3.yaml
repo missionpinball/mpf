@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 
 mode:
   priority: 300
@@ -7,4 +7,3 @@ mode:
 blocking:
   event1:
     block: 1
-

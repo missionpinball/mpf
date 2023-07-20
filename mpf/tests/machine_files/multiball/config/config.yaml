@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 
 game:
     balls_per_game: 1
@@ -128,4 +128,3 @@ multiballs:
         add_a_ball_grace_period: 10s
         start_events: mb_add_a_ball_timers_start
         stop_events: mb_add_a_ball_timers_stop
-

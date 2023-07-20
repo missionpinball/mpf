@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 mode:
   code: mpf.modes.high_score.code.high_score.HighScore
   priority: 1500
