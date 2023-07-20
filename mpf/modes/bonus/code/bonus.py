@@ -159,7 +159,8 @@ class Bonus(Mode):
                        callback=self._total_bonus)
 
     def _total_bonus(self):
-        self.player.score += self.bonus_score
+        self.player.add_with_kwargs("score", self.bonus_score,
+                                    source=self.name)
         self.debug_log("Bonus Total: {}", self.bonus_score)
         self.machine.events.post('bonus_total', score=self.bonus_score)
 
