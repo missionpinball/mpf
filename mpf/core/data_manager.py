@@ -1,9 +1,11 @@
 """Contains the DataManager base class."""
 
-import asyncio
 import copy
 import os
 import errno
+import threading
+import time
+import _thread
 
 from mpf.core.file_manager import FileManager
 from mpf.core.mpf_controller import MpfController
@@ -35,7 +37,6 @@ class DataManager(MpfController):
         super().__init__(machine)
         self.name = name
         self.min_wait_secs = min_wait_secs
-        self._dirty_task = None
         config_path = self.machine.config['mpf']['paths'][name]
         if config_path is False:
             self.filename = False
@@ -48,13 +49,12 @@ class DataManager(MpfController):
             raise AssertionError("Invalid path {} for {}".format(config_path, name))
 
         self.data = dict()
-        self._dirty = False
+        self._dirty = threading.Event()
 
         if self.filename:
             self._setup_file()
 
-        file_task = self.machine.clock.loop.create_task(self._writing_thread())
-        file_task.add_done_callback(self._cleanup)
+            _thread.start_new_thread(self._writing_thread, ())
 
     def _setup_file(self):
         self._make_sure_path_exists(os.path.dirname(self.filename))
@@ -106,32 +106,29 @@ class DataManager(MpfController):
 
     def _trigger_save(self):
         """Trigger a write of this DataManager's data to the disk."""
-        self._dirty = True
+        self.debug_log("Will write %s to disk", self.name)
+        self._dirty.set()
 
     def save_all(self, data):
         """Update all data."""
         self.data = data
         self._trigger_save()
 
-    async def _writing_thread(self):  # pragma: no cover
+    def _writing_thread(self):  # pragma: no cover
         # prevent early writes at start-up
-        await asyncio.sleep(self.min_wait_secs)
-        while not self.machine.is_shutting_down:
-            if not self._dirty:
-                await asyncio.sleep(self.min_wait_secs)
+        time.sleep(self.min_wait_secs)
+        while not self.machine.thread_stopper.is_set():
+            if not self._dirty.wait(1):
                 continue
-            self._dirty = False
+            self._dirty.clear()
 
             data = copy.deepcopy(self.data)
             self.debug_log("Writing %s to: %s", self.name, self.filename)
             # save data
             FileManager.save(self.filename, data)
             # prevent too many writes
-            await asyncio.sleep(self.min_wait_secs)
+            time.sleep(self.min_wait_secs)
 
-    def _cleanup(self, future):
-        del future
         # if dirty write data one last time during shutdown
-        if self._dirty:
-            data = copy.deepcopy(self.data)
+        if self._dirty.is_set():
             FileManager.save(self.filename, data)
