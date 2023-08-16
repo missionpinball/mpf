@@ -68,6 +68,8 @@ class FastExpansionBoard:
     def verify_hardware(self, id_string, active_board):
         """Verify hardware."""
 
+        self.log.info(f'Verifying hardware for {self} with ID string {id_string}, active board {active_board}')
+
         exp_board = active_board[:2]
         brk_board = active_board[2:]
 
