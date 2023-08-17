@@ -26,7 +26,7 @@ EXPANSION_BOARD_FEATURES = {
         'default_address': 'B4'
     },
     'FP-EXP-0081': {
-        'min_fw': '0.11',
+        'min_fw': '0.12',
         'local_breakouts': ['FP-EXP-0081', 'FP-EXP-0081'],
         'breakout_ports': 0,
         'default_address': '84'
