@@ -43,7 +43,7 @@ fast:
         led_hz: 30
       aaron:
         model: FP-EXP-0091-2  # test hw revision number included
-        id: 1
+        address: 89
         breakouts:
           - port: 3
             model: FP-BRK-0001
@@ -56,7 +56,6 @@ fast:
             type: apa-102
       dave:
         model: FP-EXP-0071
-        id: 0
         led_ports:
           - port: 1
             leds: 32

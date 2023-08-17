@@ -59,7 +59,11 @@ class FastExpCommunicator(FastSerialCommunicator):
         for board_name, board_config in self.config['boards'].items():
 
             board_config['model'] = ('-').join(board_config['model'].split('-')[:3]).upper()  # FP-eXp-0071-2 -> FP-EXP-0071
-            board_address = board_config.get(board_config['address'], EXPANSION_BOARD_FEATURES[board_config['model']]['default_address'])
+
+            if board_config['address']:  # need to do it this way since valid config will have 'address' = None
+                board_address = board_config['address']
+            else:
+                board_address = EXPANSION_BOARD_FEATURES[board_config['model']]['default_address']
 
             if board_address in self.exp_boards_by_address:
             # Got an ID for a board that's already registered. This shouldn't happen?
