@@ -12,8 +12,6 @@ MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
-MIN_FW = None  # this is set in the EXP and BRK classes
-
 class FastExpCommunicator(FastSerialCommunicator):
 
     """Handles the serial communication for the FAST EXP bus."""

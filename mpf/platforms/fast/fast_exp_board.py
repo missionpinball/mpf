@@ -9,8 +9,6 @@ from mpf.platforms.fast.fast_led import FASTExpLED
 
 class FastExpansionBoard:
 
-    MIN_FW = version.parse('0.7')
-
     """A FAST Expansion board on the EXP connection."""
 
     # __slots__ = ["communicator", "log", "address", "model", "firmware_version", "platform", "breakouts"]
@@ -89,10 +87,13 @@ class FastExpansionBoard:
                 raise AssertionError(f'Invalid ID string {id_string} from {self}')
 
         assert exp_board == self.address
+        self.firmware_version = firmware_version
 
         if proc == 'EXP':
 
-            self.firmware_version = firmware_version
+            if version.parse(firmware_version) < version.parse(self.features['min_fw']):
+                self.log.error(f'Firmware on {self} is too old. Required: {self.features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
+                self.platform.machine.stop(f'Firmware on {self} is too old. Required: {self.features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
 
             if product_id != self.model:
                 raise AssertionError(f"Expected {self.model} but got {id_string} from {self}")
@@ -100,6 +101,9 @@ class FastExpansionBoard:
                 self.hw_verified = True
 
         elif proc in ('BRK', 'LED'):
+            if version.parse(firmware_version) < version.parse(self.breakouts[brk_board].features['min_fw']):
+                self.log.error(f'Firmware on breakout board {product_id} is too old. Required: {self.breakouts[brk_board].features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
+                self.platform.machine.stop(f'Firmware on breakout board {product_id} is too old. Required: {self.breakouts[brk_board].features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
 
             brk = self.breakouts[brk_board]
 
@@ -146,10 +150,7 @@ class FastExpansionBoard:
 
 class FastBreakoutBoard:
 
-    """A FAST Breakout board on the EXP connection.
-
-        Not really used yet, but will be in the future to track firmware versions on breakouts, wiring connections, etc.
-    """
+    """A FAST Breakout board on the EXP connection."""
 
     # __slots__ = ["expansion_board", "log", "index", "platform", "communicator", "address", "leds", "led_fade_rate"]
 
