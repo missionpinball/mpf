@@ -10,7 +10,7 @@ PyPI.
 
 """
 
-__version__ = '0.57.0.dev1'
+__version__ = '0.57.0.dev2'
 '''The full version of MPF.'''
 
 __short_version__ = '0.57'
@@ -37,12 +37,8 @@ extended_version = "Mission Pinball Framework v{}, Config version:{}, Show versi
 '''An extended version string that includes the MPF version, show version,
 and BCP versions used in this build of MPF.'''
 
-if "dev" in __version__:
-    # pylint: disable-msg=invalid-name
-    log_url = "https://docs.missionpinball.org/en/dev/logs/{}.html"
-else:
-    # pylint: disable-msg=invalid-name
-    log_url = "https://docs.missionpinball.org/en/{}/logs/{{}}.html".format(__short_version__)
+log_url = "https://missionpinball.org/logs"
+# TODO make dynamic "https://docs.missionpinball.org/en/dev/logs/{}.html"
 
 __api__ = ['version',
            '__short_version__',
