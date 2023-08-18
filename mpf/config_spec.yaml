@@ -649,13 +649,12 @@ fast_exp:
 fast_exp_board:
     model: single|str|  # FP-EXP-0071, etc.
     address: single|str|None  # overrides the lookup address, useful for partner-specific firmware
-    id: single|enum(0,1,2,3)|0
     breakouts: list|subconfig(fast_breakout)|None
     led_ports: list|subconfig(fast_led_port)|None
     led_fade_time: single|ms|0
     led_hz: single|int|30
 fast_breakout:
-    port: single|enum(1,2,3,4)|  # No 0 here since that's the built-in one
+    port: single|enum(1,2,3)|
     model: single|str|
     led_ports: list|subconfig(fast_led_port)|None
 fast_led_port:

@@ -1,7 +1,7 @@
 import asyncio
 from base64 import b16decode
 from serial import SerialException, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
-from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_ADDRESS_MAP
+from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_FEATURES
 from mpf.platforms.fast.fast_exp_board import FastExpansionBoard
 from mpf.platforms.fast.communicators.base import FastSerialCommunicator
 
@@ -10,8 +10,6 @@ from mpf.core.utility_functions import Util
 MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
-
-MIN_FW = None  # this is set in the EXP and BRK classes
 
 class FastExpCommunicator(FastSerialCommunicator):
 
@@ -61,10 +59,10 @@ class FastExpCommunicator(FastSerialCommunicator):
 
             board_config['model'] = ('-').join(board_config['model'].split('-')[:3]).upper()  # FP-eXp-0071-2 -> FP-EXP-0071
 
-            if not board_config['address']:  # Is there a custom address for this board? If not, look up the default
-                board_address = EXPANSION_BOARD_ADDRESS_MAP[(board_config['model'], board_config['id'])]
-            else:
+            if board_config['address']:  # need to do it this way since valid config will have 'address' = None
                 board_address = board_config['address']
+            else:
+                board_address = EXPANSION_BOARD_FEATURES[board_config['model']]['default_address']
 
             if board_address in self.exp_boards_by_address:
             # Got an ID for a board that's already registered. This shouldn't happen?

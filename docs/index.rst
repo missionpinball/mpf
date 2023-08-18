@@ -1,7 +1,7 @@
 Mission Pinball Framework |version| Developer Documentation
 ===========================================================
 
-This is the developer documentation for the `Mission Pinball Framework <http://missionpinball.org>`_ (MPF), version
+This is the developer documentation for the `Mission Pinball Framework <https://missionpinball.org>`_ (MPF), version
 |version|. Click the "Read the Docs" link in the lower left corner for other versions & downloads.
 
 This documentation is for people who want to want to add custom Python code & game logic to their machine and for
@@ -12,7 +12,7 @@ people who want to contribute to MPF itself.
    **This is DEVELOPER documentation, not general USER documentation!**
 
    This documentation is for people writing custom Python code for MPF.
-   If you're a general *user* of MPF, read the `MPF User Documentation <http://docs.missionpinball.org>`_ instead.
+   If you're a general *user* of MPF, read the `MPF User Documentation <https://missionpinball.org>`_ instead.
 
 Video about custom code in MPF:
 
@@ -100,4 +100,4 @@ Index
    :hidden:
    :caption: USER DOCUMENTATION
 
-   User Documentation <http://docs.missionpinball.org>
+   User Documentation <https://missionpinball.org>

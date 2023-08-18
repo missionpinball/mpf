@@ -490,7 +490,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
                 try:
                     name, port, led = parts
-                    breakout = '0'
+                    breakout = str((int(port) - 1) // 4)  # assume 4 LED ports per breakout, could change to a lookup
+                    port = str((int(port) - 1) % 4 + 1)  # ports are always 1-4 so figure out if the printed port on the board is 5-8
                 except ValueError:
                     name, breakout, port, led = parts
                     breakout = breakout.strip('b')
@@ -530,6 +531,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         raise AssertionError("Unknown subtype {}".format(subtype))
 
     def port_idx_to_hex(self, port, device_num, devices_per_port):
+        """Converts port number and LED index into the proper FAST hex number.
+
+        port: the LED port number printed on the board.
+        device_num: LED position in the change, First LED is 1. No zeros.
+        devices_per_port: number of LEDs per port. Typically 32.
+        """
 
         port_offset = ((int(port) - 1) * devices_per_port)
         device_num = int(device_num) - 1

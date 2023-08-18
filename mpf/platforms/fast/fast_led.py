@@ -6,7 +6,7 @@ from typing import List
 
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
-from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_ADDRESS_MAP
+from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_FEATURES
 
 class FASTDirectLED:
 

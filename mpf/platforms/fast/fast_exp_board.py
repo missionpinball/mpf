@@ -4,12 +4,10 @@ from base64 import b16decode
 from importlib import import_module
 from packaging import version
 
-from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_BREAKOUTS, BREAKOUT_FEATURES, EXP_BREAKOUT_0_IDS
+from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_FEATURES, BREAKOUT_FEATURES
 from mpf.platforms.fast.fast_led import FASTExpLED
 
 class FastExpansionBoard:
-
-    MIN_FW = version.parse('0.7')
 
     """A FAST Expansion board on the EXP connection."""
 
@@ -25,23 +23,27 @@ class FastExpansionBoard:
         self.log = communicator.log
         self.address = address
         self.model = config['model']
-        self.id = config['id']
 
         self.firmware_version = None
         self.hw_verified = False  # have we made contact with the board and verified it's the right hardware?
 
-        self.log.debug(f'Creating FAST Expansion Board "{self.name}" ({self.model} ID {self.id})')
+        self.log.debug(f'Creating FAST Expansion Board "{self.name}" ({self.model} Address: {self.address})')
 
-        self.num_breakouts = EXPANSION_BOARD_BREAKOUTS[self.model]
+        self.features = EXPANSION_BOARD_FEATURES[self.model]  # ([local model numbers,], num of remotes) tuple
         self.breakouts = dict()
         self.breakouts_with_leds = list()
         self._led_task = None  # todo move to breakout or port and/or mixin class?
 
-        self.create_breakout({'port': '0', 'model': self.model})
+        # create the local breakouts
+        for idx in range(len(self.features['local_breakouts'])):
+            self.create_breakout({'port': str(idx), 'model': self.features['local_breakouts'][idx]})
 
-        for brk in self.config['breakouts']:
-            if brk:
+        # create the remote breakouts
+        for idx, brk in enumerate(self.config['breakouts']):
+            if idx < self.features['breakout_ports']:
                 self.create_breakout(brk)
+            else:
+                self.log.warning(f'Expansion board {self} has more breakouts than the hardware supports. Skipping {brk}')
 
     def create_breakout(self, config):
         if BREAKOUT_FEATURES[config['model']].get('device_class'):
@@ -68,22 +70,30 @@ class FastExpansionBoard:
     def verify_hardware(self, id_string, active_board):
         """Verify hardware."""
 
+        self.log.info(f'Verifying hardware for {self} with ID string {id_string}, active board {active_board}')
+
         exp_board = active_board[:2]
         brk_board = active_board[2:]
 
         try:
             proc, product_id, firmware_version = id_string.split()
         except ValueError:
-            if exp_board == '84':  # Workaround for BRK 0 ID: bug in FP-EXP-0081 0.8 firmware
-                proc = 'BRK'
-                product_id = 'FP-EXP-0081'
-                firmware_version = '0.0'
+
+            if id_string == 'F':  # got an ID:F response which means this breakout is not actually there
+                self.log.error(f'Breakout {brk_board} on {self} is not responding')
+                raise AssertionError(f'Breakout {brk_board} on {self} is not responding')
+
+            else:
+                raise AssertionError(f'Invalid ID string {id_string} from {self}')
 
         assert exp_board == self.address
+        self.firmware_version = firmware_version
 
         if proc == 'EXP':
 
-            self.firmware_version = firmware_version
+            if version.parse(firmware_version) < version.parse(self.features['min_fw']):
+                self.log.error(f'Firmware on {self} is too old. Required: {self.features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
+                self.platform.machine.stop(f'Firmware on {self} is too old. Required: {self.features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
 
             if product_id != self.model:
                 raise AssertionError(f"Expected {self.model} but got {id_string} from {self}")
@@ -91,6 +101,9 @@ class FastExpansionBoard:
                 self.hw_verified = True
 
         elif proc in ('BRK', 'LED'):
+            if version.parse(firmware_version) < version.parse(self.breakouts[brk_board].features['min_fw']):
+                self.log.error(f'Firmware on breakout board {product_id} is too old. Required: {self.breakouts[brk_board].features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
+                self.platform.machine.stop(f'Firmware on breakout board {product_id} is too old. Required: {self.breakouts[brk_board].features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
 
             brk = self.breakouts[brk_board]
 
@@ -133,14 +146,11 @@ class FastExpansionBoard:
                     msg += f'{led_num[3:]}{color}'
 
                 self.communicator.set_active_board(breakout_address)  # TODO use with @ address instead
-                self.communicator.send_bytes(b16decode(msg))  # TODO I feel like upper() is a hack, look into how colors are coming through in lower
+                self.communicator.send_bytes(b16decode(msg))
 
 class FastBreakoutBoard:
 
-    """A FAST Breakout board on the EXP connection.
-
-        Not really used yet, but will be in the future to track firmware versions on breakouts, wiring connections, etc.
-    """
+    """A FAST Breakout board on the EXP connection."""
 
     # __slots__ = ["expansion_board", "log", "index", "platform", "communicator", "address", "leds", "led_fade_rate"]
 
@@ -155,16 +165,11 @@ class FastBreakoutBoard:
         self.communicator = expansion_board.communicator
         self.address = f'{self.expansion_board.address}{self.index}'  # string hex byte + nibble
         self.features = BREAKOUT_FEATURES[config['model']]
-        self.leds = list()
+        self.leds = list()  # TODO move to mixin class
         self.led_fade_rate = 0
         self.hw_verified = False
 
-        if self.index == '0':  # Built in breakout 0 boards may have different models than their parent expansion boards
-            self.model = EXP_BREAKOUT_0_IDS[self.config['model']]
-        else:
-            self.model = self.config['model']
-
-        # TODO this is temporary, change to figure out for real what's on each breakout board.
+        self.model = self.config['model']
 
         self.platform.machine.events.add_handler('init_phase_2', self._initialize)
 
