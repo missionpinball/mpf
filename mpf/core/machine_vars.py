@@ -45,7 +45,8 @@ class MachineVariables(LogMixin):
 
                 continue
 
-            self.set_machine_var(name=name, value=settings['value'])
+            # Any value that was persisted before should be persisted again
+            self.set_machine_var(name=name, value=settings['value'], persist=True)
 
         self._load_initial_machine_vars()
 
@@ -169,7 +170,7 @@ class MachineVariables(LogMixin):
             self.machine_vars[name]['expire_secs'] = expire_secs
             self.machine_vars[name]['timeout'] = timeout
 
-    def set_machine_var(self, name: str, value: Any) -> None:
+    def set_machine_var(self, name: str, value: Any, persist=False) -> None:
         """Set the value of a machine variable.
 
         Args:
@@ -178,7 +179,7 @@ class MachineVariables(LogMixin):
             value: The value you're setting. This can be any Type.
         """
         if name not in self.machine_vars:
-            self.configure_machine_var(name=name, persist=False)
+            self.configure_machine_var(name=name, persist=persist)
             prev_value = None
             change = True
         else:
