@@ -92,7 +92,6 @@ class FastExpCommunicator(FastSerialCommunicator):
     def set_active_board(self, board_address):
         """Sets the active board. Can be 2 or 3 digit hex string."""
         if self.active_board != board_address:
-            self.log.debug(f"Setting active EXP board to {board_address}")
             self.active_board = board_address
             self.send_blind(f'EA:{board_address}')
 
