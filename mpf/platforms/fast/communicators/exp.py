@@ -1,7 +1,3 @@
-import asyncio
-from base64 import b16decode
-from packaging import version
-from serial import SerialException, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
 from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_FEATURES
 from mpf.platforms.fast.fast_exp_board import FastExpansionBoard
 from mpf.platforms.fast.communicators.base import FastSerialCommunicator
@@ -51,11 +47,6 @@ class FastExpCommunicator(FastSerialCommunicator):
     async def query_exp_boards(self):
         """Query the EXP bus for connected boards."""
 
-        # if self.platform.machine_type == 'neuron' and 'neuron' not in self.config['boards']:
-
-        #     self.config['boards']['neuron'] = {'model': 'FP-EXP-2000', 'id': '0',}
-        #     self.machine.config_validator.validate_config("fast_exp_board", self.config['boards']['neuron'])
-
         for board_name, board_config in self.config['boards'].items():
 
             board_config['model'] = ('-').join(board_config['model'].split('-')[:3]).upper()  # FP-eXp-0071-2 -> FP-EXP-0071
@@ -73,13 +64,12 @@ class FastExpCommunicator(FastSerialCommunicator):
             self.exp_boards_by_address[board_address] = board_obj  # registers with this EXP communicator
             self.platform.register_expansion_board(board_obj)  # registers with the platform
 
-            self.set_active_board(board_address)
-            await self.send_query(f'ID:', 'ID:')
+            self.set_active_board(board_address, False)
+            await self.send_query(f'ID@{board_address}:', 'ID:')
 
             for breakout_board in board_obj.breakouts.values():
-                brk_board_address = breakout_board.address
-                self.set_active_board(brk_board_address)
-                await self.send_query(f'ID:', 'ID:')
+                self.set_active_board(breakout_board.address, False)
+                await self.send_query(f'ID@{breakout_board.address}:', 'ID:')
 
             await board_obj.reset()
 
@@ -89,11 +79,12 @@ class FastExpCommunicator(FastSerialCommunicator):
     def _process_br(self, msg):
         pass  # TODO
 
-    def set_active_board(self, board_address):
+    def set_active_board(self, board_address, send_ea=True):
         """Sets the active board. Can be 2 or 3 digit hex string."""
         if self.active_board != board_address:
             self.active_board = board_address
-            self.send_blind(f'EA:{board_address}')
+            if send_ea:
+                self.send_blind(f'EA:{board_address}')
 
     def set_led_fade_rate(self, board_address, rate):
         if rate > 8191:

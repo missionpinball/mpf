@@ -247,7 +247,7 @@ class FastSerialCommunicator(LogMixin):
     def send_bytes(self, msg, log_msg=None):
         self.send_queue.put_nowait((msg, None, log_msg))
 
-    def parse_raw_bytes(self, msg):
+    def parse_incoming_raw_bytes(self, msg):
         self.received_msg += msg
 
         while True:
@@ -300,7 +300,7 @@ class FastSerialCommunicator(LogMixin):
             resp = await self.read(128)
             if resp is None:
                 return
-            self.parse_raw_bytes(resp)
+            self.parse_incoming_raw_bytes(resp)
 
     async def read(self, n=-1):
         """Read up to `n` bytes from the stream and log the result if debug is true.

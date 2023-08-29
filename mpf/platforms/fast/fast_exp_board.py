@@ -1,4 +1,4 @@
-"""FAST Expansion Board."""
+"""Contains the baes classes for FAST expansion and breakout boards"""
 
 from base64 import b16decode
 from importlib import import_module
@@ -90,7 +90,6 @@ class FastExpansionBoard:
         self.firmware_version = firmware_version
 
         if proc == 'EXP':
-
             if version.parse(firmware_version) < version.parse(self.features['min_fw']):
                 self.log.error(f'Firmware on {self} is too old. Required: {self.features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
                 self.platform.machine.stop(f'Firmware on {self} is too old. Required: {self.features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
@@ -135,7 +134,7 @@ class FastExpansionBoard:
         await self.communicator.send_query(f'BR@{self.address}:', 'BR:P')
 
     def _update_leds(self):
-
+        # Called every tick to update the LEDs on this board
         for breakout_address in self.breakouts_with_leds:
             dirty_leds = {k:v.current_color for (k, v) in self.platform.fast_exp_leds.items() if (v.dirty and v.address == breakout_address)}
 
@@ -182,6 +181,8 @@ class FastBreakoutBoard:
 
     def _initialize(self, **kwargs):
         """Populate the LED objects."""
+
+        # TODO move to a mixin class based on device type
 
         found = False
         for number, led in self.platform.fast_exp_leds.items():
