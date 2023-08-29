@@ -142,11 +142,14 @@ class FastExpansionBoard:
             if dirty_leds:
                 msg = f'52443A{len(dirty_leds):02X}'  # RD: in hex 52443A
 
+
                 for led_num, color in dirty_leds.items():
                     msg += f'{led_num[3:]}{color}'
 
+                log_msg = f'RD:{msg[6:]}'
+
                 self.communicator.set_active_board(breakout_address)  # TODO use with @ address instead
-                self.communicator.send_bytes(b16decode(msg))
+                self.communicator.send_bytes(b16decode(msg), log_msg)
 
 class FastBreakoutBoard:
 

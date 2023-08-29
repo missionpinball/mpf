@@ -226,7 +226,7 @@ class FastSerialCommunicator(LogMixin):
 
     async def send_query(self, msg, response_msg=None):
 
-        self.send_queue.put_nowait((f'{msg}\r'.encode(), response_msg))
+        self.send_queue.put_nowait((f'{msg}\r'.encode(), response_msg, msg))
         self.query_done.clear()
 
         try:
@@ -239,13 +239,13 @@ class FastSerialCommunicator(LogMixin):
 
 
     def send_and_confirm(self, msg, confirm_msg):
-        self.send_queue.put_nowait((f'{msg}\r'.encode(), confirm_msg))
+        self.send_queue.put_nowait((f'{msg}\r'.encode(), confirm_msg, msg))
 
     def send_blind(self, msg):
-        self.send_queue.put_nowait((f'{msg}\r'.encode(), None))
+        self.send_queue.put_nowait((f'{msg}\r'.encode(), None, msg))
 
-    def send_bytes(self, msg):
-        self.send_queue.put_nowait((msg, None))
+    def send_bytes(self, msg, log_msg=None):
+        self.send_queue.put_nowait((msg, None, log_msg))
 
     def parse_raw_bytes(self, msg):
         self.received_msg += msg
@@ -328,7 +328,7 @@ class FastSerialCommunicator(LogMixin):
     async def _socket_writer(self):
         while True:
             try:
-                msg, confirm_msg = await self.send_queue.get()
+                msg, confirm_msg, log_msg = await self.send_queue.get()
             except:
                 return  # TODO better way to catch shutting down?
 
@@ -346,12 +346,15 @@ class FastSerialCommunicator(LogMixin):
                 self.confirm_msg = confirm_msg
                 self.send_ready.clear()
 
-            self.write_to_port(msg)
+            self.write_to_port(msg, log_msg)
 
-    def write_to_port(self, msg):
+    def write_to_port(self, msg, log_msg=None):
         # Sends a message as is, without encoding or adding a <CR> character
         if self.port_debug:
-            self.log.info(f">>>> {msg}")
+            if log_msg:
+                self.log.info(f">>>> {log_msg}")
+            else:
+                self.log.info(f">>>> {msg}")
 
         try:
             self.writer.write(msg)
