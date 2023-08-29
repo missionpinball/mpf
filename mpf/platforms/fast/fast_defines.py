@@ -1,6 +1,4 @@
-"""Defines for FAST Boards."""
-
-FAST_CONFIG_VERSION = 2
+"""Defines for FAST Pinball hardware."""
 
 HARDWARE_KEY = {
     "neuron":  '2000',
