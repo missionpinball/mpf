@@ -44,6 +44,14 @@ class FastExpCommunicator(FastSerialCommunicator):
         for board in self.exp_boards_by_address.values():
             board.stopping()
 
+    async def soft_reset(self):
+        for board in self.exp_boards_by_address.values():
+            pass
+
+            # TODO
+            # this should hit a board.soft_reset(), which should walk its breakouts and call breakout.soft_reset()
+            # brk soft reset should depend on what devices are on it, e.g. RA:00000, MH:, etc.
+
     async def query_exp_boards(self):
         """Query the EXP bus for connected boards."""
 
@@ -65,11 +73,11 @@ class FastExpCommunicator(FastSerialCommunicator):
             self.platform.register_expansion_board(board_obj)  # registers with the platform
 
             self.set_active_board(board_address, False)
-            await self.send_query(f'ID@{board_address}:', 'ID:')
+            await self.send_and_wait_async(f'ID@{board_address}:', 'ID:')
 
             for breakout_board in board_obj.breakouts.values():
                 self.set_active_board(breakout_board.address, False)
-                await self.send_query(f'ID@{breakout_board.address}:', 'ID:')
+                await self.send_and_wait_async(f'ID@{breakout_board.address}:', 'ID:')
 
             await board_obj.reset()
 

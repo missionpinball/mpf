@@ -205,23 +205,28 @@ class FastSerialCommunicator(LogMixin):
                     raise e
             self.writer = None
 
-    async def send_and_wait_async(self, msg, pause_sending_until):
+    async def send_and_wait_async(self, msg, pause_sending_until, log_msg=None):
         await self.no_response_waiting.wait()
-
         self.no_response_waiting.clear()
-        self.send_with_confirmation(msg, pause_sending_until)
+        self.send_with_confirmation(msg, pause_sending_until, log_msg)
 
-    def send_with_confirmation(self, msg, pause_sending_until):
-        self.send_queue.put_nowait((f'{msg}\r'.encode(), pause_sending_until))
+    def send_with_confirmation(self, msg, pause_sending_until, log_msg=None):
+        if log_msg:
+            self.send_queue.put_nowait((f'{msg}\r'.encode(), pause_sending_until, log_msg))
+        else:
+            self.send_queue.put_nowait((f'{msg}\r'.encode(), pause_sending_until, msg))
 
-    def send_and_forget(self, msg):
-        self.send_queue.put_nowait((f'{msg}\r'.encode(), None))
+    def send_and_forget(self, msg, log_msg=None):
+        if log_msg:
+            self.send_queue.put_nowait((f'{msg}\r'.encode(), None, log_msg))
+        else:
+            self.send_queue.put_nowait((f'{msg}\r'.encode(), None, msg))
 
-    def send_bytes(self, msg, priority=1, log_msg=None):
-        self.send_queue.put_nowait((priority, msg, None, log_msg))
+    def send_bytes(self, msg, log_msg):
+        # Forcing log_msg since bytes are not human readable
+        self.send_queue.put_nowait((msg, None, log_msg))
 
-
-    def parse_incoming_incoming_raw_bytes(self, msg):
+    def parse_incoming_raw_bytes(self, msg):
         self.received_msg += msg
 
         while True:
@@ -240,6 +245,10 @@ class FastSerialCommunicator(LogMixin):
             try:
                 msg = msg.decode()
             except UnicodeDecodeError:
+
+                if self.machine.is_shutting_down:
+                    return
+
                 self.log.warning(f"Interference / bad data received: {msg}")
                 if not self.ignore_decode_errors:
                     raise
@@ -299,13 +308,13 @@ class FastSerialCommunicator(LogMixin):
         # Write coroutine
         while True:
             try:
-                msg, pause_sending_until = await self.send_queue.get()
+                msg, pause_sending_until, log_msg = await self.send_queue.get()
 
                 if pause_sending_until is not None:
                     self.pause_sending(pause_sending_until)
 
                 # Sends a message
-                self.write_to_port(msg)
+                self.write_to_port(msg, log_msg)
 
                 if self.pause_sending_flag.is_set():
                     await self.pause_sending_flag.wait()
