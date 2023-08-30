@@ -217,10 +217,11 @@ class FastSerialCommunicator(LogMixin):
     def send_and_forget(self, msg):
         self.send_queue.put_nowait((f'{msg}\r'.encode(), None))
 
-    def send_bytes(self, msg, priority=1):
-        self.send_queue.put_nowait((priority, msg, None))
+    def send_bytes(self, msg, priority=1, log_msg=None):
+        self.send_queue.put_nowait((priority, msg, None, log_msg))
 
-    def parse_incoming_raw_bytes(self, msg):
+
+    def parse_incoming_incoming_raw_bytes(self, msg):
         self.received_msg += msg
 
         while True:
@@ -316,10 +317,13 @@ class FastSerialCommunicator(LogMixin):
         self.pause_sending_until = msg_header
         self.pause_sending_flag.set()
 
-    def write_to_port(self, msg):
+    def write_to_port(self, msg, log_msg=None):
         # Sends a message as is, without encoding or adding a <CR> character
         if self.port_debug:
-            self.log.info(f">>>> {msg}")
+            if log_msg:
+                self.log.info(f">>>> {log_msg}")
+            else:
+                self.log.info(f">>>> {msg}")
 
         try:
             self.writer.write(msg)

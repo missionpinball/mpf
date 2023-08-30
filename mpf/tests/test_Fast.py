@@ -485,6 +485,7 @@ class TestFast(MpfTestCase):
 
         self.machine.events.add_handler("s_test_active", self._switch_hit_cb)
         self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:07\r")
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:07\r")
         self.advance_time_and_run(1)
 
         self.assertTrue(self.switch_hit)
@@ -495,6 +496,7 @@ class TestFast(MpfTestCase):
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test", 1)
 
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:07\r")
         self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:07\r")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)

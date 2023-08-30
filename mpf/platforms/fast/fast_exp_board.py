@@ -1,4 +1,4 @@
-"""FAST Expansion Board."""
+"""Contains the baes classes for FAST expansion and breakout boards"""
 
 from base64 import b16decode
 from importlib import import_module
@@ -90,7 +90,6 @@ class FastExpansionBoard:
         self.firmware_version = firmware_version
 
         if proc == 'EXP':
-
             if version.parse(firmware_version) < version.parse(self.features['min_fw']):
                 self.log.error(f'Firmware on {self} is too old. Required: {self.features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
                 self.platform.machine.stop(f'Firmware on {self} is too old. Required: {self.features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
@@ -135,18 +134,22 @@ class FastExpansionBoard:
         await self.communicator.send_and_wait_async(f'BR@{self.address}:', 'BR:P')
 
     def _update_leds(self):
-
+        # Called every tick to update the LEDs on this board
         for breakout_address in self.breakouts_with_leds:
             dirty_leds = {k:v.current_color for (k, v) in self.platform.fast_exp_leds.items() if (v.dirty and v.address == breakout_address)}
 
             if dirty_leds:
-                msg = f'52443A{len(dirty_leds):02X}'  # RD: in hex 52443A
+                # TODO add the pre-encoded address to the defines file?
+                msg_header = ''.join([f'{x:02X}' for x in f'RD@{breakout_address}:'.encode()])  # RD@<address>:, encode to binary then convert to hex chars
+                msg = f'{len(dirty_leds):02X}'
 
                 for led_num, color in dirty_leds.items():
                     msg += f'{led_num[3:]}{color}'
 
-                self.communicator.set_active_board(breakout_address)  # TODO use with @ address instead
-                self.communicator.send_bytes(b16decode(msg))
+                log_msg = f'RD@{breakout_address}:{msg}'  # pretty version of the message for the log
+
+                self.communicator.send_bytes(b16decode(f'{msg_header}{msg}'), log_msg)
+
 
 class FastBreakoutBoard:
 
@@ -178,6 +181,8 @@ class FastBreakoutBoard:
 
     def _initialize(self, **kwargs):
         """Populate the LED objects."""
+
+        # TODO move to a mixin class based on device type
 
         found = False
         for number, led in self.platform.fast_exp_leds.items():
