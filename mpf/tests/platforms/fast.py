@@ -62,7 +62,7 @@ class MockFastSerial(MockSerial):
         except UnicodeDecodeError:
             cmd = self._process_binary_msg(msg)
 
-        # print(f'{self.type} >>> {cmd}')
+        print(f'{self.type} >>> {cmd}')
 
         self.msg_history.append(cmd)
 

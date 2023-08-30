@@ -120,8 +120,6 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
             await self.send_and_wait_async(f'SL:{Util.int_to_hex_string(switch.number)}',
                                            self.switch_cmd)
 
-
-
     async def reset_drivers(self):
         """Query the NET processor to get a list of drivers and their configurations.
         Compare that to how they should be configured, and send new configuration
@@ -292,8 +290,8 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
     def start_tasks(self):
         """Start listening for commands and schedule watchdog."""
         self._update_watchdog()
-        # self._watchdog_task = self.machine.clock.schedule_interval(self._update_watchdog,
-        #                                                            self.config['watchdog'] / 2000)
+        self._watchdog_task = self.machine.clock.schedule_interval(self._update_watchdog,
+                                                                   self.config['watchdog'] / 2000)
 
     def stopping(self):
         if self._watchdog_task:

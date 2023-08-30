@@ -87,7 +87,7 @@ coils:
         default_hold_power: 0.40
     c_long_pulse:
         number: io1616upper-6  # 12
-        default_pulse_ms: 2000
+        default_pulse_ms: 20  # TODO change to 2000
         max_hold_power: 1.0
     c_hold_ssm:
         number: io1616upper-7  # 13

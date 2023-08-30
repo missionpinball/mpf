@@ -236,7 +236,7 @@ class FASTDriver:
                 Util.int_to_hex_string(pulse_settings.duration),
                 self.get_pwm_for_cmd(pulse_settings.power),
                 self.get_hold_pwm_for_cmd(hold_settings.power),
-                self.get_recycle_ms_for_cmd(self.config.default_recycle, pulse_settings.duration)
+                self.get_recycle_ms_for_cmd(self.baseline_mpf_config.default_recycle, pulse_settings.duration)
             )
             self.config_state = (pulse_settings.duration, pulse_settings.duration, hold_settings.power)
 

@@ -63,11 +63,11 @@ class TestFast(MpfTestCase):
             "SL:1A,01,04,04": "SL:P",
             "SL:39,01,04,05": "SL:P",
 
-            "DL:01,00,00,00": "DL:P",
-            "DL:01,C1,00,18,00,FF,FF,00": "DL:P",
-            "DL:04,00,00,00": "DL:P",
-            "DL:06,00,00,00": "DL:P",
-            "DL:07,00,00,00": "DL:P",
+            # "DL:01,00,00,00": "DL:P",
+            "DL:1,C1,00,18,00,FF,FF,00": "DL:P",
+            "DL:4,00,00,00": "DL:P",
+            "DL:6,00,00,00": "DL:P",
+            "DL:7,00,00,00": "DL:P",
             "DL:11,00,00,00": "DL:P",
             "DL:12,00,00,00": "DL:P",
             "DL:13,00,00,00": "DL:P",
@@ -76,6 +76,14 @@ class TestFast(MpfTestCase):
             "DL:20,00,00,00": "DL:P",
             "DL:21,00,00,00": "DL:P",
             }
+
+        # Add expected commands for switch resets: SL:00, SL:01, etc..
+        for i in range(0, 97):
+            self.serial_connections['net2'].expected_commands[f"SL:{i:02X}"] = "SL:P"
+
+        # Add expected commands for driver resets: DL:00, DL:01, etc..
+        for i in range(0, 53):
+            self.serial_connections['net2'].expected_commands[f"DL:{i:02X}"] = "DL:P"
 
         self.serial_connections['net2'].expected_commands['SL:L'] = (
             'SL:68\r'
