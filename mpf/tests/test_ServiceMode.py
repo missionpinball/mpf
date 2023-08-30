@@ -511,9 +511,9 @@ class TestServiceMode(MpfFakeGameTestCase):
     def test_settings(self):
         self.machine.settings._settings = {}
         self.machine.settings.add_setting(SettingEntry("test1", "Test1", 1, "test1", "b",
-                                                       {"a": "A", "b": "B (default)", "c": "C"}, "standard"))
+                                                       {"a": "A", "b": "B (default)", "c": "C"}, "standard", "string"))
         self.machine.settings.add_setting(SettingEntry("test2", "Test2", 2, "test2", False,
-                                                       {True: "Yes", False: "No (default)"}, "standard"))
+                                                       {True: "Yes", False: "No (default)"}, "standard", "bool"))
         self.mock_event("service_settings_start")
         self.mock_event("service_settings_edit")
         self.mock_event("service_settings_stop")
