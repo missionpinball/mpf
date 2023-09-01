@@ -90,9 +90,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         # self.exp_dirty_led_ports = set() # FastLedPort instances
         self.exp_breakouts_with_leds = set()
 
-        self.hw_switch_data = None
+        self.hw_switch_data = {i: 0 for i in range(112)}
         self.io_boards = dict()     # type: Dict[int, FastIoBoard]  # TODO move to NET communicator(s) classes?
         self.io_boards_by_name = dict()     # type: Dict[str, FastIoBoard]
+
+
 
     def get_info_string(self):
         """Dump info strings about boards."""
@@ -255,11 +257,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     async def get_hw_switch_states(self, query_hw=True):
         """Return hardware states.
 
-        Args:
-        ----
-            query_hw: Await an SA: command to update the switches from the physical hardware.
-                Otherwise this returns the last known hw states.
+        Only query the actual hardware if query_hw is True.
 
+        On MPF start, the switch controller will query hardware but the switches will not have been configured yet.
         """
 
         # This meth is called during init_phase_2, but usually DL and SL config commands are still
@@ -341,7 +341,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         else:
             raise AssertionError("Invalid machine type: {self.machine_type}")
 
-        driver = self.serial_connections['net'].drivers[int(number, 16)]
+
+
+        driver = self.serial_connections['net'].drivers[int(number, 16)]  # contains all drivers on the board
+        # platform.drivers is empty at this point
         driver.set_initial_config(config, platform_config)
 
         return driver

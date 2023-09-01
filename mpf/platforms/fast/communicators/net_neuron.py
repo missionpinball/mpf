@@ -53,7 +53,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         await self.send_and_wait_async('CH:2000,FF', 'CH:')  # Configure hardware for Neuron with active switch reporting
         self.send_and_forget('WD:1') # Force expire the watchdog since who knows what state the board is in?
         await self.query_io_boards()
-        await self.send_and_wait_async('SA:', 'SA:')  # Get initial states so switches can be created
+        # await self.send_and_wait_async('SA:', 'SA:')  # Get initial states so switches can be created
 
     async def soft_reset(self, **kwargs):
         """Reset the NET processor."""
@@ -61,6 +61,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
 
         await self.reset_switches()
         await self.reset_drivers()
+        await self.platform.get_hw_switch_states()
 
     async def clear_board_serial_buffer(self):
         """Clear out the serial buffer."""
@@ -114,11 +115,8 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         commands for any that are different.
         """
 
-        # self.switches contains a list of all switches
-
-        for switch in self.switches:
-            await self.send_and_wait_async(f'SL:{Util.int_to_hex_string(switch.number)}',
-                                           self.switch_cmd)
+        for switch in self.switches:  # all physical switches, not just ones defined in the config
+            await self.send_and_wait_async(f'{self.switch_cmd}:{switch.hw_number}', self.switch_cmd)
 
     async def reset_drivers(self):
         """Query the NET processor to get a list of drivers and their configurations.
@@ -126,8 +124,12 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         commands for any that are different.
 
         """
+
+        # self.drivers contains a list of all drivers, not just ones defined in the config
+
         for driver in self.drivers:
             await self.send_and_wait_async(f'DL:{Util.int_to_hex_string(driver.number)}', self.driver_cmd)
+            # TODO temp command does not function
 
     def _process_nn(self, msg):
         firmware_ok = True
@@ -209,8 +211,9 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
             driver_obj.hw_config_good = True
 
     def process_switch_config_msg(self, msg):
+        """Incoming SL:<switch_id>,<mode>,<debounce_close>,<debounce_open> message."""
 
-        if msg == 'P':
+        if msg == 'P':  # SL:P
             return
 
         try:
@@ -230,17 +233,13 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         except IndexError:  # Neuron tracks 104 switches regardless of how many are connected
             return
 
-        if not switch_obj.current_hw_config:
-            switch_obj.send_config_to_switch()
-
-        elif not (switch == switch_obj.current_hw_config.number and
-            mode == switch_obj.current_hw_config.mode and
-            debounce_close == switch_obj.current_hw_config.debounce_close and
-            debounce_open == switch_obj.current_hw_config.debounce_open):
+        if (switch_obj.current_hw_config.mode != mode or
+            switch_obj.current_hw_config.debounce_close != debounce_close or
+            switch_obj.current_hw_config.debounce_open != debounce_open
+            ):
+            # TODO this seems tedious, should we switch the dataclass to a namedtuple?
 
             switch_obj.send_config_to_switch()
-
-        switch_obj.hw_state_good = True
 
     def _process_sa(self, msg):
         hw_states = {}

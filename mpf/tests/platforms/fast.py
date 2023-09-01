@@ -68,6 +68,7 @@ class MockFastSerial(MockSerial):
 
         if cmd in self.autorespond_commands:
             self.queue.append(self.autorespond_commands[cmd])
+            print(f'{self.type} <<< {self.autorespond_commands[cmd]}')
             return msg_len
 
         if self.process_msg(cmd):
@@ -76,6 +77,7 @@ class MockFastSerial(MockSerial):
         if cmd in self.expected_commands:
             if self.expected_commands[cmd]:
                 self.queue.append(self.expected_commands[cmd])
+                print(f'{self.type} <<< {self.expected_commands[cmd]}')
             del self.expected_commands[cmd]
             return msg_len
         else:
@@ -95,7 +97,7 @@ class MockFastNetNeuron(MockFastSerial):
         self.autorespond_commands = {
             'WD:1' : 'WD:P',
             'WD:3E8': 'WD:P',
-            'SA:':'SA:09,050000000000000000',
+            'SA:':'SA:0E,8000000300000000000000000000',
             'CH:2000,FF':'CH:P',
             'ID:': 'ID:NET FP-CPU-2000  02.13',
             'BR:': '\r\r!B:00\r..!B:02\r.',

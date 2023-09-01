@@ -33,79 +33,76 @@ class FASTDriver:
     #              "send", "platform_settings"]
 
     def __init__(self, communicator: FastSerialCommunicator, net_version: int, hw_number: int) -> None:
-        """Initialise driver."""
-        self.log = logging.getLogger('FASTDriver')
+        """Initialize the driver object.
 
+        This is called once for each physical driver on the connected hardware, regardless of whether it's configured in MPF.
+        """
+        self.log = logging.getLogger('FAST Driver')
         self.communicator = communicator
         self.net_version = net_version
-        self.number = hw_number
+        self.number = hw_number  # must be int to work with the rest of MPF
+        self.hw_number = Util.int_to_hex_string(hw_number)  # hex version the FAST hw actually uses
 
-        self.baseline_mpf_config = None
-        self.platform_settings = None
+        # self.baseline_mpf_config = None
+        # self.platform_settings = None
 
-        self.hw_config_good = False
-        self.platform_settings = None
-        self.autofire = None
-        self.config_state = None # Tuple (pulse_ms, pulse_power, hold_power) in MPF scale
+        # self.hw_config_good = False
+        # self.platform_settings = None
+        # self.autofire = None
 
-        self.hw_driver_config = FastDriverConfig(number=Util.int_to_hex_string(hw_number), trigger='00', switch_id='00', mode='00',
+        self.baseline_driver_config = FastDriverConfig(number=self.number, trigger='00', switch_id='00', mode='00',
                                                  param1='00', param2='00', param3='00', param4='00', param5='00')
+        self.current_driver_config = self.baseline_driver_config
 
     def set_initial_config(self, mpf_config: DriverConfig, platform_settings):
-        """Sets the initial config for this driver by merging the machine-wide config,
-        this driver's config, the platform's default config, and any platform specific overrides.
+        """Sets the initial config for this driver based on the MPF config.
 
-        This method does not actually write the config to the driver.
-        It does set self.hw_driver_config_good = False
+        Args:
+            mpf_config: DriverConfig instance which holds the MPF DriverConfig settings for this driver from the config file. This already incorporates
+                any machine-wide defaults, etc. so it's ready to go.
+            platform_settings: FastDriverConfig instance which holds any platform_settings: entries for this driver from the config file.
+
+        This method does not actually write the config to the driver. Is just figures out what the FastDriverConfig should be.
+
+        This will not be called for drivers that are not in the MPF config.
         """
 
-        # TODO add validation
+        self.current_driver_config = self.convert_mpf_config_to_fast(mpf_config, platform_settings)
+        self.baseline_driver_config = copy(self.current_driver_config)
 
-        self.baseline_mpf_config = copy(mpf_config)
-
-
-        self.platform_settings = platform_settings
-
-        fast_config_from_mpf = self.convert_mpf_config_to_fast(mpf_config)
-
-        if fast_config_from_mpf != self.hw_driver_config:
-            self.hw_driver_config = fast_config_from_mpf
-            self.hw_config_good = False
-
-    def convert_mpf_config_to_fast(self, mpf_config: DriverConfig) -> FastDriverConfig:
+    def convert_mpf_config_to_fast(self, mpf_config: DriverConfig, platform_settings) -> FastDriverConfig:
         """Convert an MPF config to FAST."""
 
-        # MPF config (partial):
-        # allow_enable: single|bool|false
-        # number: single|str|
-        # default_recycle: single|bool|None                     rest_ms
-        # default_pulse_ms: single|template_ms|None             pwm1_ms
-        # default_pulse_power: single|float(0,1)|None           pwm1_power
-        # default_timed_enable_ms: single|template_ms|None      pwm2_ms
-        # default_hold_power: single|float(0,1)|None            pwm2_power
-        # pulse_with_timed_enable: single|bool|false            pwm2_enable
-        # max_pulse_ms: single|ms|None
-        # max_pulse_power: single|float(0,1)|1.0
-        # max_hold_power: single|float(0,1)|None
-        # max_hold_duration: single|secs|None
-        # platform_settings: single|dict|None
+        # mpf_config:
+            # class DriverConfig:
+            #     name: str
+            #     default_pulse_ms: int
+            #     default_pulse_power: float
+            #     default_hold_power: float
+            #     default_timed_enable_ms: int
+            #     default_recycle: bool
+            #     max_pulse_ms: int
+            #     max_pulse_power: float
+            #     max_hold_power: float
 
-        fast_config = copy(self.hw_driver_config)
+        # platform_settings:
+            # recycle_ms: single|ms|None
+            # hold_pwm_patter: single|str|None
+            # pwm2_ms: single|ms|None
+            # pwm2_power: single|int|None
 
         # Mode 00 - Disable
         # Mode 10 - Pulse
         # Mode 12 - Pulse + Kick
         # Mode 18 - Pulse + Hold
-        if mpf_config.default_pulse_ms:
-            fast_config.mode = '18'
-            fast_config.param1 = Util.int_to_hex_string(mpf_config.default_pulse_ms)  # pwm1_ms
-            fast_config.param2 = Util.float_to_hex(mpf_config.default_hold_power) # pwm1_power
-            fast_config.param3 = Util.float_to_hex(mpf_config.default_hold_power) # pwm2_power
-            fast_config.param4 = '00'  # rest_ms # TODO
-            fast_config.param5 = '00'
+
+        if mpf_config.default_pulse_ms > 255:
+            return self.convert_to_mode_70(mpf_config, platform_settings)
 
         else:
-            assert False # missed one
+            return self.convert_to_mode_10(mpf_config, platform_settings)
+
+        assert False # missed one
 
         # Mode 30 - Delayed Pulse
         # Mode 70 - Long Pulse
@@ -113,6 +110,38 @@ class FASTDriver:
         # Mode 78 - Pulse + Hold w/ Extension
 
         return fast_config
+
+    def convert_to_mode_10(self, mpf_config: DriverConfig, platform_settings) -> FastDriverConfig:
+
+        if platform_settings['pwm2_ms'] is not None:
+            pwm2_ms = platform_settings['pwm2_ms']
+        else:
+            pwm2_ms = 0
+
+        if platform_settings['pwm2_power'] is not None:
+            pwm2_power = platform_settings['pwm2_power']
+        else:
+            pwm2_power = mpf_config.default_hold_power
+
+        if platform_settings['recycle_ms'] is not None:
+            recycle_ms = platform_settings['recycle_ms']
+        else:
+            recycle_ms = 0  # mpf_config.default_recycle is a bool and not well defined, so we ignore it in the FAST platform
+
+        return FastDriverConfig(number = self.number,
+                                trigger='81',
+                                switch_id='00',
+                                mode='10',
+                                param1=Util.int_to_hex_string(mpf_config.default_pulse_ms),  # pwm1_ms
+                                param2=Util.float_to_hex(mpf_config.default_pulse_power),  # pwm1_power
+                                param3=Util.int_to_hex_string(pwm2_ms),  # pwm2_ms
+                                param4=Util.int_to_hex_string(pwm2_power),  # pwm2_power
+                                param5=Util.int_to_hex_string(recycle_ms))  # rest_ms
+
+    def convert_to_mode_70(self, mpf_config: DriverConfig) -> FastDriverConfig:
+        # Mode 70 - Long Pulse
+        # DL:<driver_id>,<trigger>,<switch_id>,<70>,<PWM1_ONTIME>,<PWM1>,<PWM2_ONTIMEx100ms>,<PWM2>,<REST_TIME><CR>
+        fast_config.mode = '70'
 
     def send_config_to_driver(self):
         # TODO this sends hw_driver_config, switch version sends MPF config
@@ -122,6 +151,8 @@ class FASTDriver:
                f'{self.hw_driver_config.param5}')
         self.communicator.send_with_confirmation(msg, f'{self.communicator.driver_cmd}')
         self.hw_config_good = True
+
+        # TODO save this as FastDriverConfig as the last config sent to the driver
 
     def get_board_name(self):
         # This code is duplicated, TODO
