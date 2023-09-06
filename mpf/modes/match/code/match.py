@@ -21,7 +21,7 @@ class Match(AsyncMode):
         self.machine.settings.add_setting(SettingEntry("match_percentage", "Match percentage", 500,
                                                        "match_percentage", 10,
                                                        {0: "off", 2: "2%", 5: "5%", 10: "10%", 15: "15%", 30: "30%",
-                                                        50: "50%"}, "standard", "int"))
+                                                        50: "50%"}, "standard"))
 
     def _get_match_numbers(self):
         """Calculate match numbers."""
@@ -62,7 +62,7 @@ class Match(AsyncMode):
             "winner_number": winner_number,
             "winners": winners
         }
-
+        
         self.machine.variables.set_machine_var('match_number', winner_number)
 
         for i in range(0, self.machine.game.max_players):

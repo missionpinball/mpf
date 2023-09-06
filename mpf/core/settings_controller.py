@@ -7,7 +7,7 @@ from mpf.core.utility_functions import Util
 
 from mpf.core.mpf_controller import MpfController
 
-SettingEntry = namedtuple("SettingEntry", ["name", "label", "sort", "machine_var", "default", "values", "settingType", "key_type"])
+SettingEntry = namedtuple("SettingEntry", ["name", "label", "sort", "machine_var", "default", "values", "settingType"])
 
 
 class SettingsController(MpfController):
@@ -47,8 +47,7 @@ class SettingsController(MpfController):
                                           settings['machine_var'],
                                           settings['default'],
                                           values,
-                                          settings['settingType'],
-                                          settings['key_type']))
+                                          settings['settingType']))
 
     def add_setting(self, setting: SettingEntry):
         """Add a setting."""
