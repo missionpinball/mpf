@@ -253,6 +253,9 @@ class FastSerialCommunicator(LogMixin):
                 if not self.ignore_decode_errors:
                     raise
 
+            if self.port_debug:
+                self.log.info(f"<<<< {msg}")
+
             self.dispatch_incoming_msg(msg)
 
     def dispatch_incoming_msg(self, msg):
@@ -300,8 +303,6 @@ class FastSerialCommunicator(LogMixin):
             self.machine.stop("Serial {} closed.".format(self.config["port"]))
             return None
 
-        if self.port_debug:
-            self.log.info(f"<<<< {resp}")
         return resp
 
     async def _socket_writer(self):
