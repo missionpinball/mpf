@@ -1,4 +1,4 @@
-# mpf/platforms/fast/communictors/net_neuron.py
+# mpf/platforms/fast/communicators/net_neuron.py
 
 import asyncio
 from packaging import version
@@ -46,7 +46,12 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
 
         for board, config in self.config['io_loop'].items():
             config['index'] = int(config['order'])-1
-            self.io_loop[config['index']] = board
+
+            try:
+                self.io_loop[config['index']] = board
+            except IndexError:
+                raise ConfigFileError(f"Invalid order value for I/O board '{board}'. "
+                                      "Order values must be sequential starting at 1.", 7, self.log.name)  # TODO
 
     async def init(self):
         await self.send_and_wait_async('ID:', 'ID:')  # Verify we're connected to a Neuron
