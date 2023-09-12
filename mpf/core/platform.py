@@ -551,6 +551,7 @@ class DriverConfig:
     max_pulse_ms: int
     max_pulse_power: float
     max_hold_power: float
+    pulse_with_timed_enable: bool
 
 @dataclass
 class RepulseSettings:

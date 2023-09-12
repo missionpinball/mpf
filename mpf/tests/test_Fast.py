@@ -40,6 +40,11 @@ class TestFast(MpfTestCase):
             elif conn == 'dmd':
                 self.serial_connections['dmd'] = MockFastDmd(self)  # default com8
 
+    def confirm_commands(self):
+        self.advance_time_and_run(.1)
+        for conn in self.serial_connections.values():
+            self.assertFalse(conn.expected_commands)
+
     def create_expected_commands(self):
         # These are all the defaults based on the config file for this test.
         # Individual tests can override / add as needed
@@ -315,16 +320,16 @@ class TestFast(MpfTestCase):
             # All 48 drivers are initialized, even if they do not exist in the MPF config
             "DL:00,81,00,10,0A,FF,00,00,00": "DL:P",
             "DL:01,81,00,10,0A,FF,00,FF,00": "DL:P",
-            "DL:02,81,00,10,17,87,00,00,00": "DL:P",
+            "DL:02,81,00,10,17,AA,00,00,00": "DL:P",
             "DL:03,81,00,10,0A,FF,00,00,00": "DL:P",
             "DL:04,81,00,10,0A,FF,00,00,00": "DL:P",
             "DL:05,81,00,10,0A,FF,00,00,1B": "DL:P",
-            "DL:06,81,00,18,0A,FF,EE,00,00": "DL:P",
+            "DL:06,81,00,10,0A,FF,00,EE,00": "DL:P",
             "DL:07,81,00,10,0A,FF,00,88,00": "DL:P",
-            "DL:09,81,00,18,14,FF,88,00,00": "DL:P",
+            "DL:09,81,00,70,14,FF,04,88,00": "DL:P",
             "DL:0A,81,00,10,0A,FF,14,AA,00": "DL:P",
-            "DL:0B,81,00,10,14,87,14,AA,00": "DL:P",
-            "DL:0C,81,00,10,FF,FF,00,FF,00": "DL:P",
+            "DL:0B,81,00,10,14,AA,14,AA,00": "DL:P",
+            "DL:0C,81,00,70,FF,FF,11,FF,00": "DL:P",
             "DL:0D,81,00,10,0A,FF,00,01,00": "DL:P",
             "DL:0E,81,00,10,0A,FF,00,01,00": "DL:P",
             "DL:0F,81,00,10,0E,FF,00,01,00": "DL:P",
@@ -479,17 +484,10 @@ class TestFast(MpfTestCase):
 
         # The default expected commands will verify all the coils are configured properly. We just need to ensure things get enabled properly.
 
-        self.assertFalse(self.serial_connections['net2'].expected_commands)
-        self.advance_time_and_run(.1)
-
-        # Pulse some coils and make sure the TL commands were sent.
-
-        # Custom pulse some coils and make sure the DL: commands to reconfig them were sent.
-
-        # Enable the autofires and make sure those TL: commands were sent.
+        self.confirm_commands()
 
         # self._test_coil_configure()
-        # self._test_pulse()
+        self._test_pulse()
         # self._test_long_pulse()
         # self._test_timed_enable()
         # self._test_default_timed_enable()
@@ -539,6 +537,33 @@ class TestFast(MpfTestCase):
                                                            {"connection": "network", "recycle_ms": 10})
 
     def _test_pulse(self):
+
+        coil = self.machine.coils["c_baseline"]
+
+        # pulse based on its initial config
+        self.serial_connections['net2'].expected_commands = {"TL:00,01": "TL:P"}
+        coil.pulse()
+        self.confirm_commands()
+
+        # pulse with a non-standard pulse_ms, trigger 89 also pulses now
+        self.serial_connections['net2'].expected_commands = {'DL:00,89,00,10,32,FF,00,00,00': 'DL:P'}
+        coil.pulse(50)
+        self.confirm_commands()
+
+        # Pulse again and it should just use a TL since the coil is already configured
+        self.serial_connections['net2'].expected_commands = {"TL:00,01": "TL:P"}
+        coil.pulse(50)
+        self.confirm_commands()
+
+        # Pulse default and it should reconfigure to default
+        self.serial_connections['net2'].expected_commands = {'DL:00,81,00,10,0A,FF,00,00,00': 'DL:P'}
+        coil.pulse()
+        self.confirm_commands()
+
+        # pulse with non-standard power
+        coil.pulse(100, 0.375)
+
+
         self.serial_connections['net2'].expected_commands = {
             "DL:04,81,00,10,17,FF,00,00,00": "DL:P",  # initial config
             "TL:04,01": "TL:P"  # manual pulse

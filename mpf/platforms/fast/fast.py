@@ -79,6 +79,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         # Most FAST platforms don't use ticks, but System11 does
         self.features['tickless'] = self.machine_type != 'sys11'
+        self.features['max_pulse'] = 25500
 
         self.serial_connections = dict()
         self.fast_leds = dict()
@@ -681,7 +682,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             driver.get_control_for_cmd(enable_switch),
             enable_switch.hw_switch.number[0],
             Util.int_to_hex_string(coil.pulse_settings.duration),
-            driver.get_pwm_for_cmd(coil.pulse_settings.power),
+            Util.float_to_pwm8_hex_string(coil.pulse_settings.power),
             driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
         enable_switch.hw_switch.calculate_debounce(enable_switch.debounce)
@@ -716,7 +717,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             enable_switch.hw_switch.number[0],
             eos_switch.hw_switch.number[0],
             Util.int_to_hex_string(coil.pulse_settings.duration),
-            driver.get_pwm_for_cmd(coil.pulse_settings.power),
+            Util.float_to_pwm8_hex_string(coil.pulse_settings.power),
             driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
         enable_switch.hw_switch.calculate_debounce(enable_switch.debounce)
@@ -747,7 +748,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             driver.get_control_for_cmd(enable_switch),
             enable_switch.hw_switch.number[0],
             Util.int_to_hex_string(coil.pulse_settings.duration),
-            driver.get_pwm_for_cmd(coil.pulse_settings.power),
+            Util.float_to_pwm8_hex_string(coil.pulse_settings.power),
             driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
         enable_switch.hw_switch.calculate_debounce(enable_switch.debounce)
@@ -769,8 +770,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             driver.get_control_for_cmd(enable_switch),
             enable_switch.hw_switch.number[0],
             Util.int_to_hex_string(coil.pulse_settings.duration),
-            driver.get_pwm_for_cmd(coil.pulse_settings.power),
-            driver.get_hold_pwm_for_cmd(coil.hold_settings.power),
+            Util.float_to_pwm8_hex_string(coil.pulse_settings.power),
+            Util.float_to_pwm8_hex_string(coil.hold_settings.power),
             driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
         enable_switch.hw_switch.calculate_debounce(enable_switch.debounce)
