@@ -13,8 +13,9 @@ from mpf.tests.loop import MockSerial
 
 class MockFastSerial(MockSerial):
 
-    def __init__(self):
+    def __init__(self, test_fast_base):
         super().__init__()
+        self.test_fast_base = test_fast_base
         self.type = None
         self.queue = []
         self.msg_history = list()  # list of commands received, e.g. ['ID:', 'ID@88:', 'ID@89:', 'EA:880', 'RD:0200ffffff121212']
@@ -56,6 +57,7 @@ class MockFastSerial(MockSerial):
 
     def _simulate_board_response(self, msg):
         # handles the processing of outgoing messages
+
         msg_len = len(msg)
         try:
             cmd = msg.decode()
@@ -89,8 +91,8 @@ class MockFastSerial(MockSerial):
 
 
 class MockFastNetNeuron(MockFastSerial):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, test_fast_base):
+        super().__init__(test_fast_base)
         self.type = "NETv2"
         self.port = 'com3'
 
@@ -116,8 +118,7 @@ class MockFastNetNeuron(MockFastSerial):
 
 class MockFastExp(MockFastSerial):
     def __init__(self, test_fast_base):
-        super().__init__()
-        self.test_fast_base = test_fast_base
+        super().__init__(test_fast_base)
         self.type = 'EXP'
         self.port = 'com4'
         self.active_board = None
@@ -214,8 +215,8 @@ class MockFastExp(MockFastSerial):
         return False
 
 class MockFastRgb(MockFastSerial):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, test_fast_base):
+        super().__init__(test_fast_base)
         self.type = 'RGB'
         self.port = 'com5'
 
@@ -240,8 +241,8 @@ class MockFastRgb(MockFastSerial):
 
 
 class MockFastNetNano(MockFastSerial):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, test_fast_base):
+        super().__init__(test_fast_base)
         self.type = "NETv1"
         self.port = 'com4'
 
@@ -263,8 +264,8 @@ class MockFastNetNano(MockFastSerial):
         return False
 
 class MockFastSeg(MockFastSerial):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, test_fast_base):
+        super().__init__(test_fast_base)
         self.type = "SEG"
         self.port = "com7"
 
@@ -273,8 +274,8 @@ class MockFastSeg(MockFastSerial):
             }
 
 class MockFastDmd(MockFastSerial):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, test_fast_base):
+        super().__init__(test_fast_base)
         self.type = "DMD"
         self.port = 'com8'
 

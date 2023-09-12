@@ -8,12 +8,17 @@ from mpf.platforms.fast.communicators.base import FastSerialCommunicator
 from mpf.platforms.fast.fast_io_board import FastIoBoard
 from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.platforms.fast.fast_driver import FastDriverConfig
+from mpf.platforms.fast.fast_switch import FASTSwitch
+from mpf.platforms.fast.fast_driver import FASTDriver
 
 
 class FastNetNeuronCommunicator(FastSerialCommunicator):
 
     MIN_FW = version.parse('2.06')
     IO_MIN_FW = version.parse('1.09')
+    MAX_IO_BOARDS = 9
+    MAX_SWITCHES = 104
+    MAX_DRIVERS = 48
     ignored_messages = ['WD:P',
                         'TL:P']
 
@@ -59,6 +64,19 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.send_and_forget('WD:1') # Force expire the watchdog since who knows what state the board is in?
         await self.query_io_boards()
         # await self.send_and_wait_async('SA:', 'SA:')  # Get initial states so switches can be created
+
+        self.create_switches()
+        self.create_drivers()
+
+    def create_switches(self):
+        # Neuron tracks all switches regardless of how many are connected
+        for i in range(self.MAX_SWITCHES):
+            self.switches.append(FASTSwitch(self, i))
+
+    def create_drivers(self):
+        # Neuron tracks all drivers regardless of how many are connected
+        for i in range(self.MAX_DRIVERS):
+            self.drivers.append(FASTDriver(self, i))
 
     async def soft_reset(self, **kwargs):
         """Reset the NET processor."""
@@ -121,7 +139,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         """
 
         for switch in self.switches:  # all physical switches, not just ones defined in the config
-            await self.send_and_wait_async(f'{self.switch_cmd}:{switch.hw_number}', self.switch_cmd)
+            await self.send_and_wait_async(f'{self.switch_cmd}:{switch.hw_number}', f'{self.switch_cmd}:{switch.hw_number}')
 
     async def reset_drivers(self):
         """Query the NET processor to get a list of drivers and their configurations.
@@ -159,11 +177,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         name = self.io_loop[node_id]
         model_string_from_config = ('-').join(self.config['io_loop'][name]['model'].split('-')[:3]).upper()  # Fp-I/O-3208-2 -> FP-I/O-3208
 
-        if model_string_from_config == 'FP-CAB-0001':
-            model_string_from_config = 'FP-I/O-0024'  # FP-CAB-0001 will report as FP-I/O-0024
-            # TODO this should probably go somewhere else, but meh
-
-        assert model == model_string_from_config, f'I/O board config error. Board {node_id} is reporting as model {model}, but the config file says it\'s model "{mode_string_from_config}"'
+        assert model == model_string_from_config, f'I/O board config error. Board {node_id} is reporting as model {model}, but the config file says it\'s model {model_string_from_config}'
 
         prior_sw = 0
         prior_drv = 0
@@ -210,10 +224,8 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         except IndexError:
             return  # we always get data for 48 drivers, no worries if we don't have that many
 
-        if driver_obj.hw_driver_config != current_hw_driver_config:
+        if driver_obj.current_driver_config != current_hw_driver_config:
             driver_obj.send_config_to_driver()
-        else:
-            driver_obj.hw_config_good = True
 
     def process_switch_config_msg(self, msg):
         """Incoming SL:<switch_id>,<mode>,<debounce_close>,<debounce_open> message."""

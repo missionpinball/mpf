@@ -271,37 +271,31 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         return self.hw_switch_data
 
-    @staticmethod
-    def convert_number_from_config(number):
-        """Convert a number from config format to hex."""
-        return Util.int_to_hex_string(number)
-
     def _parse_driver_number(self, number):
+        # Accepts FAST driver number string (is3208-1) and returns the driver index (0-based int)
+
         try:
             board_str, driver_str = number.split("-")
-        except ValueError as e:
-            total_drivers = 0
-            for board_obj in self.io_boards.values():
-                total_drivers += board_obj.driver_count
-            index = self.convert_number_from_config(number)
 
-            if int(index, 16) >= total_drivers:
-                raise AssertionError(f"Driver {int(index, 16)} does not exist. Only "
-                                     f"{total_drivers} drivers found. Driver number: {number}") from e
-
-            return index
+        except ValueError as e:  # If there's no dash, assume it's a driver number
+            return int(number, 16)
 
         try:
             board = self.io_boards_by_name[board_str]
         except KeyError:
-            raise AssertionError(f"Board {board_str} does not exist for driver {number}")
+            raise AssertionError(f"I/O Board {board_str} does not exist for driver {number}")
 
         driver = int(driver_str)
 
         if board.driver_count <= driver:
-            raise AssertionError(f"Board {board} only has drivers 0-{board.driver_count-1}. Driver value {driver} is not valid.")
+            raise AssertionError(f"I/O Board {board} only has drivers 0-{board.driver_count-1}. Driver value {driver} is not valid.")
 
-        return Util.int_to_hex_string(board.start_driver + driver)
+        index = board.start_driver + driver
+
+        if index + 1 > self.serial_connections['net'].MAX_DRIVERS:
+            raise AssertionError(f"I/O Board {board} driver {driver} is out of range. This would be driver {index + 1} but this platform supports a max of {self.serial_connections['net'].MAX_DRIVERS} drivers.")
+
+        return index
 
     def configure_driver(self, config: DriverConfig, number: str, platform_config: dict) -> FASTDriver:
         """Configure a driver.
@@ -309,7 +303,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         Args:
         ----
             config: Driver config.
-            number: Number of this driver.
+            number: string number entry from config (e.g. 'io3208-0)
             platform_settings: Platform specific settings.
 
         Returns: Driver object
@@ -317,7 +311,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         # platform_config['recycle_ms'] = 27
         # platform_config['connection'] = 'auto'
-        # platform_config['hold_pwm_patter'] = None
 
         if not self.serial_connections['net']:
             raise AssertionError('A request was made to configure a FAST '
@@ -330,20 +323,18 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         # If we have Retro driver boards, look up the driver number
         if self.is_retro:
             try:
-                number = fast_defines.RETRO_DRIVER_MAP[number.upper()]
+                index = int(fast_defines.RETRO_DRIVER_MAP[number.upper()], 16)
             except KeyError:
                 self.raise_config_error(f"Could not find Retro driver {number}", 1)
 
         # If we have FAST I/O boards, we need to make sure we have hex strings
         elif self.machine_type in ['nano', 'neuron']:
-            number = self._parse_driver_number(number)
+            index = self._parse_driver_number(number)
 
         else:
             raise AssertionError("Invalid machine type: {self.machine_type}")
 
-
-
-        driver = self.serial_connections['net'].drivers[int(number, 16)]  # contains all drivers on the board
+        driver = self.serial_connections['net'].drivers[index]  # contains all drivers on the board
         # platform.drivers is empty at this point
         driver.set_initial_config(config, platform_config)
 
@@ -389,7 +380,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             total_switches = 0
             for board_obj in self.io_boards.values():
                 total_switches += board_obj.switch_count
-            index = self.convert_number_from_config(number)
+            index = Util.int_to_hex_string(number)
 
             if int(index, 16) >= total_switches:
                 raise AssertionError(f"Switch {int(index, 16)} does not exist. Only "
@@ -562,7 +553,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 except KeyError:
                     self.raise_config_error(f"Could not find GI {number}", 3)
             else:
-                number = self.convert_number_from_config(number)
+                number = Util.int_to_hex_string(number)
 
             return [
                 {
@@ -576,7 +567,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 except KeyError:
                     self.raise_config_error(f"Could not find light {number}", 4)
             else:
-                number = self.convert_number_from_config(number)
+                number = Util.int_to_hex_string(number)
 
             return [
                 {

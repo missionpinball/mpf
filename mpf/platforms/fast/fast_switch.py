@@ -22,11 +22,10 @@ class FASTSwitch:
 
     # __slots__ = ["log", "connection", "send", "platform_settings", "_configured_debounce"]
 
-    def __init__(self, communicator, net_version, hw_number, ) -> None:
+    def __init__(self, communicator, hw_number, ) -> None:
         """Initialise switch."""
         self.log = logging.getLogger('FAST Switch')
         self.communicator = communicator
-        self.net_version = net_version
         self.number = hw_number  # must be int to work with the rest of MPF
         self.hw_number = Util.int_to_hex_string(hw_number)  # hex version the FAST hw actually uses
         self.platform = communicator.platform  # Needed by the SwitchController
@@ -65,9 +64,7 @@ class FASTSwitch:
                f'{self.current_hw_config.mode},{self.current_hw_config.debounce_close},'
                f'{self.current_hw_config.debounce_open}')
 
-
-        self.communicator.send_with_confirmation(msg, f'{self.communicator.switch_cmd}')
-
+        self.communicator.send_with_confirmation(msg, f'{self.communicator.switch_cmd}:P')
 
     def get_board_name(self):
         """Return the board of this switch."""

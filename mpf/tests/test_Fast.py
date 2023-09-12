@@ -28,17 +28,17 @@ class TestFast(MpfTestCase):
     def create_connections(self):
         for conn in self.serial_connections_to_mock:
             if conn == 'net2':
-                self.serial_connections['net2'] = MockFastNetNeuron()  # default com3
+                self.serial_connections['net2'] = MockFastNetNeuron(self)  # default com3
             elif conn == 'exp':
                 self.serial_connections['exp'] = MockFastExp(self)  # default com4
             elif conn == 'rgb':
-                self.serial_connections['rgb'] = MockFastRgb()  # default com5
+                self.serial_connections['rgb'] = MockFastRgb(self)  # default com5
             elif conn == 'net1':
-                self.serial_connections['net1'] = MockFastNetNano()  # default com6
+                self.serial_connections['net1'] = MockFastNetNano(self)  # default com6
             elif conn == 'seg':
-                self.serial_connections['seg'] = MockFastSeg()  # default com7
+                self.serial_connections['seg'] = MockFastSeg(self)  # default com7
             elif conn == 'dmd':
-                self.serial_connections['dmd'] = MockFastDmd()  # default com8
+                self.serial_connections['dmd'] = MockFastDmd(self)  # default com8
 
     def create_expected_commands(self):
         # These are all the defaults based on the config file for this test.
@@ -48,9 +48,7 @@ class TestFast(MpfTestCase):
             'NN:00': 'NN:00,FP-I/O-3208-3   ,01.10,08,20,00,00,00,00,00,00',
             'NN:01': 'NN:01,FP-I/O-0804-3   ,01.10,04,08,00,00,00,00,00,00',
             'NN:02': 'NN:02,FP-I/O-1616-3   ,01.10,10,10,00,00,00,00,00,00',
-            'NN:03': 'NN:03,FP-I/O-1616-3   ,01.10,10,10,00,00,00,00,00,00',
-            'NN:04': 'NN:04,FP-I/O-0024-3   ,01.10,08,18,00,00,00,00,00,00',
-            'NN:05': 'NN:05,!Node Not Found!,00.00,00,00,00,00,00,00,00,00',
+            'NN:03': 'NN:03,FP-I/O-0024-3   ,01.10,08,18,00,00,00,00,00,00',
 
             # Initial switch responses before they're configured:
             "SL:00": "SL:00,01,02,04",
@@ -149,18 +147,76 @@ class TestFast(MpfTestCase):
             "SL:5D": "SL:5D,01,02,04",
             "SL:5E": "SL:5E,01,02,04",
             "SL:5F": "SL:5F,01,02,04",
+            "SL:60": "SL:60,01,02,04",
+            "SL:61": "SL:61,01,02,04",
+            "SL:62": "SL:62,01,02,04",
+            "SL:63": "SL:63,01,02,04",
+            "SL:64": "SL:64,01,02,04",
+            "SL:65": "SL:65,01,02,04",
+            "SL:66": "SL:66,01,02,04",
+            "SL:67": "SL:67,01,02,04",
 
-            # All physical switches are initialized, even if they do not exist in the MPF config
-            "SL:00,01,04,04": "SL:P",  # s_baseline
-            "SL:01,01,04,04": "SL:P",  # s_flipper
-            "SL:02,01,04,04": "SL:P",  # s_flipper_eos
-            "SL:03,02,04,04": "SL:P",  # s_flipper_opto
-            "SL:04,01,04,04": "SL:P",  # s_autofire_3208
-            "SL:05,02,04,04": "SL:P",  # s_test_nc
-            "SL:06,01,04,04": "SL:P",  # s_debounce_auto
-            "SL:07,01,02,02": "SL:P",  # s_debounce_quick
-            "SL:08,01,04,04": "SL:P",  # s_debounce_normal
-            "SL:09,01,05,1A": "SL:P",  # s_debounce_custom
+            # Initial driver responses before they're configured:
+            "DL:00": "DL:00,00,00,00,00,00,00,00,00",
+            "DL:01": "DL:01,00,00,00,00,00,00,00,00",
+            "DL:02": "DL:02,00,00,00,00,00,00,00,00",
+            "DL:03": "DL:03,00,00,00,00,00,00,00,00",
+            "DL:04": "DL:04,00,00,00,00,00,00,00,00",
+            "DL:05": "DL:05,00,00,00,00,00,00,00,00",
+            "DL:06": "DL:06,00,00,00,00,00,00,00,00",
+            "DL:07": "DL:07,00,00,00,00,00,00,00,00",
+            "DL:08": "DL:08,00,00,00,00,00,00,00,00",
+            "DL:09": "DL:09,00,00,00,00,00,00,00,00",
+            "DL:0A": "DL:0A,00,00,00,00,00,00,00,00",
+            "DL:0B": "DL:0B,00,00,00,00,00,00,00,00",
+            "DL:0C": "DL:0C,00,00,00,00,00,00,00,00",
+            "DL:0D": "DL:0D,00,00,00,00,00,00,00,00",
+            "DL:0E": "DL:0E,00,00,00,00,00,00,00,00",
+            "DL:0F": "DL:0F,00,00,00,00,00,00,00,00",
+            "DL:10": "DL:10,00,00,00,00,00,00,00,00",
+            "DL:11": "DL:11,00,00,00,00,00,00,00,00",
+            "DL:12": "DL:12,00,00,00,00,00,00,00,00",
+            "DL:13": "DL:13,00,00,00,00,00,00,00,00",
+            "DL:14": "DL:14,00,00,00,00,00,00,00,00",
+            "DL:15": "DL:15,00,00,00,00,00,00,00,00",
+            "DL:16": "DL:16,00,00,00,00,00,00,00,00",
+            "DL:17": "DL:17,00,00,00,00,00,00,00,00",
+            "DL:18": "DL:18,00,00,00,00,00,00,00,00",
+            "DL:19": "DL:19,00,00,00,00,00,00,00,00",
+            "DL:1A": "DL:1A,00,00,00,00,00,00,00,00",
+            "DL:1B": "DL:1B,00,00,00,00,00,00,00,00",
+            "DL:1C": "DL:1C,00,00,00,00,00,00,00,00",
+            "DL:1D": "DL:1D,00,00,00,00,00,00,00,00",
+            "DL:1E": "DL:1E,00,00,00,00,00,00,00,00",
+            "DL:1F": "DL:1F,00,00,00,00,00,00,00,00",
+            "DL:20": "DL:20,00,00,00,00,00,00,00,00",
+            "DL:21": "DL:21,00,00,00,00,00,00,00,00",
+            "DL:22": "DL:22,00,00,00,00,00,00,00,00",
+            "DL:23": "DL:23,00,00,00,00,00,00,00,00",
+            "DL:24": "DL:24,00,00,00,00,00,00,00,00",
+            "DL:25": "DL:25,00,00,00,00,00,00,00,00",
+            "DL:26": "DL:26,00,00,00,00,00,00,00,00",
+            "DL:27": "DL:27,00,00,00,00,00,00,00,00",
+            "DL:28": "DL:28,00,00,00,00,00,00,00,00",
+            "DL:29": "DL:29,00,00,00,00,00,00,00,00",
+            "DL:2A": "DL:2A,00,00,00,00,00,00,00,00",
+            "DL:2B": "DL:2B,00,00,00,00,00,00,00,00",
+            "DL:2C": "DL:2C,00,00,00,00,00,00,00,00",
+            "DL:2D": "DL:2D,00,00,00,00,00,00,00,00",
+            "DL:2E": "DL:2E,00,00,00,00,00,00,00,00",
+            "DL:2F": "DL:2F,00,00,00,00,00,00,00,00",
+
+            # All 104 switches are initialized, even if they do not exist in the MPF config
+            "SL:00,01,04,04": "SL:P",
+            "SL:01,01,04,04": "SL:P",
+            "SL:02,01,04,04": "SL:P",
+            "SL:03,02,04,04": "SL:P",
+            "SL:04,01,04,04": "SL:P",
+            "SL:05,02,04,04": "SL:P",
+            "SL:06,01,04,04": "SL:P",
+            "SL:07,01,02,02": "SL:P",
+            "SL:08,01,04,04": "SL:P",
+            "SL:09,01,05,1A": "SL:P",
             "SL:0A,00,00,00": "SL:P",
             "SL:0B,00,00,00": "SL:P",
             "SL:0C,00,00,00": "SL:P",
@@ -191,7 +247,7 @@ class TestFast(MpfTestCase):
             "SL:25,00,00,00": "SL:P",
             "SL:26,00,00,00": "SL:P",
             "SL:27,00,00,00": "SL:P",
-            "SL:28,01,04,04": "SL:P",  # s_autofire_1616
+            "SL:28,01,04,04": "SL:P",
             "SL:29,00,00,00": "SL:P",
             "SL:2A,00,00,00": "SL:P",
             "SL:2B,00,00,00": "SL:P",
@@ -207,8 +263,8 @@ class TestFast(MpfTestCase):
             "SL:35,00,00,00": "SL:P",
             "SL:36,00,00,00": "SL:P",
             "SL:37,00,00,00": "SL:P",
-            "SL:38,00,00,00": "SL:P",
-            "SL:39,01,00,00": "SL:P",
+            "SL:38,01,04,04": "SL:P",
+            "SL:39,00,00,00": "SL:P",
             "SL:3A,00,00,00": "SL:P",
             "SL:3B,00,00,00": "SL:P",
             "SL:3C,00,00,00": "SL:P",
@@ -223,7 +279,7 @@ class TestFast(MpfTestCase):
             "SL:45,00,00,00": "SL:P",
             "SL:46,00,00,00": "SL:P",
             "SL:47,00,00,00": "SL:P",
-            "SL:48,01,04,04": "SL:P",  # s_cab_flipper
+            "SL:48,00,00,00": "SL:P",
             "SL:49,00,00,00": "SL:P",
             "SL:4A,00,00,00": "SL:P",
             "SL:4B,00,00,00": "SL:P",
@@ -247,169 +303,144 @@ class TestFast(MpfTestCase):
             "SL:5D,00,00,00": "SL:P",
             "SL:5E,00,00,00": "SL:P",
             "SL:5F,00,00,00": "SL:P",
+            "SL:60,00,00,00": "SL:P",
+            "SL:61,00,00,00": "SL:P",
+            "SL:62,00,00,00": "SL:P",
+            "SL:63,00,00,00": "SL:P",
+            "SL:64,00,00,00": "SL:P",
+            "SL:65,00,00,00": "SL:P",
+            "SL:66,00,00,00": "SL:P",
+            "SL:67,00,00,00": "SL:P",
 
-            # Also initialize all hw drivers, even if they do not exist in the MPF config
-            "DL:00,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:01,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:02,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:03,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:04,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:05,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:06,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:07,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:08,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:09,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:0A,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:0B,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:0C,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:0D,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:0E,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:0F,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:10,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:11,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:12,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:13,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:14,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:15,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:16,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:17,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:18,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:19,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:1A,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:1B,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:1C,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:1D,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:1E,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:1F,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:20,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:21,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:22,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:23,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:24,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:25,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:26,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:27,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:28,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:29,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:2A,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:2B,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:2C,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:2D,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:2E,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:2F,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:30,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:31,81,00,18,00,FF,FF,00,00": "DL:P",  # bill_reader_enable
-            "DL:32,00,00,00,00,00,00,00,00": "DL:P",
-            "DL:33,00,00,00,00,00,00,00,00": "DL:P",
+            # All 48 drivers are initialized, even if they do not exist in the MPF config
+            "DL:00,81,00,10,0A,FF,00,00,00": "DL:P",
+            "DL:01,81,00,10,0A,FF,00,FF,00": "DL:P",
+            "DL:02,81,00,10,17,87,00,00,00": "DL:P",
+            "DL:03,81,00,10,0A,FF,00,00,00": "DL:P",
+            "DL:04,81,00,10,0A,FF,00,00,00": "DL:P",
+            "DL:05,81,00,10,0A,FF,00,00,1B": "DL:P",
+            "DL:06,81,00,18,0A,FF,EE,00,00": "DL:P",
+            "DL:07,81,00,10,0A,FF,00,88,00": "DL:P",
+            "DL:09,81,00,18,14,FF,88,00,00": "DL:P",
+            "DL:0A,81,00,10,0A,FF,14,AA,00": "DL:P",
+            "DL:0B,81,00,10,14,87,14,AA,00": "DL:P",
+            "DL:0C,81,00,10,FF,FF,00,FF,00": "DL:P",
+            "DL:0D,81,00,10,0A,FF,00,01,00": "DL:P",
+            "DL:0E,81,00,10,0A,FF,00,01,00": "DL:P",
+            "DL:0F,81,00,10,0E,FF,00,01,00": "DL:P",
+            "DL:10,81,00,10,0A,FF,00,00,00": "DL:P",
+            "DL:11,81,00,10,0A,FF,00,00,00": "DL:P",
+            "DL:12,81,00,10,0F,FF,00,00,00": "DL:P",
+            "DL:13,81,00,10,0A,FF,00,00,00": "DL:P",
             }
 
-        self.serial_connections['net2'].expected_commands['SL:L'] = (
-            'SL:68\r'
-            'SL:00,02,01,02\r'
-            'SL:01,01,03,04\r'
-            'SL:02,01,02,14\r'
-            'SL:03,01,02,14\r'
-            'SL:04,01,02,14\r'
-            'SL:05,01,02,14\r'
-            'SL:06,01,02,14\r'
-            'SL:07,01,02,14\r'
-            'SL:08,01,02,14\r'
-            'SL:09,01,02,14\r'
-            'SL:0A,01,02,14\r'
-            'SL:0B,01,02,14\r'
-            'SL:0C,01,02,14\r'
-            'SL:0D,01,02,14\r'
-            'SL:0E,01,02,14\r'
-            'SL:0F,01,02,14\r'
-            'SL:10,01,02,14\r'
-            'SL:11,01,02,14\r'
-            'SL:12,01,02,14\r'
-            'SL:13,01,02,14\r'
-            'SL:14,01,02,14\r'
-            'SL:15,01,02,14\r'
-            'SL:16,01,02,14\r'
-            'SL:17,01,02,14\r'
-            'SL:18,01,02,14\r'
-            'SL:19,01,02,14\r'
-            'SL:1A,01,02,14\r'
-            'SL:1B,01,02,14\r'
-            'SL:1C,01,02,14\r'
-            'SL:1D,01,02,14\r'
-            'SL:1E,01,02,14\r'
-            'SL:1F,01,02,14\r'
-            'SL:20,01,02,14\r'
-            'SL:21,01,02,14\r'
-            'SL:22,01,02,14\r'
-            'SL:23,01,02,14\r'
-            'SL:24,01,02,14\r'
-            'SL:25,01,02,14\r'
-            'SL:26,01,02,14\r'
-            'SL:27,01,02,14\r'
-            'SL:28,01,02,14\r'
-            'SL:29,01,02,14\r'
-            'SL:2A,01,02,14\r'
-            'SL:2B,01,02,14\r'
-            'SL:2C,01,02,14\r'
-            'SL:2D,01,02,14\r'
-            'SL:2E,01,02,14\r'
-            'SL:2F,01,02,14\r'
-            'SL:30,01,02,14\r'
-            'SL:31,01,02,14\r'
-            'SL:32,01,02,14\r'
-            'SL:33,01,02,14\r'
-            'SL:34,01,02,14\r'
-            'SL:35,01,02,14\r'
-            'SL:36,01,02,14\r'
-            'SL:37,01,02,14\r'
-            'SL:38,01,02,14\r'
-            'SL:39,01,02,14\r'
-            'SL:3A,01,02,14\r'
-            'SL:3B,01,02,14\r'
-            'SL:3C,01,02,14\r'
-            'SL:3D,01,02,14\r'
-            'SL:3E,01,02,14\r'
-            'SL:3F,01,02,14\r'
-            'SL:40,01,02,14\r'
-            'SL:41,01,02,14\r'
-            'SL:42,01,02,14\r'
-            'SL:43,01,02,14\r'
-            'SL:44,01,02,14\r'
-            'SL:45,01,02,14\r'
-            'SL:46,01,02,14\r'
-            'SL:47,01,02,14\r'
-            'SL:48,01,02,14\r'
-            'SL:49,01,02,14\r'
-            'SL:4A,01,02,14\r'
-            'SL:4B,01,02,14\r'
-            'SL:4C,01,02,14\r'
-            'SL:4D,01,02,14\r'
-            'SL:4E,01,02,14\r'
-            'SL:4F,01,02,14\r'
-            'SL:50,01,02,14\r'
-            'SL:51,01,02,14\r'
-            'SL:52,01,02,14\r'
-            'SL:53,01,02,14\r'
-            'SL:54,01,02,14\r'
-            'SL:55,01,02,14\r'
-            'SL:56,01,02,14\r'
-            'SL:57,01,02,14\r'
-            'SL:58,01,02,14\r'
-            'SL:59,01,02,14\r'
-            'SL:5A,01,02,14\r'
-            'SL:5B,01,02,14\r'
-            'SL:5C,01,02,14\r'
-            'SL:5D,01,02,14\r'
-            'SL:5E,01,02,14\r'
-            'SL:5F,01,02,14\r'
-            'SL:60,01,02,14\r'
-            'SL:61,01,02,14\r'
-            'SL:62,01,02,14\r'
-            'SL:63,01,02,14\r'
-            'SL:64,01,02,14\r'
-            'SL:65,01,02,14\r'
-            'SL:66,01,02,14\r'
-            'SL:67,01,02,14\r'
-            )
+        # self.serial_connections['net2'].expected_commands['SL:L'] = (
+        #     'SL:68\r'
+        #     'SL:00,02,01,02\r'
+        #     'SL:01,01,03,04\r'
+        #     'SL:02,01,02,14\r'
+        #     'SL:03,01,02,14\r'
+        #     'SL:04,01,02,14\r'
+        #     'SL:05,01,02,14\r'
+        #     'SL:06,01,02,14\r'
+        #     'SL:07,01,02,14\r'
+        #     'SL:08,01,02,14\r'
+        #     'SL:09,01,02,14\r'
+        #     'SL:0A,01,02,14\r'
+        #     'SL:0B,01,02,14\r'
+        #     'SL:0C,01,02,14\r'
+        #     'SL:0D,01,02,14\r'
+        #     'SL:0E,01,02,14\r'
+        #     'SL:0F,01,02,14\r'
+        #     'SL:10,01,02,14\r'
+        #     'SL:11,01,02,14\r'
+        #     'SL:12,01,02,14\r'
+        #     'SL:13,01,02,14\r'
+        #     'SL:14,01,02,14\r'
+        #     'SL:15,01,02,14\r'
+        #     'SL:16,01,02,14\r'
+        #     'SL:17,01,02,14\r'
+        #     'SL:18,01,02,14\r'
+        #     'SL:19,01,02,14\r'
+        #     'SL:1A,01,02,14\r'
+        #     'SL:1B,01,02,14\r'
+        #     'SL:1C,01,02,14\r'
+        #     'SL:1D,01,02,14\r'
+        #     'SL:1E,01,02,14\r'
+        #     'SL:1F,01,02,14\r'
+        #     'SL:20,01,02,14\r'
+        #     'SL:21,01,02,14\r'
+        #     'SL:22,01,02,14\r'
+        #     'SL:23,01,02,14\r'
+        #     'SL:24,01,02,14\r'
+        #     'SL:25,01,02,14\r'
+        #     'SL:26,01,02,14\r'
+        #     'SL:27,01,02,14\r'
+        #     'SL:28,01,02,14\r'
+        #     'SL:29,01,02,14\r'
+        #     'SL:2A,01,02,14\r'
+        #     'SL:2B,01,02,14\r'
+        #     'SL:2C,01,02,14\r'
+        #     'SL:2D,01,02,14\r'
+        #     'SL:2E,01,02,14\r'
+        #     'SL:2F,01,02,14\r'
+        #     'SL:30,01,02,14\r'
+        #     'SL:31,01,02,14\r'
+        #     'SL:32,01,02,14\r'
+        #     'SL:33,01,02,14\r'
+        #     'SL:34,01,02,14\r'
+        #     'SL:35,01,02,14\r'
+        #     'SL:36,01,02,14\r'
+        #     'SL:37,01,02,14\r'
+        #     'SL:38,01,02,14\r'
+        #     'SL:39,01,02,14\r'
+        #     'SL:3A,01,02,14\r'
+        #     'SL:3B,01,02,14\r'
+        #     'SL:3C,01,02,14\r'
+        #     'SL:3D,01,02,14\r'
+        #     'SL:3E,01,02,14\r'
+        #     'SL:3F,01,02,14\r'
+        #     'SL:40,01,02,14\r'
+        #     'SL:41,01,02,14\r'
+        #     'SL:42,01,02,14\r'
+        #     'SL:43,01,02,14\r'
+        #     'SL:44,01,02,14\r'
+        #     'SL:45,01,02,14\r'
+        #     'SL:46,01,02,14\r'
+        #     'SL:47,01,02,14\r'
+        #     'SL:48,01,02,14\r'
+        #     'SL:49,01,02,14\r'
+        #     'SL:4A,01,02,14\r'
+        #     'SL:4B,01,02,14\r'
+        #     'SL:4C,01,02,14\r'
+        #     'SL:4D,01,02,14\r'
+        #     'SL:4E,01,02,14\r'
+        #     'SL:4F,01,02,14\r'
+        #     'SL:50,01,02,14\r'
+        #     'SL:51,01,02,14\r'
+        #     'SL:52,01,02,14\r'
+        #     'SL:53,01,02,14\r'
+        #     'SL:54,01,02,14\r'
+        #     'SL:55,01,02,14\r'
+        #     'SL:56,01,02,14\r'
+        #     'SL:57,01,02,14\r'
+        #     'SL:58,01,02,14\r'
+        #     'SL:59,01,02,14\r'
+        #     'SL:5A,01,02,14\r'
+        #     'SL:5B,01,02,14\r'
+        #     'SL:5C,01,02,14\r'
+        #     'SL:5D,01,02,14\r'
+        #     'SL:5E,01,02,14\r'
+        #     'SL:5F,01,02,14\r'
+        #     'SL:60,01,02,14\r'
+        #     'SL:61,01,02,14\r'
+        #     'SL:62,01,02,14\r'
+        #     'SL:63,01,02,14\r'
+        #     'SL:64,01,02,14\r'
+        #     'SL:65,01,02,14\r'
+        #     'SL:66,01,02,14\r'
+        #     'SL:67,01,02,14\r'
+        #     )
 
     def tearDown(self):
         super().tearDown()
@@ -426,17 +457,15 @@ class TestFast(MpfTestCase):
 
         if not self.startup_error:
             self.advance_time_and_run()
-            self.assertEqual(5, len(self.machine.default_platform.io_boards))
+            self.assertEqual(4, len(self.machine.default_platform.io_boards))
             self.assertEqual(32, self.machine.default_platform.io_boards[0].switch_count)
             self.assertEqual(8, self.machine.default_platform.io_boards[0].driver_count)
             self.assertEqual(8, self.machine.default_platform.io_boards[1].switch_count)
             self.assertEqual(4, self.machine.default_platform.io_boards[1].driver_count)
             self.assertEqual(16, self.machine.default_platform.io_boards[2].switch_count)
             self.assertEqual(16, self.machine.default_platform.io_boards[2].driver_count)
-            self.assertEqual(16, self.machine.default_platform.io_boards[3].switch_count)
-            self.assertEqual(16, self.machine.default_platform.io_boards[3].driver_count)
-            self.assertEqual(24, self.machine.default_platform.io_boards[4].switch_count)
-            self.assertEqual(8, self.machine.default_platform.io_boards[4].driver_count)
+            self.assertEqual(24, self.machine.default_platform.io_boards[3].switch_count)
+            self.assertEqual(8, self.machine.default_platform.io_boards[3].driver_count)
 
             for conn in self.serial_connections.values():
                 self.assertFalse(conn.expected_commands)
@@ -459,20 +488,6 @@ class TestFast(MpfTestCase):
 
         # Enable the autofires and make sure those TL: commands were sent.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         # self._test_coil_configure()
         # self._test_pulse()
         # self._test_long_pulse()
@@ -484,16 +499,13 @@ class TestFast(MpfTestCase):
 
         # test hardware scan
         info_str = (
-            'DMD: FP-CPU-002-2 v00.88\r'
-            'NET: FP-CPU-2000 v02.13\r'
-            'SEG: FP-CPU-002-2 v00.10\r'
-            '\r'
-            'I/O Boards:\r'
-            'Board 0 - Model: FP-I/O-3208 Firmware: 01.09 Switches: 32 Drivers: 8\r'
-            'Board 1 - Model: FP-I/O-0804 Firmware: 01.09 Switches: 8 Drivers: 4\r'
-            'Board 2 - Model: FP-I/O-1616 Firmware: 01.09 Switches: 16 Drivers: 16\r'
-            'Board 3 - Model: FP-I/O-1616 Firmware: 01.09 Switches: 16 Drivers: 16\r'
-            'Board 4 - Model: FP-I/O-0024 Firmware: 01.10 Switches: 24 Drivers: 8\r'
+            'NET: FP-CPU-2000 v02.13\n'
+            '\n'
+            'I/O Boards:\n'
+            'Board 0 - Model: FP-I/O-3208, Firmware: 01.10, Switches: 32, Drivers: 8\n'
+            'Board 1 - Model: FP-I/O-0804, Firmware: 01.10, Switches: 8, Drivers: 4\n'
+            'Board 2 - Model: FP-I/O-1616, Firmware: 01.10, Switches: 16, Drivers: 16\n'
+            'Board 3 - Model: FP-I/O-0024, Firmware: 01.10, Switches: 24, Drivers: 8\n'
             )
 
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())

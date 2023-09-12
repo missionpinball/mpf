@@ -32,25 +32,17 @@ class FASTDriver:
     # __slots__ = ["log", "autofire", "_autofire_cleared", "config_state", "machine", "platform", "driver_settings",
     #              "send", "platform_settings"]
 
-    def __init__(self, communicator: FastSerialCommunicator, net_version: int, hw_number: int) -> None:
+    def __init__(self, communicator: FastSerialCommunicator, hw_number: int) -> None:
         """Initialize the driver object.
 
         This is called once for each physical driver on the connected hardware, regardless of whether it's configured in MPF.
         """
         self.log = logging.getLogger('FAST Driver')
         self.communicator = communicator
-        self.net_version = net_version
         self.number = hw_number  # must be int to work with the rest of MPF
         self.hw_number = Util.int_to_hex_string(hw_number)  # hex version the FAST hw actually uses
 
-        # self.baseline_mpf_config = None
-        # self.platform_settings = None
-
-        # self.hw_config_good = False
-        # self.platform_settings = None
-        # self.autofire = None
-
-        self.baseline_driver_config = FastDriverConfig(number=self.number, trigger='00', switch_id='00', mode='00',
+        self.baseline_driver_config = FastDriverConfig(number=self.hw_number, trigger='00', switch_id='00', mode='00',
                                                  param1='00', param2='00', param3='00', param4='00', param5='00')
         self.current_driver_config = self.baseline_driver_config
 
@@ -87,31 +79,67 @@ class FASTDriver:
 
         # platform_settings:
             # recycle_ms: single|ms|None
-            # hold_pwm_patter: single|str|None
             # pwm2_ms: single|ms|None
-            # pwm2_power: single|int|None
+            # pwm2_power: single|float(0,1)|None
 
         # Mode 00 - Disable
         # Mode 10 - Pulse
         # Mode 12 - Pulse + Kick
         # Mode 18 - Pulse + Hold
 
-        if mpf_config.default_pulse_ms > 255:
-            return self.convert_to_mode_70(mpf_config, platform_settings)
+        if mpf_config.default_timed_enable_ms:  # Pulse + Hold
+            return self.convert_to_mode_18(mpf_config, platform_settings)
 
-        else:
-            return self.convert_to_mode_10(mpf_config, platform_settings)
+        # if mpf_config.default_pulse_ms > 255:  # Long Pulse
+        #     return self.convert_to_mode_70(mpf_config, platform_settings)
 
-        assert False # missed one
+        # regular pulse or long pulse TODO verify long pulse will be re-upped
+        return self.convert_to_mode_10(mpf_config, platform_settings)
 
-        # Mode 30 - Delayed Pulse
-        # Mode 70 - Long Pulse
-        # Mode 75 - Pulse w/ Cancel Switch
-        # Mode 78 - Pulse + Hold w/ Extension
-
-        return fast_config
 
     def convert_to_mode_10(self, mpf_config: DriverConfig, platform_settings) -> FastDriverConfig:
+        # DL:<driver>,<trigger>,<switch>,10,<pwm1_ms>,<pwm1_power>,<pwm2_ms>,<pwm2_power>,<rest_ms>
+
+        pwm2_ms, pwm2_power, recycle_ms = self._get_platform_settings(mpf_config, platform_settings)
+
+        if mpf_config.default_pulse_ms > 255:
+            pulse_ms = 255
+        else:
+            pulse_ms = mpf_config.default_pulse_ms
+
+        return FastDriverConfig(number = self.hw_number,
+                                trigger='81',
+                                switch_id='00',
+                                mode='10',
+                                param1=Util.int_to_hex_string(pulse_ms),  # pwm1_ms
+                                param2=Util.float_to_hex(mpf_config.default_pulse_power),  # pwm1_power
+                                param3=Util.int_to_hex_string(pwm2_ms),  # pwm2_ms
+                                param4=Util.float_to_pwm8_hex_string(pwm2_power),  # pwm2_power
+                                param5=Util.int_to_hex_string(recycle_ms))  # rest_ms
+
+    def convert_to_mode_18(self, mpf_config: DriverConfig, platform_settings) -> FastDriverConfig:
+        # DL:<driver>,<trigger>,<switch>,18,<pwm1_ms>,<pwm1_power>,<pwm2_power>,<rest_ms>,<n/a>
+
+        _, pwm2_power, recycle_ms = self._get_platform_settings(mpf_config, platform_settings)
+
+        return FastDriverConfig(number = self.hw_number,
+                                trigger='81',
+                                switch_id='00',
+                                mode='18',
+                                param1=Util.int_to_hex_string(mpf_config.default_pulse_ms),  # pwm1_ms
+                                param2=Util.float_to_hex(mpf_config.default_pulse_power),  # pwm1_power
+                                param3=Util.float_to_pwm8_hex_string(pwm2_power),  # pwm2_power
+                                param4=Util.int_to_hex_string(recycle_ms),
+                                param5='00')  # na
+
+    def convert_to_mode_70(self, mpf_config: DriverConfig, platform_settings) -> FastDriverConfig:
+        # Mode 70 - Long Pulse
+        # DL:<driver_id>,<trigger>,<switch_id>,<70>,<PWM1_ONTIME>,<PWM1>,<PWM2_ONTIMEx100ms>,<PWM2>,<REST_TIME><CR>
+        fast_config.mode = '70'
+
+        raise NotImplementedError
+
+    def _get_platform_settings(self, mpf_config: DriverConfig, platform_settings):
 
         if platform_settings['pwm2_ms'] is not None:
             pwm2_ms = platform_settings['pwm2_ms']
@@ -128,29 +156,15 @@ class FASTDriver:
         else:
             recycle_ms = 0  # mpf_config.default_recycle is a bool and not well defined, so we ignore it in the FAST platform
 
-        return FastDriverConfig(number = self.number,
-                                trigger='81',
-                                switch_id='00',
-                                mode='10',
-                                param1=Util.int_to_hex_string(mpf_config.default_pulse_ms),  # pwm1_ms
-                                param2=Util.float_to_hex(mpf_config.default_pulse_power),  # pwm1_power
-                                param3=Util.int_to_hex_string(pwm2_ms),  # pwm2_ms
-                                param4=Util.int_to_hex_string(pwm2_power),  # pwm2_power
-                                param5=Util.int_to_hex_string(recycle_ms))  # rest_ms
+        return pwm2_ms, pwm2_power, recycle_ms
 
-    def convert_to_mode_70(self, mpf_config: DriverConfig) -> FastDriverConfig:
-        # Mode 70 - Long Pulse
-        # DL:<driver_id>,<trigger>,<switch_id>,<70>,<PWM1_ONTIME>,<PWM1>,<PWM2_ONTIMEx100ms>,<PWM2>,<REST_TIME><CR>
-        fast_config.mode = '70'
 
     def send_config_to_driver(self):
-        # TODO this sends hw_driver_config, switch version sends MPF config
-        msg = (f'{self.communicator.driver_cmd}:{self.number},{self.hw_driver_config.trigger},'
-               f'{self.hw_driver_config.switch_id},{self.hw_driver_config.mode},{self.hw_driver_config.param1},'
-               f'{self.hw_driver_config.param2},{self.hw_driver_config.param3},{self.hw_driver_config.param4},'
-               f'{self.hw_driver_config.param5}')
+        msg = (f'{self.communicator.driver_cmd}:{self.hw_number},{self.current_driver_config.trigger},'
+               f'{self.current_driver_config.switch_id},{self.current_driver_config.mode},{self.current_driver_config.param1},'
+               f'{self.current_driver_config.param2},{self.current_driver_config.param3},{self.current_driver_config.param4},'
+               f'{self.current_driver_config.param5}')
         self.communicator.send_with_confirmation(msg, f'{self.communicator.driver_cmd}')
-        self.hw_config_good = True
 
         # TODO save this as FastDriverConfig as the last config sent to the driver
 
@@ -169,13 +183,6 @@ class FASTDriver:
 
         # fall back if not found
         return "FAST Unknown Board"
-
-    def get_hold_pwm_for_cmd(self, power):
-        """Return a hex string for a float power setting for hold."""
-        if self.platform_settings.get('hold_pwm_patter'):
-            return self.platform_settings['hold_pwm_patter']
-
-        return self.get_pwm_for_cmd(power)
 
     @classmethod
     def get_pwm_for_cmd(cls, power: float):

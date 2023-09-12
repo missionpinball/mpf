@@ -83,8 +83,6 @@ coils:
     c_hold_ssm:
         number: 1616_1-7
         default_hold_power: 0.25    # approximately
-        platform_settings:
-            hold_pwm_patter: "84224244"
     c_long_pulse:
         number: 1616_1-6
         default_pulse_ms: 2000

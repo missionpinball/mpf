@@ -701,9 +701,8 @@ fast_switches:
     debounce_close: single|str|None
 fast_coils:
     recycle_ms: single|ms|None
-    hold_pwm_patter: single|str|None
     pwm2_ms: single|ms|None
-    pwm2_power: single|int|None
+    pwm2_power: single|float(0,1)|None
 fast_servos:
     max_us: single|int|2000
     min_us: single|int|1000
