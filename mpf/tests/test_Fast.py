@@ -477,7 +477,7 @@ class TestFast(MpfTestCase):
         if not self.machine.is_shutting_down:
             self.advance_time_and_run(1)
 
-    def DISABLED_test_coils(self):
+    def test_coils(self):
         # The default expected commands will verify all the coils are configured properly.
         # We just need to ensure things get enabled properly.
         self.confirm_commands()
@@ -594,10 +594,10 @@ class TestFast(MpfTestCase):
         self.assertFalse(self.serial_connections['net2'].expected_commands)
 
     def test_autofire_rules(self):
-        # self._test_pulse_rules()
-        # self._test_pulse_rules_inverted_switch()
-        # self._test_long_pulse_rules()
-        # self._test_enable_exception_hw_rule()
+        self._test_pulse_rules()
+        self._test_pulse_rules_inverted_switch()
+        self._test_long_pulse_rules()
+        self._test_enable_exception_hw_rule()
         self._test_manual_action_during_active_rule()
 
     def _test_pulse_rules(self):
@@ -654,8 +654,16 @@ class TestFast(MpfTestCase):
         self.machine.autofire_coils["ac_2_stage_pwm"].enable()
         self.confirm_commands()
 
+        # Enable again, no new commands should be sent
+        self.machine.autofire_coils["ac_2_stage_pwm"].enable()
+        self.confirm_commands()
+
         # Disable, should update existing rule via TL
         self.serial_connections['net2'].expected_commands = {"TL:06,02": "TL:P"}
+        self.machine.autofire_coils["ac_2_stage_pwm"].disable()
+        self.confirm_commands()
+
+        # Disable again, no new commands should be sent
         self.machine.autofire_coils["ac_2_stage_pwm"].disable()
         self.confirm_commands()
 
@@ -737,6 +745,48 @@ class TestFast(MpfTestCase):
         self.confirm_commands()  # +100ms, 251ms total since manual pulse, so this command should have been sent
 
         # hold a device on manually, then cancel it, make sure autofire comes back
+        # mode 18 (pulse + hold), trigger C1 (bit 7 disable switch, bit 6 manual, bit 1 enable)
+        self.serial_connections['net2'].expected_commands = {"DL:0B,C1,07,18,14,AA,AA,00,00": "DL:P"}
+        self.machine.coils["c_pwm2"].enable()
+        self.confirm_commands()
+
+        # Make sure nothing else was sent
+        self.advance_time_and_run(2)
+        self.confirm_commands()
+
+        # Turn off the hold and make sure the rule comes back
+        # Need to ensure we switch from mode 18 back to 10
+        self.serial_connections['net2'].expected_commands = {"DL:0B,01,07,10,14,AA,14,AA,00": "DL:P"}
+        self.machine.coils["c_pwm2"].disable()
+        self.confirm_commands
+
+        # Make sure nothing else was sent
+        self.advance_time_and_run(2)
+        self.confirm_commands()
+
+        # Send a series of manual pulses during an autofire and make sure the rule comes back, but not until
+        # the last pulse is done
+
+        # Previous command already re-enabled the autofire
+        self.assertEqual(driver.get_current_config(), 'DL:0B,01,07,10,14,AA,14,AA,00')
+
+        # Pulse with manual pulse time
+        self.serial_connections['net2'].expected_commands = {"DL:0B,09,07,10,C8,AA,14,AA,00": "DL:P"}
+        self.machine.coils["c_pwm2"].pulse(200)
+        self.confirm_commands()  # +100ms
+
+        # Pulse again before the first pulse is done, TL this time since it's the same pulse as last time
+        self.serial_connections['net2'].expected_commands = {"TL:0B,01": "TL:P"}
+        self.machine.coils["c_pwm2"].pulse(200)
+        self.confirm_commands()  # +100ms
+        self.serial_connections['net2'].expected_commands = {"TL:0B,01": "TL:P"}
+        self.machine.coils["c_pwm2"].pulse(200)
+        self.confirm_commands()  # +100ms
+
+        # Last pulse will reset the rule after 201ms, so jump past that and verify the rule is back
+        self.serial_connections['net2'].expected_commands = {"DL:0B,01,07,10,14,AA,14,AA,00": "DL:P"}
+        self.advance_time_and_run(0.002)
+        self.confirm_commands()
 
     def _switch_hit_cb(self, **kwargs):
         self.switch_hit = True

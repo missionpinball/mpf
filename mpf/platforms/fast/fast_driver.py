@@ -260,24 +260,31 @@ class FASTDriver:
         return Util.int_to_hex_string(int(control))
 
     async def reset(self):
-        """Reset a driver."""
-        self.log.debug("Resetting driver %s", self.driver_settings)
+        """Reset the driver to fresh (disabled/unconfigured) state."""
 
-        cmd = f'{self.communicator.driver_cmd}:{self.hw_number},00,00,00,00,00,00,00,00'
+        self.current_driver_config.trigger =   '00'
+        self.current_driver_config.switch_id = '00'
+        self.current_driver_config.mode =      '00'
+        self.current_driver_config.param1 =    '00'
+        self.current_driver_config.param2 =    '00'
+        self.current_driver_config.param3 =    '00'
+        self.current_driver_config.param4 =    '00'
+        self.current_driver_config.param5 =    '00'
 
-        self.communicator.send_with_confirmation(cmd, self.communicator.driver_cmd)
+        await self.communicator.send_and_wait_async(self.get_current_config(), self.get_current_config())
 
     def disable(self):
         """Disable (turn off) this driver."""
-        self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},02')
-        self._reenable_autofire_if_configured()
+        if not self._reenable_autofire_if_configured():
+            self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},02')
 
     def set_autofire_pulse(self, pulse_settings, switch):
+        # Note this meth does not mess with the mode param at all, since it could be 10, 70, 18 etc, and those extended
+        # params are not passed into this method. So we just set what we can and leave the rest unchanged.
+        # This meth will send the minimal possible, TL with only trigger, then TL with switch, and finally full DL
         reconfigured = False
         trigger_needed = False
         switch_needed = False
-        mode = self.current_driver_config.mode  # TODO need to ensure we have a pulse mode
-        # TODO BUG if this driver was manually controlled via non-pulse, it will not reset the mode to pulse
 
         pwm1_ms = Util.int_to_hex_string(pulse_settings.duration)
         pwm1_power = Util.float_to_pwm8_hex_string(pulse_settings.power)
@@ -331,6 +338,7 @@ class FASTDriver:
 
     def clear_autofire(self):
         """Clear autofire."""
+        self._check_and_clear_delay()
 
         # TL control code 2 sets bit 7 and clears 6
         self.current_driver_config.trigger = self.clear_bit(self.current_driver_config.trigger, 6)
@@ -341,6 +349,8 @@ class FASTDriver:
 
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable (turn on) this driver."""
+
+        self._check_and_clear_delay()
 
         reconfigured = False
         mode = self.current_driver_config.mode
@@ -396,6 +406,7 @@ class FASTDriver:
         The FAST platform supports pulse and hold configuration in the same command, so
         this method can be used for both pulse() and timed_enable() behavior.
         """
+
         reconfigured = False
         mode = self.current_driver_config.mode
 
@@ -441,20 +452,24 @@ class FASTDriver:
         if not reconfigured:
             # Trigger the driver directly using the existing configuration
             self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},01')
-            return
-
         else:  # Send a new driver config and also trigger it now
             self.send_config_to_driver(one_shot=True)
-            self.communicator.machine.delay.add(pulse_settings.duration, self._reenable_autofire_if_configured,
-                                                f'fast_driver_{self.number}_delay')
+
+        # reset not add so we keep on kicking this delay down the road if we keep getting pulses
+        self.communicator.machine.delay.reset(pulse_settings.duration + 1, self._reenable_autofire_if_configured,
+                                              f'fast_driver_{self.number}_delay')
 
     def _reenable_autofire_if_configured(self):
-        """Reenable autofire if configured."""
+        """Reenable autofire if configured.
+
+        Returns True if autofire was reenabled, False otherwise."""
         self._check_and_clear_delay()
         if self.autofire_config and self.autofire_config != self.current_driver_config:
             self.log.debug("Re-enabling autofire mode")
             self.current_driver_config = copy(self.autofire_config)
             self.send_config_to_driver()
+            return True
+        return False
 
     def _check_and_clear_delay(self):
         """Check if we have a delay and clear it."""
