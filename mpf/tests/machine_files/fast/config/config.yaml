@@ -61,7 +61,6 @@ switches:
     s_cab_flipper:
         number: cab-0  # 0x48
 
-
 coils:
     c_baseline:  # DL:00,81,00,10,0A,FF,00,00,00
         number: io3208-0  # 0x00
@@ -72,47 +71,37 @@ coils:
         number: io3208-2  # 0x02
         default_pulse_ms: 23  # 0x17
         default_pulse_power: 0.53  # 0xAA
-    c_default_recycle_true:  # DL:03,81,00,10,0A,FF,00,00,00
-        number: io3208-3  # 0x03
-        default_recycle: True
-    c_default_recycle_false:  # DL:04,81,00,10,0A,FF,00,00,00
-        number: io3208-4  # 0x04
-        default_recycle: False
-    c_recycle_custom:  # DL:05,81,00,10,0A,FF,00,00,1B
+    c_custom_recycle:
         number: io3208-5  # 0x05
-        default_recycle: True
         platform_settings:
             recycle_ms: 27  # 0x1B
-    c_default_timed_enable:  # DL:06,81,00,10,0A,FF,00,EE,00 (Mode 10 with default pulse, timed enabled only used for specific commands)
+    c_long_pwm2:  # DL:06,81,00,70,0A,FF,14,EE,00
         number: io3208-6  # 0x06
-        default_timed_enable_ms: 2000  # 0xC8
+        default_hold_power: 0.75  # 0xEE
         platform_settings:
-            pwm2_power: 0.75  # 0xEE
+            pwm2_ms: 2000  # 0x14 (2000ms / 100)
     c_default_hold_power:  # DL:07,81,00,10,0A,FF,00,88,00
         number: io3208-7  # 0x07
         default_hold_power: 0.25  # 0x88
-    c_pulse_with_timed_enable:  # DL:09,81,00,70,14,FF,04,88,00 (pwm1_ms = 20, pwm2_ms = 400, pwm2_power = 0.25)
-        number: io0804-1  # 0x09
-        default_pulse_ms: 20  # 0x14
-        default_timed_enable_ms: 400  # 0xC8
-        default_hold_power: 0.25  # 0x88
-        pulse_with_timed_enable: true  # Means we'll use mode 70 by default
-    c_2_stage_pulse:  # 0A,81,00,10,0A,FF,14,AA,00
+    c_longer_pwm2:  # DL:08,81,00,70,0A,FF,C8,EE,00
+        number: io0804-0  # 0x08
+        default_hold_power: 0.75  # 0xEE
+        platform_settings:
+            pwm2_ms: 20000  # 0xC8 (20000ms / 100)
+    c_2_stage_pulse:  # DL:0A,81,00,10,18,FE,14,AA,00
         number: io0804-2  # 0x0A
+        default_pulse_ms: 24  # 0x18
+        default_pulse_power: 0.875  # 0xFE
+        default_hold_power: 0.5  # 0xAA
         platform_settings:
             pwm2_ms: 20  # 0x14
-            pwm2_power: 0.5  # 0xAA
     c_pwm2:  # DL:0B,81,00,10,14,AA,14,AA,00
         number: io0804-3  # 0x0B
         default_pulse_ms: 20  # 0x14
         default_pulse_power: 0.53  # 0xAA
+        default_hold_power: 0.51  # 0xAA
         platform_settings:
             pwm2_ms: 20 # 0x14
-            pwm2_power: .51  # 0xAA
-    c_long_pulse:  # DL:0C,81,00,70,FF,FF,11,FF,00 (Mode 70, pwm1_ms = 255, pwm2_ms = 1700)
-        number: io1616-0 # 0x0C
-        default_pulse_ms: 2000
-        max_hold_power: 1.0  # 0xFF
     c_flipper_main:
         number: io1616-1  # 0x0D
         default_pulse_ms: 10  # 0x0A

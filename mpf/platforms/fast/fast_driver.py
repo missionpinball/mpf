@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from mpf.core.platform import DriverConfig
 from mpf.core.utility_functions import Util
+from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.platforms.fast.communicators.base import FastSerialCommunicator
 
@@ -41,6 +42,7 @@ class FASTDriver:
         self.communicator = communicator
         self.number = hw_number  # must be int to work with the rest of MPF
         self.hw_number = Util.int_to_hex_string(hw_number)  # hex version the FAST hw actually uses
+        self.autofire_config = None
 
         self.baseline_driver_config = FastDriverConfig(number=self.hw_number, trigger='00',
                                                        switch_id='00', mode='00',
@@ -83,7 +85,6 @@ class FASTDriver:
         # platform_settings:
             # recycle_ms: single|ms|None
             # pwm2_ms: single|ms|None
-            # pwm2_power: single|float(0,1)|None
 
         # Mode 00 - Disable
         # Mode 10 - Pulse
@@ -93,12 +94,20 @@ class FASTDriver:
         # if mpf_config.default_timed_enable_ms:  # Pulse + Hold
         #     return self.convert_to_mode_18(mpf_config, platform_settings)
 
-        if 25500 >= mpf_config.default_pulse_ms > 255 or mpf_config.pulse_with_timed_enable:  # Long Pulse
-            return self.convert_to_mode_70(mpf_config, platform_settings)
-        elif 255 >= mpf_config.default_pulse_ms >= 0:
-            return self.convert_to_mode_10(mpf_config, platform_settings)
+        if mpf_config.default_recycle is not None:
+            raise ConfigFileError(f"FAST platform does not support default_recycle for coils. Use recycle_ms instead. Coil '{mpf_config.name}'.", 7, self.log.name)
 
-        raise AssertionError("Missed One")
+        if mpf_config.pulse_with_timed_enable:
+            raise ConfigFileError(f"FAST platform does not support pulse_with_timed_enable for coils. Use pwm2_ms instead. Coil '{mpf_config.name}'.", 7, self.log.name)
+
+        if mpf_config.default_pulse_ms > 255:
+            raise ConfigFileError(f"FAST platform does not support default_pulse_ms > 255. Use pwm2_ms instead which goes up to 25,500ms. Coil '{mpf_config.name}'.", 7, self.log.name)
+
+        if platform_settings['pwm2_ms'] and platform_settings['pwm2_ms'] > 255:
+            return self.convert_to_mode_70(mpf_config, platform_settings)
+
+        else:
+            return self.convert_to_mode_10(mpf_config, platform_settings)
 
     def convert_to_mode_10(self, mpf_config: DriverConfig, platform_settings) -> FastDriverConfig:
         # Pulse
@@ -106,16 +115,11 @@ class FASTDriver:
 
         pwm2_ms, pwm2_power, recycle_ms = self._get_platform_settings(mpf_config, platform_settings)
 
-        if mpf_config.default_pulse_ms > 255:
-            pulse_ms = 255
-        else:
-            pulse_ms = mpf_config.default_pulse_ms
-
         return FastDriverConfig(number = self.hw_number,
                                 trigger='81',
                                 switch_id='00',
                                 mode='10',
-                                param1=Util.int_to_hex_string(pulse_ms),  # pwm1_ms
+                                param1=Util.int_to_hex_string(mpf_config.default_pulse_ms),  # pwm1_ms
                                 param2=Util.float_to_pwm8_hex_string(mpf_config.default_pulse_power),  # pwm1_power
                                 param3=Util.int_to_hex_string(pwm2_ms),  # pwm2_ms
                                 param4=Util.float_to_pwm8_hex_string(pwm2_power),  # pwm2_power
@@ -143,18 +147,13 @@ class FASTDriver:
 
         _, pwm2_power, recycle_ms = self._get_platform_settings(mpf_config, platform_settings)
 
-        if mpf_config.default_pulse_ms > 255:
-            pulse_ms = 255
-            pwm2_ms = (mpf_config.default_pulse_ms - 255) // 100
-        else:
-            pulse_ms = mpf_config.default_pulse_ms
-            pwm2_ms = mpf_config.default_timed_enable_ms // 100
+        pwm2_ms = platform_settings['pwm2_ms'] // 100
 
         return FastDriverConfig(number = self.hw_number,
                                 trigger='81',
                                 switch_id='00',
                                 mode='70',
-                                param1=Util.int_to_hex_string(pulse_ms),  # pwm1_ms
+                                param1=Util.int_to_hex_string(mpf_config.default_pulse_ms),  # pwm1_ms
                                 param2=Util.float_to_pwm8_hex_string(mpf_config.default_pulse_power),  # pwm1_power
                                 param3=Util.int_to_hex_string(pwm2_ms),  # pwm2_ms * 100ms
                                 param4=Util.float_to_pwm8_hex_string(pwm2_power),  # pwm2_power
@@ -167,10 +166,10 @@ class FASTDriver:
         else:
             pwm2_ms = 0
 
-        if platform_settings['pwm2_power'] is not None:
-            pwm2_power = platform_settings['pwm2_power']
-        else:
+        if mpf_config.default_hold_power is not None:
             pwm2_power = mpf_config.default_hold_power
+        else:
+            pwm2_power = 0
 
         if platform_settings['recycle_ms'] is not None:
             recycle_ms = platform_settings['recycle_ms']
@@ -179,14 +178,40 @@ class FASTDriver:
 
         return pwm2_ms, pwm2_power, recycle_ms
 
-    def send_config_to_driver(self):
-        msg = (f'{self.communicator.driver_cmd}:{self.hw_number},{self.current_driver_config.trigger},'
+    def set_bit(self, hex_string, bit):
+        """Sets a bit in a hex string.
+
+        Args:
+            hex_string (_type_): Hex string, e.g. '81'
+            bit (_type_): Bit to set, e.g. 3
+
+        Returns:
+            _type_: Returns the hex string with the bit set, e.g. '89'
+        """
+        num = int(hex_string, 16)
+        num |= 1 << bit
+        return Util.int_to_hex_string(num)
+
+    def clear_bit(self, hex_string, bit):
+        num = int(hex_string, 16)
+        num &= ~(1 << bit)
+        return Util.int_to_hex_string(num)
+
+    def send_config_to_driver(self, one_shot: bool = False, wait_to_confirm: bool = False):
+
+        if one_shot:
+            trigger = self.set_bit(self.current_driver_config.trigger, 3)
+        else:
+            trigger = self.current_driver_config.trigger
+
+        msg = (f'{self.communicator.driver_cmd}:{self.hw_number},{trigger},'
                f'{self.current_driver_config.switch_id},{self.current_driver_config.mode},{self.current_driver_config.param1},'
                f'{self.current_driver_config.param2},{self.current_driver_config.param3},{self.current_driver_config.param4},'
                f'{self.current_driver_config.param5}')
-        self.communicator.send_with_confirmation(msg, f'{self.communicator.driver_cmd}')
-
-        # TODO save this as FastDriverConfig as the last config sent to the driver
+        if wait_to_confirm:
+            self.communicator.send_with_confirmation(msg, f'{self.communicator.driver_cmd}')
+        else:
+            self.communicator.send_and_forget(msg)
 
     def get_board_name(self):
         # This code is duplicated, TODO
@@ -232,27 +257,24 @@ class FASTDriver:
         """Reset a driver."""
         self.log.debug("Resetting driver %s", self.driver_settings)
 
-        cmd = f'{self.communicator.driver_cmd}:{self.number},00,00,00'
+        cmd = f'{self.communicator.driver_cmd}:{self.hw_number},00,00,00,00,00,00,00,00'
 
         self.communicator.send_with_confirmation(cmd, self.communicator.driver_cmd)
 
     def disable(self):
         """Disable (turn off) this driver."""
-        cmd = f'{self.communicator.trigger_cmd}:{self.number},02'
-
-        self.log.debug("Sending Disable Command: %s", cmd)
-        self.communicator.send_and_forget(cmd)  # TODO remove config lookups
-
+        self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},02')
         self._reenable_autofire_if_configured()
 
         # reenable the autofire
-        if self.autofire:
-            cmd = f'{self.communicator.trigger_cmd}:{self.number},00'
-            self.log.debug("Re-enabling auto fire mode: %s", cmd)
-            self.communicator.send_and_forget(cmd)  # TODO remove config lookups
+        if self.autofire_config:
+            cmd = f'{self.communicator.trigger_cmd}:{self.hw_number},00'
+            self.log.debug("Re-enabling autofire mode: %s", cmd)
+            self.communicator.send_and_forget(cmd)
 
     def set_autofire(self, autofire_cmd, pulse_duration, pulse_power, hold_power):
         """Set an autofire."""
+        raise AssertionError("Not implemented")
         self.autofire = autofire_cmd, (pulse_duration, pulse_power, hold_power)
         self.config_state = pulse_duration, pulse_power, hold_power
         self._autofire_cleared = False
@@ -261,6 +283,7 @@ class FASTDriver:
 
     def clear_autofire(self, config_cmd, number):
         """Clear autofire."""
+        raise AssertionError("Not implemented")
         cmd = '{}{},81'.format(config_cmd, number)
         self.log.debug("Clearing hardware rule: %s", cmd)
         self.communicator.send_with_confirmation(cmd, self.communicator.driver_cmd)
@@ -269,31 +292,49 @@ class FASTDriver:
 
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable (turn on) this driver."""
-        config_state = pulse_settings.duration, pulse_settings.power, hold_settings.power
-        if self.autofire and self.config_state == config_state:
-            # If this driver is also configured for an autofire rule, we just
-            # manually trigger it with the trigger_cmd and manual on ('03')
-            cmd = f'{self.communicator.trigger_cmd}:{self.number},03'
-        else:
-            # Otherwise we send a full config command, trigger C1 (logic triggered
-            # and drive now) switch ID 00, mode 18 (latched)
-            self._autofire_cleared = True
 
-            cmd = '{}:{},C1,00,18,{},{},{},{}'.format(
-                self.communicator.driver_cmd,
-                self.number,
-                Util.int_to_hex_string(pulse_settings.duration),
-                Util.float_to_pwm8_hex_string(pulse_settings.power),
-                self.get_hold_pwm_for_cmd(hold_settings.power),
-                self.get_recycle_ms_for_cmd(self.baseline_mpf_config.default_recycle, pulse_settings.duration)
-            )
-            self.config_state = (pulse_settings.duration, pulse_settings.duration, hold_settings.power)
+        reconfigured = False
+        mode = self.current_driver_config.mode
 
-        self.log.debug("Sending Enable Command: %s", cmd)
-        self.communicator.send_and_forget(cmd)  # TODO send_txt_with_ack
+        pwm1_ms = Util.int_to_hex_string(pulse_settings.duration)
+        pwm1_power = Util.float_to_pwm8_hex_string(pulse_settings.power)
+        pwm2_power = Util.float_to_pwm8_hex_string(hold_settings.power)
+
+        if self.current_driver_config.param1 != pwm1_ms:
+            self.current_driver_config.param1 = pwm1_ms
+            reconfigured = True
+
+        if self.current_driver_config.param2 != pwm1_power:
+            self.current_driver_config.param2 = pwm1_power
+            reconfigured = True
+
+        if self.current_driver_config.param3 != pwm2_power:
+            self.current_driver_config.param3 = pwm2_power
+            reconfigured = True
+
+        if self.current_driver_config.param4 != '00':
+            self.current_driver_config.param4 = '00'
+            reconfigured = True
+
+        if self.current_driver_config.mode != '18':
+            self.current_driver_config.mode = '18'
+            reconfigured = True
+
+        if not reconfigured:
+            # Trigger the driver directly using the existing configuration
+            self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},03')
+            return
+        else:  # Send a new driver config and also trigger it now
+            self.current_driver_config.trigger = 'C1'
+            self.send_config_to_driver(one_shot=False)
 
     def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Pulse and hold this driver for a specified duration."""
+
+        if not hold_settings.duration and self.current_driver_config.mode == '70':
+            # If we are in mode 70, timed enable defaults are already set
+            hold_settings = None
+
         self._pulse(pulse_settings, hold_settings)
 
     def pulse(self, pulse_settings: PulseSettings):
@@ -306,30 +347,12 @@ class FASTDriver:
         The FAST platform supports pulse and hold configuration in the same command, so
         this method can be used for both pulse() and timed_enable() behavior.
         """
+        reconfigured = False
+        mode = self.current_driver_config.mode
+
         pwm1_ms = Util.int_to_hex_string(pulse_settings.duration)
         pwm1_power = Util.float_to_pwm8_hex_string(pulse_settings.power)
 
-        if hold_settings is not None:
-
-            if hold_settings.duration > 25500:
-                raise AssertionError("FAST platform does not support hold durations > 25500ms")
-            elif 25500 >= hold_settings.duration > 255:
-                hold_ms = Util.int_to_hex_string(hold_settings.duration // 100)
-                mode = '70'
-            elif 255 >= hold_settings.duration >= 0:
-                hold_ms = Util.int_to_hex_string(hold_settings.duration)
-                mode = '18'
-
-            hold_ms = Util.int_to_hex_string(hold_settings.duration)
-            hold_power = Util.float_to_pwm8_hex_string(hold_settings.power)
-
-        else:
-            hold_ms = '00'
-            hold_power = '00'
-
-
-        # reconfigure if we have to
-        reconfigured = False
         if self.current_driver_config.param1 != pwm1_ms:
             self.current_driver_config.param1 = pwm1_ms
             reconfigured = True
@@ -338,40 +361,46 @@ class FASTDriver:
             self.current_driver_config.param2 = pwm1_power
             reconfigured = True
 
+        if hold_settings is not None:
+            if hold_settings.duration > 25500:
+                raise AssertionError("FAST platform does not support hold durations > 25500ms")
+            elif 25500 >= hold_settings.duration > 255:
+                hold_ms = Util.int_to_hex_string(hold_settings.duration // 100)
+                mode = '70'
+            elif 255 >= hold_settings.duration >= 0:
+                hold_ms = Util.int_to_hex_string(hold_settings.duration)
+                mode = '10'
 
+            hold_power = Util.float_to_pwm8_hex_string(hold_settings.power)
 
-
-        if not self.config_state or self.config_state[0] != config_state[0] or self.config_state[1] != config_state[1]:
-
-            self.config_state = config_state
-            self._autofire_cleared = True
-
-            # The 89 trigger will write this rule to the driver and pulse it immediately after
-            cmd = '{}:{},89,00,10,{},{},{},{},00'.format(
-                self.communicator.driver_cmd,
-                self.number,
-                hex_ms_string,
-                Util.float_to_pwm8_hex_string(pulse_settings.power),
-                hold_ms,
-                hold_power
-            )
-            self.communicator.send_with_confirmation(cmd, self.communicator.driver_cmd)
         else:
+            hold_ms = self.current_driver_config.param3
+            hold_power = self.current_driver_config.param4
+
+        if self.current_driver_config.mode != mode:
+            self.current_driver_config.mode = mode
+            reconfigured = True
+
+        if self.current_driver_config.param3 != hold_ms:
+            self.current_driver_config.param3 = hold_ms
+            reconfigured = True
+
+        if self.current_driver_config.param4 != hold_power:
+            self.current_driver_config.param4 = hold_power
+            reconfigured = True
+
+        if not reconfigured:
             # Trigger the driver directly using the existing configuration
-            cmd = f'{self.communicator.trigger_cmd}:{self.hw_number},01'
-            self.communicator.send_and_forget(cmd)
+            self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},01')
+            return
 
-        # restore autofire
-        self._reenable_autofire_if_configured()
-
-        return Util.hex_string_to_int(hex_ms_string)
+        else:  # Send a new driver config and also trigger it now
+            self.send_config_to_driver(one_shot=True)
+            self._reenable_autofire_if_configured()
 
     def _reenable_autofire_if_configured(self):
         """Reenable autofire if configured."""
-        if self.autofire and self._autofire_cleared:
-            self._autofire_cleared = False
-            cmd = self.autofire[0]
-            self.config_state = self.autofire[1]
-
-            self.log.debug("Re-enabling auto fire mode: %s", cmd)
-            self.communicator.send_with_confirmation(cmd, self.communicator.driver_cmd)
+        if self.autofire_config and self.autofire_config != self.current_driver_config:
+            self.log.debug("Re-enabling autofire mode")
+            self.current_driver_config = copy(self.autofire_config)
+            self.send_config_to_driver()

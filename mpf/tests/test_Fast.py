@@ -321,15 +321,12 @@ class TestFast(MpfTestCase):
             "DL:00,81,00,10,0A,FF,00,00,00": "DL:P",
             "DL:01,81,00,10,0A,FF,00,FF,00": "DL:P",
             "DL:02,81,00,10,17,AA,00,00,00": "DL:P",
-            "DL:03,81,00,10,0A,FF,00,00,00": "DL:P",
-            "DL:04,81,00,10,0A,FF,00,00,00": "DL:P",
             "DL:05,81,00,10,0A,FF,00,00,1B": "DL:P",
-            "DL:06,81,00,10,0A,FF,00,EE,00": "DL:P",
+            "DL:06,81,00,70,0A,FF,14,EE,00": "DL:P",
             "DL:07,81,00,10,0A,FF,00,88,00": "DL:P",
-            "DL:09,81,00,70,14,FF,04,88,00": "DL:P",
-            "DL:0A,81,00,10,0A,FF,14,AA,00": "DL:P",
+            "DL:08,81,00,70,0A,FF,C8,EE,00": "DL:P",
+            "DL:0A,81,00,10,18,FE,14,AA,00": "DL:P",
             "DL:0B,81,00,10,14,AA,14,AA,00": "DL:P",
-            "DL:0C,81,00,70,FF,FF,11,FF,00": "DL:P",
             "DL:0D,81,00,10,0A,FF,00,01,00": "DL:P",
             "DL:0E,81,00,10,0A,FF,00,01,00": "DL:P",
             "DL:0F,81,00,10,0E,FF,00,01,00": "DL:P",
@@ -481,18 +478,16 @@ class TestFast(MpfTestCase):
             self.advance_time_and_run(1)
 
     def test_coils(self):
-
-        # The default expected commands will verify all the coils are configured properly. We just need to ensure things get enabled properly.
-
+        # The default expected commands will verify all the coils are configured properly.
+        # We just need to ensure things get enabled properly.
         self.confirm_commands()
 
-        # self._test_coil_configure()
         self._test_pulse()
-        # self._test_long_pulse()
-        # self._test_timed_enable()
-        # self._test_default_timed_enable()
-        # self._test_enable_exception()
-        # self._test_allow_enable()
+        self._test_long_pulse()
+        self._test_timed_enable()
+        self._test_default_timed_enable()
+        self._test_enable_exception()
+        self._test_allow_enable()
         # self._test_pwm_ssm()
 
         # test hardware scan
@@ -507,34 +502,6 @@ class TestFast(MpfTestCase):
             )
 
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
-
-    def _test_coil_configure(self):
-        self.assertEqual("FAST Board 0", self.machine.coils["c_test"].hw_driver.get_board_name())
-        self.assertEqual("FAST Board 3", self.machine.coils["c_flipper_hold"].hw_driver.get_board_name())
-        # last driver on board
-        self.serial_connections['net2'].expected_commands = {
-            "DL:2B,00,00,00": "DL:P"
-        }
-        coil = self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, 'io1616lower-15',
-                                                              {"connection": "network", "recycle_ms": 10})
-        self.assertEqual('2B', coil.number)
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.serial_connections['net2'].expected_commands)
-
-        # board 0 has 8 drivers. configuring driver 9 should not work
-        with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, 'io3208-8',
-                                                           {"connection": "network", "recycle_ms": 10})
-
-        # test error for invalid board
-        with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, 'brian-0',
-                                                           {"connection": "network", "recycle_ms": 10})
-
-        # test error for driver number too high
-        with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, 'io3208-9',
-                                                           {"connection": "network", "recycle_ms": 10})
 
     def _test_pulse(self):
 
@@ -556,74 +523,74 @@ class TestFast(MpfTestCase):
         self.confirm_commands()
 
         # Pulse default and it should reconfigure to default
-        self.serial_connections['net2'].expected_commands = {'DL:00,81,00,10,0A,FF,00,00,00': 'DL:P'}
+        self.serial_connections['net2'].expected_commands = {'DL:00,89,00,10,0A,FF,00,00,00': 'DL:P'}
         coil.pulse()
         self.confirm_commands()
 
-        # pulse with non-standard power
+        # pulse with non-standard ms and power
+        self.serial_connections['net2'].expected_commands = {'DL:00,89,00,10,64,92,00,00,00': 'DL:P'}
         coil.pulse(100, 0.375)
+        self.confirm_commands()
 
-
-        self.serial_connections['net2'].expected_commands = {
-            "DL:04,81,00,10,17,FF,00,00,00": "DL:P",  # initial config
-            "TL:04,01": "TL:P"  # manual pulse
-        }
-        # pulse coil 4
-        self.machine.coils["c_test"].pulse()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.serial_connections['net2'].expected_commands)
+        # Do that same pulse again and it should just use a TL since the coil is already configured
+        self.serial_connections['net2'].expected_commands = {"TL:00,01": "TL:P"}
+        coil.pulse(100, 0.375)
+        self.confirm_commands()
 
     def _test_long_pulse(self):
-        # enable command
-        self.serial_connections['net2'].expected_commands = {
-            "DL:12,C1,00,18,00,FF,FF,00": "DL:P"
-        }
-        self.machine.coils["c_long_pulse"].pulse()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.serial_connections['net2'].expected_commands)
 
-        # disable command
-        self.serial_connections['net2'].expected_commands = {
-            "TL:12,02": "TL:P"
-        }
+        coil = self.machine.coils["c_long_pwm2"]
 
+        # pulse based on its initial config
+        self.serial_connections['net2'].expected_commands = {"TL:06,01": "TL:P"}
+        coil.pulse()
+        self.confirm_commands()
+
+        self.advance_time_and_run(21)
+        # pulse it again, but disable it partway through
+
+        self.serial_connections['net2'].expected_commands = {"TL:06,01": "TL:P",
+                                                             "TL:06,02": "TL:P",
+                                                            }
+
+        coil.pulse()
         self.advance_time_and_run(1)
-        # pulse_ms is 2000ms, so after 1s, this should not be sent
-        self.assertTrue(self.serial_connections['net2'].expected_commands)
-
-        self.advance_time_and_run(1)
-        # but after 2s, it should be
-        self.assertFalse(self.serial_connections['net2'].expected_commands)
+        coil.disable()
+        self.confirm_commands()
 
     def _test_timed_enable(self):
-        # enable command
-        self.serial_connections['net2'].expected_commands = {
-            "DL:16,89,00,10,14,FF,C8,88,00": "DL:P"
-        }
-        self.machine.coils["c_timed_enable"].timed_enable()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.serial_connections['net2'].expected_commands)
+
+        coil = self.machine.coils["c_long_pwm2"]  # DL:06,81,00,70,0A,FF,14,EE,00
+
+        # timed_enable based on its current config
+        self.serial_connections['net2'].expected_commands = {"TL:06,01": "TL:P"}
+        coil.timed_enable()
+        self.confirm_commands()
+
+        self.serial_connections['net2'].expected_commands = {"DL:06,89,00,70,0F,FF,0A,88,00": "TL:P"}
+        coil.timed_enable(1000, 0.25, 15, 1.0)
+        self.confirm_commands()
 
     def _test_default_timed_enable(self):
-        # enable command
-        self.serial_connections['net2'].expected_commands = {
-            "DL:17,89,00,10,14,FF,C8,88,00": "DL:P"
-        }
-        self.machine.coils["c_default_timed_enable"].pulse()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.serial_connections['net2'].expected_commands)
+        # test that a regular pulse() command will use the long pulse config
+        coil = self.machine.coils["c_longer_pwm2"]  # DL:08,81,00,70,0A,FF,C8,EE,00
+
+        # timed_enable based on its current config
+        self.serial_connections['net2'].expected_commands = {"TL:08,01": "TL:P"}
+        coil.pulse()
+        self.confirm_commands()
 
     def _test_enable_exception(self):
         # enable coil which does not have allow_enable
         with self.assertRaises(AssertionError):
-            self.machine.coils["c_test"].enable()
+            self.machine.coils["c_baseline"].enable()
             self.advance_time_and_run(.1)
 
     def _test_allow_enable(self):
         self.serial_connections['net2'].expected_commands = {
-            "DL:06,C1,00,18,17,FF,FF,00": "DL:P"
+            "DL:01,C1,00,18,0A,FF,FF,00,00": "DL:P"
         }
-        self.machine.coils["c_test_allow_enable"].enable()
+        self.machine.coils["c_allow_enable"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.serial_connections['net2'].expected_commands)
 
