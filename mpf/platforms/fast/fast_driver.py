@@ -324,6 +324,59 @@ class FASTDriver:
             else:
                 self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},00')
 
+    def set_autofire_hold_and_release(self, coil_settings, switch):
+        reconfigured = False
+        trigger_needed = False
+        switch_needed = False
+        mode = '18'
+
+        pwm1_ms = Util.int_to_hex_string(coil_settings.pulse_settings.duration)
+        pwm1_power = Util.float_to_pwm8_hex_string(coil_settings.pulse_settings.power)
+        pwm2_power = Util.float_to_pwm8_hex_string(coil_settings.hold_settings.power)
+
+        if self.current_driver_config.param1 != pwm1_ms:
+            self.current_driver_config.param1 = pwm1_ms
+            reconfigured = True
+
+        if self.current_driver_config.param2 != pwm1_power:
+            self.current_driver_config.param2 = pwm1_power
+            reconfigured = True
+
+        if self.current_driver_config.param3 != pwm2_power:
+            self.current_driver_config.param3 = pwm2_power
+            reconfigured = True
+
+        if self.current_driver_config.switch_id != switch.hw_switch.hw_number:
+            self.current_driver_config.switch_id = switch.hw_switch.hw_number
+            trigger_needed = True
+            switch_needed = True
+
+        if self.current_driver_config.mode != mode:
+            self.current_driver_config.mode = mode
+            reconfigured = True
+
+        trigger = '01'
+
+        if switch.invert:
+            trigger = self.set_bit(trigger, 4)
+
+        if self.is_new_config_needed(self.current_driver_config.trigger, trigger):
+            reconfigured = True
+        elif trigger != self.current_driver_config.trigger:
+            trigger_needed = True
+
+        self.current_driver_config.trigger = trigger
+        self.autofire_config = copy(self.current_driver_config)
+
+        if reconfigured:  # Send a new driver config
+            self.send_config_to_driver(one_shot=False)
+        elif trigger_needed:  # We only need to update the triggers
+            # Set the driver to automatic using the existing configuration
+            if switch_needed:
+                self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},00,{switch.hw_switch.hw_number}')
+            else:
+                self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},00')
+
     def is_new_config_needed(self, current, new):
         # figures out if bits other than 6 and 7 changed, meaning we need a full new DL command not just TL update
         current_num = int(current, 16)

@@ -102,14 +102,14 @@ coils:
         default_hold_power: 0.51  # 0xAA
         platform_settings:
             pwm2_ms: 20 # 0x14
-    c_flipper_main:
+    c_flipper_main:  # DL:0D,81,00,10,0A,FF,00,01,00
         number: io1616-1  # 0x0D
         default_pulse_ms: 10  # 0x0A
         default_hold_power: 0.125
-    c_flipper_hold:
+    c_flipper_hold:  # DL:0E,81,00,10,0A,FF,00,01,00
         number: io1616-2  # 0x0E
         default_hold_power: 0.125  # 0x20
-    c_flipper_single_wound:
+    c_flipper_single_wound:  # DL:0F,81,00,10,0E,FF,00,01,00
         number: io1616-3  # 0x0F
         default_pulse_ms: 14  # 0x0A
         default_hold_power: 0.125  # 0x20
