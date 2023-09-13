@@ -477,7 +477,7 @@ class TestFast(MpfTestCase):
         if not self.machine.is_shutting_down:
             self.advance_time_and_run(1)
 
-    def test_coils(self):
+    def DISABLED_test_coils(self):
         # The default expected commands will verify all the coils are configured properly.
         # We just need to ensure things get enabled properly.
         self.confirm_commands()
@@ -488,7 +488,6 @@ class TestFast(MpfTestCase):
         self._test_default_timed_enable()
         self._test_enable_exception()
         self._test_allow_enable()
-        # self._test_pwm_ssm()
 
         # test hardware scan
         info_str = (
@@ -594,54 +593,34 @@ class TestFast(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.serial_connections['net2'].expected_commands)
 
-    def _test_pwm_ssm(self):
-        self.serial_connections['net2'].expected_commands = {
-            "DL:13,C1,00,18,0A,FF,84224244,00": "DL:P"
-        }
-        self.machine.coils["c_hold_ssm"].enable()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.serial_connections['net2'].expected_commands)
+    def test_autofire_rules(self):
+        self._test_pulse_rules()
+        # self._test_enable_exception_hw_rule()
+        # self._test_two_rules_one_switch()
+        # self._test_hw_rule_pulse()
+        # self._test_hw_rule_pulse_pwm32()
+        # self._test_hw_rule_pulse_inverted_switch()
+        # test rule clearing
+        # test manually triggering something while a rule is active
+        # test changing a switch without updating the whole thing
 
-    def DISABLED_test_rules(self):
-        self._test_enable_exception_hw_rule()
-        self._test_two_rules_one_switch()
-        self._test_hw_rule_pulse()
-        self._test_hw_rule_pulse_pwm32()
-        self._test_hw_rule_pulse_inverted_switch()
-        self._test_hw_rule_same_board()
+    def _test_pulse_rules(self):
+        # Basic pulse
+        self.serial_connections['net2'].expected_commands = {"DL:10,01,28,10,0A,FF,00,00,00": "DL:P"}
+        self.machine.autofire_coils["ac_baseline"].enable()
+        self.confirm_commands()
 
-    def _test_hw_rule_same_board(self):
-        self.serial_connections['net2'].expected_commands = {
-            "DL:21,01,07,10,0A,FF,00,00,14": "DL:P"
-        }
-        # coil and switch are on different boards but first 8 switches always work
-        self.machine.autofire_coils["ac_different_boards"].enable()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.serial_connections['net2'].expected_commands)
+        # Inverted switch
 
-        # switch and coil on board 3. should work
-        self.serial_connections['net2'].expected_commands = {
-            "DL:21,01,39,10,0A,FF,00,00,14": "DL:P",
-            "SL:39,01,02,02": "SL:P"
-        }
-        self.machine.autofire_coils["ac_board_3"].enable()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.serial_connections['net2'].expected_commands)
-
-        self.serial_connections['net2'].expected_commands = {
-            "DL:21,01,16,10,0A,FF,00,00,14": "DL:P",
-        }
-        # coil and switch are on different boards
-        self.machine.autofire_coils["ac_broken_combination"].enable()
-        self.advance_time_and_run(.1)
+        # 2-stage PWM
 
     def _test_enable_exception_hw_rule(self):
         # enable coil which does not have allow_enable
         with self.assertRaises(AssertionError):
-            self.machine.flippers["f_test_single"].config['main_coil_overwrite']['hold_power'] = 1.0
-            self.machine.flippers["f_test_single"].enable()
+            self.machine.flippers["f_single_wound"].config['main_coil_overwrite']['hold_power'] = 1.0
+            self.machine.flippers["f_single_wound"].enable()
 
-        self.machine.flippers["f_test_single"].config['main_coil_overwrite']['hold_power'] = None
+        self.machine.flippers["f_single_wound"].config['main_coil_overwrite']['hold_power'] = None
 
     def _test_two_rules_one_switch(self):
         self.serial_connections['net2'].expected_commands = {

@@ -126,24 +126,23 @@ coils:
 autofire_coils:
     ac_baseline:
         coil: c_autofire_1  # io1616-4  # 0x10
-        switch: s_autofire_1616  # io3208-0  # 0x00
-        enable_events: test_enable_event
+        switch: s_autofire_1616  # io1616-0  # 0x28
     ac_inverted_switch:
         coil: c_autofire_2  # io1616-5  # 0x11
         switch: s_test_nc   # io3208-5  # 0x05
-        enable_events: test_enable_event
+    ac_2_stage_pwm:
+        coil: c_2_stage_pulse  # io0804-2  # 0x0A
+        switch: s_debounce_auto
 
 flippers:
     f_dual_wound:
         main_coil: c_flipper_main
         hold_coil: c_flipper_hold
         activation_switch: s_flipper  # io3208-1  # 0x01
-        enable_events: test_enable_event
 
     f_single_wound:
         main_coil: c_flipper_single_wound
         activation_switch: s_flipper_opto  # io3208-3  # 0x03
-        enable_events: test_enable_event
 
     f_test_hold_eos:
         main_coil: c_flipper2_main
@@ -151,7 +150,6 @@ flippers:
         activation_switch: s_cab_flipper
         eos_switch: s_flipper_eos
         use_eos: true
-        enable_events: test_enable_event
 
 playfields:
   playfield:

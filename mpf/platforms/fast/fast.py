@@ -643,28 +643,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     def _check_switch_coil_combination(self, switch, coil):
         # V2 hardware can write rules across node boards
-        if not self.machine_type == 'nano':
-            return
-
-        switch_number = int(switch.hw_switch.number[0], 16)
-        coil_number = int(coil.hw_driver.number, 16)
-
-        # first 8 switches always work
-        if 0 <= switch_number <= 7:
-            return
-
-        switch_index = 0
-        coil_index = 0
-        for board_obj in self.io_boards.values():
-            # if switch and coil are on the same board we are fine
-            if switch_index <= switch_number < switch_index + board_obj.switch_count and \
-                    coil_index <= coil_number < coil_index + board_obj.driver_count:
-                return
-            coil_index += board_obj.driver_count
-            switch_index += board_obj.switch_count
-
-        raise AssertionError(f"Driver {coil.hw_driver.number} and switch {switch.hw_switch.number} "
+        if not self.serial_connections['net'].check_switch_coil_combination(switch, coil):
+            raise AssertionError(f"Driver {coil.hw_driver.number} and switch {switch.hw_switch.number} "
                              "are on different boards. Cannot apply rule!")
+        return True
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         """Set pulse on hit and release rule to driver."""
@@ -734,25 +716,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit rule on driver."""
-        self.debug_log("Setting Pulse on hit and release HW Rule. Switch: %s,"
-                       "Driver: %s", enable_switch.hw_switch.number,
-                       coil.hw_driver.number)
-
-        self._check_switch_coil_combination(enable_switch, coil)
-
-        driver = coil.hw_driver
-
-        cmd = '{}{},{},{},10,{},{},00,00,{}'.format(
-            driver.get_config_cmd(),
-            coil.hw_driver.number,
-            driver.get_control_for_cmd(enable_switch),
-            enable_switch.hw_switch.number[0],
-            Util.int_to_hex_string(coil.pulse_settings.duration),
-            Util.float_to_pwm8_hex_string(coil.pulse_settings.power),
-            driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
-
-        enable_switch.hw_switch.calculate_debounce(enable_switch.debounce)
-        driver.set_autofire(cmd, coil.pulse_settings.duration, coil.pulse_settings.power, 0)
+        coil.hw_driver.set_autofire_pulse(coil.pulse_settings, enable_switch)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and enable and release rule on driver."""

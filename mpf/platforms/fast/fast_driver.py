@@ -272,14 +272,44 @@ class FASTDriver:
             self.log.debug("Re-enabling autofire mode: %s", cmd)
             self.communicator.send_and_forget(cmd)
 
-    def set_autofire(self, autofire_cmd, pulse_duration, pulse_power, hold_power):
-        """Set an autofire."""
-        raise AssertionError("Not implemented")
-        self.autofire = autofire_cmd, (pulse_duration, pulse_power, hold_power)
-        self.config_state = pulse_duration, pulse_power, hold_power
-        self._autofire_cleared = False
-        self.log.debug("Writing hardware rule: %s", autofire_cmd)
-        self.communicator.send_with_confirmation(autofire_cmd, self.communicator.driver_cmd)
+    def set_autofire_pulse(self, pulse_settings, switch):
+        reconfigured = False
+        mode = self.current_driver_config.mode
+
+        pwm1_ms = Util.int_to_hex_string(pulse_settings.duration)
+        pwm1_power = Util.float_to_pwm8_hex_string(pulse_settings.power)
+
+        if self.current_driver_config.param1 != pwm1_ms:
+            self.current_driver_config.param1 = pwm1_ms
+            reconfigured = True
+
+        if self.current_driver_config.param2 != pwm1_power:
+            self.current_driver_config.param2 = pwm1_power
+            reconfigured = True
+
+        if self.current_driver_config.switch_id != switch.hw_switch.hw_number:
+            self.current_driver_config.switch_id = switch.hw_switch.hw_number
+            reconfigured = True
+        # TODO TL can update the switch, if that's all we need, don't send a new config
+
+        trigger = '01'
+
+        if switch.invert:
+            trigger = self.set_bit(trigger, 4)
+
+        if self.current_driver_config.trigger != trigger:
+            self.current_driver_config.trigger = trigger
+            reconfigured = True
+
+        if not reconfigured:
+            # Set the driver to automatic using the existing configuration
+            self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},00')
+            return
+
+        else:  # Send a new driver config
+            self.send_config_to_driver(one_shot=False)
+
+        self.autofire_config = copy(self.current_driver_config)
 
     def clear_autofire(self, config_cmd, number):
         """Clear autofire."""
