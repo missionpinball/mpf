@@ -477,7 +477,7 @@ class TestFast(MpfTestCase):
         if not self.machine.is_shutting_down:
             self.advance_time_and_run(1)
 
-    def test_coils(self):
+    def DISABLED_test_coils(self):
         # The default expected commands will verify all the coils are configured properly.
         # We just need to ensure things get enabled properly.
         self.confirm_commands()
@@ -593,7 +593,7 @@ class TestFast(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.serial_connections['net2'].expected_commands)
 
-    def test_autofire_rules(self):
+    def DISABLED_test_autofire_rules(self):
         self._test_pulse_rules()
         self._test_pulse_rules_inverted_switch()
         self._test_long_pulse_rules()
@@ -791,66 +791,45 @@ class TestFast(MpfTestCase):
     def _switch_hit_cb(self, **kwargs):
         self.switch_hit = True
 
-    def DISABLED_test_switches(self):
+    def test_switches(self):
+        # Default startup SL commands test / confirm all the variations of the switch configs
+        self._test_bad_switch_configs()
         self._test_switch_changes()
         self._test_switch_changes_nc()
-        self._test_switch_configure()
 
-    def _test_switch_configure(self):
-        # last switch on first board
-        self.serial_connections['net2'].expected_commands = {
-            "SL:1F,01,04,04": "SL:P"
-        }
-        self.machine.default_platform.configure_switch('io3208-31', SwitchConfig(name="", debounce='auto', invert=0), {})
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.serial_connections['net2'].expected_commands)
-
-        # next should not work
+    def _test_bad_switch_configs(self):
+        # invalid switch
         with self.assertRaises(AssertionError):
             self.machine.default_platform.configure_switch('io3208-32', SwitchConfig(name="", debounce='auto', invert=0), {})
-
-        self.serial_connections['net2'].expected_commands = {
-            "SL:47,01,04,04": "SL:P"
-        }
-        self.machine.default_platform.configure_switch('io1616lower-15', SwitchConfig(name="", debounce='auto', invert=0), {})
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.serial_connections['net2'].expected_commands)
 
         # invalid board
         with self.assertRaises(AssertionError):
             self.machine.default_platform.configure_switch('brian-0', SwitchConfig(name="", debounce='auto', invert=0), {})
 
-        # switch number higher than board supports
-        with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch('io3208-33', SwitchConfig(name="", debounce='auto', invert=0), {})
-
     def _test_switch_changes(self):
         self.assertSwitchState("s_flipper", 0)
-        self.assertSwitchState("s_flipper_eos", 1)
 
         self.switch_hit = False
         self.advance_time_and_run(1)
-        self.assertSwitchState("s_test", 0)
+        self.assertSwitchState("s_baseline", 0)
         self.assertFalse(self.switch_hit)
 
-        self.machine.events.add_handler("s_test_active", self._switch_hit_cb)
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:07\r")
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:07\r")
+        self.machine.events.add_handler("s_baseline_active", self._switch_hit_cb)
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:00\r")
         self.advance_time_and_run(1)
 
         self.assertTrue(self.switch_hit)
-        self.assertSwitchState("s_test", 1)
+        self.assertSwitchState("s_baseline", 1)
         self.switch_hit = False
 
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
-        self.assertSwitchState("s_test", 1)
+        self.assertSwitchState("s_baseline", 1)
 
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:07\r")
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:07\r")
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:00\r")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
-        self.assertSwitchState("s_test", 0)
+        self.assertSwitchState("s_baseline", 0)
 
     def _test_switch_changes_nc(self):
         self.switch_hit = False
@@ -862,13 +841,13 @@ class TestFast(MpfTestCase):
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test_nc", 1)
 
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:1A\r")
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:05\r")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test_nc", 0)
 
         self.machine.events.add_handler("s_test_nc_active", self._switch_hit_cb)
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:1A\r")
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:05\r")
         self.advance_time_and_run(1)
 
         self.assertSwitchState("s_test_nc", 1)

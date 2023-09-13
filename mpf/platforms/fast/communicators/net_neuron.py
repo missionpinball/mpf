@@ -283,7 +283,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
             remote_processor: Processor which sent the message.
         """
         self.machine.switch_controller.process_switch_by_num(state=0,
-                                                             num=(msg, 0),
+                                                             num=int(msg, 16),
                                                              platform=self.platform)
 
     def _process_switch_closed(self, msg):
@@ -295,7 +295,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
             remote_processor: Processor which sent the message.
         """
         self.machine.switch_controller.process_switch_by_num(state=1,
-                                                             num=(msg, 0),
+                                                             num=int(msg, 16),
                                                              platform=self.platform)
 
     def _update_watchdog(self):
