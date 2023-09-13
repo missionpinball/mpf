@@ -131,8 +131,11 @@ autofire_coils:
         coil: c_autofire_2  # io1616-5  # 0x11
         switch: s_test_nc   # io3208-5  # 0x05
     ac_2_stage_pwm:
-        coil: c_2_stage_pulse  # io0804-2  # 0x0A
+        coil: c_long_pwm2
         switch: s_debounce_auto
+    ac_test_action:
+        coil: c_pwm2
+        switch: s_debounce_quick
 
 flippers:
     f_dual_wound:

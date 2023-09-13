@@ -763,7 +763,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         driver = coil.hw_driver
 
-        driver.clear_autofire(driver.get_config_cmd(), driver.number)
+        driver.clear_autofire()
 
 # TODO everything below needs to move
 

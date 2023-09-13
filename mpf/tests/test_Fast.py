@@ -594,25 +594,77 @@ class TestFast(MpfTestCase):
         self.assertFalse(self.serial_connections['net2'].expected_commands)
 
     def test_autofire_rules(self):
-        self._test_pulse_rules()
+        # self._test_pulse_rules()
+        # self._test_pulse_rules_inverted_switch()
+        # self._test_long_pulse_rules()
         # self._test_enable_exception_hw_rule()
-        # self._test_two_rules_one_switch()
-        # self._test_hw_rule_pulse()
-        # self._test_hw_rule_pulse_pwm32()
-        # self._test_hw_rule_pulse_inverted_switch()
-        # test rule clearing
-        # test manually triggering something while a rule is active
-        # test changing a switch without updating the whole thing
+        self._test_manual_action_during_active_rule()
 
     def _test_pulse_rules(self):
-        # Basic pulse
-        self.serial_connections['net2'].expected_commands = {"DL:10,01,28,10,0A,FF,00,00,00": "DL:P"}
+        # Basic pulse rule
+        # DL:10,81,00,10,0A,FF,00,00,00
+        # SL:28,01,04,04
+
+        # Enable, should just update existing rule via TL but add the switch ID
+        self.serial_connections['net2'].expected_commands = {"TL:10,00,28": "TL:P"}
         self.machine.autofire_coils["ac_baseline"].enable()
         self.confirm_commands()
 
-        # Inverted switch
+        # Disable, should update existing rule via TL
+        self.serial_connections['net2'].expected_commands = {"TL:10,02": "TL:P"}
+        self.machine.autofire_coils["ac_baseline"].disable()
+        self.confirm_commands()
 
-        # 2-stage PWM
+        # Re-enable, should update existing rule via TL
+        self.serial_connections['net2'].expected_commands = {"TL:10,00": "TL:P"}
+        self.machine.autofire_coils["ac_baseline"].enable()
+        self.confirm_commands()
+
+    def _test_pulse_rules_inverted_switch(self):
+        # Basic pulse rule with inverted switch
+        # DL:11,81,00,10,0A,FF,00,00,00
+        # SL:05,02,04,04
+
+        # Inverted switch, should send a new rule
+        self.serial_connections['net2'].expected_commands = {"DL:11,11,05,10,0A,FF,00,00,00": "DL:P"}
+        self.machine.autofire_coils["ac_inverted_switch"].enable()
+        self.confirm_commands()
+
+        # Disable, should update existing rule via TL
+        self.serial_connections['net2'].expected_commands = {"TL:11,02": "TL:P"}
+        self.machine.autofire_coils["ac_inverted_switch"].disable()
+        self.confirm_commands()
+
+        # Re-enable, should update existing rule via TL
+        self.serial_connections['net2'].expected_commands = {"TL:11,00": "TL:P"}
+        self.machine.autofire_coils["ac_inverted_switch"].enable()
+        self.confirm_commands()
+
+    def _test_long_pulse_rules(self):
+        # Pulse rules with long pulse (Mode 70)
+        driver = self.machine.coils["c_long_pwm2"].hw_driver
+        switch = self.machine.switches["s_debounce_auto"].hw_switch
+
+        # Verify current configs
+        self.assertEqual(driver.get_current_config(), 'DL:06,81,00,70,0A,FF,14,EE,00')
+        self.assertEqual(switch.get_current_config(), 'SL:06,01,04,04')
+
+        # Enable, should just update existing rule via TL but add the switch ID
+        self.serial_connections['net2'].expected_commands = {"TL:06,00,06": "TL:P"}
+        self.machine.autofire_coils["ac_2_stage_pwm"].enable()
+        self.confirm_commands()
+
+        # Disable, should update existing rule via TL
+        self.serial_connections['net2'].expected_commands = {"TL:06,02": "TL:P"}
+        self.machine.autofire_coils["ac_2_stage_pwm"].disable()
+        self.confirm_commands()
+
+        # Re-enable, should update existing rule via TL, want to ensure it keeps mode 70
+        self.serial_connections['net2'].expected_commands = {"TL:06,00": "TL:P"}
+        self.machine.autofire_coils["ac_2_stage_pwm"].enable()
+        self.confirm_commands()
+
+        self.assertEqual(driver.get_current_config(), 'DL:06,01,06,70,0A,FF,14,EE,00')
 
     def _test_enable_exception_hw_rule(self):
         # enable coil which does not have allow_enable
@@ -622,56 +674,69 @@ class TestFast(MpfTestCase):
 
         self.machine.flippers["f_single_wound"].config['main_coil_overwrite']['hold_power'] = None
 
-    def _test_two_rules_one_switch(self):
-        self.serial_connections['net2'].expected_commands = {
-            "SL:03,01,02,02": "SL:P",
-            "DL:04,01,03,10,17,FF,00,00,1B": "DL:P",
-            "DL:06,01,03,10,17,FF,00,00,2E": "DL:P"
-        }
-        self.post_event("ac_same_switch")
-        self.hit_and_release_switch("s_flipper")
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.serial_connections['net2'].expected_commands)
+    def _test_manual_action_during_active_rule(self):
+        driver = self.machine.coils["c_pwm2"].hw_driver
+        switch = self.machine.switches["s_debounce_quick"].hw_switch
 
-    def _test_hw_rule_pulse(self):
-        self.serial_connections['net2'].expected_commands = {
-            "DL:07,01,16,10,0A,FF,00,00,14": "DL:P",  # hw rule
-            "SL:16,01,02,02": "SL:P"                  # debounce quick on switch
-        }
-        self.machine.autofire_coils["ac_slingshot_test"].enable()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.serial_connections['net2'].expected_commands)
+        # Verify current configs
+        self.assertEqual(driver.get_current_config(), 'DL:0B,81,00,10,14,AA,14,AA,00')
+        self.assertEqual(switch.get_current_config(), 'SL:07,01,02,02')
 
-        self.serial_connections['net2'].expected_commands = {
-            "DL:07,81": "DL:P"
-        }
-        self.machine.autofire_coils["ac_slingshot_test"].disable()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.serial_connections['net2'].expected_commands)
+        # Enable, should just update existing rule via TL but add the switch ID
+        self.serial_connections['net2'].expected_commands = {"TL:0B,00,07": "TL:P"}
+        self.machine.autofire_coils["ac_test_action"].enable()
+        self.confirm_commands()
 
-    def _test_hw_rule_pulse_pwm32(self):
-        self.serial_connections['net2'].expected_commands = {
-            "DL:11,89,00,10,0A,AAAAAAAA,00,00,00": "DL:P"
-        }
-        self.machine.coils["c_pulse_pwm32_mask"].pulse()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.serial_connections['net2'].expected_commands)
+        # Manually pulse the coil, should not affect the rule
+        self.serial_connections['net2'].expected_commands = {"TL:0B,01": "TL:P"}
+        self.machine.coils["c_pwm2"].pulse()
+        self.confirm_commands()
 
-        self.serial_connections['net2'].expected_commands = {
-            "DL:11,C1,00,18,0A,AAAAAAAA,4A4A4A4A,00": "DL:P"
-        }
-        self.machine.coils["c_pulse_pwm32_mask"].enable()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.serial_connections['net2'].expected_commands)
+        # Disable, should update existing rule via TL
+        self.serial_connections['net2'].expected_commands = {"TL:0B,02": "TL:P"}
+        self.machine.autofire_coils["ac_test_action"].disable()
+        self.confirm_commands()
 
-    def _test_hw_rule_pulse_inverted_switch(self):
-        self.serial_connections['net2'].expected_commands = {
-            "DL:07,11,1A,10,0A,FF,00,00,14": "DL:P",
-            "SL:1A,01,02,02": "SL:P"
-        }
-        self.machine.autofire_coils["ac_inverted_switch"].enable()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.serial_connections['net2'].expected_commands)
+        # Manually pulse the coil, should not affect the rule
+        self.serial_connections['net2'].expected_commands = {"TL:0B,01": "TL:P"}
+        self.machine.coils["c_pwm2"].pulse()
+        self.confirm_commands()
+
+        # Re-enable, should update existing rule via TL
+        self.serial_connections['net2'].expected_commands = {"TL:0B,00": "TL:P"}
+        self.machine.autofire_coils["ac_test_action"].enable()
+        self.confirm_commands()
+
+        # Disabled the rule
+        self.serial_connections['net2'].expected_commands = {"TL:0B,02": "TL:P"}
+        self.machine.autofire_coils["ac_test_action"].disable()
+        self.confirm_commands()
+
+        # Manually pulse the coil with non-standard pulse
+        # trigger 89 = bit 0 driver enable + bit 3 one_shot + bit 7 disable switch
+        # switch is disabled since the rule is disabled
+        self.serial_connections['net2'].expected_commands = {"DL:0B,89,07,10,64,AA,14,AA,00": "DL:P"}
+        self.machine.coils["c_pwm2"].pulse(100)
+        self.confirm_commands()
+
+        # Enable the rule, should send new config since last pulse was non-standard
+        self.serial_connections['net2'].expected_commands = {"DL:0B,01,07,10,14,AA,14,AA,00": "DL:P"}
+        self.machine.autofire_coils["ac_test_action"].enable()
+        self.confirm_commands()
+
+        # Send non-standard pulse. Rule is enabled so a second DL command should be sent to reset the rule
+        # to the proper config
+        # trigger 09 = bit 0 driver enable + bit 3 one_shot, bit 7 is cleared since rule is active
+        self.serial_connections['net2'].expected_commands = {"DL:0B,09,07,10,FA,AA,14,AA,00": "DL:P"}
+        self.machine.coils["c_pwm2"].pulse(250)
+        self.confirm_commands()  # This also moves the clock 100ms
+
+        # Jump ahead 251ms and make sure the rule was put back
+        self.serial_connections['net2'].expected_commands = {"DL:0B,01,07,10,14,AA,14,AA,00": "DL:P"}
+        self.advance_time_and_run(0.051) # +51ms
+        self.confirm_commands()  # +100ms, 251ms total since manual pulse, so this command should have been sent
+
+        # hold a device on manually, then cancel it, make sure autofire comes back
 
     def _switch_hit_cb(self, **kwargs):
         self.switch_hit = True

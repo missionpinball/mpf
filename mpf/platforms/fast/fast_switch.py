@@ -66,6 +66,11 @@ class FASTSwitch:
 
         self.communicator.send_with_confirmation(msg, f'{self.communicator.switch_cmd}:P')
 
+    def get_current_config(self):
+        return (f'{self.communicator.switch_cmd}:{self.current_hw_config.number},'
+               f'{self.current_hw_config.mode},{self.current_hw_config.debounce_close},'
+               f'{self.current_hw_config.debounce_open}')
+
     def get_board_name(self):
         """Return the board of this switch."""
         if self.communicator.platform.is_retro:

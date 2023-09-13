@@ -213,6 +213,12 @@ class FASTDriver:
         else:
             self.communicator.send_and_forget(msg)
 
+    def get_current_config(self):
+        return (f'{self.communicator.driver_cmd}:{self.hw_number},{self.current_driver_config.trigger},'
+               f'{self.current_driver_config.switch_id},{self.current_driver_config.mode},{self.current_driver_config.param1},'
+               f'{self.current_driver_config.param2},{self.current_driver_config.param3},{self.current_driver_config.param4},'
+               f'{self.current_driver_config.param5}')
+
     def get_board_name(self):
         # This code is duplicated, TODO
         """Return the board of this driver."""
@@ -266,15 +272,12 @@ class FASTDriver:
         self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},02')
         self._reenable_autofire_if_configured()
 
-        # reenable the autofire
-        if self.autofire_config:
-            cmd = f'{self.communicator.trigger_cmd}:{self.hw_number},00'
-            self.log.debug("Re-enabling autofire mode: %s", cmd)
-            self.communicator.send_and_forget(cmd)
-
     def set_autofire_pulse(self, pulse_settings, switch):
         reconfigured = False
-        mode = self.current_driver_config.mode
+        trigger_needed = False
+        switch_needed = False
+        mode = self.current_driver_config.mode  # TODO need to ensure we have a pulse mode
+        # TODO BUG if this driver was manually controlled via non-pulse, it will not reset the mode to pulse
 
         pwm1_ms = Util.int_to_hex_string(pulse_settings.duration)
         pwm1_power = Util.float_to_pwm8_hex_string(pulse_settings.power)
@@ -289,36 +292,52 @@ class FASTDriver:
 
         if self.current_driver_config.switch_id != switch.hw_switch.hw_number:
             self.current_driver_config.switch_id = switch.hw_switch.hw_number
-            reconfigured = True
-        # TODO TL can update the switch, if that's all we need, don't send a new config
+            trigger_needed = True
+            switch_needed = True
 
         trigger = '01'
 
         if switch.invert:
             trigger = self.set_bit(trigger, 4)
 
-        if self.current_driver_config.trigger != trigger:
-            self.current_driver_config.trigger = trigger
+        if self.is_new_config_needed(self.current_driver_config.trigger, trigger):
             reconfigured = True
+        elif trigger != self.current_driver_config.trigger:
+            trigger_needed = True
 
-        if not reconfigured:
-            # Set the driver to automatic using the existing configuration
-            self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},00')
-            return
-
-        else:  # Send a new driver config
-            self.send_config_to_driver(one_shot=False)
-
+        self.current_driver_config.trigger = trigger
         self.autofire_config = copy(self.current_driver_config)
 
-    def clear_autofire(self, config_cmd, number):
+        if reconfigured:  # Send a new driver config
+            self.send_config_to_driver(one_shot=False)
+        elif trigger_needed:  # We only need to update the triggers
+            # Set the driver to automatic using the existing configuration
+            if switch_needed:
+                self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},00,{switch.hw_switch.hw_number}')
+            else:
+                self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},00')
+
+    def is_new_config_needed(self, current, new):
+        # figures out if bits other than 6 and 7 changed, meaning we need a full new DL command not just TL update
+        current_num = int(current, 16)
+        new_num = int(new, 16)
+        bitmask = 0x3F  # 0011 1111 in binary
+
+        # Use bitwise AND to mask out bits 6 and 7
+        current_num &= bitmask
+        new_num &= bitmask
+
+        return current_num != new_num
+
+    def clear_autofire(self):
         """Clear autofire."""
-        raise AssertionError("Not implemented")
-        cmd = '{}{},81'.format(config_cmd, number)
-        self.log.debug("Clearing hardware rule: %s", cmd)
-        self.communicator.send_with_confirmation(cmd, self.communicator.driver_cmd)
-        self.autofire = None
-        self.config_state = None
+
+        # TL control code 2 sets bit 7 and clears 6
+        self.current_driver_config.trigger = self.clear_bit(self.current_driver_config.trigger, 6)
+        self.current_driver_config.trigger = self.set_bit(self.current_driver_config.trigger, 7)
+
+        self.autofire_config = None
+        self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},02')
 
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable (turn on) this driver."""
@@ -426,11 +445,17 @@ class FASTDriver:
 
         else:  # Send a new driver config and also trigger it now
             self.send_config_to_driver(one_shot=True)
-            self._reenable_autofire_if_configured()
+            self.communicator.machine.delay.add(pulse_settings.duration, self._reenable_autofire_if_configured,
+                                                f'fast_driver_{self.number}_delay')
 
     def _reenable_autofire_if_configured(self):
         """Reenable autofire if configured."""
+        self._check_and_clear_delay()
         if self.autofire_config and self.autofire_config != self.current_driver_config:
             self.log.debug("Re-enabling autofire mode")
             self.current_driver_config = copy(self.autofire_config)
             self.send_config_to_driver()
+
+    def _check_and_clear_delay(self):
+        """Check if we have a delay and clear it."""
+        self.communicator.machine.delay.remove(f'fast_driver_{self.number}_delay')
