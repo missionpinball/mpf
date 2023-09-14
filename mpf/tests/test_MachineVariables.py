@@ -70,10 +70,12 @@ class TestMachineVariables(MpfTestCase):
         self.assertFalse(self.machine.variables.is_machine_var("expired_value"))
         self.assertTrue(self.machine.variables.is_machine_var("not_expired_value"))
         self.assertTrue(self.machine.variables.is_machine_var("player2_score"))
-        # should always persist
-        #self.assertTrue(self.machine.variables.machine_vars["player2_score"]["persist"])
+        # previously-persisted variables should continue to persist
+        self.assertTrue(self.machine.variables.machine_vars["player2_score"]["persist"])
         # random variable does not persist
-        self.assertFalse(self.machine.variables.machine_vars["another_score"]["persist"])
+        self.machine.variables.set_machine_var("temporary_variable", 1000)
+        self.assertEqual(1000, self.machine.variables.get_machine_var("temporary_variable"))
+        self.assertFalse(self.machine.variables.machine_vars["temporary_variable"]["persist"])
         # configured to persist
         self.assertTrue(self.machine.variables.machine_vars["test1"]["persist"])
         self.assertTrue(self.machine.variables.machine_vars["test2"]["persist"])
@@ -101,6 +103,8 @@ class TestMachineVariables(MpfTestCase):
 
         self.machine.variables.machine_var_data_manager._trigger_save.assert_called_with()
         self.assertEqual({
+                          'another_score': {'value': 123, 'expire': None, 'expire_secs': None},
+                          "not_expired_value": {'value': 24, 'expire': None, 'expire_secs': None},
                           'master_volume': {'value': 0.5, 'expire': None, 'expire_secs': None},
                           'test1': {'value': 42, 'expire': None, 'expire_secs': None},
                           'test2': {'value': '5', 'expire': None, 'expire_secs': None},

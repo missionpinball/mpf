@@ -56,7 +56,7 @@ class TestHighScoreMode(MpfBcpTestCase):
 
         # verify the data is accurate
 
-        new_score_data = {'score': [], 'loops': [('NEW', 50, {'player.number': 1})], 'hits': []}
+        new_score_data = {'score': [], 'loops': [('NEW', 50, {'player_number': 1})], 'hits': []}
 
         self.assertEqual(new_score_data,
                          self.machine.modes["high_score"].high_scores)
@@ -92,7 +92,7 @@ class TestHighScoreMode(MpfBcpTestCase):
 
         # verify the data is accurate
 
-        new_score_data = {'score': [], 'loops': [], 'hits': [('NEW', 50, {'player.number': 1, 'machine.credits_string':
+        new_score_data = {'score': [], 'loops': [], 'hits': [('NEW', 50, {'player_number': 1, 'machine_credits_string':
                           'FREE PLAY'})]}
 
         self.assertEqual(new_score_data,
