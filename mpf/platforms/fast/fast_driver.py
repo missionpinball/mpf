@@ -83,9 +83,6 @@ class FASTDriver:
         if mpf_config.default_recycle is not None:
             raise ConfigFileError(f"FAST platform does not support default_recycle for coils. Use platform_settings:recycle_ms instead. Coil '{mpf_config.name}'.", 7, self.log.name)
 
-        if mpf_config.pulse_with_timed_enable:
-            raise ConfigFileError(f"FAST platform does not support pulse_with_timed_enable for coils. Use platform_settings:pwm2_ms instead. Coil '{mpf_config.name}'.", 7, self.log.name)
-
         if mpf_config.default_pulse_ms > 255:
             raise ConfigFileError(f"FAST platform does not support default_pulse_ms > 255. Use platform_settings:pwm2_ms instead which goes up to 25,500ms. Coil '{mpf_config.name}'.", 7, self.log.name)
 
