@@ -673,29 +673,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         FAST Driver Mode 18 (with pwm2_power = 00)
         """
 
-        # coil.hw_driver.set_pulse_on_hit_and_release_rule(enable_switch, coil)
+        # Force hold to None which is needed with this rule
         coil.hold_settings = None
         coil.hw_driver.set_hardware_rule('18', enable_switch, coil)
 
-        # self.debug_log("Setting Pulse on hit and release HW Rule. Switch: %s,"
-        #                "Driver: %s", enable_switch.hw_switch.number,
-        #                coil.hw_driver.number)
-
-        # self._check_switch_coil_combination(enable_switch, coil)
-
-        # driver = coil.hw_driver
-
-        # cmd = '{}{},{},{},18,{},{},00,{},00'.format(
-        #     driver.get_config_cmd(),
-        #     coil.hw_driver.number,
-        #     driver.get_control_for_cmd(enable_switch),
-        #     enable_switch.hw_switch.number[0],
-        #     Util.int_to_hex_string(coil.pulse_settings.duration),
-        #     Util.float_to_pwm8_hex_string(coil.pulse_settings.power),
-        #     driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
-
-        # enable_switch.hw_switch.calculate_debounce(enable_switch.debounce)
-        # driver.set_autofire(cmd, coil.pulse_settings.duration, coil.pulse_settings.power, 0)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and enable and release rule on driver.
@@ -719,38 +700,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         FAST Driver Mode 75
         """
-        # Potential command from Dave:
-        # Command
-        # [DL/DN]:<DRIVER_ID>,<CONTROL>,<SWITCH_ID_ON>,<75>,<SWITCH_ID_OFF>,<Driver On Time1>,<Driver On Time2 X 100mS>,
-        # <PWM2><Driver Rest Time><CR>#
-        # SWITCH_ID_ON would be the flipper switch
-        # SWITCH_ID_OFF would be the EOS switch.
-        # So for the flipper, Driver On Time1 will = the maximum time the coil can be held on if the EOS fails.
-        # Driver On Time2 X 100mS would not be used for a flipper, so set it to 0.
-        # And PWM2 should be left on full 0xff unless you need less power for some reason.
-        self.debug_log("Setting Pulse on hit and release with HW Rule. Switch:"
-                       "%s, Driver: %s", enable_switch.hw_switch.number,
-                       coil.hw_driver.number)
+        del repulse_settings  # TODO do we want to implement software repulse?
+        # If enabled, set a switch rule to look for EOS being open and flipper button closed and manually pulse?
+        off_switch = eos_switch.hw_switch.hw_number
 
-        # self._check_switch_coil_combination(enable_switch, coil)
-        # self._check_switch_coil_combination(eos_switch, coil)
-        coil.hw_driver.set_hardware_rule('75', enable_switch, coil, eos_switch)
-
-        # driver = coil.hw_driver
-
-        # cmd = '{}{},{},{},75,{},{},00,{},{}'.format(
-        #     driver.get_config_cmd(),
-        #     coil.hw_driver.number,
-        #     driver.get_control_for_cmd(enable_switch, eos_switch),
-        #     enable_switch.hw_switch.number[0],
-        #     eos_switch.hw_switch.number[0],
-        #     Util.int_to_hex_string(coil.pulse_settings.duration),
-        #     Util.float_to_pwm8_hex_string(coil.pulse_settings.power),
-        #     driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
-
-        # enable_switch.hw_switch.calculate_debounce(enable_switch.debounce)
-        # eos_switch.hw_switch.calculate_debounce(eos_switch.debounce)
-        # driver.set_autofire(cmd, coil.pulse_settings.duration, coil.pulse_settings.power, 0)
+        coil.hw_driver.set_hardware_rule('75', enable_switch, coil, off_switch=off_switch)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
                                                                  eos_switch: SwitchSettings, coil: DriverSettings,
@@ -764,9 +718,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         FAST Driver Mode 20
         """
-        # self.warning_log("EOS cut-off rule will not work with FAST on single-wound coils. %s %s %s", enable_switch,
-        #                  eos_switch, coil)
-        # self.set_pulse_on_hit_and_enable_and_release_rule(enable_switch, coil)
 
         coil.hw_driver.set_hardware_rule('20', enable_switch, coil, eos_switch=eos_switch, repulse_settings=repulse_settings)
 

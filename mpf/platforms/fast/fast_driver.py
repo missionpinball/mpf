@@ -77,55 +77,35 @@ class FASTDriver:
         self.baseline_driver_config = copy(self.current_driver_config)
 
     def convert_mpf_config_to_fast(self, mpf_config: DriverConfig, platform_settings) -> FastDriverConfig:
-        """Convert a DriverConfig (used throughout MPF) to FastDriverConfig (FAST specific version)."""
+        """Convert a DriverConfig (used throughout MPF) to FastDriverConfig (FAST specific version).
+        This is only used for the initial configuration of drivers. Autofire rules update these."""
 
         if mpf_config.default_recycle is not None:
-            raise ConfigFileError(f"FAST platform does not support default_recycle for coils. Use recycle_ms instead. Coil '{mpf_config.name}'.", 7, self.log.name)
+            raise ConfigFileError(f"FAST platform does not support default_recycle for coils. Use platform_settings:recycle_ms instead. Coil '{mpf_config.name}'.", 7, self.log.name)
 
         if mpf_config.pulse_with_timed_enable:
-            raise ConfigFileError(f"FAST platform does not support pulse_with_timed_enable for coils. Use pwm2_ms instead. Coil '{mpf_config.name}'.", 7, self.log.name)
+            raise ConfigFileError(f"FAST platform does not support pulse_with_timed_enable for coils. Use platform_settings:pwm2_ms instead. Coil '{mpf_config.name}'.", 7, self.log.name)
 
         if mpf_config.default_pulse_ms > 255:
-            raise ConfigFileError(f"FAST platform does not support default_pulse_ms > 255. Use pwm2_ms instead which goes up to 25,500ms. Coil '{mpf_config.name}'.", 7, self.log.name)
-
-        if platform_settings['pwm2_ms'] and platform_settings['pwm2_ms'] > 255:
-            return self.convert_to_mode_70(mpf_config, platform_settings)
-        else:
-            return self.convert_to_mode_10(mpf_config, platform_settings)
-
-    def convert_to_mode_10(self, mpf_config: DriverConfig, platform_settings) -> FastDriverConfig:
-        # Pulse
-        # DL:<driver>,<trigger>,<switch>,10,<pwm1_ms>,<pwm1_power>,<pwm2_ms>,<pwm2_power>,<rest_ms>
+            raise ConfigFileError(f"FAST platform does not support default_pulse_ms > 255. Use platform_settings:pwm2_ms instead which goes up to 25,500ms. Coil '{mpf_config.name}'.", 7, self.log.name)
 
         pwm2_ms, pwm2_power, recycle_ms = self._get_platform_settings(mpf_config, platform_settings)
 
-        return FastDriverConfig(number = self.hw_number,
-                                trigger='81',
-                                switch_id='00',
-                                mode='10',
-                                param1=Util.int_to_hex_string(mpf_config.default_pulse_ms),  # pwm1_ms
-                                param2=Util.float_to_pwm8_hex_string(mpf_config.default_pulse_power),  # pwm1_power
-                                param3=Util.int_to_hex_string(pwm2_ms),  # pwm2_ms
-                                param4=Util.float_to_pwm8_hex_string(pwm2_power),  # pwm2_power
-                                param5=Util.int_to_hex_string(recycle_ms))  # rest_ms
-
-    def convert_to_mode_70(self, mpf_config: DriverConfig, platform_settings) -> FastDriverConfig:
-        # Long Pulse
-        # DL:<driver_id>,<trigger>,<switch_id>,<70>,<PWM1_ONTIME>,<PWM1>,<PWM2_ONTIMEx100ms>,<PWM2>,<REST_TIME><CR>
-
-        _, pwm2_power, recycle_ms = self._get_platform_settings(mpf_config, platform_settings)
-
-        pwm2_ms = platform_settings['pwm2_ms'] // 100
+        if platform_settings['pwm2_ms'] and platform_settings['pwm2_ms'] > 255:
+            mode = '70'
+            pwm2_ms = platform_settings['pwm2_ms'] // 100
+        else:
+            mode = '10'
 
         return FastDriverConfig(number = self.hw_number,
                                 trigger='81',
                                 switch_id='00',
-                                mode='70',
-                                param1=Util.int_to_hex_string(mpf_config.default_pulse_ms),  # pwm1_ms
-                                param2=Util.float_to_pwm8_hex_string(mpf_config.default_pulse_power),  # pwm1_power
-                                param3=Util.int_to_hex_string(pwm2_ms),  # pwm2_ms * 100ms
-                                param4=Util.float_to_pwm8_hex_string(pwm2_power),  # pwm2_power
-                                param5=Util.int_to_hex_string(recycle_ms))  # rest_ms
+                                mode=mode,
+                                param1=Util.int_to_hex_string(mpf_config.default_pulse_ms),
+                                param2=Util.float_to_pwm8_hex_string(mpf_config.default_pulse_power),
+                                param3=Util.int_to_hex_string(pwm2_ms),
+                                param4=Util.float_to_pwm8_hex_string(pwm2_power),
+                                param5=Util.int_to_hex_string(recycle_ms))
 
     def _get_platform_settings(self, mpf_config: DriverConfig, platform_settings):
 
@@ -338,6 +318,8 @@ class FASTDriver:
     def clear_autofire(self):
         """Clear autofire."""
         self._check_and_clear_delay()
+        if not self.autofire_config:
+            return
 
         # TL control code 2 sets bit 7 and clears 6
         self.current_driver_config.trigger = self.clear_bit(self.current_driver_config.trigger, 6)
@@ -408,6 +390,15 @@ class FASTDriver:
 
         reconfigured = False
         mode = self.current_driver_config.mode
+
+        # This method current hardcodes the params but some modes use different orders
+        # The workaround for now is to just set the mode to 10.
+        # No real downside, it will just send a full DL command instead of a TL
+        # TODO elegant future implementation would be to use the mode_param_mapping to use the current configured mode
+
+        if mode not in ['10', '12', '18', '70']:
+            mode = '10'
+            reconfigured = True
 
         pwm1_ms = Util.int_to_hex_string(pulse_settings.duration)
         pwm1_power = Util.float_to_pwm8_hex_string(pulse_settings.power)

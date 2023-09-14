@@ -33,7 +33,7 @@ switches:
     s_flipper:
         number: io3208-1  # 0x01
     s_flipper_eos:
-        number: io3208-2  # 0x01
+        number: io3208-2  # 0x02
     s_flipper_opto:
         number: io3208-3  # 0x03
         type: 'NC'
@@ -59,7 +59,7 @@ switches:
             debounce_open: 26  # 0x1A
             debounce_close: 5  # 0x05
     s_cab_flipper:
-        number: cab-0  # 0x48
+        number: cab-0  # 0x38
 
 coils:
     c_baseline:  # DL:00,81,00,10,0A,FF,00,00,00
@@ -102,13 +102,12 @@ coils:
         default_hold_power: 0.51  # 0xAA
         platform_settings:
             pwm2_ms: 20 # 0x14
-    c_flipper_main:  # DL:0D,81,00,10,0A,FF,00,01,00
+    c_flipper_main:  # DL:0D,81,00,10,0A,FF,00,00,00
         number: io1616-1  # 0x0D
         default_pulse_ms: 10  # 0x0A
-        default_hold_power: 0.125
-    c_flipper_hold:  # DL:0E,81,00,10,0A,FF,00,01,00
+    c_flipper_hold:  # DL:0E,81,00,10,0A,FF,00,00,00
         number: io1616-2  # 0x0E
-        default_hold_power: 0.125  # 0x20
+        allow_enable: true
     c_flipper_single_wound:  # DL:0F,81,00,10,0E,FF,00,01,00
         number: io1616-3  # 0x0F
         default_pulse_ms: 14  # 0x0A
@@ -122,6 +121,7 @@ coils:
         default_pulse_ms: 15  # 0x0A
     c_flipper2_hold:
         number: io1616-7 # 0x13
+        allow_enable: true
 
 autofire_coils:
     ac_baseline:

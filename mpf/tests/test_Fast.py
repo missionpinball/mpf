@@ -327,13 +327,13 @@ class TestFast(MpfTestCase):
             "DL:08,81,00,70,0A,FF,C8,EE,00": "DL:P",
             "DL:0A,81,00,10,18,FE,14,AA,00": "DL:P",
             "DL:0B,81,00,10,14,AA,14,AA,00": "DL:P",
-            "DL:0D,81,00,10,0A,FF,00,01,00": "DL:P",
-            "DL:0E,81,00,10,0A,FF,00,01,00": "DL:P",
+            "DL:0D,81,00,10,0A,FF,00,00,00": "DL:P",
+            "DL:0E,81,00,10,0A,FF,00,FF,00": "DL:P",
             "DL:0F,81,00,10,0E,FF,00,01,00": "DL:P",
             "DL:10,81,00,10,0A,FF,00,00,00": "DL:P",
             "DL:11,81,00,10,0A,FF,00,00,00": "DL:P",
             "DL:12,81,00,10,0F,FF,00,00,00": "DL:P",
-            "DL:13,81,00,10,0A,FF,00,00,00": "DL:P",
+            "DL:13,81,00,10,0A,FF,00,FF,00": "DL:P",
             }
 
         # self.serial_connections['net2'].expected_commands['SL:L'] = (
@@ -477,7 +477,7 @@ class TestFast(MpfTestCase):
         if not self.machine.is_shutting_down:
             self.advance_time_and_run(1)
 
-    def DISABLED_test_coils(self):
+    def test_coils(self):
         # The default expected commands will verify all the coils are configured properly.
         # We just need to ensure things get enabled properly.
         self.confirm_commands()
@@ -593,7 +593,7 @@ class TestFast(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.serial_connections['net2'].expected_commands)
 
-    def DISABLED_test_autofire_rules(self):
+    def test_autofire_rules(self):
         self._test_pulse_rules()
         self._test_pulse_rules_inverted_switch()
         self._test_long_pulse_rules()
@@ -854,7 +854,7 @@ class TestFast(MpfTestCase):
         self.assertTrue(self.switch_hit)
         self.switch_hit = False
 
-    def DISABLED_test_flipper_single_coil(self):
+    def test_flipper_single_coil(self):
         coil = self.machine.coils["c_flipper_single_wound"]
         hw_driver = coil.hw_driver
         switch = self.machine.switches["s_flipper_opto"].hw_switch
@@ -892,50 +892,72 @@ class TestFast(MpfTestCase):
         switch = self.machine.switches["s_flipper"].hw_switch
         flipper = self.machine.flippers["f_dual_wound"]
 
-        self.assertEqual(main_hw_driver.get_current_config(), 'DL:0D,81,00,10,0A,FF,00,01,00')
-        self.assertEqual(hold_hw_driver.get_current_config(), 'DL:0E,81,00,10,0A,FF,00,01,00')
+        self.assertEqual(main_hw_driver.get_current_config(), 'DL:0D,81,00,10,0A,FF,00,00,00')
+        self.assertEqual(hold_hw_driver.get_current_config(), 'DL:0E,81,00,10,0A,FF,00,FF,00')
         self.assertEqual(switch.get_current_config(), 'SL:01,01,04,04')
 
         # flipper rule enable
-        # Trigger 11 (bit 0 enable)
-        self.serial_connections['net2'].expected_commands = {"DL:0D,01,03,18,0E,FF,01,01,00": "DL:P",}
+        # Trigger 1 (bit 0 enable)
+        self.serial_connections['net2'].expected_commands = {"DL:0D,01,01,18,0A,FF,00,00,00": "DL:P",
+                                                             "DL:0E,01,01,18,0A,FF,FF,00,00": "DL:P",}
         flipper.enable()
         self.confirm_commands()
 
         # manual flip while rule is active
-        self.serial_connections['net2'].expected_commands = {"TL:0F,01": "TL:P"}
-        coil.pulse()
+        self.serial_connections['net2'].expected_commands = {"TL:0D,01": "TL:P"}
+        main_coil.pulse()
         self.confirm_commands()
 
         # disable rule (tilt)
-        self.serial_connections['net2'].expected_commands = {"TL:0F,02": "TL:P"}
+        self.serial_connections['net2'].expected_commands = {"TL:0D,02": "TL:P",
+                                                             "TL:0E,02": "TL:P",}
         flipper.disable()
         self.confirm_commands()
 
         # enable again, config has already been sent
-        self.serial_connections['net2'].expected_commands = {"TL:0F,00": "TL:P"}
+        self.serial_connections['net2'].expected_commands = {"TL:0D,00": "TL:P",
+                                                             "TL:0E,00": "TL:P",}
         flipper.enable()
         self.confirm_commands()
 
+    def test_flipper_two_coils_with_eos(self):
+        main_coil = self.machine.coils["c_flipper2_main"]
+        hold_coil = self.machine.coils["c_flipper2_hold"]
+        main_hw_driver = main_coil.hw_driver
+        hold_hw_driver = hold_coil.hw_driver
+        switch = self.machine.switches["s_cab_flipper"].hw_switch
+        eos_switch = self.machine.switches["s_flipper_eos"].hw_switch
+        flipper = self.machine.flippers["f_test_hold_eos"]
 
-        # we pulse the main coil (20)
-        # hold coil (21) is pulsed + enabled
-        self.serial_connections['net2'].expected_commands = {
-            "DL:20,01,01,18,0A,FF,00,00,00": "DL:P",
-            "DL:21,01,01,18,0A,FF,01,00,00": "DL:P",
-            "SL:01,01,02,02": "SL:P",
-        }
-        self.machine.flippers["f_test_hold"].enable()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.serial_connections['net2'].expected_commands)
+        self.assertEqual(main_hw_driver.get_current_config(), 'DL:12,81,00,10,0F,FF,00,00,00')
+        self.assertEqual(hold_hw_driver.get_current_config(), 'DL:13,81,00,10,0A,FF,00,FF,00')
+        self.assertEqual(switch.get_current_config(), 'SL:38,01,04,04')
 
-        self.serial_connections['net2'].expected_commands = {
-            "DL:20,81": "DL:P",
-            "DL:21,81": "DL:P"
-        }
-        self.machine.flippers["f_test_hold"].disable()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.serial_connections['net2'].expected_commands)
+        # flipper rule enable
+        # Trigger 1 (bit 0 enable), Mode 75 (pulse+hold w/cancel), EOS switch 38
+        self.serial_connections['net2'].expected_commands = {"DL:12,01,38,75,02,0F,00,00,00": "DL:P",
+                                                             "DL:13,01,38,18,0A,FF,FF,00,00": "DL:P",}
+        flipper.enable()
+        self.confirm_commands()
+
+        # manual flip while rule is active, this will send a new DL (since mode 75 isn't a normal pulse mode)
+        # followed by another DL after a delay to reconfigure it back to the autofire rule
+        self.serial_connections['net2'].expected_commands = {"DL:12,09,38,10,0F,FF,00,00,00": "DL:P",
+                                                             "DL:12,01,38,75,02,0F,00,00,00": "DL:P",}
+        main_coil.pulse()
+        self.confirm_commands()
+
+        # disable rule (tilt)
+        self.serial_connections['net2'].expected_commands = {"TL:12,02": "TL:P",
+                                                             "TL:13,02": "TL:P",}
+        flipper.disable()
+        self.confirm_commands()
+
+        # enable again, config has already been sent
+        self.serial_connections['net2'].expected_commands = {"TL:12,00": "TL:P",
+                                                             "TL:13,00": "TL:P",}
+        flipper.enable()
+        self.confirm_commands()
 
     def DISABLED_test_dmd_update(self):
 
