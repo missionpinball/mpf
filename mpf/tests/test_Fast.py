@@ -865,7 +865,7 @@ class TestFast(MpfTestCase):
 
         # flipper rule enable
         # Trigger 11 (bit 0 enable, bit 4 invert switch since it's an opto)
-        self.serial_connections['net2'].expected_commands = {"DL:0F,11,03,18,0E,FF,01,01,00": "DL:P",}
+        self.serial_connections['net2'].expected_commands = {"DL:0F,11,03,18,0E,FF,01,00,00": "DL:P",}
         flipper.enable()
         self.confirm_commands()
 

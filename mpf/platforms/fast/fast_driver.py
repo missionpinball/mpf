@@ -50,6 +50,16 @@ class FASTDriver:
                                                        param4='00', param5='00')
         self.current_driver_config = self.baseline_driver_config
 
+        self.mode_param_mapping = {
+            '10': ['pwm1_ms', 'pwm1_power', 'pwm2_ms', 'pwm2_power', 'recycle_ms'],
+            '12': ['pwm1_ms', 'pwm1_power', 'pwm2_ms', 'pwm2_power', 'kick_ms'],
+            '18': ['pwm1_ms', 'pwm1_power', 'pwm2_power', 'recycle_ms', None],
+            '20': ['off_switch', 'pwm1_ms', 'pwm1_power', 'pwm2_power', 'rest_ms'],
+            '30': ['delay_ms_x10', 'pwm1_ms', 'pwm2_ms', 'pwm2_power', 'recycle_ms'],
+            '70': ['pwm1_ms', 'pwm1_power', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],
+            '75': ['off_switch', 'pwm1_ms', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],
+        }
+
     def set_initial_config(self, mpf_config: DriverConfig, platform_settings):
         """Sets the initial config for this driver based on the MPF config.
 
@@ -67,32 +77,7 @@ class FASTDriver:
         self.baseline_driver_config = copy(self.current_driver_config)
 
     def convert_mpf_config_to_fast(self, mpf_config: DriverConfig, platform_settings) -> FastDriverConfig:
-        """Convert an MPF config to FAST."""
-
-        # mpf_config:
-            # class DriverConfig:
-            #     name: str
-            #     default_pulse_ms: int
-            #     default_pulse_power: float
-            #     default_hold_power: float
-            #     default_timed_enable_ms: int
-            #     default_recycle: bool
-            #     max_pulse_ms: int
-            #     max_pulse_power: float
-            #     max_hold_power: float
-            #     pulse_with_timed_enable: bool
-
-        # platform_settings:
-            # recycle_ms: single|ms|None
-            # pwm2_ms: single|ms|None
-
-        # Mode 00 - Disable
-        # Mode 10 - Pulse
-        # Mode 12 - Pulse + Kick
-        # Mode 18 - Pulse + Hold
-
-        # if mpf_config.default_timed_enable_ms:  # Pulse + Hold
-        #     return self.convert_to_mode_18(mpf_config, platform_settings)
+        """Convert a DriverConfig (used throughout MPF) to FastDriverConfig (FAST specific version)."""
 
         if mpf_config.default_recycle is not None:
             raise ConfigFileError(f"FAST platform does not support default_recycle for coils. Use recycle_ms instead. Coil '{mpf_config.name}'.", 7, self.log.name)
@@ -105,7 +90,6 @@ class FASTDriver:
 
         if platform_settings['pwm2_ms'] and platform_settings['pwm2_ms'] > 255:
             return self.convert_to_mode_70(mpf_config, platform_settings)
-
         else:
             return self.convert_to_mode_10(mpf_config, platform_settings)
 
@@ -124,22 +108,6 @@ class FASTDriver:
                                 param3=Util.int_to_hex_string(pwm2_ms),  # pwm2_ms
                                 param4=Util.float_to_pwm8_hex_string(pwm2_power),  # pwm2_power
                                 param5=Util.int_to_hex_string(recycle_ms))  # rest_ms
-
-    def convert_to_mode_18(self, mpf_config: DriverConfig, platform_settings) -> FastDriverConfig:
-        # Pulse + Hold
-        # DL:<driver>,<trigger>,<switch>,18,<pwm1_ms>,<pwm1_power>,<pwm2_power>,<rest_ms>,<n/a>
-
-        _, pwm2_power, recycle_ms = self._get_platform_settings(mpf_config, platform_settings)
-
-        return FastDriverConfig(number = self.hw_number,
-                                trigger='81',
-                                switch_id='00',
-                                mode='18',
-                                param1=Util.int_to_hex_string(mpf_config.default_pulse_ms),  # pwm1_ms
-                                param2=Util.float_to_pwm8_hex_string(mpf_config.default_pulse_power),  # pwm1_power
-                                param3=Util.float_to_pwm8_hex_string(pwm2_power),  # pwm2_power
-                                param4=Util.int_to_hex_string(recycle_ms),
-                                param5='00')  # na
 
     def convert_to_mode_70(self, mpf_config: DriverConfig, platform_settings) -> FastDriverConfig:
         # Long Pulse
@@ -278,73 +246,51 @@ class FASTDriver:
         if not self._reenable_autofire_if_configured():
             self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},02')
 
-    def set_autofire_pulse(self, pulse_settings, switch):
-        # Note this meth does not mess with the mode param at all, since it could be 10, 70, 18 etc, and those extended
-        # params are not passed into this method. So we just set what we can and leave the rest unchanged.
-        # This meth will send the minimal possible, TL with only trigger, then TL with switch, and finally full DL
+    def set_hardware_rule(self, mode, switch, coil_settings, **kwargs):
         reconfigured = False
         trigger_needed = False
         switch_needed = False
 
-        pwm1_ms = Util.int_to_hex_string(pulse_settings.duration)
-        pwm1_power = Util.float_to_pwm8_hex_string(pulse_settings.power)
+        if not mode:
+            mode = self.current_driver_config.mode
 
-        if self.current_driver_config.param1 != pwm1_ms:
-            self.current_driver_config.param1 = pwm1_ms
-            reconfigured = True
+        new_settings = kwargs
+        new_settings['pwm1_ms'] = Util.int_to_hex_string(coil_settings.pulse_settings.duration)
+        new_settings['pwm1_power'] = Util.float_to_pwm8_hex_string(coil_settings.pulse_settings.power)
 
-        if self.current_driver_config.param2 != pwm1_power:
-            self.current_driver_config.param2 = pwm1_power
-            reconfigured = True
+        if coil_settings.hold_settings:
+            new_settings['pwm2_power'] = Util.float_to_pwm8_hex_string(coil_settings.hold_settings.power)
 
-        if self.current_driver_config.switch_id != switch.hw_switch.hw_number:
-            self.current_driver_config.switch_id = switch.hw_switch.hw_number
-            trigger_needed = True
-            switch_needed = True
+            if coil_settings.hold_settings.duration and coil_settings.hold_settings.duration <= 255:
+                new_settings['pwm2_ms'] = Util.int_to_hex_string(coil_settings.hold_settings.duration,
+                                                                 allow_overflow=True)
+        else:
+            # If there are no new hold settings, we want to use the existing ones since they could have been
+            # configured via other commands which support more settings than these rules
+            new_settings['pwm2_power'] = None
+            new_settings['pwm2_ms'] = None
 
-        trigger = '01'
+        if coil_settings.recycle:
+            if True:
+                new_settings['recycle_ms'] = '00'
+            else: # int
+                new_settings['recycle_ms'] = Util.int_to_hex_string(coil_settings.recycle)
+        else:
+            new_settings['recycle_ms'] = '00'
 
-        if switch.invert:
-            trigger = self.set_bit(trigger, 4)
+        # Update the current_driver_config with any new settings
+        for idx, param in enumerate(self.mode_param_mapping[mode]):
+            if param is None or new_settings.get(param, None) is None:
+                continue
+            if param == 'delay_ms_x10':
+                new_settings['delay_ms'] = Util.int_to_hex_string(int(new_settings[param], 16) // 10)
+            elif param == 'pwm2_ms_x100':
+                new_settings['pwm2_ms'] = Util.int_to_hex_string(int(new_settings[param], 16) // 100)
 
-        if self.is_new_config_needed(self.current_driver_config.trigger, trigger):
-            reconfigured = True
-        elif trigger != self.current_driver_config.trigger:
-            trigger_needed = True
-
-        self.current_driver_config.trigger = trigger
-        self.autofire_config = copy(self.current_driver_config)
-
-        if reconfigured:  # Send a new driver config
-            self.send_config_to_driver(one_shot=False)
-        elif trigger_needed:  # We only need to update the triggers
-            # Set the driver to automatic using the existing configuration
-            if switch_needed:
-                self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},00,{switch.hw_switch.hw_number}')
-            else:
-                self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},00')
-
-    def set_autofire_hold_and_release(self, coil_settings, switch):
-        reconfigured = False
-        trigger_needed = False
-        switch_needed = False
-        mode = '18'
-
-        pwm1_ms = Util.int_to_hex_string(coil_settings.pulse_settings.duration)
-        pwm1_power = Util.float_to_pwm8_hex_string(coil_settings.pulse_settings.power)
-        pwm2_power = Util.float_to_pwm8_hex_string(coil_settings.hold_settings.power)
-
-        if self.current_driver_config.param1 != pwm1_ms:
-            self.current_driver_config.param1 = pwm1_ms
-            reconfigured = True
-
-        if self.current_driver_config.param2 != pwm1_power:
-            self.current_driver_config.param2 = pwm1_power
-            reconfigured = True
-
-        if self.current_driver_config.param3 != pwm2_power:
-            self.current_driver_config.param3 = pwm2_power
-            reconfigured = True
+            param_name = f'param{idx+1}'
+            if new_settings[param] != getattr(self.current_driver_config, param_name):
+                setattr(self.current_driver_config, param_name, new_settings[param])
+                reconfigured = True
 
         if self.current_driver_config.switch_id != switch.hw_switch.hw_number:
             self.current_driver_config.switch_id = switch.hw_switch.hw_number
