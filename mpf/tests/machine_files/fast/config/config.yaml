@@ -28,20 +28,20 @@ fast:
                 order: 4
 
 switches:
-    s_baseline:
+    s_baseline:  # Starts active via SA:
         number: io3208-0  # 0x00
     s_flipper:
         number: io3208-1  # 0x01
     s_flipper_eos:
         number: io3208-2  # 0x02
-    s_flipper_opto:
+    s_flipper_opto:  # Starts active via SA:
         number: io3208-3  # 0x03
         type: 'NC'
     s_autofire_3208:
         number: io3208-4  # 0x04
     s_autofire_1616:
         number: io1616-0  # 0x28
-    s_test_nc:
+    s_test_nc:  # Starts active via SA:
         number: io3208-5  # 0x05
         type: 'NC'
     s_debounce_auto:

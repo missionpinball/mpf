@@ -92,10 +92,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.exp_breakouts_with_leds = set()
 
         self.hw_switch_data = {i: 0 for i in range(112)}
+        self.sa_event = asyncio.Event()  # Used to signal when we have updated switch data
         self.io_boards = dict()     # type: Dict[int, FastIoBoard]  # TODO move to NET communicator(s) classes?
         self.io_boards_by_name = dict()     # type: Dict[str, FastIoBoard]
-
-
 
     def get_info_string(self):
         """Dump info strings about boards."""
@@ -268,7 +267,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         # is done which mean the DL/SL commands are processed before the init completes.
 
         if query_hw:
+            self.sa_event.clear()
             await self.serial_connections['net'].send_and_wait_async('SA:', 'SA:')
+            await self.sa_event.wait()  # Wait here until we have updated switch data
 
         return self.hw_switch_data
 
@@ -772,41 +773,3 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.machine.switch_controller.process_switch_by_num(state=1,
                                                              num=(msg, 1),
                                                              platform=self)
-
-    def receive_sa(self, msg, remote_processor):
-        """Receive all switch states.
-
-        Args:
-        ----
-            msg: switch states as bytearray
-            remote_processor: Processor which sent the message.
-        """
-        assert remote_processor == "NET"
-        self.debug_log("Received SA: %s", msg)
-        hw_states = {}
-
-        # Support for v1 firmware which uses network + local switches
-        if self.machine_type == 'nano':
-            _, local_states, _, nw_states = msg.split(',')
-            for offset, byte in enumerate(bytearray.fromhex(nw_states)):
-                for i in range(8):
-                    num = Util.int_to_hex_string((offset * 8) + i)
-                    if byte & (2**i):
-                        hw_states[(num, 1)] = 1
-                    else:
-                        hw_states[(num, 1)] = 0
-        # Support for v2 firmware which uses only local switches
-        else:
-            _, local_states = msg.split(',')
-
-        for offset, byte in enumerate(bytearray.fromhex(local_states)):
-            for i in range(8):
-
-                num = Util.int_to_hex_string((offset * 8) + i)
-
-                if byte & (2**i):
-                    hw_states[(num, 0)] = 1
-                else:
-                    hw_states[(num, 0)] = 0
-
-        self.hw_switch_data = hw_states

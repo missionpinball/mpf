@@ -273,6 +273,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
                     hw_states[num] = 0
 
         self.platform.hw_switch_data = hw_states
+        self.platform.sa_event.set()  # Signal that we have new switch data
 
     def _process_switch_open(self, msg):
         """Process local switch open.
@@ -284,7 +285,8 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         """
         self.machine.switch_controller.process_switch_by_num(state=0,
                                                              num=int(msg, 16),
-                                                             platform=self.platform)
+                                                             platform=self.platform,
+                                                             logical=True)
 
     def _process_switch_closed(self, msg):
         """Process local switch closed.
@@ -296,7 +298,8 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         """
         self.machine.switch_controller.process_switch_by_num(state=1,
                                                              num=int(msg, 16),
-                                                             platform=self.platform)
+                                                             platform=self.platform,
+                                                             logical=True)
 
     def _update_watchdog(self):
         """Send Watchdog command."""

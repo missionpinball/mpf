@@ -22,6 +22,7 @@ class MockFastSerial(MockSerial):
         self.expected_commands = dict()  # popped when called, verify empty at end of test
         self.autorespond_commands = dict()  # can be called multiple times, never popped
         self.port = None
+        self.print_fsp_traffic = False
 
     def read(self, length):
         """ Reads the message from receive queue"""
@@ -30,7 +31,6 @@ class MockFastSerial(MockSerial):
             return
 
         msg = self.queue.pop()
-        # print(f'{self.type} <<< {msg}')
         msg = (msg + '\r').encode()
         return msg
 
@@ -64,13 +64,15 @@ class MockFastSerial(MockSerial):
         except UnicodeDecodeError:
             cmd = self._process_binary_msg(msg)
 
-        print(f'{self.type} >>> {cmd}')
+        if self.print_fsp_traffic:
+            print(f'{self.type} >>> {cmd}')
 
         self.msg_history.append(cmd)
 
         if cmd in self.autorespond_commands:
             self.queue.append(self.autorespond_commands[cmd])
-            print(f'{self.type} <<< {self.autorespond_commands[cmd]}')
+            if self.print_fsp_traffic:
+                print(f'{self.type} <<< {self.autorespond_commands[cmd]}')
             return msg_len
 
         if self.process_msg(cmd):
@@ -79,7 +81,8 @@ class MockFastSerial(MockSerial):
         if cmd in self.expected_commands:
             if self.expected_commands[cmd]:
                 self.queue.append(self.expected_commands[cmd])
-                print(f'{self.type} <<< {self.expected_commands[cmd]}')
+                if self.print_fsp_traffic:
+                    print(f'{self.type} <<< {self.expected_commands[cmd]}')
             del self.expected_commands[cmd]
             return msg_len
         else:
@@ -99,7 +102,7 @@ class MockFastNetNeuron(MockFastSerial):
         self.autorespond_commands = {
             'WD:1' : 'WD:P',
             'WD:3E8': 'WD:P',
-            'SA:':'SA:0E,8000000300000000000000000000',
+            'SA:':'SA:0E,2900000000000000000000000000',
             'CH:2000,FF':'CH:P',
             'ID:': 'ID:NET FP-CPU-2000  02.13',
             'BR:': '\r\r!B:00\r..!B:02\r.',
