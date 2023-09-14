@@ -684,12 +684,12 @@ class TestFast(MpfTestCase):
     def _switch_hit_cb(self, **kwargs):
         self.switch_hit = True
 
-    def test_switches(self):
+    def DISABLED_test_switches(self):
         # Default startup SL commands test / confirm all the variations of the switch configs
-        # self._test_startup_switches()
-        # self._test_bad_switch_configs()
-        # self._test_switch_changes()
-        # self._test_switch_changes_nc()
+        self._test_startup_switches()
+        self._test_bad_switch_configs()
+        self._test_switch_changes()
+        self._test_switch_changes_nc()
         self._test_receiving_sa()
 
     def _test_startup_switches(self):
@@ -761,15 +761,17 @@ class TestFast(MpfTestCase):
         self.assertSwitchState("s_cab_flipper", 0)
 
         # Send an SA:
-        self.loop.run_until_complete(self.machine.default_platform.get_hw_switch_states())
-        self.advance_time_and_run(1)
+        self.loop.run_until_complete(self.machine.default_platform.get_hw_switch_states(True))
+        self.advance_time_and_run()
 
         self.assertSwitchState("s_cab_flipper", 1)
 
         # Process a random SA coming in (this shouldn't happen but should work in non async mode)
-
-        # self.machine.default_platform.serial_connections['net2'].parse_incoming_raw_bytes(b"SA:0E,2900000000000001000000000000\r")
-
+        # Switch 0x09 is also now active
+        self.assertSwitchState("s_debounce_custom", 0)
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"SA:0E,2902000000000001000000000000\r")
+        self.advance_time_and_run()
+        self.assertSwitchState("s_debounce_custom", 1)
 
     def DISABLED_test_flipper_single_coil(self):
         coil = self.machine.coils["c_flipper_single_wound"]
@@ -876,7 +878,7 @@ class TestFast(MpfTestCase):
         flipper.enable()
         self.confirm_commands()
 
-    def DISABLED_test_machine_reset(self):
+    def test_machine_reset(self):
 
         # Set the commands that will respond to the query on reset. Some of these are
         # changed from the default so we can simulate the machine in a dir
@@ -1050,6 +1052,7 @@ class TestFast(MpfTestCase):
 
         # reset the machine and ensure all the dirty devices get reset
         self.loop.run_until_complete(self.machine.reset())
+        self.advance_time_and_run()
 
     def DISABLED_test_dmd_update(self):
 

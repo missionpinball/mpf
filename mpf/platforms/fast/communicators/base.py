@@ -40,6 +40,7 @@ class FastSerialCommunicator(LogMixin):
         self.pause_sending_until = ''
         self.pause_sending_flag = asyncio.Event()
         self.no_response_waiting = asyncio.Event()
+        self.wait = asyncio.Event()
         self.no_response_waiting.set()  # Initially, we're not waiting for any response
 
         self.ignore_decode_errors = True

@@ -88,13 +88,13 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.exp_boards_by_address = dict()  # k: EE address, v: FastExpansionBoard instances
         self.exp_boards_by_name = dict()  # k: str name, v: FastExpansionBoard instances
         self.exp_breakout_boards = dict()  # k: EEB address, v: FastBreakoutBoard instances
-        # self.exp_dirty_led_ports = set() # FastLedPort instances
         self.exp_breakouts_with_leds = set()
-
         self.hw_switch_data = {i: 0 for i in range(112)}
-        self.sa_event = asyncio.Event()  # Used to signal when we have updated switch data
+        self.new_switch_data = asyncio.Event()  # Used to signal when we have updated switch data
         self.io_boards = dict()     # type: Dict[int, FastIoBoard]  # TODO move to NET communicator(s) classes?
         self.io_boards_by_name = dict()     # type: Dict[str, FastIoBoard]
+        self.switches_initialized = False
+        self.drivers_initialized = False
 
     def get_info_string(self):
         """Dump info strings about boards."""
@@ -110,8 +110,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     async def initialize(self):
         """Initialise platform."""
-        self.machine.events.add_async_handler('machine_reset_phase_1', self.soft_reset)
+        # self.machine.events.add_async_handler('machine_reset_phase_1', self.soft_reset)
+        self.machine.events.add_async_handler('init_phase_1', self.soft_reset)
         self.machine.events.add_handler('init_phase_3', self._start_communicator_tasks)
+        self.machine.events.add_handler('machine_reset_phase_2', self._init_complete)
         await self._connect_to_hardware()
 
     async def soft_reset(self, **kwargs):
@@ -121,13 +123,21 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         hard reset of the boards, rather it queries the boards for their current configuration and
         reapplies (with warnings) any configs that are out of sync.
 
-        This command runs during the reset_phase_1 event.
+        This command runs during the init_phase_1 phase, and then skips the reset phases, then runs
+        again on subsequent resets during the machine_reset_phase_1 phase.
         """
         del kwargs
         self.debug_log("Soft resetting FAST platform.")
 
         for comm in self.serial_connections.values():
             await comm.soft_reset()
+
+    def _init_complete(self, **kwargs):
+        del kwargs
+        # Runs on init_phase_2 and moves soft_reset() from init_phase_1 to machine_reset_phase_1
+        # We need the soft_reset() to run earlier on boot, but then at reset from there on out
+        self.machine.events.remove_handler(self.soft_reset)
+        self.machine.events.add_async_handler('machine_reset_phase_1', self.soft_reset)
 
     def stop(self):
         """Stop platform and close connections."""
@@ -254,22 +264,18 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             await communicator.init()
             self.serial_connections[port] = communicator
 
-    async def get_hw_switch_states(self, query_hw=True):
-        """Return hardware states.
+    async def get_hw_switch_states(self, query_hw=False):
+        """Return a dict of hw switch states.
 
-        Only query the actual hardware if query_hw is True.
-
-        On MPF start, the switch controller will query hardware but the switches will not have been configured yet.
+        If query_hw is True, will re-query the hardware for the current switch states. Otherwise it will just return
+        the last cached value.
         """
 
-        # This meth is called during init_phase_2, but usually DL and SL config commands are still
-        # processing since those are not async. So awaiting the SA results holds the init until this
-        # is done which mean the DL/SL commands are processed before the init completes.
-
-        if query_hw:
-            self.sa_event.clear()
-            await self.serial_connections['net'].send_and_wait_async('SA:', 'SA:')
-            await self.sa_event.wait()  # Wait here until we have updated switch data
+        # If the switches have not been initialized then their states are garbage, so don't bother
+        if self.switches_initialized and query_hw:
+            self.new_switch_data.clear()
+            await self.serial_connections['net'].update_switches_from_hardware()
+            await self.new_switch_data.wait()  # Wait here until we have updated switch data
 
         return self.hw_switch_data
 
