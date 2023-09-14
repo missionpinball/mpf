@@ -13,6 +13,8 @@ from mpf.tests.loop import MockSerial
 
 class MockFastSerial(MockSerial):
 
+    PRINT_FSP_TRAFFIC = True
+
     def __init__(self, test_fast_base):
         super().__init__()
         self.test_fast_base = test_fast_base
@@ -22,7 +24,6 @@ class MockFastSerial(MockSerial):
         self.expected_commands = dict()  # popped when called, verify empty at end of test
         self.autorespond_commands = dict()  # can be called multiple times, never popped
         self.port = None
-        self.print_fsp_traffic = False
 
     def read(self, length):
         """ Reads the message from receive queue"""
@@ -64,16 +65,13 @@ class MockFastSerial(MockSerial):
         except UnicodeDecodeError:
             cmd = self._process_binary_msg(msg)
 
-        if self.print_fsp_traffic:
+        if self.PRINT_FSP_TRAFFIC:
             print(f'{self.type} >>> {cmd}')
 
         self.msg_history.append(cmd)
 
-        if cmd in self.autorespond_commands:
-            self.queue.append(self.autorespond_commands[cmd])
-            if self.print_fsp_traffic:
-                print(f'{self.type} <<< {self.autorespond_commands[cmd]}')
-            return msg_len
+        # Order of precedence is key here. We want autoresponses to be last so they can be overridden
+        # via custom responses or expected commands on a per-test basis.
 
         if self.process_msg(cmd):
             return msg_len
@@ -81,12 +79,18 @@ class MockFastSerial(MockSerial):
         if cmd in self.expected_commands:
             if self.expected_commands[cmd]:
                 self.queue.append(self.expected_commands[cmd])
-                if self.print_fsp_traffic:
+                if self.PRINT_FSP_TRAFFIC:
                     print(f'{self.type} <<< {self.expected_commands[cmd]}')
             del self.expected_commands[cmd]
             return msg_len
-        else:
-            raise Exception(f"Unexpected command for {self.type}: {cmd}")
+
+        if cmd in self.autorespond_commands:
+            self.queue.append(self.autorespond_commands[cmd])
+            if self.PRINT_FSP_TRAFFIC:
+                print(f'{self.type} <<< {self.autorespond_commands[cmd]}')
+            return msg_len
+
+        raise Exception(f"Unexpected command for {self.type}: {cmd}")
 
     def _process_binary_msg(self, msg):
         # The first three chars are the command (XX:), the rest is the binary payload
