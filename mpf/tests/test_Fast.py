@@ -6,11 +6,12 @@ from mpf.tests.platforms.fast import MockFastNetNeuron, MockFastExp, MockFastDmd
 
 
 class TestFast(MpfTestCase):
-    """Tests the current FAST modern platforms. Tests for Net v2 (Modern & Retro), SEG, and DMD processors."""
+    """Tests FAST Neuron hardware."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.serial_connections_to_mock = ['net2', 'seg', 'dmd']
         self.serial_connections = dict()
+        # TODO create common TestFastBase class for all FAST tests
 
     def get_config_file(self):
         return 'config.yaml'
@@ -370,7 +371,7 @@ class TestFast(MpfTestCase):
         if not self.machine.is_shutting_down:
             self.advance_time_and_run(1)
 
-    def DISABLED_test_coils(self):
+    def test_test_coils(self):
         # The default expected commands will verify all the coils are configured properly.
         # We just need to ensure things get enabled properly.
         self.confirm_commands()
@@ -486,7 +487,7 @@ class TestFast(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.serial_connections['net2'].expected_commands)
 
-    def DISABLED_test_autofire_rules(self):
+    def test_test_autofire_rules(self):
         self._test_pulse_rules()
         self._test_pulse_rules_inverted_switch()
         self._test_long_pulse_rules()
@@ -684,7 +685,7 @@ class TestFast(MpfTestCase):
     def _switch_hit_cb(self, **kwargs):
         self.switch_hit = True
 
-    def DISABLED_test_switches(self):
+    def test_test_switches(self):
         # Default startup SL commands test / confirm all the variations of the switch configs
         self._test_startup_switches()
         self._test_bad_switch_configs()
@@ -773,7 +774,7 @@ class TestFast(MpfTestCase):
         self.advance_time_and_run()
         self.assertSwitchState("s_debounce_custom", 1)
 
-    def DISABLED_test_flipper_single_coil(self):
+    def test_test_flipper_single_coil(self):
         coil = self.machine.coils["c_flipper_single_wound"]
         hw_driver = coil.hw_driver
         switch = self.machine.switches["s_flipper_opto"].hw_switch
@@ -803,7 +804,7 @@ class TestFast(MpfTestCase):
         flipper.enable()
         self.confirm_commands()
 
-    def DISABLED_test_flipper_two_coils(self):
+    def test_test_flipper_two_coils(self):
         main_coil = self.machine.coils["c_flipper_main"]
         hold_coil = self.machine.coils["c_flipper_hold"]
         main_hw_driver = main_coil.hw_driver
@@ -839,7 +840,7 @@ class TestFast(MpfTestCase):
         flipper.enable()
         self.confirm_commands()
 
-    def DISABLED_test_flipper_two_coils_with_eos(self):
+    def test_test_flipper_two_coils_with_eos(self):
         main_coil = self.machine.coils["c_flipper2_main"]
         hold_coil = self.machine.coils["c_flipper2_hold"]
         main_hw_driver = main_coil.hw_driver
@@ -1054,31 +1055,31 @@ class TestFast(MpfTestCase):
         self.loop.run_until_complete(self.machine.reset())
         self.advance_time_and_run()
 
-    def DISABLED_test_dmd_update(self):
+    # def test_dmd_update(self):
 
-        # test configure
-        dmd = self.machine.default_platform.configure_dmd()
+    #     # test configure
+    #     dmd = self.machine.default_platform.configure_dmd()
 
-        # test set frame to buffer
-        frame = bytearray()
-        for i in range(4096):
-            frame.append(64 + i % 192)
+    #     # test set frame to buffer
+    #     frame = bytearray()
+    #     for i in range(4096):
+    #         frame.append(64 + i % 192)
 
-        frame = bytes(frame)
+    #     frame = bytes(frame)
 
-        # test draw
-        self.serial_connections['dmd'].expected_commands = {
-            b'BM:' + frame: False
-        }
-        dmd.update(frame)
+    #     # test draw
+    #     self.serial_connections['dmd'].expected_commands = {
+    #         b'BM:' + frame: False
+    #     }
+    #     dmd.update(frame)
 
-        self.advance_time_and_run(.1)
+    #     self.advance_time_and_run(.1)
 
-        self.assertFalse(self.serial_connections['dmd'].expected_commands)
+    #     self.assertFalse(self.serial_connections['dmd'].expected_commands)
 
     # @expect_startup_error()
     # @test_config("error_lights.yaml")
-    # def DISABLED_test_light_errors(self):
+    # def test_light_errors(self):
     #     self.assertIsInstance(self.startup_error, ConfigFileError)
     #     self.assertEqual(7, self.startup_error.get_error_no())
     #     self.assertEqual("light.test_led", self.startup_error.get_logger_name())

@@ -40,7 +40,7 @@ class FastSerialCommunicator(LogMixin):
         self.pause_sending_until = ''
         self.pause_sending_flag = asyncio.Event()
         self.no_response_waiting = asyncio.Event()
-        self.wait = asyncio.Event()
+        self.done_waiting = asyncio.Event()
         self.no_response_waiting.set()  # Initially, we're not waiting for any response
 
         self.ignore_decode_errors = True
@@ -207,6 +207,7 @@ class FastSerialCommunicator(LogMixin):
             self.writer = None
 
     async def send_and_wait_async(self, msg, pause_sending_until, log_msg=None):
+        self.done_waiting.clear()
         await self.no_response_waiting.wait()
         self.no_response_waiting.clear()
         self.send_with_confirmation(msg, pause_sending_until, log_msg)

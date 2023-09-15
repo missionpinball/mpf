@@ -28,6 +28,7 @@ from mpf.file_interfaces.yaml_interface import YamlInterface
 
 YamlInterface.cache = True
 
+LOCAL_START_TIMEOUT = None  # Set to None if you need to pause and debug something
 
 class UnitTestConfigLoader(YamlMultifileConfigLoader):
 
@@ -591,7 +592,7 @@ class MpfTestCase(unittest.TestCase):
         if os.getenv('GITHUB_ACTIONS', 'false') == 'true':  # If we're running on github
             timeout = 20
         else:  # running locally
-            timeout = None  # TODO make this configurable
+            timeout = LOCAL_START_TIMEOUT
         self._wait_for_start(init, timeout)
 
         self.machine.events.process_event_queue()

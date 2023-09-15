@@ -58,7 +58,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
                                       "Order values must be sequential starting at 1.", 7, self.log.name)  # TODO
 
     async def init(self):
-        self.wait.clear()  # Used here to hold init until all I/O boards are registered
+        # self.done_waiting.clear()  # Used here to hold init until all I/O boards are registered
         await self.send_and_wait_async('ID:', 'ID:')  # Verify we're connected to a Neuron
         await self.send_and_wait_async('CH:2000,FF', 'CH:')  # Configure hardware for Neuron with active switch reporting
         self.send_and_forget('WD:1') # Force expire the watchdog since who knows what state the board is in?
@@ -67,7 +67,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.create_switches()
         self.create_drivers()
 
-        await self.wait.wait()
+        await self.done_waiting.wait()
 
     def create_switches(self):
         # Neuron tracks all switches regardless of how many are connected
@@ -121,6 +121,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
 
         if 'switches' not in self.machine.config and 'coils' not in self.machine.config:
             self.log.debug("No coils or switches configured. Skipping I/O board discovery.")
+            self.done_waiting.set()
             return
 
         current_node = 0
@@ -211,7 +212,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
 
         # If this is the last I/O board, signal that we're done
         if node_id == len(self.config['io_loop']) - 1:
-            self.wait.set()
+            self.done_waiting.set()
 
     def process_driver_config_msg(self, msg):
         if msg == 'P':

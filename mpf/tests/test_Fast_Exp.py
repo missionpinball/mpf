@@ -1,3 +1,5 @@
+# mpf.tests.test_Fast_Exp
+
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.tests.platforms.fast import MockFastNetNeuron, MockFastExp
 
@@ -6,7 +8,9 @@ class TestFastExp(MpfTestCase):
     """Tests the FAST EXP boards."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.serial_connections_to_mock = ['net1', 'exp']
+        self.serial_connections_to_mock = ['net2', 'exp']
+        self.serial_connections = dict()
+        # TODO create common TestFastBase class for all FAST tests
 
     def get_config_file(self):
         return 'config_exp.yaml'
@@ -17,7 +21,46 @@ class TestFastExp(MpfTestCase):
     def get_platform(self):
         return False
 
-    def test_servo(self):
+    def _mock_loop(self):
+        for conn in self.serial_connections.values():
+            self.clock.mock_serial(conn.port, conn)
+
+    def create_connections(self):
+        for conn in self.serial_connections_to_mock:
+            if conn == 'net2':
+                self.serial_connections['net2'] = MockFastNetNeuron(self)  # default com3
+            elif conn == 'exp':
+                self.serial_connections['exp'] = MockFastExp(self)  # default com4
+
+    def confirm_commands(self):
+        self.advance_time_and_run(.1)
+        for conn in self.serial_connections.values():
+            self.assertFalse(conn.expected_commands)
+
+    def create_expected_commands(self):
+        # These are all the defaults based on the config file for this test.
+        # Individual tests can override / add as needed
+
+        self.serial_connections['net2'].expected_commands = {}
+        self.serial_connections['exp'].expected_commands = {}
+
+    def tearDown(self):
+        super().tearDown()
+        if not self.startup_error:
+            for name, conn in self.serial_connections.items():
+                self.assertFalse(conn.expected_commands,
+                                 f"Expected commands for {name} are not empty: {conn.expected_commands}")
+
+    def setUp(self):
+        self.expected_duration = 2
+        self.create_connections()
+        self.create_expected_commands()
+        super().setUp()
+
+        if not self.machine.is_shutting_down:
+            self.advance_time_and_run(1)
+
+    def DISABLED_test_servo(self):
         # go to min position
         self.exp_cpu.expected_commands = {
                 "MP@B40:0,00,7D0": ""                    # MP:<INDEX>,<POSITION>,<TIME_MS><CR>
@@ -52,7 +95,7 @@ class TestFastExp(MpfTestCase):
         self.assertIn("88002", platform.fast_exp_leds)
         self.assertIn("88120", platform.fast_exp_leds)
         self.assertIn("88121", platform.fast_exp_leds)
-        self.assertIn("89300", platform.fast_exp_leds)
+        self.assertIn("89200", platform.fast_exp_leds)
 
         exp_comm = platform.serial_connections['exp']
 

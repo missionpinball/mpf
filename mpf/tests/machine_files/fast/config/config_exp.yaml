@@ -45,7 +45,7 @@ fast:
         model: FP-EXP-0091-2  # test hw revision number included
         address: 89
         breakouts:
-          - port: 3
+          - port: 2
             model: FP-BRK-0001
         led_ports:
           - port: 1
@@ -85,7 +85,7 @@ lights:
   led5:
     number: brian-b1-2-2
   led6:
-    number: aaron-b3-1-1
+    number: aaron-b2-1-1
   led7:
     number: aaron-1-1
   led8:

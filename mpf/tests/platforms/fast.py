@@ -73,7 +73,12 @@ class MockFastSerial(MockSerial):
         # Order of precedence is key here. We want autoresponses to be last so they can be overridden
         # via custom responses or expected commands on a per-test basis.
 
-        if self.process_msg(cmd):
+        rsp = self.process_msg(cmd)
+
+        if rsp:
+            if self.PRINT_FSP_TRAFFIC:
+                print(f'{self.type} <<< {rsp}')
+                self.queue.append(rsp)
             return msg_len
 
         if cmd in self.expected_commands:
@@ -117,8 +122,7 @@ class MockFastNetNeuron(MockFastSerial):
 
     def process_msg(self, cmd):
         if cmd == (' ' * 256 * 4):
-            self.queue.append("XX:F")
-            return True
+            return "XX:F"
 
         return False
 
@@ -128,7 +132,6 @@ class MockFastExp(MockFastSerial):
         super().__init__(test_fast_base)
         self.type = 'EXP'
         self.port = 'com4'
-        self.active_board = None
         self.leds = dict()
         self.led_map = dict()  # LED number to name index, e.g. 88000: "led1", 88121: "led5"
 
@@ -136,53 +139,51 @@ class MockFastExp(MockFastSerial):
         # returns True if the msg was fully processed, False if it was not
 
         cmd, payload = cmd.split(":", 1)
-
-        if '@' in cmd:
-            cmd, temp_active = cmd.split("@", 1)
-
-        elif cmd == "EA":
-            temp_active = self.active_board = payload.upper()
-            return True
-
-        else:
-            temp_active = self.active_board
+        cmd, temp_active = cmd.split("@", 1)
 
         if cmd == "ID":
+            if not temp_active:  # no ID has been set, so lowest address will respond
+                return "ID:EXP FP-EXP-2000 0.11"
 
-            if temp_active in ["88", "89", "8A", "8B"]:  # 091
-                self.queue.append("ID:EXP FP-EXP-0091  0.8")
-
-            elif temp_active in ["480", "880", "881", "890", "893"]:  # 091
-                self.queue.append("ID:LED FP-BRK-0001  0.0")
-
-            elif temp_active in ["882"]:  # 091
-                self.queue.append("ID:BRK FP-DRV-0800  0.0")
+            if temp_active == '48':  # Neuron
+                return "ID:EXP FP-EXP-2000 0.11"
 
             elif temp_active in ["B4", "B5", "B6", "B7"]:  # 71
-                self.queue.append("ID:EXP FP-EXP-0071  0.8")
+                return "ID:EXP FP-EXP-0071  0.11"
 
-            elif temp_active == 'B40':  # Neuron
-                self.queue.append("ID:BRK FP-EXP-0071  0.0")
+            elif temp_active in ["84", "85", "86", "87"]:  # 81
+                return "ID:EXP FP-EXP-0081  0.12"
 
-            elif temp_active in ["84", "85", "86", "87"]:  # 71
-                self.queue.append("ID:EXP FP-EXP-0081  0.8")
+            elif temp_active in ["88", "89", "8A", "8B"]:  # 91
+                return "ID:EXP FP-EXP-0091  0.11"
 
-            elif temp_active == '840':  # Neuron
-                self.queue.append("ID:BRK FP-EXP-0081  0.0")
-
-            elif temp_active == '48':  # Neuron
-                self.queue.append("ID:EXP FP-EXP-2000 0.8")
+            # Breakouts
+            elif temp_active == "480":  # Neuron
+                return "ID:LED FP-BRK-0001  0.8"
 
             elif temp_active == '481':  # Neuron
-                self.queue.append("ID:LED FP-PWR-0007  0.8")
+                return "ID:BRK FP-PWR-0007  0.8"
 
             elif temp_active == '482':  # Neuron
-                self.queue.append("ID:BRK FP-BRK-0116  0.8")
+                return "ID:BRK FP-BRK-0116  0.8"
 
-            if not temp_active:  # no ID has been set, so lowest address will respond
-                self.queue.append("ID:EXP FP-EXP-2000 0.8")
+            elif temp_active in ["B40", "B50", "B60", "B70"]:  # 71
+                return "ID:BRK FP-EXP-0071  0.11"
 
-            return True
+            elif temp_active in ["840", "850", "860", "870",
+                                 "841", "851", "861", "871"]:  # 81
+                return "ID:BRK FP-EXP-0081  0.12"
+
+            elif temp_active in ["880", "890", "8A0", "8B0"]:  # 91
+                return "ID:BRK FP-EXP-0091  0.11"
+
+            elif temp_active in ["881", "892"]:  # 091
+                return "ID:BRK FP-BRK-0001  0.8"
+
+            elif temp_active in ["882"]:  # 091
+                return "ID:BRK FP-DRV-0800  0.0"
+
+            assert False, f"Unexpected ID request for {temp_active}"
 
         elif cmd == "BR":
             # turn off all the LEDs on that board
@@ -190,10 +191,10 @@ class MockFastExp(MockFastSerial):
                 if led_number.startswith(temp_active):
                     self.leds[led_name] = "000000"
 
-            self.queue.append("BR:P")
-            return True
+            return "BR:P"
 
         elif cmd == "RD":
+            # Update LED colors
             # RD:<COUNT>{<INDEX><R><G><B>...}
             # 88120
 
@@ -243,8 +244,7 @@ class MockFastRgb(MockFastSerial):
                 if not remaining:
                     break
 
-            self.queue.append("RX:P")
-            return True
+            return "RX:P"
 
 
 class MockFastNetNano(MockFastSerial):
@@ -265,9 +265,7 @@ class MockFastNetNano(MockFastSerial):
 
     def process_msg(self, cmd):
         if cmd == (' ' * 256 * 4):
-            self.queue.append("XX:F")
-            return True
-
+            return "XX:F"
         return False
 
 class MockFastSeg(MockFastSerial):
