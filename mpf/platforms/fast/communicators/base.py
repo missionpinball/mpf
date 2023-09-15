@@ -125,7 +125,7 @@ class FastSerialCommunicator(LogMixin):
         # await asyncio.sleep(.5)
 
     async def init(self):
-        self.send_with_confirmation('ID:', 'ID:')
+        raise NotImplementedError(f"{self.__class__.__name__} does not implement init()")
 
     def _process_xx(self, msg):
         """Process the XX response."""
@@ -146,6 +146,8 @@ class FastSerialCommunicator(LogMixin):
         if version.parse(self.remote_firmware) < MIN_FW:
             raise AssertionError(f'Firmware version mismatch. MPF requires the {self.remote_processor} processor '
                                  f'to be firmware {MIN_FW}, but yours is {self.remote_firmware}')
+
+        self.done_processing_msg_response()
 
     async def _read_with_timeout(self, timeout):
         try:
@@ -206,11 +208,28 @@ class FastSerialCommunicator(LogMixin):
                     raise e
             self.writer = None
 
-    async def send_and_wait_async(self, msg, pause_sending_until, log_msg=None):
-        self.done_waiting.clear()
+    async def send_and_wait_for_response(self, msg, pause_sending_until, log_msg=None):
         await self.no_response_waiting.wait()
         self.no_response_waiting.clear()
         self.send_with_confirmation(msg, pause_sending_until, log_msg)
+
+    async def send_and_wait_for_response_processed(self, msg, pause_sending_until, timeout=1, max_retries=0, log_msg=None):
+        self.done_waiting.clear()
+
+        retries = 0
+
+        while max_retries == -1 or retries <= max_retries:
+            try:
+                await asyncio.wait_for(self.send_and_wait_for_response(msg, pause_sending_until, log_msg), timeout=timeout)
+                break
+            except asyncio.TimeoutError:
+                self.log.error(f"Timeout waiting for response to {msg}. Retrying...")
+                retries += 1
+
+        await self.done_waiting.wait()
+
+    def done_processing_msg_response(self):
+        self.done_waiting.set()
 
     def send_with_confirmation(self, msg, pause_sending_until, log_msg=None):
         if log_msg:
@@ -274,6 +293,10 @@ class FastSerialCommunicator(LogMixin):
         if self.pause_sending_flag.is_set() and self.pause_sending_until.startswith(msg_header):
             self.resume_sending()
 
+    def pause_sending(self, msg_header):
+        self.pause_sending_until = msg_header
+        self.pause_sending_flag.set()
+
     def resume_sending(self):
         self.pause_sending_until = None
         self.pause_sending_flag.clear()
@@ -324,10 +347,6 @@ class FastSerialCommunicator(LogMixin):
 
             except:
                 return  # TODO better way to catch shutting down?
-
-    def pause_sending(self, msg_header):
-        self.pause_sending_until = msg_header
-        self.pause_sending_flag.set()
 
     def write_to_port(self, msg, log_msg=None):
         # Sends a message as is, without encoding or adding a <CR> character

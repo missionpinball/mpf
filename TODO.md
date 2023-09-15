@@ -1,7 +1,5 @@
 # FAST Platform Rewrite TODO list for MPF 0.57
 
-* Review the done_waiting() event and see if it's needed, or if there's a better
-  way to integrate it with async send and waits.
 * Get FAST EXP tests working
 * Finish the FAST machine reset test
 * Add a test for ball ending?

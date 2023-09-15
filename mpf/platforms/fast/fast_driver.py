@@ -216,7 +216,7 @@ class FASTDriver:
         self.current_driver_config.param4 =    '00'
         self.current_driver_config.param5 =    '00'
 
-        await self.communicator.send_and_wait_async(self.get_current_config(), self.get_current_config())
+        await self.communicator.send_and_wait_for_response_processed(self.get_current_config(), self.get_current_config())
 
     def disable(self):
         """Disable (turn off) this driver."""

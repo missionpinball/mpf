@@ -124,8 +124,7 @@ class FastExpansionBoard:
         self.communicator.send_and_forget(f'BR@{self.address}:')
 
     async def reset(self):
-        await self.communicator.send_and_wait_async(f'BR@{self.address}:', 'BR:P')
-        await self.communicator.done_waiting.wait()
+        await self.communicator.send_and_wait_for_response_processed(f'BR@{self.address}:', 'BR:P')
 
     def _update_leds(self):
         # Called every tick to update the LEDs on this board

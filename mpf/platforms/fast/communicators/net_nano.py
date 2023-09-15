@@ -35,10 +35,10 @@ class FastNetNanoCommunicator(FastNetNeuronCommunicator):
         # TODO add 'SN:', 'DN:' etc to look for DN:F, but then what do we do with it?
 
     async def init(self):
-        await self.send_and_wait_async('ID:', 'ID:')  # Verify we're connected to a Neuron
+        await self.send_and_wait_for_response('ID:', 'ID:')  # Verify we're connected to a Neuron
         self.send_and_forget('WD:1') # Force expire the watchdog since who knows what state the board is in?
         await self.query_io_boards()
-        await self.send_and_wait_async('SA:', 'ID:')  # Get initial states so switches can be created
+        await self.send_and_wait_for_response('SA:', 'ID:')  # Get initial states so switches can be created
 
     def _process_sa(self, msg):
         hw_states = {}

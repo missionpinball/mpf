@@ -71,28 +71,24 @@ class FastExpCommunicator(FastSerialCommunicator):
             self.platform.register_expansion_board(board_obj)  # registers with the platform
 
             self.active_board = board_address
-            # self.done_waiting.clear()
             print(f'1 {self.active_board}')
-            await self.send_and_wait_async(f'ID@{board_address}:', 'ID:')
-            await self.done_waiting.wait()
+            await self.send_and_wait_for_response_processed(f'ID@{board_address}:', 'ID:')
 
             for breakout_board in board_obj.breakouts.values():
                 self.active_board = breakout_board.address
                 print(f'2 {self.active_board}')
-                # self.done_waiting.clear()
-                await self.send_and_wait_async(f'ID@{breakout_board.address}:', 'ID:')
-                await self.done_waiting.wait()
+                await self.send_and_wait_for_response_processed(f'ID@{breakout_board.address}:', 'ID:')
 
             await board_obj.reset()
 
     def _process_id(self, msg):
         self.exp_boards_by_address[self.active_board[:2]].verify_hardware(msg, self.active_board)
         self.active_board = None
-        self.done_waiting.set()
+        self.done_processing_msg_response()
 
     def _process_br(self, msg):
         self.active_board = None
-        self.done_waiting.set()
+        self.done_processing_msg_response()
 
     def set_led_fade_rate(self, board_address, rate):
         if rate > 8191:
