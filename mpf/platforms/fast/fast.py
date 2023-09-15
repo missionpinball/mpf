@@ -31,6 +31,7 @@ from mpf.platforms.system11 import System11OverlayPlatform, System11Driver
 
 # pylint: disable-msg=too-many-instance-attributes
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+from mpf.exceptions.config_file_error import ConfigFileError
 
 
 class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
@@ -492,11 +493,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 exp_board = self.exp_boards_by_name[parts[0]]
 
                 try:
-                    name, port, led = parts
+                    _, port, led = parts
                     breakout = str((int(port) - 1) // 4)  # assume 4 LED ports per breakout, could change to a lookup
                     port = str((int(port) - 1) % 4 + 1)  # ports are always 1-4 so figure out if the printed port on the board is 5-8
                 except ValueError:
-                    name, breakout, port, led = parts
+                    _, breakout, port, led = parts
                     breakout = breakout.strip('b')
 
                 try:
@@ -523,8 +524,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 number = f'{int(parts[0]):02X}' # this is a legacy LED number as an int
 
             if number not in self.fast_leds:
-                self.fast_leds[number] = FASTDirectLED(
+                try:
+                    self.fast_leds[number] = FASTDirectLED(
                     number, int(self.config['rgb']['led_fade_time']), self)
+                except KeyError:
+                    # This number is not valid
+                    raise ConfigFileError(f"Invalid LED number: {'_'.join(parts)}", 3, self.log.name)
 
             fast_led_channel = FASTDirectLEDChannel(self.fast_leds[number], channel)
             self.fast_leds[number].add_channel(int(channel), fast_led_channel)
