@@ -28,16 +28,22 @@ class TestFastBase(MpfTestCase):
         for conn in self.serial_connections_to_mock:
             if conn == 'net2':
                 self.serial_connections['net2'] = MockFastNetNeuron(self)  # default com3
+                self.net_cpu = self.serial_connections['net2']
             elif conn == 'exp':
                 self.serial_connections['exp'] = MockFastExp(self)  # default com4
+                self.exp_cpu = self.serial_connections['exp']
             elif conn == 'rgb':
                 self.serial_connections['rgb'] = MockFastRgb(self)  # default com5
+                self.rgb_cpu = self.serial_connections['rgb']
             elif conn == 'net1':
                 self.serial_connections['net1'] = MockFastNetNano(self)  # default com6
+                self.net_cpu = self.serial_connections['net1']
             elif conn == 'seg':
                 self.serial_connections['seg'] = MockFastSeg(self)  # default com7
+                self.seg_cpu = self.serial_connections['seg']
             elif conn == 'dmd':
                 self.serial_connections['dmd'] = MockFastDmd(self)  # default com8
+                self.dmd_cpu = self.serial_connections['dmd']
 
     def confirm_commands(self):
         self.advance_time_and_run(.1)
