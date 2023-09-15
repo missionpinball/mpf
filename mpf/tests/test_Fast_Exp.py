@@ -1,41 +1,16 @@
 # mpf.tests.test_Fast_Exp
 
-from mpf.tests.MpfTestCase import MpfTestCase
-from mpf.tests.platforms.fast import MockFastNetNeuron, MockFastExp
+from mpf.tests.test_Fast import TestFastBase
 
 
-class TestFastExp(MpfTestCase):
+class TestFastExp(TestFastBase):
     """Tests the FAST EXP boards."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.serial_connections_to_mock = ['net2', 'exp']
-        self.serial_connections = dict()
-        # TODO create common TestFastBase class for all FAST tests
 
     def get_config_file(self):
         return 'config_exp.yaml'
-
-    def get_machine_path(self):
-        return 'tests/machine_files/fast/'
-
-    def get_platform(self):
-        return False
-
-    def _mock_loop(self):
-        for conn in self.serial_connections.values():
-            self.clock.mock_serial(conn.port, conn)
-
-    def create_connections(self):
-        for conn in self.serial_connections_to_mock:
-            if conn == 'net2':
-                self.serial_connections['net2'] = MockFastNetNeuron(self)  # default com3
-            elif conn == 'exp':
-                self.serial_connections['exp'] = MockFastExp(self)  # default com4
-
-    def confirm_commands(self):
-        self.advance_time_and_run(.1)
-        for conn in self.serial_connections.values():
-            self.assertFalse(conn.expected_commands)
 
     def create_expected_commands(self):
         # These are all the defaults based on the config file for this test.
@@ -43,22 +18,6 @@ class TestFastExp(MpfTestCase):
 
         self.serial_connections['net2'].expected_commands = {}
         self.serial_connections['exp'].expected_commands = {}
-
-    def tearDown(self):
-        super().tearDown()
-        if not self.startup_error:
-            for name, conn in self.serial_connections.items():
-                self.assertFalse(conn.expected_commands,
-                                 f"Expected commands for {name} are not empty: {conn.expected_commands}")
-
-    def setUp(self):
-        self.expected_duration = 2
-        self.create_connections()
-        self.create_expected_commands()
-        super().setUp()
-
-        if not self.machine.is_shutting_down:
-            self.advance_time_and_run(1)
 
     def DISABLED_test_servo(self):
         # go to min position

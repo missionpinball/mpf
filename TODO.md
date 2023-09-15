@@ -1,5 +1,7 @@
 # FAST Platform Rewrite TODO list for MPF 0.57
 
+* Get rid of all communicator-level message waiting?
+
 * Get FAST EXP tests working
 * Finish the FAST machine reset test
 * Add a test for ball ending?
