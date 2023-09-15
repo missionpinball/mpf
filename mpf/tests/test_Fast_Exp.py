@@ -15,9 +15,11 @@ class TestFastExp(TestFastBase):
     def create_expected_commands(self):
         # These are all the defaults based on the config file for this test.
         # Individual tests can override / add as needed
+        super().create_expected_commands()
 
-        self.serial_connections['net2'].expected_commands = {}
-        self.serial_connections['exp'].expected_commands = {}
+        self.serial_connections['exp'].expected_commands = {'EM@B40:0,1,7D0,1F4,9C4,5DC': '',
+                                                            'EM@B40:1,1,7D0,3E8,7D0,5DC': '',
+                                                            'EM@882:7,1,7D0,3E8,7D0,5DC': '',}
 
     def DISABLED_test_servo(self):
         # go to min position
