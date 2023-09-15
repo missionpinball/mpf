@@ -4,25 +4,6 @@ hardware:
     platform: fast
 
 fast:
-  net:
-    port: com3
-    controller: neuron
-    io_loop:
-            3208:
-                model: FP-I/O-3208
-                order: 1
-            0804:
-                model: FP-I/O-0804
-                order: 2
-            1616_1:
-                model: FP-I/O-1616
-                order: 3
-            1616_2:
-                model: FP-I/O-1616
-                order: 4
-            cab:
-                model: FP-CAB-0001
-                order: 5
   exp:
     port: com4
     boards:

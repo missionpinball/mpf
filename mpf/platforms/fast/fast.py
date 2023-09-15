@@ -65,7 +65,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             if self.config[port_type]:
                 self.configured_ports.append(port_type)
 
-        self.machine_type = self.config["net"]["controller"]
+        try:
+            self.machine_type = self.config["net"]["controller"]
+        except KeyError:
+            self.machine_type = 'no_net'
 
         if self.machine_type in ['sys11', 'wpc89', 'wpc95']:
             self.debug_log("Configuring the FAST Controller for Retro driver board")
@@ -74,6 +77,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         elif self.machine_type in ['neuron', 'nano']:
             self.debug_log("Configuring FAST Controller for FAST I/O boards.")
             self.is_retro = False
+        elif self.machine_type == 'no_net':
+            pass
         else:
             self.raise_config_error(f'Unknown machine_type "{self.machine_type}" configured fast.', 6)
 
@@ -471,10 +476,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         del platform_settings
 
-        if not (self.serial_connections['net'] or self.serial_connections['exp']):
-            raise AssertionError('A request was made to configure a FAST Light, '
-                                 'but no connection to a NET or EXP processor is '
-                                 'available')
         if subtype == "gi":
             return FASTGIString(number, self.serial_connections['net'], self.machine,
                                 int(1 / self.config['net']['gi_hz'] * 1000))
