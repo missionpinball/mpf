@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 
 mode:
   priority: 100
@@ -21,4 +21,3 @@ sequence_shots:
         delay_switch_list:
             seq2_delay: 1s
         sequence_timeout: 3s
-

@@ -191,7 +191,7 @@ class Command(MpfCommandLineParser):
         os.makedirs(os.path.normpath(machine_path))
         os.makedirs(os.path.normpath(os.path.join(machine_path, "config")))
         with open(os.path.normpath(os.path.join(machine_path, "config", "config.yaml")), "w") as f:
-            f.write("#config_version=5")
+            f.write("#config_version=6")
 
         # create test folder
         os.makedirs(os.path.normpath(os.path.join(machine_path, "tests")))
@@ -205,7 +205,7 @@ class Command(MpfCommandLineParser):
         """Create the basic hierarchy of a new show folder."""
         if not os.path.exists(shows_dir):
             os.makedirs(shows_dir)
-        file_content = "#show_version=5"
+        file_content = "#show_version=6"
         show_file_name = "{}.yaml".format(show_name)
         config_path = os.path.normpath(os.path.join(machine_path, "shows", show_file_name))
         Command.write_config_file(config_path, file_content)
@@ -217,7 +217,7 @@ class Command(MpfCommandLineParser):
         # create config folder
         os.makedirs(os.path.normpath(os.path.join(machine_path, "modes", mode_name, "config")))
         # create config file
-        file_content = """#config_version=5
+        file_content = """#config_version=6
 
             mode:
                 start_events: ball_started

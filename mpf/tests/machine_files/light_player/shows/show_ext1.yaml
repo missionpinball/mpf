@@ -1,4 +1,4 @@
-#show_version=5
+#show_version=6
 - shows:
     attract:
       show: show_ext2

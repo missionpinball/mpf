@@ -31,6 +31,7 @@ from mpf.platforms.system11 import System11OverlayPlatform, System11Driver
 
 # pylint: disable-msg=too-many-instance-attributes
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+from mpf.exceptions.config_file_error import ConfigFileError
 
 
 class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
@@ -39,11 +40,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     """Platform class for the FAST Pinball hardware."""
 
-    # __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "seg_connection", "exp_connection", "aud_connection",
-    #              "is_retro", "serial_connections", "fast_leds", "fast_commands", "config", "machine_type", "hw_switch_data",
-    #              "io_boards", "flag_led_tick_registered", "_led_task",
-    #              "fast_exp_leds", "fast_segs", "exp_boards", "exp_breakout_boards",
-    #              "exp_breakouts_with_leds"]
+    __slots__ = ["config", "configured_ports", "machine_type", "is_retro",
+                "serial_connections", "fast_leds", "fast_exp_leds", "fast_segs",
+                "exp_boards_by_address", "exp_boards_by_name", "exp_breakout_boards",
+                "exp_breakouts_with_leds", "hw_switch_data", "new_switch_data",
+                "io_boards", "io_boards_by_name", "switches_initialized",
+                "drivers_initialized"]
 
     port_types = ['net', 'exp', 'aud', 'dmd', 'rgb', 'seg', 'emu']
 
@@ -65,7 +67,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             if self.config[port_type]:
                 self.configured_ports.append(port_type)
 
-        self.machine_type = self.config["net"]["controller"]
+        try:
+            self.machine_type = self.config["net"]["controller"]
+        except KeyError:
+            self.machine_type = 'no_net'
 
         if self.machine_type in ['sys11', 'wpc89', 'wpc95']:
             self.debug_log("Configuring the FAST Controller for Retro driver board")
@@ -74,11 +79,14 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         elif self.machine_type in ['neuron', 'nano']:
             self.debug_log("Configuring FAST Controller for FAST I/O boards.")
             self.is_retro = False
+        elif self.machine_type == 'no_net':
+            pass
         else:
             self.raise_config_error(f'Unknown machine_type "{self.machine_type}" configured fast.', 6)
 
         # Most FAST platforms don't use ticks, but System11 does
         self.features['tickless'] = self.machine_type != 'sys11'
+        self.features['max_pulse'] = 25500
 
         self.serial_connections = dict()
         self.fast_leds = dict()
@@ -87,12 +95,13 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.exp_boards_by_address = dict()  # k: EE address, v: FastExpansionBoard instances
         self.exp_boards_by_name = dict()  # k: str name, v: FastExpansionBoard instances
         self.exp_breakout_boards = dict()  # k: EEB address, v: FastBreakoutBoard instances
-        # self.exp_dirty_led_ports = set() # FastLedPort instances
         self.exp_breakouts_with_leds = set()
-
-        self.hw_switch_data = None
+        self.hw_switch_data = {i: 0 for i in range(112)}
+        self.new_switch_data = asyncio.Event()  # Used to signal when we have updated switch data
         self.io_boards = dict()     # type: Dict[int, FastIoBoard]  # TODO move to NET communicator(s) classes?
         self.io_boards_by_name = dict()     # type: Dict[str, FastIoBoard]
+        self.switches_initialized = False
+        self.drivers_initialized = False
 
     def get_info_string(self):
         """Dump info strings about boards."""
@@ -108,8 +117,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     async def initialize(self):
         """Initialise platform."""
-        self.machine.events.add_async_handler('machine_reset_phase_1', self.soft_reset)
+        # self.machine.events.add_async_handler('machine_reset_phase_1', self.soft_reset)
+        self.machine.events.add_async_handler('init_phase_1', self.soft_reset)
         self.machine.events.add_handler('init_phase_3', self._start_communicator_tasks)
+        self.machine.events.add_handler('machine_reset_phase_2', self._init_complete)
         await self._connect_to_hardware()
 
     async def soft_reset(self, **kwargs):
@@ -119,13 +130,21 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         hard reset of the boards, rather it queries the boards for their current configuration and
         reapplies (with warnings) any configs that are out of sync.
 
-        This command runs during the reset_phase_1 event.
+        This command runs during the init_phase_1 phase, and then skips the reset phases, then runs
+        again on subsequent resets during the machine_reset_phase_1 phase.
         """
         del kwargs
         self.debug_log("Soft resetting FAST platform.")
 
         for comm in self.serial_connections.values():
             await comm.soft_reset()
+
+    def _init_complete(self, **kwargs):
+        del kwargs
+        # Runs on init_phase_2 and moves soft_reset() from init_phase_1 to machine_reset_phase_1
+        # We need the soft_reset() to run earlier on boot, but then at reset from there on out
+        self.machine.events.remove_handler(self.soft_reset)
+        self.machine.events.add_async_handler('machine_reset_phase_1', self.soft_reset)
 
     def stop(self):
         """Stop platform and close connections."""
@@ -252,56 +271,46 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             await communicator.init()
             self.serial_connections[port] = communicator
 
-    async def get_hw_switch_states(self, query_hw=True):
-        """Return hardware states.
+    async def get_hw_switch_states(self, query_hw=False):
+        """Return a dict of hw switch states.
 
-        Args:
-        ----
-            query_hw: Await an SA: command to update the switches from the physical hardware.
-                Otherwise this returns the last known hw states.
-
+        If query_hw is True, will re-query the hardware for the current switch states. Otherwise it will just return
+        the last cached value.
         """
 
-        # This meth is called during init_phase_2, but usually DL and SL config commands are still
-        # processing since those are not async. So awaiting the SA results holds the init until this
-        # is done which mean the DL/SL commands are processed before the init completes.
-
-        if query_hw:
-            await self.serial_connections['net'].send_and_wait_async('SA:', 'SA:')
+        # If the switches have not been initialized then their states are garbage, so don't bother
+        if self.switches_initialized and query_hw:
+            self.new_switch_data.clear()
+            await self.serial_connections['net'].update_switches_from_hardware()
+            await self.new_switch_data.wait()  # Wait here until we have updated switch data
 
         return self.hw_switch_data
 
-    @staticmethod
-    def convert_number_from_config(number):
-        """Convert a number from config format to hex."""
-        return Util.int_to_hex_string(number)
-
     def _parse_driver_number(self, number):
+        # Accepts FAST driver number string (is3208-1) and returns the driver index (0-based int)
+
         try:
             board_str, driver_str = number.split("-")
-        except ValueError as e:
-            total_drivers = 0
-            for board_obj in self.io_boards.values():
-                total_drivers += board_obj.driver_count
-            index = self.convert_number_from_config(number)
 
-            if int(index, 16) >= total_drivers:
-                raise AssertionError(f"Driver {int(index, 16)} does not exist. Only "
-                                     f"{total_drivers} drivers found. Driver number: {number}") from e
-
-            return index
+        except ValueError as e:  # If there's no dash, assume it's a driver number
+            return int(number, 16)
 
         try:
             board = self.io_boards_by_name[board_str]
         except KeyError:
-            raise AssertionError(f"Board {board_str} does not exist for driver {number}")
+            raise AssertionError(f"I/O Board {board_str} does not exist for driver {number}")
 
         driver = int(driver_str)
 
         if board.driver_count <= driver:
-            raise AssertionError(f"Board {board} only has drivers 0-{board.driver_count-1}. Driver value {driver} is not valid.")
+            raise AssertionError(f"I/O Board {board} only has drivers 0-{board.driver_count-1}. Driver value {driver} is not valid.")
 
-        return Util.int_to_hex_string(board.start_driver + driver)
+        index = board.start_driver + driver
+
+        if index + 1 > self.serial_connections['net'].MAX_DRIVERS:
+            raise AssertionError(f"I/O Board {board} driver {driver} is out of range. This would be driver {index + 1} but this platform supports a max of {self.serial_connections['net'].MAX_DRIVERS} drivers.")
+
+        return index
 
     def configure_driver(self, config: DriverConfig, number: str, platform_config: dict) -> FASTDriver:
         """Configure a driver.
@@ -309,7 +318,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         Args:
         ----
             config: Driver config.
-            number: Number of this driver.
+            number: string number entry from config (e.g. 'io3208-0)
             platform_settings: Platform specific settings.
 
         Returns: Driver object
@@ -317,7 +326,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         # platform_config['recycle_ms'] = 27
         # platform_config['connection'] = 'auto'
-        # platform_config['hold_pwm_patter'] = None
 
         if not self.serial_connections['net']:
             raise AssertionError('A request was made to configure a FAST '
@@ -330,18 +338,19 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         # If we have Retro driver boards, look up the driver number
         if self.is_retro:
             try:
-                number = fast_defines.RETRO_DRIVER_MAP[number.upper()]
+                index = int(fast_defines.RETRO_DRIVER_MAP[number.upper()], 16)
             except KeyError:
                 self.raise_config_error(f"Could not find Retro driver {number}", 1)
 
         # If we have FAST I/O boards, we need to make sure we have hex strings
         elif self.machine_type in ['nano', 'neuron']:
-            number = self._parse_driver_number(number)
+            index = self._parse_driver_number(number)
 
         else:
             raise AssertionError("Invalid machine type: {self.machine_type}")
 
-        driver = self.serial_connections['net'].drivers[int(number, 16)]
+        driver = self.serial_connections['net'].drivers[index]  # contains all drivers on the board
+        # platform.drivers is empty at this point
         driver.set_initial_config(config, platform_config)
 
         return driver
@@ -386,7 +395,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             total_switches = 0
             for board_obj in self.io_boards.values():
                 total_switches += board_obj.switch_count
-            index = self.convert_number_from_config(number)
+            index = Util.int_to_hex_string(number)
 
             if int(index, 16) >= total_switches:
                 raise AssertionError(f"Switch {int(index, 16)} does not exist. Only "
@@ -469,10 +478,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         del platform_settings
 
-        if not (self.serial_connections['net'] or self.serial_connections['exp']):
-            raise AssertionError('A request was made to configure a FAST Light, '
-                                 'but no connection to a NET or EXP processor is '
-                                 'available')
         if subtype == "gi":
             return FASTGIString(number, self.serial_connections['net'], self.machine,
                                 int(1 / self.config['net']['gi_hz'] * 1000))
@@ -489,10 +494,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 exp_board = self.exp_boards_by_name[parts[0]]
 
                 try:
-                    name, port, led = parts
-                    breakout = '0'
+                    _, port, led = parts
+                    breakout = str((int(port) - 1) // 4)  # assume 4 LED ports per breakout, could change to a lookup
+                    port = str((int(port) - 1) % 4 + 1)  # ports are always 1-4 so figure out if the printed port on the board is 5-8
                 except ValueError:
-                    name, breakout, port, led = parts
+                    _, breakout, port, led = parts
                     breakout = breakout.strip('b')
 
                 try:
@@ -500,7 +506,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 except KeyError:
                     raise AssertionError(f'Board {exp_board} does not have a configuration entry for Breakout {breakout}')  # TODO change to mpf config exception
 
-                index = self.port_idx_to_hex(port, led, 32)
+                index = self.port_idx_to_hex(port, led, 32, config.name)
                 this_led_number = f'{brk_board.address}{index}'
 
                 # this code runs once for each channel, so it will be called 3x per LED which
@@ -519,8 +525,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 number = f'{int(parts[0]):02X}' # this is a legacy LED number as an int
 
             if number not in self.fast_leds:
-                self.fast_leds[number] = FASTDirectLED(
+                try:
+                    self.fast_leds[number] = FASTDirectLED(
                     number, int(self.config['rgb']['led_fade_time']), self)
+                except KeyError:
+                    # This number is not valid
+                    raise ConfigFileError(f"Invalid LED number: {'_'.join(parts)}", 3, self.log.name)
 
             fast_led_channel = FASTDirectLEDChannel(self.fast_leds[number], channel)
             self.fast_leds[number].add_channel(int(channel), fast_led_channel)
@@ -529,10 +539,24 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         raise AssertionError("Unknown subtype {}".format(subtype))
 
-    def port_idx_to_hex(self, port, device_num, devices_per_port):
+    def port_idx_to_hex(self, port, device_num, devices_per_port, name=None):
+        """Converts port number and LED index into the proper FAST hex number.
+
+        port: the LED port number printed on the board.
+        device_num: LED position in the change, First LED is 1. No zeros.
+        devices_per_port: number of LEDs per port. Typically 32.
+        """
+
+        device_num = int(device_num)
+        if device_num > devices_per_port:
+            if name:
+                self.raise_config_error(f"Device number {device_num} exceeds the number of devices per port ({devices_per_port}) "
+                                        f"for LED {name}", 8)  # TODO get a final error code
+            else:
+                raise AssertionError(f"Device number {device_num} exceeds the number of devices per port ({devices_per_port})")
 
         port_offset = ((int(port) - 1) * devices_per_port)
-        device_num = int(device_num) - 1
+        device_num = device_num - 1
         return f'{(port_offset + device_num):02X}'
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
@@ -544,7 +568,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 except KeyError:
                     self.raise_config_error(f"Could not find GI {number}", 3)
             else:
-                number = self.convert_number_from_config(number)
+                number = Util.int_to_hex_string(number)
 
             return [
                 {
@@ -558,7 +582,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 except KeyError:
                     self.raise_config_error(f"Could not find light {number}", 4)
             else:
-                number = self.convert_number_from_config(number)
+                number = Util.int_to_hex_string(number)
 
             return [
                 {
@@ -631,141 +655,85 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Return switch config section."""
         return "fast_switches"
 
-    def _check_switch_coil_combination(self, switch, coil):
-        # V2 hardware can write rules across node boards
-        if not self.machine_type == 'nano':
-            return
+    def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
+        """Set pulse on hit rule on driver.
 
-        switch_number = int(switch.hw_switch.number[0], 16)
-        coil_number = int(coil.hw_driver.number, 16)
+        Pulses a driver when a switch is hit. When the switch is released the pulse continues. Typically used for
+        autofire coils such as pop bumpers.
 
-        # first 8 switches always work
-        if 0 <= switch_number <= 7:
-            return
+        FAST Driver Mode 10 or 70, depending on settings
+        """
 
-        switch_index = 0
-        coil_index = 0
-        for board_obj in self.io_boards.values():
-            # if switch and coil are on the same board we are fine
-            if switch_index <= switch_number < switch_index + board_obj.switch_count and \
-                    coil_index <= coil_number < coil_index + board_obj.driver_count:
-                return
-            coil_index += board_obj.driver_count
-            switch_index += board_obj.switch_count
+        coil.hw_driver.set_hardware_rule(None, enable_switch, coil)
+        # TODO currently this will just use whatever the current mode is. Should we do some math and force a mode?
 
-        raise AssertionError(f"Driver {coil.hw_driver.number} and switch {switch.hw_switch.number} "
-                             "are on different boards. Cannot apply rule!")
+    def set_delayed_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings, delay_ms: int):
+        """Set pulse on hit and release rule to driver.
+
+        When a switch is hit and a certain delay passed it pulses a driver.
+        When the switch is released the pulse continues.
+        Typically used for kickbacks.
+
+        FAST Driver Mode 30
+        """
+        coil.hw_driver.set_hardware_rule('30', enable_switch, coil, delay_ms=delay_ms)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
-        """Set pulse on hit and release rule to driver."""
-        self.debug_log("Setting Pulse on hit and release HW Rule. Switch: %s,"
-                       "Driver: %s", enable_switch.hw_switch.number,
-                       coil.hw_driver.number)
+        """Set pulse on hit and release rule to driver.
 
-        self._check_switch_coil_combination(enable_switch, coil)
+        Pulses a driver when a switch is hit. When the switch is released the pulse is canceled. Typically used on
+        the main coil for dual coil flippers without eos switch.
 
-        driver = coil.hw_driver
+        FAST Driver Mode 18 (with pwm2_power = 00)
+        """
 
-        cmd = '{}{},{},{},18,{},{},00,{},00'.format(
-            driver.get_config_cmd(),
-            coil.hw_driver.number,
-            driver.get_control_for_cmd(enable_switch),
-            enable_switch.hw_switch.number[0],
-            Util.int_to_hex_string(coil.pulse_settings.duration),
-            driver.get_pwm_for_cmd(coil.pulse_settings.power),
-            driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
+        # Force hold to None which is needed with this rule
+        coil.hold_settings = None
+        coil.hw_driver.set_hardware_rule('18', enable_switch, coil)
 
-        enable_switch.hw_switch.calculate_debounce(enable_switch.debounce)
-        driver.set_autofire(cmd, coil.pulse_settings.duration, coil.pulse_settings.power, 0)
+
+    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
+        """Set pulse on hit and enable and release rule on driver.
+
+        Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
+        the pulse is canceled and the driver gets disabled. Typically used for single coil flippers.
+
+        FAST Driver Mode 18 (with pwm2_power != 00)
+        """
+        # coil.hw_driver.set_pulse_on_hit_and_enable_and_release_rule(enable_switch, coil)
+        coil.hw_driver.set_hardware_rule('18', enable_switch, coil)
 
     def set_pulse_on_hit_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
                                                       eos_switch: SwitchSettings, coil: DriverSettings,
                                                       repulse_settings: Optional[RepulseSettings]):
-        """Set pulse on hit and release and disable rule on driver."""
-        # Potential command from Dave:
-        # Command
-        # [DL/DN]:<DRIVER_ID>,<CONTROL>,<SWITCH_ID_ON>,<75>,<SWITCH_ID_OFF>,<Driver On Time1>,<Driver On Time2 X 100mS>,
-        # <PWM2><Driver Rest Time><CR>#
-        # SWITCH_ID_ON would be the flipper switch
-        # SWITCH_ID_OFF would be the EOS switch.
-        # So for the flipper, Driver On Time1 will = the maximum time the coil can be held on if the EOS fails.
-        # Driver On Time2 X 100mS would not be used for a flipper, so set it to 0.
-        # And PWM2 should be left on full 0xff unless you need less power for some reason.
-        self.debug_log("Setting Pulse on hit and release with HW Rule. Switch:"
-                       "%s, Driver: %s", enable_switch.hw_switch.number,
-                       coil.hw_driver.number)
+        """Set pulse on hit and enable and release and disable rule on driver.
 
-        self._check_switch_coil_combination(enable_switch, coil)
-        self._check_switch_coil_combination(eos_switch, coil)
+        Pulses a driver when a switch is hit. When the switch is released
+        the pulse is canceled and the driver gets disabled. When the eos_switch is hit the pulse is canceled
+        and the driver becomes disabled. Typically used on the main coil for dual-wound coil flippers with eos switch.
 
-        driver = coil.hw_driver
+        FAST Driver Mode 75
+        """
+        del repulse_settings  # TODO do we want to implement software repulse?
+        # If enabled, set a switch rule to look for EOS being open and flipper button closed and manually pulse?
+        off_switch = eos_switch.hw_switch.hw_number
 
-        cmd = '{}{},{},{},75,{},{},00,{},{}'.format(
-            driver.get_config_cmd(),
-            coil.hw_driver.number,
-            driver.get_control_for_cmd(enable_switch, eos_switch),
-            enable_switch.hw_switch.number[0],
-            eos_switch.hw_switch.number[0],
-            Util.int_to_hex_string(coil.pulse_settings.duration),
-            driver.get_pwm_for_cmd(coil.pulse_settings.power),
-            driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
-
-        enable_switch.hw_switch.calculate_debounce(enable_switch.debounce)
-        eos_switch.hw_switch.calculate_debounce(eos_switch.debounce)
-        driver.set_autofire(cmd, coil.pulse_settings.duration, coil.pulse_settings.power, 0)
+        coil.hw_driver.set_hardware_rule('75', enable_switch, coil, off_switch=off_switch)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
                                                                  eos_switch: SwitchSettings, coil: DriverSettings,
                                                                  repulse_settings: Optional[RepulseSettings]):
-        """Set pulse on hit and enable and release and disable rule on driver."""
-        self.warning_log("EOS cut-off rule will not work with FAST on single-wound coils. %s %s %s", enable_switch,
-                         eos_switch, coil)
-        self.set_pulse_on_hit_and_enable_and_release_rule(enable_switch, coil)
+        """Set pulse on hit and enable and release and disable rule on driver.
 
-    def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
-        """Set pulse on hit rule on driver."""
-        self.debug_log("Setting Pulse on hit and release HW Rule. Switch: %s,"
-                       "Driver: %s", enable_switch.hw_switch.number,
-                       coil.hw_driver.number)
+        Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
+        the pulse is canceled and the driver becomes disabled. When the eos_switch is hit the pulse is canceled
+        and the driver becomes enabled (likely with PWM).
+        Typically used on the coil for single-wound coil flippers with eos switch.
 
-        self._check_switch_coil_combination(enable_switch, coil)
+        FAST Driver Mode 20
+        """
 
-        driver = coil.hw_driver
-
-        cmd = '{}{},{},{},10,{},{},00,00,{}'.format(
-            driver.get_config_cmd(),
-            coil.hw_driver.number,
-            driver.get_control_for_cmd(enable_switch),
-            enable_switch.hw_switch.number[0],
-            Util.int_to_hex_string(coil.pulse_settings.duration),
-            driver.get_pwm_for_cmd(coil.pulse_settings.power),
-            driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
-
-        enable_switch.hw_switch.calculate_debounce(enable_switch.debounce)
-        driver.set_autofire(cmd, coil.pulse_settings.duration, coil.pulse_settings.power, 0)
-
-    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
-        """Set pulse on hit and enable and release rule on driver."""
-        self.debug_log("Setting Pulse on hit and enable and release HW Rule. "
-                       "Switch: %s, Driver: %s",
-                       enable_switch.hw_switch.number, coil.hw_driver.number)
-
-        self._check_switch_coil_combination(enable_switch, coil)
-
-        driver = coil.hw_driver
-
-        cmd = '{}{},{},{},18,{},{},{},{},00'.format(
-            driver.get_config_cmd(),
-            driver.number,
-            driver.get_control_for_cmd(enable_switch),
-            enable_switch.hw_switch.number[0],
-            Util.int_to_hex_string(coil.pulse_settings.duration),
-            driver.get_pwm_for_cmd(coil.pulse_settings.power),
-            driver.get_hold_pwm_for_cmd(coil.hold_settings.power),
-            driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
-
-        enable_switch.hw_switch.calculate_debounce(enable_switch.debounce)
-        driver.set_autofire(cmd, coil.pulse_settings.duration, coil.pulse_settings.power, coil.hold_settings.power)
+        coil.hw_driver.set_hardware_rule('20', enable_switch, coil, eos_switch=eos_switch, repulse_settings=repulse_settings)
 
     def clear_hw_rule(self, switch, coil):
         """Clear a hardware rule.
@@ -789,7 +757,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         driver = coil.hw_driver
 
-        driver.clear_autofire(driver.get_config_cmd(), driver.number)
+        driver.clear_autofire()
 
 # TODO everything below needs to move
 
@@ -818,41 +786,3 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.machine.switch_controller.process_switch_by_num(state=1,
                                                              num=(msg, 1),
                                                              platform=self)
-
-    def receive_sa(self, msg, remote_processor):
-        """Receive all switch states.
-
-        Args:
-        ----
-            msg: switch states as bytearray
-            remote_processor: Processor which sent the message.
-        """
-        assert remote_processor == "NET"
-        self.debug_log("Received SA: %s", msg)
-        hw_states = {}
-
-        # Support for v1 firmware which uses network + local switches
-        if self.machine_type == 'nano':
-            _, local_states, _, nw_states = msg.split(',')
-            for offset, byte in enumerate(bytearray.fromhex(nw_states)):
-                for i in range(8):
-                    num = Util.int_to_hex_string((offset * 8) + i)
-                    if byte & (2**i):
-                        hw_states[(num, 1)] = 1
-                    else:
-                        hw_states[(num, 1)] = 0
-        # Support for v2 firmware which uses only local switches
-        else:
-            _, local_states = msg.split(',')
-
-        for offset, byte in enumerate(bytearray.fromhex(local_states)):
-            for i in range(8):
-
-                num = Util.int_to_hex_string((offset * 8) + i)
-
-                if byte & (2**i):
-                    hw_states[(num, 0)] = 1
-                else:
-                    hw_states[(num, 0)] = 0
-
-        self.hw_switch_data = hw_states

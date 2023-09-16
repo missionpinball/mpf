@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 
 light_settings:
     default_color_correction_profile: correction_profile_1
@@ -12,4 +12,3 @@ light_settings:
 lights:
   led1:
     number: 1
-

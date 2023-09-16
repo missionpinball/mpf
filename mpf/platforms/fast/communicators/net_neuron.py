@@ -1,4 +1,4 @@
-# mpf/platforms/fast/communictors/net_neuron.py
+# mpf/platforms/fast/communicators/net_neuron.py
 
 import asyncio
 from packaging import version
@@ -8,14 +8,21 @@ from mpf.platforms.fast.communicators.base import FastSerialCommunicator
 from mpf.platforms.fast.fast_io_board import FastIoBoard
 from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.platforms.fast.fast_driver import FastDriverConfig
+from mpf.platforms.fast.fast_switch import FASTSwitch
+from mpf.platforms.fast.fast_driver import FASTDriver
 
 
 class FastNetNeuronCommunicator(FastSerialCommunicator):
 
     MIN_FW = version.parse('2.06')
     IO_MIN_FW = version.parse('1.09')
+    MAX_IO_BOARDS = 9
+    MAX_SWITCHES = 104
+    MAX_DRIVERS = 48
     ignored_messages = ['WD:P',
                         'TL:P']
+
+    __slots__ = ["watchdog_cmd", "_watchdog_task", "io_loop", "switches", "drivers", "trigger_cmd", "driver_cmd", "switch_cmd"]
 
     def __init__(self, platform, processor, config):
 
@@ -34,7 +41,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.switch_cmd = 'SL'
 
         self.message_processors['SA:'] = self._process_sa
-        self.message_processors['CH:'] = self.process_pass_message
+        self.message_processors['CH:'] = self._process_ch
         self.message_processors['!B:'] = self._process_boot_message
         self.message_processors['\x11\x11!'] = self._process_reboot_done
         self.message_processors['NN:'] = self._process_nn
@@ -42,18 +49,33 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.message_processors['SL:'] = self.process_switch_config_msg
         self.message_processors['/L:'] = self._process_switch_open
         self.message_processors['-L:'] = self._process_switch_closed
-        # TODO add 'SL:', 'DL:' etc to look for DL:F, but then what do we do with it?
 
         for board, config in self.config['io_loop'].items():
             config['index'] = int(config['order'])-1
-            self.io_loop[config['index']] = board
+
+            try:
+                self.io_loop[config['index']] = board
+            except IndexError:
+                raise ConfigFileError(f"Invalid order value for I/O board '{board}'. "
+                                      "Order values must be sequential starting at 1.", 7, self.log.name)  # TODO
 
     async def init(self):
-        await self.send_and_wait_async('ID:', 'ID:')  # Verify we're connected to a Neuron
-        await self.send_and_wait_async('CH:2000,FF', 'CH:')  # Configure hardware for Neuron with active switch reporting
+        self.create_switches()
+        self.create_drivers()
+        await self.send_and_wait_for_response_processed('ID:', 'ID:', max_retries=-1)  # Loop here until we get a response
+        await self.send_and_wait_for_response_processed('CH:2000,FF', 'CH:')  # Configure hardware for Neuron with active switch reporting
         self.send_and_forget('WD:1') # Force expire the watchdog since who knows what state the board is in?
         await self.query_io_boards()
-        await self.send_and_wait_async('SA:', 'SA:')  # Get initial states so switches can be created
+
+    def create_switches(self):
+        # Neuron tracks all switches regardless of how many are connected
+        for i in range(self.MAX_SWITCHES):
+            self.switches.append(FASTSwitch(self, i))
+
+    def create_drivers(self):
+        # Neuron tracks all drivers regardless of how many are connected
+        for i in range(self.MAX_DRIVERS):
+            self.drivers.append(FASTDriver(self, i))
 
     async def soft_reset(self, **kwargs):
         """Reset the NET processor."""
@@ -62,19 +84,12 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         await self.reset_switches()
         await self.reset_drivers()
 
+        # We call the platform version of this meth since it uses the wait event
+        await self.platform.get_hw_switch_states(query_hw=True)
+
     async def clear_board_serial_buffer(self):
         """Clear out the serial buffer."""
-        while True:
-            # send enough dummy commands to clear out any buffers on the FAST
-            # board that might be waiting for more commands
-            self.write_to_port(b' ' * 1024)  # TODO only on Nano, others have timeouts?
-            self.write_to_port(b'\r')
-            msg = await self._read_with_timeout(.5)
-
-            if msg.startswith('XX:'):
-                break
-
-            await asyncio.sleep(.5)
+        pass  # Not needed on the Neuron
 
     def _process_boot_message(self, msg):
         """Reset the NET CPU."""
@@ -85,6 +100,36 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
     def _process_reboot_done(self, msg):
         self.log.info("Processor reset complete.")
         # TODO Mark all configs as dirty
+
+    async def reset_switches(self):
+        """Query the NET processor to get a list of switches and their configurations.
+        Compare that to how they should be configured, and send new configuration
+        commands for any that are different.
+        """
+
+        for switch in self.switches:  # all physical switches, not just ones defined in the config
+            await self.send_and_wait_for_response_processed(f'{self.switch_cmd}:{switch.hw_number}', f'{self.switch_cmd}:{switch.hw_number}')
+
+        self.platform.switches_initialized = True
+
+    async def reset_drivers(self):
+        """Query the NET processor to get a list of drivers and their configurations.
+        Compare that to how they should be configured, and send new configuration
+        commands for any that are different.
+
+        """
+
+        # self.drivers contains a list of all drivers, not just ones defined in the config
+
+        for driver in self.drivers:
+            await self.send_and_wait_for_response_processed(f'DL:{Util.int_to_hex_string(driver.number)}', self.driver_cmd)
+
+        self.platform.drivers_initialized = True
+
+    def _process_ch(self, msg):
+        if msg == 'F:':
+            return  # TODO?
+        self.done_processing_msg_response()
 
     async def query_io_boards(self):
         """Query the NET processor to see if any FAST I/O boards are connected.
@@ -98,7 +143,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
 
         current_node = 0
         while current_node < len(self.config['io_loop']):
-            await self.send_and_wait_async('NN:{:02X}'.format(current_node), 'NN:')
+            await self.send_and_wait_for_response_processed('NN:{:02X}'.format(current_node), 'NN:')
 
             # Don't move on until we get board 00 in since it can take a sec after a reset
             if current_node + 1 >= len(self.platform.io_boards):
@@ -107,29 +152,6 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
             # If our count is greater than the number of boards we have, we're done
             # if current_node > len(self.platform.io_boards):
             #     break
-
-    async def reset_switches(self):
-        """Query the NET processor to get a list of switches and their configurations.
-        Compare that to how they should be configured, and send new configuration
-        commands for any that are different.
-        """
-
-        # self.switches contains a list of all switches
-
-        for switch in self.switches:
-            await self.send_and_wait_async(f'SL:{Util.int_to_hex_string(switch.number)}',
-                                           self.switch_cmd)
-
-
-
-    async def reset_drivers(self):
-        """Query the NET processor to get a list of drivers and their configurations.
-        Compare that to how they should be configured, and send new configuration
-        commands for any that are different.
-
-        """
-        for driver in self.drivers:
-            await self.send_and_wait_async(f'DL:{Util.int_to_hex_string(driver.number)}', self.driver_cmd)
 
     def _process_nn(self, msg):
         firmware_ok = True
@@ -146,19 +168,17 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         model = ('-').join(model.split('-')[:3])  # Remove the revision dash if it's there
 
         if not model or model == '!Node Not Found!':
+            self.done_processing_msg_response()  # TODO good candidate for retry option
             return
 
         if node_id in self.platform.io_boards:
+            self.done_processing_msg_response()
             return
 
         name = self.io_loop[node_id]
         model_string_from_config = ('-').join(self.config['io_loop'][name]['model'].split('-')[:3]).upper()  # Fp-I/O-3208-2 -> FP-I/O-3208
 
-        if model_string_from_config == 'FP-CAB-0001':
-            model_string_from_config = 'FP-I/O-0024'  # FP-CAB-0001 will report as FP-I/O-0024
-            # TODO this should probably go somewhere else, but meh
-
-        assert model == model_string_from_config, f'I/O board config error. Board {node_id} is reporting as model {model}, but the config file says it\'s model "{mode_string_from_config}"'
+        assert model == model_string_from_config, f'I/O board config error. Board {node_id} is reporting as model {model}, but the config file says it\'s model {model_string_from_config}'
 
         prior_sw = 0
         prior_drv = 0
@@ -182,10 +202,15 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         if not firmware_ok:
             raise AssertionError("Exiting due to I/O board firmware mismatch")
 
-        self.no_response_waiting.set()
+        # self.no_response_waiting.set()
+
+        # If this is the last I/O board, signal that we're done
+        # if node_id == len(self.config['io_loop']) - 1:
+        self.done_processing_msg_response()
 
     def process_driver_config_msg(self, msg):
         if msg == 'P':
+            self.done_processing_msg_response()
             return
 
         try:
@@ -205,14 +230,17 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         except IndexError:
             return  # we always get data for 48 drivers, no worries if we don't have that many
 
-        if driver_obj.hw_driver_config != current_hw_driver_config:
+        if driver_obj.current_driver_config != current_hw_driver_config:
             driver_obj.send_config_to_driver()
+            # We'll mark this done with we get the :P response back above
         else:
-            driver_obj.hw_config_good = True
+            self.done_processing_msg_response()
 
     def process_switch_config_msg(self, msg):
+        """Incoming SL:<switch_id>,<mode>,<debounce_close>,<debounce_open> message."""
 
-        if msg == 'P':
+        if msg == 'P':  # SL:P
+            self.done_processing_msg_response()
             return
 
         try:
@@ -232,23 +260,30 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         except IndexError:  # Neuron tracks 104 switches regardless of how many are connected
             return
 
-        if not switch_obj.current_hw_config:
-            switch_obj.send_config_to_switch()
-
-        elif not (switch == switch_obj.current_hw_config.number and
-            mode == switch_obj.current_hw_config.mode and
-            debounce_close == switch_obj.current_hw_config.debounce_close and
-            debounce_open == switch_obj.current_hw_config.debounce_open):
+        if (switch_obj.current_hw_config.mode != mode or
+            switch_obj.current_hw_config.debounce_close != debounce_close or
+            switch_obj.current_hw_config.debounce_open != debounce_open
+            ):
+            # TODO this seems tedious, should we switch the dataclass to a namedtuple?
 
             switch_obj.send_config_to_switch()
+            # it will get marked done via the :P response above
+        else:
+            self.done_processing_msg_response()
 
-        switch_obj.hw_state_good = True
+    async def update_switches_from_hardware(self):
+        await self.send_and_wait_for_response_processed('SA:', 'SA:')
 
     def _process_sa(self, msg):
-        hw_states = {}
-        _, local_states = msg.split(',')
 
-        for offset, byte in enumerate(bytearray.fromhex(local_states)):
+        if not self.platform.switches_initialized:
+            # This means the switches have not been initialized and this data is garbage
+            return
+
+        hw_states = {}
+        _, raw_switch_data = msg.split(',')
+
+        for offset, byte in enumerate(bytearray.fromhex(raw_switch_data)):
             for i in range(8):
 
                 num = (offset * 8) + i
@@ -259,6 +294,28 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
                     hw_states[num] = 0
 
         self.platform.hw_switch_data = hw_states
+        self.update_switches_from_hw_data()
+        self.done_processing_msg_response()
+
+    def update_switches_from_hw_data(self):
+        """Uses the existing platform.hw_switch_data dict to update the switch states in the machine's switch controller.
+
+        This will silently sync the switch.hw_state. If the logical state changes, it will process it like any switch change
+
+        """
+
+        for switch in self.machine.switches:
+            hw_state = self.platform.hw_switch_data[switch.hw_switch.number]
+
+            if hw_state != switch.hw_state:
+                switch.hw_state = hw_state
+
+            logical_state = switch.invert ^ hw_state
+
+            if logical_state != switch.state:
+                self.machine.switch_controller.process_switch_obj(switch, logical_state, True)
+
+        self.platform.new_switch_data.set()  # Signal that we have new switch data
 
     def _process_switch_open(self, msg):
         """Process local switch open.
@@ -269,8 +326,9 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
             remote_processor: Processor which sent the message.
         """
         self.machine.switch_controller.process_switch_by_num(state=0,
-                                                             num=(msg, 0),
-                                                             platform=self.platform)
+                                                             num=int(msg, 16),
+                                                             platform=self.platform,
+                                                             logical=True)
 
     def _process_switch_closed(self, msg):
         """Process local switch closed.
@@ -281,8 +339,9 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
             remote_processor: Processor which sent the message.
         """
         self.machine.switch_controller.process_switch_by_num(state=1,
-                                                             num=(msg, 0),
-                                                             platform=self.platform)
+                                                             num=int(msg, 16),
+                                                             platform=self.platform,
+                                                             logical=True)
 
     def _update_watchdog(self):
         """Send Watchdog command."""
@@ -292,8 +351,8 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
     def start_tasks(self):
         """Start listening for commands and schedule watchdog."""
         self._update_watchdog()
-        # self._watchdog_task = self.machine.clock.schedule_interval(self._update_watchdog,
-        #                                                            self.config['watchdog'] / 2000)
+        self._watchdog_task = self.machine.clock.schedule_interval(self._update_watchdog,
+                                                                   self.config['watchdog'] / 2000)
 
     def stopping(self):
         if self._watchdog_task:

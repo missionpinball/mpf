@@ -42,7 +42,7 @@ So here is our base ``widget`` from the config file that we will be using.
             x: 35
 
 Refer to the widget section in the docs for more info on how to set it up:
-http://docs.missionpinball.org/displays/widgets/index.html
+https://missionpinball.org/mc/widgets/
 
 Writing the settings to show/play this widget in code
 ^^^^^^^^^^^^^^^
@@ -69,7 +69,7 @@ When it comes to the settings we start with the following:
 
 You need to add ``action`` and ``key`` to make the ``widget`` work.
 Refer to the ``widget_player`` section for more info on these and what other functions can be added:
-http://docs.missionpinball.org/config/widget_player.html
+https://missionpinball.org/config_players/widget_player/
 
 Now you can show the pre-defined widget from the config file.
 
@@ -107,7 +107,7 @@ The following code shows how to override an image and x-coordinate
 You can ``change``/``add`` everything this way from the related type of ``widget``, or the common settings for all widgets.
 Refer to the common settings for a overview of all settings.
 
-http://docs.missionpinball.org/displays/widgets/common_settings.html
+https://missionpinball.org/mc/widgets/common_settings/
 
 Just make sure you format this way
 
@@ -126,8 +126,8 @@ or create an animation from within the widget.
 Creating animation from predefined animations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The easiest thing is to change/add pre-defined animations.
-See capther 9 of widget animation for more info on this:
-http://docs.missionpinball.org/displays/widgets/animation.html
+See chapter 9 of widget animation for more info on this:
+https://missionpinball.org/mc/widgets/animation/
 
 .. code-block:: python
 

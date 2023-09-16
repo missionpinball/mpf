@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 segment_displays:
   display1:
     debug: true

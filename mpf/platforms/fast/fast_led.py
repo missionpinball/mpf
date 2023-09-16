@@ -6,7 +6,7 @@ from typing import List
 
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
-from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_ADDRESS_MAP
+from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_FEATURES
 
 class FASTDirectLED:
 
@@ -37,8 +37,6 @@ class FASTDirectLED:
         result = ""
         self.dirty = False
         current_time = self.machine.clock.get_time()
-        # send this as grb because the hardware will twist it again
-        # changed by Brian, TODO confirm?
         for index in [0, 1, 2]:
             channel = self.channels[index]
             if channel:

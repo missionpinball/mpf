@@ -267,7 +267,7 @@ class BallCountHandler(BallDeviceStateHandler):
             if self.ball_device.config['mechanical_eject']:
                 self.debug_log("BCH: Lost %s balls. Assuming mechanical eject.", missing_balls)
                 self._set_ball_count(new_balls)
-                await self.ball_device.handle_mechanial_eject_during_idle()
+                await self.ball_device.handle_mechanical_eject_during_idle()
             else:
                 try:
                     if not self.counter:

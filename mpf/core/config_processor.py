@@ -233,7 +233,7 @@ class ConfigProcessor:
 
     @staticmethod
     def get_expected_version(config_type: str) -> str:
-        """Return the expected config or show version tag, e.g. #config_version=5."""
+        """Return the expected config or show version tag, e.g. #config_version=6."""
         if config_type in ("machine", "mode"):
             return "#config_version={}".format(__config_version__)
         if config_type == "show":

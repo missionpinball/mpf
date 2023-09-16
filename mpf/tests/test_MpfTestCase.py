@@ -95,5 +95,4 @@ class TestMpfTestCase(MpfTestCase):
                                delta=0.01)
 
     def _callback(self, _id):
-        # print(self.id_list)
         self.id_list.append((_id, self.machine.clock.get_time()))

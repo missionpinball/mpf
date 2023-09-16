@@ -18,59 +18,58 @@ class FastSwitchConfig:
 
 class FASTSwitch:
 
-    """A switch connected to a fast controller."""
+    """A switch connected to a FAST controller."""
 
     # __slots__ = ["log", "connection", "send", "platform_settings", "_configured_debounce"]
 
-    def __init__(self, communicator, net_version, hw_number, ) -> None:
+    def __init__(self, communicator, hw_number, ) -> None:
         """Initialise switch."""
-        self.log = logging.getLogger('FASTSwitch')
+        self.log = logging.getLogger('FAST Switch')
         self.communicator = communicator
-        self.net_version = net_version
-        self.number = hw_number
+        self.number = hw_number  # must be int to work with the rest of MPF
+        self.hw_number = Util.int_to_hex_string(hw_number)  # hex version the FAST hw actually uses
         self.platform = communicator.platform  # Needed by the SwitchController
 
-        self.baseline_mpf_config = None  # settings from this switch in the machine config
-        # name, invert, debounce
-        self.platform_settings = None  # platform-specific settings from the machine config
-        # debounce_open, debounce_close
+        # self.baseline_mpf_config = None  # settings from this switch in the machine config
+        # # name, invert, debounce
+        # self.platform_settings = None  # platform-specific settings from the machine config
+        # # debounce_open, debounce_close
 
-        self.baseline_fast_config = None  # settings converted to FAST format
-        # switch number, mode, debounce_open, debounce_close
+        self.baseline_switch_config = FastSwitchConfig(number=self.hw_number, mode='00', debounce_close='00',
+                                                       debounce_open='00')
+        self.current_hw_config = self.baseline_switch_config
 
-        self.current_hw_config = None  # settings currently on the hardware
-
-        self.hw_config_good = False
+        # self.hw_config_good = False
 
     def set_initial_config(self, mpf_config, platform_settings):
-        """Update config."""
-        # TODO add validation
 
-        debounce_close, debounce_open = self.calculate_debounce(mpf_config, platform_settings)
+        self.current_hw_config = self.convert_mpf_config_to_fast(mpf_config, platform_settings)
+        self.baseline_fast_config = copy(self.current_hw_config)
+
+    def convert_mpf_config_to_fast(self, mpf_config, platform_settings) -> FastSwitchConfig:
+
+        debounce_close, debounce_open = self.reconcile_debounce(mpf_config, platform_settings)
+
         if mpf_config.invert:
             mode = '02'
         else:
             mode = '01'
 
-        number = Util.int_to_hex_string(self.number)
-
-        self.current_hw_config = FastSwitchConfig(number=number,
-                                                     mode=mode,
-                                                     debounce_close=debounce_close,
-                                                     debounce_open=debounce_open)
-        self.baseline_fast_config = copy(self.current_hw_config)
+        return FastSwitchConfig(number=self.hw_number, mode=mode, debounce_close=debounce_close,
+                                debounce_open=debounce_open)
 
     def send_config_to_switch(self):
 
-        try:
-            msg = (f'{self.communicator.switch_cmd}:{self.current_hw_config.number},'
-                f'{self.current_hw_config.mode},{self.current_hw_config.debounce_close},'
-                f'{self.current_hw_config.debounce_open}')
-        except AttributeError:
-            msg = (f'{self.communicator.switch_cmd}:{Util.int_to_hex_string(self.number)},00,00,00')
+        msg = (f'{self.communicator.switch_cmd}:{self.current_hw_config.number},'
+               f'{self.current_hw_config.mode},{self.current_hw_config.debounce_close},'
+               f'{self.current_hw_config.debounce_open}')
 
-        self.communicator.send_with_confirmation(msg, f'{self.communicator.switch_cmd}')
+        self.communicator.send_with_confirmation(msg, f'{self.communicator.switch_cmd}:P')
 
+    def get_current_config(self):
+        return (f'{self.communicator.switch_cmd}:{self.current_hw_config.number},'
+               f'{self.current_hw_config.mode},{self.current_hw_config.debounce_close},'
+               f'{self.current_hw_config.debounce_open}')
 
     def get_board_name(self):
         """Return the board of this switch."""
@@ -87,7 +86,7 @@ class FASTSwitch:
         # fall back if not found
         return "FAST Unknown Board"
 
-    def calculate_debounce(self, config, platform_settings):
+    def reconcile_debounce(self, config, platform_settings):
         """Looks at all the possible debounce settings for the switch, the platfor, and FAST overrides and returns
         the final debounce settings for the switch.
 
