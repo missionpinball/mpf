@@ -95,6 +95,10 @@ class MpfMcConfig:
         """Return machine path."""
         return self._machine_path
 
+    def set_machine_path(self, value):
+        """Set a new machine path."""
+        self._machine_path = value
+
     def get_config_spec(self):
         """Return config spec."""
         return self._config_spec
