@@ -1,7 +1,7 @@
 # mpf.tests.test_Fast_Exp
 
-from mpf.tests.test_Fast import TestFastBase
 from mpf.core.rgb_color import RGBColor
+from mpf.tests.test_Fast import TestFastBase
 
 
 class TestFastExp(TestFastBase):
@@ -140,13 +140,10 @@ class TestFastExp(TestFastBase):
 
         self.led17.color(RGBColor((100, 100, 100)), fade_ms=150)
         self.advance_time_and_run(.04)
-        print(int(self.exp_cpu.leds['led17'][0:2], 16))
         self.assertTrue(10 < int(self.exp_cpu.leds['led17'][0:2], 16) < 40)
         self.advance_time_and_run(.04)
-        print(int(self.exp_cpu.leds['led17'][0:2], 16))
         self.assertTrue(30 < int(self.exp_cpu.leds['led17'][0:2], 16) < 60)
         self.advance_time_and_run(.04)
-        print(int(self.exp_cpu.leds['led17'][0:2], 16))
         self.assertTrue(60 < int(self.exp_cpu.leds['led17'][0:2], 16) < 90)
         self.advance_time_and_run(2)
         self.assertEqual("646464", self.exp_cpu.leds['led17'])

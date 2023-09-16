@@ -1,8 +1,9 @@
 # mpf/platforms/fast/communicators/base.py
 
 import asyncio
+
 from packaging import version
-from serial import SerialException, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
+from serial import EIGHTBITS, PARITY_NONE, STOPBITS_ONE, SerialException
 
 from mpf.core.logging import LogMixin
 from mpf.core.utility_functions import Util
@@ -17,7 +18,10 @@ class FastSerialCommunicator(LogMixin):
 
     ignored_messages = []
 
-    # __slots__ = [] # TODO
+    __slots__ = ["platform", "remote_processor", "config", "writer", "reader", "read_task", "received_msg", "log",
+                 "machine", "fast_debug", "port_debug", "remote_firmware", "send_queue", "write_task",
+                 "pause_sending_until", "pause_sending_flag", "no_response_waiting", "done_waiting",
+                 "ignore_decode_errors", "message_processors", "remote_model"]
 
     def __init__(self, platform, processor, config):
         """Initialize FastSerialCommunicator."""

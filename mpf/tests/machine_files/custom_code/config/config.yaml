@@ -1,4 +1,8 @@
 #config_version=6
 
+# For the unit test, we need the full path from the package root since this import location
+# is part of the package. For normal configs that live outside of MPF, you can use the
+# the regular short version which would be from the machine root, e.g. code.your_module.YourClass
+
 custom_code:
-  - code.test_code.TestCustomCode
+  - mpf.tests.machine_files.custom_code.code.test_code.TestCustomCode

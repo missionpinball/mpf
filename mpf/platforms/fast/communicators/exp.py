@@ -14,10 +14,7 @@ class FastExpCommunicator(FastSerialCommunicator):
 
     ignored_messages = ['XX:F']
 
-    # __slots__ = ["remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
-    #              "messages_in_flight", "ignored_messages_in_flight", "msg_diverter", "write_task", "received_msg",
-    #              "send_queue", "is_retro", "is_nano", "machine", "platform", "log", "debug", "port", "baud",
-    #              "xonxoff", "reader", "writer", "read_task", "boards", "exp_config", "exp_boards", "active_board"]
+    __slots__ = ["exp_boards_by_address", "active_board", "_led_task"]
 
     def __init__(self, platform, processor, config):
 

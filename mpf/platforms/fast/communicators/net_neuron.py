@@ -22,6 +22,8 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
     ignored_messages = ['WD:P',
                         'TL:P']
 
+    __slots__ = ["watchdog_cmd", "_watchdog_task", "io_loop", "switches", "drivers", "trigger_cmd", "driver_cmd", "switch_cmd"]
+
     def __init__(self, platform, processor, config):
 
         super().__init__(platform, processor, config)

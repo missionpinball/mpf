@@ -1,18 +1,18 @@
 """A driver/coil in the fast platform."""
-from copy import copy
 import logging
-from typing import Dict, Tuple, Optional
+from copy import copy
 from dataclasses import dataclass
 
 from mpf.core.platform import DriverConfig
 from mpf.core.utility_functions import Util
 from mpf.exceptions.config_file_error import ConfigFileError
-from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.platforms.fast.communicators.base import FastSerialCommunicator
+from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
 
 MYPY = False
 if MYPY:   # pragma: no cover
-    from mpf.platforms.fast.fast import FastHardwarePlatform    # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.platforms.fast.fast import \
+        FastHardwarePlatform  # pylint: disable-msg=cyclic-import,unused-import
 
 @dataclass
 class FastDriverConfig:
@@ -30,8 +30,8 @@ class FASTDriver:
 
     """Base class for drivers connected to a FAST Controller."""
 
-    # __slots__ = ["log", "autofire", "_autofire_cleared", "config_state", "machine", "platform", "driver_settings",
-    #              "send", "platform_settings"]
+    __slots__ = ["log", "communicator", "number", "hw_number", "autofire_config", "baseline_driver_config",
+                    "current_driver_config", "mode_param_mapping", "platform_settings"]
 
     def __init__(self, communicator: FastSerialCommunicator, hw_number: int) -> None:
         """Initialize the driver object.

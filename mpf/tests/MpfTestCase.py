@@ -28,7 +28,7 @@ from mpf.file_interfaces.yaml_interface import YamlInterface
 
 YamlInterface.cache = True
 
-LOCAL_START_TIMEOUT = None  # Set to None if you need to pause and debug something
+LOCAL_START_TIMEOUT = 20  # Set to None if you need to pause and debug something
 
 class UnitTestConfigLoader(YamlMultifileConfigLoader):
 

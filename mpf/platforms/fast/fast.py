@@ -40,11 +40,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     """Platform class for the FAST Pinball hardware."""
 
-    # __slots__ = ["dmd_connection", "net_connection", "rgb_connection", "seg_connection", "exp_connection", "aud_connection",
-    #              "is_retro", "serial_connections", "fast_leds", "fast_commands", "config", "machine_type", "hw_switch_data",
-    #              "io_boards", "flag_led_tick_registered", "_led_task",
-    #              "fast_exp_leds", "fast_segs", "exp_boards", "exp_breakout_boards",
-    #              "exp_breakouts_with_leds"]
+    __slots__ = ["config", "configured_ports", "machine_type", "is_retro",
+                "serial_connections", "fast_leds", "fast_exp_leds", "fast_segs",
+                "exp_boards_by_address", "exp_boards_by_name", "exp_breakout_boards",
+                "exp_breakouts_with_leds", "hw_switch_data", "new_switch_data",
+                "io_boards", "io_boards_by_name", "switches_initialized",
+                "drivers_initialized"]
 
     port_types = ['net', 'exp', 'aud', 'dmd', 'rgb', 'seg', 'emu']
 

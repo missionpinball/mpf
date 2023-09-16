@@ -1,4 +1,4 @@
-"""Contains the baes classes for FAST expansion and breakout boards"""
+"""Contains the base classes for FAST expansion and breakout boards"""
 
 from base64 import b16decode
 from importlib import import_module
@@ -11,7 +11,8 @@ class FastExpansionBoard:
 
     """A FAST Expansion board on the EXP connection."""
 
-    # __slots__ = ["communicator", "log", "address", "model", "firmware_version", "platform", "breakouts"]
+    __slots__ = ["name", "communicator", "config", "platform", "log", "address", "model", "features", "breakouts",
+                 "breakouts_with_leds", "_led_task", "firmware_version", "hw_verified", "led_fade_rate"]
 
     def __init__(self, name, communicator, address, config):
         """Initialize FastExpansionBoard."""
@@ -159,7 +160,8 @@ class FastBreakoutBoard:
 
     """A FAST Breakout board on the EXP connection."""
 
-    # __slots__ = ["expansion_board", "log", "index", "platform", "communicator", "address", "leds", "led_fade_rate"]
+    __slots__ = ["config", "expansion_board", "log", "index", "platform", "communicator", "address", "features",
+                 "leds", "led_fade_rate", "hw_verified", "model"]
 
     def __init__(self, config, expansion_board):
         """Initialize FastBreakoutBoard."""

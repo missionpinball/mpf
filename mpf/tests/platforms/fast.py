@@ -14,7 +14,7 @@ from mpf.tests.loop import MockSerial
 
 class MockFastSerial(MockSerial):
 
-    PRINT_FSP_TRAFFIC = True
+    PRINT_FSP_TRAFFIC = False
 
     def __init__(self, test_fast_base):
         super().__init__()
@@ -107,9 +107,7 @@ class MockFastSerial(MockSerial):
         if rsp:
             if self.PRINT_FSP_TRAFFIC:
                 print(f'{self.type} <<< {rsp}')
-                if type(rsp) is bool:
-                    print()
-                self.queue.append(rsp)
+            self.queue.append(rsp)
             return msg_len
 
         if cmd in self.expected_commands:
