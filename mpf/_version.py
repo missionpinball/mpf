@@ -10,7 +10,7 @@ PyPI.
 
 """
 
-__version__ = '0.57.0.dev5'
+__version__ = '0.57.0.dev6'
 '''The full version of MPF.'''
 
 __short_version__ = '0.57'
@@ -26,7 +26,7 @@ __show_version__ = '6'
 '''The show format version this build of MPF uses.'''
 
 # pylint: disable-msg=invalid-name
-version = "Mission Pinball Framework (FAST Dev Fork) v{}".format(__version__)
+version = "Mission Pinball Framework v{}".format(__version__)
 '''A friendly version string for this build of MPF.'''
 # TODO change back before mainlining
 
