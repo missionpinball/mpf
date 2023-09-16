@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 
 mode:
   priority: 100
@@ -39,5 +39,3 @@ shot_profiles:
     - name: mode1_one
     - name: mode1_two
     - name: mode1_three
-
-

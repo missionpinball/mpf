@@ -24,9 +24,9 @@ class FASTGIString(LightPlatformSoftwareFade):
             brightness = 255
 
         self.log.debug("Turning On GI String to brightness %s", brightness)
-        # self.send_blind('GI:' + self.number + ',' + Util.int_to_hex_string(brightness))
+        # self.send_and_forget('GI:' + self.number + ',' + Util.int_to_hex_string(brightness))
 
-        self.connection.send_blind('GI:{},{}'.format(self.number,
+        self.connection.send_and_forget('GI:{},{}'.format(self.number,
                                     Util.int_to_hex_string(brightness)))
 
     def get_board_name(self):

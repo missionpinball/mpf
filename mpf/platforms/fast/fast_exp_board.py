@@ -1,4 +1,4 @@
-"""Contains the baes classes for FAST expansion and breakout boards"""
+"""Contains the base classes for FAST expansion and breakout boards"""
 
 from base64 import b16decode
 from importlib import import_module
@@ -11,7 +11,8 @@ class FastExpansionBoard:
 
     """A FAST Expansion board on the EXP connection."""
 
-    # __slots__ = ["communicator", "log", "address", "model", "firmware_version", "platform", "breakouts"]
+    __slots__ = ["name", "communicator", "config", "platform", "log", "address", "model", "features", "breakouts",
+                 "breakouts_with_leds", "_led_task", "firmware_version", "hw_verified", "led_fade_rate"]
 
     def __init__(self, name, communicator, address, config):
         """Initialize FastExpansionBoard."""
@@ -39,11 +40,11 @@ class FastExpansionBoard:
             self.create_breakout({'port': str(idx), 'model': self.features['local_breakouts'][idx]})
 
         # create the remote breakouts
-        for idx, brk in enumerate(self.config['breakouts']):
-            if idx < self.features['breakout_ports']:
-                self.create_breakout(brk)
-            else:
-                self.log.warning(f'Expansion board {self} has more breakouts than the hardware supports. Skipping {brk}')
+        for brk in self.config['breakouts']:
+            if int(brk['port']) > self.features['breakout_ports']:
+                raise AssertionError(f'Breakout port {brk["port"]} is not available on {self}')
+
+            self.create_breakout(brk)
 
     def create_breakout(self, config):
         if BREAKOUT_FEATURES[config['model']].get('device_class'):
@@ -57,26 +58,22 @@ class FastExpansionBoard:
         self.platform.register_breakout_board(brk_board)
 
     def __repr__(self):
-        return f'{self.model} "{self.name}"'
+        return f'EXP "{self.name}" ({self.model}, @{self.address})'
 
     def get_description_string(self) -> str:
         """Return description string."""
         return f"Expansion Board Model: {self.model_string},  Firmware: {self.firmware_version}" #TODO add brk
 
-    def set_active(self, address):
-        """Set board active."""
-        self.communicator.set_active(address)
-
     def verify_hardware(self, id_string, active_board):
         """Verify hardware."""
 
-        self.log.info(f'Verifying hardware for {self} with ID string {id_string}, active board {active_board}')
+        self.log.info(f'Verifying hardware for {self} with ID string "{id_string}", board address {active_board}')
 
         exp_board = active_board[:2]
-        brk_board = active_board[2:]
+        brk_board = active_board[2:]  # will be empty if we got a 2-digit address for an EXP board
 
         try:
-            proc, product_id, firmware_version = id_string.split()
+            _, product_id, firmware_version = id_string.split()
         except ValueError:
 
             if id_string == 'F':  # got an ID:F response which means this breakout is not actually there
@@ -89,7 +86,19 @@ class FastExpansionBoard:
         assert exp_board == self.address
         self.firmware_version = firmware_version
 
-        if proc == 'EXP':
+        if brk_board:
+            if version.parse(firmware_version) < version.parse(self.breakouts[brk_board].features['min_fw']):
+                self.log.error(f'Firmware on breakout board {product_id} is too old. Required: {self.breakouts[brk_board].features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
+                self.platform.machine.stop(f'Firmware on breakout board {product_id} is too old. Required: {self.breakouts[brk_board].features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
+
+            brk = self.breakouts[brk_board]
+
+            if product_id != brk.model:
+                raise AssertionError(f'EXP Board {self}, Breakout Port {brk.index}: Config is set for {brk.model}, but actually found "{id_string}"')
+            else:
+                brk.hw_verified = True
+
+        else:
             if version.parse(firmware_version) < version.parse(self.features['min_fw']):
                 self.log.error(f'Firmware on {self} is too old. Required: {self.features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
                 self.platform.machine.stop(f'Firmware on {self} is too old. Required: {self.features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
@@ -99,22 +108,7 @@ class FastExpansionBoard:
             else:
                 self.hw_verified = True
 
-        elif proc in ('BRK', 'LED'):
-            if version.parse(firmware_version) < version.parse(self.breakouts[brk_board].features['min_fw']):
-                self.log.error(f'Firmware on breakout board {product_id} is too old. Required: {self.breakouts[brk_board].features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
-                self.platform.machine.stop(f'Firmware on breakout board {product_id} is too old. Required: {self.breakouts[brk_board].features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
-
-            brk = self.breakouts[brk_board]
-
-            if product_id != brk.model:
-                raise AssertionError(f"Expected {brk.model} but got {id_string} from {self}")
-            else:
-                brk.hw_verified = True
-
-        else:
-            raise AssertionError(f'Unknown processor type {proc} in ID response')
-
-    def start(self):
+    def start_tasks(self):
         self._update_leds()
 
         if self.config['led_hz'] > 31.25:
@@ -128,10 +122,15 @@ class FastExpansionBoard:
             self._led_task.cancel()
             self._led_task = None
 
-        self.communicator.send_blind(f'BR@{self.address}:')
+        self.communicator.send_and_forget(f'BR@{self.address}:')
 
     async def reset(self):
-        await self.communicator.send_query(f'BR@{self.address}:', 'BR:P')
+        await self.communicator.send_and_wait_for_response_processed(f'BR@{self.address}:', 'BR:P')
+        if self.config['led_fade_time']:
+            self.set_led_fade(self.config['led_fade_time'])
+
+        # Should we do something with servos? TODO
+        # TODO move this to mixin classes for device types?
 
     def _update_leds(self):
         # Called every tick to update the LEDs on this board
@@ -150,12 +149,19 @@ class FastExpansionBoard:
 
                 self.communicator.send_bytes(b16decode(f'{msg_header}{msg}'), log_msg)
 
+    def set_led_fade(self, rate):
+        """Set LED fade rate in ms."""
+
+        self.led_fade_rate = rate
+        self.communicator.set_led_fade_rate(self.address, rate)
+
 
 class FastBreakoutBoard:
 
     """A FAST Breakout board on the EXP connection."""
 
-    # __slots__ = ["expansion_board", "log", "index", "platform", "communicator", "address", "leds", "led_fade_rate"]
+    __slots__ = ["config", "expansion_board", "log", "index", "platform", "communicator", "address", "features",
+                 "leds", "led_fade_rate", "hw_verified", "model"]
 
     def __init__(self, config, expansion_board):
         """Initialize FastBreakoutBoard."""
@@ -177,7 +183,7 @@ class FastBreakoutBoard:
         self.platform.machine.events.add_handler('init_phase_2', self._initialize)
 
     def __repr__(self):
-        return f"Breakout {self.index}, on {self.expansion_board}"
+        return f"Breakout {self.model} on {self.expansion_board}"
 
     def _initialize(self, **kwargs):
         """Populate the LED objects."""
@@ -192,13 +198,3 @@ class FastBreakoutBoard:
 
         if found:
             self.expansion_board.breakouts_with_leds.append(self.address)
-
-    def set_active(self):
-        """Set board active."""
-        self.communicator.set_active_board(self.address)
-
-    def set_led_fade(self, rate):
-        """Set LED fade rate in ms."""
-
-        self.led_fade_rate = rate
-        self.communicator.set_led_fade_rate(self.address, rate)

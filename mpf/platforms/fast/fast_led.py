@@ -37,8 +37,6 @@ class FASTDirectLED:
         result = ""
         self.dirty = False
         current_time = self.machine.clock.get_time()
-        # send this as grb because the hardware will twist it again
-        # changed by Brian, TODO confirm?
         for index in [0, 1, 2]:
             channel = self.channels[index]
             if channel:

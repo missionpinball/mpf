@@ -36,7 +36,7 @@ class ScoreQueue(SystemWideDevice):
 
     async def _initialize(self):
         await super()._initialize()
-        self._score_task = self.machine.clock.loop.create_task(self._handle_score_queue())
+        self._score_task = asyncio.create_task(self._handle_score_queue())
         self._score_task.add_done_callback(Util.raise_exceptions)
 
     def score(self, value, **kwargs):

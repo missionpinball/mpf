@@ -127,7 +127,7 @@ class BallDevice(SystemWideDevice):
         # add available_balls and route unclaimed ball to the default target
         self._balls_added_callback(1, unclaimed_balls)
 
-    async def handle_mechanial_eject_during_idle(self):
+    async def handle_mechanical_eject_during_idle(self):
         """Handle mechanical eject."""
         # handle lost balls via outgoing balls handler (if mechanical eject)
         self.config['eject_targets'][0].available_balls += 1

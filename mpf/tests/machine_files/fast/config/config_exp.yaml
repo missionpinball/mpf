@@ -1,28 +1,9 @@
-#config_version=5
+#config_version=6
 
 hardware:
     platform: fast
 
 fast:
-  net:
-    port: com3
-    controller: neuron
-    io_loop:
-            3208:
-                model: FP-I/O-3208
-                order: 1
-            0804:
-                model: FP-I/O-0804
-                order: 2
-            1616_1:
-                model: FP-I/O-1616
-                order: 3
-            1616_2:
-                model: FP-I/O-1616
-                order: 4
-            cab:
-                model: FP-CAB-0001
-                order: 5
   exp:
     port: com4
     boards:
@@ -44,8 +25,9 @@ fast:
       aaron:
         model: FP-EXP-0091-2  # test hw revision number included
         address: 89
+        led_fade_time: 1.5s
         breakouts:
-          - port: 3
+          - port: 2
             model: FP-BRK-0001
         led_ports:
           - port: 1
@@ -85,7 +67,7 @@ lights:
   led5:
     number: brian-b1-2-2
   led6:
-    number: aaron-b3-1-1
+    number: aaron-b2-1-1
   led7:
     number: aaron-1-1
   led8:

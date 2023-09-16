@@ -1,11 +1,9 @@
-Authors & Contributors
-======================
+# Authors & Contributors
 
 The following folks are the ones who've made MPF possible. Some big. Some small. All in
 their spare time, unpaid, for the love of pinball!
 
  * Brian Madden <brian@missionpinball.org>
- * Gabe Knuth <gabe@missionpinball.org>
  * Jan Kantert <jan-mission-pinball@kantert.net>
  * Quinn Capen <qcapen@gmail.com>
  * John Marsh <john.marsh@gmail.com>
@@ -31,8 +29,9 @@ their spare time, unpaid, for the love of pinball!
  * James Cardona
  * Dave Ensminger <dave@ensadi.com>
  * Charles Duncan (nullbuilds)
+ * Eric Selk <ericselk2018@gmail.com>
 
-MPF was inspired by pyprocgame which were written by:
+MPF was inspired by pyprocgame which was written by:
 
  * Adam Preble
  * Gerry Stellenberg

@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 
 playfields:
     playfield:
@@ -59,4 +59,3 @@ ball_devices:
         debug: true
         eject_timeouts: 6s
         confirm_eject_type: target
-

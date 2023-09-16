@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 mode:
     start_events: start_mode3
     stop_events: stop_mode3
@@ -27,6 +27,8 @@ variable_player:
         multiplier:
             float: 1.5
             action: set
+    score_floordiv:
+        score: 123456 // 100 * 100
     set_player7:
         score:
             int: 10

@@ -1,6 +1,9 @@
+# mpf/platforms/fast/communicators/base.py
+
 import asyncio
+
 from packaging import version
-from serial import SerialException, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
+from serial import EIGHTBITS, PARITY_NONE, STOPBITS_ONE, SerialException
 
 from mpf.core.logging import LogMixin
 from mpf.core.utility_functions import Util
@@ -8,16 +11,17 @@ from mpf.core.utility_functions import Util
 MIN_FW = version.parse('0.00') # override in subclass
 HAS_UPDATE_TASK = False
 
+
 class FastSerialCommunicator(LogMixin):
 
     """Handles the serial communication to the FAST platform."""
 
     ignored_messages = []
 
-    # __slots__ = ["aud", "dmd", "remote_processor", "remote_model", "remote_firmware", "max_messages_in_flight",
-    #              "messages_in_flight", "ignored_messages_in_flight", "send_ready", "write_task", "received_msg",
-    #              "send_queue", "is_retro", "is_nano", "machine", "platform", "log", "debug", "read_task",
-    #              "reader", "writer"]
+    __slots__ = ["platform", "remote_processor", "config", "writer", "reader", "read_task", "received_msg", "log",
+                 "machine", "fast_debug", "port_debug", "remote_firmware", "send_queue", "write_task",
+                 "pause_sending_until", "pause_sending_flag", "no_response_waiting", "done_waiting",
+                 "ignore_decode_errors", "message_processors", "remote_model"]
 
     def __init__(self, platform, processor, config):
         """Initialize FastSerialCommunicator."""
@@ -35,39 +39,31 @@ class FastSerialCommunicator(LogMixin):
 
         self.remote_firmware = None  # TODO some connections have more than one processor, should there be a processor object?
 
-        self.send_ready = asyncio.Event()
-        self.send_ready.set()
-        self.query_done = asyncio.Event()
-        self.query_done.set()
-        self.send_queue = asyncio.Queue()
-        self.confirm_msg = None
+        self.send_queue = asyncio.Queue()  # Tuples of ( message, pause_until_string)
         self.write_task = None
+        self.pause_sending_until = ''
+        self.pause_sending_flag = asyncio.Event()
+        self.no_response_waiting = asyncio.Event()
+        self.done_waiting = asyncio.Event()
+        self.no_response_waiting.set()  # Initially, we're not waiting for any response
 
-        self.ignore_decode_errors = True  # TODO set to False once the connection is established
-        # TODO make this a config option? meh.
-        # TODO this is not implemented yet
+        self.ignore_decode_errors = True
 
         self.message_processors = {'XX:': self._process_xx,
                                    'ID:': self._process_id}
 
         self.configure_logging(logger=f'[{self.remote_processor}]', console_level=config['debug'],
                                file_level=config['debug'], url_base='https://fastpinball.com/mpf/error')
+                                # TODO change these to not be hardcoded
+                                # TODO do something with the URL endpoint
 
     def __repr__(self):
-        return f'<FAST {self.remote_processor} Communicator>'
+        return f'<{self.__class__.__name__}>'
 
     async def soft_reset(self):
-        raise NotImplementedError
+        raise NotImplementedError(f"{self.__class__.__name__} does not implement soft_reset()")
 
     async def connect(self):
-        """Does several things to connect to the FAST processor.
-
-        * Opens the serial connection
-        * Clears out any data in the serial buffer
-        * Starts the read & write tasks
-        * Set the flag to ignore decode errors
-        """
-
         for port in self.config['port']:
             self.log.info(f"Trying to connect to {port} at {self.config['baud']}bps")
             success = False
@@ -95,7 +91,7 @@ class FastSerialCommunicator(LogMixin):
                 break
         else:
             self.log.error("Failed to connect to any of the specified ports.")
-            raise SerialException("Could not connect to any of the specified ports.")
+            raise SerialException(f"{self} could not connect to a serial port. Is it open in CoolTerm? ;)")
 
         serial = self.writer.transport.serial
         if hasattr(serial, "set_low_latency_mode"):
@@ -120,10 +116,10 @@ class FastSerialCommunicator(LogMixin):
 
         self.ignore_decode_errors = False
 
-        self.write_task = self.machine.clock.loop.create_task(self._socket_writer())
+        self.write_task = asyncio.create_task(self._socket_writer())
         self.write_task.add_done_callback(Util.raise_exceptions)
 
-        self.read_task = self.machine.clock.loop.create_task(self._socket_reader())
+        self.read_task = asyncio.create_task(self._socket_reader())
         self.read_task.add_done_callback(Util.raise_exceptions)
 
     async def clear_board_serial_buffer(self):
@@ -133,12 +129,17 @@ class FastSerialCommunicator(LogMixin):
         # await asyncio.sleep(.5)
 
     async def init(self):
-
-        await self.send_query('ID:', 'ID:')
+        raise NotImplementedError(f"{self.__class__.__name__} does not implement init()")
 
     def _process_xx(self, msg):
         """Process the XX response."""
-        self.log.warning("Received XX response: %s", msg)  # what are we going to do here? TODO
+        self.log.warning(f"Received XX response:{msg}")  # what are we going to do here? TODO
+
+    def process_pass_message(self, msg):
+        if msg == 'P':
+            return
+        else:
+            self.log.warning(f"Received unexpected pass message:{msg}")
 
     def _process_id(self, msg):
         """Process the ID response."""
@@ -146,27 +147,11 @@ class FastSerialCommunicator(LogMixin):
 
         self.log.info(f"Connected to {self.remote_model} with firmware v{self.remote_firmware}")
 
-        self.machine.variables.set_machine_var("fast_{}_firmware".format(self.remote_processor.lower()),
-                                               self.remote_firmware)
-        '''machine_var: fast_(x)_firmware
-
-        desc: Holds the version number of the firmware for the processor on
-        the FAST Pinball controller that's connected. The "x" is replaced with
-        processor attached (e.g. "net", "exp", etc).
-        '''
-
-        self.machine.variables.set_machine_var("fast_{}_model".format(self.remote_processor.lower()), self.remote_model)
-
-        '''machine_var: fast_(x)_model
-
-        desc: Holds the model number of the board for the processor on
-        the FAST Pinball controller that's connected. The "x" is replaced with
-        processor attached (e.g. "net", "exp", etc).
-        '''
-
         if version.parse(self.remote_firmware) < MIN_FW:
             raise AssertionError(f'Firmware version mismatch. MPF requires the {self.remote_processor} processor '
                                  f'to be firmware {MIN_FW}, but yours is {self.remote_firmware}')
+
+        self.done_processing_msg_response()
 
     async def _read_with_timeout(self, timeout):
         try:
@@ -185,7 +170,6 @@ class FastSerialCommunicator(LogMixin):
             min_chars: Minimum message length before separator
         """
         assert self.reader is not None
-        # asyncio StreamReader only supports this from python 3.5.2 on
         buffer = b''
         while True:
             char = await self.reader.readexactly(1)
@@ -195,7 +179,7 @@ class FastSerialCommunicator(LogMixin):
                     self.log.info(f"<<<< {buffer}")
                 return buffer
 
-    def start(self):
+    def start_tasks(self):
         """Start periodic tasks, etc.
 
         Called once on MPF boot, not at game start."""
@@ -219,30 +203,52 @@ class FastSerialCommunicator(LogMixin):
 
         if self.writer:
             self.writer.close()
-            if hasattr(self.writer, "wait_closed"):
-                # Python 3.7+ only
+            try:
                 self.machine.clock.loop.run_until_complete(self.writer.wait_closed())
+            except RuntimeError as e:
+                if 'Event loop stopped before Future completed.' in str(e):
+                    self.log.warning("Event loop stopped before writer could close. This may not be an issue if the event loop was stopped intentionally.")
+                else:
+                    raise e
             self.writer = None
 
-    async def send_query(self, msg, response_msg=None):
-        self.send_queue.put_nowait((f'{msg}\r'.encode(), response_msg, msg))
-        self.query_done.clear()
+    async def send_and_wait_for_response(self, msg, pause_sending_until, log_msg=None):
+        await self.no_response_waiting.wait()
+        self.no_response_waiting.clear()
+        self.send_with_confirmation(msg, pause_sending_until, log_msg)
 
-        try:
-            await asyncio.wait_for(self.query_done.wait(), timeout=1)  # TODO make configurable?
-        except asyncio.TimeoutError:
-            # TODO better timeout handling
-            # Add a timeout callback to message_processors which can be called here.
-            # That will allow intelligent handling of timeouts depending on message type
-            raise asyncio.TimeoutError(f'Message Timeout: The serial message {msg} did not receive a response.')
+    async def send_and_wait_for_response_processed(self, msg, pause_sending_until, timeout=1, max_retries=0, log_msg=None):
+        self.done_waiting.clear()
 
-    def send_and_confirm(self, msg, confirm_msg):
-        self.send_queue.put_nowait((f'{msg}\r'.encode(), confirm_msg, msg))
+        retries = 0
 
-    def send_blind(self, msg):
-        self.send_queue.put_nowait((f'{msg}\r'.encode(), None, msg))
+        while max_retries == -1 or retries <= max_retries:
+            try:
+                await asyncio.wait_for(self.send_and_wait_for_response(msg, pause_sending_until, log_msg), timeout=timeout)
+                break
+            except asyncio.TimeoutError:
+                self.log.error(f"Timeout waiting for response to {msg}. Retrying...")
+                retries += 1
 
-    def send_bytes(self, msg, log_msg=None):
+        await self.done_waiting.wait()
+
+    def done_processing_msg_response(self):
+        self.done_waiting.set()
+
+    def send_with_confirmation(self, msg, pause_sending_until, log_msg=None):
+        if log_msg:
+            self.send_queue.put_nowait((f'{msg}\r'.encode(), pause_sending_until, log_msg))
+        else:
+            self.send_queue.put_nowait((f'{msg}\r'.encode(), pause_sending_until, msg))
+
+    def send_and_forget(self, msg, log_msg=None):
+        if log_msg:
+            self.send_queue.put_nowait((f'{msg}\r'.encode(), None, log_msg))
+        else:
+            self.send_queue.put_nowait((f'{msg}\r'.encode(), None, msg))
+
+    def send_bytes(self, msg, log_msg):
+        # Forcing log_msg since bytes are not human readable
         self.send_queue.put_nowait((msg, None, log_msg))
 
     def parse_incoming_raw_bytes(self, msg):
@@ -264,36 +270,43 @@ class FastSerialCommunicator(LogMixin):
             try:
                 msg = msg.decode()
             except UnicodeDecodeError:
+
+                if self.machine.is_shutting_down:
+                    return
+
                 self.log.warning(f"Interference / bad data received: {msg}")
                 if not self.ignore_decode_errors:
                     raise
 
-            if msg in self.ignored_messages:
-                continue
+            if self.port_debug:
+                self.log.info(f"<<<< {msg}")
 
-            handled = False
+            self.dispatch_incoming_msg(msg)
 
-            # If this message header is in our list of message processors, call it
-            msg_header = msg[:3]
-            if msg_header in self.message_processors:
-                self.message_processors[msg_header](msg[3:])
-                handled = True
+    def dispatch_incoming_msg(self, msg):
 
-            # Does this message match the start of the confirm message?
-            if self.confirm_msg and msg.startswith(self.confirm_msg):
-                self.confirm_msg = None
-                self.send_ready.set()
-                handled = True
+        if msg in self.ignored_messages:
+            return
 
-                # Did we also have a query in progress? If so, mark it done
-                if not self.query_done.is_set():
-                    self.query_done.set()
+        msg_header = msg[:3]
+        if msg_header in self.message_processors:
+            self.message_processors[msg_header](msg[3:])
+            self.no_response_waiting.set()
 
-            if not handled:
-                self.log.warning(f"Unknown message received: {msg}")
-                # TODO: should we raise an exception here?
+        # if the msg_header matches the first chars of the self.pause_sending_until, unpause sending
+        if self.pause_sending_flag.is_set() and self.pause_sending_until.startswith(msg_header):
+            self.resume_sending()
+
+    def pause_sending(self, msg_header):
+        self.pause_sending_until = msg_header
+        self.pause_sending_flag.set()
+
+    def resume_sending(self):
+        self.pause_sending_until = None
+        self.pause_sending_flag.clear()
 
     async def _socket_reader(self):
+        # Read coroutine
         while True:
             resp = await self.read(128)
             if resp is None:
@@ -313,38 +326,31 @@ class FastSerialCommunicator(LogMixin):
             self.log.warning("Serial error: {}".format(e))
             return None
 
-        # we either got empty response (-> socket closed) or and error
+        # we either got empty response (-> socket closed) or an error
         if not resp:
             self.log.warning("Serial closed.")
             self.machine.stop("Serial {} closed.".format(self.config["port"]))
             return None
 
-        if self.port_debug:
-            self.log.info(f"<<<< {resp}")
         return resp
 
     async def _socket_writer(self):
+        # Write coroutine
         while True:
             try:
-                msg, confirm_msg, log_msg = await self.send_queue.get()
+                msg, pause_sending_until, log_msg = await self.send_queue.get()
+
+                if pause_sending_until is not None:
+                    self.pause_sending(pause_sending_until)
+
+                # Sends a message
+                self.write_to_port(msg, log_msg)
+
+                if self.pause_sending_flag.is_set():
+                    await self.pause_sending_flag.wait()
+
             except:
                 return  # TODO better way to catch shutting down?
-
-            await asyncio.wait_for(self.send_ready.wait(), timeout=None)  # TODO timeout? Prob no, but should do something to not block forever
-
-            try:
-                await asyncio.wait_for(self.send_ready.wait(), timeout=1)
-            except asyncio.TimeoutError:
-                self.log.error("Timeout waiting for send_ready. Message was: %s", msg)
-                # TODO Decide what to do here, prob raise a specific exception?
-                # self.send_ready.set()  # TODO only if we decide to continue
-                raise
-
-            if confirm_msg:
-                self.confirm_msg = confirm_msg
-                self.send_ready.clear()
-
-            self.write_to_port(msg, log_msg)
 
     def write_to_port(self, msg, log_msg=None):
         # Sends a message as is, without encoding or adding a <CR> character

@@ -337,7 +337,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
         self.config = self.machine.config_validator.validate_config("lisy", self.machine.config['lisy'])
         self._configure_device_logging_and_debug("lisy", self.config)
-        self.api_version = None             # type: Optional[StrictVersion]
+        self.api_version = None             # type: Optional[version.parse]
         self._light_system = None
         self._send_length_of_command = self.config['send_length_after_command']
 
@@ -517,7 +517,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
                 self._inputs[str(number)] = state == 1
 
-            self._watchdog_task = self.machine.clock.loop.create_task(self._watchdog())
+            self._watchdog_task = asyncio.create_task(self._watchdog())
             self._watchdog_task.add_done_callback(Util.raise_exceptions)
 
             self.debug_log("Init of LISY done.")
@@ -539,7 +539,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
     async def start(self):
         """Start reading switch changes."""
-        self._poll_task = self.machine.clock.loop.create_task(self._poll())
+        self._poll_task = asyncio.create_task(self._poll())
         self._poll_task.add_done_callback(Util.raise_exceptions)
         if self._light_system:
             self._light_system.start()

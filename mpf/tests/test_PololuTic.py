@@ -1,8 +1,12 @@
 import asyncio
+from io import StringIO
+
 
 from mpf.platforms.pololu import pololu_tic
 from mpf.tests.MpfTestCase import MpfTestCase
 import ruamel.yaml
+from ruamel.yaml import RoundTripDumper
+
 
 
 class TestPololuTic(MpfTestCase):
@@ -23,7 +27,13 @@ class TestPololuTic(MpfTestCase):
                 'Current position': self._position,
             }
             new_status.update(self.status)
-            return ruamel.yaml.dump(new_status)
+
+            with StringIO() as output:
+                yaml = ruamel.yaml.YAML()
+                yaml.Dumper = RoundTripDumper
+                yaml.dump(new_status, output)
+                return output.getvalue()
+
         elif args == ('--reset-command-timeout',):
             return ""
 

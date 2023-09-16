@@ -19,7 +19,7 @@ class FastSegCommunicator(FastSerialCommunicator):
 
         self._seg_task = None
 
-    def start(self):
+    def start_tasks(self):
         """Start the communicator."""
 
         for s in self.machine.device_manager.collections["segment_displays"]:
@@ -35,11 +35,11 @@ class FastSegCommunicator(FastSerialCommunicator):
         for s in self.platform.fast_segs:
 
             if s.next_text:
-                self.send_blind(f'PA:{s.hex_id},{s.next_text.convert_to_str()[0:7]}')
+                self.send_and_forget(f'PA:{s.hex_id},{s.next_text.convert_to_str()[0:7]}')
                 s.next_text = None
 
             if s.next_color:
-                self.send_blind(('PC:{},{}').format(s.hex_id, s.next_color))
+                self.send_and_forget(('PC:{},{}').format(s.hex_id, s.next_color))
                 s.next_color = None
 
     def _process_id(self, msg):
@@ -51,8 +51,9 @@ class FastSegCommunicator(FastSerialCommunicator):
         # TODO make this actually check each display
         self.remote_processor, self.remote_model, self.remote_firmware = msg.split()
         self.platform.log.info(f"Connected to SEG processor on {self.remote_model} with firmware v{self.remote_firmware}")
-        self.machine.variables.set_machine_var("fast_seg_firmware", self.remote_firmware)
-        self.machine.variables.set_machine_var("fast_seg_model", self.remote_model)
+
+    async def soft_reset(self):
+        pass  # TODO turn off all segments
 
     def stopping(self):
         if self._seg_task:
@@ -61,6 +62,6 @@ class FastSegCommunicator(FastSerialCommunicator):
 
         # TODO Better way to do this?
         for s in self.platform.fast_segs:
-            self.send_blind(f'PA:{s.hex_id},        ')
+            self.send_and_forget(f'PA:{s.hex_id},        ')
             s.next_text = None
             s.next_color = None

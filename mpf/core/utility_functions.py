@@ -1,6 +1,7 @@
 """Contains the Util class which includes many utility functions."""
-from collections import Iterable as IterableCollection
+from collections.abc import Iterable as IterableCollection
 from copy import deepcopy
+import importlib
 import re
 from fractions import Fraction
 from functools import reduce, lru_cache
@@ -316,6 +317,11 @@ class Util:
         return return_int
 
     @staticmethod
+    def float_to_hex(f: float) -> str:
+        """Convert a float from 0.0-1.0 to a 2-char hex byte (in string form)."""
+        return hex(int(f * 255))[2:].zfill(2).upper()
+
+    @staticmethod
     def event_config_to_dict(config) -> dict:
         """Convert event config to a dict."""
         return_dict = dict()
@@ -371,6 +377,36 @@ class Util:
 
         raise ValueError("%s is invalid pwm hex value. (Expected value "
                          "0-8)" % source_int)
+
+    @staticmethod
+    def float_to_pwm8_hex_string(source_float: float) -> str:
+        """Convert a float to a PWM8 string."""
+        # Define the lookup table
+        lookup_table = {
+            0: '00',  # 00000000
+            1: '01',  # 00000001
+            2: '88',  # 10001000
+            3: '92',  # 10010010
+            4: 'AA',  # 10101010
+            5: 'BA',  # 10111010
+            6: 'EE',  # 11101110
+            7: 'FE',  # 11111110
+            8: 'FF',  # 11111111
+        }
+
+        # Round the float to 3 decimal places
+        source_float = round(source_float, 3)
+
+        # Make sure the float is between 0 and 1
+        if 0.0 <= source_float <= 1.0:
+            # Map the float to an integer in the range [0, 8]
+            mapped_int = round(source_float * 8)
+
+            # Perform sanity check for allowed mapped integers
+            if mapped_int in lookup_table:
+                return lookup_table[mapped_int]
+
+        raise ValueError("%s is an invalid pwm hex value. (Expected value between 0.0 and 1.0)" % source_float)
 
     @staticmethod
     def pwm32_to_hex_string(source_int: int) -> str:
@@ -605,16 +641,12 @@ class Util:
             class_string(str): The input string
 
         Returns a reference to the python class object.
-
-        This function came from here:
-        http://stackoverflow.com/questions/452969/does-python-have-an-equivalent-to-java-class-forname
         """
-        # todo I think there's a better way to do this in Python 3
+
         parts = class_string.split('.')
         module = ".".join(parts[:-1])
-        m = __import__(module)
-        for comp in parts[1:]:
-            m = getattr(m, comp)
+        m = importlib.import_module(module)
+        m = getattr(m, parts[-1:][0])
         return m
 
     @staticmethod

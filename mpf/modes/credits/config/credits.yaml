@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 mode:
   code: mpf.modes.credits.code.credits.Credits
   priority: 1000010

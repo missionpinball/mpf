@@ -644,8 +644,6 @@ fast_exp:
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
     boards: dict|str:subconfig(fast_exp_board)|
-    # led_fade_time: single|ms|0
-    # led_hz: single|int|30
 fast_exp_board:
     model: single|str|  # FP-EXP-0071, etc.
     address: single|str|None  # overrides the lookup address, useful for partner-specific firmware
@@ -700,9 +698,8 @@ fast_switches:
     debounce_open: single|str|None
     debounce_close: single|str|None
 fast_coils:
-    connection: single|enum(network,local,auto)|auto
     recycle_ms: single|ms|None
-    hold_pwm_patter: single|str|None
+    pwm2_ms: single|ms|None
 fast_servos:
     max_us: single|int|2000
     min_us: single|int|1000
@@ -799,6 +796,7 @@ high_score:
     enter_initials_timeout: single|secs|20s
     reverse_sort: list|str|None
     reset_high_scores_events: list|event_handler|high_scores_reset,factory_reset
+    vars: dict|str:list|None
 info_lights:
     __valid_in__: machine                            # todo add to validator
     __type__: config
@@ -997,9 +995,6 @@ machine_vars:
     value_type: single|enum(str,float,int)|int
     persist: single|bool|true
 mc_custom_code:
-    __valid_in__: machine  # used by the MC, ignored by MPF
-    __type__: list
-mc_scriptlets:
     __valid_in__: machine  # used by the MC, ignored by MPF
     __type__: list
 mma8451_accelerometer:
@@ -1430,9 +1425,6 @@ score_reel_groups:
     reels: list|machine(score_reels)|
     chimes: list|machine(coils)|None
     lights_tag: single|str|None
-scriptlets:
-    __valid_in__: machine
-    __type__: list
 segment_displays:
     __valid_in__: machine
     __type__: device
@@ -1617,7 +1609,7 @@ show_player:
     action: single|enum(play,stop,pause,resume,advance,step_back,update,queue)|play
     show: single|str|None
     priority: single|int_or_token|0
-    speed: single|float_or_token|1
+    speed: single|template_float_or_token|1
     block_queue: single|bool|false
     start_step: single|template_int|1
     start_running: single|template_bool|True
@@ -1835,6 +1827,11 @@ sound_ducking:
 sound_marker:
     time: single|secs|
     events: list|event_posted|
+speedometers:
+    __valid_in__: machine, mode
+    __type__: device
+    start_switch: single|machine(switches)|None
+    stop_switch: single|machine(switches)|None
 spi_bit_bang:
     __valid_in__: machine
     __type__: config
@@ -2263,8 +2260,8 @@ widgets:
         rotation: single|int_or_token|0
         scale: single|float_or_token|1.0
         casing: single|str|None
-        # outline_color: single|kivycolor|ffffffff
-        # outline_width: single|int_or_token|0
+        outline_color: single|kivycolor|ffffffff
+        outline_width: single|int_or_token|0
         # text_size: single|int_or_token|None  # sets width of bounding box, not font
         # shorten: single|bool_or_token|None
         # mipmap: single|bool_or_token|None

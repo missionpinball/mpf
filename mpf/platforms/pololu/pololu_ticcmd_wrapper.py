@@ -3,6 +3,7 @@ import subprocess
 import logging
 import asyncio
 
+from io import StringIO
 from threading import Thread
 import ruamel.yaml
 
@@ -97,7 +98,8 @@ class PololuTiccmdWrapper:
     async def get_status(self):
         """Return the current status of the TIC device."""
         cmd_return = await self._ticcmd_future('-s', '--full')
-        status = ruamel.yaml.safe_load(cmd_return)
+        yaml = ruamel.yaml.YAML(typ='safe')
+        status = yaml.load(StringIO(cmd_return))
         return status
 
     def halt_and_hold(self):

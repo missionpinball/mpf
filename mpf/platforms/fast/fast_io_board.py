@@ -8,9 +8,10 @@ class FastIoBoard:
     """A FAST I/O board on the NET processor."""
 
     # pylint: disable-msg=too-many-arguments
-    def __init__(self, name, node_id, model_string, firmware_version, switch_count, driver_count, prior_switches, prior_drivers):
+    def __init__(self, communicator, name, node_id, model_string, firmware_version, switch_count, driver_count, prior_switches, prior_drivers):
         """Initialise FastIoBoard."""
-        self.name = name
+        self.communicator = communicator
+        self.name = str(name)
         self.node_id = node_id  # position in the I/O loop, 0-indexed
         self.model = model_string
         self.firmware_version = firmware_version
@@ -26,10 +27,4 @@ class FastIoBoard:
 
     def get_description_string(self) -> str:
         """Return description string."""
-        return "Board {} - Model: {} Firmware: {} Switches: {} Drivers: {}".format(
-            self.node_id,
-            self.model,
-            self.firmware_version,
-            self.switch_count,
-            self.driver_count
-        )
+        return f"Board {self.node_id} - Model: {self.model}, Firmware: {self.firmware_version}, Switches: {self.switch_count}, Drivers: {self.driver_count}"

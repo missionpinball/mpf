@@ -879,18 +879,18 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
         await self._connect_to_hardware(port, baud, flow_control=flow_control)
 
-        self._poll_task = self.machine.clock.loop.create_task(self._poll())
+        self._poll_task = asyncio.create_task(self._poll())
         self._poll_task.add_done_callback(Util.raise_exceptions)
 
-        self._sender_task = self.machine.clock.loop.create_task(self._sender())
+        self._sender_task = asyncio.create_task(self._sender())
         self._sender_task.add_done_callback(Util.raise_exceptions)
 
         if self.config['use_send_key']:
-            self._send_key_task = self.machine.clock.loop.create_task(self._send_key())
+            self._send_key_task = asyncio.create_task(self._send_key())
             self._send_key_task.add_done_callback(Util.raise_exceptions)
 
         if self.config['periodically_query_nodes']:
-            self._query_nodes_task = self.machine.clock.loop.create_task(self._query_status_and_coil_current())
+            self._query_nodes_task = asyncio.create_task(self._query_status_and_coil_current())
             self._query_nodes_task.add_done_callback(Util.raise_exceptions)
 
         self._light_system = PlatformBatchLightSystem(self.machine.clock, self._send_multiple_light_update,

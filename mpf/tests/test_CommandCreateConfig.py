@@ -20,7 +20,7 @@ class TestCommandCreateConfig(TestCase):
             Command.create_machine_config_structure("testmachine", os.path.normpath("/home/testmachine"))
 
             with open(os.path.normpath("/home/testmachine/config/config.yaml"), "w") as handle_config:
-                handle_config.write.assert_any_call("#config_version=5")
+                handle_config.write.assert_any_call("#config_version=6")
 
             mock_file.assert_any_call(os.path.normpath("/home/testmachine/config/config.yaml"), "w")
 
@@ -35,6 +35,3 @@ class TestCommandCreateConfig(TestCase):
             Command.create_show_structure("testshow", os.path.normpath("/home/test/shows"), os.path.normpath("/home/test/"))
             mock_file.assert_called_with(os.path.normpath("/home/test/shows/testshow.yaml"), "w")
             os_makedirs.assert_called_once_with(os.path.normpath("/home/test/shows"))
-
-
-

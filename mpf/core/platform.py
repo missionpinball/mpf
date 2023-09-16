@@ -2,9 +2,10 @@
 import abc
 import asyncio
 from collections import namedtuple
+from dataclasses import dataclass
 from enum import Enum
 
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any
 
 from mpf.core.logging import LogMixin
 from mpf.core.utility_functions import Util
@@ -243,7 +244,7 @@ class SegmentDisplaySoftwareFlashPlatform(SegmentDisplayPlatform, metaclass=abc.
     async def initialize(self):
         """Start flash task."""
         await super().initialize()
-        self._display_flash_task = self.machine.clock.loop.create_task(self._display_flash())
+        self._display_flash_task = asyncio.create_task(self._display_flash())
         self._display_flash_task.add_done_callback(Util.raise_exceptions)
 
     async def _display_flash(self):
@@ -526,12 +527,36 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
-SwitchSettings = namedtuple("SwitchSettings", ["hw_switch", "invert", "debounce"])
-DriverSettings = namedtuple("DriverSettings", ["hw_driver", "pulse_settings", "hold_settings", "recycle"])
-DriverConfig = namedtuple("DriverConfig", ["name", "default_pulse_ms", "default_pulse_power",
-                                           "default_hold_power", "default_timed_enable_ms", "default_recycle",
-                                           "max_pulse_ms", "max_pulse_power", "max_hold_power"])
-RepulseSettings = namedtuple("RepulseSettings", ["enable_repulse", "debounce_ms"])
+@dataclass
+class SwitchSettings:
+    hw_switch: Any
+    invert: Any
+    debounce: Any
+
+@dataclass
+class DriverSettings:
+    hw_driver: Any
+    pulse_settings: Any
+    hold_settings: Any
+    recycle: Any
+
+@dataclass
+class DriverConfig:
+    name: str
+    default_pulse_ms: int
+    default_pulse_power: float
+    default_hold_power: float
+    default_timed_enable_ms: int
+    default_recycle: bool
+    max_pulse_ms: int
+    max_pulse_power: float
+    max_hold_power: float
+
+@dataclass
+class RepulseSettings:
+    enable_repulse: bool
+    debounce_ms: int
+
 
 
 class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
