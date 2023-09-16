@@ -21,7 +21,7 @@ class FastSerialCommunicator(LogMixin):
     __slots__ = ["platform", "remote_processor", "config", "writer", "reader", "read_task", "received_msg", "log",
                  "machine", "fast_debug", "port_debug", "remote_firmware", "send_queue", "write_task",
                  "pause_sending_until", "pause_sending_flag", "no_response_waiting", "done_waiting",
-                 "ignore_decode_errors", "message_processors", "remote_model"]
+                 "ignore_decode_errors", "message_processors", "remote_model", "port"]
 
     def __init__(self, platform, processor, config):
         """Initialize FastSerialCommunicator."""
@@ -35,6 +35,7 @@ class FastSerialCommunicator(LogMixin):
         self.log = None
         self.machine = platform.machine
         self.fast_debug = platform.debug
+        self.port = None  # string of the port we're connected to
         self.port_debug = config['debug']
 
         self.remote_firmware = None  # TODO some connections have more than one processor, should there be a processor object?
@@ -84,6 +85,7 @@ class FastSerialCommunicator(LogMixin):
                 else:
                     # we got a connection
                     self.log.info(f"Connected to {port} at {self.config['baud']}bps")
+                    self.port = port
                     success = True
                     break
 
@@ -143,7 +145,12 @@ class FastSerialCommunicator(LogMixin):
 
     def _process_id(self, msg):
         """Process the ID response."""
-        self.remote_processor, self.remote_model, self.remote_firmware = msg.split()
+        processor, self.remote_model, self.remote_firmware = msg.split()
+
+        if self.remote_processor != processor:
+            self._processor_mismatch(processor)
+        else:
+            self.remote_processor = processor
 
         self.log.info(f"Connected to {self.remote_model} with firmware v{self.remote_firmware}")
 
@@ -152,6 +159,10 @@ class FastSerialCommunicator(LogMixin):
                                  f'to be firmware {MIN_FW}, but yours is {self.remote_firmware}')
 
         self.done_processing_msg_response()
+
+    def _processor_mismatch(self, processor):
+        print(f"PORT CONFIG ERROR: You config lists port '{self.port}' for the {self.remote_processor} connection, but the ID: response shows that port is the {processor} connection. Update your config.")
+        self.machine.stop('FAST Serial port mismatch')
 
     async def _read_with_timeout(self, timeout):
         try:
