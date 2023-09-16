@@ -54,12 +54,15 @@ class Command(MpfCommandLineParser):
     def production_bundle(self):
         """Create a production bundle."""
         config_loader = YamlMultifileConfigLoader(self.machine_path, self.args.configfile, False, False)
-        mpf_config = config_loader.load_mpf_config()
-        if self.args.mc:
-            mc_config = config_loader.load_mc_config()
 
+        mpf_config = config_loader.load_mpf_config()
         if self.args.dest_path:
             mpf_config.set_machine_path(self.args.dest_path)
+
+        if self.args.mc:
+            mc_config = config_loader.load_mc_config()
+            if self.args.dest_path:
+                mc_config.set_machine_path(self.args.dest_path)
 
         pickle.dump(mpf_config, open(ProductionConfigLoader.get_mpf_bundle_path(self.machine_path), "wb"))
         if self.args.mc:

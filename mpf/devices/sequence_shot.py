@@ -21,7 +21,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
     collection = 'sequence_shots'
     class_label = 'sequence_shot'
 
-    __slots__ = ["delay", "active_sequences", "active_delays", "_sequence_events", "_delay_events"]
+    __slots__ = ["delay", "active_sequences", "active_delays", "_sequence_events", "_delay_events", "_start_time"]
 
     def __init__(self, machine, name):
         """Initialise sequence shot."""
@@ -33,6 +33,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
 
         self._sequence_events = []      # type: List[str]
         self._delay_events = {}         # type: Dict[str, int]
+        self._start_time = None
 
     @property
     def can_exist_outside_of_game(self):
@@ -131,6 +132,9 @@ class SequenceShot(SystemWideDevice, ModeDevice):
                            self.active_delays)
             return
 
+        #record start time
+        self._start_time = self.machine.clock.get_time()
+
         # create a new sequence
         seq_id = uuid.uuid4()
         next_event = self._sequence_events[1]
@@ -169,8 +173,14 @@ class SequenceShot(SystemWideDevice, ModeDevice):
             self.active_sequences.append(ActiveSequence(sequence.id, current_position_index, next_event))
 
     def _completed(self):
-        """Post sequence complete event."""
-        self.machine.events.post("{}_hit".format(self.name))
+        #measure the elapsed time between start and completion of the sequence
+        if self._start_time is not None:
+            elapsed = self.machine.clock.get_time() - self._start_time
+        else:
+            elapsed = 0
+
+        """Post sequence complete event including its elapsed time to complete."""
+        self.machine.events.post("{}_hit".format(self.name),elapsed=elapsed)
         '''event: (name)_hit
         desc: The sequence_shot called (name) was just completed.
         '''

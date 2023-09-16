@@ -27,6 +27,8 @@ variable_player:
         multiplier:
             float: 1.5
             action: set
+    score_floordiv:
+        score: 123456 // 100 * 100
     set_player7:
         score:
             int: 10

@@ -85,6 +85,7 @@ mpf:
         timers: mpf.devices.timer.Timer
         segment_displays: mpf.devices.segment_display.segment_display.SegmentDisplay
         sequence_shots: mpf.devices.sequence_shot.SequenceShot
+        speedometers: mpf.devices.speedometer.Speedometer
         hardware_sound_systems: mpf.devices.hardware_sound_system.HardwareSoundSystem
         steppers: mpf.devices.stepper.Stepper
         state_machines: mpf.devices.state_machine.StateMachine

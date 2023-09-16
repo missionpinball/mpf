@@ -7,7 +7,7 @@ mode:
   use_wait_queue: true
 
 # Instructions on how to use this mode:
-# http://docs.missionpinball.org/en/latest/game_logic/high_scores/index.html
+# http://docs.missionpinball.org/game_logic/high_scores/index.html
 
 high_score:
   enter_initials_timeout: 60
@@ -28,10 +28,28 @@ high_score:
       - MPF: 23
 
 slide_player:
-  high_score_enter_initials: high_score_enter_initials
+  high_score_enter_initials:
+    high_score_enter_initials:
+        action: play
+    high_score_award_display:
+        action: remove
+    #Make sure to remove any slides you add under this high_score_enter_initials slide, or it will continue to
+    #show the award slide instead of initials for another player that also earned a high score.
+    score_award_display:
+        action: remove
   high_score_award_display:
     high_score_award_display:
         action: play
+    high_score_enter_initials:
+        action: remove
+  #This is used to show the slide for a specific award and show additional parameters.  This can include any
+  #static lables as well as dynamic player and machine variables.
+  #You will need to generate this block again and swap the name for any subsequent categories that you want
+  #to show unique additional values.
+  score_award_display:
+    score_award_display:
+        action: play
+        priority: 1
     high_score_enter_initials:
         action: remove
 
@@ -83,5 +101,38 @@ slides:
     text: (value)
     color: ffffff
     number_grouping: true
+    style: medium
+    y: center - 33%
+
+  #This is the slide for a specific category (in this case "score"), where you can include any values you want.
+  #This can include both player and machine vars. Player vars must have a number associated, otherwise it will
+  #pull from the last user who had a turn, not the user for which the player var applies.
+  #Player Var Syntax: (player(player_num)|variable) where you swap the variable, but do not change before the |
+  #Machine Var Syntax: (machine|variable) where you swap the variable, but do not change before the |
+  score_award_display:
+  - type: text
+    text: (player_name)
+    color: ffffff
+    style: big
+    y: center + 33%
+  - type: text
+    text: (award)
+    color: ffffff
+    style: medium
+    y: center + 15%
+  - type: text
+    text: (value)
+    color: ffffff
+    number_grouping: true
+    style: medium
+    y: center
+  - type: text
+    text: (player(player_num)|ball)
+    color: ffffff
+    style: medium
+    y: center - 15%
+  - type: text
+    text: (machine|credits_string)
+    color: ffffff
     style: medium
     y: center - 33%
