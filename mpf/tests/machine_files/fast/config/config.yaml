@@ -1,168 +1,160 @@
-#config_version=5
+#config_version=6
+
+# Config file for FAST Neuron Controller I/O board testing
+
+mpf:
+  report_crashes: never
 
 hardware:
     platform: fast
 
 fast:
-    driverboards: fast
-    ports: com3, com4, com5, com6
-    debug: true
-    firmware_updates:
-      - type: net
-        version: "2.04"
-        file: "firmware/FAST_NET_01_04_00.txt"
+    net:
+        port: com3
+        debug: true
+        controller: neuron
+        io_loop:
+            io3208:  # drivers 0-8 (0x00-0x08), switches 0-31 (0x00-0x1F)
+                model: FP-I/O-3208
+                order: 1
+            io0804:  # drivers 9-11 (0x09-0x0B), switches 32-39 (0x20-0x27)
+                model: FP-I/O-0804
+                order: 2
+            io1616:  # drivers 12-27 (0x0C-0x1B), switches 40-55 (0x28-0x37)
+                model: FP-I/O-1616
+                order: 3
+            cab:  # drivers 28-35 (0x1C-0x23), switches 56-79 (0x38-0x4F)
+                model: FP-I/O-0024
+                order: 4
 
 switches:
-    s_test:
-        number: 7
-        platform_settings:
-            debounce_open: 26
-            debounce_close: 5
-    s_test_nc:
-        number: 26
-        type: 'NC'
-    s_slingshot_test:
-        number: 22
+    s_baseline:  # Starts active via SA:
+        number: io3208-0  # 0x00
     s_flipper:
-        number: 1
+        number: io3208-1  # 0x01
     s_flipper_eos:
-        number: 2
-    s_autofire:
-        number: 3
-    s_test3:
-        number: 3-1
-    s_nux_up:
-        number: 0-11
-    s_nux_down:
-        number: 0-12
-
-digital_outputs:
-  c_nux_motor:
-    number: 0-1
-    type: driver
-
-motors:
-  motorized_drop_target_bank:
-    motor_left_output: c_nux_motor
-    position_switches: !!omap
-      - up: s_nux_up
-      - down: s_nux_down
-    reset_position: up
-    go_to_position:
-      go_up: up
-      go_down: down
+        number: io3208-2  # 0x02
+    s_flipper_opto:  # Starts active via SA:
+        number: io3208-3  # 0x03
+        type: 'NC'
+    s_autofire_3208:
+        number: io3208-4  # 0x04
+    s_autofire_1616:
+        number: io1616-0  # 0x28
+    s_test_nc:  # Starts active via SA:
+        number: io3208-5  # 0x05
+        type: 'NC'
+    s_debounce_auto:
+        number: io3208-6  # 0x06
+        debounce: auto
+    s_debounce_quick:
+        number: io3208-7  # 0x07
+        debounce: quick  # debounce 02, 02
+    s_debounce_normal:
+        number: io3208-8  # 0x08
+        debounce: normal
+    s_debounce_custom:
+        number: io3208-9  # 0x09
+        platform_settings:
+            debounce_open: 26  # 0x1A
+            debounce_close: 5  # 0x05
+    s_cab_flipper:
+        number: cab-0  # 0x38
 
 coils:
-    c_test:
-        number: 4
-        default_pulse_ms: 23
-        default_recycle: True
+    c_baseline:  # DL:00,81,00,10,0A,FF,00,00,00
+        number: io3208-0  # 0x00
+    c_allow_enable:
+        number: io3208-1  # 0x01
+        allow_enable: true
+    c_custom_pulse:  # DL:02,81,00,10,17,AA,00,00,00
+        number: io3208-2  # 0x02
+        default_pulse_ms: 23  # 0x17
+        default_pulse_power: 0.53  # 0xAA
+    c_custom_recycle:
+        number: io3208-5  # 0x05
         platform_settings:
-            recycle_ms: 27
-    c_test_allow_enable:
-        number: 6
-        default_pulse_ms: 23
-        max_hold_power: 1.0
-    c_slingshot_test:
-        number: 7
-    c_pulse_pwm32_mask:
-        number: 17
-        default_pulse_power: 0.53
-        default_hold_power: 0.40
-    c_hold_ssm:
-        number: 19
-        default_hold_power: 0.25    # approximately
+            recycle_ms: 27  # 0x1B
+    c_long_pwm2:  # DL:06,81,00,70,0A,FF,14,EE,00
+        number: io3208-6  # 0x06
+        default_hold_power: 0.75  # 0xEE
         platform_settings:
-            hold_pwm_patter: "84224244"
-    c_long_pulse:
-        number: 18
-        default_pulse_ms: 2000
-        max_hold_power: 1.0
-    c_timed_enable:
-        number: 22
-        default_pulse_ms: 20
-        default_timed_enable_ms: 200
-        default_hold_power: 0.25
-    c_default_timed_enable:
-        number: 23
-        default_pulse_ms: 20
-        default_timed_enable_ms: 200
-        default_hold_power: 0.25
-        pulse_with_timed_enable: true
-    c_flipper_main:
-        number: 32
-        default_pulse_ms: 10
-        default_hold_power: 0.125
-    c_flipper_hold:
-        number: 3-5
-        default_hold_power: 0.125
+            pwm2_ms: 2000  # 0x14 (2000ms / 100)
+    c_default_hold_power:  # DL:07,81,00,10,0A,FF,00,88,00
+        number: io3208-7  # 0x07
+        default_hold_power: 0.25  # 0x88
+    c_longer_pwm2:  # DL:08,81,00,70,0A,FF,C8,EE,00
+        number: io0804-0  # 0x08
+        default_hold_power: 0.75  # 0xEE
+        platform_settings:
+            pwm2_ms: 20000  # 0xC8 (20000ms / 100)
+    c_2_stage_pulse:  # DL:0A,81,00,10,18,FE,14,AA,00
+        number: io0804-2  # 0x0A
+        default_pulse_ms: 24  # 0x18
+        default_pulse_power: 0.875  # 0xFE
+        default_hold_power: 0.5  # 0xAA
+        platform_settings:
+            pwm2_ms: 20  # 0x14
+    c_pwm2:  # DL:0B,81,00,10,14,AA,14,AA,00
+        number: io0804-3  # 0x0B
+        default_pulse_ms: 20  # 0x14
+        default_pulse_power: 0.53  # 0xAA
+        default_hold_power: 0.51  # 0xAA
+        platform_settings:
+            pwm2_ms: 20 # 0x14
+    c_flipper_main:  # DL:0D,81,00,10,0A,FF,00,00,00
+        number: io1616-1  # 0x0D
+        default_pulse_ms: 10  # 0x0A
+    c_flipper_hold:  # DL:0E,81,00,10,0A,FF,00,00,00
+        number: io1616-2  # 0x0E
+        allow_enable: true
+    c_flipper_single_wound:  # DL:0F,81,00,10,0E,FF,00,01,00
+        number: io1616-3  # 0x0F
+        default_pulse_ms: 14  # 0x0A
+        default_hold_power: 0.125  # 0x20
+    c_autofire_1:
+        number: io1616-4  # 0x10
+    c_autofire_2:
+        number: io1616-5  # 0x11
+    c_flipper2_main:
+        number: io1616-6  # 0x12
+        default_pulse_ms: 15  # 0x0A
+    c_flipper2_hold:
+        number: io1616-7 # 0x13
+        allow_enable: true
 
 autofire_coils:
-    ac_slingshot_test:
-        coil: c_slingshot_test
-        switch: s_slingshot_test
+    ac_baseline:
+        coil: c_autofire_1  # io1616-4  # 0x10
+        switch: s_autofire_1616  # io1616-0  # 0x28
     ac_inverted_switch:
-        coil: c_slingshot_test
-        switch: s_test_nc
-    ac_same_switch1:
-        coil: c_test
-        switch: s_autofire
-        enable_events: ac_same_switch
-    ac_same_switch2:
-        coil: c_test_allow_enable
-        switch: s_autofire
-        enable_events: ac_same_switch
-    ac_broken_combination:
-        coil: c_flipper_hold
-        switch: s_slingshot_test
-    ac_different_boards:
-        coil: c_flipper_hold
-        switch: s_test
-    ac_board_3:
-        coil: c_flipper_hold
-        switch: s_test3
-
-servos:
-    servo1:
-        number: 3
-    servo20:
-        number: 3-2
+        coil: c_autofire_2  # io1616-5  # 0x11
+        switch: s_test_nc   # io3208-5  # 0x05
+    ac_2_stage_pwm:
+        coil: c_long_pwm2
+        switch: s_debounce_auto
+    ac_test_action:
+        coil: c_pwm2
+        switch: s_debounce_quick
 
 flippers:
-    f_test_single:
-        debug: true
-        main_coil_overwrite:
-            pulse_ms: 11
-        main_coil: c_flipper_main
-        activation_switch: s_flipper
-
-    f_test_hold:
-        debug: true
+    f_dual_wound:
         main_coil: c_flipper_main
         hold_coil: c_flipper_hold
-        activation_switch: s_flipper
+        activation_switch: s_flipper  # io3208-1  # 0x01
+
+    f_single_wound:
+        main_coil: c_flipper_single_wound
+        activation_switch: s_flipper_opto  # io3208-3  # 0x03
 
     f_test_hold_eos:
-        debug: true
-        main_coil: c_flipper_main
-        hold_coil: c_flipper_hold
-        activation_switch: s_flipper
+        main_coil: c_flipper2_main
+        hold_coil: c_flipper2_hold
+        activation_switch: s_cab_flipper
         eos_switch: s_flipper_eos
         use_eos: true
 
-lights:
-  test_pdb_light:
-    number: 35
-    subtype: matrix
-  test_gi:
-    number: 42
-    subtype: gi
-  test_led:
-    number: 2-23
-    type: grb
-  test_led2:
-    previous: test_led
-    type: grb
-  l_o_circle:
-    number: 0-10
-    type: grb
+playfields:
+  playfield:
+    tags: default
+    default_source_device: None

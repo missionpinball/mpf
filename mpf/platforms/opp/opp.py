@@ -141,7 +141,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoP
         """Start polling and listening for commands."""
         # start polling
         for chain_serial in self.read_input_msg:
-            self._poll_task[chain_serial] = self.machine.clock.loop.create_task(self._poll_sender(chain_serial))
+            self._poll_task[chain_serial] = asyncio.create_task(self._poll_sender(chain_serial))
             self._poll_task[chain_serial].add_done_callback(Util.raise_exceptions)
 
         # start listening for commands
@@ -1138,13 +1138,14 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoP
         if not coil.hw_driver.switches:
             coil.hw_driver.remove_switch_rule()
 
-    async def configure_servo(self, number) -> OPPServo:
+    async def configure_servo(self, number, config: dict) -> OPPServo:
+        del config
         chain_serial, card, pin_number = number.split('-')
 
         if self.min_version[chain_serial] < 0x02020002:
             self.raise_config_error("Servos not supported on this OPP FW version: {}.".format(
                 self.min_version[chain_serial]), 23)
-        
+
         for inputs in self.opp_inputs:
             if inputs.chain_serial == chain_serial:
                 possible_inputs = self._get_numbers(inputs.mask)
@@ -1153,5 +1154,5 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoP
             servo_number = int(pin_number) - 8
         else:
             self.raise_config_error("Servo unavailable at this number: {}.".format(number), 24)
-            
+
         return OPPServo(chain_serial, servo_number, self)

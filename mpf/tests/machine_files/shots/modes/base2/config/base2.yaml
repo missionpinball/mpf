@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 mode:
     start_events: player_turn_started
     stop_events: player_turn_stopped
@@ -243,5 +243,3 @@ shot_profiles:
           show: rainbow
         - name: base_three
           show: rainbow
-
-

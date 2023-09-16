@@ -47,7 +47,7 @@ class SwitchCounter(PhysicalBallCounter):
                 switch=switch, state=0,
                 callback=self.invalidate_count)
 
-        self._task = self.machine.clock.loop.create_task(self._run())
+        self._task = asyncio.create_task(self._run())
         self._task.add_done_callback(Util.raise_exceptions)
         self._is_unreliable = False
 

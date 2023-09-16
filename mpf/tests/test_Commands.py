@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import patch, MagicMock, call
 
-from mpf.commands import game, migrate
+from mpf.commands import game
 
 
 class TestCommands(TestCase):
@@ -34,10 +34,3 @@ class TestCommands(TestCase):
                                     self.assertEqual(loader_mock.load_mpf_config(), controller.call_args[0][1])
                                     sys.exit.assert_called_once_with()
                                     self.assertEqual(call(), sys.exit.call_args)
-
-    def test_migrate(self):
-        with patch("mpf.commands.migrate.logging"):
-            with patch("mpf.commands.migrate.os"):
-                with patch("mpf.commands.migrate.Migrator") as cmd:
-                    migrate.Command("test", "machine", "")
-                    cmd.assert_called_with("test", "machine")

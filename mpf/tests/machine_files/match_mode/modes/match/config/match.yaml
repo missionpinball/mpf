@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 
 slide_player:
   match_has_match: match
@@ -11,4 +11,3 @@ slides:
   no_match:
     - type: text
       text: asd
-

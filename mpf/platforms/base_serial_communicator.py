@@ -85,7 +85,7 @@ class BaseSerialCommunicator:
 
     async def start_read_loop(self):
         """Start the read loop."""
-        self.read_task = self.machine.clock.loop.create_task(self._socket_reader())
+        self.read_task = asyncio.create_task(self._socket_reader())
         self.read_task.add_done_callback(Util.raise_exceptions)
 
     # pylint: disable-msg=inconsistent-return-statements

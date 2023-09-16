@@ -1,10 +1,77 @@
-"""Defines for FAST Boards."""
+"""Defines for FAST Pinball hardware."""
 
 HARDWARE_KEY = {
-    "fast":  '2000',
-    "sys11": '1100',
-    "wpc89": '8900',
-    "wpc95": '9500'
+    "neuron":  '2000',
+    "sys11":   '1100',
+    "wpc89":   '8900',
+    "wpc95":   '9500'
+}
+
+VALID_IO_BOARDS = (
+    'FP-I/O-3208',
+    'FP-I/O-1616',
+    'FP-I/O-1604',
+    'FP-I/O-0804',
+    'FP-I/O-0024',
+    'FP-CAB-0001',  # internally the same as FP-I/O-0024
+)
+
+EXPANSION_BOARD_FEATURES = {
+    'FP-EXP-0071': {
+        'min_fw': '0.11',
+        'local_breakouts': ['FP-EXP-0071'],
+        'breakout_ports': 0,
+        'default_address': 'B4'
+    },
+    'FP-EXP-0081': {
+        'min_fw': '0.12',
+        'local_breakouts': ['FP-EXP-0081', 'FP-EXP-0081'],
+        'breakout_ports': 0,
+        'default_address': '84'
+    },
+    'FP-EXP-0091': {
+        'min_fw': '0.11',
+        'local_breakouts': ['FP-EXP-0091'],
+        'breakout_ports': 2,
+        'default_address': '88'
+    },
+    'FP-EXP-2000': {
+        'min_fw': '0.11',
+        'local_breakouts': ['FP-BRK-0001'],
+        'breakout_ports': 3,
+        'default_address': '48'
+    },
+}
+
+BREAKOUT_FEATURES = {
+    'FP-EXP-0071': {
+        'min_fw': '0.11',
+        'led_ports': 4,
+        'servo_ports': 4,
+    },
+    'FP-EXP-0081': {
+        'min_fw': '0.11',
+        'led_ports': 4,
+    },
+    'FP-EXP-0091': {
+        'min_fw': '0.11',
+        'led_ports': 4,
+    },
+    'FP-BRK-0001': {  # Neuron
+        'min_fw': '0.8',
+        'led_ports': 4,
+    },
+    'FP-DRV-0800': {
+        'min_fw': '0.0',
+        'servo_ports': 8,
+    },
+    'FP-BRK-0116': {
+        'min_fw': '0.0',
+        'flasher_ports': 16,
+    },
+    'FP-PWR-0007': {
+        'min_fw': '0.0',
+        'device_class': 'mpf.platforms.fast.fast_exp_board',},  # TODO temp module until this code is written
 }
 
 RETRO_SWITCH_MAP = {

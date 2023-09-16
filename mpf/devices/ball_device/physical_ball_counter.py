@@ -43,7 +43,7 @@ class EjectTracker:
             ball_left = await self._ball_count_handler.counter.wait_for_ball_to_leave()
             self._ball_left = asyncio.ensure_future(ball_left)
 
-        self._task = self.machine.clock.loop.create_task(self._run(ball_changes))
+        self._task = asyncio.create_task(self._run(ball_changes))
         self._task.add_done_callback(Util.raise_exceptions)
 
     async def _run(self, ball_changes):

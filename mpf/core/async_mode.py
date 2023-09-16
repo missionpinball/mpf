@@ -36,7 +36,7 @@ class AsyncMode(Mode, metaclass=abc.ABCMeta):
         del kwargs
         super()._started()
 
-        self._task = self.machine.clock.loop.create_task(self._run())
+        self._task = asyncio.create_task(self._run())
         self._task.add_done_callback(self._mode_ended)
 
     def _mode_ended(self, future: asyncio.Future) -> None:

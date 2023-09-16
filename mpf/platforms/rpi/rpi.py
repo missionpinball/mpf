@@ -185,7 +185,7 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
         self._switches = await self.pi.read_bank_1()
 
         self._cmd_queue = asyncio.Queue()
-        self._cmd_task = self.machine.clock.loop.create_task(self._run())
+        self._cmd_task = asyncio.create_task(self._run())
         self._cmd_task.add_done_callback(Util.raise_exceptions)
 
     def send_command(self, cmd):
@@ -213,8 +213,9 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
             self.machine.clock.loop.run_until_complete(self.pi.stop())
             self.pi = None
 
-    async def configure_servo(self, number: str) -> ServoPlatformInterface:
+    async def configure_servo(self, number: str, config: dict) -> ServoPlatformInterface:
         """Configure a servo."""
+        del config
         return RpiServo(number, self)
 
     async def get_hw_switch_states(self):

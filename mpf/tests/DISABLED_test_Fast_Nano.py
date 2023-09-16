@@ -3,24 +3,26 @@ from mpf.core.rgb_color import RGBColor
 from mpf.exceptions.config_file_error import ConfigFileError
 
 from mpf.tests.MpfTestCase import MagicMock, test_config, expect_startup_error
-from mpf.tests.test_Fast import TestFastBase
+from mpf.tests.test_Fast import TestFast
 
-class TestFastV1(TestFastBase):
-    """FAST Platform class for a networked V1 platform."""
+class TestFastV1(TestFast):
+    """FAST Platform class for a networked V1 platform. Tests the NET v1 and RGB processors."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.net_cpu = None
+        self.rgb_cpu = None
+
     def get_config_file(self):
         return 'config_v1.yaml'
 
     def create_expected_commands(self):
-        # V1 firmware uses network switches (SN/DN) and no CH
         self.net_cpu.expected_commands = {
-            'BR:': '\rFOO\r#!B:02',    # there might be some garbage in front of the command
-            'ID:': 'ID:NET FP-CPU-002-1 01.03',
             'NN:00': 'NN:00,FP-I/O-3208-2   ,01.00,08,20,04,06,00,00,00,00',     # 3208 board
             'NN:01': 'NN:01,FP-I/O-0804-1   ,01.00,04,08,04,06,00,00,00,00',     # 0804 board
             'NN:02': 'NN:02,FP-I/O-1616-2   ,01.00,10,10,04,06,00,00,00,00',     # 1616 board
             'NN:03': 'NN:03,FP-I/O-1616-2   ,01.00,10,10,04,06,00,00,00,00',     # 1616 board
             'NN:04': 'NN:04,,,,,,,,,,',     # no board
-            "SA:": "SA:01,00,09,050000000000000000",
             "SN:01,01,04,04": "SN:P",
             "SN:02,01,04,04": "SN:P",
             "SN:03,01,04,04": "SN:P",
@@ -42,21 +44,13 @@ class TestFastV1(TestFastBase):
             "DN:20,00,00,00": "DN:P",
             "DN:21,00,00,00": "DN:P",
             "DN:01,C1,00,18,00,FF,FF,00": "DN:P",   # configure digital output
-            "XO:03,7F": "XO:P",
-            "XO:14,7F": "XO:P"
-        }
-        self.dmd_cpu.expected_commands = {
-            b'ID:': 'ID:DMD FP-CPU-002-1 00.88',
-        }
+            }
+
         self.rgb_cpu.expected_commands = {
-            'ID:': 'ID:RGB FP-CPU-002-1 00.89',
             "RF:0": "RF:P",
             "RA:000000": "RA:P",
             "RF:00": "RF:P",
-        }
-        self.seg_cpu.expected_commands = {
-            'ID:': 'ID:SEG FP-CPU-002-1 00.10',
-        }
+            }
 
     def setUp(self):
         super().setUp()
@@ -64,7 +58,6 @@ class TestFastV1(TestFastBase):
             self.advance_time_and_run()
             self.assertFalse(self.net_cpu.expected_commands)
             self.assertFalse(self.rgb_cpu.expected_commands)
-            self.assertFalse(self.dmd_cpu.expected_commands)
             self.assertFalse(self.seg_cpu.expected_commands)
 
             # test io board detection
@@ -78,15 +71,6 @@ class TestFastV1(TestFastBase):
             self.assertEqual(16, self.machine.default_platform.io_boards[3].switch_count)
             self.assertEqual(16, self.machine.default_platform.io_boards[3].driver_count)
 
-            self.assertEqual("00.88", self.machine.variables.get_machine_var("fast_dmd_firmware"))
-            self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_dmd_model"))
-            self.assertEqual("00.89", self.machine.variables.get_machine_var("fast_rgb_firmware"))
-            self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_rgb_model"))
-            self.assertEqual("01.03", self.machine.variables.get_machine_var("fast_net_firmware"))
-            self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_net_model"))
-            self.assertEqual("00.10", self.machine.variables.get_machine_var("fast_seg_firmware"))
-            self.assertEqual("FP-CPU-002-1", self.machine.variables.get_machine_var("fast_seg_model"))
-
     def test_coils(self):
         self._test_pulse()
         self._test_long_pulse()
@@ -98,10 +82,11 @@ class TestFastV1(TestFastBase):
         self._test_coil_configure()
 
         # test hardware scan
-        info_str = """NET CPU: NET FP-CPU-002-1 01.03
-RGB CPU: RGB FP-CPU-002-1 00.89
-DMD CPU: DMD FP-CPU-002-1 00.88
-Segment Controller: SEG FP-CPU-002-1 00.10
+        info_str = """NET CPU: NET FP-CPU-002-2 01.05
+RGB CPU: RGB FP-CPU-002-2 00.89
+No connection to the Audio Controller.
+Segment Controller: SEG FP-CPU-002-2 00.10
+No connection to the Expansion Bus.
 
 Boards:
 Board 0 - Model: FP-I/O-3208-2    Firmware: 01.00 Switches: 32 Drivers: 8
@@ -118,7 +103,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
         self.net_cpu.expected_commands = {
             "DN:2B,00,00,00": "DN:P"
         }
-        coil = self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '3-15',
+        coil = self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '1616_2-15',
                                                               {"connection": "network", "recycle_ms": 10})
         self.assertEqual('2B', coil.number)
         self.advance_time_and_run(.1)
@@ -126,17 +111,17 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
 
         # board 0 has 8 drivers. configuring driver 9 should not work
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '0-8',
+            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '3208-8',
                                                            {"connection": "network", "recycle_ms": 10})
 
-        # only boards 0-3 exist
+        # test error for invalid board
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '4-0',
+            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, 'brian-0',
                                                            {"connection": "network", "recycle_ms": 10})
 
-        # only 8 + 4 + 16 + 16 = 44 = 0x2C driver exist
+        # test error for driver number too high
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '44',
+            self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '3208-9',
                                                            {"connection": "network", "recycle_ms": 10})
 
     def _test_pulse(self):
@@ -310,49 +295,6 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
-    def test_firmware_update(self):
-        commands = []
-
-        def _catch_update(cmd):
-            commands.append(cmd)
-            return len(cmd)
-        parse_func = self.net_cpu.write
-        self.net_cpu.write = _catch_update
-        output = self.machine.default_platform.update_firmware()
-        self.advance_time_and_run()
-        self.net_cpu.write = parse_func
-        # check if we send the dummy update
-        self.assertEqual([b'BL:AA55\r>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-                          b'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-                          b'>>>>>>>>>>>>>>>>>>>>>>>>>\rBL:AA55\r<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
-                          b'<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
-                          b'<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\rBL:AA55\r>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-                          b'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-                          b'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\rDUMMY UPDAT'
-                          b'E\r', b'WD:3e8\r', b'WD:3e8\r'], commands)
-        expected_output = """NET CPU is version 01.03
-Found an update to version 1.04 for the NET CPU. Will flash file firmware/FAST_NET_01_04_00.txt
-Update done.
-"""
-        self.assertEqual(expected_output, output)
-
-    def test_servo(self):
-        # go to min position
-        self.net_cpu.expected_commands = {
-                "XO:03,00": "XO:P"
-        }
-        self.machine.servos["servo1"].go_to_position(0)
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.net_cpu.expected_commands)
-
-        # go to max position
-        self.net_cpu.expected_commands = {
-                "XO:03,FF": "XO:P"
-        }
-        self.machine.servos["servo1"].go_to_position(1)
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.net_cpu.expected_commands)
-
     def _switch_hit_cb(self, **kwargs):
         self.switch_hit = True
 
@@ -366,28 +308,28 @@ Update done.
         self.net_cpu.expected_commands = {
             "SN:1F,01,04,04": "SN:P"
         }
-        self.machine.default_platform.configure_switch('0-31', SwitchConfig(name="", debounce='auto', invert=0), {})
+        self.machine.default_platform.configure_switch('3208-31', SwitchConfig(name="", debounce='auto', invert=0), {})
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # next should not work
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch('0-32', SwitchConfig(name="", debounce='auto', invert=0), {})
+            self.machine.default_platform.configure_switch('3208-32', SwitchConfig(name="", debounce='auto', invert=0), {})
 
         self.net_cpu.expected_commands = {
             "SN:47,01,04,04": "SN:P"
         }
-        self.machine.default_platform.configure_switch('3-15', SwitchConfig(name="", debounce='auto', invert=0), {})
+        self.machine.default_platform.configure_switch('1616_2-15', SwitchConfig(name="", debounce='auto', invert=0), {})
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # invalid board
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch('4-0', SwitchConfig(name="", debounce='auto', invert=0), {})
+            self.machine.default_platform.configure_switch('brian-0', SwitchConfig(name="", debounce='auto', invert=0), {})
 
-        # last switch is 0x47. 0x48 = 72
+        # invalid switch number
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch('72', SwitchConfig(name="", debounce='auto', invert=0), {})
+            self.machine.default_platform.configure_switch('3208-33', SwitchConfig(name="", debounce='auto', invert=0), {})
 
     def _test_switch_changes(self):
         self.assertSwitchState("s_flipper", 0)
@@ -399,7 +341,7 @@ Update done.
         self.assertFalse(self.switch_hit)
 
         self.machine.events.add_handler("s_test_active", self._switch_hit_cb)
-        self.machine.default_platform.process_received_message("-N:07", "NET")
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-N:07\r")
         self.advance_time_and_run(1)
 
         self.assertTrue(self.switch_hit)
@@ -410,7 +352,7 @@ Update done.
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test", 1)
 
-        self.machine.default_platform.process_received_message("/N:07", "NET")
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/N:07\r")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test", 0)
@@ -425,13 +367,13 @@ Update done.
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test_nc", 1)
 
-        self.machine.default_platform.process_received_message("-N:1A", "NET")
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-N:1A\r")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test_nc", 0)
 
         self.machine.events.add_handler("s_test_nc_active", self._switch_hit_cb)
-        self.machine.default_platform.process_received_message("/N:1A", "NET")
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/N:1A\r")
         self.advance_time_and_run(1)
 
         self.assertSwitchState("s_test_nc", 1)
@@ -568,32 +510,10 @@ Update done.
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
-    def test_dmd_update(self):
-
-        # test configure
-        dmd = self.machine.default_platform.configure_dmd()
-
-        # test set frame to buffer
-        frame = bytearray()
-        for i in range(4096):
-            frame.append(64 + i % 192)
-
-        frame = bytes(frame)
-
-        # test draw
-        self.dmd_cpu.expected_commands = {
-            b'BM:' + frame: False
-        }
-        dmd.update(frame)
-
-        self.advance_time_and_run(.1)
-
-        self.assertFalse(self.dmd_cpu.expected_commands)
-
     def test_bootloader_crash(self):
         # Test that the machine stops if the RGB processor sends a bootloader msg
         self.machine.stop = MagicMock()
-        self.machine.default_platform.process_received_message("!B:00", "RGB")
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"!B:00\r")
         self.advance_time_and_run(1)
         self.assertTrue(self.machine.stop.called)
 
@@ -602,144 +522,12 @@ Update done.
         self.machine.default_platform.config['ignore_rgb_crash'] = True
         self.mock_event('fast_rgb_rebooted')
         self.machine.stop = MagicMock()
-        self.machine.default_platform.process_received_message("!B:00", "RGB")
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"!B:00\r")
         self.advance_time_and_run(1)
         self.assertFalse(self.machine.stop.called)
         self.assertEventCalled('fast_rgb_rebooted')
 
-    def test_lights_and_leds(self):
-        self._test_matrix_light()
-        self._test_pdb_gi_light()
-        self._test_pdb_led()
-
-    def _test_matrix_light(self):
-        # test enable of matrix light
-        self.net_cpu.expected_commands = {
-            "L1:23,FF": "L1:P",
-        }
-        self.machine.lights["test_pdb_light"].on()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.net_cpu.expected_commands)
-
-        # test enable of matrix light with brightness
-        self.net_cpu.expected_commands = {
-            "L1:23,80": "L1:P",
-        }
-        self.machine.lights["test_pdb_light"].on(brightness=128)
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.net_cpu.expected_commands)
-
-        # test disable of matrix light
-        self.net_cpu.expected_commands = {
-            "L1:23,00": "L1:P",
-        }
-        self.machine.lights["test_pdb_light"].off()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.net_cpu.expected_commands)
-
-        # test disable of matrix light with brightness
-        self.net_cpu.expected_commands = {
-            "L1:23,00": "L1:P",
-        }
-        self.machine.lights["test_pdb_light"].on(brightness=255, fade_ms=100)
-        self.advance_time_and_run(.02)
-        self.assertFalse(self.net_cpu.expected_commands)
-
-        # step 1
-        self.net_cpu.expected_commands = {
-            "L1:23,32": "L1:P",
-            "L1:23,33": "L1:P",
-        }
-        self.advance_time_and_run(.02)
-        self.assertEqual(1, len(self.net_cpu.expected_commands))
-
-        # step 2
-        self.net_cpu.expected_commands = {
-            "L1:23,65": "L1:P",
-            "L1:23,66": "L1:P",
-        }
-        self.advance_time_and_run(.02)
-        self.assertEqual(1, len(self.net_cpu.expected_commands))
-
-        # step 3
-        self.net_cpu.expected_commands = {
-            "L1:23,98": "L1:P",
-            "L1:23,99": "L1:P",
-        }
-        self.advance_time_and_run(.02)
-        self.assertEqual(1, len(self.net_cpu.expected_commands))
-
-        # step 4
-        self.net_cpu.expected_commands = {
-            "L1:23,CB": "L1:P",
-            "L1:23,CC": "L1:P",
-        }
-        self.advance_time_and_run(.02)
-        self.assertEqual(1, len(self.net_cpu.expected_commands))
-
-        # step 5
-        self.net_cpu.expected_commands = {
-            "L1:23,FE": "L1:P",
-            "L1:23,FF": "L1:P",
-        }
-        self.advance_time_and_run(.02)
-        self.assertEqual(1, len(self.net_cpu.expected_commands))
-
-        # step 6 if step 5 did not send FF
-        if "L1:23,FE" not in self.net_cpu.expected_commands:
-            self.net_cpu.expected_commands = {
-                "L1:23,FF": "L1:P",
-            }
-            self.advance_time_and_run(.02)
-            self.assertFalse(self.net_cpu.expected_commands)
-
-    def _test_pdb_gi_light(self):
-        # test gi on
-        device = self.machine.lights["test_gi"]
-        self.net_cpu.expected_commands = {
-            "GI:2A,FF": "GI:P",
-        }
-        device.on()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.net_cpu.expected_commands)
-
-        self.net_cpu.expected_commands = {
-            "GI:2A,80": "GI:P",
-        }
-        device.on(brightness=128)
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.net_cpu.expected_commands)
-
-        self.net_cpu.expected_commands = {
-            "GI:2A,F5": "GI:P",
-        }
-        device.on(brightness=245)
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.net_cpu.expected_commands)
-
-        # test gi off
-        self.net_cpu.expected_commands = {
-            "GI:2A,00": "GI:P",
-        }
-        device.off()
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.net_cpu.expected_commands)
-
-        self.net_cpu.expected_commands = {
-            "GI:2A,F5": "GI:P",
-        }
-        device.on(brightness=245)
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.net_cpu.expected_commands)
-
-        self.net_cpu.expected_commands = {
-            "GI:2A,00": "GI:P",
-        }
-        device.on(brightness=0)
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.net_cpu.expected_commands)
-
-    def _test_pdb_led(self):
+    def test_leds(self):
         self.advance_time_and_run()
         device = self.machine.lights["test_led"]
         device2 = self.machine.lights["test_led2"]
@@ -748,7 +536,7 @@ Update done.
         # test led on
         device.on()
         self.advance_time_and_run(1)
-        self.assertEqual("ffffff", self.rgb_cpu.leds['97'])
+        self.assertEqual("FFFFFF", self.rgb_cpu.leds['97'])
         self.assertEqual("000000", self.rgb_cpu.leds['98'])
 
         device2.color("001122")
@@ -757,12 +545,12 @@ Update done.
         device.off()
         self.advance_time_and_run(1)
         self.assertEqual("000000", self.rgb_cpu.leds['97'])
-        self.assertEqual("001122", self.rgb_cpu.leds['98'])
+        self.assertEqual("110022", self.rgb_cpu.leds['98'])  # GRB so ensure it's not 001122
 
         # test led color
         device.color(RGBColor((2, 23, 42)))
         self.advance_time_and_run(1)
-        self.assertEqual("02172a", self.rgb_cpu.leds['97'])
+        self.assertEqual("17022A", self.rgb_cpu.leds['97'])  # GRB so ensure it's not 001122
 
         # test led off
         device.off()

@@ -1,44 +1,55 @@
-#config_version=5
+#config_version=6
 
 hardware:
     platform: fast
 
 fast:
-    driverboards: fast
-    ports: com3, com4, com5, com6
-    debug: true
-    firmware_updates:
-      - type: net
-        version: "1.04"
-        file: "firmware/FAST_NET_01_04_00.txt"
+    net:
+        port: com6
+        controller: nano
+        io_loop:
+            3208:
+                model: FP-I/O-3208
+                order: 1
+            0804:
+                model: FP-I/O-0804
+                order: 2
+            1616_1:
+                model: FP-I/O-1616
+                order: 3
+            1616_2:
+                model: FP-I/O-1616
+                order: 4
+    rgb:
+        port: com5
 
 switches:
     s_test:
-        number: 7
+        number: 3208-7  # 0x07
         platform_settings:
             debounce_open: 26
             debounce_close: 5
     s_test_nc:
-        number: 26
+        number: 3208-26  # 0x1A
         type: 'NC'
     s_slingshot_test:
-        number: 22
+        number: 3208-22 # 0x16
     s_flipper:
-        number: 1
+        number: 3208-1 # 0x01
     s_flipper_eos:
-        number: 2
+        number: 3208-2 # 0x02
     s_autofire:
-        number: 3
+        number: 3208-3 # 0x03
     s_test3:
-        number: 3-1
+        number: 1616_2-1  # 0x39
     s_nux_up:
-        number: 0-11
+        number: 3208-11  #0x0B
     s_nux_down:
-        number: 0-12
+        number: 3208-12  #0x0C
 
 digital_outputs:
   c_nux_motor:
-    number: 0-1
+    number: 3208-1
     type: driver
 
 motors:
@@ -54,47 +65,45 @@ motors:
 
 coils:
     c_test:
-        number: 4
+        number: 3208-4
         default_pulse_ms: 23
         default_recycle: True
         platform_settings:
             recycle_ms: 27
     c_test_allow_enable:
-        number: 6
+        number: 3208-6
         default_pulse_ms: 23
         max_hold_power: 1.0
     c_slingshot_test:
-        number: 7
+        number: 3208-7
     c_pulse_pwm32_mask:
-        number: 17
+        number: 1616_1-5
         default_pulse_power: 0.53
         default_hold_power: 0.40
     c_hold_ssm:
-        number: 19
+        number: 1616_1-7
         default_hold_power: 0.25    # approximately
-        platform_settings:
-            hold_pwm_patter: "84224244"
     c_long_pulse:
-        number: 18
+        number: 1616_1-6
         default_pulse_ms: 2000
         max_hold_power: 1.0
     c_timed_enable:
-        number: 22
+        number: 1616_1-10
         default_pulse_ms: 20
         default_timed_enable_ms: 200
         default_hold_power: 0.25
     c_default_timed_enable:
-        number: 23
+        number: 1616_1-11
         default_pulse_ms: 20
         default_timed_enable_ms: 200
         default_hold_power: 0.25
         pulse_with_timed_enable: true
     c_flipper_main:
-        number: 32
+        number: 1616_2-4
         default_pulse_ms: 10
         default_hold_power: 0.125
     c_flipper_hold:
-        number: 3-5
+        number: 1616_2-5
         default_hold_power: 0.125
 
 autofire_coils:
@@ -122,12 +131,6 @@ autofire_coils:
         coil: c_flipper_hold
         switch: s_test3
 
-servos:
-    servo1:
-        number: 3
-    servo20:
-        number: 3-2
-
 flippers:
     f_test_single:
         debug: true
@@ -151,12 +154,6 @@ flippers:
         use_eos: true
 
 lights:
-  test_pdb_light:
-    number: 35
-    subtype: matrix
-  test_gi:
-    number: 42
-    subtype: gi
   test_led:
     number: 2-23
     type: grb

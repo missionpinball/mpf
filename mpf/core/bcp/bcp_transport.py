@@ -53,7 +53,7 @@ class BcpTransportManager:
         while True:
             try:
                 cmd, kwargs = await transport.read_message()
-            except IOError:
+            except OSError:
                 self.unregister_transport(transport)
                 return
 
@@ -101,7 +101,7 @@ class BcpTransportManager:
         """Send command to a specific bcp client."""
         try:
             client.send(bcp_command, kwargs)
-        except IOError:
+        except OSError:
             client.stop()
             self.unregister_transport(client)
 

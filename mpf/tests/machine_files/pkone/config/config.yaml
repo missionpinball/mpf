@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 # Hardware setup for tests: Extension boards at addresses 0 and 1, Lightshow boards at 2 (rgb) and 3 (rgbw)
 
 hardware:
@@ -167,4 +167,3 @@ lights:
   test_other_simple_led:
     number: 3-1
     subtype: simple
-

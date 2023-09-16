@@ -96,7 +96,7 @@ class ClockBase(LogMixin):
 
     def start_server(self, client_connected_cb, host=None, port=None, **kwd):
         """Start a server."""
-        return asyncio.start_server(client_connected_cb, host, port, loop=self.loop, **kwd)
+        return asyncio.start_server(client_connected_cb, host, port, **kwd)
 
     def open_connection(self, host=None, port=None, *,
                         limit=None, **kwds):

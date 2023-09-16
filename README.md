@@ -20,13 +20,12 @@ Visit the MPF project homepage at https://missionpinball.org. Additional related
 Documentation
 -------------
 
-* User Docs (installation, tutorials, & reference): https://docs.missionpinball.org
-* Developer documentation: https://developer.missionpinball.org/
+* User Docs (installation, tutorials, & reference): https://missionpinball.org
 
 Support
 -------
 
-MPF is an open source community project which has no official support. Some MPF users participate in the MPF-Users Google group: https://groups.google.com/forum/#!forum/mpf-users.
+MPF is an open source community project which has no official support. Some MPF users participate in the MPF-Users Google group or GitHub Discussion. Links [here](https://missionpinball.org/community/).
 
 Individual pinball hardware companies may provide additional support for users of their hardware, often via their own Slack, Discord, or other chat groups. If you get stuck, you can ask for help in the MPF-users group, or you reach out to your hardware provider.
 
@@ -35,15 +34,15 @@ Maintenance, Pull Requests, & Bug Fixes
 
 As a community project, we welcome pull requests and bug fixes. However, we do not have the resources to provide support for MPF. If you are interested in becoming a maintainer, please contact us at brian@missionpinball.org.
 
-Bugs or other issues related to MPF itself can be posted to the [MPF Discussions page on GitHub](https://github.com/orgs/missionpinball/discussions).
+Bugs or other issues related to MPF itself can be posted to the [MPF Discussions page on GitHub](https://missionpinball.org/community/).
 
 Contributing
 ------------
 
 Individual pinball hardware makers are responsible for their own platform interface maintenance and contributions.
 
-If you're a Python coder, documentation writer, or pinball maker, feel free to make a change and submit a pull request. For more information about contributing see the [Contributing Code](http://docs.missionpinball.org/about/contributing_to_mpf.html)
-and [Contributing Documentation](http://docs.missionpinball.org/about/contributing_to_mpf_docs.html) pages.
+MPF is a passion project created and maintained by volunteers. If you're a Python coder, documentation writer, or pinball maker, feel free to make a change and submit a pull request. For more information about contributing see the [Contributing Code](https://missionpinball.org/about/contributing_to_mpf/)
+and [Contributing Documentation](https://missionpinball.org/about/help_docs/) pages.
 
 License
 -------

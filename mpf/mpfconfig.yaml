@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 # This file contains configuration options for the MPF itself, including
 # default settings for your machine-wide game-specific config files.
 
@@ -135,7 +135,6 @@ mpf:
         visual_pinball_engine: mpf.platforms.visual_pinball_engine.visual_pinball_engine.VisualPinballEnginePlatform
 
     paths:
-        scriptlets: scriptlets
         audits: data/audits.yaml
         machine_vars: data/machine_vars.yaml
         high_scores: data/high_scores.yaml
@@ -218,18 +217,6 @@ p_roc:
     lamp_matrix_strobe_time: 100ms
     watchdog_time: 1s
     use_watchdog: True
-
-fast:
-    ports: com3, com4, com5
-    baud: 921600
-    watchdog: 1s
-    default_normal_debounce_close: 4ms
-    default_normal_debounce_open: 4ms
-    default_quick_debounce_close: 2ms
-    default_quick_debounce_open: 2ms
-    net_buffer: 10
-    rgb_buffer: 3
-    dmd_buffer: 3
 
 spike:
     wait_times:

@@ -1,0 +1,121 @@
+#config_version=6
+
+hardware:
+    platform: fast
+
+fast:
+  exp:
+    port: com4
+    boards:
+      brian:
+        model: FP-exp-0091  # test mixed case
+        breakouts:
+          - port: 1
+            model: FP-BRK-0001
+          - port: 2
+            model: FP-DRV-0800
+        led_ports:
+          - port: 1
+            leds: 32
+            type: ws2812
+          - port: 2
+            leds: 32
+            type: apa-102
+        led_hz: 30
+      aaron:
+        model: FP-EXP-0091-2  # test hw revision number included
+        address: 89
+        led_fade_time: 1.5s
+        breakouts:
+          - port: 2
+            model: FP-BRK-0001
+        led_ports:
+          - port: 1
+            leds: 32
+            type: ws2812
+          - port: 2
+            leds: 32
+            type: apa-102
+      dave:
+        model: FP-EXP-0071
+        led_ports:
+          - port: 1
+            leds: 32
+            type: ws2812
+          - port: 2
+            leds: 32
+            type: apa-102
+      eli:
+        model: FP-EXP-0081-1
+      neuron:
+        model: FP-EXP-2000
+        breakouts:
+          - port: 1
+            model: FP-PWR-0007
+          - port: 2
+            model: FP-BRK-0116
+
+lights:
+  led1:
+    number: Brian-b1-1-1 #88100  # test mixed case
+  led2:
+    number: brian-1-2  #88001
+  led3:
+    number: brian-1-3
+  led4:
+    number: brian-b1-2-1
+  led5:
+    number: brian-b1-2-2
+  led6:
+    number: aaron-b2-1-1
+  led7:
+    number: aaron-1-1
+  led8:
+    number: dave-1-1
+  led9:
+    number: dave-2-2
+  led10:
+    number: dave-3-3
+    type: grb
+  led11:
+    number: dave-4-4
+  led12:
+    number: dave-4-5
+  led13:
+    number: dave-4-6
+  led14:
+    number: dave-4-7
+  led15:
+    number: dave-4-8
+  led16:
+    number: dave-4-9
+  led17:
+    number: dave-4-10
+  led18:
+    number: dave-4-11
+  led19:
+    number: eli-8-1
+  led20:
+    number: neuron-1-1
+  led21:
+    number: neuron-1-2
+
+servos:
+    servo1:
+        number: dAve-1  # test mixed case
+        platform_settings:
+            min_us: 500
+            home_us: 1500
+            max_us: 2500
+            max_runtime: 2s
+    servo2:
+        number: dave-2
+    servo3:
+        number: brian-b2-8
+    # servo20:
+    #     number: FP-EXP-0071-i1-b0-4
+    #     servo_min: 500
+    #     servo_max: 2500
+    #     reset_position: 1000
+    #     ball_search_min: 700
+    #     ball_search_max: 1200

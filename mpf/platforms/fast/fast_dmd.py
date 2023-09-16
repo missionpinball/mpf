@@ -26,4 +26,4 @@ class FASTDMD(DmdPlatformInterface):
         ----
             data: bytes to send to DMD
         """
-        self.send(data)
+        self.send_bytes(data)

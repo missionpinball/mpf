@@ -359,8 +359,9 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
 
         return PKONEServoNumber(board_id, servo_num)
 
-    async def configure_servo(self, number: str) -> PKONEServo:
+    async def configure_servo(self, number: str, config: dict) -> PKONEServo:
         """Configure a servo."""
+        del config
         servo_number = self._parse_servo_number(str(number))
         return PKONEServo(servo_number, self.controller_connection)
 

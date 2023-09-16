@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 
 light_stripes:
   stripe1:
@@ -37,7 +37,7 @@ light_rings:
     center_y: 50
     debug: True
 
-neoseg_displays:    
+neoseg_displays:
   neoSeg_0:
     start_channel: 0-0-0
     size: 8digit

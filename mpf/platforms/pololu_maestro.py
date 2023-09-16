@@ -41,13 +41,14 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
             self.serial.close()
             self.serial = None
 
-    async def configure_servo(self, number: str):
+    async def configure_servo(self, number: str, config: dict):
         """Configure a servo device in platform.
 
         Args:
         ----
             number: Number of the servo.
         """
+        del config
         try:
             controller_str, number_str = number.split("-")
         except ValueError:

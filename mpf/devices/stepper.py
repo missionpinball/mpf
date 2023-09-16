@@ -71,7 +71,7 @@ class Stepper(SystemWideDevice):
             self.raise_config_error("Cannot use homing_mode switch without a homing_switch. Please add homing_switch or"
                                     " use homing_mode hardware.", 1)
 
-        self._move_task = self.machine.clock.loop.create_task(self._run())
+        self._move_task = asyncio.create_task(self._run())
         self._move_task.add_done_callback(Util.raise_exceptions)
 
     def validate_and_parse_config(self, config, is_mode_config, debug_prefix: str = None):

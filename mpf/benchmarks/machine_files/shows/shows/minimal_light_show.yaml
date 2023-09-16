@@ -1,4 +1,4 @@
-#show_version=5
+#show_version=6
 - duration: .001
   lights:
     light_1: red

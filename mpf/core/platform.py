@@ -2,9 +2,10 @@
 import abc
 import asyncio
 from collections import namedtuple
+from dataclasses import dataclass
 from enum import Enum
 
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any
 
 from mpf.core.logging import LogMixin
 from mpf.core.utility_functions import Util
@@ -13,6 +14,7 @@ MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.devices.switch import Switch   # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.stepper import Stepper     # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.devices.servo import Servo     # pylint: disable-msg=cyclic-import,unused-import
     from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface  # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface  # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
@@ -56,7 +58,7 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         self.features['has_drivers'] = False
         self.features['tickless'] = False
         self.features['has_segment_displays'] = False
-        self.features['has_hardware_sound_systems'] = False
+        self.features['has_hardware_sound_systems'] = True
         self.features['has_steppers'] = False
         self.features['allow_empty_numbers'] = False
         self.features['hardware_eos_repulse'] = False
@@ -69,7 +71,7 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
                                     "you configured for {feature_name} actually supports that type "
                                     "of devices.".format(self.__class__, feature_name=feature_name), 99)
 
-    def _configure_device_logging_and_debug(self, logger_name, config):
+    def _configure_device_logging_and_debug(self, logger_name, config, url_base=None):
         """Configure logging for platform."""
         if config['debug']:
             self.debug = True
@@ -78,7 +80,8 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
 
         self.configure_logging(logger_name,
                                config['console_log'],
-                               config['file_log'])
+                               config['file_log'],
+                               url_base=url_base)
 
     @classmethod
     def get_config_spec(cls):
@@ -162,7 +165,7 @@ class HardwareSoundPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_hardware_sound_systems'] = True
 
     @abc.abstractmethod
-    def configure_hardware_sound_system(self) -> "HardwareSoundPlatformInterface":
+    def configure_hardware_sound_system(self, platform_settings: dict) -> "HardwareSoundPlatformInterface":
         """Return a reference to the hardware sound interface."""
         raise NotImplementedError
 
@@ -241,7 +244,7 @@ class SegmentDisplaySoftwareFlashPlatform(SegmentDisplayPlatform, metaclass=abc.
     async def initialize(self):
         """Start flash task."""
         await super().initialize()
-        self._display_flash_task = self.machine.clock.loop.create_task(self._display_flash())
+        self._display_flash_task = asyncio.create_task(self._display_flash())
         self._display_flash_task.add_done_callback(Util.raise_exceptions)
 
     async def _display_flash(self):
@@ -320,14 +323,40 @@ class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_servos'] = True
 
     @abc.abstractmethod
-    async def configure_servo(self, number: str) -> "ServoPlatformInterface":
+    async def configure_servo(self, number: str, config: dict, platform_config: dict) -> "ServoPlatformInterface":
         """Configure a servo device in platform.
 
         Args:
         ----
             number: Number of the servo
+            config: The config section for this servo
+            platform_config: Platform specific settings.
         """
         raise NotImplementedError
+
+    @classmethod
+    def get_servo_config_section(cls) -> Optional[str]:
+        """Return config section for additional servo config items."""
+        return None
+
+    def validate_servo_section(self, servo: "Servo", config: dict) -> dict:
+        """Validate a servo config for platform.
+
+        Args:
+        ----
+            servo: Servo to validate.
+            config: Config to validate.
+
+        Returns: Validated config.
+        """
+        if self.get_servo_config_section():
+            spec = self.get_servo_config_section()     # pylint: disable-msg=assignment-from-none
+            config = servo.machine.config_validator.validate_config(spec, config, servo.name)
+        elif config:
+            raise AssertionError("No platform_config supported but not empty {} for servo {}".
+                                 format(config, servo.name))
+
+        return config
 
 
 class StepperPlatform(BasePlatform, metaclass=abc.ABCMeta):
@@ -498,12 +527,36 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
-SwitchSettings = namedtuple("SwitchSettings", ["hw_switch", "invert", "debounce"])
-DriverSettings = namedtuple("DriverSettings", ["hw_driver", "pulse_settings", "hold_settings", "recycle"])
-DriverConfig = namedtuple("DriverConfig", ["name", "default_pulse_ms", "default_pulse_power",
-                                           "default_hold_power", "default_timed_enable_ms", "default_recycle",
-                                           "max_pulse_ms", "max_pulse_power", "max_hold_power"])
-RepulseSettings = namedtuple("RepulseSettings", ["enable_repulse", "debounce_ms"])
+@dataclass
+class SwitchSettings:
+    hw_switch: Any
+    invert: Any
+    debounce: Any
+
+@dataclass
+class DriverSettings:
+    hw_driver: Any
+    pulse_settings: Any
+    hold_settings: Any
+    recycle: Any
+
+@dataclass
+class DriverConfig:
+    name: str
+    default_pulse_ms: int
+    default_pulse_power: float
+    default_hold_power: float
+    default_timed_enable_ms: int
+    default_recycle: bool
+    max_pulse_ms: int
+    max_pulse_power: float
+    max_hold_power: float
+
+@dataclass
+class RepulseSettings:
+    enable_repulse: bool
+    debounce_ms: int
+
 
 
 class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):

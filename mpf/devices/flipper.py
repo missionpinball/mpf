@@ -19,7 +19,7 @@ class Flipper(SystemWideDevice):
     Contains several methods for actions that can be performed on this flipper,
     like :meth:`enable`, :meth:`disable`, etc.
 
-    Flippers have several options, including player buttons, EOS swtiches,
+    Flippers have several options, including player buttons, EOS switches,
     multiple coil options (pulsing, hold coils, etc.)
 
     Args:
