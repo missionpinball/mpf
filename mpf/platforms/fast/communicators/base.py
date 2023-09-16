@@ -225,7 +225,6 @@ class FastSerialCommunicator(LogMixin):
             self.writer = None
 
     async def send_query(self, msg, response_msg=None):
-
         self.send_queue.put_nowait((f'{msg}\r'.encode(), response_msg, msg))
         self.query_done.clear()
 
@@ -236,7 +235,6 @@ class FastSerialCommunicator(LogMixin):
             # Add a timeout callback to message_processors which can be called here.
             # That will allow intelligent handling of timeouts depending on message type
             raise asyncio.TimeoutError(f'Message Timeout: The serial message {msg} did not receive a response.')
-
 
     def send_and_confirm(self, msg, confirm_msg):
         self.send_queue.put_nowait((f'{msg}\r'.encode(), confirm_msg, msg))

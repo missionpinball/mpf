@@ -1,9 +1,10 @@
 import asyncio
-from packaging import version
-from mpf.platforms.fast import fast_defines
 
-from mpf.core.utility_functions import Util
+from packaging import version
+
+from mpf.platforms.fast import fast_defines
 from mpf.platforms.fast.communicators.base import FastSerialCommunicator
+from mpf.platforms.fast.fast_io_board import FastIoBoard
 
 MIN_FW = version.parse('2.06')
 

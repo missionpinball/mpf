@@ -108,7 +108,7 @@ class FASTAudio(HardwareSoundPlatformInterface):
     def press_source(self, ms=None):
         self._press(FastLcdButtons.SOURCE)
 
-    def _press(self, target: FastLcdButtons, ms: 10):
+    def _press(self, target: FastLcdButtons, ms=10):
         if not target in self.lcd_keys:
             raise ValueError(f"LCD button for {target} is not defined in platform settings ({self.lcd_keys.keys()}")
         self.send_blind(f"XO:{self.lcd_keys[target]},{Util.int_to_hex_string(ms)}")
