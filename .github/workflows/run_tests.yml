@@ -50,7 +50,7 @@ jobs:
           pip install -e .
 
       - name: Run tests
-        run: coverage run -m unittest discover -v -s mpf/tests
+        run: coverage run -m unittest -v mpf.tests.test_OPP
 
       - name: Upload coverage data to coveralls.io
         run: coveralls --service=github

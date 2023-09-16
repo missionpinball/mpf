@@ -148,6 +148,9 @@ class MpfTestCase(unittest.TestCase):
     def __init__(self, methodName='runTest'):
         LogMixin.unit_test = True
 
+        # Temp to help debug
+        asyncio.get_event_loop().set_debug(True)
+
         super().__init__(methodName)
         self.machine = None     # type: TestMachineController
         self.startup_error = None
