@@ -17,14 +17,15 @@ class TestFastExp(TestFastBase):
         # These are all the defaults based on the config file for this test.
         # Individual tests can override / add as needed
 
-        self.serial_connections['exp'].expected_commands = {'EM@B40:0,1,7D0,1F4,9C4,5DC': '',
+        self.serial_connections['exp'].expected_commands = {'RF@89:5DC': '',
+                                                            'EM@B40:0,1,7D0,1F4,9C4,5DC': '',
                                                             'EM@B40:1,1,7D0,3E8,7D0,5DC': '',
                                                             'EM@882:7,1,7D0,3E8,7D0,5DC': '',
                                                             'MP@B40:0,7F,7D0': '',
                                                             'MP@B40:1,7F,7D0': '',
                                                             'MP@882:7,7F,7D0': '',}
 
-    def DISABLED_test_servo(self):
+    def test_servo(self):
         # go to min position
         self.exp_cpu.expected_commands = {
                 "MP@B40:0,00,7D0": ""                    # MP:<INDEX>,<POSITION>,<TIME_MS><CR>
@@ -54,6 +55,7 @@ class TestFastExp(TestFastBase):
         self._test_exp_board_reset()
         self._test_grb_led()
         self._test_led_software_fade()
+        self._test_lew_hardware_fade()
 
     def _test_led_internals(self):
 
@@ -129,7 +131,6 @@ class TestFastExp(TestFastBase):
         self.assertEqual("12FF34", self.exp_cpu.leds['led10'])  # ensure the hardware received the colors in RGB order
 
     def _test_led_software_fade(self):
-        # fade led over 100ms
 
         self.exp_cpu.expected_commands = {'RD@B40:0169151515': '',
                                           'RD@B40:01692b2b2b': '',
@@ -149,3 +150,9 @@ class TestFastExp(TestFastBase):
         self.assertTrue(60 < int(self.exp_cpu.leds['led17'][0:2], 16) < 90)
         self.advance_time_and_run(2)
         self.assertEqual("646464", self.exp_cpu.leds['led17'])
+
+    def _test_lew_hardware_fade(self):
+        # This is also tested via the config file and the expected commands
+        self.exp_cpu.expected_commands = {'RF@88:3E8': '',}
+        self.machine.default_platform.exp_boards_by_name["brian"].set_led_fade(1000)
+        self.advance_time_and_run()

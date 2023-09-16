@@ -125,6 +125,11 @@ class FastExpansionBoard:
 
     async def reset(self):
         await self.communicator.send_and_wait_for_response_processed(f'BR@{self.address}:', 'BR:P')
+        if self.config['led_fade_time']:
+            self.set_led_fade(self.config['led_fade_time'])
+
+        # Should we do something with servos? TODO
+        # TODO move this to mixin classes for device types?
 
     def _update_leds(self):
         # Called every tick to update the LEDs on this board
@@ -142,6 +147,12 @@ class FastExpansionBoard:
                 log_msg = f'RD@{breakout_address}:{msg}'  # pretty version of the message for the log
 
                 self.communicator.send_bytes(b16decode(f'{msg_header}{msg}'), log_msg)
+
+    def set_led_fade(self, rate):
+        """Set LED fade rate in ms."""
+
+        self.led_fade_rate = rate
+        self.communicator.set_led_fade_rate(self.address, rate)
 
 
 class FastBreakoutBoard:
@@ -185,9 +196,3 @@ class FastBreakoutBoard:
 
         if found:
             self.expansion_board.breakouts_with_leds.append(self.address)
-
-    def set_led_fade(self, rate):
-        """Set LED fade rate in ms."""
-
-        self.led_fade_rate = rate
-        self.communicator.set_led_fade_rate(self.address, rate)
