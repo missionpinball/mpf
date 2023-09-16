@@ -71,12 +71,10 @@ class FastExpCommunicator(FastSerialCommunicator):
             self.platform.register_expansion_board(board_obj)  # registers with the platform
 
             self.active_board = board_address
-            print(f'1 {self.active_board}')
             await self.send_and_wait_for_response_processed(f'ID@{board_address}:', 'ID:')
 
             for breakout_board in board_obj.breakouts.values():
                 self.active_board = breakout_board.address
-                print(f'2 {self.active_board}')
                 await self.send_and_wait_for_response_processed(f'ID@{breakout_board.address}:', 'ID:')
 
             await board_obj.reset()

@@ -9,6 +9,7 @@ MockFastSeg
 MockFastDmd
 """
 
+import re
 from mpf.tests.loop import MockSerial
 
 class MockFastSerial(MockSerial):
@@ -48,11 +49,39 @@ class MockFastSerial(MockSerial):
 
     def write(self, msg):
         """Write message out to the serial port."""
-        parts = msg.split(b'\r')
-        for part in parts:
-            if part == b'':
+        lines = msg.split(b'\r')
+
+        for line in lines:
+            if line == b'':
                 continue
-            self._simulate_board_response(part)
+
+            # Split based on 'RD@xxx:' pattern (hex included)
+            parts = re.split(b'(RD@[0-9A-Fa-f]+:)', line)
+
+            # re adds an empty string to the beginning of the list if the string starts with the pattern
+            if parts and parts[0] == b'':
+                parts.pop(0)
+
+            # Reassemble the parts, taking binary into consideration
+            for i in range(0, len(parts) - 1, 2):
+                prefix = parts[i]  # RD@xxx:
+                payload = parts[i + 1]  # binary payload
+
+                # Convert binary payload back to hex chars
+                hex_payload = payload.hex()
+
+                # Assemble back the message part with the prefix
+                complete_message = f"{prefix.decode('utf-8', 'ignore')}{hex_payload}"
+
+                if complete_message == '':
+                    continue
+
+                # Simulate board response with the reassembled message
+                self._simulate_board_response(complete_message.encode('utf-8'))
+
+            # If the line did not contain 'RD@xxx:', treat it as a regular ASCII message
+            if len(parts) == 1:
+                self._simulate_board_response(line)
 
         return len(msg)
 
@@ -78,6 +107,8 @@ class MockFastSerial(MockSerial):
         if rsp:
             if self.PRINT_FSP_TRAFFIC:
                 print(f'{self.type} <<< {rsp}')
+                if type(rsp) is bool:
+                    print()
                 self.queue.append(rsp)
             return msg_len
 
@@ -124,8 +155,6 @@ class MockFastNetNeuron(MockFastSerial):
         if cmd == (' ' * 256 * 4):
             return "XX:F"
 
-        return False
-
 
 class MockFastExp(MockFastSerial):
     def __init__(self, test_fast_base):
@@ -138,68 +167,66 @@ class MockFastExp(MockFastSerial):
     def process_msg(self, cmd):
         # returns True if the msg was fully processed, False if it was not
 
-        cmd, payload = cmd.split(":", 1)
-        cmd, temp_active = cmd.split("@", 1)
+        try:
+            cmd, payload = cmd.split(":", 1)
+        except ValueError:  # binary encoded message
+            cmd, payload = bytes.fromhex(cmd).decode().split(":", 1)
+
+        cmd, address = cmd.split("@", 1)
 
         if cmd == "ID":
-            if not temp_active:  # no ID has been set, so lowest address will respond
+            if not address:  # no ID has been set, so lowest address will respond
                 return "ID:EXP FP-EXP-2000 0.11"
 
-            if temp_active == '48':  # Neuron
+            if address == '48':  # Neuron
                 return "ID:EXP FP-EXP-2000 0.11"
 
-            elif temp_active in ["B4", "B5", "B6", "B7"]:  # 71
+            elif address in ["B4", "B5", "B6", "B7"]:  # 71
                 return "ID:EXP FP-EXP-0071  0.11"
 
-            elif temp_active in ["84", "85", "86", "87"]:  # 81
+            elif address in ["84", "85", "86", "87"]:  # 81
                 return "ID:EXP FP-EXP-0081  0.12"
 
-            elif temp_active in ["88", "89", "8A", "8B"]:  # 91
+            elif address in ["88", "89", "8A", "8B"]:  # 91
                 return "ID:EXP FP-EXP-0091  0.11"
 
             # Breakouts
-            elif temp_active == "480":  # Neuron
+            elif address == "480":  # Neuron
                 return "ID:LED FP-BRK-0001  0.8"
 
-            elif temp_active == '481':  # Neuron
+            elif address == '481':  # Neuron
                 return "ID:BRK FP-PWR-0007  0.8"
 
-            elif temp_active == '482':  # Neuron
+            elif address == '482':  # Neuron
                 return "ID:BRK FP-BRK-0116  0.8"
 
-            elif temp_active in ["B40", "B50", "B60", "B70"]:  # 71
+            elif address in ["B40", "B50", "B60", "B70"]:  # 71
                 return "ID:BRK FP-EXP-0071  0.11"
 
-            elif temp_active in ["840", "850", "860", "870",
+            elif address in ["840", "850", "860", "870",
                                  "841", "851", "861", "871"]:  # 81
                 return "ID:BRK FP-EXP-0081  0.12"
 
-            elif temp_active in ["880", "890", "8A0", "8B0"]:  # 91
+            elif address in ["880", "890", "8A0", "8B0"]:  # 91
                 return "ID:BRK FP-EXP-0091  0.11"
 
-            elif temp_active in ["881", "892"]:  # 091
+            elif address in ["881", "892"]:  # 091
                 return "ID:BRK FP-BRK-0001  0.8"
 
-            elif temp_active in ["882"]:  # 091
+            elif address in ["882"]:  # 091
                 return "ID:BRK FP-DRV-0800  0.0"
 
-            assert False, f"Unexpected ID request for {temp_active}"
+            assert False, f"Unexpected ID request for {address}"
 
         elif cmd == "BR":
             # turn off all the LEDs on that board
             for led_number, led_name in self.led_map.items():
-                if led_number.startswith(temp_active):
+                if led_number.startswith(address):
                     self.leds[led_name] = "000000"
-
             return "BR:P"
 
         elif cmd == "RD":
-            # Update LED colors
-            # RD:<COUNT>{<INDEX><R><G><B>...}
-            # 88120
-
-            self.test_fast_base.assertTrue(self.active_board, "Received RD: command with no active expansion board set")
-
+            # LED color, update our map of LED colors
             if not self.led_map:
                 for name, led in self.test_fast_base.machine.lights.items():
                     led_number = led.hw_drivers['red'][0].number.split('-')[0]  # 88000
@@ -214,13 +241,10 @@ class MockFastExp(MockFastSerial):
             # update our record of the LED colors
             for i in range(count):
                 color = color_data[i * 8 + 2:i * 8 + 8]
-                led_number = f'{self.active_board}{color_data[i * 8:i * 8 + 2]}'
+                led_number = f'{address}{color_data[i * 8:i * 8 + 2]}'
 
                 self.leds[self.led_map[led_number]] = color
 
-            return True
-
-        return False
 
 class MockFastRgb(MockFastSerial):
     def __init__(self, test_fast_base):
@@ -266,7 +290,6 @@ class MockFastNetNano(MockFastSerial):
     def process_msg(self, cmd):
         if cmd == (' ' * 256 * 4):
             return "XX:F"
-        return False
 
 class MockFastSeg(MockFastSerial):
     def __init__(self, test_fast_base):
