@@ -1,6 +1,5 @@
 # mpf/platforms/fast/communicators/net_neuron.py
 
-import asyncio
 from packaging import version
 
 from mpf.core.utility_functions import Util

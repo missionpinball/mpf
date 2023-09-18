@@ -7,6 +7,14 @@ HARDWARE_KEY = {
     "wpc95":   '9500'
 }
 
+USB_IDS = {  # (VID, PID)
+    (11914, 4155): ('net', 'FAST Neuron Controller'),
+    (11914, 4156): ('aud', 'FAST Audio Interface'),
+    (11914, 4157): ('exp', 'FAST Expansion Board'),
+    (11914, 4158): ('dsp', 'FAST Display Controller'),
+    (1027, 24593): ('net', 'FAST Nano Controller'),  # FTDI Quad RS232-HS
+}
+
 VALID_IO_BOARDS = (
     'FP-I/O-3208',
     'FP-I/O-1616',

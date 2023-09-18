@@ -5,33 +5,35 @@ hardware, including the FAST Neuron, Nano, and Retro controllers as well
 as FAST I/O boards.
 """
 import asyncio
-
 from copy import deepcopy
-from typing import Dict, Set, Optional
+from typing import Dict, Optional
+
 from serial import SerialException
 
+from mpf.core.platform import (DmdPlatform, DriverConfig,
+                               DriverSettings, LightsPlatform, RepulseSettings,
+                               SegmentDisplayPlatform, ServoPlatform,
+                               SwitchConfig, SwitchSettings)
+from mpf.core.utility_functions import Util
+from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.exceptions.runtime_error import MpfRuntimeError
-from mpf.platforms.fast.fast_io_board import FastIoBoard
-from mpf.platforms.fast.fast_servo import FastServo
 from mpf.platforms.fast import fast_defines
 from mpf.platforms.fast.fast_audio import FASTAudio
 from mpf.platforms.fast.fast_dmd import FASTDMD
 from mpf.platforms.fast.fast_driver import FASTDriver
 from mpf.platforms.fast.fast_gi import FASTGIString
-from mpf.platforms.fast.fast_led import FASTDirectLED, FASTDirectLEDChannel, FASTExpLED
+from mpf.platforms.fast.fast_io_board import FastIoBoard
+from mpf.platforms.fast.fast_led import (FASTDirectLED, FASTDirectLEDChannel,
+                                         FASTExpLED)
 from mpf.platforms.fast.fast_light import FASTMatrixLight
+from mpf.platforms.fast.fast_port_detector import FastPortDetector
 from mpf.platforms.fast.fast_segment_display import FASTSegmentDisplay
+from mpf.platforms.fast.fast_servo import FastServo
 from mpf.platforms.fast.fast_switch import FASTSwitch
-from mpf.core.platform import ServoPlatform, DmdPlatform, LightsPlatform, SegmentDisplayPlatform, \
-    DriverPlatform, DriverSettings, SwitchPlatform, SwitchSettings, DriverConfig, SwitchConfig, \
-    RepulseSettings
-from mpf.core.utility_functions import Util
-
-from mpf.platforms.system11 import System11OverlayPlatform, System11Driver
-
 # pylint: disable-msg=too-many-instance-attributes
-from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
-from mpf.exceptions.config_file_error import ConfigFileError
+from mpf.platforms.interfaces.light_platform_interface import \
+    LightPlatformInterface
+from mpf.platforms.system11 import System11Driver, System11OverlayPlatform
 
 
 class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
@@ -217,46 +219,57 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     async def _connect_to_hardware(self):  # TODO move to class methods?
         """Connect to each port from the config."""
 
+        await self._check_for_autodetect()
+
         for port in self.configured_ports:
 
             config = self.config[port]
 
             if port == 'net':
                 if config['controller'] == 'neuron':
-                    from mpf.platforms.fast.communicators.net_neuron import FastNetNeuronCommunicator
+                    from mpf.platforms.fast.communicators.net_neuron import \
+                        FastNetNeuronCommunicator
                     communicator = FastNetNeuronCommunicator(platform=self, processor=port, config=config)
                 elif config['controller'] == 'nano':
-                    from mpf.platforms.fast.communicators.net_nano import FastNetNanoCommunicator
+                    from mpf.platforms.fast.communicators.net_nano import \
+                        FastNetNanoCommunicator
                     communicator = FastNetNanoCommunicator(platform=self, processor=port, config=config)
                 elif config['controller'] in ['sys11', 'wpc89', 'wpc95']:
-                    from mpf.platforms.fast.communicators.net_retro import FastNetRetroCommunicator
+                    from mpf.platforms.fast.communicators.net_retro import \
+                        FastNetRetroCommunicator
                     communicator = FastNetRetroCommunicator(platform=self, processor=port, config=config)
                 else:
                     raise AssertionError("Unknown controller type")  # TODO better error
                 self.serial_connections['net'] = communicator
 
             elif port == 'exp':
-                from mpf.platforms.fast.communicators.exp import FastExpCommunicator
+                from mpf.platforms.fast.communicators.exp import \
+                    FastExpCommunicator
                 communicator = FastExpCommunicator(platform=self, processor=port,config=config)
                 self.serial_connections['exp'] = communicator
             elif port == 'seg':
-                from mpf.platforms.fast.communicators.seg import FastSegCommunicator
+                from mpf.platforms.fast.communicators.seg import \
+                    FastSegCommunicator
                 communicator = FastSegCommunicator(platform=self, processor=port,config=config)
                 self.serial_connections['seg'] = communicator
             elif port == 'aud':
-                from mpf.platforms.fast.communicators.aud import FastAudCommunicator
+                from mpf.platforms.fast.communicators.aud import \
+                    FastAudCommunicator
                 communicator = FastAudCommunicator(platform=self, processor=port,config=config)
                 self.serial_connections['aud'] = communicator
             elif port == 'dmd':
-                from mpf.platforms.fast.communicators.dmd import FastDmdCommunicator
+                from mpf.platforms.fast.communicators.dmd import \
+                    FastDmdCommunicator
                 communicator = FastDmdCommunicator(platform=self, processor=port,config=config)
                 self.serial_connections['dmd'] = communicator
             elif port == 'emu':
-                from mpf.platforms.fast.communicators.emu import FastEmuCommunicator
+                from mpf.platforms.fast.communicators.emu import \
+                    FastEmuCommunicator
                 communicator = FastEmuCommunicator(platform=self, processor=port,config=config)
                 self.serial_connections['emu'] = communicator
             elif port == 'rgb':
-                from mpf.platforms.fast.communicators.rgb import FastRgbCommunicator
+                from mpf.platforms.fast.communicators.rgb import \
+                    FastRgbCommunicator
                 communicator = FastRgbCommunicator(platform=self, processor=port,config=config)
                 self.serial_connections['rgb'] = communicator
             else:
@@ -270,6 +283,28 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                       "".format(port), 1, self.log.name) from e
             await communicator.init()
             self.serial_connections[port] = communicator
+
+    async def _check_for_autodetect(self):
+        autodetect_processors = list()
+        hardcoded_ports = list()
+
+        for processor in self.port_types:
+            try:
+                for port in self.config[processor]['port']:
+                    if port == 'auto':
+                        autodetect_processors.append(processor)
+                    else:
+                        hardcoded_ports.append(port)
+            except KeyError:
+                pass
+
+        if not autodetect_processors:
+            return
+
+        detector = FastPortDetector(platform=self, autodetect_processors=autodetect_processors,
+                                                  hardcoded_ports=hardcoded_ports)
+
+        await detector.detect_ports()
 
     async def get_hw_switch_states(self, query_hw=False):
         """Return a dict of hw switch states.

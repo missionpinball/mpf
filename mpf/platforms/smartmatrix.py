@@ -7,7 +7,6 @@ from typing import Dict
 import serial
 
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
-from mpf.platforms.autodetect import autodetect_smartmatrix_dmd_port
 
 from mpf.core.platform import RgbDmdPlatform
 from mpf.core.utility_functions import Util
@@ -113,7 +112,10 @@ class SmartMatrixDevice(DmdPlatformInterface):
         """Connect to SmartMatrix device."""
         self.log.info("Connecting to SmartMatrix RGB DMD on %s baud %s", self.config['port'], self.config['baud'])
         if self.config['port'] == 'autodetect':
-            port = autodetect_smartmatrix_dmd_port()
+            # port = autodetect_smartmatrix_dmd_port()
+            raise AssertionError("Autodetect has been removed. Please specify the port in your config.")
+            # Does anyone even use this? We can use the new FAST auto-detect if we want it. I removed the old auto-detect
+            # since it was only used for this now.
         else:
             port = self.config['port']
         self.port = serial.Serial(port, self.config['baud'])
