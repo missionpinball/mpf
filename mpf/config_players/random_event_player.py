@@ -14,7 +14,7 @@ class RandomEventPlayer(ConfigPlayer):
     __slots__ = ["_machine_wide_dict"]
 
     def __init__(self, machine):
-        """Initialise random event player."""
+        """initialize random event player."""
         super().__init__(machine)
         self._machine_wide_dict = {}
 

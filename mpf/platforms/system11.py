@@ -29,7 +29,7 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
                  "relay_switch"]
 
     def __init__(self, machine: MachineController) -> None:
-        """Initialise the board."""
+        """initialize the board."""
         super().__init__(machine)
 
         self.delay = DelayManager(machine)

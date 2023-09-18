@@ -13,7 +13,7 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
     """Supports the PCA9685/PCA9635 chip via I2C."""
 
     def __init__(self, machine):
-        """Initialise I2C servo platform."""
+        """initialize I2C servo platform."""
         super().__init__(machine)
         self.config = self.machine.config_validator.validate_config("servo_controllers",
                                                                     self.machine.config.get('servo_controllers', {}))
@@ -27,7 +27,7 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
         return '<Platform.I2C_Servo_Controller_Platform>'
 
     async def initialize(self):
-        """Initialise platform."""
+        """initialize platform."""
         await super().initialize()
         # load i2c platform
         self.platform = self.machine.get_platform_sections(
@@ -42,7 +42,7 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
         i2c_device = await self.platform.configure_i2c(address)
         self.i2c_devices[address] = i2c_device
 
-        # initialise PCA9685/PCA9635
+        # initialize PCA9685/PCA9635
         i2c_device.i2c_write8(0x00, 0x11)  # set sleep
         i2c_device.i2c_write8(0x01, 0x04)  # configure output
         i2c_device.i2c_write8(0xFE, 130)   # set approx 50Hz
@@ -83,7 +83,7 @@ class I2cServo(ServoPlatformInterface):
     """A servo hw device."""
 
     def __init__(self, number, config, i2c_device):
-        """Initialise I2C hw servo."""
+        """initialize I2C hw servo."""
         self.log = logging.getLogger('I2cServo')
         self.number = number
         self.config = config

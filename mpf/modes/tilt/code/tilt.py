@@ -31,7 +31,7 @@ class Tilt(Mode):
         super().__init__(*args, **kwargs)
 
     def mode_init(self):
-        """Initialise mode."""
+        """initialize mode."""
         self._balls_to_collect = 0
         self._last_warning = None
         self.ball_ending_tilted_queue = None

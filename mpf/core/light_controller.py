@@ -16,21 +16,21 @@ class LightController(MpfController):
 
     """Handles light updates and light monitoring."""
 
-    __slots__ = ["light_color_correction_profiles", "_initialised", "_monitor_update_task", "brightness_factor",
+    __slots__ = ["light_color_correction_profiles", "_initialized", "_monitor_update_task", "brightness_factor",
                  "_brightness_template"]
 
     config_name = "light_controller"
 
     def __init__(self, machine: MachineController) -> None:
-        """Initialise lights controller."""
+        """initialize lights controller."""
         super().__init__(machine)
         self.brightness_factor = 1.0
 
         # Generate and add color correction profiles to the machine
         self.light_color_correction_profiles = dict()       # type: Dict[str, RGBColorCorrectionProfile]
 
-        # will only get initialised if there are lights
-        self._initialised = False
+        # will only get initialized if there are lights
+        self._initialized = False
         self._brightness_template = self.machine.placeholder_manager.build_float_template("machine.brightness", 1.0)
         self._update_brightness()
 
@@ -56,11 +56,11 @@ class LightController(MpfController):
         for name, color in self.machine.config['named_colors'].items():
             RGBColor.add_color(name, color)
 
-    def initialise_light_subsystem(self):
-        """Initialise the light subsystem."""
-        if self._initialised:
+    def initialize_light_subsystem(self):
+        """initialize the light subsystem."""
+        if self._initialized:
             return
-        self._initialised = True
+        self._initialized = True
         self.machine.validate_machine_config_section('light_settings')
 
         if self.machine.config['light_settings']['color_correction_profiles'] is None:

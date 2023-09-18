@@ -98,7 +98,7 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         """Perform a firmware update."""
 
     async def initialize(self):
-        """Initialise the platform.
+        """initialize the platform.
 
         This is called after all platforms have been created and core modules have been loaded.
         """
@@ -236,7 +236,7 @@ class SegmentDisplaySoftwareFlashPlatform(SegmentDisplayPlatform, metaclass=abc.
     """SegmentDisplayPlatform with software flash support."""
 
     def __init__(self, machine):
-        """Initialise software flash support."""
+        """initialize software flash support."""
         super().__init__(machine)
         self._displays = set()
         self._display_flash_task = None
@@ -302,7 +302,7 @@ class I2cPlatform(BasePlatform, metaclass=abc.ABCMeta):
     __slots__ = []  # type: List[str]
 
     def __init__(self, machine):
-        """Initialise I2C platform and set feature."""
+        """initialize I2C platform and set feature."""
         super().__init__(machine)
         self.features['has_i2c'] = True
 

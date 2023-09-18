@@ -19,7 +19,7 @@ class SmartMatrixHardwarePlatform(RgbDmdPlatform):
     __slots__ = ["devices"]
 
     def __init__(self, machine):
-        """Initialise RGB DMD."""
+        """initialize RGB DMD."""
         super().__init__(machine)
         self.features['tickless'] = True
 
@@ -38,7 +38,7 @@ class SmartMatrixHardwarePlatform(RgbDmdPlatform):
             self.devices[name] = SmartMatrixDevice(config, machine)
 
     async def initialize(self):
-        """Initialise platform."""
+        """initialize platform."""
         for device in self.devices.values():
             await device.connect()
 
@@ -69,7 +69,7 @@ class SmartMatrixDevice(DmdPlatformInterface):
     __slots__ = ["config", "writer", "port", "control_data_queue", "current_frame", "new_frame_event", "machine", "log"]
 
     def __init__(self, config, machine):
-        """Initialise smart matrix device."""
+        """initialize smart matrix device."""
         self.config = config
         self.writer = None
         self.port = None

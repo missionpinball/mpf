@@ -40,7 +40,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplaySoftware
                  "_use_first_eight_direct_inputs"]
 
     def __init__(self, machine):
-        """Initialise P-ROC."""
+        """initialize P-ROC."""
         super().__init__(machine)
         # validate config for p_roc
         self.config = self.machine.config_validator.validate_config("p_roc", self.machine.config.get('p_roc', {}))
@@ -129,7 +129,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplaySoftware
 
         polarity = platform_settings.get("polarity", None)
         driver = PROCDriver(proc_num, config, self, number, polarity)
-        self._late_init_futures.append(driver.initialise())
+        self._late_init_futures.append(driver.initialize())
 
         return driver
 
@@ -280,7 +280,7 @@ class AuxPort:
     __slots__ = ["platform", "_commands"]
 
     def __init__(self, platform):
-        """Initialise aux port."""
+        """initialize aux port."""
         self.platform = platform
         self._commands = []
 
@@ -323,7 +323,7 @@ class PRocAlphanumericDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
     __slots__ = ["display"]
 
     def __init__(self, display, index):
-        """Initialise alpha numeric display."""
+        """initialize alpha numeric display."""
         super().__init__(index)
         self.display = display
 
@@ -443,7 +443,7 @@ class AuxAlphanumericDisplay:
     __slots__ = ["platform", "aux_controller", "aux_index", "texts"]
 
     def __init__(self, platform, aux_controller):
-        """Initialise the alphanumeric display."""
+        """initialize the alphanumeric display."""
         self.platform = platform
         self.aux_controller = aux_controller
         self.aux_index = aux_controller.reserve_index()

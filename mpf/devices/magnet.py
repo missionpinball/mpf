@@ -21,7 +21,7 @@ class Magnet(EnableDisableMixinSystemWideDevice, SystemWideDevice):
     class_label = 'magnet'
 
     def __init__(self, machine, name):
-        """Initialise magnet."""
+        """initialize magnet."""
         super().__init__(machine, name)
         self.delay = DelayManager(machine)
         self._active = False

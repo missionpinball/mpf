@@ -27,7 +27,7 @@ class BallSave(SystemWideDevice, ModeDevice):
                  "timer_started", "saves_remaining", "early_saved", "state", "_scheduled_balls"]
 
     def __init__(self, machine: "MachineController", name: str) -> None:
-        """Initialise ball save."""
+        """initialize ball save."""
         self.ball_locks = None
         self.unlimited_saves = None         # type: Optional[bool]
         self.source_playfield = None        # type: Optional[Playfield]

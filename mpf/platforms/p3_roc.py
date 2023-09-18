@@ -39,7 +39,7 @@ class P3RocGpioSwitch(SwitchPlatformInterface):
     __slots__ = ["index"]
 
     def __init__(self, config, number, index, platform):
-        """Initialise P-ROC switch."""
+        """initialize P-ROC switch."""
         super().__init__(config, number, platform)
         self.index = index
 
@@ -61,7 +61,7 @@ class P3RocGpioDriver(DriverPlatformInterface):
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, number, config, index, platform):
-        """Initialise driver."""
+        """initialize driver."""
         super().__init__(config, number)
         self.index = index
         self.platform = platform
@@ -109,7 +109,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
                  "accelerometer_device", "gpio_poll_task", "gpio_config"]
 
     def __init__(self, machine):
-        """Initialise and connect P3-Roc."""
+        """initialize and connect P3-Roc."""
         super().__init__(machine)
         # validate config for p3_roc
         self.config = self.machine.config_validator.validate_config("p3_roc", self.machine.config.get('p_roc', {}))
@@ -609,7 +609,7 @@ class P3RocI2c(I2cPlatformInterface):
     __slots__ = ["platform", "address", "proc"]
 
     def __init__(self, number: str, platform) -> None:
-        """Initialise I2c device on P3_Roc."""
+        """initialize I2c device on P3_Roc."""
         super().__init__(number)
         self.platform = platform
         self.address = number
@@ -667,7 +667,7 @@ class P3RocBurstOpto(SwitchPlatformInterface):
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, config, number, input_switch, driver, platform):
-        """Initialise burst opto."""
+        """initialize burst opto."""
         super().__init__(config, number, platform)
         self.input_switch = input_switch
         self.driver = driver

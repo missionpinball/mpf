@@ -16,7 +16,7 @@ class MMA8451Device(AccelerometerPlatformInterface):
     __slots__ = ["i2c_platform", "platform", "callback", "number", "task"]
 
     def __init__(self, number, callback, i2c_platform, platform):
-        """Initialise MMA8451 accelerometer."""
+        """initialize MMA8451 accelerometer."""
         self.i2c_platform = i2c_platform    # type: I2cPlatform
         self.platform = platform            # type: MMA8451Platform
         self.callback = callback
@@ -97,7 +97,7 @@ class MMA8451Platform(AccelerometerPlatform):
         self.accelerometers = []
 
     async def initialize(self):
-        """Initialise MMA8451 platform."""
+        """initialize MMA8451 platform."""
 
     def stop(self):
         """Stop accelerometer poll tasks."""

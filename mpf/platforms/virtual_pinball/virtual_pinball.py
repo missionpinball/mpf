@@ -18,7 +18,7 @@ class VirtualPinballSwitch(SwitchPlatformInterface):
     __slots__ = ["state"]
 
     def __init__(self, config, number, platform):
-        """Initialise switch."""
+        """initialize switch."""
         super().__init__(config, number, platform)
         self.state = self.config.invert
 
@@ -34,7 +34,7 @@ class VirtualPinballLight(LightPlatformInterface):
     __slots__ = ["_current_fade", "subtype", "hw_number", "machine"]
 
     def __init__(self, number, subtype, hw_number, machine):
-        """Initialise LED."""
+        """initialize LED."""
         super().__init__(number)
         self._current_fade = (0, -1, 0, -1)
         self.subtype = subtype
@@ -81,7 +81,7 @@ class VirtualPinballDriver(DriverPlatformInterface):
     __slots__ = ["clock", "_state"]
 
     def __init__(self, config, number, clock):
-        """Initialise virtual driver to disabled."""
+        """initialize virtual driver to disabled."""
         super().__init__(config, number)
         self.clock = clock
         self._state = False
@@ -124,7 +124,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
     __slots__ = ["_lights", "_switches", "_drivers", "_last_drivers", "_last_lights", "_started", "rules"]
 
     def __init__(self, machine):
-        """Initialise VPX platform."""
+        """initialize VPX platform."""
         super().__init__(machine)
         self._lights = {}           # type: Dict[str, VirtualPinballLight]
         self._switches = {}         # type: Dict[str, VirtualPinballSwitch]
@@ -137,7 +137,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self.rules = {}
 
     async def initialize(self):
-        """Initialise platform."""
+        """initialize platform."""
         self.machine.bcp.interface.register_command_callback("vpcom_bridge", self._dispatch)
         self.machine.events.add_async_handler("init_phase_5", self._wait_for_connect)
 
@@ -226,7 +226,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                 self._last_lights[number] = brightness
 
         return changed_lamps
-        
+
     def _get_changed_brightness_lights_by_subtype(self, subtype):
         """Return changed lights since last call. Returns float for each light brightness."""
         changed_lamps = []
@@ -251,7 +251,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
     def vpx_changed_leds(self):
         """Return changed leds since last call."""
         return self._get_changed_lights_by_subtype("led")
-        
+
     def vpx_changed_brightness_leds(self):
         """Return changed brightness leds since last call."""
         return self._get_changed_brightness_lights_by_subtype("led")

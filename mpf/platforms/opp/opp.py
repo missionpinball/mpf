@@ -51,7 +51,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoP
                  "matrix_light_cards"]
 
     def __init__(self, machine) -> None:
-        """Initialise OPP platform."""
+        """initialize OPP platform."""
         super().__init__(machine)
         self.opp_connection = {}            # type: Dict[str, OPPSerialCommunicator]
         self.serial_connections = set()     # type: Set[OPPSerialCommunicator]
@@ -103,7 +103,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoP
         }
 
     async def initialize(self):
-        """Initialise connections to OPP hardware."""
+        """initialize connections to OPP hardware."""
         await self._connect_to_hardware()
         self.opp_commands[ord(OppRs232Intf.READ_GEN2_INP_CMD)] = self.read_gen2_inp_resp
         self.opp_commands[ord(OppRs232Intf.READ_MATRIX_INP)] = self.read_matrix_inp_resp

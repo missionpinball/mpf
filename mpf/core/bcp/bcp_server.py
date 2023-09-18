@@ -14,7 +14,7 @@ class BcpServer(MpfController):
     config_name = "bcp_server"
 
     def __init__(self, machine, ip, port, server_type):
-        """Initialise BCP server."""
+        """initialize BCP server."""
         super().__init__(machine)
         self._server = None
         self._ip = ip

@@ -50,7 +50,7 @@ class Command:
         # print(config.get_machine_config())
 
         self.machine = MachineController(vars(self.args), config)
-        self.machine.initialise_mpf()
+        self.machine.initialize_mpf()
 
         result = wire(self.machine)
 

@@ -33,7 +33,7 @@ class Mode(LogMixin):
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, machine: "MachineController", config, name: str, path, asset_paths) -> None:
-        """Initialise mode.
+        """initialize mode.
 
         Args:
         ----
@@ -545,8 +545,8 @@ class Mode(LogMixin):
             self.machine.switch_controller.remove_switch_handler_by_key(handler)
         self.switch_handlers = list()
 
-    def initialise_mode(self) -> None:
-        """Initialise this mode."""
+    def initialize_mode(self) -> None:
+        """initialize this mode."""
         self.mode_init()
 
     def mode_init(self) -> None:

@@ -25,7 +25,7 @@ class ScoreReel(SystemWideDevice):
     class_label = 'score_reel'
 
     def __init__(self, machine, name):
-        """Initialise score reel."""
+        """initialize score reel."""
         super().__init__(machine, name)
         self.delay = DelayManager(machine)
 

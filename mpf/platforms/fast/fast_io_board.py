@@ -9,7 +9,7 @@ class FastIoBoard:
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, communicator, name, node_id, model_string, firmware_version, switch_count, driver_count, prior_switches, prior_drivers):
-        """Initialise FastIoBoard."""
+        """initialize FastIoBoard."""
         self.communicator = communicator
         self.name = str(name)
         self.node_id = node_id  # position in the I/O loop, 0-indexed

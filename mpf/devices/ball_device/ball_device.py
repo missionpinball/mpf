@@ -36,7 +36,7 @@ class BallDevice(SystemWideDevice):
                  "counted_balls", "_state"]
 
     def __init__(self, machine, name):
-        """Initialise ball device."""
+        """initialize ball device."""
         super().__init__(machine, name)
 
         self.delay = DelayManager(machine)
@@ -194,9 +194,9 @@ class BallDevice(SystemWideDevice):
 
     async def _initialize_async(self):
         """Count balls without handling them as new."""
-        await self.ball_count_handler.initialise()
-        await self.incoming_balls_handler.initialise()
-        await self.outgoing_balls_handler.initialise()
+        await self.ball_count_handler.initialize()
+        await self.incoming_balls_handler.initialize()
+        await self.outgoing_balls_handler.initialize()
 
         self.available_balls = self.ball_count_handler.handled_balls
 

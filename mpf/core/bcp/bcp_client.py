@@ -11,7 +11,7 @@ class BaseBcpClient(MpfController, metaclass=abc.ABCMeta):
     __slots__ = ["name", "bcp", "exit_on_close"]
 
     def __init__(self, machine, name, bcp):
-        """Initialise client."""
+        """initialize client."""
         super().__init__(machine)
         self.name = name
         self.bcp = bcp

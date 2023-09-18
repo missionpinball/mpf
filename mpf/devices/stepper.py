@@ -29,7 +29,7 @@ class Stepper(SystemWideDevice):
                  "_ball_search_old_target", "_is_homed", "_is_moving", "_move_task", "delay"]
 
     def __init__(self, machine, name):
-        """Initialise stepper."""
+        """initialize stepper."""
         self.hw_stepper = None          # type: Optional[StepperPlatformInterface]
         self.platform = None            # type: Optional[Stepper]
         self._target_position = 0       # in user units
@@ -85,7 +85,7 @@ class Stepper(SystemWideDevice):
         return config
 
     async def _run(self):
-        # wait for switches to be initialised
+        # wait for switches to be initialized
         await self.machine.events.wait_for_event("init_phase_3")
 
         # first home the stepper

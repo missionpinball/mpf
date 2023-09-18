@@ -21,7 +21,7 @@ class OscLight(LightPlatformSoftwareFade):
     """A light on OSC."""
 
     def __init__(self, number, loop, software_fade_ms, client):
-        """Initialise light."""
+        """initialize light."""
         super().__init__(number, loop, software_fade_ms)
         self.client = client    # type: SimpleUDPClient
 
@@ -74,7 +74,7 @@ class OscPlatform(LightsPlatform, SwitchPlatform):
 
     # noinspection PyCallingNonCallable
     async def initialize(self):
-        """Initialise platform."""
+        """initialize platform."""
         self.config = self.machine.config['osc']
         self.machine.config_validator.validate_config("osc", self.config)
         self.client = SimpleUDPClient(self.config['remote_ip'], self.config['remote_port'])

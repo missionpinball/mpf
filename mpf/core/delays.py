@@ -30,7 +30,7 @@ class DelayManager(MpfController):
     config_name = "delay_manager"
 
     def __init__(self, machine: "MachineController") -> None:
-        """Initialise delay manager."""
+        """initialize delay manager."""
         self.delays = {}        # type: Dict[str, Tuple[Any, Callable]]
         super().__init__(machine)
 

@@ -12,16 +12,16 @@ if MYPY:  # pragma: no cover
 class OPPServo(ServoPlatformInterface):
     """A servo in the OPP platform."""
 
-    __slots__ = ["number", "chain_serial", "platform", "speed", "current_position"] 
+    __slots__ = ["number", "chain_serial", "platform", "speed", "current_position"]
 
     def __init__(self, chain_serial, servo_num, platform: "OppHardwarePlatform"):
-        """Initialise servo."""
+        """initialize servo."""
         self.number = servo_num
         self.platform = platform
         self.chain_serial = chain_serial
         self.speed = 0
         self.current_position = 0
-    
+
     def stop(self):
         """Disable servo.
         Set position to 0 to disable servo.
@@ -30,7 +30,7 @@ class OPPServo(ServoPlatformInterface):
 
     def go_to_position(self, position):
         """Set a servo position.
-        
+
         position [0 to 1.0] is converted to position_numeric [0 to 255].
         position_numeric is measured in 10us intervals, so a position_numeric of 100 is a 1ms pulse
         and 150 is 1.5ms. A position_numeric of 0 disables the servo. Use caution with extreme
@@ -41,7 +41,7 @@ class OPPServo(ServoPlatformInterface):
         position_numeric = int(position * 255)
         servo_offset = 0x3000 + self.number
 
-        
+
         if position_numeric == 0 or self.current_position == 0 or self.speed <= 0:
             fade_ms = 0
         else:
@@ -63,19 +63,19 @@ class OPPServo(ServoPlatformInterface):
         cmd = bytes(msg)
 
         self.platform.debug_log("Set servo position on %s: %s", self.chain_serial, "".join(" 0x%02x" % b for b in cmd))
-        
+
         self.platform.send_to_processor(self.chain_serial, cmd)
 
         self.current_position = position_numeric
-        
+
 
     def set_speed_limit(self, speed_limit):
         """Set the speed of this servo
-        
+
         For the standard 1ms pulse width change to move a servo between
         extremes, a speed of 1 will take 1 minute, and a speed of 60 would take
-        1 second. 
-        
+        1 second.
+
         A speed <= 0 is unrestricted by firmware
         """
         self.platform.debug_log("Change servo speed limit on %s: %s", self.chain_serial, int(speed_limit))

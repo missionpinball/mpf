@@ -623,7 +623,7 @@ class TestPRoc(MpfTestCase):
 
     @test_config("wpc.yaml")
     def test_load_wpc(self):
-        # make sure p-roc properly initialises with WPC config
+        # make sure p-roc properly initializes with WPC config
 
         # make sure polarity is right
         number = self.machine.coils["c_test_direct"].hw_driver.number

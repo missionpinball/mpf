@@ -15,7 +15,7 @@ class Match(AsyncMode):
     __slots__ = []
 
     def __init__(self, *args, **kwargs):
-        """Initialise match mode."""
+        """initialize match mode."""
         super().__init__(*args, **kwargs)
         # add setting
         self.machine.settings.add_setting(SettingEntry("match_percentage", "Match percentage", 500,
@@ -62,7 +62,7 @@ class Match(AsyncMode):
             "winner_number": winner_number,
             "winners": winners
         }
-        
+
         self.machine.variables.set_machine_var('match_number', winner_number)
 
         for i in range(0, self.machine.game.max_players):

@@ -20,7 +20,7 @@ class DataManager(MpfController):
     __slots__ = ["name", "min_wait_secs", "filename", "data", "_dirty"]
 
     def __init__(self, machine, name, min_wait_secs=1):
-        """Initialise data manger.
+        """initialize data manger.
 
         The DataManager is responsible for reading and writing data to/from a
         file on disk.

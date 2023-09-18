@@ -11,7 +11,7 @@ class EventEjector(BallDeviceEjector):
     __slots__ = []  # type: List[str]
 
     def __init__(self, config, ball_device, machine):
-        """Initialise ejector."""
+        """initialize ejector."""
         super().__init__(config, ball_device, machine)
         self.config = self.machine.config_validator.validate_config("ball_device_ejector_event", self.config)
 

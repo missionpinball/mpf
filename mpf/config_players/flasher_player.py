@@ -14,7 +14,7 @@ class FlasherPlayer(DeviceConfigPlayer):
     __slots__ = ["delay"]
 
     def __init__(self, machine):
-        """Initialise flasher_player."""
+        """initialize flasher_player."""
         super().__init__(machine)
         self.delay = DelayManager(self.machine)
 

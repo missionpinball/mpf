@@ -18,7 +18,7 @@ class BcpTransportManager:
     __slots__ = ["_machine", "_transports", "_readers", "_handlers"]
 
     def __init__(self, machine):
-        """Initialise BCP transport manager."""
+        """initialize BCP transport manager."""
         self._machine = machine     # type: MachineController
         self._transports = []
         self._readers = {}

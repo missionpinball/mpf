@@ -17,7 +17,7 @@ class InfoLights:
     """
 
     def __init__(self, machine):
-        """Initialise info lights plugin."""
+        """initialize info lights plugin."""
         self.log = logging.getLogger('infolights')
         self.machine = machine
         self.game_over_show = None

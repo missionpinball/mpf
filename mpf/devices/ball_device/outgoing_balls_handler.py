@@ -20,7 +20,7 @@ class OutgoingBall:
     __slots__ = ["max_tries", "eject_timeout", "target", "player_controlled", "already_left"]
 
     def __init__(self, target: "BallDevice") -> None:
-        """Initialise outgoing ball."""
+        """initialize outgoing ball."""
         self.max_tries = 0                  # type: int
         self.eject_timeout = 0              # type: int
         self.target = target                # type: BallDevice
@@ -36,7 +36,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                  "_no_incoming_ball_which_may_skip", "_incoming_ball_which_may_skip_obj", "_eject_future"]
 
     def __init__(self, ball_device: "BallDevice") -> None:
-        """Initialise outgoing balls handler."""
+        """initialize outgoing balls handler."""
         super().__init__(ball_device)
         self._eject_queue = asyncio.Queue()     # type: asyncio.Queue
         self._current_target = None     # type: Optional[BallDevice]

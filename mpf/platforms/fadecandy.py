@@ -21,7 +21,7 @@ class FadecandyHardwarePlatform(OpenpixelHardwarePlatform):
     __slots__ = []  # type: List[str]
 
     def __init__(self, machine: "MachineController") -> None:
-        """Initialise Fadecandy.
+        """initialize Fadecandy.
 
         Args:
         ----
@@ -54,7 +54,7 @@ class FadeCandyOPClient(OpenPixelClient):
                  "config"]
 
     def __init__(self, machine, config):
-        """Initialise Fadecandy client.
+        """initialize Fadecandy client.
 
         Args:
         ----

@@ -12,7 +12,7 @@ class BcpPluginPlayer(DeviceConfigPlayer):
     __slots__ = ["bcp_client"]
 
     def __init__(self, machine):
-        """Initialise plugin player."""
+        """initialize plugin player."""
         super().__init__(machine)
         self.bcp_client = None
         self.instances['_global_bcp'] = dict()
@@ -33,7 +33,7 @@ class BcpPluginPlayer(DeviceConfigPlayer):
     def _add_handlers(self):
         self.machine.events.add_handler('init_phase_1', self._initialize_mode_handlers, priority=20)
         # since bcp is connecting in init_phase_2 we have to postpone this
-        self.machine.events.add_handler('init_phase_3', self._initialise_system_wide)
+        self.machine.events.add_handler('init_phase_3', self._initialize_system_wide)
 
     def process_mode_config(self, config, root_config_dict, mode, **kwargs):
         """Create bcp context."""

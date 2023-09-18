@@ -13,7 +13,7 @@ class Speedometer(SystemWideDevice):
     __slots__ = ["time_start"]
 
     def __init__(self, machine, name):
-        """Initialise speedometer."""
+        """initialize speedometer."""
         super().__init__(machine, name)
         self.time_start = None
 

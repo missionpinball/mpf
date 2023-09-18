@@ -23,7 +23,7 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
     __slots__ = ["delay"]
 
     def __init__(self, machine):
-        """Initialise SegmentDisplayPlayer."""
+        """initialize SegmentDisplayPlayer."""
         super().__init__(machine)
         self.delay = DelayManager(self.machine)
 

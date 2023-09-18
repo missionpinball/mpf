@@ -25,7 +25,7 @@ class Achievement(ModeDevice):
     allow_empty_configs = True
 
     def __init__(self, machine, name):
-        """Initialise achievement."""
+        """initialize achievement."""
         super().__init__(machine, name)
         self._player = None
         self._mode = None

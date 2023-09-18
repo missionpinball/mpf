@@ -23,7 +23,7 @@ class FASTSwitch:
     # __slots__ = ["log", "connection", "send", "platform_settings", "_configured_debounce"]
 
     def __init__(self, communicator, hw_number, ) -> None:
-        """Initialise switch."""
+        """initialize switch."""
         self.log = logging.getLogger('FAST Switch')
         self.communicator = communicator
         self.number = hw_number  # must be int to work with the rest of MPF

@@ -15,7 +15,7 @@ class PulseCoilEjector(DefaultBallSearch, BallDeviceEjector):
     __slots__ = []  # type: List[str]
 
     def __init__(self, config, ball_device, machine):
-        """Initialise pulse coil ejector."""
+        """initialize pulse coil ejector."""
         for option in ["eject_coil", "eject_coil_jam_pulse", "eject_coil_retry_pulse", "eject_coil_reorder_pulse",
                        "eject_coil_max_wait_ms", "retries_before_increasing_pulse"]:
             if option not in config and option in ball_device.config:

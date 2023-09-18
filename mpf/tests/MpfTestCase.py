@@ -567,7 +567,7 @@ class MpfTestCase(unittest.TestCase):
 
             self._early_machine_init(self.machine)
 
-            self._initialise_machine()
+            self._initialize_machine()
 
         # pylint: disable-msg=broad-except
         except Exception as e:
@@ -586,8 +586,8 @@ class MpfTestCase(unittest.TestCase):
             if not getattr(getattr(self, self._testMethodName), "expect_startup_error", False):
                 raise self.startup_error
 
-    def _initialise_machine(self):
-        init = asyncio.ensure_future(self.machine.initialise())
+    def _initialize_machine(self):
+        init = asyncio.ensure_future(self.machine.initialize())
 
         if os.getenv('GITHUB_ACTIONS', 'false') == 'true':  # If we're running on github
             timeout = 20

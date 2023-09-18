@@ -28,7 +28,7 @@ class Accelerometer(SystemWideDevice):
     class_label = 'accelerometer'
 
     def __init__(self, machine: MachineController, name: str) -> None:
-        """Initialise accelerometer."""
+        """initialize accelerometer."""
         self.platform = None        # type: Optional[AccelerometerPlatform]
         super().__init__(machine, name)
 
@@ -37,7 +37,7 @@ class Accelerometer(SystemWideDevice):
         self.hw_device = None   # type: Optional[AccelerometerPlatformInterface]
 
     async def _initialize(self):
-        """Initialise and configure accelerometer."""
+        """initialize and configure accelerometer."""
         await super()._initialize()
         self.platform = self.machine.get_platform_sections(
             'accelerometers', self.config['platform'])

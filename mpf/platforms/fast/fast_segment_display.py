@@ -17,7 +17,7 @@ class FASTSegmentDisplay(SegmentDisplayPlatformInterface):
     __slots__ = ["serial", "hex_id", "next_color", "next_text"]
 
     def __init__(self, index, communicator):
-        """Initialise alpha numeric display."""
+        """initialize alpha numeric display."""
         super().__init__(index)
         self.serial = communicator
         self.hex_id = Util.int_to_hex_string(index * 7)

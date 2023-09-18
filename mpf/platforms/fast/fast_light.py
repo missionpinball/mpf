@@ -13,7 +13,7 @@ class FASTMatrixLight(LightPlatformSoftwareFade):
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, number, connection, machine, fade_interval_ms: int, platform) -> None:
-        """Initialise light."""
+        """initialize light."""
         super().__init__(number, machine.clock.loop, fade_interval_ms)
         self.log = logging.getLogger('FASTMatrixLight')
         self.connection = connection

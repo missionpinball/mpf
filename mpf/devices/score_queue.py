@@ -20,7 +20,7 @@ class ScoreQueue(SystemWideDevice):
     __slots__ = ["_score_queue", "_score_queue_empty", "_score_task"]
 
     def __init__(self, machine, name):
-        """Initialise ball lock."""
+        """initialize ball lock."""
         super().__init__(machine, name)
         self._score_queue = asyncio.Queue()
         self._score_queue_empty = asyncio.Event()

@@ -89,7 +89,7 @@ class DeviceManager(MpfController):
         self.load_devices_config(validate=True)
         await self.machine.mode_controller.load_mode_devices()
 
-        # step 3: initialise devices (mode devices will be initialised when mode is started)
+        # step 3: initialize devices (mode devices will be initialized when mode is started)
         await self.initialize_devices()
 
     def stop_devices(self):
@@ -159,7 +159,7 @@ class DeviceManager(MpfController):
                 collection[device_name].load_config(config[device_name])
 
     async def initialize_devices(self):
-        """Initialise devices."""
+        """initialize devices."""
         futures = []
         for collection_name in self.machine.config['mpf']['device_modules'].keys():
             if collection_name not in self.machine.config:
@@ -261,7 +261,7 @@ class DeviceCollection(dict):
     __slots__ = ["machine", "name", "config_section", "_tag_cache"]
 
     def __init__(self, machine, collection, config_section):
-        """Initialise device collection."""
+        """initialize device collection."""
         super().__init__()
 
         self.machine = machine

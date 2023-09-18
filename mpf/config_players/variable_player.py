@@ -18,7 +18,7 @@ class VariablePlayer(ConfigPlayer):
     __slots__ = ["blocks"]
 
     def __init__(self, machine: MachineController) -> None:
-        """Initialise variable player."""
+        """initialize variable player."""
         super().__init__(machine)
         self.blocks = {}    # type: Dict[str, List[VarBlock]]
 

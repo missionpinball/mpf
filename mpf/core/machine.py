@@ -224,7 +224,7 @@ class MachineController(LogMixin):
         """
         self._crash_handlers.append(handler)
 
-    async def initialise_core_and_hardware(self) -> None:
+    async def initialize_core_and_hardware(self) -> None:
         """Load core modules and hardware."""
         self._boot_holds = set()
         self.is_init_done = asyncio.Event()
@@ -241,9 +241,9 @@ class MachineController(LogMixin):
         # they're not set up yet when the hw platforms are constructed.
         await self._initialize_platforms()
 
-    async def initialise(self) -> None:
-        """Initialise machine."""
-        await self.initialise_core_and_hardware()
+    async def initialize(self) -> None:
+        """initialize machine."""
+        await self.initialize_core_and_hardware()
 
         self._initialize_credit_string()
 
@@ -321,7 +321,7 @@ class MachineController(LogMixin):
         self.clear_boot_hold('init')
 
     async def _initialize_platforms(self) -> None:
-        """Initialise all used hardware platforms."""
+        """initialize all used hardware platforms."""
         init_done = []
         # collect all platform init futures
         for hardware_platform in list(self.hardware_platforms.values()):
@@ -646,22 +646,22 @@ class MachineController(LogMixin):
 
         self.monitors[monitor_class].add(monitor)
 
-    def initialise_mpf(self):
-        """Initialise MPF."""
-        self.info_log("Initialise MPF.")
+    def initialize_mpf(self):
+        """initialize MPF."""
+        self.info_log("Initializing MPF...")
         timeout = 30 if self.options["production"] else None
         try:
-            init = asyncio.ensure_future(self.initialise())
+            init = asyncio.ensure_future(self.initialize())
             self.clock.loop.run_until_complete(Util.first([init, self.stop_future], cancel_others=False,
                                                           timeout=timeout))
         except asyncio.TimeoutError:
             self._crash_shutdown()
-            self.error_log("MPF needed more than {}s for initialisation. Aborting!".format(timeout))
+            self.error_log("MPF needed more than {}s for initialization. Aborting!".format(timeout))
             return False
         except RuntimeError as e:
             self._crash_shutdown()
             # do not show a runtime useless runtime error
-            self.error_log("Failed to initialise MPF")
+            self.error_log("Failed to initialize MPF")
             report_crash(e, "init_runtime_error", self.config)
             return False
         if init.done() and init.exception():
@@ -669,7 +669,7 @@ class MachineController(LogMixin):
             try:
                 raise init.exception()
             except:     # noqa
-                self.log.exception("Failed to initialise MPF")
+                self.log.exception("Failed to initialize MPF")
                 report_crash(init.exception(), "init_exception", self.config)
             return False
 
@@ -677,7 +677,7 @@ class MachineController(LogMixin):
 
     def run(self) -> None:
         """Start the main machine run loop."""
-        if not self.initialise_mpf():
+        if not self.initialize_mpf():
             return
 
         self.info_log("Starting the main run loop.")

@@ -33,7 +33,7 @@ class DropTarget(SystemWideDevice):
     __slots__ = ["reset_coil", "knockdown_coil", "banks", "_in_ball_search", "complete", "delay", "_ignore_switch_hits"]
 
     def __init__(self, machine: "MachineController", name: str) -> None:
-        """Initialise drop target."""
+        """initialize drop target."""
         self.reset_coil = None              # type: Optional[Driver]
         self.knockdown_coil = None          # type: Optional[Driver]
         self.banks = set()                  # type: Set[DropTargetBank]
@@ -322,7 +322,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
     class_label = 'drop_target_bank'
 
     def __init__(self, machine: "MachineController", name: str) -> None:
-        """Initialise drop target bank."""
+        """initialize drop target bank."""
         super().__init__(machine, name)
 
         self.drop_targets = list()          # type: List[DropTarget]

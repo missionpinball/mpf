@@ -35,7 +35,7 @@ class Flipper(SystemWideDevice):
     class_label = 'flipper'
 
     def __init__(self, machine, name):
-        """Initialise flipper."""
+        """initialize flipper."""
         super().__init__(machine, name)
 
         self._enabled = False

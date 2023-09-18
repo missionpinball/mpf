@@ -85,7 +85,7 @@ class FASTDirectLEDChannel(LightPlatformInterface):
     __slots__ = ["led", "channel", "_current_fade", "_last_brightness"]
 
     def __init__(self, led: FASTDirectLED, channel) -> None:
-        """Initialise LED."""
+        """initialize LED."""
         super().__init__("{}-{}".format(led.number, channel))
         self.led = led
         self.channel = int(channel)

@@ -118,7 +118,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         return info_string
 
     async def initialize(self):
-        """Initialise platform."""
+        """initialize platform."""
         # self.machine.events.add_async_handler('machine_reset_phase_1', self.soft_reset)
         self.machine.events.add_async_handler('init_phase_1', self.soft_reset)
         self.machine.events.add_handler('init_phase_3', self._start_communicator_tasks)

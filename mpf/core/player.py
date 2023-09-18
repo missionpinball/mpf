@@ -82,7 +82,7 @@ class Player:
     """
 
     def __init__(self, machine, index):
-        """Initialise player."""
+        """initialize player."""
         # use self.__dict__ below since __setattr__ would make these player vars
         self.__dict__['log'] = logging.getLogger("Player")
         self.__dict__['machine'] = machine
@@ -253,7 +253,7 @@ class Player:
             return '<Player (new)>'
 
     def __getattr__(self, name):
-        """Return value of attribute or initialise it with 0 when it does not exist."""
+        """Return value of attribute or initialize it with 0 when it does not exist."""
         if name in self.vars:
             return self.vars[name]
 

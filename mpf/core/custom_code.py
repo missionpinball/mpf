@@ -10,7 +10,7 @@ class CustomCode(LogMixin):
     __slots__ = ["machine", "name", "delay"]
 
     def __init__(self, machine, name):
-        """Initialise custom code."""
+        """initialize custom code."""
         super().__init__()
         self.machine = machine
         self.name = name

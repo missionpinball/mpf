@@ -33,7 +33,7 @@ class LisySwitch(SwitchPlatformInterface):
     __slots__ = ["index"]  # type: List[str]
 
     def __init__(self, config, number, platform):
-        """Initialise switch."""
+        """initialize switch."""
         super().__init__(config, number, platform)
         self.index = int(number)
 
@@ -49,7 +49,7 @@ class LisyDriver(DriverPlatformInterface):
     __slots__ = ["platform", "_pulse_ms", "_recycle_time", "index", "has_rule"]     # type: List[str]
 
     def __init__(self, config, number, platform):
-        """Initialise driver."""
+        """initialize driver."""
         super().__init__(config, number)
         self.platform = platform
         self._pulse_ms = -1
@@ -113,7 +113,7 @@ class LisySimpleLamp(LightPlatformSoftwareFade):
     __slots__ = ["platform", "_state"]
 
     def __init__(self, number, platform):
-        """Initialise Lisy Light."""
+        """initialize Lisy Light."""
         super().__init__(number, platform.machine.clock.loop, 50)
         self.platform = platform
         self._state = None
@@ -151,7 +151,7 @@ class LisyModernLight(PlatformBatchLight):
     __slots__ = ["platform"]
 
     def __init__(self, number, platform, light_system):
-        """Initialise Lisy Light."""
+        """initialize Lisy Light."""
         super().__init__(number, light_system)
         self.platform = platform
 
@@ -183,7 +183,7 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
     __slots__ = ["platform", "_type_of_display", "_length_of_display"]
 
     def __init__(self, number: int, platform: "LisyHardwarePlatform", display_size) -> None:
-        """Initialise segment display."""
+        """initialize segment display."""
         super().__init__(number)
         self.platform = platform
         self._type_of_display = None
@@ -251,7 +251,7 @@ class LisySound(HardwareSoundPlatformInterface):
     __slots__ = ["platform"]
 
     def __init__(self, platform):
-        """Initialise hardware sound."""
+        """initialize hardware sound."""
         self.platform = platform        # type: LisyHardwarePlatform
 
     def play_sound(self, number: int, track: int = 1):
@@ -317,7 +317,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                  "_light_system", "_send_length_of_command", "_lisy_version", "_hardware_name"]  # type: List[str]
 
     def __init__(self, machine) -> None:
-        """Initialise platform."""
+        """initialize platform."""
         super().__init__(machine)
         self._writer = None                 # type: Optional[asyncio.StreamWriter]
         self._reader = None                 # type: Optional[asyncio.StreamReader]
@@ -375,7 +375,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
     # pylint: disable-msg=too-many-statements
     # pylint: disable-msg=too-many-branches
     async def initialize(self):
-        """Initialise platform."""
+        """initialize platform."""
         async with self._bus_lock:
 
             await super().initialize()

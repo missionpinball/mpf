@@ -16,7 +16,7 @@ class SwitchPlatformInterface(metaclass=abc.ABCMeta):
     __slots__ = ["config", "number", "platform"]
 
     def __init__(self, config: SwitchConfig, number: Any, platform: SwitchPlatform) -> None:
-        """Initialise default attributes for switches."""
+        """initialize default attributes for switches."""
         self.config = config        # type: SwitchConfig
         self.number = number        # type: Any
         self.platform = platform    # type: SwitchPlatform

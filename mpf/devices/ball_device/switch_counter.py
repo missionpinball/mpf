@@ -17,7 +17,7 @@ class SwitchCounter(PhysicalBallCounter):
     __slots__ = ["_entrances", "_trigger_recount", "_task", "_is_unreliable", "_switches"]
 
     def __init__(self, ball_device, config):
-        """Initialise ball counter."""
+        """initialize ball counter."""
         for option in ["entrance_count_delay", "exit_count_delay", "entrance_event_timeout", "jam_switch",
                        "ball_switches"]:
             if option not in config and option in ball_device.config:

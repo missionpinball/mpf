@@ -26,7 +26,7 @@ class PROCSwitch(SwitchPlatformInterface):
     __slots__ = ["string_number", "log", "notify_on_nondebounce", "hw_rules", "pdbconfig"]
 
     def __init__(self, config, number, notify_on_nondebounce, platform):
-        """Initialise P-ROC switch."""
+        """initialize P-ROC switch."""
         super().__init__(config, number, platform)
         self.string_number = number
         self.log = logging.getLogger('PROCSwitch {}'.format(self.string_number))
@@ -66,7 +66,7 @@ class PROCDriver(DriverPlatformInterface):
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, number, config, platform, string_number, polarity):
-        """Initialise driver."""
+        """initialize driver."""
         self.log = logging.getLogger('PROCDriver {}'.format(number))
         super().__init__(config, number)
         self.platform = platform            # type: PROCBasePlatform
@@ -74,7 +74,7 @@ class PROCDriver(DriverPlatformInterface):
         self.string_number = string_number
         self.pdbconfig = getattr(platform, "pdbconfig", None)
 
-    async def initialise(self):
+    async def initialize(self):
         """Initialize driver."""
         if self.polarity is None:
             self.log.debug("Getting polarity for driver %s", self.number)
@@ -170,7 +170,7 @@ class PROCMatrixLight(LightPlatformSoftwareFade):
     __slots__ = ["log", "proc", "platform"]
 
     def __init__(self, number, machine, platform):
-        """Initialise matrix light device."""
+        """initialize matrix light device."""
         super().__init__(number, machine.clock.loop,
                          int(1 / machine.config['mpf']['default_light_hw_update_hz'] * 1000))
         self.log = logging.getLogger('PROCMatrixLight {}'.format(number))
@@ -393,7 +393,7 @@ class PDBLED(PlatformBatchLight):
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, board, address, polarity, debug, driver_platform, light_system):
-        """Initialise PDB LED."""
+        """initialize PDB LED."""
         self.board = board
         self.address = address
         self.debug = debug
@@ -440,7 +440,7 @@ class PdLedServo(ServoPlatformInterface):
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, board, number, platform, debug, min_servo_value):
-        """Initialise PDB LED."""
+        """initialize PDB LED."""
         self.board = int(board)
         self.number = int(number)
         self.debug = debug
@@ -467,7 +467,7 @@ class PdLedStepper(StepperPlatformInterface):
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, board, number, platform, debug, stepper_ticks_per_half_period):
-        """Initialise PDB LED."""
+        """initialize PDB LED."""
         self.board = int(board)
         self.number = int(number)
         self.debug = debug

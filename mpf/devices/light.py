@@ -60,11 +60,11 @@ class Light(SystemWideDevice, DevicePositionMixin):
                  "_off_color", "_drivers_loaded", "_last_fade_target"]
 
     def __init__(self, machine, name):
-        """Initialise light."""
+        """initialize light."""
         self.hw_drivers = {}        # type: Dict[str, List[LightPlatformInterface]]
         self.platforms = set()      # type: Set[LightsPlatform]
         super().__init__(machine, name)
-        self.machine.light_controller.initialise_light_subsystem()
+        self.machine.light_controller.initialize_light_subsystem()
         self.delay = DelayManager(self.machine)
         self._drivers_loaded = asyncio.Future()
 
