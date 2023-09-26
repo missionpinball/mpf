@@ -255,6 +255,8 @@ class MockFastRgb(MockFastSerial):
             }
 
         self.leds = dict()
+        for i in range(128):
+            self.leds[f'{i:02X}'] = "000000"
 
     def process_msg(self, cmd):
         if cmd[:3] == 'RS:':
@@ -283,7 +285,7 @@ class MockFastNetNano(MockFastSerial):
         self.autorespond_commands = {
             'WD:1' : 'WD:P',
             'WD:3E8': 'WD:P',
-            "SA:": "SA:01,00,09,050000000000000000",
+            "SA:": "SA:01,00,09,000000040000000000",  # switch 0x1A is active
             'ID:': 'ID:NET FP-CPU-002-2  01.05',
             }
 

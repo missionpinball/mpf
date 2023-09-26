@@ -20,11 +20,6 @@ class FastNetNanoCommunicator(FastNetNeuronCommunicator):
     DRIVER_CMD = 'DN'
     SWITCH_CMD = 'SN'
 
-    def __init__(self, platform, processor, config):
-        super().__init__(platform, processor, config)
-
-        self.message_processors['\x11\x11!'] = self._process_reboot_done
-
     async def configure_hardware(self):
         pass # Not used on a Nano
 
@@ -40,3 +35,4 @@ class FastNetNanoCommunicator(FastNetNeuronCommunicator):
         if msg == '02':  # reboot done
             self._process_reboot_done()
             # TODO what else? Mark all configs as dirty? Log and warn if this was unexpected?
+            # TODO add ignore_reboot option to config

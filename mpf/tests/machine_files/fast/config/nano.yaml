@@ -11,7 +11,6 @@ hardware:
 fast:
     net:
         port: com6
-        debug: true
         controller: nano
         io_loop:
             3208:
@@ -28,7 +27,6 @@ fast:
                 order: 4
     rgb:
         port: com5
-        debug: true
 
 switches:
     s_test:
@@ -163,11 +161,10 @@ flippers:
 
 lights:
   test_led:
-    number: 2-23
-    type: grb
-  test_led2:
+    number: 2-23 #0x56
+  test_led2:  #0x57
     previous: test_led
     type: grb
   l_o_circle:
-    number: 0-10
+    number: 1-10 # 0x09
     type: grb

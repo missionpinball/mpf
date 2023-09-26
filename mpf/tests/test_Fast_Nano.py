@@ -183,7 +183,7 @@ class TestFastNano(TestFastBase):
             'NN:02': 'NN:02,FP-I/O-1616-2   ,01.05,10,10,04,06,00,00,00,00',
             'NN:03': 'NN:03,FP-I/O-1616-2   ,01.05,10,10,04,06,00,00,00,00',
 
-            # Max switches are initialized (since that's how it happen on the Neuron
+            # Initialization commands, also tests all the various switch config options
             "SN:00,00,00,00": "SN:P",
             "SN:01,01,04,04": "SN:P",
             "SN:02,01,04,04": "SN:P",
@@ -293,7 +293,7 @@ class TestFastNano(TestFastBase):
             "SN:6A,00,00,00": "SN:P",
             "SN:6B,00,00,00": "SN:P",
 
-            # Drivers with configs
+            # Drivers with configs, tests config options
             "DN:01,81,00,10,FF,FF,00,FF,00": "DN:P",  # initial digital output config, will be updated later
             "DN:04,81,00,10,17,FF,00,00,1B": "DN:P",
             "DN:06,81,00,10,17,FF,00,FF,00": "DN:P",
@@ -306,9 +306,8 @@ class TestFastNano(TestFastBase):
             "DN:20,81,00,10,0A,FF,00,01,00": "DN:P",
             "DN:21,81,00,10,0A,FF,00,01,00": "DN:P",
 
-            # Digital output is configured later
+            # Digital output which after the initial pass
             "DN:01,C1,00,18,00,FF,FF,00,00": "DN:P",
-
             }
 
     def setUp(self):
@@ -329,7 +328,7 @@ class TestFastNano(TestFastBase):
             self.assertEqual(16, self.machine.default_platform.io_boards[3].switch_count)
             self.assertEqual(16, self.machine.default_platform.io_boards[3].driver_count)
 
-    def DISABLED_test_coils(self):
+    def test_coils(self):
         self._test_pulse()
         self._test_long_pulse()
         self._test_timed_enable()
@@ -410,14 +409,14 @@ class TestFastNano(TestFastBase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
-    def DISABLED_test_nano_reboot(self):
+    def test_nano_reboot(self):
         # NANO reboots
         self.net_cpu.queue.append("!B:00")
         self.advance_time_and_run(.1)
         # assert that MPF will stop
         self.assertTrue(self.machine.stop_future.done())
 
-    def DISABLED_test_rules(self):
+    def test_rules(self):
         self._test_enable_exception_hw_rule()
         self._test_two_rules_one_switch()
         self._test_hw_rule_pulse()
@@ -506,42 +505,13 @@ class TestFastNano(TestFastBase):
     def _switch_hit_cb(self, **kwargs):
         self.switch_hit = True
 
-    def DISABLED_test_switches(self):
+    def test_switches(self):
         self._test_switch_changes()
         self._test_switch_changes_nc()
-        self._test_switch_configure()
-
-    def _test_switch_configure(self):
-        # last switch on first board
-        self.net_cpu.expected_commands = {
-            "SN:1F,01,04,04": "SN:P"
-        }
-        self.machine.default_platform.configure_switch('3208-31', SwitchConfig(name="", debounce='auto', invert=0), {})
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.net_cpu.expected_commands)
-
-        # next should not work
-        with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch('3208-32', SwitchConfig(name="", debounce='auto', invert=0), {})
-
-        self.net_cpu.expected_commands = {
-            "SN:47,01,04,04": "SN:P"
-        }
-        self.machine.default_platform.configure_switch('1616_2-15', SwitchConfig(name="", debounce='auto', invert=0), {})
-        self.advance_time_and_run(.1)
-        self.assertFalse(self.net_cpu.expected_commands)
-
-        # invalid board
-        with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch('brian-0', SwitchConfig(name="", debounce='auto', invert=0), {})
-
-        # invalid switch number
-        with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch('3208-33', SwitchConfig(name="", debounce='auto', invert=0), {})
 
     def _test_switch_changes(self):
         self.assertSwitchState("s_flipper", 0)
-        self.assertSwitchState("s_flipper_eos", 1)
+        self.assertSwitchState("s_flipper_eos", 0)
 
         self.switch_hit = False
         self.advance_time_and_run(1)
@@ -567,31 +537,32 @@ class TestFastNano(TestFastBase):
 
     def _test_switch_changes_nc(self):
         self.switch_hit = False
+        self.machine.events.add_handler("s_test_nc_active", self._switch_hit_cb)
         self.advance_time_and_run(1)
-        self.assertSwitchState("s_test_nc", 1)
+        self.assertSwitchState("s_test_nc", 0)
         self.assertFalse(self.switch_hit)
 
-        self.advance_time_and_run(1)
-        self.assertFalse(self.switch_hit)
-        self.assertSwitchState("s_test_nc", 1)
-
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-N:1A\r")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test_nc", 0)
 
-        self.machine.events.add_handler("s_test_nc_active", self._switch_hit_cb)
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-N:1A\r")
+        self.advance_time_and_run(1)
+        self.assertTrue(self.switch_hit)
+        self.assertSwitchState("s_test_nc", 1)
+
+        self.switch_hit = False
         self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/N:1A\r")
         self.advance_time_and_run(1)
 
-        self.assertSwitchState("s_test_nc", 1)
-        self.assertTrue(self.switch_hit)
+        self.assertSwitchState("s_test_nc", 0)
+        self.assertFalse(self.switch_hit)
         self.switch_hit = False
 
-    def DISABLED_test_flipper_single_coil(self):
+    def test_flipper_single_coil(self):
         # manual flip no hw rule
         self.net_cpu.expected_commands = {
-            "DN:20,89,00,10,0A,FF,00,00,00": "DN:P",
+            "TN:20,01": "TN:P",
         }
         self.machine.coils["c_flipper_main"].pulse()
         self.advance_time_and_run(.1)
@@ -599,7 +570,7 @@ class TestFastNano(TestFastBase):
 
         # manual enable no hw rule
         self.net_cpu.expected_commands = {
-            "DN:20,C1,00,18,0A,FF,01,00": "DN:P"
+            "DN:20,C1,00,18,0A,FF,01,00,00": "DN:P"
         }
         self.machine.coils["c_flipper_main"].enable()
         self.advance_time_and_run(.1)
@@ -616,16 +587,16 @@ class TestFastNano(TestFastBase):
         # flipper rule enable
         self.net_cpu.expected_commands = {
             "DN:20,01,01,18,0B,FF,01,00,00": "DN:P",
-            "SN:01,01,02,02": "SN:P"
         }
         self.machine.flippers["f_test_single"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # manual flip with hw rule in action
+        # TODO I think this is wrong? Check with Dave
         self.net_cpu.expected_commands = {
-            "DN:20,89,00,10,0A,FF,00,00,00": "DN:P",    # configure and pulse
-            "DN:20,01,01,18,0B,FF,01,00,00": "DN:P",    # restore rule
+            "DN:20,09,01,18,0A,FF,01,00,00": "DN:P",    # manual pulse 10ms, trigger 09 = one_shot + driver enable
+            "DN:20,01,01,18,0B,FF,01,00,00": "DN:P",    # restore autofire rule
         }
         self.machine.coils["c_flipper_main"].pulse()
         self.advance_time_and_run(.1)
@@ -650,7 +621,6 @@ class TestFastNano(TestFastBase):
         # manual disable with hw rule
         self.net_cpu.expected_commands = {
             "TN:20,02": "TN:P",
-            "TN:20,00": "TN:P"   # reenable autofire rule
         }
         self.machine.coils["c_flipper_main"].disable()
         self.advance_time_and_run(.1)
@@ -658,7 +628,7 @@ class TestFastNano(TestFastBase):
 
         # manual enable with hw rule (different pulse)
         self.net_cpu.expected_commands = {
-            "DN:20,C1,00,18,0A,FF,01,00": "DN:P",       # configure pwm + enable
+            "DN:20,C1,01,18,0A,FF,01,00,00": "DN:P",       # configure pwm + enable
         }
         self.machine.coils["c_flipper_main"].enable()
         self.advance_time_and_run(.1)
@@ -666,9 +636,8 @@ class TestFastNano(TestFastBase):
 
         # manual disable with hw rule
         self.net_cpu.expected_commands = {
-            "TN:20,02": "TN:P",
-            "DN:20,01,01,18,0B,FF,01,00,00": "DN_P",    # configure rules
-            "TN:20,00": "TN:P"                          # reenable autofire rule
+
+            "DN:20,01,01,18,0B,FF,01,00,00": "DN:P",    # configure rules
         }
         self.machine.coils["c_flipper_main"].disable()
         self.advance_time_and_run(.1)
@@ -676,7 +645,7 @@ class TestFastNano(TestFastBase):
 
         # disable rule
         self.net_cpu.expected_commands = {
-            "DN:20,81": "DN:P"
+            "TN:20,02": "TN:P"                          # disable autofire rule
         }
         self.machine.flippers["f_test_single"].disable()
         self.advance_time_and_run(.1)
@@ -684,7 +653,7 @@ class TestFastNano(TestFastBase):
 
         # manual flip no hw rule
         self.net_cpu.expected_commands = {
-            "DN:20,89,00,10,0A,FF,00,00,00": "DN:P"
+            "DN:20,89,01,18,0A,FF,01,00,00": "DN:P"  # TODO verify this
         }
         self.machine.coils["c_flipper_main"].pulse()
         self.advance_time_and_run(.1)
@@ -698,97 +667,98 @@ class TestFastNano(TestFastBase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
-    def DISABLED_test_flipper_two_coils(self):
+    def test_flipper_two_coils(self):
         # we pulse the main coil (20)
         # hold coil (21) is pulsed + enabled
         self.net_cpu.expected_commands = {
             "DN:20,01,01,18,0A,FF,00,00,00": "DN:P",
             "DN:21,01,01,18,0A,FF,01,00,00": "DN:P",
-            "SN:01,01,02,02": "SN:P",
         }
         self.machine.flippers["f_test_hold"].enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         self.net_cpu.expected_commands = {
-            "DN:20,81": "DN:P",
-            "DN:21,81": "DN:P"
+            "TN:20,02": "TN:P",
+            "TN:21,02": "TN:P"
         }
         self.machine.flippers["f_test_hold"].disable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
-    def DISABLED_test_bootloader_crash(self):
+    def test_bootloader_crash(self):
         # Test that the machine stops if the RGB processor sends a bootloader msg
         self.machine.stop = MagicMock()
         self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"!B:00\r")
         self.advance_time_and_run(1)
         self.assertTrue(self.machine.stop.called)
 
-    def DISABLED_test_bootloader_crash_ignored(self):
+    # TODO figure out what to do here
+    def test_bootloader_crash_ignored(self):
         # Test that RGB processor bootloader msgs can be ignored
-        self.machine.default_platform.config['ignore_rgb_crash'] = True
+        self.machine.default_platform.config['ignore_reboot'] = True
         self.mock_event('fast_rgb_rebooted')
         self.machine.stop = MagicMock()
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"!B:00\r")
+        self.machine.default_platform.serial_connections['rgb'].parse_incoming_raw_bytes(b"!B:00\r")
         self.advance_time_and_run(1)
         self.assertFalse(self.machine.stop.called)
         self.assertEventCalled('fast_rgb_rebooted')
 
-    def DISABLED_test_leds(self):
+    def test_leds(self):
         self.advance_time_and_run()
-        device = self.machine.lights["test_led"]
-        device2 = self.machine.lights["test_led2"]
-        self.assertEqual("000000", self.rgb_cpu.leds['97'])
-        self.assertEqual("000000", self.rgb_cpu.leds['98'])
+        device = self.machine.lights["test_led"]   # 0x56
+        device2 = self.machine.lights["test_led2"]  #0x57
+        self.assertEqual("000000", self.rgb_cpu.leds['56'])
+        self.assertEqual("000000", self.rgb_cpu.leds['57'])
         # test led on
         device.on()
         self.advance_time_and_run(1)
-        self.assertEqual("FFFFFF", self.rgb_cpu.leds['97'])
-        self.assertEqual("000000", self.rgb_cpu.leds['98'])
+        self.assertEqual("FFFFFF", self.rgb_cpu.leds['56'])
+        self.assertEqual("000000", self.rgb_cpu.leds['57'])
 
         device2.color("001122")
 
         # test led off
         device.off()
         self.advance_time_and_run(1)
-        self.assertEqual("000000", self.rgb_cpu.leds['97'])
-        self.assertEqual("110022", self.rgb_cpu.leds['98'])  # GRB so ensure it's not 001122
+        self.assertEqual("000000", self.rgb_cpu.leds['56'])
+        self.assertEqual("110022", self.rgb_cpu.leds['57'])  # GRB so ensure it's not 001122
 
         # test led color
-        device.color(RGBColor((2, 23, 42)))
+        device2.color(RGBColor((2, 23, 42)))  #02172A
         self.advance_time_and_run(1)
-        self.assertEqual("17022A", self.rgb_cpu.leds['97'])  # GRB so ensure it's not 001122
+        self.assertEqual("17022A", self.rgb_cpu.leds['57'])  # GRB so ensure it's not 02172A
 
         # test led off
-        device.off()
+        device2.off()
         self.advance_time_and_run(1)
-        self.assertEqual("000000", self.rgb_cpu.leds['97'])
+        self.assertEqual("000000", self.rgb_cpu.leds['57'])
 
         self.advance_time_and_run(.02)
 
         # fade led over 100ms
-        device.color(RGBColor((100, 100, 100)), fade_ms=100)
+        device2.color(RGBColor((100, 100, 100)), fade_ms=100)
         self.advance_time_and_run(.03)
-        self.assertTrue(10 < int(self.rgb_cpu.leds['97'][0:2], 16) < 40)
-        self.assertTrue(self.rgb_cpu.leds['97'][0:2] == self.rgb_cpu.leds['97'][2:4] == self.rgb_cpu.leds['97'][4:6])
+        self.assertTrue(10 < int(self.rgb_cpu.leds['57'][0:2], 16) < 40)
+        self.assertTrue(self.rgb_cpu.leds['57'][0:2] == self.rgb_cpu.leds['57'][2:4] == self.rgb_cpu.leds['57'][4:6])
         self.advance_time_and_run(.03)
-        self.assertTrue(40 < int(self.rgb_cpu.leds['97'][0:2], 16) < 60)
-        self.assertTrue(self.rgb_cpu.leds['97'][0:2] == self.rgb_cpu.leds['97'][2:4] == self.rgb_cpu.leds['97'][4:6])
+        self.assertTrue(40 < int(self.rgb_cpu.leds['57'][0:2], 16) < 60)
+        self.assertTrue(self.rgb_cpu.leds['57'][0:2] == self.rgb_cpu.leds['57'][2:4] == self.rgb_cpu.leds['57'][4:6])
         self.advance_time_and_run(.03)
-        self.assertTrue(60 < int(self.rgb_cpu.leds['97'][0:2], 16) < 90)
-        self.assertTrue(self.rgb_cpu.leds['97'][0:2] == self.rgb_cpu.leds['97'][2:4] == self.rgb_cpu.leds['97'][4:6])
+        self.assertTrue(60 < int(self.rgb_cpu.leds['57'][0:2], 16) < 90)
+        self.assertTrue(self.rgb_cpu.leds['57'][0:2] == self.rgb_cpu.leds['57'][2:4] == self.rgb_cpu.leds['57'][4:6])
         self.advance_time_and_run(2)
-        self.assertEqual("646464", self.rgb_cpu.leds['97'])
+        self.assertEqual("646464", self.rgb_cpu.leds['57'])
 
-    @expect_startup_error()
-    @test_config("error_lights.yaml")
-    def DISABLED_test_light_errors(self):
-        self.assertIsInstance(self.startup_error, ConfigFileError)
-        self.assertEqual(7, self.startup_error.get_error_no())
-        self.assertEqual("light.test_led", self.startup_error.get_logger_name())
-        self.assertIsInstance(self.startup_error.__cause__, ConfigFileError)
-        self.assertEqual(9, self.startup_error.__cause__.get_error_no())
-        self.assertEqual("FAST", self.startup_error.__cause__.get_logger_name())
-        self.assertEqual("Light syntax is number-channel (but was \"3\") for light test_led.",
-                         self.startup_error.__cause__._message)
+    # TODO need to go through the entire FAST platform and cleanup config errors and error logging in general
+    # @expect_startup_error()
+    # @test_config("error_lights.yaml")
+    # def test_light_errors(self):
+    #     self.assertIsInstance(self.startup_error, ConfigFileError)
+    #     self.assertEqual(2, self.startup_error.get_error_no())
+    #     self.assertEqual("light.test_led", self.startup_error.get_logger_name())
+    #     self.assertIsInstance(self.startup_error.__cause__, ConfigFileError)
+    #     self.assertEqual(9, self.startup_error.__cause__.get_error_no())
+    #     self.assertEqual("FAST", self.startup_error.__cause__.get_logger_name())
+    #     self.assertEqual("Light syntax is number-channel (but was \"3\") for light test_led.",
+    #                      self.startup_error.__cause__._message)

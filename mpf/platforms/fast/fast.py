@@ -520,7 +520,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             return FASTMatrixLight(number, self.serial_connections['net'], self.machine,
                                    int(1 / self.config['net']['lamp_hz'] * 1000), self)
         if not subtype or subtype == "led":
-
+            # TODO refactor and split into EXP and RGB communicators
             parts, channel = number.lower().rsplit('-', 1)  # make everything lowercase and strip trailing channel number
             parts = parts.split('-')  # split into board name, (breakout), port, led
 
@@ -581,8 +581,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         device_num: LED position in the change, First LED is 1. No zeros.
         devices_per_port: number of LEDs per port. Typically 32.
         """
-
+        port = int(port)
         device_num = int(device_num)
+
+        if port < 1:
+            raise AssertionError(f"Port {port} is not valid for device {device_num}")
+
         if device_num > devices_per_port:
             if name:
                 self.raise_config_error(f"Device number {device_num} exceeds the number of devices per port ({devices_per_port}) "
@@ -590,7 +594,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             else:
                 raise AssertionError(f"Device number {device_num} exceeds the number of devices per port ({devices_per_port})")
 
-        port_offset = ((int(port) - 1) * devices_per_port)
+        port_offset = ((port - 1) * devices_per_port)
         device_num = device_num - 1
         return f'{(port_offset + device_num):02X}'
 
@@ -793,31 +797,3 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         driver = coil.hw_driver
 
         driver.clear_autofire()
-
-# TODO everything below needs to move
-
-    def receive_nw_open(self, msg, remote_processor):
-        """Process network switch open.
-
-        Args:
-        ----
-            msg: switch number
-            remote_processor: Processor which sent the message.
-        """
-        assert remote_processor == "NET"
-        self.machine.switch_controller.process_switch_by_num(state=0,
-                                                             num=(msg, 1),
-                                                             platform=self)
-
-    def receive_nw_closed(self, msg, remote_processor):
-        """Process network switch closed.
-
-        Args:
-        ----
-            msg: switch number
-            remote_processor: Processor which sent the message.
-        """
-        assert remote_processor == "NET"
-        self.machine.switch_controller.process_switch_by_num(state=1,
-                                                             num=(msg, 1),
-                                                             platform=self)
