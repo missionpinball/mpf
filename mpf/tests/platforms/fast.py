@@ -296,6 +296,28 @@ class MockFastNetNano(MockFastSerial):
         if cmd == (' ' * 256 * 4):
             return "XX:F"
 
+class MockFastNetRetro(MockFastSerial):
+    def __init__(self, test_fast_base):
+        super().__init__(test_fast_base)
+        self.type = "NETv2"
+        self.port = 'com3'
+
+        self.autorespond_commands = {
+            'WD:1' : 'WD:P',
+            'WD:3E8': 'WD:P',
+            'SA:':'SA:0E,2900000000000000000000000000',
+            'CH:9500,FF':'CH:P',
+            'ID:': 'ID:NET FP-SBI-0095  02.13',
+            'BR:': '\r\r!B:00\r..!B:02\r.',
+            }
+
+        self.attached_boards = dict()
+        self.msg_history = list()
+
+    def process_msg(self, cmd):
+        if cmd == (' ' * 256 * 4):
+            return "XX:F"
+
 class MockFastSeg(MockFastSerial):
     def __init__(self, test_fast_base):
         super().__init__(test_fast_base)

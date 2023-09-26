@@ -5,13 +5,12 @@ hardware, including the FAST Neuron, Nano, and Retro controllers as well
 as FAST I/O boards.
 """
 import asyncio
-from copy import deepcopy
 from typing import Dict, Optional
 
 from serial import SerialException
 
-from mpf.core.platform import (DmdPlatform, DriverConfig,
-                               DriverSettings, LightsPlatform, RepulseSettings,
+from mpf.core.platform import (DmdPlatform, DriverConfig, DriverSettings,
+                               LightsPlatform, RepulseSettings,
                                SegmentDisplayPlatform, ServoPlatform,
                                SwitchConfig, SwitchSettings)
 from mpf.core.utility_functions import Util
@@ -31,8 +30,7 @@ from mpf.platforms.fast.fast_segment_display import FASTSegmentDisplay
 from mpf.platforms.fast.fast_servo import FastServo
 from mpf.platforms.fast.fast_switch import FASTSwitch
 # pylint: disable-msg=too-many-instance-attributes
-from mpf.platforms.interfaces.light_platform_interface import \
-    LightPlatformInterface
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.system11 import System11Driver, System11OverlayPlatform
 
 
@@ -76,7 +74,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         if self.machine_type in ['sys11', 'wpc89', 'wpc95']:
             self.debug_log("Configuring the FAST Controller for Retro driver board")
-            # todo make logs respect fast:debug:True or figure out how they work
             self.is_retro = True
         elif self.machine_type in ['neuron', 'nano']:
             self.debug_log("Configuring FAST Controller for FAST I/O boards.")

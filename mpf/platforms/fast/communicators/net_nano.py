@@ -1,12 +1,9 @@
-import asyncio
-from packaging import version
-from serial import SerialException, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
-from typing import Optional
-from mpf.platforms.fast import fast_defines
+# mpf/platforms/fast/communicators/net_nano.py
 
-from mpf.core.utility_functions import Util
+from packaging import version
+
 from mpf.platforms.fast.communicators.net_neuron import FastNetNeuronCommunicator
-from mpf.platforms.fast.fast_io_board import FastIoBoard
+
 
 class FastNetNanoCommunicator(FastNetNeuronCommunicator):
 

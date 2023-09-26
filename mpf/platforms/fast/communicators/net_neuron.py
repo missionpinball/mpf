@@ -9,6 +9,7 @@ from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.platforms.fast.fast_driver import FastDriverConfig
 from mpf.platforms.fast.fast_switch import FASTSwitch
 from mpf.platforms.fast.fast_driver import FASTDriver
+from mpf.platforms.fast import fast_defines
 
 
 class FastNetNeuronCommunicator(FastSerialCommunicator):
@@ -64,7 +65,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         await self.query_io_boards()
 
     async def configure_hardware(self):
-        await self.send_and_wait_for_response_processed('CH:2000,FF', 'CH:')  # Configure hardware for Neuron with active switch reporting
+        await self.send_and_wait_for_response_processed(f'CH:{fast_defines.HARDWARE_KEY[self.platform.machine_type]},FF', 'CH:')
 
     def create_switches(self):
         # Neuron tracks all switches regardless of how many are connected
@@ -115,11 +116,9 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         """Query the NET processor to get a list of drivers and their configurations.
         Compare that to how they should be configured, and send new configuration
         commands for any that are different.
-
         """
 
         # self.drivers contains a list of all drivers, not just ones defined in the config
-
         for driver in self.drivers:
             await self.send_and_wait_for_response_processed(f'{self.DRIVER_CMD}:{Util.int_to_hex_string(driver.number)}', self.DRIVER_CMD)
 
@@ -147,10 +146,6 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
             # Don't move on until we get board 00 in since it can take a sec after a reset
             if current_node + 1 >= len(self.platform.io_boards):
                 current_node += 1
-
-            # If our count is greater than the number of boards we have, we're done
-            # if current_node > len(self.platform.io_boards):
-            #     break
 
     def _process_nn(self, msg):
         firmware_ok = True

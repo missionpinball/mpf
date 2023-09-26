@@ -1,7 +1,9 @@
 # mpf.tests.test_Fast
 
 from mpf.tests.MpfTestCase import MpfTestCase
-from mpf.tests.platforms.fast import MockFastNetNeuron, MockFastExp, MockFastDmd, MockFastSeg, MockFastRgb, MockFastNetNano
+from mpf.tests.platforms.fast import (MockFastDmd, MockFastExp,
+                                      MockFastNetNano, MockFastNetNeuron,
+                                      MockFastRgb, MockFastSeg, MockFastNetRetro)
 
 
 class TestFastBase(MpfTestCase):
@@ -38,6 +40,9 @@ class TestFastBase(MpfTestCase):
             elif conn == 'net1':
                 self.serial_connections['net1'] = MockFastNetNano(self)  # default com6
                 self.net_cpu = self.serial_connections['net1']
+            elif conn == 'net_retro':
+                self.serial_connections['net_retro'] = MockFastNetRetro(self)  # default com6
+                self.net_cpu = self.serial_connections['net_retro']
             elif conn == 'seg':
                 self.serial_connections['seg'] = MockFastSeg(self)  # default com7
                 self.seg_cpu = self.serial_connections['seg']

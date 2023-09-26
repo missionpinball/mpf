@@ -21,7 +21,8 @@ VALID_IO_BOARDS = (
     'FP-I/O-1604',
     'FP-I/O-0804',
     'FP-I/O-0024',
-    'FP-CAB-0001',  # internally the same as FP-I/O-0024
+    'FP-CAB-0001',   # Internally the same as FP-I/O-0024
+    'FP-RETRO-I/O',  # Fake I/O board for Retro Controllers
 )
 
 EXPANSION_BOARD_FEATURES = {

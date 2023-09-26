@@ -1,6 +1,4 @@
-from mpf.core.platform import SwitchConfig
 from mpf.core.rgb_color import RGBColor
-from mpf.exceptions.config_file_error import ConfigFileError
 
 from mpf.tests.MpfTestCase import MagicMock, test_config, expect_startup_error
 from mpf.tests.test_Fast import TestFastBase

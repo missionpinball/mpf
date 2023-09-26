@@ -1,0 +1,155 @@
+#config_version=6
+
+# Config file for FAST Retro Controller I/O board testing
+
+mpf:
+  report_crashes: never
+
+hardware:
+    platform: fast
+
+fast:
+    net:
+        port: com3
+        debug: true
+        controller: wpc95
+
+switches:
+    s_baseline:  # Starts active via SA:
+        number: S11  # 0x00
+    s_flipper:
+        number: S12  # 0x01
+    s_flipper_eos:
+        number: S13  # 0x02
+    s_flipper_opto:  # Starts active via SA:
+        number: S14  # 0x03
+        type: 'NC'
+    s_autofire_3208:
+        number: S15  # 0x04
+    s_autofire_1616:
+        number: S61  # 0x28
+    s_test_nc:  # Starts active via SA:
+        number: S16  # 0x05
+        type: 'NC'
+    s_debounce_auto:
+        number: S17  # 0x06
+        debounce: auto
+    s_debounce_quick:
+        number: S18  # 0x07
+        debounce: quick  # debounce 02, 02
+    s_debounce_normal:
+        number: S21  # 0x08
+        debounce: normal
+    s_debounce_custom:
+        number: S22  # 0x09
+        platform_settings:
+            debounce_open: 26  # 0x1A
+            debounce_close: 5  # 0x05
+    s_cab_flipper:
+        number: S81  # 0x38
+
+coils:
+    c_baseline:  # DL:00,81,00,10,0A,FF,00,00,00
+        number: C01  # 0x00
+    c_allow_enable:  # DL:01,81,00,10,0A,FF,00,FF,00
+        number: C02  # 0x01
+        allow_enable: true
+    c_custom_pulse:  # DL:02,81,00,10,17,AA,00,00,00
+        number: C03  # 0x02
+        default_pulse_ms: 23  # 0x17
+        default_pulse_power: 0.53  # 0xAA
+    c_custom_recycle:  # DL:05,81,00,10,0A,FF,00,00,1B
+        number: C06  # 0x05
+        platform_settings:
+            recycle_ms: 27  # 0x1B
+    c_long_pwm2:  # DL:06,81,00,70,0A,FF,14,EE,00
+        number: C07  # 0x06
+        default_hold_power: 0.75  # 0xEE
+        platform_settings:
+            pwm2_ms: 2000  # 0x14 (2000ms / 100)
+    c_default_hold_power:  # DL:07,81,00,10,0A,FF,00,88,00
+        number: C08  # 0x07
+        default_hold_power: 0.25  # 0x88
+    c_longer_pwm2:  # DL:08,81,00,70,0A,FF,C8,EE,00
+        number: C09  # 0x08
+        default_hold_power: 0.75  # 0xEE
+        platform_settings:
+            pwm2_ms: 20000  # 0xC8 (20000ms / 100)
+    c_2_stage_pulse:  # DL:0A,81,00,10,18,FE,14,AA,00
+        number: C11  # 0x0A
+        default_pulse_ms: 24  # 0x18
+        default_pulse_power: 0.875  # 0xFE
+        default_hold_power: 0.5  # 0xAA
+        platform_settings:
+            pwm2_ms: 20  # 0x14
+    c_pwm2:  # DL:0B,81,00,10,14,AA,14,AA,00
+        number: C12  # 0x0B
+        default_pulse_ms: 20  # 0x14
+        default_pulse_power: 0.53  # 0xAA
+        default_hold_power: 0.51  # 0xAA
+        platform_settings:
+            pwm2_ms: 20 # 0x14
+    c_flipper_main:  # DL:0D,81,00,10,0A,FF,00,00,00
+        number: C14  # 0x0D
+        default_pulse_ms: 10  # 0x0A
+    c_flipper_hold:  # DL:0E,81,00,10,0A,FF,00,00,00
+        number: C15  # 0x0E
+        allow_enable: true
+    c_flipper_single_wound:  # DL:0F,81,00,10,0E,FF,00,01,00
+        number: C16  # 0x0F
+        default_pulse_ms: 14  # 0x0A
+        default_hold_power: 0.125  # 0x20
+    c_autofire_1:
+        number: C17  # 0x10
+    c_autofire_2:
+        number: C18  # 0x11
+    c_flipper2_main:
+        number: FLRM  # 0x20
+        default_pulse_ms: 15  # 0x0A
+    c_flipper2_hold:
+        number: FLRH # 0x21
+        allow_enable: true
+
+autofire_coils:
+    ac_baseline:
+        coil: c_autofire_1  # io1616-4  # 0x10
+        switch: s_autofire_1616  # io1616-0  # 0x28
+    ac_inverted_switch:
+        coil: c_autofire_2  # io1616-5  # 0x11
+        switch: s_test_nc   # io3208-5  # 0x05
+    ac_2_stage_pwm:
+        coil: c_long_pwm2
+        switch: s_debounce_auto
+    ac_test_action:
+        coil: c_pwm2
+        switch: s_debounce_quick
+
+flippers:
+    f_dual_wound:
+        main_coil: c_flipper_main
+        hold_coil: c_flipper_hold
+        activation_switch: s_flipper  # io3208-1  # 0x01
+
+    f_single_wound:
+        main_coil: c_flipper_single_wound
+        activation_switch: s_flipper_opto  # io3208-3  # 0x03
+
+    f_test_hold_eos:
+        main_coil: c_flipper2_main
+        hold_coil: c_flipper2_hold
+        activation_switch: s_cab_flipper
+        eos_switch: s_flipper_eos
+        use_eos: true
+
+playfields:
+  playfield:
+    tags: default
+    default_source_device: None
+
+lights:
+  test_pdb_light:
+    number: L54
+    subtype: matrix
+  test_gi:
+    number: G01
+    subtype: gi
