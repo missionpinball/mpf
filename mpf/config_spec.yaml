@@ -691,6 +691,7 @@ fast_rgb:
     debug: single|bool|false
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
+    led_fade_time: single|ms|0
     led_hz: single|int|30
     ignore_reboot: single|bool|true
 fast_switches:

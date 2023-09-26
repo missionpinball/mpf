@@ -62,7 +62,9 @@ class FastRgbCommunicator(FastSerialCommunicator):
 
     def reset(self):
         """Reset the RGB processor."""
+        # self.send_and_forget('RF:0')  # TODO confirm if the RGB supports RF. I think not?
         self.send_and_forget('RA:000000')
+        # self.send_and_forget(f"RF:{Util.int_to_hex_string(self.config['led_fade_time'])}")
 
     def stopping(self):
         if self._led_task:
