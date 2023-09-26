@@ -11,7 +11,7 @@ class TestFastNeuron(TestFastBase):
         self.serial_connections_to_mock = ['net2', 'seg', 'dmd']
 
     def get_config_file(self):
-        return 'config.yaml'
+        return 'neuron.yaml'
 
     def create_expected_commands(self):
         # These is everything that happens based on this config file before the

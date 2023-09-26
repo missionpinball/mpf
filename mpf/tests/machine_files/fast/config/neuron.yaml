@@ -64,14 +64,14 @@ switches:
 coils:
     c_baseline:  # DL:00,81,00,10,0A,FF,00,00,00
         number: io3208-0  # 0x00
-    c_allow_enable:
+    c_allow_enable:  # DL:01,81,00,10,0A,FF,00,FF,00
         number: io3208-1  # 0x01
         allow_enable: true
     c_custom_pulse:  # DL:02,81,00,10,17,AA,00,00,00
         number: io3208-2  # 0x02
         default_pulse_ms: 23  # 0x17
         default_pulse_power: 0.53  # 0xAA
-    c_custom_recycle:
+    c_custom_recycle:  # DL:05,81,00,10,0A,FF,00,00,1B
         number: io3208-5  # 0x05
         platform_settings:
             recycle_ms: 27  # 0x1B

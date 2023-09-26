@@ -251,13 +251,13 @@ class MockFastRgb(MockFastSerial):
         self.port = 'com5'
 
         self.autorespond_commands = {
-            'ID:': 'ID:RGB FP-CPU-002-2 00.89',
+            'ID:': 'ID:RGB FP-CPU-002-2 01.00',
             }
 
         self.leds = dict()
 
     def process_msg(self, cmd):
-        if cmd[:3] == "RS:":
+        if cmd[:3] == 'RS:':
             remaining = cmd[3:]
             while True:
                 self.leds[remaining[0:2]] = remaining[2:8]
@@ -268,12 +268,17 @@ class MockFastRgb(MockFastSerial):
 
             return "RX:P"
 
+        elif cmd[:3] == 'RA:':
+            for led in self.leds:
+                self.leds[led] = cmd[3:9]
+
+            return "RX:P"
 
 class MockFastNetNano(MockFastSerial):
     def __init__(self, test_fast_base):
         super().__init__(test_fast_base)
         self.type = "NETv1"
-        self.port = 'com4'
+        self.port = 'com6'
 
         self.autorespond_commands = {
             'WD:1' : 'WD:P',

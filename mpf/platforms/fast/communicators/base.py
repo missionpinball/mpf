@@ -16,7 +16,7 @@ class FastSerialCommunicator(LogMixin):
 
     """Handles the serial communication to the FAST platform."""
 
-    ignored_messages = []
+    IGNORED_MESSAGES = []
 
     __slots__ = ["platform", "remote_processor", "config", "writer", "reader", "read_task", "received_msg", "log",
                  "machine", "fast_debug", "port_debug", "remote_firmware", "send_queue", "write_task",
@@ -27,6 +27,7 @@ class FastSerialCommunicator(LogMixin):
         """Initialize FastSerialCommunicator."""
         self.platform = platform
         self.remote_processor = processor.upper()
+        self.remote_model = str()
         self.config = config
         self.writer = None
         self.reader = None
@@ -296,7 +297,7 @@ class FastSerialCommunicator(LogMixin):
 
     def dispatch_incoming_msg(self, msg):
 
-        if msg in self.ignored_messages:
+        if msg in self.IGNORED_MESSAGES:
             return
 
         msg_header = msg[:3]

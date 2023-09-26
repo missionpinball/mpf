@@ -10,7 +10,7 @@ MIN_FW = version.parse('2.06')
 
 class FastNetRetroCommunicator(FastSerialCommunicator):
 
-    ignored_messages = []
+    IGNORED_MESSAGES = []
 
     async def init(self):
         await super().init()

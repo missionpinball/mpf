@@ -55,6 +55,7 @@ class TestFastBase(MpfTestCase):
         # code in the test starts. (These commands also do lots of tests themselves.),
         # including initial switch and driver states.
 
+        # TODO move these since they're Neuron specific
         self.serial_connections['net2'].expected_commands = {
             # Initial switch responses before they're configured which apply to all tests:
             "SL:00": "SL:00,01,02,04",

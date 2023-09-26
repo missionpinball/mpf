@@ -12,7 +12,7 @@ class FastExpCommunicator(FastSerialCommunicator):
 
     """Handles the serial communication for the FAST EXP bus."""
 
-    ignored_messages = ['XX:F']
+    IGNORED_MESSAGES = ['XX:F']
 
     __slots__ = ["exp_boards_by_address", "active_board", "_led_task"]
 

@@ -9,7 +9,7 @@ class FastDmdCommunicator(FastSerialCommunicator):
 
     """Handles the serial communication to a DMD in the FAST platform."""
 
-    ignored_messages = []
+    IGNORED_MESSAGES = []
 
     def _send(self, msg): # todo is this meth even used?
         self.send_bytes(b'BM:' + msg)

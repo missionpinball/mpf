@@ -9,4 +9,4 @@ class FastEmuCommunicator(FastSerialCommunicator):
 
     """Handles the serial communication to the EMU processor on a FAST Retro Controller."""
 
-    ignored_messages = []
+    IGNORED_MESSAGES = []

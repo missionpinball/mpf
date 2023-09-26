@@ -30,8 +30,8 @@ dependencies = [
     "packaging",  # 23.1
     "uvloop; platform_system!='Windows'", # 0.17.0
     "prompt_toolkit",
-    "asciimatics",
-    "terminaltables",
+    "asciimatics",  # only used for the TUI
+    "terminaltables",  # only used for the TUI and CLI
     ]
 dynamic = ["version"]
 

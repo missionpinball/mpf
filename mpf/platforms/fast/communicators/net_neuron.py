@@ -18,13 +18,14 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
     MAX_IO_BOARDS = 9
     MAX_SWITCHES = 104
     MAX_DRIVERS = 48
-    ignored_messages = ['WD:P',
-                        'TL:P']
+    IGNORED_MESSAGES = ['WD:P', 'TL:P']
+    TRIGGER_CMD = 'TL'
+    DRIVER_CMD = 'DL'
+    SWITCH_CMD = 'SL'
 
-    __slots__ = ["watchdog_cmd", "_watchdog_task", "io_loop", "switches", "drivers", "trigger_cmd", "driver_cmd", "switch_cmd"]
+    __slots__ = ["watchdog_cmd", "_watchdog_task", "io_loop", "switches", "drivers"]
 
     def __init__(self, platform, processor, config):
-
         super().__init__(platform, processor, config)
 
         self.watchdog_cmd = f"WD:{config['watchdog']:02X}"
@@ -35,19 +36,15 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.switches = list()
         self.drivers = list()
 
-        self.trigger_cmd = 'TL'
-        self.driver_cmd = 'DL'
-        self.switch_cmd = 'SL'
-
         self.message_processors['SA:'] = self._process_sa
         self.message_processors['CH:'] = self._process_ch
         self.message_processors['!B:'] = self._process_boot_message
         self.message_processors['\x11\x11!'] = self._process_reboot_done
         self.message_processors['NN:'] = self._process_nn
-        self.message_processors['DL:'] = self.process_driver_config_msg
-        self.message_processors['SL:'] = self.process_switch_config_msg
-        self.message_processors['/L:'] = self._process_switch_open
-        self.message_processors['-L:'] = self._process_switch_closed
+        self.message_processors[f'{self.DRIVER_CMD}:'] = self.process_driver_config_msg
+        self.message_processors[f'{self.SWITCH_CMD}:'] = self.process_switch_config_msg
+        self.message_processors[f'/{self.SWITCH_CMD[-1]}:'] = self._process_switch_open
+        self.message_processors[f'-{self.SWITCH_CMD[-1]}:'] = self._process_switch_closed
 
         for board, config in self.config['io_loop'].items():
             config['index'] = int(config['order'])-1
@@ -62,9 +59,12 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.create_switches()
         self.create_drivers()
         await self.send_and_wait_for_response_processed('ID:', 'ID:', max_retries=-1)  # Loop here until we get a response
-        await self.send_and_wait_for_response_processed('CH:2000,FF', 'CH:')  # Configure hardware for Neuron with active switch reporting
+        await self.configure_hardware()
         self.send_and_forget('WD:1') # Force expire the watchdog since who knows what state the board is in?
         await self.query_io_boards()
+
+    async def configure_hardware(self):
+        await self.send_and_wait_for_response_processed('CH:2000,FF', 'CH:')  # Configure hardware for Neuron with active switch reporting
 
     def create_switches(self):
         # Neuron tracks all switches regardless of how many are connected
@@ -107,7 +107,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         """
 
         for switch in self.switches:  # all physical switches, not just ones defined in the config
-            await self.send_and_wait_for_response_processed(f'{self.switch_cmd}:{switch.hw_number}', f'{self.switch_cmd}:{switch.hw_number}')
+            await self.send_and_wait_for_response_processed(f'{self.SWITCH_CMD}:{switch.hw_number}', f'{self.SWITCH_CMD}:{switch.hw_number}')
 
         self.platform.switches_initialized = True
 
@@ -121,7 +121,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         # self.drivers contains a list of all drivers, not just ones defined in the config
 
         for driver in self.drivers:
-            await self.send_and_wait_for_response_processed(f'DL:{Util.int_to_hex_string(driver.number)}', self.driver_cmd)
+            await self.send_and_wait_for_response_processed(f'{self.DRIVER_CMD}:{Util.int_to_hex_string(driver.number)}', self.DRIVER_CMD)
 
         self.platform.drivers_initialized = True
 

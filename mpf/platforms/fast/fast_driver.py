@@ -80,7 +80,7 @@ class FASTDriver:
         """Convert a DriverConfig (used throughout MPF) to FastDriverConfig (FAST specific version).
         This is only used for the initial configuration of drivers. Autofire rules update these."""
 
-        if mpf_config.default_recycle is not None:
+        if mpf_config.default_recycle:
             raise ConfigFileError(f"FAST platform does not support default_recycle for coils. Use platform_settings:recycle_ms instead. Coil '{mpf_config.name}'.", 7, self.log.name)
 
         if mpf_config.default_pulse_ms > 255:
@@ -149,17 +149,17 @@ class FASTDriver:
         else:
             trigger = self.current_driver_config.trigger
 
-        msg = (f'{self.communicator.driver_cmd}:{self.hw_number},{trigger},'
+        msg = (f'{self.communicator.DRIVER_CMD}:{self.hw_number},{trigger},'
                f'{self.current_driver_config.switch_id},{self.current_driver_config.mode},{self.current_driver_config.param1},'
                f'{self.current_driver_config.param2},{self.current_driver_config.param3},{self.current_driver_config.param4},'
                f'{self.current_driver_config.param5}')
         if wait_to_confirm:
-            self.communicator.send_with_confirmation(msg, f'{self.communicator.driver_cmd}')
+            self.communicator.send_with_confirmation(msg, f'{self.communicator.DRIVER_CMD}')
         else:
             self.communicator.send_and_forget(msg)
 
     def get_current_config(self):
-        return (f'{self.communicator.driver_cmd}:{self.hw_number},{self.current_driver_config.trigger},'
+        return (f'{self.communicator.DRIVER_CMD}:{self.hw_number},{self.current_driver_config.trigger},'
                f'{self.current_driver_config.switch_id},{self.current_driver_config.mode},{self.current_driver_config.param1},'
                f'{self.current_driver_config.param2},{self.current_driver_config.param3},{self.current_driver_config.param4},'
                f'{self.current_driver_config.param5}')
@@ -221,7 +221,7 @@ class FASTDriver:
     def disable(self):
         """Disable (turn off) this driver."""
         if not self._reenable_autofire_if_configured():
-            self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},02')
+            self.communicator.send_and_forget(f'{self.communicator.TRIGGER_CMD}:{self.hw_number},02')
 
     def set_hardware_rule(self, mode, switch, coil_settings, **kwargs):
         reconfigured = False
@@ -296,9 +296,9 @@ class FASTDriver:
         elif trigger_needed:  # We only need to update the triggers
             # Set the driver to automatic using the existing configuration
             if switch_needed:
-                self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},00,{switch.hw_switch.hw_number}')
+                self.communicator.send_and_forget(f'{self.communicator.TRIGGER_CMD}:{self.hw_number},00,{switch.hw_switch.hw_number}')
             else:
-                self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},00')
+                self.communicator.send_and_forget(f'{self.communicator.TRIGGER_CMD}:{self.hw_number},00')
 
     def is_new_config_needed(self, current, new):
         # figures out if bits other than 6 and 7 changed, meaning we need a full new DL command not just TL update
@@ -323,7 +323,7 @@ class FASTDriver:
         self.current_driver_config.trigger = self.set_bit(self.current_driver_config.trigger, 7)
 
         self.autofire_config = None
-        self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},02')
+        self.communicator.send_and_forget(f'{self.communicator.TRIGGER_CMD}:{self.hw_number},02')
 
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable (turn on) this driver."""
@@ -359,7 +359,7 @@ class FASTDriver:
 
         if not reconfigured:
             # Trigger the driver directly using the existing configuration
-            self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},03')
+            self.communicator.send_and_forget(f'{self.communicator.TRIGGER_CMD}:{self.hw_number},03')
             return
         else:  # Send a new driver config and also trigger it now
             self.current_driver_config.trigger = 'C1'
@@ -438,7 +438,7 @@ class FASTDriver:
 
         if not reconfigured:
             # Trigger the driver directly using the existing configuration
-            self.communicator.send_and_forget(f'{self.communicator.trigger_cmd}:{self.hw_number},01')
+            self.communicator.send_and_forget(f'{self.communicator.TRIGGER_CMD}:{self.hw_number},01')
         else:  # Send a new driver config and also trigger it now
             self.send_config_to_driver(one_shot=True)
 

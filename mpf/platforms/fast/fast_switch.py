@@ -60,14 +60,14 @@ class FASTSwitch:
 
     def send_config_to_switch(self):
 
-        msg = (f'{self.communicator.switch_cmd}:{self.current_hw_config.number},'
+        msg = (f'{self.communicator.SWITCH_CMD}:{self.current_hw_config.number},'
                f'{self.current_hw_config.mode},{self.current_hw_config.debounce_close},'
                f'{self.current_hw_config.debounce_open}')
 
-        self.communicator.send_with_confirmation(msg, f'{self.communicator.switch_cmd}:P')
+        self.communicator.send_with_confirmation(msg, f'{self.communicator.SWITCH_CMD}:P')
 
     def get_current_config(self):
-        return (f'{self.communicator.switch_cmd}:{self.current_hw_config.number},'
+        return (f'{self.communicator.SWITCH_CMD}:{self.current_hw_config.number},'
                f'{self.current_hw_config.mode},{self.current_hw_config.debounce_close},'
                f'{self.current_hw_config.debounce_open}')
 

@@ -1,27 +1,34 @@
 #config_version=6
 
+# Config file for FAST Nano Controller I/O board testing
+
+mpf:
+  report_crashes: never
+
 hardware:
     platform: fast
 
 fast:
     net:
         port: com6
+        debug: true
         controller: nano
         io_loop:
             3208:
                 model: FP-I/O-3208
                 order: 1
-            0804:
+            '0804':
                 model: FP-I/O-0804
                 order: 2
-            1616_1:
+            io1616_1:  # mixed letters / numbers with underscore works
                 model: FP-I/O-1616
                 order: 3
-            1616_2:
+            '1616_2':  # only numbers with underscore requires quotes
                 model: FP-I/O-1616
                 order: 4
     rgb:
         port: com5
+        debug: true
 
 switches:
     s_test:
@@ -48,7 +55,7 @@ switches:
         number: 3208-12  #0x0C
 
 digital_outputs:
-  c_nux_motor:
+  c_nux_motor:  #0x01
     number: 3208-1
     type: driver
 
@@ -64,45 +71,45 @@ motors:
       go_down: down
 
 coils:
-    c_test:
+    c_test:               # DN:04,81,00,10,17,FF,00,00,1B
         number: 3208-4
         default_pulse_ms: 23
-        default_recycle: True
         platform_settings:
             recycle_ms: 27
-    c_test_allow_enable:
+    c_test_allow_enable:  # DN:06,81,00,10,17,FF,00,FF,00
         number: 3208-6
         default_pulse_ms: 23
         max_hold_power: 1.0
-    c_slingshot_test:
+    c_slingshot_test:     # DN:07,81,00,10,0A,FF,00,00,00
         number: 3208-7
-    c_pulse_pwm32_mask:
-        number: 1616_1-5
+    c_pulse_pwm32_mask:   # DN:11,81,00,10,0A,AA,00,92,00
+        number: io1616_1-5
         default_pulse_power: 0.53
         default_hold_power: 0.40
-    c_hold_ssm:
-        number: 1616_1-7
-        default_hold_power: 0.25    # approximately
-    c_long_pulse:
-        number: 1616_1-6
-        default_pulse_ms: 2000
+    c_long_pulse:         # DN:12,81,00,70,0A,FF,14,FF,00
+        number: io1616_1-6
         max_hold_power: 1.0
-    c_timed_enable:
-        number: 1616_1-10
+        platform_settings:
+            pwm2_ms: 2000
+    c_hold_ssm:           # DN:13,81,00,10,0A,FF,00,88,00
+        number: io1616_1-7
+        default_hold_power: 0.25
+    c_timed_enable:       # DN:16,81,00,10,14,FF,00,88,00
+        number: io1616_1-10
         default_pulse_ms: 20
         default_timed_enable_ms: 200
         default_hold_power: 0.25
     c_default_timed_enable:
-        number: 1616_1-11
+        number: io1616_1-11 # DN:17,81,00,10,14,FF,00,88,00
         default_pulse_ms: 20
         default_timed_enable_ms: 200
         default_hold_power: 0.25
         pulse_with_timed_enable: true
-    c_flipper_main:
+    c_flipper_main:         # DN:20,81,00,10,0A,FF,00,01,00
         number: 1616_2-4
         default_pulse_ms: 10
         default_hold_power: 0.125
-    c_flipper_hold:
+    c_flipper_hold:         # DN:21,81,00,10,0A,FF,00,01,00
         number: 1616_2-5
         default_hold_power: 0.125
 

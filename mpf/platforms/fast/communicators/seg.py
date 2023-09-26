@@ -12,7 +12,7 @@ class FastSegCommunicator(FastSerialCommunicator):
 
     """Handles the serial communication to the FAST platform."""
 
-    ignored_messages = []
+    IGNORED_MESSAGES = []
 
     async def init(self):
         await super().init()
