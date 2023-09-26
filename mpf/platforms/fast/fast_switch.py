@@ -77,9 +77,8 @@ class FASTSwitch:
             return f"FAST Retro ({self.communicator.platform.machine_type.upper()})"
 
         switch_index = 0
-        number = Util.hex_string_to_int(self.number)
         for board_obj in self.communicator.platform.io_boards.values():
-            if switch_index <= number < switch_index + board_obj.switch_count:
+            if switch_index <= self.number < switch_index + board_obj.switch_count:
                 return f"FAST Board {str(board_obj.node_id)}"
             switch_index += board_obj.switch_count
 

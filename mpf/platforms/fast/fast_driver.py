@@ -43,6 +43,7 @@ class FASTDriver:
         self.number = hw_number  # must be int to work with the rest of MPF
         self.hw_number = Util.int_to_hex_string(hw_number)  # hex version the FAST hw actually uses
         self.autofire_config = None
+        self.platform_settings = dict()
 
         self.baseline_driver_config = FastDriverConfig(number=self.hw_number, trigger='00',
                                                        switch_id='00', mode='00',
@@ -73,6 +74,7 @@ class FASTDriver:
         This will not be called for drivers that are not in the MPF config.
         """
 
+        self.platform_settings = platform_settings
         self.current_driver_config = self.convert_mpf_config_to_fast(mpf_config, platform_settings)
         self.baseline_driver_config = copy(self.current_driver_config)
 
@@ -171,9 +173,8 @@ class FASTDriver:
             return f"FAST Retro ({self.communicator.platform.machine_type.upper()})"
 
         coil_index = 0
-        number = Util.hex_string_to_int(self.number)
         for board_obj in self.communicator.platform.io_boards.values():
-            if coil_index <= number < coil_index + board_obj.driver_count:
+            if coil_index <= self.number < coil_index + board_obj.driver_count:
                 return f"FAST Board {str(board_obj.node_id)}"
             coil_index += board_obj.driver_count
 
@@ -224,6 +225,9 @@ class FASTDriver:
             self.communicator.send_and_forget(f'{self.communicator.TRIGGER_CMD}:{self.hw_number},02')
 
     def set_hardware_rule(self, mode, switch, coil_settings, **kwargs):
+
+        self._check_switch_coil_combination(switch, coil_settings.hw_driver)
+
         reconfigured = False
         trigger_needed = False
         switch_needed = False
@@ -247,13 +251,15 @@ class FASTDriver:
             new_settings['pwm2_power'] = None
             new_settings['pwm2_ms'] = None
 
-        if coil_settings.recycle:
-            if True:
+        if coil_settings.recycle is True:
+            if self.platform_settings['recycle_ms']:  # MPF autofire rules will use True, so pull it from the config if specified.
+                new_settings['recycle_ms'] = Util.int_to_hex_string(self.platform_settings['recycle_ms'])
+            else:
                 new_settings['recycle_ms'] = '00'
-            else: # int
-                new_settings['recycle_ms'] = Util.int_to_hex_string(coil_settings.recycle)
-        else:
+        elif not coil_settings.recycle:  # False or None
             new_settings['recycle_ms'] = '00'
+        else:
+            new_settings['recycle_ms'] = Util.int_to_hex_string(coil_settings.recycle)
 
         # Update the current_driver_config with any new settings
         for idx, param in enumerate(self.mode_param_mapping[mode]):
@@ -300,6 +306,21 @@ class FASTDriver:
             else:
                 self.communicator.send_and_forget(f'{self.communicator.TRIGGER_CMD}:{self.hw_number},00')
 
+    def _check_switch_coil_combination(self, switch, coil):
+        # TODO move this to the communicator or something? Since it's only Nano?
+
+        # V2 hardware can write rules across node boards
+        if self.communicator.config['controller'] != 'nano':
+            return
+
+        # first 8 switches always work
+        if 0 <= switch.hw_switch.number <= 7:
+            return
+
+        if self.get_board_name() != switch.hw_switch.get_board_name():
+            raise AssertionError(f"Driver {coil.number} and switch {switch.hw_switch.number} "
+                                "are on different boards. Cannot apply rule!")
+
     def is_new_config_needed(self, current, new):
         # figures out if bits other than 6 and 7 changed, meaning we need a full new DL command not just TL update
         current_num = int(current, 16)
@@ -336,6 +357,10 @@ class FASTDriver:
         pwm1_ms = Util.int_to_hex_string(pulse_settings.duration)
         pwm1_power = Util.float_to_pwm8_hex_string(pulse_settings.power)
         pwm2_power = Util.float_to_pwm8_hex_string(hold_settings.power)
+
+        if mode != '18':
+            mode = '18'
+            reconfigured = True
 
         if self.current_driver_config.param1 != pwm1_ms:
             self.current_driver_config.param1 = pwm1_ms

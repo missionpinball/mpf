@@ -80,9 +80,10 @@ coils:
         number: 3208-6
         default_pulse_ms: 23
         max_hold_power: 1.0
+        allow_enable: true
     c_slingshot_test:     # DN:07,81,00,10,0A,FF,00,00,00
         number: 3208-7
-    c_pulse_pwm32_mask:   # DN:11,81,00,10,0A,AA,00,92,00
+    c_pulse_pwm_mask:   # DN:11,81,00,10,0A,AA,00,92,00
         number: io1616_1-5
         default_pulse_power: 0.53
         default_hold_power: 0.40

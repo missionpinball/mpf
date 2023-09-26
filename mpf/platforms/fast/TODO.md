@@ -8,6 +8,7 @@
 * Digital driver, confirm? Initial config?
 * Remove hw led fade time from nano?
 * implement soft reset for EXP
+* verify enable for neuron
 
 
 * Delayed pulse. Add platform_setting for this.

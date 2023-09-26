@@ -34,6 +34,9 @@ class FastNetNanoCommunicator(FastNetNeuronCommunicator):
         super()._process_sa(f'00,{raw_switch_data}')
 
     def _process_boot_message(self, msg):
-        if msg == '02':
+        if msg == '00':  # rebooting
+            self.machine.stop("FAST NET Nano rebooted")
+
+        if msg == '02':  # reboot done
             self._process_reboot_done()
             # TODO what else? Mark all configs as dirty? Log and warn if this was unexpected?
