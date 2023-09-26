@@ -14,14 +14,13 @@ class FASTDirectLED:
 
     __slots__ = ["number", "number_int", "dirty", "hardware_fade_ms", "log", "channels", "machine", "platform"]
 
-    def __init__(self, number: str, hardware_fade_ms: int, platform) -> None:
+    def __init__(self, number: str, platform) -> None:
         """Initialize FAST LED on RGB processor."""
         self.number = number
         self.number_int = Util.hex_string_to_int(number)
         self.dirty = True
         self.machine = platform.machine
         self.platform = platform
-        self.hardware_fade_ms = hardware_fade_ms
         self.log = logging.getLogger('FASTLED')
         self.channels = [None, None, None]      # type: List[Optional[FASTDirectLEDChannel]]
         # All FAST LEDs are 3 element RGB and are set using hex strings
