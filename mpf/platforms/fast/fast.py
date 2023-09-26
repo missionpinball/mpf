@@ -561,8 +561,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
             if number not in self.fast_leds:
                 try:
-                    self.fast_leds[number] = FASTDirectLED(
-                    number, int(self.config['rgb']['led_fade_time']), self)
+                    self.fast_leds[number] = FASTDirectLED(number, self)
                 except KeyError:
                     # This number is not valid
                     raise ConfigFileError(f"Invalid LED number: {'_'.join(parts)}", 3, self.log.name)
