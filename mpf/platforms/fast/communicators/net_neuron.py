@@ -125,14 +125,12 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.platform.drivers_initialized = True
 
     def _process_ch(self, msg):
-        if msg == 'F:':
-            return  # TODO?
+        if msg == 'F':
+            raise AssertionError("Could not configure hardware. Check your FAST config.")
         self.done_processing_msg_response()
 
     async def query_io_boards(self):
-        """Query the NET processor to see if any FAST I/O boards are connected.
-
-        If so, queries the I/O boards to log them and make sure they're the proper firmware version.
+        """Walks through the I/O boards in the config to verify the physical boards match the config.
         """
 
         if 'switches' not in self.machine.config and 'coils' not in self.machine.config:
@@ -151,7 +149,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         firmware_ok = True
 
         if msg == 'F':  # NN:F
-            return
+            return  # TODO now what?
 
         node_id, model, fw, dr, sw, _, _, _, _, _, _ = msg.split(',')
 
@@ -196,22 +194,13 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         if not firmware_ok:
             raise AssertionError("Exiting due to I/O board firmware mismatch")
 
-        # self.no_response_waiting.set()
-
-        # If this is the last I/O board, signal that we're done
-        # if node_id == len(self.config['io_loop']) - 1:
         self.done_processing_msg_response()
 
     def process_driver_config_msg(self, msg):
+        # Got an incoming DL/DN: message
         if msg == 'P':
             self.done_processing_msg_response()
             return
-
-        try:
-            int(msg, 16)  # received an DL:L switch count response
-            return
-        except ValueError:
-            pass
 
         # From here down we're processing driver config data, 9 fields, one byte each
         # <driver_id>,<trigger>,<switch_id>,<mode>,<param_1>,<param_2>,<param_3>,<param_4>,<param_5>
@@ -222,7 +211,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         try:
             driver_obj = self.drivers[int(current_hw_driver_config.number, 16)]
         except IndexError:
-            return  # we always get data for 48 drivers, no worries if we don't have that many
+            return  # we might get a config for a driver that doesn't exist in MPF, no worries
 
         if driver_obj.current_driver_config != current_hw_driver_config:
             driver_obj.send_config_to_driver()
@@ -236,12 +225,6 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         if msg == 'P':  # SL:P
             self.done_processing_msg_response()
             return
-
-        try:
-            int(msg, 16)  # received an SL:L switch count response
-            return
-        except ValueError:
-            pass
 
         # From here down we're processing switch config data
         # '00,02,01,02' = switch number, mode, debounce close, debounce open

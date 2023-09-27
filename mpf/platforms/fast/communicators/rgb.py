@@ -39,7 +39,7 @@ class FastRgbCommunicator(FastSerialCommunicator):
         update rather than lots of individual ones).
 
         """
-        dirty_leds = [led for led in self.platform.fast_leds.values() if led.dirty]
+        dirty_leds = [led for led in self.platform.fast_rgb_leds.values() if led.dirty]
 
         if dirty_leds:
             msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color) for led in dirty_leds])

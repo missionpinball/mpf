@@ -7,12 +7,11 @@
 * RGBW LEDs on EXP bus (Eli will add functionality to the EXP boards that will take RGB colors and convert them to RGBW, so all we'll have to add is a way to specify which LEDs are RGBW so we can send the correct config commands.)
 * Add ability to not probe the serial ports for platforms where the order does not change (e.g. everything but windows.) This will speed up the initial load time. (though only by about 100ms) We will still use the USB PID/VID to identify which serial ports are connected to which devices, we just won't actually probe them to verify their IDs.
 
-# Things to verify / check / confirm
+## Things to verify / check / confirm
 
 * Digital driver, confirm? Initial config?
 * Verify driver enable for neuron, with disable later
 * Find all the TODOs
-
 
 ## Tests Needed
 
@@ -34,6 +33,7 @@
 * Move FAST devices on EXP and breakout boards to mixin classes. e.g. LEds are a mixin class, servos are a mixin class, so the config for an EXP-0071 would pull in those two mixin classes rather than having device specific code in the base class.
 * Figure out the config file errors / error logs to FAST site / etc. Currently there is no consistency, need to figure out which errors we link to the web, come up with a template and URLs to display them, etc.
 * Single LED update task. Currently the LED update task is per EXP board which means they can be off by a few ms. We should have a single LED update task that runs at the same time for all boards.
+* Change EXP `led_hz` setting to `led_update_ms` or something (specify in ms and not hertz since that's how the hardware works. Also enforce multiples of 32ms since that's the hw update speed.)
 
 ## MPF general
 

@@ -1,9 +1,5 @@
-"""FAST hardware platform.
+"""FAST Pinball hardware platform."""
 
-Contains the hardware interface and drivers for the FAST Pinball platform
-hardware, including the FAST Neuron, Nano, and Retro controllers as well
-as FAST I/O boards.
-"""
 import asyncio
 from typing import Dict, Optional
 
@@ -22,7 +18,7 @@ from mpf.platforms.fast.fast_dmd import FASTDMD
 from mpf.platforms.fast.fast_driver import FASTDriver
 from mpf.platforms.fast.fast_gi import FASTGIString
 from mpf.platforms.fast.fast_io_board import FastIoBoard
-from mpf.platforms.fast.fast_led import (FASTDirectLED, FASTDirectLEDChannel,
+from mpf.platforms.fast.fast_led import (FASTRGBLED, FASTLEDChannel,
                                          FASTExpLED)
 from mpf.platforms.fast.fast_light import FASTMatrixLight
 from mpf.platforms.fast.fast_port_detector import FastPortDetector
@@ -41,7 +37,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     """Platform class for the FAST Pinball hardware."""
 
     __slots__ = ["config", "configured_ports", "machine_type", "is_retro",
-                "serial_connections", "fast_leds", "fast_exp_leds", "fast_segs",
+                "serial_connections", "fast_rgb_leds", "fast_exp_leds", "fast_segs",
                 "exp_boards_by_address", "exp_boards_by_name", "exp_breakout_boards",
                 "exp_breakouts_with_leds", "hw_switch_data", "new_switch_data",
                 "io_boards", "io_boards_by_name", "switches_initialized",
@@ -88,7 +84,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.features['max_pulse'] = 25500
 
         self.serial_connections = dict()
-        self.fast_leds = dict()
+        self.fast_rgb_leds = dict()
         self.fast_exp_leds = dict()
         self.fast_segs = list()
         self.exp_boards_by_address = dict()  # k: EE address, v: FastExpansionBoard instances
@@ -103,7 +99,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.drivers_initialized = False
 
     def get_info_string(self):
-        """Dump info strings about boards."""
+        """Dump info strings about attached FAST hardware."""
         info_string = ""
 
         for port in sorted(self.serial_connections.keys()):
@@ -182,7 +178,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     def __repr__(self):
         """Return str representation."""
-        return '<Platform.FAST>'
+        return '[FAST Platform Interface]'
 
     def register_io_board(self, board):  # TODO move to NET communicator(s) classes?
         """Register a FAST I/O Board.
@@ -282,6 +278,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.serial_connections[port] = communicator
 
     async def _check_for_autodetect(self):
+        # Figures out which processors need to be autodetected and then runs the autodetect process
         autodetect_processors = list()
         hardcoded_ports = list()
 
@@ -356,9 +353,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         Returns: Driver object
         """
 
-        # platform_config['recycle_ms'] = 27
-        # platform_config['connection'] = 'auto'
-
         if not self.serial_connections['net']:
             raise AssertionError('A request was made to configure a FAST '
                                  'driver, but no connection to a NET processor'
@@ -367,14 +361,14 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if not number:
             raise AssertionError("Driver needs a number")
 
-        # If we have Retro driver boards, look up the driver number
+        # For a Retro Controller, look up the driver number
         if self.is_retro:
             try:
                 index = int(fast_defines.RETRO_DRIVER_MAP[number.upper()], 16)
             except KeyError:
                 self.raise_config_error(f"Could not find Retro driver {number}", 1)
 
-        # If we have FAST I/O boards, we need to make sure we have hex strings
+        # If we have FAST I/O boards, parse the config into a FAST hex driver number
         elif self.machine_type in ['nano', 'neuron']:
             index = self._parse_driver_number(number)
 
@@ -404,10 +398,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         exp_board = self.exp_boards_by_name[parts[0]]
 
         try:
-            name, port = parts
+            _, port = parts
             breakout_id = '0'
         except ValueError:
-            name, breakout_id, port = parts
+            _, breakout_id, port = parts
             breakout_id = breakout_id.strip('b')
 
         brk_board = exp_board.breakouts[breakout_id]
@@ -546,7 +540,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 if this_led_number not in self.fast_exp_leds:
                     self.fast_exp_leds[this_led_number] = FASTExpLED(this_led_number, exp_board.config['led_fade_time'], self)
 
-                fast_led_channel = FASTDirectLEDChannel(self.fast_exp_leds[this_led_number], channel)
+                fast_led_channel = FASTLEDChannel(self.fast_exp_leds[this_led_number], channel)
                 self.fast_exp_leds[this_led_number].add_channel(int(channel), fast_led_channel)
 
                 return fast_led_channel
@@ -556,15 +550,15 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             except IndexError:
                 number = f'{int(parts[0]):02X}' # this is a legacy LED number as an int
 
-            if number not in self.fast_leds:
+            if number not in self.fast_rgb_leds:
                 try:
-                    self.fast_leds[number] = FASTDirectLED(number, self)
+                    self.fast_rgb_leds[number] = FASTRGBLED(number, self)
                 except KeyError:
                     # This number is not valid
                     raise ConfigFileError(f"Invalid LED number: {'_'.join(parts)}", 3, self.log.name)
 
-            fast_led_channel = FASTDirectLEDChannel(self.fast_leds[number], channel)
-            self.fast_leds[number].add_channel(int(channel), fast_led_channel)
+            fast_led_channel = FASTLEDChannel(self.fast_rgb_leds[number], channel)
+            self.fast_rgb_leds[number].add_channel(int(channel), fast_led_channel)
 
             return fast_led_channel
 
@@ -626,20 +620,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             ]
         if not subtype or subtype == "led":
 
-            # parts = number.split('-')
-
-            # if parts[0].lower() in self.exp_boards_by_name:
-            #     # we have an expansion LED
-            #     number = '-'.join(parts[1:])  # strip of the exp board friendly name
-
-            # # if the LED number is in <channel> - <led> format, convert it to a
-            # # FAST hardware number
-            # if '-' in str(number):
-            #     num = str(number).split('-')
-            #     index = (int(num[0]) * 64) + int(num[1])
-            # else:
-            #     index = int(number)
-
             return [
                 {"number": f"{number}-0"},
                 {"number": f"{number}-1"},
@@ -657,7 +637,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         return FASTDMD(self.machine, self.serial_connections['dmd'].send_raw)
 
-
     def configure_hardware_sound_system(self, platform_settings):
         """Configure a hardware FAST audio controller."""
         if not self.serial_connections['aud']:
@@ -666,7 +645,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                  "available.")
 
         return FASTAudio(self.machine, self.serial_connections['aud'].send, platform_settings)
-
 
     async def configure_segment_display(self, number: str, display_size: int, platform_settings) -> FASTSegmentDisplay:
         """Configure a segment display."""
@@ -725,7 +703,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         # Force hold to None which is needed with this rule
         coil.hold_settings = None
         coil.hw_driver.set_hardware_rule('18', enable_switch, coil)
-
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and enable and release rule on driver.

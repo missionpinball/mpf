@@ -8,7 +8,7 @@ from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_FEATURES
 
-class FASTDirectLED:
+class FASTRGBLED:
 
     """FAST RGB LED."""
 
@@ -23,11 +23,11 @@ class FASTDirectLED:
         self.platform = platform
         self.hardware_fade_ms = 0
         self.log = logging.getLogger('FASTLED')
-        self.channels = [None, None, None]      # type: List[Optional[FASTDirectLEDChannel]]
+        self.channels = [None, None, None]      # type: List[Optional[FASTLEDChannel]]
         # All FAST LEDs are 3 element RGB and are set using hex strings
         self.log.debug("Creating FAST RGB LED at hardware address: %s", self.number)
 
-    def add_channel(self, channel_num: int, channel_obj: "FASTDirectLEDChannel"):
+    def add_channel(self, channel_num: int, channel_obj: "FASTLEDChannel"):
         """Add channel to LED."""
         self.channels[channel_num] = channel_obj
 
@@ -49,7 +49,7 @@ class FASTDirectLED:
 
         return result
 
-class FASTExpLED(FASTDirectLED):
+class FASTExpLED(FASTRGBLED):
 
     """FAST RGB LED on an expansion board."""
 
@@ -73,18 +73,18 @@ class FASTExpLED(FASTDirectLED):
         self.platform = platform
         self.hardware_fade_ms = hardware_fade_ms
         self.log = logging.getLogger('FASTLED')
-        self.channels = [None, None, None]      # type: List[Optional[FASTDirectLEDChannel]]
+        self.channels = [None, None, None]      # type: List[Optional[FASTLEDChannel]]
         # All FAST LEDs are 3 element RGB and are set using hex strings
         self.log.debug("Creating FAST RGB LED on expansion board at hardware address: %s", self.number)
 
 
-class FASTDirectLEDChannel(LightPlatformInterface):
+class FASTLEDChannel(LightPlatformInterface):
 
     """Represents a single RGB LED channel connected to the FAST hardware platform."""
 
     __slots__ = ["led", "channel", "_current_fade", "_last_brightness"]
 
-    def __init__(self, led: FASTDirectLED, channel) -> None:
+    def __init__(self, led: FASTRGBLED, channel) -> None:
         """initialize LED."""
         super().__init__("{}-{}".format(led.number, channel))
         self.led = led

@@ -1,10 +1,9 @@
 """A switch connected to a FAST controller."""
 import logging
+from copy import copy
+from dataclasses import dataclass
 
 from mpf.core.utility_functions import Util
-from dataclasses import dataclass
-from copy import copy
-
 
 MYPY = False
 
@@ -20,33 +19,32 @@ class FASTSwitch:
 
     """A switch connected to a FAST controller."""
 
-    # __slots__ = ["log", "connection", "send", "platform_settings", "_configured_debounce"]
+    __slots__ = ["log", "communicator", "number", "hw_number", "platform", "baseline_switch_config",
+                 "current_hw_config"]
 
     def __init__(self, communicator, hw_number, ) -> None:
         """initialize switch."""
+
         self.log = logging.getLogger('FAST Switch')
         self.communicator = communicator
         self.number = hw_number  # must be int to work with the rest of MPF
         self.hw_number = Util.int_to_hex_string(hw_number)  # hex version the FAST hw actually uses
         self.platform = communicator.platform  # Needed by the SwitchController
 
-        # self.baseline_mpf_config = None  # settings from this switch in the machine config
-        # # name, invert, debounce
-        # self.platform_settings = None  # platform-specific settings from the machine config
-        # # debounce_open, debounce_close
-
         self.baseline_switch_config = FastSwitchConfig(number=self.hw_number, mode='00', debounce_close='00',
                                                        debounce_open='00')
         self.current_hw_config = self.baseline_switch_config
 
-        # self.hw_config_good = False
-
     def set_initial_config(self, mpf_config, platform_settings):
+        """Takes the mpf_config and platform_settings and converts them to the FAST format.
+        Sets that to the current config and establishes it as the baseline. This is only called
+        when MPF is starting up."""
 
         self.current_hw_config = self.convert_mpf_config_to_fast(mpf_config, platform_settings)
-        self.baseline_fast_config = copy(self.current_hw_config)
+        self.baseline_switch_config = copy(self.current_hw_config)
 
     def convert_mpf_config_to_fast(self, mpf_config, platform_settings) -> FastSwitchConfig:
+        """Converts the MPF switch config to the FAST format."""
 
         debounce_close, debounce_open = self.reconcile_debounce(mpf_config, platform_settings)
 
@@ -59,6 +57,7 @@ class FASTSwitch:
                                 debounce_open=debounce_open)
 
     def send_config_to_switch(self):
+        """Sends the current config to the switch. e.g. actually updates the physical switch."""
 
         msg = (f'{self.communicator.SWITCH_CMD}:{self.current_hw_config.number},'
                f'{self.current_hw_config.mode},{self.current_hw_config.debounce_close},'
@@ -73,8 +72,6 @@ class FASTSwitch:
 
     def get_board_name(self):
         """Return the board of this switch."""
-        if self.communicator.platform.is_retro:
-            return f"FAST Retro ({self.communicator.platform.machine_type.upper()})"
 
         switch_index = 0
         for board_obj in self.communicator.platform.io_boards.values():

@@ -1,4 +1,4 @@
-"""A driver/coil in the fast platform."""
+"""A driver/coil in the FAST platform."""
 import logging
 from copy import copy
 from dataclasses import dataclass
@@ -31,7 +31,7 @@ class FASTDriver:
     """Base class for drivers connected to a FAST Controller."""
 
     __slots__ = ["log", "communicator", "number", "hw_number", "autofire_config", "baseline_driver_config",
-                    "current_driver_config", "mode_param_mapping", "platform_settings"]
+                 "current_driver_config", "mode_param_mapping", "platform_settings"]
 
     def __init__(self, communicator: FastSerialCommunicator, hw_number: int) -> None:
         """Initialize the driver object.
@@ -107,7 +107,6 @@ class FASTDriver:
                                 param5=Util.int_to_hex_string(recycle_ms))
 
     def _get_platform_settings(self, mpf_config: DriverConfig, platform_settings):
-
         if platform_settings['pwm2_ms'] is not None:
             pwm2_ms = platform_settings['pwm2_ms']
         else:
@@ -167,10 +166,7 @@ class FASTDriver:
                f'{self.current_driver_config.param5}')
 
     def get_board_name(self):
-        # This code is duplicated, TODO
         """Return the board of this driver."""
-        if self.communicator.platform.is_retro:
-            return f"FAST Retro ({self.communicator.platform.machine_type.upper()})"
 
         coil_index = 0
         for board_obj in self.communicator.platform.io_boards.values():
