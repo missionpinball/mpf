@@ -714,7 +714,11 @@ class TestFastNano(TestFastBase):
         self.assertEqual("FFFFFF", self.rgb_cpu.leds['56'])
         self.assertEqual("000000", self.rgb_cpu.leds['57'])
 
+        device.color("112233")
         device2.color("001122")
+        self.advance_time_and_run(1)
+        self.assertEqual("112233", self.rgb_cpu.leds['56'])
+        self.assertEqual("110022", self.rgb_cpu.leds['57'])  # GRB so ensure it's not 001122
 
         # test led off
         device.off()

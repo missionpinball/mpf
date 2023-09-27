@@ -1,11 +1,15 @@
 """Contains the base classes for FAST expansion and breakout boards"""
 
+import asyncio
 from base64 import b16decode
 from importlib import import_module
+
 from packaging import version
 
-from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_FEATURES, BREAKOUT_FEATURES
+from mpf.platforms.fast.fast_defines import (BREAKOUT_FEATURES,
+                                             EXPANSION_BOARD_FEATURES)
 from mpf.platforms.fast.fast_led import FASTExpLED
+
 
 class FastExpansionBoard:
 
@@ -126,11 +130,16 @@ class FastExpansionBoard:
 
     async def reset(self):
         await self.communicator.send_and_wait_for_response_processed(f'BR@{self.address}:', 'BR:P')
+
+        # TODO move this to mixin classes for device types?
         if self.config['led_fade_time']:
             self.set_led_fade(self.config['led_fade_time'])
 
-        # Should we do something with servos? TODO
-        # TODO move this to mixin classes for device types?
+        # TODO re-initialize servos? Or call each breakout to do that?
+
+    async def soft_reset(self):
+        for breakout in self.breakouts.values():
+            await breakout.soft_reset()
 
     def _update_leds(self):
         # Called every tick to update the LEDs on this board
@@ -198,3 +207,11 @@ class FastBreakoutBoard:
 
         if found:
             self.expansion_board.breakouts_with_leds.append(self.address)
+
+    async def soft_reset(self):
+        """Reset the breakout board."""
+        self.communicator.send_and_forget(f'RA@{self.address}:000000')
+        await asyncio.sleep(.03)
+
+        # Should we do something with servos? TODO
+        # TODO move this to mixin classes for device types?

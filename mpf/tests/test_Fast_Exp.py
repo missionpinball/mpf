@@ -17,7 +17,18 @@ class TestFastExp(TestFastBase):
         # These are all the defaults based on the config file for this test.
         # Individual tests can override / add as needed
 
-        self.serial_connections['exp'].expected_commands = {'RF@89:5DC': '',
+        self.serial_connections['exp'].expected_commands = {'RA@880:000000': '',
+                                                            'RA@881:000000': '',
+                                                            'RA@882:000000': '',
+                                                            'RA@890:000000': '',
+                                                            'RA@892:000000': '',
+                                                            'RA@B40:000000': '',
+                                                            'RA@840:000000': '',
+                                                            'RA@841:000000': '',
+                                                            'RA@480:000000': '',
+                                                            'RA@481:000000': '',
+                                                            'RA@482:000000': '',
+                                                            'RF@89:5DC': '',
                                                             'EM@B40:0,1,7D0,1F4,9C4,5DC': '',
                                                             'EM@B40:1,1,7D0,3E8,7D0,5DC': '',
                                                             'EM@882:7,1,7D0,3E8,7D0,5DC': '',

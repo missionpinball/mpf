@@ -243,6 +243,15 @@ class MockFastExp(MockFastSerial):
 
                 self.leds[self.led_map[led_number]] = color
 
+        elif cmd == "RA":
+            # LED color, update all LEDs
+            if not self.led_map:
+                return  # no map means nothing to reset yet
+
+            for led_number, led_name in self.led_map.items():
+                if led_number.startswith(address):
+                    self.leds[led_name] = payload.upper()
+
 
 class MockFastRgb(MockFastSerial):
     def __init__(self, test_fast_base):
