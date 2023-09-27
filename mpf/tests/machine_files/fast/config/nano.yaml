@@ -168,3 +168,5 @@ lights:
   l_o_circle:
     number: 1-10 # 0x09
     type: grb
+  old_style_number:
+    number: 0  # 0x00

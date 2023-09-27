@@ -574,6 +574,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         port = int(port)
         device_num = int(device_num)
 
+        if device_num < 1:
+            raise AssertionError(f"Device number {device_num} is not valid for device {name}. The first device in the change should be 1, not 0")
+
         if port < 1:
             raise AssertionError(f"Port {port} is not valid for device {device_num}")
 
