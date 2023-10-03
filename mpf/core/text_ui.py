@@ -10,7 +10,8 @@ from mpf.core.mpf_controller import MpfController
 
 try:
     from asciimatics.scene import Scene
-    from asciimatics.widgets import Frame, Layout, THEMES, Label, Divider, PopUpDialog, Widget
+    from asciimatics.widgets import Frame, Layout, Label, Divider, PopUpDialog, Widget
+    from asciimatics.widgets.utilities import THEMES
     from asciimatics.screen import Screen
 except ImportError:
     Scene = None
@@ -79,6 +80,7 @@ class TextUi(MpfController):
         self.screen = None
 
         if not machine.options['text_ui'] or not Scene:
+            self.log.debug(f"Text UI is disabled. TUI option setting: {machine.options['text_ui']}, Asciimatics loaded: {Scene}")
             return
 
         # hack to add themes until https://github.com/peterbrittain/asciimatics/issues/207 is implemented

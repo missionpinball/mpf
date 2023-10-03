@@ -30,7 +30,7 @@ dependencies = [
     "packaging",  # 23.1
     "uvloop; platform_system!='Windows'", # 0.17.0
     "prompt_toolkit",
-    "asciimatics",  # only used for the TUI
+    "asciimatics>=1.14.0", # Oct 3 2023, only used for the Text UI
     "terminaltables",  # only used for the TUI and CLI
     ]
 dynamic = ["version"]
