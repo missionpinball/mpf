@@ -170,10 +170,8 @@ class Command:
             console_log = logging.StreamHandler()
             console_log.setLevel(self.args.consoleloglevel)
 
-        # tell the handler to use this format
         console_log.setFormatter(logging.Formatter(
-            '%(asctime)s.%(msecs)03d : %(levelname)s : %(name)s : %(message)s', "%S"))
-
+            '%(asctime)s.%(msecs)03d : %(levelname)s [%(name)s] %(message)s', "%H:%M:%S"))
 
         # initialize async handler for console
         console_log_queue = Queue()
