@@ -122,7 +122,7 @@ class ClockBase(LogMixin):
         if not limit:
             # pylint: disable-msg=protected-access
             limit = asyncio.streams._DEFAULT_LIMIT
-        return asyncio.open_connection(host=host, port=port, loop=self.loop, limit=limit, **kwds)
+        return asyncio.open_connection(host=host, port=port, limit=limit, **kwds)
 
     async def open_serial_connection(self, limit=None, **kwargs) -> Tuple[asyncio.StreamReader, asyncio.StreamWriter]:
         """Open a serial connection using asyncio.
