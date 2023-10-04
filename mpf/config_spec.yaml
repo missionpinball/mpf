@@ -790,7 +790,7 @@ high_score:
     __valid_in__: mode
     __type__: config
     award_slide_display_time: single|ms|4s
-    categories: omap|str:list|
+    categories: dict|str:list|
     defaults: dict|str:list|None
     enter_initials_timeout: single|secs|20s
     reverse_sort: list|str|None
@@ -1043,7 +1043,7 @@ magnets:
 motors:
     __valid_in__: machine
     __type__: device
-    position_switches: omap|str:machine(switches)|
+    position_switches: dict|str:machine(switches)|
     reset_position: single|str|
     reset_events: event_handler|event_handler:ms|machine_reset_phase_3, ball_starting
     go_to_position: dict|str:str|None

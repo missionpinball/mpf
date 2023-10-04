@@ -1,18 +1,13 @@
-"""Contains the YamlInterface class for reading & writing YAML files.
-
-Fixes for octal and boolean values are from here:
-http://stackoverflow.com/questions/32965846/cant-parse-yaml-correctly/
-"""
+"""Contains the YamlInterface class for reading & writing YAML files."""
 import copy
 from typing import Any, Iterable, List, Dict
 
 from ruamel import yaml
 from ruamel.yaml.error import MarkedYAMLError
 
-
 from mpf.core.file_interface import FileInterface
 
-_yaml = yaml.YAML()
+_yaml = yaml.YAML(typ='safe', pure=True)
 _yaml.default_flow_style = False
 
 class YamlInterface(FileInterface):
@@ -22,8 +17,6 @@ class YamlInterface(FileInterface):
     file_types = ['.yaml', '.yml']
     cache = False
     file_cache = dict()     # type: Dict[str, Any]
-
-    # __slots__ = []  # type: List[str]
 
     def load(self, filename, expected_version_str=None, halt_on_error=True) -> dict:
         """Load a YAML file from disk.
@@ -54,6 +47,7 @@ class YamlInterface(FileInterface):
                         raise AssertionError("Version mismatch. Expected: {} Actual: {} Files: {}".format(
                             expected_version_str, version_str, filename))
                 config = self.process(f)
+                config = self.to_plain_dict(config)
         except MarkedYAMLError as e:
             mark = e.problem_mark
             msg = "YAML error found in file {}. Line {}, " \
@@ -77,9 +71,19 @@ class YamlInterface(FileInterface):
         return config
 
     @staticmethod
+    def to_plain_dict(data):
+        """Recursively convert CommentedMap and CommentedSeq to Python dict and list respectively."""
+        if isinstance(data, dict):
+            return {key: YamlInterface.to_plain_dict(value) for key, value in data.items()}
+        elif isinstance(data, list):
+            return [YamlInterface.to_plain_dict(item) for item in data]
+        else:
+            return data
+
+    @staticmethod
     def process(data_string: Iterable[str]) -> dict:
         """Parse yaml from a string."""
-        return _yaml.load(data_string)  # todo instantiate only once
+        return _yaml.load(data_string)
 
     def save(self, filename: str, data: dict) -> None:   # pragma: no cover
         """Save config to yaml file."""

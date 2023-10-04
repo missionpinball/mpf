@@ -77,7 +77,6 @@ class ConfigValidator:
             "list": self._validate_type_list,
             "int_from_hex": self._validate_type_int_from_hex,
             "dict": self._validate_type_dict,
-            "omap": self._validate_type_omap,
             "kivycolor": self._validate_type_kivycolor,
             "color": self._validate_type_color,
             "color_or_token": self._validate_type_or_token(self._validate_type_color),
@@ -284,13 +283,17 @@ class ConfigValidator:
 
         validators = validation.split(':')
 
+        # Dicts starting in Python 3.7 are ordered by default, so we can use a normal dict now
         if item_type == "omap":
-            item_dict = OrderedDict()
-            if not isinstance(item, OrderedDict):
-                self.validation_error(item, validation_failure_info, "Item is not an ordered dict. "
-                                                                     "Did you forget to add !!omap to your entry?",
-                                      7)
-        elif item_type == "dict":
+            item_type = "dict"
+
+        #     item_dict = OrderedDict()
+        #     if not isinstance(item, OrderedDict):
+        #         self.validation_error(item, validation_failure_info, "Item is not an ordered dict. "
+        #                                                              "Did you forget to add !!omap to your entry?",
+        #                               7)
+
+        if item_type == "dict":
             item_dict = dict()
             if item == "None" or item is None:
                 item = {}
