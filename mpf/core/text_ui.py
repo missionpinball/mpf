@@ -460,6 +460,7 @@ class TextUi(MpfController):
     def _bcp_connected(self, **kwargs):
         del kwargs
         self.scene.remove_effect(self._pending_bcp_connection)
+        self._create_window()  # The MC will write any SDL or other messages on top of the TUI, so recreate it to get rid of that stuff
         self._schedule_draw_screen()
 
     def _asset_load_change(self, percent, **kwargs):
