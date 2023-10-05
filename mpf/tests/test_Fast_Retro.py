@@ -1,7 +1,6 @@
 # mpf.tests.test_Fast
 
 from mpf.tests.test_Fast import TestFastBase
-from mpf.tests.platforms.fast import MockFastNetNeuron, MockFastExp, MockFastDmd, MockFastSeg, MockFastRgb, MockFastNetNano
 
 
 class TestFastRetro(TestFastBase):

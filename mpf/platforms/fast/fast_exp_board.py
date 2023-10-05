@@ -8,7 +8,6 @@ from packaging import version
 
 from mpf.platforms.fast.fast_defines import (BREAKOUT_FEATURES,
                                              EXPANSION_BOARD_FEATURES)
-from mpf.platforms.fast.fast_led import FASTExpLED
 
 
 class FastExpansionBoard:
@@ -18,8 +17,18 @@ class FastExpansionBoard:
     __slots__ = ["name", "communicator", "config", "platform", "log", "address", "model", "features", "breakouts",
                  "breakouts_with_leds", "_led_task", "firmware_version", "hw_verified", "led_fade_rate"]
 
-    def __init__(self, name, communicator, address, config):
-        """Initialize FastExpansionBoard."""
+    def __init__(self, name: str, communicator, address: str, config: dict) -> None:
+        """Initializes a FAST Expansion Board
+
+        Args:
+            name (str): Name of this board from the config file
+            communicator (FastExpCommunicator): FAST EXP Communicator
+            address (str): Two-character hex address of this board
+            config (dict): This board's section from the config file
+
+        Raises:
+            AssertionError: If a breakout board in the config is not valid.
+        """
 
         self.name = name
         self.communicator = communicator
@@ -37,7 +46,7 @@ class FastExpansionBoard:
         self.features = EXPANSION_BOARD_FEATURES[self.model]  # ([local model numbers,], num of remotes) tuple
         self.breakouts = dict()
         self.breakouts_with_leds = list()
-        self._led_task = None  # todo move to breakout or port and/or mixin class?
+        self._led_task = None  # TODO move to breakout or port and/or mixin class?
 
         # create the local breakouts
         for idx in range(len(self.features['local_breakouts'])):
@@ -46,13 +55,13 @@ class FastExpansionBoard:
         # create the remote breakouts
         for brk in self.config['breakouts']:
             if int(brk['port']) > self.features['breakout_ports']:
+                # TODO change to config file error
                 raise AssertionError(f'Breakout port {brk["port"]} is not available on {self}')
 
             self.create_breakout(brk)
 
-    def create_breakout(self, config):
+    def create_breakout(self, config: dict) -> None:
         if BREAKOUT_FEATURES[config['model']].get('device_class'):
-            # module = import_module(BREAKOUT_FEATURES[config['model']]['device_class'])
             module = import_module('mpf.platforms.fast.fast_exp_board')
             brk_board = module.FastBreakoutBoard(config, self)
         else:
@@ -68,8 +77,13 @@ class FastExpansionBoard:
         """Return description string."""
         return f"Expansion Board Model: {self.model_string},  Firmware: {self.firmware_version}" #TODO add brk
 
-    def verify_hardware(self, id_string, active_board):
-        """Verify hardware."""
+    def verify_hardware(self, id_string: str, active_board: str) -> None:
+        """Verifies an EXP or breakout board firmware versions
+
+        Args:
+            id_string (str): ID string returned from the ID: FAST Serial Command
+            active_board (str): 2 or 3 hex character address of the EXP or BRK board
+        """
 
         self.log.info(f'Verifying hardware for {self} with ID string "{id_string}", board address {active_board}')
 
@@ -79,11 +93,9 @@ class FastExpansionBoard:
         try:
             _, product_id, firmware_version = id_string.split()
         except ValueError:
-
             if id_string == 'F':  # got an ID:F response which means this breakout is not actually there
                 self.log.error(f'Breakout {brk_board} on {self} is not responding')
                 raise AssertionError(f'Breakout {brk_board} on {self} is not responding')
-
             else:
                 raise AssertionError(f'Invalid ID string {id_string} from {self}')
 
@@ -158,7 +170,7 @@ class FastExpansionBoard:
 
                 self.communicator.send_bytes(b16decode(f'{msg_header}{msg}'), log_msg)
 
-    def set_led_fade(self, rate):
+    def set_led_fade(self, rate: int) -> None:
         """Set LED fade rate in ms."""
 
         self.led_fade_rate = rate

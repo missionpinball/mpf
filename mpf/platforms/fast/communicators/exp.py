@@ -72,16 +72,26 @@ class FastExpCommunicator(FastSerialCommunicator):
 
             await board_obj.reset()
 
-    def _process_id(self, msg):
+    def _process_id(self, msg: str):
         self.exp_boards_by_address[self.active_board[:2]].verify_hardware(msg, self.active_board)
         self.active_board = None
         self.done_processing_msg_response()
 
     def _process_br(self, msg):
+        del msg
         self.active_board = None
         self.done_processing_msg_response()
 
-    def set_led_fade_rate(self, board_address, rate):
+    def set_led_fade_rate(self, board_address: str, rate: int) -> None:
+        """Sets the hardware LED fade rate for an EXP board
+
+        Args:
+            board_address (str): 2 hex character board address
+            rate (int): Fade rate, in milliseconds, between 0 and 8191
+
+        Raises:
+            ValueError: If the fade rate is out of bounds
+        """
         if not 0 <= rate <= 8191:
             raise ValueError(f"FAST LED fade rate of {rate}ms is out of bounds. Must be between 0 and 8191ms")
 
