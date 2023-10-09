@@ -15,9 +15,9 @@ motors:
     motorized_drop_target_bank:
         debug: True
         motor_left_output: c_motor_run
-        position_switches:  !!omap
-            - up: s_position_up
-            - down: s_position_down
+        position_switches:
+            up: s_position_up
+            down: s_position_down
         reset_position: down
         go_to_position:
             go_up: up

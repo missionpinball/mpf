@@ -12,8 +12,8 @@ mode:
 high_score:
   enter_initials_timeout: 60
   award_slide_display_time: 4s
-  categories: !!omap
-  - score:
+  categories:
+    score:
       - GRAND CHAMPION
       - HIGH SCORE 1
       - HIGH SCORE 2

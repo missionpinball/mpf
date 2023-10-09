@@ -1,6 +1,5 @@
 """Physical segment displays."""
 from asyncio import Future
-from collections import OrderedDict
 from typing import Optional, Dict, List
 
 from mpf.core.clock import PeriodicTask
@@ -216,7 +215,7 @@ class SegmentDisplay(SystemWideDevice):
                                                   -999999, "")
         else:
             # sort text stack by priority
-            self._text_stack = OrderedDict(
+            self._text_stack = dict(
                 sorted(self._text_stack.items(), key=lambda item: item[1].priority, reverse=True))
 
             # get top entry (highest priority)

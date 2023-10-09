@@ -6,9 +6,8 @@ import re
 from fractions import Fraction
 from functools import reduce, lru_cache
 
-from typing import Dict, List, Tuple, Callable, Any, Union, Iterable
+from typing import Dict, List, Tuple, Callable, Any, Union, Iterable, Optional
 import asyncio
-from ruamel.yaml.compat import ordereddict
 
 
 class Util:
@@ -62,33 +61,27 @@ class Util:
         raise AssertionError("Unknown type {}".format(type_name))
 
     @staticmethod
-    def keys_to_lower(source_dict) -> Union[dict, list]:
+    def keys_to_lower(source: Optional[Union[dict, list, int, float, str]]) -> Union[dict, list, int, float, str]:
         """Convert the keys of a dictionary to lowercase.
 
         Args:
         ----
-            source_dict: The dictionary you want to convert.
+            source: The dictionary, list, or basic data type you want to convert.
 
-        Returns a dictionary with lowercase keys.
+        Returns:
+            Dictionary or list with lowercase keys for dictionaries, or the basic data type unchanged.
         """
-        if not source_dict:
+        if source is None:
             return dict()
-        if isinstance(source_dict, dict):
-            for k in list(source_dict.keys()):
-                if isinstance(source_dict[k], ordereddict):
-                    # Dont know why but code will break with this specific dict
-                    # TODO: fix this!
-                    pass
-                elif isinstance(source_dict[k], dict):
-                    source_dict[k] = Util.keys_to_lower(source_dict[k])
 
-            return dict((str(k).lower(), v) for k, v in source_dict.items())
-        if isinstance(source_dict, list):
-            for num, item in enumerate(source_dict):
-                source_dict[num] = Util.keys_to_lower(item)
-            return source_dict
+        if isinstance(source, dict):
+            return {str(k).lower(): Util.keys_to_lower(v) for k, v in source.items()}
+        if isinstance(source, list):
+            return [Util.keys_to_lower(item) for item in source]
+        if isinstance(source, (int, float, str)):  # handle basic data types
+            return source
 
-        raise AssertionError("Source dict has invalid format.")
+        raise AssertionError(f"Source of type {type(source)} has invalid format.")
 
     @staticmethod
     def string_to_list(string: Union[str, List[str], None]) -> List[Any]:

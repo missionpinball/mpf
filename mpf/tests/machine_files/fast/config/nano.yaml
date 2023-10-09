@@ -60,9 +60,9 @@ digital_outputs:
 motors:
   motorized_drop_target_bank:
     motor_left_output: c_nux_motor
-    position_switches: !!omap
-      - up: s_nux_up
-      - down: s_nux_down
+    position_switches:
+      up: s_nux_up
+      down: s_nux_down
     reset_position: up
     go_to_position:
       go_up: up

@@ -1,6 +1,5 @@
 """Contains the DeviceManager base class."""
 import asyncio
-from collections import OrderedDict
 
 from typing import Callable, Tuple, List, Generator, Dict
 
@@ -26,7 +25,7 @@ class DeviceManager(MpfController):
 
         self._monitorable_devices = {}
 
-        self.collections = OrderedDict()
+        self.collections = dict()
         self._device_classes = {}           # type: Dict[str, Device]
 
         # this has to happen after mode load

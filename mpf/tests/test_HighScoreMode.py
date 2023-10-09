@@ -1,6 +1,4 @@
 """Test high score mode."""
-from collections import OrderedDict
-
 from unittest.mock import MagicMock, call
 from mpf.tests.MpfBcpTestCase import MpfBcpTestCase
 from mpf.tests.MpfTestCase import test_config_directory
@@ -37,23 +35,23 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.assertModeNotRunning("high_score")
 
     def test_default_high_scores(self):
-        new_score_data = OrderedDict()
-        new_score_data['score'] = [('BRI', 4242),
-                                   ('GHK', 2323),
-                                   ('JK', 1337),
-                                   ('QC', 42),
-                                   ('MPF', 23)]
-        new_score_data['loops'] = [('JK', 42)]
+        new_score_data = dict()
+        new_score_data['score'] = [['BRI', 4242],
+                                   ['GHK', 2323],
+                                   ['JK', 1337],
+                                   ['QC', 42],
+                                   ['MPF', 23]]
+        new_score_data['loops'] = [['JK', 42]]
 
         self.assertEqual(new_score_data, self.machine.modes["high_score"].high_scores)
 
     def test_no_high_scores(self):
-        self.machine.modes["high_score"].high_scores = OrderedDict(
-            score=[('BRI', 7050550),
-                   ('GHK', 93060),
-                   ('JK', 87890),
-                   ('QC', 87890),
-                   ('MPF', 10000)])
+        self.machine.modes["high_score"].high_scores = dict(
+            score=[['BRI', 7050550],
+                   ['GHK', 93060],
+                   ['JK', 87890],
+                   ['QC', 87890],
+                   ['MPF', 10000]])
 
         self.start_game(4)
         self.machine.game.player_list[0].score = 1000
@@ -65,23 +63,23 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.advance_time_and_run()
         self.assertFalse(self.machine.modes["high_score"].active)
 
-        new_score_data = OrderedDict()
-        new_score_data['score'] = [('BRI', 7050550),
-                                   ('GHK', 93060),
-                                   ('JK', 87890),
-                                   ('QC', 87890),
-                                   ('MPF', 10000)]
+        new_score_data = dict()
+        new_score_data['score'] = [['BRI', 7050550],
+                                   ['GHK', 93060],
+                                   ['JK', 87890],
+                                   ['QC', 87890],
+                                   ['MPF', 10000]]
         new_score_data['loops'] = []
         self.assertEqual(new_score_data, self.machine.modes["high_score"].data_manager.written_data)
 
     def test_tilt_during_high_score(self):
         self.mock_event("high_score_enter_initials")
-        self.machine.modes["high_score"].high_scores = OrderedDict(
-            score=[('BRI', 7050550),
-                   ('GHK', 93060),
-                   ('JK', 87890),
-                   ('QC', 87890),
-                   ('MPF', 1000)])
+        self.machine.modes["high_score"].high_scores = dict(
+                            score=[['BRI', 7050550],
+                                   ['GHK', 93060],
+                                   ['JK', 87890],
+                                   ['QC', 87890],
+                                   ['MPF', 1000]])
 
         self.start_game()
         self.advance_time_and_run()
@@ -129,13 +127,13 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.post_event("high_scores_reset")
         self.advance_time_and_run(.1)
 
-        new_score_data = OrderedDict()
-        new_score_data['score'] = [('BRI', 4242),
-                                   ('GHK', 2323),
-                                   ('JK', 1337),
-                                   ('QC', 42),
-                                   ('MPF', 23)]
-        new_score_data['loops'] = [('JK', 42)]
+        new_score_data = dict()
+        new_score_data['score'] = [['BRI', 4242],
+                                   ['GHK', 2323],
+                                   ['JK', 1337],
+                                   ['QC', 42],
+                                   ['MPF', 23]]
+        new_score_data['loops'] = [['JK', 42]]
 
         self.assertEqual(new_score_data, self.machine.modes["high_score"].high_scores)
         self.assertEqual(new_score_data, self.machine.modes["high_score"].data_manager.written_data)
@@ -218,12 +216,12 @@ class TestHighScoreMode(MpfBcpTestCase):
 
     def test_add_player_during_high_score(self):
         self.mock_event("high_score_enter_initials")
-        self.machine.modes["high_score"].high_scores = OrderedDict(
-            score=[('BRI', 7050550),
-                   ('GHK', 93060),
-                   ('JK', 87890),
-                   ('QC', 87890),
-                   ('MPF', 1000)])
+        self.machine.modes["high_score"].high_scores = dict(
+            score=[['BRI', 7050550],
+                   ['GHK', 93060],
+                   ['JK', 87890],
+                   ['QC', 87890],
+                   ['MPF', 1000]])
 
         self.start_game()
         self.advance_time_and_run()
@@ -241,12 +239,12 @@ class TestHighScoreMode(MpfBcpTestCase):
 
     def test_1_high_score(self):
         self.mock_event("high_score_enter_initials")
-        self.machine.modes["high_score"].high_scores = OrderedDict(
-            score=[('BRI', 7050550),
-                   ('GHK', 93060),
-                   ('JK', 87890),
-                   ('QC', 87890),
-                   ('MPF', 1000)])
+        self.machine.modes["high_score"].high_scores = dict(
+            score=[['BRI', 7050550],
+                   ['GHK', 93060],
+                   ['JK', 87890],
+                   ['QC', 87890],
+                   ['MPF', 1000]])
 
         self.start_game(4)
         self.advance_time_and_run()
@@ -272,12 +270,12 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.advance_time_and_run(3)
         self.assertFalse(self.machine.modes["high_score"].active)
 
-        new_score_data = OrderedDict()
-        new_score_data['score'] = [('NEW', 8000000),
-                                   ('BRI', 7050550),
-                                   ('GHK', 93060),
-                                   ('JK', 87890),
-                                   ('QC', 87890)]
+        new_score_data = dict()
+        new_score_data['score'] = [['NEW', 8000000],
+                                   ['BRI', 7050550],
+                                   ['GHK', 93060],
+                                   ['JK', 87890],
+                                   ['QC', 87890]]
         new_score_data['loops'] = []
 
         self.assertEqual(new_score_data,
@@ -287,12 +285,12 @@ class TestHighScoreMode(MpfBcpTestCase):
 
     def test_2_high_scores(self):
         self.mock_event("high_score_enter_initials")
-        self.machine.modes["high_score"].high_scores = OrderedDict(
-            score=[('BRI', 7050550),
-                   ('GHK', 93060),
-                   ('JK', 87890),
-                   ('QC', 87890),
-                   ('MPF', 1000)])
+        self.machine.modes["high_score"].high_scores = dict(
+            score=[['BRI', 7050550],
+                   ['GHK', 93060],
+                   ['JK', 87890],
+                   ['QC', 87890],
+                   ['MPF', 1000]])
 
         self.start_game(4)
         self.machine.game.player_list[0].score = 8000000
@@ -330,12 +328,12 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.assertFalse(self.machine.modes["high_score"].active)
 
         # verify the data is accurate
-        new_score_data = OrderedDict()
-        new_score_data['score'] = [('NEW', 10000000),
-                                   ('P2', 8000000),
-                                   ('BRI', 7050550),
-                                   ('GHK', 93060),
-                                   ('JK', 87890)]
+        new_score_data = dict()
+        new_score_data['score'] = [['NEW', 10000000],
+                                   ['P2', 8000000],
+                                   ['BRI', 7050550],
+                                   ['GHK', 93060],
+                                   ['JK', 87890]]
         new_score_data['loops'] = []
 
         self.assertEqual(new_score_data,
@@ -345,12 +343,12 @@ class TestHighScoreMode(MpfBcpTestCase):
     def test_2_high_scores_and_timeout(self):
         self.mock_event("high_score_enter_initials")
         self.mock_event("high_score_award_display")
-        self.machine.modes["high_score"].high_scores = OrderedDict(
-            score=[('BRI', 7050550),
-                   ('GHK', 93060),
-                   ('JK', 87890),
-                   ('QC', 87890),
-                   ('MPF', 1000)])
+        self.machine.modes["high_score"].high_scores = dict(
+            score=[['BRI', 7050550],
+                   ['GHK', 93060],
+                   ['JK', 87890],
+                   ['QC', 87890],
+                   ['MPF', 1000]])
 
         self.start_game(2)
         self.machine.game.player_list[0].score = 8000000
@@ -383,12 +381,12 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.assertFalse(self.machine.modes["high_score"].active)
 
         # verify the data is accurate
-        new_score_data = OrderedDict()
-        new_score_data['score'] = [('P2', 8000000),
-                                   ('BRI', 7050550),
-                                   ('GHK', 93060),
-                                   ('JK', 87890),
-                                   ('QC', 87890)]
+        new_score_data = dict()
+        new_score_data['score'] = [['P2', 8000000],
+                                   ['BRI', 7050550],
+                                   ['GHK', 93060],
+                                   ['JK', 87890],
+                                   ['QC', 87890]]
         new_score_data['loops'] = []
 
         self.assertEqual(new_score_data,
@@ -397,10 +395,10 @@ class TestHighScoreMode(MpfBcpTestCase):
 
     def test_new_score_to_incomplete_list(self):
         self.mock_event("high_score_enter_initials")
-        self.machine.modes["high_score"].high_scores = OrderedDict(
-            score=[('BRI', 7050550),
-                   ('GHK', 93060),
-                   ('MPF', 1000)])
+        self.machine.modes["high_score"].high_scores = dict(
+            score=[['BRI', 7050550],
+                   ['GHK', 93060],
+                   ['MPF', 1000]])
 
         self.start_game(4)
         self.machine.game.player_list[0].score = 1500
@@ -415,11 +413,11 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.advance_time_and_run(5)
         self.assertFalse(self.machine.modes["high_score"].active)
 
-        new_score_data = OrderedDict()
-        new_score_data['score'] = [('BRI', 7050550),
-                                   ('GHK', 93060),
-                                   ('NEW', 1500),
-                                   ('MPF', 1000)]
+        new_score_data = dict()
+        new_score_data['score'] = [['BRI', 7050550],
+                                   ['GHK', 93060],
+                                   ['NEW', 1500],
+                                   ['MPF', 1000]]
         new_score_data['loops'] = []
 
         self.assertEqual(new_score_data,
@@ -428,12 +426,12 @@ class TestHighScoreMode(MpfBcpTestCase):
 
     def test_more_than_3_chars(self):
         self.mock_event("high_score_enter_initials")
-        self.machine.modes["high_score"].high_scores = OrderedDict(
-            score=[('BRI', 7050550),
-                   ('GHK', 93060),
-                   ('JK', 87890),
-                   ('QC', 87890),
-                   ('MPF', 1000)])
+        self.machine.modes["high_score"].high_scores = dict(
+            score=[['BRI', 7050550],
+                   ['GHK', 93060],
+                   ['JK', 87890],
+                   ['QC', 87890],
+                   ['MPF', 1000]])
 
         self.start_game(4)
         self.machine.game.player_list[0].score = 8000000
@@ -452,12 +450,12 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.advance_time_and_run(5)
         self.assertFalse(self.machine.modes["high_score"].active)
 
-        new_score_data = OrderedDict()
-        new_score_data['score'] = [('NEWNEW', 8000000),
-                                   ('BRI', 7050550),
-                                   ('GHK', 93060),
-                                   ('JK', 87890),
-                                   ('QC', 87890)]
+        new_score_data = dict()
+        new_score_data['score'] = [['NEWNEW', 8000000],
+                                   ['BRI', 7050550],
+                                   ['GHK', 93060],
+                                   ['JK', 87890],
+                                   ['QC', 87890]]
         new_score_data['loops'] = []
 
         self.assertEqual(new_score_data,
@@ -471,13 +469,13 @@ class TestHighScoreMode(MpfBcpTestCase):
         # also tests 2 players getting an award for one slot, so only the
         # highest one should be presented
         # also tests the order (score first, then loops)
-        self.machine.modes["high_score"].high_scores = OrderedDict()
-        self.machine.modes["high_score"].high_scores['score'] = [('BRI', 7050550),
-                                                              ('GHK', 93060),
-                                                              ('JK', 87890),
-                                                              ('QC', 87890),
-                                                              ('MPF', 1000)]
-        self.machine.modes["high_score"].high_scores['loops'] = [('BIL', 2)]
+        self.machine.modes["high_score"].high_scores = dict()
+        self.machine.modes["high_score"].high_scores['score'] = [['BRI', 7050550],
+                                                              ['GHK', 93060],
+                                                              ['JK', 87890],
+                                                              ['QC', 87890],
+                                                              ['MPF', 1000]]
+        self.machine.modes["high_score"].high_scores['loops'] = [['BIL', 2]]
 
         self.start_game(4)
         self.machine.game.player_list[0].score = 8000000
@@ -528,13 +526,13 @@ class TestHighScoreMode(MpfBcpTestCase):
 
         # verify the data is accurate
 
-        new_score_data = OrderedDict()
-        new_score_data['score'] = [('NEW', 10000000),
-                                   ('P1', 8000000),
-                                   ('BRI', 7050550),
-                                   ('GHK', 93060),
-                                   ('JK', 87890)]
-        new_score_data['loops'] = [('P1', 50)]
+        new_score_data = dict()
+        new_score_data['score'] = [['NEW', 10000000],
+                                   ['P1', 8000000],
+                                   ['BRI', 7050550],
+                                   ['GHK', 93060],
+                                   ['JK', 87890]]
+        new_score_data['loops'] = [['P1', 50]]
 
         # only ask every player once
         self.assertEqual(2, self._events['high_score_enter_initials'])
@@ -544,12 +542,12 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.assertEqual(new_score_data, self.machine.modes["high_score"].data_manager.written_data)
 
     def test_score_from_nonexistent_player_var(self):
-        self.machine.modes["high_score"].high_scores = OrderedDict(
-            score=[('BRI', 7050550),
-                   ('GHK', 93060),
-                   ('JK', 87890),
-                   ('QC', 87890),
-                   ('MPF', 1000)])
+        self.machine.modes["high_score"].high_scores = dict(
+            score=[['BRI', 7050550],
+                   ['GHK', 93060],
+                   ['JK', 87890],
+                   ['QC', 87890],
+                   ['MPF', 1000]])
 
         self.start_game(4)
         self.machine.game.end_game()
@@ -557,12 +555,12 @@ class TestHighScoreMode(MpfBcpTestCase):
 
         self.assertFalse(self.machine.modes["high_score"].active)
 
-        new_score_data = OrderedDict()
-        new_score_data['score'] = [('BRI', 7050550),
-                                   ('GHK', 93060),
-                                   ('JK', 87890),
-                                   ('QC', 87890),
-                                   ('MPF', 1000)]
+        new_score_data = dict()
+        new_score_data['score'] = [['BRI', 7050550],
+                                    ['GHK', 93060],
+                                    ['JK', 87890],
+                                    ['QC', 87890],
+                                    ['MPF', 1000]]
         new_score_data['loops'] = []
 
         self.assertEqual(new_score_data,
@@ -571,42 +569,42 @@ class TestHighScoreMode(MpfBcpTestCase):
 
     def _get_mock_data(self):
         if self._testMethodName == "testInvalidData":
-            new_score_data = OrderedDict()
-            new_score_data['score'] = [(13, '123'),
-                                       (123.1, 4),
-                                       (1)]
+            new_score_data = dict()
+            new_score_data['score'] = [[13, '123'],
+                                       [123.1, 4],
+                                       [1]]
             new_score_data['loops'] = ""
 
             return {"high_scores": new_score_data}
         elif self._testMethodName == "testLoadData":
-            new_score_data = OrderedDict()
-            new_score_data['score'] = [('BRI', 5),
-                                       ('GHK', 4),
-                                       ('JK', 3),
-                                       ('QC', 2),
-                                       ('MPF', 1)]
-            new_score_data['loops'] = [('MPF', 7)]
+            new_score_data = dict()
+            new_score_data['score'] = [['BRI', 5],
+                                       ['GHK', 4],
+                                       ['JK', 3],
+                                       ['QC', 2],
+                                       ['MPF', 1]]
+            new_score_data['loops'] = [['MPF', 7]]
             return {"high_scores": new_score_data}
         elif self._testMethodName == "test_reset":
-            new_score_data = OrderedDict(
-                score=[('ABC', 1000000),
-                       ('ABC', 900000),
-                       ('ABC', 800000),
-                       ('ABC', 700000),
-                       ('ABC', 600000)],
-                loops=[('MPF', 500000)])
+            new_score_data = dict(
+                score=[['ABC', 1000000],
+                       ['ABC', 900000],
+                       ['ABC', 800000],
+                       ['ABC', 700000],
+                       ['ABC', 600000]],
+                loops=[['MPF', 500000]])
             return {"high_scores": new_score_data}
 
         return super()._get_mock_data()
 
     def testLoadData(self):
-        new_score_data = OrderedDict()
-        new_score_data['score'] = [('BRI', 5),
-                                   ('GHK', 4),
-                                   ('JK', 3),
-                                   ('QC', 2),
-                                   ('MPF', 1)]
-        new_score_data['loops'] = [('MPF', 7)]
+        new_score_data = dict()
+        new_score_data['score'] = [['BRI', 5],
+                                   ['GHK', 4],
+                                   ['JK', 3],
+                                   ['QC', 2],
+                                   ['MPF', 1]]
+        new_score_data['loops'] = [['MPF', 7]]
         self.assertEqual(new_score_data, self.machine.modes["high_score"].high_scores)
         # no changes yet
         self.assertEqual(None, self.machine.modes["high_score"].data_manager.written_data)
@@ -617,13 +615,13 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.advance_time_and_run(10)
 
         # this should reload the defaults
-        new_score_data = OrderedDict()
-        new_score_data['score'] = [('BRI', 4242),
-                                   ('GHK', 2323),
-                                   ('JK', 1337),
-                                   ('QC', 42),
-                                   ('MPF', 23)]
-        new_score_data['loops'] = [('JK', 42)]
+        new_score_data = dict()
+        new_score_data['score'] = [['BRI', 4242],
+                                   ['GHK', 2323],
+                                   ['JK', 1337],
+                                   ['QC', 42],
+                                   ['MPF', 23]]
+        new_score_data['loops'] = [['JK', 42]]
 
         self.assertEqual(new_score_data, self.machine.modes["high_score"].high_scores)
         self.assertEqual(new_score_data, self.machine.modes["high_score"].data_manager.written_data)
@@ -634,14 +632,14 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.machine.game.game_ending()
         self.advance_time_and_run()
 
-        new_score_data = OrderedDict()
-        new_score_data['score'] = [('BRI', 4242),
-                                   ('GHK', 2323),
-                                   ('JK', 1337),
-                                   ('QC', 42),
-                                   ('MPF', 23)]
-        new_score_data['loops'] = [('JK', 42)]
-        new_score_data['time_to_wizard'] = [('JK', 300),
-                                            ('BM', 350)]
+        new_score_data = dict()
+        new_score_data['score'] = [['BRI', 4242],
+                                   ['GHK', 2323],
+                                   ['JK', 1337],
+                                   ['QC', 42],
+                                   ['MPF', 23]]
+        new_score_data['loops'] = [['JK', 42]]
+        new_score_data['time_to_wizard'] = [['JK', 300],
+                                            ['BM', 350]]
         self.assertEqual(new_score_data, self.machine.modes["high_score"].high_scores)
         self.assertEqual(new_score_data, self.machine.modes["high_score"].data_manager.written_data)

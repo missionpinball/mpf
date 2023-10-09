@@ -1,6 +1,4 @@
 """Test high score mode."""
-from collections import OrderedDict
-
 from unittest.mock import MagicMock
 from mpf.tests.MpfBcpTestCase import MpfBcpTestCase
 
@@ -31,7 +29,7 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.mock_event("high_score_enter_initials")
         self.mock_event("loops_award_display")
         # tests loop award with additional variables
-        self.machine.modes["high_score"].high_scores = OrderedDict()
+        self.machine.modes["high_score"].high_scores = dict()
         self.machine.modes["high_score"].high_scores['loops'] = [('BIL', 2)]
 
         self.start_game(1)
@@ -56,7 +54,7 @@ class TestHighScoreMode(MpfBcpTestCase):
 
         # verify the data is accurate
 
-        new_score_data = {'score': [], 'loops': [('NEW', 50, {'player_number': 1})], 'hits': []}
+        new_score_data = {'score': [], 'loops': [['NEW', 50, {'player_number': 1}]], 'hits': []}
 
         self.assertEqual(new_score_data,
                          self.machine.modes["high_score"].high_scores)
@@ -67,8 +65,8 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.mock_event("high_score_enter_initials")
         self.mock_event("hits_award_display")
         # tests loop award with additional variables
-        self.machine.modes["high_score"].high_scores = OrderedDict()
-        self.machine.modes["high_score"].high_scores['hits'] = [('AAA', 2)]
+        self.machine.modes["high_score"].high_scores = dict()
+        self.machine.modes["high_score"].high_scores['hits'] = [['AAA', 2]]
 
         self.start_game(1)
         self.machine.game.player_list[0].hits = 50
@@ -92,8 +90,9 @@ class TestHighScoreMode(MpfBcpTestCase):
 
         # verify the data is accurate
 
-        new_score_data = {'score': [], 'loops': [], 'hits': [('NEW', 50, {'player_number': 1, 'machine_credits_string':
-                          'FREE PLAY'})]}
+        new_score_data = {'score': [],
+                          'loops': [],
+                          'hits': [['NEW', 50, {'player_number': 1, 'machine_credits_string': 'FREE PLAY'}]]}
 
         self.assertEqual(new_score_data,
                          self.machine.modes["high_score"].high_scores)

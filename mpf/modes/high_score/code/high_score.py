@@ -52,12 +52,12 @@ class HighScore(AsyncMode):
 
     def _load_defaults(self):
         """Load default high scores."""
-        self.high_scores = {k: [(next(iter(a.keys())), next(iter(a.values()))) for a in v] for (k, v) in
+        self.high_scores = {k: [[next(iter(a.keys())), next(iter(a.values()))] for a in v] for (k, v) in
                             self.config['high_score']['defaults'].items()}
 
     def _load_vars(self):
         """Load var values from the config file"""
-        self.vars = {k: [(next(iter(a.keys())), next(iter(a.values()))) for a in v] for (k, v) in
+        self.vars = {k: [[next(iter(a.keys())), next(iter(a.values()))] for a in v] for (k, v) in
                      self.config['high_score']['vars'].items()}
 
     def _reset(self, **kwargs):
@@ -75,7 +75,7 @@ class HighScore(AsyncMode):
                     return False
 
                 for entry in data[category]:
-                    if not isinstance(entry, tuple) or (len(entry) != 2 and len(entry) != 3):
+                    if not isinstance(entry, list) or (len(entry) != 2 and len(entry) != 3):
                         self.log.warning("Found invalid high score entry.")
                         return False
 
@@ -181,7 +181,7 @@ class HighScore(AsyncMode):
                 # if the player var is 0, don't add it. This prevents
                 # values of 0 being added to blank high score lists
                 if player[category_name]:
-                    new_list.append((player, player[category_name]))
+                    new_list.append([player, player[category_name]])
 
             # sort if from highest to lowest
             new_list.sort(key=lambda x: x[1], reverse=(category_name not in self.high_score_config['reverse_sort']))
@@ -205,10 +205,10 @@ class HighScore(AsyncMode):
                     if category_name in self.vars:
                         var_dict = self._assign_vars(category_name, player)
                         # add high score with variables
-                        new_list[i] = (player.initials, value, var_dict)
+                        new_list[i] = [player.initials, value, var_dict]
                     else:
                         # add high score without variables
-                        new_list[i] = (player.initials, value)
+                        new_list[i] = [player.initials, value]
                     # show award slide
                     player_num = player.number
                     await self._show_award_slide(player_num, player.initials, category_name, award_names[i], value)

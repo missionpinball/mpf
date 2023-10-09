@@ -23,11 +23,11 @@ motors:
         debug: True
         motor_left_output: c_multiposition_motor_left
         motor_right_output: c_multiposition_motor_right
-        position_switches:  !!omap
-            - position1: s_multiposition_motor_1
-            - position2: s_multiposition_motor_2
-            - position3: s_multiposition_motor_3
-            - position4: s_multiposition_motor_4
+        position_switches:
+            position1: s_multiposition_motor_1
+            position2: s_multiposition_motor_2
+            position3: s_multiposition_motor_3
+            position4: s_multiposition_motor_4
         reset_position: position4
         go_to_position:
             goto_position1: position1

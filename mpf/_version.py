@@ -10,7 +10,7 @@ PyPI.
 
 """
 
-__version__ = '0.57.0.dev18'
+__version__ = '0.57.0.dev19'  # Also consider whether MPF-MC pyproject.toml should be updated
 '''The full version of MPF.'''
 
 __short_version__ = '0.57'
