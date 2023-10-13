@@ -65,11 +65,11 @@ sort_devices_by_number: single|bool|True
                 volume = self.machine.variables.get_machine_var("master_volume")
                 if not isinstance(volume, float):
                     volume = .5
-                volume += .1
+                volume += .05
                 if volume >= 1.0:
                     volume = 1.0
                 else:
-                    volume = round(volume, 1)
+                    volume = round(volume, 2)
                 self.machine.variables.set_machine_var("master_volume", volume)
                 # post event for increased volume
                 self.machine.events.post("master_volume_increase", volume=volume)
@@ -85,11 +85,11 @@ sort_devices_by_number: single|bool|True
                 volume = self.machine.variables.get_machine_var("master_volume")
                 if not isinstance(volume, float):
                     volume = .5
-                volume -= .1
+                volume -= .05
                 if volume <= 0.0:
                     volume = 0.0
                 else:
-                    volume = round(volume, 1)
+                    volume = round(volume, 2)
                 self.machine.variables.set_machine_var("master_volume", volume)
                 # post event for decreased volume
                 self.machine.events.post("master_volume_decrease", volume=volume)
