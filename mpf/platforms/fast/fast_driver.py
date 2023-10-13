@@ -285,6 +285,14 @@ class FASTDriver:
         if switch.invert:
             trigger = self.set_bit(trigger, 4)
 
+        # If this driver mode has an off switch, we need to check to see if it's inverted
+        # and then update the trigger to act on inverted too. Since the off switch object
+        # does not exist here, we need to go find it.
+        if new_settings.get('off_switch', None):
+            off_switch = self.communicator.switches[int(new_settings['off_switch'], 16)]
+            if off_switch.baseline_switch_config.mode == '02':  # inverted
+                trigger = self.set_bit(trigger, 5)
+
         if self.is_new_config_needed(self.current_driver_config.trigger, trigger):
             reconfigured = True
         elif trigger != self.current_driver_config.trigger:

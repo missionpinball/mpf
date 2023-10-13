@@ -37,8 +37,8 @@ class TestFastNeuron(TestFastBase):
             "SL:07,01,02,02": "SL:P",
             "SL:08,01,04,04": "SL:P",
             "SL:09,01,05,1A": "SL:P",
-            "SL:0A,00,00,00": "SL:P",
-            "SL:0B,00,00,00": "SL:P",
+            "SL:0A,01,04,04": "SL:P",
+            "SL:0B,02,04,04": "SL:P",
             "SL:0C,00,00,00": "SL:P",
             "SL:0D,00,00,00": "SL:P",
             "SL:0E,00,00,00": "SL:P",
@@ -149,6 +149,8 @@ class TestFastNeuron(TestFastBase):
             "DL:11,81,00,10,0A,FF,00,00,00": "DL:P",
             "DL:12,81,00,10,0F,FF,00,00,00": "DL:P",
             "DL:13,81,00,10,0A,FF,00,FF,00": "DL:P",
+            "DL:14,81,00,10,11,FF,00,00,00": "DL:P",
+            "DL:15,81,00,10,0A,FF,00,FF,00": "DL:P",
             }
 
         self.net_cpu .expected_commands.update(net_commands_from_this_config)
@@ -556,7 +558,7 @@ class TestFastNeuron(TestFastBase):
         self.advance_time_and_run()
         self.assertSwitchState("s_debounce_custom", 1)
 
-    def test_test_flipper_single_coil(self):
+    def test_test_flipper_single_coil_with_opto_switch(self):
         coil = self.machine.coils["c_flipper_single_wound"]
         hw_driver = coil.hw_driver
         switch = self.machine.switches["s_flipper_opto"].hw_switch
@@ -661,6 +663,26 @@ class TestFastNeuron(TestFastBase):
         flipper.enable()
         self.confirm_commands()
 
+    def test_test_flipper_two_coils_with_nc_eos(self):
+        main_coil = self.machine.coils["c_flipper3_main"]
+        hold_coil = self.machine.coils["c_flipper3_hold"]
+        main_hw_driver = main_coil.hw_driver
+        hold_hw_driver = hold_coil.hw_driver
+        switch = self.machine.switches["s_flipper3"].hw_switch
+        eos_switch = self.machine.switches["s_flipper3_eos_nc"].hw_switch
+        flipper = self.machine.flippers["f_eos_nc"]
+
+        self.assertEqual(main_hw_driver.get_current_config(), 'DL:14,81,00,10,11,FF,00,00,00')
+        self.assertEqual(hold_hw_driver.get_current_config(), 'DL:15,81,00,10,0A,FF,00,FF,00')
+        self.assertEqual(switch.get_current_config(), 'SL:0A,01,04,04')
+
+        # flipper rule enable
+        # Trigger 21 (bit 0 enable, bit 4 invert second switch), Mode 75 (pulse+hold w/cancel), EOS switch 38
+        self.net_cpu .expected_commands = {"DL:14,21,0A,75,0B,11,00,00,00": "DL:P",
+                                           "DL:15,01,0A,18,0A,FF,FF,00,00": "DL:P",}
+        flipper.enable()
+        self.confirm_commands()
+
     def test_machine_reset(self):
 
         # Set the commands that will respond to the query on reset. Some of these are
@@ -677,8 +699,8 @@ class TestFastNeuron(TestFastBase):
             "SL:07": "SL:07,01,02,02",
             "SL:08": "SL:08,01,04,04",
             "SL:09": "SL:09,01,05,1A",
-            "SL:0A": "SL:0A,00,00,00",
-            "SL:0B": "SL:0B,00,00,00",
+            "SL:0A": "SL:0A,01,04,04",
+            "SL:0B": "SL:0B,02,04,04",
             "SL:0C": "SL:0C,00,00,00",
             "SL:0D": "SL:0D,00,00,00",
             "SL:0E": "SL:0E,02,00,00",
@@ -798,8 +820,8 @@ class TestFastNeuron(TestFastBase):
             "DL:11": "DL:11,81,00,10,0A,FF,00,00,00",
             "DL:12": "DL:12,81,00,10,0F,FF,00,00,00",
             "DL:13": "DL:13,81,00,10,0A,FF,00,FF,00",
-            "DL:14": "DL:14,00,00,00,00,00,00,00,00",
-            "DL:15": "DL:15,00,00,00,00,00,00,00,00",
+            "DL:14": "DL:14,81,00,10,11,FF,00,00,00",
+            "DL:15": "DL:15,81,00,10,0A,FF,00,FF,00",
             "DL:16": "DL:16,00,00,00,00,00,00,00,00",
             "DL:17": "DL:17,00,00,00,00,00,00,00,00",
             "DL:18": "DL:18,00,00,00,00,00,00,00,00",
