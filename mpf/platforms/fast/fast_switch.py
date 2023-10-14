@@ -50,6 +50,7 @@ class FASTSwitch:
 
         if mpf_config.invert:
             mode = '02'
+            debounce_close, debounce_open = debounce_open, debounce_close
         else:
             mode = '01'
 

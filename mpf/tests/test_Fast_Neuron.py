@@ -38,7 +38,7 @@ class TestFastNeuron(TestFastBase):
             "SL:08,01,04,04": "SL:P",
             "SL:09,01,05,1A": "SL:P",
             "SL:0A,01,04,04": "SL:P",
-            "SL:0B,02,04,04": "SL:P",
+            "SL:0B,02,02,04": "SL:P",
             "SL:0C,00,00,00": "SL:P",
             "SL:0D,00,00,00": "SL:P",
             "SL:0E,00,00,00": "SL:P",
@@ -153,9 +153,9 @@ class TestFastNeuron(TestFastBase):
             "DL:15,81,00,10,0A,FF,00,FF,00": "DL:P",
             }
 
-        self.net_cpu .expected_commands.update(net_commands_from_this_config)
+        self.net_cpu.expected_commands.update(net_commands_from_this_config)
 
-    def test_test_coils(self):
+    def test_coils(self):
         # The default expected commands will verify all the coils are configured properly.
         # We just need to ensure things get enabled properly.
         self.confirm_commands()
@@ -185,32 +185,32 @@ class TestFastNeuron(TestFastBase):
         coil = self.machine.coils["c_baseline"]
 
         # pulse based on its initial config
-        self.net_cpu .expected_commands = {"TL:00,01": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:00,01": "TL:P"}
         coil.pulse()
         self.confirm_commands()
 
         # pulse with a non-standard pulse_ms, trigger 89 also pulses now
-        self.net_cpu .expected_commands = {'DL:00,89,00,10,32,FF,00,00,00': 'DL:P'}
+        self.net_cpu.expected_commands = {'DL:00,89,00,10,32,FF,00,00,00': 'DL:P'}
         coil.pulse(50)
         self.confirm_commands()
 
         # Pulse again and it should just use a TL since the coil is already configured
-        self.net_cpu .expected_commands = {"TL:00,01": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:00,01": "TL:P"}
         coil.pulse(50)
         self.confirm_commands()
 
         # Pulse default and it should reconfigure to default
-        self.net_cpu .expected_commands = {'DL:00,89,00,10,0A,FF,00,00,00': 'DL:P'}
+        self.net_cpu.expected_commands = {'DL:00,89,00,10,0A,FF,00,00,00': 'DL:P'}
         coil.pulse()
         self.confirm_commands()
 
         # pulse with non-standard ms and power
-        self.net_cpu .expected_commands = {'DL:00,89,00,10,64,92,00,00,00': 'DL:P'}
+        self.net_cpu.expected_commands = {'DL:00,89,00,10,64,92,00,00,00': 'DL:P'}
         coil.pulse(100, 0.375)
         self.confirm_commands()
 
         # Do that same pulse again and it should just use a TL since the coil is already configured
-        self.net_cpu .expected_commands = {"TL:00,01": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:00,01": "TL:P"}
         coil.pulse(100, 0.375)
         self.confirm_commands()
 
@@ -219,14 +219,14 @@ class TestFastNeuron(TestFastBase):
         coil = self.machine.coils["c_long_pwm2"]
 
         # pulse based on its initial config
-        self.net_cpu .expected_commands = {"TL:06,01": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:06,01": "TL:P"}
         coil.pulse()
         self.confirm_commands()
 
         self.advance_time_and_run(21)
         # pulse it again, but disable it partway through
 
-        self.net_cpu .expected_commands = {"TL:06,01": "TL:P",
+        self.net_cpu.expected_commands = {"TL:06,01": "TL:P",
                                                              "TL:06,02": "TL:P",
                                                             }
 
@@ -240,11 +240,11 @@ class TestFastNeuron(TestFastBase):
         coil = self.machine.coils["c_long_pwm2"]  # DL:06,81,00,70,0A,FF,14,EE,00
 
         # timed_enable based on its current config
-        self.net_cpu .expected_commands = {"TL:06,01": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:06,01": "TL:P"}
         coil.timed_enable()
         self.confirm_commands()
 
-        self.net_cpu .expected_commands = {"DL:06,89,00,70,0F,FF,0A,88,00": "DL:P"}
+        self.net_cpu.expected_commands = {"DL:06,89,00,70,0F,FF,0A,88,00": "DL:P"}
         coil.timed_enable(1000, 0.25, 15, 1.0)
         self.confirm_commands()
 
@@ -253,7 +253,7 @@ class TestFastNeuron(TestFastBase):
         coil = self.machine.coils["c_longer_pwm2"]  # DL:08,81,00,70,0A,FF,C8,EE,00
 
         # timed_enable based on its current config
-        self.net_cpu .expected_commands = {"TL:08,01": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:08,01": "TL:P"}
         coil.pulse()
         self.confirm_commands()
 
@@ -264,12 +264,12 @@ class TestFastNeuron(TestFastBase):
             self.advance_time_and_run(.1)
 
     def _test_allow_enable(self):
-        self.net_cpu .expected_commands = {
+        self.net_cpu.expected_commands = {
             "DL:01,C1,00,18,0A,FF,FF,00,00": "DL:P"
         }
         self.machine.coils["c_allow_enable"].enable()
         self.advance_time_and_run(.1)
-        self.assertFalse(self.net_cpu .expected_commands)
+        self.assertFalse(self.net_cpu.expected_commands)
 
     def test_test_autofire_rules(self):
         self._test_pulse_rules()
@@ -284,17 +284,17 @@ class TestFastNeuron(TestFastBase):
         # SL:28,01,04,04
 
         # Enable, should just update existing rule via TL but add the switch ID
-        self.net_cpu .expected_commands = {"TL:10,00,28": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:10,00,28": "TL:P"}
         self.machine.autofire_coils["ac_baseline"].enable()
         self.confirm_commands()
 
         # Disable, should update existing rule via TL
-        self.net_cpu .expected_commands = {"TL:10,02": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:10,02": "TL:P"}
         self.machine.autofire_coils["ac_baseline"].disable()
         self.confirm_commands()
 
         # Re-enable, should update existing rule via TL
-        self.net_cpu .expected_commands = {"TL:10,00": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:10,00": "TL:P"}
         self.machine.autofire_coils["ac_baseline"].enable()
         self.confirm_commands()
 
@@ -304,17 +304,17 @@ class TestFastNeuron(TestFastBase):
         # SL:05,02,04,04
 
         # Inverted switch, should send a new rule
-        self.net_cpu .expected_commands = {"DL:11,11,05,10,0A,FF,00,00,00": "DL:P"}
+        self.net_cpu.expected_commands = {"DL:11,11,05,10,0A,FF,00,00,00": "DL:P"}
         self.machine.autofire_coils["ac_inverted_switch"].enable()
         self.confirm_commands()
 
         # Disable, should update existing rule via TL
-        self.net_cpu .expected_commands = {"TL:11,02": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:11,02": "TL:P"}
         self.machine.autofire_coils["ac_inverted_switch"].disable()
         self.confirm_commands()
 
         # Re-enable, should update existing rule via TL
-        self.net_cpu .expected_commands = {"TL:11,00": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:11,00": "TL:P"}
         self.machine.autofire_coils["ac_inverted_switch"].enable()
         self.confirm_commands()
 
@@ -328,7 +328,7 @@ class TestFastNeuron(TestFastBase):
         self.assertEqual(switch.get_current_config(), 'SL:06,01,04,04')
 
         # Enable, should just update existing rule via TL but add the switch ID
-        self.net_cpu .expected_commands = {"TL:06,00,06": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:06,00,06": "TL:P"}
         self.machine.autofire_coils["ac_2_stage_pwm"].enable()
         self.confirm_commands()
 
@@ -337,7 +337,7 @@ class TestFastNeuron(TestFastBase):
         self.confirm_commands()
 
         # Disable, should update existing rule via TL
-        self.net_cpu .expected_commands = {"TL:06,02": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:06,02": "TL:P"}
         self.machine.autofire_coils["ac_2_stage_pwm"].disable()
         self.confirm_commands()
 
@@ -346,7 +346,7 @@ class TestFastNeuron(TestFastBase):
         self.confirm_commands()
 
         # Re-enable, should update existing rule via TL, want to ensure it keeps mode 70
-        self.net_cpu .expected_commands = {"TL:06,00": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:06,00": "TL:P"}
         self.machine.autofire_coils["ac_2_stage_pwm"].enable()
         self.confirm_commands()
 
@@ -369,62 +369,62 @@ class TestFastNeuron(TestFastBase):
         self.assertEqual(switch.get_current_config(), 'SL:07,01,02,02')
 
         # Enable, should just update existing rule via TL but add the switch ID
-        self.net_cpu .expected_commands = {"TL:0B,00,07": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:0B,00,07": "TL:P"}
         self.machine.autofire_coils["ac_test_action"].enable()
         self.confirm_commands()
 
         # Manually pulse the coil, should not affect the rule
-        self.net_cpu .expected_commands = {"TL:0B,01": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:0B,01": "TL:P"}
         self.machine.coils["c_pwm2"].pulse()
         self.confirm_commands()
 
         # Disable, should update existing rule via TL
-        self.net_cpu .expected_commands = {"TL:0B,02": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:0B,02": "TL:P"}
         self.machine.autofire_coils["ac_test_action"].disable()
         self.confirm_commands()
 
         # Manually pulse the coil, should not affect the rule
-        self.net_cpu .expected_commands = {"TL:0B,01": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:0B,01": "TL:P"}
         self.machine.coils["c_pwm2"].pulse()
         self.confirm_commands()
 
         # Re-enable, should update existing rule via TL
-        self.net_cpu .expected_commands = {"TL:0B,00": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:0B,00": "TL:P"}
         self.machine.autofire_coils["ac_test_action"].enable()
         self.confirm_commands()
 
         # Disabled the rule
-        self.net_cpu .expected_commands = {"TL:0B,02": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:0B,02": "TL:P"}
         self.machine.autofire_coils["ac_test_action"].disable()
         self.confirm_commands()
 
         # Manually pulse the coil with non-standard pulse
         # trigger 89 = bit 0 driver enable + bit 3 one_shot + bit 7 disable switch
         # switch is disabled since the rule is disabled
-        self.net_cpu .expected_commands = {"DL:0B,89,07,10,64,AA,14,AA,00": "DL:P"}
+        self.net_cpu.expected_commands = {"DL:0B,89,07,10,64,AA,14,AA,00": "DL:P"}
         self.machine.coils["c_pwm2"].pulse(100)
         self.confirm_commands()
 
         # Enable the rule, should send new config since last pulse was non-standard
-        self.net_cpu .expected_commands = {"DL:0B,01,07,10,14,AA,14,AA,00": "DL:P"}
+        self.net_cpu.expected_commands = {"DL:0B,01,07,10,14,AA,14,AA,00": "DL:P"}
         self.machine.autofire_coils["ac_test_action"].enable()
         self.confirm_commands()
 
         # Send non-standard pulse. Rule is enabled so a second DL command should be sent to reset the rule
         # to the proper config
         # trigger 09 = bit 0 driver enable + bit 3 one_shot, bit 7 is cleared since rule is active
-        self.net_cpu .expected_commands = {"DL:0B,09,07,10,FA,AA,14,AA,00": "DL:P"}
+        self.net_cpu.expected_commands = {"DL:0B,09,07,10,FA,AA,14,AA,00": "DL:P"}
         self.machine.coils["c_pwm2"].pulse(250)
         self.confirm_commands()  # This also moves the clock 100ms
 
         # Jump ahead 251ms and make sure the rule was put back
-        self.net_cpu .expected_commands = {"DL:0B,01,07,10,14,AA,14,AA,00": "DL:P"}
+        self.net_cpu.expected_commands = {"DL:0B,01,07,10,14,AA,14,AA,00": "DL:P"}
         self.advance_time_and_run(0.051) # +51ms
         self.confirm_commands()  # +100ms, 251ms total since manual pulse, so this command should have been sent
 
         # hold a device on manually, then cancel it, make sure autofire comes back
         # mode 18 (pulse + hold), trigger C1 (bit 7 disable switch, bit 6 manual, bit 1 enable)
-        self.net_cpu .expected_commands = {"DL:0B,C1,07,18,14,AA,AA,00,00": "DL:P"}
+        self.net_cpu.expected_commands = {"DL:0B,C1,07,18,14,AA,AA,00,00": "DL:P"}
         self.machine.coils["c_pwm2"].enable()
         self.confirm_commands()
 
@@ -434,7 +434,7 @@ class TestFastNeuron(TestFastBase):
 
         # Turn off the hold and make sure the rule comes back
         # Need to ensure we switch from mode 18 back to 10
-        self.net_cpu .expected_commands = {"DL:0B,01,07,10,14,AA,14,AA,00": "DL:P"}
+        self.net_cpu.expected_commands = {"DL:0B,01,07,10,14,AA,14,AA,00": "DL:P"}
         self.machine.coils["c_pwm2"].disable()
         self.confirm_commands
 
@@ -449,20 +449,20 @@ class TestFastNeuron(TestFastBase):
         self.assertEqual(driver.get_current_config(), 'DL:0B,01,07,10,14,AA,14,AA,00')
 
         # Pulse with manual pulse time
-        self.net_cpu .expected_commands = {"DL:0B,09,07,10,C8,AA,14,AA,00": "DL:P"}
+        self.net_cpu.expected_commands = {"DL:0B,09,07,10,C8,AA,14,AA,00": "DL:P"}
         self.machine.coils["c_pwm2"].pulse(200)
         self.confirm_commands()  # +100ms
 
         # Pulse again before the first pulse is done, TL this time since it's the same pulse as last time
-        self.net_cpu .expected_commands = {"TL:0B,01": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:0B,01": "TL:P"}
         self.machine.coils["c_pwm2"].pulse(200)
         self.confirm_commands()  # +100ms
-        self.net_cpu .expected_commands = {"TL:0B,01": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:0B,01": "TL:P"}
         self.machine.coils["c_pwm2"].pulse(200)
         self.confirm_commands()  # +100ms
 
         # Last pulse will reset the rule after 201ms, so jump past that and verify the rule is back
-        self.net_cpu .expected_commands = {"DL:0B,01,07,10,14,AA,14,AA,00": "DL:P"}
+        self.net_cpu.expected_commands = {"DL:0B,01,07,10,14,AA,14,AA,00": "DL:P"}
         self.advance_time_and_run(0.002)
         self.confirm_commands()
 
@@ -540,7 +540,7 @@ class TestFastNeuron(TestFastBase):
         # state and ensure it's processed properly
 
         # Show s_cab_flipper 0x38 switch on
-        self.net_cpu .expected_commands = {
+        self.net_cpu.expected_commands = {
             "SA:" : "SA:0E,2900000000000001000000000000"}
 
         self.assertSwitchState("s_cab_flipper", 0)
@@ -569,22 +569,22 @@ class TestFastNeuron(TestFastBase):
 
         # flipper rule enable
         # Trigger 11 (bit 0 enable, bit 4 invert switch since it's an opto)
-        self.net_cpu .expected_commands = {"DL:0F,11,03,18,0E,FF,01,00,00": "DL:P",}
+        self.net_cpu.expected_commands = {"DL:0F,11,03,18,0E,FF,01,00,00": "DL:P",}
         flipper.enable()
         self.confirm_commands()
 
         # manual flip while rule is active
-        self.net_cpu .expected_commands = {"TL:0F,01": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:0F,01": "TL:P"}
         coil.pulse()
         self.confirm_commands()
 
         # disable rule (tilt)
-        self.net_cpu .expected_commands = {"TL:0F,02": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:0F,02": "TL:P"}
         flipper.disable()
         self.confirm_commands()
 
         # enable again, config has already been sent
-        self.net_cpu .expected_commands = {"TL:0F,00": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:0F,00": "TL:P"}
         flipper.enable()
         self.confirm_commands()
 
@@ -602,24 +602,24 @@ class TestFastNeuron(TestFastBase):
 
         # flipper rule enable
         # Trigger 1 (bit 0 enable)
-        self.net_cpu .expected_commands = {"DL:0D,01,01,18,0A,FF,00,00,00": "DL:P",
+        self.net_cpu.expected_commands = {"DL:0D,01,01,18,0A,FF,00,00,00": "DL:P",
                                                              "DL:0E,01,01,18,0A,FF,FF,00,00": "DL:P",}
         flipper.enable()
         self.confirm_commands()
 
         # manual flip while rule is active
-        self.net_cpu .expected_commands = {"TL:0D,01": "TL:P"}
+        self.net_cpu.expected_commands = {"TL:0D,01": "TL:P"}
         main_coil.pulse()
         self.confirm_commands()
 
         # disable rule (tilt)
-        self.net_cpu .expected_commands = {"TL:0D,02": "TL:P",
+        self.net_cpu.expected_commands = {"TL:0D,02": "TL:P",
                                                              "TL:0E,02": "TL:P",}
         flipper.disable()
         self.confirm_commands()
 
         # enable again, config has already been sent
-        self.net_cpu .expected_commands = {"TL:0D,00": "TL:P",
+        self.net_cpu.expected_commands = {"TL:0D,00": "TL:P",
                                                              "TL:0E,00": "TL:P",}
         flipper.enable()
         self.confirm_commands()
@@ -639,26 +639,26 @@ class TestFastNeuron(TestFastBase):
 
         # flipper rule enable
         # Trigger 1 (bit 0 enable), Mode 75 (pulse+hold w/cancel), EOS switch 38
-        self.net_cpu .expected_commands = {"DL:12,01,38,75,02,0F,00,00,00": "DL:P",
+        self.net_cpu.expected_commands = {"DL:12,01,38,75,02,0F,00,00,00": "DL:P",
                                                              "DL:13,01,38,18,0A,FF,FF,00,00": "DL:P",}
         flipper.enable()
         self.confirm_commands()
 
         # manual flip while rule is active, this will send a new DL (since mode 75 isn't a normal pulse mode)
         # followed by another DL after a delay to reconfigure it back to the autofire rule
-        self.net_cpu .expected_commands = {"DL:12,09,38,10,0F,FF,00,00,00": "DL:P",
+        self.net_cpu.expected_commands = {"DL:12,09,38,10,0F,FF,00,00,00": "DL:P",
                                                              "DL:12,01,38,75,02,0F,00,00,00": "DL:P",}
         main_coil.pulse()
         self.confirm_commands()
 
         # disable rule (tilt)
-        self.net_cpu .expected_commands = {"TL:12,02": "TL:P",
+        self.net_cpu.expected_commands = {"TL:12,02": "TL:P",
                                                              "TL:13,02": "TL:P",}
         flipper.disable()
         self.confirm_commands()
 
         # enable again, config has already been sent
-        self.net_cpu .expected_commands = {"TL:12,00": "TL:P",
+        self.net_cpu.expected_commands = {"TL:12,00": "TL:P",
                                                              "TL:13,00": "TL:P",}
         flipper.enable()
         self.confirm_commands()
@@ -678,7 +678,7 @@ class TestFastNeuron(TestFastBase):
 
         # flipper rule enable
         # Trigger 21 (bit 0 enable, bit 4 invert second switch), Mode 75 (pulse+hold w/cancel), EOS switch 38
-        self.net_cpu .expected_commands = {"DL:14,21,0A,75,0B,11,00,00,00": "DL:P",
+        self.net_cpu.expected_commands = {"DL:14,21,0A,75,0B,11,00,00,00": "DL:P",
                                            "DL:15,01,0A,18,0A,FF,FF,00,00": "DL:P",}
         flipper.enable()
         self.confirm_commands()
@@ -686,9 +686,9 @@ class TestFastNeuron(TestFastBase):
     def test_machine_reset(self):
 
         # Set the commands that will respond to the query on reset. Some of these are
-        # changed from the default so we can simulate the machine in a dir
+        # changed from the default so we can simulate the machine in a dirty state
 
-        self.net_cpu .expected_commands = {
+        self.net_cpu.expected_commands = {
             "SL:00": "SL:00,01,04,04",
             "SL:01": "SL:01,01,04,04",
             "SL:02": "SL:02,01,04,04",
@@ -700,7 +700,7 @@ class TestFastNeuron(TestFastBase):
             "SL:08": "SL:08,01,04,04",
             "SL:09": "SL:09,01,05,1A",
             "SL:0A": "SL:0A,01,04,04",
-            "SL:0B": "SL:0B,02,04,04",
+            "SL:0B": "SL:0B,02,02,04",
             "SL:0C": "SL:0C,00,00,00",
             "SL:0D": "SL:0D,00,00,00",
             "SL:0E": "SL:0E,02,00,00",
