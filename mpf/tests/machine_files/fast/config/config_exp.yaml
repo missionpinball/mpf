@@ -46,7 +46,7 @@ fast:
             leds: 32
             type: apa-102
       eli:
-        model: FP-EXP-0081-1
+        model: FP-EXP-0081-1  # test including hw revision number
       neuron:
         model: FP-EXP-2000
         breakouts:
@@ -94,11 +94,31 @@ lights:
   led18:
     number: dave-4-11
   led19:
-    number: eli-8-1
+    number: eli-8-1  # 84160
   led20:
     number: neuron-1-1
   led21:
     number: neuron-1-2
+  led22:  # start channel, RGB LED
+    start_channel: neuron-1-3-0  # 48002-0, 48002-1, 48002-2
+    type: rgb
+  led23:  # previous numbering, RGB LED
+    previous: led22  # 48003-0, 48003-1, 48003-2
+    type: rgb
+  led24:  # start channel, RGBW LED
+    start_channel: neuron-1-5-0  #48004-0, 48004-1, 48004-2, 48005-0
+    type: rgbw
+  led25:  # start channel, RGBW LED
+    start_channel: neuron-1-6-1  # 48005-1, 48005-2, 48006-0, 48006-1
+    type: rgbw
+  led26:  # previous numbering, RGBW LED
+    previous: led25  # 48006-2, 48007-0, 48007-1, 48007-2
+    type: rgbw
+  led27:  # make sure we can get back to normal
+    number: neuron-1-9-0  # 48008-0, 48008-1, 48008-2
+  led28:  # start channel with breakout
+    start_channel: brian-b2-2-3-0  #88222-0, 88222-1, 88222-2, 88223-0
+    type: rgbw
 
 servos:
     servo1:

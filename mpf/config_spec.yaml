@@ -694,8 +694,8 @@ fast_rgb:
     led_hz: single|int|30
     ignore_reboot: single|bool|true
 fast_switches:
-    debounce_open: single|str|None
-    debounce_close: single|str|None
+    debounce_open: single|ms|None
+    debounce_close: single|ms|None
 fast_coils:
     recycle_ms: single|ms|None
     pwm2_ms: single|ms|None

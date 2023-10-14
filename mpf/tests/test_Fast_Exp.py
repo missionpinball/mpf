@@ -65,6 +65,7 @@ class TestFastExp(TestFastBase):
         self._test_led_colors()
         self._test_exp_board_reset()
         self._test_grb_led()
+        self._test_rgbw_leds()
         self._test_led_software_fade()
         self._test_lew_hardware_fade()
 
@@ -77,6 +78,33 @@ class TestFastExp(TestFastBase):
         self.assertIn("88120", self.fast_exp_leds)
         self.assertIn("88121", self.fast_exp_leds)
         self.assertIn("89200", self.fast_exp_leds)
+
+        # Make sure all the RGBW, and previous, and start_channels are working
+        self.assertEqual(self.led22.hw_drivers['red'][0].number, '48002-0')
+        self.assertEqual(self.led22.hw_drivers['green'][0].number, '48002-1')
+        self.assertEqual(self.led22.hw_drivers['blue'][0].number, '48002-2')
+        self.assertEqual(self.led23.hw_drivers['red'][0].number, '48003-0')
+        self.assertEqual(self.led23.hw_drivers['green'][0].number, '48003-1')
+        self.assertEqual(self.led23.hw_drivers['blue'][0].number, '48003-2')
+        self.assertEqual(self.led24.hw_drivers['red'][0].number, '48004-0')
+        self.assertEqual(self.led24.hw_drivers['green'][0].number, '48004-1')
+        self.assertEqual(self.led24.hw_drivers['blue'][0].number, '48004-2')
+        self.assertEqual(self.led24.hw_drivers['white'][0].number, '48005-0')
+        self.assertEqual(self.led25.hw_drivers['red'][0].number, '48005-1')
+        self.assertEqual(self.led25.hw_drivers['green'][0].number, '48005-2')
+        self.assertEqual(self.led25.hw_drivers['blue'][0].number, '48006-0')
+        self.assertEqual(self.led25.hw_drivers['white'][0].number, '48006-1')
+        self.assertEqual(self.led26.hw_drivers['red'][0].number, '48006-2')
+        self.assertEqual(self.led26.hw_drivers['green'][0].number, '48007-0')
+        self.assertEqual(self.led26.hw_drivers['blue'][0].number, '48007-1')
+        self.assertEqual(self.led26.hw_drivers['white'][0].number, '48007-2')
+        self.assertEqual(self.led27.hw_drivers['red'][0].number, '48008-0')
+        self.assertEqual(self.led27.hw_drivers['green'][0].number, '48008-1')
+        self.assertEqual(self.led27.hw_drivers['blue'][0].number, '48008-2')
+        self.assertEqual(self.led28.hw_drivers['red'][0].number, '88222-0')
+        self.assertEqual(self.led28.hw_drivers['green'][0].number, '88222-1')
+        self.assertEqual(self.led28.hw_drivers['blue'][0].number, '88222-2')
+        self.assertEqual(self.led28.hw_drivers['white'][0].number, '88223-0')
 
     def _test_led_colors(self):
 
@@ -140,6 +168,15 @@ class TestFastExp(TestFastBase):
         self.led10.color("ff1234")
         self.advance_time_and_run()
         self.assertEqual("12FF34", self.exp_cpu.leds['led10'])  # ensure the hardware received the colors in RGB order
+
+    def _test_rgbw_leds(self):
+        self.exp_cpu.expected_commands = {'RD@480:02050000000600ff00': '',}
+        self.led25.color("ffffff")
+        self.advance_time_and_run()
+
+        self.exp_cpu.expected_commands = {'RD@882:022200112223110000': '',}
+        self.led28.color("112233")
+        self.advance_time_and_run()
 
     def _test_led_software_fade(self):
 

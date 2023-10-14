@@ -271,7 +271,7 @@ class TestFastNeuron(TestFastBase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
-    def test_test_autofire_rules(self):
+    def test_autofire_rules(self):
         self._test_pulse_rules()
         self._test_pulse_rules_inverted_switch()
         self._test_long_pulse_rules()
@@ -469,7 +469,7 @@ class TestFastNeuron(TestFastBase):
     def _switch_hit_cb(self, **kwargs):
         self.switch_hit = True
 
-    def test_test_switches(self):
+    def test_switches(self):
         # Default startup SL commands test / confirm all the variations of the switch configs
         self._test_startup_switches()
         self._test_bad_switch_configs()
@@ -558,7 +558,7 @@ class TestFastNeuron(TestFastBase):
         self.advance_time_and_run()
         self.assertSwitchState("s_debounce_custom", 1)
 
-    def test_test_flipper_single_coil_with_opto_switch(self):
+    def test_flipper_single_coil_with_opto_switch(self):
         coil = self.machine.coils["c_flipper_single_wound"]
         hw_driver = coil.hw_driver
         switch = self.machine.switches["s_flipper_opto"].hw_switch
@@ -588,7 +588,7 @@ class TestFastNeuron(TestFastBase):
         flipper.enable()
         self.confirm_commands()
 
-    def test_test_flipper_two_coils(self):
+    def test_flipper_two_coils(self):
         main_coil = self.machine.coils["c_flipper_main"]
         hold_coil = self.machine.coils["c_flipper_hold"]
         main_hw_driver = main_coil.hw_driver
@@ -624,7 +624,7 @@ class TestFastNeuron(TestFastBase):
         flipper.enable()
         self.confirm_commands()
 
-    def test_test_flipper_two_coils_with_eos(self):
+    def test_flipper_two_coils_with_eos(self):
         main_coil = self.machine.coils["c_flipper2_main"]
         hold_coil = self.machine.coils["c_flipper2_hold"]
         main_hw_driver = main_coil.hw_driver
@@ -663,7 +663,7 @@ class TestFastNeuron(TestFastBase):
         flipper.enable()
         self.confirm_commands()
 
-    def test_test_flipper_two_coils_with_nc_eos(self):
+    def test_flipper_two_coils_with_nc_eos(self):
         main_coil = self.machine.coils["c_flipper3_main"]
         hold_coil = self.machine.coils["c_flipper3_hold"]
         main_hw_driver = main_coil.hw_driver

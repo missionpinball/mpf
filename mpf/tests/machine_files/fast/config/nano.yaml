@@ -160,13 +160,25 @@ flippers:
         use_eos: true
 
 lights:
-  test_led:
-    number: 2-23 #0x56
-  test_led2:  #0x57
-    previous: test_led
-    type: grb
-  l_o_circle:
-    number: 1-10 # 0x09
-    type: grb
   old_style_number:
     number: 0  # 0x00
+  test_led:
+    number: 2-23 #0x97, int 151
+  test_led2:
+    previous: test_led    #0x98, int 152
+    type: grb
+  l_o_circle:
+    number: 1-10 # 0x4A, int 74
+    type: grb
+  test_rgbw1:
+    start_channel: 33-0  # 0x21, int 33
+    type: rgbw
+  test_rgbw2:
+    start_channel: 34-1
+    type: rgbw
+  test_rgbw3:
+    start_channel: 35-2
+    type: rgbw
+  test_rgbw4:
+    previous: test_rgbw3
+    type: rgbw

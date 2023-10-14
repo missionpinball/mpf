@@ -16,8 +16,8 @@ class FASTRGBLED:
 
     def __init__(self, number: str, platform) -> None:
         """Initialize FAST LED on RGB processor."""
-        self.number = number
-        self.number_int = Util.hex_string_to_int(number)
+        self.number = number  # 5 char hex string, board address, breakout
+        self.number_int = int(number, 16)  # Need this for doing math on the number
         self.dirty = True
         self.machine = platform.machine
         self.platform = platform
@@ -56,12 +56,14 @@ class FASTExpLED(FASTRGBLED):
     __slots__ = ["board_address", "platform", "breakout_board", "port", "dirty", "machine", "platform", "hardware_fade_ms",
                  "log", "channels", "breakout", "index", "address", "exp_board"]
 
+    def __repr__(self):
+        return f'<FASTExpLED: {self.number}>'
+
     def __init__(self, number: str, hardware_fade_ms: int, platform) -> None:
         """Initialize FAST LED."""
 
-        # self.board_address, self.breakout, self.port, self.index, self.number = self.parse_number_string(number, platform)
-        self.number = number
-        self.number_int = Util.hex_string_to_int(number)
+        self.number = number  # 5 char hex string, board address, breakout
+        self.number_int = int(number, 16)
         self.platform = platform
         self.address = f'{number[0:3]}' # '880'
         self.exp_board = platform.exp_boards_by_address[self.address[0:2]]
@@ -83,6 +85,9 @@ class FASTLEDChannel(LightPlatformInterface):
     """Represents a single RGB LED channel connected to the FAST hardware platform."""
 
     __slots__ = ["led", "channel", "_current_fade", "_last_brightness"]
+
+    def __repr__(self):
+        return f'<FASTLEDChannel: {self.led.number}-{self.channel}>'
 
     def __init__(self, led: FASTRGBLED, channel) -> None:
         """initialize LED."""
@@ -129,11 +134,17 @@ class FASTLEDChannel(LightPlatformInterface):
         return self.led.number_int * 3 + self.channel == other.led.number_int * 3 + other.channel + 1
 
     def get_successor_number(self):
-        """Return next number."""
-        if self.channel == 2:
-            return "{}-0".format(self.led.number_int + 1)
+        """Return next number. We want this in the config format"""
+        # if self.channel == 2:
+        #     hex_int = int(self.number, 16) + 1  # number is hex string so we need to launder it through an int
+        #     return f"{hex_int:X}-0"
 
-        return "{}-{}".format(self.led.number_int, self.channel + 1)
+        # return f"{self.led.number}-{self.channel + 1}"
+
+        if self.channel == 2:
+            return f"{self.led.number_int + 1}-0"
+
+        return f"{self.led.number_int}-{self.channel + 1}"
 
     def __lt__(self, other):
         """Order lights by their order on the hardware."""

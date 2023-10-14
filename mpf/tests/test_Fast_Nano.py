@@ -708,53 +708,87 @@ class TestFastNano(TestFastBase):
         self.assertEqual("00-0", self.machine.lights['old_style_number'].hw_drivers['red'][0].number)
 
         self.advance_time_and_run()
-        device = self.machine.lights["test_led"]   # 0x56
-        device2 = self.machine.lights["test_led2"]  #0x57
-        self.assertEqual("000000", self.rgb_cpu.leds['56'])
-        self.assertEqual("000000", self.rgb_cpu.leds['57'])
+        device = self.machine.lights["test_led"]   # 0x97
+        device2 = self.machine.lights["test_led2"]  #0x98
+        self.assertEqual("000000", self.rgb_cpu.leds['97'])
+        self.assertEqual("000000", self.rgb_cpu.leds['98'])
         # test led on
         device.on()
         self.advance_time_and_run(1)
-        self.assertEqual("FFFFFF", self.rgb_cpu.leds['56'])
-        self.assertEqual("000000", self.rgb_cpu.leds['57'])
+        self.assertEqual("FFFFFF", self.rgb_cpu.leds['97'])
+        self.assertEqual("000000", self.rgb_cpu.leds['98'])
 
         device.color("112233")
         device2.color("001122")
         self.advance_time_and_run(1)
-        self.assertEqual("112233", self.rgb_cpu.leds['56'])
-        self.assertEqual("110022", self.rgb_cpu.leds['57'])  # GRB so ensure it's not 001122
+        self.assertEqual("112233", self.rgb_cpu.leds['97'])
+        self.assertEqual("110022", self.rgb_cpu.leds['98'])  # GRB so ensure it's not 001122
 
         # test led off
         device.off()
         self.advance_time_and_run(1)
-        self.assertEqual("000000", self.rgb_cpu.leds['56'])
-        self.assertEqual("110022", self.rgb_cpu.leds['57'])  # GRB so ensure it's not 001122
+        self.assertEqual("000000", self.rgb_cpu.leds['97'])
+        self.assertEqual("110022", self.rgb_cpu.leds['98'])  # GRB so ensure it's not 001122
 
         # test led color
         device2.color(RGBColor((2, 23, 42)))  #02172A
         self.advance_time_and_run(1)
-        self.assertEqual("17022A", self.rgb_cpu.leds['57'])  # GRB so ensure it's not 02172A
+        self.assertEqual("17022A", self.rgb_cpu.leds['98'])  # GRB so ensure it's not 02172A
 
         # test led off
         device2.off()
         self.advance_time_and_run(1)
-        self.assertEqual("000000", self.rgb_cpu.leds['57'])
+        self.assertEqual("000000", self.rgb_cpu.leds['98'])
 
         self.advance_time_and_run(.02)
 
         # fade led over 100ms
         device2.color(RGBColor((100, 100, 100)), fade_ms=100)
         self.advance_time_and_run(.03)
-        self.assertTrue(10 < int(self.rgb_cpu.leds['57'][0:2], 16) < 40)
-        self.assertTrue(self.rgb_cpu.leds['57'][0:2] == self.rgb_cpu.leds['57'][2:4] == self.rgb_cpu.leds['57'][4:6])
+        self.assertTrue(10 < int(self.rgb_cpu.leds['98'][0:2], 16) < 40)
+        self.assertTrue(self.rgb_cpu.leds['98'][0:2] == self.rgb_cpu.leds['98'][2:4] == self.rgb_cpu.leds['98'][4:6])
         self.advance_time_and_run(.03)
-        self.assertTrue(40 < int(self.rgb_cpu.leds['57'][0:2], 16) < 60)
-        self.assertTrue(self.rgb_cpu.leds['57'][0:2] == self.rgb_cpu.leds['57'][2:4] == self.rgb_cpu.leds['57'][4:6])
+        self.assertTrue(40 < int(self.rgb_cpu.leds['98'][0:2], 16) < 60)
+        self.assertTrue(self.rgb_cpu.leds['98'][0:2] == self.rgb_cpu.leds['98'][2:4] == self.rgb_cpu.leds['98'][4:6])
         self.advance_time_and_run(.03)
-        self.assertTrue(60 < int(self.rgb_cpu.leds['57'][0:2], 16) < 90)
-        self.assertTrue(self.rgb_cpu.leds['57'][0:2] == self.rgb_cpu.leds['57'][2:4] == self.rgb_cpu.leds['57'][4:6])
+        self.assertTrue(60 < int(self.rgb_cpu.leds['98'][0:2], 16) < 90)
+        self.assertTrue(self.rgb_cpu.leds['98'][0:2] == self.rgb_cpu.leds['98'][2:4] == self.rgb_cpu.leds['98'][4:6])
         self.advance_time_and_run(2)
-        self.assertEqual("646464", self.rgb_cpu.leds['57'])
+        self.assertEqual("646464", self.rgb_cpu.leds['98'])
+
+        # test RGBW LEDs
+
+        rgbw1 = self.machine.lights["test_rgbw1"]
+        rgbw2 = self.machine.lights["test_rgbw2"]
+        rgbw3 = self.machine.lights["test_rgbw3"]
+        rgbw4 = self.machine.lights["test_rgbw4"]
+
+        self.assertEqual(rgbw1.hw_drivers['red'][0].number, '21-0')
+        self.assertEqual(rgbw1.hw_drivers['green'][0].number, '21-1')
+        self.assertEqual(rgbw1.hw_drivers['blue'][0].number, '21-2')
+        self.assertEqual(rgbw1.hw_drivers['white'][0].number, '22-0')
+        self.assertEqual(rgbw2.hw_drivers['red'][0].number, '22-1')
+        self.assertEqual(rgbw2.hw_drivers['green'][0].number, '22-2')
+        self.assertEqual(rgbw2.hw_drivers['blue'][0].number, '23-0')
+        self.assertEqual(rgbw2.hw_drivers['white'][0].number, '23-1')
+        self.assertEqual(rgbw3.hw_drivers['red'][0].number, '23-2')
+        self.assertEqual(rgbw3.hw_drivers['green'][0].number, '24-0')
+        self.assertEqual(rgbw3.hw_drivers['blue'][0].number, '24-1')
+        self.assertEqual(rgbw3.hw_drivers['white'][0].number, '24-2')
+        self.assertEqual(rgbw4.hw_drivers['red'][0].number, '25-0')
+        self.assertEqual(rgbw4.hw_drivers['green'][0].number, '25-1')
+        self.assertEqual(rgbw4.hw_drivers['blue'][0].number, '25-2')
+        self.assertEqual(rgbw4.hw_drivers['white'][0].number, '26-0')
+
+        rgbw1.color("ffffff")
+        self.advance_time_and_run(1)
+        self.assertEqual("000000", self.rgb_cpu.leds['21'])
+        self.assertEqual("FF0000", self.rgb_cpu.leds['22'])
+
+        rgbw2.color("445566")
+        self.advance_time_and_run(1)
+        self.assertEqual("FF0011", self.rgb_cpu.leds['22'])
+        self.assertEqual("224400", self.rgb_cpu.leds['23'])
 
     # TODO need to go through the entire FAST platform and cleanup config errors and error logging in general
     # @expect_startup_error()

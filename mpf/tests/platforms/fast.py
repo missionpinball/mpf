@@ -226,9 +226,7 @@ class MockFastExp(MockFastSerial):
         elif cmd == "RD":
             # LED color, update our map of LED colors
             if not self.led_map:
-                for name, led in self.test_fast_base.machine.lights.items():
-                    led_number = led.hw_drivers['red'][0].number.split('-')[0]  # 88000
-                    self.led_map[led_number] = name
+                self._create_led_map()
 
             payload = payload.upper()
             count = int(payload[:2], 16)
@@ -252,6 +250,23 @@ class MockFastExp(MockFastSerial):
                 if led_number.startswith(address):
                     self.leds[led_name] = payload.upper()
 
+    def _create_led_map(self):
+        # This just gives us a map of LED numbers to LED names, e.g. 88000: "led1", 88121: "led5"
+        # so we can reference them by name in our tests. It's a bit awkward when logical LEDs
+        # span multiple physical LEDs, but meh, it's just for tests
+
+        for name, led in self.test_fast_base.machine.lights.items():
+            led_number = led.hw_drivers['red'][0].number.split('-')[0]
+            self.led_map[led_number] = name
+            led_number = led.hw_drivers['green'][0].number.split('-')[0]
+            self.led_map[led_number] = name
+            led_number = led.hw_drivers['blue'][0].number.split('-')[0]
+            self.led_map[led_number] = name
+            try:
+                led_number = led.hw_drivers['white'][0].number.split('-')[0]
+                self.led_map[led_number] = name
+            except KeyError:
+                pass
 
 class MockFastRgb(MockFastSerial):
     def __init__(self, test_fast_base):

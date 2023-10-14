@@ -500,8 +500,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def configure_light(self, number, subtype, config, platform_settings) -> LightPlatformInterface:
         """Configure light in platform."""
 
-        # number will have the trailing -X representing the chanel. Typically -0, -1, -2 for RGB LEDs
-
         del platform_settings
 
         if subtype == "gi":
@@ -511,21 +509,26 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             return FASTMatrixLight(number, self.serial_connections['net'], self.machine,
                                    int(1 / self.config['net']['lamp_hz'] * 1000), self)
         if not subtype or subtype == "led":
-            # TODO refactor and split into EXP and RGB communicators
             parts, channel = number.lower().rsplit('-', 1)  # make everything lowercase and strip trailing channel number
-            parts = parts.split('-')  # split into board name, (breakout), port, led
+            parts = parts.split('-')  # split into board name, breakout, port, led
 
             if parts[0] in self.exp_boards_by_name:
-                # this is an expansion board LED
+                # this is an expansion board LED in config file format
                 exp_board = self.exp_boards_by_name[parts[0]]
 
                 try:
                     _, port, led = parts
-                    breakout = str((int(port) - 1) // 4)  # assume 4 LED ports per breakout, could change to a lookup
-                    port = str((int(port) - 1) % 4 + 1)  # ports are always 1-4 so figure out if the printed port on the board is 5-8
+                    breakout = '0'
                 except ValueError:
                     _, breakout, port, led = parts
                     breakout = breakout.strip('b')
+
+                # ports are always 1-4, but some EXP boards have more which are labeled 5-8
+                # Those are really 1-4 of the next breakout board, so if we get a port > 4
+                # then sort it out to the real internal values
+                if int(port) > 4:
+                    breakout = str((int(port) - 1) // 4)  # assume 4 LED ports per breakout, could change to a lookup
+                    port = str((int(port) - 1) % 4 + 1)
 
                 try:
                     brk_board = exp_board.breakouts[breakout]
@@ -545,24 +548,39 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
                 return fast_led_channel
 
-            try:
-                number = self.port_idx_to_hex(parts[0], parts[1], 64)
-            except IndexError:
-                number = f'{int(parts[0]):02X}' # this is a legacy LED number as an int
+            elif int(parts[0]) > 255:
+                # EXP LED in int form, which is how "previous:" values are calculated
+                this_led_number = hex(int(parts[0]))[2:]
+                exp_board = self.exp_boards_by_address[this_led_number[:2]]
 
-            if number not in self.fast_rgb_leds:
+                if this_led_number not in self.fast_exp_leds:
+                    # RGBW LEDs could span multiple FAST LEDs, so make sure it exists
+                    self.fast_exp_leds[this_led_number] = FASTExpLED(this_led_number, exp_board.config['led_fade_time'], self)
+
+                fast_led_channel = FASTLEDChannel(self.fast_exp_leds[this_led_number], channel)
+                self.fast_exp_leds[this_led_number].add_channel(int(channel), fast_led_channel)
+
+                return fast_led_channel
+
+            else:
+                # Nano LED
+
                 try:
-                    self.fast_rgb_leds[number] = FASTRGBLED(number, self)
-                except KeyError:
-                    # This number is not valid
-                    raise ConfigFileError(f"Invalid LED number: {'_'.join(parts)}", 3, self.log.name)
+                    number = self.port_idx_to_hex(parts[0], parts[1], 64)
+                except IndexError:
+                    number = f'{int(parts[0]):02X}' # this is a legacy LED number as an int
 
-            fast_led_channel = FASTLEDChannel(self.fast_rgb_leds[number], channel)
-            self.fast_rgb_leds[number].add_channel(int(channel), fast_led_channel)
+                if number not in self.fast_rgb_leds:
+                    try:
+                        self.fast_rgb_leds[number] = FASTRGBLED(number, self)
+                    except KeyError:
+                        # This number is not valid
+                        raise ConfigFileError(f"Invalid LED number: {'_'.join(parts)}", 3, self.log.name)
 
-            return fast_led_channel
+                fast_led_channel = FASTLEDChannel(self.fast_rgb_leds[number], channel)
+                self.fast_rgb_leds[number].add_channel(int(channel), fast_led_channel)
 
-        raise AssertionError("Unknown subtype {}".format(subtype))
+                return fast_led_channel
 
     def port_idx_to_hex(self, port, device_num, devices_per_port, name=None):
         """Converts port number and LED index into the proper FAST hex number.
@@ -592,7 +610,19 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         return f'{(port_offset + device_num):02X}'
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
-        """Parse light channels from number string."""
+        """Takes the `number:` and `subtype:` from the config file and parses and
+        standardizes it into a format the FAST Light interface can understand
+
+        Incoming `number:` examples:
+
+        number: playfield-b2-2-3 --> board: playfield, breakout: 2, port: 2, led: 3
+        number: playfield-b2-2-3-0 --> board: playfield, breakout: 2, port: 2, led: 3, channel: 0
+        number: playfield-2-3 --> board: playfield, (breakout:1, not listed), port: 2, led: 3
+        number: playfield-2-3-0 --> board: playfield, (breakout:1, not listed), port: 2, led: 3, channel: 0
+        number: 15 --> Nano LED 15
+        number: 15-0 --> Nano LED 15, channel 0
+
+        """
         if subtype == "gi":
             if self.is_retro:  # translate matrix/map number to FAST GI number
                 try:
@@ -602,11 +632,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             else:
                 number = Util.int_to_hex_string(number)
 
-            return [
-                {
-                    "number": number
-                }
-            ]
+            return [{"number": number}]
+
         if subtype == "matrix":
             if self.is_retro:  # translate matrix number to FAST light num
                 try:
@@ -616,20 +643,52 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             else:
                 number = Util.int_to_hex_string(number)
 
-            return [
-                {
-                    "number": number
-                }
-            ]
+            return [{"number": number}]
+
         if not subtype or subtype == "led":
 
-            return [
-                {"number": f"{number}-0"},
-                {"number": f"{number}-1"},
-                {"number": f"{number}-2"},
-            ]
+            parts = number.lower().split("-")
 
-        raise AssertionError(f"Unknown subtype {subtype}")
+            if parts[0] in self.exp_boards_by_name:
+                # This is an expansion board LED
+                if not parts[1].startswith('b'):
+                    # No breakout specified, so we insert a b0
+                    parts.insert(1, 'b0')
+
+                if len(parts) == 4:
+                    # No channel specified, so we return 3 channels 0,1,2
+                    return [{'number': '-'.join(parts) + f'-{i}'} for i in range(3)]
+
+                elif len(parts) == 5:
+                    # We have a channel specified
+                    channel = int(parts[4])
+                    if 0 <= channel <= 2:
+                        result = []
+                        for i in range(3):
+                            if i + channel > 2:
+                                # Channel rolls over, increment the LED number
+                                parts[3] = str(int(parts[3]) + 1)
+                                parts[4] = '0'
+                            else:
+                                parts[4] = str(channel + i)
+                            result.append({'number': '-'.join(parts)})
+                        return result
+                    else:
+                        raise AssertionError(f"Invalid LED channel: {channel}")
+                else:
+                    raise AssertionError(f"Invalid LED number: {number}")
+
+            else:
+                # This is a Nano LED
+                if '-' in str(number):
+                    num = list(map(int, str(number).split('-')))
+                    index = num[0] * 64 + num[1]
+                else:
+                    index = int(number)
+
+                return [{"number": f"{index}-{i}"} for i in range(3)]
+
+        raise AssertionError(f"Unknown LED subtype {subtype}")
 
     def configure_dmd(self):
         """Configure a hardware DMD connected to a FAST controller."""
