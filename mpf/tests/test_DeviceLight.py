@@ -377,31 +377,44 @@ class TestDeviceLight(MpfTestCase):
 
         led.color(RGBColor((11, 23, 42)))
         self.advance_time_and_run(1)
-        self.assertEqual(42 / 255, led.hw_drivers["blue"][0].current_brightness)
+        self.assertEqual(42 / 255.0, led.hw_drivers["blue"][0].current_brightness)
         self.assertEqual('led-2', led.hw_drivers["blue"][0].number)
-        self.assertEqual(23 / 255, led.hw_drivers["green"][0].current_brightness)
+        self.assertEqual(23 / 255.0, led.hw_drivers["green"][0].current_brightness)
         self.assertEqual('led-3', led.hw_drivers["green"][0].number)
-        self.assertEqual(11 / 255, led.hw_drivers["red"][0].current_brightness)
+        self.assertEqual(11 / 255.0, led.hw_drivers["red"][0].current_brightness)
         self.assertEqual('led-4', led.hw_drivers["red"][0].number)
 
         led = self.machine.lights["led_bgr_2"]
+        self.assertFalse(led._is_rgbw)
         led.color(RGBColor((11, 23, 42)))
         self.advance_time_and_run(1)
-        self.assertEqual(42 / 255, led.hw_drivers["blue"][0].current_brightness)
+        self.assertEqual(42 / 255.0, led.hw_drivers["blue"][0].current_brightness)
         self.assertEqual('led-42-r', led.hw_drivers["blue"][0].number)
-        self.assertEqual(23 / 255, led.hw_drivers["green"][0].current_brightness)
+        self.assertEqual(23 / 255.0, led.hw_drivers["green"][0].current_brightness)
         self.assertEqual('led-42-g', led.hw_drivers["green"][0].number)
-        self.assertEqual(11 / 255, led.hw_drivers["red"][0].current_brightness)
+        self.assertEqual(11 / 255.0, led.hw_drivers["red"][0].current_brightness)
         self.assertEqual('led-42-b', led.hw_drivers["red"][0].number)
 
-        # test rgbw
+        # test rgbw via manual channel entries
         led = self.machine.lights["led3"]
-
+        self.assertTrue(led._is_rgbw)
         led.color(RGBColor((11, 23, 42)))
         self.advance_time_and_run(1)
-        self.assertLightColor("led2", [11, 23, 42])
-        self.assertEqual(11 / 255, led.hw_drivers["white"][0].current_brightness)
+        self.assertEqual(0 / 255.0, led.hw_drivers["red"][0].current_brightness)
+        self.assertEqual(12 / 255.0, led.hw_drivers["green"][0].current_brightness)
+        self.assertEqual(31 / 255.0, led.hw_drivers["blue"][0].current_brightness)
+        self.assertEqual(11 / 255.0, led.hw_drivers["white"][0].current_brightness)
         self.assertEqual('led-10', led.hw_drivers["white"][0].number)
+
+        led.color(RGBColor((255, 255, 255)))
+        self.advance_time_and_run(1)
+        self.assertEqual(0, led.hw_drivers["red"][0].current_brightness)
+        self.assertEqual(0, led.hw_drivers["green"][0].current_brightness)
+        self.assertEqual(0, led.hw_drivers["blue"][0].current_brightness)
+        self.assertEqual(1, led.hw_drivers["white"][0].current_brightness)
+
+        # type type: rgbw
+        self.assertTrue(self.machine.lights["led5"]._is_rgbw)
 
         # test www light
         led = self.machine.lights["led_www"]

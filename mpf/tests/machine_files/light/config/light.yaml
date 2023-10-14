@@ -55,3 +55,6 @@ lights:
     number: 23
     type: www
     debug: True
+  led5:
+    start_channel: 50-1
+    type: rgbw
