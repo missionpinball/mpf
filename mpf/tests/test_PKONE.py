@@ -695,7 +695,7 @@ class TestPKONE(MpfTestCase):
 
         # test turning on rgb led out of hardware alignment using color
         self.controller.expected_commands = {
-            "PLB2103020000255192203192000000": None,
+            "PLB2103020000063000011192000000": None,
         }
         self.machine.lights["test_rgb_led_3"].color(RGBColor("pink"))
         self.advance_time_and_run(.1)
@@ -720,7 +720,7 @@ class TestPKONE(MpfTestCase):
         self.advance_time_and_run(.5)
         self.assertEqual(14, len(self.controller.sent_commands))
         self.assertEqual("PLB2103020000000000000000000000", self.controller.sent_commands[0])
-        self.assertEqual("PLB2103020000255192203192000000", self.controller.sent_commands[-1])
+        self.assertEqual("PLB2103020000063000011192000000", self.controller.sent_commands[-1])
         self.controller.reset()
 
         # test turning off rgb led out of hardware alignment with fade (uses software fade) and turning on
@@ -731,7 +731,7 @@ class TestPKONE(MpfTestCase):
         self.advance_time_and_run(.5)
         self.assertEqual(15, len(self.controller.sent_commands))
         self.assertEqual("PLB2101010025000000255", self.controller.sent_commands[0])
-        self.assertEqual("PLB2103020000255192203192000000", self.controller.sent_commands[1])
+        self.assertEqual("PLB2103020000063000011192000000", self.controller.sent_commands[1])
         self.assertEqual("PLB2103020000000000000000000000", self.controller.sent_commands[-1])
         self.controller.reset()
 
@@ -807,4 +807,3 @@ class TestPKONE(MpfTestCase):
         self.assertTrue(self.machine.default_platform._led_is_hardware_aligned("test_rgbw_led_2"))
         self.assertFalse(self.machine.default_platform._led_is_hardware_aligned("test_rgbw_led_3"))
         self.assertFalse(self.machine.default_platform._led_is_hardware_aligned("test_rgbw_led_4"))
-
