@@ -762,6 +762,7 @@ class TestFastNano(TestFastBase):
         rgbw2 = self.machine.lights["test_rgbw2"]
         rgbw3 = self.machine.lights["test_rgbw3"]
         rgbw4 = self.machine.lights["test_rgbw4"]
+        rgbw5 = self.machine.lights["test_rgbw5"]
 
         self.assertEqual(rgbw1.hw_drivers['red'][0].number, '21-0')
         self.assertEqual(rgbw1.hw_drivers['green'][0].number, '21-1')
@@ -779,6 +780,10 @@ class TestFastNano(TestFastBase):
         self.assertEqual(rgbw4.hw_drivers['green'][0].number, '25-1')
         self.assertEqual(rgbw4.hw_drivers['blue'][0].number, '25-2')
         self.assertEqual(rgbw4.hw_drivers['white'][0].number, '26-0')
+        self.assertEqual(rgbw5.hw_drivers['red'][0].number, '28-0')
+        self.assertEqual(rgbw5.hw_drivers['green'][0].number, '28-2')
+        self.assertEqual(rgbw5.hw_drivers['blue'][0].number, '28-1')
+        self.assertEqual(rgbw5.hw_drivers['white'][0].number, '29-2')
 
         rgbw1.color("ffffff")
         self.advance_time_and_run(1)
@@ -789,6 +794,17 @@ class TestFastNano(TestFastBase):
         self.advance_time_and_run(1)
         self.assertEqual("FF0011", self.rgb_cpu.leds['22'])
         self.assertEqual("224400", self.rgb_cpu.leds['23'])
+
+        rgbw5.color("ffffff")
+        self.advance_time_and_run(1)
+        self.assertEqual("000000", self.rgb_cpu.leds['28'])
+        self.assertEqual("0000FF", self.rgb_cpu.leds['29'])
+
+        rgbw5.color("223344") # -> 00112222
+        self.advance_time_and_run(1)
+        self.assertEqual("002211", self.rgb_cpu.leds['28'])
+        self.assertEqual("000022", self.rgb_cpu.leds['29'])
+
 
     # TODO need to go through the entire FAST platform and cleanup config errors and error logging in general
     # @expect_startup_error()

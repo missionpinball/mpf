@@ -119,6 +119,16 @@ lights:
   led28:  # start channel with breakout
     start_channel: brian-b2-2-3-0  #88222-0, 88222-1, 88222-2, 88223-0
     type: rgbw
+  led29:
+    channels:  # testing out of order, non-contiquous channels
+      red:
+        number: neuron-1-10-0  # 48009-0
+      green:
+        number: neuron-1-10-2  # 48009-2
+      blue:
+        number: neuron-1-10-1  # 48009-1
+      white:
+        number: neuron-1-11-2  # 4800A-2
 
 servos:
     servo1:

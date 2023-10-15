@@ -182,3 +182,13 @@ lights:
   test_rgbw4:
     previous: test_rgbw3
     type: rgbw
+  test_rgbw5:
+    channels:
+      red:
+        number: 40-0
+      green:
+        number: 40-2
+      blue:
+        number: 40-1
+      white:
+        number: 41-2

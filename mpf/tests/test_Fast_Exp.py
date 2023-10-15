@@ -66,6 +66,7 @@ class TestFastExp(TestFastBase):
         self._test_exp_board_reset()
         self._test_grb_led()
         self._test_rgbw_leds()
+        self._test_led_channels()
         self._test_led_software_fade()
         self._test_lew_hardware_fade()
 
@@ -79,7 +80,7 @@ class TestFastExp(TestFastBase):
         self.assertIn("88121", self.fast_exp_leds)
         self.assertIn("89200", self.fast_exp_leds)
 
-        # Make sure all the RGBW, and previous, and start_channels are working
+        # Make sure all the RGBW, channels, previous, and start_channels are working
         self.assertEqual(self.led22.hw_drivers['red'][0].number, '48002-0')
         self.assertEqual(self.led22.hw_drivers['green'][0].number, '48002-1')
         self.assertEqual(self.led22.hw_drivers['blue'][0].number, '48002-2')
@@ -105,6 +106,10 @@ class TestFastExp(TestFastBase):
         self.assertEqual(self.led28.hw_drivers['green'][0].number, '88222-1')
         self.assertEqual(self.led28.hw_drivers['blue'][0].number, '88222-2')
         self.assertEqual(self.led28.hw_drivers['white'][0].number, '88223-0')
+        self.assertEqual(self.led29.hw_drivers['red'][0].number, '48009-0')
+        self.assertEqual(self.led29.hw_drivers['green'][0].number, '48009-2')
+        self.assertEqual(self.led29.hw_drivers['blue'][0].number, '48009-1')
+        self.assertEqual(self.led29.hw_drivers['white'][0].number, '4800A-2')
 
     def _test_led_colors(self):
 
@@ -176,6 +181,20 @@ class TestFastExp(TestFastBase):
 
         self.exp_cpu.expected_commands = {'RD@882:022200112223110000': '',}
         self.led28.color("112233")
+        self.advance_time_and_run()
+
+    def _test_led_channels(self):
+        # LED 29 has random ordered channels
+        # red 48009-0, green 48009-2, blue 48009-1, white 48010-2
+
+        # white = 00 00 00 FF which becomes
+        # 09 [00 00 00] 0A [00 00 FF]
+        self.exp_cpu.expected_commands = {'RD@480:02090000000a0000ff': '',}
+        self.led29.color("ffffff")
+        self.advance_time_and_run()
+
+        self.exp_cpu.expected_commands = {'RD@480:02090022110a000022': '',}
+        self.led29.color("223344")  # -> 00112222
         self.advance_time_and_run()
 
     def _test_led_software_fade(self):
