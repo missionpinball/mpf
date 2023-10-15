@@ -683,6 +683,18 @@ class TestFastNeuron(TestFastBase):
         flipper.enable()
         self.confirm_commands()
 
+        # hit the flipper and to simulate the EOS and everything
+        # and earlier bug caused it to disable the flipper which is why we test this now
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:0A\r")  # flipper
+        self.advance_time_and_run(0.015)
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:0B\r")  # eos
+        self.advance_time_and_run(3)
+
+        # release both
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:0A\r")  # flipper
+        self.advance_time_and_run(0.001)
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:0B\r")
+
     def test_machine_reset(self):
 
         # Set the commands that will respond to the query on reset. Some of these are
