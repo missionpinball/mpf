@@ -2,6 +2,7 @@
 
 from mpf.core.platform import SwitchConfig
 from mpf.tests.test_Fast import TestFastBase
+from mpf.tests.MpfTestCase import MagicMock
 
 
 class TestFastNeuron(TestFastBase):
@@ -683,18 +684,6 @@ class TestFastNeuron(TestFastBase):
         flipper.enable()
         self.confirm_commands()
 
-        # hit the flipper and to simulate the EOS and everything
-        # and earlier bug caused it to disable the flipper which is why we test this now
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:0A\r")  # flipper
-        self.advance_time_and_run(0.015)
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:0B\r")  # eos
-        self.advance_time_and_run(3)
-
-        # release both
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:0A\r")  # flipper
-        self.advance_time_and_run(0.001)
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:0B\r")
-
     def test_machine_reset(self):
 
         # Set the commands that will respond to the query on reset. Some of these are
@@ -871,36 +860,90 @@ class TestFastNeuron(TestFastBase):
         self.loop.run_until_complete(self.machine.reset())
         self.advance_time_and_run()
 
-    # def test_dmd_update(self):
+    def test_fast_game(self):
 
-    #     # test configure
-    #     dmd = self.machine.default_platform.configure_dmd()
+        self.machine.playfield.add_ball = MagicMock()
+        self.machine.ball_controller.num_balls_known = 3
 
-    #     # test set frame to buffer
-    #     frame = bytearray()
-    #     for i in range(4096):
-    #         frame.append(64 + i % 192)
+        # Ensure the various autofires get enabled
+        self.net_cpu.expected_commands = {
+            "TL:10,00,28": "TL:P",                    # ac_baseline
+            "DL:11,11,05,10,0A,FF,00,00,00": "DL:P",  # ac_inverted_switch
+            "TL:06,00,06": "TL:P",                    # ac_2_stage_pwm
+            "TL:0B,00,07": "TL:P",                    # ac_test_action
+            "DL:0D,01,01,18,0A,FF,00,00,00": "DL:P",  # f_dual_wound
+            "DL:0E,01,01,18,0A,FF,FF,00,00": "DL:P",  # f_dual_wound
+            "DL:0F,11,03,18,0E,FF,01,00,00": "DL:P",  # f_single_wound
+            "DL:12,01,38,75,02,0F,00,00,00": "DL:P",  # f_test_hold_eos
+            "DL:13,01,38,18,0A,FF,FF,00,00": "DL:P",  # f_test_hold_eos
+            "DL:14,21,0A,75,0B,11,00,00,00": "DL:P",  # f_eos_nc
+            "DL:15,01,0A,18,0A,FF,FF,00,00": "DL:P",  # f_eos_nc
+        }
 
-    #     frame = bytes(frame)
+        self.hit_and_release_switch("s_debounce_auto")
+        self.advance_time_and_run()
+        self.assertIsNotNone(self.machine.game)
 
-    #     # test draw
-    #     self.serial_connections['dmd'].expected_commands = {
-    #         b'BM:' + frame: False
-    #     }
-    #     dmd.update(frame)
+        # hit the flipper and to simulate the EOS and everything
+        # and earlier bug caused it to disable the flipper which is why we test this now
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:0A\r")  # flipper
+        self.advance_time_and_run(0.015)
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:0B\r")  # eos
+        self.advance_time_and_run(3)
 
-    #     self.advance_time_and_run(.1)
+        # release both
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:0A\r")  # flipper
+        self.advance_time_and_run(0.001)
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:0B\r")
+        self.advance_time_and_run(3)
 
-    #     self.assertFalse(self.serial_connections['dmd'].expected_commands)
+        # ---
 
-    # @expect_startup_error()
-    # @test_config("error_lights.yaml")
-    # def test_light_errors(self):
-    #     self.assertIsInstance(self.startup_error, ConfigFileError)
-    #     self.assertEqual(7, self.startup_error.get_error_no())
-    #     self.assertEqual("light.test_led", self.startup_error.get_logger_name())
-    #     self.assertIsInstance(self.startup_error.__cause__, ConfigFileError)
-    #     self.assertEqual(9, self.startup_error.__cause__.get_error_no())
-    #     self.assertEqual("FAST", self.startup_error.__cause__.get_logger_name())
-    #     self.assertEqual("Light syntax is number-channel (but was \"3\") for light test_led.",
-    #                      self.startup_error.__cause__._message)
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:0A\r")  # flipper
+        self.advance_time_and_run(0.016)
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:0B\r")  # eos
+        self.advance_time_and_run(0.100)
+
+        # release both
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:0A\r")  # flipper
+        self.advance_time_and_run(0.100)
+        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:0B\r")
+        self.advance_time_and_run(3)
+
+        # end game
+        self.net_cpu.expected_commands = {
+            "TL:10,02": "TL:P",
+            "TL:10,02": "TL:P",
+            "TL:11,02": "TL:P",
+            "TL:06,02": "TL:P",
+            "TL:0B,02": "TL:P",
+            "TL:0D,02": "TL:P",
+            "TL:0E,02": "TL:P",
+            "TL:0F,02": "TL:P",
+            "TL:12,02": "TL:P",
+            "TL:13,02": "TL:P",
+            "TL:14,02": "TL:P",
+            "TL:15,02": "TL:P",
+        }
+
+        self.machine.game.end_game()
+        self.advance_time_and_run()
+
+        # Start a game again, all commands should be TLs now
+
+        self.net_cpu.expected_commands = {
+            "TL:10,00": "TL:P",
+            "TL:11,00": "TL:P",
+            "TL:06,00": "TL:P",
+            "TL:0B,00": "TL:P",
+            "TL:0D,00": "TL:P",
+            "TL:0E,00": "TL:P",
+            "TL:0F,00": "TL:P",
+            "TL:12,00": "TL:P",
+            "TL:13,00": "TL:P",
+            "TL:14,00": "TL:P",
+            "TL:15,00": "TL:P",
+        }
+
+        self.hit_and_release_switch("s_debounce_auto")
+        self.advance_time_and_run()

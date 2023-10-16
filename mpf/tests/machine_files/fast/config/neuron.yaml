@@ -8,6 +8,9 @@ mpf:
 hardware:
     platform: fast
 
+machine:  # Needed for the game testing
+    min_balls: 0
+
 fast:
     net:
         port: com3
@@ -46,6 +49,7 @@ switches:
     s_debounce_auto:
         number: io3208-6  # 0x06
         debounce: auto
+        tags: start
     s_debounce_quick:
         number: io3208-7  # 0x07
         debounce: quick  # debounce 02, 02
