@@ -11,7 +11,7 @@ class TestFastExp(TestFastBase):
         self.serial_connections_to_mock = ['net2', 'exp']
 
     def get_config_file(self):
-        return 'config_exp.yaml'
+        return 'exp.yaml'
 
     def create_expected_commands(self):
         # These are all the defaults based on the config file for this test.
