@@ -125,7 +125,7 @@ class Flipper(SystemWideDevice):
 
         To prevent multiple rules at the same time we prioritize disable > enable.
         """
-        del kwargs
+        self.debug_log(f"Disabling via event callback. kwargs: {kwargs}")
         self.disable()
 
     def disable(self):
@@ -261,6 +261,8 @@ class Flipper(SystemWideDevice):
         Note this method will keep this flipper enabled until you call
         sw_release().
         """
+        self.debug_log('sw_flip')
+
         if not self._enabled:
             return
 
@@ -283,6 +285,7 @@ class Flipper(SystemWideDevice):
 
         See the documentation for sw_flip() for details.
         """
+        self.debug_log('sw_release')
         self._sw_flipped = False
 
         # disable the flipper coil(s)
