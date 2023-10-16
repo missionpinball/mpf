@@ -585,9 +585,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def port_idx_to_hex(self, port, device_num, devices_per_port, name=None):
         """Converts port number and LED index into the proper FAST hex number.
 
-        port: the LED port number printed on the board.
+        port: the LED port number printed on the board. First port is 1. No zeros.
         device_num: LED position in the change, First LED is 1. No zeros.
         devices_per_port: number of LEDs per port. Typically 32.
+        name: used for config error logging
+
+        Returns: FAST hex string for the LED
         """
         port = int(port)
         device_num = int(device_num)
@@ -681,8 +684,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             else:
                 # This is a Nano LED
                 if '-' in str(number):
-                    num = list(map(int, str(number).split('-')))
-                    index = num[0] * 64 + num[1]
+                    # num = list(map(int, str(number).split('-')))
+                    # index = num[0] * 64 + num[1]
+                    index = int(self.port_idx_to_hex(parts[0], parts[1], 64), 16)
                 else:
                     index = int(number)
 

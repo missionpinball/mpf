@@ -707,6 +707,9 @@ class TestFastNano(TestFastBase):
         # Verify the old style number works
         self.assertEqual("00-0", self.machine.lights['old_style_number'].hw_drivers['red'][0].number)
 
+        # Verify 1-based numbers work
+        self.assertEqual("FF-0", self.machine.lights['test_max_1_based'].hw_drivers['red'][0].number)
+
         self.advance_time_and_run()
         device = self.machine.lights["test_led"]   # 0x97
         device2 = self.machine.lights["test_led2"]  #0x98

@@ -163,12 +163,12 @@ lights:
   old_style_number:
     number: 0  # 0x00
   test_led:
-    number: 2-23 #0x97, int 151
+    number: 3-24 #0x97, int 151
   test_led2:
     previous: test_led    #0x98, int 152
     type: grb
   l_o_circle:
-    number: 1-10 # 0x4A, int 74
+    number: 2-11 # 0x4A, int 74
     type: grb
   test_rgbw1:
     start_channel: 33-0  # 0x21, int 33
@@ -192,3 +192,5 @@ lights:
         number: 40-1
       white:
         number: 41-2
+  test_max_1_based:
+    number: 4-64
