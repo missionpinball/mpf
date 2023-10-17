@@ -1,5 +1,4 @@
 from math import ceil
-from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
 
 
@@ -24,7 +23,13 @@ class FASTAudioInterface(LogMixin):
 
         # TODO set amp enable settings
         self.communicator.set_phones_level(communicator.config['headphones_level'], False)
-        self.communicator.set_phones_behavior(communicator.config['mute_speakers_with_headphones'], False)
+
+        if communicator.config['mute_speakers_with_headphones']:
+            phones = 'mute'
+        else:
+            phones = 'ignore'
+
+        self.communicator.set_phones_behavior(phones, False)
         self.communicator.send_config_to_board()
 
         # TODO send initial volumes
