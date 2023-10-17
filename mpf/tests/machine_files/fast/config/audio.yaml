@@ -9,8 +9,8 @@ fast:
     port: com9
     baud: 230400
     lcd_pulse_time: 100ms
-    friendly_volume_steps: 20
-    friendly_max_volume: 100
+    friendly_max_volume: 20
+    friendly_max_headphone_volume: 20
     max_volume_main: 63
     max_volume_sub: 40
     max_volume_headphones: 63
@@ -19,3 +19,4 @@ fast:
     headphones_amp_enabled: True
     headphones_level: headphones  # headphones or line
     mute_speakers_with_headphones: True
+    link_phones_to_main: False

@@ -67,10 +67,10 @@ class FastAudCommunicator(FastSerialCommunicator):
         if self.amps['sub']['enabled']:
             byte = Util.set_bit(byte, 1)
         if self.amps['headphones']['enabled']:
-            if not self.phones_level:               # line level
+            if not self.phones_level:  # line level
                 byte = Util.set_bit(byte, 2)
                 byte = Util.set_bit(byte, 3)
-            else:                                   # phones level
+            else:  # phones level
                 if self.phones_mute:
                     byte = Util.set_bit(byte, 3)
                 else:
