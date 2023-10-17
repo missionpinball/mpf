@@ -1,0 +1,22 @@
+#config_version=6
+
+hardware:
+    platform: fast
+
+fast:
+  aud:
+    debug: true
+    port: com9
+    baud: 230400
+    lcd_pulse_time: 100ms
+    volume_steps: 20
+    volume_scale: 100
+    max_volume_main: 63
+    max_volume_sub: 63
+    max_volume_headphones: 63
+    sub_percent_of_main: 1.0
+    main_amp_enabled: True
+    sub_amp_enabled: True
+    headphones_amp_enabled: True
+    headphones_level: headphones  # headphones or line
+    mute_speakers_with_headphones: True

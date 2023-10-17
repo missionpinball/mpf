@@ -1,114 +1,96 @@
-"""Hardware sound system."""
-from enum import Enum
 from math import ceil
 from mpf.core.utility_functions import Util
-from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
-
-class FastAudioDevices(Enum):
-
-    """Track values for audio targets."""
-
-    SPEAKER = 1
-    SUBWOOFER = 2
-    HEADPHONES = 3
+from mpf.core.logging import LogMixin
 
 
-class FastLcdButtons(Enum):
-
-    """Map LCD pins to control events."""
-
-    MENU = 1
-    SELECT = 2
-    PLUS = 3
-    MINUS = 4
-    POWER = 5
-    SOURCE = 6
-
-
-class FASTAudio(HardwareSoundPlatformInterface):
+class FASTAudioInterface(LogMixin):
 
     """Hardware sound system using the FAST Audio board."""
 
-    __slots__ = ["lcd_keys", "platform", "send", "track_keys"]
+    # __slots__ = []
 
-    def __init__(self, platform, sender, platform_settings={}):
+    def __init__(self, platform, communicator):
         self.platform = platform
-        self.platform.log.info("Creating FAST audio system: %s", self)
-        self.platform.log.info(" - sender is %s", sender)
-        self.platform.log.info("Platform settings: %s", platform_settings)
-        self.send = sender
-        self.track_keys = {
-            FastAudioDevices.SPEAKER: "AV",
-            FastAudioDevices.SUBWOOFER: "AS",
-            FastAudioDevices.HEADPHONES: "AH"
-        }
+        self.communicator = communicator
 
-        self.lcd_keys = {}
-        for key, value in platform_settings.items():
-            if key == "lcd_pin_menu":
-                self.lcd_keys[FastLcdButtons.MENU] = value
-            elif key == "lcd_pin_select":
-                self.lcd_keys[FastLcdButtons.SELECT] = value
-            elif key == "lcd_pin_power":
-                self.lcd_keys[FastLcdButtons.POWER] = value
-            elif key == "lcd_pin_plus":
-                self.lcd_keys[FastLcdButtons.PLUS] = value
-            elif key == "lcd_pin_minus":
-                self.lcd_keys[FastLcdButtons.MINUS] = value
-            elif key == "lcd_pin_source":
-                self.lcd_keys[FastLcdButtons.SOURCE] = value
+        self.volume_steps = communicator.config['volume_steps']
+        self.volume_scale = communicator.config['volume_scale']
+        self.sub_percent_of_main = communicator.config['sub_percent_of_main']
 
-    def play_sound(self, number: int, track: int = 1):
-        """Play a sound."""
-        raise NotImplementedError
+        self.current_volume = 0
+        self.main_volume = 0
+        self.sub_volume = 0
+        self.phones_volume = 0
 
-    def play_sound_file(self, file: str, platform_options: dict, track: int = 1):
-        """Play a sound file."""
-        raise NotImplementedError
+        # TODO set amp enable settings
+        self.communicator.set_phones_level(communicator.config['headphones_level'], False)
+        self.communicator.set_phones_behavior(communicator.config['mute_speakers_with_headphones'], False)
+        self.communicator.send_config_to_board()
 
-    def text_to_speech(self, text: str, platform_options: dict, track: int = 1):
-        """Text to speech output."""
-        raise NotImplementedError
+        # TODO send initial volumes
 
-    def stop_all_sounds(self, track: int = 1):
-        """Play a sound."""
-        raise NotImplementedError
+        # TODO register for master volume machine variable changes
 
-    def set_speakers(self, volume: float):
-        self.set_volume(FastAudioDevices.SPEAKER, volume)
+    def increase_volume(self, steps=1):
+        """Increase the volume of both main and sub via the
+        ratio specified."""
 
-    def set_headphones(self, volume: float):
-        self.set_volume(FastAudioDevices.HEADPHONES, volume)
+        # steps are normalized to the config settings
 
-    def set_subwoofer(self, volume: float):
-        self.set_volume(FastAudioDevices.SUBWOOFER, volume)
+    def decrease_volume(self, steps=1):
+        """Decrease the volume of both main and sub via the
+        ratio specified."""
 
-    def set_volume(self, volume: float, track: int = 1):
-        """Set volume."""
-        # FAST Audio board supports 64 levels of precision, so convert the float accordingly
-        value = Util.int_to_hex_string(ceil(volume * 64))
-        msg = f"{self.track_keys[track]}:{Util.int_to_hex_string(value)}"
-        self.send_and_forget(msg)
+    def increase_main_volume(self, steps=1):
+        """Increase the volume of the main channel."""
 
-    def press_power(self, ms=None):
-        self._press(FastLcdButtons.POWER)
+    def decrease_main_volume(self, steps=1):
+        """Decrease the volume of the main channel."""
 
-    def press_menu(self, ms=None):
-        self._press(FastLcdButtons.MENU)
+    def set_main_volume(self, volume=0):
+        """Set the volume of the main channel."""
 
-    def press_plus(self, ms=None):
-        self._press(FastLcdButtons.PLUS)
+    def increase_sub_volume(self, steps=1):
+        """Increase the volume of the sub channel."""
 
-    def press_minus(self, ms=None):
-        self._press(FastLcdButtons.MINUS)
+    def decrease_sub_volume(self, steps=1):
+        """Decrease the volume of the sub channel."""
 
-    def press_select(self, ms=None):
-        self._press(FastLcdButtons.SELECT)
+    def set_sub_volume(self, volume=0):
+        """Set the volume of the sub channel."""
 
-    def press_source(self, ms=None):
-        self._press(FastLcdButtons.SOURCE)
+    def increase_headphones_volume(self, steps=1):
+        """Increase the volume of the headphones channel."""
 
-    def _press(self, target: FastLcdButtons, ms=10):
-        if not target in self.lcd_keys:
-            raise ValueError(f"LCD button for {target} is not defined in platform settings ({self.lcd_keys.keys()}")
-        self.send_and_forget(f"XO:{self.lcd_keys[target]},{Util.int_to_hex_string(ms)}")
+    def decrease_headphones_volume(self, steps=1):
+        """Decrease the volume of the headphones channel."""
+
+    def set_headphones_volume(self, volume=0):
+        """Set the volume of the headphones channel."""
+
+    def temp_duck_volume(self):
+        """Restore the main volume to the saved value."""
+
+    def temp_duck_main_volume(self, steps=1):
+        """Temporarily duck the main volume."""
+
+    def temp_duck_sub_volume(self, steps=1):
+        """Temporarily duck the sub volume."""
+
+    def temp_duck_headphones_volume(self, steps=1):
+        """Temporarily duck the headphones volume."""
+
+    def restore_volume(self):
+        """Restore the main/sub blended volume to the saved value."""
+
+    def restore_main_volume(self):
+        """Restore the main volume to the saved value."""
+
+    def restore_sub_volume(self):
+        """Restore the sub volume to the saved value."""
+
+    def restore_headphones_volume(self):
+        """Restore the headphones volume to the saved value."""
+
+    def pulse_lcd_pin(self, pin, ms=100):
+        """Pulse the LCD pin."""

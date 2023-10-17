@@ -361,3 +361,51 @@ class MockFastDmd(MockFastSerial):
         self.autorespond_commands = {
             'ID:': 'ID:DMD FP-CPU-002-2 00.88',
             }
+
+class MockFastAudio(MockFastSerial):
+    def __init__(self, test_fast_base):
+        super().__init__(test_fast_base)
+        self.type = "AUD"
+        self.port = "com9"
+        self._main_volume = '0'
+        self._sub_volume = '0'
+        self._phones_volume = '0'
+
+        self.autorespond_commands = {
+            'ID:': 'ID:AUD FP-AUD-0100 00.10',
+            }
+
+    def process_msg(self, cmd):
+        cmd = cmd.upper()
+        if cmd[:2] in ('AV', 'AS', 'AH'):
+            return self.process_volume_command(cmd)
+        if cmd[:2] == 'AM':
+            return self.process_am_command(cmd)
+        elif cmd[:2] == 'XO':
+            return self.process_xo_command(cmd)
+
+    def process_volume_command(self, cmd):
+        device, volume = cmd.split(':')
+
+        if len(volume) == 1:
+            volume = f'0{volume}'
+        assert len(volume) == 2
+        assert volume >= '00'
+        assert volume <= '3F'
+
+        if device == 'AV':
+            self._main_volume = volume
+        elif device == 'AS':
+            self._sub_volume = volume
+        elif device == 'AH':
+            self._phones_volume = volume
+        else:
+            raise AssertionError(f'Unknown device {device}')
+
+        return cmd
+
+    def process_xo_command(self, cmd):
+        return cmd
+
+    def process_am_command(self, cmd):
+        return cmd

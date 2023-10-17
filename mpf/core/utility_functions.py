@@ -792,3 +792,47 @@ class Util:
             future.result()
         except asyncio.CancelledError:
             pass
+
+    @staticmethod
+    def set_bit(hex_string, bit):
+        """Sets a bit in a hex string.
+
+        Args:
+            hex_string (_type_): Hex string, e.g. '81'
+            bit (_type_): Bit to set, e.g. 3
+
+        Returns:
+            _type_: Returns the hex string with the bit set, e.g. '89'
+        """
+        num = int(hex_string, 16)
+        num |= 1 << bit
+        return Util.int_to_hex_string(num)
+
+    @staticmethod
+    def clear_bit(hex_string, bit):
+        """Clears a bit in a hex string.
+
+        Args:
+            hex_string (str): Hex string to modify, e.g. '81'
+            bit (int): Position of the bit to clear, e.g. 3
+
+        Returns:
+            str: Returns the modified hex string with the bit cleared, e.g. '80'
+        """
+        num = int(hex_string, 16)
+        num &= ~(1 << bit)
+        return Util.int_to_hex_string(num)
+
+    @staticmethod
+    def check_bit(hex_string, bit):
+        """Checks the status of a bit in a hex string.
+
+        Args:
+            hex_string (str): Hex string, e.g. '81'
+            bit (int): Bit to check, e.g. 3
+
+        Returns:
+            bool: True if the bit is set, False otherwise
+        """
+        num = int(hex_string, 16)
+        return bool(num & (1 << bit))

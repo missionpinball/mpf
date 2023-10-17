@@ -13,7 +13,7 @@ from mpf.core.utility_functions import Util
 from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.exceptions.runtime_error import MpfRuntimeError
 from mpf.platforms.fast import fast_defines
-from mpf.platforms.fast.fast_audio import FASTAudio
+from mpf.platforms.fast.fast_audio import FASTAudioInterface
 from mpf.platforms.fast.fast_dmd import FASTDMD
 from mpf.platforms.fast.fast_driver import FASTDriver
 from mpf.platforms.fast.fast_gi import FASTGIString
@@ -41,7 +41,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 "exp_boards_by_address", "exp_boards_by_name", "exp_breakout_boards",
                 "exp_breakouts_with_leds", "hw_switch_data", "new_switch_data",
                 "io_boards", "io_boards_by_name", "switches_initialized",
-                "drivers_initialized"]
+                "drivers_initialized", "audio_interface"]
 
     port_types = ['net', 'exp', 'aud', 'dmd', 'rgb', 'seg', 'emu']
 
@@ -97,6 +97,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.io_boards_by_name = dict()     # type: Dict[str, FastIoBoard]
         self.switches_initialized = False
         self.drivers_initialized = False
+        self.audio_interface = None
 
     def get_info_string(self):
         """Dump info strings about attached FAST hardware."""
@@ -705,12 +706,14 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     def configure_hardware_sound_system(self, platform_settings):
         """Configure a hardware FAST audio controller."""
+        # This isn't technically a HardwareSoundSystem implementation, but this is
+        # as good of a way as any to initialize it.
         if not self.serial_connections['aud']:
             raise AssertionError("A request was made to configure a FAST AUDIO, "
                                  "but no connection to a AUDIO processor is "
                                  "available.")
 
-        return FASTAudio(self.machine, self.serial_connections['aud'].send, platform_settings)
+        return FASTAudioInterface(self.machine, self.serial_connections['aud'])
 
     async def configure_segment_display(self, number: str, display_size: int, platform_settings) -> FASTSegmentDisplay:
         """Configure a segment display."""
