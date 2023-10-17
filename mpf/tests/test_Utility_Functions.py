@@ -215,3 +215,11 @@ class TestUtil(unittest.TestCase):
         self.assertTrue(Util.is_power2(256))
         self.assertFalse(Util.is_power2(3))
         self.assertFalse(Util.is_power2(222))
+
+    def test_bit_functions(self):
+        self.assertEqual(Util.set_bit('00', 0), '01')
+        self.assertEqual(Util.set_bit('02', 2), '06')
+        self.assertEqual(Util.clear_bit('91', 4), '81')
+        self.assertEqual(Util.clear_bit('81', 3), '81')  # no change
+        self.assertEqual(Util.check_bit('01', 0), True)
+        self.assertEqual(Util.check_bit('91', 5), False)

@@ -802,11 +802,12 @@ class Util:
             bit (_type_): Bit to set, e.g. 3
 
         Returns:
-            _type_: Returns the hex string with the bit set, e.g. '89'
+            _type_: Returns the hex string with the bit set, e.g. '89'.
+            The return string will be the same length as the input string.
         """
         num = int(hex_string, 16)
         num |= 1 << bit
-        return Util.int_to_hex_string(num)
+        return Util.int_to_hex_string(num).zfill(len(hex_string))
 
     @staticmethod
     def clear_bit(hex_string, bit):
