@@ -681,6 +681,8 @@ fast_aud:
     headphones_level: single|enum(headphones,line)|headphones
     mute_speakers_with_headphones: single|bool|true
     volume_map: list|(int,int)|None
+    headphones_map: list|(int,int)|None
+    link_phones_to_main: single|bool|false
 fast_seg:
     port: list|str|auto
     baud: single|int|230400

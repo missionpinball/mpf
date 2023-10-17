@@ -14,8 +14,13 @@ class FASTAudioInterface(LogMixin):
 
         self.current_volume = 0
         self.current_headphones_volume = 0
+        self.temp_ducked_volume_steps = 0
         self.friendly_max_volume = communicator.config['friendly_max_volume']
         self.volume_map = list()
+        self.headphones_map = list()
+
+        # changes phones with main volume, useful for line out, 3rd amp, etc.
+        self.link_phones_to_main = communicator.config['link_phones_to_main']
 
         # Just set everything here. The communicator will update the
         # config on its own as part of its init process
@@ -40,17 +45,22 @@ class FASTAudioInterface(LogMixin):
         if not self.volume_map:
             self.create_volume_map()
 
+        if not self.headphones_map:
+            self.create_headphones_map()
+
         communicator.set_phones_behavior(phones, send_now=False)
 
         # TODO read in machine vars, fall back to defaults if not set
         self.current_volume = communicator.config['default_volume']
-        self.current_headphones_volume = communicator.config['default_headphones_volume']
+
+        if self.link_phones_to_main:
+            self.current_headphones_volume = self.current_volume
+        else:
+            self.current_headphones_volume = communicator.config['default_headphones_volume']
 
         self.communicator.set_volume('main', self.volume_map[self.current_volume][0], send_now=False)
         self.communicator.set_volume('sub', self.volume_map[self.current_volume][1], send_now=False)
-
-        # TODO change below to use the headphone steps, create headphone map
-        self.communicator.set_volume('headphones', self.current_headphones_volume, send_now=False)
+        self.communicator.set_volume('headphones', self.headphones_map[self.current_headphones_volume], send_now=False)
 
     def create_volume_map(self):
         steps = self.communicator.config['friendly_volume_steps']
@@ -71,66 +81,57 @@ class FASTAudioInterface(LogMixin):
         self.volume_map.append((0, 0))
         self.volume_map.reverse()
 
-    def increase_volume(self, steps=1):
-        """Increase the volume of both main and sub via the
-        ratio specified."""
+    def create_headphones_map(self):
+        steps = self.communicator.config['friendly_headphones_steps']
+        max_volume = self.communicator.config['max_volume_headphones']
+        step_percent = 1 / steps
 
-        # steps are normalized to the config settings
+        for i in range(steps):
+            volume = ceil(max_volume * (1 - (i * step_percent)))
+            self.headphones_map.append(volume)
+
+        self.headphones_map.append(0)
+        self.headphones_map.reverse()
+
+    def send_volume_to_hw(self):
+        self.communicator.set_volume('main', self.volume_map[self.current_volume][0])
+        self.communicator.set_volume('sub', self.volume_map[self.current_volume][1])
+
+    def send_headphones_volume_to_hw(self):
+        self.communicator.set_volume('headphones', self.headphones_map[self.current_headphones_volume])
+
+    def increase_volume(self, steps=1):
+        self.set_volume(self.current_volume + steps)
 
     def decrease_volume(self, steps=1):
-        """Decrease the volume of both main and sub via the
-        ratio specified."""
+        self.set_volume(self.current_volume - steps)
 
-    def increase_main_volume(self, steps=1):
-        """Increase the volume of the main channel."""
+    def set_volume(self, volume=0):
+        self.current_volume = volume
+        self.send_volume_to_hw()
 
-    def decrease_main_volume(self, steps=1):
-        """Decrease the volume of the main channel."""
-
-    def set_main_volume(self, volume=0):
-        """Set the volume of the main channel."""
-
-    def increase_sub_volume(self, steps=1):
-        """Increase the volume of the sub channel."""
-
-    def decrease_sub_volume(self, steps=1):
-        """Decrease the volume of the sub channel."""
-
-    def set_sub_volume(self, volume=0):
-        """Set the volume of the sub channel."""
+        if self.link_phones_to_main:
+            self.current_headphones_volume = volume
+            self.send_headphones_volume_to_hw()
 
     def increase_headphones_volume(self, steps=1):
-        """Increase the volume of the headphones channel."""
+        self.set_headphones_volume(self.current_headphones_volume + steps)
 
     def decrease_headphones_volume(self, steps=1):
-        """Decrease the volume of the headphones channel."""
+        self.set_headphones_volume(self.current_headphones_volume - steps)
 
     def set_headphones_volume(self, volume=0):
-        """Set the volume of the headphones channel."""
+        self.current_headphones_volume = volume
+        self.send_headphones_volume_to_hw()
 
-    def temp_duck_volume(self):
-        """Restore the main volume to the saved value."""
-
-    def temp_duck_main_volume(self, steps=1):
-        """Temporarily duck the main volume."""
-
-    def temp_duck_sub_volume(self, steps=1):
-        """Temporarily duck the sub volume."""
-
-    def temp_duck_headphones_volume(self, steps=1):
-        """Temporarily duck the headphones volume."""
+    def temp_duck_volume(self, steps=1):
+        """Temporarily duck the volume by the specified number of steps."""
+        self.temp_ducked_volume_steps = steps
+        self.set_volume(self.current_volume - steps)
 
     def restore_volume(self):
         """Restore the main/sub blended volume to the saved value."""
-
-    def restore_main_volume(self):
-        """Restore the main volume to the saved value."""
-
-    def restore_sub_volume(self):
-        """Restore the sub volume to the saved value."""
-
-    def restore_headphones_volume(self):
-        """Restore the headphones volume to the saved value."""
+        self.set_volume(self.current_volume + self.temp_ducked_volume_steps)
 
     def pulse_lcd_pin(self, pin, ms=100):
-        """Pulse the LCD pin."""
+        self.communicator.pulse_lcd_pin(pin, ms)
