@@ -363,6 +363,9 @@ class MockFastDmd(MockFastSerial):
             }
 
 class MockFastAudio(MockFastSerial):
+
+    PRINT_FSP_TRAFFIC = True  # TODO temp for dev
+
     def __init__(self, test_fast_base):
         super().__init__(test_fast_base)
         self.type = "AUD"

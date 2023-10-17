@@ -9,12 +9,11 @@ fast:
     port: com9
     baud: 230400
     lcd_pulse_time: 100ms
-    volume_steps: 20
-    volume_scale: 100
+    friendly_volume_steps: 20
+    friendly_max_volume: 100
     max_volume_main: 63
-    max_volume_sub: 63
+    max_volume_sub: 40
     max_volume_headphones: 63
-    sub_percent_of_main: 1.0
     main_amp_enabled: True
     sub_amp_enabled: True
     headphones_amp_enabled: True

@@ -18,6 +18,7 @@ class FastAudCommunicator(FastSerialCommunicator):
 
     MIN_FW = version.parse('0.10')
     IGNORED_MESSAGES = ['AV:', 'AS:', 'AH:', 'AM:']
+    HAS_UPDATE_TASK = False  # TODO change this when WD is implemented
 
     __slots__ = ["amps", "current_config_byte", "phones_level", "phones_mute", "_watchdog_ms"]
 
@@ -48,12 +49,11 @@ class FastAudCommunicator(FastSerialCommunicator):
 
     async def init(self):
         self.platform.audio_interface = FASTAudioInterface(self.platform, self)
-        await self.soft_reset()
 
     async def soft_reset(self):
+        self.update_config(send_now=True)
         for amp in self.amps:
-            self.set_volume(amp, self.amps[amp]['volume'])
-        self.update_config()
+            self.set_volume(amp, int(self.amps[amp]['volume'], 16))
 
     def _volume_to_hw(self, volume):
         volume = int(volume)
@@ -81,28 +81,29 @@ class FastAudCommunicator(FastSerialCommunicator):
         if send_now:
             self.send_config_to_board()
 
-    def set_volume(self, amp, volume):
+    def set_volume(self, amp, volume, send_now=True):
         if amp not in self.amps:
             raise AssertionError(f"Invalid amp {amp}")
 
         volume = self._volume_to_hw(volume)
         self.amps[amp]['volume'] = volume
-        self.send_and_forget(f"{self.amps[amp]['cmd']}:{volume}")
+        if send_now:
+            self.send_and_forget(f"{self.amps[amp]['cmd']}:{volume}")
 
     def get_volume(self, amp):
         return int(self.amps[amp]['volume'], 16)
 
-    def enable_amp(self, amp):
+    def enable_amp(self, amp, send_now=True):
         if amp not in self.amps:
             raise AssertionError(f"Invalid amp {amp}")
         self.amps[amp]['enabled'] = True
-        self.update_config()
+        self.update_config(send_now)
 
-    def disable_amp(self, amp):
+    def disable_amp(self, amp, send_now=True):
         if amp not in self.amps:
             raise AssertionError(f"Invalid amp {amp}")
         self.amps[amp]['enabled'] = False
-        self.update_config()
+        self.update_config(send_now)
 
     def set_phones_level(self, mode, send_now=True):
         if mode == 'line':
