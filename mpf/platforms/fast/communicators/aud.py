@@ -11,14 +11,13 @@ class FastAudCommunicator(FastSerialCommunicator):
 
     # Notes on this class, versus the FASTAudioInterface class in mpf/platforms/fast/fast_audio.py:
 
-    # FastAudCommunicator should just focus on actually talking to the hardware. It will deal in hardware
+    # FastAudCommunicator focuses on actually talking to the hardware. It will deal in hardware
     # levels 0-63, and handle decoding/encoding the config bitmask, etc.
-    # FastAudioInterface should handle the higher level stuff, like volume scaling, and the general
+    # FastAudioInterface handles the higher level stuff, like volume scaling, and the general
     # interface into the rest of MPF (reading configs, interacting with events, etc.)
 
     MIN_FW = version.parse('0.10')
     IGNORED_MESSAGES = ['AV:', 'AS:', 'AH:', 'AM:']
-    HAS_UPDATE_TASK = False  # TODO change this when WD is implemented
 
     __slots__ = ["amps", "current_config_byte", "phones_level", "phones_mute", "_watchdog_ms"]
 

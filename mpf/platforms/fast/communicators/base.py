@@ -9,7 +9,6 @@ from mpf.core.logging import LogMixin
 from mpf.core.utility_functions import Util
 
 MIN_FW = version.parse('0.00') # override in subclass
-HAS_UPDATE_TASK = False
 
 
 class FastSerialCommunicator(LogMixin):

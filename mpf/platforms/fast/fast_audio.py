@@ -6,14 +6,13 @@ class FASTAudioInterface(LogMixin):
 
     """Hardware sound system using the FAST Audio board."""
 
-    # __slots__ = ["platform", "communicator", "amps", "temp_ducked_volume_steps"]
+    __slots__ = ["platform", "machine", "communicator", "amps", "control_pin_pulse_times"]
 
     def __init__(self, platform, communicator):
         self.platform = platform
         self.machine = platform.machine
         self.communicator = communicator
         self.amps = {'main': {}, 'sub': {}, 'headphones': {}}
-        self.temp_ducked_volume_steps = 0
         self.control_pin_pulse_times = list()
 
         # need to get this in before the soft_reset(), but after machine vars load
@@ -31,14 +30,14 @@ class FASTAudioInterface(LogMixin):
             var_name = f'fast_audio_{amp}_volume'
 
             if amp != 'main' and self.communicator.config[f'link_{amp}_to_main']:
-                value_to_set = self.machine.variables.get_machine_var('fast_audio_main_volume')
-            else:
-                value_to_set = self.communicator.config[f'default_{amp}_volume']
+                self.machine.variables.set_machine_var(
+                    name=var_name,
+                    value=self.machine.variables.get_machine_var('fast_audio_main_volume'),
+                    persist=self.communicator.config[f'persist_volume_settings'])
 
-            # Check if the machine variable already exists. If not, set it.
-            if not self.machine.variables.is_machine_var(var_name):
+            elif not self.machine.variables.is_machine_var(var_name):
                 self.machine.variables.set_machine_var(name=var_name,
-                                                    value=value_to_set,
+                                                    value=self.communicator.config[f'default_{amp}_volume'],
                                                     persist=self.communicator.config[f'persist_volume_settings'])
     def _init_amps(self):
         for amp in self.amps.keys():
@@ -59,7 +58,9 @@ class FASTAudioInterface(LogMixin):
                 self.amps[amp]['steps'] = len(self.amps[amp]['levels_list']) - 1
 
             if self.amps[amp]['link_to_main'] and len(self.amps[amp]['levels_list']) != len(self.amps['main']['levels_list']):
-                raise AssertionError(f"Invalid {amp}_levels_list / steps. Must be same length as main_levels_list / steps to link to main.")
+                raise AssertionError(f"Cannot link {amp} to main. The number of volume steps must be the same. "
+                                     f"Main has {len(self.amps['main']['levels_list'])} steps, "
+                                     f"but {amp} has {len(self.amps[amp]['levels_list'])} steps.")
 
             self.communicator.set_volume(amp, self.get_hw_volume(amp), send_now=False)
 
@@ -85,7 +86,7 @@ class FASTAudioInterface(LogMixin):
         self.platform.machine.events.add_handler('machine_var_fast_audio_main_volume', self.set_volume, amp='main')
         self.platform.machine.events.add_handler('machine_var_fast_audio_sub_volume', self.set_volume, amp='sub')
         self.platform.machine.events.add_handler('machine_var_fast_audio_headphones_volume', self.set_volume, amp='headphones')
-        self.platform.machine.events.add_handler('fast_audio_duck', self.temp_duck_volume, steps=4)
+        self.platform.machine.events.add_handler('fast_audio_temp_volume', self.temp_volume)
         self.platform.machine.events.add_handler('fast_audio_restore', self.restore_volume)
         self.platform.machine.events.add_handler('fast_audio_pulse_lcd_pin', self.pulse_lcd_pin)
         self.platform.machine.events.add_handler('fast_audio_pulse_power_pin', self.pulse_power_pin)
@@ -119,7 +120,11 @@ class FASTAudioInterface(LogMixin):
         self.communicator.set_volume(amp, self.get_hw_volume(amp))
 
     def get_hw_volume(self, amp):
-        return self.amps[amp]['levels_list'][self.get_volume(amp)]
+        try:
+            return self.amps[amp]['levels_list'][self.get_volume(amp)]
+        except IndexError:
+            raise AssertionError(f"Invalid volume {self.get_volume(amp)} for amp: {amp}.",
+                                 f"There are only {len(self.amps[amp]['levels_list'])} entries in the volume levels list.")
 
     def increase_volume(self, amp, change=1, **kwargs):
         """Increase the volume by the specified number of steps."""
@@ -151,18 +156,19 @@ class FASTAudioInterface(LogMixin):
     def _set_machine_var_volume(self, amp, value):
         self.machine.variables.set_machine_var(f'fast_audio_{amp}_volume', value)
 
-    def temp_duck_volume(self, change=1, **kwargs):
-        """Temporarily duck the volume by the specified number of steps.
-        The original value will be saved and can be restored with
-        restore_volume().
+    def temp_volume(self, amp, change=1, **kwargs):
+        """Temporarily change the volume by the specified number of steps, up or down,
+        but without changing the machine var. This is used for ducking or other
+        temporary volume changes where you don't want to save it to disk.
         """
         change = int(change)
-        self.temp_ducked_volume_steps = change
-        self.set_volume('main', self.get_volume('main') - change)
+        self.communicator.set_volume(amp, self.amps['main']['levels_list'][self.get_volume(amp) + change],
+                                     send_now=True)
 
-    def restore_volume(self, **kwargs):
-        """Restore the volume to the value it was before it was ducked."""
-        self.set_volume(self.get_volume('main') + self.temp_ducked_volume_steps)
+    def restore_volume(self, amp, **kwargs):
+        """Restore the volume to the value to the machine var value"""
+        self.communicator.set_volume(amp, self.amps['main']['levels_list'][self.get_volume(amp)],
+                                     send_now=True)
 
     def pulse_lcd_pin(self, pin, ms=None, **kwargs):
         """Pulse the specified LCD pin for the specified number of milliseconds.
