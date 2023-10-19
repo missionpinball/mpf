@@ -243,7 +243,7 @@ class MpfTestCase(unittest.TestCase):
         """Get absolute path relative to current directory."""
         return os.path.join(os.path.abspath(os.curdir), path)
 
-    def post_event(self, event_name, run_time=0):
+    def post_event(self, event_name, run_time=0, **kwargs):
         """Post an MPF event and optionally advance the time.
 
         Args:
@@ -264,7 +264,7 @@ class MpfTestCase(unittest.TestCase):
             self.post_event('tilt', 1.5)
 
         """
-        self.machine.events.post(event_name)
+        self.machine.events.post(event_name, **kwargs)
         self.advance_time_and_run(run_time)
 
     def post_event_with_params(self, event_name, **params):

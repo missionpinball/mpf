@@ -149,5 +149,5 @@ class FastAudCommunicator(FastSerialCommunicator):
         # TODO WD command processing
 
     def pulse_control_pin(self, pin, ms):
-        assert 0 < pin < 7, f"Invalid pin {pin}"
-        self.send_and_forget(f"XO:{pin:02X}:{hex(ms)[2:].upper()}")
+        assert 0 <= pin <= 7, f"Invalid pin {pin}"
+        self.send_and_forget(f"XO:{pin:02X},{hex(ms)[2:].upper()}")

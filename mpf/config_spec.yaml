@@ -665,7 +665,12 @@ fast_aud:
     debug: single|bool|false
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
-    lcd_pulse_time: single|ms|100
+    pin1_pulse_time: single|ms|100
+    pin2_pulse_time: single|ms|100
+    pin3_pulse_time: single|ms|100
+    pin4_pulse_time: single|ms|100
+    pin5_pulse_time: single|ms|100
+    pin6_pulse_time: single|ms|100
     reset_pulse_time: single|ms|100
     power_pulse_time: single|ms|100
     watchdog: single|ms|1000

@@ -70,3 +70,19 @@ class TestFastAudio(TestFastBase):
         self.assertEqual('13', self.aud_cpu.main_volume)
         self.assertEqual(9, fast_audio.get_volume('main'))
         self.assertEqual(19, fast_audio.get_hw_volume('main'))
+
+        # Test machine var player events work from config
+        self.aud_cpu.expected_commands['AV:16'] = 'AV:16'
+        self.post_event('increase_main_volume', 1)
+        self.assertEqual('16', self.aud_cpu.main_volume)
+        self.assertEqual(10, fast_audio.get_volume('main'))
+        self.assertEqual(22, fast_audio.get_hw_volume('main'))
+
+    def test_control_pins(self):
+        self.aud_cpu.expected_commands['XO:01,63'] = 'XO:P'
+        self.post_event('fast_audio_pulse_lcd_pin', pin=2)
+        self.advance_time_and_run(1)
+        self.aud_cpu.expected_commands['XO:06,62'] = 'XO:P'
+        self.post_event('fast_audio_pulse_power_pin',1)
+        self.aud_cpu.expected_commands['XO:07,61'] = 'XO:P'
+        self.post_event('fast_audio_pulse_reset_pin',1)

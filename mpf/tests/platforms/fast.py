@@ -383,10 +383,8 @@ class MockFastAudio(MockFastSerial):
         cmd = cmd.upper()
         if cmd[:2] in ('AV', 'AS', 'AH'):
             return self.process_volume_command(cmd)
-        if cmd[:2] == 'AM':
+        elif cmd[:2] == 'AM':
             return self.process_am_command(cmd)
-        elif cmd[:2] == 'XO':
-            return self.process_xo_command(cmd)
 
     def process_volume_command(self, cmd):
         device, volume = cmd.split(':')
@@ -405,9 +403,6 @@ class MockFastAudio(MockFastSerial):
             self.headphones_volume = volume
         else:
             raise AssertionError(f'Unknown device {device}')
-
-    def process_xo_command(self, cmd):
-        return cmd
 
     def process_am_command(self, cmd):
         self.board_config_byte = cmd[3:]

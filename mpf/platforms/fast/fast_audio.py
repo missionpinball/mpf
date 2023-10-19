@@ -14,6 +14,7 @@ class FASTAudioInterface(LogMixin):
         self.communicator = communicator
         self.amps = {'main': {}, 'sub': {}, 'headphones': {}}
         self.temp_ducked_volume_steps = 0
+        self.control_pin_pulse_times = list()
 
         # need to get this in before the soft_reset(), but after machine vars load
         self.machine.events.add_handler('init_phase_1', self._initialize, priority=100)
@@ -21,6 +22,7 @@ class FASTAudioInterface(LogMixin):
     def _initialize(self, **kwargs):
         self._configure_machine_vars()
         self._init_amps()
+        self._configure_control_pins()
         self._init_hw_config()
         self._register_event_handlers()
 
@@ -61,6 +63,13 @@ class FASTAudioInterface(LogMixin):
 
             self.communicator.set_volume(amp, self.get_hw_volume(amp), send_now=False)
 
+    def _configure_control_pins(self):
+        for i in range(6):
+            self.control_pin_pulse_times.append(self.communicator.config[f'pin{i+1}_pulse_time'])
+
+        self.control_pin_pulse_times.append(self.communicator.config['power_pulse_time'])
+        self.control_pin_pulse_times.append(self.communicator.config['reset_pulse_time'])
+
     def _init_hw_config(self):
         # Just set everything here. The communicator will send it to the board later
         self.communicator.set_phones_level(self.communicator.config['headphones_level'], send_now=False)
@@ -75,10 +84,10 @@ class FASTAudioInterface(LogMixin):
     def _register_event_handlers(self):
         self.platform.machine.events.add_handler('machine_var_fast_audio_main_volume', self.set_volume, amp='main')
         self.platform.machine.events.add_handler('machine_var_fast_audio_sub_volume', self.set_volume, amp='sub')
-        self.platform.machine.events.add_handler('fast_audio_headphones_volume', self.set_volume, amp='headphones')
+        self.platform.machine.events.add_handler('machine_var_fast_audio_headphones_volume', self.set_volume, amp='headphones')
         self.platform.machine.events.add_handler('fast_audio_duck', self.temp_duck_volume, steps=4)
         self.platform.machine.events.add_handler('fast_audio_restore', self.restore_volume)
-        self.platform.machine.events.add_handler('fast_audio_pulse_lcd_pin', self.pulse_lcd_pin, pin=1)
+        self.platform.machine.events.add_handler('fast_audio_pulse_lcd_pin', self.pulse_lcd_pin)
         self.platform.machine.events.add_handler('fast_audio_pulse_power_pin', self.pulse_power_pin)
         self.platform.machine.events.add_handler('fast_audio_pulse_reset_pin', self.pulse_reset_pin)
 
@@ -155,20 +164,27 @@ class FASTAudioInterface(LogMixin):
         """Restore the volume to the value it was before it was ducked."""
         self.set_volume(self.get_volume('main') + self.temp_ducked_volume_steps)
 
-    def pulse_lcd_pin(self, pin, ms=100, **kwargs):
+    def pulse_lcd_pin(self, pin, ms=None, **kwargs):
         """Pulse the specified LCD pin for the specified number of milliseconds.
 
         pin is the label from the board, 1-6
         """
+        if not ms:
+            ms = self.control_pin_pulse_times[pin-1]
+
         pin = int(pin)
         assert 1 <= pin <= 6, f"Invalid pin {pin}"
         # pins are zero indexed in the hardware
         self.communicator.pulse_control_pin(pin-1, ms)
 
-    def pulse_power_pin(self, ms=100, **kwargs):
+    def pulse_power_pin(self, ms=None, **kwargs):
         """Pulse the specified power pin for the specified number of milliseconds."""
+        if not ms:
+            ms = self.control_pin_pulse_times[6]
         self.communicator.pulse_control_pin(6, ms)
 
-    def pulse_reset_pin(self, ms=100, **kwargs):
+    def pulse_reset_pin(self, ms=None, **kwargs):
         """Pulse the specified reset pin for the specified number of milliseconds."""
+        if not ms:
+            ms = self.control_pin_pulse_times[7]
         self.communicator.pulse_control_pin(7, ms)
