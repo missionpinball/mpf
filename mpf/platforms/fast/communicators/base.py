@@ -60,7 +60,7 @@ class FastSerialCommunicator(LogMixin):
                                 # TODO do something with the URL endpoint
 
     def __repr__(self):
-        return f'<{self.__class__.__name__}>'
+        return f'[FAST {self.remote_processor}]'
 
     async def soft_reset(self):
         raise NotImplementedError(f"{self.__class__.__name__} does not implement soft_reset()")

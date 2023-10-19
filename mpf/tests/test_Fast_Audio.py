@@ -16,38 +16,57 @@ class TestFastAudio(TestFastBase):
         # These are all the defaults based on the config file for this test.
         # Individual tests can override / add as needed
 
-        self.serial_connections['aud'].expected_commands = {}
+        self.serial_connections['aud'].expected_commands = {'AM:0B':'AM:0B',
+                                                            'AV:11':'AV:11',
+                                                            'AS:17':'AS:17',
+                                                            'AH:28':'AH:28',}
 
-    def test_audio(self):
-        pass
+    def test_audio_basics(self):
+        fast_audio = self.machine.default_platform.audio_interface
+        # 31 steps, 0-63
+        main_list = [0, 3, 5, 7, 9, 11, 13, 15, 17, 19,
+                     22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+                     43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63]
 
-        # increase_volume(steps=1)
-        # decrease_volume(steps=1)
-        # set_volume(volume=20)
-        # temp_duck_volume(steps=1)
-        # restore_volume()
+        # 21 steps, 0-50
+        sub_list = [0, 3, 5, 8, 10, 13, 15, 18, 20, 23,
+                    25, 28, 30, 33, 35, 38, 40, 43, 45, 48, 50]
 
-        # increase_main_volume(steps=1)
-        # decrease_main_volume(steps=1)
-        # set_main_volume(volume=20)
-        # temp_duck_main_volume(steps=1)
-        # restore_main_volume()
+        # 11 steps, 0-40
+        headphones_list = [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40]
 
-        # increase_sub_volume(steps=1)
-        # decrease_sub_volume(steps=1)
-        # set_sub_volume(volume=20)
-        # temp_duck_sub_volume(steps=1)
-        # restore_sub_volume()
+        self.assertEqual(main_list, fast_audio.amps['main']['levels_list'])
+        self.assertEqual(sub_list, fast_audio.amps['sub']['levels_list'])
+        self.assertEqual(headphones_list, fast_audio.amps['headphones']['levels_list'])
 
-        # increase_headphones_volume(steps=1)
-        # decrease_headphones_volume(steps=1)
-        # set_headphones_volume(volume=20)
-        # temp_duck_headphones_volume(steps=1)
-        # restore_headphones_volume()
+        self.assertEqual(8, self.machine.variables.get_machine_var('fast_audio_main_volume'))
+        self.assertEqual(9, self.machine.variables.get_machine_var('fast_audio_sub_volume'))
+        self.assertEqual(10, self.machine.variables.get_machine_var('fast_audio_headphones_volume'))
 
-        # pulse_lcd_pin_1(ms=100)
-        # pulse_lcd_pin_2(ms=100)
-        # pulse_lcd_pin_3(ms=100)
-        # pulse_lcd_pin_4(ms=100)
-        # pulse_lcd_pin_5(ms=100)
-        # pulse_lcd_pin_6(ms=100)
+        self.assertEqual(8, fast_audio.get_volume('main'))
+        self.assertEqual(9, fast_audio.get_volume('sub'))
+        self.assertEqual(10, fast_audio.get_volume('headphones'))
+
+        self.assertEqual(17, fast_audio.get_hw_volume('main'))
+        self.assertEqual(23, fast_audio.get_hw_volume('sub'))
+        self.assertEqual(40, fast_audio.get_hw_volume('headphones'))
+
+        self.assertEqual('11', self.aud_cpu.main_volume)
+        self.assertEqual('17', self.aud_cpu.sub_volume)
+        self.assertEqual('28', self.aud_cpu.headphones_volume)
+
+        self.assertTrue(fast_audio.communicator.amps['main']['enabled'])
+        self.assertTrue(fast_audio.communicator.amps['sub']['enabled'])
+        self.assertTrue(fast_audio.communicator.amps['headphones']['enabled'])
+
+        self.assertTrue(fast_audio.amps['main']['link_to_main'])
+        self.assertFalse(fast_audio.amps['sub']['link_to_main'])
+        self.assertFalse(fast_audio.amps['headphones']['link_to_main'])
+
+        # Change the volume var and make sure it's reflected in the hardware
+        self.aud_cpu.expected_commands['AV:13'] = 'AV:13'
+        self.machine.variables.set_machine_var('fast_audio_main_volume', 9)
+        self.advance_time_and_run(1)
+        self.assertEqual('13', self.aud_cpu.main_volume)
+        self.assertEqual(9, fast_audio.get_volume('main'))
+        self.assertEqual(19, fast_audio.get_hw_volume('main'))

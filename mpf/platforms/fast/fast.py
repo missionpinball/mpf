@@ -117,6 +117,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.machine.events.add_async_handler('init_phase_1', self.soft_reset)
         self.machine.events.add_handler('init_phase_3', self._start_communicator_tasks)
         self.machine.events.add_handler('machine_reset_phase_2', self._init_complete)
+        self.audio_interface = self.configure_audio_interface()
         await self._connect_to_hardware()
 
     async def soft_reset(self, **kwargs):
@@ -704,14 +705,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         return FASTDMD(self.machine, self.serial_connections['dmd'].send_raw)
 
-    def configure_hardware_sound_system(self, platform_settings):
+    def configure_audio_interface(self):
         """Configure a hardware FAST audio controller."""
-        # This isn't technically a HardwareSoundSystem implementation, but this is
-        # as good of a way as any to initialize it.
-        if not self.serial_connections['aud']:
-            raise AssertionError("A request was made to configure a FAST AUDIO, "
-                                 "but no connection to a AUDIO processor is "
-                                 "available.")
+
+        if 'aud' not in self.serial_connections:
+            self.log.debug("Skipping FAST Audio Interface because there's no 'aud:' section in the FAST config.")
+            return None
 
         return FASTAudioInterface(self.machine, self.serial_connections['aud'])
 
@@ -724,8 +723,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                  "Segment Display but no connection is "
                                  "available.")
 
-        display = FASTSegmentDisplay(int(number), self.serial_connections['seg'])
-        return display
+        return FASTSegmentDisplay(int(number), self.serial_connections['seg'])
 
     @classmethod
     def get_coil_config_section(cls):

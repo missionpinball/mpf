@@ -666,30 +666,27 @@ fast_aud:
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
     lcd_pulse_time: single|ms|100
-
+    reset_pulse_time: single|ms|100
+    power_pulse_time: single|ms|100
+    watchdog: single|ms|1000
+    persist_volume_settings: single|bool|true
     main_steps: single|int|20
     sub_steps: single|int|20
     headphones_steps: single|int|20
-
     default_main_volume: single|int|10
     default_sub_volume: single|int|10
     default_headphones_volume: single|int|10
-
     max_volume_main: single|int|63
     max_volume_sub: single|int|63
     max_volume_headphones: single|int|63
-
     main_amp_enabled: single|bool|true
     sub_amp_enabled: single|bool|true
     headphones_amp_enabled: single|bool|true
-
     main_levels_list: list|int|None
     sub_levels_list: list|int|None
     headphones_levels_list: list|int|None
-
     headphones_level: single|enum(headphones,line)|headphones
     mute_speakers_with_headphones: single|bool|true
-
     link_main_to_main: single|bool|true
     link_sub_to_main: single|bool|true
     link_headphones_to_main: single|bool|false

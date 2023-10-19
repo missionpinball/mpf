@@ -364,15 +364,16 @@ class MockFastDmd(MockFastSerial):
 
 class MockFastAudio(MockFastSerial):
 
-    PRINT_FSP_TRAFFIC = True  # TODO temp for dev
+    # PRINT_FSP_TRAFFIC = True
 
     def __init__(self, test_fast_base):
         super().__init__(test_fast_base)
         self.type = "AUD"
         self.port = "com9"
-        self._main_volume = '0'
-        self._sub_volume = '0'
-        self._phones_volume = '0'
+        self.main_volume = '0'
+        self.sub_volume = '0'
+        self.headphones_volume = '0'
+        self.board_config_byte = '00'
 
         self.autorespond_commands = {
             'ID:': 'ID:AUD FP-AUD-0100 00.10',
@@ -397,18 +398,16 @@ class MockFastAudio(MockFastSerial):
         assert volume <= '3F'
 
         if device == 'AV':
-            self._main_volume = volume
+            self.main_volume = volume
         elif device == 'AS':
-            self._sub_volume = volume
+            self.sub_volume = volume
         elif device == 'AH':
-            self._phones_volume = volume
+            self.headphones_volume = volume
         else:
             raise AssertionError(f'Unknown device {device}')
-
-        return cmd
 
     def process_xo_command(self, cmd):
         return cmd
 
     def process_am_command(self, cmd):
-        return cmd
+        self.board_config_byte = cmd[3:]
