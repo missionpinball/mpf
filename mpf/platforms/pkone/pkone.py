@@ -101,7 +101,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
             self.controller_connection.send('PWS{:04d}'.format(self.config['watchdog']))
 
             # Schedule the watchdog task to send at half the configured interval
-            self._update_watchdog = self.machine.clock.schedule_interval(self._watchdog_task,
+            self._watchdog_task = self.machine.clock.schedule_interval(self._update_watchdog,
                                                                        self.config['watchdog'] / 2000)
 
         for connection in self.serial_connections:
