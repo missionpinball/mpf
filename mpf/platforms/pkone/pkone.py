@@ -101,7 +101,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
             self.controller_connection.send('PWS{:04d}'.format(self.config['watchdog']))
 
             # Schedule the watchdog task to send at half the configured interval
-            self._watchdog_task = self.machine.clock.schedule_interval(self._watchdog_task,
+            self._update_watchdog = self.machine.clock.schedule_interval(self._watchdog_task,
                                                                        self.config['watchdog'] / 2000)
 
         for connection in self.serial_connections:
@@ -110,7 +110,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
         self._initialize_led_hw_driver_alignment()
         self._light_system.start()
 
-    def _watchdog_task(self):
+    def _update_watchdog(self):
         """Send Watchdog ping command."""
         self.controller_connection.send('PWD')
 
