@@ -17,10 +17,9 @@ class FastSegCommunicator(FastSerialCommunicator):
     IGNORED_MESSAGES = []
 
     async def init(self):
-        await super().init()
+        await self.send_and_wait_for_response_processed('ID:', 'ID:', max_retries=-1)  # Loop here until we get a response
 
     def start_tasks(self):
-        """Start the communicator."""
 
         for s in self.machine.device_manager.collections["segment_displays"]:
             self.platform.fast_segs.append(s.hw_display)
@@ -41,16 +40,6 @@ class FastSegCommunicator(FastSerialCommunicator):
             if s.next_color:
                 self.send_and_forget(('PC:{},{}').format(s.hex_id, s.next_color))
                 s.next_color = None
-
-    def _process_id(self, msg):
-        """Process the ID response."""
-
-        # No FW comparison as some have v 'FF.FF' We can fix this for real in the future if the
-        # firmware is changed in a way that matters for MPF.
-
-        # TODO make this actually check each display
-        self.remote_processor, self.remote_model, self.remote_firmware = msg.split()
-        self.platform.log.info(f"Connected to SEG processor on {self.remote_model} with firmware v{self.remote_firmware}")
 
     async def soft_reset(self):
         pass  # TODO turn off all segments

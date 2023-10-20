@@ -104,11 +104,14 @@ class MockFastSerial(MockSerial):
 
         rsp = self.process_msg(cmd)
 
-        if rsp:
+        if type(rsp) is str and rsp:
             if self.PRINT_FSP_TRAFFIC:
                 print(f'{self.type} <<< {rsp}')
             self.queue.append(rsp)
             return msg_len
+
+        if rsp == True:
+            return 0
 
         if cmd in self.expected_commands:
             if self.expected_commands[cmd]:
@@ -343,14 +346,39 @@ class MockFastNetRetro(MockFastSerial):
             return "XX:F"
 
 class MockFastSeg(MockFastSerial):
+
+    PRINT_FSP_TRAFFIC = True
+
     def __init__(self, test_fast_base):
         super().__init__(test_fast_base)
         self.type = "SEG"
         self.port = "com7"
+        self.seg_digits = dict()
+        self.seg_colors = dict()
 
         self.autorespond_commands = {
             'ID:': 'ID:SEG FP-CPU-002-2 00.10',
             }
+
+    def process_msg(self, cmd):
+        cmd = cmd.upper()
+        cmd, payload = cmd.split(':')
+
+        if cmd == 'PA':
+            idx, data = payload.split(',')
+            self.seg_digits[idx] = data
+            return True  # processed, no return msg
+
+        # PC:00,ffffff,ffffff,ffffff,ffffff,ffffff,ffffff,ffffff,
+        elif cmd == 'PC':
+            sliced = payload.split(',')
+            idx = sliced.pop(0)
+            # A training comma will lead to an extra list item we don't want
+            if not sliced[-1:][0]:
+                sliced.pop(-1)
+
+            self.seg_colors[idx] = sliced
+            return True
 
 class MockFastRgbDmd(MockFastSerial):
 
