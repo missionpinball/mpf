@@ -6,7 +6,7 @@ MockFastExp
 MockFastRgb
 MockFastNetNano
 MockFastSeg
-MockFastDmd
+MockFastRgbDmd
 """
 
 import re
@@ -352,7 +352,10 @@ class MockFastSeg(MockFastSerial):
             'ID:': 'ID:SEG FP-CPU-002-2 00.10',
             }
 
-class MockFastDmd(MockFastSerial):
+class MockFastRgbDmd(MockFastSerial):
+
+    PRINT_FSP_TRAFFIC = False
+
     def __init__(self, test_fast_base):
         super().__init__(test_fast_base)
         self.type = "DMD"
@@ -361,6 +364,14 @@ class MockFastDmd(MockFastSerial):
         self.autorespond_commands = {
             'ID:': 'ID:DMD FP-CPU-002-2 00.88',
             }
+
+    def process_msg(self, cmd):
+        md = cmd.upper()
+        cmd, payload = cmd.split(':')
+
+        if cmd == 'BM':
+            assert len(payload) == 128 * 32 * 3
+            return 'BM:P'
 
 class MockFastAudio(MockFastSerial):
 

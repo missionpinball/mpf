@@ -1,7 +1,7 @@
 # mpf.tests.test_Fast
 
 from mpf.tests.MpfTestCase import MpfTestCase
-from mpf.tests.platforms.fast import (MockFastDmd, MockFastExp,
+from mpf.tests.platforms.fast import (MockFastRgbDmd, MockFastExp,
                                       MockFastNetNano, MockFastNetNeuron,
                                       MockFastRgb, MockFastSeg, MockFastNetRetro,
                                       MockFastAudio)
@@ -48,7 +48,7 @@ class TestFastBase(MpfTestCase):
                 self.serial_connections['seg'] = MockFastSeg(self)  # default com7
                 self.seg_cpu = self.serial_connections['seg']
             elif conn == 'dmd':
-                self.serial_connections['dmd'] = MockFastDmd(self)  # default com8
+                self.serial_connections['dmd'] = MockFastRgbDmd(self)  # default com8
                 self.dmd_cpu = self.serial_connections['dmd']
             elif conn == 'aud':
                 self.serial_connections['aud'] = MockFastAudio(self)  # default com9

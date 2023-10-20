@@ -5,7 +5,7 @@ from typing import Dict, Optional
 
 from serial import SerialException
 
-from mpf.core.platform import (DmdPlatform, DriverConfig, DriverSettings,
+from mpf.core.platform import (RgbDmdPlatform, DriverConfig, DriverSettings,
                                LightsPlatform, RepulseSettings,
                                SegmentDisplayPlatform, ServoPlatform,
                                SwitchConfig, SwitchSettings)
@@ -30,7 +30,7 @@ from mpf.platforms.interfaces.light_platform_interface import LightPlatformInter
 from mpf.platforms.system11 import System11Driver, System11OverlayPlatform
 
 
-class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
+class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
                            SegmentDisplayPlatform,
                            System11OverlayPlatform):
 
@@ -256,8 +256,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                 self.serial_connections['aud'] = communicator
             elif port == 'dmd':
                 from mpf.platforms.fast.communicators.dmd import \
-                    FastDmdCommunicator
-                communicator = FastDmdCommunicator(platform=self, processor=port,config=config)
+                    FastRgbDmdCommunicator
+                communicator = FastRgbDmdCommunicator(platform=self, processor=port,config=config)
                 self.serial_connections['dmd'] = communicator
             elif port == 'emu':
                 from mpf.platforms.fast.communicators.emu import \
@@ -698,14 +698,14 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         raise AssertionError(f"Unknown LED subtype {subtype}")
 
-    def configure_dmd(self):
+    def configure_rgb_dmd(self, name):
         """Configure a hardware DMD connected to a FAST controller."""
         if not self.serial_connections['dmd']:
             raise AssertionError("A request was made to configure a FAST DMD, "
                                  "but no connection to a DMD processor is "
                                  "available.")
 
-        return FASTDMD(self.machine, self.serial_connections['dmd'].send_raw)
+        return FASTDMD(self.machine, name, self.serial_connections['dmd'])
 
     def configure_audio_interface(self):
         """Configure a hardware FAST audio controller."""
