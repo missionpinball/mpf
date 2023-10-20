@@ -12,9 +12,9 @@ fast:
     default_main_volume: 8
     default_sub_volume: 9
     default_headphones_volume: 10
-    max_volume_main: 63
-    max_volume_sub: 50
-    max_volume_headphones: 40
+    max_hw_volume_main: 63
+    max_hw_volume_sub: 50
+    max_hw_volume_headphones: 40
     link_sub_to_main: false
     link_headphones_to_main: false
 

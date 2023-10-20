@@ -681,9 +681,9 @@ fast_aud:
     default_main_volume: single|int|10
     default_sub_volume: single|int|10
     default_headphones_volume: single|int|10
-    max_volume_main: single|int|63
-    max_volume_sub: single|int|63
-    max_volume_headphones: single|int|63
+    max_hw_volume_main: single|int|63
+    max_hw_volume_sub: single|int|63
+    max_hw_volume_headphones: single|int|63
     main_amp_enabled: single|bool|true
     sub_amp_enabled: single|bool|true
     headphones_amp_enabled: single|bool|true

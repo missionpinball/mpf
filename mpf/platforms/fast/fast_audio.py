@@ -42,7 +42,7 @@ class FASTAudioInterface(LogMixin):
     def _init_amps(self):
         for amp in self.amps.keys():
             self.amps[amp]['steps'] = self.communicator.config[f'{amp}_steps']
-            self.amps[amp]['max_volume'] = self.communicator.config[f'max_volume_{amp}']
+            self.amps[amp]['max_volume'] = self.communicator.config[f'max_hw_volume_{amp}']
             self.amps[amp]['levels_list'] = self.communicator.config[f'{amp}_levels_list']
             self.amps[amp]['link_to_main'] = self.communicator.config[f'link_{amp}_to_main']
 
@@ -94,11 +94,11 @@ class FASTAudioInterface(LogMixin):
 
     def _create_levels_list(self, amp):
         steps = self.communicator.config[f'{amp}_steps']
-        max_volume = self.communicator.config[f'max_volume_{amp}']
+        max_volume = self.communicator.config[f'max_hw_volume_{amp}']
         step_percent = 1 / steps
 
         if max_volume > 63:
-            raise AssertionError(f"Invalid max_volume_{amp}: {max_volume}")
+            raise AssertionError(f"Invalid max_hw_volume_{amp}: {max_volume}")
 
         for i in range(steps):
             volume = ceil(max_volume * (1 - (i * step_percent)))
