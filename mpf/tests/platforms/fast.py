@@ -347,7 +347,7 @@ class MockFastNetRetro(MockFastSerial):
 
 class MockFastSeg(MockFastSerial):
 
-    PRINT_FSP_TRAFFIC = True
+    PRINT_FSP_TRAFFIC = False
 
     def __init__(self, test_fast_base):
         super().__init__(test_fast_base)
