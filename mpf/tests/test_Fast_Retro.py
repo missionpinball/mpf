@@ -1,4 +1,4 @@
-# mpf.tests.test_Fast
+# mpf.tests.test_Fast_Retro
 
 from mpf.tests.test_Fast import TestFastBase
 

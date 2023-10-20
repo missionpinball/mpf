@@ -1,4 +1,4 @@
-# mpf.tests.test_Fast_Exp
+# mpf.tests.test_Fast_Audio
 
 from mpf.tests.test_Fast import TestFastBase
 from mpf.tests.MpfTestCase import test_config

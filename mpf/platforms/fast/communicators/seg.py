@@ -1,3 +1,5 @@
+# mpf/platforms/fast/communicators/seg.py
+
 from packaging import version
 
 from mpf.platforms.fast.communicators.base import FastSerialCommunicator

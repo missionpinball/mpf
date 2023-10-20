@@ -1,3 +1,5 @@
+# mpf/platforms/fast/communicators/exp.py
+
 from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_FEATURES
 from mpf.platforms.fast.fast_exp_board import FastExpansionBoard
 from mpf.platforms.fast.communicators.base import FastSerialCommunicator

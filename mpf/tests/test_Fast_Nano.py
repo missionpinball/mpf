@@ -1,3 +1,5 @@
+# mpf.tests.test_Fast_Nano
+
 from mpf.core.rgb_color import RGBColor
 
 from mpf.tests.MpfTestCase import MagicMock, test_config, expect_startup_error
