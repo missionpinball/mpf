@@ -47,6 +47,7 @@ class FastAudCommunicator(FastSerialCommunicator):
         self._watchdog_ms = 0
 
     async def init(self):
+        await self.send_and_wait_for_response_processed('ID:', 'ID:', max_retries=-1)  # Loop here until we get a response
         self.platform.audio_interface = FASTAudioInterface(self.platform, self)
 
     async def soft_reset(self):
