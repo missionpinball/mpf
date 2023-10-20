@@ -20,6 +20,8 @@ class TestFastAudio(TestFastBase):
                                                                 'AS:0F':'AS:0F',  # 15
                                                                 'AH:36':'AH:36',}  # 54
 
+            self.serial_connections['aud'].autorespond_commands['WD:3E8'] = 'WD:3E8,03'
+
         else:
             self.serial_connections['aud'].expected_commands = {'AM:0B':'AM:0B',
                                                                 'AV:11':'AV:11',

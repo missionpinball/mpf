@@ -15,7 +15,7 @@ class FastExpansionBoard:
     """A FAST Expansion board on the EXP connection."""
 
     __slots__ = ["name", "communicator", "config", "platform", "log", "address", "model", "features", "breakouts",
-                 "breakouts_with_leds", "_led_task", "firmware_version", "hw_verified", "led_fade_rate"]
+                 "breakouts_with_leds", "firmware_version", "hw_verified", "led_fade_rate"]
 
     def __init__(self, name: str, communicator, address: str, config: dict) -> None:
         """Initializes a FAST Expansion Board
@@ -46,7 +46,9 @@ class FastExpansionBoard:
         self.features = EXPANSION_BOARD_FEATURES[self.model]  # ([local model numbers,], num of remotes) tuple
         self.breakouts = dict()
         self.breakouts_with_leds = list()
-        self._led_task = None  # TODO move to breakout or port and/or mixin class?
+
+        if self.config['led_hz'] > 31.25:
+            self.config['led_hz'] = 31.25
 
         # create the local breakouts
         for idx in range(len(self.features['local_breakouts'])):
@@ -123,22 +125,6 @@ class FastExpansionBoard:
                 raise AssertionError(f"Expected {self.model} but got {id_string} from {self}")
             else:
                 self.hw_verified = True
-
-    def start_tasks(self):
-        self._update_leds()
-
-        if self.config['led_hz'] > 31.25:
-            self.config['led_hz'] = 31.25
-
-        self._led_task = self.platform.machine.clock.schedule_interval(
-                        self._update_leds, 1 / self.config['led_hz'])
-
-    def stopping(self):
-        if self._led_task:
-            self._led_task.cancel()
-            self._led_task = None
-
-        self.communicator.send_and_forget(f'BR@{self.address}:')
 
     async def reset(self):
         await self.communicator.send_and_wait_for_response_processed(f'BR@{self.address}:', 'BR:P')

@@ -24,16 +24,12 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
     DRIVER_CMD = 'DL'
     SWITCH_CMD = 'SL'
 
-    __slots__ = ["watchdog_cmd", "_watchdog_task", "io_loop", "switches", "drivers"]
+    __slots__ = ["io_loop", "switches", "drivers"]
 
     def __init__(self, platform, processor, config):
         super().__init__(platform, processor, config)
 
-        self.watchdog_cmd = f"WD:{config['watchdog']:02X}"
-        self._watchdog_task = None
-
         self.io_loop = [None] * len(self.config['io_loop'])
-
         self.switches = list()
         self.drivers = list()
 
@@ -320,19 +316,5 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
                                                              platform=self.platform,
                                                              logical=True)
 
-    def _update_watchdog(self):
-        """Send Watchdog command."""
-
-        self.send_and_forget(self.watchdog_cmd)
-
-    def start_tasks(self):
-        """Start listening for commands and schedule watchdog."""
-        self._update_watchdog()
-        self._watchdog_task = self.machine.clock.schedule_interval(self._update_watchdog,
-                                                                   self.config['watchdog'] / 2000)
-
     def stopping(self):
-        if self._watchdog_task:
-            self._watchdog_task.cancel()
-            self._watchdog_task = None
         self.send_and_forget('WD:1')

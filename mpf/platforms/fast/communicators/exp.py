@@ -14,7 +14,7 @@ class FastExpCommunicator(FastSerialCommunicator):
 
     IGNORED_MESSAGES = ['XX:F']
 
-    __slots__ = ["exp_boards_by_address", "active_board", "_led_task"]
+    __slots__ = ["exp_boards_by_address", "active_board"]
 
     def __init__(self, platform, processor, config):
 
@@ -22,8 +22,6 @@ class FastExpCommunicator(FastSerialCommunicator):
 
         self.exp_boards_by_address = dict()  # keys = board addresses, values = FastExpansionBoard objects
         self.active_board = None
-        self._led_task = None
-
         self.message_processors['BR:'] = self._process_br
 
     async def init(self):
@@ -33,11 +31,12 @@ class FastExpCommunicator(FastSerialCommunicator):
         """Start listening for commands and schedule watchdog."""
 
         for board in self.exp_boards_by_address.values():
-            board.start_tasks()
+            self.tasks.append(self.platform.machine.clock.schedule_interval(
+                          board._update_leds, 1 / board.config['led_hz']))
 
     def stopping(self):
         for board in self.exp_boards_by_address.values():
-            board.stopping()
+            board.communicator.send_and_forget(f'BR@{board.address}:')
 
     async def soft_reset(self):
         for board in self.exp_boards_by_address.values():

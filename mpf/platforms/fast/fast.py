@@ -161,6 +161,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         for conn in self.serial_connections.values():
             conn.stopping()
+            conn.cancel_tasks()
 
         # wait 100ms for the messages to be sent
         if not self.unit_test:
@@ -176,6 +177,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def _start_communicator_tasks(self, **kwargs):  # init_phase_3
         del kwargs
         for comm in self.serial_connections.values():
+            comm.start_watchdog()
             comm.start_tasks()
 
     def __repr__(self):

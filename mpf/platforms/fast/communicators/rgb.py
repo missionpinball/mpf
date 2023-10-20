@@ -15,7 +15,6 @@ class FastRgbCommunicator(FastSerialCommunicator):
     def __init__(self, platform, processor, config):
         super().__init__(platform, processor, config)
 
-        self._led_task = None
         self.message_processors['!B:'] = self._process_boot_msg
 
     async def init(self):
@@ -52,8 +51,8 @@ class FastRgbCommunicator(FastSerialCommunicator):
         if self.config['led_hz'] > 30:
             self.config['led_hz'] = 30
 
-        self._led_task = self.machine.clock.schedule_interval(
-                        self.update_leds, 1 / self.config['led_hz'])
+        self.tasks.append(self.machine.clock.schedule_interval(
+                          self.update_leds, 1 / self.config['led_hz']))
 
     async def soft_reset(self, **kwargs):
         """Reset the NET processor."""
@@ -67,8 +66,4 @@ class FastRgbCommunicator(FastSerialCommunicator):
         # self.send_and_forget(f"RF:{Util.int_to_hex_string(self.config['led_fade_time'])}")
 
     def stopping(self):
-        if self._led_task:
-            self._led_task.cancel()
-            self._led_task = None
-
         self.reset()

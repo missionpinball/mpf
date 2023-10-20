@@ -17,8 +17,6 @@ class FastSegCommunicator(FastSerialCommunicator):
     async def init(self):
         await super().init()
 
-        self._seg_task = None
-
     def start_tasks(self):
         """Start the communicator."""
 
@@ -28,8 +26,8 @@ class FastSegCommunicator(FastSerialCommunicator):
         self.platform.fast_segs.sort(key=lambda x: x.number)
 
         if self.platform.fast_segs:
-            self._seg_task = self.machine.clock.schedule_interval(self._update_segs,
-                                                1 / self.config['fps'])
+            self.tasks.append(self.machine.clock.schedule_interval(self._update_segs,
+                              1 / self.config['fps']))
 
     def _update_segs(self, **kwargs):
         for s in self.platform.fast_segs:
@@ -56,12 +54,7 @@ class FastSegCommunicator(FastSerialCommunicator):
         pass  # TODO turn off all segments
 
     def stopping(self):
-        if self._seg_task:
-            self._seg_task.cancel()
-            self._seg_task = None
-
-        # TODO Better way to do this?
         for s in self.platform.fast_segs:
-            self.send_and_forget(f'PA:{s.hex_id},        ')
+            self.send_and_forget(f'PA:{s.hex_id},')
             s.next_text = None
             s.next_color = None

@@ -20,7 +20,7 @@ class FastSerialCommunicator(LogMixin):
     __slots__ = ["platform", "remote_processor", "config", "writer", "reader", "read_task", "received_msg", "log",
                  "machine", "fast_debug", "port_debug", "remote_firmware", "send_queue", "write_task",
                  "pause_sending_until", "pause_sending_flag", "no_response_waiting", "done_waiting",
-                 "ignore_decode_errors", "message_processors", "remote_model", "port"]
+                 "ignore_decode_errors", "message_processors", "remote_model", "port", "tasks", "watchdog_cmd"]
 
     def __init__(self, platform, processor, config):
         """Initialize FastSerialCommunicator."""
@@ -30,7 +30,9 @@ class FastSerialCommunicator(LogMixin):
         self.config = config
         self.writer = None
         self.reader = None
+        self.tasks = list()  # higher level tasks subclasses might need
         self.read_task = None
+        self.write_task = None
         self.received_msg = b''
         self.log = None
         self.machine = platform.machine
@@ -41,7 +43,7 @@ class FastSerialCommunicator(LogMixin):
         self.remote_firmware = None  # TODO some connections have more than one processor, should there be a processor object?
 
         self.send_queue = asyncio.Queue()  # Tuples of ( message, pause_until_string)
-        self.write_task = None
+
         self.pause_sending_until = ''
         self.pause_sending_flag = asyncio.Event()
         self.no_response_waiting = asyncio.Event()
@@ -52,6 +54,11 @@ class FastSerialCommunicator(LogMixin):
 
         self.message_processors = {'XX:': self._process_xx,
                                    'ID:': self._process_id}
+
+        if config.get('watchdog', None):
+            self.watchdog_cmd = f"WD:{config['watchdog']:02X}"
+        else:
+            self.watchdog_cmd = None
 
         self.configure_logging(logger=f'[{self.remote_processor}]', console_level=config['debug'],
                                file_level=config['debug'], url_base='https://fastpinball.com/mpf/error')
@@ -176,6 +183,15 @@ class FastSerialCommunicator(LogMixin):
                     self.log.info(f"<<<< {buffer}")
                 return buffer
 
+    def start_watchdog(self):
+        """Start listening for commands and schedule watchdog."""
+
+        if self.watchdog_cmd:
+            self._watchdog_task()  # send one now
+            self.tasks.append(self.machine.clock.schedule_interval(
+                self._watchdog_task,
+                self.config['watchdog'] / 2000))
+
     def start_tasks(self):
         """Start periodic tasks, etc.
 
@@ -187,6 +203,11 @@ class FastSerialCommunicator(LogMixin):
         """The serial connection is about to stop. This is called before stop() and allows you
         to do things that need to go out before the connection is closed. A 100ms delay to allow for this happens after this is called."""
         pass
+
+    def cancel_tasks(self):
+        # called after stopping()
+        for task in self.tasks:
+            task.cancel()
 
     def stop(self):
         """Stop and shut down this serial connection."""
@@ -333,6 +354,11 @@ class FastSerialCommunicator(LogMixin):
     def _resume_sending(self):
         self.pause_sending_until = None
         self.pause_sending_flag.clear()
+
+    def _watchdog_task(self):
+        """Sends the watchdog command."""
+
+        self.send_and_forget(self.watchdog_cmd)
 
     async def _socket_reader(self):
         # Read coroutine
