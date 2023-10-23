@@ -113,12 +113,12 @@ class TestPKONE(MpfTestCase):
             'PCB0': 'PCB0XF11H2PY',     # Extension board at ID 0 (firmware 1.1, hardware rev 2, high power on)
             'PCB1': 'PCB1XF11H2PN',     # Extension board at ID 1 (firmware 1.1, hardware rev 2, high power off)
             'PCB2': 'PCB2LF10H1RGB',    # Lightshow board at ID 2 (RGB firmware 1.0, hardware rev 1)
-            'PCB3': 'PCB2LF10H1RGBW',   # Lightshow board at ID 3 (RGBW firmware 1.0, hardware rev 1)
+            'PCB3': 'PCB3LF10H1RGBW',   # Lightshow board at ID 3 (RGBW firmware 1.0, hardware rev 1)
             'PCB4': 'PCB4N',
             'PCB5': 'PCB5N',
             'PCB6': 'PCB6N',
             'PCB7': 'PCB7N',
-            'PRS': 'PRS',
+            'PRS': 'PRSN',
             'PWS1000': 'PWS',
             'PSA0': 'PSA011000000000000000000000000000000000E',
             'PSA1': 'PSA100110000000000000000000000000000000E',
