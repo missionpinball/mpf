@@ -29,7 +29,6 @@ class TestScoreReels(MpfFakeGameTestCase):
     def _synchronise_to_reel(self):
         pass
 
-    @unittest.skipIf(sys.version_info >= (3, 11), "Score reels are not working in Python 3.11+")
     def testOvershooting(self):
         player1_10k = self.machine.coils["player1_10k"].hw_driver
         player1_1k = self.machine.coils["player1_1k"].hw_driver
@@ -93,7 +92,6 @@ class TestScoreReels(MpfFakeGameTestCase):
         self.assertEqual(2, player1_100.pulse.call_count)
         self.assertEqual(1, player1_10.pulse.call_count)
 
-    @unittest.skipIf(sys.version_info >= (3, 11), "Score reels are not working in Python 3.11+")
     def testScoring(self):
         player1_10k = self.machine.coils["player1_10k"].hw_driver
         player1_1k = self.machine.coils["player1_1k"].hw_driver
@@ -215,7 +213,6 @@ class TestScoreReels(MpfFakeGameTestCase):
         self.assertEqual(10, player1_10.pulse.call_count)
         self.assertEqual(1, chime1.pulse.call_count)
 
-    @unittest.skipIf(sys.version_info >= (3, 11), "Score reels are not working in Python 3.11+")
     def testAdvanceingFailure(self):
         player1_10k = self.machine.coils["player1_10k"].hw_driver
         player1_1k = self.machine.coils["player1_1k"].hw_driver
@@ -260,7 +257,6 @@ class TestScoreReels(MpfFakeGameTestCase):
         self.assertEqual(3, player1_100.pulse.call_count)
         self.assertEqual(1, player1_10.pulse.call_count)
 
-    @unittest.skipIf(sys.version_info >= (3, 11), "Score reels are not working in Python 3.11+")
     def testThreePlayers(self):
         player1_10k = self.machine.coils["player1_10k"].hw_driver
         player1_1k = self.machine.coils["player1_1k"].hw_driver
@@ -387,7 +383,6 @@ class TestScoreReelsVirtual(MpfFakeGameTestCase):
     def get_machine_path(self):
         return 'tests/machine_files/score_reels/'
 
-    @unittest.skipIf(sys.version_info >= (3, 11), "Score reels are not working in Python 3.11+")
     def testScoringVirtual(self):
         self.machine.playfield.add_ball = MagicMock()
         self.machine.ball_controller.num_balls_known = 3
@@ -429,7 +424,6 @@ class TestScoreReelsVirtual(MpfFakeGameTestCase):
         self.assertSwitchState("score_1p_10_9", 0)
         self.assertSwitchState("score_1p_100_9", 1)
 
-    @unittest.skipIf(sys.version_info >= (3, 11), "Score reels are not working in Python 3.11+")
     def test_inactive_player_scoring(self):
         self.start_two_player_game()
         self.assertGameIsRunning()
@@ -483,7 +477,7 @@ class TestScoreReelsVirtual(MpfFakeGameTestCase):
         self.advance_time_and_run()
         self.assertGameIsRunning()
         self.assertEqual(0, self.machine.game.num_players)
-        self.advance_time_and_run()
+        self.advance_time_and_run(5)
         self.assertEqual(1, self.machine.game.num_players)
         self.hit_and_release_switch("s_start")
         self.advance_time_and_run(1)
