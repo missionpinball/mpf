@@ -116,8 +116,9 @@ class ScoreReelGroup(SystemWideDevice):
 
     async def wait_for_ready(self):
         """Return a future which will be done when all reels reached their destination."""
-        futures = [reel.wait_for_ready() for reel in self.reels if reel]
-        await asyncio.gather(*futures)
+        for reel in self.reels:
+            if reel:
+                await reel.wait_for_ready()
 
     def int_to_reel_list(self, value):
         """Convert an integer to a list of integers that represent each positional digit in this ScoreReelGroup.

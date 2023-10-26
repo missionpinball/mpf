@@ -151,12 +151,10 @@ class ScoreReelController:
                 if not reel1:
                     raise AssertionError('Need a score reel group tagged "player1"')
 
-        futures = []
         for score_reel_group in self.machine.score_reel_groups.values():
             score_reel_group.set_value(0)
             await score_reel_group.wait_for_ready()
 
-        await asyncio.gather(*futures)
 
     def _game_ending(self, **kwargs):
         """Reset controller."""
