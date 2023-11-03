@@ -418,15 +418,7 @@ class MpfTestCase(unittest.TestCase):
         """
         self.machine.log.info("Advancing time by %s", delta)
         try:
-            # Original
             self.loop.run_until_complete(asyncio.sleep(delay=delta))
-
-            # Tried this, doesn't fix the score reel test prob, so not changing it
-            # self.task = self.loop.create_task(asyncio.sleep(delay=delta))
-            # self.task.add_done_callback(Util.raise_exceptions)
-            # self.loop.run_until_complete(self.task)
-
-
             return
 
         except RuntimeError as e:
