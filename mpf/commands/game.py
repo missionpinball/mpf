@@ -106,7 +106,7 @@ class Command:
                             const=logging.DEBUG,
                             default=logging.INFO,
                             help="Enables verbose logging to the console. DO "
-                                 "NOTE: On Windows platforms you must also use -v for "
+                                 "NOTE: you must also use -v for "
                                  "this to work.")
 
         parser.add_argument("-x",
@@ -177,7 +177,7 @@ class Command:
         console_log_queue = Queue()
         console_queue_handler = QueueHandler(console_log_queue)
         self.console_queue_listener = logging.handlers.QueueListener(
-            console_log_queue, console_log)
+            console_log_queue, console_log, respect_handler_level=True)
         self.console_queue_listener.start()
 
         # initialize file log
