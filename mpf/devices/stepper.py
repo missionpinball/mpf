@@ -98,6 +98,10 @@ class Stepper(SystemWideDevice):
         while True:
             # wait until we should be moving
             await self._is_moving.wait()
+            if not self._is_homed:
+                await self._home()
+                self._post_ready_event()
+                continue
             self._is_moving.clear()
             # store target position in local variable since it may change in the meantime
             target_position = self._target_position
@@ -167,6 +171,14 @@ class Stepper(SystemWideDevice):
         if self._move_task:
             self._move_task.cancel()
             self._move_task = None
+
+    @event_handler(1)
+    def event_home(self, **kwargs):
+        """Event handler for home event."""
+        del kwargs
+        self._target_position = 0
+        self._is_homed = False
+        self._is_moving.set()
 
     @event_handler(1)
     def event_reset(self, **kwargs):

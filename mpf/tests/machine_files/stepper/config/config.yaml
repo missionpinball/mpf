@@ -5,6 +5,7 @@ steppers:
         number: 1
         pos_min:   -5 #user units (negative is behind home flag)
         pos_max: 1000 #user units
+        home_events: test_home
         homing_direction: clockwise
         homing_mode: hardware
         reset_position: 0
