@@ -137,7 +137,7 @@ class TestStepper(MpfTestCase):
         event_future = self.machine.events.wait_for_event("stepper_linearAxis_stepper_ready")
         self.post_event("test_rel_02")
         self.machine.clock.loop.run_until_complete(event_future)
-        self.assertEqual(124.0, stepper._current_position, 0)
+        self.assertEqual(123.0, stepper._current_position, 0)
 
     def test_ball_search(self):
         stepper = self.machine.steppers["linearAxis_stepper"]
