@@ -9,3 +9,5 @@ variable_player:
       my_var: 100
     add_not_audited:
       not_audited: 100
+    add_score_odd:
+      score: 123
