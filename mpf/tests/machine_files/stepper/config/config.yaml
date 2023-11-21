@@ -15,6 +15,10 @@ steppers:
             -5: test_00
             999: test_01
             500: test_10
+        relative_positions:
+            -2: test_rel_00
+            25: test_rel_01
+            100: test_rel_02
 
 
 # this is needed to test ball search
