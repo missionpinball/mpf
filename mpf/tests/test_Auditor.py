@@ -64,6 +64,18 @@ class TestAuditor(MpfFakeGameTestCase):
                           'my_var': {'top': [200, 0], 'average': 100.0, 'total': 2}},
                          auditor.data_manager.written_data["player"])
 
+        # test rounding the average to an integer
+        self.start_game()
+
+        self.post_event("add_score")
+        self.post_event("add_score_odd")
+        self.assertPlayerVarEqual(223, "score")
+
+        self.drain_all_balls()
+        self.assertGameIsNotRunning()
+
+        self.assertEqual(174, auditor.current_audits['player']['score']['average'])
+
     def test_auditor_switches_events(self):
         auditor = self.machine.plugins[0]
         self.assertIsInstance(auditor, Auditor)

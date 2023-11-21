@@ -224,7 +224,7 @@ class Auditor:
                         self.current_audits['player'][item]['top'],
                         self.config['num_player_top_records']))
 
-                self.current_audits['player'][item]['average'] = (
+                self.current_audits['player'][item]['average'] = int(
                     ((self.current_audits['player'][item]['total'] *
                       self.current_audits['player'][item]['average']) +
                      self.machine.game.player[item]) /
