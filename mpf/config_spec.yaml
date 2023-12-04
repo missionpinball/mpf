@@ -96,6 +96,7 @@ auditor:
     audit: list|str|None
     events: list|event_handler|None
     player: list|str|None
+    missing_switch_min_games: single|int|10
     num_player_top_records: single|int|1
     reset_audit_events: list|event_handler|auditor_reset,factory_reset
 autofire_coils:

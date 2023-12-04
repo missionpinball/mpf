@@ -67,15 +67,17 @@ class Auditor:
         if 'player' not in self.current_audits:
             self.current_audits['player'] = dict()
 
-        # Make sure we have all the switches in our audit dict
-        for switch in self.machine.switches.values():
-            if (switch.name not in self.current_audits['switches'] and
-                    'no_audit' not in switch.tags):
-                self.current_audits['switches'][switch.name] = 0
+        if 'missing_switches' not in self.current_audits:
+            self.current_audits['missing_switches'] = dict()
 
         # build the list of switches we should audit
         self.switchnames_to_audit = {x.name for x in self.machine.switches.values()
                                      if 'no_audit' not in x.tags}
+
+        # Make sure we have all the switches in our audit dict
+        for switch_name in self.switchnames_to_audit:
+            if switch_name not in self.current_audits['switches']:
+                self.current_audits['switches'][switch_name] = 0
 
         for event in self.config['events']:
             if event not in self.current_audits['events']:
@@ -179,8 +181,11 @@ class Auditor:
 
     def audit_switch(self, change: MonitoredSwitchChange):
         """Record switch change."""
-        if self.enabled and change.state and change.name in self.switchnames_to_audit:
-            self.audit('switches', change.name)
+        if change.state and change.name in self.switchnames_to_audit:
+            if change.name in self.current_audits['missing_switches']:
+                del self.current_audits['missing_switches'][change.name]
+            if self.enabled:
+                self.audit('switches', change.name)
 
     def audit_shot(self, name, profile, state):
         """Record shot hit."""
@@ -233,6 +238,13 @@ class Auditor:
                 self.current_audits['player'][item]['total'] += 1
         self._save_audits()
 
+    def report_missing_switches(self, missing_switch_min_games=None):
+        min_threshold = missing_switch_min_games or \
+            self.config['missing_switch_min_games']
+        missing_switches = self.current_audits['missing_switches'].items()
+        result = filter(lambda x: x[1] >= min_threshold, missing_switches)
+        return list(result)
+
     @classmethod
     def _merge_into_top_list(cls, new_item, current_list, num_items):
         # takes a list of top integers and a new item and merges the new item
@@ -271,6 +283,13 @@ class Auditor:
                 # Make sure we have an entry in our audit file for this event
                 if event not in self.current_audits['events']:
                     self.current_audits['events'][event] = 0
+
+        # Track how many games played since each switch was triggered
+        for switch_name in self.switchnames_to_audit:
+            if switch_name not in self.current_audits['missing_switches']:
+                self.current_audits['missing_switches'][switch_name] = 1
+            else:
+                self.current_audits['missing_switches'][switch_name] += 1
 
     def _save_audits(self):
         self.data_manager.save_all(data=self.current_audits)
