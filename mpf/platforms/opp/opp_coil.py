@@ -64,6 +64,7 @@ class OPPSolenoid(DriverPlatformInterface):
         msg.append((mask >> 8) & 0xff)
         msg.append(mask & 0xff)
         msg.extend(OppRs232Intf.calc_crc8_whole_msg(msg))
+        msg.extend(OppRs232Intf.EOM_CMD)
         cmd = bytes(msg)
         if self.sol_card.platform.debug:
             self.log.debug("Triggering solenoid driver: %s", "".join(" 0x%02x" % b for b in cmd))
