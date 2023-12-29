@@ -20,7 +20,7 @@ class Match(AsyncMode):
         # add setting
         self.machine.settings.add_setting(SettingEntry("match_percentage", "Match Percentage", 500,
                                                        "match_percentage", 10,
-                                                       {0: "Disabled", 2: "2%", 5: "5%", 10: "10%", 15: "15%", 30: "30%",
+                                                       {0: "Never", 2: "2%", 5: "5%", 10: "10%", 15: "15%", 30: "30%",
                                                         50: "50%"}, "standard"))
 
     def _get_match_numbers(self):
@@ -53,8 +53,6 @@ class Match(AsyncMode):
             return
 
         match_percentage = self.machine.settings.get_setting_value("match_percentage")
-        if not match_percentage:
-            return
 
         match_numbers = self._get_match_numbers()
         winner_number = self._get_winner_number(match_numbers, match_percentage)

@@ -71,8 +71,10 @@ class Auditor:
             self.current_audits['missing_switches'] = dict()
 
         # build the list of switches we should audit
-        self.switchnames_to_audit = {x.name for x in self.machine.switches.values()
-                                     if 'no_audit' not in x.tags}
+        is_free_play = self.machine.settings.get_setting_value('free_play')
+        self.switchnames_to_audit = {x.name for x in self.machine.switches.values() if
+            # Don't audit tagged switches, or credit switches during free play
+            ('no_audit' not in x.tags) and ('no_audit_free' not in x.tags or not is_free_play)}
 
         # Make sure we have all the switches in our audit dict
         for switch_name in self.switchnames_to_audit:
