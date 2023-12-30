@@ -197,10 +197,9 @@ class ShowPlayer(DeviceConfigPlayer):
         del show
         del queue
         del start_time
-        del placeholder_args
         if key in instance_dict:
             instance_dict[key].update(
-                speed=show_settings.get('speed'),
+                speed=show_settings['speed'].evaluate(placeholder_args),
                 manual_advance=show_settings.get('manual_advance')
             )
 
