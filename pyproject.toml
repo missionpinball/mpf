@@ -25,7 +25,7 @@ dependencies = [
     "asciimatics == 1.14.0", # Oct 4 2023, only used for the Text UI
     "packaging == 23.1",  # Oct 4 2023, used for version comparisons
     "prompt_toolkit == 3.0.39",  # Oct 4 2023, used for command line interface
-    "psutil == 5.9.5",  # Oct 4 2023, pulls system stats into TUI and BCP
+    "psutil == 5.9.7",  # Oct 4 2023, pulls system stats into TUI and BCP
     "pyserial == 3.5",  # Oct 4 2023, some older platforms use this
     "pyserial-asyncio == 0.6", # Oct 4 2023, handles all modern serial communication
     "ruamel.yaml == 0.17.32",  # Oct 4, 2023, main config file interface
