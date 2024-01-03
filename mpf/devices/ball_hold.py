@@ -220,12 +220,16 @@ class BallHold(EnableDisableMixin, SystemWideDevice, ModeDevice):
         # register on ball_enter of hold_devices
         for device in self.hold_devices:
             self.machine.events.add_handler(
-                'balldevice_' + device.name + '_ball_enter',
+                f'balldevice_{device.name}_ball_enter',
                 self._hold_ball, device=device, priority=priority)
+            self.machine.events.add_handler(
+                f'balldevice_{device.name}_ball_missing',
+                self._lost_ball, device=device, priority=priority)
 
     def _unregister_handlers(self):
         # unregister ball_enter handlers
         self.machine.events.remove_handler(self._hold_ball)
+        self.machine.events.remove_handler(self._lost_ball)
 
     def is_full(self):
         """Return true if hold is full."""
@@ -237,6 +241,16 @@ class BallHold(EnableDisableMixin, SystemWideDevice, ModeDevice):
         if balls < 0:
             balls = 0
         return balls
+
+    def _lost_ball(self, device, balls, **kwargs):
+        """Handle the ball hold devices losing a ball."""
+        if self.balls_held:
+            self.balls_held -= balls
+            self.debug_log("Hold device %s lost %s balls, hold now has %s balls held", device, balls, self.balls_held)
+        else:
+            self.debug_log("Hold device %s lost %s balls but hold is not holding. Doing nothing.", device, balls)
+        # Do not claim this ball
+        return { 'balls': balls }
 
     def _hold_ball(self, device, new_balls, unclaimed_balls, **kwargs):
         """Handle result of _ball_enter event of hold_devices."""
