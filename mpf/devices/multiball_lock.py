@@ -183,11 +183,17 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
                 'balldevice_' + device.name + '_ball_entered',
                 self._post_events, device=device, priority=priority,
                 blocking_facility=blocking_facility)
+            self.machine.events.add_handler(
+                f'balldevice_{device.name}_ball_missing',
+                self._lost_ball, device=device, priority=priority,
+                blocking_facility=blocking_facility
+            )
 
     def _unregister_handlers(self):
         # unregister ball_enter handlers
         self.machine.events.remove_handler(self._lock_ball)
         self.machine.events.remove_handler(self._post_events)
+        self.machine.events.remove_handler(self._lost_ball)
 
     @property
     def is_virtually_full(self):
@@ -326,6 +332,14 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
         self.debug_log("Locked %s balls virtually and %s balls physically", balls_to_lock, balls_to_lock_physically)
 
         return {'unclaimed_balls': unclaimed_balls - balls_to_lock_physically}
+
+    def _lost_ball(self, device, balls, **kwargs):
+        del kwargs
+        if self.locked_balls and self.config['ball_lost_action'] == "add_to_play":
+            self.debug_log("Ball device %s lost %s balls, adding to balls_in_play")
+            self.machine.game.balls_in_play += balls
+        # Do not claim the ball
+        return {'balls': balls}
 
     def _post_events(self, device, **kwargs):
         """Post events on callback from _ball_entered handler.
