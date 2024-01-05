@@ -183,10 +183,10 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
                 'balldevice_' + device.name + '_ball_entered',
                 self._post_events, device=device, priority=priority,
                 blocking_facility=blocking_facility)
+            self.info_log("Registering handler for %s", f'balldevice_{device.name}_ball_missing',)
             self.machine.events.add_handler(
                 f'balldevice_{device.name}_ball_missing',
-                self._lost_ball, device=device, priority=priority,
-                blocking_facility=blocking_facility
+                self._lost_ball, device=device, priority=priority
             )
 
     def _unregister_handlers(self):
@@ -335,9 +335,14 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
 
     def _lost_ball(self, device, balls, **kwargs):
         del kwargs
+        self.info_log("Ball device %s lost %s balls, %s has %s locked balls and action %s",
+                      device.name, balls, self.name, self.locked_balls,
+                      self.config['ball_lost_action'] )
         if self.locked_balls and self.config['ball_lost_action'] == "add_to_play":
-            self.debug_log("Ball device %s lost %s balls, adding to balls_in_play")
+            self.debug_log("Ball device %s lost %s balls, adding to balls_in_play", device.name, balls)
             self.machine.game.balls_in_play += balls
+        else:
+            self.info_log(" - not adding to play, config is %s", self.config)
         # Do not claim the ball
         return {'balls': balls}
 
