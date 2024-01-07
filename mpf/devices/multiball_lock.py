@@ -54,6 +54,11 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
         self.machine.events.add_handler("player_turn_starting", self._player_turn_starting)
         self.machine.events.add_handler("ball_ending", self._ball_ending)
 
+        for device in self.lock_devices:
+            self.info_log("Registering handler for %s", f'balldevice_{device.name}_ball_missing')
+            self.machine.events.add_handler(f'balldevice_{device.name}_ball_missing',
+                                            self._lost_ball, device=device)
+
     def _enable(self):
         """Enable the lock.
 
@@ -183,17 +188,11 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
                 'balldevice_' + device.name + '_ball_entered',
                 self._post_events, device=device, priority=priority,
                 blocking_facility=blocking_facility)
-            self.info_log("Registering handler for %s", f'balldevice_{device.name}_ball_missing',)
-            self.machine.events.add_handler(
-                f'balldevice_{device.name}_ball_missing',
-                self._lost_ball, device=device, priority=priority
-            )
 
     def _unregister_handlers(self):
         # unregister ball_enter handlers
         self.machine.events.remove_handler(self._lock_ball)
         self.machine.events.remove_handler(self._post_events)
-        self.machine.events.remove_handler(self._lost_ball)
 
     @property
     def is_virtually_full(self):
