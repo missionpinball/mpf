@@ -2320,6 +2320,7 @@ widgets:
         force_complete_event: single|event_handler|None
         block_events: list|event_handler|None
         release_events: list|event_handler|None
+        bitmap_font: single|bool_or_token|false
         bold: single|bool_or_token|false
         italic: single|bool_or_token|false
         number_grouping: single|bool_or_token|false
