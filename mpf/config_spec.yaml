@@ -1812,6 +1812,7 @@ sound_system:
 sound_system_tracks:
     type: single|enum(standard,sound_loop,playlist)|standard
     volume: single|gain|0.5
+    label: single|str|None
     events_when_played: list|event_posted|None
     events_when_stopped: list|event_posted|None
     events_when_paused: list|event_posted|None

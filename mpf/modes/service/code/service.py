@@ -122,6 +122,7 @@ sort_devices_by_number: single|bool|True
             ServiceMenuEntry("Audits Menu", self._audits_menu),
             ServiceMenuEntry("Adjustments Menu", self._adjustments_menu),
             ServiceMenuEntry("Utilities Menu", self._utilities_menu),
+            ServiceMenuEntry("Audio Menu", self._audio_menu)
 
         ]
         return entries
@@ -183,6 +184,17 @@ sort_devices_by_number: single|bool|True
 
     async def _adjustments_menu(self):
         await self._make_menu(self._load_adjustments_menu_entries())
+
+    # Audio
+    def _load_audio_menu_entries(self) -> List[ServiceMenuEntry]:
+        """Return the audio menu items with label and callback."""
+        return [
+            ServiceMenuEntry("Software Levels", self._volume_menu)
+            # TODO: Add hardware platform volume control
+        ]
+
+    async def _audio_menu(self):
+        await self._make_menu(self._load_audio_menu_entries())
 
     # Utilities
     def _load_utilities_menu_entries(self) -> List[ServiceMenuEntry]:
@@ -433,6 +445,84 @@ sort_devices_by_number: single|bool|True
 
         self.machine.events.post("service_light_test_stop")
 
+    # VOLUME Menu
+    def _load_software_sound_menu_entries(self) -> List[ServiceMenuEntry]:
+        """Return the software sound menu items with label and callback."""
+        return [
+            ServiceMenuEntry("%s Volume" % config.get('label', track), partial(self._sound_track_menu, track))
+            for track, config in self.machine.config["sound_system"]["tracks"].items()
+        ]
+
+    async def _volume_menu(self):
+        position = 0
+        items = [{**config, "name": track, "label": config.get("label", track),
+                  "value": int((self.machine.variables.get_machine_var(f"{track}_volume") or config['volume']) * 100)
+                 } for track, config in self.machine.config["sound_system"]["tracks"].items()]
+
+        # do not crash if no items
+        if not items:   # pragma: no cover
+            return
+
+        self._update_volume_slide(items, position)
+
+        while True:
+            key = await self._get_key()
+            if key == 'ESC':
+                break
+            if key == 'UP':
+                position += 1
+                if position >= len(items):
+                    position = 0
+                self._update_volume_slide(items, position)
+            elif key == 'DOWN':
+                position -= 1
+                if position < 0:
+                    position = len(items) - 1
+                self._update_volume_slide(items, position)
+            elif key == 'ENTER':
+                # change setting
+                await self._volume_change(items, position)
+
+        self.machine.events.post("service_volume_stop")
+
+
+    def _update_volume_slide(self, items, position, is_change=False):
+        config = items[position]
+        event = "service_volume_{}".format("edit" if is_change else "start")
+        self.machine.events.post(event,
+                                 settings_label=config["label"],
+                                 value_label="%d%%" % config["value"])
+
+    async def _volume_change(self, items, position):
+        self._update_volume_slide(items, position)
+
+        # Use ints for values to avoid floating-point comparisons
+        values = [int((0.05 * i) * 100) for i in range(0,21)]
+        value_position = values.index(items[position]["value"])
+        self._update_volume_slide(items, position, is_change=True)
+
+        while True:
+            key = await self._get_key()
+            new_value = None
+            if key == 'ESC':
+                self._update_volume_slide(items, position)
+                break
+            if key == 'UP':
+                value_position += 1
+                if value_position >= len(values):
+                    value_position = 0
+                new_value = values[value_position]
+            elif key == 'DOWN':
+                value_position -= 1
+                if value_position < 0:
+                    value_position = len(values) - 1
+                new_value = values[value_position]
+            if new_value is not None:
+                items[position]['value'] = new_value
+                self.machine.variables.set_machine_var(f"{items[position]['name']}_volume", values[value_position] / 100, persist=True)
+                self._update_volume_slide(items, position, is_change=True)
+
+    # AUDIT Menu
     def _load_audit_menu_entries(self) -> List[ServiceMenuEntry]:
         """Return the audit menu items with label and callback."""
         return [
