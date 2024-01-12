@@ -188,10 +188,21 @@ sort_devices_by_number: single|bool|True
     # Audio
     def _load_audio_menu_entries(self) -> List[ServiceMenuEntry]:
         """Return the audio menu items with label and callback."""
-        return [
+        items = [
             ServiceMenuEntry("Software Levels", self._volume_menu)
-            # TODO: Add hardware platform volume control
         ]
+
+        self.debug_log("Looking for platform volumes: %s", self.machine.hardware_platforms)
+        for p, platform in self.machine.hardware_platforms.items():
+            # TODO: Define an AudioInterface base class
+            if getattr(platform, "audio_interface", None):
+                self.debug_log("Found '%s' platform audio for volume: %s", p, platform)
+                # TODO: find a good way to get a name of a platform
+                name = p.title()
+                items.append(ServiceMenuEntry(f"{name} Levels", partial(self._volume_menu, platform)))
+            else:
+                self.debug_log("Platform '%s' has no audio to configure volume: %s", p, platform)
+        return items
 
     async def _audio_menu(self):
         await self._make_menu(self._load_audio_menu_entries())
@@ -453,15 +464,24 @@ sort_devices_by_number: single|bool|True
             for track, config in self.machine.config["sound_system"]["tracks"].items()
         ]
 
-    async def _volume_menu(self):
+    async def _volume_menu(self, platform=None):
         position = 0
+        if platform:
+            item_configs = platform.audio_interface.amps
+        else:
+            item_configs = self.machine.config["sound_system"]["tracks"]
         items = [{**config, "name": track, "label": config.get("label", track),
-                  "value": int((self.machine.variables.get_machine_var(f"{track}_volume") or config['volume']) * 100)
-                 } for track, config in self.machine.config["sound_system"]["tracks"].items()]
+                  "value": (self.machine.variables.get_machine_var(f"{track}_volume") or config['volume'])
+                 } for track, config in item_configs.items()]
 
         # do not crash if no items
         if not items:   # pragma: no cover
             return
+
+        # Convert floats to ints for systems that use 0.0-1.0 for volume
+        for item in items:
+            if isinstance(item['value'], float):
+                item['value'] = int(item['value'] * 100)
 
         self._update_volume_slide(items, position)
 
@@ -481,23 +501,30 @@ sort_devices_by_number: single|bool|True
                 self._update_volume_slide(items, position)
             elif key == 'ENTER':
                 # change setting
-                await self._volume_change(items, position)
+                await self._volume_change(items, position, focus_change="enter")
 
         self.machine.events.post("service_volume_stop")
 
 
-    def _update_volume_slide(self, items, position, is_change=False):
+    def _update_volume_slide(self, items, position, is_change=False, focus_change=None):
         config = items[position]
         event = "service_volume_{}".format("edit" if is_change else "start")
+        # The 'focus_change' argument can be used to start/stop sound files playing
+        # during the service menu, to test volume.
         self.machine.events.post(event,
                                  settings_label=config["label"],
-                                 value_label="%d%%" % config["value"])
+                                 value_label=config["value"],
+                                 track=config["name"],
+                                 focus_change=focus_change)
 
-    async def _volume_change(self, items, position):
-        self._update_volume_slide(items, position)
+    async def _volume_change(self, items, position, focus_change=None):
+        self._update_volume_slide(items, position, focus_change=focus_change)
 
-        # Use ints for values to avoid floating-point comparisons
-        values = [int((0.05 * i) * 100) for i in range(0,21)]
+        if items[position].get("levels_list"):
+            values = items[position]["levels_list"]
+        else:
+            # Use ints for values to avoid floating-point comparisons
+            values = [int((0.05 * i) * 100) for i in range(0,21)]
         value_position = values.index(items[position]["value"])
         self._update_volume_slide(items, position, is_change=True)
 
@@ -505,7 +532,7 @@ sort_devices_by_number: single|bool|True
             key = await self._get_key()
             new_value = None
             if key == 'ESC':
-                self._update_volume_slide(items, position)
+                self._update_volume_slide(items, position, focus_change="exit")
                 break
             if key == 'UP':
                 value_position += 1

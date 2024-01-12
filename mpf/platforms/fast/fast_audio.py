@@ -12,7 +12,11 @@ class FASTAudioInterface(LogMixin):
         self.platform = platform
         self.machine = platform.machine
         self.communicator = communicator
-        self.amps = {'main': {}, 'sub': {}, 'headphones': {}}
+        self.amps = {
+            'main': { 'label': "Speakers" },
+            'sub': { 'label': "Subwoofer" },
+            'headphones': { 'label': "Headphones" }
+        }
         self.control_pin_pulse_times = list()
 
         # need to get this in before the soft_reset(), but after machine vars load
@@ -45,6 +49,7 @@ class FASTAudioInterface(LogMixin):
             self.amps[amp]['max_volume'] = self.communicator.config[f'max_hw_volume_{amp}']
             self.amps[amp]['levels_list'] = self.communicator.config[f'{amp}_levels_list']
             self.amps[amp]['link_to_main'] = self.communicator.config[f'link_{amp}_to_main']
+            self.amps[amp]['volume'] = self.get_volume(amp)
 
             # Just set everything here. The communicator will send the
             # config as part of its init process later
@@ -144,16 +149,19 @@ class FASTAudioInterface(LogMixin):
             value = 0
 
         self.send_volume_to_hw(amp)
+        self._set_machine_var_volume(amp, value)
 
-        for other_amp in self.amps.keys():
-            if self.amps[other_amp]['link_to_main'] and other_amp != amp:
-                self._set_machine_var_volume(other_amp, self.amps[amp]['levels_list'][value])
-                self.send_volume_to_hw(other_amp)
+        if amp == self.amps['main']:
+            for other_amp in self.amps.keys():
+                if self.amps[other_amp]['link_to_main'] and other_amp != amp:
+                    self._set_machine_var_volume(other_amp, self.amps[amp]['levels_list'][value])
+                    self.send_volume_to_hw(other_amp)
 
     def get_volume(self, amp, **kwargs):
         return self.machine.variables.get_machine_var(f'fast_audio_{amp}_volume')
 
     def _set_machine_var_volume(self, amp, value):
+        amp['volume'] = value
         self.machine.variables.set_machine_var(f'fast_audio_{amp}_volume', value)
 
     def temp_volume(self, amp, change=1, **kwargs):
