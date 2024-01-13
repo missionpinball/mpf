@@ -470,8 +470,13 @@ sort_devices_by_number: single|bool|True
             item_configs = platform.audio_interface.amps
         else:
             item_configs = self.machine.config["sound_system"]["tracks"]
-        items = [{**config, "name": track, "label": config.get("label", track),
-                  "value": (self.machine.variables.get_machine_var(f"{track}_volume") or config['volume'])
+        items = [{
+                    **config,
+                    "name": config.get("name", track),
+                    "label": config.get("label", track),
+                    "is_platform": bool(platform),
+                    # TODO: Give each software track a 'name' property
+                    "value": self.machine.variables.get_machine_var(f"{config['name'] if platform else track}_volume") or config['volume']
                  } for track, config in item_configs.items()]
 
         # do not crash if no items
@@ -515,11 +520,11 @@ sort_devices_by_number: single|bool|True
                                  settings_label=config["label"],
                                  value_label=config["value"],
                                  track=config["name"],
+                                 is_platform=config["is_platform"],
                                  focus_change=focus_change)
 
     async def _volume_change(self, items, position, focus_change=None):
         self._update_volume_slide(items, position, focus_change=focus_change)
-
         if items[position].get("levels_list"):
             values = items[position]["levels_list"]
         else:
@@ -546,7 +551,12 @@ sort_devices_by_number: single|bool|True
                 new_value = values[value_position]
             if new_value is not None:
                 items[position]['value'] = new_value
-                self.machine.variables.set_machine_var(f"{items[position]['name']}_volume", values[value_position] / 100, persist=True)
+                # Internally tracked values divide by 100 to store a float.
+                # External (hardware) values, use the value units provided
+                # TODO: Create an Amp/Track class to internalize this method.
+                if not items[position].get("levels_list"):
+                    new_value = new_value / 100
+                self.machine.variables.set_machine_var(f"{items[position]['name']}_volume", new_value, persist=True)
                 self._update_volume_slide(items, position, is_change=True)
 
     # AUDIT Menu
