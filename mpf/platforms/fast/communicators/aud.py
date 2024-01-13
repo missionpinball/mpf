@@ -29,17 +29,17 @@ class FastAudCommunicator(FastSerialCommunicator):
         self.amps = {
             'main':
                 {'cmd': 'AV',
-                 'volume': '00',
+                 'volume': 0,
                  'enabled': False,
                  },
             'sub':
                 {'cmd': 'AS',
-                 'volume': '00',
+                 'volume': 0,
                  'enabled': False,
                  },
             'headphones':
                 {'cmd': 'AH',
-                 'volume': '00',
+                 'volume': 0,
                  'enabled': False,
                  },
             }
@@ -54,10 +54,12 @@ class FastAudCommunicator(FastSerialCommunicator):
 
     async def soft_reset(self):
         self.update_config(send_now=True)
-        for amp in self.amps:
-            self.set_volume(amp, int(self.amps[amp]['volume'], 16))
+        for amp_name in self.amps:
+            self.set_volume(amp_name, self.amps[amp_name]['volume'])
 
     def _volume_to_hw(self, volume):
+        """Always store and pass volume levels as decimals (0-64), and use this
+        method to convert to hex strings when sending via serial to AUD board."""
         volume = int(volume)
         assert 0 <= volume <= 63, f"Invalid volume {volume}"
         return f"{volume:02X}"
@@ -83,28 +85,31 @@ class FastAudCommunicator(FastSerialCommunicator):
         if send_now:
             self.send_config_to_board()
 
-    def set_volume(self, amp, volume, send_now=True):
-        if amp not in self.amps:
-            raise AssertionError(f"Invalid amp {amp}")
+    def set_volume(self, amp_name, volume, send_now=True):
+        if amp_name not in self.amps:
+            raise AssertionError(f"Invalid amp {amp_name}")
 
-        volume = self._volume_to_hw(volume)
-        self.amps[amp]['volume'] = volume
+        # Track the internal (realtime) volume of the amp, which may be
+        # different than the stored (machine var) volume during ducking
+        self.amps[amp_name]['volume'] = volume
         if send_now:
-            self.send_and_forget(f"{self.amps[amp]['cmd']}:{volume}")
+            hw_volume = self._volume_to_hw(volume)
+            self.send_and_forget(f"{self.amps[amp_name]['cmd']}:{hw_volume}")
 
-    def get_volume(self, amp):
-        return int(self.amps[amp]['volume'], 16)
+    def get_volume(self, amp_name):
+        """Get the current internal volume of the amp."""
+        return self.amps[amp_name]['volume']
 
-    def enable_amp(self, amp, send_now=True):
-        if amp not in self.amps:
-            raise AssertionError(f"Invalid amp {amp}")
-        self.amps[amp]['enabled'] = True
+    def enable_amp(self, amp_name, send_now=True):
+        if amp_name not in self.amps:
+            raise AssertionError(f"Invalid amp {amp_name}")
+        self.amps[amp_name]['enabled'] = True
         self.update_config(send_now)
 
-    def disable_amp(self, amp, send_now=True):
-        if amp not in self.amps:
-            raise AssertionError(f"Invalid amp {amp}")
-        self.amps[amp]['enabled'] = False
+    def disable_amp(self, amp_name, send_now=True):
+        if amp_name not in self.amps:
+            raise AssertionError(f"Invalid amp {amp_name}")
+        self.amps[amp_name]['enabled'] = False
         self.update_config(send_now)
 
     def set_phones_level(self, mode, send_now=True):

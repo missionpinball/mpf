@@ -692,7 +692,7 @@ fast_aud:
     headphones_levels_list: list|int|None
     headphones_level: single|enum(headphones,line)|headphones
     mute_speakers_with_headphones: single|bool|true
-    link_main_to_main: single|bool|true
+    link_main_to_main: single|bool|false
     link_sub_to_main: single|bool|true
     link_headphones_to_main: single|bool|false
 
