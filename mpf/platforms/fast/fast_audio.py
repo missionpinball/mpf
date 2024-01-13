@@ -69,9 +69,10 @@ class FASTAudioInterface(LogMixin):
                                      f"Main has {len(self.amps['main']['levels_list'])} steps, "
                                      f"but {amp_name} has {len(amp['levels_list'])} steps.")
 
-        # Finish all the configurations first, then iterate to set volumes (for linked amps)
-        for amp_name in self.amps.keys():
-            self._set_volume(amp_name, self.get_volume(amp_name))
+        # Write the volume levels to the hardware layer, but no need to send
+        # them because (regular priority) init_phase_1 includes a soft_reset()
+        self.send_volume_to_hw(send_now=False)
+
 
     def _configure_control_pins(self):
         for i in range(6):
@@ -119,14 +120,14 @@ class FASTAudioInterface(LogMixin):
         self.amps[amp_name]['levels_list'].append(0)
         self.amps[amp_name]['levels_list'].reverse()
 
-    def send_volume_to_hw(self, amp_name=None):
+    def send_volume_to_hw(self, amp_name=None, send_now=True):
         """Send the current volume to the hardware."""
         if amp_name is None:
             for amp_name in self.amps.keys():
-                self.send_volume_to_hw(amp_name)
+                self.send_volume_to_hw(amp_name, send_now)
             return
 
-        self.communicator.set_volume(amp_name, self.get_volume(amp_name))
+        self.communicator.set_volume(amp_name, self.get_volume(amp_name), send_now)
 
     def _set_volume(self, amp_name, value=0, **kwargs):
         """Set the amp volume to the specified level, in absolute units.
@@ -139,7 +140,7 @@ class FASTAudioInterface(LogMixin):
         elif value < 0:
             value = 0
 
-        self.debug_log("Writing FAST amp volume %s to %s (decimal)", amp_name, value)
+        #self.platform.debug_log("Writing FAST amp volume %s to %s (decimal)", amp_name, value)
         self.send_volume_to_hw(amp_name)
 
         if amp_name == 'main':
