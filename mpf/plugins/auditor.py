@@ -71,7 +71,13 @@ class Auditor:
             self.current_audits['missing_switches'] = dict()
 
         # build the list of switches we should audit
-        is_free_play = self.machine.settings.get_setting_value('free_play')
+        try:
+            is_free_play = self.machine.settings.get_setting_value('free_play')
+        except AssertionError:
+            # If the machine has never set up a setting for free_play, get_setting_value
+            # will throw. Assume this is a homebrew and is free to play.
+            is_free_play = True
+
         self.switchnames_to_audit = {x.name for x in self.machine.switches.values() if
             # Don't audit tagged switches, or credit switches during free play
             ('no_audit' not in x.tags) and ('no_audit_free' not in x.tags or not is_free_play)}
