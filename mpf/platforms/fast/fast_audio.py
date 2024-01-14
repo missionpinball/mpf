@@ -193,3 +193,7 @@ class FASTAudioInterface(LogMixin):
         if not ms:
             ms = self.control_pin_pulse_times[7]
         self.communicator.pulse_control_pin(7, ms)
+
+    def save_settings_to_firmware(self, **kwargs):
+        del kwargs
+        self.communicator.save_settings_to_firmware()

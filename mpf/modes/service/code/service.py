@@ -456,14 +456,6 @@ sort_devices_by_number: single|bool|True
 
         self.machine.events.post("service_light_test_stop")
 
-    # VOLUME Menu
-    def _load_software_sound_menu_entries(self) -> List[ServiceMenuEntry]:
-        """Return the software sound menu items with label and callback."""
-        return [
-            ServiceMenuEntry("%s Volume" % config.get('label', track), partial(self._sound_track_menu, track))
-            for track, config in self.machine.config["sound_system"]["tracks"].items()
-        ]
-
     async def _volume_menu(self, platform=None):
         position = 0
         if platform:
@@ -488,6 +480,16 @@ sort_devices_by_number: single|bool|True
             if isinstance(item['value'], float):
                 item['value'] = int(item['value'] * 100)
 
+        # If supported on hardware platform, add option to write to firmware
+        if platform and hasattr(platform.audio_interface, "save_settings_to_firmware"):
+            items.append({
+                "name": "write_to_firmware",
+                "label": "Write Settings",
+                "is_platform": True,
+                "value": "Confirm",
+                "levels_list": ["Confirm", "Saved"]
+            })
+
         self._update_volume_slide(items, position)
 
         while True:
@@ -506,7 +508,7 @@ sort_devices_by_number: single|bool|True
                 self._update_volume_slide(items, position)
             elif key == 'ENTER':
                 # change setting
-                await self._volume_change(items, position, focus_change="enter")
+                await self._volume_change(items, position, platform, focus_change="enter")
 
         self.machine.events.post("service_volume_stop")
 
@@ -523,7 +525,7 @@ sort_devices_by_number: single|bool|True
                                  is_platform=config["is_platform"],
                                  focus_change=focus_change)
 
-    async def _volume_change(self, items, position, focus_change=None):
+    async def _volume_change(self, items, position, platform, focus_change=None):
         self._update_volume_slide(items, position, focus_change=focus_change)
         if items[position].get("levels_list"):
             values = items[position]["levels_list"]
@@ -551,12 +553,20 @@ sort_devices_by_number: single|bool|True
                 new_value = values[value_position]
             if new_value is not None:
                 items[position]['value'] = new_value
-                # Internally tracked values divide by 100 to store a float.
-                # External (hardware) values, use the value units provided
-                # TODO: Create an Amp/Track class to internalize this method.
-                if not items[position].get("levels_list"):
-                    new_value = new_value / 100
-                self.machine.variables.set_machine_var(f"{items[position]['name']}_volume", new_value, persist=True)
+                # Check for a firmware update
+                if items[position]['name'] == "write_to_firmware":
+                    if new_value == "Saved":
+                        platform.audio_interface.save_settings_to_firmware()
+                        # Remove the options from the list
+                        values = ['Saved']
+                        items[position]['levels_list'] = values
+                else:
+                    # Internally tracked values divide by 100 to store a float.
+                    # External (hardware) values, use the value units provided
+                    # TODO: Create an Amp/Track class to internalize this method.
+                    if not items[position].get("levels_list"):
+                        new_value = new_value / 100
+                    self.machine.variables.set_machine_var(f"{items[position]['name']}_volume", new_value, persist=True)
                 self._update_volume_slide(items, position, is_change=True)
 
     # AUDIT Menu
