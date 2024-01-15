@@ -663,6 +663,7 @@ fast_aud:
     port: list|str|auto
     baud: single|int|230400
     debug: single|bool|false
+    optional: single|bool|false
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
     pin1_pulse_time: single|ms|100
