@@ -1790,6 +1790,7 @@ sound_player:
     delay: single|secs|None
     track: single|str|None
     volume: single|gain|None
+    ducking: single|subconfig(sound_ducking)|None
     pan: single|float_or_token|None
     loops: single|int_or_token|None
     priority: single|int_or_token|None
