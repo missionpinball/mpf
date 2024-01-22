@@ -64,8 +64,11 @@ class FastPortDetector:
             except SerialException:
                 self.log.error(f"Could not connect to port {port}. Are you connected via CoolTerm? :)")
 
+            self.platform.debug_log(" - success connecting to port %s", port)
             self.task_writers[asyncio.current_task()] = writer
 
+            total_attempts = 5
+            attempts = 0
             while True:
                 writer.write(b'ID:\r')
 
@@ -73,7 +76,11 @@ class FastPortDetector:
                 try:
                     data = await asyncio.wait_for(reader.read(100), timeout=1.0)
                 except asyncio.TimeoutError:
-                    continue  # retry
+                    attempts += 1
+                    if attempts < total_attempts:
+                        continue  # retry
+                    else:
+                        self.platform.debug_log("Unable to get ID: on port %s after %s retries.", port, total_attempts)
 
                 if data:
                     data = data.decode('utf-8', errors='ignore')
