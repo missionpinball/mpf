@@ -91,7 +91,7 @@ class Bonus(Mode):
             self._subtotal()
             return
 
-        hits = self.player.vars.get(entry['player_score_entry'], 1)
+        hits = self.player.vars.get(entry['player_score_entry'], 0)
         score = entry['score'].evaluate([]) * hits
 
         if (not score and entry['skip_if_zero']) or (score < 0 and entry['skip_if_negative']):
