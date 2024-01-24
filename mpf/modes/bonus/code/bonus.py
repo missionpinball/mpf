@@ -91,7 +91,11 @@ class Bonus(Mode):
             self._subtotal()
             return
 
-        hits = self.player.vars.get(entry['player_score_entry'], 0)
+        # Calling player.vars.get() instead of player.get() bypasses the
+        # auto-fill zero and will throw if there is no player variable.
+        # The fallback value of 1 is used for bonus entries that don't use
+        # a player score, which are multiplied by one to get the bonus.
+        hits = self.player.vars.get(entry['player_score_entry'], 1)
         score = entry['score'].evaluate([]) * hits
 
         if (not score and entry['skip_if_zero']) or (score < 0 and entry['skip_if_negative']):
