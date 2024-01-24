@@ -80,14 +80,15 @@ class Shot(EnableDisableMixin, ModeDevice):
         self._handlers = []
         for switch in self.config['switches']:
             self._handlers.append(self.machine.events.add_handler("{}_active".format(switch.name),
-                                                                  self.event_hit, priority=self.mode.priority,
+                                                                  self.event_hit,
+                                                                  priority=self.mode.priority + self.config['priority'],
                                                                   blocking_facility="shot"))
 
         for switch in list(self.config['delay_switch'].keys()):
             self._handlers.append(self.machine.events.add_handler("{}_active".format(switch.name),
                                                                   self._delay_switch_hit,
                                                                   switch_name=switch.name,
-                                                                  priority=self.mode.priority,
+                                                                  priority=self.mode.priority + self.config['priority'],
                                                                   blocking_facility="shot"))
 
     def _remove_switch_handlers(self):

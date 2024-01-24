@@ -1561,6 +1561,7 @@ shots:
     delay_switch: dict|machine(switches):ms|None
     persist_enable: single|bool|true
     playfield: single|machine(playfields)|playfield
+    priority: single|int|0
     mark_playfield_active: single|bool|true
     enable_events: event_handler|event_handler:ms|None
     disable_events: event_handler|event_handler:ms|None
@@ -2194,6 +2195,7 @@ widgets:
         timing: single|enum(after_previous,with_previous)|after_previous
         repeat: single|bool_or_token|false
         easing: single|str|linear
+        step: single|float|0.0
     bezier:
         points: list|num_or_token|
         thickness: single|float_or_token|1.0
