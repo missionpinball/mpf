@@ -100,6 +100,13 @@ class Bonus(Mode):
             self._bonus_next_item()
             return
 
+        if self.settings["rounding_value"] and (r := (score % self.settings["rounding_value"])):
+            self.debug_log("rounding bonus score %s remainder of %s", score, r)
+            if self.settings["rounding_direction"] == "down":
+                score -= r
+            else:
+                score += self.settings["rounding_value"] - r
+
         self.debug_log("Bonus Entry '{}': score: {} player_score_entry: {}={}".
                        format(entry['event'], score,
                               entry['player_score_entry'], hits))
