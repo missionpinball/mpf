@@ -105,6 +105,11 @@ class Mode(LogMixin):
         """Return *True* if this mode is active."""
         return self._active
 
+    @property
+    def starting(self) -> bool:
+        """Return *True* if this mode is starting."""
+        return self._starting
+
     @active.setter
     def active(self, new_active: bool):
         """Setter for _active."""
