@@ -133,12 +133,11 @@ class DataManager(MpfController):
                 # If the file writer has an exception handle it here. Otherwise
                 # this thread will die and all subsequent write attempts will no-op.
                 self.info_log("ERROR writing file %s: %s", self.filename, e)
-            data = None
             # prevent too many writes
             time.sleep(self.min_wait_secs)
 
         # if dirty write data one last time during shutdown
-        if data and self._dirty.is_set():
+        if self._dirty.is_set():
             while FileManager.is_busy:
                 time.sleep(0.2)
             FileManager.save(self.filename, data)
