@@ -792,7 +792,7 @@ class AssetPool:
                   if not asset[2] or asset[2].evaluate([])]  # type: List[TNullableAssetEntry]
         # Avoid crashes, return None as the asset if no conditions evaluate true
         if not result:
-            self.machine.log.warning("AssetPool {}: {}".format(
+            self.warning_log("AssetPool {}: {}".format(
                 self.name, "All conditional assets evaluated False and no other assets defined."))
             result.append((None, 0))
         return result
@@ -814,7 +814,7 @@ class AssetPool:
                 if self._asset_sequence[0].name in truthy_asset_names:
                     break
                 if x == len(self._asset_sequence) - 1:
-                    self.machine.log.warning("AssetPool {}: All assets in sequence evaluated False.".format(self.name))
+                    self.warning_log("AssetPool {}: All assets in sequence evaluated False.".format(self.name))
                     return None
 
                 self._asset_sequence.rotate(-1)
