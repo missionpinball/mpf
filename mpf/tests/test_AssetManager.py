@@ -222,6 +222,31 @@ class TestAssets(MpfTestCase):
         # play a group
         self.machine.shows['group7'].play()
 
+    def _test_conditional_random_with_multiplayer_conditions(self):
+        # When the number of valid conditional assets goes *down* on
+        # a random_force_all, a situation could occur that all the remaining
+        # conditional assets are used up. This test validates that the
+        # pool will reset the availability in that case.
+        self.machine.modes["mode1"].start()
+        self.advance_time_and_run()
+        self.assertIn('group8', self.machine.shows)
+
+        # Set a condition so all three events are valid
+        self.machine.modes["mode1"].priority = 2
+        # Pull two assets, including the future only-valid one
+        res = list()
+        while self.machine.shows['show3'] not in res:
+            res = [
+                self.machine.shows['group9'].asset,
+                self.machine.shows['group9'].asset
+            ]
+        # Change the condition so only one show is valid, but already used
+        self.machine.modes["mode1"].priority = 0
+        self.assertIs(self.machine.shows['group9'].asset, self.machine.shows['show3'])
+        self.assertIs(self.machine.shows['group9'].asset, self.machine.shows['show3'])
+        self.assertIs(self.machine.shows['group9'].asset, self.machine.shows['show3'])
+        self.assertIs(self.machine.shows['group9'].asset, self.machine.shows['show3'])
+
     def _test_conditional_sequence_asset_group(self):
         # These tests are not independent, and mode1 is still running/stopping from the above test :(
         self.advance_time_and_run()
@@ -262,4 +287,3 @@ class TestAssets(MpfTestCase):
         self.assertIs(self.machine.shows['group8'].asset, self.machine.shows['show1'])
         self.assertIs(self.machine.shows['group8'].asset, self.machine.shows['show2'])
         self.assertIs(self.machine.shows['group8'].asset, self.machine.shows['show3'])
-

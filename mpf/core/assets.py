@@ -792,7 +792,7 @@ class AssetPool:
                   if not asset[2] or asset[2].evaluate([])]  # type: List[TNullableAssetEntry]
         # Avoid crashes, return None as the asset if no conditions evaluate true
         if not result:
-            self.warning_log("AssetPool {}: {}".format(
+            self.machine.log.warning("AssetPool {}: {}".format(
                 self.name, "All conditional assets evaluated False and no other assets defined."))
             result.append((None, 0))
         return result
@@ -814,7 +814,7 @@ class AssetPool:
                 if self._asset_sequence[0].name in truthy_asset_names:
                     break
                 if x == len(self._asset_sequence) - 1:
-                    self.warning_log("AssetPool {}: All assets in sequence evaluated False.".format(self.name))
+                    self.machine.log.warning("AssetPool {}: All assets in sequence evaluated False.".format(self.name))
                     return None
 
                 self._asset_sequence.rotate(-1)
@@ -833,6 +833,9 @@ class AssetPool:
 
     def _get_random_force_all_asset(self) -> Optional[AssetClass]:
         conditional_assets = self._get_conditional_assets()  # Store to variable to avoid calling twice
+        # Different players may have different conditions, so remove any unapplicable ones
+        # Otherwise a previous player may "use up" all the assets of the next player
+        self._assets_sent = set(a for a in self._assets_sent if a in conditional_assets)
         if len(self._assets_sent) == len(conditional_assets):
             self._assets_sent = set()
 
