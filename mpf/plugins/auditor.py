@@ -206,7 +206,13 @@ class Auditor:
                 kwargs.
         """
         del kwargs
-        self.current_audits['events'][eventname] += 1
+        # Any events defined in the configs will exist, but custom code
+        # may call this method with other events that haven't been defined.
+        # Using try/except for the lowest cost on majority of paths
+        try:
+            self.current_audits['events'][eventname] += 1
+        except KeyError:
+            self.current_audits['events'][eventname] = 1
         if self._autosave or self.config['autosave_events']:
             self._save_audits()
 
