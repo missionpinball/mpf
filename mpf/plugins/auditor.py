@@ -207,7 +207,7 @@ class Auditor:
         """
         del kwargs
         self.current_audits['events'][eventname] += 1
-        if self._autosave:
+        if self._autosave or self.config['autosave_events']:
             self._save_audits()
 
     def audit_player(self, **kwargs):

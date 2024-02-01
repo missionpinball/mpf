@@ -97,6 +97,7 @@ auditor:
     save_events: event_handler|event_handler:ms|ball_ended
     audit: list|str|None
     autosave: single|bool|true
+    autosave_events: single|bool|true
     events: list|event_handler|None
     player: list|str|None
     audit_shots: single|bool|true
