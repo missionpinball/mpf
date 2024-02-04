@@ -1923,6 +1923,7 @@ steppers:
     __valid_in__: machine
     __type__: device
     named_positions: dict|float:str|None
+    home_events: event_handler|event_handler:ms|None
     homing_mode: single|enum(hardware,switch)|hardware
     homing_switch: single|machine(switches)|None
     homing_direction: single|enum(clockwise,counterclockwise)|clockwise
@@ -1932,6 +1933,7 @@ steppers:
     ball_search_max: single|int|1
     ball_search_wait: single|ms|5s
     include_in_ball_search: single|bool|true
+    relative_positions: dict|float:str|None
     reset_position: single|int|0
     reset_events: event_handler|event_handler:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
     number: single|str|
@@ -2319,6 +2321,7 @@ widgets:
         force_complete_event: single|event_handler|None
         block_events: list|event_handler|None
         release_events: list|event_handler|None
+        bitmap_font: single|bool_or_token|false
         bold: single|bool_or_token|false
         italic: single|bool_or_token|false
         number_grouping: single|bool_or_token|false

@@ -96,23 +96,48 @@ class TestStepper(MpfTestCase):
         # should go to reset position
         self.assertEqual(0.0, stepper._current_position)
 
-        # post another defined event
+        # post a named_position defined event
         event_future = self.machine.events.wait_for_event("stepper_linearAxis_stepper_ready")
         self.post_event("test_00")
         self.machine.clock.loop.run_until_complete(event_future)
         self.assertEqual(-5.0, stepper._current_position, 0)
 
-        # post another defined event
+        # post a named_position defined event
         event_future = self.machine.events.wait_for_event("stepper_linearAxis_stepper_ready")
         self.post_event("test_01")
         self.machine.clock.loop.run_until_complete(event_future)
         self.assertEqual(999.0, stepper._current_position, 0)
 
-        # post another defined event
+        # post a named_position defined event
         event_future = self.machine.events.wait_for_event("stepper_linearAxis_stepper_ready")
         self.post_event("test_10")
         self.machine.clock.loop.run_until_complete(event_future)
         self.assertEqual(500.0, stepper._current_position, 0)
+
+        # post a home event
+        event_future = self.machine.events.wait_for_event("stepper_linearAxis_stepper_ready")
+        self.post_event("test_home")
+        self.machine.clock.loop.run_until_complete(event_future)
+        # should go to reset position
+        self.assertEqual(0.0, stepper._current_position)
+
+        # post a relative_position defined event
+        event_future = self.machine.events.wait_for_event("stepper_linearAxis_stepper_ready")
+        self.post_event("test_rel_00")
+        self.machine.clock.loop.run_until_complete(event_future)
+        self.assertEqual(-2.0, stepper._current_position, 0)
+
+        # post a relative_position defined event
+        event_future = self.machine.events.wait_for_event("stepper_linearAxis_stepper_ready")
+        self.post_event("test_rel_01")
+        self.machine.clock.loop.run_until_complete(event_future)
+        self.assertEqual(23.0, stepper._current_position, 0)
+
+        # post a relative_position defined event
+        event_future = self.machine.events.wait_for_event("stepper_linearAxis_stepper_ready")
+        self.post_event("test_rel_02")
+        self.machine.clock.loop.run_until_complete(event_future)
+        self.assertEqual(123.0, stepper._current_position, 0)
 
     def test_ball_search(self):
         stepper = self.machine.steppers["linearAxis_stepper"]
