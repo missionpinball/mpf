@@ -119,6 +119,16 @@ class TestShots(MpfTestCase):
         # check if color returns to mode1_shot_2 color
         self.assertLightColor("light_2", "antiquewhite")
 
+    def test_switch_priorities(self):
+        self.start_game()
+        self.start_mode("mode3")
+
+        self.assertEqual(self.machine.game.player['foo'], 0)
+        self.hit_and_release_switch('switch_3')
+        self.advance_time_and_run()
+
+        self.assertEqual(self.machine.game.player['foo'], 100)
+
     def test_hits(self):
         self.assertFalse(self.machine.shots["mode1_shot_1"].enabled)
 
