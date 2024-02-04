@@ -596,8 +596,9 @@ class MpfTestCase(unittest.TestCase):
             self.loop.run_once()
             if timeout and time.time() > start + timeout:
                 raise AssertionError("Start took more than {}s".format(timeout))
-
         # trigger exception if there was one
+        if self._exception:
+            raise(self._exception['exception'])
         init.result()
 
     def _mock_event_handler(self, event_name, **kwargs):

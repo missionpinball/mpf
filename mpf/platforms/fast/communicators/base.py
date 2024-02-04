@@ -73,6 +73,10 @@ class FastSerialCommunicator(LogMixin):
 
     async def connect(self):
         for port in self.config['port']:
+            # If this is an auto-detect that failed to detect, the port will
+            # just be 'auto' and there's no reason to try and connect to it.
+            if port == 'auto':
+                continue
             self.log.info(f"Trying to connect to {port} at {self.config['baud']}bps")
             success = False
 
@@ -88,7 +92,7 @@ class FastSerialCommunicator(LogMixin):
 
                     # if we are in production mode, retry
                     await asyncio.sleep(.1)
-                    self.log.warning("Connection to %s failed. Will retry.", port)
+                    self.log.warning("Connection to port %s failed. Will retry.", port)
                 else:
                     # we got a connection
                     self.log.info(f"Connected to {port} at {self.config['baud']}bps")

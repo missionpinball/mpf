@@ -117,7 +117,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
         self.machine.events.add_async_handler('init_phase_1', self.soft_reset)
         self.machine.events.add_handler('init_phase_3', self._start_communicator_tasks)
         self.machine.events.add_handler('machine_reset_phase_2', self._init_complete)
-        self.audio_interface = self.configure_audio_interface()
         await self._connect_to_hardware()
 
     async def soft_reset(self, **kwargs):
@@ -275,6 +274,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
             try:
                 await communicator.connect()
             except SerialException as e:
+                if config.get("optional"):
+                    self.info_log("Unable to connect to %s on port %s, flagged as optional so ignoring", port, config['port'])
+                    del(self.serial_connections[port])
+                    continue
                 raise MpfRuntimeError("Could not open serial port {}. Is something else connected to the port? "
                                       "Did the port number or your computer change? Do you have permissions to the port? "
                                       "".format(port), 1, self.log.name) from e
