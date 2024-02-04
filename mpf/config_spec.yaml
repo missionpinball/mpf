@@ -286,6 +286,8 @@ bonus_mode_settings:
     end_bonus_event: single|event_handler|None
     keep_multiplier: single|template_bool|False
     bonus_entries: list|subconfig(bonus_entries)|
+    rounding_value: single|int|None
+    rounding_direction: single|str|up
 bonus_entries:
     event: single|event_posted|
     score: single|template_int|
