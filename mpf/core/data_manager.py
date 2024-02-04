@@ -116,19 +116,29 @@ class DataManager(MpfController):
 
     def _writing_thread(self):  # pragma: no cover
         # prevent early writes at start-up
+        data = None
         time.sleep(self.min_wait_secs)
         while not self.machine.thread_stopper.is_set():
             if not self._dirty.wait(1):
                 continue
+            while FileManager.is_busy:
+                time.sleep(0.2)
             self._dirty.clear()
 
             data = copy.deepcopy(self.data)
-            self.debug_log("Writing %s to: %s", self.name, self.filename)
             # save data
-            FileManager.save(self.filename, data)
+            try:
+                FileManager.save(self.filename, data)
+            except Exception as e:
+                # If the file writer has an exception handle it here. Otherwise
+                # this thread will die and all subsequent write attempts will no-op.
+                self.info_log("ERROR writing file %s: %s", self.filename, e)
+            data = None
             # prevent too many writes
             time.sleep(self.min_wait_secs)
 
         # if dirty write data one last time during shutdown
-        if self._dirty.is_set():
+        if data and self._dirty.is_set():
+            while FileManager.is_busy:
+                time.sleep(0.2)
             FileManager.save(self.filename, data)
