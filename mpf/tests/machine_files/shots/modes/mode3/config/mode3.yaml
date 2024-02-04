@@ -1,0 +1,21 @@
+#config_version=6
+
+mode:
+  priority: 100
+
+shots:
+  mode3_shot_3_1:
+    switch: switch_3
+  mode3_shot_3_2:
+    switch: switch_3
+    priority: 10
+
+variable_player:
+  mode3_shot_3_1_hit:
+    foo:
+      action: set
+      int: 100
+  mode3_shot_3_2_hit:
+    foo:
+      action: set
+      int: 50

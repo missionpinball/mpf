@@ -5,6 +5,7 @@ modes:
   - base3
   - mode1
   - mode2
+  - mode3
 
 switches:
   switch_1:
