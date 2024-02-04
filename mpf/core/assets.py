@@ -575,7 +575,7 @@ class BaseAssetManager(MpfController, LogMixin):
 
         if not remaining:
             if self._start_time:
-                self.log.info("Asset loading took: %s", time.time() - self._start_time)
+                self.info_log("Asset loading took: %s", time.time() - self._start_time)
             self._last_asset_event_time = None
             self.machine.events.post('asset_loading_complete')
             '''event: asset_loading_complete
@@ -833,6 +833,9 @@ class AssetPool:
 
     def _get_random_force_all_asset(self) -> Optional[AssetClass]:
         conditional_assets = self._get_conditional_assets()  # Store to variable to avoid calling twice
+        # Different players may have different conditions, so remove any unapplicable ones
+        # Otherwise a previous player may "use up" all the assets of the next player
+        self._assets_sent = set(a for a in self._assets_sent if a in conditional_assets)
         if len(self._assets_sent) == len(conditional_assets):
             self._assets_sent = set()
 

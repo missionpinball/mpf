@@ -168,7 +168,10 @@ class Command:
             console_log.setLevel(logging.ERROR)
         else:
             console_log = logging.StreamHandler()
-            console_log.setLevel(self.args.consoleloglevel)
+            if self.args.production:
+                console_log.setLevel(logging.ERROR)
+            else:
+                console_log.setLevel(self.args.consoleloglevel)
 
         console_log.setFormatter(logging.Formatter(
             '%(asctime)s.%(msecs)03d : %(levelname)s [%(name)s] %(message)s', "%H:%M:%S"))
