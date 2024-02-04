@@ -282,7 +282,8 @@ class Shot(EnableDisableMixin, ModeDevice):
         if self.profile.config['block']:
             min_priority = kwargs.get("_min_priority", {"all": 0})
             min_shots = min_priority.get("shot", 0)
-            min_priority["shot"] = self.mode.priority if self.mode.priority > min_shots else min_shots
+            shot_priority = self.mode.priority + self.config["priority"]
+            min_priority["shot"] = shot_priority if shot_priority > min_shots else min_shots
             return {"_min_priority": min_priority}
 
         return None
