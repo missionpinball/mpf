@@ -32,7 +32,7 @@ class TestPololuTic(MpfTestCase):
                 yaml = ruamel.yaml.YAML()
                 yaml.Dumper = RoundTripDumper
                 yaml.dump(new_status, output)
-                return output.getvalue()
+                return output.getvalue().encode()
 
         elif args == ('--reset-command-timeout',):
             return ""
