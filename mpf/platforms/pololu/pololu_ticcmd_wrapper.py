@@ -97,11 +97,10 @@ class PololuTiccmdWrapper:
     async def get_status(self):
         """Return the current status of the TIC device."""
         cmd_return = await self._ticcmd_future('-s', '--full')
-        self.log.info("get_status() received cmd_return: %s", cmd_return)
+        self.log.debug("get_status() received cmd_return: %s", cmd_return)
         value = cmd_return.decode('utf-8')
         yaml = ruamel.yaml.YAML(typ='safe')
         status = yaml.load(value)
-        self.log.info("yaml.load() generated status: %s", status)
         return status
 
     def halt_and_hold(self):
