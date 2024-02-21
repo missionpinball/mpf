@@ -186,7 +186,7 @@ ball_device_counter_entrance_switches:
 ball_device_ejector_event:
     class: ignore
     events_when_eject_try: list|event_posted|None
-    events_when_reoder_balls: list|event_posted|None
+    events_when_reorder_balls: list|event_posted|None
     events_when_ball_search: list|event_posted|None
 ball_device_ejector_pulse:
     class: ignore
