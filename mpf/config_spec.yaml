@@ -292,7 +292,7 @@ bonus_mode_settings:
     end_bonus_event: single|event_handler|None
     keep_multiplier: single|template_bool|False
     bonus_entries: list|subconfig(bonus_entries)|
-    rounding_value: single|int|
+    rounding_value: single|int|None
     rounding_direction: single|str|up
 bonus_entries:
     event: single|event_posted|
@@ -319,7 +319,6 @@ coils:
     disable_events: event_handler|event_handler:ms|None
     enable_events: event_handler|event_handler:ms|None
     pulse_events: event_handler|event_handler:ms|None
-    timed_enable_events: event_handler|event_handler:ms|None
     platform_settings: single|dict|None
     psu: single|machine(psus)|default
     platform: single|str|None
@@ -1143,7 +1142,6 @@ multiball_locks:
     __type__: device
     balls_to_lock: single|int|
     balls_to_replace: single|int|-1
-    ball_lost_action: single|str|None
     blocking_facility: single|str|None
     lock_devices: list|machine(ball_devices)|
     source_devices: list|machine(ball_devices)|None
@@ -1795,7 +1793,6 @@ sound_player:
     delay: single|secs|None
     track: single|str|None
     volume: single|gain|None
-    ducking: single|subconfig(sound_ducking)|None
     pan: single|float_or_token|None
     loops: single|int_or_token|None
     priority: single|int_or_token|None

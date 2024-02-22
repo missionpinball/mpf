@@ -13,7 +13,6 @@ USB_IDS = {  # (VID, PID)
     (11914, 4157): ('exp', 'FAST Expansion Board'),
     (11914, 4158): ('dsp', 'FAST Display Controller'),
     (1027, 24593): ('net', 'FAST Nano Controller'),  # FTDI Quad RS232-HS
-    (1027, 24597): ('aud', 'FAST Audio Interface'),  # AVW's old-ass board
 }
 
 VALID_IO_BOARDS = (

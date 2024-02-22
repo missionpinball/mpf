@@ -315,7 +315,6 @@ class Playfield(SystemWideDevice):
             self.machine.ball_controller.add_captured_ball(self)
 
     def _source_device_ball_lost(self, target, **kwargs):
-        self.debug_log("Ball lost from source device %s with target %s", target.name, self.name)
         del kwargs
         if target == self:
             self.available_balls -= 1

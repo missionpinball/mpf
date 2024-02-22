@@ -18,9 +18,9 @@ class Match(AsyncMode):
         """initialize match mode."""
         super().__init__(*args, **kwargs)
         # add setting
-        self.machine.settings.add_setting(SettingEntry("match_percentage", "Match Percentage", 500,
+        self.machine.settings.add_setting(SettingEntry("match_percentage", "Match percentage", 500,
                                                        "match_percentage", 10,
-                                                       {0: "Never", 2: "2%", 5: "5%", 10: "10%", 15: "15%", 30: "30%",
+                                                       {0: "off", 2: "2%", 5: "5%", 10: "10%", 15: "15%", 30: "30%",
                                                         50: "50%"}, "standard"))
 
     def _get_match_numbers(self):
