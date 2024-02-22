@@ -232,8 +232,9 @@ class Auditor:
 
         for item in set(self.config['player']):
             for player in self.machine.game.player_list:
-                # Don't audit empty values, except score
-                if item != "score" and not self.machine.game.player[item]:
+                # Don't audit values that haven't been initialized on the player, either by
+                # a value set during gameplay or with an initial_value in the player_vars config
+                if not item in self.machine.game.player.vars:
                     continue
 
                 self.current_audits['player'][item]['top'] = (

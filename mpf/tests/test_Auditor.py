@@ -40,6 +40,7 @@ class TestAuditor(MpfFakeGameTestCase):
         self.assertEqual(200, auditor.current_audits['player']['my_var']['average'])
         self.assertEqual([200], auditor.current_audits['player']['my_var']['top'])
         self.assertEqual(1, auditor.current_audits['player']['my_var']['total'])
+        self.assertEqual(0, auditor.current_audits['player']['optional_var']['total'])
         self.assertNotIn("not_audited", auditor.current_audits['player'])
 
         # start a game
@@ -47,7 +48,9 @@ class TestAuditor(MpfFakeGameTestCase):
 
         self.post_event("add_score")
         self.post_event("add_score")
+        self.post_event("add_optional_var")
         self.assertPlayerVarEqual(200, "score")
+        self.assertPlayerVarEqual(20, "optional_var")
 
         self.drain_all_balls()
         self.assertGameIsNotRunning()
@@ -61,7 +64,8 @@ class TestAuditor(MpfFakeGameTestCase):
         self.assertNotIn("not_audited", auditor.current_audits['player'])
 
         self.assertEqual({'score': {'top': [200, 100], 'average': 150.0, 'total': 2},
-                          'my_var': {'top': [200, 0], 'average': 100.0, 'total': 2}},
+                          'my_var': {'top': [200, 0], 'average': 100.0, 'total': 2},
+                          'optional_var': {'top': [20], 'average': 20.0, 'total': 1}},
                          auditor.data_manager.written_data["player"])
 
         # test rounding the average to an integer
