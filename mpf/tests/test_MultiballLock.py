@@ -73,6 +73,38 @@ class TestMultiballLock(MpfGameTestCase):
                          self._last_event_kwargs["multiball_lock_lock_default_locked_ball"])
         self.assertEventCalledWith("multiball_lock_lock_default_full", balls=2)
 
+    def test_lost_ball_add_to_play(self):
+        self.fill_troughs()
+        self.start_game()
+        self.mock_event("multiball_lock_lock_default_locked_ball")
+        self.mock_event("multiball_lock_lock_default_full")
+        self.post_event("start_default")
+
+        lock_device = self.machine.ball_devices["bd_lock_physical"]
+        mb_lock = self.machine.multiball_locks["lock_physical"]
+        pf = self.machine.ball_devices["playfield"]
+
+        # Add a ball by activating the switch
+        self.hit_switch_and_run("s_lockp1", 10)
+        self.assertEqual(1, lock_device.balls)
+        self.assertEqual(1, mb_lock.locked_balls)
+        self.assertEqual(1, pf.balls)
+        self.assertEqual(1, self.machine.game.balls_in_play)
+        # Disable the lock
+        self.post_event("disable_lock_physical")
+        self.advance_time_and_run(1)
+        # Add another ball
+        self.hit_switch_and_run("s_lockp2", 1)
+        self.assertEqual(1, lock_device.balls)
+        self.assertEqual(1, mb_lock.locked_balls)
+        self.advance_time_and_run(3)
+        # Fake an extra ball leaving
+        self.release_switch_and_run("s_lockp2", 10)
+        self.assertEqual(0, lock_device.balls)
+        self.assertEqual(1, mb_lock.locked_balls)
+        self.assertEqual(2, pf.balls)
+        self.assertEqual(2, self.machine.game.balls_in_play)
+
     def test_filling_three(self):
         self.fill_troughs()
         self.start_game()

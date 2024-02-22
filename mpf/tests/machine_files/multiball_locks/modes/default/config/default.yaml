@@ -24,3 +24,9 @@ multiball_locks:
     balls_to_lock: 2
     locked_ball_counting_strategy: virtual_only
     blocking_facility: foo
+  lock_physical:
+    lock_devices: bd_lock_physical
+    balls_to_lock: 2
+    locked_ball_counting_strategy: virtual_only
+    ball_lost_action: add_to_play
+    disable_events: disable_lock_physical
