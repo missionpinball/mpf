@@ -65,11 +65,11 @@ sort_devices_by_number: single|bool|True
                 volume = self.machine.variables.get_machine_var("master_volume")
                 if not isinstance(volume, float):
                     volume = .5
-                volume += .1
+                volume += .05
                 if volume >= 1.0:
                     volume = 1.0
                 else:
-                    volume = round(volume, 1)
+                    volume = round(volume, 2)
                 self.machine.variables.set_machine_var("master_volume", volume)
                 # post event for increased volume
                 self.machine.events.post("master_volume_increase", volume=volume)
@@ -85,11 +85,11 @@ sort_devices_by_number: single|bool|True
                 volume = self.machine.variables.get_machine_var("master_volume")
                 if not isinstance(volume, float):
                     volume = .5
-                volume -= .1
+                volume -= .05
                 if volume <= 0.0:
                     volume = 0.0
                 else:
-                    volume = round(volume, 1)
+                    volume = round(volume, 2)
                 self.machine.variables.set_machine_var("master_volume", volume)
                 # post event for decreased volume
                 self.machine.events.post("master_volume_decrease", volume=volume)
@@ -572,13 +572,18 @@ sort_devices_by_number: single|bool|True
     # AUDIT Menu
     def _load_audit_menu_entries(self) -> List[ServiceMenuEntry]:
         """Return the audit menu items with label and callback."""
-        return [
+        items = [
             ServiceMenuEntry("Earning Audits", self._audit_earning_menu),
             ServiceMenuEntry("Switch Audits", self._audit_switch_menu),
             ServiceMenuEntry("Shot Audits", self._audit_shot_menu),
             ServiceMenuEntry("Event Audits", self._audit_event_menu),
             ServiceMenuEntry("Player Audits", self._audit_player_menu),
         ]
+
+        if self.machine.auditor.report_missing_switches():
+            items.insert(0, ServiceMenuEntry("Missing Switches", self._audit_missing_menu))
+
+        return items
 
     async def _audits_menu(self):
         await self._make_menu(self._load_audit_menu_entries())
@@ -619,6 +624,10 @@ sort_devices_by_number: single|bool|True
             items = {}
 
         await self._audits_submenu(list(items.items()))
+
+    async def _audit_missing_menu(self):
+        items = self.machine.auditor.report_missing_switches()
+        await self._audits_submenu(items)
 
     async def _audit_player_menu(self):
         audits = self.machine.auditor.current_audits.get('player', {})

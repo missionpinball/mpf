@@ -22,7 +22,7 @@ class EventEjector(BallDeviceEjector):
 
     async def reorder_balls(self):
         """Reorder balls when jammed."""
-        for event in self.config["events_when_reoder_balls"]:
+        for event in self.config["events_when_reorder_balls"]:
             self.machine.events.post(event)
 
     def ball_search(self, phase, iteration):

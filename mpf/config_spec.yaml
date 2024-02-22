@@ -92,10 +92,16 @@ assets:
 auditor:
     __valid_in__: machine
     __type__: config
+    enable_events: list|event_handler|game_starting
+    disable_events: list|event_handler|game_ended
     save_events: event_handler|event_handler:ms|ball_ended
     audit: list|str|None
+    autosave: single|bool|true
+    autosave_events: single|bool|true
     events: list|event_handler|None
     player: list|str|None
+    audit_shots: single|bool|true
+    missing_switch_min_games: single|int|10
     num_player_top_records: single|int|1
     reset_audit_events: list|event_handler|auditor_reset,factory_reset
 autofire_coils:
@@ -180,7 +186,7 @@ ball_device_counter_entrance_switches:
 ball_device_ejector_event:
     class: ignore
     events_when_eject_try: list|event_posted|None
-    events_when_reoder_balls: list|event_posted|None
+    events_when_reorder_balls: list|event_posted|None
     events_when_ball_search: list|event_posted|None
 ball_device_ejector_pulse:
     class: ignore

@@ -15,7 +15,8 @@ class Auditor:
 
     """Writes switch events, regular events, and player variables to an audit log file."""
 
-    __slots__ = ["log", "machine", "switchnames_to_audit", "config", "current_audits", "enabled", "data_manager"]
+    __slots__ = ["log", "machine", "switchnames_to_audit", "config", "_autosave",
+                 "current_audits", "enabled", "data_manager"]
 
     def __init__(self, machine: "MachineController") -> None:
         """initialize auditor.
@@ -67,15 +68,25 @@ class Auditor:
         if 'player' not in self.current_audits:
             self.current_audits['player'] = dict()
 
-        # Make sure we have all the switches in our audit dict
-        for switch in self.machine.switches.values():
-            if (switch.name not in self.current_audits['switches'] and
-                    'no_audit' not in switch.tags):
-                self.current_audits['switches'][switch.name] = 0
+        if 'missing_switches' not in self.current_audits:
+            self.current_audits['missing_switches'] = dict()
 
         # build the list of switches we should audit
-        self.switchnames_to_audit = {x.name for x in self.machine.switches.values()
-                                     if 'no_audit' not in x.tags}
+        try:
+            is_free_play = self.machine.settings.get_setting_value('free_play')
+        except AssertionError:
+            # If the machine has never set up a setting for free_play, get_setting_value
+            # will throw. Assume this is a homebrew and is free to play.
+            is_free_play = True
+
+        self.switchnames_to_audit = {x.name for x in self.machine.switches.values() if
+            # Don't audit tagged switches, or credit switches during free play
+            ('no_audit' not in x.tags) and ('no_audit_free' not in x.tags or not is_free_play)}
+
+        # Make sure we have all the switches in our audit dict
+        for switch_name in self.switchnames_to_audit:
+            if switch_name not in self.current_audits['switches']:
+                self.current_audits['switches'][switch_name] = 0
 
         for event in self.config['events']:
             if event not in self.current_audits['events']:
@@ -106,25 +117,17 @@ class Auditor:
         self.config = self.machine.config_validator.validate_config('auditor', self.machine.config['auditor'])
 
         self.current_audits = self.data_manager.get_data()
+        self._autosave = self.config["autosave"]
 
         self._load_defaults()
         self._set_machine_variables()
 
-        # Register for the events the auditor needs to do its job
-        self.machine.events.add_handler('game_starting', self.enable)
-        self.machine.events.add_handler('game_ended', self.disable)
-        if 'player' in self.config['audit']:
-            self.machine.events.add_handler('game_ending', self.audit_player)
-
-        # Enable the shots monitor
-        Shot.monitor_enabled = True
-        self.machine.register_monitor('shots', self.audit_shot)
-
-        # Add the switches monitor
-        self.machine.switch_controller.add_monitor(self.audit_switch)
-
         for event in self.config['reset_audit_events']:
             self.machine.events.add_handler(event, self._reset)
+        for event in self.config['enable_events']:
+            self.machine.events.add_handler(event, self.enable)
+        for event in self.config['disable_events']:
+            self.machine.events.add_handler(event, self.disable)
 
     def _reset(self, **kwargs):
         """Reset audits."""
@@ -148,6 +151,8 @@ class Auditor:
                 might include random kwargs.
         """
         del kwargs
+        if not self.enabled:
+            return
 
         if audit_class not in self.current_audits:
             self.current_audits[audit_class] = dict()
@@ -161,7 +166,8 @@ class Auditor:
             self.current_audits[audit_class][event] = value
         self.machine.variables.set_machine_var("audits_{}_{}".format(audit_class, event),
                                                self.current_audits[audit_class][event])
-        self._save_audits()
+        if self._autosave:
+            self._save_audits()
 
     def get_audit(self, audit_class, event, **kwargs):
         """Return an auditable event or create one if it does not exist.
@@ -179,7 +185,9 @@ class Auditor:
 
     def audit_switch(self, change: MonitoredSwitchChange):
         """Record switch change."""
-        if self.enabled and change.state and change.name in self.switchnames_to_audit:
+        if change.state and change.name in self.switchnames_to_audit:
+            if change.name in self.current_audits['missing_switches']:
+                del self.current_audits['missing_switches'][change.name]
             self.audit('switches', change.name)
 
     def audit_shot(self, name, profile, state):
@@ -198,8 +206,15 @@ class Auditor:
                 kwargs.
         """
         del kwargs
-        self.current_audits['events'][eventname] += 1
-        self._save_audits()
+        # Any events defined in the configs will exist, but custom code
+        # may call this method with other events that haven't been defined.
+        # Using try/except for the lowest cost on majority of paths
+        try:
+            self.current_audits['events'][eventname] += 1
+        except KeyError:
+            self.current_audits['events'][eventname] = 1
+        if self._autosave or self.config['autosave_events']:
+            self._save_audits()
 
     def audit_player(self, **kwargs):
         """Write player data to the audit log.
@@ -217,6 +232,10 @@ class Auditor:
 
         for item in set(self.config['player']):
             for player in self.machine.game.player_list:
+                # Don't audit values that haven't been initialized on the player, either by
+                # a value set during gameplay or with an initial_value in the player_vars config
+                if not item in self.machine.game.player.vars:
+                    continue
 
                 self.current_audits['player'][item]['top'] = (
                     self._merge_into_top_list(
@@ -231,7 +250,15 @@ class Auditor:
                     (self.current_audits['player'][item]['total'] + 1))
 
                 self.current_audits['player'][item]['total'] += 1
-        self._save_audits()
+        if self._autosave:
+            self._save_audits()
+
+    def report_missing_switches(self, missing_switch_min_games=None):
+        min_threshold = missing_switch_min_games or \
+            self.config['missing_switch_min_games']
+        missing_switches = self.current_audits['missing_switches'].items()
+        result = filter(lambda x: x[1] >= min_threshold, missing_switches)
+        return list(result)
 
     @classmethod
     def _merge_into_top_list(cls, new_item, current_list, num_items):
@@ -272,7 +299,33 @@ class Auditor:
                 if event not in self.current_audits['events']:
                     self.current_audits['events'][event] = 0
 
-    def _save_audits(self):
+        # Track how many games played since each switch was triggered
+        for switch_name in self.switchnames_to_audit:
+            if switch_name not in self.current_audits['missing_switches']:
+                self.current_audits['missing_switches'][switch_name] = 1
+            else:
+                self.current_audits['missing_switches'][switch_name] += 1
+
+        # Register for the events the auditor needs to do its job
+        # self.machine.events.add_handler('game_starting', self.enable)
+        # self.machine.events.add_handler('game_ended', self.disable)
+        if 'player' in self.config['audit']:
+            self.machine.events.add_handler('game_ending', self.audit_player)
+
+        # Enable the shots monitor
+        if self.config["audit_shots"]:
+            Shot.monitor_enabled = True
+            self.machine.register_monitor('shots', self.audit_shot)
+
+        # Add the switches monitor
+        self.machine.switch_controller.add_monitor(self.audit_switch)
+
+        # Add a save event handler
+        for event in self.config['save_events']:
+            self.machine.events.add_handler(event, self._save_audits)
+
+    def _save_audits(self, **kwargs):
+        del kwargs
         self.data_manager.save_all(data=self.current_audits)
 
     def disable(self, **kwargs):
@@ -283,3 +336,7 @@ class Auditor:
 
         # remove switch and event handlers
         self.machine.events.remove_handler(self.audit_event)
+        self.machine.events.remove_handler(self.audit_player)
+        self.machine.events.remove_handler(self.audit_shot)
+        self.machine.events.remove_handler(self.audit_switch)
+        self.machine.events.remove_handler(self._save_audits)

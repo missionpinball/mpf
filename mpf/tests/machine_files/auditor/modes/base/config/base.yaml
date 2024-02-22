@@ -11,3 +11,5 @@ variable_player:
       not_audited: 100
     add_score_odd:
       score: 123
+    add_optional_var:
+      optional_var: 20
