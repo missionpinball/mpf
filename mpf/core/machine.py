@@ -499,7 +499,7 @@ class MachineController(LogMixin):
 
             for custom_code in Util.string_to_event_list(self.config['custom_code']):
 
-                self.debug_log(f"Loading {custom_code} custom code")
+                self.debug_log("Loading %s custom code", custom_code)
 
                 custom_code_obj = Util.string_to_class(custom_code)(
                     machine=self,

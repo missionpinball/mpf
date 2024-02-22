@@ -125,7 +125,7 @@ class Flipper(SystemWideDevice):
 
         To prevent multiple rules at the same time we prioritize disable > enable.
         """
-        self.debug_log(f"Disabling via event callback. kwargs: {kwargs}")
+        self.debug_log("Disabling via event callback. kwargs: %s", kwargs)
         self.disable()
 
     def disable(self):
