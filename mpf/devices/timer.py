@@ -513,9 +513,18 @@ class Timer(ModeDevice):
 
     @staticmethod
     def _get_timer_value(timer_value, in_ms=False, **kwargs):
+        """Return an int value for the number of ticks on the timer."""
         if hasattr(timer_value, "evaluate"):
             # Convert to int for ticks; config_spec must be float for change_tick_interval
             return int(timer_value.evaluate(kwargs) * (1000 if in_ms else 1))
+        return timer_value
+
+    @staticmethod
+    def _get_timer_tick_secs(timer_value, **kwargs):
+        """Return a float value for the number of seconds between each tick."""
+        if hasattr(timer_value, "evaluate"):
+            # Convert to int for ticks; config_spec must be float for change_tick_interval
+            return timer_value.evaluate(kwargs)
         return timer_value
 
     def change_tick_interval(self, change=0.0, **kwargs):
@@ -546,7 +555,7 @@ class Timer(ModeDevice):
             **kwargs: Optional kwargs that may affect the evaluation of the
                 timer value placeholder template.
         """
-        self.tick_secs = abs(self._get_timer_value(timer_value, **kwargs))
+        self.tick_secs = abs(self._get_timer_tick_secs(timer_value, **kwargs))
         self._create_system_timer()
 
     def jump(self, timer_value, **kwargs):
