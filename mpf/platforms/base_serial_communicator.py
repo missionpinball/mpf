@@ -119,6 +119,7 @@ class BaseSerialCommunicator:
             raise
         except Exception as e:  # pylint: disable-msg=broad-except
             self.log.warning("Serial error: {}".format(e))
+            self.machine.events.post("serial_error")
             return None
 
         # we either got empty response (-> socket closed) or and error

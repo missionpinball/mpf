@@ -458,7 +458,8 @@ class BcpInterface(MpfController):
             self.machine.register_monitor('machine_vars', self._machine_var_change)
 
         # Send initial machine variable values
-        self._send_machine_vars(client)
+        for s in ("standard", "feature", "game", "coin"):
+            self._send_machine_vars(client, setting_type=s)
 
         # Establish handler for machine variable changes
         self.machine.bcp.transport.add_handler_to_transport("_machine_vars", client)
@@ -470,9 +471,10 @@ class BcpInterface(MpfController):
         if not self.machine.bcp.transport.get_transports_for_handler("_machine_vars"):
             self.machine.machine_var_monitor = False
 
-    def _send_machine_vars(self, client):
+    def _send_machine_vars(self, client, setting_type=None):
         self.machine.bcp.transport.send_to_client(
-            client, bcp_command='settings', settings=Util.convert_to_simply_type(self.machine.settings.get_settings()))
+            client, bcp_command='settings',
+            settings=Util.convert_to_simply_type(self.machine.settings.get_settings(setting_type)))
         for var_name, settings in self.machine.variables.machine_vars.items():
             self.machine.bcp.transport.send_to_client(client, bcp_command='machine_variable',
                                                       name=var_name,

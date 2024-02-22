@@ -242,9 +242,9 @@ class Shot(EnableDisableMixin, ModeDevice):
 
         priority = settings['priority'] + self.mode.priority
         if not start_step:
-            start_step = settings['start_step']
+            start_step = show_tokens.get('start_step') or settings['start_step']
 
-        self.debug_log("Playing show: %s. %s", show_name, settings)
+        self.debug_log("Playing show: %s (starting at step %s). %s", show_name, start_step, settings)
 
         show_config = self.machine.show_controller.create_show_config(
             show_name, priority=priority, speed=settings.get("speed"),
