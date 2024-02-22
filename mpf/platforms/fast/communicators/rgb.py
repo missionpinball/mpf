@@ -59,7 +59,8 @@ class FastRgbCommunicator(FastSerialCommunicator):
     async def soft_reset(self, **kwargs):
         """Reset the NET processor."""
         del kwargs
-        await self.send_and_wait_for_response('RA:000000', 'RX:P')
+        #await self.send_and_wait_for_response('RA:000000', 'RX:P')
+        self.send_and_forget("RA:000000")
 
     def reset(self):
         """Reset the RGB processor."""

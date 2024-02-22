@@ -319,6 +319,7 @@ coils:
     disable_events: event_handler|event_handler:ms|None
     enable_events: event_handler|event_handler:ms|None
     pulse_events: event_handler|event_handler:ms|None
+    timed_enable_events: event_handler|event_handler:ms|None
     platform_settings: single|dict|None
     psu: single|machine(psus)|default
     platform: single|str|None
@@ -1793,6 +1794,7 @@ sound_player:
     delay: single|secs|None
     track: single|str|None
     volume: single|gain|None
+    ducking: single|subconfig(sound_ducking)|None
     pan: single|float_or_token|None
     loops: single|int_or_token|None
     priority: single|int_or_token|None
