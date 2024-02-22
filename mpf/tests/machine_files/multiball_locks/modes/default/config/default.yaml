@@ -30,3 +30,4 @@ multiball_locks:
     locked_ball_counting_strategy: virtual_only
     ball_lost_action: add_to_play
     disable_events: disable_lock_physical
+    reset_count_for_current_player_events: physical_mb_start

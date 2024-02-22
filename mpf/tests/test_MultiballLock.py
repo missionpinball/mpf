@@ -1,4 +1,5 @@
 """Test multiball_locks."""
+import logging
 from mpf.tests.MpfGameTestCase import MpfGameTestCase
 from mpf.tests.MpfTestCase import test_config
 
@@ -72,6 +73,44 @@ class TestMultiballLock(MpfGameTestCase):
         self.assertEqual({'total_balls_locked': 2},
                          self._last_event_kwargs["multiball_lock_lock_default_locked_ball"])
         self.assertEventCalledWith("multiball_lock_lock_default_full", balls=2)
+
+
+    def test_multiple_eject(self):
+        self.fill_troughs()
+        self.start_game()
+        self.mock_event("multiball_lock_lock_default_locked_ball")
+        self.mock_event("multiball_lock_lock_default_full")
+        self.post_event("start_default")
+
+        lock_device = self.machine.ball_devices["bd_lock_physical"]
+        mb_lock = self.machine.multiball_locks["lock_physical"]
+        pf = self.machine.ball_devices["playfield"]
+
+        # Add a ball by activating the switch
+        self.hit_switch_and_run("s_lockp1", 10)
+        self.assertEqual(1, lock_device.balls)
+        self.assertEqual(1, mb_lock.locked_balls)
+        self.assertEqual(1, pf.balls)
+        self.assertEqual(1, self.machine.game.balls_in_play)
+        # Add another ball
+        self.hit_switch_and_run("s_lockp2", 1)
+        self.assertEqual(2, lock_device.balls)
+        self.assertEqual(2, mb_lock.locked_balls)
+        self.advance_time_and_run(3)
+        # Start the multiball
+        self.post_event("physical_mb_start")
+        # self.advance_time_and_run()
+        # Fake an extra ball leaving
+        with self.assertLogs("ball_device.bd_lock_physical", level="WARNING") as log:
+            self.release_switch_and_run("s_lockp2", 10)
+            self.assertEqual(0, lock_device.balls)
+            self.assertEqual(0, mb_lock.locked_balls)
+            self.assertEqual(3, pf.balls)
+            self.assertEqual(3, self.machine.game.balls_in_play)
+            # Assert that no warning was logged about the handler
+            self.assertFalse(log.output)
+            # log something to prevent the test from breaking
+            logging.getLogger("ball_device.bd_lock_physical").warning("DEBUG")
 
     def test_lost_ball_add_to_play(self):
         self.fill_troughs()
