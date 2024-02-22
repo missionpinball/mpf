@@ -55,7 +55,6 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
         self.machine.events.add_handler("ball_ending", self._ball_ending)
 
         for device in self.lock_devices:
-            self.info_log("Registering handler for %s", f'balldevice_{device.name}_ball_missing')
             self.machine.events.add_handler(f'balldevice_{device.name}_ball_missing',
                                             self._lost_ball, device=device)
 
@@ -338,10 +337,8 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
                       device.name, balls, self.name, self.locked_balls,
                       self.config['ball_lost_action'] )
         if self.locked_balls and self.config['ball_lost_action'] == "add_to_play":
-            self.debug_log("Ball device %s lost %s balls, adding to balls_in_play", device.name, balls)
+            self.info_log("Ball device %s lost %s balls, adding to balls_in_play", device.name, balls)
             self.machine.game.balls_in_play += balls
-        else:
-            self.info_log(" - not adding to play, config is %s", self.config)
         # Do not claim the ball
         return {'balls': balls}
 

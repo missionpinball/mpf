@@ -246,9 +246,9 @@ class BallHold(EnableDisableMixin, SystemWideDevice, ModeDevice):
         """Handle the ball hold devices losing a ball."""
         if self.balls_held:
             self.balls_held -= balls
-            self.debug_log("Ball device %s lost %s balls, hold now has %s balls held", device, balls, self.balls_held)
+            self.info_log("Ball device %s lost %s balls, hold now has %s balls held", device, balls, self.balls_held)
         else:
-            self.debug_log("Ball device %s lost %s balls but hold is not holding. Doing nothing.", device, balls)
+            self.info_log("Ball device %s lost %s balls but hold is not holding. Doing nothing.", device, balls)
         # Do not claim this ball
         return { 'balls': balls }
 
