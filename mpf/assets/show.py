@@ -604,7 +604,7 @@ class RunningShow:
         Updates the values of a show while it runs. Currently supports only speed
         and manual_advance properties.
         """
-        updated_values = {k: v for k, v in kwargs.items() if v is not None and v != getattr(self.show_config, k)}
+        updated_values = {k: v for k, v in kwargs.items() if v is not None}
         if updated_values:
             self.show_config = self.show_config._replace(**updated_values)
 
