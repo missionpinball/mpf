@@ -1142,6 +1142,7 @@ multiball_locks:
     __type__: device
     balls_to_lock: single|int|
     balls_to_replace: single|int|-1
+    ball_lost_action: single|str|None
     blocking_facility: single|str|None
     lock_devices: list|machine(ball_devices)|
     source_devices: list|machine(ball_devices)|None

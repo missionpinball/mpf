@@ -54,6 +54,11 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
         self.machine.events.add_handler("player_turn_starting", self._player_turn_starting)
         self.machine.events.add_handler("ball_ending", self._ball_ending)
 
+        for device in self.lock_devices:
+            self.info_log("Registering handler for %s", f'balldevice_{device.name}_ball_missing')
+            self.machine.events.add_handler(f'balldevice_{device.name}_ball_missing',
+                                            self._lost_ball, device=device)
+
     def _enable(self):
         """Enable the lock.
 
@@ -326,6 +331,19 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
         self.debug_log("Locked %s balls virtually and %s balls physically", balls_to_lock, balls_to_lock_physically)
 
         return {'unclaimed_balls': unclaimed_balls - balls_to_lock_physically}
+
+    def _lost_ball(self, device, balls, **kwargs):
+        del kwargs
+        self.info_log("Ball device %s lost %s balls, %s has %s locked balls and action %s",
+                      device.name, balls, self.name, self.locked_balls,
+                      self.config['ball_lost_action'] )
+        if self.locked_balls and self.config['ball_lost_action'] == "add_to_play":
+            self.debug_log("Ball device %s lost %s balls, adding to balls_in_play", device.name, balls)
+            self.machine.game.balls_in_play += balls
+        else:
+            self.info_log(" - not adding to play, config is %s", self.config)
+        # Do not claim the ball
+        return {'balls': balls}
 
     def _post_events(self, device, **kwargs):
         """Post events on callback from _ball_entered handler.
