@@ -96,5 +96,5 @@ class FastExpCommunicator(FastSerialCommunicator):
         if not 0 <= rate <= 8191:
             raise ValueError(f"FAST LED fade rate of {rate}ms is out of bounds. Must be between 0 and 8191ms")
 
-        self.platform.debug_log(f"{self} - Setting LED fade rate to {rate}ms")
+        self.platform.debug_log("%s - Setting LED fade rate to %sms", self, rate)
         self.send_and_forget(f'RF@{board_address}:{Util.int_to_hex_string(rate, True)}')
