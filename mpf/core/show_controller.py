@@ -68,7 +68,7 @@ class ShowController(MpfController):
                              "there's already a show with that name. Shows are"
                              " shared machine-wide".format(name))
 
-        self.debug_log("Registering show: {}".format(name))
+        self.debug_log("Registering show: %s", name)
         self.machine.shows[name] = Show(self.machine,
                                         name=name)
 

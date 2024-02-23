@@ -656,7 +656,7 @@ class MachineController(LogMixin):
                                                           timeout=timeout))
         except asyncio.TimeoutError:
             self._crash_shutdown()
-            self.error_log("MPF needed more than {}s for initialization. Aborting!".format(timeout))
+            self.error_log("MPF needed more than %ss for initialization. Aborting!", timeout)
             return False
         except RuntimeError as e:
             self._crash_shutdown()
