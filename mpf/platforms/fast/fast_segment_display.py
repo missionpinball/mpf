@@ -35,7 +35,6 @@ class FASTSegmentDisplay(SegmentDisplayPlatformInterface):
 
     def _set_color(self, colors: List[RGBColor]) -> None:
         """Set display color."""
-        #self.serial.platform.info_log("Color: {}".format(colors))
         if len(colors) == 1:
             self.next_color = (RGBColor(colors[0]).hex + ',') * 7
         else:
