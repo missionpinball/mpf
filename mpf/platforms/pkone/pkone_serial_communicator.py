@@ -125,7 +125,7 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
         msg = ''
         while msg != 'PRSE' and not msg.startswith('PXX'):
             msg = (await self.readuntil(b'E')).decode()
-            self.platform.debug_log("Got: {}".format(msg))
+            self.platform.debug_log("Got: %s", msg)
 
         if msg.startswith('PXX'):
             raise AssertionError('Received an error while resetting the controller: {}'.format(msg))

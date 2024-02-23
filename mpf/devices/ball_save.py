@@ -78,10 +78,10 @@ class BallSave(SystemWideDevice, ModeDevice):
         self.enabled = True
         self.state = 'enabled'
         self.active_time = self.config['active_time'].evaluate([])
-        self.debug_log("Enabling. Auto launch: {}, Balls to save: {}, Active time: {}s".format(
+        self.debug_log("Enabling. Auto launch: %s, Balls to save: %s, Active time: %ss",
                        self.config['auto_launch'],
                        self.config['balls_to_save'],
-                       self.active_time))
+                       self.active_time)
 
         # Enable shoot again
         self.machine.events.add_handler('ball_drain',

@@ -80,7 +80,7 @@ class TextUi(MpfController):
         self.screen = None
 
         if not machine.options['text_ui'] or not Scene:
-            self.log.debug(f"Text UI is disabled. TUI option setting: {machine.options['text_ui']}, Asciimatics loaded: {Scene}")
+            self.log.debug("Text UI is disabled. TUI option setting: %s, Asciimatics loaded: %s", machine.options['text_ui'], Scene)
             return
 
         # hack to add themes until https://github.com/peterbrittain/asciimatics/issues/207 is implemented

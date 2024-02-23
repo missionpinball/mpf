@@ -34,4 +34,4 @@ class MpfController(LogMixin, metaclass=abc.ABCMeta):
             self.machine.config['logging']['console'][self.config_name],
             self.machine.config['logging']['file'][self.config_name])
 
-        self.debug_log("Loading the {}".format(self.module_name))
+        self.debug_log("Loading the %s", self.module_name)

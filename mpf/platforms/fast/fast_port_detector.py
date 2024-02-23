@@ -19,7 +19,7 @@ class FastPortDetector:
         self.task_writers = dict()
         self.results = dict()  # dict of processor: port
 
-        self.platform.log.info(f"Auto-detecting ports for the following connections: {self.autodetect_processors}")
+        self.platform.log.info("Auto-detecting ports for the following connections: %s", self.autodetect_processors)
 
         self._find_fast_devices()
 
@@ -33,9 +33,10 @@ class FastPortDetector:
                     baud = self.machine.config['fast'][proc]['baud']
                     if port.device not in self.hardcoded_ports:
                         self.detected_fast_ports.append((port.device, baud))
-                        self.platform.log.debug(f"Port {port.device} is connected to a {desc}.")
+                        self.platform.log.debug("Port %s is connected to a %s.", port.device, desc)
                     else:
-                        self.platform.log.debug(f"Skipping auto-detect of {proc} on {port.device} since it's in the config file elsewhere.")
+                        self.platform.log.debug("Skipping auto-detect of %s on %s since it's in the config file elsewhere.",
+                                                proc, port.device)
 
     async def detect_ports(self):
         self.tasks = [asyncio.create_task(self._connect_task(port, baud)) for port, baud in self.detected_fast_ports]
@@ -62,7 +63,7 @@ class FastPortDetector:
                     bytesize=EIGHTBITS, parity=PARITY_NONE, stopbits=STOPBITS_ONE)
                 reader, writer = await connector
             except SerialException:
-                self.log.error(f"Could not connect to port {port}. Are you connected via CoolTerm? :)")
+                self.log.error("Could not connect to port %s. Are you connected via CoolTerm? :)", port)
 
             self.platform.debug_log(" - success connecting to port %s", port)
             self.task_writers[asyncio.current_task()] = writer
@@ -93,7 +94,7 @@ class FastPortDetector:
 
     def _report_success(self, processor, port):
         self.results[processor] = port
-        self.platform.log.info(f'Detected {processor.upper()} on port {port}')
+        self.platform.log.info('Detected %s on port %s', processor.upper(), port)
         self.platform.config[processor]['port'] = [port]
 
         if len(self.results) >= len(self.autodetect_processors):

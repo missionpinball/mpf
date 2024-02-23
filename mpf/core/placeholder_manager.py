@@ -907,8 +907,8 @@ class BasePlaceholderManager(MpfController):
                     match_dict['number'] = type(default_number)(match_dict['number'])
                 # Gracefully fall back if the number can't be parsed
                 except ValueError:
-                    self.warning_log("Condition '{}' has invalid number value '{}'".format(
-                                     template, match_dict['number']))
+                    self.warning_log("Condition '%s' has invalid number value '%s'",
+                                     template, match_dict['number'])
                     match_dict['number'] = default_number
         return ConditionalEvent(match_dict["name"], match_dict["condition"], match_dict["number"])
 

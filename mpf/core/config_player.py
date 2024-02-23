@@ -161,7 +161,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         try:
             return self.instances[context][self.config_file_section]
         except KeyError:
-            self.warning_log("Config player {} is missing context {}".format(self.config_file_section, context))
+            self.warning_log("Config player %s is missing context %s", self.config_file_section, context)
             return {}
 
     def _reset_instance_dict(self, context):

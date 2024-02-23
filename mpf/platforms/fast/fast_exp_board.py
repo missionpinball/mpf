@@ -41,7 +41,8 @@ class FastExpansionBoard:
         self.firmware_version = None
         self.hw_verified = False  # have we made contact with the board and verified it's the right hardware?
 
-        self.log.debug(f'Creating FAST Expansion Board "{self.name}" ({self.model} Address: {self.address})')
+        self.log.debug('Creating FAST Expansion Board "%s" (%s Address: %s)',
+                       self.name, self.model, self.address)
 
         self.features = EXPANSION_BOARD_FEATURES[self.model]  # ([local model numbers,], num of remotes) tuple
         self.breakouts = dict()
@@ -87,7 +88,8 @@ class FastExpansionBoard:
             active_board (str): 2 or 3 hex character address of the EXP or BRK board
         """
 
-        self.log.info(f'Verifying hardware for {self} with ID string "{id_string}", board address {active_board}')
+        self.log.info('Verifying hardware for %s with ID string "%s", board address %s',
+                      self, id_string, active_board)
 
         exp_board = active_board[:2]
         brk_board = active_board[2:]  # will be empty if we got a 2-digit address for an EXP board
@@ -96,7 +98,7 @@ class FastExpansionBoard:
             _, product_id, firmware_version = id_string.split()
         except ValueError:
             if id_string == 'F':  # got an ID:F response which means this breakout is not actually there
-                self.log.error(f'Breakout {brk_board} on {self} is not responding')
+                self.log.error('Breakout %s on %s is not responding', brk_board, self)
                 raise AssertionError(f'Breakout {brk_board} on {self} is not responding')
             else:
                 raise AssertionError(f'Invalid ID string {id_string} from {self}')
@@ -106,7 +108,8 @@ class FastExpansionBoard:
 
         if brk_board:
             if version.parse(firmware_version) < version.parse(self.breakouts[brk_board].features['min_fw']):
-                self.log.error(f'Firmware on breakout board {product_id} is too old. Required: {self.breakouts[brk_board].features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
+                self.log.error('Firmware on breakout board %s is too old. Required: %s, Actual: %s. Update at fastpinball.com/firmware',
+                               product_id, self.breakouts[brk_board].features["min_fw"], firmware_version)
                 self.platform.machine.stop(f'Firmware on breakout board {product_id} is too old. Required: {self.breakouts[brk_board].features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
 
             brk = self.breakouts[brk_board]
@@ -118,7 +121,8 @@ class FastExpansionBoard:
 
         else:
             if version.parse(firmware_version) < version.parse(self.features['min_fw']):
-                self.log.error(f'Firmware on {self} is too old. Required: {self.features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
+                self.log.error('Firmware on %s is too old. Required: %s, Actual: %s. Update at fastpinball.com/firmware',
+                               self, self.features["min_fw"], firmware_version)
                 self.platform.machine.stop(f'Firmware on {self} is too old. Required: {self.features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
 
             if product_id != self.model:
@@ -176,7 +180,7 @@ class FastBreakoutBoard:
         self.expansion_board = expansion_board  # object
         self.log = expansion_board.log
         self.index = config['port']  # int, zero-based, 0-5
-        self.log.debug(f"Creating FAST Breakout Board {self.index} on {self.expansion_board}")
+        self.log.debug("Creating FAST Breakout Board %s on %s", self.index, self.expansion_board)
         self.platform = expansion_board.platform
         self.communicator = expansion_board.communicator
         self.address = f'{self.expansion_board.address}{self.index}'  # string hex byte + nibble

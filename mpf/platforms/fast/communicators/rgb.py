@@ -24,7 +24,7 @@ class FastRgbCommunicator(FastSerialCommunicator):
 
     def _process_boot_msg(self, msg):
         """Process bootloader message."""
-        self.log.debug(f"Got Bootloader message: !B:{msg}")
+        self.log.debug("Got Bootloader message: !B:%s", msg)
         if msg in ('00', '02'):
             if self.config['ignore_reboot']:
                 self.machine.events.post("fast_rgb_rebooted", msg=msg)

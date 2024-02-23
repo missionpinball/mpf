@@ -77,7 +77,7 @@ class FastSerialCommunicator(LogMixin):
             # just be 'auto' and there's no reason to try and connect to it.
             if port == 'auto':
                 continue
-            self.log.info(f"Trying to connect to {port} at {self.config['baud']}bps")
+            self.log.info("Trying to connect to %s at %sbps", port, self.config['baud'])
             success = False
 
             while not success:
@@ -95,7 +95,7 @@ class FastSerialCommunicator(LogMixin):
                     self.log.warning("Connection to port %s failed. Will retry.", port)
                 else:
                     # we got a connection
-                    self.log.info(f"Connected to {port} at {self.config['baud']}bps")
+                    self.log.info("Connected to %s at %sbps", port, self.config['baud'])
                     self.port = port
                     success = True
                     break
@@ -110,9 +110,9 @@ class FastSerialCommunicator(LogMixin):
         if hasattr(serial, "set_low_latency_mode"):
             try:
                 serial.set_low_latency_mode(True)
-                self.log.debug(f"Connected via low latency mode for {self.config['port']}.")
+                self.log.debug("Connected via low latency mode for %s.", self.config['port'])
             except (NotImplementedError, ValueError) as e:
-                self.log.debug(f"Connected via standard mode for {self.config['port']}. {e}")
+                self.log.debug("Connected via standard mode for %s. %s", self.config['port'], e)
 
         # defaults are slightly high for our use case
         self.writer.transport.set_write_buffer_limits(2048, 1024)
@@ -145,7 +145,7 @@ class FastSerialCommunicator(LogMixin):
 
     def _process_xx(self, msg):
         """Process the XX response."""
-        self.log.warning(f"Received XX response:{msg}")  # what are we going to do here? TODO
+        self.log.warning("Received XX response:%s", msg)  # what are we going to do here? TODO
 
     def _process_id(self, msg):
         """Process the ID response."""
@@ -156,7 +156,8 @@ class FastSerialCommunicator(LogMixin):
         else:
             self.remote_processor = processor
 
-        self.log.info(f"Connected to {self.remote_model} with firmware v{self.remote_firmware}")
+        self.log.info("Connected to %s with firmware v%s",
+                      self.remote_model, self.remote_firmware)
 
         if version.parse(self.remote_firmware) < MIN_FW:
             raise AssertionError(f'Firmware version mismatch. MPF requires the {self.remote_processor} processor '
@@ -184,7 +185,7 @@ class FastSerialCommunicator(LogMixin):
             buffer += char
             if char == separator and len(buffer) > min_chars:
                 if self.port_debug:
-                    self.log.info(f"<<<< {buffer}")
+                    self.log.info("<<<< %s", buffer)
                 return buffer
 
     def start_watchdog(self):
@@ -271,7 +272,7 @@ class FastSerialCommunicator(LogMixin):
                 await asyncio.wait_for(self.send_and_wait_for_response(msg, pause_sending_until, log_msg), timeout=timeout)
                 break
             except asyncio.TimeoutError:
-                self.log.error(f"Timeout waiting for response to {msg}. Retrying...")
+                self.log.error("Timeout waiting for response to %s. Retrying...", msg)
                 retries += 1
 
         await self.done_waiting.wait()
@@ -328,12 +329,12 @@ class FastSerialCommunicator(LogMixin):
                 if self.machine.is_shutting_down:
                     return
 
-                self.log.warning(f"Interference / bad data received: {msg}")
+                self.log.warning("Interference / bad data received: %s", msg)
                 if not self.ignore_decode_errors:
                     raise
 
             if self.port_debug:
-                self.log.info(f"<<<< {msg}")
+                self.log.info("<<<< %s", msg)
 
             self._dispatch_incoming_msg(msg)
 
@@ -415,12 +416,12 @@ class FastSerialCommunicator(LogMixin):
         # Sends a message as is, without encoding or adding a <CR> character
         if self.port_debug:
             if log_msg:
-                self.log.info(f">>>> {log_msg}")
+                self.log.info(">>>> %s", log_msg)
             else:
-                self.log.info(f">>>> {msg}")
+                self.log.info(">>>> %s", msg)
 
         try:
             self.writer.write(msg)
         except AttributeError:
-            self.log.warning(f"Serial connection is not open. Cannot send message: {msg}")
+            self.log.warning("Serial connection is not open. Cannot send message: %s", msg)
             return
