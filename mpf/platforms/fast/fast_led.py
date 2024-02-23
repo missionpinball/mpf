@@ -123,6 +123,12 @@ class FASTLEDChannel(LightPlatformInterface):
             self._last_brightness = brightness
             done = True
 
+        if brightness < 0:
+            self.led.log.warning("Calculated a negative brightness (%s) for led %s channel %s. current_time: %s"+\
+                                 "start_brightness: %s, start_time: %s, target_brightness: %s, target_time: %s",
+                                 brightness, self.led, self.channel, current_time, start_brightness, start_time,
+                                 target_brightness, target_time)
+
         return brightness, fade_ms, done
 
     def get_board_name(self):
