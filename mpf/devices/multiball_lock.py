@@ -319,15 +319,15 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
         '''
 
         # schedule eject of new balls for all physically locked balls
-        if self.config['balls_to_replace'] == -1 or self.locked_balls <= self.config['balls_to_replace']:
-            self.debug_log("%s locked balls and %s to replace, requesting %s new balls",
-                           self.locked_balls, self.config['balls_to_replace'], balls_to_lock_physically)
+        if self.config['balls_to_replace'] == -1 or new_locked_balls <= self.config['balls_to_replace']:
+            self.info_log("%s locked balls and %s to replace, requesting %s new balls",
+                          new_locked_balls, self.config['balls_to_replace'], balls_to_lock_physically)
             self._request_new_balls(balls_to_lock_physically)
         else:
-            self.debug_log("%s locked balls exceeds %s to replace, not requesting any balls",
-                           self.locked_balls, self.config['balls_to_replace'])
+            self.info_log("%s locked balls exceeds %s to replace, not requesting any balls",
+                          new_locked_balls, self.config['balls_to_replace'])
 
-        self.debug_log("Locked %s balls virtually and %s balls physically", balls_to_lock, balls_to_lock_physically)
+        self.info_log("Locked %s balls virtually and %s balls physically", balls_to_lock, balls_to_lock_physically)
 
         return {'unclaimed_balls': unclaimed_balls - balls_to_lock_physically}
 

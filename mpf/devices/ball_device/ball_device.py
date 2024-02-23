@@ -141,7 +141,8 @@ class BallDevice(SystemWideDevice):
     async def lost_idle_ball(self):
         """Lost an ball while the device was idle."""
         # handle lost balls
-        self.warning_log("Ball disappeared while idle. This should not normally happen.")
+        if self.state == "idle":
+            self.warning_log("Ball disappeared while idle. This should not normally happen.")
         self.available_balls -= 1
         self.config['ball_missing_target'].add_missing_balls(1)
         await self._balls_missing(1)

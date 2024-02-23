@@ -12,6 +12,8 @@ coils:
         number:
     eject_coil4:
         number:
+    eject_coil5:
+        number:
 
 switches:
     s_ball_switch1:
@@ -40,7 +42,10 @@ switches:
         number:
     s_lockb2:
         number:
-
+    s_lockp1:
+        number:
+    s_lockp2:
+        number:
 playfields:
     playfield:
         default_source_device: bd_trough
@@ -64,6 +69,11 @@ ball_devices:
         eject_coil: eject_coil4
         ball_switches: s_lockb1, s_lockb2
         eject_timeouts: 2s
+    bd_lock_physical:
+        eject_coil: eject_coil5
+        ball_switches: s_lockp1, s_lockp2
+        eject_timeouts: 2s
+        eject_events: eject_lock
 
 multiballs:
     mb:
@@ -71,3 +81,7 @@ multiballs:
         shoot_again: 0
         start_events: mb_start
         ball_locks: bd_lock
+    physical:
+        ball_count: 3
+        start_events: physical_mb_start
+        ball_locks: bd_lock_physical
