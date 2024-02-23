@@ -144,7 +144,8 @@ class FASTDriver:
         return Util.int_to_hex_string(num)
 
     def send_config_to_driver(self, one_shot: bool = False, wait_to_confirm: bool = False):
-        self.log.debug(f"Sending config to driver {self.number}. one_shot: {one_shot}. wait_to_confirm: {wait_to_confirm}")
+        self.log.debug("Sending config to driver %s. one_shot: %s. wait_to_confirm: %s",
+                       self.number, one_shot, wait_to_confirm)
 
         if one_shot:
             trigger = self.set_bit(self.current_driver_config.trigger, 3)
@@ -167,7 +168,7 @@ class FASTDriver:
                   f'{self.current_driver_config.param2},{self.current_driver_config.param3},{self.current_driver_config.param4},'
                   f'{self.current_driver_config.param5}')
 
-        self.log.debug(f"Current config for driver {self.number}: {config}")
+        self.log.debug("Current config for driver %s: %s", self.number, config)
         return config
 
     def get_board_name(self):
@@ -194,12 +195,12 @@ class FASTDriver:
             return "FF"
 
         rms = Util.int_to_hex_string(pulse_ms * 2)
-        self.log.debug(f"Using recycle_ms of {rms} for driver {self.number}")
+        self.log.debug("Using recycle_ms of %s for driver %s", rms, self.number)
         return rms
 
     async def reset(self):
         """Reset the driver to fresh (disabled/unconfigured) state."""
-        self.log.debug(f"Resetting driver {self.number}")
+        self.log.debug("Resetting driver %s", self.number)
         self.current_driver_config.trigger =   '00'
         self.current_driver_config.switch_id = '00'
         self.current_driver_config.mode =      '00'
@@ -214,15 +215,15 @@ class FASTDriver:
     def disable(self):
         """Disable (turn off) this driver."""
         if not self._reenable_autofire_if_configured():
-            self.log.debug(f"Disabling driver {self.number}")
+            self.log.debug("Disabling driver %s", self.number)
             self.communicator.send_and_forget(f'{self.communicator.TRIGGER_CMD}:{self.hw_number},02')
         else:
-            self.log.debug(f"Received disable command for driver {self.number} but reenabled autofire instead")
+            self.log.debug("Received disable command for driver %s but reenabled autofire instead", self.number)
 
     def set_hardware_rule(self, mode, switch, coil_settings, **kwargs):
 
-        self.log.debug(f"Setting hardware rule for driver {self.number}. Mode: {mode}. Switch: {switch.hw_switch.hw_number}. "
-                       f"coil_settings: {coil_settings}. kwargs: {kwargs}.")
+        self.log.debug("Setting hardware rule for driver %s. Mode: %s. Switch: %s. coil_settings: %s. kwargs: %s.",
+                       self.number, mode, switch.hw_switch.hw_number, coil_settings, kwargs)
 
         self._check_switch_coil_combination(switch, coil_settings.hw_driver)
 
@@ -341,7 +342,7 @@ class FASTDriver:
 
     def clear_autofire(self):
         """Clear autofire."""
-        self.log.debug(f"Clearing autofire mode for driver {self.number}")
+        self.log.debug("Clearing autofire mode for driver %s", self.number)
         self._check_and_clear_delay()
         if not self.autofire_config:
             return
@@ -356,7 +357,8 @@ class FASTDriver:
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable (turn on) this driver."""
 
-        self.log.debug(f"Enabling (turning on) driver {self.number} with pulse_settings: {pulse_settings} and hold_settings: {hold_settings}.")
+        self.log.debug("Enabling (turning on) driver %s with pulse_settings: %s and hold_settings: %s.",
+                       self.number, pulse_settings, hold_settings)
 
         self._check_and_clear_delay()
 
@@ -402,7 +404,8 @@ class FASTDriver:
     def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Pulse and hold this driver for a specified duration."""
 
-        self.log.debug(f"Timed enabling (pulsing and holding) driver {self.number} with pulse_settings: {pulse_settings} and hold_settings: {hold_settings}.")
+        self.log.debug("Timed enabling (pulsing and holding) driver %s with pulse_settings: %s and hold_settings: %s.",
+                       self.number, pulse_settings, hold_settings)
 
         if not hold_settings.duration and self.current_driver_config.mode == '70':
             # If we are in mode 70, timed enable defaults are already set
@@ -412,7 +415,8 @@ class FASTDriver:
 
     def pulse(self, pulse_settings: PulseSettings):
         """Pulse this driver."""
-        self.log.debug(f"Pulsing driver {self.number} with pulse_settings: {pulse_settings}.")
+        self.log.debug("Pulsing driver %s with pulse_settings: %s.",
+                       self.number, pulse_settings)
         self._pulse(pulse_settings)
 
     def _pulse(self, pulse_settings: PulseSettings, hold_settings: HoldSettings = None):
