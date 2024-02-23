@@ -324,7 +324,7 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
                            self.locked_balls, self.config['balls_to_replace'], balls_to_lock_physically)
             self._request_new_balls(balls_to_lock_physically)
         else:
-            self.debug_log("%s locked balls exceeds %s to replace, not requesting any balls"
+            self.debug_log("%s locked balls exceeds %s to replace, not requesting any balls",
                            self.locked_balls, self.config['balls_to_replace'])
 
         self.debug_log("Locked %s balls virtually and %s balls physically", balls_to_lock, balls_to_lock_physically)
