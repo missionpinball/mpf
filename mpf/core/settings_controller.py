@@ -85,18 +85,17 @@ class SettingsController(MpfController):
             value = self.machine.variables.get_machine_var(self._settings[setting_name].machine_var)
 
         if value not in self._settings[setting_name].values:
-            self.warning_log("Setting {} contained an invalid value {}. Falling back to default: {}".format(
-                setting_name, value, self._settings[setting_name].default
-            ))
+            self.warning_log("Setting %s contained an invalid value %s. Falling back to default: %s",
+                             setting_name, value, self._settings[setting_name].default)
             value = self._settings[setting_name].default
 
-        self.debug_log("Retrieving value: {}={}".format(setting_name, value))
+        self.debug_log("Retrieving value: %s=%s", setting_name, value)
 
         return value
 
     def set_setting_value(self, setting_name, value):
         """Set the value of a setting."""
-        self.debug_log("New value: {}={}".format(setting_name, value))
+        self.debug_log("New value: %s=%s", setting_name, value)
 
         if setting_name not in self._settings:
             raise AssertionError("Invalid setting {}".format(setting_name))

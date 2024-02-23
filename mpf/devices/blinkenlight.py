@@ -56,7 +56,7 @@ class Blinkenlight(SystemWideDevice):
         # check if this key already exists. If it does, replace it with the incoming color/priority
         self._colors = [x for x in self._colors if x[1] != key]
         self._colors.append((color, key, priority))
-        self.info_log('Color {} with key {} added'.format(color, key))
+        self.info_log('Color %s with key %s added', color, key)
         self._update_light()
 
     def remove_all_colors(self):
@@ -70,7 +70,7 @@ class Blinkenlight(SystemWideDevice):
         old_len = len(self._colors)
         self._colors = [x for x in self._colors if x[1] != key]
         if len(self._colors) != old_len:
-            self.info_log('Color removed with key {}'.format(key))
+            self.info_log('Color removed with key %s', key)
             self._update_light()
 
     def _update_light(self):
