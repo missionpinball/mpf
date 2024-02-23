@@ -158,7 +158,12 @@ class FastExpansionBoard:
 
                 log_msg = f'RD@{breakout_address}:{msg}'  # pretty version of the message for the log
 
-                self.communicator.send_bytes(b16decode(f'{msg_header}{msg}'), log_msg)
+                try:
+                    self.communicator.send_bytes(b16decode(f'{msg_header}{msg}'), log_msg)
+                except Exception as e:
+                    self.log.error(f"Error decoding the following message for board {breakout_address} : {msg_header}{msg}")
+                    self.log.debug("Attempted update that caused this error: %s", dirty_leds)
+                    raise e
 
     def set_led_fade(self, rate: int) -> None:
         """Set LED fade rate in ms."""
