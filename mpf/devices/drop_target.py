@@ -211,10 +211,13 @@ class DropTarget(SystemWideDevice):
     def _update_state_from_switch(self, reconcile=False, **kwargs):
         del kwargs
 
+        self.debug_log("Updating Drop Target '{}' State From Switches".format(self.name))
         is_complete = self.machine.switch_controller.is_active(
             self.config['switch'])
 
+        self.debug_log("Switch '{}' is active value '{}'.  Self.Complete value '{}'".format(self.config['switch'].name, is_complete, self.complete))
         if self._in_ball_search or self._ignore_switch_hits:
+            self.debug_log("Exiting Drop Target '{}' state update due to being in ball search or ignoring switch hits".format(self.name))
             return
 
         if not reconcile:
@@ -223,8 +226,10 @@ class DropTarget(SystemWideDevice):
         if is_complete != self.complete:
 
             if is_complete:
+                self.debug_log("Updating Drop Target '{}' To Down".format(self.name))
                 self._down()
             else:
+                self.debug_log("Updating Drop Target '{}' To Up".format(self.name))
                 self._up()
 
             self._update_banks()
