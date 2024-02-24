@@ -224,7 +224,7 @@ class MachineController(LogMixin):
         """
         self._crash_handlers.append(handler)
 
-    async def initialise_core_and_hardware(self) -> None:
+    async def initialize_core_and_hardware(self) -> None:
         """Load core modules and hardware."""
         self._boot_holds = set()
         self.is_init_done = asyncio.Event()
@@ -241,9 +241,9 @@ class MachineController(LogMixin):
         # they're not set up yet when the hw platforms are constructed.
         await self._initialize_platforms()
 
-    async def initialise(self) -> None:
-        """Initialise machine."""
-        await self.initialise_core_and_hardware()
+    async def initialize(self) -> None:
+        """initialize machine."""
+        await self.initialize_core_and_hardware()
 
         self._initialize_credit_string()
 
@@ -321,14 +321,14 @@ class MachineController(LogMixin):
         self.clear_boot_hold('init')
 
     async def _initialize_platforms(self) -> None:
-        """Initialise all used hardware platforms."""
+        """initialize all used hardware platforms."""
         init_done = []
         # collect all platform init futures
         for hardware_platform in list(self.hardware_platforms.values()):
             init_done.append(hardware_platform.initialize())
 
         # wait for all of them in parallel
-        results = await asyncio.wait(init_done)
+        results = await asyncio.wait([asyncio.create_task(init_done) for init_done in init_done])
         for result in results[0]:
             result.result()
 
@@ -433,11 +433,11 @@ class MachineController(LogMixin):
         """
         python_version_info = sys.version_info
 
-        if not (python_version_info[0] == 3 and python_version_info[1] in (5, 6, 7, 8, 9)):
-            raise AssertionError("Incorrect Python version. MPF requires "
-                                 "Python 3.5, 3.6, 3.7, 3.8 or 3.9. You have Python {}.{}.{}."
-                                 .format(python_version_info[0], python_version_info[1],
-                                         python_version_info[2]))
+        # if not (python_version_info[0] == 3 and python_version_info[1] in (5, 6, 7, 8, 9)):
+        #     raise AssertionError("Incorrect Python version. MPF requires "
+        #                          "Python 3.5, 3.6, 3.7, 3.8 or 3.9. You have Python {}.{}.{}."
+        #                          .format(python_version_info[0], python_version_info[1],
+        #                                  python_version_info[2]))
 
         self.log.info("Platform: %s", sys.platform)
         self.log.info("Python executable location: %s", sys.executable)
@@ -494,21 +494,12 @@ class MachineController(LogMixin):
 
     def _load_custom_code(self) -> None:
         """Load custom code."""
-        if 'scriptlets' in self.config:
-            self.debug_log("Loading scriptlets (deprecated).")
-            for scriptlet in Util.string_to_event_list(self.config['scriptlets']):
-                self.debug_log("Loading '%s' scriptlet (deprecated)", scriptlet)
-                scriptlet_obj = Util.string_to_class(self.config['mpf']['paths']['scriptlets'] + "." + scriptlet)(
-                    machine=self,
-                    name=scriptlet.split('.')[1])
-                self.custom_code.append(scriptlet_obj)
-
         if 'custom_code' in self.config:
             self.debug_log("Loading custom code.")
 
             for custom_code in Util.string_to_event_list(self.config['custom_code']):
 
-                self.debug_log("Loading '%s' custom code", custom_code)
+                self.debug_log("Loading %s custom code", custom_code)
 
                 custom_code_obj = Util.string_to_class(custom_code)(
                     machine=self,
@@ -532,9 +523,9 @@ class MachineController(LogMixin):
 
         These events are posted when MPF boots (after the init_phase events are
         posted), and they're also posted subsequently when the machine is reset
-        (after existing the service mode, for example).
+        (after exiting the service mode, for example).
 
-        This is a queue event. The machine reset phase 1 will not be complete
+        This is an async queue event. The machine reset phase 1 will not be complete
         until the queue is cleared.
 
         '''
@@ -546,9 +537,9 @@ class MachineController(LogMixin):
 
         These events are posted when MPF boots (after the init_phase events are
         posted), and they're also posted subsequently when the machine is reset
-        (after existing the service mode, for example).
+        (after exiting the service mode, for example).
 
-        This is a queue event. The machine reset phase 2 will not be complete
+        This is an async queue event. The machine reset phase 2 will not be complete
         until the queue is cleared.
 
         '''
@@ -562,7 +553,7 @@ class MachineController(LogMixin):
         posted), and they're also posted subsequently when the machine is reset
         (after exiting the service mode, for example).
 
-        This is a queue event. The machine reset phase 3 will not be complete
+        This is an async queue event. The machine reset phase 3 will not be complete
         until the queue is cleared.
 
         '''
@@ -655,22 +646,22 @@ class MachineController(LogMixin):
 
         self.monitors[monitor_class].add(monitor)
 
-    def initialise_mpf(self):
-        """Initialise MPF."""
-        self.info_log("Initialise MPF.")
+    def initialize_mpf(self):
+        """initialize MPF."""
+        self.info_log("Initializing MPF...")
         timeout = 30 if self.options["production"] else None
         try:
-            init = asyncio.ensure_future(self.initialise())
+            init = asyncio.ensure_future(self.initialize())
             self.clock.loop.run_until_complete(Util.first([init, self.stop_future], cancel_others=False,
                                                           timeout=timeout))
         except asyncio.TimeoutError:
             self._crash_shutdown()
-            self.error_log("MPF needed more than {}s for initialisation. Aborting!".format(timeout))
+            self.error_log("MPF needed more than %ss for initialization. Aborting!", timeout)
             return False
         except RuntimeError as e:
             self._crash_shutdown()
             # do not show a runtime useless runtime error
-            self.error_log("Failed to initialise MPF")
+            self.error_log("Failed to initialize MPF")
             report_crash(e, "init_runtime_error", self.config)
             return False
         if init.done() and init.exception():
@@ -678,7 +669,7 @@ class MachineController(LogMixin):
             try:
                 raise init.exception()
             except:     # noqa
-                self.log.exception("Failed to initialise MPF")
+                self.log.exception("Failed to initialize MPF")
                 report_crash(init.exception(), "init_exception", self.config)
             return False
 
@@ -686,7 +677,7 @@ class MachineController(LogMixin):
 
     def run(self) -> None:
         """Start the main machine run loop."""
-        if not self.initialise_mpf():
+        if not self.initialize_mpf():
             return
 
         self.info_log("Starting the main run loop.")

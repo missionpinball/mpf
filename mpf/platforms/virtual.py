@@ -33,7 +33,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
                  "rules"]
 
     def __init__(self, machine) -> None:
-        """Initialise virtual platform."""
+        """initialize virtual platform."""
         super().__init__(machine)
         self._setup_log()
 
@@ -59,13 +59,14 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         self.log.debug("Configuring virtual hardware interface.")
 
     async def initialize(self) -> None:
-        """Initialise platform."""
+        """initialize platform."""
 
     def stop(self):
         """Stop platform."""
 
-    async def configure_servo(self, number: str):
+    async def configure_servo(self, number: str, config: dict):
         """Configure a servo device in platform."""
+        del config
         return VirtualServo(number)
 
     async def configure_stepper(self, number: str, config: dict):
@@ -165,8 +166,9 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         return VirtualLight("{}-{}".format(subtype, number), platform_settings, self.machine)
 
     # pylint: disable-msg=no-self-use
-    def configure_hardware_sound_system(self) -> "HardwareSoundPlatformInterface":
+    def configure_hardware_sound_system(self, platform_settings) -> "HardwareSoundPlatformInterface":
         """Configure virtual hardware sound system."""
+        del platform_settings
         return VirtualSound()
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
@@ -280,7 +282,7 @@ class VirtualI2cDevice(I2cPlatformInterface):
     __slots__ = ["data"]
 
     def __init__(self, number, initial_layout) -> None:
-        """Initialise virtual i2c device."""
+        """initialize virtual i2c device."""
         super().__init__(number)
         self.data = initial_layout
 
@@ -307,7 +309,7 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
     __slots__ = ["_text", "flashing", "flash_mask", "machine", "post_update_events"]
 
     def __init__(self, number, machine) -> None:
-        """Initialise virtual segment display."""
+        """initialize virtual segment display."""
         super().__init__(number)
         self.machine = machine
         self._text = None
@@ -338,7 +340,7 @@ class VirtualSound(HardwareSoundPlatformInterface):
     __slots__ = ["playing", "volume"]
 
     def __init__(self) -> None:
-        """Initialise virtual hardware sound."""
+        """initialize virtual hardware sound."""
         self.playing = None     # type: Optional[Union[int, str]]
         self.volume = None      # type: Optional[float]
 
@@ -370,7 +372,7 @@ class VirtualDmd(DmdPlatformInterface):
     __slots__ = ["data", "brightness"]
 
     def __init__(self) -> None:
-        """Initialise virtual DMD."""
+        """initialize virtual DMD."""
         self.data = None        # type: Optional[bytes]
         self.brightness = None  # type: Optional[float]
 
@@ -395,7 +397,7 @@ class VirtualSwitch(SwitchPlatformInterface):
     __slots__ = ["log"]
 
     def __init__(self, config, number, platform) -> None:
-        """Initialise switch."""
+        """initialize switch."""
         super().__init__(config, number, platform)
         self.log = logging.getLogger('VirtualSwitch')
 
@@ -415,7 +417,7 @@ class VirtualLight(LightPlatformInterface):
     __slots__ = ["settings", "_current_fade", "machine"]
 
     def __init__(self, number, settings, machine) -> None:
-        """Initialise LED."""
+        """initialize LED."""
         super().__init__(number)
         self.settings = settings
         self.machine = machine
@@ -464,7 +466,7 @@ class VirtualServo(ServoPlatformInterface):
     __slots__ = ["log", "number", "current_position", "speed_limit", "acceleration_limit"]
 
     def __init__(self, number) -> None:
-        """Initialise servo."""
+        """initialize servo."""
         self.log = logging.getLogger('VirtualServo')
         self.number = number
         self.current_position = None
@@ -495,7 +497,7 @@ class VirtualStepper(StepperPlatformInterface):
     __slots__ = ["log", "number", "_current_position", "velocity", "direction", "machine"]
 
     def __init__(self, number, machine) -> None:
-        """Initialise servo."""
+        """initialize servo."""
         self.log = logging.getLogger('VirtualStepper')
         self.number = number
         self._current_position = 0
@@ -535,7 +537,7 @@ class VirtualDriver(DriverPlatformInterface):
     __slots__ = ["state", "log", "__dict__"]
 
     def __init__(self, config, number) -> None:
-        """Initialise virtual driver to disabled."""
+        """initialize virtual driver to disabled."""
         self.log = logging.getLogger("VirtualDriver.{}".format(number))
         super().__init__(config, number)
         self.state = "disabled"

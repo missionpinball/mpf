@@ -1,6 +1,5 @@
 """Contains the DeviceManager base class."""
 import asyncio
-from collections import OrderedDict
 
 from typing import Callable, Tuple, List, Generator, Dict
 
@@ -26,7 +25,7 @@ class DeviceManager(MpfController):
 
         self._monitorable_devices = {}
 
-        self.collections = OrderedDict()
+        self.collections = dict()
         self._device_classes = {}           # type: Dict[str, Device]
 
         # this has to happen after mode load
@@ -89,7 +88,7 @@ class DeviceManager(MpfController):
         self.load_devices_config(validate=True)
         await self.machine.mode_controller.load_mode_devices()
 
-        # step 3: initialise devices (mode devices will be initialised when mode is started)
+        # step 3: initialize devices (mode devices will be initialized when mode is started)
         await self.initialize_devices()
 
     def stop_devices(self):
@@ -159,7 +158,7 @@ class DeviceManager(MpfController):
                 collection[device_name].load_config(config[device_name])
 
     async def initialize_devices(self):
-        """Initialise devices."""
+        """initialize devices."""
         futures = []
         for collection_name in self.machine.config['mpf']['device_modules'].keys():
             if collection_name not in self.machine.config:
@@ -173,7 +172,7 @@ class DeviceManager(MpfController):
             for device_name in config:
                 futures.append(collection[device_name].device_added_system_wide())
 
-        await asyncio.wait(futures)
+        await asyncio.wait([asyncio.create_task(futures) for futures in futures])
 
     # pylint: disable-msg=too-many-nested-blocks
     def get_device_control_events(self, config) -> Generator[Tuple[str, Callable, int, "Device"], None, None]:
@@ -261,7 +260,7 @@ class DeviceCollection(dict):
     __slots__ = ["machine", "name", "config_section", "_tag_cache"]
 
     def __init__(self, machine, collection, config_section):
-        """Initialise device collection."""
+        """initialize device collection."""
         super().__init__()
 
         self.machine = machine
@@ -306,11 +305,14 @@ class DeviceCollection(dict):
         Args:
         ----
             tag: A string of the tag name which specifies what devices are
-                returned.
+                returned.  A value of "*" returns all devices.
 
         Returns a list of device objects. If no devices are found with that tag, it
         will return an empty list.
         """
+        if tag == "*":
+            return self.values()
+
         items_in_tag_cache = self._tag_cache.get(tag, None)
         if items_in_tag_cache is not None:
             return items_in_tag_cache

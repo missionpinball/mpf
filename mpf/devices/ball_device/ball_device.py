@@ -36,7 +36,7 @@ class BallDevice(SystemWideDevice):
                  "counted_balls", "_state"]
 
     def __init__(self, machine, name):
-        """Initialise ball device."""
+        """initialize ball device."""
         super().__init__(machine, name)
 
         self.delay = DelayManager(machine)
@@ -127,7 +127,7 @@ class BallDevice(SystemWideDevice):
         # add available_balls and route unclaimed ball to the default target
         self._balls_added_callback(1, unclaimed_balls)
 
-    async def handle_mechanial_eject_during_idle(self):
+    async def handle_mechanical_eject_during_idle(self):
         """Handle mechanical eject."""
         # handle lost balls via outgoing balls handler (if mechanical eject)
         self.config['eject_targets'][0].available_balls += 1
@@ -141,7 +141,8 @@ class BallDevice(SystemWideDevice):
     async def lost_idle_ball(self):
         """Lost an ball while the device was idle."""
         # handle lost balls
-        self.warning_log("Ball disappeared while idle. This should not normally happen.")
+        if self.state == "idle":
+            self.warning_log("Ball disappeared while idle. This should not normally happen.")
         self.available_balls -= 1
         self.config['ball_missing_target'].add_missing_balls(1)
         await self._balls_missing(1)
@@ -194,9 +195,9 @@ class BallDevice(SystemWideDevice):
 
     async def _initialize_async(self):
         """Count balls without handling them as new."""
-        await self.ball_count_handler.initialise()
-        await self.incoming_balls_handler.initialise()
-        await self.outgoing_balls_handler.initialise()
+        await self.ball_count_handler.initialize()
+        await self.incoming_balls_handler.initialize()
+        await self.outgoing_balls_handler.initialize()
 
         self.available_balls = self.ball_count_handler.handled_balls
 

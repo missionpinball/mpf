@@ -22,7 +22,7 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
                  "grace_period", "hurry_up"]
 
     def __init__(self, machine, name):
-        """Initialise multiball."""
+        """initialize multiball."""
         self.ball_locks = None
         self.source_playfield = None
         super().__init__(machine, name)
@@ -78,7 +78,7 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
     def _handle_balls_in_play_and_balls_live(self):
         ball_count = self.config['ball_count'].evaluate([])
         balls_to_replace = self.machine.game.balls_in_play if self.config['replace_balls_in_play'] else 0
-        self.debug_log("Going to add an additional {} balls for replace_balls_in_play".format(balls_to_replace))
+        self.debug_log("Going to add an additional %s balls for replace_balls_in_play", balls_to_replace)
 
         if self.config['ball_count_type'] == "total":
             # policy: total balls

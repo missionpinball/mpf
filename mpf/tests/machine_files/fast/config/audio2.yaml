@@ -1,0 +1,43 @@
+#config_version=6
+
+# Additional audio settings for testing
+
+hardware:
+    platform: fast
+
+fast:
+  aud:
+    port: com9
+    main_levels_list: 0, 2, 4, 6, 8, 10, 12, 14, 20, 30, 40, 41, 42, 43, 44, 45
+    sub_levels_list:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
+    headphones_level: line
+
+machine_vars:
+  fast_audio_main_volume:
+    initial_value: 15
+    value_type: int
+    persist: True
+  fast_audio_sub_volume:
+    initial_value: 2
+    value_type: int
+    persist: True
+  fast_audio_headphones_volume:
+    initial_value: 17
+    value_type: int
+    persist: True

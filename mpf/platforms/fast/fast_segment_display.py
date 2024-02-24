@@ -17,7 +17,7 @@ class FASTSegmentDisplay(SegmentDisplayPlatformInterface):
     __slots__ = ["serial", "hex_id", "next_color", "next_text"]
 
     def __init__(self, index, communicator):
-        """Initialise alpha numeric display."""
+        """initialize alpha numeric display."""
         super().__init__(index)
         self.serial = communicator
         self.hex_id = Util.int_to_hex_string(index * 7)
@@ -35,7 +35,6 @@ class FASTSegmentDisplay(SegmentDisplayPlatformInterface):
 
     def _set_color(self, colors: List[RGBColor]) -> None:
         """Set display color."""
-        #self.serial.platform.info_log("Color: {}".format(colors))
         if len(colors) == 1:
             self.next_color = (RGBColor(colors[0]).hex + ',') * 7
         else:

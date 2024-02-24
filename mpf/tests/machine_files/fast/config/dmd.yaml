@@ -1,0 +1,12 @@
+#config_version=6
+
+hardware:
+    platform: fast
+
+fast:
+  dmd:
+    port: com8
+
+rgb_dmds:
+  dmd:
+    label: Test

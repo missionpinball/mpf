@@ -19,7 +19,7 @@ class MpfCommandLineParser:
     """Base class for cli commands."""
 
     def __init__(self, args, path):
-        """Initialise CLI entry point."""
+        """initialize CLI entry point."""
         self.argv = args
         self.path = path
         self.mpf_path = os.path.abspath(os.path.join(mpf.core.__path__[0],
@@ -127,7 +127,7 @@ class CommandLineUtility(MpfCommandLineParser):
     """Default CLI entry point."""
 
     def __init__(self, path=None):
-        """Initialise CLI entry point."""
+        """initialize CLI entry point."""
         super().__init__(path=path, args=sys.argv[:])
         self.external_commands = dict()
         self.get_external_commands()

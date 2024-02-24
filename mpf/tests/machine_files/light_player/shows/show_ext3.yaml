@@ -1,4 +1,4 @@
-#show_version=5
+#show_version=6
 - lights:
     (led1): (color_on)
     (led2): (color_off)

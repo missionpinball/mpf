@@ -12,7 +12,7 @@ class DeviceMonitor:
     __slots__ = ["_attributes_to_monitor", "_aliased_attributes_to_monitor", "_do_not_overwrite_setter"]
 
     def __init__(self, *attributes_to_monitor, _do_not_overwrite_setter=False, **aliased_attributes_to_monitor):
-        """Initialise decorator and remember attributes to monitor."""
+        """initialize decorator and remember attributes to monitor."""
         self._attributes_to_monitor = attributes_to_monitor
         self._aliased_attributes_to_monitor = aliased_attributes_to_monitor
         self._do_not_overwrite_setter = _do_not_overwrite_setter

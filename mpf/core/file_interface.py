@@ -17,7 +17,7 @@ class FileInterface:
     file_types = list()     # type: List[str]
 
     def __init__(self):
-        """Initialise file manager."""
+        """initialize file manager."""
         self.log = logging.getLogger('{} File Interface'.format(
             self.file_types[0][1:].upper()))
 

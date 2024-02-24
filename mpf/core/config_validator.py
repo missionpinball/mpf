@@ -3,7 +3,7 @@ import logging
 from functools import lru_cache
 
 import re
-from collections import OrderedDict, namedtuple
+from collections import namedtuple
 from copy import deepcopy
 
 from typing import Any
@@ -44,7 +44,7 @@ class ConfigValidator:
     __slots__ = ["machine", "config_spec", "log", "validator_list"]
 
     def __init__(self, machine, config_spec):
-        """Initialise validator."""
+        """initialize validator."""
         self.machine = machine      # type: MachineController
         self.log = logging.getLogger('ConfigValidator')
         self.config_spec = config_spec
@@ -56,6 +56,7 @@ class ConfigValidator:
             "lstr": self._validate_type_lstr,
             "float": self._validate_type_float,
             "float_or_token": self._validate_type_or_token(self._validate_type_float),
+            "template_float_or_token": self._validate_type_or_token(self._validate_type_template_float),
             "int": self._validate_type_int,
             "int_or_token": self._validate_type_or_token(self._validate_type_int),
             "num": self._validate_type_num,
@@ -76,7 +77,6 @@ class ConfigValidator:
             "list": self._validate_type_list,
             "int_from_hex": self._validate_type_int_from_hex,
             "dict": self._validate_type_dict,
-            "omap": self._validate_type_omap,
             "kivycolor": self._validate_type_kivycolor,
             "color": self._validate_type_color,
             "color_or_token": self._validate_type_or_token(self._validate_type_color),
@@ -270,26 +270,20 @@ class ConfigValidator:
         if item_type == "event_handler":
             if validation != "event_handler:ms":
                 raise AssertionError("event_handler should use event_handler:ms in config_spec: {}".format(spec))
-            return self._validate_dict_or_omap(item_type, validation, validation_failure_info, item)
-        if item_type in ('dict', 'omap'):
-            return self._validate_dict_or_omap(item_type, validation, validation_failure_info, item)
+            return self._validate_dict(item_type, validation, validation_failure_info, item)
+        if item_type == 'dict':
+            return self._validate_dict(item_type, validation, validation_failure_info, item)
 
         raise ConfigFileError("Invalid Type '{}' in config spec {}".format(item_type,
                               self._build_error_path(validation_failure_info)), 1, self.log.name)
 
-    def _validate_dict_or_omap(self, item_type, validation, validation_failure_info, item):
+    def _validate_dict(self, item_type, validation, validation_failure_info, item):
         if ':' not in validation:
             self.validation_error(item, validation_failure_info, "Missing : in dict validator.")
 
         validators = validation.split(':')
 
-        if item_type == "omap":
-            item_dict = OrderedDict()
-            if not isinstance(item, OrderedDict):
-                self.validation_error(item, validation_failure_info, "Item is not an ordered dict. "
-                                                                     "Did you forget to add !!omap to your entry?",
-                                      7)
-        elif item_type == "dict":
+        if item_type == "dict":
             item_dict = dict()
             if item == "None" or item is None:
                 item = {}
@@ -454,7 +448,7 @@ class ConfigValidator:
 
         return self.machine.placeholder_manager.build_quoted_string_template(item)
 
-    def _validate_type_template_float(self, item, validation_failure_info):
+    def _validate_type_template_float(self, item, validation_failure_info, param=None):
         if item is None:
             return None
         if not isinstance(item, (str, float, int)):
@@ -603,15 +597,8 @@ class ConfigValidator:
             self.validation_error(item, validation_failure_info, "Item is not a dict.")
 
         if param:
-            return self._validate_dict_or_omap("dict", param, validation_failure_info, item)
+            return self._validate_dict("dict", param, validation_failure_info, item)
 
-        return item
-
-    def _validate_type_omap(self, item, validation_failure_info):
-        if not item:
-            return {}
-        if not isinstance(item, OrderedDict):
-            self.validation_error(item, validation_failure_info, "Item is not a ordered dict.")
         return item
 
     def _validate_type_kivycolor(self, item, validation_failure_info):

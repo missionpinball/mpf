@@ -13,7 +13,7 @@ class EntranceSwitchCounter(PhysicalBallCounter):
     __slots__ = ["recycle_secs", "recycle_clear_time", "_settle_delay"]
 
     def __init__(self, ball_device, config):
-        """Initialise entrance switch counter."""
+        """initialize entrance switch counter."""
         for option in ["entrance_switch", "entrance_switch_ignore_window_ms", "entrance_switch_full_timeout",
                        "ball_capacity"]:
             if option not in config and option in ball_device.config:

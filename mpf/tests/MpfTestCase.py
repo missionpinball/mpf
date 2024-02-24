@@ -28,6 +28,7 @@ from mpf.file_interfaces.yaml_interface import YamlInterface
 
 YamlInterface.cache = True
 
+LOCAL_START_TIMEOUT = 20  # Set to None if you need to pause and debug something
 
 class UnitTestConfigLoader(YamlMultifileConfigLoader):
 
@@ -242,7 +243,7 @@ class MpfTestCase(unittest.TestCase):
         """Get absolute path relative to current directory."""
         return os.path.join(os.path.abspath(os.curdir), path)
 
-    def post_event(self, event_name, run_time=0):
+    def post_event(self, event_name, run_time=0, **kwargs):
         """Post an MPF event and optionally advance the time.
 
         Args:
@@ -263,7 +264,7 @@ class MpfTestCase(unittest.TestCase):
             self.post_event('tilt', 1.5)
 
         """
-        self.machine.events.post(event_name)
+        self.machine.events.post(event_name, **kwargs)
         self.advance_time_and_run(run_time)
 
     def post_event_with_params(self, event_name, **params):
@@ -419,6 +420,7 @@ class MpfTestCase(unittest.TestCase):
         try:
             self.loop.run_until_complete(asyncio.sleep(delay=delta))
             return
+
         except RuntimeError as e:
             try:
                 self.machine.stop()
@@ -472,7 +474,7 @@ class MpfTestCase(unittest.TestCase):
         if mpf_path in sys.path:
             sys.path.remove(mpf_path)
 
-        # make tests path independent. remove current dir absolue
+        # make tests path independent. remove current dir absolute
         if os.curdir in sys.path:
             sys.path.remove(os.curdir)
 
@@ -557,7 +559,7 @@ class MpfTestCase(unittest.TestCase):
 
             self._early_machine_init(self.machine)
 
-            self._initialise_machine()
+            self._initialize_machine()
 
         # pylint: disable-msg=broad-except
         except Exception as e:
@@ -576,9 +578,15 @@ class MpfTestCase(unittest.TestCase):
             if not getattr(getattr(self, self._testMethodName), "expect_startup_error", False):
                 raise self.startup_error
 
-    def _initialise_machine(self):
-        init = asyncio.ensure_future(self.machine.initialise())
-        self._wait_for_start(init, 20)
+    def _initialize_machine(self):
+        init = asyncio.ensure_future(self.machine.initialize())
+
+        if os.getenv('GITHUB_ACTIONS', 'false') == 'true':  # If we're running on github
+            timeout = 20
+        else:  # running locally
+            timeout = LOCAL_START_TIMEOUT
+        self._wait_for_start(init, timeout)
+
         self.machine.events.process_event_queue()
         self.advance_time_and_run(.001)
 
@@ -586,10 +594,11 @@ class MpfTestCase(unittest.TestCase):
         start = time.time()
         while not init.done() and not self._exception:
             self.loop.run_once()
-            if time.time() > start + timeout:
+            if timeout and time.time() > start + timeout:
                 raise AssertionError("Start took more than {}s".format(timeout))
-
         # trigger exception if there was one
+        if self._exception:
+            raise(self._exception['exception'])
         init.result()
 
     def _mock_event_handler(self, event_name, **kwargs):
@@ -942,11 +951,13 @@ class MpfTestCase(unittest.TestCase):
             elif self._exception:
                 raise Exception(self._exception)
 
+        # Sometimes a test will weirdly hang on Github Actions. This will print
+        # that into their logs so we can see what's going on.
         duration = time.time() - self.test_start_time
         if duration > self.expected_duration:
-            print("Test {}.{} took {} > {}s".format(self.__class__,
-                  self._testMethodName, round(duration, 2),
-                  self.expected_duration))
+            if os.getenv('GITHUB_ACTIONS', 'false') == 'true':
+                print(f"Test {self.__class__}.{self._testMethodName} took "
+                    f"{round(duration, 2)} > {self.expected_duration}s")
 
         self.machine.log.debug("Test ended")
         if sys.exc_info != (None, None, None):

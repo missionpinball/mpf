@@ -65,11 +65,11 @@ sort_devices_by_number: single|bool|True
                 volume = self.machine.variables.get_machine_var("master_volume")
                 if not isinstance(volume, float):
                     volume = .5
-                volume += .1
+                volume += .05
                 if volume >= 1.0:
                     volume = 1.0
                 else:
-                    volume = round(volume, 1)
+                    volume = round(volume, 2)
                 self.machine.variables.set_machine_var("master_volume", volume)
                 # post event for increased volume
                 self.machine.events.post("master_volume_increase", volume=volume)
@@ -85,11 +85,11 @@ sort_devices_by_number: single|bool|True
                 volume = self.machine.variables.get_machine_var("master_volume")
                 if not isinstance(volume, float):
                     volume = .5
-                volume -= .1
+                volume -= .05
                 if volume <= 0.0:
                     volume = 0.0
                 else:
-                    volume = round(volume, 1)
+                    volume = round(volume, 2)
                 self.machine.variables.set_machine_var("master_volume", volume)
                 # post event for decreased volume
                 self.machine.events.post("master_volume_decrease", volume=volume)
@@ -122,6 +122,7 @@ sort_devices_by_number: single|bool|True
             ServiceMenuEntry("Audits Menu", self._audits_menu),
             ServiceMenuEntry("Adjustments Menu", self._adjustments_menu),
             ServiceMenuEntry("Utilities Menu", self._utilities_menu),
+            ServiceMenuEntry("Audio Menu", self._audio_menu)
 
         ]
         return entries
@@ -183,6 +184,28 @@ sort_devices_by_number: single|bool|True
 
     async def _adjustments_menu(self):
         await self._make_menu(self._load_adjustments_menu_entries())
+
+    # Audio
+    def _load_audio_menu_entries(self) -> List[ServiceMenuEntry]:
+        """Return the audio menu items with label and callback."""
+        items = [
+            ServiceMenuEntry("Software Levels", self._volume_menu)
+        ]
+
+        self.debug_log("Looking for platform volumes: %s", self.machine.hardware_platforms)
+        for p, platform in self.machine.hardware_platforms.items():
+            # TODO: Define an AudioInterface base class
+            if getattr(platform, "audio_interface", None):
+                self.debug_log("Found '%s' platform audio for volume: %s", p, platform)
+                # TODO: find a good way to get a name of a platform
+                name = p.title()
+                items.append(ServiceMenuEntry(f"{name} Levels", partial(self._volume_menu, platform)))
+            else:
+                self.debug_log("Platform '%s' has no audio to configure volume: %s", p, platform)
+        return items
+
+    async def _audio_menu(self):
+        await self._make_menu(self._load_audio_menu_entries())
 
     # Utilities
     def _load_utilities_menu_entries(self) -> List[ServiceMenuEntry]:
@@ -433,15 +456,134 @@ sort_devices_by_number: single|bool|True
 
         self.machine.events.post("service_light_test_stop")
 
+    async def _volume_menu(self, platform=None):
+        position = 0
+        if platform:
+            item_configs = platform.audio_interface.amps
+        else:
+            item_configs = self.machine.config["sound_system"]["tracks"]
+        items = [{
+                    **config,
+                    "name": config.get("name", track),
+                    "label": config.get("label", track),
+                    "is_platform": bool(platform),
+                    # TODO: Give each software track a 'name' property
+                    "value": self.machine.variables.get_machine_var(f"{config['name'] if platform else track}_volume") or config['volume']
+                 } for track, config in item_configs.items()]
+
+        # do not crash if no items
+        if not items:   # pragma: no cover
+            return
+
+        # Convert floats to ints for systems that use 0.0-1.0 for volume
+        for item in items:
+            if isinstance(item['value'], float):
+                item['value'] = int(item['value'] * 100)
+
+        # If supported on hardware platform, add option to write to firmware
+        if platform and hasattr(platform.audio_interface, "save_settings_to_firmware"):
+            items.append({
+                "name": "write_to_firmware",
+                "label": "Write Settings",
+                "is_platform": True,
+                "value": "Confirm",
+                "levels_list": ["Confirm", "Saved"]
+            })
+
+        self._update_volume_slide(items, position)
+
+        while True:
+            key = await self._get_key()
+            if key == 'ESC':
+                break
+            if key == 'UP':
+                position += 1
+                if position >= len(items):
+                    position = 0
+                self._update_volume_slide(items, position)
+            elif key == 'DOWN':
+                position -= 1
+                if position < 0:
+                    position = len(items) - 1
+                self._update_volume_slide(items, position)
+            elif key == 'ENTER':
+                # change setting
+                await self._volume_change(items, position, platform, focus_change="enter")
+
+        self.machine.events.post("service_volume_stop")
+
+
+    def _update_volume_slide(self, items, position, is_change=False, focus_change=None):
+        config = items[position]
+        event = "service_volume_{}".format("edit" if is_change else "start")
+        # The 'focus_change' argument can be used to start/stop sound files playing
+        # during the service menu, to test volume.
+        self.machine.events.post(event,
+                                 settings_label=config["label"],
+                                 value_label=config["value"],
+                                 track=config["name"],
+                                 is_platform=config["is_platform"],
+                                 focus_change=focus_change)
+
+    async def _volume_change(self, items, position, platform, focus_change=None):
+        self._update_volume_slide(items, position, focus_change=focus_change)
+        if items[position].get("levels_list"):
+            values = items[position]["levels_list"]
+        else:
+            # Use ints for values to avoid floating-point comparisons
+            values = [int((0.05 * i) * 100) for i in range(0,21)]
+        value_position = values.index(items[position]["value"])
+        self._update_volume_slide(items, position, is_change=True)
+
+        while True:
+            key = await self._get_key()
+            new_value = None
+            if key == 'ESC':
+                self._update_volume_slide(items, position, focus_change="exit")
+                break
+            if key == 'UP':
+                value_position += 1
+                if value_position >= len(values):
+                    value_position = 0
+                new_value = values[value_position]
+            elif key == 'DOWN':
+                value_position -= 1
+                if value_position < 0:
+                    value_position = len(values) - 1
+                new_value = values[value_position]
+            if new_value is not None:
+                items[position]['value'] = new_value
+                # Check for a firmware update
+                if items[position]['name'] == "write_to_firmware":
+                    if new_value == "Saved":
+                        platform.audio_interface.save_settings_to_firmware()
+                        # Remove the options from the list
+                        values = ['Saved']
+                        items[position]['levels_list'] = values
+                else:
+                    # Internally tracked values divide by 100 to store a float.
+                    # External (hardware) values, use the value units provided
+                    # TODO: Create an Amp/Track class to internalize this method.
+                    if not items[position].get("levels_list"):
+                        new_value = new_value / 100
+                    self.machine.variables.set_machine_var(f"{items[position]['name']}_volume", new_value, persist=True)
+                self._update_volume_slide(items, position, is_change=True)
+
+    # AUDIT Menu
     def _load_audit_menu_entries(self) -> List[ServiceMenuEntry]:
         """Return the audit menu items with label and callback."""
-        return [
+        items = [
             ServiceMenuEntry("Earning Audits", self._audit_earning_menu),
             ServiceMenuEntry("Switch Audits", self._audit_switch_menu),
             ServiceMenuEntry("Shot Audits", self._audit_shot_menu),
             ServiceMenuEntry("Event Audits", self._audit_event_menu),
             ServiceMenuEntry("Player Audits", self._audit_player_menu),
         ]
+
+        if self.machine.auditor.report_missing_switches():
+            items.insert(0, ServiceMenuEntry("Missing Switches", self._audit_missing_menu))
+
+        return items
 
     async def _audits_menu(self):
         await self._make_menu(self._load_audit_menu_entries())
@@ -482,6 +624,10 @@ sort_devices_by_number: single|bool|True
             items = {}
 
         await self._audits_submenu(list(items.items()))
+
+    async def _audit_missing_menu(self):
+        items = self.machine.auditor.report_missing_switches()
+        await self._audits_submenu(items)
 
     async def _audit_player_menu(self):
         audits = self.machine.auditor.current_audits.get('player', {})

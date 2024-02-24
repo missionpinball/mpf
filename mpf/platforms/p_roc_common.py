@@ -54,7 +54,7 @@ class ProcProcess:
     """External pinproc process."""
 
     def __init__(self):
-        """Initialise process."""
+        """initialize process."""
         self.proc = None
         self.dmd = None
         self.loop = None
@@ -63,7 +63,7 @@ class ProcProcess:
         self.log = None
 
     def start_pinproc(self, machine_type, loop, trace, log):
-        """Initialise libpinproc."""
+        """initialize libpinproc."""
         self.loop = loop
         asyncio.set_event_loop(loop)
         self.stop_future = asyncio.Future()
@@ -73,7 +73,7 @@ class ProcProcess:
         while not self.proc:
             try:
                 self.proc = pinproc.PinPROC(machine_type)
-            except IOError as e:     # pragma: no cover
+            except OSError as e:     # pragma: no cover
                 self.log.warning("Failed to instantiate pinproc.PinPROC(%s): %s. Is your P/P3-Roc connected "
                                  "and powered up?", machine_type, e)
                 self.log.info("Will retry creating PinPROC in 1s.")
@@ -82,7 +82,7 @@ class ProcProcess:
 
             try:
                 self.proc.reset(1)
-            except IOError as e:  # pragma: no cover
+            except OSError as e:  # pragma: no cover
                 self.log.warning("Failed to reset P/P3-Roc: %s. Is your P/P3-Roc connected and powered up?", e)
                 self.log.info("Will retry creating PinPROC and resetting it in 1s.")
                 time.sleep(1)
@@ -125,7 +125,7 @@ class ProcProcess:
                 return result
 
             return getattr(self.proc, cmd)(*args)
-        except IOError as error:  # pragma: no cover
+        except OSError as error:  # pragma: no cover
             raise MpfRuntimeError("Communication with P/P3-Roc broke down. Check USB cable and power supply.", 2,
                                   self.log.name) from error
 
@@ -150,7 +150,7 @@ class ProcProcess:
                 await asyncio.sleep(poll_sleep)
 
             return []
-        except IOError as error:  # pragma: no cover
+        except OSError as error:  # pragma: no cover
             raise MpfRuntimeError("Communication with P/P3-Roc broke down. Check USB cable and power supply.", 2,
                                   self.log.name) from error
 
@@ -287,9 +287,10 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
     async def start(self):
         """Start listening for switches."""
         if self._late_init_futures:
-            await asyncio.wait(self._late_init_futures)
+            tasks = [self.machine.clock.loop.create_task(future) for future in self._late_init_futures]
+            await asyncio.wait(tasks)
 
-        self.event_task = self.machine.clock.loop.create_task(self._poll_events())
+        self.event_task = asyncio.create_task(self._poll_events())
         self.event_task.add_done_callback(Util.raise_exceptions)
         self._light_system.start()
 
@@ -795,13 +796,14 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
                                       {'notifyHost': True, 'reloadActive': False}, [], False)
         return switch
 
-    async def configure_servo(self, number: str) -> ServoPlatformInterface:
+    async def configure_servo(self, number: str, config: dict) -> ServoPlatformInterface:
         """Configure a servo on a PD-LED board.
 
         Args:
         ----
             number: Number of the servo
         """
+        del config
         try:
             board, index = number.split("-")
         except ValueError:

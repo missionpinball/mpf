@@ -20,7 +20,7 @@ class OutgoingBall:
     __slots__ = ["max_tries", "eject_timeout", "target", "player_controlled", "already_left"]
 
     def __init__(self, target: "BallDevice") -> None:
-        """Initialise outgoing ball."""
+        """initialize outgoing ball."""
         self.max_tries = 0                  # type: int
         self.eject_timeout = 0              # type: int
         self.target = target                # type: BallDevice
@@ -36,7 +36,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                  "_no_incoming_ball_which_may_skip", "_incoming_ball_which_may_skip_obj", "_eject_future"]
 
     def __init__(self, ball_device: "BallDevice") -> None:
-        """Initialise outgoing balls handler."""
+        """initialize outgoing balls handler."""
         super().__init__(ball_device)
         self._eject_queue = asyncio.Queue()     # type: asyncio.Queue
         self._current_target = None     # type: Optional[BallDevice]
@@ -425,22 +425,24 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                                                 eject_try)
             await self.ball_device.ball_count_handler.end_eject(ball_eject_process, result)
 
-            self.info_log("Eject successful, looking for missing balls")
-            new_balls = await self.ball_device.ball_count_handler.counter.count_balls()
-            old_balls = self.ball_device.counted_balls
-            self.info_log("Found %s physical balls and %s expected balls", new_balls, old_balls)
-            if new_balls < old_balls:
-                # Post that the ball is lost
-                await self.ball_device.lost_idle_ball()
-                # Cancel the eject queue for the lost ball
-                for _ in range(0, old_balls - new_balls):
-                    self.info_log("Cancelling a queued eject request")
-                    if not self._eject_queue.empty():
-                        self._eject_queue.get_nowait()
-                        self._eject_queue.task_done()
-                self.info_log("Necessary queue requests are completed. Updating ball count to %s." % new_balls)
-                self.ball_device.ball_count_handler._set_ball_count(new_balls)
+            # Check if more balls left than expected, meaning the ejector kicked out multiple
+            # balls. If so, tag those missing balls as lost (except for mechanical ejects, which
+            # may be expected, and troughs, which may jam)
+            if "trough" not in self.ball_device.tags and not self.ball_device.config['mechanical_eject']:
+                new_balls = await self.ball_device.ball_count_handler.counter.count_balls()
+                old_balls = self.ball_device.counted_balls
 
+                if new_balls < old_balls:
+                    self.info_log("Found %s physical balls and %s expected balls", new_balls, old_balls)
+                    # Post that the ball is lost
+                    await self.ball_device.lost_idle_ball()
+                    # Cancel the eject queue for the lost ball
+                    for _ in range(0, old_balls - new_balls):
+                        if not self._eject_queue.empty():
+                            self._eject_queue.get_nowait()
+                            self._eject_queue.task_done()
+                    self.info_log("Necessary queue requests are cancelled. Updating ball count to %s." % new_balls)
+                    self.ball_device.ball_count_handler._set_ball_count(new_balls)
 
             return result
         except asyncio.CancelledError:

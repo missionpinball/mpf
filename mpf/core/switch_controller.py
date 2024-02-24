@@ -28,7 +28,7 @@ class RegisteredSwitch:
     __slots__ = ["ms", "callback", "cancelled"]
 
     def __init__(self, ms, callback):
-        """Initialise registered switch."""
+        """initialize registered switch."""
         self.ms = ms
         self.callback = callback
         self.cancelled = False
@@ -41,10 +41,10 @@ class SwitchController(MpfController):
     config_name = "switch_controller"
 
     __slots__ = ["registered_switches", "_timed_switch_handler_delay", "_active_timed_switches",
-                 "_switch_lookup", "monitors", "_initialised"]
+                 "_switch_lookup", "monitors", "_initialized"]
 
     def __init__(self, machine: MachineController) -> None:
-        """Initialise switch controller."""
+        """initialize switch controller."""
         super().__init__(machine)
         self.registered_switches = dict()                       # type: Dict[Switch, List[List[RegisteredSwitch]]]
         # Dictionary of switches and states that have been registered for
@@ -68,7 +68,7 @@ class SwitchController(MpfController):
         self.monitors = list()      # type: List[Callable[[MonitoredSwitchChange], None]]
 
         # to detect early switch changes before init
-        self._initialised = False
+        self._initialized = False
 
     def register_switch(self, switch: Switch):
         """Add a switch object to the switch controller for tracking.
@@ -87,12 +87,12 @@ class SwitchController(MpfController):
             # build lookup table
             self._switch_lookup[(switch.hw_switch.number, switch.hw_switch.platform)] = switch
 
-        self._initialised = True
+        self._initialized = True
 
         self.log_active_switches()
 
     async def update_switches_from_hw(self):
-        """Update the states of all the switches be re-reading the states from the hardware platform.
+        """Update the states of all the switches by re-reading the states from the hardware platform.
 
         This method works silently and does not post any events if any switches
         changed state.
@@ -115,9 +115,9 @@ class SwitchController(MpfController):
                 try:
                     switch.state = switch_states[number] ^ switch.invert
                 except (IndexError, KeyError):
-                    raise AssertionError("Missing switch {} in update from HW: {} "
-                                         "State from HW: {}, switches known: {}".
-                                         format(switch, platform, switch_states, switches))
+                    raise AssertionError(f"Missing switch {switch} in update from HW: {platform} "
+                                         f"\nHW States: {switch_states}"
+                                         f"\nKnown switches: {switches}")
 
     async def verify_switches(self) -> bool:
         """Verify that switches states match the hardware.
@@ -169,7 +169,7 @@ class SwitchController(MpfController):
             number of ms. If ms is not specified, returns True if the switch
             is in the state regardless of how long it's been in that state.
         """
-        if not self._initialised:
+        if not self._initialized:
             raise AssertionError(CANNOT_READ_SWITCHES_EARLY_ERROR)
         if not ms:
             ms = 0.0
@@ -194,7 +194,7 @@ class SwitchController(MpfController):
             number of ms. If ms is not specified, returns True if the switch
             is in the state regardless of how long it's been in that state.
         """
-        if not self._initialised:
+        if not self._initialized:
             raise AssertionError(CANNOT_READ_SWITCHES_EARLY_ERROR)
         if not ms:
             ms = 0.0
@@ -219,7 +219,7 @@ class SwitchController(MpfController):
             number of ms. If ms is not specified, returns True if the switch
             is in the state regardless of how long it's been in that state.
         """
-        if not self._initialised:
+        if not self._initialized:
             raise AssertionError(CANNOT_READ_SWITCHES_EARLY_ERROR)
         if not ms:
             ms = 0.0
@@ -247,7 +247,7 @@ class SwitchController(MpfController):
             timestamp: Timestamp when this switch change happened.
 
         """
-        if not self._initialised:
+        if not self._initialized:
             raise AssertionError("Got early switch change for switch {} to state {}. platform: {}".format(
                 num, state, platform))
         switch = self._switch_lookup.get((num, platform), None)
@@ -332,6 +332,7 @@ class SwitchController(MpfController):
         handles NC versus NO switches and translates them to 'active' versus
         'inactive'.)
         """
+
         assert obj.hw_switch is not None
         # We need int, but this lets it come in as boolean also
         if state:

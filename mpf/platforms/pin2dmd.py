@@ -41,7 +41,7 @@ class Pin2DmdHardwarePlatform(RgbDmdPlatform):
     __slots__ = ["device", "config"]
 
     def __init__(self, machine):
-        """Initialise PIN2DMD."""
+        """initialize PIN2DMD."""
         super().__init__(machine)
         self.features['tickless'] = True
         self.config = self.machine.config_validator.validate_config("pin2dmd", self.machine.config.get('pin2dmd', {}))
@@ -54,7 +54,7 @@ class Pin2DmdHardwarePlatform(RgbDmdPlatform):
                                  'Try: "pip3 install pyusb".') from IMPORT_FAILED
 
     async def initialize(self):
-        """Initialise platform."""
+        """initialize platform."""
         await self.device.connect()
 
     def stop(self):
@@ -81,7 +81,7 @@ class Pin2DmdDevice(DmdPlatformInterface):
                  "debug", "resolution", "panel"]
 
     def __init__(self, machine, debug, resolution, panel):
-        """Initialise smart matrix device."""
+        """initialize smart matrix device."""
         self.writer = None
         self.current_frame = None
         self.new_frame_event = None

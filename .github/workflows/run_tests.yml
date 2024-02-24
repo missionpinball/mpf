@@ -11,23 +11,29 @@ jobs:
       matrix:
         include:
         - os: windows-latest
-          python-version: 3.7
-        - os: windows-latest
           python-version: 3.8
         - os: windows-latest
           python-version: 3.9
-        - os: ubuntu-latest
-          python-version: 3.7
+        - os: windows-latest
+          python-version: "3.10"
+        - os: windows-latest
+          python-version: 3.11
         - os: ubuntu-latest
           python-version: 3.8
         - os: ubuntu-latest
           python-version: 3.9
-        - os: macos-latest
-          python-version: 3.7
+        - os: ubuntu-latest
+          python-version: "3.10"
+        - os: ubuntu-latest
+          python-version: 3.11
         - os: macos-latest
           python-version: 3.8
         - os: macos-latest
           python-version: 3.9
+        - os: macos-latest
+          python-version: "3.10"
+        - os: macos-latest
+          python-version: 3.11
 
     steps:
       - name: Checkout MPF
@@ -44,9 +50,18 @@ jobs:
           pip install -e .
 
       - name: Run tests
-        run: coverage run -m unittest discover -s mpf/tests
+      # Oct 15 2023, "coverage" randomly is not recognized as valid on windows
+      # even though you can see it being installed via pip (from coveralls)?!?
+        shell: bash  # Need bash on windows to use the if statement
+        run: |
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            python3 -m unittest discover -s mpf/tests
+          else
+            python3 -m coverage run -m unittest discover -s mpf/tests
+          fi
 
       - name: Upload coverage data to coveralls.io
+        if: matrix.os != 'windows-latest'
         run: coveralls --service=github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

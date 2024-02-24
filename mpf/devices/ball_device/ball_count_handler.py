@@ -18,7 +18,7 @@ class BallCountHandler(BallDeviceStateHandler):
                  "_ball_count", "_ball_count_changed_futures", "counter"]
 
     def __init__(self, ball_device):
-        """Initialise ball count handler."""
+        """initialize ball count handler."""
         super().__init__(ball_device)
         # inputs
         self._is_counting = asyncio.Lock()
@@ -79,8 +79,8 @@ class BallCountHandler(BallDeviceStateHandler):
         # reset futures
         self._ball_count_changed_futures = []
 
-    async def initialise(self):
-        """Initialise handler."""
+    async def initialize(self):
+        """initialize handler."""
         counter_config = self.ball_device.config.get("counter", {})
         if counter_config:
             counter_class = Util.string_to_class(counter_config["class"])
@@ -105,7 +105,7 @@ class BallCountHandler(BallDeviceStateHandler):
         if self._ball_count > 0:
             self._has_balls.set()
         self.ball_device.counted_balls = self._ball_count
-        await super().initialise()
+        await super().initialize()
         self._count_valid.set()
 
     @property
@@ -267,7 +267,7 @@ class BallCountHandler(BallDeviceStateHandler):
             if self.ball_device.config['mechanical_eject']:
                 self.debug_log("BCH: Lost %s balls. Assuming mechanical eject.", missing_balls)
                 self._set_ball_count(new_balls)
-                await self.ball_device.handle_mechanial_eject_during_idle()
+                await self.ball_device.handle_mechanical_eject_during_idle()
             else:
                 try:
                     if not self.counter:

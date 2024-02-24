@@ -10,7 +10,7 @@ class SwitchPlayer:
     """Plays back switch sequences from a config file, used for testing."""
 
     def __init__(self, machine):
-        """Initialise switch player."""
+        """initialize switch player."""
         self.log = logging.getLogger('switch_player')
 
         if 'switch_player' not in machine.config:

@@ -15,7 +15,7 @@ class PlatformBatchLight(LightPlatformInterface, abc.ABC):
     __slots__ = ["light_system", "_current_fade", "_last_brightness"]
 
     def __init__(self, number, light_system: "PlatformBatchLightSystem"):
-        """Initialise light."""
+        """initialize light."""
         super().__init__(number)
         self.light_system = light_system
         self._current_fade = (0, -1, 0, -1)
@@ -64,7 +64,7 @@ class PlatformBatchLightSystem:
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, clock, update_callback, update_hz, max_batch_size):
-        """Initialise light system."""
+        """initialize light system."""
         self.dirty_lights = SortedSet()    # type: Set[PlatformBatchLight]
         self.dirty_lights_changed = asyncio.Event()
         self.dirty_schedule = SortedList()

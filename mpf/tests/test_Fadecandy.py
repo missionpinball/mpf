@@ -188,7 +188,7 @@ class TestFadecandy(MpfTestCase):
         self._messages = []
         self.machine.lights["test_rgbw"].on(priority=10, key="test")
         self.advance_time_and_run(.1)
-        self.assertOpenPixelLedsSent({}, {}, {0: (255, 255, 255), 1: (0, 255, 0)})
+        self.assertOpenPixelLedsSent({}, {}, {0: (0, 0, 0), 1: (0, 255, 0)})
 
         self._messages = []
         self.machine.lights["test_rgbw"].color("red", priority=20, key="test")

@@ -50,7 +50,7 @@ class MockExternalBcpClient(BaseBcpClient):
     """Connected BCP instance."""
 
     def __init__(self, mock_bcp_client):
-        """Initialise virtual external bcp client."""
+        """initialize virtual external bcp client."""
         self.module_name = "BCPClient"
         self.config_name = "bcp_client"
         super().__init__(mock_bcp_client.machine, mock_bcp_client.name, mock_bcp_client.bcp)

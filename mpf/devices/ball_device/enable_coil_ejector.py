@@ -12,7 +12,7 @@ class EnableCoilEjector(DefaultBallSearch, BallDeviceEjector):
     __slots__ = ["delay"]
 
     def __init__(self, config, ball_device, machine):
-        """Initialise ejector."""
+        """initialize ejector."""
         for option in ["eject_coil", "eject_coil_enable_time"]:
             if option not in config and option in ball_device.config:
                 config[option] = ball_device.config[option]

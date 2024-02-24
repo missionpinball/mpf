@@ -1,6 +1,6 @@
 """LISY platform for System 1 and System 80."""
 import asyncio
-from distutils.version import StrictVersion
+from packaging import version
 
 from typing import Dict, Optional, List
 
@@ -33,7 +33,7 @@ class LisySwitch(SwitchPlatformInterface):
     __slots__ = ["index"]  # type: List[str]
 
     def __init__(self, config, number, platform):
-        """Initialise switch."""
+        """initialize switch."""
         super().__init__(config, number, platform)
         self.index = int(number)
 
@@ -49,7 +49,7 @@ class LisyDriver(DriverPlatformInterface):
     __slots__ = ["platform", "_pulse_ms", "_recycle_time", "index", "has_rule"]     # type: List[str]
 
     def __init__(self, config, number, platform):
-        """Initialise driver."""
+        """initialize driver."""
         super().__init__(config, number)
         self.platform = platform
         self._pulse_ms = -1
@@ -59,7 +59,7 @@ class LisyDriver(DriverPlatformInterface):
 
     def configure_recycle(self, recycle_time):
         """Configure recycle time."""
-        if self.platform.api_version < StrictVersion("0.9"):
+        if self.platform.api_version < version.parse("0.9"):
             return
         if recycle_time > 255:
             recycle_time = 255
@@ -113,7 +113,7 @@ class LisySimpleLamp(LightPlatformSoftwareFade):
     __slots__ = ["platform", "_state"]
 
     def __init__(self, number, platform):
-        """Initialise Lisy Light."""
+        """initialize Lisy Light."""
         super().__init__(number, platform.machine.clock.loop, 50)
         self.platform = platform
         self._state = None
@@ -151,7 +151,7 @@ class LisyModernLight(PlatformBatchLight):
     __slots__ = ["platform"]
 
     def __init__(self, number, platform, light_system):
-        """Initialise Lisy Light."""
+        """initialize Lisy Light."""
         super().__init__(number, light_system)
         self.platform = platform
 
@@ -183,7 +183,7 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
     __slots__ = ["platform", "_type_of_display", "_length_of_display"]
 
     def __init__(self, number: int, platform: "LisyHardwarePlatform", display_size) -> None:
-        """Initialise segment display."""
+        """initialize segment display."""
         super().__init__(number)
         self.platform = platform
         self._type_of_display = None
@@ -191,7 +191,7 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
 
     async def initialize(self):
         """Initialize segment display."""
-        if self.platform.api_version >= StrictVersion("0.9"):
+        if self.platform.api_version >= version.parse("0.9"):
             # display info for display
             display_info = await self.platform.send_byte_and_read_response(
                 LisyDefines.InfoGetDisplayDetails, bytearray([self.number]), 2)
@@ -236,7 +236,7 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
     def _set_text(self, text: SegmentDisplayText):
         """Set text to display."""
         assert self.platform.api_version is not None
-        if self.platform.api_version >= StrictVersion("0.9"):
+        if self.platform.api_version >= version.parse("0.9"):
             formatted_text = self._format_text(text)
             self.platform.send_byte(LisyDefines.DisplaysSetDisplay0To + self.number,
                                     bytearray([len(formatted_text)]) + formatted_text)
@@ -251,13 +251,13 @@ class LisySound(HardwareSoundPlatformInterface):
     __slots__ = ["platform"]
 
     def __init__(self, platform):
-        """Initialise hardware sound."""
+        """initialize hardware sound."""
         self.platform = platform        # type: LisyHardwarePlatform
 
     def play_sound(self, number: int, track: int = 1):
         """Play sound with number."""
         assert self.platform.api_version is not None
-        if self.platform.api_version >= StrictVersion("0.9"):
+        if self.platform.api_version >= version.parse("0.9"):
             self.platform.send_byte(LisyDefines.SoundPlaySound, bytes([track, number]))
         else:
             assert track == 1
@@ -268,7 +268,7 @@ class LisySound(HardwareSoundPlatformInterface):
         assert self.platform.api_version is not None
         flags = 1 if platform_options.get("loop", False) else 0
         flags += 2 if platform_options.get("no_cache", False) else 0
-        if self.platform.api_version >= StrictVersion("0.9"):
+        if self.platform.api_version >= version.parse("0.9"):
             self.platform.send_string(LisyDefines.SoundPlaySoundFile, chr(track) + chr(flags) + file)
         else:
             assert track == 1
@@ -279,7 +279,7 @@ class LisySound(HardwareSoundPlatformInterface):
         assert self.platform.api_version is not None
         flags = 1 if platform_options.get("loop", False) else 0
         flags += 2 if platform_options.get("no_cache", False) else 0
-        if self.platform.api_version >= StrictVersion("0.9"):
+        if self.platform.api_version >= version.parse("0.9"):
             self.platform.send_string(LisyDefines.SoundTextToSpeech, chr(track) + chr(flags) + text)
         else:
             assert track == 1
@@ -288,7 +288,7 @@ class LisySound(HardwareSoundPlatformInterface):
     def set_volume(self, volume: float, track: int = 1):
         """Set volume."""
         assert self.platform.api_version is not None
-        if self.platform.api_version >= StrictVersion("0.9"):
+        if self.platform.api_version >= version.parse("0.9"):
             self.platform.send_byte(LisyDefines.SoundSetVolume, bytes([track, int(volume * 100)]))
         else:
             assert track == 1
@@ -297,7 +297,7 @@ class LisySound(HardwareSoundPlatformInterface):
     def stop_all_sounds(self, track: int = 1):
         """Stop all sounds."""
         assert self.platform.api_version is not None
-        if self.platform.api_version >= StrictVersion("0.9"):
+        if self.platform.api_version >= version.parse("0.9"):
             self.platform.send_byte(LisyDefines.SoundStopAllSounds, bytes([track]))
         else:
             assert track == 1
@@ -317,7 +317,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                  "_light_system", "_send_length_of_command", "_lisy_version", "_hardware_name"]  # type: List[str]
 
     def __init__(self, machine) -> None:
-        """Initialise platform."""
+        """initialize platform."""
         super().__init__(machine)
         self._writer = None                 # type: Optional[asyncio.StreamWriter]
         self._reader = None                 # type: Optional[asyncio.StreamReader]
@@ -337,7 +337,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
         self.config = self.machine.config_validator.validate_config("lisy", self.machine.config['lisy'])
         self._configure_device_logging_and_debug("lisy", self.config)
-        self.api_version = None             # type: Optional[StrictVersion]
+        self.api_version = None             # type: Optional[version.parse]
         self._light_system = None
         self._send_length_of_command = self.config['send_length_after_command']
 
@@ -375,7 +375,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
     # pylint: disable-msg=too-many-statements
     # pylint: disable-msg=too-many-branches
     async def initialize(self):
-        """Initialise platform."""
+        """initialize platform."""
         async with self._bus_lock:
 
             await super().initialize()
@@ -439,7 +439,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 self._lisy_version = lisy_version.decode()
 
                 if api_version:
-                    self.api_version = StrictVersion(api_version.decode())
+                    self.api_version = version.parse(api_version.decode())
                 else:
                     self.error_log("Failed to read api_version from LISY. Got %s", api_version)
                     continue
@@ -481,12 +481,12 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
             self.send_byte(LisyDefines.InfoGetSwitchCount)
             self._number_of_switches = await self._read_byte()
 
-            if self.api_version >= StrictVersion("0.10"):
+            if self.api_version >= version.parse("0.10"):
                 # get number of modern lights
                 self.send_byte(LisyDefines.GetModernLightsCount)
                 # in api version 10+ this returns two bytes
                 self._number_of_modern_lights = await self._read_two_bytes()
-            elif self.api_version >= StrictVersion("0.9"):
+            elif self.api_version >= version.parse("0.9"):
                 # get number of modern lights
                 self.send_byte(LisyDefines.GetModernLightsCount)
                 self._number_of_modern_lights = await self._read_byte()
@@ -517,7 +517,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
                 self._inputs[str(number)] = state == 1
 
-            self._watchdog_task = self.machine.clock.loop.create_task(self._watchdog())
+            self._watchdog_task = asyncio.create_task(self._watchdog())
             self._watchdog_task.add_done_callback(Util.raise_exceptions)
 
             self.debug_log("Init of LISY done.")
@@ -539,7 +539,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
     async def start(self):
         """Start reading switch changes."""
-        self._poll_task = self.machine.clock.loop.create_task(self._poll())
+        self._poll_task = asyncio.create_task(self._poll())
         self._poll_task.add_done_callback(Util.raise_exceptions)
         if self._light_system:
             self._light_system.start()
@@ -772,8 +772,9 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         self._handle_software_flash(display)
         return display
 
-    def configure_hardware_sound_system(self) -> HardwareSoundPlatformInterface:
+    def configure_hardware_sound_system(self, platform_settings) -> HardwareSoundPlatformInterface:
         """Configure hardware sound."""
+        del platform_settings
         return LisySound(self)
 
     def send_byte(self, cmd: int, byte: bytes = None):

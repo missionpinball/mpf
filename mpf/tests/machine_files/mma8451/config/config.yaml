@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 
 hardware:
   platform: virtual
@@ -13,4 +13,3 @@ accelerometers:
         platform: mma8451
         platform_settings:
           i2c_platform: virtual
-

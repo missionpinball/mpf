@@ -15,7 +15,7 @@ class Attract(Mode):
     __slots__ = ["start_button_pressed_time", "start_hold_time", "start_buttons_held"]
 
     def __init__(self, *args, **kwargs):
-        """Initialise mode."""
+        """initialize mode."""
         super().__init__(*args, **kwargs)
 
         self.start_button_pressed_time = 0.0

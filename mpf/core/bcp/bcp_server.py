@@ -1,4 +1,6 @@
 """Bcp server for clients which connect and disconnect randomly."""
+import asyncio
+
 from mpf.exceptions.runtime_error import MpfRuntimeError
 
 from mpf.core.utility_functions import Util
@@ -12,7 +14,7 @@ class BcpServer(MpfController):
     config_name = "bcp_server"
 
     def __init__(self, machine, ip, port, server_type):
-        """Initialise BCP server."""
+        """initialize BCP server."""
         super().__init__(machine)
         self._server = None
         self._ip = ip
@@ -24,7 +26,7 @@ class BcpServer(MpfController):
         try:
             self._server = await self.machine.clock.start_server(
                 self._accept_client, self._ip, self._port)
-        except IOError as e:
+        except OSError as e:
             raise MpfRuntimeError("Failed to bind BCP Socket to {} on port {}. "
                                   "Is there another application running on that port?".format(self._ip, self._port), 1,
                                   "MPF BCP Server") from e

@@ -28,7 +28,7 @@ class Dmd(SystemWideDevice):
         machine.bcp.interface.register_command_callback("dmd_frame", partial(cls._bcp_receive_dmd_frame, machine))
 
     def __init__(self, machine, name):
-        """Initialise DMD."""
+        """initialize DMD."""
         self.hw_device = None
         self.platform = None        # type: DmdPlatform
         super().__init__(machine, name)

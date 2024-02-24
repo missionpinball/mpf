@@ -19,7 +19,7 @@ class Flipper(SystemWideDevice):
     Contains several methods for actions that can be performed on this flipper,
     like :meth:`enable`, :meth:`disable`, etc.
 
-    Flippers have several options, including player buttons, EOS swtiches,
+    Flippers have several options, including player buttons, EOS switches,
     multiple coil options (pulsing, hold coils, etc.)
 
     Args:
@@ -35,7 +35,7 @@ class Flipper(SystemWideDevice):
     class_label = 'flipper'
 
     def __init__(self, machine, name):
-        """Initialise flipper."""
+        """initialize flipper."""
         super().__init__(machine, name)
 
         self._enabled = False
@@ -125,7 +125,7 @@ class Flipper(SystemWideDevice):
 
         To prevent multiple rules at the same time we prioritize disable > enable.
         """
-        del kwargs
+        self.debug_log("Disabling via event callback. kwargs: %s", kwargs)
         self.disable()
 
     def disable(self):
@@ -261,6 +261,8 @@ class Flipper(SystemWideDevice):
         Note this method will keep this flipper enabled until you call
         sw_release().
         """
+        self.debug_log('sw_flip')
+
         if not self._enabled:
             return
 
@@ -283,6 +285,7 @@ class Flipper(SystemWideDevice):
 
         See the documentation for sw_flip() for details.
         """
+        self.debug_log('sw_release')
         self._sw_flipped = False
 
         # disable the flipper coil(s)

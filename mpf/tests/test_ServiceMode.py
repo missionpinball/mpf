@@ -141,7 +141,15 @@ class TestServiceMode(MpfFakeGameTestCase):
 
         self.hit_and_release_switch("s_service_up")
         self.advance_time_and_run()
+        self.assertEventCalledWith("service_menu_selected", label='Audio Menu')
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
         self.assertEventCalledWith("service_menu_selected", label='Diagnostics Menu')
+
+        self.hit_and_release_switch("s_service_down")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_menu_selected", label='Audio Menu')
 
         self.hit_and_release_switch("s_service_down")
         self.advance_time_and_run()

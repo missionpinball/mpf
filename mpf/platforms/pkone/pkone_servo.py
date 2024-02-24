@@ -17,7 +17,7 @@ class PKONEServo(ServoPlatformInterface):
     __slots__ = ["number", "platform"]
 
     def __init__(self, number: PKONEServoNumber, platform: "PKONEHardwarePlatform"):
-        """Initialise servo."""
+        """initialize servo."""
         self.number = number
         self.platform = platform
 

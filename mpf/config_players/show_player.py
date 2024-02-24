@@ -20,7 +20,7 @@ class ShowPlayer(DeviceConfigPlayer):
     __slots__ = ["_actions"]
 
     def __init__(self, machine):
-        """Initialise show player."""
+        """initialize show player."""
         super().__init__(machine)
         self._actions = {
             'play': self._play,
@@ -102,9 +102,10 @@ class ShowPlayer(DeviceConfigPlayer):
         start_step = show_settings['start_step'].evaluate(placeholder_args)
         start_running = show_settings['start_running'].evaluate(placeholder_args)
         show_tokens = {k: v.evaluate(placeholder_args) for k, v in show_settings['show_tokens'].items()}
+        speed = show_settings['speed'].evaluate(placeholder_args)
 
         show_config = self.machine.show_controller.create_show_config(
-            show, show_settings['priority'], show_settings['speed'], show_settings['loops'], show_settings['sync_ms'],
+            show, show_settings['priority'], speed, show_settings['loops'], show_settings['sync_ms'],
             show_settings['manual_advance'], show_tokens, show_settings['events_when_played'],
             show_settings['events_when_stopped'], show_settings['events_when_looped'],
             show_settings['events_when_paused'], show_settings['events_when_resumed'],
@@ -128,9 +129,10 @@ class ShowPlayer(DeviceConfigPlayer):
 
         start_step = show_settings['start_step'].evaluate(placeholder_args)
         show_tokens = {k: v.evaluate(placeholder_args) for k, v in show_settings['show_tokens'].items()}
+        speed = show_settings['speed'].evaluate(placeholder_args)
 
         show_config = self.machine.show_controller.create_show_config(
-            show, show_settings['priority'], show_settings['speed'], show_settings['loops'], show_settings['sync_ms'],
+            show, show_settings['priority'], speed, show_settings['loops'], show_settings['sync_ms'],
             show_settings['manual_advance'], show_tokens, show_settings['events_when_played'],
             show_settings['events_when_stopped'], show_settings['events_when_looped'],
             show_settings['events_when_paused'], show_settings['events_when_resumed'],
@@ -195,10 +197,9 @@ class ShowPlayer(DeviceConfigPlayer):
         del show
         del queue
         del start_time
-        del placeholder_args
         if key in instance_dict:
             instance_dict[key].update(
-                speed=show_settings.get('speed'),
+                speed=show_settings['speed'].evaluate(placeholder_args),
                 manual_advance=show_settings.get('manual_advance')
             )
 

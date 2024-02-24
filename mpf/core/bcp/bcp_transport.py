@@ -18,7 +18,7 @@ class BcpTransportManager:
     __slots__ = ["_machine", "_transports", "_readers", "_handlers"]
 
     def __init__(self, machine):
-        """Initialise BCP transport manager."""
+        """initialize BCP transport manager."""
         self._machine = machine     # type: MachineController
         self._transports = []
         self._readers = {}
@@ -53,7 +53,7 @@ class BcpTransportManager:
         while True:
             try:
                 cmd, kwargs = await transport.read_message()
-            except IOError:
+            except OSError:
                 self.unregister_transport(transport)
                 return
 
@@ -101,7 +101,7 @@ class BcpTransportManager:
         """Send command to a specific bcp client."""
         try:
             client.send(bcp_command, kwargs)
-        except IOError:
+        except OSError:
             client.stop()
             self.unregister_transport(client)
 

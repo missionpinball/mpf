@@ -28,7 +28,7 @@ class Shot(EnableDisableMixin, ModeDevice):
                  "_player_var_name"]
 
     def __init__(self, machine, name):
-        """Initialise shot."""
+        """initialize shot."""
         # If this device is setup in a machine-wide config, make sure it has
         # a default enable event.
         self._player_var_name = "shot_{}".format(name)
@@ -80,14 +80,15 @@ class Shot(EnableDisableMixin, ModeDevice):
         self._handlers = []
         for switch in self.config['switches']:
             self._handlers.append(self.machine.events.add_handler("{}_active".format(switch.name),
-                                                                  self.event_hit, priority=self.mode.priority,
+                                                                  self.event_hit,
+                                                                  priority=self.mode.priority + self.config['priority'],
                                                                   blocking_facility="shot"))
 
         for switch in list(self.config['delay_switch'].keys()):
             self._handlers.append(self.machine.events.add_handler("{}_active".format(switch.name),
                                                                   self._delay_switch_hit,
                                                                   switch_name=switch.name,
-                                                                  priority=self.mode.priority,
+                                                                  priority=self.mode.priority + self.config['priority'],
                                                                   blocking_facility="shot"))
 
     def _remove_switch_handlers(self):
@@ -281,7 +282,8 @@ class Shot(EnableDisableMixin, ModeDevice):
         if self.profile.config['block']:
             min_priority = kwargs.get("_min_priority", {"all": 0})
             min_shots = min_priority.get("shot", 0)
-            min_priority["shot"] = self.mode.priority if self.mode.priority > min_shots else min_shots
+            shot_priority = self.mode.priority + self.config["priority"]
+            min_priority["shot"] = shot_priority if shot_priority > min_shots else min_shots
             return {"_min_priority": min_priority}
 
         return None

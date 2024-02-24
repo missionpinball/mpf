@@ -17,7 +17,7 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
     __slots__ = ["config", "platform", "serial"]
 
     def __init__(self, machine):
-        """Initialise Pololu Servo Controller platform."""
+        """initialize Pololu Servo Controller platform."""
         super().__init__(machine)
         self.config = self.machine.config_validator.validate_config("pololu_maestro",
                                                                     self.machine.config.get('pololu_maestro', {}))
@@ -31,7 +31,7 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
         return '<Platform.Pololu_Maestro>'
 
     async def initialize(self):
-        """Initialise platform."""
+        """initialize platform."""
         await super().initialize()
         self.serial = serial.Serial(self.config['port'])
 
@@ -41,13 +41,14 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
             self.serial.close()
             self.serial = None
 
-    async def configure_servo(self, number: str):
+    async def configure_servo(self, number: str, config: dict):
         """Configure a servo device in platform.
 
         Args:
         ----
             number: Number of the servo.
         """
+        del config
         try:
             controller_str, number_str = number.split("-")
         except ValueError:
@@ -64,7 +65,7 @@ class PololuServo(ServoPlatformInterface):
     __slots__ = ["log", "number", "controller_number", "config", "serial", "cmd_header"]
 
     def __init__(self, controller_number, number, config, serial_port):
-        """Initialise Pololu servo."""
+        """initialize Pololu servo."""
         self.log = logging.getLogger('PololuServo')
         self.number = number
         self.controller_number = controller_number

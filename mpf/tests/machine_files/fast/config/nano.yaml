@@ -1,0 +1,196 @@
+#config_version=6
+
+# Config file for FAST Nano Controller I/O board testing
+
+mpf:
+  report_crashes: never
+
+hardware:
+    platform: fast
+
+fast:
+    net:
+        port: com6
+        controller: nano
+        io_loop:
+            3208:
+                model: FP-I/O-3208
+                order: 1
+            '0804':
+                model: FP-I/O-0804
+                order: 2
+            io1616_1:  # mixed letters / numbers with underscore works
+                model: FP-I/O-1616
+                order: 3
+            '1616_2':  # only numbers with underscore requires quotes
+                model: FP-I/O-1616
+                order: 4
+    rgb:
+        port: com5
+
+switches:
+    s_test:
+        number: 3208-7  # 0x07
+        platform_settings:
+            debounce_open: 26
+            debounce_close: 5
+    s_test_nc:
+        number: 3208-26  # 0x1A
+        type: 'NC'
+    s_slingshot_test:
+        number: 3208-22 # 0x16
+    s_flipper:
+        number: 3208-1 # 0x01
+    s_flipper_eos:
+        number: 3208-2 # 0x02
+    s_autofire:
+        number: 3208-3 # 0x03
+    s_test3:
+        number: 1616_2-1  # 0x39
+    s_nux_up:
+        number: 3208-11  #0x0B
+    s_nux_down:
+        number: 3208-12  #0x0C
+
+digital_outputs:
+  c_nux_motor:  #0x01
+    number: 3208-1
+    type: driver
+
+motors:
+  motorized_drop_target_bank:
+    motor_left_output: c_nux_motor
+    position_switches:
+      up: s_nux_up
+      down: s_nux_down
+    reset_position: up
+    go_to_position:
+      go_up: up
+      go_down: down
+
+coils:
+    c_test:               # DN:04,81,00,10,17,FF,00,00,1B
+        number: 3208-4
+        default_pulse_ms: 23
+        platform_settings:
+            recycle_ms: 27
+    c_test_allow_enable:  # DN:06,81,00,10,17,FF,00,FF,00
+        number: 3208-6
+        default_pulse_ms: 23
+        max_hold_power: 1.0
+        allow_enable: true
+    c_slingshot_test:     # DN:07,81,00,10,0A,FF,00,00,00
+        number: 3208-7
+    c_pulse_pwm_mask:   # DN:11,81,00,10,0A,AA,00,92,00
+        number: io1616_1-5
+        default_pulse_power: 0.53
+        default_hold_power: 0.40
+    c_long_pulse:         # DN:12,81,00,70,0A,FF,14,FF,00
+        number: io1616_1-6
+        max_hold_power: 1.0
+        platform_settings:
+            pwm2_ms: 2000
+    c_hold_ssm:           # DN:13,81,00,10,0A,FF,00,88,00
+        number: io1616_1-7
+        default_hold_power: 0.25
+    c_timed_enable:       # DN:16,81,00,10,14,FF,00,88,00
+        number: io1616_1-10
+        default_pulse_ms: 20
+        default_timed_enable_ms: 200
+        default_hold_power: 0.25
+    c_default_timed_enable:
+        number: io1616_1-11 # DN:17,81,00,10,14,FF,00,88,00
+        default_pulse_ms: 20
+        default_timed_enable_ms: 200
+        default_hold_power: 0.25
+        pulse_with_timed_enable: true
+    c_flipper_main:         # DN:20,81,00,10,0A,FF,00,01,00
+        number: 1616_2-4
+        default_pulse_ms: 10
+        default_hold_power: 0.125
+    c_flipper_hold:         # DN:21,81,00,10,0A,FF,00,01,00
+        number: 1616_2-5
+        default_hold_power: 0.125
+
+autofire_coils:
+    ac_slingshot_test:
+        coil: c_slingshot_test
+        switch: s_slingshot_test
+    ac_inverted_switch:
+        coil: c_slingshot_test
+        switch: s_test_nc
+    ac_same_switch1:
+        coil: c_test
+        switch: s_autofire
+        enable_events: ac_same_switch
+    ac_same_switch2:
+        coil: c_test_allow_enable
+        switch: s_autofire
+        enable_events: ac_same_switch
+    ac_broken_combination:
+        coil: c_flipper_hold
+        switch: s_slingshot_test
+    ac_different_boards:
+        coil: c_flipper_hold
+        switch: s_test
+    ac_board_3:
+        coil: c_flipper_hold
+        switch: s_test3
+
+flippers:
+    f_test_single:
+        debug: true
+        main_coil_overwrite:
+            pulse_ms: 11
+        main_coil: c_flipper_main
+        activation_switch: s_flipper
+
+    f_test_hold:
+        debug: true
+        main_coil: c_flipper_main
+        hold_coil: c_flipper_hold
+        activation_switch: s_flipper
+
+    f_test_hold_eos:
+        debug: true
+        main_coil: c_flipper_main
+        hold_coil: c_flipper_hold
+        activation_switch: s_flipper
+        eos_switch: s_flipper_eos
+        use_eos: true
+
+lights:
+  old_style_number:
+    number: 0  # 0x00
+  test_led:
+    number: 3-24 #0x97, int 151
+  test_led2:
+    previous: test_led    #0x98, int 152
+    type: grb
+  l_o_circle:
+    number: 2-11 # 0x4A, int 74
+    type: grb
+  test_rgbw1:
+    start_channel: 33-0  # 0x21, int 33
+    type: rgbw
+  test_rgbw2:
+    start_channel: 34-1
+    type: rgbw
+  test_rgbw3:
+    start_channel: 35-2
+    type: rgbw
+  test_rgbw4:
+    previous: test_rgbw3
+    type: rgbw
+  test_rgbw5:
+    channels:
+      red:
+        number: 40-0
+      green:
+        number: 40-2
+      blue:
+        number: 40-1
+      white:
+        number: 41-2
+  test_max_1_based:
+    number: 4-64

@@ -25,7 +25,7 @@ class ConfigProcessor:
     __slots__ = ["log", "_load_cache", "_store_cache"]
 
     def __init__(self, load_cache, store_cache):
-        """Initialise config processor."""
+        """initialize config processor."""
         self.log = logging.getLogger("ConfigProcessor")
         self._load_cache = load_cache
         self._store_cache = store_cache
@@ -233,7 +233,7 @@ class ConfigProcessor:
 
     @staticmethod
     def get_expected_version(config_type: str) -> str:
-        """Return the expected config or show version tag, e.g. #config_version=5."""
+        """Return the expected config or show version tag, e.g. #config_version=6."""
         if config_type in ("machine", "mode"):
             return "#config_version={}".format(__config_version__)
         if config_type == "show":

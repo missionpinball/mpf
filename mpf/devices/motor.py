@@ -16,7 +16,7 @@ class Motor(SystemWideDevice):
     class_label = 'motor'
 
     def __init__(self, machine, name):
-        """Initialise motor."""
+        """initialize motor."""
         self._target_position = None
         self._last_position = None
         self.type = None

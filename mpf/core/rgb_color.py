@@ -170,7 +170,7 @@ class RGBColor:
     __slots__ = ["_color"]
 
     def __init__(self, color: Union["RGBColor", str, List[int], Tuple[int, int, int]] = None) -> None:
-        """Initialise color."""
+        """initialize color."""
         if isinstance(color, RGBColor):
             self._color = color.rgb
         elif isinstance(color, str):
@@ -182,7 +182,10 @@ class RGBColor:
                             "wrapped in quotation marks in your config: " +
                             '"{}"'.format(color))
         elif color:
-            self._color = (color[0], color[1], color[2])
+            try:
+                self._color = (color[0], color[1], color[2])
+            except IndexError:
+                raise ValueError(f"Invalid RGB color value provided: {color}. Do you need to add quotes around a color that starts or ends with zeros?")
         else:
             self._color = RGB_MIN
 

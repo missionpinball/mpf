@@ -14,7 +14,7 @@ class TwitchBot(LogMixin):
     """Adds Twitch chat room events."""
 
     def __init__(self, machine):
-        """Initialise Twitch client."""
+        """initialize Twitch client."""
         super().__init__()
         self.machine = machine      # type: MachineController
         self.configure_logging("twitch_client")

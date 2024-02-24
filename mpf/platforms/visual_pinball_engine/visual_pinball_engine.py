@@ -1,4 +1,5 @@
 """VPE platform."""
+import asyncio
 from typing import Optional, List
 
 from mpf.core.segment_mappings import TextToSegmentMapper, FOURTEEN_SEGMENTS
@@ -33,7 +34,7 @@ class VisualPinballEngineSwitch(SwitchPlatformInterface):
     """A switch in VPE."""
 
     def __init__(self, config, number, platform):
-        """Initialise switch."""
+        """initialize switch."""
         super().__init__(config, number, platform)
         self.state = self.config.invert
 
@@ -49,7 +50,7 @@ class VisualPinballEngineLight(LightPlatformInterface):
     __slots__ = ["platform", "clock", "config"]
 
     def __init__(self, number, platform, config):
-        """Initialise LED."""
+        """initialize LED."""
         super().__init__(number)
         self.platform = platform    # type: VisualPinballEnginePlatform
         self.clock = self.platform.machine.clock
@@ -95,7 +96,7 @@ class VisualPinballEngineDriver(DriverPlatformInterface):
     __slots__ = ["platform"]
 
     def __init__(self, config, number, platform):
-        """Initialise virtual driver to disabled."""
+        """initialize virtual driver to disabled."""
         super().__init__(config, number)
         self.platform = platform    # type: VisualPinballEnginePlatform
 
@@ -139,7 +140,7 @@ class VisualPinballEngineDmd(DmdPlatformInterface):
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, name, platform, color_mapping, width, height) -> None:
-        """Initialise virtual DMD."""
+        """initialize virtual DMD."""
         self.data = None        # type: Optional[bytes]
         self.brightness = 1.0   # type: Optional[float]
         self.name = name
@@ -180,7 +181,7 @@ class VisualPinballEngineSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInter
     __slots__ = ["platform", "length_of_display"]
 
     def __init__(self, number, display_size, platform):
-        """Initialise segment display."""
+        """initialize segment display."""
         super().__init__(number)
         self.platform = platform
         self.length_of_display = display_size
@@ -212,7 +213,7 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
                  "_configured_segment_displays"]
 
     def __init__(self, machine):
-        """Initialise VPE platform."""
+        """initialize VPE platform."""
         super().__init__(machine)
         self.config = self.machine.config_validator.validate_config("vpe", self.machine.config.get('vpe', {}))
         self._configure_device_logging_and_debug("VPE Platform", self.config)
@@ -286,7 +287,7 @@ class VisualPinballEnginePlatform(LightsPlatform, SwitchPlatform, DriverPlatform
         """Start listening for switch changes."""
         await super().start()
         self.platform_rpc.set_ready()
-        self._switch_poll_task = self.machine.clock.loop.create_task(self._switch_poll())
+        self._switch_poll_task = asyncio.create_task(self._switch_poll())
         self._switch_poll_task.add_done_callback(Util.raise_exceptions)
 
     async def _switch_poll(self):

@@ -28,7 +28,7 @@ class SpikeSwitch(SwitchPlatformInterface):
     __slots__ = ["node", "index", "platform_config", "_last_debounce"]
 
     def __init__(self, config, number, platform, platform_config):
-        """Initialise switch."""
+        """initialize switch."""
         super().__init__(config, number, platform)
         self.node, self.index = self.number.split("-")
         self.node = int(self.node)
@@ -93,7 +93,7 @@ class SpikeBacklight(LightPlatformSoftwareFade):
     __slots__ = ["platform"]
 
     def __init__(self, number, platform, loop, fade_interval_ms):
-        """Initialise backlight."""
+        """initialize backlight."""
         super().__init__(number, loop, fade_interval_ms)
         self.platform = platform        # type: SpikePlatform
 
@@ -129,7 +129,7 @@ class SpikeLight(PlatformBatchLight):
     __slots__ = ["node", "index", "platform", "_max_fade"]
 
     def __init__(self, number, platform, light_system):
-        """Initialise light."""
+        """initialize light."""
         super().__init__(number, light_system)
         node, index = number.split("-")
         self.node = int(node)
@@ -170,7 +170,7 @@ class SpikeDMD(DmdPlatformInterface):
     __slots__ = ["platform", "data", "new_frame_event", "dmd_task"]
 
     def __init__(self, platform):
-        """Initialise DMD."""
+        """initialize DMD."""
         self.platform = platform
         self.data = None
         self.new_frame_event = asyncio.Event()
@@ -244,7 +244,7 @@ class SpikeDriver(DriverPlatformInterface):
     __slots__ = ["platform", "node", "index", "_enable_task"]
 
     def __init__(self, config, number, platform):
-        """Initialise driver on Stern Spike."""
+        """initialize driver on Stern Spike."""
         super().__init__(config, number)
         self.platform = platform
         self.node, self.index = number.split("-")
@@ -329,7 +329,7 @@ class SpikeStepper(StepperPlatformInterface):
     __slots__ = ["number", "node", "stepper_id", "config", "platform", "_position", "light_index"]
 
     def __init__(self, number, config, platform):
-        """Initialise stepper."""
+        """initialize stepper."""
         self.number = number
         node, index = number.split("-", 2)
         self.node = int(node)
@@ -449,7 +449,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                  "node_firmware_version", "_query_nodes_task"]
 
     def __init__(self, machine):
-        """Initialise spike hardware platform."""
+        """initialize spike hardware platform."""
         super().__init__(machine)
         self._writer = None
         self._reader = None
@@ -867,7 +867,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         return hw_states
 
     async def initialize(self):
-        """Initialise platform."""
+        """initialize platform."""
         port = self.config['port']
         baud = self.config['baud']
         flow_control = self.config['flow_control']
@@ -879,18 +879,18 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
         await self._connect_to_hardware(port, baud, flow_control=flow_control)
 
-        self._poll_task = self.machine.clock.loop.create_task(self._poll())
+        self._poll_task = asyncio.create_task(self._poll())
         self._poll_task.add_done_callback(Util.raise_exceptions)
 
-        self._sender_task = self.machine.clock.loop.create_task(self._sender())
+        self._sender_task = asyncio.create_task(self._sender())
         self._sender_task.add_done_callback(Util.raise_exceptions)
 
         if self.config['use_send_key']:
-            self._send_key_task = self.machine.clock.loop.create_task(self._send_key())
+            self._send_key_task = asyncio.create_task(self._send_key())
             self._send_key_task.add_done_callback(Util.raise_exceptions)
 
         if self.config['periodically_query_nodes']:
-            self._query_nodes_task = self.machine.clock.loop.create_task(self._query_status_and_coil_current())
+            self._query_nodes_task = asyncio.create_task(self._query_status_and_coil_current())
             self._query_nodes_task.add_done_callback(Util.raise_exceptions)
 
         self._light_system = PlatformBatchLightSystem(self.machine.clock, self._send_multiple_light_update,
@@ -1301,7 +1301,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
             node = node_str[0]
             if node == 0:
-                # all nodes initialised
+                # all nodes initialized
                 break
 
             if node == 0xF0:

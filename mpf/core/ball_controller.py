@@ -20,7 +20,7 @@ class BallController(MpfController):
     __slots__ = ["delay", "num_balls_known", "_add_new_balls_task", "_captured_balls"]
 
     def __init__(self, machine: MachineController) -> None:
-        """Initialise ball controller.
+        """initialize ball controller.
 
         Args:
         ----
@@ -61,7 +61,7 @@ class BallController(MpfController):
             # there is no non-playfield device. end this.
             return
 
-        self._add_new_balls_task = self.machine.clock.loop.create_task(self._add_new_balls_to_playfield())
+        self._add_new_balls_task = asyncio.create_task(self._add_new_balls_to_playfield())
         self._add_new_balls_task.add_done_callback(Util.raise_exceptions)
 
     def _stop(self, **kwargs) -> None:
@@ -160,7 +160,7 @@ class BallController(MpfController):
         return balls
 
     def _initialize(self, **kwargs) -> None:
-        """Initialise ball controller."""
+        """initialize ball controller."""
         # If there are no ball devices, then the ball controller has no work to
         # do and will create errors, so we just abort.
         del kwargs

@@ -16,7 +16,7 @@ class HardwareSoundSystem(SystemWideDevice):
     __slots__ = ["hw_device", "_volume"]
 
     def __init__(self, machine, name):
-        """Initialise hardware sound system."""
+        """initialize hardware sound system."""
         super().__init__(machine, name)
         self.hw_device = None       # type: HardwareSoundPlatformInterface
         self.platform = None
@@ -28,7 +28,7 @@ class HardwareSoundSystem(SystemWideDevice):
         self.platform = self.machine.get_platform_sections(
             'hardware_sound_system', self.config['platform'])
         self.platform.assert_has_feature("hardware_sound_systems")
-        self.hw_device = self.platform.configure_hardware_sound_system()
+        self.hw_device = self.platform.configure_hardware_sound_system(self.config['platform_settings'])
 
     def play(self, sound_number: int, track: int = 1):
         """Play a sound."""

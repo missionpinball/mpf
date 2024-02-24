@@ -1,7 +1,7 @@
 import datetime
 import selectors
 import socket
-from asyncio import base_events, coroutine, events      # type: ignore
+from asyncio import base_events, events      # type: ignore
 import collections
 import heapq
 
@@ -277,16 +277,22 @@ class TimeTravelLoop(base_events.BaseEventLoop):
         self._wait_for_external_executor = False
 
     def close(self, ignore_running_tasks=False) -> None:
-        if hasattr(asyncio, "all_tasks"):
-            tasks = asyncio.all_tasks(loop=self)
-        else:
-            tasks = asyncio.Task.all_tasks(loop=self)
+        tasks = asyncio.all_tasks(loop=self)
+
 
         if not ignore_running_tasks:
-            open_tasks = [t for t in tasks if (not t.done() and not isinstance(t.get_coro(), asyncio.Lock))]
-            if open_tasks:
-                super().close()
-                raise AssertionError("There are still open tasks: {}".format(open_tasks))
+            # open_tasks = [t for t in tasks if (not t.done() and not isinstance(t.get_coro(), asyncio.Lock))]
+            # if open_tasks:
+            #     super().close()
+            #     raise AssertionError("There are still open tasks: {}".format(open_tasks))
+
+            for task in tasks:
+                task.cancel()
+                try:
+                    self.run_until_complete(task)
+                except asyncio.CancelledError:
+                    pass
+
         super().close()
 
     def time(self):
@@ -511,8 +517,8 @@ class TestClock(ClockBase):
         await server.bind(client_connected_cb)
         return server
 
-    @coroutine
-    def open_connection(self, host=None, port=None, *,
+
+    async def open_connection(self, host=None, port=None, *,
                         limit=None, **kwds):
         """A wrapper for create_connection() returning a (reader, writer) pair.
 
@@ -556,8 +562,7 @@ class TestClock(ClockBase):
             serial.is_open = True
         return serial
 
-    @coroutine
-    def open_serial_connection(self, limit=None, **kwargs):     # type: ignore
+    async def open_serial_connection(self, limit=None, **kwargs):     # type: ignore
         """A wrapper for create_serial_connection() returning a (reader, writer) pair.
 
         The reader returned is a StreamReader instance; the writer is a

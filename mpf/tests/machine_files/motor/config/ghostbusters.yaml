@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 
 switches:
     s_slimer_home:
@@ -19,9 +19,9 @@ motors:
         debug: True
         motor_left_output: c_slimer_motor_forward
         motor_right_output: c_slimer_motor_backward
-        position_switches:  !!omap
-            - home: s_slimer_home
-            - away: s_slimer_away
+        position_switches:
+            home: s_slimer_home
+            away: s_slimer_away
         reset_position: home
         go_to_position:
             slimer_home: home

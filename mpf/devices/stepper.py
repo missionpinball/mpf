@@ -1,4 +1,4 @@
-"""Implements a servo in MPF."""
+"""Implements a stepper in MPF."""
 import asyncio
 
 from typing import Optional
@@ -29,7 +29,7 @@ class Stepper(SystemWideDevice):
                  "_ball_search_old_target", "_is_homed", "_is_moving", "_move_task", "delay"]
 
     def __init__(self, machine, name):
-        """Initialise stepper."""
+        """initialize stepper."""
         self.hw_stepper = None          # type: Optional[StepperPlatformInterface]
         self.platform = None            # type: Optional[Stepper]
         self._target_position = 0       # in user units
@@ -55,6 +55,12 @@ class Stepper(SystemWideDevice):
                                             self.event_move_to_position,
                                             position=position)
 
+        for position in self.config['relative_positions']:
+            self.machine.events.add_handler(self.config['relative_positions'][position],
+                                            self.event_move_to_position,
+                                            position=position,
+                                            is_relative=True)
+
         if not self.platform.features['allow_empty_numbers'] and self.config['number'] is None:
             self.raise_config_error("Stepper must have a number.", 2)
 
@@ -71,7 +77,7 @@ class Stepper(SystemWideDevice):
             self.raise_config_error("Cannot use homing_mode switch without a homing_switch. Please add homing_switch or"
                                     " use homing_mode hardware.", 1)
 
-        self._move_task = self.machine.clock.loop.create_task(self._run())
+        self._move_task = asyncio.create_task(self._run())
         self._move_task.add_done_callback(Util.raise_exceptions)
 
     def validate_and_parse_config(self, config, is_mode_config, debug_prefix: str = None):
@@ -85,7 +91,7 @@ class Stepper(SystemWideDevice):
         return config
 
     async def _run(self):
-        # wait for switches to be initialised
+        # wait for switches to be initialized
         await self.machine.events.wait_for_event("init_phase_3")
 
         # first home the stepper
@@ -97,11 +103,18 @@ class Stepper(SystemWideDevice):
 
         while True:
             # wait until we should be moving
+            self.debug_log("Waiting for stepper to move...")
             await self._is_moving.wait()
+            if not self._is_homed:
+                await self._home()
+                self._post_ready_event()
+                continue
+            self.debug_log("Moving the stepper!")
             self._is_moving.clear()
             # store target position in local variable since it may change in the meantime
             target_position = self._target_position
             delta = target_position - self._current_position
+            self.debug_log("Stepper moving relative %s to hit target %s from %s", delta, target_position, self._current_position)
             if delta != 0:
                 self.debug_log("Got move command. Current position: %s Target position: %s Delta: %s",
                                self._current_position, target_position, delta)
@@ -118,8 +131,8 @@ class Stepper(SystemWideDevice):
             self.debug_log("Move completed")
 
     def _move_to_absolute_position(self, position):
-        """Move servo to position."""
-        self.debug_log("Moving to position %s", position)
+        """Move stepper to position."""
+        self.debug_log("Moving stepper %s to absolute position %s", self.hw_stepper, position)
         if self.config['pos_min'] <= position <= self.config['pos_max']:
             self._target_position = position
             self._is_moving.set()
@@ -169,6 +182,14 @@ class Stepper(SystemWideDevice):
             self._move_task = None
 
     @event_handler(1)
+    def event_home(self, **kwargs):
+        """Event handler for home event."""
+        del kwargs
+        self._target_position = 0
+        self._is_homed = False
+        self._is_moving.set()
+
+    @event_handler(1)
     def event_reset(self, **kwargs):
         """Event handler for reset event."""
         del kwargs
@@ -179,20 +200,21 @@ class Stepper(SystemWideDevice):
         self._move_to_absolute_position(self.config['reset_position'])
 
     @event_handler(5)
-    def event_move_to_position(self, position=None, **kwargs):
+    def event_move_to_position(self, position=None, is_relative=False, **kwargs):
         """Event handler for move_to_position event."""
         del kwargs
         if position is None:
             raise AssertionError("move_to_position event is missing a position.")
 
-        self.move_to_position(position)
+        self.move_to_position(position, is_relative)
 
-    def move_to_position(self, position):
+    def move_to_position(self, position, is_relative=False):
         """Move stepper to a position."""
-        self._target_position = position
+        self.debug_log("Stepper at %s moving to %s position %s", self._current_position, "relative" if is_relative else "absolute", position)
+        self._target_position = (self._current_position + position) if is_relative else position
         if self._ball_search_started:
             return
-        self._move_to_absolute_position(position)
+        self._move_to_absolute_position(self._target_position)
 
     def _ball_search_start(self, **kwargs):
         del kwargs

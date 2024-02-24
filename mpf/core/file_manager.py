@@ -20,10 +20,11 @@ class FileManager:
     log = logging.getLogger('FileManager')
     file_interfaces = dict()    # type: Dict[str, YamlInterface]
     initialized = False
+    is_busy = False
 
     @classmethod
     def init(cls):
-        """Initialise file interfaces."""
+        """initialize file interfaces."""
         cls.file_interfaces[".yaml"] = YamlInterface()
         cls.file_interfaces[".bin"] = PickleInterface()
 
@@ -85,12 +86,12 @@ class FileManager:
             file = FileManager.locate_file(filename)
         except FileNotFoundError:
             if halt_on_error:
-                raise IOError("Could not find file {}".format(filename))
+                raise OSError("Could not find file {}".format(filename))
 
             return dict()
 
         if not file and halt_on_error:
-            raise IOError(
+            raise OSError(
                 "Could not find file '{}'. Resolved abs path to {}".format(
                     filename, os.path.abspath(filename)))
 
@@ -109,6 +110,12 @@ class FileManager:
         if not FileManager.initialized:
             FileManager.init()
 
+        # FileManager is a singleton and many threads may attempt to write
+        # concurrently. Ruamel has a known issue where concurrent writes
+        # on a YamlInterface will throw. Set a flag to prevent multiple
+        # data writes concurrently.
+        # TODO: Create FileManager instances for each DataManager instance.
+        FileManager.is_busy = True
         ext = os.path.splitext(filename)[1]
 
         # save to temp file and move afterwards. prevents broken files
@@ -121,3 +128,4 @@ class FileManager:
 
         # move temp file
         os.replace(temp_file, filename)
+        FileManager.is_busy = False

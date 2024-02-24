@@ -1,0 +1,49 @@
+#config_version=6
+
+hardware:
+    platform: fast
+
+fast:
+  aud:
+    port: com9
+    main_steps: 30
+    sub_steps: 20
+    headphones_steps: 10
+    default_main_volume: 8
+    default_sub_volume: 9
+    default_headphones_volume: 10
+    max_hw_volume_main: 63
+    max_hw_volume_sub: 50
+    max_hw_volume_headphones: 40
+    link_sub_to_main: false
+    link_headphones_to_main: false
+    watchdog: 0
+    pin2_pulse_time: 99
+    power_pulse_time: 98
+    reset_pulse_time: 97
+
+variable_player:
+  increase_main_volume:
+    fast_audio_main_volume:
+      action: add_machine
+      int: 1
+  decrease_main_volume:
+    fast_audio_main_volume:
+      action: add_machine
+      int: -1
+  increase_sub_volume:
+    fast_audio_sub_volume:
+      action: add_machine
+      int: 1
+  decrease_sub_volume:
+    fast_audio_sub_volume:
+      action: add_machine
+      int: -1
+  increase_headphones_volume:
+    fast_audio_headphones_volume:
+      action: add_machine
+      int: 1
+  decrease_headphones_volume:
+    fast_audio_headphones_volume:
+      action: add_machine
+      int: -1

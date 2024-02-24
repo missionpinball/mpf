@@ -17,7 +17,7 @@ class Credits(Mode):
                  "pricing_tiers_wrap_around", "_switch_handlers"]
 
     def __init__(self, *args, **kwargs):
-        """Initialise credits mode."""
+        """initialize credits mode."""
         self.data_manager = None
         self.earnings = None
 
@@ -32,7 +32,7 @@ class Credits(Mode):
         super().__init__(*args, **kwargs)
 
     def mode_init(self):
-        """Initialise mode."""
+        """initialize mode."""
         self.data_manager = self.machine.create_data_manager('earnings')
         self.earnings = self.data_manager.get_data()
 

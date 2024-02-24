@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 mode:
   code: mpf.modes.tilt.code.tilt.Tilt
   priority: 1000000
@@ -7,7 +7,7 @@ mode:
   stop_on_ball_end: False
 
 # Instructions on how to use this mode:
-# http://docs.missionpinball.org/en/latest/game_logic/tilt.html
+# https://missionpinball.org/game_logic/tilt
 
 tilt:
   tilt_warning_switch_tag: tilt_warning

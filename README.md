@@ -8,51 +8,43 @@ Mission Pinball Framework (MPF)
 What is Mission Pinball Framework?
 ----------------------------------
 
-Mission Pinball Framework (MPF) is an open source, cross-platform software for powering real pinball
-machines in restaurants, bars, arcades, and elsewhere. MPF is developed by fun people under the MIT license, and supported by a vibrant pinball-loving community. It is a work in progress we are actively developing. We review commits weekly.
+Mission Pinball Framework (MPF) is open source, cross-platform software for powering real pinball
+machines. MPF is a community-developed project released under the MIT license. It's supported by volunteers in their spare time.
 
 [![Coverage Status](https://coveralls.io/repos/missionpinball/mpf/badge.svg?branch=dev&service=github)](https://coveralls.io/github/missionpinball/mpf?branch=dev)
 [![Test Status](https://github.com/missionpinball/mpf/actions/workflows/run_tests.yml/badge.svg)](https://github.com/missionpinball/mpf/actions/workflows/run_tests.yml)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1687/badge)](https://bestpractices.coreinfrastructure.org/projects/1687)
 
+Visit the MPF project homepage at https://missionpinball.org. Additional related projects exist as part of the MPF ecosystem, including the "MPF Monitor" which is a graphical application that lets you simulate pinball hardware, and "MPF-MC" which is a media controller which provides graphics and sounds for pinball machines.
 
-Technology and Compatibility
-----------------------------
+Documentation
+-------------
 
-You can use MPF to power your own custom-built machine, or to update software in existing Williams, Bally,
-Stern, or Data East pinball machines. MPF interfaces with machines via modern pinball controller hardware, including:
-
-* FAST Pinball controllers
-* Multimorphic P-ROC or P3-ROC systems
-* Open Pinball Project (OPP) open source hardware
-* LISY Platform
-* Penny K Arcade PKONE
-* Arduino Pinball Controller
-* Plus many more systems & devices!
-
-MPF is written in Python. It can be run on Windows, Mac, Linux, and Raspberry Pi host machines using the same code and configurations.
-
-Visit the MPF project homepage at http://missionpinball.org.
-
-<em>See also the [MPF Media Controller](https://github.com/missionpinball/mpf-mc/) (based on [Kivy](http://kivy.org)),
-which is used to control graphics and sounds, including high-res LCD displays, classic DMDs, and modern RGB LED DMDs.</em>
-
-Installation and Documentation
-------------------------------
-* Getting started tutorial: http://docs.missionpinball.org/en/latest/tutorial/
-* Installation: http://docs.missionpinball.org/en/latest/install/
-* User documentation: http://docs.missionpinball.org
-* Developer documentation: http://developer.missionpinball.org/
+* User Docs (installation, tutorials, & reference): https://missionpinball.org
 
 Support
 -------
-Visit the user support forum at https://groups.google.com/forum/#!forum/mpf-users.
+
+MPF is an open source community project which has no official support. Some MPF users participate in the MPF-Users Google group or GitHub Discussion. Links [here](https://missionpinball.org/community/).
+
+Individual pinball hardware companies may provide additional support for users of their hardware, often via their own Slack, Discord, or other chat groups. If you get stuck, you can ask for help in the MPF-users group, or you reach out to your hardware provider.
+
+Maintenance, Pull Requests, & Bug Fixes
+---------------------------------------
+
+As a community project, we welcome pull requests and bug fixes. However, we do not have the resources to provide support for MPF. If you are interested in becoming a maintainer, please contact us at brian@missionpinball.org.
+
+Bugs or other issues related to MPF itself can be posted to the [MPF Discussions page on GitHub](https://missionpinball.org/community/).
 
 Contributing
 ------------
-MPF is a passion project supported by an awesome pinball-loving community. If you're a Python coder, documentation writer, or pinball proponent, join the community! Drop us a line in the forum, or make a change and submit a pull request. For more information about contributing see the [Contributing Code](http://docs.missionpinball.org/en/latest/about/contributing_to_mpf.html)
-and [Contributing Documentation](http://docs.missionpinball.org/en/latest/about/contributing_to_mpf_docs.html) pages.
+
+Individual pinball hardware makers are responsible for their own platform interface maintenance and contributions.
+
+MPF is a passion project created and maintained by volunteers. If you're a Python coder, documentation writer, or pinball maker, feel free to make a change and submit a pull request. For more information about contributing see the [Contributing Code](https://missionpinball.org/about/contributing_to_mpf/)
+and [Contributing Documentation](https://missionpinball.org/about/help_docs/) pages.
 
 License
 -------
+
 MPF and related projects are released under the MIT License. Refer to the LICENSE file for details. Docs are released under Creative Commons CC BY 4.0.

@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 # This file contains configuration options for the MPF itself, including
 # default settings for your machine-wide game-specific config files.
 
@@ -6,20 +6,20 @@
 # config files there to override these defaults.
 
 mpf:
-    core_modules: !!omap
-        - events: mpf.core.events.EventManager
-        - text_ui: mpf.core.text_ui.TextUi
-        - mode_controller: mpf.core.mode_controller.ModeController
-        - device_manager: mpf.core.device_manager.DeviceManager
-        - switch_controller: mpf.core.switch_controller.SwitchController
-        - ball_controller: mpf.core.ball_controller.BallController
-        - show_controller: mpf.core.show_controller.ShowController
-        - bcp: mpf.core.bcp.bcp.Bcp
-        - service: mpf.core.service_controller.ServiceController
-        - settings: mpf.core.settings_controller.SettingsController
-        - placeholder_manager: mpf.core.placeholder_manager.PlaceholderManager
-        - light_controller: mpf.core.light_controller.LightController
-        - platform_controller: mpf.core.platform_controller.PlatformController
+    core_modules:
+        events: mpf.core.events.EventManager
+        text_ui: mpf.core.text_ui.TextUi
+        mode_controller: mpf.core.mode_controller.ModeController
+        device_manager: mpf.core.device_manager.DeviceManager
+        switch_controller: mpf.core.switch_controller.SwitchController
+        ball_controller: mpf.core.ball_controller.BallController
+        show_controller: mpf.core.show_controller.ShowController
+        bcp: mpf.core.bcp.bcp.Bcp
+        service: mpf.core.service_controller.ServiceController
+        settings: mpf.core.settings_controller.SettingsController
+        placeholder_manager: mpf.core.placeholder_manager.PlaceholderManager
+        light_controller: mpf.core.light_controller.LightController
+        platform_controller: mpf.core.platform_controller.PlatformController
 
     config_players:
         coil: mpf.config_players.coil_player.CoilPlayer
@@ -85,6 +85,7 @@ mpf:
         timers: mpf.devices.timer.Timer
         segment_displays: mpf.devices.segment_display.segment_display.SegmentDisplay
         sequence_shots: mpf.devices.sequence_shot.SequenceShot
+        speedometers: mpf.devices.speedometer.Speedometer
         hardware_sound_systems: mpf.devices.hardware_sound_system.HardwareSoundSystem
         steppers: mpf.devices.stepper.Stepper
         state_machines: mpf.devices.state_machine.StateMachine
@@ -134,7 +135,6 @@ mpf:
         visual_pinball_engine: mpf.platforms.visual_pinball_engine.visual_pinball_engine.VisualPinballEnginePlatform
 
     paths:
-        scriptlets: scriptlets
         audits: data/audits.yaml
         machine_vars: data/machine_vars.yaml
         high_scores: data/high_scores.yaml
@@ -217,18 +217,6 @@ p_roc:
     lamp_matrix_strobe_time: 100ms
     watchdog_time: 1s
     use_watchdog: True
-
-fast:
-    ports: com3, com4, com5
-    baud: 921600
-    watchdog: 1s
-    default_normal_debounce_close: 4ms
-    default_normal_debounce_open: 4ms
-    default_quick_debounce_close: 2ms
-    default_quick_debounce_open: 2ms
-    net_buffer: 10
-    rgb_buffer: 3
-    dmd_buffer: 3
 
 spike:
     wait_times:

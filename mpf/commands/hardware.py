@@ -45,9 +45,9 @@ class Command(MpfCommandLineParser):
 
     def scan(self):
         """Scan hardware."""
-        self.mpf.clock.loop.run_until_complete(self.mpf.initialise_core_and_hardware())
+        self.mpf.clock.loop.run_until_complete(self.mpf.initialize_core_and_hardware())
         if self.mpf.thread_stopper.is_set():
-            raise AssertionError("Initialisation failed!")
+            raise AssertionError("initialization failed!")
 
         for name, platform in self.mpf.hardware_platforms.items():
             print("{}:".format(name))
@@ -58,9 +58,9 @@ class Command(MpfCommandLineParser):
 
     def firmware_update(self):
         """Upgrade firmware of platforms."""
-        self.mpf.clock.loop.run_until_complete(self.mpf.initialise_core_and_hardware())
+        self.mpf.clock.loop.run_until_complete(self.mpf.initialize_core_and_hardware())
         if self.mpf.thread_stopper.is_set():
-            raise AssertionError("Initialisation failed!")
+            raise AssertionError("initialization failed!")
 
         for name, platform in self.mpf.hardware_platforms.items():
             print("{}:".format(name))
@@ -140,9 +140,9 @@ class Command(MpfCommandLineParser):
 
     def benchmark(self):
         """Benchmark hardware."""
-        self.mpf.clock.loop.run_until_complete(self.mpf.initialise())
+        self.mpf.clock.loop.run_until_complete(self.mpf.initialize())
         if self.mpf.thread_stopper.is_set():
-            raise AssertionError("Initialisation failed!")
+            raise AssertionError("initialization failed!")
 
         print(self.mpf.switches, self.mpf.coils)
         config = self.mpf.config_validator.validate_config("hardware_benchmark",

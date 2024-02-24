@@ -17,7 +17,7 @@ class LightPlatformInterface(metaclass=abc.ABCMeta):
     __slots__ = ["number"]
 
     def __init__(self, number: Any) -> None:
-        """Initialise light."""
+        """initialize light."""
         self.number = number
 
     @abc.abstractmethod
@@ -65,7 +65,7 @@ class LightPlatformDirectFade(LightPlatformInterface, metaclass=abc.ABCMeta):
     __slots__ = ["loop", "task"]
 
     def __init__(self, number, loop: AbstractEventLoop) -> None:
-        """Initialise light."""
+        """initialize light."""
         super().__init__(number)
         self.loop = loop
         self.task = None    # type: Optional[asyncio.Task]
@@ -142,7 +142,7 @@ class LightPlatformSoftwareFade(LightPlatformDirectFade, metaclass=abc.ABCMeta):
     __slots__ = ["software_fade_ms"]
 
     def __init__(self, number, loop: AbstractEventLoop, software_fade_ms: int) -> None:
-        """Initialise light with software fade."""
+        """initialize light with software fade."""
         super().__init__(number, loop)
         self.software_fade_ms = software_fade_ms
 

@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 
 hardware:
     platform: visual_pinball_engine
@@ -57,4 +57,3 @@ flippers:
     f_test:
         main_coil: c_flipper
         activation_switch: s_flipper
-

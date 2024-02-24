@@ -75,7 +75,7 @@ class Show:
                  "_step_cache", "machine"]
 
     def __init__(self, machine, name):
-        """Initialise show."""
+        """initialize show."""
         self.machine = machine
         self._autoplay_settings = dict()
         self.tokens = set()
@@ -493,7 +493,7 @@ class RunningShow:
     # pylint: disable-msg=too-many-arguments
     # pylint: disable-msg=too-many-locals
     def __init__(self, machine, show, start_step, start_running, callback, start_time, start_callback, show_config):
-        """Initialise an instance of a show."""
+        """initialize an instance of a show."""
         self.machine = machine
         self.show = show
         self.show_config = show_config
@@ -604,7 +604,7 @@ class RunningShow:
         Updates the values of a show while it runs. Currently supports only speed
         and manual_advance properties.
         """
-        updated_values = {k: v for k, v in kwargs.items() if v is not None and v != getattr(self.show_config, k)}
+        updated_values = {k: v for k, v in kwargs.items() if v is not None}
         if updated_values:
             self.show_config = self.show_config._replace(**updated_values)
 

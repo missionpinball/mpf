@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 mode:
   priority: 100002
   game_mode: False
@@ -90,6 +90,21 @@ slide_player:
       action: play
       priority: 3
   service_settings_stop:
+    service_settings:
+      action: remove
+
+  # volume:
+  service_volume_start:
+    service_settings:
+      action: play
+      priority: 2
+    service_settings_edit:
+      action: remove
+  service_volume_edit:
+    service_settings_edit:
+      action: play
+      priority: 3
+  service_volume_stop:
     service_settings:
       action: remove
 

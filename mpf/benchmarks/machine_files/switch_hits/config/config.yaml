@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 switches:
   s_switch_standard_playfield:
     number: 1

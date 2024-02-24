@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 ball_routings:
     route_to_ball_device2:
       source_devices: test_device1

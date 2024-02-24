@@ -152,4 +152,4 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         return cls.collection, cls.config_section
 
     async def _initialize(self):
-        """Initialise device."""
+        """initialize device."""

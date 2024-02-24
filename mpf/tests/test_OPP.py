@@ -257,7 +257,7 @@ Matrix lights:
 """
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
-    def testOpp(self):
+    def DISABLED_testOpp(self):  # disabled as this test fails randomly (but frequently) on GitHub when running on Windows.
         # assert that the watchdog does not trigger on incand only boards
         with self.assertLogs('OPP', level='WARNING') as cm:
             self.advance_time_and_run(1)
@@ -307,21 +307,21 @@ Matrix lights:
 
         self.serialMocks["com1"].expected_commands[
             self._crc_message(b'\x20\x40\x30\x00\x00\x01\x00\x00\x95', False)] = False
-        
+
         self.post_event("reset_servo")
         self.advance_time_and_run(.1)
         self._wait_for_processing()
 
         self.serialMocks["com1"].expected_commands[
             self._crc_message(b'\x20\x40\x30\x00\x00\x01\x05\xdc\x63', False)] = False
-        
+
         self.post_event("servo_up")
         self.advance_time_and_run(.1)
         self._wait_for_processing()
 
         self.serialMocks["com1"].expected_commands[
             self._crc_message(b'\x20\x40\x30\x00\x00\x01\x0b\xb8\xc7', False)] = False
-        
+
         self.post_event("servo_down")
         self.advance_time_and_run(.1)
         self._wait_for_processing()

@@ -1,13 +1,13 @@
 """Contains the Util class which includes many utility functions."""
-from collections import Iterable as IterableCollection
+from collections.abc import Iterable as IterableCollection
 from copy import deepcopy
+import importlib
 import re
 from fractions import Fraction
 from functools import reduce, lru_cache
 
-from typing import Dict, List, Tuple, Callable, Any, Union, Iterable
+from typing import Dict, List, Tuple, Callable, Any, Union, Iterable, Optional
 import asyncio
-from ruamel.yaml.compat import ordereddict
 
 
 class Util:
@@ -61,33 +61,27 @@ class Util:
         raise AssertionError("Unknown type {}".format(type_name))
 
     @staticmethod
-    def keys_to_lower(source_dict) -> Union[dict, list]:
+    def keys_to_lower(source: Optional[Union[dict, list, int, float, str]]) -> Union[dict, list, int, float, str]:
         """Convert the keys of a dictionary to lowercase.
 
         Args:
         ----
-            source_dict: The dictionary you want to convert.
+            source: The dictionary, list, or basic data type you want to convert.
 
-        Returns a dictionary with lowercase keys.
+        Returns:
+            Dictionary or list with lowercase keys for dictionaries, or the basic data type unchanged.
         """
-        if not source_dict:
+        if source is None:
             return dict()
-        if isinstance(source_dict, dict):
-            for k in list(source_dict.keys()):
-                if isinstance(source_dict[k], ordereddict):
-                    # Dont know why but code will break with this specific dict
-                    # TODO: fix this!
-                    pass
-                elif isinstance(source_dict[k], dict):
-                    source_dict[k] = Util.keys_to_lower(source_dict[k])
 
-            return dict((str(k).lower(), v) for k, v in source_dict.items())
-        if isinstance(source_dict, list):
-            for num, item in enumerate(source_dict):
-                source_dict[num] = Util.keys_to_lower(item)
-            return source_dict
+        if isinstance(source, dict):
+            return {str(k).lower(): Util.keys_to_lower(v) for k, v in source.items()}
+        if isinstance(source, list):
+            return [Util.keys_to_lower(item) for item in source]
+        if isinstance(source, (int, float, str)):  # handle basic data types
+            return source
 
-        raise AssertionError("Source dict has invalid format.")
+        raise AssertionError(f"Source of type {type(source)} has invalid format.")
 
     @staticmethod
     def string_to_list(string: Union[str, List[str], None]) -> List[Any]:
@@ -316,6 +310,11 @@ class Util:
         return return_int
 
     @staticmethod
+    def float_to_hex(f: float) -> str:
+        """Convert a float from 0.0-1.0 to a 2-char hex byte (in string form)."""
+        return hex(int(f * 255))[2:].zfill(2).upper()
+
+    @staticmethod
     def event_config_to_dict(config) -> dict:
         """Convert event config to a dict."""
         return_dict = dict()
@@ -347,7 +346,7 @@ class Util:
         source_int = int(source_int)
 
         if 0 <= source_int <= 255 or allow_overflow:
-            return format(source_int, 'x').upper().zfill(2)
+            return f"{source_int:02X}"
 
         raise ValueError("invalid source int: %s" % source_int)
 
@@ -371,6 +370,36 @@ class Util:
 
         raise ValueError("%s is invalid pwm hex value. (Expected value "
                          "0-8)" % source_int)
+
+    @staticmethod
+    def float_to_pwm8_hex_string(source_float: float) -> str:
+        """Convert a float to a PWM8 string."""
+        # Define the lookup table
+        lookup_table = {
+            0: '00',  # 00000000
+            1: '01',  # 00000001
+            2: '88',  # 10001000
+            3: '92',  # 10010010
+            4: 'AA',  # 10101010
+            5: 'BA',  # 10111010
+            6: 'EE',  # 11101110
+            7: 'FE',  # 11111110
+            8: 'FF',  # 11111111
+        }
+
+        # Round the float to 3 decimal places
+        source_float = round(source_float, 3)
+
+        # Make sure the float is between 0 and 1
+        if 0.0 <= source_float <= 1.0:
+            # Map the float to an integer in the range [0, 8]
+            mapped_int = round(source_float * 8)
+
+            # Perform sanity check for allowed mapped integers
+            if mapped_int in lookup_table:
+                return lookup_table[mapped_int]
+
+        raise ValueError("%s is an invalid pwm hex value. (Expected value between 0.0 and 1.0)" % source_float)
 
     @staticmethod
     def pwm32_to_hex_string(source_int: int) -> str:
@@ -605,16 +634,12 @@ class Util:
             class_string(str): The input string
 
         Returns a reference to the python class object.
-
-        This function came from here:
-        http://stackoverflow.com/questions/452969/does-python-have-an-equivalent-to-java-class-forname
         """
-        # todo I think there's a better way to do this in Python 3
+
         parts = class_string.split('.')
         module = ".".join(parts[:-1])
-        m = __import__(module)
-        for comp in parts[1:]:
-            m = getattr(m, comp)
+        m = importlib.import_module(module)
+        m = getattr(m, parts[-1:][0])
         return m
 
     @staticmethod
@@ -767,3 +792,48 @@ class Util:
             future.result()
         except asyncio.CancelledError:
             pass
+
+    @staticmethod
+    def set_bit(hex_string, bit):
+        """Sets a bit in a hex string.
+
+        Args:
+            hex_string (_type_): Hex string, e.g. '81'
+            bit (_type_): Bit to set, e.g. 3
+
+        Returns:
+            _type_: Returns the hex string with the bit set, e.g. '89'.
+            The return string will be the same length as the input string.
+        """
+        num = int(hex_string, 16)
+        num |= 1 << bit
+        return Util.int_to_hex_string(num).zfill(len(hex_string))
+
+    @staticmethod
+    def clear_bit(hex_string, bit):
+        """Clears a bit in a hex string.
+
+        Args:
+            hex_string (str): Hex string to modify, e.g. '81'
+            bit (int): Position of the bit to clear, e.g. 3
+
+        Returns:
+            str: Returns the modified hex string with the bit cleared, e.g. '80'
+        """
+        num = int(hex_string, 16)
+        num &= ~(1 << bit)
+        return Util.int_to_hex_string(num)
+
+    @staticmethod
+    def check_bit(hex_string, bit):
+        """Checks the status of a bit in a hex string.
+
+        Args:
+            hex_string (str): Hex string, e.g. '81'
+            bit (int): Bit to check, e.g. 3
+
+        Returns:
+            bool: True if the bit is set, False otherwise
+        """
+        num = int(hex_string, 16)
+        return bool(num & (1 << bit))

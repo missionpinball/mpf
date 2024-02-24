@@ -104,8 +104,7 @@ class BallSearch(MpfController):
             restore_callback: optional callback to restore state of the device
                 after ball search ended
         """
-        self.debug_log("Registering callback: {} (priority: {})".format(
-            name, priority))
+        self.debug_log("Registering callback: %s (priority: %s)", name, priority)
         self.callbacks.append(BallSearchCallback(priority, callback, name, restore_callback))
         # sort by priority
         self.callbacks = sorted(self.callbacks, key=lambda entry: entry.priority)
@@ -279,8 +278,8 @@ class BallSearch(MpfController):
                     'ball_search_wait_after_iteration']
 
             # if a callback returns True we wait for the next one
-            self.debug_log("Ball search: {} (phase: {}  iteration: {})".format(
-                element.name, self.phase, self.iteration))
+            self.debug_log("Ball search: %s (phase: %s  iteration: %s)",
+                element.name, self.phase, self.iteration)
             if element.callback(self.phase, self.iteration):
                 self.delay.add(name='run', callback=self._run, ms=timeout)
                 return

@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 mode:
   start_events: ball_started
 
@@ -9,3 +9,7 @@ variable_player:
       my_var: 100
     add_not_audited:
       not_audited: 100
+    add_score_odd:
+      score: 123
+    add_optional_var:
+      optional_var: 20

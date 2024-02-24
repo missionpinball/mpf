@@ -13,7 +13,7 @@ class PeriodicTask:
     __slots__ = ["_canceled", "_interval", "_callback", "_loop", "_last_call"]
 
     def __init__(self, interval, loop, callback):
-        """Initialise periodic task."""
+        """initialize periodic task."""
         self._canceled = False
         self._interval = interval
         self._callback = callback
@@ -49,7 +49,7 @@ class ClockBase(LogMixin):
     __slots__ = ["machine", "loop"]
 
     def __init__(self, machine=None, loop=None):
-        """Initialise clock."""
+        """initialize clock."""
         super().__init__()
         self.machine = machine
 
@@ -96,7 +96,7 @@ class ClockBase(LogMixin):
 
     def start_server(self, client_connected_cb, host=None, port=None, **kwd):
         """Start a server."""
-        return asyncio.start_server(client_connected_cb, host, port, loop=self.loop, **kwd)
+        return asyncio.start_server(client_connected_cb, host, port, **kwd)
 
     def open_connection(self, host=None, port=None, *,
                         limit=None, **kwds):
@@ -122,7 +122,7 @@ class ClockBase(LogMixin):
         if not limit:
             # pylint: disable-msg=protected-access
             limit = asyncio.streams._DEFAULT_LIMIT
-        return asyncio.open_connection(host=host, port=port, loop=self.loop, limit=limit, **kwds)
+        return asyncio.open_connection(host=host, port=port, limit=limit, **kwds)
 
     async def open_serial_connection(self, limit=None, **kwargs) -> Tuple[asyncio.StreamReader, asyncio.StreamWriter]:
         """Open a serial connection using asyncio.

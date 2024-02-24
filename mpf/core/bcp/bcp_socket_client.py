@@ -131,7 +131,7 @@ class AsyncioBcpClientSocket():
     """Simple asyncio bcp client."""
 
     def __init__(self, sender, receiver):
-        """Initialise BCP client socket."""
+        """initialize BCP client socket."""
         self._sender = sender
         self._receiver = receiver
         self._receive_buffer = b''
@@ -211,7 +211,7 @@ class BCPClientSocket(BaseBcpClient):
     __slots__ = ["_sender", "_receiver", "_send_goodbye", "_receive_buffer", "_bcp_client_socket_commands", "__dict__"]
 
     def __init__(self, machine, name, bcp):
-        """Initialise BCP client socket."""
+        """initialize BCP client socket."""
         super().__init__(machine, name, bcp)
 
         self._sender = None

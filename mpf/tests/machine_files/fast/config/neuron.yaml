@@ -1,0 +1,183 @@
+#config_version=6
+
+# Config file for FAST Neuron Controller I/O board testing
+
+mpf:
+  report_crashes: never
+
+hardware:
+    platform: fast
+
+machine:  # Needed for the game testing
+    min_balls: 0
+
+fast:
+    net:
+        port: com3
+        controller: neuron
+        io_loop:
+            io3208:  # drivers 0-8 (0x00-0x08), switches 0-31 (0x00-0x1F)
+                model: FP-I/O-3208
+                order: 1
+            io0804:  # drivers 9-11 (0x09-0x0B), switches 32-39 (0x20-0x27)
+                model: FP-I/O-0804
+                order: 2
+            io1616:  # drivers 12-27 (0x0C-0x1B), switches 40-55 (0x28-0x37)
+                model: FP-I/O-1616
+                order: 3
+            cab:  # drivers 28-35 (0x1C-0x23), switches 56-79 (0x38-0x4F)
+                model: FP-I/O-0024
+                order: 4
+
+switches:
+    s_baseline:  # Starts active via SA:
+        number: io3208-0  # 0x00
+    s_flipper:
+        number: io3208-1  # 0x01
+    s_flipper_eos:
+        number: io3208-2  # 0x02
+    s_flipper_opto:  # Starts active via SA:
+        number: io3208-3  # 0x03
+        type: NC
+    s_autofire_3208:
+        number: io3208-4  # 0x04
+    s_autofire_1616:
+        number: io1616-0  # 0x28
+    s_test_nc:  # Starts active via SA:
+        number: io3208-5  # 0x05
+        type: NC
+    s_debounce_auto:
+        number: io3208-6  # 0x06
+        debounce: auto
+        tags: start
+    s_debounce_quick:
+        number: io3208-7  # 0x07
+        debounce: quick  # debounce 02, 02
+    s_debounce_normal:
+        number: io3208-8  # 0x08
+        debounce: normal
+    s_debounce_custom:
+        number: io3208-9  # 0x09
+        platform_settings:
+            debounce_open: 26  # 0x1A
+            debounce_close: 5  # 0x05
+    s_flipper3:
+        number: io3208-10  # 0x0A
+    s_flipper3_eos_nc:
+        number: io3208-11  # 0x0B
+        type: NC
+        platform_settings:  # test that NC inverts debounces
+            debounce_open: 2ms
+    s_cab_flipper:
+        number: cab-0  # 0x38
+
+coils:
+    c_baseline:  # DL:00,81,00,10,0A,FF,00,00,00
+        number: io3208-0  # 0x00
+    c_allow_enable:  # DL:01,81,00,10,0A,FF,00,FF,00
+        number: io3208-1  # 0x01
+        allow_enable: true
+    c_custom_pulse:  # DL:02,81,00,10,17,AA,00,00,00
+        number: io3208-2  # 0x02
+        default_pulse_ms: 23  # 0x17
+        default_pulse_power: 0.53  # 0xAA
+    c_custom_recycle:  # DL:05,81,00,10,0A,FF,00,00,1B
+        number: io3208-5  # 0x05
+        platform_settings:
+            recycle_ms: 27  # 0x1B
+    c_long_pwm2:  # DL:06,81,00,70,0A,FF,14,EE,00
+        number: io3208-6  # 0x06
+        default_hold_power: 0.75  # 0xEE
+        platform_settings:
+            pwm2_ms: 2000  # 0x14 (2000ms / 100)
+    c_default_hold_power:  # DL:07,81,00,10,0A,FF,00,88,00
+        number: io3208-7  # 0x07
+        default_hold_power: 0.25  # 0x88
+    c_longer_pwm2:  # DL:08,81,00,70,0A,FF,C8,EE,00
+        number: io0804-0  # 0x08
+        default_hold_power: 0.75  # 0xEE
+        platform_settings:
+            pwm2_ms: 20000  # 0xC8 (20000ms / 100)
+    c_2_stage_pulse:  # DL:0A,81,00,10,18,FE,14,AA,00
+        number: io0804-2  # 0x0A
+        default_pulse_ms: 24  # 0x18
+        default_pulse_power: 0.875  # 0xFE
+        default_hold_power: 0.5  # 0xAA
+        platform_settings:
+            pwm2_ms: 20  # 0x14
+    c_pwm2:  # DL:0B,81,00,10,14,AA,14,AA,00
+        number: io0804-3  # 0x0B
+        default_pulse_ms: 20  # 0x14
+        default_pulse_power: 0.53  # 0xAA
+        default_hold_power: 0.51  # 0xAA
+        platform_settings:
+            pwm2_ms: 20 # 0x14
+    c_flipper_main:  # DL:0D,81,00,10,0A,FF,00,00,00
+        number: io1616-1  # 0x0D
+        default_pulse_ms: 10  # 0x0A
+    c_flipper_hold:  # DL:0E,81,00,10,0A,FF,00,00,00
+        number: io1616-2  # 0x0E
+        allow_enable: true
+    c_flipper_single_wound:  # DL:0F,81,00,10,0E,FF,00,01,00
+        number: io1616-3  # 0x0F
+        default_pulse_ms: 14  # 0x0A
+        default_hold_power: 0.125  # 0x20
+    c_autofire_1:
+        number: io1616-4  # 0x10
+    c_autofire_2:
+        number: io1616-5  # 0x11
+    c_flipper2_main:
+        number: io1616-6  # 0x12
+        default_pulse_ms: 15  # 0x0A
+    c_flipper2_hold:
+        number: io1616-7 # 0x13
+        allow_enable: true
+    c_flipper3_main:
+        number: io1616-8  # 0x14
+        default_pulse_ms: 17  # 0x11
+    c_flipper3_hold:
+        number: io1616-9 # 0x15
+        allow_enable: true
+
+autofire_coils:
+    ac_baseline:
+        coil: c_autofire_1  # io1616-4  # 0x10
+        switch: s_autofire_1616  # io1616-0  # 0x28
+    ac_inverted_switch:
+        coil: c_autofire_2  # io1616-5  # 0x11
+        switch: s_test_nc   # io3208-5  # 0x05
+    ac_2_stage_pwm:
+        coil: c_long_pwm2
+        switch: s_debounce_auto
+    ac_test_action:
+        coil: c_pwm2
+        switch: s_debounce_quick
+
+flippers:
+    f_dual_wound:
+        main_coil: c_flipper_main
+        hold_coil: c_flipper_hold
+        activation_switch: s_flipper  # io3208-1  # 0x01
+
+    f_single_wound:
+        main_coil: c_flipper_single_wound
+        activation_switch: s_flipper_opto  # io3208-3  # 0x03
+
+    f_test_hold_eos:
+        main_coil: c_flipper2_main
+        hold_coil: c_flipper2_hold
+        activation_switch: s_cab_flipper
+        eos_switch: s_flipper_eos
+        use_eos: true
+
+    f_eos_nc:
+        main_coil: c_flipper3_main
+        hold_coil: c_flipper3_hold
+        activation_switch: s_flipper3
+        eos_switch: s_flipper3_eos_nc
+        use_eos: true
+
+playfields:
+  playfield:
+    tags: default
+    default_source_device: None

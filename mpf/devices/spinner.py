@@ -25,7 +25,7 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
     __slots__ = ["hits", "_active_ms", "_active", "_idle", "delay"]
 
     def __init__(self, machine: "MachineController", name: str) -> None:
-        """Initialise spinner device."""
+        """initialize spinner device."""
         super().__init__(machine, name)
         self._active = False
         self._idle = True

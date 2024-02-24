@@ -28,7 +28,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
     __slots__ = ["device_collection", "machine", "mode_event_keys", "instances", "_global_keys"]
 
     def __init__(self, machine):
-        """Initialise config player."""
+        """initialize config player."""
         super().__init__()
         self.device_collection = None
 
@@ -55,7 +55,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
 
     def _add_handlers(self):
         self.machine.events.add_handler('init_phase_1', self._initialize_mode_handlers, priority=20)
-        self.machine.events.add_handler('init_phase_1', self._initialise_system_wide, priority=1)
+        self.machine.events.add_handler('init_phase_1', self._initialize_system_wide, priority=1)
 
     def __repr__(self):
         """Return string representation."""
@@ -74,7 +74,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
 
         # if self.config_file_section in self.machine.config:
 
-    def _initialise_system_wide(self, **kwargs):
+    def _initialize_system_wide(self, **kwargs):
         del kwargs
         if self.machine_collection_name:
             self.device_collection = getattr(self.machine,
@@ -161,7 +161,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
         try:
             return self.instances[context][self.config_file_section]
         except KeyError:
-            self.warning_log("Config player {} is missing context {}".format(self.config_file_section, context))
+            self.warning_log("Config player %s is missing context %s", self.config_file_section, context)
             return {}
 
     def _reset_instance_dict(self, context):

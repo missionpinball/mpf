@@ -37,7 +37,7 @@ class RpiDriver(DriverPlatformInterface):
     """An output on a Rasoberry Pi."""
 
     def __init__(self, number, config, platform):
-        """Initialise output."""
+        """initialize output."""
         super().__init__(config, number)
         self.platform = platform            # type: RaspberryPiHardwarePlatform
         self.gpio = int(self.number)
@@ -84,7 +84,7 @@ class RpiServo(ServoPlatformInterface):
     """A servo connected to a RPI."""
 
     def __init__(self, number, platform):
-        """Initialise servo."""
+        """initialize servo."""
         self.gpio = int(number)
         self.platform = platform    # type: RaspberryPiHardwarePlatform
 
@@ -110,7 +110,7 @@ class RpiI2cDevice(I2cPlatformInterface):
     """A I2c device on a Rpi."""
 
     def __init__(self, number: str, loop, platform) -> None:
-        """Initialise i2c device on rpi."""
+        """initialize i2c device on rpi."""
         super().__init__(number)
         self.loop = loop
         self.pi = platform.pi
@@ -160,7 +160,7 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
     """
 
     def __init__(self, machine):
-        """Initialise Raspberry Pi platform."""
+        """initialize Raspberry Pi platform."""
         super().__init__(machine)
 
         if not apigpio:
@@ -177,7 +177,7 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
         self._configure_device_logging_and_debug("Raspberry Pi", self.config)
 
     async def initialize(self):
-        """Initialise platform."""
+        """initialize platform."""
         # create pi object and connect
         self.pi = apigpio.Pi(self.machine.clock.loop)
         await self.pi.connect((self.config['ip'], self.config['port']))
@@ -185,7 +185,7 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
         self._switches = await self.pi.read_bank_1()
 
         self._cmd_queue = asyncio.Queue()
-        self._cmd_task = self.machine.clock.loop.create_task(self._run())
+        self._cmd_task = asyncio.create_task(self._run())
         self._cmd_task.add_done_callback(Util.raise_exceptions)
 
     def send_command(self, cmd):
@@ -213,8 +213,9 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
             self.machine.clock.loop.run_until_complete(self.pi.stop())
             self.pi = None
 
-    async def configure_servo(self, number: str) -> ServoPlatformInterface:
+    async def configure_servo(self, number: str, config: dict) -> ServoPlatformInterface:
         """Configure a servo."""
+        del config
         return RpiServo(number, self)
 
     async def get_hw_switch_states(self):

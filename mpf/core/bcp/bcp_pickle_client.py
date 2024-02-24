@@ -11,7 +11,7 @@ class BcpPickleClient(BaseBcpClient):
     """BCP client using pickle."""
 
     def __init__(self, machine, name, bcp):
-        """Initialise BCP pickle client."""
+        """initialize BCP pickle client."""
         super().__init__(machine, name, bcp)
         self._receiver = None
         self._sender = None

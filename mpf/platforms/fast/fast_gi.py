@@ -9,13 +9,13 @@ class FASTGIString(LightPlatformSoftwareFade):
 
     """A FAST GI string in a Retro machine."""
 
-    __slots__ = ["log", "send"]
+    # __slots__ = ["log", "send"]
 
-    def __init__(self, number, sender, machine, software_fade_ms: int) -> None:
-        """Initialise GI string."""
+    def __init__(self, number, connection, machine, software_fade_ms: int) -> None:
+        """initialize GI string."""
         super().__init__(number, machine.clock.loop, software_fade_ms)
         self.log = logging.getLogger('FASTGIString.0x' + str(number))
-        self.send = sender
+        self.connection = connection
 
     def set_brightness(self, brightness: float):
         """Set GI string to a certain brightness."""
@@ -24,9 +24,9 @@ class FASTGIString(LightPlatformSoftwareFade):
             brightness = 255
 
         self.log.debug("Turning On GI String to brightness %s", brightness)
-        # self.send('GI:' + self.number + ',' + Util.int_to_hex_string(brightness))
+        # self.send_and_forget('GI:' + self.number + ',' + Util.int_to_hex_string(brightness))
 
-        self.send('GI:{},{}'.format(self.number,
+        self.connection.send_and_forget('GI:{},{}'.format(self.number,
                                     Util.int_to_hex_string(brightness)))
 
     def get_board_name(self):

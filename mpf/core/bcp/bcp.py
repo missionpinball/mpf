@@ -26,7 +26,7 @@ class Bcp(MpfController):
     __slots__ = ["interface", "transport", "servers", "enabled"]
 
     def __init__(self, machine: "MachineController") -> None:
-        """Initialise BCP module."""
+        """initialize BCP module."""
         super().__init__(machine)
         self.interface = BcpInterface(machine)
         self.transport = BcpTransportManager(machine)
@@ -57,8 +57,7 @@ class Bcp(MpfController):
     def _setup_bcp_connections(self, queue: QueuedEvent, **kwargs):
         """Connect to BCP servers from MPF config."""
         del kwargs
-        if ('connections' not in self.machine.config['bcp'] or not
-                self.machine.config['bcp']['connections']):
+        if 'connections' not in self.machine.config['bcp'] or not self.machine.config['bcp']['connections'] or self.machine.config['bcp']['connections'] == 'None':
             return
 
         client_connect_futures = []

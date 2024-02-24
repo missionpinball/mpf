@@ -29,7 +29,7 @@ class ModeController(MpfController):
                  "loader_methods", "start_methods"]
 
     def __init__(self, machine: MachineController) -> None:
-        """Initialise mode controller.
+        """initialize mode controller.
 
         Args:
         ----
@@ -56,7 +56,7 @@ class ModeController(MpfController):
         if 'modes' in self.machine.config:
             # priority needs to be higher than device_manager::_load_device_modules
             self.machine.events.add_async_handler('init_phase_1', self.load_modes, priority=10)
-            self.machine.events.add_handler('init_phase_2', self.initialise_modes)
+            self.machine.events.add_handler('init_phase_2', self.initialize_modes)
 
         self.machine.events.add_handler('ball_ending', self._ball_ending,
                                         priority=0)
@@ -85,10 +85,10 @@ class ModeController(MpfController):
         for mode in self.machine.modes.values():
             await mode.load_mode_devices()
 
-    def initialise_modes(self, **kwargs):
-        """Initialise modes."""
+    def initialize_modes(self, **kwargs):
+        """initialize modes."""
         del kwargs
-        # initialise modes after loading all of them to prevent races
+        # initialize modes after loading all of them to prevent races
         for item in self.loader_methods:
             for mode in self.machine.modes.values():
                 if (item.config_section and
@@ -104,7 +104,7 @@ class ModeController(MpfController):
                                 **item.kwargs)
 
         for mode in self.machine.modes.values():
-            mode.initialise_mode()
+            mode.initialize_mode()
 
     async def load_modes(self, **kwargs):
         """Load the modes from the modes: section of the machine configuration file."""

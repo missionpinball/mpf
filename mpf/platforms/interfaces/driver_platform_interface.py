@@ -23,7 +23,7 @@ class DriverPlatformInterface(metaclass=abc.ABCMeta):
     __slots__ = ["number", "config"]
 
     def __init__(self, config: DriverConfig, number: "Any") -> None:
-        """Initialise driver."""
+        """initialize driver."""
         self.number = number    # type: Any
         self.config = config    # type: DriverConfig
 

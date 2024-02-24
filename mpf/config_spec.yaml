@@ -18,6 +18,7 @@ achievement_groups:
     disable_events: event_handler|event_handler:ms|None
     start_selected_events: event_handler|event_handler:ms|None
     select_random_achievement_events: event_handler|event_handler:ms|None
+    disable_random: single|bool|false
     allow_selection_change_while_disabled: single|bool|false
     auto_select: single|bool|false
     disable_while_achievement_started: single|bool|true
@@ -28,6 +29,7 @@ achievement_groups:
     events_when_no_more_enabled: list|event_posted|None
     events_when_enabled: list|event_posted|None
     show_tokens: dict|str:str|None
+    sync_ms: single|int|None
     show_when_enabled: single|machine(shows)|None
 achievements:
     __valid_in__: mode
@@ -90,10 +92,16 @@ assets:
 auditor:
     __valid_in__: machine
     __type__: config
+    enable_events: list|event_handler|game_starting
+    disable_events: list|event_handler|game_ended
     save_events: event_handler|event_handler:ms|ball_ended
     audit: list|str|None
+    autosave: single|bool|true
+    autosave_events: single|bool|true
     events: list|event_handler|None
     player: list|str|None
+    audit_shots: single|bool|true
+    missing_switch_min_games: single|int|10
     num_player_top_records: single|int|1
     reset_audit_events: list|event_handler|auditor_reset,factory_reset
 autofire_coils:
@@ -178,7 +186,7 @@ ball_device_counter_entrance_switches:
 ball_device_ejector_event:
     class: ignore
     events_when_eject_try: list|event_posted|None
-    events_when_reoder_balls: list|event_posted|None
+    events_when_reorder_balls: list|event_posted|None
     events_when_ball_search: list|event_posted|None
 ball_device_ejector_pulse:
     class: ignore
@@ -284,6 +292,8 @@ bonus_mode_settings:
     end_bonus_event: single|event_handler|None
     keep_multiplier: single|template_bool|False
     bonus_entries: list|subconfig(bonus_entries)|
+    rounding_value: single|int|None
+    rounding_direction: single|str|up
 bonus_entries:
     event: single|event_posted|
     score: single|template_int|
@@ -309,6 +319,7 @@ coils:
     disable_events: event_handler|event_handler:ms|None
     enable_events: event_handler|event_handler:ms|None
     pulse_events: event_handler|event_handler:ms|None
+    timed_enable_events: event_handler|event_handler:ms|None
     platform_settings: single|dict|None
     psu: single|machine(psus)|default
     platform: single|str|None
@@ -343,10 +354,6 @@ dual_wound_coils:
     eos_switch: single|machine(switches)|None
 opp_coils:
     recycle_factor: single|int|None
-fast_coils:
-    connection: single|enum(network,local,auto)|auto
-    recycle_ms: single|ms|None
-    hold_pwm_patter: single|str|None
 pkone_coils:
     recycle_ms: single|ms|None
 coil_player:
@@ -548,6 +555,9 @@ effects:
         size: single|float|4.0
     invert_colors:
         none: ignore
+    linear_gradient:
+        color_stops: dict|float:kivycolor|None
+        angle: single|float|0.0
     monochrome:
         luminosity: list|float|.299, .587, .114
     pixelate:
@@ -608,28 +618,133 @@ fadecandy:
 fast:
     __valid_in__: machine
     __type__: config
-    driverboards: single|enum(fast,sys11,wpc89,wpc95,None)|None
-    ports: list|str|
-    baud: list|int|921600
-    watchdog: single|ms|1000
-    default_quick_debounce_open: single|ms|
-    default_quick_debounce_close: single|ms|
-    default_normal_debounce_open: single|ms|
-    default_normal_debounce_close: single|ms|
-    hardware_led_fade_time: single|ms|0
+    net: single|subconfig(fast_net)|None
+    exp: single|subconfig(fast_exp)|None
+    aud: single|subconfig(fast_aud)|None
+    seg: single|subconfig(fast_seg)|None
+    dmd: single|subconfig(fast_dmd)|None
+    emu: single|subconfig(fast_emu)|None
+    rgb: single|subconfig(fast_rgb)|None
     debug: single|bool|false
-    net_buffer: single|int|10
-    rgb_buffer: single|int|3
-    dmd_buffer: single|int|3
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
-    firmware_updates: list|subconfig(fast_firmware_update)|None
-    ignore_rgb_crash: single|bool|false
-    segment_display_update_hz: single|int|20
-fast_firmware_update:
-    type: single|enum(net,rgb)|
-    file: single|str|
-    version: single|str|
+fast_net:
+    port: list|str|auto
+    io_loop: dict|str:subconfig(fast_io_loop)|None
+    baud: single|int|921600
+    debug: single|bool|false
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
+    controller: single|enum(neuron,nano,sys11,wpc89,wpc95)|
+    watchdog: single|ms|1000
+    default_quick_debounce_open: single|ms|2
+    default_quick_debounce_close: single|ms|2
+    default_normal_debounce_open: single|ms|4
+    default_normal_debounce_close: single|ms|4
+    gi_hz: single|int|30
+    lamp_hz: single|int|30
+fast_io_loop:
+    model: single|str|  # FP-I/O-0804, etc.
+    order: single|enum(1,2,3,4,5,6,7,8,9)|
+fast_exp:
+    port: list|str|auto
+    baud: single|int|921600
+    debug: single|bool|false
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
+    boards: dict|str:subconfig(fast_exp_board)|
+fast_exp_board:
+    model: single|str|  # FP-EXP-0071, etc.
+    address: single|str|None  # overrides the lookup address, useful for partner-specific firmware
+    breakouts: list|subconfig(fast_breakout)|None
+    led_ports: list|subconfig(fast_led_port)|None
+    led_fade_time: single|ms|0
+    led_hz: single|float|30
+fast_breakout:
+    port: single|enum(1,2,3)|
+    model: single|str|
+    led_ports: list|subconfig(fast_led_port)|None
+fast_led_port:
+    port: single|str|
+    type: single|enum(ws2812,apa-102)|ws2812
+    leds: single|int|32
+fast_aud:
+    port: list|str|auto
+    baud: single|int|230400
+    debug: single|bool|false
+    optional: single|bool|false
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
+    pin1_pulse_time: single|ms|100
+    pin2_pulse_time: single|ms|100
+    pin3_pulse_time: single|ms|100
+    pin4_pulse_time: single|ms|100
+    pin5_pulse_time: single|ms|100
+    pin6_pulse_time: single|ms|100
+    reset_pulse_time: single|ms|100
+    power_pulse_time: single|ms|100
+    watchdog: single|ms|1000
+    persist_volume_settings: single|bool|true
+    main_steps: single|int|20
+    sub_steps: single|int|20
+    headphones_steps: single|int|20
+    default_main_volume: single|int|10
+    default_sub_volume: single|int|10
+    default_headphones_volume: single|int|10
+    max_hw_volume_main: single|int|63
+    max_hw_volume_sub: single|int|63
+    max_hw_volume_headphones: single|int|63
+    main_amp_enabled: single|bool|true
+    sub_amp_enabled: single|bool|true
+    headphones_amp_enabled: single|bool|true
+    main_levels_list: list|int|None
+    sub_levels_list: list|int|None
+    headphones_levels_list: list|int|None
+    headphones_level: single|enum(headphones,line)|headphones
+    mute_speakers_with_headphones: single|bool|true
+    link_main_to_main: single|bool|false
+    link_sub_to_main: single|bool|true
+    link_headphones_to_main: single|bool|false
+
+fast_seg:
+    port: list|str|auto
+    baud: single|int|230400
+    debug: single|bool|false
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
+    fps: single|int|20
+fast_dmd:
+    port: list|str|auto
+    baud: single|int|2000000
+    debug: single|bool|false
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
+    fps: single|int|20
+fast_emu:
+    port: list|str|auto
+    baud: single|int|230400
+    debug: single|bool|false
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
+fast_rgb:
+    port: list|str|auto
+    baud: single|int|921600
+    debug: single|bool|false
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
+    led_hz: single|int|30
+    ignore_reboot: single|bool|true
+fast_switches:
+    debounce_open: single|ms|None
+    debounce_close: single|ms|None
+fast_coils:
+    recycle_ms: single|ms|None
+    pwm2_ms: single|ms|None
+fast_servos:
+    max_us: single|int|2000
+    min_us: single|int|1000
+    home_us: single|int|1500
+    max_runtime: single|ms|2000  # 65535 max
 file_shows:
     __valid_in__: machine, mode                      # todo add to validator
     __type__: config_dict
@@ -695,6 +810,7 @@ hardware_sound_systems:
     __valid_in__: machine
     __type__: device
     platform: single|str|None
+    platform_settings: single|dict|None
 hardware_sound_player:
     __valid_in__: machine, mode, show
     __type__: config_player
@@ -715,11 +831,12 @@ high_score:
     __valid_in__: mode
     __type__: config
     award_slide_display_time: single|ms|4s
-    categories: omap|str:list|
+    categories: dict|str:list|
     defaults: dict|str:list|None
     enter_initials_timeout: single|secs|20s
     reverse_sort: list|str|None
     reset_high_scores_events: list|event_handler|high_scores_reset,factory_reset
+    vars: dict|str:list|None
 info_lights:
     __valid_in__: machine                            # todo add to validator
     __type__: config
@@ -920,9 +1037,6 @@ machine_vars:
 mc_custom_code:
     __valid_in__: machine  # used by the MC, ignored by MPF
     __type__: list
-mc_scriptlets:
-    __valid_in__: machine  # used by the MC, ignored by MPF
-    __type__: list
 mma8451_accelerometer:
     i2c_platform: single|str|None
 mode:
@@ -970,7 +1084,7 @@ magnets:
 motors:
     __valid_in__: machine
     __type__: device
-    position_switches: omap|str:machine(switches)|
+    position_switches: dict|str:machine(switches)|
     reset_position: single|str|
     reset_events: event_handler|event_handler:ms|machine_reset_phase_3, ball_starting
     go_to_position: dict|str:str|None
@@ -999,6 +1113,7 @@ mpf:
     platforms: ignore
     paths: ignore
     report_crashes: single|enum(ask,never,always)|ask
+    rgbw_white_behavior: single|enum(white_only,min_rgb,duck_rgb)|duck_rgb
 mpf-mc:
     __valid_in__: machine                           # todo add to validator
     __type__: config
@@ -1028,6 +1143,7 @@ multiball_locks:
     __type__: device
     balls_to_lock: single|int|
     balls_to_replace: single|int|-1
+    ball_lost_action: single|str|None
     blocking_facility: single|str|None
     lock_devices: list|machine(ball_devices)|
     source_devices: list|machine(ball_devices)|None
@@ -1351,9 +1467,6 @@ score_reel_groups:
     reels: list|machine(score_reels)|
     chimes: list|machine(coils)|None
     lights_tag: single|str|None
-scriptlets:
-    __valid_in__: machine
-    __type__: list
 segment_displays:
     __valid_in__: machine
     __type__: device
@@ -1437,6 +1550,7 @@ servos:
     reset_events: event_handler|event_handler:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
     number: single|str|
     platform: single|str|None
+    platform_settings: single|dict|None
 settings:
     __valid_in__: machine
     __type__: config_dict
@@ -1457,6 +1571,7 @@ shots:
     delay_switch: dict|machine(switches):ms|None
     persist_enable: single|bool|true
     playfield: single|machine(playfields)|playfield
+    priority: single|int|0
     mark_playfield_active: single|bool|true
     enable_events: event_handler|event_handler:ms|None
     disable_events: event_handler|event_handler:ms|None
@@ -1537,7 +1652,7 @@ show_player:
     action: single|enum(play,stop,pause,resume,advance,step_back,update,queue)|play
     show: single|str|None
     priority: single|int_or_token|0
-    speed: single|float_or_token|1
+    speed: single|template_float_or_token|1
     block_queue: single|bool|false
     start_step: single|template_int|1
     start_running: single|template_bool|True
@@ -1680,6 +1795,7 @@ sound_player:
     delay: single|secs|None
     track: single|str|None
     volume: single|gain|None
+    ducking: single|subconfig(sound_ducking)|None
     pan: single|float_or_token|None
     loops: single|int_or_token|None
     priority: single|int_or_token|None
@@ -1705,11 +1821,11 @@ sound_system:
     buffer: single|int|2048
     frequency: single|int|44100
     channels: single|int|1
-    master_volume: ignore
     tracks: dict|str:subconfig(sound_system_tracks)|
 sound_system_tracks:
     type: single|enum(standard,sound_loop,playlist)|standard
     volume: single|gain|0.5
+    label: single|str|None
     events_when_played: list|event_posted|None
     events_when_stopped: list|event_posted|None
     events_when_paused: list|event_posted|None
@@ -1755,6 +1871,11 @@ sound_ducking:
 sound_marker:
     time: single|secs|
     events: list|event_posted|
+speedometers:
+    __valid_in__: machine, mode
+    __type__: device
+    start_switch: single|machine(switches)|None
+    stop_switch: single|machine(switches)|None
 spi_bit_bang:
     __valid_in__: machine
     __type__: config
@@ -1814,6 +1935,7 @@ steppers:
     __valid_in__: machine
     __type__: device
     named_positions: dict|float:str|None
+    home_events: event_handler|event_handler:ms|None
     homing_mode: single|enum(hardware,switch)|hardware
     homing_switch: single|machine(switches)|None
     homing_direction: single|enum(clockwise,counterclockwise)|clockwise
@@ -1823,6 +1945,7 @@ steppers:
     ball_search_max: single|int|1
     ball_search_wait: single|ms|5s
     include_in_ball_search: single|bool|true
+    relative_positions: dict|float:str|None
     reset_position: single|int|0
     reset_events: event_handler|event_handler:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
     number: single|str|
@@ -1875,9 +1998,6 @@ switches:
     x: single|float|None
     y: single|float|None
     z: single|float|None
-fast_switches:
-    debounce_open: single|str|None
-    debounce_close: single|str|None
 system11:
     __valid_in__: machine
     __type__: config
@@ -2086,6 +2206,7 @@ widgets:
         timing: single|enum(after_previous,with_previous)|after_previous
         repeat: single|bool_or_token|false
         easing: single|str|linear
+        step: single|float|0.0
     bezier:
         points: list|num_or_token|
         thickness: single|float_or_token|1.0
@@ -2186,8 +2307,8 @@ widgets:
         rotation: single|int_or_token|0
         scale: single|float_or_token|1.0
         casing: single|str|None
-        # outline_color: single|kivycolor|ffffffff
-        # outline_width: single|int_or_token|0
+        outline_color: single|kivycolor|ffffffff
+        outline_width: single|int_or_token|0
         # text_size: single|int_or_token|None  # sets width of bounding box, not font
         # shorten: single|bool_or_token|None
         # mipmap: single|bool_or_token|None
@@ -2213,6 +2334,7 @@ widgets:
         force_complete_event: single|event_handler|None
         block_events: list|event_handler|None
         release_events: list|event_handler|None
+        bitmap_font: single|bool_or_token|false
         bold: single|bool_or_token|false
         italic: single|bool_or_token|false
         number_grouping: single|bool_or_token|false

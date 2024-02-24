@@ -57,14 +57,14 @@ class Light(SystemWideDevice, DevicePositionMixin):
     class_label = 'light'
 
     __slots__ = ["hw_drivers", "platforms", "delay", "default_fade_ms", "_color_correction_profile", "stack",
-                 "_off_color", "_drivers_loaded", "_last_fade_target"]
+                 "_off_color", "_drivers_loaded", "_last_fade_target", "_rbgw_style"]
 
     def __init__(self, machine, name):
-        """Initialise light."""
+        """initialize light."""
         self.hw_drivers = {}        # type: Dict[str, List[LightPlatformInterface]]
         self.platforms = set()      # type: Set[LightsPlatform]
         super().__init__(machine, name)
-        self.machine.light_controller.initialise_light_subsystem()
+        self.machine.light_controller.initialize_light_subsystem()
         self.delay = DelayManager(self.machine)
         self._drivers_loaded = asyncio.Future()
 
@@ -73,6 +73,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
 
         self._color_correction_profile = None
         self._last_fade_target = None
+        self._rbgw_style = None  # RGBW LED will be white_only, min_rgb, duck_rgb. Others are None
 
         self.stack = list()     # type: List[LightStackEntry]
         """A list of dicts which represents different commands that have come
@@ -132,8 +133,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
                 for driver in drivers:
                     key = (light.config['platform'], driver.number, type(driver))
                     if key in check_set:
-                        raise ConfigFileError("Duplicate light number {} {} for light {}".format(
-                            type(driver), driver.number, light), 10, "light", key, "light")
+                        raise ConfigFileError(f"Duplicate light number {type(driver)} {driver.number} for light {light}", 10, "light", key, "light")
 
                     check_set.add(key)
 
@@ -342,6 +342,9 @@ class Light(SystemWideDevice, DevicePositionMixin):
             else:
                 self.default_fade_ms = (self.machine.config['light_settings']
                                         ['default_fade_ms'])
+
+            if len(self.hw_drivers) == 4 and all(channel in self.hw_drivers for channel in ['red', 'green', 'blue', 'white']):
+                self._rbgw_style = self.machine.config['mpf']['rgbw_white_behavior']
 
             self.debug_log("Initializing Light. CC Profile: %s, "
                            "Default fade: %sms", self._color_correction_profile,
@@ -613,15 +616,45 @@ class Light(SystemWideDevice, DevicePositionMixin):
 
         for color, drivers in self.hw_drivers.items():
             if color in ["red", "blue", "green"]:
-                start_brightness = getattr(start_color, color) / 255.0
-                target_brightness = getattr(target_color, color) / 255.0
+                if self._rbgw_style == "duck_rgb":
+                    start_brightness = (getattr(start_color, color) -
+                                        min(start_color.red, start_color.green, start_color.blue)) / 255.0
+                    target_brightness = (getattr(target_color, color) -
+                                         min(target_color.red, target_color.green, target_color.blue)) / 255.0
+                elif self._rbgw_style == "white_only":  # any shade of white is moved to the white channel
+                    if start_color.red == start_color.green == start_color.blue:
+                        start_brightness = 0.0
+                    else:
+                        start_brightness = getattr(start_color, color) / 255.0
+                    if target_color.red == target_color.green == target_color.blue:
+                        target_brightness = 0.0
+                    else:
+                        target_brightness = getattr(target_color, color) / 255.0
+                else:  # min_rgb or None (non-RGBW)
+                    start_brightness = getattr(start_color, color) / 255.0
+                    target_brightness = getattr(target_color, color) / 255.0
+
             elif color == "white":
-                start_brightness = min(start_color.red, start_color.green, start_color.blue) / 255.0
-                target_brightness = min(target_color.red, target_color.green, target_color.blue) / 255.0
+                if self._rbgw_style == "white_only":
+                    if start_color.red == start_color.green == start_color.blue:
+                        start_brightness = start_color.red / 255.0
+                    else:
+                        start_brightness = 0.0
+                    if target_color.red == target_color.green == target_color.blue:
+                        target_brightness = target_color.red / 255.0
+                    else:
+                        target_brightness = 0.0
+                else:  # white is the minimum of RGB
+                    start_brightness = min(start_color.red, start_color.green, start_color.blue) / 255.0
+                    target_brightness = min(target_color.red, target_color.green, target_color.blue) / 255.0
             else:
                 raise ColorException("Invalid color {}".format(color))
+
             for driver in drivers:
-                driver.set_fade(start_brightness, start_time, target_brightness, target_time)
+                try:
+                    driver.set_fade(start_brightness, start_time, target_brightness, target_time)
+                except UnboundLocalError:
+                    print()
 
         for platform in self.platforms:
             platform.light_sync()

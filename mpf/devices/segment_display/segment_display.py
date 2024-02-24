@@ -1,6 +1,5 @@
 """Physical segment displays."""
 from asyncio import Future
-from collections import OrderedDict
 from typing import Optional, Dict, List
 
 from mpf.core.clock import PeriodicTask
@@ -59,7 +58,7 @@ class SegmentDisplay(SystemWideDevice):
     class_label = 'segment_display'
 
     def __init__(self, machine, name: str) -> None:
-        """Initialise segment display device."""
+        """initialize segment display device."""
         super().__init__(machine, name)
         self.hw_display = None                      # type: Optional[SegmentDisplayPlatformInterface]
         self.platform = None                        # type: Optional[SegmentDisplayPlatform]
@@ -76,7 +75,7 @@ class SegmentDisplay(SystemWideDevice):
         self._current_state = None                  # type: Optional[SegmentDisplayState]
 
     async def _initialize(self):
-        """Initialise display."""
+        """initialize display."""
         await super()._initialize()
         # load platform
         self.platform = self.machine.get_platform_sections('segment_displays', self.config['platform'])
@@ -216,7 +215,7 @@ class SegmentDisplay(SystemWideDevice):
                                                   -999999, "")
         else:
             # sort text stack by priority
-            self._text_stack = OrderedDict(
+            self._text_stack = dict(
                 sorted(self._text_stack.items(), key=lambda item: item[1].priority, reverse=True))
 
             # get top entry (highest priority)

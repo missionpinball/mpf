@@ -1,0 +1,25 @@
+#config_version=6
+
+hardware:
+    platform: fast
+
+fast:
+  seg:
+    port: com7
+
+segment_displays:
+    7_seg_display_1:
+        number: 0
+        size: 7
+    7_seg_display_2:
+        number: 1
+        size: 7
+    7_seg_display_3:
+        number: 2
+        size: 7
+    7_seg_display_4:
+        number: 3
+        size: 7
+    7_seg_display_5:
+        number: 4
+        size: 6

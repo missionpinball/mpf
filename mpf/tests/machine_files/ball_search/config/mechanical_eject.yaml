@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 
 game:
     balls_per_game: 3
@@ -50,4 +50,3 @@ ball_devices:
         debug: true
         ball_search_order: 2
         auto_fire_on_unexpected_ball: False
-

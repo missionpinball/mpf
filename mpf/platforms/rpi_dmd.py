@@ -25,7 +25,7 @@ class RpiDmdPlatform(RgbDmdPlatform):
     __slots__ = ["_dmd", "config"]
 
     def __init__(self, machine):
-        """Initialise RGB DMD."""
+        """initialize RGB DMD."""
         super().__init__(machine)
         if not RGBMatrix:
             raise AssertionError("Please install the rgbmatrix or RGB Matrix library to use a RGB Matrix on the RPi")
@@ -36,7 +36,7 @@ class RpiDmdPlatform(RgbDmdPlatform):
         atexit.register(self.stop)
 
     async def initialize(self):
-        """Initialise platform."""
+        """initialize platform."""
         self.config = self.machine.config_validator.validate_config(
             config_spec='rpi_dmd',
             source=self.machine.config.get('rpi_dmd', {})
@@ -64,7 +64,7 @@ class RpiRgbDmdDevice(DmdPlatformInterface):
     """A RpiRgbDmd device."""
 
     def __init__(self, config):
-        """Initialise RpiRgbDmd device."""
+        """initialize RpiRgbDmd device."""
         self.config = config
         xs = config["cols"]
         ys = config["rows"]

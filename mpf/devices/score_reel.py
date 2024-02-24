@@ -25,7 +25,7 @@ class ScoreReel(SystemWideDevice):
     class_label = 'score_reel'
 
     def __init__(self, machine, name):
-        """Initialise score reel."""
+        """initialize score reel."""
         super().__init__(machine, name)
         self.delay = DelayManager(machine)
 
@@ -68,7 +68,7 @@ class ScoreReel(SystemWideDevice):
         for value in range(num_values):
             self.value_switches.append(self.config.get('switch_' + str(value)))
 
-        self._runner = self.machine.clock.loop.create_task(self._run())
+        self._runner = asyncio.create_task(self._run())
         self._runner.add_done_callback(Util.raise_exceptions)
 
     def stop(self, **kwargs):
@@ -152,7 +152,9 @@ class ScoreReel(SystemWideDevice):
         self.log.debug("Advancing reel to value %s (current value: %s repeat_pulse_time: %sms)",
                        self._destination_value, self.assumed_value, self.config['repeat_pulse_time'])
         while self._destination_value != self.assumed_value:
+            self.machine.events.post('reel_{}_will_advance'.format(self.name))
             wait_ms = self.config['coil_inc'].pulse(max_wait_ms=500)
+            self.machine.events.post('reel_{}_advancing'.format(self.name))
             previous_value = self.assumed_value
 
             await asyncio.sleep((wait_ms + self.config['repeat_pulse_time']) / 1000)
@@ -163,8 +165,8 @@ class ScoreReel(SystemWideDevice):
             self.check_hw_switches()
 
             if previous_value != self.assumed_value and self.assumed_value >= 0:
-                self.machine.events.post('reel_{}_advance'.format(self.name))
-                '''event: reel_(name)_advance
+                self.machine.events.post('reel_{}_advanced'.format(self.name))
+                '''event: reel_(name)_advanced
 
                 desc: The reel (name) advanced to the next position.
                 '''

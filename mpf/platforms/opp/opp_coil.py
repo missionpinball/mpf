@@ -22,7 +22,7 @@ class OPPSolenoid(DriverPlatformInterface):
     __slots__ = ["sol_card", "log", "switch_rule", "_switches", "_config_state", "platform_settings", "switches"]
 
     def __init__(self, sol_card, number):
-        """Initialise OPP solenoid driver."""
+        """initialize OPP solenoid driver."""
         super().__init__({}, number)
         self.sol_card = sol_card        # type: OPPSolenoidCard
         self.log = sol_card.log
@@ -64,6 +64,7 @@ class OPPSolenoid(DriverPlatformInterface):
         msg.append((mask >> 8) & 0xff)
         msg.append(mask & 0xff)
         msg.extend(OppRs232Intf.calc_crc8_whole_msg(msg))
+        msg.extend(OppRs232Intf.EOM_CMD)
         cmd = bytes(msg)
         if self.sol_card.platform.debug:
             self.log.debug("Triggering solenoid driver: %s", "".join(" 0x%02x" % b for b in cmd))
@@ -143,7 +144,7 @@ class OPPSolenoid(DriverPlatformInterface):
         # if config would not change do nothing
         if new_config_state == self._config_state:
             return
-        
+
         if self.sol_card.platform.min_version[self.sol_card.chain_serial] >= 0x02030005:
             if self._config_state is None:
                 self.reconfigure_pulse_pwm(pulse_settings)
@@ -211,12 +212,12 @@ class OPPSolenoid(DriverPlatformInterface):
             self.log.debug("Writing individual config: %s on %s", "".join(" 0x%02x" % b for b in final_cmd),
                            self.sol_card.chain_serial)
         self.sol_card.platform.send_to_processor(self.sol_card.chain_serial, final_cmd)
-    
+
     def reconfigure_pulse_pwm(self, pulse_settings: PulseSettings):
         pwm_val = int((pulse_settings.power * 32) - 1)
         if pwm_val < 0:
             pwm_val = 0
-        
+
         _, _, solenoid = self.number.split('-')
 
         msg = bytearray()
@@ -242,7 +243,7 @@ class OPPSolenoidCard:
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, chain_serial, addr, mask, sol_dict, platform):
-        """Initialise OPP solenoid card."""
+        """initialize OPP solenoid card."""
         self.log = logging.getLogger('OPPSolenoid {} on {}'.format(addr, chain_serial))
         self.chain_serial = chain_serial
         self.addr = addr

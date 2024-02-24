@@ -108,7 +108,7 @@ class AflRunner(object):
             True)
 
         try:
-            self.loop.run_until_complete(self.machine.initialise())
+            self.loop.run_until_complete(self.machine.initialize())
         except RuntimeError as e:
             try:
                 self.machine.stop()

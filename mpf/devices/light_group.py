@@ -21,7 +21,7 @@ class LightGroup(SystemWideDevice):
     __slots__ = ["lights", "_drivers_loaded"]
 
     def __init__(self, machine: MachineController, name) -> None:
-        """Initialise light group."""
+        """initialize light group."""
         super().__init__(machine, name)
 
         self.lights = []        # type: List[Light]
@@ -48,7 +48,7 @@ class LightGroup(SystemWideDevice):
 
         for light in self.lights:
             await light.device_added_system_wide()
-        
+
         if reorder:
             self._reorder_lights()
 
@@ -139,7 +139,7 @@ class LightStrip(LightGroup):
 
             relative_index = index - self.config['number_start']
             self._create_light_at_index(index, x, y, relative_index)
-            
+
         return False
 
 
@@ -188,11 +188,10 @@ class NeoSegDisplay(LightGroup):
             count = 30
         else:
             count = 0
-            
+
         for index in range(self.config['number_start'], self.config['number_start'] + count):
             x = y = None
             relative_index = index - self.config['number_start']
             self._create_light_at_index(index, x, y, relative_index)
 
         return True
-        

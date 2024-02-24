@@ -1,4 +1,4 @@
-#config_version=5
+#config_version=6
 
 lights:
     light_01:
@@ -64,4 +64,3 @@ shows:
 flasher_player:
    flash:
       flasher_01: 100ms
-

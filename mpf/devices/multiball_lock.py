@@ -26,13 +26,13 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
                  "_player_var_name"]
 
     def __init__(self, machine, name):
-        """Initialise ball lock."""
+        """initialize ball lock."""
         super().__init__(machine, name)
         self.lock_devices = []
         self.source_playfield = None    # type: Optional[Playfield]
         self._source_devices = None     # type: Optional[List[BallDevice]]
 
-        # initialise variables
+        # initialize variables
         self._events = {}
 
         self._locked_balls = 0
@@ -53,6 +53,10 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
 
         self.machine.events.add_handler("player_turn_starting", self._player_turn_starting)
         self.machine.events.add_handler("ball_ending", self._ball_ending)
+
+        for device in self.lock_devices:
+            self.machine.events.add_handler(f'balldevice_{device.name}_ball_missing',
+                                            self._lost_ball, device=device)
 
     def _enable(self):
         """Enable the lock.
@@ -316,16 +320,27 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
 
         # schedule eject of new balls for all physically locked balls
         if self.config['balls_to_replace'] == -1 or new_locked_balls <= self.config['balls_to_replace']:
-            self.info_log("{} locked balls and {} to replace, requesting {} new balls"
-                           .format(new_locked_balls, self.config['balls_to_replace'], balls_to_lock_physically))
+            self.info_log("%s locked balls and %s to replace, requesting %s new balls",
+                          new_locked_balls, self.config['balls_to_replace'], balls_to_lock_physically)
             self._request_new_balls(balls_to_lock_physically)
         else:
-            self.info_log("{} locked balls exceeds {} to replace, not requesting any balls"
-                           .format(new_locked_balls, self.config['balls_to_replace']))
+            self.info_log("%s locked balls exceeds %s to replace, not requesting any balls",
+                          new_locked_balls, self.config['balls_to_replace'])
 
         self.info_log("Locked %s balls virtually and %s balls physically", balls_to_lock, balls_to_lock_physically)
 
         return {'unclaimed_balls': unclaimed_balls - balls_to_lock_physically}
+
+    def _lost_ball(self, device, balls, **kwargs):
+        del kwargs
+        self.info_log("Ball device %s lost %s balls, %s has %s locked balls and action %s",
+                      device.name, balls, self.name, self.locked_balls,
+                      self.config['ball_lost_action'] )
+        if self.locked_balls and self.config['ball_lost_action'] == "add_to_play":
+            self.info_log("Ball device %s lost %s balls, adding to balls_in_play", device.name, balls)
+            self.machine.game.balls_in_play += balls
+        # Do not claim the ball
+        return {'balls': balls}
 
     def _post_events(self, device, **kwargs):
         """Post events on callback from _ball_entered handler.

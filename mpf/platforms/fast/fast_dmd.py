@@ -6,13 +6,12 @@ class FASTDMD(DmdPlatformInterface):
 
     """Object for a FAST DMD."""
 
-    def __init__(self, machine, sender):
-        """Initialise DMD."""
+    def __init__(self, machine, name, sender):
+        """initialize DMD."""
         self.machine = machine
+        self.name = name
         self.send = sender
 
-        # Clear the DMD
-        # todo
 
     def set_brightness(self, brightness: float):
         """Set brightness."""
@@ -26,4 +25,5 @@ class FASTDMD(DmdPlatformInterface):
         ----
             data: bytes to send to DMD
         """
-        self.send(data)
+
+        self.send.send_frame(data)

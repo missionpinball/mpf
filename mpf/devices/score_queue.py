@@ -20,7 +20,7 @@ class ScoreQueue(SystemWideDevice):
     __slots__ = ["_score_queue", "_score_queue_empty", "_score_task"]
 
     def __init__(self, machine, name):
-        """Initialise ball lock."""
+        """initialize ball lock."""
         super().__init__(machine, name)
         self._score_queue = asyncio.Queue()
         self._score_queue_empty = asyncio.Event()
@@ -36,7 +36,7 @@ class ScoreQueue(SystemWideDevice):
 
     async def _initialize(self):
         await super()._initialize()
-        self._score_task = self.machine.clock.loop.create_task(self._handle_score_queue())
+        self._score_task = asyncio.create_task(self._handle_score_queue())
         self._score_task.add_done_callback(Util.raise_exceptions)
 
     def score(self, value, **kwargs):

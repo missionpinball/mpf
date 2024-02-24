@@ -22,7 +22,7 @@ class BaseSerialCommunicator:
 
     # pylint: disable=too-many-arguments
     def __init__(self, platform, port: str, baud: int, xonxoff=False) -> None:
-        """Initialise Serial Connection Hardware.
+        """initialize Serial Connection Hardware.
 
         Args:
         ----
@@ -85,7 +85,7 @@ class BaseSerialCommunicator:
 
     async def start_read_loop(self):
         """Start the read loop."""
-        self.read_task = self.machine.clock.loop.create_task(self._socket_reader())
+        self.read_task = asyncio.create_task(self._socket_reader())
         self.read_task.add_done_callback(Util.raise_exceptions)
 
     # pylint: disable-msg=inconsistent-return-statements
@@ -133,7 +133,7 @@ class BaseSerialCommunicator:
         return resp
 
     async def _identify_connection(self):
-        """Initialise and identify connection."""
+        """initialize and identify connection."""
         raise NotImplementedError("Implement!")
 
     def stop(self):

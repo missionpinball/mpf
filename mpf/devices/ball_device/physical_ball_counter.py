@@ -22,7 +22,7 @@ class EjectTracker:
                  "_ball_returned", "_ready", "_unknown_balls", "_num_unknown_balls", "_num_lost_balls"]
 
     def __init__(self, ball_counter_handler, already_left):
-        """Initialise eject tracker."""
+        """initialize eject tracker."""
         self.machine = ball_counter_handler.machine
         self._already_left = already_left
         self._ball_count_handler = ball_counter_handler     # type: BallCountHandler
@@ -43,7 +43,7 @@ class EjectTracker:
             ball_left = await self._ball_count_handler.counter.wait_for_ball_to_leave()
             self._ball_left = asyncio.ensure_future(ball_left)
 
-        self._task = self.machine.clock.loop.create_task(self._run(ball_changes))
+        self._task = asyncio.create_task(self._run(ball_changes))
         self._task.add_done_callback(Util.raise_exceptions)
 
     async def _run(self, ball_changes):
@@ -183,7 +183,7 @@ class PhysicalBallCounter:
                  "_ball_change_futures"]
 
     def __init__(self, ball_device, config) -> None:
-        """Initialise ball counter."""
+        """initialize ball counter."""
         self.ball_device = ball_device              # type: BallDevice
         self.config = config
         self.machine = self.ball_device.machine     # type: MachineController

@@ -30,7 +30,7 @@ class ScoreReelController:
     config_name = "score_reel_controller"
 
     def __init__(self, machine):
-        """Initialise score reel controller."""
+        """initialize score reel controller."""
         self.machine = machine
         self.log = logging.getLogger("ScoreReelController")
         self.log.debug("Loading the ScoreReelController")
@@ -56,13 +56,13 @@ class ScoreReelController:
         self.machine.events.add_handler('player_score', self._score_change)
 
         # receives notifications of game starts to reset the reels
-        self.machine.events.add_handler('game_starting', self._game_starting)
+        self.machine.events.add_async_handler('game_starting', self._game_starting)
 
         # receives notifications of game ends to reset the reels
         self.machine.events.add_handler('game_ending', self._game_ending)
 
         # Need to hook this in case reels aren't done when ball ends
-        self.machine.events.add_handler('ball_ending', self._ball_ending, 900)
+        self.machine.events.add_async_handler('ball_ending', self._ball_ending, 900)
 
     def _rotate_player(self, **kwargs):
         """Start a new player's turn.
@@ -123,7 +123,7 @@ class ScoreReelController:
             # set value
             score_reel_group.set_value(value=value)
 
-    def _game_starting(self, queue, **kwargs):
+    async def _game_starting(self, **kwargs):
         """Reset the score reels when a new game starts.
 
         This is a queue event so it doesn't allow the game start to continue
@@ -134,8 +134,6 @@ class ScoreReelController:
             queue: A reference to the queue object for the game starting event.
         """
         del kwargs
-        # tell the game_starting event queue that we have stuff to do
-        queue.wait()
 
         # calculate a player <-> reel mapping
         for player_num in range(1, self.machine.game.max_players + 1):
@@ -153,20 +151,10 @@ class ScoreReelController:
                 if not reel1:
                     raise AssertionError('Need a score reel group tagged "player1"')
 
-        futures = []
         for score_reel_group in self.machine.score_reel_groups.values():
             score_reel_group.set_value(0)
-            futures.append(score_reel_group.wait_for_ready())
+            await score_reel_group.wait_for_ready()
 
-        future = asyncio.wait(iter(futures))
-        future = asyncio.ensure_future(future)
-        future.add_done_callback(partial(self._reels_ready, queue=queue))
-
-    @staticmethod
-    def _reels_ready(future, queue):
-        """Unblock queue since all reels are ready."""
-        del future
-        queue.clear()
 
     def _game_ending(self, **kwargs):
         """Reset controller."""
@@ -176,11 +164,8 @@ class ScoreReelController:
         self.active_scorereelgroup = None
         self.player_to_scorereel_map = {}
 
-    def _ball_ending(self, queue=None, **kwargs):
+    async def _ball_ending(self, **kwargs):
         del kwargs
-        # We need to hook the ball_ending event in case the ball ends while the
-        # score reel is still catching up.
-        queue.wait()
 
-        future = asyncio.ensure_future(self.active_scorereelgroup.wait_for_ready())
-        future.add_done_callback(partial(self._reels_ready, queue=queue))
+        for score_reel_group in self.machine.score_reel_groups.values():
+            await score_reel_group.wait_for_ready()

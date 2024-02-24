@@ -1,10 +1,11 @@
-#config_version=5
+#config_version=6
 
 modes:
   - base2
   - base3
   - mode1
   - mode2
+  - mode3
 
 switches:
   switch_1:

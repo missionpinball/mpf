@@ -6,7 +6,7 @@ import os
 import signal
 import socket
 import sys
-from datetime import datetime
+import datetime
 import logging
 from logging.handlers import QueueHandler, SysLogHandler
 
@@ -46,8 +46,7 @@ class Command:
         parser.add_argument("-b",
                             action="store_false", dest="bcp", default=True,
                             help="Runs MPF without making a connection "
-                                 "attempt to a "
-                                 "BCP Server")
+                                 "attempt to a BCP Server")
 
         parser.add_argument("-c",
                             action="store", dest="configfile",
@@ -75,7 +74,7 @@ class Command:
                             metavar='file_name',
                             default=os.path.join(
                                 "logs",
-                                datetime.now().strftime(
+                                datetime.datetime.now().strftime(
                                     "%Y-%m-%d-%H-%M-%S-mpf-" +
                                     socket.gethostname() + ".log")),
                             help="The name (and path) of the log file")
@@ -107,7 +106,7 @@ class Command:
                             const=logging.DEBUG,
                             default=logging.INFO,
                             help="Enables verbose logging to the console. DO "
-                                 "NOTE: On Windows platforms you must also use -v for "
+                                 "NOTE: you must also use -v for "
                                  "this to work.")
 
         parser.add_argument("-x",
@@ -151,10 +150,6 @@ class Command:
         self.args = parser.parse_args(args)
         self.args.configfile = Util.string_to_event_list(self.args.configfile)
 
-        # Configure logging. Creates a logfile and logs to the console.
-        # Formatting options are documented here:
-        # https://docs.python.org/2.7/library/logging.html#logrecord-attributes
-
         try:
             os.makedirs(os.path.join(machine_path, 'logs'))
         except OSError as exception:
@@ -173,20 +168,22 @@ class Command:
             console_log.setLevel(logging.ERROR)
         else:
             console_log = logging.StreamHandler()
-            console_log.setLevel(self.args.consoleloglevel)
+            if self.args.production:
+                console_log.setLevel(logging.ERROR)
+            else:
+                console_log.setLevel(self.args.consoleloglevel)
 
-        # tell the handler to use this format
         console_log.setFormatter(logging.Formatter(
-            '%(levelname)s : %(name)s : %(message)s'))
+            '%(asctime)s.%(msecs)03d : %(levelname)s [%(name)s] %(message)s', "%H:%M:%S"))
 
-        # initialise async handler for console
+        # initialize async handler for console
         console_log_queue = Queue()
         console_queue_handler = QueueHandler(console_log_queue)
         self.console_queue_listener = logging.handlers.QueueListener(
-            console_log_queue, console_log)
+            console_log_queue, console_log, respect_handler_level=True)
         self.console_queue_listener.start()
 
-        # initialise file log
+        # initialize file log
         file_log = logging.FileHandler(full_logfile_path)
         if self.args.jsonlogging:
             formatter = JSONFormatter()
@@ -194,7 +191,7 @@ class Command:
             formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
         file_log.setFormatter(formatter)
 
-        # initialise async handler for file log
+        # initialize async handler for file log
         file_log_queue = Queue()
         file_queue_handler = QueueHandler(file_log_queue)
         self.file_queue_listener = logging.handlers.QueueListener(

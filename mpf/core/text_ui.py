@@ -10,7 +10,8 @@ from mpf.core.mpf_controller import MpfController
 
 try:
     from asciimatics.scene import Scene
-    from asciimatics.widgets import Frame, Layout, THEMES, Label, Divider, PopUpDialog, Widget
+    from asciimatics.widgets import Frame, Layout, Label, Divider, PopUpDialog, Widget
+    from asciimatics.widgets.utilities import THEMES
     from asciimatics.screen import Screen
 except ImportError:
     Scene = None
@@ -79,6 +80,7 @@ class TextUi(MpfController):
         self.screen = None
 
         if not machine.options['text_ui'] or not Scene:
+            self.log.debug("Text UI is disabled. TUI option setting: %s, Asciimatics loaded: %s", machine.options['text_ui'], Scene)
             return
 
         # hack to add themes until https://github.com/peterbrittain/asciimatics/issues/207 is implemented
@@ -327,7 +329,10 @@ class TextUi(MpfController):
 
         names = self.config.get('player_vars', player_vars.keys())
         for name in names:
-            self.machine.events.replace_handler('player_' + name, self._update_player)
+            try:
+                self.machine.events.replace_handler('player_' + name, self._update_player)
+            except ValueError:
+                pass
             self._player_widgets.append(Label("{}: {}".format(name, player_vars[name])))
 
         self._layout_change = True
@@ -455,6 +460,7 @@ class TextUi(MpfController):
     def _bcp_connected(self, **kwargs):
         del kwargs
         self.scene.remove_effect(self._pending_bcp_connection)
+        self._create_window()  # The MC will write any SDL or other messages on top of the TUI, so recreate it to get rid of that stuff
         self._schedule_draw_screen()
 
     def _asset_load_change(self, percent, **kwargs):
