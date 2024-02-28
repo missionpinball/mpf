@@ -31,7 +31,7 @@ class FASTDriver:
     """Base class for drivers connected to a FAST Controller."""
 
     __slots__ = ["log", "communicator", "number", "hw_number", "autofire_config", "baseline_driver_config",
-                 "current_driver_config", "mode_param_mapping", "platform_settings"]
+                 "config", "current_driver_config", "mode_param_mapping", "platform_settings"]
 
     def __init__(self, communicator: FastSerialCommunicator, hw_number: int) -> None:
         """Initialize the driver object.
@@ -42,6 +42,7 @@ class FASTDriver:
         self.communicator = communicator
         self.number = hw_number  # must be int to work with the rest of MPF
         self.hw_number = Util.int_to_hex_string(hw_number)  # hex version the FAST hw actually uses
+        self.config = None
         self.autofire_config = None
         self.platform_settings = dict()
 
@@ -73,7 +74,7 @@ class FASTDriver:
 
         This will not be called for drivers that are not in the MPF config.
         """
-
+        self.config = mpf_config
         self.platform_settings = platform_settings
         self.current_driver_config = self.convert_mpf_config_to_fast(mpf_config, platform_settings)
         self.baseline_driver_config = copy(self.current_driver_config)
@@ -357,15 +358,14 @@ class FASTDriver:
     def set_relay(self, relay_switch, debounce_closed_ms, debounce_open_ms):
         """Set an AC Relay rule with virtual switch."""
         cmd = '{}{},81,{},25,{},{}'.format(
-            self.get_config_cmd(),
+            '13', # self.get_config_cmd(),
             self.number,
-            relay_switch.number[0], # FAST switch numbers are tuples
+            relay_switch.number, # FAST switch numbers are tuples
             hex(debounce_closed_ms)[2:],
             hex(debounce_open_ms)[2:]
         )
         self.log.debug("Setting AC Relay command: %s", cmd)
-        self.send(cmd)
-        self._is_relay = True
+        self.communicator.send_and_forget(cmd)
 
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable (turn on) this driver."""

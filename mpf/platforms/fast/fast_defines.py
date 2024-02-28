@@ -12,6 +12,7 @@ USB_IDS = {  # (VID, PID)
     (11914, 4156): ('aud', 'FAST Audio Interface'),
     (11914, 4157): ('exp', 'FAST Expansion Board'),
     (11914, 4158): ('dsp', 'FAST Display Controller'),
+    (1163, 5824):  ('net', 'FAST Retro Controller'),  # Teensyduino
     (1027, 24593): ('net', 'FAST Nano Controller'),  # FTDI Quad RS232-HS
 }
 
