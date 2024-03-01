@@ -413,7 +413,8 @@ class FastSerialCommunicator(LogMixin):
                 if self.pause_sending_flag.is_set():
                     await self.pause_sending_flag.wait()
 
-            except:
+            except Exception as e:
+                self.log.error(e)
                 return  # TODO better way to catch shutting down?
 
     def write_to_port(self, msg, log_msg=None):
