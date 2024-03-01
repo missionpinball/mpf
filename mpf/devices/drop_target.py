@@ -60,7 +60,7 @@ class DropTarget(SystemWideDevice):
             self.config['playfield'].ball_search.register(
                 self.config['ball_search_order'], self._ball_search, self.name)
 
-        if f'{self.config['playfield'].name}_active' in self.config['switch'].tags:
+        if f"{self.config['playfield'].name}_active" in self.config['switch'].tags:
             self.raise_config_error(
                 "Drop target device '{}' uses switch '{}' which has a "
                 "'{}_active' tag. This is handled internally by the device. Remove the "
