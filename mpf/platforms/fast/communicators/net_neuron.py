@@ -116,7 +116,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
 
         # self.drivers contains a list of all drivers, not just ones defined in the config
         for driver in self.drivers:
-            await self.send_and_wait_for_response_processed(f'{self.DRIVER_CMD}:{Util.int_to_hex_string(driver.number)}', self.DRIVER_CMD)
+            await self.send_and_wait_for_response_processed(f'{self.DRIVER_CMD}:{Util.int_to_hex_string(driver.number)}', f"{self.DRIVER_CMD}:")
 
         self.platform.drivers_initialized = True
 

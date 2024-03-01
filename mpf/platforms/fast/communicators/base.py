@@ -349,10 +349,14 @@ class FastSerialCommunicator(LogMixin):
             self.no_response_waiting.set()
 
         # if the msg_header matches the first chars of the self.pause_sending_until, unpause sending
+        # Note that the msg_header includes the colon (e.g. "DL:", "SA:") and therefore
+        # pause_sending_until must also include the colon.
         if self.pause_sending_flag.is_set() and self.pause_sending_until.startswith(msg_header):
             self._resume_sending()
 
     def pause_sending(self, msg_header):
+        if __debug__:
+            assert len(msg_header) >= 3, f"Confirmation headers should be at least three characters, received '{msg_header}'"
         self.pause_sending_until = msg_header
         self.pause_sending_flag.set()
 
