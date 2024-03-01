@@ -57,6 +57,7 @@ class FASTDriver:
             '12': ['pwm1_ms', 'pwm1_power', 'pwm2_ms', 'pwm2_power', 'kick_ms'],
             '18': ['pwm1_ms', 'pwm1_power', 'pwm2_power', 'recycle_ms', None],
             '20': ['off_switch', 'pwm1_ms', 'pwm1_power', 'pwm2_power', 'rest_ms'],
+            '25': ['relay_on_report_ms', 'relay_off_report_ms'],
             '30': ['delay_ms_x10', 'pwm1_ms', 'pwm2_ms', 'pwm2_power', 'recycle_ms'],
             '70': ['pwm1_ms', 'pwm1_power', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],
             '75': ['off_switch', 'pwm1_ms', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],
@@ -357,26 +358,33 @@ class FASTDriver:
 
     def set_relay(self, relay_switch, debounce_closed_ms, debounce_open_ms):
         """Set an AC Relay rule with virtual switch."""
-        cmd = '{}{},81,{},25,{},{}'.format(
-            '13', # self.get_config_cmd(),
-            self.number,
-            relay_switch.number, # FAST switch numbers are tuples
-            hex(debounce_closed_ms)[2:],
-            hex(debounce_open_ms)[2:]
-        )
-        self.log.debug("Setting AC Relay command: %s", cmd)
-        self.communicator.send_and_forget(cmd)
+
+        self.current_driver_config = FastDriverConfig(number=self.hw_number, trigger='81',
+                                        switch_id=relay_switch.number,
+                                        mode='25',
+                                        param1=Util.int_to_hex_string(debounce_closed_ms),
+                                        param2=Util.int_to_hex_string(debounce_open_ms),
+                                        param3='00',
+                                        param4='00',
+                                        param5='00')
+        self.send_config_to_driver()
 
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable (turn on) this driver."""
 
-        self.log.debug("Enabling (turning on) driver %s with pulse_settings: %s and hold_settings: %s.",
-                       self.number, pulse_settings, hold_settings)
+        self.log.debug("Enabling (turning on) driver %s (mode %s) with pulse_settings: %s and hold_settings: %s.",
+                       self.number, self.current_driver_config.mode, pulse_settings, hold_settings)
 
         self._check_and_clear_delay()
 
         reconfigured = False
         mode = self.current_driver_config.mode
+
+        # AC Relays have special behavior
+        if mode == '25':
+            self.log.debug(" - A/C Relay activating!")
+            self.communicator.send_and_forget(f'{self.communicator.TRIGGER_CMD}:{self.hw_number},03')
+            return
 
         pwm1_ms = Util.int_to_hex_string(pulse_settings.duration)
         pwm1_power = Util.float_to_pwm8_hex_string(pulse_settings.power)
