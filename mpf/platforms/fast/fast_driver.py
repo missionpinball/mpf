@@ -146,8 +146,8 @@ class FASTDriver:
         return Util.int_to_hex_string(num)
 
     def send_config_to_driver(self, one_shot: bool = False, wait_to_confirm: bool = False):
-        self.log.debug("Sending config to driver %s. one_shot: %s. wait_to_confirm: %s",
-                       self.number, one_shot, wait_to_confirm)
+        self.log.debug("Sending config to driver %s (0x%s). one_shot: %s. wait_to_confirm: %s",
+                       self.number, self.hw_number, one_shot, wait_to_confirm)
 
         if one_shot:
             trigger = self.set_bit(self.current_driver_config.trigger, 3)
@@ -159,7 +159,7 @@ class FASTDriver:
                f'{self.current_driver_config.param2},{self.current_driver_config.param3},{self.current_driver_config.param4},'
                f'{self.current_driver_config.param5}')
         if wait_to_confirm:
-            self.communicator.send_with_confirmation(msg, f'{self.communicator.DRIVER_CMD}')
+            self.communicator.send_with_confirmation(msg, f'{self.communicator.DRIVER_CMD}:')
         else:
             self.communicator.send_and_forget(msg)
 
@@ -359,21 +359,23 @@ class FASTDriver:
     def set_relay(self, relay_switch, debounce_closed_ms, debounce_open_ms):
         """Set an AC Relay rule with virtual switch."""
 
+        self.log.debug("Setting A/C Relay for driver %s (0x%s) and switch %s (0x%s)",
+                       self.number, self.hw_number, relay_switch.number, relay_switch.hw_number)
         self.current_driver_config = FastDriverConfig(number=self.hw_number, trigger='81',
-                                        switch_id=relay_switch.number,
+                                        switch_id=relay_switch.hw_number,
                                         mode='25',
                                         param1=Util.int_to_hex_string(debounce_closed_ms),
                                         param2=Util.int_to_hex_string(debounce_open_ms),
                                         param3='00',
                                         param4='00',
                                         param5='00')
-        self.send_config_to_driver()
+        self.send_config_to_driver(wait_to_confirm=True)
 
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable (turn on) this driver."""
 
-        self.log.debug("Enabling (turning on) driver %s (mode %s) with pulse_settings: %s and hold_settings: %s.",
-                       self.number, self.current_driver_config.mode, pulse_settings, hold_settings)
+        self.log.debug("Enabling (turning on) driver %s (0x%s) mode %s with pulse_settings: %s and hold_settings: %s.",
+                       self.number, self.hw_number, self.current_driver_config.mode, pulse_settings, hold_settings)
 
         self._check_and_clear_delay()
 

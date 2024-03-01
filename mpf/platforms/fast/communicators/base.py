@@ -60,7 +60,7 @@ class FastSerialCommunicator(LogMixin):
         else:
             self.watchdog_cmd = None
 
-        self.configure_logging(logger=f'[{self.remote_processor}]', console_level=config['debug'],
+        self.configure_logging(logger=f'FAST [{self.remote_processor}]', console_level=config['debug'],
                                file_level=config['debug'], url_base='https://fastpinball.com/mpf/error')
                                 # TODO change these to not be hardcoded
                                 # TODO do something with the URL endpoint

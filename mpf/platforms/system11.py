@@ -133,7 +133,8 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
             self.relay_switch.add_handler(state=1, callback=self._on_c_side_enabled)
 
             # If the platform does not have a physical switch for the AC Relay, a virtual
-            # switch may be implemented with a special driver configuration.
+            # switch may be implemented with a special driver configuration if that
+            # driver class has a set_relay() method defined.
             if hasattr(self.system11_config['ac_relay_driver'].hw_driver, 'set_relay'):
                 self.system11_config['ac_relay_driver'].hw_driver.set_relay(
                     self.relay_switch.hw_switch,
