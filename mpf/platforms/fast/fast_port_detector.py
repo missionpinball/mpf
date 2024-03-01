@@ -70,18 +70,14 @@ class FastPortDetector:
 
             total_attempts = 5
             attempts = 0
-            while True:
+            while attempts < total_attempts:
                 writer.write(b'ID:\r')
 
                 # Wait for a response with 1-second timeout
                 try:
                     data = await asyncio.wait_for(reader.read(100), timeout=1.0)
                 except asyncio.TimeoutError:
-                    attempts += 1
-                    if attempts < total_attempts:
-                        continue  # retry
-                    else:
-                        self.platform.debug_log("Unable to get ID: on port %s after %s retries.", port, total_attempts)
+                    pass
 
                 if data:
                     data = data.decode('utf-8', errors='ignore')
@@ -91,6 +87,9 @@ class FastPortDetector:
                             self._report_success(processor, port)
                             writer.close()
                             return
+                attempts += 1
+            self.platform.debug_log("Unable to get ID: on port %s after %s retries.", port, total_attempts)
+            return
 
     def _report_success(self, processor, port):
         self.results[processor] = port

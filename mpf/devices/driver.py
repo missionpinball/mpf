@@ -382,6 +382,8 @@ class Driver(SystemWideDevice):
         # Let the PSU wait for both the pulse _and_ the timed enable
         wait_ms = self._notify_psu_and_get_wait_ms(pulse_duration + hold_duration, max_wait_ms)
 
+        self.info_log("Pulsing Driver for %sms (%s pulse_power) with timed enable for %sms (%s hold_power)",
+                      pulse_duration, pulse_power, hold_duration, hold_power)
         # TODO: Detect a NotImplementedError and simulate a timed_enable
         #       with a software timer and enable+disable
         self.hw_driver.timed_enable(PulseSettings(pulse_power, pulse_duration),

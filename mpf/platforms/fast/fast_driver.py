@@ -31,7 +31,7 @@ class FASTDriver:
     """Base class for drivers connected to a FAST Controller."""
 
     __slots__ = ["log", "communicator", "number", "hw_number", "autofire_config", "baseline_driver_config",
-                 "current_driver_config", "mode_param_mapping", "platform_settings"]
+                 "config", "current_driver_config", "mode_param_mapping", "platform_settings"]
 
     def __init__(self, communicator: FastSerialCommunicator, hw_number: int) -> None:
         """Initialize the driver object.
@@ -42,6 +42,7 @@ class FASTDriver:
         self.communicator = communicator
         self.number = hw_number  # must be int to work with the rest of MPF
         self.hw_number = Util.int_to_hex_string(hw_number)  # hex version the FAST hw actually uses
+        self.config = None
         self.autofire_config = None
         self.platform_settings = dict()
 
@@ -56,6 +57,7 @@ class FASTDriver:
             '12': ['pwm1_ms', 'pwm1_power', 'pwm2_ms', 'pwm2_power', 'kick_ms'],
             '18': ['pwm1_ms', 'pwm1_power', 'pwm2_power', 'recycle_ms', None],
             '20': ['off_switch', 'pwm1_ms', 'pwm1_power', 'pwm2_power', 'rest_ms'],
+            '25': ['relay_on_report_ms', 'relay_off_report_ms'],
             '30': ['delay_ms_x10', 'pwm1_ms', 'pwm2_ms', 'pwm2_power', 'recycle_ms'],
             '70': ['pwm1_ms', 'pwm1_power', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],
             '75': ['off_switch', 'pwm1_ms', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],
@@ -73,7 +75,7 @@ class FASTDriver:
 
         This will not be called for drivers that are not in the MPF config.
         """
-
+        self.config = mpf_config
         self.platform_settings = platform_settings
         self.current_driver_config = self.convert_mpf_config_to_fast(mpf_config, platform_settings)
         self.baseline_driver_config = copy(self.current_driver_config)
@@ -144,8 +146,8 @@ class FASTDriver:
         return Util.int_to_hex_string(num)
 
     def send_config_to_driver(self, one_shot: bool = False, wait_to_confirm: bool = False):
-        self.log.debug("Sending config to driver %s. one_shot: %s. wait_to_confirm: %s",
-                       self.number, one_shot, wait_to_confirm)
+        self.log.debug("Sending config to driver %s (0x%s). one_shot: %s. wait_to_confirm: %s",
+                       self.number, self.hw_number, one_shot, wait_to_confirm)
 
         if one_shot:
             trigger = self.set_bit(self.current_driver_config.trigger, 3)
@@ -157,7 +159,7 @@ class FASTDriver:
                f'{self.current_driver_config.param2},{self.current_driver_config.param3},{self.current_driver_config.param4},'
                f'{self.current_driver_config.param5}')
         if wait_to_confirm:
-            self.communicator.send_with_confirmation(msg, f'{self.communicator.DRIVER_CMD}')
+            self.communicator.send_with_confirmation(msg, f'{self.communicator.DRIVER_CMD}:')
         else:
             self.communicator.send_and_forget(msg)
 
@@ -354,16 +356,37 @@ class FASTDriver:
         self.autofire_config = None
         self.communicator.send_and_forget(f'{self.communicator.TRIGGER_CMD}:{self.hw_number},02')
 
+    def set_relay(self, relay_switch, debounce_closed_ms, debounce_open_ms):
+        """Set an AC Relay rule with virtual switch."""
+
+        self.log.debug("Setting A/C Relay for driver %s (0x%s) and switch %s (0x%s)",
+                       self.number, self.hw_number, relay_switch.number, relay_switch.hw_number)
+        self.current_driver_config = FastDriverConfig(number=self.hw_number, trigger='81',
+                                        switch_id=relay_switch.hw_number,
+                                        mode='25',
+                                        param1=Util.int_to_hex_string(debounce_closed_ms),
+                                        param2=Util.int_to_hex_string(debounce_open_ms),
+                                        param3='00',
+                                        param4='00',
+                                        param5='00')
+        self.send_config_to_driver(wait_to_confirm=True)
+
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable (turn on) this driver."""
 
-        self.log.debug("Enabling (turning on) driver %s with pulse_settings: %s and hold_settings: %s.",
-                       self.number, pulse_settings, hold_settings)
+        self.log.debug("Enabling (turning on) driver %s (0x%s) mode %s with pulse_settings: %s and hold_settings: %s.",
+                       self.number, self.hw_number, self.current_driver_config.mode, pulse_settings, hold_settings)
 
         self._check_and_clear_delay()
 
         reconfigured = False
         mode = self.current_driver_config.mode
+
+        # AC Relays have special behavior
+        if mode == '25':
+            self.log.debug(" - A/C Relay activating!")
+            self.communicator.send_and_forget(f'{self.communicator.TRIGGER_CMD}:{self.hw_number},03')
+            return
 
         pwm1_ms = Util.int_to_hex_string(pulse_settings.duration)
         pwm1_power = Util.float_to_pwm8_hex_string(pulse_settings.power)
