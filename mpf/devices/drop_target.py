@@ -60,7 +60,7 @@ class DropTarget(SystemWideDevice):
             self.config['playfield'].ball_search.register(
                 self.config['ball_search_order'], self._ball_search, self.name)
 
-        if '{}_active'.format(self.config['playfield'].name) in self.config['switch'].tags:
+        if f"{self.config['playfield'].name}_active" in self.config['switch'].tags:
             self.raise_config_error(
                 "Drop target device '{}' uses switch '{}' which has a "
                 "'{}_active' tag. This is handled internally by the device. Remove the "
@@ -211,13 +211,13 @@ class DropTarget(SystemWideDevice):
     def _update_state_from_switch(self, reconcile=False, **kwargs):
         del kwargs
 
-        self.debug_log("Updating Drop Target '{}' State From Switches".format(self.name))
         is_complete = self.machine.switch_controller.is_active(
             self.config['switch'])
 
-        self.debug_log("Switch '{}' is active value '{}'.  Self.Complete value '{}'".format(self.config['switch'].name, is_complete, self.complete))
+        self.debug_log("Drop target %s switch %s has active value %s compared to drop complete %s",
+                       self.name, self.config['switch'].name, is_complete, self.complete)
         if self._in_ball_search or self._ignore_switch_hits:
-            self.debug_log("Exiting Drop Target '{}' state update due to being in ball search or ignoring switch hits".format(self.name))
+            self.debug_log("Ignoring state change in drop target %s due to being in ball search or ignoring switch hits", self.name)
             return
 
         if not reconcile:
@@ -226,10 +226,8 @@ class DropTarget(SystemWideDevice):
         if is_complete != self.complete:
 
             if is_complete:
-                self.debug_log("Updating Drop Target '{}' To Down".format(self.name))
                 self._down()
             else:
-                self.debug_log("Updating Drop Target '{}' To Up".format(self.name))
                 self._up()
 
             self._update_banks()

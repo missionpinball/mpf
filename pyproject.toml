@@ -31,7 +31,8 @@ dependencies = [
     "ruamel.yaml == 0.17.32",  # Oct 4, 2023, main config file interface
     "sortedcontainers == 2.4.0",  # Oct 4 2023, used by platform batch light system
     "terminaltables == 3.1.10",  # Oct 4 2023, used for the service CLI
-    "uvloop == 0.17.0; platform_system!='Windows'", # Oct 4 2023, msin asyncio loop
+    # uvloop should be optional, non-Cython derivatives don't support it.
+    # "uvloop == 0.17.0; platform_system!='Windows'", # Oct 4 2023, msin asyncio loop
     "Pillow == 9.5.0"  # Nov 4 2023. Asciimatics needs Pillow > 2.7, but latest 10.x breaks kivy for now (fix due in 2.3), so we pin to latest working Pillow for now.
     ]
 dynamic = ["version"]

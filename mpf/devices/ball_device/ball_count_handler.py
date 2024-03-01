@@ -93,7 +93,7 @@ class BallCountHandler(BallDeviceStateHandler):
 
         self._ball_count = await self.counter.count_balls()
         # on start try to reorder balls if count is unstable
-        if self.counter.is_count_unreliable():
+        if self.counter.is_count_unreliable() or self.counter.is_jammed():
             self.info_log("BCH: Count is unstable. Trying to reorder balls.")
             await self.ball_device.ejector.reorder_balls()
             self.info_log("BCH: Repulse done. Waiting for balls to settle.")
