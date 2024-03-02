@@ -11,7 +11,7 @@ from mpf.core.switch_controller import MonitoredSwitchChange
 from mpf.core.utility_functions import Util
 
 ServiceMenuEntry = namedtuple("ServiceMenuEntry", ["label", "callback"])
-
+LightChainMap = namedtuple("LightMap", ["board", "chain", "light"])
 
 class Service(AsyncMode):
 
@@ -167,6 +167,7 @@ sort_devices_by_number: single|bool|True
         """Return the light menu items with label and callback."""
         return [
             ServiceMenuEntry("Single Light Test", self._light_test_menu),
+            ServiceMenuEntry("Light Chain Test", self._light_chain_menu)
         ]
 
     async def _diagnostics_light_menu(self):
@@ -420,6 +421,15 @@ sort_devices_by_number: single|bool|True
                                  light_num=light.config['number'],
                                  test_color=color)
 
+    def _update_light_chain_slide(self, items, position, color):
+        board, chain, lights = items[position]
+        self.machine.events.post("service_light_test_start",
+                                 board_name=board,
+                                 light_name=" ",
+                                 light_label=chain,
+                                 light_num=" ",
+                                 test_color=color)
+
     async def _light_test_menu(self):
         position = 0
         color_position = 0
@@ -438,6 +448,96 @@ sort_devices_by_number: single|bool|True
 
             key = await self._get_key()
             items[position].light.remove_from_stack_by_key("service")
+            if key == 'ESC':
+                break
+            if key == 'UP':
+                position += 1
+                if position >= len(items):
+                    position = 0
+            elif key == 'DOWN':
+                position -= 1
+                if position < 0:
+                    position = len(items) - 1
+            elif key == 'ENTER':
+                # change color
+                color_position += 1
+                if color_position >= len(colors):
+                    color_position = 0
+
+        self.machine.events.post("service_light_test_stop")
+
+    async def _light_chain_menu(self):
+        position = 0
+        color_position = 0
+        colors = ["white", "red", "green", "blue", "yellow"]
+        items = self.machine.service.get_light_map(do_sort=self._do_sort)
+
+        # Categorize by platform and address
+        chain_lookup = {}
+        for board, l in items:
+            numbers = l.get_hw_numbers()
+            chain_2 = None
+            # Just choose the first one as representative?
+            number = numbers[0]
+            if "-" in number:
+                bits = number.split("-")  # e.g. led-7-4-r
+                if len(bits) == 2:
+                    # FAST lights are single addresses in blocks of 64
+                    if board.startswith("FAST"):
+                        addr = int(bits[0], 16)
+                        chain = addr // 64
+                    else:
+                        chain, addr = bits
+                elif len(bits) == 3:
+                    chain, addr, color = bits
+                elif len(bits) == 4:
+                    _, chain, addr, color = bits
+                else:
+                    self.warning_log("Unknown bits in parsing light address: %s", bits)
+                    continue
+                chain = f"Chain {chain}"
+            elif l.config['subtype'] == "matrix":
+                # Matrix lights get two chains: one for the row, one for the column
+                number = int(number, 16)
+                chain = f"Row {(number // 8) + 1}"
+                addr = number % 8
+                chain_2 = f"Column {(number % 8) + 1}"
+                addr_2 = number // 8
+            else:
+                chain = "XX"
+                addr = number
+
+            for platform in l.platforms:
+                platform_name = type(platform).__name__
+                if platform_name not in chain_lookup:
+                    chain_lookup[platform_name] = {}
+                if not chain in chain_lookup[platform_name]:
+                    chain_lookup[platform_name][chain] = []
+                chain_lookup[platform_name][chain].append((addr, l))
+                # This is ugly, but is iteration overkill?
+                if chain_2:
+                    if not chain_2 in chain_lookup[platform_name]:
+                        chain_lookup[platform_name][chain_2] = []
+                    chain_lookup[platform_name][chain_2].append((addr_2, l))
+
+        items = []
+        for platform_name, chains in chain_lookup.items():
+            for chain_name, chain in chains.items():
+                items.append(LightChainMap(platform_name, chain_name, chain))
+        # do not crash if no lights are configured
+        if not items:   # pragma: no cover
+            return
+
+        items.sort(key=lambda x: x.chain )
+
+        while True:
+            self._update_light_chain_slide(items, position, colors[color_position])
+            for addr, l in items[position].light:
+                l.color(colors[color_position], key="service", priority=1000000)
+
+            key = await self._get_key()
+            for addr, l in items[position].light:
+                l.remove_from_stack_by_key("service")
             if key == 'ESC':
                 break
             if key == 'UP':
