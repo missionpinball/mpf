@@ -19,6 +19,7 @@ from mpf.core.logging import LogMixin
 from mpf.core.machine_vars import MachineVariables
 from mpf.core.utility_functions import Util
 from mpf.core.config_loader import MpfConfig
+from mpf.core.plugin import MpfPlugin
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -489,8 +490,15 @@ class MachineController(LogMixin):
 
             self.debug_log("Loading '%s' plugin", plugin)
 
-            plugin_obj = Util.string_to_class(plugin)(self)
-            self.plugins.append(plugin_obj)
+            plugin_obj = Util.string_to_class(plugin)(self)  # type: MpfPlugin
+            if plugin_obj.is_plugin_enabled:
+                self.debug_log("Including plugin %s", plugin_obj.name)
+                plugin_obj.initialize()
+                self.plugins.append(plugin_obj)
+            else:
+                self.debug_log("Excluding plugin %s because it's not enabled", plugin_obj.name)
+
+        raise Exception
 
     def _load_custom_code(self) -> None:
         """Load custom code."""
