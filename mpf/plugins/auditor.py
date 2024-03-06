@@ -1,8 +1,7 @@
 """MPF plugin for an auditor which records switch events, high scores, shots, etc."""
 
-import logging
-
 from mpf.core.switch_controller import MonitoredSwitchChange
+from mpf.core.plugin import MpfPlugin
 from mpf.devices.shot import Shot
 
 MYPY = False
@@ -11,29 +10,17 @@ if MYPY:   # pragma: no cover
     from typing import Any, Set     # pylint: disable-msg=cyclic-import,unused-import
 
 
-class Auditor:
+class Auditor(MpfPlugin):
 
     """Writes switch events, regular events, and player variables to an audit log file."""
 
     __slots__ = ["log", "machine", "switchnames_to_audit", "config", "_autosave",
                  "current_audits", "enabled", "data_manager"]
 
-    def __init__(self, machine: "MachineController") -> None:
-        """initialize auditor.
+    config_section = 'auditor'
 
-        Args:
-        ----
-            machine: A reference to the machine controller object.
-        """
-        if 'auditor' not in machine.config:
-            machine.log.debug('"Auditor:" section not found in machine '
-                              'configuration, so the auditor will not be '
-                              'used.')
-            return
-
-        self.log = logging.getLogger('Auditor')
-        self.machine = machine
-
+    def initialize(self):
+        self.configure_logging('Auditor')
         self.machine.auditor = self
         self.switchnames_to_audit = set()       # type: Set[str]
         self.config = None                      # type: Any
