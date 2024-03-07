@@ -64,6 +64,10 @@ class Command:
                             "ensuring all assets are set up properly "
                             "during development.")
 
+        parser.add_argument("-pit", action="store", dest="platform_integration_test",
+                            metavar='pit_file', default=False,
+                            help="Runs a platform integration test")
+
         parser.add_argument("--json-logging",
                             action="store_true", dest="jsonlogging",
                             default=False,

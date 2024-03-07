@@ -3,10 +3,10 @@
 Typically in an EM machine.
 """
 
-import logging
+from mpf.core.plugin import MpfPlugin
 
 
-class InfoLights:
+class InfoLights(MpfPlugin):
 
     """Uses lights to represent game state.
 
@@ -16,20 +16,13 @@ class InfoLights:
 
     """
 
-    def __init__(self, machine):
+    config_section = 'info_lights'
+
+    def initialize(self):
         """initialize info lights plugin."""
-        self.log = logging.getLogger('infolights')
-        self.machine = machine
+        self.configure_logging(self.name)
+        self.config = self.machine.config['info_lights']
         self.game_over_show = None
-
-        try:
-            self.config = self.machine.config['info_lights']
-        except KeyError:
-            self.machine.log.debug('"info_lights:" section not found in machine '
-                                   'configuration, so the Info Lights plugin '
-                                   'will not be used.')
-            return
-
         self.machine.events.add_handler('init_phase_5', self._initialize)
 
     def _initialize(self, **kwargs):

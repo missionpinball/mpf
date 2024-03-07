@@ -97,6 +97,7 @@ mpf:
     plugins:
         - mpf.plugins.auditor.Auditor
         - mpf.plugins.info_lights.InfoLights
+        - mpf.plugins.platform_integration_test_runner.MpfPlatformIntegrationTestRunner
         - mpf.plugins.switch_player.SwitchPlayer
         - mpf.plugins.twitch_bot.TwitchBot
         - mpf.plugins.virtual_segment_display_connector.VirtualSegmentDisplayConnector

@@ -1,25 +1,19 @@
 """MPF plugin which automatically plays back switch events from the config file."""
 
-import logging
 from mpf.core.delays import DelayManager
+from mpf.core.plugin import MpfPlugin
 from mpf.core.utility_functions import Util
 
 
-class SwitchPlayer:
+class SwitchPlayer(MpfPlugin):
 
     """Plays back switch sequences from a config file, used for testing."""
 
-    def __init__(self, machine):
+    config_section = 'switch_player'
+
+    def initialize(self):
         """initialize switch player."""
-        self.log = logging.getLogger('switch_player')
-
-        if 'switch_player' not in machine.config:
-            machine.log.debug('"switch_player:" section not found in '
-                              'machine configuration, so the Switch Player'
-                              'plugin will not be used.')
-            return
-
-        self.machine = machine
+        self.configure_logging(self.name)
         self.delay = DelayManager(self.machine)
         self.current_step = 0
 

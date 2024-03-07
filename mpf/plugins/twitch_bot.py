@@ -1,6 +1,6 @@
 """MPF plugin which adds events from monitoring a Twitch chat room."""
 import threading
-from mpf.core.logging import LogMixin
+from mpf.core.plugin import MpfPlugin
 
 from .twitch.twitch_client import TwitchClient
 
@@ -9,22 +9,15 @@ if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
-class TwitchBot(LogMixin):
+class TwitchBot(MpfPlugin):
 
     """Adds Twitch chat room events."""
 
-    def __init__(self, machine):
+    config_section = 'twitch_client'
+
+    def initialize(self):
         """initialize Twitch client."""
-        super().__init__()
-        self.machine = machine      # type: MachineController
-        self.configure_logging("twitch_client")
-
-        if 'twitch_client' not in machine.config:
-            self.log.debug('"twitch_client:" section not found in '
-                           'machine configuration, so the Twitch Client'
-                           'plugin will not be used.')
-            return
-
+        self.configure_logging(self.name)
         self.config = self.machine.config_validator.validate_config(
             "twitch_client", self.machine.config['twitch_client'])
 
