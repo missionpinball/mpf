@@ -68,8 +68,8 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
                 for s in Util.string_to_list(ball_device.config["ball_switches"]):
                     self.info_log("Initializing trough switch %s", s)
                     self.machine.switch_controller.process_switch(s, 1)
-        self.info_log("Re-initializing trough ball count")
-        asyncio.create_task(self.machine.ball_devices['bd_trough']._initialize_async())
+                self.info_log("Re-initializing trough ball count")
+                ball_device.ball_count_handler.counter.trigger_recount()
 
     def _run_test(self, **kwargs):
         del kwargs
