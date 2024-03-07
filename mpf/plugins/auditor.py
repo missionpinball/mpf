@@ -20,7 +20,7 @@ class Auditor(MpfPlugin):
     config_section = 'auditor'
 
     def initialize(self):
-        self.configure_logging('Auditor')
+        self.configure_logging(self.name)
         self.machine.auditor = self
         self.switchnames_to_audit = set()       # type: Set[str]
         self.config = None                      # type: Any

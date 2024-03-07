@@ -7,11 +7,17 @@ from mpf.core.delays import DelayManager
 from mpf.core.plugin import MpfPlugin
 from mpf.core.utility_functions import Util
 
-
 class MpfPlatformIntegrationTestRunner(MpfPlugin):
 
-    __slots__ = ( "delay", "machine", "name", "_task", "_keep_alive", "_start_time", "_test_obj")
+    """Runs a Platform Integration test provided by the command line.
 
+        mpf -pit path_to/test_file.py
+          -or-
+        mpf -pit path.to.ModuleFile.ModuleClassName
+
+    """
+
+    __slots__ = ( "delay", "machine", "name", "_task", "_keep_alive", "_start_time", "_test_obj")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -24,20 +30,20 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
         """This plugin is controlled by the '-pit' command line arg."""
         return self.machine.options["platform_integration_test"]
 
-
     def initialize(self):
-        """initialize custom code but with custom logging formatter"""
+        """Initialize test runner and load test module."""
         self.configure_logging('MpfPlatformIntegration', 'basic', 'full')
         self.info_log("Platform Integration Test is here! Arg value is %s", self.machine.options["platform_integration_test"])
         self.delay = DelayManager(self.machine)
 
         # Find the file with the test
         test_file = self.machine.options["platform_integration_test"]
+        # If a path to a python file is found, convert it to a module path
+        # This requires the import class to be the PascalCase version
+        # of the python file's snake_case name.
         if test_file.endswith(".py"):
-            self.info_log("Trying to make a test from python file %s", test_file)
             parts = test_file.split("/")
             parts[-1] = parts[-1][:-3]
-            # Assume the class name is the same as the filename
             parts.append(Util.snake_to_pascal(parts[-1]))
             test_file = ".".join(parts)
 
@@ -49,6 +55,8 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
         self.machine.events.add_handler("init_phase_3", self._setup_test)
 
     def keep_alive(self, value=True):
+        """Configure whether the test runner will keep the MPF instance
+            running after the test run finishes."""
         self._keep_alive = value
 
     def _setup_test(self, **kwargs):
@@ -127,7 +135,9 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
         except asyncio.TimeoutError:
             if continue_on_timeout:
                 return False
-            self.machine.stop_with_exception({ "exception": AssertionError(f"Awaited event '{event}' failed to trigger within {timeout}s.")})
+            self.machine.stop_with_exception({
+                "exception": AssertionError(f"Awaited event '{event}' failed to trigger within {timeout}s.")
+            })
 
     async def set_switch(self, switch_name, state=None, duration_secs=None, wait_after=None, blocking=True):
         """Set a switch to a given state.
@@ -137,7 +147,6 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
             """
         self.set_switch_sync(switch_name, state)
         if duration_secs:
-
             # Blocking mode: await the duration before returning
             if blocking:
                 self.info_log(f" - waiting {duration_secs}s to toggle back switch {switch_name}")
@@ -161,6 +170,7 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
             await asyncio.sleep(0.5)
 
     async def eject_and_plunge_ball(self, plunger_lane_settle_time=2, **kwargs):
+        # TODO: Use dynamic switch names to find the plunger and trough
         del kwargs
         self.info_log("Ejecting and plunging ball...")
         self.set_switch_sync("s_trough_1", 0)
@@ -173,6 +183,7 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
         await asyncio.sleep(1)
 
     async def move_ball_from_drain_to_trough(self, **kwargs):
+        # TODO: Use dynamic switch names to find drain and trough
         del kwargs
         self.set_switch_sync("s_drain", 0)
         await asyncio.sleep(0.25)

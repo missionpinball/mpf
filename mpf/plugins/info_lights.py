@@ -20,7 +20,7 @@ class InfoLights(MpfPlugin):
 
     def initialize(self):
         """initialize info lights plugin."""
-        self.configure_logging('infolights')
+        self.configure_logging(self.name)
         self.config = self.machine.config['info_lights']
         self.game_over_show = None
         self.machine.events.add_handler('init_phase_5', self._initialize)

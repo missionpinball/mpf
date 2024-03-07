@@ -31,7 +31,7 @@ class VirtualSegmentDisplayConnector(MpfPlugin):
         return self.config_section in self.machine.config and self.machine.bcp.enabled
 
     def initialize(self):
-        self.configure_logging('VirtualSegmentDisplayConnector')
+        self.configure_logging(self.name)
         self.config = self.machine.config_validator.validate_config(
             "virtual_segment_display_connector", self.machine.config['virtual_segment_display_connector'])
 

@@ -738,6 +738,7 @@ class Util:
 
     @staticmethod
     def snake_to_pascal(input: str) -> str:
+        """Convert a snake_case_string to a PascalCaseString."""
         temp = input.split('_')
         return ''.join(e.title() for e in temp)
 
