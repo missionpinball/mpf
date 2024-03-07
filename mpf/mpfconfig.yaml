@@ -100,6 +100,7 @@ mpf:
         - mpf.plugins.switch_player.SwitchPlayer
         - mpf.plugins.twitch_bot.TwitchBot
         - mpf.plugins.virtual_segment_display_connector.VirtualSegmentDisplayConnector
+        - mpf.plugins.platform_integration_test_runner.MpfPlatformIntegrationTestRunner
 
     platforms:
         fadecandy: mpf.platforms.fadecandy.FadecandyHardwarePlatform
