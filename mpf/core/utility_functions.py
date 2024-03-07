@@ -737,6 +737,11 @@ class Util:
             return 1.0
 
     @staticmethod
+    def snake_to_pascal(input: str) -> str:
+        temp = input.split('_')
+        return ''.join(e.title() for e in temp)
+
+    @staticmethod
     def cancel_futures(futures: Iterable[asyncio.Future]):
         """Cancel futures."""
         for future in futures:
