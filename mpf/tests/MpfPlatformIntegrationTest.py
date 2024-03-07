@@ -6,6 +6,9 @@ class MpfPlatformIntegrationTest(LogMixin):
 
     __slots__ = ("machine", "runner")
 
+    test_start_event = "mode_attract_started"
+    initial_switches = None
+
     def __init__(self, runner):
         self.runner = runner
         self.machine = runner.machine

@@ -498,8 +498,6 @@ class MachineController(LogMixin):
             else:
                 self.debug_log("Excluding plugin %s because it's not enabled", plugin_obj.name)
 
-        raise Exception
-
     def _load_custom_code(self) -> None:
         """Load custom code."""
         if 'custom_code' in self.config:

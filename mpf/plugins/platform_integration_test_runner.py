@@ -36,11 +36,30 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
 
         self.info_log("Trying to import from module '%s'", test_file)
         # Look for a file path
-        test_target = Util.string_to_class(test_file)(self)
+        self._test_obj = Util.string_to_class(test_file)(self)
 
-        self.machine.events.add_handler("mode_attract_started", self._run_tests)
-        for s in range(1,4):
-            self.machine.switch_controller.process_switch(f"s_trough_{s}", 1)
+        # Wait until init phase 3 to setup test
+        self.machine.events.add_handler("init_phase_3", self.setup_test)
+
+    def setup_test(self, **kwargs):
+        del kwargs
+        self.machine.events.remove_handler(self.setup_test)
+
+        # Create an event handler to begin the test run
+        self.machine.events.add_handler(self._test_obj.test_start_event, self._run_tests)
+
+        # Pre-set initial switches defined in the test
+        if self._test_obj.initial_switches is not None:
+            for s in self._test_obj.initial_switches:
+                self.machine.switch_controller.process_switch(s, 1)
+        # Pre-fill the trough with balls
+        else:
+            print(self.machine.ball_devices)
+            for ball_device in [bd for bd in self.machine.ball_devices.values() if 'trough' in bd.tags]:
+                print(Util.string_to_list(ball_device.config["ball_switches"]))
+                for s in Util.string_to_list(ball_device.config["ball_switches"]):
+                    self.info_log("Initializing trough switch %s", s)
+                    self.machine.switch_controller.process_switch(s, 1)
         self.info_log("Re-initializing trough ball count")
         asyncio.create_task(self.machine.ball_devices['bd_trough']._initialize_async())
 
@@ -49,7 +68,7 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
         self.log.info("Running tests!")
         for playfield in self.machine.playfields.values():
             playfield.ball_search.disable()
-        self._task = asyncio.create_task(self.test_skillshot())
+        self._task = asyncio.create_task(self._test_obj.run_test())
         self._task.add_done_callback(self._stop_callback)
 
     def _stop_callback(self, future):
@@ -120,33 +139,3 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
         await asyncio.sleep(0.25)
         self.set_switch_sync("s_trough_3", 1)
         await asyncio.sleep(0.25)
-
-    async def test_skillshot(self):
-        p = 1
-        await self.start_game("asrak", "swamp")
-        for p in range(1, NUM_PLAYERS + 2):
-            for ball in range(1,4):
-                await self.eject_and_plunge_ball()
-                for ball_save in self.machine.ball_saves.values():
-                    ball_save.disable()
-                # self.info_log("Testing skillshot!")
-                # await self.set_switch("s_center_ramp_exit", 1, 0.1, blocking=False)
-                # await self.wait_for_event("skillshot_asrak_lit_hit", 1)
-                self.info_log("Beginning spinner test")
-                for _ in range(0, 100):
-                    await self.set_switch("s_titan_spinner", 1, 0.005)
-                self.info_log("Spinner test complete.")
-                self.machine.events.post("debug_dump_stats")
-                await asyncio.sleep(0.5)
-                self.info_log(f"Draining ball {ball} for player {p}")
-                await self.set_switch("s_drain", 1)
-                self.info_log(f"End of ball {ball} for player {p}")
-                await self.move_ball_from_drain_to_trough()
-
-                if ball == 3 and p == NUM_PLAYERS:
-                    await self.wait_for_event("game_will_end")
-                    # self.machine.events.post("debug_dump_stats")
-                else:
-                    self.info_log("Waiting for player turn to start")
-                    await self.wait_for_event("player_turn_started")
-        await self.wait_for_event("mode_game_stopped")
