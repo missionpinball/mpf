@@ -54,9 +54,7 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
                 self.machine.switch_controller.process_switch(s, 1)
         # Pre-fill the trough with balls
         else:
-            print(self.machine.ball_devices)
-            for ball_device in [bd for bd in self.machine.ball_devices.values() if 'trough' in bd.tags]:
-                print(Util.string_to_list(ball_device.config["ball_switches"]))
+            for ball_device in self.machine.ball_devices.items_tagged('trough'):
                 for s in Util.string_to_list(ball_device.config["ball_switches"]):
                     self.info_log("Initializing trough switch %s", s)
                     self.machine.switch_controller.process_switch(s, 1)
@@ -109,19 +107,17 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
             self.delay.add(name=switch_name, ms=duration_secs*1000, callback=self.set_switch_sync,
                           switch_name=switch_name, state=int(not state))
 
-    async def start_game(self, force_character=None, force_quest=None):
+    async def start_game(self, player_count=1):
         self.info_log("Starting game.")
         # self.machine.events.add_handler("balldevice_bd_trough_ejecting_ball", self.eject_and_plunge_ball)
         # self.machine.events.add_handler("balldevice_bd_drain_ejecting_ball", self.move_ball_from_drain_to_trough)
         await asyncio.sleep(1)
-        for _ in range(0, NUM_PLAYERS):
-            await self.set_switch("s_credit", 1, 0.2)
-            await asyncio.sleep(1)
-        assert self.machine.modes.missionselect.active, "Mission select mode not active"
-        if force_character or force_quest:
-            self.machine.modes.missionselect.force_selection(force_character, force_quest)
+        start_button = self.machine.switches.items_tagged('start')[0]
+        for _ in range(0, player_count+1):
+            await self.set_switch(start_button.name, 1, 0.2)
+            await asyncio.sleep(0.5)
 
-    async def eject_and_plunge_ball(self, **kwargs):
+    async def eject_and_plunge_ball(self, plunger_lane_settle_time=2, **kwargs):
         del kwargs
         self.info_log("Ejecting and plunging ball...")
         self.set_switch_sync("s_trough_1", 0)
@@ -130,7 +126,7 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
         await asyncio.sleep(0.1)
         self.set_switch_sync("s_trough_1", 1)
         await asyncio.sleep(0.25)
-        await self.set_switch("s_plunger_lane", 1, 2)
+        await self.set_switch("s_plunger_lane", 1, plunger_lane_settle_time)
         await asyncio.sleep(1)
 
     async def move_ball_from_drain_to_trough(self, **kwargs):
