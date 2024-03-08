@@ -23,7 +23,7 @@ classifiers=[
     ]
 dependencies = [
     "asciimatics == 1.15.0", # Oct 4 2023, only used for the Text UI
-    "packaging == 23.1",  # Oct 4 2023, used for version comparisons
+    "packaging == 23.2",  # Oct 4 2023, used for version comparisons
     "prompt_toolkit == 3.0.43",  # Oct 4 2023, used for command line interface
     "psutil == 5.9.5",  # Oct 4 2023, pulls system stats into TUI and BCP
     "pyserial == 3.5",  # Oct 4 2023, some older platforms use this
