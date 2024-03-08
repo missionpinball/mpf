@@ -95,7 +95,7 @@ class Stepper(SystemWideDevice):
         await self.machine.events.wait_for_event("init_phase_3")
 
         # first home the stepper
-        self.debug_log("Homing stepper")
+        self.info_log("Initializing stepper and homing.")
         await self._home()
 
         # run the loop at least once
@@ -103,36 +103,37 @@ class Stepper(SystemWideDevice):
 
         while True:
             # wait until we should be moving
-            self.debug_log("Waiting for stepper to move...")
+            self.info_log("Resting position is now %s. Stepper is ready to move.", self._current_position)
             await self._is_moving.wait()
             if not self._is_homed:
                 await self._home()
                 self._post_ready_event()
                 continue
-            self.debug_log("Moving the stepper!")
+            self.debug_log("Moving the stepper to target position %s, current position %s",
+                           self._target_position, self._current_position)
             self._is_moving.clear()
             # store target position in local variable since it may change in the meantime
             target_position = self._target_position
             delta = target_position - self._current_position
-            self.debug_log("Stepper moving relative %s to hit target %s from %s", delta, target_position, self._current_position)
             if delta != 0:
-                self.debug_log("Got move command. Current position: %s Target position: %s Delta: %s",
-                               self._current_position, target_position, delta)
+                self.info_log("Stepper moving relative %s to hit target %s from %s",
+                              delta, target_position, self._current_position)
                 # move stepper
                 self.hw_stepper.move_rel_pos(delta)
                 # wait for the move to complete
                 await self.hw_stepper.wait_for_move_completed()
             else:
-                self.debug_log("Got move command. Stepper already at target. Not moving.")
+                self.info_log("Got command to move (relative) to %s, but already there. Not moving.",
+                              self._target_position)
             # set current position
             self._current_position = target_position
             # post ready event
             self._post_ready_event()
-            self.debug_log("Move completed")
 
     def _move_to_absolute_position(self, position):
         """Move stepper to position."""
-        self.debug_log("Moving stepper %s to absolute position %s", self.hw_stepper, position)
+        self.info_log("Moving to absolute position %s. Current position: %s",
+                      self.hw_stepper, position, self._current_position)
         if self.config['pos_min'] <= position <= self.config['pos_max']:
             self._target_position = position
             self._is_moving.set()
@@ -144,7 +145,7 @@ class Stepper(SystemWideDevice):
         self._is_homed = False
         self._is_moving.set()
         if self.config['homing_mode'] == "hardware":
-            self.info_log("Homing stepper using hardware homing.")
+            self.info_log("Homing stepper using hardware homing command.")
             self.hw_stepper.home(self.config['homing_direction'])
             await self.hw_stepper.wait_for_move_completed()
         else:
@@ -210,7 +211,8 @@ class Stepper(SystemWideDevice):
 
     def move_to_position(self, position, is_relative=False):
         """Move stepper to a position."""
-        self.debug_log("Stepper at %s moving to %s position %s", self._current_position, "relative" if is_relative else "absolute", position)
+        self.info_log("Stepper at %s moving to %s position %s", self._current_position,
+                      "relative" if is_relative else "absolute", position)
         self._target_position = (self._current_position + position) if is_relative else position
         if self._ball_search_started:
             return
