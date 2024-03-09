@@ -32,6 +32,7 @@ class Command(MpfCommandLineParser):
 
         self.mpf = MachineController({"bcp": False,
                                       "no_load_cache": False,
+                                      "platform_integration_test": False,
                                       "mpfconfigfile": os.path.join(self.mpf_path, "mpfconfig.yaml"),
                                       "configfile": ["config"],
                                       "production": False,

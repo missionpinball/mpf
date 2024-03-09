@@ -70,6 +70,7 @@ class AflRunner(object):
             'debug': False,
             'bcp': False,
             'no_load_cache': False,
+            'platform_integration_test': False,
             'create_config_cache': True,
             'text_ui': False,
             'production': not self.debug,

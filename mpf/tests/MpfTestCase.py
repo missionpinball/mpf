@@ -389,6 +389,7 @@ class MpfTestCase(unittest.TestCase):
             'debug': True,
             'bcp': self.get_use_bcp(),
             'no_load_cache': False,
+            'platform_integration_test': False,
             'create_config_cache': True,
             'text_ui': False,
         }

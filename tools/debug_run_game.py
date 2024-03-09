@@ -17,6 +17,7 @@ options = {
     'debug': True,
     'bcp': True,
     'no_load_cache': False,
+    'platform_integration_test': False,
     'create_config_cache': True,
     'text_ui': False,
     'consoleloglevel': logging.DEBUG,
