@@ -2369,7 +2369,7 @@ window:
     source_display: single|str|window
     borderless: single|bool_int|false
     resizable: single|bool_int|true
-    fullscreen: single|bool_int|false
+    fullscreen: single|str|false
     show_cursor: single|bool_int|true
     exit_on_escape: single|bool|true
     height: single|int|600
