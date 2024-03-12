@@ -61,7 +61,7 @@ class AutofireCoil(SystemWideDevice):
             self._timeout_max_hits = self.config['timeout_max_hits']
             self._timeout_disable_time = self.config['timeout_disable_time']
 
-        if '{}_active'.format(self.config['playfield'].name) in self.config['switch'].tags:
+        if f'{self.config['playfield'].name}_active' in self.config['switch'].tags:
             self.raise_config_error(
                 "Autofire device '{}' uses switch '{}' which has a "
                 "'{}_active' tag. This is handled internally by the device. Remove the "

@@ -9,12 +9,15 @@ MIN_FW = version.parse('0.87') # override in subclass
 
 class FastRgbCommunicator(FastSerialCommunicator):
 
-    """Handles the serial communication for legacy FAST RGB processors including
-    the Nano Controller and FP-EXP-0800 LED controller."""
+    """Handles the serial communication for legacy FAST RGB processors.
+
+    Includes the Nano Controller and FP-EXP-0800 LED controller.
+    """
 
     IGNORED_MESSAGES = ['RX:P']
 
     def __init__(self, platform, processor, config):
+        """Initialize the RGB platform and process boot message."""
         super().__init__(platform, processor, config)
 
         self.message_processors['!B:'] = self._process_boot_msg
