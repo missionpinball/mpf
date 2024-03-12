@@ -352,11 +352,13 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         except ImportError:
             self.warning_log("Could not import terminos (this is ok on windows).")
             return
-        serial_port = open(self.config['port'])
-        attrs = termios.tcgetattr(serial_port)
-        attrs[2] = attrs[2] & ~termios.HUPCL
-        termios.tcsetattr(serial_port, termios.TCSAFLUSH, attrs)
-        serial_port.close()
+        # Disabling linter on encoding until understanding what encoding LISY uses on serial
+        # pylint: disable-msg=unspecified-encoding
+        with open(self.config['port']) as serial_port:
+            attrs = termios.tcgetattr(serial_port)
+            attrs[2] = attrs[2] & ~termios.HUPCL
+            termios.tcsetattr(serial_port, termios.TCSAFLUSH, attrs)
+            serial_port.close()
 
     async def _clear_read_buffer(self):
         """Clear read buffer."""
