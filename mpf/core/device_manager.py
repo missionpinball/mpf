@@ -285,7 +285,9 @@ class DeviceCollection(dict):
         """
         # We used this to allow the programmer to access a hardware item like
         # self.coils.coilname
-
+        self.machine.log.warning("Accessing devices by attribute is deprecated and will be removed. "
+                                 "Access by value instead: %s.%s -> %s['%s']",
+                                 self.name, attr, self.name, attr)
         try:
             return self[attr]
         except KeyError:
@@ -296,6 +298,9 @@ class DeviceCollection(dict):
 
         This method is DEPRECATED and will be removed soon. Use .values() instead.
         """
+        self.machine.log.warning("Iterating device collections directly is deprecated and will be removed. "
+                                 "Access by value() instead: device_collections[%s] -> device_collections['%s'].values()",
+                                 self.name, self.name)
         for item in self.values():
             yield item
 
